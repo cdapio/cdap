@@ -8,7 +8,7 @@ This guide outlines the steps to setup your system for contributing to CDAP.
 Prerequisites
 =============
 
-- Java 6+ SDK
+- Java 7+ SDK
 - Maven 3.1+
 - Git
 
