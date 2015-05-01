@@ -26,7 +26,11 @@ import co.cask.cdap.templates.etl.api.Transform;
 /**
  * Batch Source forms the first stage of a Batch ETL Pipeline. Along with configuring the Batch job, it
  * also transforms the key value pairs provided by the Batch job into a single output type to be consumed by
- * subsequent transforms. By default, the value of the key value pair will be ouput.
+ * subsequent transforms. By default, the value of the key value pair will be output.
+ *
+ * {@link BatchSource#initialize}, {@link BatchSource#transform} and {@link BatchSource#destroy} methods are called
+ * inside the Batch Job while {@link BatchSource#prepareJob} and {@link BatchSource#teardownJob} methods are called
+ * on the client side, which launches the BatchJob, before the BatchJob starts and after it completes respectively.
  *
  * @param <KEY_IN> the type of input key from the Batch job
  * @param <VAL_IN> the type of input value from the Batch job
@@ -49,7 +53,7 @@ public abstract class BatchSource<KEY_IN, VAL_IN, OUT>
   public abstract void prepareJob(BatchSourceContext context) throws Exception;
 
   /**
-   * Initialize the source. This is called once each time the Hadoop Job runs, before any
+   * Initialize the source. This is called once at the beginning, each time the Batch Job runs, before any
    * calls to {@link #transform(KeyValue, Emitter)} are made.
    *
    * @param context {@link BatchSourceContext}
@@ -58,16 +62,35 @@ public abstract class BatchSource<KEY_IN, VAL_IN, OUT>
     // no-op
   }
 
+  /**
+   * Transform the {@link KeyValue} pair produced by the input, configured in the Job,
+   * to a single object and emit it to the next stage. By default it emits the value.
+   *
+   * @param input the input to transform
+   * @param emitter {@link Emitter} to emit data to the next stage
+   * @throws Exception if there's an error during this method invocation
+   */
   @Override
   public void transform(KeyValue<KEY_IN, VAL_IN> input, Emitter<OUT> emitter) throws Exception {
     emitter.emit((OUT) input.getValue());
   }
 
   /**
-   * Destroy the source. This is called at the end of the Hadoop Job run.
+   * Destroy the source. This is called at the end of the Batch Job run.
    */
   @Override
   public void destroy() {
+    // no-op
+  }
+
+  /**
+   * Get the result of the Batch Job. Used to perform any end of the run logic.
+   *
+   * @param succeeded defines the result of job execution: true if job succeeded, false otherwise
+   * @param context job execution context
+   * @throws Exception if there's an error during this method invocation
+   */
+  public void teardownJob(boolean succeeded, BatchSourceContext context) throws Exception {
     // no-op
   }
 }

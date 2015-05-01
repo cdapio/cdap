@@ -29,7 +29,7 @@ public interface Transform<IN, OUT> {
    *
    * @param input the input to transform
    * @param emitter {@link Emitter} to emit data to the next stage
-   * @throws Exception
+   * @throws Exception if there's an error during this method invocation
    */
   void transform(IN input, Emitter<OUT> emitter) throws Exception;
 }

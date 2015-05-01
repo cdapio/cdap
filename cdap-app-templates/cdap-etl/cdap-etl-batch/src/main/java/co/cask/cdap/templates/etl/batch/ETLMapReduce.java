@@ -54,6 +54,11 @@ import java.util.Map;
 public class ETLMapReduce extends AbstractMapReduce {
   private static final Logger LOG = LoggerFactory.getLogger(ETLMapReduce.class);
   private static final Gson GSON = new Gson();
+
+  private BatchSource batchSource;
+  private BatchSink batchSink;
+  private String sourcePluginId;
+  private String sinkPluginId;
   private Metrics mrMetrics;
 
   @Override
@@ -73,39 +78,53 @@ public class ETLMapReduce extends AbstractMapReduce {
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Sink.PLUGINID));
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Transform.PLUGINIDS));
 
-    ETLBatchConfig config = GSON.fromJson(runtimeArgs.get(Constants.CONFIG_KEY), ETLBatchConfig.class);
+    ETLBatchConfig etlBatchConfig = GSON.fromJson(runtimeArgs.get(Constants.CONFIG_KEY), ETLBatchConfig.class);
 
-    prepareSource(context, config.getSource());
-    prepareSink(context, config.getSink());
+    prepareSource(context, etlBatchConfig.getSource());
+    prepareSink(context, etlBatchConfig.getSink());
 
-    if (config.getResources() != null) {
-      context.setMapperResources(config.getResources());
+    if (etlBatchConfig.getResources() != null) {
+      context.setMapperResources(etlBatchConfig.getResources());
     }
     job.setMapperClass(ETLMapper.class);
     job.setNumReduceTasks(0);
   }
 
   private void prepareSource(MapReduceContext context, ETLStage sourceStage) throws Exception {
-    String sourcePluginId = context.getRuntimeArguments().get(Constants.Source.PLUGINID);
-    BatchSource source = context.newPluginInstance(sourcePluginId);
+    sourcePluginId = context.getRuntimeArguments().get(Constants.Source.PLUGINID);
+    batchSource = context.newPluginInstance(sourcePluginId);
     BatchSourceContext sourceContext = new MapReduceSourceContext(context, mrMetrics, sourcePluginId);
     LOG.info("Source Stage : {}", sourceStage);
-    LOG.info("Source Class : {}", source.getClass().getName());
-    source.prepareJob(sourceContext);
+    LOG.info("Source Class : {}", batchSource.getClass().getName());
+    batchSource.prepareJob(sourceContext);
   }
 
   private void prepareSink(MapReduceContext context, ETLStage sinkStage) throws Exception {
-    String sinkPluginId = context.getRuntimeArguments().get(Constants.Sink.PLUGINID);
-    BatchSink sink = context.newPluginInstance(sinkPluginId);
+    sinkPluginId = context.getRuntimeArguments().get(Constants.Sink.PLUGINID);
+    batchSink = context.newPluginInstance(sinkPluginId);
     BatchSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics, sinkPluginId);
     LOG.info("Sink Stage : {}", sinkStage);
-    LOG.info("Sink Class : {}", sink.getClass().getName());
-    sink.prepareJob(sinkContext);
+    LOG.info("Sink Class : {}", batchSink.getClass().getName());
+    batchSink.prepareJob(sinkContext);
   }
 
   @Override
-  public void onFinish(boolean succeeded, MapReduceContext context) {
+  public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
+    teardownSource(context, succeeded);
+    teardownSink(context, succeeded);
     LOG.info("Batch Run for Adapter {} : {}", context.getRuntimeArguments().get(Constants.ADAPTER_NAME), succeeded);
+  }
+
+  private void teardownSource(MapReduceContext context, boolean succeeded) throws Exception {
+    BatchSourceContext sourceContext = new MapReduceSourceContext(context, mrMetrics, sourcePluginId);
+    LOG.info("Teardown Source : {}", batchSource.getClass().getName());
+    batchSource.teardownJob(succeeded, sourceContext);
+  }
+
+  private void teardownSink(MapReduceContext context, boolean succeeded) throws Exception {
+    BatchSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics, sinkPluginId);
+    LOG.info("Teardown Sink : {}", batchSink.getClass().getName());
+    batchSink.teardownJob(succeeded, sinkContext);
   }
 
   /**
