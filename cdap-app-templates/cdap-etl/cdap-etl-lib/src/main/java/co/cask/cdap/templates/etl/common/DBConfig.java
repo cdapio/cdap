@@ -46,12 +46,15 @@ public class DBConfig extends PluginConfig {
   public String password;
 
   @Description("Name of the JDBC plugin to use. This is the value of the 'name' key defined in the json file " +
-    "for the JDBC plugin. Defaults to 'jdbc'.")
-  @Nullable
-  public String jdbcPluginName = "jdbc";
+    "for the JDBC plugin.")
+  public String jdbcPluginName;
 
   @Description("Type of the JDBC plugin to use. This is the value of the 'type' key defined in the json file " +
     "for the JDBC plugin. Defaults to 'jdbc'.")
   @Nullable
   public String jdbcPluginType = "jdbc";
+
+  public DBConfig() {
+    jdbcPluginType = "jdbc";
+  }
 }

@@ -28,12 +28,20 @@ import co.cask.cdap.templates.etl.batch.sources.DBSource;
 import co.cask.cdap.templates.etl.batch.sources.KVTableSource;
 import co.cask.cdap.templates.etl.batch.sources.StreamBatchSource;
 import co.cask.cdap.templates.etl.batch.sources.TableSource;
+import co.cask.cdap.templates.etl.common.DBRecord;
+import co.cask.cdap.templates.etl.common.ETLStage;
 import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import co.cask.cdap.templates.etl.transforms.ProjectionTransform;
 import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
 import co.cask.cdap.test.TestBase;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.mapred.AvroKey;
+import org.apache.avro.mapreduce.AvroKeyOutputFormat;
+import org.hsqldb.jdbc.JDBCDriver;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
@@ -55,8 +63,16 @@ public class BaseETLBatchTest extends TestBase {
       TableSink.class, TimePartitionedFileSetDatasetAvroSink.class);
     addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar", IdentityTransform.class,
       ProjectionTransform.class, ScriptFilterTransform.class, StructuredRecordToGenericRecordTransform.class);
+    addTemplatePlugins(TEMPLATE_ID, "hsql-jdbc-1.0.0.jar", JDBCDriver.class);
+    addTemplatePluginJson(TEMPLATE_ID, "hsql-jdbc-1.0.0.json", "jdbc", "hypersql", "hypersql jdbc driver",
+      JDBCDriver.class.getName());
     deployTemplate(NAMESPACE, TEMPLATE_ID, ETLBatchTemplate.class,
+      Lists.newArrayList(AvroKeyOutputFormat.class, DBRecord.class),
       EndPointStage.class.getPackage().getName(),
-      BatchSource.class.getPackage().getName());
+      ETLStage.class.getPackage().getName(),
+      BatchSource.class.getPackage().getName(),
+      Schema.class.getPackage().getName(),
+      GenericRecord.class.getPackage().getName(),
+      AvroKey.class.getPackage().getName());
   }
 }
