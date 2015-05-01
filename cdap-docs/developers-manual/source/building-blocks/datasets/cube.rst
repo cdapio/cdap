@@ -100,7 +100,7 @@ second is used.
 Querying Data
 =============
 Querying data in Cube dataset is the most useful part of its API. One can slice, dice and
-drill down into the data of the Cube. Use these methods of the API to perform queries:
+drill down into the data of the Cube. Use these methods of the API to perform queries::
   
   public interface Cube extends Dataset, BatchWritable<Object, CubeFact> {
    Collection<TimeSeries> query(CubeQuery query);
