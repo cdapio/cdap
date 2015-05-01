@@ -34,11 +34,9 @@ angular.module(PKG.name + '.feature.adapters')
       })
         .then(function(res) {
           this.scope.defaultSources = res;
-          if (res.length) {
-            this.scope.defaultSources.forEach(function(source) {
-              source.icon = getIcon(source.name);
-            }.bind(this));
-          }
+          this.scope.defaultSources.forEach(function(source) {
+            source.icon = getIcon(source.name);
+          }.bind(this));
         }.bind(this));
     }
 
@@ -48,11 +46,9 @@ angular.module(PKG.name + '.feature.adapters')
       })
         .then(function(res) {
           this.scope.defaultSinks = res;
-          if (res.length) {
-            this.scope.defaultSinks.forEach(function(sink) {
-              sink.icon = getIcon(sink.name);
-            }.bind(this));
-          }
+          this.scope.defaultSinks.forEach(function(sink) {
+            sink.icon = getIcon(sink.name);
+          }.bind(this));
         }.bind(this));
     }
 
@@ -62,11 +58,9 @@ angular.module(PKG.name + '.feature.adapters')
       })
         .then(function(res) {
           this.scope.defaultTransforms = res;
-          if (res.length) {
-            this.scope.defaultTransforms.forEach(function(transform) {
-              transform.icon = getIcon(transform.name);
-            }.bind(this));
-          }
+          this.scope.defaultTransforms.forEach(function(transform) {
+            transform.icon = getIcon(transform.name);
+          }.bind(this));
         }.bind(this));
     }
 
@@ -76,7 +70,6 @@ angular.module(PKG.name + '.feature.adapters')
         pluginid: pluginId
       })
        .then(function(res) {
-         console.log(res);
          this.scope.templatePluginConfig = res;
        }.bind(this));
     }
