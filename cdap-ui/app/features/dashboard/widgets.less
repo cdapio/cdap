@@ -18,14 +18,18 @@ body.state-dashboard {
         position: absolute;
         top: 10px;
         left: 15px;
+
         &.open {
-          .dropdown-toggle {
+          .btn.dropdown-toggle {
             background-color: @cdap-header;
             color: white;
             .border-radius(8px 8px 0 0);
             + .dropdown-menu {
+              top: 24px !important;
+              left: 1px !important;
               .border-radius(0);
-              > li:first-child a { .border-radius(0 8px 0 0); }
+              > li:first-child a { .border-radius(0 4px 0 0); }
+              > li:last-child a { .border-radius(0 0 4px 4px); }
             }
           }
         }
