@@ -57,7 +57,7 @@ IFS=$'\n'
 lines=`cat "$bin"/../resources/points.txt`
 for line in $lines
 do
-  status=`curl -qSfsw "%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X POST -d "$line" http://$gateway:10000/v2/streams/$stream`
+  status=`curl -qSfsw "%{http_code}\\n" -H "Authorization: Bearer $auth_token" -X POST -d "$line" http://$gateway:10000/v3/namespaces/default/streams/$stream`
   if [ $status -ne 200 ]; then
     echo "Failed to send data."
     if [ $status == 401 ]; then
