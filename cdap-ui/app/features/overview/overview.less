@@ -10,6 +10,15 @@ body.state-overview {
       padding-bottom: 20px;
       margin-bottom: 20px;
       h2 { margin-top: 0; }
+
+      .nounderline {
+        color: @cdap-bluegray;
+
+        &:hover {
+          text-decoration: none;
+        }
+      }
+
       .col-xs-12.col-lg-4 {
         white-space: nowrap;
         @media (max-width: @screen-md-max) { text-align: center; }

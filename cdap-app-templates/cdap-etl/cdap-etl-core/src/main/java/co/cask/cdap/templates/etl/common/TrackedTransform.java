@@ -21,7 +21,7 @@ import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.Transformation;
 
 /**
- * A {@link Transformation} that delegates transform operations to another Transform while emitting metrics
+ * A {@link Transformation} that delegates transform operations while emitting metrics
  * around how many records were input into the transform.
  *
  * @param <IN> Type of input object
