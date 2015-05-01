@@ -178,7 +178,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       // runner, which is probably the yarn user. This may cause permissions issues if the program
       // tries to access cdap data. For example, writing to a FileSet will fail, as the yarn user will
       // be running the job, but the data directory will be owned by cdap.
-      if (!UserGroupInformation.isSecurityEnabled()) {
+      if (!MapReduceContextProvider.isLocal(hConf) && !UserGroupInformation.isSecurityEnabled()) {
         String runAs = cConf.get(Constants.CFG_HDFS_USER);
         try {
           UserGroupInformation.createRemoteUser(runAs)
