@@ -197,8 +197,8 @@
               <classifier>batch</classifier>
               <instructions>
                 <!-- build bundle jar for batch. excluding realtime-->
-                <Export-Package>co.cask.cdap.templates.etl.batch.*;co.cask.cdap.templates.etl.transforms.*,
-                  co.cask.cdap.templates.etl.common,org.apache.avro.mapreduce</Export-Package>
+                <Export-Package>co.cask.cdap.templates.etl.batch.*;co.cask.cdap.templates.etl.transforms.*;
+                  co.cask.cdap.templates.etl.common;org.apache.avro.mapreduce</Export-Package>
                 <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
                 <Embed-Transitive>true</Embed-Transitive>
                 <Embed-Directory>lib</Embed-Directory>
@@ -215,7 +215,7 @@
               <classifier>realtime</classifier>
               <instructions>
                 <!-- build bundle jar for realtime. excluding batch-->
-                <Export-Package>co.cask.cdap.templates.etl.realtime.*;co.cask.cdap.templates.etl.transforms.*,
+                <Export-Package>co.cask.cdap.templates.etl.realtime.*;co.cask.cdap.templates.etl.transforms.*;
                   co.cask.cdap.templates.etl.common</Export-Package>
                 <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
                 <Embed-Transitive>true</Embed-Transitive>
