@@ -198,7 +198,7 @@
               <instructions>
                 <!-- build bundle jar for batch. excluding realtime-->
                 <Export-Package>co.cask.cdap.templates.etl.batch.*;co.cask.cdap.templates.etl.transforms.*,
-                  co.cask.cdap.templates.etl.common</Export-Package>
+                  co.cask.cdap.templates.etl.common,org.apache.avro.mapreduce</Export-Package>
                 <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
                 <Embed-Transitive>true</Embed-Transitive>
                 <Embed-Directory>lib</Embed-Directory>
