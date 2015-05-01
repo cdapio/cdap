@@ -17,7 +17,6 @@
 package co.cask.cdap.templates.etl.common;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 
 import java.util.List;
 

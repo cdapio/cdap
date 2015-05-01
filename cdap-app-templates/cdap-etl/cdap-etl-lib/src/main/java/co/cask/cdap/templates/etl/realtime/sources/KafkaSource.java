@@ -28,7 +28,6 @@ import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import co.cask.cdap.templates.etl.realtime.kafka.Kafka08SimpleApiConsumer;
 import co.cask.cdap.templates.etl.realtime.kafka.KafkaSimpleApiConsumer;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

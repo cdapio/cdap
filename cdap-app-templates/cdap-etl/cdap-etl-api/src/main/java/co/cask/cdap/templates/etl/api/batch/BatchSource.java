@@ -21,7 +21,7 @@ import co.cask.cdap.templates.etl.api.Destroyable;
 import co.cask.cdap.templates.etl.api.Emitter;
 import co.cask.cdap.templates.etl.api.EndPointStage;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
-import co.cask.cdap.templates.etl.api.Transform;
+import co.cask.cdap.templates.etl.api.Transformation;
 
 /**
  * Batch Source forms the first stage of a Batch ETL Pipeline. Along with configuring the Batch job, it
@@ -33,7 +33,7 @@ import co.cask.cdap.templates.etl.api.Transform;
  * @param <OUT> the type of output for the source
  */
 public abstract class BatchSource<KEY_IN, VAL_IN, OUT>
-  implements EndPointStage, Transform<KeyValue<KEY_IN, VAL_IN>, OUT>, Destroyable {
+  implements EndPointStage, Transformation<KeyValue<KEY_IN, VAL_IN>, OUT>, Destroyable {
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {

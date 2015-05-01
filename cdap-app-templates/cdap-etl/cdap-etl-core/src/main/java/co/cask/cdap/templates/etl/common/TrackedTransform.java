@@ -18,20 +18,20 @@ package co.cask.cdap.templates.etl.common;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.Transform;
+import co.cask.cdap.templates.etl.api.Transformation;
 
 /**
- * A {@link Transform} that delegates transform operations to another Transform while emitting metrics
+ * A {@link Transformation} that delegates transform operations to another Transform while emitting metrics
  * around how many records were input into the transform.
  *
  * @param <IN> Type of input object
  * @param <OUT> Type of output object
  */
-public class TrackedTransform<IN, OUT> implements Transform<IN, OUT> {
-  private final Transform transform;
+public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT> {
+  private final Transformation transform;
   private final Metrics metrics;
 
-  public TrackedTransform(Transform transform, Metrics metrics) {
+  public TrackedTransform(Transformation transform, Metrics metrics) {
     this.transform = transform;
     this.metrics = metrics;
   }

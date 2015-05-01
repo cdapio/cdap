@@ -16,32 +16,27 @@
 
 package co.cask.cdap.templates.etl.api;
 
-/**
- * Transform Stage.
- *
- * @param <IN> Type of input object
- * @param <OUT> Type of output object
- */
-public abstract class TransformStage<IN, OUT> implements Transform<IN, OUT>, Destroyable {
+import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
 
-  private StageContext context;
+/**
+ * Context passed to ETL stages.
+ */
+public interface TransformContext {
 
   /**
-   * Initialize the Transform Stage. Transforms are initialized once when the program starts up and
-   * is guaranteed to occur before any calls to {@link #transform(Object, Emitter)} are made.
+   * Gets the {@link PluginProperties} associated with the stage.
    *
-   * @param context {@link StageContext}
+   * @return the {@link PluginProperties}.
    */
-  public void initialize(StageContext context) {
-    this.context = context;
-  }
+  PluginProperties getPluginProperties();
 
-  @Override
-  public void destroy() {
-    //no-op
-  }
-
-  protected StageContext getContext() {
-    return context;
-  }
+  /**
+   * Get an instance of {@link Metrics}, used to collect metrics. Note that metric names are not scoped by
+   * the stage they are emitted from. A metric called 'reads' emitted in one stage will be aggregated with
+   * those emitted in another stage.
+   *
+   * @return {@link Metrics} for collecting metrics
+   */
+  Metrics getMetrics();
 }
