@@ -17,13 +17,9 @@
 package co.cask.cdap.templates.etl.realtime;
 
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.templates.AdapterSpecification;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.templates.etl.api.StageContext;
-import co.cask.cdap.templates.etl.common.Constants;
-
-import javax.annotation.Nullable;
 
 /**
  * Context for the Transform Stage.
@@ -31,7 +27,8 @@ import javax.annotation.Nullable;
 public class RealtimeStageContext implements StageContext {
   private final WorkerContext context;
   private final Metrics metrics;
-  private final String pluginPrefix;
+
+  protected final String pluginPrefix;
 
   public RealtimeStageContext(WorkerContext context, Metrics metrics, String pluginPrefix) {
     this.context = context;
@@ -47,30 +44,5 @@ public class RealtimeStageContext implements StageContext {
   @Override
   public PluginProperties getPluginProperties() {
     return context.getPluginProperties(pluginPrefix);
-  }
-
-  @Nullable
-  @Override
-  public AdapterSpecification getAdapterSpecification() {
-    return context.getAdapterSpecification();
-  }
-
-  @Override
-  public PluginProperties getPluginProperties(String childPluginId) {
-    return context.getPluginProperties(getPluginId(childPluginId));
-  }
-
-  @Override
-  public <T> Class<T> loadPluginClass(String childPluginId) {
-    return context.loadPluginClass(getPluginId(childPluginId));
-  }
-
-  @Override
-  public <T> T newPluginInstance(String childPluginId) throws InstantiationException {
-    return context.newPluginInstance(getPluginId(childPluginId));
-  }
-
-  private String getPluginId(String childPluginId) {
-    return String.format("%s%s%s", pluginPrefix, Constants.ID_SEPARATOR, childPluginId);
   }
 }
