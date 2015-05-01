@@ -91,8 +91,8 @@ public class ReflectionRowRecordReader extends ReflectionRowReader<StructuredRec
     // if row field is given, make sure the type is a non-null simple type
     if (rowFieldName != null) {
       Schema.Field rowField = schema.getField(rowFieldName);
-      Schema.Type rowType = rowField.getSchema().getType();
       Preconditions.checkArgument(rowField != null, "Row field not found in schema");
+      Schema.Type rowType = rowField.getSchema().getType();
       Preconditions.checkArgument(rowType != Schema.Type.NULL, "Row field cannot have null type.");
       Preconditions.checkArgument(rowType.isSimpleType(),
         "Row field must be a simple type (boolean, bytes, int, long, float, double, or string).");
