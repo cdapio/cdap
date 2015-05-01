@@ -26,7 +26,7 @@ import co.cask.cdap.templates.etl.api.Transformation;
 /**
  * Batch Sink forms the last stage of a Batch ETL Pipeline. In addition to configuring the Batch job, the sink
  * also transforms a single input object into a key value pair that the Batch job will output. By default, the input
- * object is used as the key and null is used as the value.
+ * object is used as both the key and value.
  *
  * @param <IN> the type of input object to the sink
  * @param <KEY_OUT> the type of key the sink outputs
@@ -60,7 +60,7 @@ public abstract class BatchSink<IN, KEY_OUT, VAL_OUT>
 
   @Override
   public void transform(IN input, Emitter<KeyValue<KEY_OUT, VAL_OUT>> emitter) throws Exception {
-    emitter.emit(new KeyValue<KEY_OUT, VAL_OUT>((KEY_OUT) input, null));
+    emitter.emit(new KeyValue<KEY_OUT, VAL_OUT>((KEY_OUT) input, (VAL_OUT) input));
   }
 
   /**
