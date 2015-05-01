@@ -57,19 +57,19 @@ angular.module(PKG.name + '.feature.adapters')
     };
 
     var defaultSource = {
-      name: 'Add a Source',
+      name: 'Add a source',
       properties: {},
       placeHolderSource: true
     };
 
     var defaultSink = {
-      name: 'Add a Sink',
+      name: 'Add a sink',
       placeHolderSink: true,
       properties: {}
     };
 
     var defaultTransforms = [{
-      name: 'Add a Transforms',
+      name: 'Add a transform',
       placeHolderTransform: true,
       properties: {}
     }];
@@ -210,8 +210,12 @@ angular.module(PKG.name + '.feature.adapters')
       if ($scope.source.placeHolderSource || $scope.sink.placeHolderSource) {
         return;
       }
+      delete $scope.source._backendProperties;
+      delete $scope.sink._backendProperties;
       for(i=0; i<$scope.transforms.length; i+=1) {
         if (!$scope.transforms[i].placeHolderTransform) {
+          delete $scope.transforms[i]._backendProperties;
+          delete $scope.transforms[i].$$hashkey;
           transforms.push($scope.transforms[i]);
         }
       }

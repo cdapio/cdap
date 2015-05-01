@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.templates;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.api.templates.plugins.PluginSelector;
 
@@ -25,6 +26,7 @@ import javax.annotation.Nullable;
  * This interface provides method to register plugin usage for an adapter. The registered plugins
  * will be available at runtime of the adapter.
  */
+@Beta
 public interface AdapterPluginRegistry {
 
   /**

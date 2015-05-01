@@ -18,6 +18,12 @@ angular.module(PKG.name + '.commons')
           $scope.properties = [];
 
           if (!str) {
+            //intialize to one empty property
+            $scope.properties.push({
+              key: '',
+              value: ''
+            });
+
             return;
           }
           var arr = str.split($scope.delimiter);
@@ -34,12 +40,12 @@ angular.module(PKG.name + '.commons')
 
         initialize();
 
-        var propertyListener = $scope.$watch('properties', function() {
+        $scope.$watch('properties', function() {
 
           var str = '';
 
           angular.forEach($scope.properties, function(p) {
-            if (p.key) {
+            if (p.key.length > 0) {
               str = str + p.key + $scope.kvdelimiter + p.value + $scope.delimiter;
             }
           });
@@ -53,9 +59,6 @@ angular.module(PKG.name + '.commons')
 
         }, true);
 
-        $scope.$on('$destroy', function() {
-          propertyListener();
-        });
 
         $scope.addProperty = function() {
           $scope.properties.push({

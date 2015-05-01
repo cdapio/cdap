@@ -167,6 +167,9 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   public void testInvalidReservedId() throws Exception {
     HttpResponse response = createNamespace(METADATA_VALID, INVALID_NAME);
     assertResponseCode(400, response);
+    // '-' is not allowed anymore
+    response = createNamespace(METADATA_VALID, "my-namespace");
+    assertResponseCode(400, response);
     // 'default' and 'system' are reserved namespaces
     response = createNamespace(METADATA_VALID, Constants.DEFAULT_NAMESPACE);
     assertResponseCode(400, response);

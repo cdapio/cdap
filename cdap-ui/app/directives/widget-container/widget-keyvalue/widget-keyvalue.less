@@ -1,20 +1,34 @@
+@import "../../../styles/variables.less";
+
 my-key-value {
-  .labels {
-    [class*="col-"] {
-      margin-bottom: 5px;
+
+  .keyvalue-container {
+    border: 2px solid @cdap-bluegray;
+    border-radius: @border-radius-base;
+    padding: 15px 0;
+
+    .row {
+      margin-bottom: 2px;
+      padding-left: 15px;
+    }
+
+    .empty-container {
+      padding-left: 15px;
     }
   }
 
-  [class*="col-"] {
-    padding-right: 0;
-    padding-left: 0;
+  .labels {
+    [class*="col-"] {
+      margin-bottom: 10px;
+    }
+  }
 
-    .delimiter-label {
-      line-height: 30px;
+  .delimiter-label {
+    line-height: 26px;
+    padding-left: 17px;
 
-      > strong {
-        vertical-align: middle;
-      }
+    > strong {
+      vertical-align: middle;
     }
   }
 }

@@ -29,9 +29,9 @@ downloaded with the Logging HTTP API. To do that, send an HTTP GET request::
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<program-type>``
-     - One of ``flows``, ``mapreduce``, ``services``, or ``spark``
+     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
    * - ``<program-id>``
-     - Name of the program (*Flow*, *MapReduce*, *Service*, *Spark*) being called
+     - Name of the program (*Flow*, *MapReduce*, *Service*, *Spark*, *Workflow*) being called
    * - ``<ts>``
      - *Start* and *stop* times, given as seconds since the start of the Epoch.
 
@@ -46,6 +46,46 @@ downloaded with the Logging HTTP API. To do that, send an HTTP GET request::
    * - Description
      - Return the logs for all the events from the Flow *WordCountFlow* of the *WordCount*
        Application in the namespace *default*,
+       beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
+       ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
+
+
+Downloading Application Logs For A Run
+--------------------------------------
+To download logs for a program run, send an HTTP GET request::
+
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/logs?start=<ts>&stop=<ts>
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<app-id>``
+     - Name of the Application being called
+   * - ``<program-type>``
+     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
+   * - ``<program-id>``
+     - Name of the program (*Flow*, *MapReduce*, *Service*, *Spark*, *Workflow*) being called
+   * - ``<run-id>``
+     - Run id of the program run
+   * - ``<ts>``
+     - *Start* and *stop* times, given as seconds since the start of the Epoch.
+
+.. rubric:: Example
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/namespaces/default/apps/WordCount/flows/WordCountFlow/``\
+       ``runs/c826e692-ef8c-11e4-953d-d6686e126da6/logs?start=1382576400&stop=1382576700``
+   * - Description
+     - Return the logs for all the events from the Flow *WordCountFlow* of the *WordCount*
+       Application in the namespace *default* for run c826e692-ef8c-11e4-953d-d6686e126da6,
        beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
 

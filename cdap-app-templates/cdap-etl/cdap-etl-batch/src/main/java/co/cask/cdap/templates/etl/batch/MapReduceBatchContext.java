@@ -20,9 +20,13 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.templates.AdapterSpecification;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.batch.BatchContext;
+import co.cask.cdap.templates.etl.common.Constants;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Abstract implementation of {@link BatchContext} using {@link MapReduceContext}.
@@ -55,5 +59,30 @@ public abstract class MapReduceBatchContext extends BatchStageContext implements
   public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
     throws DatasetInstantiationException {
     return mrContext.getDataset(name, arguments);
+  }
+
+  @Nullable
+  @Override
+  public AdapterSpecification getAdapterSpecification() {
+    return mrContext.getAdapterSpecification();
+  }
+
+  @Override
+  public PluginProperties getPluginProperties(String pluginId) {
+    return mrContext.getPluginProperties(getPluginId(pluginId));
+  }
+
+  @Override
+  public <T> Class<T> loadPluginClass(String pluginId) {
+    return mrContext.loadPluginClass(getPluginId(pluginId));
+  }
+
+  @Override
+  public <T> T newPluginInstance(String pluginId) throws InstantiationException {
+    return mrContext.newPluginInstance(getPluginId(pluginId));
+  }
+
+  private String getPluginId(String childPluginId) {
+    return String.format("%s%s%s", pluginPrefix, Constants.ID_SEPARATOR, childPluginId);
   }
 }

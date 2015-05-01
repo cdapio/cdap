@@ -26,7 +26,7 @@ angular.module(PKG.name + '.feature.adapters')
               name: key,
               template: value.config.metadata.type,
               status: '-',
-              description: 'Something something dark.Something Something something dark'
+              description: value.config.metadata.description
             });
           });
         }
@@ -44,7 +44,7 @@ angular.module(PKG.name + '.feature.adapters')
       dataSrc.poll({
         _cdapNsPath: '/adapters/' + app.name + '/status'
       }, function(res) {
-        app.status = res;
+        app.status = res.status;
       });
     }
 

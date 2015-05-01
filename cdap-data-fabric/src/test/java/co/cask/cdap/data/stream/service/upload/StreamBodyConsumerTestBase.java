@@ -69,7 +69,7 @@ public abstract class StreamBodyConsumerTestBase {
     BodyConsumer bodyConsumer = createBodyConsumer(new ContentWriterFactory() {
       @Override
       public Id.Stream getStream() {
-        return Id.Stream.from("test-namespace", "test-stream");
+        return Id.Stream.from("test_namespace", "test-stream");
       }
 
       @Override

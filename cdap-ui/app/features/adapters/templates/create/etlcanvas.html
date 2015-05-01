@@ -2,7 +2,7 @@
   <div class="row">
     <div class="col-xs-4">
       <div class="wrapper">
-        <div class="template">
+        <div class="template" ng-class="{'plugin-added': !source['placeHolderSource']}">
           <div>
             <span tooltip="{{source.name}}" ng-if="source.name.length > 18">{{source.name |  myEllipsis: 18}}</span>
             <span ng-if="source.name.length <= 18">{{source.name }}</span>
@@ -11,18 +11,17 @@
                   ng-if="!source.placeHolderSource"></span>
           </div>
         </div>
-        <div class="default">
-          <div>Drop to Add a Source</div>
-        </div>
+
       </div>
     </div>
     <div class="col-xs-4">
       <div class="wrapper transform-wrapper">
-        <div class="template transforms" ng-model="transforms" as-sortable="dragdrop">
-          <div class="default">
-            <div>Drop To Add A Transforms</div>
-          </div>
-          <div ng-repeat="transform in transforms" as-sortable-item>
+        <div class="template transforms"
+             ng-model="transforms"
+             as-sortable="dragdrop">
+          <div ng-repeat="transform in transforms"
+               ng-class="{'plugin-added': !transform['placeHolderTransform']}"
+               as-sortable-item>
             <div as-sortable-item-handle>
               <span tooltip="{{transform.name}}" ng-if="transform.name.length > 18">{{transform.name |  myEllipsis: 18}}</span>
               <span ng-if="transform.name.length <= 18">{{transform.name }}</span>
@@ -39,7 +38,7 @@
     </div>
     <div class="col-xs-4">
       <div class="wrapper">
-        <div class="template">
+        <div class="template" ng-class="{'plugin-added': !sink['placeHolderSink']}">
           <div>
             <span tooltip="{{sink.name}}" ng-if="sink.name.length > 18">{{sink.name |  myEllipsis: 18}}</span>
             <span ng-if="sink.name.length <= 18">{{sink.name }}</span>
@@ -47,9 +46,6 @@
                   ng-click="editSinkProperties()"
                   ng-if="!sink.placeHolderSink"></span>
           </div>
-        </div>
-        <div class="default">
-          <div>Drag &amp; Drop to Add a Sink</div>
         </div>
       </div>
     </div>
