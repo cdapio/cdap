@@ -182,7 +182,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                              InstantiatorFactory instantiator, ClassLoader classLoader,
                              WorkflowToken token) throws Exception {
 
-    WorkflowActionSpecification actionSpec;
+    final WorkflowActionSpecification actionSpec;
     ScheduleProgramInfo actionInfo = node.getProgram();
     switch (actionInfo.getProgramType()) {
       case MAPREDUCE:
@@ -209,14 +209,19 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     status.put(node.getNodeId(), node);
 
     final WorkflowAction action = initialize(actionSpec, classLoader, instantiator, token, node.getNodeId());
+    ExecutorService executor = Executors.newSingleThreadExecutor();
     try {
       // Run the action in new thread
-      ExecutorService executor = Executors.newSingleThreadExecutor();
       Future<?> future = executor.submit(new Runnable() {
         @Override
         public void run() {
           ClassLoaders.setContextClassLoader(action.getClass().getClassLoader());
-          action.run();
+          try {
+            action.run();
+          } finally {
+            // Call action.destroy().
+            destroy(actionSpec, action);
+          }
         }
       });
       future.get();
@@ -225,8 +230,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       Throwables.propagateIfPossible(t, Exception.class);
       throw Throwables.propagate(t);
     } finally {
-      // Destroy the action.
-      destroy(actionSpec, action);
+      executor.shutdownNow();
       status.remove(node.getNodeId());
     }
   }
