@@ -30,14 +30,14 @@
           <a ng-if="data.type === 'Stream'" ui-sref="streams.detail.overview({streamId: data.name})" ng-click="MyOrderings.dataClicked(data.name)">
             <p ng-bind="data.name"> </p>
             <div class="title-type-image">
-              <img class="type-icon" src="assets/img/ico_stream.png" alt="" />
+              <span class="icon-streams"></span>
               <span> Stream </span>
             </div>
           </a>
           <a ng-if="data.type !== 'Stream'" ui-sref="datasets.detail.overview({datasetId: data.name})" ng-click="MyOrderings.dataClicked(data.name)">
             <p ng-bind="data.name"> </p>
             <div class="title-type-image">
-              <img class="type-icon" src="assets/img/ico_datasets.png" alt="" />
+              <span class="icon-datasets"></span>
               <span> Dataset </span>
             </div>
           </a>
@@ -102,7 +102,7 @@
           <a ui-sref="apps.detail.overview({appId: app.id})"  ng-click="MyOrderings.appClicked(app.id)">
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
-              <img class="type-icon" src="assets/img/ico_cdap.png" alt="" />
+              <span class="icon-fist"></span>
               <span> CDAP </span>
             </div>
           </a>
