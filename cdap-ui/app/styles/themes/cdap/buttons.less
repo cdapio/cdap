@@ -101,14 +101,23 @@ body.theme-cdap {
     background-color: @cdap-header;
     border: 0;
     color: white;
-    .border-radius(4px);
     .dropdown-defaults();
     .dropdown-blue();
+    .dropdown-left();
+  }
+
+  .dropdown-right {
+    .dropdown-right();
+  }
+
+  .dropdown-left {
+    .dropdown-left();
   }
   // Sets navy blue-colored dropdown menu
   .btn-success.dropdown-toggle {
     border: 0;
     .dropdown-defaults();
+    .dropdown-right();
   }
 
   .txt-running {
