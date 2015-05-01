@@ -1,6 +1,7 @@
 <section class="panel-group explore"
      ng-controller="CdapStreamExploreController"
      ng-model="activePanel"
+     data-allow-multiple="true"
      bs-collapse>
 
   <!-- VIEW DATA -->
@@ -74,8 +75,8 @@
 
   <!-- WRITE & EXECUTE SQL -->
   <div class="panel panel-explore">
-    <div class="panel-heading">
-      <h3 class="panel-title" bs-collapse-toggle>
+    <div class="panel-heading" bs-collapse-toggle>
+      <h3 class="panel-title">
         <span
           ng-class="{'fa-caret-right': activePanel!==1,
                      'fa-caret-down': activePanel===1}"
@@ -85,15 +86,15 @@
     </div>
     <div class="panel-collapse" bs-collapse-target>
       <div class="panel-body">
-        <my-sql-query data-panel="activePanel" data-type="'stream'" data-name="name"></my-sql-query>
+        <my-sql-query data-type="'stream'" data-name="name"></my-sql-query>
       </div>
     </div>
   </div>
 
   <!-- VIEW QUERIES -->
   <div class="panel panel-explore">
-    <div class="panel-heading">
-      <h3 class="panel-title" bs-collapse-toggle>
+    <div class="panel-heading" bs-collapse-toggle>
+      <h3 class="panel-title">
         <span
           ng-class="{'fa-caret-right': activePanel!==2,
                      'fa-caret-down': activePanel===2}"
@@ -104,7 +105,7 @@
     <div class="panel-collapse" bs-collapse-target>
       <div class="panel-body">
 
-        <my-view-queries ng-if="activePanel === 2"></my-view-queries>
+        <my-view-queries></my-view-queries>
 
       </div>
     </div>
