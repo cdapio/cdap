@@ -137,13 +137,17 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
     // moves the <appfabricdir>/archive/<app-name>.jar to <appfabricdir>/<app-name>/archive/<app-name>.jar
     // Cannot do this before starting the deploy pipeline because appId could be null at that time.
     // However, it is guaranteed to be non-null from VerificationsStage onwards
-    moveAppArchiveUnderAppDirectory(input.getLocation(), applicationName);
+    Location newLocation = moveAppArchiveUnderAppDirectory(input.getLocation(), applicationName);
+    ApplicationDeployable updatedAppDeployable = new ApplicationDeployable(input.getId(), input.getSpecification(),
+                                                                           input.getExistingAppSpec(),
+                                                                           input.getApplicationDeployScope(),
+                                                                           newLocation);
 
     // Emits the received specification with programs.
-    emit(new ApplicationWithPrograms(input, programs.build()));
+    emit(new ApplicationWithPrograms(updatedAppDeployable, programs.build()));
   }
 
-  private void moveAppArchiveUnderAppDirectory(Location origArchiveLocation, String appName) throws IOException {
+  private Location moveAppArchiveUnderAppDirectory(Location origArchiveLocation, String appName) throws IOException {
     // Move archive directory under application directory.
     Location oldArchiveDir = Locations.getParent(origArchiveLocation);
     Preconditions.checkState(oldArchiveDir != null, "Application archive is not expected to be in the root directory.");
@@ -164,7 +168,7 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
       throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
                                           oldArchiveDir.toURI(), newArchiveLocation.toURI()));
     }
-
+    return newArchiveLocation.append(origArchiveLocation.getName());
   }
 
   private WebappSpecification createWebappSpec(final String name) {
