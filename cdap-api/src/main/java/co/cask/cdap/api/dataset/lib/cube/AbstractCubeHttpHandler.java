@@ -57,7 +57,7 @@ public abstract class AbstractCubeHttpHandler extends AbstractHttpServiceHandler
   public void addFact(HttpServiceRequest request, HttpServiceResponder responder) {
     try {
       String body = Bytes.toString(request.getContent());
-      Collection<CubeFact> facts = new Gson().fromJson(body, CUBE_FACT_COLLECTION);
+      Collection<CubeFact> facts = GSON.fromJson(body, CUBE_FACT_COLLECTION);
       getCube().add(facts);
       responder.sendStatus(200);
     } catch (Throwable th) {
@@ -75,7 +75,7 @@ public abstract class AbstractCubeHttpHandler extends AbstractHttpServiceHandler
   public void searchDimensionValue(HttpServiceRequest request, HttpServiceResponder responder) {
     try {
       String body = Bytes.toString(request.getContent());
-      CubeExploreQuery query = new Gson().fromJson(body, CubeExploreQuery.class);
+      CubeExploreQuery query = GSON.fromJson(body, CubeExploreQuery.class);
       Collection<DimensionValue> result = getCube().findDimensionValues(query);
       responder.sendJson(result);
     } catch (Throwable th) {
@@ -109,7 +109,7 @@ public abstract class AbstractCubeHttpHandler extends AbstractHttpServiceHandler
   public void query(HttpServiceRequest request, HttpServiceResponder responder) {
     try {
       String body = Bytes.toString(request.getContent());
-      CubeQuery query = new Gson().fromJson(body, CubeQuery.class);
+      CubeQuery query = GSON.fromJson(body, CubeQuery.class);
       Collection<TimeSeries> result = getCube().query(query);
       responder.sendJson(result);
     } catch (Throwable th) {
