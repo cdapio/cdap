@@ -37,7 +37,6 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
@@ -264,9 +263,29 @@ public class AppMetadataStore extends MetadataStoreDataset {
   // Any changes made here will have to be made over there too.
   // JIRA https://issues.cask.co/browse/CDAP-2172
   public RunRecord getRun(Id.Program program, final String runid) {
-    // For querying running records
+    // Query active run record first
+    RunRecord running = getUnfinishedRun(program, TYPE_RUN_RECORD_STARTED, runid);
+    // If program is running, this will be non-null
+    if (running != null) {
+      return running;
+    }
+
+    // If program is not running, query completed run records
+    RunRecord complete = getCompletedRun(program, runid);
+    if (complete != null) {
+      return complete;
+    }
+
+    // Else query suspended run records
+    return getUnfinishedRun(program, TYPE_RUN_RECORD_SUSPENDED, runid);
+  }
+
+  /**
+   * @return run records for runs that do not have start time in mds key for the run record.
+   */
+  private RunRecord getUnfinishedRun(Id.Program program, String recordType, String runid) {
     MDSKey runningKey = new MDSKey.Builder()
-      .add(TYPE_RUN_RECORD_STARTED)
+      .add(recordType)
       .add(program.getNamespaceId())
       .add(program.getApplicationId())
       .add(program.getType().name())
@@ -274,14 +293,10 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(runid)
       .build();
 
-    // Query running record first
-    RunRecord running = get(runningKey, RunRecord.class);
-    // If program is running, this will be non-null
-    if (running != null) {
-      return running;
-    }
+    return get(runningKey, RunRecord.class);
+  }
 
-    // If program is not running, query completed run records
+  private RunRecord getCompletedRun(Id.Program program, final String runid) {
     MDSKey completedKey = new MDSKey.Builder()
       .add(TYPE_RUN_RECORD_COMPLETED)
       .add(program.getNamespaceId())
@@ -318,21 +333,18 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   private List<RunRecord> getSuspendedRuns(Id.Program program, long startTime, long endTime, int limit,
                                            final String adapter, @Nullable Predicate<RunRecord> filter) {
-    MDSKey suspendKey = getProgramKeyBuilder(TYPE_RUN_RECORD_SUSPENDED, program).build();
-    MDSKey start = new MDSKey.Builder(suspendKey).add(getInvertedTsKeyPart(endTime)).build();
-    MDSKey stop = new MDSKey.Builder(suspendKey).add(getInvertedTsKeyPart(startTime)).build();
-    return list(start, stop, RunRecord.class, limit, andPredicate(new Predicate<RunRecord>() {
-      @Override
-      public boolean apply(@Nullable RunRecord record) {
-        // Check if RunRecord matches with passed in adapter name
-        return (adapter == null) || (record != null && adapter.equals(record.getAdapterName()));
-      }
-    }, filter));
+    return getNonCompleteRuns(program, TYPE_RUN_RECORD_SUSPENDED, startTime, endTime, limit, adapter, filter);
   }
 
   private List<RunRecord> getActiveRuns(Id.Program program, final long startTime, final long endTime, int limit,
                                         final String adapter, @Nullable Predicate<RunRecord> filter) {
-    MDSKey activeKey = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, program).build();
+    return getNonCompleteRuns(program, TYPE_RUN_RECORD_STARTED, startTime, endTime, limit, adapter, filter);
+    }
+
+  private List<RunRecord> getNonCompleteRuns(Id.Program program, String recordType,
+                                             final long startTime, final long endTime, int limit,
+                                             final String adapter, Predicate<RunRecord> filter) {
+    MDSKey activeKey = getProgramKeyBuilder(recordType, program).build();
 
     return list(activeKey, null, RunRecord.class, limit, andPredicate(new Predicate<RunRecord>() {
                   @Override
@@ -345,7 +357,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
                     return normalCheck;
                   }
                 }, filter));
-    }
+  }
 
   private List<RunRecord> getHistoricalRuns(Id.Program program, ProgramRunStatus status,
                                             final long startTime, final long endTime, int limit, final String adapter,
