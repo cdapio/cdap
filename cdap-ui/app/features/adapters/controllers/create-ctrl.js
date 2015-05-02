@@ -39,18 +39,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     apiFactory.fetchTemplates();
     $scope.adapterTypes = [];
-    // Default ETL Templates
-    // $scope.adapterTypes = [
-    //   {
-    //     name: 'ETL Batch',
-    //     type: 'etlBatch'
-    //   },
-    //   {
-    //     name: 'ETL Realtime',
-    //     type: 'etlRealtime'
-    //   }
-    // ];
-
+    
     // Metadata Model
     $scope.metadata = {
         name: '',
