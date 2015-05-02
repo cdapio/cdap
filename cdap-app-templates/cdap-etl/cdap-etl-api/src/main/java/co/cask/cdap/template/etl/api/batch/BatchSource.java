@@ -18,7 +18,6 @@ package co.cask.cdap.template.etl.api.batch;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.template.etl.api.Destroyable;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.EndPointStage;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
@@ -39,7 +38,7 @@ import co.cask.cdap.template.etl.api.Transformation;
  */
 @Beta
 public abstract class BatchSource<KEY_IN, VAL_IN, OUT>
-  implements EndPointStage, Transformation<KeyValue<KEY_IN, VAL_IN>, OUT>, Destroyable {
+  implements EndPointStage, Transformation<KeyValue<KEY_IN, VAL_IN>, OUT, BatchSourceContext> {
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
@@ -54,12 +53,7 @@ public abstract class BatchSource<KEY_IN, VAL_IN, OUT>
    */
   public abstract void prepareJob(BatchSourceContext context) throws Exception;
 
-  /**
-   * Initialize the source. This is called once at the beginning, each time the Batch Job runs, before any
-   * calls to {@link #transform(KeyValue, Emitter)} are made.
-   *
-   * @param context {@link BatchSourceContext}
-   */
+  @Override
   public void initialize(BatchSourceContext context) throws Exception {
     // no-op
   }
@@ -77,9 +71,6 @@ public abstract class BatchSource<KEY_IN, VAL_IN, OUT>
     emitter.emit((OUT) input.getValue());
   }
 
-  /**
-   * Destroy the source. This is called at the end of the Batch Job run.
-   */
   @Override
   public void destroy() {
     // no-op

@@ -17,9 +17,9 @@
 package co.cask.cdap.template.etl.api.realtime;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.template.etl.api.Destroyable;
 import co.cask.cdap.template.etl.api.EndPointStage;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
+import co.cask.cdap.template.etl.api.StageLifecycle;
 
 /**
  * Realtime Sink.
@@ -27,7 +27,7 @@ import co.cask.cdap.template.etl.api.PipelineConfigurer;
  * @param <I> Object sink operates on
  */
 @Beta
-public abstract class RealtimeSink<I> implements EndPointStage, Destroyable {
+public abstract class RealtimeSink<I> implements EndPointStage, StageLifecycle<RealtimeContext> {
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
@@ -39,6 +39,7 @@ public abstract class RealtimeSink<I> implements EndPointStage, Destroyable {
    *
    * @param context {@link RealtimeContext}
    */
+  @Override
   public void initialize(RealtimeContext context) throws Exception {
     // no-op
   }

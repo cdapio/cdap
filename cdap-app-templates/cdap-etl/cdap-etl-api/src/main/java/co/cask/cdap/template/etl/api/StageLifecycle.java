@@ -19,27 +19,18 @@ package co.cask.cdap.template.etl.api;
 import co.cask.cdap.api.annotation.Beta;
 
 /**
- * Transform Stage.
+ * Interface for stage that supports initialize call for resource setup.
  *
- * @param <IN> Type of input object
- * @param <OUT> Type of output object
+ * @param <T> execution context
  */
 @Beta
-public abstract class Transform<IN, OUT> implements Transformation<IN, OUT, TransformContext> {
+public interface StageLifecycle<T extends TransformContext> extends Destroyable {
 
-  private TransformContext context;
-
-  @Override
-  public void initialize(TransformContext context) throws Exception {
-    this.context = context;
-  }
-
-  @Override
-  public void destroy() {
-    //no-op
-  }
-
-  protected TransformContext getContext() {
-    return context;
-  }
+  /**
+   * Initialize the Stage. Can be used to setup resources.
+   *
+   * @param context execution context
+   * @throws Exception if there is any error during initialization.
+   */
+  void initialize(T context) throws Exception;
 }

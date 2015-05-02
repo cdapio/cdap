@@ -169,12 +169,12 @@ public class ETLMapReduce extends AbstractMapReduce {
       pipeline.add(sink);
       stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.SINK, etlConfig.getSink().getName()));
 
-      transformExecutor = new TransformExecutor<KeyValue, KeyValue>(pipeline, stageMetrics);
+      transformExecutor = new TransformExecutor<>(pipeline, stageMetrics);
     }
 
     private void addTransforms(List<ETLStage> stageConfigs, List<Transformation> pipeline,
                                List<StageMetrics> stageMetrics, List<String> transformIds,
-                               MapReduceContext context) throws InstantiationException {
+                               MapReduceContext context) throws Exception {
       Preconditions.checkArgument(stageConfigs.size() == transformIds.size());
 
       for (int i = 0; i < stageConfigs.size(); i++) {

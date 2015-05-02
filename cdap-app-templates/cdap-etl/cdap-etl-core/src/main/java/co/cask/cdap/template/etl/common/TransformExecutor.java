@@ -80,9 +80,7 @@ public class TransformExecutor<IN, OUT> implements Destroyable {
   @Override
   public void destroy() {
     for (Transformation transform : transforms) {
-      if (transform instanceof Destroyable) {
-        Destroyables.destroyQuietly((Destroyable) transform);
-      }
+      Destroyables.destroyQuietly(transform);
     }
   }
 }

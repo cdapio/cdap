@@ -18,7 +18,6 @@ package co.cask.cdap.template.etl.api.batch;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.template.etl.api.Destroyable;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.EndPointStage;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
@@ -30,8 +29,8 @@ import co.cask.cdap.template.etl.api.Transformation;
  * object is used as both the key and value.
  *
  * {@link BatchSink#initialize}, {@link BatchSink#transform} and {@link BatchSink#destroy} methods are called inside
- * the Batch Job while {@link BatchSink#prepareJob} and {@link BatchSink#teardownJob} methods are called on the client
- * side, which launches the BatchJob, before the BatchJob starts and after it completes respectively.
+ * the Batch Adapter while {@link BatchSink#prepareJob} and {@link BatchSink#teardownJob} methods are called on the
+ * client side, which launches the BatchJob, before the BatchJob starts and after it completes respectively.
  *
  * @param <IN> the type of input object to the sink
  * @param <KEY_OUT> the type of key the sink outputs
@@ -39,7 +38,7 @@ import co.cask.cdap.template.etl.api.Transformation;
  */
 @Beta
 public abstract class BatchSink<IN, KEY_OUT, VAL_OUT>
-  implements EndPointStage, Transformation<IN, KeyValue<KEY_OUT, VAL_OUT>>, Destroyable {
+  implements EndPointStage, Transformation<IN, KeyValue<KEY_OUT, VAL_OUT>, BatchSinkContext> {
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
@@ -54,12 +53,7 @@ public abstract class BatchSink<IN, KEY_OUT, VAL_OUT>
    */
   public abstract void prepareJob(BatchSinkContext context) throws Exception;
 
-  /**
-   * Initialize the sink. This is called once each time the Batch Job runs, before any
-   * calls to {@link #transform(Object, Emitter)} are made.
-   *
-   * @param context {@link BatchSinkContext}
-   */
+  @Override
   public void initialize(BatchSinkContext context) throws Exception {
     // no-op
   }
@@ -74,12 +68,9 @@ public abstract class BatchSink<IN, KEY_OUT, VAL_OUT>
    */
   @Override
   public void transform(IN input, Emitter<KeyValue<KEY_OUT, VAL_OUT>> emitter) throws Exception {
-    emitter.emit(new KeyValue<KEY_OUT, VAL_OUT>((KEY_OUT) input, (VAL_OUT) input));
+    emitter.emit(new KeyValue<>((KEY_OUT) input, (VAL_OUT) input));
   }
 
-  /**
-   * Destroy the sink. This is called at the end of the Batch Job run.
-   */
   @Override
   public void destroy() {
     // no-op
