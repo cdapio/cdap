@@ -21,12 +21,15 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.templates.etl.api.Emitter;
+import co.cask.cdap.templates.etl.api.PipelineConfigurer;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.templates.etl.api.realtime.SourceState;
 import co.cask.cdap.templates.etl.realtime.jms.JmsProvider;
 import co.cask.cdap.templates.etl.realtime.jms.JndiBasedJmsProvider;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
@@ -164,6 +167,14 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
       throw new RuntimeException("JMSException thrown when trying to initialize connection: " + ex.getMessage(),
                                  ex);
     }
+  }
+
+  @Override
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    pipelineConfigurer.usePluginClass("JMSProvider", Context.INITIAL_CONTEXT_FACTORY,
+                                      String.format("%s.%s.%s", "jmsource","JMSProvider",
+                                                    Context.INITIAL_CONTEXT_FACTORY),
+                                      PluginProperties.builder().build());
   }
 
   @Nullable
