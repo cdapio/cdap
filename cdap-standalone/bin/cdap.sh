@@ -29,7 +29,7 @@ fi
 CDAP_OPTS="-XX:+UseConcMarkSweepGC -Djava.security.krb5.realm= -Djava.security.krb5.kdc= -Djava.awt.headless=true"
 
 # Specifies Web App Path
-UI_PATH=${UI_PATH:-"ui/alpha/server.js"}
+UI_PATH=${UI_PATH:-"ui/server.js"}
 
 APP_NAME="cask-cdap"
 APP_BASE_NAME=`basename "$0"`

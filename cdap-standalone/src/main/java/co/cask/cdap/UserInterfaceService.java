@@ -48,7 +48,6 @@ final class UserInterfaceService extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(UserInterfaceService.class);
   private static final String NODE_JS_EXECUTABLE = "node";
-  private static final String UI_VERSION = "alpha";
 
   static final String UI;
   static {
@@ -57,8 +56,6 @@ final class UserInterfaceService extends AbstractExecutionThreadService {
     File base = new File("ui");
     if (!base.isDirectory()) {
       base = new File("cdap-ui");
-    } else {
-      base = new File(base, UI_VERSION);
     }
     UI = new File(base, "server.js").getAbsolutePath();
   }
