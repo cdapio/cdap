@@ -70,8 +70,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
   protected void startUp() throws Exception {
     LOG.info("Starting ProgramLifecycleService");
 
-    scheduledExecutorService.scheduleAtFixedRate(new RunRecordsCorrectorRunnable(this, store, runtimeService),
-                                                 2L, 600L, TimeUnit.SECONDS);
+    scheduledExecutorService.scheduleWithFixedDelay(new RunRecordsCorrectorRunnable(this, store, runtimeService),
+                                                    2L, 600L, TimeUnit.SECONDS);
   }
 
   @Override
