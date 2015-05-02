@@ -32,6 +32,17 @@ angular.module(PKG.name + '.feature.adapters')
       return icon;
     }
 
+    AdapterApiFactory.prototype.fetchTemplates = function() {
+      this.dataSrc.request({
+        _cdapPath: '/templates'
+      })
+        .then(function(res) {
+          this.scope.adapterTypes = res || [];
+          this.scope.metadata.type = this.scope.adapterTypes[0].name;
+        }.bind(this));
+
+    }
+
     AdapterApiFactory.prototype.fetchSources = function(adapterType) {
       this.dataSrc.request({
         _cdapPath: '/templates/' + adapterType + '/extensions/source'
