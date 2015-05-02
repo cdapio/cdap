@@ -680,3 +680,5 @@ Workflow *ETLWorkflow* of the Application *etlBatch* of the namespace *default*.
 you can formulate your request.
 
 The :ref:`CDAP CLI <cli>` has a command (``get adapter logs <adaptor-id>``) that does this directly.
+
+

@@ -152,7 +152,7 @@ Glossary
    .. ETL and Application Templates
 
    Structured Record
-      The data format used to exchange events between different ETL :term:`Plugins <plugin>`.
+      The data format used to exchange events between most of the pre-built CDAP ETL :term:`Plugins <plugin>`.
       
    Sink
       A :term:`Plugin` that accepts events and persists them.
@@ -161,7 +161,8 @@ Glossary
       A :term:`Plugin` that produces events.
       
    Transformation
-      A :term:`Plugin` that accepts events, performs modifications on them, and then transmits them.
+      A :term:`Plugin` that accepts events and then creates and emits zero or more
+      new events, generally in response to the data in the incoming events.
 
    Transform
       See :term:`Transformation`.
@@ -170,12 +171,11 @@ Glossary
       A type of :term:`Transformation` that only passes events that meet a specific criteria.
       
    Projection
-      A type of :term:`Transformation` that modifies events that meet a specific criteria.
+      A type of :term:`Transformation` that rewrites events based on rules in its configuration.
       A modification could include renaming and dropping of fields.
 
    Adapter Configuration
-      A JSON Object, either in-memory or in a file, that defines an :term:`Adapter`, which
-      is created from the :term:`Application Template` specified in the configuration.
+      A JSON String that defines an :term:`Adapter`.
       
    Application Template
       A set of :term:`Plugins <Plugin>` that can be combined together to create an
@@ -190,9 +190,8 @@ Glossary
 
    Adapter
       An Adapter is an instance of an :term:`Application Template` that has been created
-      from a specific configuration, usually an Adapter configuration, either a file or an
-      in-memory object. Adapters combine :term:`Plugins <plugin>` to access CDAP programs
-      and resources.
+      from a specific configuration. Adapters combine :term:`Plugins <plugin>` to access
+      CDAP programs and resources.
    
    Pipeline
       A linked :term:`Source` and :term:`Sink`, with a set of zero or more
@@ -218,8 +217,9 @@ Glossary
       specifically for creating :term:`ETL Pipelines <ETL Pipeline>`.
 
    ETL Plugin
-      A :term:`Sink`, :term:`Source` or :term:`Transformation`, packaged in a JAR file
-      format, for use as a :term:`Plugin` in an ETL Adapter.
+      A :term:`Plugin` of type BatchSource, RealtimeSource, BatchSink, RealtimeSink, or
+      :term:`Transformation`, packaged in a JAR file format, for use as a :term:`Plugin`
+      in an ETL Adapter. See also :term:`Source` and :term:`Sink`.
 
    Plugin
       Specially-constructed files (JAR Files) that add custom features to CDAP.
