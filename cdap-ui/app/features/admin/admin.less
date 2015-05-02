@@ -106,6 +106,17 @@ body.theme-cdap.state-admin {
       &.status-grey { background-color: @cdap-gray; }
     }
     input.pref-key { font-weight: bold; }
+
+    .namespace-table {
+      td {
+        max-width: 300px;
+        div {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
   }
 
 }
