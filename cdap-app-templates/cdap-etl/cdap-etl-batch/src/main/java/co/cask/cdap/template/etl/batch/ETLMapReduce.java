@@ -83,14 +83,19 @@ public class ETLMapReduce extends AbstractMapReduce {
     }
     job.setMapperClass(ETLMapper.class);
     job.setNumReduceTasks(0);
+    String adapterName = runtimeArgs.get(Constants.ADAPTER_NAME);
+    String sourceName = config.getSource().getName();
+    String sinkName = config.getSink().getName();
+    job.setJobName(String.format("etlBatch.%s.%s.to.%s.%d",
+                                 adapterName, sourceName, sinkName, context.getLogicalStartTime()));
   }
 
   private void prepareSource(MapReduceContext context, ETLStage sourceStage) throws Exception {
     String sourcePluginId = context.getRuntimeArguments().get(Constants.Source.PLUGINID);
     BatchSource source = context.newPluginInstance(sourcePluginId);
     BatchSourceContext sourceContext = new MapReduceSourceContext(context, mrMetrics, sourcePluginId);
-    LOG.info("Source Stage : {}", sourceStage);
-    LOG.info("Source Class : {}", source.getClass().getName());
+    LOG.debug("Source Stage : {}", sourceStage.getClass().getName());
+    LOG.debug("Source Class : {}", source.getClass().getName());
     source.prepareJob(sourceContext);
   }
 
@@ -98,8 +103,8 @@ public class ETLMapReduce extends AbstractMapReduce {
     String sinkPluginId = context.getRuntimeArguments().get(Constants.Sink.PLUGINID);
     BatchSink sink = context.newPluginInstance(sinkPluginId);
     BatchSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics, sinkPluginId);
-    LOG.info("Sink Stage : {}", sinkStage);
-    LOG.info("Sink Class : {}", sink.getClass().getName());
+    LOG.debug("Sink Stage : {}", sinkStage.getClass().getName());
+    LOG.debug("Sink Class : {}", sink.getClass().getName());
     sink.prepareJob(sinkContext);
   }
 
@@ -130,7 +135,7 @@ public class ETLMapReduce extends AbstractMapReduce {
 
 
       List<ETLStage> stageList = etlConfig.getTransforms();
-      LOG.info("Transform Stages : {}", stageList);
+      LOG.debug("Transform Stages : {}", stageList);
 
       List<Transformation> pipeline = Lists.newArrayListWithCapacity(stageList.size() + 2);
       List<StageMetrics> stageMetrics = Lists.newArrayListWithCapacity(stageList.size() + 2);
@@ -150,7 +155,7 @@ public class ETLMapReduce extends AbstractMapReduce {
       pipeline.add(sink);
       stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.SINK, etlConfig.getSink().getName()));
 
-      transformExecutor = new TransformExecutor<KeyValue, KeyValue>(pipeline, stageMetrics);
+      transformExecutor = new TransformExecutor(pipeline, stageMetrics);
     }
 
     private void addTransforms(List<ETLStage> stageConfigs, List<Transformation> pipeline,
