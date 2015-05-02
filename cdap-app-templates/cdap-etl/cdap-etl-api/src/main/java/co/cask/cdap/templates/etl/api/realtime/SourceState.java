@@ -19,11 +19,11 @@ package co.cask.cdap.templates.etl.api.realtime;
 import com.google.common.collect.Maps;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
- * State of Source maintained.
+ * State of Source.
  */
-// TODO: Improve the API as use case evolves
 public class SourceState {
 
   private final Map<String, byte[]> stateMap;
@@ -42,6 +42,15 @@ public class SourceState {
    */
   public SourceState() {
     this.stateMap = Maps.newHashMap();
+  }
+
+  /**
+   * Construct a SourceState by making a copy of another SourceState.
+   *
+   * @param state {@link SourceState}
+   */
+  public SourceState(SourceState state) {
+    this(state.getState());
   }
 
   /**
@@ -80,5 +89,41 @@ public class SourceState {
    */
   public void setState(Map<String, byte[]> map) {
     stateMap.putAll(map);
+  }
+
+  /**
+   * Clear the internal state and set it to values from provided State.
+   *
+   * @param state state to be copied
+   */
+  public void setState(SourceState state) {
+    clearState();
+    setState(state.getState());
+  }
+
+  /**
+   * Clear the internal state.
+   */
+  public void clearState() {
+    stateMap.clear();
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    SourceState that = (SourceState) o;
+    return Objects.equals(stateMap, that.stateMap);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(stateMap);
   }
 }

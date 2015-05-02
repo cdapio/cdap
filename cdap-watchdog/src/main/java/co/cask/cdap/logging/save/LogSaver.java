@@ -88,7 +88,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Stopping LogSaver...");
-    cancelLogCollectorCallbacks();
+    // Log saver is stopped by Multi-leader election through unscheduleTasks()
   }
 
   @VisibleForTesting
@@ -103,6 +103,8 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
 
   @VisibleForTesting
   void unscheduleTasks() throws Exception {
+    cancelLogCollectorCallbacks();
+
     for (KafkaLogProcessor processor : messageProcessors) {
       try {
         // Catching the exception to let all the plugins a chance to stop cleanly.
@@ -112,7 +114,6 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
                   processor.getClass().getSimpleName());
       }
     }
-    cancelLogCollectorCallbacks();
   }
 
   private void cancelLogCollectorCallbacks() {

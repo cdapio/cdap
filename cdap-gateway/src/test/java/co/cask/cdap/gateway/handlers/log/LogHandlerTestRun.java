@@ -475,6 +475,13 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
       Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
       expected++;
     }
+
+    // Try with invalid time range -> start > stop
+    logsUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s",
+                                   appId, entityType, entityId, 350, 300);
+    logsUrl = getUrlWithAdapterId(logsUrl, adapterId, "&");
+    response = doGet(getVersionedAPIPath(logsUrl, namespace));
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
   }
 
   private void testLogsRunId(String appId, String entityType, String entityId, String namespace,

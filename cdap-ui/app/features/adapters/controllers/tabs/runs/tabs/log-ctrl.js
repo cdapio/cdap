@@ -13,7 +13,7 @@ angular.module(PKG.name + '.feature.adapters')
                 '/adapters/' + $state.params.adapterId
    })
     .then(function(res) {
-      var appId = res.program.application.applicationId;
+      var appId = res.program.application;
       var programId = res.program.id;
       logPath = '/apps/' + appId +
                 '/'+ res.program.type.toLowerCase() + 's' +'/' + programId +

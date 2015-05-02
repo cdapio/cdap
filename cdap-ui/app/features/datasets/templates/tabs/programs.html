@@ -34,7 +34,24 @@
               </div>
 
             </td>
-            <td>{{ ::program.type }}</td>
+            <td>
+              <span ng-if="program.type === 'Spark'"
+                      class="icon-spark">
+              </span>
+              <span ng-if="program.type === 'Mapreduce'"
+                      class="icon-mapreduce">
+              </span>
+              <span ng-if="program.type === 'Service'"
+                      class="icon-service">
+              </span>
+              <span ng-if="program.type === 'Workflow'"
+                      class="icon-workflow">
+              </span>
+              <span ng-if="program.type === 'Flow'"
+                      class="icon-tigon">
+              </span>
+              <span>{{ ::program.type }}</span>
+            </td>
             <td>
               <a ui-sref="apps.detail.overview({ appId: program.application.applicationId })">
                 {{ ::program.application.applicationId }}
@@ -45,6 +62,7 @@
       </table>
     </div>
 
+    <br />
     <div class="well text-center" ng-if="programs.length === 0">
       <h3>No program that is using this dataset.</h3>
     </div>

@@ -106,7 +106,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
   /**
    * Only works for {@link co.cask.cdap.data2.transaction.queue.hbase.ShardedHBaseQueueStrategy}.
    */
-  private QueueStatistics scanQueue(final QueueName queueName, @Nullable Long consumerGroupId) throws Exception {
+  public QueueStatistics scanQueue(final QueueName queueName, @Nullable Long consumerGroupId) throws Exception {
     HBaseConsumerStateStore stateStore = queueAdmin.getConsumerStateStore(queueName);
 
     TransactionExecutor txExecutor = Transactions.createTransactionExecutor(txExecutorFactory, stateStore);
@@ -236,7 +236,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
   /**
    *
    */
-  private static final class QueueStatistics {
+  public static final class QueueStatistics {
 
     private long unprocessed;
     private long processedAndVisible;

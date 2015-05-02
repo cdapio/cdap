@@ -17,6 +17,8 @@
 package co.cask.cdap.templates.etl.realtime;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
@@ -32,11 +34,11 @@ import co.cask.cdap.templates.etl.realtime.sources.JmsSource;
 import co.cask.cdap.templates.etl.realtime.sources.KafkaSource;
 import co.cask.cdap.templates.etl.realtime.sources.TestSource;
 import co.cask.cdap.templates.etl.realtime.sources.TwitterSource;
-import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import co.cask.cdap.templates.etl.transforms.ProjectionTransform;
 import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
 import co.cask.cdap.test.AdapterManager;
+import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
@@ -46,7 +48,6 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -71,12 +72,25 @@ public class ETLWorkerTest extends TestBase {
       TestSource.class, JmsSource.class, KafkaSource.class, TwitterSource.class);
     addTemplatePlugins(TEMPLATE_ID, "realtime-sinks-1.0.0.jar",
       RealtimeCubeSink.class, RealtimeTableSink.class, StreamSink.class);
-    addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar", IdentityTransform.class,
+    addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar",
       ProjectionTransform.class, ScriptFilterTransform.class, StructuredRecordToGenericRecordTransform.class);
     deployTemplate(NAMESPACE, TEMPLATE_ID, ETLRealtimeTemplate.class,
       EndPointStage.class.getPackage().getName(),
       ETLStage.class.getPackage().getName(),
       RealtimeSource.class.getPackage().getName());
+  }
+
+  @Test
+  public void testEmptyProperties() throws Exception {
+    // Set properties to null to test if ETLTemplate can handle it.
+    ETLStage source = new ETLStage("Test", null);
+    ETLStage sink = new ETLStage("Stream", ImmutableMap.of(Properties.Stream.NAME, "testS"));
+    ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sink, Lists.<ETLStage>newArrayList());
+
+    AdapterConfig adapterConfig = new AdapterConfig("null properties", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
+    Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "testAdap");
+    AdapterManager adapterManager = createAdapter(adapterId, adapterConfig);
+    Assert.assertNotNull(adapterManager);
   }
 
   @Test
@@ -92,8 +106,14 @@ public class ETLWorkerTest extends TestBase {
     AdapterManager adapterManager = createAdapter(adapterId, adapterConfig);
 
     adapterManager.start();
-    // Let the worker run for 5 seconds
-    TimeUnit.SECONDS.sleep(5);
+    // Let the worker run for 3 seconds
+    TimeUnit.SECONDS.sleep(3);
+    adapterManager.stop();
+
+    // Start again to see if the state is maintained
+    adapterManager.start();
+    // Let the worker run for 2 seconds
+    TimeUnit.SECONDS.sleep(2);
     adapterManager.stop();
 
     StreamManager streamManager = getStreamManager(NAMESPACE, "testStream");
@@ -111,27 +131,23 @@ public class ETLWorkerTest extends TestBase {
     Assert.assertEquals("Hello", Bytes.toString(body, Charsets.UTF_8));
   }
 
-  // TODO: Remove ignore once end-to-end testing is figured out with plugins
-  @Ignore
   @Test
   @SuppressWarnings("ConstantConditions")
   public void testTableSink() throws Exception {
-    /*ApplicationTemplate<ETLRealtimeConfig> appTemplate = new ETLRealtimeTemplate();
-    ETLStage source = new ETLStage(TestSource.class.getSimpleName(),
-                                   ImmutableMap.of(TestSource.PROPERTY_TYPE, TestSource.TABLE_TYPE));
-    ETLStage sink = new ETLStage(RealtimeTableSink.class.getSimpleName(),
-                                 ImmutableMap.of(Properties.BatchWritable.NAME, "table1",
-                                                 Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "binary"));
-    ETLRealtimeConfig adapterConfig = new ETLRealtimeConfig(source, sink, Lists.<ETLStage>newArrayList());
-    MockAdapterConfigurer adapterConfigurer = new MockAdapterConfigurer();
-    appTemplate.configureAdapter("myAdapter", adapterConfig, adapterConfigurer);
-    addDatasetInstances(adapterConfigurer);
-    Map<String, String> workerArgs = Maps.newHashMap(adapterConfigurer.getArguments());
-    WorkerManager workerManager = templateManager.startWorker(ETLWorker.class.getSimpleName(), workerArgs);
+    ETLStage source = new ETLStage("Test", ImmutableMap.of(TestSource.PROPERTY_TYPE, TestSource.TABLE_TYPE));
+    ETLStage sink = new ETLStage("Table",
+                                 ImmutableMap.of(Properties.BatchReadableWritable.NAME, "table1",
+                                   Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "binary"));
+    ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sink, Lists.<ETLStage>newArrayList());
+    AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
+    Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "testTableSink");
+
+    AdapterManager manager = createAdapter(adapterId, adapterConfig);
+
+    manager.start();
     // Let the worker run for 5 seconds
     TimeUnit.SECONDS.sleep(5);
-    workerManager.stop();
-    templateManager.stopAll();
+    manager.stop();
 
     // verify
     DataSetManager<Table> tableManager = getDataset("table1");
@@ -144,6 +160,6 @@ public class ETLWorkerTest extends TestBase {
     Assert.assertEquals("Bob", row.getString("name"));
     Assert.assertEquals(3.4, row.getDouble("score"), 0.000001);
     Assert.assertEquals(false, row.getBoolean("graduated"));
-    Assert.assertNotNull(row.getLong("time"));*/
+    Assert.assertNotNull(row.getLong("time"));
   }
 }

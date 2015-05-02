@@ -377,6 +377,7 @@ body.theme-cdap {
       // Small and large modal styling
       &.modal-sm, &.modal-lg {
         color: white;
+
         .modal-footer {
           .btn-primary, .btn-success {
             .cask-btn(@color: white, @background: @brand-success, @border: 0, @padding: 10px 20px);
@@ -386,11 +387,17 @@ body.theme-cdap {
       }
       // Small modal styling
       &.modal-sm {
+        -ms-transform: translateX(0%) translateY(50%);
+        -webkit-transform: translateX(0%) translateY(50%);
+        transform: translateX(0%) translateY(50%);
         text-align: center;
         .modal-footer { text-align: center; }
       }
       // Large modal styling
       &.modal-lg {
+        -ms-transform: translateX(0%) translateY(40%);
+        -webkit-transform: translateX(0%) translateY(40%);
+        transform: translateX(0%) translateY(40%);
         .modal-content {
           .fa-plus { padding-top: 2px }
           a.fa-times { .cask-btn(@color: @brand-danger, @background: @brand-danger, @border: 0, @padding: 15px 15px); }

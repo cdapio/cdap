@@ -8,7 +8,17 @@
           <div ng-repeat="(name, value) in plugin.properties track by $index" class="row">
             <div class="row-padding">
               <div class="form-group">
-                <label class="control-label col-xs-12">{{name}}</label>
+                <label
+                      ng-init="title='info';description=plugin._backendProperties[name].description"
+                      class="control-label col-xs-12">
+                  <span  data-placement="right"
+                         data-trigger="hover"
+                         data-auto-close="1"
+                         data-template="/assets/features/adapters/templates/create/popover.html"
+                         bs-popover>
+                         {{name}}
+                  </span>
+                </label>
                 <div class="col-xs-12">
                   <input type="text"
                           class="form-control"
@@ -32,7 +42,7 @@
                     <div class="form-group">
                       <label class="control-label col-xs-12"
                           ng-init="title=groups[group].fields[field].info;description=groups[group].fields[field].description">
-                        <span data-placement="bottom"
+                        <span data-placement="right"
                               data-trigger="hover"
                               data-auto-close="1"
                               data-template="/assets/features/adapters/templates/create/popover.html"

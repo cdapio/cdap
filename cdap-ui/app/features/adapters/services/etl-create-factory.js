@@ -6,12 +6,41 @@ angular.module(PKG.name + '.feature.adapters')
       this.dataSrc = new MyDataSource(scope);
     }
 
+    function getIcon(plugin) {
+      var iconMap = {
+        'script': 'fa-code',
+        'twitter': 'fa-twitter',
+        'cube': 'fa-cubes',
+        'data': 'fa-database',
+        'database': 'fa-database',
+        'table': 'fa-table',
+        'kafka': 'icon-kafka',
+        'stream': 'icon-plugin-stream',
+        'avro': 'icon-avro',
+        'jms': 'icon-jms'
+      };
+
+      var pluginName = plugin.toLowerCase(),
+          icons = Object.keys(iconMap),
+          icon = 'fa-plug';
+      for(var i=0; i<icons.length; i++) {
+        if (pluginName.indexOf(icons[i]) !== -1) {
+          icon = iconMap[icons[i]];
+          break;
+        }
+      }
+      return icon;
+    }
+
     AdapterApiFactory.prototype.fetchSources = function(adapterType) {
       this.dataSrc.request({
         _cdapPath: '/templates/' + adapterType + '/extensions/source'
       })
         .then(function(res) {
           this.scope.defaultSources = res;
+          this.scope.defaultSources.forEach(function(source) {
+            source.icon = getIcon(source.name);
+          }.bind(this));
         }.bind(this));
     }
 
@@ -21,6 +50,9 @@ angular.module(PKG.name + '.feature.adapters')
       })
         .then(function(res) {
           this.scope.defaultSinks = res;
+          this.scope.defaultSinks.forEach(function(sink) {
+            sink.icon = getIcon(sink.name);
+          }.bind(this));
         }.bind(this));
     }
 
@@ -30,6 +62,9 @@ angular.module(PKG.name + '.feature.adapters')
       })
         .then(function(res) {
           this.scope.defaultTransforms = res;
+          this.scope.defaultTransforms.forEach(function(transform) {
+            transform.icon = getIcon(transform.name);
+          }.bind(this));
         }.bind(this));
     }
 
@@ -39,7 +74,6 @@ angular.module(PKG.name + '.feature.adapters')
         pluginid: pluginId
       })
        .then(function(res) {
-         console.log(res);
          this.scope.templatePluginConfig = res;
        }.bind(this));
     }

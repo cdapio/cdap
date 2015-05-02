@@ -76,7 +76,10 @@
     <tabset type="tabs slanted-tabs">
       <tab ng-repeat="tab in tabs" active="tab.active">
         <tab-heading>
-          <span ng-if="tab.title.length > 10" tooltip="{{tab.title}}">{{tab.title |  myEllipsis: 10}}</span>
+          <span class="fa {{tab.icon}}"></span>
+          <span ng-if="tab.title.length > 10"
+                tooltip="{{tab.title}}">{{tab.title |  myEllipsis: 10}}
+          </span>
           <span ng-if="tab.title.length <= 10" >{{tab.title |  myEllipsis: 10}}</span>
           <a href=""
              ng-if="tab.isCloseable !== false"

@@ -268,3 +268,119 @@ This will clear the existing data from the Dataset. This cannot be undone.
      - Description
    * - ``200 OK``
      - Dataset was successfully truncated
+
+Datasets used by an Application
+-------------------------------
+
+You can retrieve a list of Datasets used by an Application by issuing a HTTP GET request to the URL::
+
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/datasets 
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<app-id>``
+     - Application ID 
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Request was successful
+
+Datasets used by a Program
+--------------------------
+
+You can retrieve a list of Datasets used by a program by issuing a HTTP GET request to the URL::
+
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/datasets
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<app-id>``
+     - Application ID
+   * - ``<program-type>``
+     - Program Type, one of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
+   * - ``<program-id>``
+     - Program ID
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Request was successful
+
+Datasets used by an Adapter
+---------------------------
+
+You can retrieve a list of Datasets used by an Adapter by issuing a HTTP GET request to the URL::
+
+  GET <base-url>/namespaces/<namespace>/adapters/<adapter-id>/datasets
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<adapter-id>``
+     - Adapter ID
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Request was successful
+
+Programs using a Dataset
+------------------------
+
+You can retrieve a list of programs that are using a Dataset by issuing a HTTP GET request to the URL::
+
+  GET <base-url>/namespaces/<namespace>/data/datasets/<dataset-id>/programs
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<dataset-id>``
+     - Dataset ID
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Request was successful

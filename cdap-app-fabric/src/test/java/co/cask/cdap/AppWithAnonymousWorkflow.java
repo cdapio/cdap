@@ -14,26 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.templates.etl.transforms;
+package co.cask.cdap;
 
-import co.cask.cdap.api.annotation.Description;
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.Transform;
+import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
 
 /**
- * Simple Identity Transform.
- *
- * @param <T> any type
+ * App with anonymous Workflow
  */
-@Plugin(type = "transform")
-@Name("Identity")
-@Description("Transform that just passes data through without any modification")
-public class IdentityTransform<T> extends Transform<T, T> {
-
+public class AppWithAnonymousWorkflow extends AbstractApplication {
   @Override
-  public void transform(T input, Emitter<T> emitter) {
-    emitter.emit(input);
+  public void configure() {
+    setName("AppWithAnonymousWorkflow");
+    setDescription("Application with anonymous Workflow.");
+    addWorkflow(new AbstractWorkflow() {
+      @Override
+      protected void configure() {
+        // no name for the workflow set here. this should fail
+      }
+    });
   }
 }

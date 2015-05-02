@@ -76,4 +76,5 @@ public class QueryClient {
   public ListenableFuture<ExploreExecutionResult> execute(String query) {
     return exploreClient.submit(config.getConnectionConfig().getNamespace(), query);
   }
+
 }

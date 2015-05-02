@@ -1,9 +1,16 @@
+.. meta::
+    :author: Cask Data, Inc.
+    :copyright: Copyright © 2015 Cask Data, Inc.
 
-# Cask Data Application Platform - CDAP
+=====================================
+Cask Data Application Platform - CDAP
+=====================================
 
-![CDAP Logo](cdap-docs/developers-manual/source/_images/CDAP.png)
+.. image:: cdap-docs/developers-manual/source/_images/CDAP.png
 
-**Introduction**
+
+Introduction
+============
 
 The Cask™ Data Application Platform (CDAP)is an integrated, open source application
 development platform for the Hadoop ecosystem that provides developers with data and
@@ -34,109 +41,117 @@ Developers can build and test their applications end-to-end in a full-stack, sin
 installation. CDAP can be run either standalone, deployed within the Enterprise or hosted
 in the Cloud.
 
-For more information, see our collection of 
-[Developers' Manual and other documentation](http://docs.cask.co/cdap/current/en/developers-manual/index.html).
+For more information, see our collection of `Developers' Manual and other documentation
+<http://docs.cask.co/cdap/current/en/developers-manual/index.html>`__.
 
-## Getting Started
 
-### Prerequisites
+Getting Started
+===============
+
+Prerequisites
+-------------
 
 To install and use CDAP and its included examples, there are a few simple prerequisites:
 
-  1. JDK 6 or JDK 7 (required to run CDAP; note that $JAVA_HOME should be set)
-  2. Node.js (from v0.8.16; required to run the CDAP UI)
-  3. Apache Maven 3.0+ (required to build the example applications)
+1. JDK 7 (required to run CDAP; note that $JAVA_HOME should be set)
+2. Node.js (from v0.8.16; required to run the CDAP UI)
+3. Apache Maven 3.0+ (required to build the example applications; 3.1+ to build CDAP itself)
   
-### Build
+Build
+-----
 
 You can get started with CDAP by building directly from the latest source code::
 
-```
   git clone https://github.com/caskdata/cdap.git
   cd cdap
   mvn clean package
-```
 
 After the build completes, you will have a distribution of the CDAP standalone under the
-`cdap-distribution/target/` directory.  
+``cdap-distribution/target/`` directory.  
 
-Take the `cdap-<version>.tar.gz` file and unzip it into a suitable location.
+Take the ``cdap-<version>.tar.gz`` file and unzip it into a suitable location.
 
-For more build options, please refer to the [build instructions](BUILD.md).
+For more build options, please refer to the `build instructions <BUILD.rst>`__.
 
-## Getting Started
 
-Visit our web site for a [Getting Started](http://docs.cask.co/cdap/current/en/developers-manual/getting-started/index.html)
-that will guide you through installing CDAP and running an example application.  
+Introductory Tutorial
+=====================
 
-## Where to Go Next
+Visit our web site for an `introductory tutorial for developers
+<http://docs.cask.co/cdap/current/en/developers-manual/getting-started/index.html>`__ that
+will guide you through installing CDAP and running an example application.  
+
+
+Where to Go Next
+================
 
 Now that you've had a look at the CDAP SDK, take a look at:
 
-- Examples, located in the `cdap-examples` directory of the CDAP SDK;
-- [Selected Examples](http://docs.cask.co/cdap/current/en/examples-manual/examples/index.html) 
+- Examples, located in the ``cdap-examples`` directory of the CDAP SDK;
+- `Selected Examples <http://docs.cask.co/cdap/current/en/examples-manual/examples/index.html>`__ 
   (demonstrating basic features of the CDAP) are located on-line; and
-- Developers' Manual, located in the source distribution in `cdap-docs/developers-manual/source`
-  or [online](http://docs.cask.co/cdap/current/en/developers-manual/index.html).
+- Developers' Manual, located in the source distribution in ``cdap-docs/developers-manual/source``
+  or `online <http://docs.cask.co/cdap/current/en/developers-manual/index.html>`__.
 
 
-## How to Contribute
+How to Contribute
+=================
 
-Interested in helping to improve CDAP? We welcome all contributions, whether in filing detailed
-bug reports, submitting pull requests for code changes and improvements, or by asking questions and
-assisting others on the mailing list.
+Interested in helping to improve CDAP? We welcome all contributions, whether in filing
+detailed bug reports, submitting pull requests for code changes and improvements, or by
+asking questions and assisting others on the mailing list.
 
-For quick guide to getting your system setup to contribute to CDAP, take a look at our [Contributor Quickstart Guide](DEVELOPERS.md).
+For quick guide to getting your system setup to contribute to CDAP, take a look at our
+`Contributor Quickstart Guide <DEVELOPERS.rst>`__.
 
-### Bug Reports & Feature Requests
+Filing Issues: Bug Reports & Feature Requests
+---------------------------------------------
+Bugs and suggestions should be made by `filing an Issue <https://issues.cask.co/browse/cdap>`__.
 
-Bugs and tasks are tracked in a public JIRA issue tracker. Details on access will be forthcoming.
+Pull Requests
+-------------
 
-### Pull Requests
+We have a simple pull-based development model with a consensus-building phase, similar to
+Apache's voting process. If you’d like to help make CDAP better by adding new features,
+enhancing existing features, or fixing bugs, here's how to do it:
 
-We have a simple pull-based development model with a consensus-building phase, similar to Apache's
-voting process. If you’d like to help make CDAP better by adding new features, enhancing existing
-features, or fixing bugs, here's how to do it:
-
-1. If you are planning a large change or contribution, discuss your plans on the `cask-cdap-dev`
-   mailing list first.  This will help us understand your needs and best guide your solution in a
-   way that fits the project.
+1. If you are planning a large change or contribution, discuss your plans on the 
+   `cdap-dev@googlegroups.com <https://groups.google.com/d/forum/cdap-dev>`__ mailing list first.
+   This will help us understand your needs and best guide your solution in a way that fits the project.
 2. Fork CDAP into your own GitHub repository.
 3. Create a topic branch with an appropriate name.
 4. Work on the code to your heart's content.
 5. Once you’re satisfied, create a pull request from your GitHub repo (it’s helpful if you fill in
    all of the description fields).
-6. After we review and accept your request, we’ll commit your code to the cask/cdap
-   repository.
+6. After we review and accept your request, we’ll commit your code to the cask/cdap repository.
 
 Thanks for helping to improve CDAP!
 
-### Filing Issues
-JIRA for filing [Issues](http://issues.cask.co)
-
-### Mailing Lists
+Mailing Lists
+-------------
 
 CDAP User Group and Development Discussions:
 
-- [cdap-user@googlegroups.com](https://groups.google.com/d/forum/cdap-user)
+- `cdap-user@googlegroups.com <https://groups.google.com/d/forum/cdap-user>`__
 
 The *cdap-user* mailing list is primarily for users using the product to develop
 applications. You can expect questions from users, release announcements, and any other
 discussions that we think will be helpful to the users.
 
-- [cdap-dev@googlegroups.com](https://groups.google.com/d/forum/cdap-dev)
+- `cdap-dev@googlegroups.com <https://groups.google.com/d/forum/cdap-dev>`__
 
 The *cdap-dev* mailing list is essentially for developers actively working
 on the product, and should be used for all our design, architecture and technical
 discussions moving forward. This mailing list will also receive all JIRA and GitHub
 notifications.
 
-### IRC Channel
-
+IRC Channel
+-----------
 CDAP IRC Channel: #cdap on irc.freenode.net
 
 
-## License and Trademarks
+License and Trademarks
+======================
 
 Copyright © 2014-2015 Cask Data, Inc.
 

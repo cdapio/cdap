@@ -259,7 +259,7 @@ public class DatasetTypeManager extends AbstractIdleService {
     try {
       return mdsDatasets.execute(new TxCallable<MDSDatasets, Boolean>() {
         @Override
-        public Boolean call(MDSDatasets datasets) throws DatasetModuleConflictException {
+        public Boolean call(MDSDatasets datasets) throws DatasetModuleConflictException, IOException {
           DatasetModuleMeta module = datasets.getTypeMDS().getModule(datasetModuleId);
 
           if (module == null) {
@@ -301,6 +301,11 @@ public class DatasetTypeManager extends AbstractIdleService {
           }
 
           datasets.getTypeMDS().deleteModule(datasetModuleId);
+          // Also delete module jar
+          Location moduleJarLocation = locationFactory.create(module.getJarLocation());
+          if (!moduleJarLocation.delete()) {
+            LOG.debug("Could not delete dataset module archive");
+          }
 
           return true;
         }
@@ -329,10 +334,12 @@ public class DatasetTypeManager extends AbstractIdleService {
     try {
       mdsDatasets.execute(new TxCallable<MDSDatasets, Void>() {
         @Override
-        public Void call(MDSDatasets datasets) throws DatasetModuleConflictException {
+        public Void call(MDSDatasets datasets) throws DatasetModuleConflictException, IOException {
           Set<String> typesToDelete = Sets.newHashSet();
+          List<Location> moduleLocations = Lists.newArrayList();
           for (DatasetModuleMeta module : datasets.getTypeMDS().getModules(namespaceId)) {
             typesToDelete.addAll(module.getTypes());
+            moduleLocations.add(locationFactory.create(module.getJarLocation()));
           }
 
           // check if there are any instances that use types of these modules?
@@ -346,7 +353,12 @@ public class DatasetTypeManager extends AbstractIdleService {
           }
 
           datasets.getTypeMDS().deleteModules(namespaceId);
-
+          // Delete module locations
+          for (Location moduleLocation : moduleLocations) {
+            if (!moduleLocation.delete()) {
+              LOG.debug("Could not delete dataset module archive - " + moduleLocation.toURI().getPath());
+            }
+          }
           return null;
         }
       });

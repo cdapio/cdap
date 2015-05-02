@@ -129,7 +129,7 @@ public class AdapterClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ApplicationTemplateNotFoundException(Id.ApplicationTemplate.from(adapterSpec.getTemplate()));
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
-      throw new BadRequestException(response.getResponseMessage());
+      throw new BadRequestException(response.getResponseBodyAsString());
     }
   }
 

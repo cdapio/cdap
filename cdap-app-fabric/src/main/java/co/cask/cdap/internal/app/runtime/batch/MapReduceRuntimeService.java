@@ -892,32 +892,31 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       return null;
     }
 
-    File templateDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
-    File pluginDir = new File(templateDir, adapterSpec.getTemplate());
+    // Find plugins that are used by this adapter.
+    File pluginDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_PLUGIN_DIR));
+    File templatePluginDir = new File(pluginDir, adapterSpec.getTemplate());
     File jarFile = File.createTempFile("plugin", ".jar");
     try {
-      JarOutputStream output = new JarOutputStream(new FileOutputStream(jarFile));
-      try {
+      String entryPrefix = pluginDir.getName() + "/" + adapterSpec.getTemplate();
+
+      try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jarFile))) {
         // Create the directory entries
-        output.putNextEntry(new JarEntry(adapterSpec.getTemplate() + "/"));
-        output.putNextEntry(new JarEntry(adapterSpec.getTemplate() + "/lib/"));
+        output.putNextEntry(new JarEntry(entryPrefix + "/"));
+        output.putNextEntry(new JarEntry(entryPrefix + "/lib/"));
 
         // copy the plugin jars
         for (PluginInfo plugin : pluginInfos) {
-          String entryName = String.format("%s/%s", adapterSpec.getTemplate(), plugin.getFileName());
+          String entryName = String.format("%s/%s", entryPrefix, plugin.getFileName());
           output.putNextEntry(new JarEntry(entryName));
-          Files.copy(new File(pluginDir, plugin.getFileName()), output);
+          Files.copy(new File(templatePluginDir, plugin.getFileName()), output);
         }
 
         // copy the common plugin lib jars
-        for (File libJar : DirUtils.listFiles(new File(pluginDir, "lib"), "jar")) {
-          String entryName = String.format("%s/lib/%s", adapterSpec.getTemplate(), libJar.getName());
+        for (File libJar : DirUtils.listFiles(new File(templatePluginDir, "lib"), "jar")) {
+          String entryName = String.format("%s/lib/%s", entryPrefix, libJar.getName());
           output.putNextEntry(new JarEntry(entryName));
           Files.copy(libJar, output);
         }
-
-      } finally {
-        output.close();
       }
 
       // Copy the jar to a location, based on the location factory

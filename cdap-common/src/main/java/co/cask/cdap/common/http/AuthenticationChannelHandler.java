@@ -61,7 +61,7 @@ public class AuthenticationChannelHandler extends SimpleChannelUpstreamHandler {
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
-    LOG.error("Got exception: ", e);
+    LOG.error("Got exception: ", e.getCause());
     ChannelFuture future = Channels.future(ctx.getChannel());
     future.addListener(ChannelFutureListener.CLOSE);
     // TODO: add WWW-Authenticate header for 401 response -  REACTOR-900

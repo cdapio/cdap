@@ -21,7 +21,7 @@ body.theme-cdap.state-admin {
               border-bottom-left-radius: 8px;
               max-height: 500px;
               overflow-y: auto;
-              
+
               > li:last-of-type ul {
                 border-bottom-right-radius: 8px;
                 border-bottom-left-radius: 8px;
@@ -38,7 +38,6 @@ body.theme-cdap.state-admin {
               }
               a {
                 color: white;
-                text-indent: 10px;
                 &.current { color: @cdap-orange; }
                 span { color: white; }
               }
@@ -81,6 +80,17 @@ body.theme-cdap.state-admin {
         }
       }
     }
+    [datasets-list] {
+      table {
+        tr{
+          a {
+            [class*="icon-"] {
+              vertical-align: middle;
+            }
+          }
+        }
+      }
+    }
     h2:first-child { margin-top: 0; }
     .panel-default { margin-top: 18px; }
     // All list templates using circular status icons will rely on this selector
@@ -96,6 +106,17 @@ body.theme-cdap.state-admin {
       &.status-grey { background-color: @cdap-gray; }
     }
     input.pref-key { font-weight: bold; }
+
+    .namespace-table {
+      td {
+        max-width: 300px;
+        div {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
   }
 
 }

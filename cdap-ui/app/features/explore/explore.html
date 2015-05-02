@@ -14,9 +14,9 @@
         <p class="list-group-item list-group-heading">Tables ({{dataList.length}})</p>
         <div class="list-group-content">
           <a href="" class="list-group-item" ng-repeat="data in dataList" ng-click="selectTable(data)" ng-class="{'selected': data.name === name }">
-            <img class="type-icon" src="assets/img/ico_stream.png" alt="" / ng-if="data.type === 'stream'">
-            <img class="type-icon" src="assets/img/ico_datasets.png" alt="" / ng-if="data.type === 'dataset'">
-            {{ ::data.name }}
+            <span class="icon-streams" / ng-if="data.type === 'stream'"></span>
+            <span class="icon-datasets" / ng-if="data.type === 'dataset'"></span>
+            <span>{{ ::data.name }}</span>
           </a>
         </div>
       </div>
@@ -226,4 +226,3 @@
 
 
 </section>
-

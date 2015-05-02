@@ -16,10 +16,14 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import co.cask.cdap.api.workflow.WorkflowContext;
+
+import javax.annotation.Nullable;
 
 /**
  *
@@ -32,6 +36,7 @@ public class GoodWorkflowApp extends AbstractApplication {
     setDescription("WorkflowApp with multiple forks inside it");
     addMapReduce(new DummyMR());
     addWorkflow(new GoodWorkflow());
+    addWorkflow(new AnotherGoodWorkflow());
   }
 
   /**
@@ -93,6 +98,51 @@ public class GoodWorkflowApp extends AbstractApplication {
 
     @Override
     public void run() {
+    }
+  }
+
+  public class AnotherGoodWorkflow extends AbstractWorkflow {
+
+    @Override
+    protected void configure() {
+      addMapReduce("MR1");
+
+      fork()
+        .addMapReduce("MR2")
+        .condition(new MyVerificationPredicate())
+          .addMapReduce("MR3")
+          .addMapReduce("MR4")
+        .otherwise()
+          .addMapReduce("MR5")
+          .addMapReduce("MR6")
+        .end()
+        .addMapReduce("MR7")
+      .also()
+        .addMapReduce("MR8")
+      .join();
+
+     condition(new MyVerificationPredicate())
+       .addSpark("SP1")
+       .addSpark("SP2")
+     .otherwise()
+       .addSpark("SP3")
+       .addSpark("SP4")
+       .fork()
+        .addSpark("SP5")
+       .also()
+        .addSpark("SP6")
+       .join()
+     .end();
+
+     addSpark("SP7");
+    }
+  }
+
+  public static final class MyVerificationPredicate implements Predicate<WorkflowContext> {
+
+    @Override
+    public boolean apply(@Nullable WorkflowContext input) {
+      return false;
     }
   }
 }

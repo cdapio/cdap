@@ -65,6 +65,9 @@ public final class Reflections {
         }
 
         for (Field field : type.getRawType().getDeclaredFields()) {
+          if (field.isSynthetic()) {
+            continue;
+          }
           if (!field.isAccessible()) {
             field.setAccessible(true);
           }
@@ -74,6 +77,9 @@ public final class Reflections {
         }
 
         for (Method method : type.getRawType().getDeclaredMethods()) {
+          if (method.isSynthetic() || method.isBridge()) {
+            continue;
+          }
           if (!method.isAccessible()) {
             method.setAccessible(true);
           }
