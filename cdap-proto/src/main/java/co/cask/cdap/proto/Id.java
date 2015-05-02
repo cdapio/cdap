@@ -646,6 +646,10 @@ public abstract class Id {
       return new Flow(Id.Application.from(Namespace.DEFAULT, appId), flowId);
     }
 
+    public static Flow from(String namespaceId, String appId, String flowId) {
+      return new Flow(Id.Application.from(namespaceId, appId), flowId);
+    }
+
     /**
      * Uniquely identifies a Flowlet.
      */
