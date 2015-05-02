@@ -14,7 +14,6 @@ angular.module(PKG.name + '.feature.adapters')
           if (!app.isdraft)  {
             pollStatus(app);
           }
-          app.template = (app.instances? 'etlRealtime': 'etlBatch');
         });
       });
     mySettings.get('adapterDrafts')
