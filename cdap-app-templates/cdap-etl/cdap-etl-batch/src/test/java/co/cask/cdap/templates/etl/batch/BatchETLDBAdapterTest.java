@@ -22,14 +22,9 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.etl.batch.config.ETLBatchConfig;
-import co.cask.cdap.templates.etl.batch.sinks.DBSink;
-import co.cask.cdap.templates.etl.batch.sinks.TableSink;
-import co.cask.cdap.templates.etl.batch.sources.DBSource;
-import co.cask.cdap.templates.etl.batch.sources.TableSource;
 import co.cask.cdap.templates.etl.common.ETLStage;
 import co.cask.cdap.templates.etl.common.Properties;
 import co.cask.cdap.test.AdapterManager;
@@ -39,23 +34,19 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.io.Resources;
 import org.hsqldb.Server;
 import org.hsqldb.server.ServerAcl;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URI;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.DriverManager;
@@ -73,7 +64,6 @@ import javax.sql.rowset.serial.SerialBlob;
 /**
  * Test for ETL using databases
  */
-@Ignore
 public class BatchETLDBAdapterTest extends BaseETLBatchTest {
   private static final long currentTs = System.currentTimeMillis();
   private static final String clobData = "this is a long string with line separators \n that can be used as \n a clob";
@@ -95,10 +85,6 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
     } finally {
       conn.close();
     }
-    // deploy etl batch template
-    String path = Resources.getResource("org/hsqldb/jdbcDriver.class").getPath();
-    File hsqldbJar = new File(URI.create(path.substring(0, path.indexOf('!'))));
-    //templateManager = deployApplication(ETLBatchTemplate.class, hsqldbJar);
 
     Schema nullableString = Schema.nullableOf(Schema.of(Schema.Type.STRING));
     Schema nullableBoolean = Schema.nullableOf(Schema.of(Schema.Type.BOOLEAN));
@@ -204,15 +190,17 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
       "DECIMAL_COL, BIT_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, BLOB_COL, CLOB_COL FROM my_table " +
       "WHERE ID < 3";
     String countQuery = "SELECT COUNT(ID) from my_table WHERE id < 3";
-    ETLStage source = new ETLStage(DBSource.class.getSimpleName(),
-                                   ImmutableMap.of(Properties.DB.DRIVER_CLASS, hsqlDBServer.getHsqlDBDriver(),
-                                                   Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl(),
-                                                   Properties.DB.TABLE_NAME, "my_table",
-                                                   Properties.DB.IMPORT_QUERY, importQuery,
-                                                   Properties.DB.COUNT_QUERY, countQuery
-                                   ));
+    ETLStage source = new ETLStage("Database", ImmutableMap.<String, String>builder()
+                                     .put(Properties.DB.DRIVER_CLASS, hsqlDBServer.getHsqlDBDriver())
+                                     .put(Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl())
+                                     .put(Properties.DB.TABLE_NAME, "my_table")
+                                     .put(Properties.DB.IMPORT_QUERY, importQuery)
+                                     .put(Properties.DB.COUNT_QUERY, countQuery)
+                                     .put(Properties.DB.JDBC_PLUGIN_NAME, "hypersql")
+                                     .build()
+                                   );
 
-    ETLStage sink = new ETLStage(TableSink.class.getSimpleName(), ImmutableMap.of(
+    ETLStage sink = new ETLStage("Table", ImmutableMap.of(
       "name", "outputTable",
       Properties.Table.PROPERTY_SCHEMA, schema.toString(),
       Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "ID"));
@@ -292,19 +280,19 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
   @Test
   @Category(SlowTests.class)
   public void testDBSink() throws Exception {
-    ApplicationTemplate<ETLBatchConfig> appTemplate = new ETLBatchTemplate();
     String cols = "ID, NAME, SCORE, GRADUATED, TINY, SMALL, BIG, FLOAT_COL, REAL_COL, NUMERIC_COL, DECIMAL_COL, " +
       "BIT_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, BLOB_COL, CLOB_COL";
-    ETLStage source = new ETLStage(TableSource.class.getSimpleName(),
+    ETLStage source = new ETLStage("Table",
                                    ImmutableMap.of(
                                      Properties.BatchReadableWritable.NAME, "inputTable",
                                      Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "ID",
                                      Properties.Table.PROPERTY_SCHEMA, schema.toString()));
-    ETLStage sink = new ETLStage(DBSink.class.getSimpleName(),
+    ETLStage sink = new ETLStage("Database",
                                  ImmutableMap.of(Properties.DB.DRIVER_CLASS, hsqlDBServer.getHsqlDBDriver(),
                                                  Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl(),
                                                  Properties.DB.TABLE_NAME, "my_dest_table",
-                                                 Properties.DB.COLUMNS, cols
+                                                 Properties.DB.COLUMNS, cols,
+                                                 Properties.DB.JDBC_PLUGIN_NAME, "hypersql"
                                  ));
     List<ETLStage> transforms = Lists.newArrayList();
     ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transforms);

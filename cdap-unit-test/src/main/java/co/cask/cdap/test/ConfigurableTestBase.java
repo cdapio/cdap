@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.templates.ApplicationTemplate;
+import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.InMemoryProgramRunnerModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
@@ -406,6 +407,26 @@ public class ConfigurableTestBase {
   }
 
   /**
+   * Deploys an {@link ApplicationTemplate}.
+   *
+   * @param namespace The namespace to deploy to
+   * @param templateId The id of the template. Must match the name set in
+   *                   {@link ApplicationTemplate#configure(ApplicationConfigurer, ApplicationContext)}
+   * @param templateClz The template class
+   * @param libraries Additional libraries to bundle in the template jar. Used to simulate jars that you would normally
+   *                  place in the lib directory for the template.
+   * @param exportPackages The list of packages that should be visible to template plugins. For example,
+   *                       if your plugins implement an interface com.company.api.myinterface that is in your template,
+   *                       you will want to include 'com.company.api' in the list of export pacakges.
+   */
+  protected static void deployTemplate(Id.Namespace namespace, Id.ApplicationTemplate templateId,
+                                       Class<? extends ApplicationTemplate> templateClz,
+                                       List<Class<?>> libraries,
+                                       String... exportPackages) throws IOException {
+    getTestManager().deployTemplate(namespace, templateId, templateClz, libraries, exportPackages);
+  }
+
+  /**
    * Adds a plugins jar usable by the given template. Only supported in unit tests. Plugins added will not be visible
    * until a call to {@link #deployTemplate(Id.Namespace, Id.ApplicationTemplate, Class, String...)} is made. The
    * jar created will include all classes in the same package as the given plugin class, plus any dependencies of the
@@ -429,6 +450,26 @@ public class ConfigurableTestBase {
   protected static void addTemplatePlugins(Id.ApplicationTemplate templateId, String jarName,
                                            Class<?> pluginClz, Class<?>... classes) throws IOException {
     getTestManager().addTemplatePlugins(templateId, jarName, pluginClz, classes);
+  }
+
+  /**
+   * Add a template plugin configuration file.
+   *
+   * @param templateId the id of the template to add the plugin config for
+   * @param fileName the name of the config file. The name should match the plugin jar file that it is for. For example,
+   *                 if you added a plugin named hsql-jdbc-1.0.0.jar, the config file must be named hsql-jdbc-1.0.0.json
+   * @param type the type of plugin
+   * @param name the name of the plugin
+   * @param description the description for the plugin
+   * @param className the class name of the plugin
+   * @param fields the fields the plugin uses
+   * @throws IOException
+   */
+  protected static void addTemplatePluginJson(Id.ApplicationTemplate templateId, String fileName,
+                                              String type, String name,
+                                              String description, String className,
+                                              PluginPropertyField... fields) throws IOException {
+    getTestManager().addTemplatePluginJson(templateId, fileName, type, name, description, className, fields);
   }
 
   /**

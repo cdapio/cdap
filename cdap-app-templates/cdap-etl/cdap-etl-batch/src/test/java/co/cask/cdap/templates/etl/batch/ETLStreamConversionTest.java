@@ -50,10 +50,10 @@ import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumReader;
+import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -64,8 +64,6 @@ import java.util.concurrent.TimeUnit;
  * Tests for {@link ETLBatchTemplate} for Stream conversion from stream to avro format for writing to
  * {@link TimePartitionedFileSet}
  */
-// TODO: re-enable after mapred classloading fix
-@Ignore
 public class ETLStreamConversionTest extends BaseETLBatchTest {
   private static final Gson GSON = new Gson();
 

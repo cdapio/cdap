@@ -19,6 +19,7 @@ package co.cask.cdap.internal.test;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.utils.ApplicationBundler;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import org.apache.twill.filesystem.Location;
@@ -26,6 +27,7 @@ import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
@@ -41,18 +43,19 @@ public final class AppJarHelper {
     // No-op
   }
 
-  public static Location createDeploymentJar(LocationFactory locationFactory, Class<?> clz, Manifest manifest,
-                                             File... bundleEmbeddedJars) throws IOException {
+  public static Location createDeploymentJar(LocationFactory locationFactory, List<Class<?>> classes,
+                                             Manifest manifest, File... bundleEmbeddedJars) throws IOException {
 
     ApplicationBundler bundler = new ApplicationBundler(ImmutableList.of("co.cask.cdap.api",
                                                                          "org.apache.hadoop",
                                                                          "org.apache.hive",
                                                                          "org.apache.spark"),
                                                         ImmutableList.of("org.apache.hadoop.hbase"));
+    Class<?> clz = classes.get(0);
     Location jarLocation = locationFactory.create(clz.getName()).getTempFile(".jar");
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(clz.getClassLoader());
     try {
-      bundler.createBundle(jarLocation, clz);
+      bundler.createBundle(jarLocation, classes);
     } finally {
       ClassLoaders.setContextClassLoader(oldClassLoader);
     }
@@ -110,6 +113,11 @@ public final class AppJarHelper {
     }
 
     return deployJar;
+  }
+
+  public static Location createDeploymentJar(LocationFactory locationFactory, Class<?> clz, Manifest manifest,
+                                             File... bundleEmbeddedJars) throws IOException {
+    return createDeploymentJar(locationFactory, Lists.<Class<?>>newArrayList(clz), manifest, bundleEmbeddedJars);
   }
 
   public static Location createDeploymentJar(LocationFactory locationFactory,
