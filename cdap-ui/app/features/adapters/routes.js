@@ -82,6 +82,18 @@ angular.module(PKG.name + '.feature.adapters')
               }
             })
 
+        .state('adapters.detail.datasets', {
+          url: '/datasets',
+          data: {
+            authorizedRoles: MYAUTH_ROLE.all,
+            highlightTab: 'development'
+          },
+          templateUrl: 'data-list/data-list.html',
+          controller: 'AdapterDatasetsController',
+          ncyBreadcrumb: {
+            label: 'History'
+          }
+        })
         .state('adapters.detail.history', {
           url: '/history',
           data: {
