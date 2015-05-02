@@ -272,7 +272,7 @@ This will clear the existing data from the Dataset. This cannot be undone.
 Listing of Datasets used by Applications
 ----------------------------------------
 
-You can get a list of Datasets used by an application by issuing a HTTP GET request to the URL:
+You can retrieve a list of Datasets used by an application by issuing a HTTP GET request to the URL:
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/datasets 
 
@@ -300,7 +300,7 @@ You can get a list of Datasets used by an application by issuing a HTTP GET requ
 Listing of Datasets used by Programs
 ------------------------------------
 
-You can get a list of Datasets used by a program by issuing a HTTP GET request to the URL:
+You can retrieve a list of Datasets used by a program by issuing a HTTP GET request to the URL:
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/datasets
 
@@ -329,10 +329,10 @@ You can get a list of Datasets used by a program by issuing a HTTP GET request t
    * - ``200 OK``
      - Request was successful
 
-Listing of Datasets used by Adapters
-------------------------------------
+Datasets used by an Adapter
+---------------------------
 
-You can get a list of Datasets used by an adapter by issuing a HTTP GET request to the URL:
+You can retrieve a list of Datasets used by an adapter by issuing a HTTP GET request to the URL:
 
   GET <base-url>/namespaces/<namespace>/adapters/<adapter-id>/datasets
 
@@ -357,10 +357,10 @@ You can get a list of Datasets used by an adapter by issuing a HTTP GET request 
    * - ``200 OK``
      - Request was successful
 
-Listing of Programs used by datasets
-------------------------------------
+Programs used by a dataset
+--------------------------
 
-You can get a list of programs that is using a Dataset by issuing a HTTP GET request to the URL:
+You can retrieve a list of programs that is using a Dataset by issuing a HTTP GET request to the URL:
 
   GET <base-url>/namespaces/<namespace>/data/datasets/<dataset-id>/programs
 
