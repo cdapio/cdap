@@ -388,3 +388,123 @@ the Stream and re-create it with the new schema.
      - Change the TTL property of the Stream named *mystream* in the namespace *default* to 1 day,
        and the format to CSV (comma separated values) with a three field schema
        that uses a space delimiter instead of a comma delimiter. 
+
+Stream used by Applications
+---------------------------
+
+You can get a list of Streams used by an application by issuing a HTTP GET request to the URL:
+
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/streams
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<app-id>``
+     - Application ID
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Request was successful
+
+Streams used by Programs
+------------------------
+
+You can get a list of Streams used by a program by issuing a HTTP GET request to the URL:
+
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/streams 
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<app-id>``
+     - Application ID
+   * - ``<program-type>``
+     - Program Type
+   * - ``<program-id>``
+     - Program ID
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Request was successful
+
+Streams used by Adapters
+------------------------
+
+You can get a list of Streams used by an adapter by issuing a HTTP GET request to the URL:
+
+  GET <base-url>/namespaces/<namespace>/adapters/<adapter-id>/streams 
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<app-id>``
+     - Application ID
+   * - ``<adapter-id>``
+     - Adapter ID
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Request was successful
+
+Programs used by Streams 
+------------------------
+
+You can get a list of programs that is using a Stream by issuing a HTTP GET request to the URL:
+
+  GET <base-url>/namespaces/<namespace>/data/datasets/<dataset-id>/programs
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<dataset-id>``
+     - Dataset ID
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Request was successful
+
+
