@@ -389,8 +389,8 @@ the Stream and re-create it with the new schema.
        and the format to CSV (comma separated values) with a three field schema
        that uses a space delimiter instead of a comma delimiter. 
 
-Stream used by Applications
----------------------------
+Listing of Stream used by Applications
+--------------------------------------
 
 You can get a list of Streams used by an application by issuing a HTTP GET request to the URL:
 
@@ -417,8 +417,8 @@ You can get a list of Streams used by an application by issuing a HTTP GET reque
    * - ``200 OK``
      - Request was successful
 
-Streams used by Programs
-------------------------
+Listing of Streams used by Programs
+-----------------------------------
 
 You can get a list of Streams used by a program by issuing a HTTP GET request to the URL:
 
@@ -449,8 +449,8 @@ You can get a list of Streams used by a program by issuing a HTTP GET request to
    * - ``200 OK``
      - Request was successful
 
-Streams used by Adapters
-------------------------
+Listing of Streams used by Adapters
+-----------------------------------
 
 You can get a list of Streams used by an adapter by issuing a HTTP GET request to the URL:
 
@@ -464,8 +464,6 @@ You can get a list of Streams used by an adapter by issuing a HTTP GET request t
      - Description
    * - ``<namespace>``
      - Namespace ID
-   * - ``<app-id>``
-     - Application ID
    * - ``<adapter-id>``
      - Adapter ID
 
@@ -479,8 +477,8 @@ You can get a list of Streams used by an adapter by issuing a HTTP GET request t
    * - ``200 OK``
      - Request was successful
 
-Programs used by Streams 
-------------------------
+Listing of Programs used by Streams 
+-----------------------------------
 
 You can get a list of programs that is using a Stream by issuing a HTTP GET request to the URL:
 

@@ -269,8 +269,8 @@ This will clear the existing data from the Dataset. This cannot be undone.
    * - ``200 OK``
      - Dataset was successfully truncated
 
-Datasets used by Applications
------------------------------
+Listing of Datasets used by Applications
+----------------------------------------
 
 You can get a list of Datasets used by an application by issuing a HTTP GET request to the URL:
 
@@ -297,8 +297,8 @@ You can get a list of Datasets used by an application by issuing a HTTP GET requ
    * - ``200 OK``
      - Request was successful
 
-Datasets used by Programs
--------------------------
+Listing of Datasets used by Programs
+------------------------------------
 
 You can get a list of Datasets used by a program by issuing a HTTP GET request to the URL:
 
@@ -329,8 +329,8 @@ You can get a list of Datasets used by a program by issuing a HTTP GET request t
    * - ``200 OK``
      - Request was successful
 
-Datasets used by Adapters
--------------------------
+Listing of Datasets used by Adapters
+------------------------------------
 
 You can get a list of Datasets used by an adapter by issuing a HTTP GET request to the URL:
 
@@ -344,8 +344,6 @@ You can get a list of Datasets used by an adapter by issuing a HTTP GET request 
      - Description
    * - ``<namespace>``
      - Namespace ID
-   * - ``<app-id>``
-     - Application ID
    * - ``<adapter-id>``
      - Adapter ID
 
@@ -359,8 +357,8 @@ You can get a list of Datasets used by an adapter by issuing a HTTP GET request 
    * - ``200 OK``
      - Request was successful
 
-Programs used by datasets
--------------------------
+Listing of Programs used by datasets
+------------------------------------
 
 You can get a list of programs that is using a Dataset by issuing a HTTP GET request to the URL:
 
