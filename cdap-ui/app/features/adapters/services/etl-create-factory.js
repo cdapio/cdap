@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .factory('AdapterApiFactory', function(MyDataSource, $filter, $state, $alert, $timeout, mySettings) {
+  .factory('AdapterApiFactory', function(MyDataSource, $filter, $state, $alert, $timeout, mySettings, myHelpers) {
     var filterFilter = $filter('filter');
     function AdapterApiFactory(scope) {
       this.scope = scope;
@@ -30,6 +30,17 @@ angular.module(PKG.name + '.feature.adapters')
         }
       }
       return icon;
+    }
+
+    AdapterApiFactory.prototype.fetchTemplates = function() {
+      this.dataSrc.request({
+        _cdapPath: '/templates'
+      })
+        .then(function(res) {
+          this.scope.adapterTypes = res || [];
+          this.scope.metadata.type = myHelpers.objectQuery(this.scope, 'adapterTypes', 0, 'name');
+        }.bind(this));
+
     }
 
     AdapterApiFactory.prototype.fetchSources = function(adapterType) {
