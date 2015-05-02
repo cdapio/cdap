@@ -187,7 +187,7 @@ public class ConfigurableTestBase {
     cConf.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
     cConf.set(Constants.Explore.LOCAL_DATA_DIR,
               tmpFolder.newFolder("hive").getAbsolutePath());
-    cConf.set(Constants.AppFabric.APP_TEMPLATE_DIR, tmpFolder.newFolder("plugins").getAbsolutePath());
+    cConf.set(Constants.AppFabric.APP_TEMPLATE_DIR, tmpFolder.newFolder("templates").getAbsolutePath());
 
     if (additionalConfiguration != null) {
       for (Map.Entry<String, String> entry : additionalConfiguration.entrySet()) {

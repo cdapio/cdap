@@ -106,10 +106,9 @@ public class PluginTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
     cConf.set(Constants.AppFabric.APP_TEMPLATE_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
 
-    DirUtils.mkdirs(new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR)));
-
     // Create the template jar, with the package of PluginTestRunnable exported
     File appTemplateDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
+    DirUtils.mkdirs(appTemplateDir);
     appTemplateJar = createJar(PluginTestAppTemplate.class, new File(appTemplateDir, "PluginTest-1.0.jar"),
                                createManifest(ManifestFields.EXPORT_PACKAGE,
                                               PluginTestRunnable.class.getPackage().getName()));
@@ -119,7 +118,7 @@ public class PluginTest {
     templateClassLoader = createAppClassLoader(appTemplateJar);
 
     // Create the plugin directory for the PluginTest template
-    templatePluginDir = new File(appTemplateDir, TEMPLATE_NAME);
+    templatePluginDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_PLUGIN_DIR), TEMPLATE_NAME);
     DirUtils.mkdirs(templatePluginDir);
 
     // Create a lib jar that is shared among all plugins for the template.
@@ -189,11 +188,8 @@ public class PluginTest {
     );
 
     File configFile = new File(templatePluginDir, "external-plugin-1.0.json");
-    Writer writer = Files.newWriter(configFile, Charsets.UTF_8);
-    try {
+    try (Writer writer = Files.newWriter(configFile, Charsets.UTF_8)) {
       GSON.toJson(pluginDefs, writer);
-    } finally {
-      writer.close();
     }
 
     // Build up the plugin repository.
@@ -314,8 +310,7 @@ public class PluginTest {
     DirUtils.mkdirs(jarFile.getParentFile());
 
     URI relativeURI = sourceDir.toURI();
-    JarOutputStream output = new JarOutputStream(new FileOutputStream(jarFile));
-    try {
+    try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jarFile))) {
       Queue<File> queue = Lists.newLinkedList();
       queue.add(sourceDir);
       while (!queue.isEmpty()) {
@@ -331,8 +326,6 @@ public class PluginTest {
           Files.copy(file, output);
         }
       }
-    } finally {
-      output.close();
     }
 
     return jarFile;
@@ -352,8 +345,9 @@ public class PluginTest {
   private static File generateClass(Class<?> fromClass, final String className, File directory) throws IOException {
     // Generate a class dynamically using ASM from another class, but use a different class name,
     // so that it won't be in the test class path.
-    InputStream byteCode = fromClass.getClassLoader().getResourceAsStream(Type.getInternalName(fromClass) + ".class");
-    try {
+    try (
+      InputStream byteCode = fromClass.getClassLoader().getResourceAsStream(Type.getInternalName(fromClass) + ".class")
+    ) {
       ClassReader reader = new ClassReader(byteCode);
       ClassWriter writer = new ClassWriter(0);
       reader.accept(new ClassVisitor(Opcodes.ASM4, writer) {
@@ -368,8 +362,6 @@ public class PluginTest {
       DirUtils.mkdirs(target.getParentFile());
       Files.write(writer.toByteArray(), target);
       return target;
-    } finally {
-      byteCode.close();
     }
   }
 

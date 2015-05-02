@@ -34,6 +34,8 @@ import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
 import co.cask.cdap.test.TestBase;
 import com.google.gson.Gson;
+import org.apache.avro.mapred.AvroKey;
+import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
@@ -52,7 +54,7 @@ public class BaseETLBatchTest extends TestBase {
       DBSource.class, KVTableSource.class, StreamBatchSource.class, TableSource.class);
     addTemplatePlugins(TEMPLATE_ID, "batch-sinks-1.0.0.jar",
       BatchCubeSink.class, DBSink.class, KVTableSink.class,
-      TableSink.class, TimePartitionedFileSetDatasetAvroSink.class);
+      TableSink.class, TimePartitionedFileSetDatasetAvroSink.class, AvroKeyOutputFormat.class, AvroKey.class);
     addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar", IdentityTransform.class,
       ProjectionTransform.class, ScriptFilterTransform.class, StructuredRecordToGenericRecordTransform.class);
     deployTemplate(NAMESPACE, TEMPLATE_ID, ETLBatchTemplate.class,
