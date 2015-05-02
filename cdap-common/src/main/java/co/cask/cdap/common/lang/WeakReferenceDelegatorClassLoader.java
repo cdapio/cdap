@@ -16,6 +16,9 @@
 
 package co.cask.cdap.common.lang;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
@@ -27,6 +30,8 @@ import java.util.Enumeration;
  * with a {@link WeakReference} so that garbage collection of the delegating ClassLoader is possible.
  */
 public class WeakReferenceDelegatorClassLoader extends ClassLoader implements Delegator<ClassLoader> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(WeakReferenceDelegatorClassLoader.class);
 
   private final WeakReference<ClassLoader> delegate;
 
@@ -64,7 +69,8 @@ public class WeakReferenceDelegatorClassLoader extends ClassLoader implements De
   private ClassLoader ensureDelegateExists() {
     ClassLoader classLoader = delegate.get();
     if (classLoader == null) {
-      throw new IllegalStateException("Delegating ClassLoader is already Garbage Collected.");
+      classLoader = getClass().getClassLoader();
+      LOG.warn("Delegating ClassLoader is already Garbage Collected. Using system ClassLoader instead: " + classLoader);
     }
     return classLoader;
   }
