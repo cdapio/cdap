@@ -108,12 +108,12 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Starting ProgramLifecycleService");
+    LOG.info("Starting ApplicationLifecycleService");
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("Shutting down ProgramLifecycleService");
+    LOG.info("Shutting down ApplicationLifecycleService");
   }
 
   /**
