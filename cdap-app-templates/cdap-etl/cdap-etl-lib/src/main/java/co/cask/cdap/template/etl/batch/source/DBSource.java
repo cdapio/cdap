@@ -80,7 +80,7 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
   }
 
   @Override
-  public void prepareJob(BatchSourceContext context) {
+  public void prepareRun(BatchSourceContext context) {
     LOG.debug("tableName = {}; driverClass = {}; connectionString = {}; importQuery = {}; countQuery = {}",
               dbSourceConfig.tableName, dbSourceConfig.driverClass, dbSourceConfig.connectionString,
               dbSourceConfig.importQuery, dbSourceConfig.countQuery);

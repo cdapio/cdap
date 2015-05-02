@@ -96,7 +96,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     BatchSourceContext sourceContext = new MapReduceSourceContext(context, mrMetrics, sourcePluginId);
     LOG.info("Source Stage : {}", sourceStage);
     LOG.info("Source Class : {}", batchSource.getClass().getName());
-    batchSource.prepareJob(sourceContext);
+    batchSource.prepareRun(sourceContext);
   }
 
   private void prepareSink(MapReduceContext context, ETLStage sinkStage) throws Exception {
@@ -105,7 +105,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     BatchSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics, sinkPluginId);
     LOG.info("Sink Stage : {}", sinkStage);
     LOG.info("Sink Class : {}", batchSink.getClass().getName());
-    batchSink.prepareJob(sinkContext);
+    batchSink.prepareRun(sinkContext);
   }
 
   @Override
@@ -118,13 +118,13 @@ public class ETLMapReduce extends AbstractMapReduce {
   private void teardownSource(MapReduceContext context, boolean succeeded) throws Exception {
     BatchSourceContext sourceContext = new MapReduceSourceContext(context, mrMetrics, sourcePluginId);
     LOG.info("Teardown Source : {}", batchSource.getClass().getName());
-    batchSource.teardownJob(succeeded, sourceContext);
+    batchSource.onRunFinish(succeeded, sourceContext);
   }
 
   private void teardownSink(MapReduceContext context, boolean succeeded) throws Exception {
     BatchSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics, sinkPluginId);
     LOG.info("Teardown Sink : {}", batchSink.getClass().getName());
-    batchSink.teardownJob(succeeded, sinkContext);
+    batchSink.onRunFinish(succeeded, sinkContext);
   }
 
   /**

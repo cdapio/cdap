@@ -93,8 +93,8 @@ public class TableSource extends BatchReadableSource<byte[], Row, StructuredReco
   }
 
   @Override
-  public void prepareJob(BatchSourceContext context) {
-    super.prepareJob(context);
+  public void prepareRun(BatchSourceContext context) {
+    super.prepareRun(context);
   }
 
   @Override

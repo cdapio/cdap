@@ -58,7 +58,7 @@ public abstract class BatchWritableSink<IN, KEY_OUT, VAL_OUT> extends BatchSink<
   protected abstract Map<String, String> getProperties();
 
   @Override
-  public void prepareJob(BatchSinkContext context) {
+  public void prepareRun(BatchSinkContext context) {
     PluginProperties pluginProperties = context.getPluginProperties();
     context.setOutput(pluginProperties.getProperties().get(Properties.BatchReadableWritable.NAME));
   }

@@ -98,7 +98,7 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
   }
 
   @Override
-  public void prepareJob(BatchSourceContext context) {
+  public void prepareRun(BatchSourceContext context) {
     long duration = ETLUtils.parseDuration(streamBatchConfig.duration);
     long delay = Strings.isNullOrEmpty(streamBatchConfig.delay) ? 0 : ETLUtils.parseDuration(streamBatchConfig.delay);
     long endTime = context.getLogicalStartTime() - delay;

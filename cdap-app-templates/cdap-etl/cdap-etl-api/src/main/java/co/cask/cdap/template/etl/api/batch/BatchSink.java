@@ -19,39 +19,24 @@ package co.cask.cdap.template.etl.api.batch;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.template.etl.api.Emitter;
-import co.cask.cdap.template.etl.api.EndPointStage;
-import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.Transformation;
 
 /**
- * Batch Sink forms the last stage of a Batch ETL Pipeline. In addition to configuring the Batch job, the sink
- * also transforms a single input object into a key value pair that the Batch job will output. By default, the input
+ * Batch Sink forms the last stage of a Batch ETL Pipeline. Along with configuring the Batch run, it
+ * also transforms a single input object into a key value pair that the Batch run will output. By default, the input
  * object is used as both the key and value.
  *
  * {@link BatchSink#initialize}, {@link BatchSink#transform} and {@link BatchSink#destroy} methods are called inside
- * the Batch Adapter while {@link BatchSink#prepareJob} and {@link BatchSink#teardownJob} methods are called on the
- * client side, which launches the BatchJob, before the BatchJob starts and after it completes respectively.
+ * the Batch Run while {@link BatchSink#prepareRun} and {@link BatchSink#onRunFinish} methods are called on the
+ * client side, which launches the Batch run, before the Batch run starts and after it finishes respectively.
  *
  * @param <IN> the type of input object to the sink
  * @param <KEY_OUT> the type of key the sink outputs
  * @param <VAL_OUT> the type of value the sink outputs
  */
 @Beta
-public abstract class BatchSink<IN, KEY_OUT, VAL_OUT>
-  implements EndPointStage, Transformation<IN, KeyValue<KEY_OUT, VAL_OUT>, BatchSinkContext> {
-
-  @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    // no-op
-  }
-
-  /**
-   * Prepare the Batch Job. Used to configure the Hadoop Job before starting the Batch Job.
-   *
-   * @param context {@link BatchSinkContext}
-   * @throws Exception if there's an error during this method invocation
-   */
-  public abstract void prepareJob(BatchSinkContext context) throws Exception;
+public abstract class BatchSink<IN, KEY_OUT, VAL_OUT> extends BatchEndPointStage<BatchSinkContext>
+  implements Transformation<IN, KeyValue<KEY_OUT, VAL_OUT>, BatchSinkContext> {
 
   @Override
   public void initialize(BatchSinkContext context) throws Exception {
@@ -59,8 +44,8 @@ public abstract class BatchSink<IN, KEY_OUT, VAL_OUT>
   }
 
   /**
-   * Transform the input received from previous stage to a {@link KeyValue} pair which can be
-   * consumed by the output configured in the Job.
+   * Transform the input received from previous stage to a {@link KeyValue} pair which can be consumed by the output,
+   * as set in {@link BatchSink#prepareRun}. By default, the input object is used as both key and value.
    *
    * @param input the input to transform
    * @param emitter {@link Emitter} to emit data to the next stage
@@ -73,17 +58,6 @@ public abstract class BatchSink<IN, KEY_OUT, VAL_OUT>
 
   @Override
   public void destroy() {
-    // no-op
-  }
-
-  /**
-   * Get the result of the Batch Job. Used to perform any end of the run logic.
-   *
-   * @param succeeded defines the result of job execution: true if job succeeded, false otherwise
-   * @param context job execution context
-   * @throws Exception if there's an error during this method invocation
-   */
-  public void teardownJob(boolean succeeded, BatchSinkContext context) throws Exception {
     // no-op
   }
 }
