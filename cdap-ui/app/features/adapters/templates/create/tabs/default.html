@@ -1,6 +1,9 @@
 <div class="panel panel-default">
   <div class="panel-heading clearfix">
-    <span class="pull-left panel-title">{{metadata.name}}</span>
+    <div class="pull-left panel-title">
+      <span class="icon-app" ng-if="metadata.name.length"></span>
+      <span>{{metadata.name}}</span>
+    </div>
     <div class="pull-right" aria-label="...">
       <button type="button"
               class="btn btn-default"
