@@ -37,23 +37,14 @@ angular.module(PKG.name + '.feature.adapters')
       }
     };
 
-    // Default ETL Templates
-    $scope.adapterTypes = [
-      {
-        name: 'ETL Batch',
-        type: 'etlBatch'
-      },
-      {
-        name: 'ETL Realtime',
-        type: 'etlRealtime'
-      }
-    ];
-
+    apiFactory.fetchTemplates();
+    $scope.adapterTypes = [];
+    
     // Metadata Model
     $scope.metadata = {
         name: '',
         description: '',
-        type: 'etlRealtime'
+        type: ''
     };
 
     var defaultSource = {
@@ -81,12 +72,13 @@ angular.module(PKG.name + '.feature.adapters')
     $scope.activePanel = 0;
 
     $scope.$watch('metadata.type',function(adapterType) {
+
       if (!adapterType.length) return;
       $scope.onAdapterTypeSelected = true;
       apiFactory.fetchSources(adapterType);
       apiFactory.fetchSinks(adapterType);
       apiFactory.fetchTransforms(adapterType);
-    });
+    }, true);
 
     $scope.handleSourceDrop = function(sourceName) {
       if ($scope.source.placeHolderSource) {
