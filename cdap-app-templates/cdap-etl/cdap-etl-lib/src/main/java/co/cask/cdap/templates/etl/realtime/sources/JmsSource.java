@@ -171,9 +171,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    pipelineConfigurer.usePluginClass("JMSProvider", Context.INITIAL_CONTEXT_FACTORY,
-                                      String.format("%s.%s.%s", "jmsource","JMSProvider",
-                                                    Context.INITIAL_CONTEXT_FACTORY),
+    pipelineConfigurer.usePluginClass("JMSProvider", Context.INITIAL_CONTEXT_FACTORY, "jmsource.JMSProvider.Context",
                                       PluginProperties.builder().build());
   }
 
