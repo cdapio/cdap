@@ -42,6 +42,7 @@ import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -169,7 +170,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     String versionedUrl = getVersionedAPIPath(nextRunTimeUrl, Constants.Gateway.API_VERSION_3_TOKEN,
                                               program.getNamespaceId());
     HttpResponse response = doGet(versionedUrl);
-    return readResponse(response, new TypeToken<List<ScheduledRuntime>>() { }.getType());
+    return readResponse(response, new TypeToken<List<ScheduledRuntime>>() {
+    }.getType());
   }
 
   private String getStatusURL(String namespace, String appName, String schedule) throws Exception {
@@ -386,14 +388,43 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     deleteApplication(60, deleteURL, 200);
   }
 
+  private void verifyFileExists(final List<File> fileList)
+    throws Exception {
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        for (File file : fileList) {
+          if (!file.exists()) {
+            return false;
+          }
+        }
+        return true;
+      }
+    }, 180, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+  }
+
   @Test
   public void testWorkflowForkApp() throws Exception {
     String workflowAppWithFork = "WorkflowAppWithFork";
     String workflowWithFork = "WorkflowWithFork";
 
-    File doneFile = new File(tmpFolder.newFolder() + "/testWorkflowForkApp.done");
-    File oneActionFile = new File(tmpFolder.newFolder() + "/oneAction.done");
-    File anotherActionFile = new File(tmpFolder.newFolder() + "/anotherAction.done");
+    Map<String, String> runtimeArgs = Maps.newHashMap();
+
+    // Files used to synchronize between this test and workflow execution
+    File firstSimpleActionFile = new File(tmpFolder.newFolder() + "/firstsimpleaction.file");
+    File firstSimpleActionDoneFile = new File(tmpFolder.newFolder() + "/firstsimpleaction.file.done");
+    runtimeArgs.put("first.simple.action.file", firstSimpleActionFile.getAbsolutePath());
+    runtimeArgs.put("first.simple.action.donefile", firstSimpleActionDoneFile.getAbsolutePath());
+
+    File oneSimpleActionFile = new File(tmpFolder.newFolder() + "/onesimpleaction.file");
+    File oneSimpleActionDoneFile = new File(tmpFolder.newFolder() + "/onesimpleaction.file.done");
+    runtimeArgs.put("one.simple.action.file", oneSimpleActionFile.getAbsolutePath());
+    runtimeArgs.put("one.simple.action.donefile", oneSimpleActionDoneFile.getAbsolutePath());
+
+    File anotherSimpleActionFile = new File(tmpFolder.newFolder() + "/anothersimpleaction.file");
+    File anotherSimpleActionDoneFile = new File(tmpFolder.newFolder() + "/anothersimpleaction.file.done");
+    runtimeArgs.put("another.simple.action.file", anotherSimpleActionFile.getAbsolutePath());
+    runtimeArgs.put("another.simple.action.donefile", anotherSimpleActionDoneFile.getAbsolutePath());
 
     HttpResponse response = deploy(WorkflowAppWithFork.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -401,54 +432,109 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Id.Program programId = Id.Program.from(TEST_NAMESPACE2, workflowAppWithFork, ProgramType.WORKFLOW,
                                            workflowWithFork);
 
-    Map<String, String> runtimeArguments = ImmutableMap.of("done.file", doneFile.getAbsolutePath(),
-                                                           "oneaction.file", oneActionFile.getAbsolutePath(),
-                                                           "anotheraction.file", anotherActionFile.getAbsolutePath());
+    setAndTestRuntimeArgs(programId, runtimeArgs);
 
-    setAndTestRuntimeArgs(programId, runtimeArguments);
-
+    // Start a Workflow
     startProgram(programId, 200);
 
+    // Workflow should be running
     waitState(programId, "RUNNING");
 
+    // Get the currently running RunRecord for the Workflow
     List<RunRecord> historyRuns = getProgramRuns(programId, "running");
     Assert.assertTrue(historyRuns.size() == 1);
+    RunRecord record = historyRuns.get(0);
+    String runId = record.getPid();
 
-    String runId = historyRuns.get(0).getPid();
+    // Wait till first action in the Workflow starts executing
+    verifyFileExists(Lists.newArrayList(firstSimpleActionFile));
 
-    while (!(oneActionFile.exists() && anotherActionFile.exists())) {
-      TimeUnit.MILLISECONDS.sleep(50);
-    }
+    verifyRunningProgramCount(programId, runId, 1);
 
-    verifyRunningProgramCount(programId, runId, 2);
-
+    // Stop the Workflow
     stopProgram(programId, 200);
 
+    // Workflow run record should be marked 'killed'
+    verifyProgramRuns(programId, "killed");
+
+    // Delete the asset created in the previous run
+    firstSimpleActionFile.delete();
+
+    // Start the Workflow again
+    startProgram(programId, 200);
+
+    // Workflow should be running
+    waitState(programId, "RUNNING");
+
+    // Get the currently running RunRecord for the Workflow
+    historyRuns = getProgramRuns(programId, "running");
+    Assert.assertTrue(historyRuns.size() == 1);
+    record = historyRuns.get(0);
+    Assert.assertTrue(!runId.equals(record.getPid()));
+
+    // Store the new RunId
+    runId = record.getPid();
+
+    // Wait till first action in the Workflow starts executing
+    verifyFileExists(Lists.newArrayList(firstSimpleActionFile));
+
+    verifyRunningProgramCount(programId, runId, 1);
+
+    // Signal the first action to continue
+    firstSimpleActionDoneFile.createNewFile();
+
+    // Wait till fork in the Workflow starts executing
+    verifyFileExists(Lists.newArrayList(oneSimpleActionFile, anotherSimpleActionFile));
+
+    // Two actions should be running in Workflow as a part of the fork
+    verifyRunningProgramCount(programId, runId, 2);
+
+    // Stop the program while in fork
+    stopProgram(programId, 200);
+
+    // Current endpoint would return 404
     response = getWorkflowCurrentStatus(programId, runId);
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
-    verifyProgramRuns(programId, "killed");
+    // Now there should be 2 RunRecord with status killed
+    verifyProgramRuns(programId, "killed", 1);
 
-    oneActionFile.delete();
-    anotherActionFile.delete();
+    // Delete the assets generated in the previous run
+    firstSimpleActionFile.delete();
+    firstSimpleActionDoneFile.delete();
+    oneSimpleActionFile.delete();
+    anotherSimpleActionFile.delete();
 
+    // Restart the run again
     startProgram(programId, 200);
 
+    // Wait till the Workflow is running
     waitState(programId, "RUNNING");
 
+    // Store the new RunRecord for the currently running run
     historyRuns = getProgramRuns(programId, "running");
     Assert.assertTrue(historyRuns.size() == 1);
     runId = historyRuns.get(0).getPid();
 
-    while (!(oneActionFile.exists() && anotherActionFile.exists())) {
-      TimeUnit.MILLISECONDS.sleep(50);
-    }
+    // Wait till first action in the Workflow starts executing
+    verifyFileExists(Lists.newArrayList(firstSimpleActionFile));
 
+    verifyRunningProgramCount(programId, runId, 1);
+
+    // Signal the first action to continue
+    firstSimpleActionDoneFile.createNewFile();
+
+    // Wait till fork in the Workflow starts executing
+    verifyFileExists(Lists.newArrayList(oneSimpleActionFile, anotherSimpleActionFile));
+
+    // Two actions should be running in Workflow as a part of the fork
     verifyRunningProgramCount(programId, runId, 2);
 
-    // Signal the Workflow that execution can be continued by creating temp file
-    doneFile.createNewFile();
+    // Signal the Workflow that execution can be continued
+    oneSimpleActionDoneFile.createNewFile();
+    anotherSimpleActionDoneFile.createNewFile();
 
+    // Workflow should now have one completed run
     verifyProgramRuns(programId, "completed");
   }
 

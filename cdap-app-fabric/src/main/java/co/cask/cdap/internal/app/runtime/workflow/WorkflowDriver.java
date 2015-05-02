@@ -343,6 +343,11 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         WorkflowNode node = iterator.next();
         executeNode(appSpec, node, instantiator, classLoader, token);
       } catch (Throwable t) {
+        Throwable rootCause = Throwables.getRootCause(t);
+        if (rootCause instanceof InterruptedException) {
+          LOG.error("Workflow execution aborted.");
+          break;
+        }
         Throwables.propagate(t);
       }
     }
