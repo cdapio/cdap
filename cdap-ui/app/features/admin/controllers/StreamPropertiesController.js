@@ -2,6 +2,7 @@ angular.module(PKG.name + '.feature.admin')
   .controller('StreamPropertiesController', function($scope, MyDataSource, $stateParams, myHelpers, $alert) {
 
     var dataSrc = new MyDataSource($scope);
+    $scope.avro = {};
 
     var basePath = '/namespaces/' + $stateParams.nsadmin + '/streams/' + $stateParams.streamId;
     $scope.formatOptions = ['avro', 'clf', 'csv', 'grok', 'syslog', 'text', 'tsv'];
@@ -15,7 +16,7 @@ angular.module(PKG.name + '.feature.admin')
           $scope.ttl = myHelpers.objectQuery(res, 'ttl');
           $scope.format = myHelpers.objectQuery(res, 'format', 'name');
           $scope.threshold = myHelpers.objectQuery(res, 'notification.threshold.mb');
-          // $scope.properties = myHelpers.objectQuery(res, 'format', 'schema', 'fields');
+          $scope.avro.schema = myHelpers.objectQuery(res, 'format', 'schema');
           var properties = myHelpers.objectQuery(res, 'format', 'schema', 'fields');
           $scope.properties = [];
           angular.forEach(properties, function(p) {
@@ -50,6 +51,7 @@ angular.module(PKG.name + '.feature.admin')
               value: v
             });
           });
+
         });
     };
 
@@ -73,12 +75,14 @@ angular.module(PKG.name + '.feature.admin')
       };
 
       // do not include properties on the request when schema field is empty
-      if (properties.length !== 0 && $scope.format !== 'clf' && $scope.format !== 'syslog') {
+      if (properties.length !== 0 && $scope.format !== 'clf' && $scope.format !== 'syslog' && $scope.format !== 'avro') {
         obj.schema = {
           type: 'record',
           name: $stateParams.streamid + 'Body',
           fields: properties
         };
+      } else if ($scope.format === 'avro') {
+        obj.schema = $scope.avro.schema;
       }
 
       var settings = {};
@@ -89,7 +93,7 @@ angular.module(PKG.name + '.feature.admin')
         }
       });
       // do not include settings on request when there is no setting defined
-      if (Object.keys(settings).length !== 0 && $scope.format !== 'clf' && $scope.format !== 'syslog') {
+      if (Object.keys(settings).length !== 0 && $scope.format !== 'clf' && $scope.format !== 'syslog' && $scope.format !== 'avro') {
         obj.settings = settings;
       }
 
