@@ -42,6 +42,7 @@ import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -387,6 +388,21 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     deleteApplication(60, deleteURL, 200);
   }
 
+  private void verifyFileExists(final List<File> fileList)
+    throws Exception {
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        for (File file : fileList) {
+          if (!file.exists()) {
+            return false;
+          }
+        }
+        return true;
+      }
+    }, 180, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+  }
+
   @Test
   public void testWorkflowForkApp() throws Exception {
     String workflowAppWithFork = "WorkflowAppWithFork";
@@ -431,9 +447,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     String runId = record.getPid();
 
     // Wait till first action in the Workflow starts executing
-    while (!firstSimpleActionFile.exists()) {
-      TimeUnit.MILLISECONDS.sleep(50);
-    }
+    verifyFileExists(Lists.newArrayList(firstSimpleActionFile));
+
     verifyRunningProgramCount(programId, runId, 1);
 
     // Stop the Workflow
@@ -461,18 +476,15 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     runId = record.getPid();
 
     // Wait till first action in the Workflow starts executing
-    while (!firstSimpleActionFile.exists()) {
-      TimeUnit.MILLISECONDS.sleep(50);
-    }
+    verifyFileExists(Lists.newArrayList(firstSimpleActionFile));
+
     verifyRunningProgramCount(programId, runId, 1);
 
     // Signal the first action to continue
     firstSimpleActionDoneFile.createNewFile();
 
     // Wait till fork in the Workflow starts executing
-    while (!(oneSimpleActionFile.exists() && anotherSimpleActionFile.exists())) {
-      TimeUnit.MILLISECONDS.sleep(50);
-    }
+    verifyFileExists(Lists.newArrayList(oneSimpleActionFile, anotherSimpleActionFile));
 
     // Two actions should be running in Workflow as a part of the fork
     verifyRunningProgramCount(programId, runId, 2);
@@ -505,18 +517,15 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     runId = historyRuns.get(0).getPid();
 
     // Wait till first action in the Workflow starts executing
-    while (!firstSimpleActionFile.exists()) {
-      TimeUnit.MILLISECONDS.sleep(50);
-    }
+    verifyFileExists(Lists.newArrayList(firstSimpleActionFile));
+
     verifyRunningProgramCount(programId, runId, 1);
 
     // Signal the first action to continue
     firstSimpleActionDoneFile.createNewFile();
 
     // Wait till fork in the Workflow starts executing
-    while (!(oneSimpleActionFile.exists() && anotherSimpleActionFile.exists())) {
-      TimeUnit.MILLISECONDS.sleep(50);
-    }
+    verifyFileExists(Lists.newArrayList(oneSimpleActionFile, anotherSimpleActionFile));
 
     // Two actions should be running in Workflow as a part of the fork
     verifyRunningProgramCount(programId, runId, 2);
