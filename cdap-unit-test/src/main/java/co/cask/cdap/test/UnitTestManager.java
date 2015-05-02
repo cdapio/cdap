@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.templates.ApplicationTemplate;
+import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.program.ManifestFields;
@@ -47,13 +48,17 @@ import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.io.Files;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -62,11 +67,13 @@ import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.jar.Manifest;
 
@@ -75,6 +82,7 @@ import java.util.jar.Manifest;
  */
 public class UnitTestManager implements TestManager {
 
+  private static final Gson GSON = new Gson();
   private final AppFabricClient appFabricClient;
   private final DatasetFramework datasetFramework;
   private final TransactionSystemClient txSystemClient;
@@ -170,6 +178,35 @@ public class UnitTestManager implements TestManager {
     DirUtils.mkdirs(templatePluginDir);
     File destination = new File(templatePluginDir, jarName);
     Files.copy(Locations.newInputSupplier(pluginJar), destination);
+  }
+
+  @Override
+  public void addTemplatePluginJson(Id.ApplicationTemplate templateId, String fileName, String type, String name,
+                                    String description, String className,
+                                    PluginPropertyField... fields) throws IOException {
+
+    File templateDir = new File(pluginDir, templateId.getId());
+    DirUtils.mkdirs(templateDir);
+
+    JsonObject json = new JsonObject();
+    json.addProperty("type", type);
+    json.addProperty("name", name);
+    json.addProperty("description", description);
+    json.addProperty("className", className);
+    if (fields.length > 0) {
+      Map<String, PluginPropertyField> properties = Maps.newHashMap();
+      for (PluginPropertyField field : fields) {
+        properties.put(field.getName(), field);
+      }
+      json.add("properties", GSON.toJsonTree(properties));
+    }
+    File configFile = new File(templateDir, fileName);
+    Writer writer = Files.newWriter(configFile, Charsets.UTF_8);
+    try {
+      GSON.toJson(Lists.newArrayList(json), writer);
+    } finally {
+      writer.close();
+    }
   }
 
   @Override

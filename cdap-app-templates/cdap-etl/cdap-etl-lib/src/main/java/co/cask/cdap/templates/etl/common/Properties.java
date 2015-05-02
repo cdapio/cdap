@@ -25,14 +25,16 @@ public final class Properties {
    * Class to hold properties for DBSource and DBSink
    */
   public static class DB {
-    public static final String DRIVER_CLASS = "dbDriverClass";
-    public static final String CONNECTION_STRING = "dbConnectionString";
-    public static final String TABLE_NAME = "dbTableName";
-    public static final String USER = "dbUser";
-    public static final String PASSWORD = "dbPassword";
-    public static final String COLUMNS = "dbColumns";
-    public static final String IMPORT_QUERY = "dbImportQuery";
-    public static final String COUNT_QUERY = "dbCountQuery";
+    public static final String DRIVER_CLASS = "driverClass";
+    public static final String CONNECTION_STRING = "connectionString";
+    public static final String TABLE_NAME = "tableName";
+    public static final String USER = "user";
+    public static final String PASSWORD = "password";
+    public static final String COLUMNS = "columns";
+    public static final String JDBC_PLUGIN_NAME = "jdbcPluginName";
+    public static final String JDBC_PLUGIN_TYPE = "jdbcPluginType";
+    public static final String IMPORT_QUERY = "importQuery";
+    public static final String COUNT_QUERY = "countQuery";
   }
 
   /**
