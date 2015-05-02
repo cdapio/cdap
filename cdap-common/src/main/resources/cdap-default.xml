@@ -579,7 +579,7 @@
     <!-- Template configuration -->
     <property>
         <name>app.template.dir</name>
-        <value>/opt/cdap/master/@cdap.app.template.dir@</value>
+        <value>/opt/cdap/master/templates</value>
         <description>Directory where all archives for app templates are stored</description>
     </property>
 
