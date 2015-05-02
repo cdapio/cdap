@@ -836,7 +836,9 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // Since the number of good records are lesser than the number of bad records,
     // 'else' branch of the condition will get executed.
     // Wait till the execution of the fork on the else branch starts
-    while(!(elseForkOneActionFile.exists() && elseForkAnotherActionFile.exists() && elseForkThirdActionFile.exists())) {
+    while (!(elseForkOneActionFile.exists() &&
+             elseForkAnotherActionFile.exists() &&
+             elseForkThirdActionFile.exists())) {
       TimeUnit.MILLISECONDS.sleep(50);
     }
 
@@ -887,7 +889,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // Since the number of good records are greater than the number of bad records,
     // 'if' branch of the condition will get executed.
     // Wait till the execution of the fork on the if branch starts
-    while(!(ifForkOneActionFile.exists() && ifForkAnotherActionFile.exists())) {
+    while (!(ifForkOneActionFile.exists() && ifForkAnotherActionFile.exists())) {
       TimeUnit.MILLISECONDS.sleep(50);
     }
 
