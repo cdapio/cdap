@@ -107,8 +107,14 @@ public class ETLWorkerTest extends TestBase {
     AdapterManager adapterManager = createAdapter(adapterId, adapterConfig);
 
     adapterManager.start();
-    // Let the worker run for 5 seconds
-    TimeUnit.SECONDS.sleep(5);
+    // Let the worker run for 3 seconds
+    TimeUnit.SECONDS.sleep(3);
+    adapterManager.stop();
+
+    // Start again to see if the state is maintained
+    adapterManager.start();
+    // Let the worker run for 2 seconds
+    TimeUnit.SECONDS.sleep(2);
     adapterManager.stop();
 
     StreamManager streamManager = getStreamManager(NAMESPACE, "testStream");
