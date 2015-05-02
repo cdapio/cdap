@@ -296,6 +296,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       // Extracts all process and tick methods
       for (Method method : type.getRawType().getDeclaredMethods()) {
+        if (method.isSynthetic() || method.isBridge()) {
+          continue;
+        }
         if (!seenMethods.add(new FlowletMethod(method, flowletType))) {
           // The method is already seen. It can only happen if a children class override a parent class method and
           // is visting the parent method, since the method visiting order is always from the leaf class walking
