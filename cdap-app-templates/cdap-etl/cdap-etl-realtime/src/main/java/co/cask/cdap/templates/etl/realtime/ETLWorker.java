@@ -222,13 +222,13 @@ public class ETLWorker extends AbstractWorker {
 
       // Start a Transaction if there is data to persist or if the Source state has changed.
       try {
-        if ((dataToSink.size() != 0) || (!nextState.equals(currentState))) {
+        if ((!dataToSink.isEmpty()) || (!nextState.equals(currentState))) {
           getContext().execute(new TxRunnable() {
             @Override
             public void run(DatasetContext context) throws Exception {
 
               // Invoke the sink's write method if there is any object to be written.
-              if (dataToSink.size() != 0) {
+              if (!dataToSink.isEmpty()) {
                 DefaultDataWriter defaultDataWriter = new DefaultDataWriter(getContext(), context);
                 sink.write(dataToSink, defaultDataWriter);
               }
