@@ -43,7 +43,7 @@ public class ScriptFilterTransformTest {
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidFilter() throws Exception {
     ScriptFilterTransform.ScriptFilterConfig config = new ScriptFilterTransform.ScriptFilterConfig();
-    config.script = "function shouldFilter(input) { return 'foobar'; }";
+    config.script = "return 'foobar'";
     Transform transform = new ScriptFilterTransform(config);
     TransformContext transformContext = new MockTransformContext(ImmutableMap.<String, String>of());
     transform.initialize(transformContext);
@@ -57,7 +57,7 @@ public class ScriptFilterTransformTest {
   @Test
   public void testSimple() throws Exception {
     ScriptFilterTransform.ScriptFilterConfig config = new ScriptFilterTransform.ScriptFilterConfig();
-    config.script = "function shouldFilter(inputRecord) { return inputRecord.x * 1024 < 2048; }";
+    config.script = "return input.x * 1024 < 2048";
     Schema schema = Schema.recordOf("number", Schema.Field.of("x", Schema.of(Schema.Type.INT)));
     StructuredRecord input = StructuredRecord.builder(schema).set("x", 1).build();
     Transform transform = new ScriptFilterTransform(config);
@@ -126,11 +126,7 @@ public class ScriptFilterTransformTest {
       .build();
 
     ScriptFilterTransform.ScriptFilterConfig config = new ScriptFilterTransform.ScriptFilterConfig();
-    config.script = "function shouldFilter(rec) {\n" +
-      "var pi = rec.inner1.list[0].p;\n" +
-      "var e = rec.inner1.list[0].e;\n" +
-      "return pi.val > e.val;\n" +
-      "}";
+    config.script = "var pi = input.inner1.list[0].p; var e = input.inner1.list[0].e; return pi.val > e.val;";
     Transform transform = new ScriptFilterTransform(config);
     TransformContext transformContext = new MockTransformContext(ImmutableMap.<String, String>of());
     transform.initialize(transformContext);
@@ -140,11 +136,7 @@ public class ScriptFilterTransformTest {
     Assert.assertTrue(emitter.getEmitted().isEmpty());
     emitter.clear();
 
-    config.script = "function shouldFilter(input) {\n" +
-      "var pi = input.inner1.list[0].p;\n" +
-      "var e = input.inner1.list[0].e;\n" +
-      "return pi.val > 10 * e.val;\n" +
-      "}";
+    config.script = "var pi = input.inner1.list[0].p; var e = input.inner1.list[0].e; return pi.val > 10 * e.val;";
     transform = new ScriptFilterTransform(config);
     transformContext = new MockTransformContext(ImmutableMap.<String, String>of());
     transform.initialize(transformContext);

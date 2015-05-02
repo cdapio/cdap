@@ -50,8 +50,6 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(StructuredRecord.class, new StructuredRecordSerializer())
     .create();
-  private static final String FUNCTION_NAME = "dont_name_your_function_this";
-  private static final String VARIABLE_NAME = "dont_name_your_variable_this";
   private ScriptEngine engine;
   private Invocable invocable;
   private Schema schema;
@@ -62,9 +60,9 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
    */
   public static class Config extends PluginConfig {
     @Description("Javascript defining how to transform one record into another. The script must implement a function " +
-      "called 'transform', which take as input a Json object that represents the input record, and returns " +
-      "a Json object that respresents the transformed input. " +
-      "For example, 'function transform(input) { input.count = input.count * 1024; return input; }' " +
+      "called 'transform', which must return a Json object that represents the transformed input. " +
+      "The input record will be available as a Json object named 'input'. " +
+      "For example, 'function transform() { input.count = input.count * 1024; return input; }' " +
       "will scale the 'count' field by 1024.")
     private final String script;
 
@@ -89,13 +87,7 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
     ScriptEngineManager manager = new ScriptEngineManager();
     engine = manager.getEngineByName("JavaScript");
     try {
-      // this is pretty ugly, but doing this so that we can pass the 'input' json into the transform function.
-      // that is, we want people to implement
-      // function transform(input) { ... }
-      // rather than function transform() { ... } and have them access a global variable in the function
-      String script = String.format("function %s() { return transform(%s); }\n%s",
-                                    FUNCTION_NAME, VARIABLE_NAME, config.script);
-      engine.eval(script);
+      engine.eval(config.script);
     } catch (ScriptException e) {
       throw new IllegalArgumentException("Invalid script.", e);
     }
@@ -112,8 +104,8 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
   @Override
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) {
     try {
-      engine.eval(String.format("var %s = %s;", VARIABLE_NAME, GSON.toJson(input)));
-      Map scriptOutput = (Map) invocable.invokeFunction(FUNCTION_NAME);
+      engine.eval("var input = " + GSON.toJson(input) + "; ");
+      Map scriptOutput = (Map) invocable.invokeFunction("transform");
       StructuredRecord output = decodeRecord(scriptOutput, schema == null ? input.getSchema() : schema);
       emitter.emit(output);
     } catch (Exception e) {
