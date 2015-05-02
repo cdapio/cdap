@@ -236,24 +236,24 @@
                 </goals>
                 <configuration>
                   <target>
-                    <copy todir = "${stage.opt.dir}/alpha/server">
+                    <copy todir = "${stage.opt.dir}/server">
                       <fileset dir = "server"/>
                     </copy>
-                    <copy todir = "${stage.opt.dir}/alpha/dist">
+                    <copy todir = "${stage.opt.dir}/dist">
                       <fileset dir = "dist"/>
                     </copy>
-                    <copy todir = "${stage.opt.dir}/alpha/node_modules">
+                    <copy todir = "${stage.opt.dir}/node_modules">
                       <fileset dir = "node_modules"/>
                     </copy>
-                    <copy todir = "${stage.opt.dir}/alpha/templates">
+                    <copy todir = "${stage.opt.dir}/templates">
                       <fileset dir = "templates"/>
                     </copy>
-                    <copy todir = "${stage.opt.dir}/alpha/">
+                    <copy todir = "${stage.opt.dir}/">
                       <fileset dir = "./">
                         <include name="package.json" />
                       </fileset>
                     </copy>
-                    <copy todir = "${stage.opt.dir}/alpha/">
+                    <copy todir = "${stage.opt.dir}/">
                       <fileset dir = "./">
                         <include name="server.js" />
                       </fileset>
