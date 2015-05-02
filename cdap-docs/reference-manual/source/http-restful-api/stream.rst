@@ -389,10 +389,10 @@ the Stream and re-create it with the new schema.
        and the format to CSV (comma separated values) with a three field schema
        that uses a space delimiter instead of a comma delimiter. 
 
-Listing of Stream used by Applications
---------------------------------------
+Streams used by an Application
+------------------------------
 
-You can retrieve a list of Streams used by an application by issuing a HTTP GET request to the URL:
+You can retrieve a list of Streams used by an Application by issuing a HTTP GET request to the URL::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/streams
 
@@ -417,10 +417,10 @@ You can retrieve a list of Streams used by an application by issuing a HTTP GET 
    * - ``200 OK``
      - Request was successful
 
-Listing of Streams used by Programs
------------------------------------
+Streams used by a Program
+-------------------------
 
-You can retrieve a list of Streams used by a program by issuing a HTTP GET request to the URL:
+You can retrieve a list of Streams used by a program by issuing a HTTP GET request to the URL::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/streams 
 
@@ -435,7 +435,7 @@ You can retrieve a list of Streams used by a program by issuing a HTTP GET reque
    * - ``<app-id>``
      - Application ID
    * - ``<program-type>``
-     - CDAP Program Type 
+     - Program Type, one of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
    * - ``<program-id>``
      - Program ID
 
@@ -452,7 +452,7 @@ You can retrieve a list of Streams used by a program by issuing a HTTP GET reque
 Streams used by an Adapter
 --------------------------
 
-You can retrieve a list of Streams used by an adapter by issuing a HTTP GET request to the URL:
+You can retrieve a list of Streams used by an Adapter by issuing a HTTP GET request to the URL::
 
   GET <base-url>/namespaces/<namespace>/adapters/<adapter-id>/streams 
 
@@ -480,7 +480,7 @@ You can retrieve a list of Streams used by an adapter by issuing a HTTP GET requ
 Programs using a Stream 
 -----------------------
 
-You can retrieve a list of programs that is using a Stream by issuing a HTTP GET request to the URL:
+You can retrieve a list of programs that are using a Stream by issuing a HTTP GET request to the URL::
 
   GET <base-url>/namespaces/<namespace>/data/datasets/<dataset-id>/programs
 

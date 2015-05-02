@@ -269,10 +269,10 @@ This will clear the existing data from the Dataset. This cannot be undone.
    * - ``200 OK``
      - Dataset was successfully truncated
 
-Listing of Datasets used by Applications
-----------------------------------------
+Datasets used by an Application
+-------------------------------
 
-You can retrieve a list of Datasets used by an application by issuing a HTTP GET request to the URL:
+You can retrieve a list of Datasets used by an Application by issuing a HTTP GET request to the URL::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/datasets 
 
@@ -297,10 +297,10 @@ You can retrieve a list of Datasets used by an application by issuing a HTTP GET
    * - ``200 OK``
      - Request was successful
 
-Listing of Datasets used by Programs
-------------------------------------
+Datasets used by a Program
+--------------------------
 
-You can retrieve a list of Datasets used by a program by issuing a HTTP GET request to the URL:
+You can retrieve a list of Datasets used by a program by issuing a HTTP GET request to the URL::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/datasets
 
@@ -315,7 +315,7 @@ You can retrieve a list of Datasets used by a program by issuing a HTTP GET requ
    * - ``<app-id>``
      - Application ID
    * - ``<program-type>``
-     - Program Type
+     - Program Type, one of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
    * - ``<program-id>``
      - Program ID
 
@@ -332,7 +332,7 @@ You can retrieve a list of Datasets used by a program by issuing a HTTP GET requ
 Datasets used by an Adapter
 ---------------------------
 
-You can retrieve a list of Datasets used by an adapter by issuing a HTTP GET request to the URL:
+You can retrieve a list of Datasets used by an Adapter by issuing a HTTP GET request to the URL::
 
   GET <base-url>/namespaces/<namespace>/adapters/<adapter-id>/datasets
 
@@ -357,10 +357,10 @@ You can retrieve a list of Datasets used by an adapter by issuing a HTTP GET req
    * - ``200 OK``
      - Request was successful
 
-Programs used by a dataset
---------------------------
+Programs using a Dataset
+------------------------
 
-You can retrieve a list of programs that is using a Dataset by issuing a HTTP GET request to the URL:
+You can retrieve a list of programs that are using a Dataset by issuing a HTTP GET request to the URL::
 
   GET <base-url>/namespaces/<namespace>/data/datasets/<dataset-id>/programs
 
