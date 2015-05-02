@@ -107,22 +107,17 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
     Integer configMessagesToReceive = config.messagesToReceive;
     messagesToReceive = configMessagesToReceive.intValue();
 
-    // Set initial context factory name and provider URL
-    runtimeArguments.put(Context.INITIAL_CONTEXT_FACTORY, config.initialContextFactory);
-    runtimeArguments.put(Context.PROVIDER_URL, config.providerUrl);
-
     // Get environment vars - this would be prefixed with java.naming.*
     final Hashtable<String, String> envVars = new Hashtable<String, String>();
-    Maps.filterEntries(runtimeArguments, new Predicate<Map.Entry<String, String>>() {
-      @Override
-      public boolean apply(@Nullable Map.Entry<String, String> input) {
-        if (input.getKey() != null && input.getKey().startsWith(JAVA_NAMING_PREFIX)) {
-          envVars.put(input.getKey(), input.getValue());
-          return true;
-        }
-        return false;
+    for (Map.Entry<String, String> entry : runtimeArguments.entrySet()) {
+      if (entry.getKey() != null && entry.getKey().startsWith(JAVA_NAMING_PREFIX)) {
+        envVars.put(entry.getKey(), entry.getValue());
       }
-    });
+    }
+
+    // Set initial context factory name and provider URL
+    envVars.put(Context.INITIAL_CONTEXT_FACTORY, config.initialContextFactory);
+    envVars.put(Context.PROVIDER_URL, config.providerUrl);
 
     // Bootstrap the JMS consumer
     initializeJMSConnection(envVars, config.destinationName, config.connectionFactoryName);
