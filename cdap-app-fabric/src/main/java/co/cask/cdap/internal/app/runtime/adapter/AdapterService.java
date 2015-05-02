@@ -325,7 +325,8 @@ public class AdapterService extends AbstractIdleService {
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
     Id.Application applicationId = Id.Application.from(namespace, adapterSpec.getTemplate());
     if (adapterStatus != AdapterStatus.STOPPED) {
-      throw new CannotBeDeletedException(Id.Adapter.from(namespace, adapterName));
+      throw new CannotBeDeletedException(Id.Adapter.from(namespace, adapterName), "The adapter has not been stopped." +
+        " Please stop it first.");
     }
     store.removeAdapter(namespace, adapterName);
     try {

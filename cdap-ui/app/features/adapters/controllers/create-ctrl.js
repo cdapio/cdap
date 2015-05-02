@@ -37,23 +37,14 @@ angular.module(PKG.name + '.feature.adapters')
       }
     };
 
-    // Default ETL Templates
-    $scope.adapterTypes = [
-      {
-        name: 'ETL Batch',
-        type: 'etlBatch'
-      },
-      {
-        name: 'ETL Realtime',
-        type: 'etlRealtime'
-      }
-    ];
-
+    apiFactory.fetchTemplates();
+    $scope.adapterTypes = [];
+    
     // Metadata Model
     $scope.metadata = {
         name: '',
         description: '',
-        type: 'etlRealtime'
+        type: ''
     };
 
     var defaultSource = {
@@ -81,12 +72,13 @@ angular.module(PKG.name + '.feature.adapters')
     $scope.activePanel = 0;
 
     $scope.$watch('metadata.type',function(adapterType) {
+
       if (!adapterType.length) return;
       $scope.onAdapterTypeSelected = true;
       apiFactory.fetchSources(adapterType);
       apiFactory.fetchSinks(adapterType);
       apiFactory.fetchTransforms(adapterType);
-    });
+    }, true);
 
     $scope.handleSourceDrop = function(sourceName) {
       if ($scope.source.placeHolderSource) {
@@ -135,13 +127,16 @@ angular.module(PKG.name + '.feature.adapters')
         return;
       }
       var filterFilter = $filter('filter'),
+          icon,
           match;
       match = filterFilter($scope.tabs, {type: 'source'});
       if (match.length) {
         $scope.tabs[$scope.tabs.indexOf(match[0])].active = true;
       } else {
+        icon = filterFilter($scope.defaultSources, {name: $scope.source.name});
         $scope.tabs.push({
           title: $scope.source.name,
+          icon: icon[0].icon,
           type: 'source',
           active: true,
           partial: '/assets/features/adapters/templates/create/tabs/sourcePropertyEdit.html'
@@ -154,13 +149,16 @@ angular.module(PKG.name + '.feature.adapters')
       }
 
       var filterFilter = $filter('filter'),
+          icon,
           match;
       match = filterFilter($scope.tabs, {type: 'sink'});
       if (match.length) {
         $scope.tabs[$scope.tabs.indexOf(match[0])].active = true;
       } else {
+        icon = filterFilter($scope.defaultSinks, {name: $scope.sink.name});
         $scope.tabs.active = ($scope.tabs.push({
           title: $scope.sink.name,
+          icon: icon[0].icon,
           type: 'sink',
           active: true,
           partial: '/assets/features/adapters/templates/create/tabs/sinkPropertyEdit.html'
@@ -180,8 +178,10 @@ angular.module(PKG.name + '.feature.adapters')
       if (match.length) {
         $scope.tabs[$scope.tabs.indexOf(match[0])].active = true;
       } else {
+        icon = filterFilter($scope.defaultTransforms, {name: transform.name});
         $scope.tabs.active = ($scope.tabs.push({
           title: transform.name,
+          icon: icon[0].icon,
           transformid: transform.$$hashKey,
           transform: transform,
           active: true,
@@ -297,6 +297,7 @@ angular.module(PKG.name + '.feature.adapters')
     $scope.tabs = [
       {
         title: 'Default',
+        icon: 'cogs',
         isCloseable: false,
         partial: '/assets/features/adapters/templates/create/tabs/default.html'
       }

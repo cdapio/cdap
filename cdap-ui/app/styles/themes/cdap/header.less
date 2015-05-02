@@ -57,7 +57,15 @@ body {
           background: url('@{img-path}/cdap.png') no-repeat 15px center;
           background-size: 100px auto;
           position: relative;
-          top: -5px;
+          top: 1px;
+
+          &.first {
+            background: none;
+            font-size: 40px;
+            color: @cdap-orange;
+            top: -8px;
+          }
+
           > strong {
             display: inline-block;
             visibility: hidden;

@@ -40,7 +40,7 @@ Standalone and Distributed CDAP
 
 - Run App-Template tests::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn test -U -fae -am -amd -P templates -pl cdap-app-templates
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn test -U -fae -am -amd -P templates -pl cdap-app-templates/cdap-etl
 
   See `Surefire doc <http://maven.apache.org/surefire/maven-surefire-plugin/examples/single-test.html>`__ for details
 
@@ -50,7 +50,7 @@ Standalone and Distributed CDAP
 
 - Build Standalone distribution ZIP::
 
-    MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -P examples,templates -pl cdap-examples,cdap-app-templates -am -amd && MAVEN_OPTS="-Xmx512m" mvn package -pl cdap-standalone -am -DskipTests -P dist,release
+    MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -P examples,templates -pl cdap-examples,cdap-app-templates/cdap-etl -am -amd && MAVEN_OPTS="-Xmx512m" mvn package -pl cdap-standalone -am -DskipTests -P dist,release
     
 - Build the limited set of Javadocs used in distribution ZIP::
 
@@ -62,7 +62,7 @@ Standalone and Distributed CDAP
     
 - Build distributions (rpm, deb, tgz)::
 
-    mvn package -DskipTests -P dist,rpm-prepare,rpm,deb-prepare,deb,tgz
+    mvn package -DskipTests -P dist,release,rpm-prepare,rpm,deb-prepare,deb,tgz
 
 - Build Cloudera Manager parcel::
 

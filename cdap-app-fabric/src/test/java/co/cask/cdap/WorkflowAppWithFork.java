@@ -48,63 +48,33 @@ public class WorkflowAppWithFork extends AbstractApplication {
     public void configure() {
       setName("WorkflowWithFork");
       setDescription("WorkflowWithFork description");
-      fork().addAction(new OneAction()).also().addAction(new AnotherAction()).join();
+      addAction(new SimpleAction("first"));
+      fork()
+        .addAction(new SimpleAction("one"))
+      .also()
+        .addAction(new SimpleAction("another"))
+      .join();
     }
   }
 
-  /**
-   *
-   */
-  static class OneAction extends AbstractWorkflowAction {
-    private static final Logger LOG = LoggerFactory.getLogger(OneAction.class);
-    private String filePath = "";
-    private String doneFilePath = "";
+  static final class SimpleAction extends AbstractWorkflowAction {
+    private static final Logger LOG = LoggerFactory.getLogger(SimpleAction.class);
 
-    @Override
-    public void initialize(WorkflowContext context) throws Exception {
-      filePath = context.getRuntimeArguments().get("oneaction.file");
-      doneFilePath = context.getRuntimeArguments().get("done.file");
+    public SimpleAction(String name) {
+      super(name);
     }
 
     @Override
     public void run() {
-      LOG.info("Ran one action");
+      LOG.info("Running SimpleAction: " + getContext().getSpecification().getName());
       try {
-        File file = new File(filePath);
+        File file = new File(getContext().getRuntimeArguments().get(getContext().getSpecification().getName() +
+                                                                      ".simple.action.file"));
         file.createNewFile();
-        File doneFile = new File(doneFilePath);
+        File doneFile = new File(getContext().getRuntimeArguments().get(getContext().getSpecification().getName() +
+                                                                          ".simple.action.donefile"));
         while (!doneFile.exists()) {
-          TimeUnit.SECONDS.sleep(1);
-        }
-      } catch (Exception e) {
-        // no-op
-      }
-    }
-  }
-
-  /**
-   *
-   */
-  static class AnotherAction extends AbstractWorkflowAction {
-    private static final Logger LOG = LoggerFactory.getLogger(AnotherAction.class);
-    private String filePath = "";
-    private String doneFilePath = "";
-
-    @Override
-    public void initialize(WorkflowContext context) throws Exception {
-      filePath = context.getRuntimeArguments().get("anotheraction.file");
-      doneFilePath = context.getRuntimeArguments().get("done.file");
-    }
-
-    @Override
-    public void run() {
-      LOG.info("Ran another action");
-      try {
-        File file = new File(filePath);
-        file.createNewFile();
-        File doneFile = new File(doneFilePath);
-        while (!doneFile.exists()) {
-          TimeUnit.SECONDS.sleep(1);
+          TimeUnit.MILLISECONDS.sleep(50);
         }
       } catch (Exception e) {
         // no-op

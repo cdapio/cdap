@@ -45,7 +45,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
-import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
@@ -109,14 +108,14 @@ public class PluginRepository {
   };
 
   private final CConfiguration cConf;
-  private final File templateDir;
+  private final File pluginDir;
   private final File tmpDir;
   private final AtomicReference<Map<String, TreeMultimap<PluginInfo, PluginClass>>> plugins;
 
   @Inject
   PluginRepository(CConfiguration cConf) {
     this.cConf = cConf;
-    this.templateDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
+    this.pluginDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_PLUGIN_DIR));
     this.plugins = new AtomicReference<Map<String, TreeMultimap<PluginInfo, PluginClass>>>(
       new HashMap<String, TreeMultimap<PluginInfo, PluginClass>>());
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
@@ -192,27 +191,22 @@ public class PluginRepository {
     // Also the PluginClass should be unique by its (type, name).
     TreeMultimap<PluginInfo, PluginClass> templatePlugins = TreeMultimap.create(new PluginInfoComaprator(),
                                                                                 new PluginClassComparator());
-    File pluginDir = new File(templateDir, template);
-    List<File> pluginJars = DirUtils.listFiles(pluginDir, "jar");
+    File templatePluginDir = new File(pluginDir, template);
+    List<File> pluginJars = DirUtils.listFiles(templatePluginDir, "jar");
     if (pluginJars.isEmpty()) {
       return templatePlugins;
     }
 
     Iterable<PluginFile> pluginFiles = Iterables.transform(pluginJars, FILE_TO_PLUGIN_FILE);
-    CloseableClassLoader templateClassLoader = createTemplateClassLoader(templateJar);
-    try {
-      PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, template, templateClassLoader);
-      try {
-        for (PluginFile pluginFile : pluginFiles) {
-          if (!configureByFile(pluginFile, templatePlugins)) {
-            configureByInspection(pluginFile, pluginInstantiator, templatePlugins);
-          }
+    try (
+      CloseableClassLoader templateClassLoader = createTemplateClassLoader(templateJar);
+      PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, template, templateClassLoader)
+    ) {
+      for (PluginFile pluginFile : pluginFiles) {
+        if (!configureByFile(pluginFile, templatePlugins)) {
+          configureByInspection(pluginFile, pluginInstantiator, templatePlugins);
         }
-      } finally {
-        Closeables.closeQuietly(pluginInstantiator);
       }
-    } finally {
-      templateClassLoader.close();
     }
 
     return templatePlugins;
@@ -234,8 +228,7 @@ public class PluginRepository {
     }
 
     // The config file is a json array of PluginClass object (except the PluginClass.configFieldName)
-    Reader reader = Files.newReader(configFile, Charsets.UTF_8);
-    try {
+    try (Reader reader = Files.newReader(configFile, Charsets.UTF_8)) {
       List<PluginClass> pluginClasses = GSON.fromJson(reader, CONFIG_OBJECT_TYPE);
 
       // Put it one by one so that we can log duplicate plugin class
@@ -245,8 +238,6 @@ public class PluginRepository {
         }
       }
       templatePlugins.putAll(pluginFile.getPluginInfo(), pluginClasses);
-    } finally {
-      Closeables.closeQuietly(reader);
     }
 
     return true;
@@ -291,11 +282,8 @@ public class PluginRepository {
    * Returns the set of package names that are declared in "Export-Package" in the jar file Manifest.
    */
   private Set<String> getExportPackages(File file) throws IOException {
-    JarFile jarFile = new JarFile(file);
-    try {
+    try (JarFile jarFile = new JarFile(file)) {
       return ManifestFields.getExportPackages(jarFile.getManifest());
-    } finally {
-      jarFile.close();
     }
   }
 

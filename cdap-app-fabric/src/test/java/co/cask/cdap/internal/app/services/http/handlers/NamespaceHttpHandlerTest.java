@@ -340,7 +340,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertTrue(nsLocation.exists());
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, resetEnabled);
     // because service is running
-    assertResponseCode(409, deleteNamespace(NAME));
+    assertResponseCode(409, deleteNamespaceData(NAME));
     Assert.assertTrue(nsLocation.exists());
     stopProgram(program);
     assertResponseCode(200, deleteNamespaceData(NAME));

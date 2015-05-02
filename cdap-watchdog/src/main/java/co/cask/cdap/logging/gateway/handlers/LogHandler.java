@@ -76,7 +76,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
                       @PathParam("app-id") String appId, @PathParam("program-type") String programType,
                       @PathParam("program-id") String programId,
                       @QueryParam("start") @DefaultValue("-1") long fromTimeSecsParam,
-                      @QueryParam("stop") @DefaultValue(Long.MAX_VALUE + "") long toTimeSecsParam,
+                      @QueryParam("stop") @DefaultValue("-1") long toTimeSecsParam,
                       @QueryParam("escape") @DefaultValue("true") boolean escape,
                       @QueryParam("filter") @DefaultValue("") String filterStr,
                       @QueryParam("adapterid") String adapterId) {
@@ -92,7 +92,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
                            @PathParam("app-id") String appId, @PathParam("program-type") String programType,
                            @PathParam("program-id") String programId, @PathParam("run-id") String runId,
                            @QueryParam("start") @DefaultValue("-1") long fromTimeSecsParam,
-                           @QueryParam("stop") @DefaultValue(Long.MAX_VALUE + "") long toTimeSecsParam,
+                           @QueryParam("stop") @DefaultValue("-1") long toTimeSecsParam,
                            @QueryParam("escape") @DefaultValue("true") boolean escape,
                            @QueryParam("filter") @DefaultValue("") String filterStr,
                            @QueryParam("adapterid") String adapterId) {
@@ -109,25 +109,15 @@ public class LogHandler extends AuthenticatedHttpHandler {
                          long fromTimeSecsParam, long toTimeSecsParam, boolean escape, String filterStr,
                          @Nullable RunRecord runRecord) {
     try {
-
-      if (fromTimeSecsParam < -1 || toTimeSecsParam < 0) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time range. " +
-          "'start' and 'stop' should be greater than zero. " +
-          "Instead, 'start' was " + fromTimeSecsParam + " and 'stop' was " + toTimeSecsParam);
-        return;
-      }
-
-      if (toTimeSecsParam <= fromTimeSecsParam) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time range. " +
-          "'stop' should be greater than 'start'.");
+      TimeRange timeRange = parseTime(fromTimeSecsParam, toTimeSecsParam, responder);
+      if (timeRange == null) {
         return;
       }
 
       Filter filter = FilterParser.parse(filterStr);
-      long fromTimeMs = TimeUnit.MILLISECONDS.convert(fromTimeSecsParam, TimeUnit.SECONDS);
-      long toTimeMs = TimeUnit.MILLISECONDS.convert(toTimeSecsParam, TimeUnit.SECONDS);
 
-      ReadRange readRange = new ReadRange(fromTimeMs, toTimeMs, LogOffset.INVALID_KAFKA_OFFSET);
+      ReadRange readRange = new ReadRange(timeRange.getFromMillis(), timeRange.getToMillis(),
+                                          LogOffset.INVALID_KAFKA_OFFSET);
       readRange = adjustReadRange(readRange, runRecord);
 
       ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
@@ -281,25 +271,21 @@ public class LogHandler extends AuthenticatedHttpHandler {
   @Path("/system/{component-id}/{service-id}/logs")
   public void sysList(HttpRequest request, HttpResponder responder, @PathParam("component-id") String componentId,
                       @PathParam("service-id") String serviceId,
-                      @QueryParam("start") @DefaultValue("-1") long fromTimeMsParam,
-                      @QueryParam("stop") @DefaultValue("-1") long toTimeMsParam,
+                      @QueryParam("start") @DefaultValue("-1") long fromTimeSecsParam,
+                      @QueryParam("stop") @DefaultValue("-1") long toTimeSecsParam,
                       @QueryParam("escape") @DefaultValue("true") boolean escape,
                       @QueryParam("filter") @DefaultValue("") String filterStr) {
     try {
-      Filter filter = FilterParser.parse(filterStr);
-      long fromTimeMs = TimeUnit.MILLISECONDS.convert(fromTimeMsParam, TimeUnit.SECONDS);
-      long toTimeMs = TimeUnit.MILLISECONDS.convert(toTimeMsParam, TimeUnit.SECONDS);
-
-      if (fromTimeMs < 0 || toTimeMs < 0 || toTimeMs <= fromTimeMs) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time range. 'start' and 'stop' should be " +
-          "greater than zero and stop should be greater than start.");
+      TimeRange timeRange = parseTime(fromTimeSecsParam, toTimeSecsParam, responder);
+      if (timeRange == null) {
         return;
       }
 
+      Filter filter = FilterParser.parse(filterStr);
       LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.SYSTEM_NAMESPACE, componentId,
                                                                              serviceId);
       ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
-      logReader.getLog(loggingContext, fromTimeMs, toTimeMs, filter, logCallback);
+      logReader.getLog(loggingContext, timeRange.getFromMillis(), timeRange.getToMillis(), filter, logCallback);
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Throwable e) {
@@ -356,5 +342,37 @@ public class LogHandler extends AuthenticatedHttpHandler {
       LOG.error("Caught exception", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  private static final class TimeRange {
+    private final long fromMillis;
+    private final long toMillis;
+
+    public TimeRange(long fromMillis, long toMillis) {
+      this.fromMillis = fromMillis;
+      this.toMillis = toMillis;
+    }
+
+    public long getFromMillis() {
+      return fromMillis;
+    }
+
+    public long getToMillis() {
+      return toMillis;
+    }
+  }
+
+  private static TimeRange parseTime(long fromTimeSecsParam, long toTimeSecsParam, HttpResponder responder) {
+    long fromMillis = fromTimeSecsParam < 0 ?
+      System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1) : TimeUnit.SECONDS.toMillis(fromTimeSecsParam);
+    long toMillis = toTimeSecsParam < 0 ? System.currentTimeMillis() : TimeUnit.SECONDS.toMillis(toTimeSecsParam);
+
+    if (toMillis <= fromMillis) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time range. " +
+        "'stop' should be greater than 'start'.");
+      return null;
+    }
+
+    return new TimeRange(fromMillis, toMillis);
   }
 }
