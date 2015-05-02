@@ -43,14 +43,15 @@ import javax.script.ScriptException;
 @Description("A transform plugin that filters records using a custom javascript provided in the plugin's config.")
 public class ScriptFilterTransform extends Transform<StructuredRecord, StructuredRecord> {
   private static final String SCRIPT_DESCRIPTION = "Javascript that must implement a shouldFilter function that " +
-    "returns true if the input record should be filtered and false if not. " +
-    "The script has access to the input record through a variable named 'input', " +
-    "which is a Json object representation of the record. " +
-    "For example, 'function shouldFilter() { return input.count > 100'; } " +
+    "takes a Json object representation of the input record, " +
+    "and returns true if the input record should be filtered and false if not. " +
+    "For example, 'function shouldFilter(input) { return input.count > 100'; } " +
     "will filter out any records whose count field is greater than 100.";
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(StructuredRecord.class, new StructuredRecordSerializer())
     .create();
+  private static final String FUNCTION_NAME = "dont_name_your_function_this";
+  private static final String VARIABLE_NAME = "dont_name_your_variable_this";
 
   private final ScriptFilterConfig scriptFilterConfig;
 
@@ -69,8 +70,14 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
     String scriptStr = scriptFilterConfig.script;
     Preconditions.checkArgument(!scriptStr.isEmpty(), "Filter script must be specified.");
 
+    // this is pretty ugly, but doing this so that we can pass the 'input' json into the shouldFilter function.
+    // that is, we want people to implement
+    // function shouldFilter(input) { ... }
+    // rather than function shouldFilter() { ... } and have them access a global variable in the function
     try {
-      engine.eval(scriptStr);
+      String script = String.format("function %s() { return shouldFilter(%s); }\n%s",
+                                    FUNCTION_NAME, VARIABLE_NAME, scriptStr);
+      engine.eval(script);
     } catch (ScriptException e) {
       throw new IllegalArgumentException("Invalid script.", e);
     }
@@ -81,8 +88,8 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
   @Override
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) {
     try {
-      engine.eval("var input = " + GSON.toJson(input) + "; ");
-      Boolean shouldFilter = (Boolean) invocable.invokeFunction("shouldFilter");
+      engine.eval(String.format("var %s = %s;", VARIABLE_NAME, GSON.toJson(input)));
+      Boolean shouldFilter = (Boolean) invocable.invokeFunction(FUNCTION_NAME);
       if (!shouldFilter) {
         emitter.emit(input);
       } else {
