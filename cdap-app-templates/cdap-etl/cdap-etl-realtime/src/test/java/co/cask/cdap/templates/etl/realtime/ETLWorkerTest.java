@@ -34,7 +34,6 @@ import co.cask.cdap.templates.etl.realtime.sources.JmsSource;
 import co.cask.cdap.templates.etl.realtime.sources.KafkaSource;
 import co.cask.cdap.templates.etl.realtime.sources.TestSource;
 import co.cask.cdap.templates.etl.realtime.sources.TwitterSource;
-import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import co.cask.cdap.templates.etl.transforms.ProjectionTransform;
 import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
@@ -73,7 +72,7 @@ public class ETLWorkerTest extends TestBase {
       TestSource.class, JmsSource.class, KafkaSource.class, TwitterSource.class);
     addTemplatePlugins(TEMPLATE_ID, "realtime-sinks-1.0.0.jar",
       RealtimeCubeSink.class, RealtimeTableSink.class, StreamSink.class);
-    addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar", IdentityTransform.class,
+    addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar",
       ProjectionTransform.class, ScriptFilterTransform.class, StructuredRecordToGenericRecordTransform.class);
     deployTemplate(NAMESPACE, TEMPLATE_ID, ETLRealtimeTemplate.class,
       EndPointStage.class.getPackage().getName(),

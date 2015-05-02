@@ -47,7 +47,7 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
     // kv table to kv table pipeline
     ETLStage source = new ETLStage("KVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "table1"));
     ETLStage sink = new ETLStage("KVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "table2"));
-    ETLStage transform = new ETLStage("Identity", ImmutableMap.<String, String>of());
+    ETLStage transform = new ETLStage("Projection", ImmutableMap.<String, String>of());
     List<ETLStage> transformList = Lists.newArrayList(transform);
     ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transformList);
     AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));

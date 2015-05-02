@@ -28,7 +28,6 @@ import co.cask.cdap.templates.etl.batch.sources.DBSource;
 import co.cask.cdap.templates.etl.batch.sources.KVTableSource;
 import co.cask.cdap.templates.etl.batch.sources.StreamBatchSource;
 import co.cask.cdap.templates.etl.batch.sources.TableSource;
-import co.cask.cdap.templates.etl.transforms.IdentityTransform;
 import co.cask.cdap.templates.etl.transforms.ProjectionTransform;
 import co.cask.cdap.templates.etl.transforms.ScriptFilterTransform;
 import co.cask.cdap.templates.etl.transforms.StructuredRecordToGenericRecordTransform;
@@ -55,7 +54,7 @@ public class BaseETLBatchTest extends TestBase {
     addTemplatePlugins(TEMPLATE_ID, "batch-sinks-1.0.0.jar",
       BatchCubeSink.class, DBSink.class, KVTableSink.class,
       TableSink.class, TimePartitionedFileSetDatasetAvroSink.class, AvroKeyOutputFormat.class, AvroKey.class);
-    addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar", IdentityTransform.class,
+    addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar",
       ProjectionTransform.class, ScriptFilterTransform.class, StructuredRecordToGenericRecordTransform.class);
     deployTemplate(NAMESPACE, TEMPLATE_ID, ETLBatchTemplate.class,
       EndPointStage.class.getPackage().getName(),
