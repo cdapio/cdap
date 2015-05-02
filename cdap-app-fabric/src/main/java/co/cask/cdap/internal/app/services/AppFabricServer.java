@@ -220,5 +220,6 @@ public class AppFabricServer extends AbstractIdleService {
     applicationLifecycleService.stopAndWait();
     adapterService.stopAndWait();
     notificationService.stopAndWait();
+    programLifecycleService.stopAndWait();
   }
 }
