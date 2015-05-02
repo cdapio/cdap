@@ -75,6 +75,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final Set<String> handlerHookNames;
   private final NamespaceAdmin namespaceAdmin;
   private final StreamCoordinatorClient streamCoordinatorClient;
+  private final ProgramLifecycleService programLifecycleService;
 
   private NettyHttpService httpService;
   private Set<HttpHandler> handlers;
@@ -92,6 +93,7 @@ public class AppFabricServer extends AbstractIdleService {
                          @Nullable MetricsCollectionService metricsCollectionService,
                          ProgramRuntimeService programRuntimeService, AdapterService adapterService,
                          ApplicationLifecycleService applicationLifecycleService,
+                         ProgramLifecycleService programLifecycleService,
                          StreamCoordinatorClient streamCoordinatorClient,
                          @Named("appfabric.services.names") Set<String> servicesNames,
                          @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
@@ -110,6 +112,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.namespaceAdmin = namespaceAdmin;
     this.applicationLifecycleService = applicationLifecycleService;
     this.streamCoordinatorClient = streamCoordinatorClient;
+    this.programLifecycleService = programLifecycleService;
   }
 
   /**
@@ -131,6 +134,7 @@ public class AppFabricServer extends AbstractIdleService {
     adapterService.start();
     programRuntimeService.start();
     streamCoordinatorClient.start();
+    programLifecycleService.start();
 
     // Create handler hooks
     ImmutableList.Builder<HandlerHook> builder = ImmutableList.builder();
