@@ -276,7 +276,7 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
       adapterService.removeAdapter(Id.Namespace.from(namespaceId), adapterName);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (CannotBeDeletedException e) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
+      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
     } catch (NotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     } catch (Throwable t) {
