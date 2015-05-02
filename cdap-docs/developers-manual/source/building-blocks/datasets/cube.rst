@@ -17,7 +17,7 @@ A `Cube dataset
 is an implementation of an `OLAP Cube <http://en.wikipedia.org/wiki/OLAP_cube>`__ that is
 pre-packaged with CDAP. Cube datasets store multidimensional facts and provide a querying
 interface for the retrieval of the data. Additionally, Cube datasets allows for
-:term:`exploring` of the data stored in the Cube.
+exploring of the data stored in the Cube.
 
 Storing Data
 ============
@@ -70,10 +70,10 @@ be configured before any data is written to the Cube. Currently, a view is confi
 a list of dimensions and list of required dimensions using the :ref:`Dataset properties
 <custom-datasets-properties>`.
 
-A Cube can have multiple configured views and they can be altered by updating the dataset
+A Cube can have multiple views configured. They can be altered by updating the dataset
 properties using the :ref:`Dataset RESTful API <http-restful-api-dataset-updating>`.
 
-Here is an example:
+Here is an example, using pseudo-SQL and Cube dataset properties:
 
 .. image:: /_images/cube-example.png
    :width: 642 px
@@ -90,10 +90,10 @@ CubeFact has non-null values for both dimensions.
 
 In addition to configuring aggregation views, a Cube can be configured to aggregate
 for multiple time resolutions based on the ``dataset.cube.resolutions`` property, which
-takes a value in seconds, such as 1, 60, or 3600 (corresponding to 1 second, 1 minute, or
-1 hour resolutions)::
+takes a comma-separated list of resolution values in seconds, such as ``1,60,3600``
+(corresponding to 1 second, 1 minute, or 1 hour resolutions)::
 
-  dataset.cube.resolutions=60
+  dataset.cube.resolutions=1,60,3600
 
 By default, if no ``dataset.cube.resolutions`` property is provided, a resolution of 1
 second is used.
@@ -119,7 +119,7 @@ To understand the ``CubeQuery`` interface, let's look at an example:
 On the right is an example of how to build a Java ``CubeQuery`` corresponding to the
 SQL-like statement shown on the left.
 
-In this example, we query two measurements: ``cpu.used`` and ``disk.reads`` and use gauge
+In this example, we query two measurements: ``cpu.used`` and ``disk.reads`` and use max
 and sum functions to perform aggregation if needed. The query is performed on
 ``rack+server`` aggregated view at 1 minute resolution. The data is selected for those
 records that have a rack dimension value of ``rack1`` and for the given time range. The data is
@@ -217,30 +217,89 @@ RESTful access to it::
 Example of the query in JSON format::
 
   {
-   "select": {
-     "measurements": [
-       {
-         "name": "cpu.used",
-         "aggregationType": "gauge"
-       },
-       {
-         "name": "disk.reads",
-         "aggregationType": "sum"
-       }
-     ]
-   },
-   "from": {
-     "view": "rack+server",
-     "resolution": "60"
-   },
-   "where": {
-     "dimensions": {
-       "rack": "rack1"
-     },
-     "startTs": 1423370200,
-     "endTs": 1423398198
-   },
-   "groupBy": {
-     "dimensions": ["server"]
-   }
+      "aggregation": "rack+server",
+      "startTs": 1423370200,
+      "endTs":   1423398198,
+      "measurements": {"cpu.used": "MAX", "disk.reads": "SUM"},
+      "resolution": 60,
+      "dimensionValues": {"rack": "rack1"},
+      "groupByDimensions": ["server"],
+      "limit": 100
   }
+
+Example of the response in JSON format (pretty-printed to fit)::
+
+
+  [
+      {
+          "measureName": "disk.reads",
+          "dimensionValues": {
+              "server": "server1"
+          },
+          "timeValues": [
+              {
+                  "timestamp": 1423370200,
+                  "value": 969
+              },
+              {
+                  "timestamp": 1423370260,
+                  "value": 360
+              }
+          ]
+      },
+      {
+          "measureName": "disk.reads",
+          "dimensionValues": {
+              "server": "server2"
+          },
+          "timeValues": [
+              {
+                  "timestamp": 1423370200,
+                  "value": 23
+              },
+              {
+                  "timestamp": 1423370260,
+                  "value": 444
+              }
+          ]
+      },
+      {
+          "measureName": "cpu.used",
+          "dimensionValues": {
+              "server": "server1"
+          },
+          "timeValues": [
+              {
+                  "timestamp": 1423370200,
+                  "value": 50
+              },
+              {
+                  "timestamp": 1423370260,
+                  "value": 55
+              }
+          ]
+      },
+      {
+          "measureName": "cpu.used",
+          "dimensionValues": {
+              "server": "server2"
+          },
+          "timeValues": [
+              {
+                  "timestamp": 1423370200,
+                  "value": 12
+              },
+              {
+                  "timestamp": 1423370260,
+                  "value": 56
+              }
+          ]
+      }
+  ]
+
+
+
+.. rubric::  Examples of Using Cube Dataset
+
+An example of using a Cube Dataset is included in the CDAP Guide :ref:`Data Analysis with
+OLAP Cube <cdap-cube-guide>`.
