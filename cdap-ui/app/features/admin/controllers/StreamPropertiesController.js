@@ -5,7 +5,7 @@ angular.module(PKG.name + '.feature.admin')
     $scope.avro = {};
 
     var basePath = '/namespaces/' + $stateParams.nsadmin + '/streams/' + $stateParams.streamId;
-    $scope.formatOptions = ['avro', 'clf', 'csv', 'grok', 'syslog', 'text', 'tsv'];
+    $scope.formatOptions = ['avro', 'clf', 'csv', 'grok', 'syslog', 'text', 'tsv', 'stream'];
 
     $scope.reload = function () {
       dataSrc
@@ -71,7 +71,7 @@ angular.module(PKG.name + '.feature.admin')
       });
 
       var obj = {
-        name: $scope.format
+        name: $scope.format === 'stream' ? 'text' : $scope.format
       };
 
       // do not include properties on the request when schema field is empty
@@ -124,7 +124,16 @@ angular.module(PKG.name + '.feature.admin')
     };
 
     $scope.$watch('format', function() {
-      if ($scope.format !== 'grok') {
+      if ($scope.format === 'stream') {
+        $scope.properties = [{
+          name: 'body',
+          type: 'string'
+        }];
+
+        $scope.settings = [];
+        $scope.disableButtons = false;
+        return;
+      } else if ($scope.format !== 'grok') {
         $scope.disableButtons = false;
         return;
       }
