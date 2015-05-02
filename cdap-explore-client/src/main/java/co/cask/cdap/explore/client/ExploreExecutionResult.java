@@ -19,6 +19,7 @@ package co.cask.cdap.explore.client;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryResult;
+import co.cask.cdap.proto.QueryStatus;
 
 import java.io.Closeable;
 import java.util.Iterator;
@@ -58,4 +59,9 @@ public interface ExploreExecutionResult extends Iterator<QueryResult>, Closeable
    * @return true if this {@link ExploreExecutionResult} may contain results.
    */
   boolean canContainResults();
+
+  /**
+   * @return the {@link QueryStatus} of the execution.
+   */
+  QueryStatus getStatus();
 }
