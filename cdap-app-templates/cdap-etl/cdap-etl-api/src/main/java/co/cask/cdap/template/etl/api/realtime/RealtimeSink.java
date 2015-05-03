@@ -35,7 +35,8 @@ public abstract class RealtimeSink<I> implements EndPointStage, StageLifecycle<R
   }
 
   /**
-   * Initialize the Sink.
+   * Initialize the Sink. This method is guaranteed to be invoked before any calls to {@link RealtimeSink#write}
+   * are made.
    *
    * @param context {@link RealtimeContext}
    */
@@ -54,6 +55,9 @@ public abstract class RealtimeSink<I> implements EndPointStage, StageLifecycle<R
    */
   public abstract int write(Iterable<I> objects, DataWriter dataWriter) throws Exception;
 
+  /**
+   * Destroy the Sink.
+   */
   @Override
   public void destroy() {
     //no-op

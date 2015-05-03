@@ -39,7 +39,7 @@ public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT, Transf
 
   @Override
   public void initialize(TransformContext context) throws Exception {
-    transform.initialize(context);
+    // no-op
   }
 
   @Override

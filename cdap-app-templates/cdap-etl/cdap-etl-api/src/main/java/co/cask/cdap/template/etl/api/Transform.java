@@ -29,11 +29,20 @@ public abstract class Transform<IN, OUT> implements Transformation<IN, OUT, Tran
 
   private TransformContext context;
 
+  /**
+   * Initialize the Transform Stage.
+   *
+   * @param context {@link TransformContext}
+   * @throws Exception if there is any error during initialization
+   */
   @Override
   public void initialize(TransformContext context) throws Exception {
     this.context = context;
   }
 
+  /**
+   * Destroy the Transform Stage.
+   */
   @Override
   public void destroy() {
     //no-op

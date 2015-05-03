@@ -42,7 +42,7 @@ public abstract class BatchEndPointStage<T extends BatchContext> implements EndP
   public abstract void prepareRun(T context) throws Exception;
 
   /**
-   * Get the result of the Batch run. Used to perform any end of the run logic.
+   * Invoked after the Batch run finishes. Used to perform any end of the run logic.
    *
    * @param succeeded defines the result of batch execution: true if run succeeded, false otherwise
    * @param context batch execution context

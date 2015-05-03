@@ -38,7 +38,8 @@ public abstract class RealtimeSource<T> implements EndPointStage, StageLifecycle
   }
 
   /**
-   * Initialize the Source.
+   * Initialize the Source. This method is guaranteed to be invoked before any calls to {@link RealtimeSource#poll}
+   * are made.
 
    * @param context {@link RealtimeContext}
    */

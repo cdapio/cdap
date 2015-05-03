@@ -22,7 +22,7 @@ import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.Transformation;
 
 /**
- * Batch Source forms the first stage of a Batch ETL Pipeline. Along with configuring the Batch run, it
+ * Batch Source forms the first stage of a Batch ETL Pipeline. In addition to configuring the Batch run, it
  * also transforms the key value pairs provided by the Batch run into a single output type to be consumed by
  * subsequent transforms. By default, the value of the key value pair will be emitted.
  *
@@ -38,6 +38,13 @@ import co.cask.cdap.template.etl.api.Transformation;
 public abstract class BatchSource<KEY_IN, VAL_IN, OUT> extends BatchEndPointStage<BatchSourceContext>
   implements Transformation<KeyValue<KEY_IN, VAL_IN>, OUT, BatchSourceContext> {
 
+  /**
+   * Initialize the Batch Source stage. Executed inside the Batch Run. This method is guaranteed to be invoked
+   * before any calls to {@link BatchSource#transform} are made.
+   *
+   * @param context {@link BatchSourceContext}
+   * @throws Exception if there is any error during initialization
+   */
   @Override
   public void initialize(BatchSourceContext context) throws Exception {
     // no-op
@@ -46,6 +53,7 @@ public abstract class BatchSource<KEY_IN, VAL_IN, OUT> extends BatchEndPointStag
   /**
    * Transform the {@link KeyValue} pair produced by the input, as set in {@link BatchSource#prepareRun},
    * to a single object and emit it to the next stage. By default it emits the value.
+   * This method is invoked inside the Batch run.
    *
    * @param input the input to transform
    * @param emitter {@link Emitter} to emit data to the next stage
@@ -56,6 +64,9 @@ public abstract class BatchSource<KEY_IN, VAL_IN, OUT> extends BatchEndPointStag
     emitter.emit((OUT) input.getValue());
   }
 
+  /**
+   * Destroy the Batch Source stage. Executed at the end of the Batch run.
+   */
   @Override
   public void destroy() {
     // no-op

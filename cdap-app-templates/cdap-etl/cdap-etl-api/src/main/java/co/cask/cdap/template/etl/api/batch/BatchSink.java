@@ -22,7 +22,7 @@ import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.Transformation;
 
 /**
- * Batch Sink forms the last stage of a Batch ETL Pipeline. Along with configuring the Batch run, it
+ * Batch Sink forms the last stage of a Batch ETL Pipeline. In addition to configuring the Batch run, it
  * also transforms a single input object into a key value pair that the Batch run will output. By default, the input
  * object is used as both the key and value.
  *
@@ -38,6 +38,13 @@ import co.cask.cdap.template.etl.api.Transformation;
 public abstract class BatchSink<IN, KEY_OUT, VAL_OUT> extends BatchEndPointStage<BatchSinkContext>
   implements Transformation<IN, KeyValue<KEY_OUT, VAL_OUT>, BatchSinkContext> {
 
+  /**
+   * Initialize the Batch Sink stage. Executed inside the Batch Run. This method is guaranteed to be invoked
+   * before any calls to {@link BatchSink#transform} are made.
+   *
+   * @param context {@link BatchSinkContext}
+   * @throws Exception if there is any error during initialization
+   */
   @Override
   public void initialize(BatchSinkContext context) throws Exception {
     // no-op
@@ -46,6 +53,7 @@ public abstract class BatchSink<IN, KEY_OUT, VAL_OUT> extends BatchEndPointStage
   /**
    * Transform the input received from previous stage to a {@link KeyValue} pair which can be consumed by the output,
    * as set in {@link BatchSink#prepareRun}. By default, the input object is used as both key and value.
+   * This method is invoked inside the Batch run.
    *
    * @param input the input to transform
    * @param emitter {@link Emitter} to emit data to the next stage
@@ -56,6 +64,9 @@ public abstract class BatchSink<IN, KEY_OUT, VAL_OUT> extends BatchEndPointStage
     emitter.emit(new KeyValue<>((KEY_OUT) input, (VAL_OUT) input));
   }
 
+  /**
+   * Destroy the Batch Sink stage. Executed at the end of the Batch Run.
+   */
   @Override
   public void destroy() {
     // no-op

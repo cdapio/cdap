@@ -30,7 +30,7 @@ public interface StageLifecycle<T extends TransformContext> extends Destroyable 
    * Initialize the Stage. Can be used to setup resources.
    *
    * @param context execution context
-   * @throws Exception if there is any error during initialization.
+   * @throws Exception if there is any error during initialization
    */
   void initialize(T context) throws Exception;
 }

@@ -110,20 +110,20 @@ public class ETLMapReduce extends AbstractMapReduce {
 
   @Override
   public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-    teardownSource(context, succeeded);
-    teardownSink(context, succeeded);
+    onRunFinishSource(context, succeeded);
+    onRunFinishSink(context, succeeded);
     LOG.info("Batch Run for Adapter {} : {}", context.getRuntimeArguments().get(Constants.ADAPTER_NAME), succeeded);
   }
 
-  private void teardownSource(MapReduceContext context, boolean succeeded) throws Exception {
+  private void onRunFinishSource(MapReduceContext context, boolean succeeded) throws Exception {
     BatchSourceContext sourceContext = new MapReduceSourceContext(context, mrMetrics, sourcePluginId);
-    LOG.info("Teardown Source : {}", batchSource.getClass().getName());
+    LOG.info("On RunFinish Source : {}", batchSource.getClass().getName());
     batchSource.onRunFinish(succeeded, sourceContext);
   }
 
-  private void teardownSink(MapReduceContext context, boolean succeeded) throws Exception {
+  private void onRunFinishSink(MapReduceContext context, boolean succeeded) throws Exception {
     BatchSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics, sinkPluginId);
-    LOG.info("Teardown Sink : {}", batchSink.getClass().getName());
+    LOG.info("On RunFinish Sink : {}", batchSink.getClass().getName());
     batchSink.onRunFinish(succeeded, sinkContext);
   }
 

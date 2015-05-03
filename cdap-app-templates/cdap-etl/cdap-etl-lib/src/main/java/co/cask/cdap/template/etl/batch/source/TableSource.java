@@ -93,11 +93,6 @@ public class TableSource extends BatchReadableSource<byte[], Row, StructuredReco
   }
 
   @Override
-  public void prepareRun(BatchSourceContext context) {
-    super.prepareRun(context);
-  }
-
-  @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
     Preconditions.checkArgument(tableConfig.schemaStr != null && !tableConfig.schemaStr.isEmpty(),
