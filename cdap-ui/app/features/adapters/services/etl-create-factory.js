@@ -3,6 +3,9 @@ angular.module(PKG.name + '.feature.adapters')
     var filterFilter = $filter('filter');
     function AdapterApiFactory(scope) {
       this.scope = scope;
+      this.scope.defaultSources = [];
+      this.scope.defaultSinks = [];
+      this.scope.defaultTransforms = [];
       this.dataSrc = new MyDataSource(scope);
     }
 
