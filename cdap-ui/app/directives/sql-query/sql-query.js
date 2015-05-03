@@ -4,12 +4,11 @@ angular.module(PKG.name + '.commons')
     return {
       restrict: 'E',
       scope: {
-        panel: '=',
         type: '=',
         name: '='
       },
       templateUrl: 'sql-query/sql-query.html',
-      controller: function ($scope, MyDataSource, $state) {
+      controller: function ($scope, MyDataSource, $state, EventPipe) {
 
         var dataSrc = new MyDataSource($scope);
 
@@ -27,8 +26,8 @@ angular.module(PKG.name + '.commons')
               }
             })
             .then(function () {
-              // $scope.getQueries();
-              $scope.panel++;
+
+              EventPipe.emit('explore.newQuery');
             });
         };
 

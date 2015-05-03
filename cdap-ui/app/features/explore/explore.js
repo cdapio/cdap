@@ -1,9 +1,9 @@
 angular.module(PKG.name + '.feature.explore')
-  .controller('GlobalExploreController', function ($scope, MyDataSource, $state, myHelpers) {
+  .controller('GlobalExploreController', function ($scope, MyDataSource, $state, myHelpers, EventPipe) {
 
     var dataSrc = new MyDataSource($scope);
 
-    $scope.activePanel = 0;
+    $scope.activePanel = [0];
     $scope.openGeneral = true;
     $scope.openSchema = false;
     $scope.openPartition = false;
@@ -23,6 +23,11 @@ angular.module(PKG.name + '.feature.explore')
       $scope.selectTable(res[0]);
     });
 
+    EventPipe.on('explore.newQuery', function() {
+      if ($scope.activePanel.indexOf(1) === -1) {
+        $scope.activePanel = [0,1];
+      }
+    });
 
     $scope.selectTable = function (data) {
       // Passing this info to sql-query directive

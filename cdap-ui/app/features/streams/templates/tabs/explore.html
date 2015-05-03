@@ -1,6 +1,7 @@
 <section class="panel-group explore"
      ng-controller="CdapStreamExploreController"
      ng-model="activePanel"
+     data-allow-multiple="true"
      bs-collapse>
 
   <!-- VIEW DATA -->
@@ -8,8 +9,8 @@
     <div class="panel-heading" bs-collapse-toggle>
       <h3 class="panel-title">
         <span
-          ng-class="{'fa-caret-right': activePanel!==0,
-                     'fa-caret-down': activePanel===0}"
+          ng-class="{'fa-caret-right': activePanel.indexOf(0) === -1,
+                     'fa-caret-down': activePanel.indexOf(0) !== -1}"
           class="fa fa-fw"
         ></span>View Data
       </h3>
@@ -74,29 +75,29 @@
 
   <!-- WRITE & EXECUTE SQL -->
   <div class="panel panel-explore">
-    <div class="panel-heading">
-      <h3 class="panel-title" bs-collapse-toggle>
+    <div class="panel-heading" bs-collapse-toggle>
+      <h3 class="panel-title">
         <span
-          ng-class="{'fa-caret-right': activePanel!==1,
-                     'fa-caret-down': activePanel===1}"
+          ng-class="{'fa-caret-right': activePanel.indexOf(1) === -1,
+                     'fa-caret-down': activePanel.indexOf(1) !== -1}"
           class="fa fa-fw"
         ></span>Write &amp; Execute SQL
       </h3>
     </div>
     <div class="panel-collapse" bs-collapse-target>
       <div class="panel-body">
-        <my-sql-query data-panel="activePanel" data-type="'stream'" data-name="name"></my-sql-query>
+        <my-sql-query data-type="'stream'" data-name="name"></my-sql-query>
       </div>
     </div>
   </div>
 
   <!-- VIEW QUERIES -->
   <div class="panel panel-explore">
-    <div class="panel-heading">
-      <h3 class="panel-title" bs-collapse-toggle>
+    <div class="panel-heading" bs-collapse-toggle>
+      <h3 class="panel-title">
         <span
-          ng-class="{'fa-caret-right': activePanel!==2,
-                     'fa-caret-down': activePanel===2}"
+          ng-class="{'fa-caret-right': activePanel.indexOf(2) === -1,
+                     'fa-caret-down': activePanel.indexOf(2) !== -1}"
           class="fa fa-fw"
         ></span>View Queries
       </h3>
@@ -104,7 +105,7 @@
     <div class="panel-collapse" bs-collapse-target>
       <div class="panel-body">
 
-        <my-view-queries ng-if="activePanel === 2"></my-view-queries>
+        <my-view-queries></my-view-queries>
 
       </div>
     </div>

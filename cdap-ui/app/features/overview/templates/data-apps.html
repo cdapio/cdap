@@ -52,12 +52,6 @@
       </div>
       <hr />
       <div class="text-left" ng-controller="AppsSectionCtrl">
-        <!-- <my-file-select
-            data-button-label="Add Data"
-            data-button-disabled="true"
-            data-button-icon="fa-plus"
-            on-file-select="onFileSelected($files)">
-        </my-file-select> -->
         <a class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $state.params.namespace})">
           <span class="fa fa-plus"></span>
           <span>Add Stream</span>
@@ -83,16 +77,12 @@
               <span class="fa fa-list-ul"></span>
                All Adapters
             </a>
-<!--             <a ui-sref="apps.list" class="btn btn-default">
-              <span class="fa fa-pencil-square-o"></span>
-               <span>ETL</span>
-            </a> -->
-            <my-file-select
-                data-button-label="Add App"
-                data-button-icon="fa-plus"
-                on-file-select="onFileSelected($files)"
-                ng-controller="AppsSectionCtrl">
-            </my-file-select>
+            <a ui-sref="admin.namespace.detail.apps({nsadmin: $state.params.namespace})"
+               class="btn btn-default">
+              <span class="fa fa-plus"></span>
+              <span> Add App </span>
+            </a>
+
           </div>
         </div>
       </div>
@@ -117,14 +107,14 @@
       </div>
       <hr />
       <div class="text-left" ng-controller="AppsSectionCtrl">
-        <my-file-select
-            data-button-label="Add App"
-            data-button-icon="fa-plus"
-            on-file-select="onFileSelected($files)">
-        </my-file-select>
+        <a ui-sref="admin.namespace.detail.apps({nsadmin: $state.params.namespace})"
+           class="btn btn-default">
+          <span class="fa fa-plus"></span>
+          <span> Add App </span>
+        </a>
         <a ui-sref="adapters.create" class="btn btn-default">
           <span class="fa fa-plus"></span>
-          <span>Add ETL App</span>
+          <span>Add Adapter</span>
         </a>
       </div>
     </div>

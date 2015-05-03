@@ -37,5 +37,12 @@
 
 <my-tabs
   data-tabs-list="['Status', 'Explore', 'Programs', 'Metadata']"
-  data-tabs-partial-path="/assets/features/datasets/templates/tabs/">
+  data-tabs-partial-path="/assets/features/datasets/templates/tabs/"
+  ng-if="explorable">
+</my-tabs>
+
+<my-tabs
+  data-tabs-list="['Programs']"
+  data-tabs-partial-path="/assets/features/datasets/templates/tabs/"
+  ng-if="!explorable">
 </my-tabs>

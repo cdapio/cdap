@@ -44,6 +44,6 @@ public class ApplicationTemplateCommands extends CommandSet<Command> implements 
 
   @Override
   public String getCategory() {
-    return CommandCategory.LIFECYCLE.getName();
+    return CommandCategory.APPLICATION_LIFECYCLE.getName();
   }
 }

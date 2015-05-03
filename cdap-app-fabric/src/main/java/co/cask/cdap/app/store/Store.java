@@ -47,6 +47,17 @@ import javax.annotation.Nullable;
 public interface Store {
 
   /**
+   * Compare and set operation that allow to compare and set expected and update status.
+   * Implementation of this method should guarantee that the operation is atomic or in transaction.
+   *
+   * @param id              Info about program
+   * @param pid             The run id
+   * @param expectedStatus  The expected value
+   * @param updateStatus    The new value
+   */
+  void compareAndSetStatus(Id.Program id, String pid, ProgramRunStatus expectedStatus, ProgramRunStatus updateStatus);
+
+  /**
    * Loads a given program.
    *
    * @param program id of the program

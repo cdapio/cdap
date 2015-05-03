@@ -149,6 +149,11 @@ Glossary
       the data model and the schema that represents the data are optimized for querying
       and aggregating over time ranges.
 
+   Exploring
+      Streams and Datasets in CDAP can be explored through ad-hoc SQL-like queries. To
+      enable exploration, you must set several properties when creating the Stream or
+      Dataset, and the files in a Dataset must meet certain requirements.
+
    .. ETL and Application Templates
 
    Structured Record
