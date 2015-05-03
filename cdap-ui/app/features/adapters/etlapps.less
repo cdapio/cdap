@@ -151,6 +151,14 @@ body.theme-cdap.state-adapters-create {
             border-bottom: 1px solid lightgray;
             background-color: transparent;
             &:last-child { border: 1px solid transparent; }
+
+            .description-overflow {
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              color: darkgray;
+              font-size: 11px;
+            }
           }
         }
       }
@@ -194,7 +202,6 @@ body.theme-cdap.state-adapters-create {
     .panel-heading { cursor: pointer; }
   }
 
-  .tooltip.top { white-space: nowrap; }
 }
 
 body.theme-cdap.state-adapters-list {
