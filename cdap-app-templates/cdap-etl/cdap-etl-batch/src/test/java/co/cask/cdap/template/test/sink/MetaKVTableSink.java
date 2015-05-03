@@ -59,4 +59,3 @@ public class MetaKVTableSink extends KVTableSink {
     table.write(FINISH_RUN_KEY, FINISH_RUN_KEY);
   }
 }
-
