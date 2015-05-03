@@ -1,7 +1,22 @@
 angular.module(PKG.name + '.feature.datasets')
-  .controller('CdapDatasetsDetailController', function($scope, $state, MyDataSource, $alert) {
+  .controller('CdapDatasetsDetailController', function($scope, $state, MyDataSource, $alert, $filter) {
+    var filterFilter = $filter('filter');
 
     var dataSrc = new MyDataSource($scope);
+    $scope.explorable = null;
+
+    dataSrc.request({
+      _cdapNsPath: '/data/explore/tables'
+    })
+    .then(function(res) {
+      var match = filterFilter(res, $state.params.datasetId);
+
+      if (match.length === 0) {
+        $scope.explorable = false;
+      } else {
+        $scope.explorable = true;
+      }
+    });
 
     $scope.truncate = function() {
       dataSrc.request({
