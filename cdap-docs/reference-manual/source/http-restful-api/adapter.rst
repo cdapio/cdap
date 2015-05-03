@@ -341,6 +341,8 @@ Application Template (pretty-printed and reformatted to fit)::
 Adapters
 ========
 
+.. _http-restful-api-adapter-creating-adapter:
+
 Creating an Adapter 
 -------------------
 To create an Adapter, submit an HTTP PUT request::
