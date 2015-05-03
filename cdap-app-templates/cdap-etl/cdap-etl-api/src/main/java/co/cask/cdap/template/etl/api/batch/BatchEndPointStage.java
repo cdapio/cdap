@@ -46,9 +46,8 @@ public abstract class BatchEndPointStage<T extends BatchContext> implements EndP
    *
    * @param succeeded defines the result of batch execution: true if run succeeded, false otherwise
    * @param context batch execution context
-   * @throws Exception if there's an error during this method invocation
    */
-  public void onRunFinish(boolean succeeded, T context) throws Exception {
+  public void onRunFinish(boolean succeeded, T context) {
     // no-op
   }
 }

@@ -115,16 +115,24 @@ public class ETLMapReduce extends AbstractMapReduce {
     LOG.info("Batch Run for Adapter {} : {}", context.getRuntimeArguments().get(Constants.ADAPTER_NAME), succeeded);
   }
 
-  private void onRunFinishSource(MapReduceContext context, boolean succeeded) throws Exception {
+  private void onRunFinishSource(MapReduceContext context, boolean succeeded) {
     BatchSourceContext sourceContext = new MapReduceSourceContext(context, mrMetrics, sourcePluginId);
     LOG.info("On RunFinish Source : {}", batchSource.getClass().getName());
-    batchSource.onRunFinish(succeeded, sourceContext);
+    try {
+      batchSource.onRunFinish(succeeded, sourceContext);
+    } catch (Throwable t) {
+      LOG.warn("Exception when calling onRunFinish on {}", batchSource, t);
+    }
   }
 
-  private void onRunFinishSink(MapReduceContext context, boolean succeeded) throws Exception {
+  private void onRunFinishSink(MapReduceContext context, boolean succeeded) {
     BatchSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics, sinkPluginId);
     LOG.info("On RunFinish Sink : {}", batchSink.getClass().getName());
-    batchSink.onRunFinish(succeeded, sinkContext);
+    try {
+      batchSink.onRunFinish(succeeded, sinkContext);
+    } catch (Throwable t) {
+      LOG.warn("Exception when calling onRunFinish on {}", batchSink, t);
+    }
   }
 
   /**
