@@ -88,6 +88,10 @@ BOLD='\033[1m'
 NC='\033[0m'
 WARNING="${RED}${BOLD}WARNING:${NC}"
 
+function echo_red_bold() {
+  echo -e "${RED}${BOLD}${1}${NC}${2}"
+}
+
 ZIP_FILE_NAME=$HTML
 ZIP="${ZIP_FILE_NAME}.zip"
 
