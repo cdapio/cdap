@@ -11,6 +11,6 @@ CDAP Users’ Manual Table of Contents
 
     Introduction <index>
     ETL Overview <etl/index>
-    ETL Plugins <etl/plugins>
+    ETL Templates <etl/templates>
     Creating An ETL Adapter <etl/creating>
     Operating An ETL Adapter <etl/operations>

@@ -5,23 +5,30 @@
 
 .. _http-restful-api-adapter:
 
-===========================================================
-Application Template and Adapter HTTP RESTful API
-===========================================================
+========================================================
+Application Template and Adapter HTTP RESTful API (Beta)
+========================================================
 
 Use the CDAP Application Template and Adapter HTTP API to obtain a list of available
 Application Templates and Plugins, and create, delete, and manage the lifecycle of
 Adapters.
 
 Note that the ETL Templates are a type of Application Template, specifically designed for
-creating ETL Adapters. See the Developers’ Manual Building Blocks section on ETL Adapters
-for additional information.[link]
+creating ETL Adapters. See the Users' Manual :ref:`Introduction to Application Templates
+and ETL <users-intro-application-templates>` for information on creating Adaptors and
+operating them.
+
+See the Developers’ Manual Advanced section on :ref:`Creating Application Templates
+<advanced-custom-app-template>` for information on creating custom Application Templates,
+Plugins and Adaptors.
 
 
 .. highlight:: console
 
 Application Templates
 =====================
+
+.. _http-restful-api-adapter-application-templates:
 
 Available Application Templates 
 -------------------------------
@@ -227,7 +234,8 @@ where
      - Plugin name
 
 This will return a JSON String map that lists the details of the Plugin. This is the
-information needed to configure the plugin when used in creating an Adapter.
+information needed when configuring an Adapter using the Plugin, the type of each
+property, and whether it is a mandatory property (*"required"*).
 
 Example output for the ``Database`` plugin of type ``source`` of the ``etlBatch``
 Application Template (pretty-printed and reformatted to fit)::
@@ -328,8 +336,10 @@ Application Template (pretty-printed and reformatted to fit)::
     }
   ]
 
+.. _http-restful-api-adapter-adapters:
+
 Adapters
-=====================
+========
 
 Creating an Adapter 
 -------------------
@@ -337,7 +347,8 @@ To create an Adapter, submit an HTTP PUT request::
 
   PUT <base-url>/namespaces/<namespace-id>/adapters/<adapter-id>
 
-with the path to the Adapter configuration file [link] as the body of the request::
+with the path to the :ref:`Adapter configuration file
+<users-etl-configuration-file-format>` as the body of the request::
 
   <config-path>
 
@@ -356,8 +367,8 @@ where
    * - ``<config-path>``
      - Path to the configuration file
 
-The format of the configuration file is described in the Developers’ Manual section
-on Adapters. [link]
+The format of the configuration file is described in the Users’ Manual section
+on :ref:`Creating an Adapter <users-etl-configuration-file-format>`.
 
 .. rubric::  Example
 
@@ -370,6 +381,8 @@ on Adapters. [link]
    * - Description
      - Creates an Adapter *streamAdapter* in the namespace *default* using the configuration
        file ``config.json``
+
+.. _http-restful-api-adapter-listing-adapters:
 
 Listing Existing Adapters
 -------------------------
@@ -658,7 +671,7 @@ fit)::
   ]
 
 
-Retrieving Adapter logs
+Retrieving Adapter Logs
 -----------------------
 As an Adaptor is an instantiation of a particular program (a Workflow, MapReduce, Workers, etc.),
 the logs for an Adaptor are the logs of the underlying program. To retrieve these logs
@@ -681,4 +694,74 @@ you can formulate your request.
 
 The :ref:`CDAP CLI <cli>` has a command (``get adapter logs <adaptor-id>``) that does this directly.
 
+
+Retrieving Adapter Metrics
+--------------------------
+To retrieve the metrics of an Adapter, use these RESTful API endpoints.
+
+
+.. rubric:: Find Available Adapters
+
+To search for the available Adapters, if metrics have been emitted by the adapters, submit an HTTP GET request::
+
+  GET <base-url>/metrics/search?target=tags&tag=namespace:<namespace-id>
+
+where
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace-id>``
+     - Namespace ID
+
+The command will return available Adapters in *namespace-id* if metrics have been emitted by the Adapters.
+
+
+.. rubric:: Find Available Metrics
+
+To search for the available metrics for an Adapter, submit an HTTP GET request::
+
+  GET <base-url>/metrics/search?target=metric&tag=namespace:<namespace-id>&tag=adapter:<adapter-id>
+
+where
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace-id>``
+     - Namespace ID
+   * - ``<adapter-id>``
+     - Adapter ID
+
+
+.. rubric:: Aggregate Available Values
+
+To retrieve the aggregated value for a metric emitted by an Adapter, submit an HTTP GET request::
+
+  GET <base-url>/metrics/query?tag=namespace:<namespace-id>&tag=adapter:<adapter-id>&metric=<metric-id>&aggregate=true
+
+where
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace-id>``
+     - Namespace ID
+   * - ``<adapter-id>``
+     - Adapter ID
+   * - ``<metric-id>``
+     - Metric ID
+
+The command will return the aggregate value for the metric *metric-id* emitted by *adapter-id* in
+*namespace-id* across all runs of the Adapter. If you would like the metrics for a
+particular run, specify an additional tag of ``tag=run:<run-id>`` in the above query.
 

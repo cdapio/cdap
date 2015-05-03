@@ -68,6 +68,6 @@ CDAP Developers’ Manual
 .. _advanced: advanced/index.html
 
 - |advanced|_ Covers **advanced topics on CDAP** that will be of interest to
-  developers who want a deeper dive into CDAP, with presentations on the **Data
-  Exploration of Datasets,** suggested **Best Practices for CDAP Development,** and on
-  **Adding a Custom Logback** to a CDAP application.
+  developers who want a deeper dive into CDAP, with presentations on ** suggested **Best
+  Practices for CDAP Development,** on **Adding a Custom Logback** to a CDAP
+  application, and on creating **custom Application Templates and Adapters**.

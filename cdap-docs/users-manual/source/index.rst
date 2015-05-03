@@ -9,20 +9,48 @@
 CDAP Users’ Manual
 ==================================================
 
-Introduction
-============
-The motivation behind the CDAP Users’ Manual is that the users of CDAP should be able
-to build solutions to common big data problems without writing a single line of Java code.
+.. _users-intro-application-templates:
 
-Through the use of *Application Templates* and the creation of *Adapters*, a CDAP User can
-take CDAP's out-of-the-box capabilities and perform common tasks such as the ETL (Extraction,
-Transformation and Loading) of data.
+Introduction to Application Templates
+=====================================
+CDAP allows developers to create distributed applications using the foundational
+application building blocks (Datasets, Streams, Flows, MapReduce, Services, Workflows and
+Workers). However, there are use cases that require that a similar type of action be
+performed in different circumstances, differing only slightly in each case. 
+
+For example, perhaps you need to copy data from five different relational tables to CDAP
+Datasets periodically; you wouldn't want to deploy five different applications to
+perform these tasks. Instead, you would want to reuse a common program that can be
+configured to perform similar actions on differently configured data sources. In situations
+like these, you can create or use an *Application Template*.
+
+An **Application Template** is a blueprint that can be configured in different ways to
+create multiple instances or *Adapters* of the same application. A useful analogy is that of
+Java classes and instances. In Java, you often write a Class that performs a certain
+function, but behaves a little differently based on arguments that are passed into its
+constructor. In order to create an instance of the class, you call its constructor and
+pass in arguments that specify the particular behavior you want. 
+
+Similarly, an Application Template performs generally the same function, but behaves
+differently depending on the configuration it is given. To create an instance of an
+Application Template |---| called an *Adapter* |---| you make a REST call providing the
+configuration.
+
+Users of CDAP manage the lifecycle of an **Adapter** in a very similar manner to managing the
+life cycle of a CDAP program.
+
+CDAP comes packaged with two Application Templates to create ETL (Extract Transform Load)
+pipelines, simply by configuring the ETL templates and not writing any code at all. In the
+future, a variety of application templates will be delivered. The framework is extensible:
+users can write their own application templates if they so chose, and can manage the
+lifecycle of their custom application templates using CDAP.
+
 
 ETL (Beta)
 ==========
-ETL is **Extract**, **Transformation** and **Loading** of data, and is a common first-step in any data
+ETL is **Extract**, **Transformation** and **Loading** of data, a common first-step in any data
 application. CDAP endeavors to make performing ETL possible out-of-box without writing
-code; instead, you just configure CDAP appropriately and then operate it.
+code; instead, you just configure CDAP appropriately and operate it.
 
 These sections describe:
 
@@ -32,22 +60,21 @@ These sections describe:
 - |overview|_ An introduction to ETL, ETL Templates, Adapters, and Plugins.
 
 
-.. |etl-plugins| replace:: **ETL Plugins:**
-.. _etl-plugins: etl/plugins.html
+.. |etl-templates| replace:: **ETL Templates:**
+.. _etl-templates: etl/templates.html
 
-- |etl-plugins|_ Data sources, data sinks, and transformations; included with CDAP,
-  available for use in ETL Adapters.
+- |etl-templates|_ Details on exploring Application Templates using RESTful APIs.
 
 
 .. |etl-creating| replace:: **Creating An ETL Adapter:**
 .. _etl-creating: etl/creating.html
 
-- |etl-creating|_ Covers using the Plugins included with CDAP to create an ETL Adapter.
+- |etl-creating|_ Covers using the ETL Application Templates and Plugins included with CDAP to create an ETL Adapter.
 
 
 .. |etl-operations| replace:: **Operating An ETL Adapter:**
 .. _etl-operations: etl/operations.html
 
-- |etl-operations|_ Covers using an ETL Adapter created with the CDAP ETL Templates.
+- |etl-operations|_ Covers using an ETL Adapter to perform ETL.
 
 

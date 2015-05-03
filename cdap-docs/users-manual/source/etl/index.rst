@@ -108,11 +108,20 @@ sink plugins to add their own.
 
 Template and Plugin Details
 ===========================
-Details of templates and the required properties for sources, transformations, and sinks
-can be explored using RESTful APIs.
 
-Note that while Adapters are namespaced, Templates and Plugins are not namespaced. If you
-are creating a custom Plugin to add to either the existing Templates or your own Template,
-its name needs to not collide with existing names.
+.. |templates| replace:: **ETL Template and Plugin Details:**
+.. _templates: templates.html
+
+- |templates|_ Detailed description of available ETL Application Template and Plugins.
+
+.. |creating| replace:: **Creating An ETL Adapter:**
+.. _creating: creating.html
+
+- |creating|_ Steps for creating an ETL Adaptor from an ETL Application Template.
+
+.. |operations| replace:: **Operating An ETL Adapter:**
+.. _operations: operations.html
+
+- |operations|_ Lifecycle controls for operating an ETL Adapter.
 
 
