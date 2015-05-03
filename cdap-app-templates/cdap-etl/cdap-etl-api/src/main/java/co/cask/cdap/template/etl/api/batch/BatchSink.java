@@ -19,6 +19,7 @@ package co.cask.cdap.template.etl.api.batch;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.template.etl.api.Emitter;
+import co.cask.cdap.template.etl.api.StageLifecycle;
 import co.cask.cdap.template.etl.api.Transformation;
 
 /**
@@ -36,7 +37,7 @@ import co.cask.cdap.template.etl.api.Transformation;
  */
 @Beta
 public abstract class BatchSink<IN, KEY_OUT, VAL_OUT> extends BatchEndPointStage<BatchSinkContext>
-  implements Transformation<IN, KeyValue<KEY_OUT, VAL_OUT>, BatchSinkContext> {
+  implements Transformation<IN, KeyValue<KEY_OUT, VAL_OUT>>, StageLifecycle<BatchSinkContext> {
 
   /**
    * Initialize the Batch Sink stage. Executed inside the Batch Run. This method is guaranteed to be invoked

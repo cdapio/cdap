@@ -19,6 +19,7 @@ package co.cask.cdap.template.etl.api.batch;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.template.etl.api.Emitter;
+import co.cask.cdap.template.etl.api.StageLifecycle;
 import co.cask.cdap.template.etl.api.Transformation;
 
 /**
@@ -36,7 +37,7 @@ import co.cask.cdap.template.etl.api.Transformation;
  */
 @Beta
 public abstract class BatchSource<KEY_IN, VAL_IN, OUT> extends BatchEndPointStage<BatchSourceContext>
-  implements Transformation<KeyValue<KEY_IN, VAL_IN>, OUT, BatchSourceContext> {
+  implements Transformation<KeyValue<KEY_IN, VAL_IN>, OUT>, StageLifecycle<BatchSourceContext> {
 
   /**
    * Initialize the Batch Source stage. Executed inside the Batch Run. This method is guaranteed to be invoked

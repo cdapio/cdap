@@ -24,7 +24,7 @@ import co.cask.cdap.api.annotation.Beta;
  * @param <T> execution context
  */
 @Beta
-public interface StageLifecycle<T extends TransformContext> extends Destroyable {
+public interface StageLifecycle<T> extends Destroyable {
 
   /**
    * Initialize the Stage. Can be used to setup resources.

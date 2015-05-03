@@ -25,7 +25,7 @@ import co.cask.cdap.api.annotation.Beta;
  * @param <OUT> Type of output object
  */
 @Beta
-public abstract class Transform<IN, OUT> implements Transformation<IN, OUT, TransformContext> {
+public abstract class Transform<IN, OUT> implements StageLifecycle<TransformContext>, Transformation<IN, OUT> {
 
   private TransformContext context;
 

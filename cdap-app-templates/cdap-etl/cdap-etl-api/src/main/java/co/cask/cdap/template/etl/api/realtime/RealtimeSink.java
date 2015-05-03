@@ -24,7 +24,7 @@ import co.cask.cdap.template.etl.api.StageLifecycle;
 /**
  * Realtime Sink.
  *
- * @param <I> Object sink operates on
+ * @param <I> Type of object that sink operates on
  */
 @Beta
 public abstract class RealtimeSink<I> implements EndPointStage, StageLifecycle<RealtimeContext> {

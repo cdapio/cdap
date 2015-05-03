@@ -18,7 +18,6 @@ package co.cask.cdap.template.etl.common;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.template.etl.api.Emitter;
-import co.cask.cdap.template.etl.api.TransformContext;
 import co.cask.cdap.template.etl.api.Transformation;
 
 /**
@@ -28,7 +27,7 @@ import co.cask.cdap.template.etl.api.Transformation;
  * @param <IN> Type of input object
  * @param <OUT> Type of output object
  */
-public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT, TransformContext> {
+public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT> {
   private final Transformation transform;
   private final Metrics metrics;
 
@@ -38,18 +37,8 @@ public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT, Transf
   }
 
   @Override
-  public void initialize(TransformContext context) throws Exception {
-    // no-op
-  }
-
-  @Override
   public void transform(IN input, Emitter<OUT> emitter) throws Exception {
     metrics.count("records.in", 1);
     transform.transform(input, emitter);
-  }
-
-  @Override
-  public void destroy() {
-    transform.destroy();
   }
 }

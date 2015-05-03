@@ -23,10 +23,9 @@ import co.cask.cdap.api.annotation.Beta;
  *
  * @param <IN> Type of input object
  * @param <OUT> Type of output object
- * @param <T> execution context
  */
 @Beta
-public interface Transformation<IN, OUT, T extends TransformContext> extends StageLifecycle<T> {
+public interface Transformation<IN, OUT> {
 
   /**
    * Transform the input and emit output using {@link Emitter}.
