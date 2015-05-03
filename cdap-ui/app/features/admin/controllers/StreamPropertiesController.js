@@ -74,8 +74,9 @@ angular.module(PKG.name + '.feature.admin')
         name: $scope.format === 'stream' ? 'text' : $scope.format
       };
 
+      var exceptions = ['clf', 'syslog', 'avro'];
       // do not include properties on the request when schema field is empty
-      if (properties.length !== 0 && $scope.format !== 'clf' && $scope.format !== 'syslog' && $scope.format !== 'avro') {
+      if (properties.length !== 0 && exceptions.indexOf($scope.format) === -1 ) {
         obj.schema = {
           type: 'record',
           name: $stateParams.streamid + 'Body',
@@ -93,7 +94,7 @@ angular.module(PKG.name + '.feature.admin')
         }
       });
       // do not include settings on request when there is no setting defined
-      if (Object.keys(settings).length !== 0 && $scope.format !== 'clf' && $scope.format !== 'syslog' && $scope.format !== 'avro') {
+      if (Object.keys(settings).length !== 0 && exceptions.indexOf($scope.format) === -1 ) {
         obj.settings = settings;
       }
 
