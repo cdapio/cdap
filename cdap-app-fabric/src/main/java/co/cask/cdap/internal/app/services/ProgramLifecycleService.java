@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
@@ -27,7 +28,10 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunRecord;
+import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
@@ -37,8 +41,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -48,6 +55,7 @@ import javax.annotation.Nullable;
 public class ProgramLifecycleService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramLifecycleService.class);
 
+  private final ScheduledExecutorService scheduledExecutorService;
   private final Store store;
   private final ProgramRuntimeService runtimeService;
 
@@ -55,16 +63,29 @@ public class ProgramLifecycleService extends AbstractIdleService {
   public ProgramLifecycleService(Store store, ProgramRuntimeService runtimeService) {
     this.store = store;
     this.runtimeService = runtimeService;
+    this.scheduledExecutorService = Executors.newScheduledThreadPool(1);
   }
 
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting ProgramLifecycleService");
+
+    scheduledExecutorService.scheduleWithFixedDelay(new RunRecordsCorrectorRunnable(this, store, runtimeService),
+                                                    2L, 600L, TimeUnit.SECONDS);
   }
 
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Shutting down ProgramLifecycleService");
+
+    scheduledExecutorService.shutdown();
+    try {
+      if (!scheduledExecutorService.awaitTermination(5, TimeUnit.SECONDS)) {
+        scheduledExecutorService.shutdownNow();
+      }
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+    }
   }
 
   private Program getProgram(Id.Program id, ProgramType programType) throws IOException, ProgramNotFoundException {
@@ -191,4 +212,67 @@ public class ProgramLifecycleService extends AbstractIdleService {
     }
     return null;
   }
+
+  /**
+   * Fix all the possible inconsistent states for RunRecords that shows it is in RUNNING state but actually not
+   * via check to {@link ProgramRuntimeService}.
+   *
+   * @param programType The type of programs the run records nee to validate and update.
+   * @param store The data store that manages run records instances for all programs.
+   * @param runtimeService The {@link ProgramRuntimeService} instance to check the actual state of the program.
+   */
+  private  void validateAndCorrectRunningRunRecords(ProgramType programType, Store store,
+                                                  ProgramRuntimeService runtimeService) {
+      final Map<RunId, RuntimeInfo> runIdToRuntimeInfo = runtimeService.list(programType);
+
+    List<RunRecord> invalidRunRecords = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecord>() {
+      @Override
+      public boolean apply(@Nullable RunRecord input) {
+        if (input == null) {
+          return false;
+        }
+        // Check if it is actually running
+        String runId = input.getPid();
+        return !runIdToRuntimeInfo.containsKey(RunIds.fromString(runId));
+      }
+    });
+
+    if (!invalidRunRecords.isEmpty()) {
+      LOG.debug("Found {} RunRecords with RUNNING status but the program not actually running.",
+                invalidRunRecords.size());
+    }
+
+    // Now lets correct the invalid RunRecords
+    for (RunRecord rr : invalidRunRecords) {
+      String runId = rr.getPid();
+      RuntimeInfo runtimeInfo = runIdToRuntimeInfo.get(RunIds.fromString(runId));
+      store.compareAndSetStatus(runtimeInfo.getProgramId(), runId, ProgramController.State.ALIVE.getRunStatus(),
+                                ProgramController.State.ERROR.getRunStatus());
+    }
+  }
+
+  /**
+   * Helper class to run in separate thread to validate t
+   */
+  public static class RunRecordsCorrectorRunnable implements Runnable {
+    private final ProgramLifecycleService programLifecycleService;
+    private final Store store;
+    private final ProgramRuntimeService runtimeService;
+
+    public RunRecordsCorrectorRunnable(ProgramLifecycleService programLifecycleService, Store store,
+                                       ProgramRuntimeService runtimeService) {
+      this.programLifecycleService = programLifecycleService;
+      this.store = store;
+      this.runtimeService = runtimeService;
+    }
+
+    @Override
+    public void run() {
+      // Lets update the running programs run records
+      for (ProgramType programType : ProgramType.values()) {
+        programLifecycleService.validateAndCorrectRunningRunRecords(programType, store, runtimeService);
+      }
+    }
+  }
+
 }

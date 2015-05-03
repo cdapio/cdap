@@ -57,6 +57,7 @@ public class StandaloneAppFabricServer extends AppFabricServer {
                                    ProgramRuntimeService programRuntimeService,
                                    AdapterService adapterService,
                                    ApplicationLifecycleService applicationLifecycleService,
+                                   ProgramLifecycleService programLifecycleService,
                                    StreamCoordinatorClient streamCoordinatorClient,
                                    @Named("appfabric.services.names") Set<String> servicesNames,
                                    @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
@@ -64,7 +65,7 @@ public class StandaloneAppFabricServer extends AppFabricServer {
                                    MetricStore metricStore) {
     super(configuration, discoveryService, schedulerService, notificationService, hostname, handlers,
           metricsCollectionService, programRuntimeService, adapterService, applicationLifecycleService,
-          streamCoordinatorClient, servicesNames, handlerHookNames, namespaceAdmin);
+          programLifecycleService, streamCoordinatorClient, servicesNames, handlerHookNames, namespaceAdmin);
     this.metricStore = metricStore;
   }
 
