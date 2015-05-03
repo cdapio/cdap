@@ -2,10 +2,10 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _advanced-custom-etl:
+.. _advanced-custom-app-template:
 
 ==============================
-Creating Application Templates
+Creating Application Templates (Beta)
 ==============================
 
 Overview

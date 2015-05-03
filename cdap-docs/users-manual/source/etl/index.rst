@@ -4,9 +4,9 @@
 
 .. _users-etl-index:
 
-============
-ETL Overview
-============
+===================
+ETL Overview (Beta)
+===================
 
 
 A Quick Intro to ETL
@@ -30,7 +30,7 @@ an ETL Pipeline:
 ETL Templates, Adapters and Plugins 
 -----------------------------------
 
-An Application Template is a blueprint that is used to create an Adapter, an instance of
+An *Application Template* is a blueprint that is used to create an Adapter, an instantiation of
 a template in CDAP.
 
 CDAP provides two Application Templates |---| the ETL Templates **etlBatch** and
@@ -83,14 +83,14 @@ This matrix depicts the list of available sources, transformations, and sinks:
 
 ETL Adapters
 ............
-An ETL Adapter is an instance of an ETL Template that has been given a specific
+An *ETL Adapter* is an instantiation of an ETL Template that has been given a specific
 configuration on creation.
 
-Batch adapters can be scheduled to run periodically using a cron expression and can read
+**Batch adapters** can be scheduled to run periodically using a cron expression and can read
 data from batch sources using a Mapreduce job. The batch adapter then performs any
 optional transformations before writing to a batch sink.
 
-Realtime adapters are designed to poll sources periodically to fetch the data, perform any
+**Realtime adapters** are designed to poll sources periodically to fetch the data, perform any
 optional transformations, and then write to a realtime sink.
 
 ETL Adapters are created by preparing a configuration that specifies the ETL template and
@@ -111,70 +111,8 @@ Template and Plugin Details
 Details of templates and the required properties for sources, transformations, and sinks
 can be explored using RESTful APIs.
 
-Note that Templates and Plugins are not namespaced, while Adapters are namespaced. If you
+Note that while Adapters are namespaced, Templates and Plugins are not namespaced. If you
 are creating a custom Plugin to add to either the existing Templates or your own Template,
 its name needs to not collide with existing names.
 
 
-
-
-
-
-
-
-
-
-OLD MATERIAL
-------------
-
-An ETL Adapter is a representation of an ETL pipeline. An ETL pipeline contains a
-Source, optional Transforms (zero or more) and a Sink. Only 
-one such pipeline can be created in each ETL Adapter.
-
-ETL Adapters are created from either of the two ETL Application Templates shipped with CDAP:
-
-- ETL Batch
-- ETL Realtime
-
-ETL Batch Template
-..................
-
-ETL Batch Template is implemented using a Schedule added to a Workflow. The Workflow will
-trigger a MapReduce driver program. A new Schedule is added for every new Adapter that is
-created and started. This is the same mechanism used for all templates that use Workflow
-as their driver program.
-
-ETL Realtime Template
-.....................
-
-The ETL Realtime is implemented using a Worker. It is a continuously-running Worker program
-that is launched when the Adapter is started. A new Worker program is started for every
-Adapter that is created and started. This is the same mechanism used for all templates
-that use Worker as their driver program.
-
-
-What's a Plugin?
-----------------
-A Plugin carries out one of the steps in the ETL Pipeline. There are three main types of
-Plugins used in an ETL Adapter:
-
-- Source;
-- Transform; and
-- Sink. 
-
-These are the basic building blocks for an ETL Adapter, both Batch and Realtime. When
-creating an ETL Adapter, users provide the list of plugins that are to be used. In
-addition to these basic plugin types, there can be other external plugins that are
-used within the basic Plugin types. [Additional details are available in an Advanced section.]
-
-Depending upon whether the ETL Batch or ETL Realtime template is used to create an ETL
-Adapter, an appropriate source and sink needs to be used. That is, the Realtime Source and
-Realtime Sink cannot be used to create an ETL Adapter from the ETL Batch template. 
-
-Transforms can be used in either ETL Realtime and ETL Batch templates.
-
-
-Custom Application Template and Plugins
----------------------------------------
-If you are interested in writing your own Application Templates and Plugins, or
-extending the existing ETL framework, please see these Developers’ Manual sections. [link]
