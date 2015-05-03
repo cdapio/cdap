@@ -31,12 +31,17 @@ public class LaunchOptions {
   private final boolean autoconnect;
   private final boolean debug;
   private final boolean verifySSL;
+  private final String scriptFile;
+  private final boolean scriptFileFirst;
 
-  public LaunchOptions(String uri, boolean autoconnect, boolean debug, boolean verifySSL) {
+  public LaunchOptions(String uri, boolean autoconnect, boolean debug, 
+                       boolean verifySSL, String scriptFile, boolean scriptFileFirst) {
     this.uri = uri;
     this.autoconnect = autoconnect;
     this.debug = debug;
     this.verifySSL = verifySSL;
+    this.scriptFile = scriptFile;
+    this.scriptFileFirst = scriptFileFirst;
   }
 
   public String getUri() {
@@ -55,6 +60,14 @@ public class LaunchOptions {
     return verifySSL;
   }
 
+  public String getScriptFile() {
+    return scriptFile;
+  }
+
+  public boolean getScriptFileFirst() {
+    return scriptFileFirst;
+  }
+
   public static Builder builder() {
     return new Builder();
   }
@@ -67,6 +80,8 @@ public class LaunchOptions {
     private boolean autoconnect;
     private boolean debug;
     private boolean verifySSL;
+    private String scriptFile;
+    private boolean scriptFileFirst;
 
     public Builder setUri(String uri) {
       this.uri = uri;
@@ -88,8 +103,18 @@ public class LaunchOptions {
       return this;
     }
 
+    public Builder setScriptFile(String scriptFile) {
+      this.scriptFile = scriptFile;
+      return this;
+    }
+
+    public Builder setScriptFileFirst(boolean scriptFileFirst) {
+      this.scriptFileFirst = scriptFileFirst;
+      return this;
+    }
+
     public LaunchOptions build() {
-      return new LaunchOptions(uri, autoconnect, debug, verifySSL);
+      return new LaunchOptions(uri, autoconnect, debug, verifySSL, scriptFile, scriptFileFirst);
     }
   }
 }

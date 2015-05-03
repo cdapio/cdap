@@ -124,7 +124,7 @@ public class CLIMainTest extends StandaloneTestBase {
     clientConfig = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
     clientConfig.setAllTimeouts(60000);
     cliConfig = new CLIConfig(clientConfig, System.out, new CsvTableRenderer());
-    LaunchOptions launchOptions = new LaunchOptions(LaunchOptions.DEFAULT.getUri(), true, true, false);
+    LaunchOptions launchOptions = new LaunchOptions(LaunchOptions.DEFAULT.getUri(), true, true, false, null, false);
     cliMain = new CLIMain(launchOptions, cliConfig);
     programClient = new ProgramClient(cliConfig.getClientConfig());
     adapterClient = new AdapterClient(cliConfig.getClientConfig());
