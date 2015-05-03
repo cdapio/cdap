@@ -90,6 +90,28 @@ Example output of the ``etlBatch`` Application Template (pretty-printed)::
 Application Template.
 
 
+Template Update
+-----------------
+To update a particular Application Templates, submit an HTTP PUT request::
+
+  PUT <base-url>/templates/<template-id>
+  
+where
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<template-id>``
+     - Name of the Application Template, such as ``etlBatch`` or ``etlRealtime``
+  
+This will cause an Application Template to be updated, and can be used if you are
+deploying a custom JAR or Plugin and need to update an Application Template so that your
+changes are seen. Any other updates (such as the re-creation of Adapters based on that
+Template) are left to the developer or user of the custom Jar or Plugin.
+
 Template Extensions 
 -------------------
 To retrieve a list of all the extensions of a particular type for an Application
@@ -696,6 +718,7 @@ you can formulate your request.
 
 The :ref:`CDAP CLI <cli>` has a command (``get adapter logs <adaptor-id>``) that does this directly.
 
+.. _http-restful-api-adapter-metrics:
 
 Retrieving Adapter Metrics
 --------------------------
