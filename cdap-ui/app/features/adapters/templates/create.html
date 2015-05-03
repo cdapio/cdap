@@ -34,7 +34,7 @@
                reset-search-input="false"
                title="Create New or Select draft">
               <ui-select-match placeholder="Create New or Select draft" > {{selectedAdapterDraft}}</ui-select-match>
-              <ui-select-choices repeat="adapter in adapterDraftList| filter: $select.search">
+              <ui-select-choices repeat="adapter in adaptersDraftList| filter: $select.search">
                 <div ng-bind-html="adapter | highlight: $select.search"></div>
               </ui-select-choices>
             </ui-select>
