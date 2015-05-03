@@ -111,6 +111,12 @@ angular
       'cdap'  // customized theme
     ]);
   })
+  .config(function ($httpProvider) {
+    $httpProvider.defaults.useXDomain = true;
+    delete $httpProvider.defaults.headers.common["X-Requested-With"];
+    $httpProvider.defaults.headers.common["Accept"] = "application/json";
+    $httpProvider.defaults.headers.common["Content-Type"] = "application/json";
+  })
 
   .run(function ($rootScope, MYSOCKET_EVENT, myAlert) {
     $rootScope.$on(MYSOCKET_EVENT.closed, function (angEvent, data) {
@@ -142,30 +148,6 @@ angular
         });
       }
     });
-  })
-
-  .run(function(MyDataSource, EventPipe, MY_CONFIG, $rootScope) {
-    // verify backend server is running
-    var dataSrc = new MyDataSource($rootScope.$new());
-    function pingBackend() {
-      dataSrc.poll({
-        url: ['http://',
-              MY_CONFIG.cdap.routerServerUrl,
-              ':',
-              MY_CONFIG.cdap.routerServerPort,
-              '/status'].join(''),
-        interval: 2000
-      }, function(res) {
-        EventPipe.emit('backendUp');
-      }, function(res) {
-        if (res.error.code === 'ECONNREFUSED') {
-          EventPipe.emit('backendDown');
-        }
-      });
-    }
-
-    pingBackend(); // execute immediately when initially opening a page
-
   })
 
   /**
