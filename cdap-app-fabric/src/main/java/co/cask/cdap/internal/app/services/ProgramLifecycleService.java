@@ -223,7 +223,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   private  void validateAndCorrectRunningRunRecords(ProgramType programType, Store store,
                                                   ProgramRuntimeService runtimeService) {
-      final Map<RunId, RuntimeInfo> runIdToRuntimeInfo = runtimeService.list(programType);
+    final Map<RunId, RuntimeInfo> runIdToRuntimeInfo = runtimeService.list(programType);
 
     List<RunRecord> invalidRunRecords = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecord>() {
       @Override
