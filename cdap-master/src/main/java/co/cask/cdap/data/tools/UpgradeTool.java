@@ -32,11 +32,13 @@ import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.ProjectInfo;
+import co.cask.cdap.config.DefaultConfigStore;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.tools.flow.FlowQueuePendingCorrector;
+import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.queue.QueueClientFactory;
@@ -52,8 +54,11 @@ import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.schedule.AbstractSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.ExecutorThreadPool;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
+import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
+import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
@@ -118,7 +123,7 @@ public class UpgradeTool {
    * Set of Action available in this tool.
    */
   private enum Action {
-    UPGRADE("Upgrades CDAP to 3.0\n" +
+    UPGRADE("Upgrades CDAP to 3.0 (requires cdap-kafka-server to be running, to produce metrics)\n" +
               "  The upgrade tool upgrades the following: \n" +
               "  1. User Datasets (Upgrades only the coprocessor jars)\n" +
               "  2. System Datasets\n" +
@@ -174,8 +179,8 @@ public class UpgradeTool {
       new AuthModule(),
       new ExploreClientModule(),
       new DataFabricDistributedModule(),
+      new DataSetsModules().getInMemoryModules(),
       new ServiceStoreModules().getDistributedModule(),
-      new DataSetsModules().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SystemDatasetRuntimeModule().getDistributedModules(),
@@ -218,6 +223,7 @@ public class UpgradeTool {
     zkClientService.startAndWait();
     txService.startAndWait();
     flowQueuePendingCorrector.startAndWait();
+    initializeDSFramework(cConf, dsFramework);
   }
 
   /**
@@ -235,6 +241,28 @@ public class UpgradeTool {
       LOG.error("Exception while trying to stop upgrade process", e);
       Runtime.getRuntime().halt(1);
     }
+  }
+
+  /**
+   * Sets up a {@link DatasetFramework} instance for standalone usage.  NOTE: should NOT be used by applications!!!
+   */
+  private void initializeDSFramework(CConfiguration cConf, DatasetFramework dsFramework)
+    throws IOException, DatasetManagementException {
+
+    // dataset service
+    DatasetMetaTableUtil.setupDatasets(dsFramework);
+    // app metadata
+    DefaultStore.setupDatasets(dsFramework);
+    // config store
+    DefaultConfigStore.setupDatasets(dsFramework);
+    // logs metadata
+    LogSaverTableUtil.setupDatasets(dsFramework);
+    // scheduler metadata
+    ScheduleStoreTableUtil.setupDatasets(dsFramework);
+
+    // metrics data
+    DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(cConf, dsFramework);
+    DefaultMetricDatasetFactory.setupDatasets(factory);
   }
 
   private void doMain(String[] args) throws Exception {

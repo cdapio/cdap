@@ -32,6 +32,7 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
@@ -172,8 +173,16 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
 
     QueueName queueName = QueueName.fromFlowlet(flowId, producerFlowlet, flowletQueue);
     long consumerGroupId = FlowUtils.generateConsumerGroupId(flowId, consumerFlowlet);
-    HBaseQueueDebugger.QueueStatistics stats = queueDebugger.scanQueue(queueName, consumerGroupId);
-    long correctQueuePendingValue = stats.getUnprocessed() + stats.getProcessedAndNotVisible();
+
+    long correctQueuePendingValue;
+    try {
+      HBaseQueueDebugger.QueueStatistics stats = queueDebugger.scanQueue(queueName, consumerGroupId);
+      correctQueuePendingValue = stats.getUnprocessed() + stats.getProcessedAndNotVisible();
+    } catch (NotFoundException e) {
+      // OK since flowlet queue exists, but actual queue doesn't exist
+      // (e.g. when running upgrade tool from 2.8 to 3.0)
+      correctQueuePendingValue = 0;
+    }
 
     Map<String, String> tags = ImmutableMap.<String, String>builder()
       .put(Constants.Metrics.Tag.NAMESPACE, flowId.getNamespaceId())
@@ -201,17 +210,21 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
       queuePending = timeValue.getValue();
     }
 
+    metricsCollectionService.startAndWait();
+
     MetricsCollector collector = metricsCollectionService.getCollector(tags);
     collector.gauge("queue.pending", correctQueuePendingValue);
     System.out.printf("Adjusted system.queue.pending metric from %d to %d (tags %s)\n",
                       queuePending, correctQueuePendingValue, GSON.toJson(tags));
+
+    // stop will flush the metrics
+    metricsCollectionService.stopAndWait();
   }
 
   @Override
   protected void startUp() throws Exception {
     kafkaClientService.startAndWait();
     zkClientService.startAndWait();
-    metricsCollectionService.startAndWait();
     twillRunnerService.startAndWait();
     programRuntimeService.startAndWait();
     queueDebugger.startAndWait();
@@ -222,8 +235,6 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
     queueDebugger.stopAndWait();
     programRuntimeService.startAndWait();
     twillRunnerService.startAndWait();
-    // stop will flush the metrics
-    metricsCollectionService.stopAndWait();
     zkClientService.stopAndWait();
     kafkaClientService.stopAndWait();
   }

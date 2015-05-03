@@ -149,6 +149,6 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
 
   protected String getTableNameForFlow(String namespaceId, String app, String flow) {
     TableId tableId = getDataTableId(namespaceId, app, flow);
-    return String.format("%s.%s", tableId.getNamespace(), tableId.getTableName());
+    return String.format("%s.%s", tableId.getNamespace().getId(), tableId.getTableName());
   }
 }

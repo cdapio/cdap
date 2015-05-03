@@ -16,21 +16,19 @@
 
 package co.cask.cdap.common.exception;
 
-import co.cask.cdap.proto.Id;
-
 /**
  * Thrown when an element is not found
  */
 public class NotFoundException extends Exception {
 
-  private final Id objectId;
+  private final Object object;
 
-  public NotFoundException(Id id) {
-    super(String.format("'%s' was not found", id.getIdRep()));
-    this.objectId = id;
+  public NotFoundException(Object object) {
+    super(String.format("'%s' was not found", object.toString()));
+    this.object = object;
   }
 
-  public Id getObjectId() {
-    return objectId;
+  public Object getObject() {
+    return object;
   }
 }
