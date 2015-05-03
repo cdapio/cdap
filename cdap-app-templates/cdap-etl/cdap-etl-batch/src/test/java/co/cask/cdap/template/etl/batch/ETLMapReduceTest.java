@@ -25,8 +25,8 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.template.etl.batch.config.ETLBatchConfig;
-import co.cask.cdap.template.etl.batch.sink.MetaKVTableSink;
-import co.cask.cdap.template.etl.batch.source.MetaKVTableSource;
+import co.cask.cdap.template.test.sink.MetaKVTableSink;
+import co.cask.cdap.template.test.source.MetaKVTableSource;
 import co.cask.cdap.template.etl.common.ETLStage;
 import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.test.AdapterManager;
@@ -78,8 +78,8 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
 
   @Test
   public void testKVToKVMeta() throws Exception {
-    ETLStage source = new ETLStage("MetaKVSource", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "mtable1"));
-    ETLStage sink = new ETLStage("MetaKVSink", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "mtable2"));
+    ETLStage source = new ETLStage("MetaKVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "mtable1"));
+    ETLStage sink = new ETLStage("MetaKVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "mtable2"));
     List<ETLStage> transformList = Lists.newArrayList();
     ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transformList);
     AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));

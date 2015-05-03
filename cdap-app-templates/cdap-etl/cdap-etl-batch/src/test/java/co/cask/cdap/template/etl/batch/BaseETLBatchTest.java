@@ -22,18 +22,18 @@ import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.batch.sink.BatchCubeSink;
 import co.cask.cdap.template.etl.batch.sink.DBSink;
 import co.cask.cdap.template.etl.batch.sink.KVTableSink;
-import co.cask.cdap.template.etl.batch.sink.MetaKVTableSink;
 import co.cask.cdap.template.etl.batch.sink.TableSink;
 import co.cask.cdap.template.etl.batch.sink.TimePartitionedFileSetDatasetAvroSink;
 import co.cask.cdap.template.etl.batch.source.DBSource;
 import co.cask.cdap.template.etl.batch.source.KVTableSource;
-import co.cask.cdap.template.etl.batch.source.MetaKVTableSource;
 import co.cask.cdap.template.etl.batch.source.StreamBatchSource;
 import co.cask.cdap.template.etl.batch.source.TableSource;
 import co.cask.cdap.template.etl.common.DBRecord;
 import co.cask.cdap.template.etl.transform.ProjectionTransform;
 import co.cask.cdap.template.etl.transform.ScriptFilterTransform;
 import co.cask.cdap.template.etl.transform.StructuredRecordToGenericRecordTransform;
+import co.cask.cdap.template.test.sink.MetaKVTableSink;
+import co.cask.cdap.template.test.source.MetaKVTableSource;
 import co.cask.cdap.test.TestBase;
 import com.google.gson.Gson;
 import org.apache.avro.mapred.AvroKey;
@@ -54,12 +54,12 @@ public class BaseETLBatchTest extends TestBase {
   @BeforeClass
   public static void setupTest() throws IOException {
     addTemplatePlugins(TEMPLATE_ID, "batch-sources-1.0.0.jar",
-      MetaKVTableSource.class,
       DBSource.class, KVTableSource.class, StreamBatchSource.class, TableSource.class, DBRecord.class);
     addTemplatePlugins(TEMPLATE_ID, "batch-sinks-1.0.0.jar",
-      MetaKVTableSink.class,
       BatchCubeSink.class, DBSink.class, KVTableSink.class, TableSink.class,
       TimePartitionedFileSetDatasetAvroSink.class, AvroKeyOutputFormat.class, AvroKey.class);
+    addTemplatePlugins(TEMPLATE_ID, "test-sources-1.0.0.jar", MetaKVTableSource.class);
+    addTemplatePlugins(TEMPLATE_ID, "test-sinks-1.0.0.jar", MetaKVTableSink.class);
     addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar",
       ProjectionTransform.class, ScriptFilterTransform.class, StructuredRecordToGenericRecordTransform.class);
     addTemplatePlugins(TEMPLATE_ID, "hsql-jdbc-1.0.0.jar", JDBCDriver.class);
