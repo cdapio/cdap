@@ -73,7 +73,7 @@ a list of dimensions and list of required dimensions using the :ref:`Dataset pro
 A Cube can have multiple views configured. They can be altered by updating the dataset
 properties using the :ref:`Dataset RESTful API <http-restful-api-dataset-updating>`.
 
-Here is an example, using pseudo-SQL and Cube dataset properties:
+Here's an example of configuring a pre-aggregated view via the dataset properties:
 
 .. image:: /_images/cube-example.png
    :width: 642 px
@@ -102,7 +102,7 @@ second is used.
 
 Querying Data
 =============
-Querying data in Cube dataset is the most useful part of its API. One can slice, dice and
+Querying data in Cube dataset is the most useful part of it. One can slice, dice and
 drill down into the data of the Cube. Use these methods of the API to perform queries::
   
   public interface Cube extends Dataset, BatchWritable<Object, CubeFact> {
