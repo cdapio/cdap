@@ -33,7 +33,7 @@ function extractConfig(param) {
 
   if (process.env.NODE_ENV === 'production') {
     buffer = '';
-    tool = spawn(__dirname + '/../../../bin/config-tool', ['--'+param]);
+    tool = spawn(__dirname + '/../../bin/config-tool', ['--'+param]);
     tool.stderr.on('data', configReadFail.bind(this));
     tool.stdout.on('data', configRead.bind(this));
     tool.stdout.on('end', onConfigReadEnd.bind(this, deferred, param));
