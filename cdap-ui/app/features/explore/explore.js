@@ -3,6 +3,8 @@ angular.module(PKG.name + '.feature.explore')
 
     var dataSrc = new MyDataSource($scope);
 
+    $scope.activeTab = 0;
+
     $scope.activePanel = [0];
     $scope.openGeneral = true;
     $scope.openSchema = false;
