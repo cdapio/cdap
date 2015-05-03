@@ -11,6 +11,12 @@ body.state-explore {
         vertical-align: middle;
       }
 
+      .slanted-tabs {
+        .active > a {
+          color: @cdap-darkness;
+        }
+      }
+
       .tab-content {
         max-height: 248px;
         overflow-y: auto;
@@ -18,12 +24,6 @@ body.state-explore {
         .table-curved {
           border-radius: 0;
 
-          // thead {
-          //   th {
-          //     background-color: @cdap-header;
-          //     color: white;
-          //   }
-          // }
 
           tr > td:first-child {
             font-weight: 700;
@@ -34,6 +34,7 @@ body.state-explore {
       .list-group {
         .list-group-heading {
           font-weight: 700;
+          font-size: 15px;
         }
 
         .list-group-content {
