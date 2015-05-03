@@ -90,6 +90,8 @@ Example output of the ``etlBatch`` Application Template (pretty-printed)::
 Application Template.
 
 
+.. _http-restful-api-adapter-template-update:
+
 Template Update
 -----------------
 To update a particular Application Templates, submit an HTTP PUT request::

@@ -4,14 +4,15 @@
 
 .. _advanced-custom-app-template:
 
-=================================================
-Creating Application Templates and Plugins (Beta)
-=================================================
+==================================================================
+Creating Custom Application Templates, Plugins and Adapters (Beta)
+==================================================================
 
 Overview
 ========
 This section is intended for developers writing custom Application Templates, Plugins and
-Adaptors. Users of these should refer to the :ref:`Users’ Manual <users-intro-application-templates>`.
+Adapters. Users of these should refer to the :ref:`Users’ Manual
+<users-intro-application-templates>`.
 
 
 Creating Custom ETL Plugins
@@ -208,63 +209,63 @@ Methods
 
 Example::
 
-/**
- * Realtime Source to poll data from external sources.
- */
-@Plugin(type = "source")
-@Name("Source")
-@Description("Realtime Source")
-public class Source extends RealtimeSource<StructuredRecord> {
-
-  private final SourceConfig config;
-
-  public Source(SourceConfig config) {
-    this.config = config;
-  }
-
   /**
-   * Config class for Source.
+   * Realtime Source to poll data from external sources.
    */
-  public static class SourceConfig extends PluginConfig {
+  @Plugin(type = "source")
+  @Name("Source")
+  @Description("Realtime Source")
+  public class Source extends RealtimeSource<StructuredRecord> {
 
-    @Name("param")
-    @Description("Source Param")
-    private String param;
-    // Note:  only primitives (included boxed types) and string are the types that are supported
+    private final SourceConfig config;
 
-  }
+    public Source(SourceConfig config) {
+      this.config = config;
+    }
+
+    /**
+     * Config class for Source.
+     */
+    public static class SourceConfig extends PluginConfig {
+
+      @Name("param")
+      @Description("Source Param")
+      private String param;
+      // Note:  only primitives (included boxed types) and string are the types that are supported
+
+    }
   
-  @Nullable
-  @Override
-  public SourceState poll(Emitter<StructuredRecord> writer, SourceState currentState) {
-    // Poll for new data
-    // Write structured record to the writer
-    // writer.emit(writeDefaultRecords(writer);
-    return currentState;
-  }
+    @Nullable
+    @Override
+    public SourceState poll(Emitter<StructuredRecord> writer, SourceState currentState) {
+      // Poll for new data
+      // Write structured record to the writer
+      // writer.emit(writeDefaultRecords(writer);
+      return currentState;
+    }
 
-  @Override
-  public void initialize(RealtimeContext context) throws Exception {
-    super.initialize(context);
-    // No-op
-    // Get Config param and use to initialize
-    // String param = config.param
-    // Perform init operations, external operations etc.
-  }
+    @Override
+    public void initialize(RealtimeContext context) throws Exception {
+      super.initialize(context);
+      // No-op
+      // Get Config param and use to initialize
+      // String param = config.param
+      // Perform init operations, external operations etc.
+    }
 
-  @Override
-  public void destroy() {
-    super.destroy();
-    // Handle destroy lifecycle
-  }
+    @Override
+    public void destroy() {
+      super.destroy();
+      // Handle destroy lifecycle
+    }
 
-  private void writeDefaultRecords(Emitter<StructuredRecord> writer){
-    Schema.Field bodyField = Schema.Field.of("body", Schema.of(Schema.Type.STRING));
-    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(Schema.recordOf("defaultRecord", bodyField));
-    recordBuilder.set("body", "Hello");
-    writer.emit(recordBuilder.build());
+    private void writeDefaultRecords(Emitter<StructuredRecord> writer){
+      Schema.Field bodyField = Schema.Field.of("body", Schema.of(Schema.Type.STRING));
+      StructuredRecord.Builder recordBuilder = StructuredRecord.builder(Schema.recordOf("defaultRecord", bodyField));
+      recordBuilder.set("body", "Hello");
+      writer.emit(recordBuilder.build());
+    }
   }
-}
 
 
 Creating a Realtime Sink Plugin
@@ -352,35 +353,35 @@ copies in each transform is emitted. The user metrics can be queried by using th
 :ref:`RESTful API<http-restful-api-adapter-metrics>`::
 
 
-@Plugin(type = "transform")
-@Name("Duplicator")
-@Description("Transformation Example that makes copies")
+  @Plugin(type = "transform")
+  @Name("Duplicator")
+  @Description("Transformation Example that makes copies")
 
-public class DuplicateTransform extends TransformStage<StructuredRecord, StructuredRecord> {
+  public class DuplicateTransform extends TransformStage<StructuredRecord, StructuredRecord> {
   
-private final Config config;
+  private final Config config;
 
-  public static final class Config extends PluginConfig {
+    public static final class Config extends PluginConfig {
     
-    @Name("count")
-    @Description("Field that indicates number of copies to make")
-    private String fieldName; 
-  } 
+      @Name("count")
+      @Description("Field that indicates number of copies to make")
+      private String fieldName; 
+    } 
   
-    @Override
-  public void transform(StructuredRecord input,      Emitter<StructuredRecord> emitter) {
-    Integer copies = input.get(config.fieldName);
-    for (int i = 0; i < copies; i++) {
-      emitter.emit(input);
+      @Override
+    public void transform(StructuredRecord input,      Emitter<StructuredRecord> emitter) {
+      Integer copies = input.get(config.fieldName);
+      for (int i = 0; i < copies; i++) {
+        emitter.emit(input);
+      }
+      getContext().getMetrics().count("copies", copies);
     }
-    getContext().getMetrics().count("copies", copies);
-  }
 
-  @Override
-  public void destroy() {
+    @Override
+    public void destroy() {
     
+    }
   }
-}
 
 
 Test Framework for Adapters
@@ -570,11 +571,11 @@ creating the source::
   
 
 **Prebuilt JARs:** In a case where you'd like to use prebuilt third party JARs (such as a
-JDBC Driver) as a plugin, please refer to the :ref:`Creating Plugins using Config file 
-<users-etl-configuration-file-format>`. Copy the JAR and the JSON file to the 
-:ref:`Plugin directory <advanced-custom-app-template-installation-directory>` and then
-update the Template by using the 
-:ref:`HTTP RESTful API update template endpoint < >`.
+JDBC Driver) as a plugin, please refer to the :ref:`Creating Plugins using Config file
+<users-etl-configuration-file-format>`. Copy the JAR and the JSON file to the :ref:`Plugin
+directory <advanced-custom-app-template-installation-directory>` and then update the
+Template by using the :ref:`HTTP RESTful API Application Template Update
+<http-restful-api-adapter-template-update>` endpoint.
 
 Sample JDBC Driver Plugin configuration::
 
