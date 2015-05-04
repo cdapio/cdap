@@ -165,7 +165,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   @Override
   protected void startUp() throws Exception {
     final Job job = Job.getInstance(new Configuration(hConf));
-    job.setJobName(getJobName(context));
     Configuration mapredConf = job.getConfiguration();
 
     if (UserGroupInformation.isSecurityEnabled()) {
@@ -198,6 +197,14 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         setOutputDatasetIfNeeded(job);
       }
     }, "startUp()");
+
+    // Override user-defined job name, since we set it and depend on the name.
+    // https://issues.cask.co/browse/CDAP-2441
+    String jobName = job.getJobName();
+    if (!jobName.isEmpty()) {
+      LOG.warn("Job name {} is being overridden.", jobName);
+    }
+    job.setJobName(getJobName(context));
 
     // After calling beforeSubmit, we know what plugins are needed for adapter, hence construct the proper
     // ClassLoader from here and use it for setting up the job
