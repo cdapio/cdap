@@ -26,7 +26,7 @@ There are specific instructions for :ref:`upgrading existing CDAP installations<
 
 These are the CDAP components:
 
-- **CDAP Webapp:** User interface—the *Console*—for managing CDAP applications;
+- **CDAP UI:** User interface—the *Console*—for managing CDAP applications;
 - **CDAP Router:** Service supporting REST endpoints for CDAP;
 - **CDAP Master:** Service for managing runtime, lifecycle and resources of CDAP applications;
 - **CDAP Kafka:** Metrics and logging transport service, using an embedded version of *Kafka*; and
@@ -68,7 +68,7 @@ in addition to having CPUs with a minimum speed of 2 GHz:
 +---------------------------------------+--------------------+-----------------------------------------------+
 | CDAP Component                        | Hardware Component | Specifications                                |
 +=======================================+====================+===============================================+
-| **CDAP Webapp**                       | RAM                | 1 GB minimum, 2 GB recommended                |
+| **CDAP UI**                           | RAM                | 1 GB minimum, 2 GB recommended                |
 +---------------------------------------+--------------------+-----------------------------------------------+
 | **CDAP Router**                       | RAM                | 2 GB minimum, 4 GB recommended                |
 +---------------------------------------+--------------------+-----------------------------------------------+
@@ -624,7 +624,7 @@ recompiled and re-deployed.)
              cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
              cdap-kafka cdap-master cdap-security cdap-ui
 
-         **Note:** We have deprecated the cdap-web-app package in favor of cdap-ui package 
+   **Note:** We have deprecated the cdap-web-app package in favor of cdap-ui package 
 
 #. Copy the ``logback-container.xml`` into your ``conf`` directory. 
    Please see :ref:`Configuration <install-configuration>`.
