@@ -198,6 +198,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.lookup(programId, runId);
     if (runtimeInfo != null) {
       runtimeInfo.getController().stop().get();
+    } else {
+      LOG.warn("RunId {} not found for Program {}", runId, programId);
     }
   }
 
