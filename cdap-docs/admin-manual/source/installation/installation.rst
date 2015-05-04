@@ -618,13 +618,19 @@ you have a use case for it, please reach out to us at `cdap-user@googlegroups.co
 
        $ sudo yum install cdap cdap-gateway \
              cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
-             cdap-kafka cdap-master cdap-security cdap-web-app
+             cdap-kafka cdap-master cdap-security cdap-ui
 
    - Using APT (on one line)::
 
        $ sudo apt-get install cdap cdap-gateway \
              cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
-             cdap-kafka cdap-master cdap-security cdap-web-app
+             cdap-kafka cdap-master cdap-security cdap-ui
+
+#  Remove link to older cdap-web-app service
+       $ rm -rf /etc/init.d/cdap-web-app
+
+   We have deprecated the cdap-web-app package. So the links to older cdap-web-app service
+   should be removed
 
 #. Copy the ``logback-container.xml`` into your ``conf`` directory. 
    Please see :ref:`Configuration <install-configuration>`.
@@ -638,17 +644,18 @@ you have a use case for it, please reach out to us at `cdap-user@googlegroups.co
 
      $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
 
-#. Run the Data Migration Tool for metrics::
-
-     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.DataMigration metrics [--keep-old-metrics-data]
-
-   This will migrate aggregate metrics data from the CDAP 2.6.x tables to the CDAP 2.8 metrics system. 
-   The old metrics tables are deleted by default unless the optional argument ``--keep-old-metrics-data`` is specified.
-
 #. Restart the CDAP processes::
 
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
      
+#. Run the Flow Queue pending metrics corrector::
+
+     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.flow.FlowQueuePendingCorrector
+
+   This will correct the pending metrics for flows. This is a new metric that was introduced in 
+   CDAP 3.0; flows that existed before the upgrade to 3.0 do not have a correct value for this
+   metric and running the tool provides a one time correction.
+
 #. This will allow you to see your old run history, logs, and |---| if you migrated your 
    old metrics with the *Data Migration Tool* |---| metrics.
 
