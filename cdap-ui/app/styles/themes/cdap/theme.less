@@ -73,7 +73,7 @@ body.theme-cdap {
     &[cask-sortable] {
       thead {
 
-        
+
         .empty { cursor: default; }
       }
     }
@@ -109,6 +109,13 @@ body.theme-cdap {
     border: solid @table-border-color 1px;
     .border-radius(8px);
     border-left: 0;
+    thead {
+      tr {
+        th {
+          font-weight: 400;
+        }
+      }
+    }
       td, th {
         border-left: 1px solid @table-border-color;
         border-top: 1px solid @table-border-color;
