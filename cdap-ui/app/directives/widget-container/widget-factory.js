@@ -35,14 +35,16 @@ angular.module(PKG.name + '.commons')
         element: '<my-dsv></my-dsv>',
         attributes: {
           'ng-model': 'model',
-          'data-delimiter': ','
+          'data-delimiter': '{{ myconfig.properties.delimiter }}',
+          'data-type': 'csv'
         }
       },
       'dsv': {
         element: '<my-dsv></my-dsv>',
         attributes: {
           'ng-model': 'model',
-          'data-delimiter': '{{ myconfig.delimiter }}'
+          'data-delimiter': '{{ myconfig.properties.delimiter }}',
+          'data-type': 'dsv'
         }
       },
       'json-editor': {
