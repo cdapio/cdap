@@ -16,7 +16,7 @@
              "widget": "schema",
              "label": "Schema",
              "description" : "Specify the schema for the table",
-             "schema-types" : [ "int", "boolean", "string" ],
+             "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
              "schema-default-type" : "string"
           },
 

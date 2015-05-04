@@ -1,0 +1,17 @@
+{
+  "id": "KVTable",
+  "groups" : {
+    "position": [ "group1" ],
+    "group1": {
+       "display" : "General",
+       "position" : [ "name" ],
+       "fields" : {
+          "name" : {
+             "widget": "textbox",
+             "label": "Table Name",
+             "description" : "Specifies the name of the table to which data will be written to"
+          }
+       }
+    }
+  }
+}
