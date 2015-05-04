@@ -33,9 +33,9 @@ ETL Templates, Adapters and Plugins
 An *Application Template* is a blueprint that is used to create an Adapter, an instantiation of
 a template in CDAP.
 
-CDAP provides two Application Templates |---| the ETL Templates **etlBatch** and
-**etlRealtime** |---| which are used to create Adapters that perform ETL in either batch
-and realtime. The  *etlBatch* and *etlRealtime* templates consist of a variety of sources,
+CDAP provides two Application Templates |---| the ETL Templates **ETLBatch** and
+**ETLRealtime** |---| which are used to create Adapters that perform ETL in either batch
+and realtime. The  *ETLBatch* and *ETLRealtime* templates consist of a variety of sources,
 transformations and sinks that are packaged together.
 
 The batch sources can write to any batch sinks that are available and realtime sources can

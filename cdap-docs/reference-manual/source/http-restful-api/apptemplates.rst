@@ -41,12 +41,12 @@ description and type of program that it creates. Example output (pretty-printed)
 
   [
     {
-      "name": "etlBatch",
+      "name": "ETLBatch",
       "description": "Batch Extract-Transform-Load (ETL) Adapter",
       "programType": "Workflow"
     },
     {
-      "name": "etlRealtime",
+      "name": "ETLRealtime",
       "description": "Realtime Extract-Transform-Load (ETL) Adapter",
       "programType": "Worker"
     }
@@ -68,12 +68,12 @@ where
    * - Parameter
      - Description
    * - ``<template-id>``
-     - Name of the Application Template, such as ``etlBatch`` or ``etlRealtime``
+     - Name of the Application Template, such as ``ETLBatch`` or ``ETLRealtime``
   
 This will return a JSON String map that lists the details of the Application Template.
-Example output of the ``etlBatch`` Application Template (pretty-printed)::
+Example output of the ``ETLBatch`` Application Template (pretty-printed)::
 
-  $ GET <base-url>/templates/etlBatch
+  $ GET <base-url>/templates/ETLBatch
 
   {
     "extensions": [
@@ -81,7 +81,7 @@ Example output of the ``etlBatch`` Application Template (pretty-printed)::
         "source",
         "transform"
     ],
-    "name": "etlBatch",
+    "name": "ETLBatch",
     "description": "Batch Extract-Transform-Load (ETL) Adapter",
     "programType": "Workflow"
   }
@@ -109,7 +109,7 @@ where
    * - ``<namespace-id>``
      - Namespace ID of Adaptors that have used this Application Template
    * - ``<template-id>``
-     - Name of the Application Template, such as ``etlBatch`` or ``etlRealtime``
+     - Name of the Application Template, such as ``ETLBatch`` or ``ETLRealtime``
   
 This will cause an Application Template to be updated, and can be used if you are
 deploying a custom JAR or Plugin and need to update an Application Template so that your
@@ -138,7 +138,7 @@ where
    * - Parameter
      - Description
    * - ``<template-id>``
-     - Name of the Application Template, such as ``etlBatch`` or ``etlRealtime``
+     - Name of the Application Template, such as ``ETLBatch`` or ``ETLRealtime``
    * - ``<extension-type>``
      - Extension type, such as (for ETL Templates) ``source``, ``sink``, or ``transform``
 
@@ -146,15 +146,15 @@ This will return a JSON String map that lists all the extensions of particular t
 that Application Template, including their name, description, and the source files that
 contain the extension.
 
-Example output for the ``source`` extensions of the ``etlBatch`` Application Template
+Example output for the ``source`` extensions of the ``ETLBatch`` Application Template
 (pretty-printed and reformatted to fit)::
 
-  $ GET <base-url>/templates/etlBatch/extensions/source
+  $ GET <base-url>/templates/ETLBatch/extensions/source
 
   [
     {
       "template": {
-        "name": "etlBatch",
+        "name": "ETLBatch",
         "description": "Batch Extract-Transform-Load (ETL) Adapter",
         "programType": "Workflow"
       },
@@ -175,7 +175,7 @@ Example output for the ``source`` extensions of the ``etlBatch`` Application Tem
     },
     {
       "template": {
-        "name": "etlBatch",
+        "name": "ETLBatch",
         "description": "Batch Extract-Transform-Load (ETL) Adapter",
         "programType": "Workflow"
       },
@@ -197,7 +197,7 @@ Example output for the ``source`` extensions of the ``etlBatch`` Application Tem
     },
     {
       "template": {
-        "name": "etlBatch",
+        "name": "ETLBatch",
         "description": "Batch Extract-Transform-Load (ETL) Adapter",
         "programType": "Workflow"
       },
@@ -221,7 +221,7 @@ Example output for the ``source`` extensions of the ``etlBatch`` Application Tem
     },
     {
       "template": {
-        "name": "etlBatch",
+        "name": "ETLBatch",
         "description": "Batch Extract-Transform-Load (ETL) Adapter",
         "programType": "Workflow"
       },
@@ -259,7 +259,7 @@ where
    * - Parameter
      - Description
    * - ``<template-id>``
-     - Name of the Application Template, such as ``etlBatch`` or ``etlRealtime``
+     - Name of the Application Template, such as ``ETLBatch`` or ``ETLRealtime``
    * - ``<extension-type>``
      - Extension type, such as (for ETL Templates) ``source``, ``sink``, or ``transform``
    * - ``<plugin-id>``
@@ -269,10 +269,10 @@ This will return a JSON String map that lists the details of the Plugin. This is
 information needed when configuring an Adapter using the Plugin, the type of each
 property, and whether it is a mandatory property (*"required"*).
 
-Example output for the ``Database`` plugin of type ``source`` of the ``etlBatch``
+Example output for the ``Database`` plugin of type ``source`` of the ``ETLBatch``
 Application Template (pretty-printed and reformatted to fit)::
 
-  $ GET <base-url>/templates/etlBatch/extensions/source/plugins/Database
+  $ GET <base-url>/templates/ETLBatch/extensions/source/plugins/Database
 
   [
     {
@@ -347,7 +347,7 @@ Application Template (pretty-printed and reformatted to fit)::
         }
       },
       "template": {
-        "name": "etlBatch",
+        "name": "ETLBatch",
         "description": "Batch Extract-Transform-Load (ETL) Adapter",
         "programType": "Workflow"
       },
@@ -444,10 +444,10 @@ command will return a list of adapters (pretty-printed and reformatted to fit)::
     {
       "name": "streamAdapter",
       "description": "Batch ETL",
-      "template": "etlBatch",
+      "template": "ETLBatch",
       "program": {
         "namespace": "default",
-        "application": "etlBatch",
+        "application": "ETLBatch",
         "type": "Workflow",
         "id": "ETLWorkflow"
       },
@@ -522,10 +522,10 @@ command will return (pretty-printed and reformatted to fit)::
   {
     "name": "streamAdapter",
     "description": "Batch ETL",
-    "template": "etlBatch",
+    "template": "ETLBatch",
     "program": {
       "namespace": "default",
-      "application": "etlBatch",
+      "application": "ETLBatch",
       "type": "Workflow",
       "id": "ETLWorkflow"
     },
@@ -717,13 +717,13 @@ and then use its ``program`` information to determine how to build your request:
 
     "program": {
       "namespace": "default",
-      "application": "etlBatch",
+      "application": "ETLBatch",
       "type": "Workflow",
       "id": "ETLWorkflow"
     },
 
 For example, using the previous ``streamAdapter``, you would be interested in the logs of the
-Workflow *ETLWorkflow* of the Application *etlBatch* of the namespace *default*. From this,
+Workflow *ETLWorkflow* of the Application *ETLBatch* of the namespace *default*. From this,
 you can formulate your request.
 
 The :ref:`CDAP CLI <cli>` has a command (``get adapter logs <adaptor-id>``) that does this directly.

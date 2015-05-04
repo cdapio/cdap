@@ -19,7 +19,7 @@ Creating Custom ETL Plugins
 ===========================
 
 CDAP provides for the creation of custom ETL Plugins for batch/realtime sources/sinks and
-transformations to extend the existing ``etlBatch`` and ``etlRealtime`` Application Templates.
+transformations to extend the existing ``ETLBatch`` and ``ETLRealtime`` Application Templates.
 
 To make a custom plugin available to one of the Application Templates (and thus available
 to any Adapter created from one of the Templates), the plugin should be packaged as a bundle jar
@@ -36,7 +36,7 @@ Installation Directory
   can be provided to CDAP by setting the property ``app.template.dir`` in
   ``cdap-site.xml``. The default path is: ``/opt/cdap/master/templates/plugins/<template-type>``
 
-where ``template-type`` is one of the ETL App Template types (``etlBatch`` or ``etlRealtime``)
+where ``template-type`` is one of the ETL App Template types (``ETLBatch`` or ``ETLRealtime``)
 
 The CDAP Standalone should be restarted for this change to take effect in Standalone mode,
 and ``cdap-master`` Services should be restarted in the Distributed mode.
@@ -464,7 +464,7 @@ the required JAR manifest. If you move the plugin class to a different Java pack
 the project is created, you will need to modify the configuration of the
 ``maven-bundle-plugin`` in the ``pom.xml`` file to reflect the package name changes.
 
-If you are developing plugins for ``etlBatch``, be aware that for classes inside the plugin
+If you are developing plugins for ``ETLBatch``, be aware that for classes inside the plugin
 JAR that you have added to the Hadoop Job configuration directly (for example, your custom
 ``InputFormat`` class), you will need to add the Java packages of those classes to the
 "Export-Package" as well. This is to ensure those classes are visible to the Hadoop
@@ -511,13 +511,13 @@ Plugin Configuration for Prebuilt Jars
         ]
       },
     "description": "ETL using a Table as source and RDBMS table as sink",
-    "template": "etlBatch"
+    "template": "ETLBatch"
   }
   
 **JMS:** A JMS server needs to be setup similar to using `ActiveMQ <http://activemq.apache.org>`__::
 
   {
-    "template": "etlRealtime",
+    "template": "ETLRealtime",
     "config": {
       "instances": "1",
       "source": {
@@ -546,7 +546,7 @@ Plugin Configuration for Prebuilt Jars
 creating the source::
 
   {
-    "template": "etlRealtime",
+    "template": "ETLRealtime",
     "config": {
       "instances": "1",
       "source": {

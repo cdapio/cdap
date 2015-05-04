@@ -35,7 +35,7 @@ configuration for a Batch Adapter that runs every minute, reading data from a St
 *myStream* and writing to a Dataset (Table) called *myTable*,  without any transformations::
 
   {
-    "template":"etlBatch",
+    "template":"ETLBatch",
     "description":"Batch ETL",
     "config":{
         "schedule":"* * * * *",
@@ -83,7 +83,7 @@ This next configuration creates a Realtime Adapter that reads from Twitter and w
 Stream after performing a projection transformation::
 
   {
-    "template":"etlRealtime",
+    "template":"ETLRealtime",
     "description":"Twitter to Stream: renames the 'message' field name to 'tweet',
     "config":{
         "instances":"1",
