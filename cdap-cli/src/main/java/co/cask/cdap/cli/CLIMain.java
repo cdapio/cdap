@@ -33,10 +33,12 @@ import co.cask.common.cli.CommandSet;
 import co.cask.common.cli.exception.CLIExceptionHandler;
 import co.cask.common.cli.exception.InvalidCommandException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.io.Files;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -50,10 +52,12 @@ import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Map;
 import javax.net.ssl.SSLHandshakeException;
 
@@ -77,7 +81,7 @@ public class CLIMain {
 
   @VisibleForTesting
   public static final Option VERIFY_SSL_OPTION = new Option(
-    "s", "verify-ssl", true, "If \"true\", verify SSL certificate when making requests." +
+    "v", "verify-ssl", true, "If \"true\", verify SSL certificate when making requests." +
     " Defaults to \"" + DEFAULT_VERIFY_SSL + "\".");
 
   @VisibleForTesting
@@ -90,6 +94,9 @@ public class CLIMain {
   @VisibleForTesting
   public static final Option DEBUG_OPTION = new Option(
     "d", "debug", false, "Print exception stack traces.");
+
+  private static final Option SCRIPT_OPTION = new Option(
+    "s", "script", true, "Execute a file containing a series of CLI commands, line-by-line.");
 
   private final CLI cli;
   private final Iterable<CommandSet<Command>> commands;
@@ -189,13 +196,17 @@ public class CLIMain {
   }
 
   private void updateCLIPrompt(ClientConfig clientConfig) {
+    cli.getReader().setPrompt(getPrompt(clientConfig));
+  }
+
+  public String getPrompt(ClientConfig clientConfig) {
     try {
       ConnectionConfig connectionConfig = clientConfig.getConnectionConfig();
       URI baseURI = connectionConfig.getURI();
       URI uri = baseURI.resolve("/" + connectionConfig.getNamespace());
-      cli.getReader().setPrompt("cdap (" + uri + ")> ");
+      return "cdap (" + uri + ")> ";
     } catch (DisconnectedException e) {
-      cli.getReader().setPrompt("cdap (DISCONNECTED)> ");
+      return "cdap (DISCONNECTED)> ";
     }
   }
 
@@ -237,6 +248,9 @@ public class CLIMain {
         .setAutoconnect(parseBooleanOption(command, AUTOCONNECT_OPTION, DEFAULT_AUTOCONNECT))
         .build();
 
+      String scriptFile = command.getOptionValue(SCRIPT_OPTION.getOpt(), "");
+      boolean hasScriptFile = command.hasOption(SCRIPT_OPTION.getOpt());
+
       String[] commandArgs = cliMainArgs.getCommandTokens();
 
       try {
@@ -248,7 +262,20 @@ public class CLIMain {
         cliMain.tryAutoconnect();
         cliMain.updateCLIPrompt(cliConfig.getClientConfig());
 
-        if (commandArgs.length == 0) {
+        if (hasScriptFile) {
+          File script = new File(scriptFile);
+          if (!script.exists()) {
+            output.println("ERROR: Script file '" + script.getAbsolutePath() + "' does not exist");
+            System.exit(1);
+          }
+          List<String> scriptLines = Files.readLines(script, Charsets.UTF_8);
+          for (String scriptLine : scriptLines) {
+            output.print(cliMain.getPrompt(clientConfig));
+            output.println(scriptLine);
+            cli.execute(scriptLine, output);
+            output.println();
+          }
+        } else if (commandArgs.length == 0) {
           cli.startInteractiveMode(output);
         } else {
           cli.execute(Joiner.on(" ").join(commandArgs), output);
@@ -275,6 +302,7 @@ public class CLIMain {
     addOptionalOption(options, VERIFY_SSL_OPTION);
     addOptionalOption(options, AUTOCONNECT_OPTION);
     addOptionalOption(options, DEBUG_OPTION);
+    addOptionalOption(options, SCRIPT_OPTION);
     return options;
   }
 
@@ -292,7 +320,8 @@ public class CLIMain {
       "[--debug] " +
       "[--help] " +
       "[--verify-ssl <true|false>] " +
-      "[--uri <arg>]";
+      "[--uri <uri>]" +
+      "[--script <script-file>]";
     formatter.printHelp("cdap-cli.sh " + args, getOptions());
     System.exit(0);
   }
