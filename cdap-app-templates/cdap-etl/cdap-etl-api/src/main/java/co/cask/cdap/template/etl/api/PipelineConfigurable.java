@@ -19,36 +19,16 @@ package co.cask.cdap.template.etl.api;
 import co.cask.cdap.api.annotation.Beta;
 
 /**
- * Transform Stage.
- *
- * @param <IN> Type of input object
- * @param <OUT> Type of output object
+ * Allows the stage to configure pipeline.
  */
 @Beta
-public abstract class Transform<IN, OUT> implements StageLifecycle<TransformContext>, Transformation<IN, OUT> {
-
-  private TransformContext context;
+public interface PipelineConfigurable {
 
   /**
-   * Initialize the Transform Stage.
+   * Configure an ETL pipeline, adding datasets and streams that the stage needs.
    *
-   * @param context {@link TransformContext}
-   * @throws Exception if there is any error during initialization
+   * @param pipelineConfigurer the configurer used to add required datasets and streams
+   * @throws IllegalArgumentException if the given config is invalid
    */
-  @Override
-  public void initialize(TransformContext context) throws Exception {
-    this.context = context;
-  }
-
-  /**
-   * Destroy the Transform Stage.
-   */
-  @Override
-  public void destroy() {
-    //no-op
-  }
-
-  protected TransformContext getContext() {
-    return context;
-  }
+  void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException;
 }

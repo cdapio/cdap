@@ -27,6 +27,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.template.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.template.etl.common.ETLStage;
 import co.cask.cdap.template.etl.common.Properties;
+import co.cask.cdap.template.test.sink.MetaKVTableSink;
+import co.cask.cdap.template.test.source.MetaKVTableSource;
 import co.cask.cdap.test.AdapterManager;
 import co.cask.cdap.test.DataSetManager;
 import com.google.common.collect.ImmutableMap;
@@ -72,6 +74,36 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
     for (int i = 0; i < 10000; i++) {
       Assert.assertEquals("world" + i, Bytes.toString(outputTable.read("hello" + i)));
     }
+  }
+
+  @Test
+  public void testKVToKVMeta() throws Exception {
+    ETLStage source = new ETLStage("MetaKVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "mtable1"));
+    ETLStage sink = new ETLStage("MetaKVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "mtable2"));
+    List<ETLStage> transformList = Lists.newArrayList();
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transformList);
+    AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
+
+    Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "testMetaKVAdapter");
+    AdapterManager manager = createAdapter(adapterId, adapterConfig);
+
+    manager.start();
+    manager.waitForOneRunToFinish(5, TimeUnit.MINUTES);
+    manager.stop();
+
+    DataSetManager<KeyValueTable> sourceMetaTable = getDataset(MetaKVTableSource.META_TABLE);
+    KeyValueTable sourceTable = sourceMetaTable.get();
+    Assert.assertEquals(MetaKVTableSource.PREPARE_RUN_KEY,
+                        Bytes.toString(sourceTable.read(MetaKVTableSource.PREPARE_RUN_KEY)));
+    Assert.assertEquals(MetaKVTableSource.FINISH_RUN_KEY,
+                        Bytes.toString(sourceTable.read(MetaKVTableSource.FINISH_RUN_KEY)));
+
+    DataSetManager<KeyValueTable> sinkMetaTable = getDataset(MetaKVTableSink.META_TABLE);
+    KeyValueTable sinkTable = sinkMetaTable.get();
+    Assert.assertEquals(MetaKVTableSink.PREPARE_RUN_KEY,
+                        Bytes.toString(sinkTable.read(MetaKVTableSink.PREPARE_RUN_KEY)));
+    Assert.assertEquals(MetaKVTableSink.FINISH_RUN_KEY,
+                        Bytes.toString(sinkTable.read(MetaKVTableSink.FINISH_RUN_KEY)));
   }
 
   @SuppressWarnings("ConstantConditions")

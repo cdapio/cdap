@@ -20,9 +20,10 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.template.etl.api.EndPointStage;
+import co.cask.cdap.template.etl.api.PipelineConfigurable;
 import co.cask.cdap.template.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.template.etl.common.ETLStage;
 import co.cask.cdap.template.etl.common.Properties;
@@ -63,8 +64,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class ETLWorkerTest extends TestBase {
   private static final Gson GSON = new Gson();
-  private static final Id.Namespace NAMESPACE = Id.Namespace.from("default");
-  private static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("etlRealtime");
+  private static final Id.Namespace NAMESPACE = Constants.DEFAULT_NAMESPACE_ID;
+  private static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("ETLRealtime");
 
   @BeforeClass
   public static void setupTests() throws IOException {
@@ -75,7 +76,7 @@ public class ETLWorkerTest extends TestBase {
     addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar",
       ProjectionTransform.class, ScriptFilterTransform.class, StructuredRecordToGenericRecordTransform.class);
     deployTemplate(NAMESPACE, TEMPLATE_ID, ETLRealtimeTemplate.class,
-      EndPointStage.class.getPackage().getName(),
+      PipelineConfigurable.class.getPackage().getName(),
       ETLStage.class.getPackage().getName(),
       RealtimeSource.class.getPackage().getName());
   }

@@ -16,6 +16,8 @@
 
 package co.cask.cdap.template.etl.common;
 
+import com.google.common.base.Objects;
+
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -38,5 +40,13 @@ public final class ETLStage {
   @Nullable
   public Map<String, String> getProperties() {
     return properties;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("name", name)
+      .add("properties", properties)
+      .toString();
   }
 }

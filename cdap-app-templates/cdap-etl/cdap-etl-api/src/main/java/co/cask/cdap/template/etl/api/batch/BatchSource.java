@@ -18,55 +18,55 @@ package co.cask.cdap.template.etl.api.batch;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.template.etl.api.Destroyable;
 import co.cask.cdap.template.etl.api.Emitter;
-import co.cask.cdap.template.etl.api.EndPointStage;
-import co.cask.cdap.template.etl.api.PipelineConfigurer;
+import co.cask.cdap.template.etl.api.StageLifecycle;
 import co.cask.cdap.template.etl.api.Transformation;
 
 /**
- * Batch Source forms the first stage of a Batch ETL Pipeline. Along with configuring the Batch job, it
- * also transforms the key value pairs provided by the Batch job into a single output type to be consumed by
- * subsequent transforms. By default, the value of the key value pair will be ouput.
+ * Batch Source forms the first stage of a Batch ETL Pipeline. In addition to configuring the Batch run, it
+ * also transforms the key value pairs provided by the Batch run into a single output type to be consumed by
+ * subsequent transforms. By default, the value of the key value pair will be emitted.
  *
- * @param <KEY_IN> the type of input key from the Batch job
- * @param <VAL_IN> the type of input value from the Batch job
+ * {@link BatchSource#initialize}, {@link BatchSource#transform} and {@link BatchSource#destroy} methods are called
+ * inside the Batch Run while {@link BatchSource#prepareRun} and {@link BatchSource#onRunFinish} methods are called
+ * on the client side, which launches the Batch run, before the Batch run starts and after it finishes respectively.
+ *
+ * @param <KEY_IN> the type of input key from the Batch run
+ * @param <VAL_IN> the type of input value from the Batch run
  * @param <OUT> the type of output for the source
  */
 @Beta
-public abstract class BatchSource<KEY_IN, VAL_IN, OUT>
-  implements EndPointStage, Transformation<KeyValue<KEY_IN, VAL_IN>, OUT>, Destroyable {
+public abstract class BatchSource<KEY_IN, VAL_IN, OUT> extends BatchConfigurable<BatchSourceContext>
+  implements Transformation<KeyValue<KEY_IN, VAL_IN>, OUT>, StageLifecycle<BatchSourceContext> {
 
+  /**
+   * Initialize the Batch Source stage. Executed inside the Batch Run. This method is guaranteed to be invoked
+   * before any calls to {@link BatchSource#transform} are made.
+   *
+   * @param context {@link BatchSourceContext}
+   * @throws Exception if there is any error during initialization
+   */
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    // no-op
-  }
-
-  /**
-   * Prepare the Batch Job. Used to configure the Hadoop Job before starting the Batch Job.
-   *
-   * @param context {@link BatchSourceContext}
-   * @throws Exception if there's an error during this method invocation
-   */
-  public abstract void prepareJob(BatchSourceContext context) throws Exception;
-
-  /**
-   * Initialize the source. This is called once each time the Hadoop Job runs, before any
-   * calls to {@link #transform(KeyValue, Emitter)} are made.
-   *
-   * @param context {@link BatchSourceContext}
-   */
   public void initialize(BatchSourceContext context) throws Exception {
     // no-op
   }
 
+  /**
+   * Transform the {@link KeyValue} pair produced by the input, as set in {@link BatchSource#prepareRun},
+   * to a single object and emit it to the next stage. By default it emits the value.
+   * This method is invoked inside the Batch run.
+   *
+   * @param input the input to transform
+   * @param emitter {@link Emitter} to emit data to the next stage
+   * @throws Exception if there's an error during this method invocation
+   */
   @Override
   public void transform(KeyValue<KEY_IN, VAL_IN> input, Emitter<OUT> emitter) throws Exception {
     emitter.emit((OUT) input.getValue());
   }
 
   /**
-   * Destroy the source. This is called at the end of the Hadoop Job run.
+   * Destroy the Batch Source stage. Executed at the end of the Batch run.
    */
   @Override
   public void destroy() {

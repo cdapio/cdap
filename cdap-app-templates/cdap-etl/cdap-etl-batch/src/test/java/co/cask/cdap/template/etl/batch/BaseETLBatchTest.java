@@ -16,8 +16,9 @@
 
 package co.cask.cdap.template.etl.batch;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.template.etl.api.EndPointStage;
+import co.cask.cdap.template.etl.api.PipelineConfigurable;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.batch.sink.BatchCubeSink;
 import co.cask.cdap.template.etl.batch.sink.DBSink;
@@ -32,6 +33,8 @@ import co.cask.cdap.template.etl.common.DBRecord;
 import co.cask.cdap.template.etl.transform.ProjectionTransform;
 import co.cask.cdap.template.etl.transform.ScriptFilterTransform;
 import co.cask.cdap.template.etl.transform.StructuredRecordToGenericRecordTransform;
+import co.cask.cdap.template.test.sink.MetaKVTableSink;
+import co.cask.cdap.template.test.source.MetaKVTableSource;
 import co.cask.cdap.test.TestBase;
 import com.google.gson.Gson;
 import org.apache.avro.mapred.AvroKey;
@@ -45,8 +48,8 @@ import java.io.IOException;
  * Base test class that sets up plugins and the batch template.
  */
 public class BaseETLBatchTest extends TestBase {
-  protected static final Id.Namespace NAMESPACE = Id.Namespace.from("default");
-  protected static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("etlBatch");
+  protected static final Id.Namespace NAMESPACE = Constants.DEFAULT_NAMESPACE_ID;
+  protected static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("ETLBatch");
   protected static final Gson GSON = new Gson();
 
   @BeforeClass
@@ -54,15 +57,17 @@ public class BaseETLBatchTest extends TestBase {
     addTemplatePlugins(TEMPLATE_ID, "batch-sources-1.0.0.jar",
       DBSource.class, KVTableSource.class, StreamBatchSource.class, TableSource.class, DBRecord.class);
     addTemplatePlugins(TEMPLATE_ID, "batch-sinks-1.0.0.jar",
-      BatchCubeSink.class, DBSink.class, KVTableSink.class,
-      TableSink.class, TimePartitionedFileSetDatasetAvroSink.class, AvroKeyOutputFormat.class, AvroKey.class);
+      BatchCubeSink.class, DBSink.class, KVTableSink.class, TableSink.class,
+      TimePartitionedFileSetDatasetAvroSink.class, AvroKeyOutputFormat.class, AvroKey.class);
+    addTemplatePlugins(TEMPLATE_ID, "test-sources-1.0.0.jar", MetaKVTableSource.class);
+    addTemplatePlugins(TEMPLATE_ID, "test-sinks-1.0.0.jar", MetaKVTableSink.class);
     addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar",
       ProjectionTransform.class, ScriptFilterTransform.class, StructuredRecordToGenericRecordTransform.class);
     addTemplatePlugins(TEMPLATE_ID, "hsql-jdbc-1.0.0.jar", JDBCDriver.class);
     addTemplatePluginJson(TEMPLATE_ID, "hsql-jdbc-1.0.0.json", "jdbc", "hypersql", "hypersql jdbc driver",
       JDBCDriver.class.getName());
     deployTemplate(NAMESPACE, TEMPLATE_ID, ETLBatchTemplate.class,
-      EndPointStage.class.getPackage().getName(),
+      PipelineConfigurable.class.getPackage().getName(),
       BatchSource.class.getPackage().getName());
   }
 }

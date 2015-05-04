@@ -71,7 +71,7 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
     streamManager.send(ImmutableMap.of("header1", "bar"), "AAPL|10|500.32");
 
     ETLBatchConfig etlConfig = constructETLBatchConfig(filesetName);
-    AdapterConfig adapterConfig = new AdapterConfig("description", "etlBatch", GSON.toJsonTree(etlConfig));
+    AdapterConfig adapterConfig = new AdapterConfig("description", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
     Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "sconversion");
     AdapterManager manager = createAdapter(adapterId, adapterConfig);
 
@@ -99,7 +99,8 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
                                  ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
                                                  EVENT_SCHEMA.toString(),
                                                  Properties.TimePartitionedFileSetDataset.TPFS_NAME, fileSetName));
-    return new ETLBatchConfig("* * * * *", source, sink, Lists.<ETLStage>newArrayList());
+    ETLStage transform = new ETLStage("Projection", ImmutableMap.<String, String>of());
+    return new ETLBatchConfig("* * * * *", source, sink, Lists.newArrayList(transform));
   }
 
   private List<GenericRecord> readOutput(TimePartitionedFileSet fileSet, Schema schema) throws IOException {

@@ -113,9 +113,6 @@ application or include in a message.
     app id,description
     PurchaseApp,Some description
 
-
-
-
 .. _cli-available-commands:
 
 Available Commands

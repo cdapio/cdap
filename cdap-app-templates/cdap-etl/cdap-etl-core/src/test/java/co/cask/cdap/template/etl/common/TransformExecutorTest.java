@@ -17,6 +17,7 @@
 package co.cask.cdap.template.etl.common;
 
 import co.cask.cdap.template.etl.api.Emitter;
+import co.cask.cdap.template.etl.api.Transform;
 import co.cask.cdap.template.etl.api.Transformation;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
@@ -71,7 +72,7 @@ public class TransformExecutorTest {
     Assert.assertEquals(3, mockMetrics.getCount("sink.third.records.out"));
   }
 
-  private static class IntToDouble implements Transformation<Integer, Double> {
+  private static class IntToDouble extends Transform<Integer, Double> {
     @Override
     public void transform(Integer input, Emitter<Double> emitter) throws Exception {
       emitter.emit(input.doubleValue());
@@ -80,7 +81,7 @@ public class TransformExecutorTest {
     }
   }
 
-  private static class Filter implements Transformation<Double, Double> {
+  private static class Filter extends Transform<Double, Double> {
     private final Double threshold;
 
     public Filter(Double threshold) {
@@ -95,7 +96,7 @@ public class TransformExecutorTest {
     }
   }
 
-  private static class DoubleToString implements Transformation<Double, String> {
+  private static class DoubleToString extends Transform<Double, String> {
     @Override
     public void transform(Double input, Emitter<String> emitter) throws Exception {
       emitter.emit(String.valueOf(input));

@@ -20,9 +20,9 @@
         <tbody>
           <tr ng-repeat="dataset in datasets | orderBy:sortable.predicate:sortable.reverse">
             <td class="col-xs-5">
-
+              <strong class="icon-datasets"></strong>
               <a ui-sref="admin.namespace.detail.data.datasetmetadata({datasetId: dataset.name})">
-                <strong class="icon-datasets"></strong>
+
                 <strong ng-bind="dataset.name"></strong>
               </a>
             </td>
@@ -32,8 +32,9 @@
           </tr>
           <tr ng-repeat="stream in streams | orderBy:sortable.predicate:sortable.reverse">
             <td class="col-xs-5">
+              <strong class="icon-streams"></strong>
               <a ui-sref="admin.namespace.detail.data.streammetadata({streamId: stream.name})">
-                <strong class="icon-streams"></strong>
+
                 <strong ng-bind="stream.name"></strong>
               </a>
             </td>

@@ -51,4 +51,5 @@ elif [ -d "$conf" ]; then
   CLASSPATH=$CLASSPATH:"$conf"/
 fi
 
+CDAP_HOME="$bin"/..
 java $JAVA_OPTS -cp ${CLASSPATH} -Dscript=$script co.cask.cdap.cli.CLIMain "$@"

@@ -267,7 +267,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
       throw new UnsupportedOperationException("Plugin not supported for non-adapter program");
     }
     AdapterPlugin plugin = adapterSpec.getPlugins().get(pluginId);
-    Preconditions.checkArgument(plugin != null, "Plugin with id %s not exists in adapter {} of template {}.",
+    Preconditions.checkArgument(plugin != null, "Plugin with id %s not exists in adapter %s of template %s.",
                                 pluginId, adapterSpec.getName(), adapterSpec.getTemplate());
     return plugin;
   }

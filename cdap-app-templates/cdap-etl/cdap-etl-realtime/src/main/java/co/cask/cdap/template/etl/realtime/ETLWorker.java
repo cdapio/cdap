@@ -145,7 +145,7 @@ public class ETLWorker extends AbstractWorker {
     sink = new TrackedRealtimeSink(sink, metrics, stage.getName());
   }
 
-  private List<Transformation> initializeTransforms(WorkerContext context, List<ETLStage> stages) {
+  private List<Transformation> initializeTransforms(WorkerContext context, List<ETLStage> stages) throws Exception {
     List<String> transformIds = GSON.fromJson(context.getRuntimeArguments().get(Constants.Transform.PLUGINIDS),
                                               STRING_LIST_TYPE);
     List<Transformation> transforms = Lists.newArrayList();
