@@ -74,15 +74,13 @@ To create an instance of this Adaptor, called *streamAdapter*:
 where ``config.json`` is the file that contains the Adapter configuration
 
 
+.. highlight:: console
+
 Using the ETL Realtime Template
 -------------------------------
 
 This next configuration creates a Realtime Adapter that reads from Twitter and writes to a
 Stream after performing a projection transformation::
-
-.. highlight:: console
-
-::
 
   {
     "template":"etlRealtime",
