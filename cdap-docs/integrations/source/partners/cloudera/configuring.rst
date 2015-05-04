@@ -172,15 +172,15 @@ Upgrading an Existing Version
 
 .. rubric:: Upgrading Patch Release versions
 
-When a new compatible CDAP parcel is released, it will be available via the Parcels page in the Cloudera Manager UI
+When a new compatible CDAP parcel is released, it will be available via the Parcels page in the Cloudera Manager UI.
 
 #. Stop all Flows, Services, and other Programs in all your applications.
 
-#. Stop CDAP services
+#. Stop CDAP services.
 
-#. Use the Cloudera Manager UI to download, distribute, and activate the parcel on all cluster hosts
+#. Use the Cloudera Manager UI to download, distribute, and activate the parcel on all cluster hosts.
 
-#. Start CDAP services
+#. Start CDAP services.
 
 .. rubric:: Upgrading Major/Minor Release versions
 
@@ -188,15 +188,15 @@ These steps will upgrade from CDAP 2.8.0 to CDAP 3.0.0. (**Note:** Apps need to 
 
 #. Stop all Flows, Services, and other Programs in all your applications.
 
-#. Stop CDAP services
+#. Stop CDAP services.
 
 #. Ensure your installed version of the CSD matches the target version of CDAP. For example, CSD version 3.0.* is compatible
    with CDAP version 3.0.*.  Download the latest version of the CSD `here <http://cask.co/resources/#cdap-integrations>`__.
 
-#. Use the Cloudera Manager UI to download, distribute, and activate the parcel on all cluster hosts
+#. Use the Cloudera Manager UI to download, distribute, and activate the parcel on all cluster hosts.
 
 #. Before starting services, run the Upgrade Tool to update any necessary CDAP table definitions.  From the CDAP Service page,
-   select "Run CDAP Upgrade Tool" from the Actions menu
+   select "Run CDAP Upgrade Tool" from the Actions menu.
 
 #. Start the CDAP services.  At this point it may be necessary to correct for any changes in the CSD.  For example, if new CDAP services
    were added or removed, you must add or remove role instances as necessary.  When upgrading from 2.8.0 to 3.0.0, the CDAP Web-App role has
@@ -207,7 +207,7 @@ These steps will upgrade from CDAP 2.8.0 to CDAP 3.0.0. (**Note:** Apps need to 
    - From the CDAP Instances page, check the CDAP-Web-App role, and select Delete from the Actions menu.
 
 #. After CDAP services have started, run the Post-Upgrade tool to perform any necessary upgrade steps against the running services.  From the
-   CDAP Service page, select "Run CDAP Post-Upgrade Tasks"
+   CDAP Service page, select "Run CDAP Post-Upgrade Tasks."
 
 #. You must recompile and then redeploy your applications.
 

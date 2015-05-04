@@ -100,7 +100,7 @@ show in the list for the cluster where you installed it. You can select it, and 
 *Cask DAP* page, with *Quick Links* and *Status Summary*. The lights of the *Status
 Summary* should all turn green, showing completion of startup. 
 
-The *Quick Links* includes a link to the **CDAP Console**, which by default is running on 
+The *Quick Links* includes a link to the **CDAP UI**, which by default is running on
 port ``9999`` of the host where the UI role instance is running.
 
 .. figure:: ../../_images/integration-cloudera/cloudera-csd-09.png
