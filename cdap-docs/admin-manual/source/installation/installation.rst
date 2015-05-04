@@ -648,14 +648,7 @@ recompiled and re-deployed.)
 
    This will correct the pending metrics for flows. This is a new metric that was introduced in 
    CDAP 3.0; flows that existed before the upgrade to 3.0 do not have a correct value for this
-   metric and running the tool provides a one time correction.
-
-#. This will allow you to see your old run history, logs, and |---| if you migrated your 
-   old metrics with the *Data Migration Tool* |---| metrics.
-
-   **Note:** You will no longer be able to see your previous logs in the CDAP Console (UI). 
-   To access your previous logs, please see the section on downloading logs in the
-   :ref:`Logging HTTP RESTful API <http-restful-api-logging>`.
+   metric and running the tool provides a one-time correction.
 
 #. You must recompile and then redeploy your applications. 
 
