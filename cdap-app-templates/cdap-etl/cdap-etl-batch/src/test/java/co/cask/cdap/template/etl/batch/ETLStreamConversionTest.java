@@ -99,7 +99,7 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
                                  ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
                                                  EVENT_SCHEMA.toString(),
                                                  Properties.TimePartitionedFileSetDataset.TPFS_NAME, fileSetName));
-    ETLStage transform = new ETLStage("Projection", ImmutableMap.of("drop", "headers"));
+    ETLStage transform = new ETLStage("Projection", ImmutableMap.<String, String>of());
     return new ETLBatchConfig("* * * * *", source, sink, Lists.newArrayList(transform));
   }
 
