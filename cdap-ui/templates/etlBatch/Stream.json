@@ -19,7 +19,7 @@
           "schema" : {
              "widget": "schema",
              "label" : "Schema",
-             "schema-types" : [ "int", "string", "boolean" ],
+             "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
              "schema-default-type" : "string"
           },
 
