@@ -222,7 +222,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @param runtimeService The {@link ProgramRuntimeService} instance to check the actual state of the program.
    */
   private  void validateAndCorrectRunningRunRecords(ProgramType programType, Store store,
-                                                  ProgramRuntimeService runtimeService) {
+                                                    ProgramRuntimeService runtimeService) {
     final Map<RunId, RuntimeInfo> runIdToRuntimeInfo = runtimeService.list(programType);
 
     List<RunRecord> invalidRunRecords = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecord>() {
@@ -245,9 +245,22 @@ public class ProgramLifecycleService extends AbstractIdleService {
     // Now lets correct the invalid RunRecords
     for (RunRecord rr : invalidRunRecords) {
       String runId = rr.getPid();
-      RuntimeInfo runtimeInfo = runIdToRuntimeInfo.get(RunIds.fromString(runId));
-      store.compareAndSetStatus(runtimeInfo.getProgramId(), runId, ProgramController.State.ALIVE.getRunStatus(),
-                                ProgramController.State.ERROR.getRunStatus());
+
+      // Get running programs based on type and check if any RunRecord id for that program.
+      Id.Program targetProgramId = null;
+      for (Map.Entry<RunId, RuntimeInfo> entry : runIdToRuntimeInfo.entrySet()) {
+        RuntimeInfo runtimeInfo = entry.getValue();
+        RunRecord runRecord = store.getRun(runtimeInfo.getProgramId(), runId);
+        if (runRecord != null && runRecord.getPid().equals(runId)) {
+          targetProgramId = runtimeInfo.getProgramId();
+        }
+      }
+
+      // Check if such program exist for the RunRecord
+      if (targetProgramId != null) {
+        store.compareAndSetStatus(targetProgramId, runId, ProgramController.State.ALIVE.getRunStatus(),
+                                  ProgramController.State.ERROR.getRunStatus());
+      }
     }
   }
 
