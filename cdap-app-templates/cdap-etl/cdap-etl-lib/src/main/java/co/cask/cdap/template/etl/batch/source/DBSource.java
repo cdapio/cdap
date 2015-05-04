@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
  */
 @Plugin(type = "source")
 @Name("Database")
-@Description("Batch source for a database.")
+@Description("Batch source for a database")
 public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(DBSource.class);
 

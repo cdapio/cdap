@@ -127,7 +127,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     final ProgramController controller = runtimeInfo.getController();
     final String runId = controller.getRunId().getId();
     final String twillRunId = runtimeInfo.getTwillRunId() == null ? null : runtimeInfo.getTwillRunId().getId();
-    if (programType != ProgramType.MAPREDUCE) {
+    if (programType != ProgramType.MAPREDUCE && programType != ProgramType.SPARK) {
       // MapReduce state recording is done by the MapReduceProgramRunner
       // TODO [JIRA: CDAP-2013] Same needs to be done for other programs as well
       controller.addListener(new AbstractListener() {

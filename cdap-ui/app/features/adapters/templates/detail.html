@@ -6,6 +6,7 @@
       <span ng-bind="$state.params.adapterId"></span>
     </h2>
     <div class="type-block">
+      <span class="icon-ETLtemplates"></span>
       <small> Type: Adapter </small>
     </div>
   </div>
@@ -37,7 +38,7 @@
         <span class="caret"></span>
       </button>
 
-      <ul class="dropdown-menu" role="menu" ng-if="status === 'STOPPED'">
+      <ul class="dropdown-menu dropdown-menu-right" role="menu" ng-if="status === 'STOPPED'">
         <li>
           <a href="#" ng-click="openRuntime()">
             <span class="fa fa-wrench"></span>

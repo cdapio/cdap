@@ -53,10 +53,7 @@ import javax.annotation.Nullable;
 @SuppressWarnings("unused")
 @Plugin(type = "source")
 @Name("Stream")
-@Description("Batch source for a stream. If a format is given, any property prefixed with " +
-  "'format.setting.' will be passed to the format. For example, if a property with key " +
-  "'format.setting.delimiter' and value '|' is given, the setting 'delimiter' with value '|' " +
-  "will be passed to the format.")
+@Description("Batch source for a Stream")
 public class StreamBatchSource extends BatchSource<LongWritable, Object, StructuredRecord> {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamBatchSource.class);

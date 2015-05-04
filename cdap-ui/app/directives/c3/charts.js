@@ -85,6 +85,7 @@ ngC3.controller('c3Controller', function ($scope, c3, myHelpers, $filter) {
 
     var xTick = {};
     xTick.count = $scope.options.xtickcount;
+    xTick.culling = $scope.options.xTickCulling;
     if ($scope.options.formatAsTimestamp) {
       var timestampFormat = function(timestampSeconds) {
         return $filter('amDateFormat')(timestampSeconds * 1000, 'h:mm:ss a');
@@ -118,7 +119,8 @@ ngC3.directive('c3Line', function () {
 ngC3.directive('c3Bar', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
-      scope.initC3(elem, 'bar', attr, {stack: true});
+      // xtickcount option does not work for bar charts, so have to use culling
+      scope.initC3(elem, 'bar', attr, {stack: true, xTickCulling: {max: 5}});
     }
   }, baseDirective);
 });
