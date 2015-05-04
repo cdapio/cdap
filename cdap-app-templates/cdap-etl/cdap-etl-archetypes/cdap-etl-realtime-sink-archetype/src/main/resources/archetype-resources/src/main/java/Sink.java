@@ -20,9 +20,8 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.template.plugins.PluginConfig;
 import co.cask.cdap.templates.etl.api.PipelineConfigurer;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
 import co.cask.cdap.templates.etl.api.realtime.DataWriter;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.templates.etl.api.realtime.RealtimeSink;
@@ -65,7 +64,7 @@ public class Sink extends RealtimeSink<StructuredRecord> {
   }
 
   @Override
-  public void configurePipeline(ETLStage stageConfig, PipelineConfigurer pipelineConfigurer) {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
      // Create any sink that is required. Datasets/Streams
     // pipelineConfigurer.addStream(new Stream(name));
     // pipelineConfigurer.createDataset(name, type, properties);
