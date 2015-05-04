@@ -33,13 +33,35 @@ General
 - The `File DropZone <http://docs.cask.co/cdap/2.8.0/en/developers-manual/ingesting-tools/cdap-file-drop-zone.html>`__ 
   and `File Tailer <http://docs.cask.co/cdap/2.8.0/en/developers-manual/ingesting-tools/cdap-file-tailer.html>`__
   are no longer supported as of Release 3.0.
-
+- Support for *Procedures* has been removed. After upgrading, an Application that
+  contained a Procedure must be redeployed. 
+- Support for *Service Workers* have been removed. After upgrading, an Application that
+  contained a Service Worker must be redeployed.  
 
 New Features
 ------------
 
+- Workflow logs can now be retrieved using the :ref:`CDP HTTP Logging RESTful API 
+  <http-restful-api-logging>`.
+- CDAP Tables are :ref:`now explorable <table-exploration>`.
+- The :ref:`CDAP CLI <cli>` supports the new :ref:`Application Template and Adapters APIs 
+  <users-index>`. (`CDAP-1773 <https://issues.cask.co/browse/CDAP-1773>`__).
+- Both `grok <http://logstash.net/docs/1.4.2/filters/grok>`__ and 
+  `syslog <http://en.wikipedia.org/wiki/Syslog>`__ record formats can now be used when 
+  :ref:`setting the format of a Stream <http-restful-api-stream-setting-properties>`
+  (`CDAP-1949 <https://issues.cask.co/browse/CDAP-1949>`__).
+- Added HTTP RESTful endpoints for listing Datasets and Streams as used by Adapters, 
+  Programs, and Applications, and vice-versa 
+  (`CDAP-2214 <https://issues.cask.co/browse/CDAP-2214>`__).
+- Created a `queue introspection tool <https://github.com/caskdata/cdap/pull/2290>`__, 
+  for counting processed and unprocessed entries in a 
+  Flowlet queue (`CDAP-2105 <https://issues.cask.co/browse/CDAP-2105>`__).
+
 Improvement
 -----------
+
+- The CDAP Authentication server now reports the port correctly when the port is set to 0
+  (`CDAP-614 <https://issues.cask.co/browse/CDAP-614>`__).
 
 API Changes
 -----------
@@ -58,6 +80,13 @@ API Changes
   that queried for a metric has been deprecated, pending removal
   in a later version of CDAP (`CDAP-1998 <https://issues.cask.co/browse/CDAP-1998>`__). A
   :ref:`replacement endpoint <http-restful-api-metrics-querying-a-metric>` is available.
+  
+- Metrics: The tag name for Service Handlers in previous releases was wrongly "runnable",
+  and internally represented as "srn". These metrics are now tagged as "handler" ("hnd"), and
+  metrics queries will only account for this tag name. If you need to query historic metrics
+  that were emitted with the old tag "runnable", use "srn" to query them (instead of either
+  "runnable" or "handler").
+
 
 .. _known-issues-300:
 
@@ -67,6 +96,8 @@ Known Issues
 - CDAP has been tested on and supports CDH 4.2.x through CDH 5.3.x, HDP 2.0 through 2.1, and
   Apache Bigtop 0.8.0. It has not been tested on more recent versions of CDH. 
   See :ref:`our Hadoop/HBase Environment configurations <install-hadoop-hbase>`.
+  
+- See the above section (*API Changes*) for alterations that can affect existing installations.
 
 - See also the *Known Issues* of `version 2.8.0 <#known-issues-280>`_\ .
 
