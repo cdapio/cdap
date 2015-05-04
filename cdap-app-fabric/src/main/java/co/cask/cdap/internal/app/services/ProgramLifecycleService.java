@@ -16,9 +16,6 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -199,7 +196,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     if (runtimeInfo != null) {
       runtimeInfo.getController().stop().get();
     } else {
-      LOG.warn("RunId {} not found for Program {}", runId, programId);
+      LOG.warn("RunTimeInfo not found for Program {} RunId {}", programId, runId);
     }
   }
 
