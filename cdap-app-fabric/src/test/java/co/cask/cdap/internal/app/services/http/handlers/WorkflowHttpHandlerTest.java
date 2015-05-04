@@ -595,13 +595,28 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     List<RunRecord> anotherMRHistoryRuns = getProgramRuns(mr2ProgramId, "completed");
 
+    Id.Program spark1ProgramId = Id.Program.from(TEST_NAMESPACE2, workflowAppWithScopedParameters,
+                                                 ProgramType.SPARK, "OneSpark");
+
+    List<RunRecord> oneSparkHistoryRuns = getProgramRuns(spark1ProgramId, "completed");
+
+    Id.Program spark2ProgramId = Id.Program.from(TEST_NAMESPACE2, workflowAppWithScopedParameters, ProgramType.SPARK,
+                                              "AnotherSpark");
+
+    List<RunRecord> anotherSparkHistoryRuns = getProgramRuns(spark2ProgramId, "completed");
+
+
     Assert.assertEquals(1, workflowHistoryRuns.size());
     Assert.assertEquals(1, oneMRHistoryRuns.size());
     Assert.assertEquals(1, anotherMRHistoryRuns.size());
+    Assert.assertEquals(1, oneSparkHistoryRuns.size());
+    Assert.assertEquals(1, anotherSparkHistoryRuns.size());
 
     Map<String, String> workflowRunRecordProperties = workflowHistoryRuns.get(0).getProperties();
     Map<String, String> oneMRRunRecordProperties = oneMRHistoryRuns.get(0).getProperties();
     Map<String, String> anotherMRRunRecordProperties = anotherMRHistoryRuns.get(0).getProperties();
+    Map<String, String> oneSparkRunRecordProperties = oneSparkHistoryRuns.get(0).getProperties();
+    Map<String, String> anotherSparkRunRecordProperties = anotherSparkHistoryRuns.get(0).getProperties();
 
     Assert.assertNotNull(oneMRRunRecordProperties.get("workflowrunid"));
     Assert.assertEquals(workflowHistoryRuns.get(0).getPid(), oneMRRunRecordProperties.get("workflowrunid"));
@@ -609,8 +624,16 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertNotNull(anotherMRRunRecordProperties.get("workflowrunid"));
     Assert.assertEquals(workflowHistoryRuns.get(0).getPid(), anotherMRRunRecordProperties.get("workflowrunid"));
 
+    Assert.assertNotNull(oneSparkRunRecordProperties.get("workflowrunid"));
+    Assert.assertEquals(workflowHistoryRuns.get(0).getPid(), oneSparkRunRecordProperties.get("workflowrunid"));
+
+    Assert.assertNotNull(anotherSparkRunRecordProperties.get("workflowrunid"));
+    Assert.assertEquals(workflowHistoryRuns.get(0).getPid(), anotherSparkRunRecordProperties.get("workflowrunid"));
+
     Assert.assertEquals(workflowRunRecordProperties.get("0"), oneMRHistoryRuns.get(0).getPid());
+    Assert.assertEquals(workflowRunRecordProperties.get("1"), oneSparkHistoryRuns.get(0).getPid());
     Assert.assertEquals(workflowRunRecordProperties.get("2"), anotherMRHistoryRuns.get(0).getPid());
+    Assert.assertEquals(workflowRunRecordProperties.get("3"), anotherSparkHistoryRuns.get(0).getPid());
   }
 
   @Test
