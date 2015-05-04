@@ -39,7 +39,6 @@ angular.module(PKG.name+'.services')
 
       socket.onopen = function (event) {
         EventPipe.emit('backendUp', 'User interface service is online');
-        console.info('ON OPEN');
         if(attempt>1) {
           $rootScope.$broadcast(MYSOCKET_EVENT.reconnected, event);
           attempt = 1;
