@@ -189,6 +189,12 @@ public abstract class Id {
     protected Id getParent() {
       return null;
     }
+
+    // TODO: remove (use super toString() which returns getIdRep())
+    @Override
+    public String toString() {
+      return id;
+    }
   }
 
   /**
