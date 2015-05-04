@@ -51,7 +51,7 @@ angular.module(PKG.name+'.feature.home')
           if(!n.length) {
             mySessionStorage.get(PREFKEY)
               .then(function (latest) {
-                var d = latest || rNsList[0].name;
+                var d = latest || 'default';
                 console.warn('invalid namespace, defaulting to', d);
                 $state.go(
                   $state.current,
