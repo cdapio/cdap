@@ -52,7 +52,7 @@ angular.module(PKG.name + '.feature.flows')
         templateUrl: '/assets/features/flows/templates/tabs/runs.html',
         controller: 'FlowsRunsController',
         ncyBreadcrumb: {
-          label: 'Runs'
+          label: '{{$state.params.programId}}'
         }
       })
         .state('flows.detail.runs.run', {
