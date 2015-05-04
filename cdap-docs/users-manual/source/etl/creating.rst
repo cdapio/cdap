@@ -102,7 +102,7 @@ Stream after performing a projection transformation::
             {
                 "name":"Projection"
                 "properties":{
-                    "rename":"message:tweet"
+                    "drop":"lang,time,favCount,source,geoLat,geoLong,isRetweet"
                 }
             }
        ],
@@ -125,6 +125,6 @@ number of instances of a Realtime Adapter cannot be changed during runtime.
 The ``instances`` property value needs to be greater than 0. Note that the ``instance``
 property replaces the ``schedule`` property of the ETL Batch Template.
 
-In this case, we will use a *ProjectionTransform* (a type of Transform) to rename a field
-in the incoming data from "message" to "tweet". A *StreamSink* needs a data field property
+In this case, we will use a *ProjectionTransform* (a type of Transform) to drop certain
+columns in the incoming data. A *StreamSink* in the final step needs a data field property
 that it will use as the content for the data to be written. 
