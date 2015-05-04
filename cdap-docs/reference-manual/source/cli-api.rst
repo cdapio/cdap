@@ -73,17 +73,22 @@ Options
 The CLI may be started with command-line options, as detailed below::
 
   usage: cdap-cli.sh [--autoconnect <true|false>] [--debug] [--help]
-                     [--verify-ssl <true|false>] [--uri <arg>]
+                     [--verify-ssl <true|false>] [--uri <uri>][--script
+                     <script-file>]
    -a,--autoconnect <arg>   If "true", try provided connection (from uri)
                             upon launch or try default connection if none
                             provided. Defaults to "true".
    -d,--debug               Print exception stack traces.
    -h,--help                Print the usage message.
-   -s,--verify-ssl <arg>    If "true", verify SSL certificate when making
-                            requests. Defaults to "true".
+   -s,--script <arg>        Execute a file containing a series of CLI
+                            commands, line-by-line.
    -u,--uri <arg>           CDAP instance URI to interact with in the format
                             "[http[s]://]<hostname>[:<port>[/<namespace>]]".
-                            Defaults to "http://0.0.0.0:10000/default".
+                            Defaults to
+                            "http://<hostname>.local:10000".
+   -v,--verify-ssl <arg>    If "true", verify SSL certificate when making
+                            requests. Defaults to "true".
+
 
 Settings
 --------
@@ -151,9 +156,12 @@ These are the available commands:
    ``deploy app <app-jar-file>``,"Deploys an Application."
    ``describe adapter <adapter-name>``,"Lists all Adapters."
    ``describe app <app-id>``,"Shows information about an Application."
+   ``describe app-template <app-template-id>``,"Lists all Application Templates."
    ``describe stream <stream-id>``,"Shows detailed information about a Stream."
    ``get adapter logs <adapter-name>``,"Gets the logs of an Adapter."
-   ``get adapter runs <adapter-name>``,"Gets the runs of an Adapter."
+   ``get adapter runs <adapter-name> [status <status>]``,"Gets the runs of an Adapter."
+   ``get adapter status <adapter-name>``,"Gets the status of an Adapter."
+   ``get app-template plugins <app-template-id> <plugin-type>``,"Lists plugins for an Application Template."
    ``get endpoints service <app-id.service-id>``,"List the endpoints that a Service exposes."
    ``get flow live <app-id.flow-id>``,"Gets the live info of a Flow."
    ``get flow logs <app-id.flow-id> [<start-time>] [<end-time>]``,"Gets the logs of a Flow."
@@ -206,6 +214,7 @@ These are the available commands:
    ``get workflow schedules <app-id.workflow-id>``,"Resumes a schedule"
    ``get workflow status <app-id.workflow-id>``,"Gets the status of a Workflow."
    ``list adapters``,"Lists all Adapters."
+   ``list app-templates``,"Lists all Application Templates."
    ``list apps``,"Lists all Applications."
    ``list flows``,"Lists all Flows."
    ``list mapreduce``,"Lists all MapReduce Programs."

@@ -47,6 +47,8 @@ New Features
 - CDAP Tables are :ref:`now explorable <table-exploration>`.
 - The :ref:`CDAP CLI <cli>` supports the new :ref:`Application Template and Adapters APIs 
   <users-index>`. (`CDAP-1773 <https://issues.cask.co/browse/CDAP-1773>`__).
+- The :ref:`CDAP CLI <cli>` startup options have been changed to accommodate a new option
+  of executing a file containing a series of CLI commands, line-by-line.
 - Both `grok <http://logstash.net/docs/1.4.2/filters/grok>`__ and 
   `syslog <http://en.wikipedia.org/wiki/Syslog>`__ record formats can now be used when 
   :ref:`setting the format of a Stream <http-restful-api-stream-setting-properties>`
@@ -88,6 +90,8 @@ API Changes
   that were emitted with the old tag "runnable", use "srn" to query them (instead of either
   "runnable" or "handler").
 
+- The :ref:`CDAP CLI <cli>` startup options have been changed to accommodate a new option
+  of executing a file containing a series of CLI commands, line-by-line.
 
 .. _known-issues-300:
 
