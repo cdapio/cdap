@@ -147,100 +147,103 @@ that Application Template, including their name, description, and the source fil
 contain the extension.
 
 Example output for the ``source`` extensions of the ``ETLBatch`` Application Template
-(pretty-printed and reformatted to fit)::
+(pretty-printed and reformatted to fit):
 
-  $ GET <base-url>/templates/ETLBatch/extensions/source
+.. container:: highlight
 
-  [
-    {
-      "template": {
-        "name": "ETLBatch",
-        "description": "Batch Extract-Transform-Load (ETL) Adapter",
-        "programType": "Workflow"
+  .. parsed-literal::
+    |$| GET <base-url>/templates/ETLBatch/extensions/source
+
+    [
+      {
+        "template": {
+          "name": "ETLBatch",
+          "description": "Batch Extract-Transform-Load (ETL) Adapter",
+          "programType": "Workflow"
+        },
+        "source": {
+          "fileName": "cdap-etl-lib-|release|-batch.jar",
+          "name": "cdap-etl-lib",
+          "version": {
+            "version": "|release|-batch",
+            "major": |version-major|,
+            "minor": |version-minor|,
+            "fix": |version-fix|,
+            "suffix": "|version-suffix-batch|"
+          }
+        },
+        "type": "source",
+        "name": "Database",
+        "description": "Batch source for a database."
       },
-      "source": {
-        "fileName": "cdap-etl-lib-3.0.0-SNAPSHOT-batch.jar",
-        "name": "cdap-etl-lib",
-        "version": {
-          "version": "3.0.0-SNAPSHOT-batch",
-          "major": 3,
-          "minor": 0,
-          "fix": 0,
-          "suffix": "SNAPSHOT-batch"
-        }
+      {
+        "template": {
+          "name": "ETLBatch",
+          "description": "Batch Extract-Transform-Load (ETL) Adapter",
+          "programType": "Workflow"
+        },
+        "source": {
+          "fileName": "cdap-etl-lib-|release|-batch.jar",
+          "name": "cdap-etl-lib",
+          "version": {
+            "version": "|release|-batch",
+            "major": |version-major|,
+            "minor": |version-minor|,
+            "fix": |version-fix|,
+            "suffix": "|version-suffix-batch|"
+          }
+        },
+        "type": "source",
+        "name": "KVTable",
+        "description": "CDAP KeyValue Table Dataset Batch Source. Outputs records with a 
+          'key' field and a 'value' field. Both fields are of type bytes."
       },
-      "type": "source",
-      "name": "Database",
-      "description": "Batch source for a database."
-    },
-    {
-      "template": {
-        "name": "ETLBatch",
-        "description": "Batch Extract-Transform-Load (ETL) Adapter",
-        "programType": "Workflow"
+      {
+        "template": {
+          "name": "ETLBatch",
+          "description": "Batch Extract-Transform-Load (ETL) Adapter",
+          "programType": "Workflow"
+        },
+        "source": {
+          "fileName": "cdap-etl-lib-|release|-batch.jar",
+          "name": "cdap-etl-lib",
+          "version": {
+            "version": "|release|-batch",
+            "major": |version-major|,
+            "minor": |version-minor|,
+            "fix": |version-fix|,
+            "suffix": "|version-suffix-batch|"
+          }
+        },
+        "type": "source",
+        "name": "Stream",
+        "description": "Batch source for a stream. If a format is given, any property 
+          prefixed with 'format.setting.' will be passed to the format. For example, if a 
+          property with key 'format.setting.delimiter' and value '|' is given, the setting 
+          'delimiter' with value '|' will be passed to the format."
       },
-      "source": {
-        "fileName": "cdap-etl-lib-3.0.0-SNAPSHOT-batch.jar",
-        "name": "cdap-etl-lib",
-        "version": {
-          "version": "3.0.0-SNAPSHOT-batch",
-          "major": 3,
-          "minor": 0,
-          "fix": 0,
-          "suffix": "SNAPSHOT-batch"
-        }
-      },
-      "type": "source",
-      "name": "KVTable",
-      "description": "CDAP KeyValue Table Dataset Batch Source. Outputs records with a 
-        'key' field and a 'value' field. Both fields are of type bytes."
-    },
-    {
-      "template": {
-        "name": "ETLBatch",
-        "description": "Batch Extract-Transform-Load (ETL) Adapter",
-        "programType": "Workflow"
-      },
-      "source": {
-        "fileName": "cdap-etl-lib-3.0.0-SNAPSHOT-batch.jar",
-        "name": "cdap-etl-lib",
-        "version": {
-          "version": "3.0.0-SNAPSHOT-batch",
-          "major": 3,
-          "minor": 0,
-          "fix": 0,
-          "suffix": "SNAPSHOT-batch"
-        }
-      },
-      "type": "source",
-      "name": "Stream",
-      "description": "Batch source for a stream. If a format is given, any property 
-        prefixed with 'format.setting.' will be passed to the format. For example, if a 
-        property with key 'format.setting.delimiter' and value '|' is given, the setting 
-        'delimiter' with value '|' will be passed to the format."
-    },
-    {
-      "template": {
-        "name": "ETLBatch",
-        "description": "Batch Extract-Transform-Load (ETL) Adapter",
-        "programType": "Workflow"
-      },
-      "source": {
-        "fileName": "cdap-etl-lib-3.0.0-SNAPSHOT-batch.jar",
-        "name": "cdap-etl-lib",
-        "version": {
-          "version": "3.0.0-SNAPSHOT-batch",
-          "major": 3,
-          "minor": 0,
-          "fix": 0,
-          "suffix": "SNAPSHOT-batch"
-        }
-      },
-      "type": "source",
-      "name": "Table",
-      "description": "CDAP Table Dataset Batch Source"
-    }
-  ]
+      {
+        "template": {
+          "name": "ETLBatch",
+          "description": "Batch Extract-Transform-Load (ETL) Adapter",
+          "programType": "Workflow"
+        },
+        "source": {
+          "fileName": "cdap-etl-lib-|release|-batch.jar",
+          "name": "cdap-etl-lib",
+          "version": {
+            "version": "|release|-batch",
+            "major": |version-major|,
+            "minor": |version-minor|,
+            "fix": |version-fix|,
+            "suffix": "|version-suffix-batch|"
+          }
+        },
+        "type": "source",
+        "name": "Table",
+        "description": "CDAP Table Dataset Batch Source"
+      }
+    ]
 
 
 Details of an Extension (Plugin)
@@ -270,103 +273,106 @@ information needed when configuring an Adapter using the Plugin, the type of eac
 property, and whether it is a mandatory property (*"required"*).
 
 Example output for the ``Database`` plugin of type ``source`` of the ``ETLBatch``
-Application Template (pretty-printed and reformatted to fit)::
+Application Template (pretty-printed and reformatted to fit):
 
-  $ GET <base-url>/templates/ETLBatch/extensions/source/plugins/Database
+.. container:: highlight
 
-  [
-    {
-      "className": "co.cask.cdap.templates.etl.batch.sources.DBSource",
-      "properties": {
-        "jdbcPluginType": {
-          "name": "jdbcPluginType",
-          "description": "Type of the JDBC plugin to use. This is the value of the 'type' 
-          key defined in the json file for the JDBC plugin. Defaults to 'jdbc'.",
-          "type": "string",
-          "required": false
+  .. parsed-literal::
+    |$| GET <base-url>/templates/ETLBatch/extensions/source/plugins/Database
+
+    [
+      {
+        "className": "co.cask.cdap.templates.etl.batch.sources.DBSource",
+        "properties": {
+          "jdbcPluginType": {
+            "name": "jdbcPluginType",
+            "description": "Type of the JDBC plugin to use. This is the value of the 'type' 
+            key defined in the json file for the JDBC plugin. Defaults to 'jdbc'.",
+            "type": "string",
+            "required": false
+          },
+          "tableName": {
+            "name": "tableName",
+            "description": "Table name to export to.",
+            "type": "string",
+            "required": true
+          },
+          "jdbcPluginName": {
+            "name": "jdbcPluginName",
+            "description": "Name of the JDBC plugin to use. This is the value of the 'name' 
+            key defined in the json file for the JDBC plugin. Defaults to 'jdbc'.",
+            "type": "string",
+            "required": false
+          },
+          "driverClass": {
+            "name": "driverClass",
+            "description": "Driver class to connect to the database.",
+            "type": "string",
+            "required": true
+          },
+          "importQuery": {
+            "name": "importQuery",
+            "description": "The SELECT query to use to import data from the specified table. 
+            You can specify an arbitrary number of columns to import, or import all columns 
+            using \*. You can also specify a number of WHERE clauses or ORDER BY clauses. 
+            However, LIMIT and OFFSET clauses should not be used in this query.",
+            "type": "string",
+            "required": true
+          },
+          "connectionString": {
+            "name": "connectionString",
+            "description": "JDBC connection string including database name.",
+            "type": "string",
+            "required": true
+          },
+          "password": {
+            "name": "password",
+            "description": "Password to use to connect to the specified database. Required 
+            for databases that need authentication. Optional for databases that do not 
+            require authentication.",
+            "type": "string",
+            "required": false
+          },
+          "user": {
+            "name": "user",
+            "description": "User to use to connect to the specified database. Required for 
+            databases that need authentication. Optional for databases that do not require 
+            authentication.",
+            "type": "string",
+            "required": false
+          },
+          "countQuery": {
+            "name": "countQuery",
+            "description": "The SELECT query to use to get the count of records to import 
+            from the specified table. Examples: SELECT COUNT(*) from <my_table> where 
+            <my_column> 1, SELECT COUNT(my_column) from my_table). NOTE: Please include the 
+            same WHERE clauses in this query as the ones used in the import query to reflect 
+            an accurate number of records to import.",
+            "type": "string",
+            "required": true
+          }
         },
-        "tableName": {
-          "name": "tableName",
-          "description": "Table name to export to.",
-          "type": "string",
-          "required": true
+        "template": {
+          "name": "ETLBatch",
+          "description": "Batch Extract-Transform-Load (ETL) Adapter",
+          "programType": "Workflow"
         },
-        "jdbcPluginName": {
-          "name": "jdbcPluginName",
-          "description": "Name of the JDBC plugin to use. This is the value of the 'name' 
-          key defined in the json file for the JDBC plugin. Defaults to 'jdbc'.",
-          "type": "string",
-          "required": false
+        "source": {
+          "fileName": "cdap-etl-lib-|release|-batch.jar",
+          "name": "cdap-etl-lib",
+          "version": {
+            "version": "|release|-batch",
+            "major": |version-major|,
+            "minor": |version-minor|,
+            "fix": |version-fix|,
+            "suffix": "|version-suffix-batch|"
+          }
         },
-        "driverClass": {
-          "name": "driverClass",
-          "description": "Driver class to connect to the database.",
-          "type": "string",
-          "required": true
-        },
-        "importQuery": {
-          "name": "importQuery",
-          "description": "The SELECT query to use to import data from the specified table. 
-          You can specify an arbitrary number of columns to import, or import all columns 
-          using *. You can also specify a number of WHERE clauses or ORDER BY clauses. 
-          However, LIMIT and OFFSET clauses should not be used in this query.",
-          "type": "string",
-          "required": true
-        },
-        "connectionString": {
-          "name": "connectionString",
-          "description": "JDBC connection string including database name.",
-          "type": "string",
-          "required": true
-        },
-        "password": {
-          "name": "password",
-          "description": "Password to use to connect to the specified database. Required 
-          for databases that need authentication. Optional for databases that do not 
-          require authentication.",
-          "type": "string",
-          "required": false
-        },
-        "user": {
-          "name": "user",
-          "description": "User to use to connect to the specified database. Required for 
-          databases that need authentication. Optional for databases that do not require 
-          authentication.",
-          "type": "string",
-          "required": false
-        },
-        "countQuery": {
-          "name": "countQuery",
-          "description": "The SELECT query to use to get the count of records to import 
-          from the specified table. Examples: SELECT COUNT(*) from <my_table> where 
-          <my_column> 1, SELECT COUNT(my_column) from my_table). NOTE: Please include the 
-          same WHERE clauses in this query as the ones used in the import query to reflect 
-          an accurate number of records to import.",
-          "type": "string",
-          "required": true
-        }
-      },
-      "template": {
-        "name": "ETLBatch",
-        "description": "Batch Extract-Transform-Load (ETL) Adapter",
-        "programType": "Workflow"
-      },
-      "source": {
-        "fileName": "cdap-etl-lib-3.0.0-SNAPSHOT-batch.jar",
-        "name": "cdap-etl-lib",
-        "version": {
-          "version": "3.0.0-SNAPSHOT-batch",
-          "major": 3,
-          "minor": 0,
-          "fix": 0,
-          "suffix": "SNAPSHOT-batch"
-        }
-      },
-      "type": "source",
-      "name": "Database",
-      "description": "Batch source for a database."
-    }
-  ]
+        "type": "source",
+        "name": "Database",
+        "description": "Batch source for a database."
+      }
+    ]
 
 .. _http-restful-api-apptemplates-adapters:
 
@@ -495,6 +501,8 @@ command will return a list of adapters (pretty-printed and reformatted to fit)::
       "instances": 1
     }
   ]
+
+.. _http-restful-api-apptemplates-adapters-details:
 
 List Details of an Adapter
 --------------------------
@@ -712,8 +720,9 @@ the logs for an Adaptor are the logs of the underlying program. To retrieve thes
 using a RESTful API, you need to know which underlying program the Adaptor uses
 and then use the CDAP :ref:`Logging API <http-restful-api-logging>` to retrieve its logs.
 
-To find the underlying programs, you can `list details of an Adapter <list-details-of-an-adapter>`
-and then use its ``program`` information to determine how to build your request::
+To find the underlying programs, you can :ref:`list details of an Adapter
+<http-restful-api-apptemplates-adapters-details>` and then use its ``program`` information
+to determine how to build your request::
 
     "program": {
       "namespace": "default",
