@@ -144,30 +144,6 @@ angular
     });
   })
 
-  .run(function(MyDataSource, EventPipe, MY_CONFIG, $rootScope) {
-    // verify backend server is running
-    var dataSrc = new MyDataSource($rootScope.$new());
-    function pingBackend() {
-      dataSrc.poll({
-        url: ['http://',
-              MY_CONFIG.cdap.routerServerUrl,
-              ':',
-              MY_CONFIG.cdap.routerServerPort,
-              '/status'].join(''),
-        interval: 2000
-      }, function(res) {
-        EventPipe.emit('backendUp');
-      }, function(res) {
-        if (res.error.code === 'ECONNREFUSED') {
-          EventPipe.emit('backendDown');
-        }
-      });
-    }
-
-    pingBackend(); // execute immediately when initially opening a page
-
-  })
-
   /**
    * BodyCtrl
    * attached to the <body> tag, mostly responsible for

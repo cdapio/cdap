@@ -72,8 +72,8 @@ body.theme-cdap {
     margin-top: 10px;
     &[cask-sortable] {
       thead {
-        background-color: @cdap-header;
-        th { color: white; }
+
+
         .empty { cursor: default; }
       }
     }
@@ -109,6 +109,13 @@ body.theme-cdap {
     border: solid @table-border-color 1px;
     .border-radius(8px);
     border-left: 0;
+    thead {
+      tr {
+        th {
+          font-weight: 400;
+        }
+      }
+    }
       td, th {
         border-left: 1px solid @table-border-color;
         border-top: 1px solid @table-border-color;
@@ -210,9 +217,8 @@ body.theme-cdap {
       .border-radius(8px);
     }
     .panel-title {
+      font-size: 17px;
       span.fa {
-        background-color: @cdap-gray;
-        color: white;
         margin-right: 10px;
         line-height: 1.2;
         .border-radius(25px);

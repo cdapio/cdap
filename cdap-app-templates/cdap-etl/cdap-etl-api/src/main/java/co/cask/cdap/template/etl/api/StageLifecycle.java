@@ -19,16 +19,18 @@ package co.cask.cdap.template.etl.api;
 import co.cask.cdap.api.annotation.Beta;
 
 /**
- * Base class for ETL Source, Sink Stages.
+ * Interface for stage that supports initialize call for resource setup.
+ *
+ * @param <T> execution context
  */
 @Beta
-public interface EndPointStage {
+public interface StageLifecycle<T> extends Destroyable {
 
   /**
-   * Configure an ETL pipeline, adding datasets and streams that the stage needs.
+   * Initialize the Stage. Can be used to setup resources.
    *
-   * @param pipelineConfigurer the configurer used to add required datasets and streams
-   * @throws IllegalArgumentException if the given config is invalid
+   * @param context execution context
+   * @throws Exception if there is any error during initialization
    */
-  void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException;
+  void initialize(T context) throws Exception;
 }

@@ -78,6 +78,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -178,12 +179,13 @@ public class DefaultStore implements Store {
             case COMPLETED:
             case KILLED:
             case FAILED:
-              mds.apps.recordProgramStop(id, pid, System.currentTimeMillis(), updateStatus);
+              long now = System.currentTimeMillis();
+              long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
+              mds.apps.recordProgramStop(id, pid, nowSecs, updateStatus);
               break;
             default:
               break;
           }
-          mds.apps.recordProgramStop(id, pid, System.currentTimeMillis(), updateStatus);
         }
         return null;
       }

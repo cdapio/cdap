@@ -21,7 +21,10 @@
          "dataset.cube.resolutions" : {
            "widget" : "csv",
            "label" : "Cube Resolution",
-           "description" : "Aggregates for multiple time resolutions to provide a better view of data for both small and large time ranges"
+           "description" : "Aggregates for multiple time resolutions to provide a better view of data for both small and large time ranges",
+           "properties": {
+              "delimiter": ","
+           }
          },
          "mapping.config" : {
             "widget" : "json-editor",

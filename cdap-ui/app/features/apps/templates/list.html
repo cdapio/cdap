@@ -10,10 +10,11 @@
       </button>
       <ul class="dropdown-menu dropdown-menu-right" role="menu">
         <li role="presentation">
-          <my-file-select on-file-select="onFileSelected($files)"
-            data-button-label="Add App"
-            data-button-icon="fa-plus"
-            data-dropdown="true"> </my-file-select>
+          <a role="menuitem" ui-sref="admin.namespace.detail.apps({nsadmin: $state.params.namespace})"
+             class="text-center clearfix">
+            <span class="pull-left"> Add App </span>
+            <span class="fa fa-plus pull-right"></span>
+          </a>
         </li>
       </ul>
     </div>
@@ -42,4 +43,3 @@
     <tbody>
   </table>
 </div>
-

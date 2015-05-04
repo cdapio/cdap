@@ -56,7 +56,7 @@ public abstract class BatchReadableSource<KEY_IN, VAL_IN, OUT> extends BatchSour
   protected abstract Map<String, String> getProperties();
 
   @Override
-  public void prepareJob(BatchSourceContext context) {
+  public void prepareRun(BatchSourceContext context) {
     PluginProperties pluginProperties = context.getPluginProperties();
     context.setInput(pluginProperties.getProperties().get(Properties.BatchReadableWritable.NAME));
   }

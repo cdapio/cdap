@@ -17,6 +17,7 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
@@ -107,7 +108,12 @@ public class HBaseQueueDebugger extends AbstractIdleService {
    * Only works for {@link co.cask.cdap.data2.transaction.queue.hbase.ShardedHBaseQueueStrategy}.
    */
   public QueueStatistics scanQueue(final QueueName queueName, @Nullable Long consumerGroupId) throws Exception {
-    HBaseConsumerStateStore stateStore = queueAdmin.getConsumerStateStore(queueName);
+    HBaseConsumerStateStore stateStore;
+    try {
+      stateStore = queueAdmin.getConsumerStateStore(queueName);
+    } catch (IllegalStateException e) {
+      throw new NotFoundException(queueName);
+    }
 
     TransactionExecutor txExecutor = Transactions.createTransactionExecutor(txExecutorFactory, stateStore);
     Multimap<Long, QueueBarrier> barriers = txExecutor.execute(

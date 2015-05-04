@@ -4,10 +4,16 @@ angular.module(PKG.name + '.commons')
       restrict: 'E',
       scope: {
         model: '=ngModel',
-        delimiter: '@'
+        delimiter: '@',
+        type: '@'
       },
       templateUrl: 'widget-container/widget-dsv/widget-dsv.html',
       controller: function($scope) {
+        if ($scope.type === 'csv') {
+          $scope.showDelimiter = false;
+        } else {
+          $scope.showDelimiter = true;
+        }
 
         var delimiter = $scope.delimiter || ',';
 

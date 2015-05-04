@@ -90,7 +90,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
   }
 
   @Override
-  public void prepareJob(BatchSinkContext context) {
+  public void prepareRun(BatchSinkContext context) {
     LOG.debug("tableName = {}; driverClass = {}; connectionString = {}; importQuery = {}; columns = {}",
               dbSinkConfig.tableName, dbSinkConfig.driverClass, dbSinkConfig.connectionString, dbSinkConfig.columns);
 

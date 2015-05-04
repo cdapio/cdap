@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.services')
-  .service('myNamespace', function myNamespace($q, MyDataSource, EventPipe) {
+  .service('myNamespace', function myNamespace($q, MyDataSource, EventPipe, $http, MY_CONFIG) {
 
     this.namespaceList = [];
 
@@ -38,7 +38,7 @@ angular.module(PKG.name + '.services')
               function (err) {
                 queryInProgress.reject(err);
                 queryInProgress = null;
-                EventPipe.emit('backendDown', 'Problem accessing Namespaces. Please check if CDAP is online');
+                EventPipe.emit('backendDown', 'Problem accessing namespace');
               }
         );
 
@@ -53,5 +53,25 @@ angular.module(PKG.name + '.services')
       });
       return ns[0].name || id;
     };
+
+    function startPolling() {
+
+      _.debounce(function() {
+        $http.get('http://' + window.location.host + '/backendstatus')
+                .success(success).error(error);
+              }, 2000)();
+
+    }
+    function success() {
+      EventPipe.emit('backendUp');
+      startPolling();
+    }
+
+    function error() {
+      EventPipe.emit('backendDown');
+      startPolling();
+    }
+
+    startPolling();
 
   });

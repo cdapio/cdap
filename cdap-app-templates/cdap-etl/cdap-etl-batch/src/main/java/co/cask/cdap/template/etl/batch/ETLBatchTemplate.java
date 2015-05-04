@@ -52,7 +52,7 @@ public class ETLBatchTemplate extends ETLTemplate<ETLBatchConfig> {
   @Override
   public void configure(ApplicationConfigurer configurer, ApplicationContext context) {
     configurer.setName(getAppName("etl.batch.plugin.name"));
-    configurer.setDescription("Batch Extract-Transform-Load (ETL) Adapter");
+    configurer.setDescription("Batch Extract-Transform-Load (ETL) Template");
     configurer.addMapReduce(new ETLMapReduce());
     configurer.addWorkflow(new ETLWorkflow());
   }
