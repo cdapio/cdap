@@ -354,8 +354,9 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @param programType
    * @param programName
    * @param runId
-   * @return instance of {@link Id.Program} if existi for the runId or null if does not.
+   * @return instance of {@link Id.Program} if exist for the runId or null if does not.
    */
+  @Nullable
   private static Id.Program validateProgramForRunRecord(Store store, String namespaceName, String appName,
                                                         ProgramType programType, String programName, String runId) {
     Id.Program programId = Id.Program.from(namespaceName, appName, programType, programName);
