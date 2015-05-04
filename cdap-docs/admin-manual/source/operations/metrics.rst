@@ -31,7 +31,7 @@ The Metrics system currently supports two kinds of metrics: count and gauge:
     gauge(metricName, value)
 
 They will then emit their metrics and you can retrieve them (along with system metrics)
-via the *Metrics Explorer* in the :ref:`CDAP Console <cdap-console>` or
+via the *Metrics Explorer* in the :ref:`CDAP UI <cdap-ui>` or
 via the CDAP’s :ref:`restful-api`. The names given to the metrics (such as
 ``names.longnames`` and ``names.bytes`` as in the example below) should be composed only
 of alphanumeric characters.
@@ -80,5 +80,5 @@ An example of user-defined metrics is in ``PurchaseStore`` in the :ref:`Purchase
 
 Using Metrics Explorer
 ----------------------
-The *Metrics Explorer* of the :ref:`CDAP Console <cdap-console>`
+The *Metrics Explorer* of the :ref:`CDAP UI <cdap-ui>`
 can be used to examine and set metrics in a CDAP instance.

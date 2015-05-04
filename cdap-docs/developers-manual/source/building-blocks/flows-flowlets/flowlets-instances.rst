@@ -8,7 +8,7 @@ Flowlets and Instances
 
 You can have one or more instances of any given Flowlet, each consuming a disjoint
 partition of each input. You can control the number of instances programmatically via the
-:ref:`REST interfaces <rest-scaling-flowlets>` or via the CDAP Console. This enables you
+:ref:`REST interfaces <rest-scaling-flowlets>` or via the CDAP UI. This enables you
 to scale your application to meet capacity at runtime.
 
 In the stand-alone CDAP, multiple Flowlet instances are run in threads, so in some cases

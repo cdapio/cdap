@@ -101,7 +101,7 @@ When completing the Wizard, these notes may help:
      secure Hadoop cluster.
 
    - *Add Service* Wizard, Page 5: **Router Server Port:** This should match the "Router Bind
-     Port"; it’s used by the CDAP Console to connect to the Router service.
+     Port"; it’s used by the CDAP UI to connect to the Router service.
 
 Complete instructions, step-by-step, for using the Admin Console *Add Service* Wizard to install CDAP
 :ref:`are available <step-by-step-cloudera-add-service>`.
@@ -113,7 +113,7 @@ Verification
 
 After CDAP has started up, the best way to verify the installation is to deploy an application,
 ingest some data, run a MapReduce program on it, and then query the results out.  The following
-procedure describes how to do this primarily, via the CDAP Console, though this can all be done via
+procedure describes how to do this primarily, via the CDAP UI, though this can all be done via
 command line.
 
 We provide in our SDK pre-built ``.JAR`` files for convenience.
@@ -127,13 +127,13 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
    ``CDAP_HOME/examples/Purchase-``\ |literal-release|\ ``.jar``. The ``Purchase`` example is documented 
    in the CDAP :ref:`examples manual <examples-purchase>`.
 
-#. Open a web browser to the CDAP Console. It is located on port ``9999`` of the box where
+#. Open a web browser to the CDAP UI. It is located on port ``9999`` of the box where
    you installed CDAP.
 
-#. From the CDAP Console Overview page, click "Load App” and navigate to the jar.
+#. From the CDAP UI Overview page, click "Load App” and navigate to the jar.
    (You can also drag-and-drop to the browser window)
 
-#. Once it is deployed, click on the *Process* button in the left sidebar of the CDAP Console,
+#. Once it is deployed, click on the *Process* button in the left sidebar of the CDAP UI,
    then click *PurchaseFlow* in the Process page to get to the *Flow* detail page, then
    click the *Start* button. (This will launch additional YARN containers.)
 
@@ -142,7 +142,7 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
    *Inject*.  You should see activity in the graphs and the Flowlet counters increment.
 
 #. Run a MapReduce program against this data by click on the *Process* button in the left
-   sidebar of the CDAP Console, select *PurchaseHistoryWorkflow_PurchaseHistoryBuilder*,
+   sidebar of the CDAP UI, select *PurchaseHistoryWorkflow_PurchaseHistoryBuilder*,
    and click the *Start* button.  This will launch an additional container and a MapReduce
    job in YARN.  After it starts you should see the Map and Reduce progress bars complete.
    Failures at this stage are often due to YARN MapReduce misconfiguration or a lack of

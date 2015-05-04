@@ -18,7 +18,7 @@ Operations
     Preferences and Runtime Arguments <preferences>
     Scaling Instances <scaling-instances>
     Resource Guarantees in YARN <resource-guarantees>
-    CDAP Console <cdap-console>
+    CDAP UI <cdap-ui>
     Master Services Logback <logback>
     Transaction Service Maintenance <tx-maintenance>
     Troubleshooting <troubleshooting>
@@ -54,10 +54,10 @@ Operations
 - |resource-guarantees|_ Providing resource guarantees **for CDAP Programs in YARN.**
 
 
-.. |cdap-console| replace:: **CDAP Console:**
-.. _cdap-console: cdap-console.html
+.. |cdap-ui| replace:: **CDAP UI:**
+.. _cdap-ui: cdap-ui.html
 
-- |cdap-console|_ The CDAP Console is available for **deploying, querying and managing CDAP.** 
+- |cdap-ui|_ The CDAP UI is available for **deploying, querying and managing CDAP.** 
 
 
 .. |logback| replace:: **Master Services Logging Configuration:**
@@ -94,7 +94,7 @@ Command Line Interface. See :ref:`reference:cli` in the
 Administrators can check the health of various services in the system.
 (In these examples, substitute for ``<host>`` the host name or IP address of the CDAP server.)
 
-- To retrieve the **health check of the CDAP Console**, make a GET request to the URI::
+- To retrieve the **health check of the CDAP UI**, make a GET request to the URI::
 
     http://<host>:9999/status
 

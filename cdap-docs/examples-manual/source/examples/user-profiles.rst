@@ -148,7 +148,7 @@ Starting the Service and the Flow
 
 Once the application is deployed:
 
-  - Click on ``UserProfiles`` in the Overview page of the CDAP Console to get to the
+  - Click on ``UserProfiles`` in the Overview page of the CDAP UI to get to the
     Application detail page, click:
   
     - ``UserProfileService`` in the *Service* pane to get to the Service detail page, then click the *Start* button; and
@@ -208,7 +208,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 **Stopping the Service**
 
-- Click on ``UserProfiles`` in the Overview page of the CDAP Console to get to the
+- Click on ``UserProfiles`` in the Overview page of the CDAP UI to get to the
   Application detail page, click ``ActivityFlow`` in the *Flow* section of the *Process* pane
   to get to the Flow's detail page, and then click the *Stop* button; repeat these steps for
   the ``FileSetService`` in the *Service* pane; or

@@ -135,7 +135,7 @@ Starting the Service
 
 Once the application is deployed:
 
-- Click on ``SportResults`` in the Overview page of the CDAP Console to get to the
+- Click on ``SportResults`` in the Overview page of the CDAP UI to get to the
   Application detail page, click ``UploadService`` in the *Service* pane to get to the
   Service detail page, then click the *Start* button;
 - Or use the Command Line Interface::
@@ -207,7 +207,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 **Stopping the Service**
 
-- Click on ``SportResults`` in the Overview page of the CDAP Console to get to the
+- Click on ``SportResults`` in the Overview page of the CDAP UI to get to the
   Application detail page, click ``UploadService`` in the *Service* pane to get to the
   Service detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::

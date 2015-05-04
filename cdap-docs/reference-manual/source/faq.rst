@@ -62,7 +62,7 @@ advantages of using CDAP include:
 #. **Easy Application Operations:**
    Once your Big Data application is in production, CDAP is designed specifically to monitor your
    applications and scale with your data processing needs: increase capacity with a click of a button
-   without taking your application offline. Use the CDAP Console or RESTful APIs to monitor and manage the
+   without taking your application offline. Use the CDAP UI or RESTful APIs to monitor and manage the
    lifecycle and scale of your application.
 
 

@@ -26,7 +26,7 @@ There are specific instructions for :ref:`upgrading existing CDAP installations<
 
 These are the CDAP components:
 
-- **CDAP Webapp:** User interface—the *Console*—for managing CDAP applications;
+- **CDAP Webapp:** User interface—the *CDAP UI*—for managing CDAP applications;
 - **CDAP Router:** Service supporting REST endpoints for CDAP;
 - **CDAP Master:** Service for managing runtime, lifecycle and resources of CDAP applications;
 - **CDAP Kafka:** Metrics and logging transport service, using an embedded version of *Kafka*; and
@@ -399,7 +399,7 @@ Depending on your installation, you may want to set these properties:
   #. Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
 
 - Set the ``router.server.address`` property in ``conf/cdap-site.xml`` to the **hostname of the CDAP Router**.
-  The CDAP Console uses this property to connect to the Router::
+  The CDAP UI uses this property to connect to the Router::
 
       <property>
         <name>router.server.address</name>
@@ -530,7 +530,7 @@ command::
 
   $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i restart ; done
 
-When all the services have completed starting, the CDAP Console should then be
+When all the services have completed starting, the CDAP UI should then be
 accessible through a browser at port ``9999``. 
 
 The URL will be ``http://<host>:9999`` where ``<host>`` is the IP address of
@@ -577,9 +577,9 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 #. Open a command prompt and navigate to ``CDAP_HOME/examples``.
 #. Each example folder has a ``.jar`` file in its ``target`` directory.
    For verification, we will use the ``WordCount`` example.
-#. Open a web browser to the CDAP Console.
+#. Open a web browser to the CDAP UI.
    It is located on port ``9999`` of the box where you installed CDAP.
-#. On the Console, click the button *Load an App*.
+#. On the UI, click the button *Add App*.
 #. Find the pre-built ``WordCount-``\ |literal-release|\ ``.jar`` using the dialog box to navigate to
    ``CDAP_HOME/examples/WordCount/target/``. 
 #. Once the application is deployed, instructions on running the example can be found at the
@@ -652,7 +652,7 @@ you have a use case for it, please reach out to us at `cdap-user@googlegroups.co
 #. This will allow you to see your old run history, logs, and |---| if you migrated your 
    old metrics with the *Data Migration Tool* |---| metrics.
 
-   **Note:** You will no longer be able to see your previous logs in the CDAP Console (UI). 
+   **Note:** You will no longer be able to see your previous logs in the CDAP UI. 
    To access your previous logs, please see the section on downloading logs in the
    :ref:`Logging HTTP RESTful API <http-restful-api-logging>`.
 
