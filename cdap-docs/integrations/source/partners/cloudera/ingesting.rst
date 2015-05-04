@@ -95,14 +95,72 @@ is why it takes minutes instead of seconds.
 
 To reduce query time, you can use Impala to query the data instead of Hive. Since Streams
 are written in a custom format, they cannot be directly queried through Impala. Instead,
-you can create an Adapter that regularly reads Stream events and writes those events into
-files on HDFS that can then be queried by Impala. You can also do this through the CLI::
+you can use the ETLBatch ApplicationTemplate to create an Adapter that regularly reads
+Stream events and writes those events into files on HDFS that can then be queried by Impala.
 
-  > create stream-conversion adapter ticks_adapter on trades frequency 10m format csv schema "ticker string, price double, trades int"
+To do this, write the following JSON to a config file::
 
-This will create an Adapter that runs every ten minutes, reads the last ten minutes of
-events from the Stream, and writes them to a file set that can be queried through Impala.
+  {
+      "description": "Periodically reads Stream data and writes it to a TimePartitionedFileSet",
+      "template": "ETLBatch",
+      "config": {
+          "schedule": "*/10 * * * *",
+          "source": {
+              "name": "Stream",
+              "properties": {
+                  "name": "trades",
+                  "duration": "10m",
+                  "format": "csv",
+                  "schema": "{
+                      \"type\":\"record\",
+                      \"name\":\"purchase\",
+                      \"fields\":[
+                          {\"name\":\"ticker\",\"type\":\"string\"},
+                          {\"name\":\"price\",\"type\":\"double\"},
+                          {\"name\":\"trades\",\"type\":\"int\"}
+                      ]
+                  }"
+              }
+          },
+          "transforms": [
+              {
+                  "name": "Projection",
+                  "properties": {
+                      "drop": "headers"
+                  }
+              }
+          ],
+          "sink": {
+              "name": "TPFSAvro",
+              "properties": {
+                  "name": "trades.converted",
+                  "schema": "{
+                      \"type\":\"record\",
+                      \"name\":\"purchase\",
+                      \"fields\":[
+                          {\"name\":\"ts\",\"type\":\"long\"},
+                          {\"name\":\"ticker\",\"type\":\"string\"},
+                          {\"name\":\"price\",\"type\":\"double\"},
+                          {\"name\":\"trades\",\"type\":\"int\"}
+                      ]
+                  }",
+                  "basePath": "trades.converted"
+              }
+          }
+      }
+  }
 
+Then use your config file to create an Adapter through the CLI.
+For example, if you wrote the above JSON to a file named ``conversion.json``::
+
+  > create adapter trades_conversion conversion.json
+
+This will use the Application Template to create and configure an Adapter.
+The Adapter will not run until you start it::
+
+  > start adapter trades_conversion
+
+This will create a schedule that will run the Adapter every ten minutes. 
 The next time the Adapter runs, it will spawn a MapReduce job that reads all events added
 in the past ten minutes, writes each event to Avro encoded files, and registers a new
 partition in the Hive Metastore. We can then query the contents using Impala. On a
