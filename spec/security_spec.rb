@@ -1,11 +1,11 @@
 require 'spec_helper'
 
 describe 'cdap::security' do
-  context 'on Centos 6.5 x86_64' do
+  context 'using default cdap version' do
     let(:chef_run) do
-      ChefSpec::SoloRunner.new(platform: 'centos', version: 6.5) do |node|
+      ChefSpec::SoloRunner.new(platform: 'centos', version: 6.6) do |node|
         node.automatic['domain'] = 'example.com'
-        stub_command('update-alternatives --display cdap-conf | grep best | awk \'{print $5}\' | grep /etc/cdap/conf.chef').and_return(false)
+        stub_command(/update-alternatives --display /).and_return(false)
       end.converge(described_recipe)
     end
 

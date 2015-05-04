@@ -1,9 +1,9 @@
 require 'spec_helper'
 
 describe 'cdap::sdk' do
-  context 'on Centos 6.5 x86_64' do
+  context 'using default cdap version' do
     let(:chef_run) do
-      ChefSpec::SoloRunner.new(platform: 'centos', version: 6.5) do |node|
+      ChefSpec::SoloRunner.new(platform: 'centos', version: 6.6) do |node|
         node.automatic['domain'] = 'example.com'
         node.default['cdap']['sdk']['install_dir'] = '/opt/cdap'
         stub_command('test -e /usr/bin/node').and_return(true)
@@ -32,6 +32,8 @@ describe 'cdap::sdk' do
       expect(chef_run).to start_service('cdap-sdk')
       expect(chef_run).to enable_service('cdap-sdk')
     end
+
+    # There is no ark matcher, so we cannot test for it
     # ark[sdk]                           cdap/recipes/sdk.rb:48
   end
 end
