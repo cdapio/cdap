@@ -39,7 +39,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     apiFactory.fetchTemplates();
     $scope.adapterTypes = [];
-    
+
     // Metadata Model
     $scope.metadata = {
         name: '',
@@ -47,6 +47,9 @@ angular.module(PKG.name + '.feature.adapters')
         type: ''
     };
 
+    $scope.schedule = {
+      cron: ''
+    };
     var defaultSource = {
       name: 'Add a source',
       properties: {},
@@ -232,7 +235,8 @@ angular.module(PKG.name + '.feature.adapters')
       if ($scope.metadata.type === 'etlRealtime') {
         data.config.instances = 1;
       } else if ($scope.metadata.type === 'etlBatch') {
-        data.config.schedule = '* * * * *';
+        // default value should be * * * * *
+        data.config.schedule = $scope.schedule.cron;
       }
 
       apiFactory.save(data);
