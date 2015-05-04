@@ -19,10 +19,10 @@ package co.cask.cdap.template.etl.api;
 import co.cask.cdap.api.annotation.Beta;
 
 /**
- * Base class for ETL Source, Sink Stages.
+ * Allows the stage to configure pipeline.
  */
 @Beta
-public interface EndPointStage {
+public interface PipelineConfigurable {
 
   /**
    * Configure an ETL pipeline, adding datasets and streams that the stage needs.

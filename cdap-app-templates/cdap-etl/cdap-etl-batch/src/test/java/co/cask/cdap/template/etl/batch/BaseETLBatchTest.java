@@ -17,7 +17,7 @@
 package co.cask.cdap.template.etl.batch;
 
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.template.etl.api.EndPointStage;
+import co.cask.cdap.template.etl.api.PipelineConfigurable;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.batch.sink.BatchCubeSink;
 import co.cask.cdap.template.etl.batch.sink.DBSink;
@@ -66,7 +66,7 @@ public class BaseETLBatchTest extends TestBase {
     addTemplatePluginJson(TEMPLATE_ID, "hsql-jdbc-1.0.0.json", "jdbc", "hypersql", "hypersql jdbc driver",
       JDBCDriver.class.getName());
     deployTemplate(NAMESPACE, TEMPLATE_ID, ETLBatchTemplate.class,
-      EndPointStage.class.getPackage().getName(),
+      PipelineConfigurable.class.getPackage().getName(),
       BatchSource.class.getPackage().getName());
   }
 }

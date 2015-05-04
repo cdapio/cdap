@@ -36,7 +36,7 @@ import co.cask.cdap.template.etl.api.Transformation;
  * @param <OUT> the type of output for the source
  */
 @Beta
-public abstract class BatchSource<KEY_IN, VAL_IN, OUT> extends BatchEndPointStage<BatchSourceContext>
+public abstract class BatchSource<KEY_IN, VAL_IN, OUT> extends BatchConfigurable<BatchSourceContext>
   implements Transformation<KeyValue<KEY_IN, VAL_IN>, OUT>, StageLifecycle<BatchSourceContext> {
 
   /**

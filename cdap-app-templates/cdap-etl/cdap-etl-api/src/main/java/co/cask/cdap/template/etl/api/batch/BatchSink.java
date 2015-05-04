@@ -36,7 +36,7 @@ import co.cask.cdap.template.etl.api.Transformation;
  * @param <VAL_OUT> the type of value the sink outputs
  */
 @Beta
-public abstract class BatchSink<IN, KEY_OUT, VAL_OUT> extends BatchEndPointStage<BatchSinkContext>
+public abstract class BatchSink<IN, KEY_OUT, VAL_OUT> extends BatchConfigurable<BatchSinkContext>
   implements Transformation<IN, KeyValue<KEY_OUT, VAL_OUT>>, StageLifecycle<BatchSinkContext> {
 
   /**

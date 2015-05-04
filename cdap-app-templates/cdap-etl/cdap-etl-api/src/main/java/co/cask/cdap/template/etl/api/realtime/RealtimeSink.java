@@ -17,7 +17,7 @@
 package co.cask.cdap.template.etl.api.realtime;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.template.etl.api.EndPointStage;
+import co.cask.cdap.template.etl.api.PipelineConfigurable;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.StageLifecycle;
 
@@ -27,7 +27,7 @@ import co.cask.cdap.template.etl.api.StageLifecycle;
  * @param <I> Type of object that sink operates on
  */
 @Beta
-public abstract class RealtimeSink<I> implements EndPointStage, StageLifecycle<RealtimeContext> {
+public abstract class RealtimeSink<I> implements PipelineConfigurable, StageLifecycle<RealtimeContext> {
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {

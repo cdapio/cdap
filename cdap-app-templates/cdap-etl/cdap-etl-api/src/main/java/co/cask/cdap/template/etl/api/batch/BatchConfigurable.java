@@ -17,16 +17,16 @@
 package co.cask.cdap.template.etl.api.batch;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.template.etl.api.EndPointStage;
+import co.cask.cdap.template.etl.api.PipelineConfigurable;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 
 /**
- * EndPointStage for Batch Source/Sink.
+ * Base class for Batch run configuration methods.
  *
  * @param <T> batch execution context
  */
 @Beta
-public abstract class BatchEndPointStage<T extends BatchContext> implements EndPointStage {
+public abstract class BatchConfigurable<T extends BatchContext> implements PipelineConfigurable {
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {

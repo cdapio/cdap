@@ -20,7 +20,7 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.templates.AdapterConfigurer;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
-import co.cask.cdap.template.etl.api.EndPointStage;
+import co.cask.cdap.template.etl.api.PipelineConfigurable;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.Transform;
 import co.cask.cdap.template.etl.api.Transformation;
@@ -54,7 +54,7 @@ public abstract class ETLTemplate<T extends ETLConfig> extends ApplicationTempla
   private static final Logger LOG = LoggerFactory.getLogger(ETLTemplate.class);
   private static final Gson GSON = new Gson();
 
-  protected void configure(EndPointStage stage, AdapterConfigurer configurer, String pluginPrefix)
+  protected void configure(PipelineConfigurable stage, AdapterConfigurer configurer, String pluginPrefix)
     throws Exception {
     PipelineConfigurer pipelineConfigurer = new DefaultPipelineConfigurer(configurer, pluginPrefix);
     stage.configurePipeline(pipelineConfigurer);
@@ -81,16 +81,16 @@ public abstract class ETLTemplate<T extends ETLConfig> extends ApplicationTempla
     // Instantiate Source, Transforms, Sink stages.
     // Use the plugin name as the plugin id for source and sink stages since there can be only one source and one sink.
     PluginProperties sourceProperties = getPluginProperties(sourceConfig);
-    EndPointStage source = configurer.usePlugin(Constants.Source.PLUGINTYPE, sourceConfig.getName(), sourcePluginId,
-                                                sourceProperties);
+    PipelineConfigurable source = configurer.usePlugin(Constants.Source.PLUGINTYPE, sourceConfig.getName(),
+                                                       sourcePluginId, sourceProperties);
     if (source == null) {
       throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found",
                                                        Constants.Source.PLUGINTYPE, sourceConfig.getName()));
     }
 
     PluginProperties sinkProperties = getPluginProperties(sinkConfig);
-    EndPointStage sink = configurer.usePlugin(Constants.Sink.PLUGINTYPE, sinkConfig.getName(), sinkPluginId,
-                                              sinkProperties);
+    PipelineConfigurable sink = configurer.usePlugin(Constants.Sink.PLUGINTYPE, sinkConfig.getName(), sinkPluginId,
+                                                     sinkProperties);
     if (sink == null) {
       throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found",
                                                        Constants.Sink.PLUGINTYPE, sinkConfig.getName()));
@@ -107,7 +107,7 @@ public abstract class ETLTemplate<T extends ETLConfig> extends ApplicationTempla
       String transformId = String.format("%s%s%d", transformConfig.getName(), Constants.ID_SEPARATOR, i);
       PluginProperties transformProperties = getPluginProperties(transformConfig);
       Transform transformObj = configurer.usePlugin(Constants.Transform.PLUGINTYPE, transformConfig.getName(),
-                                                         transformId, transformProperties);
+                                                    transformId, transformProperties);
       if (transformObj == null) {
         throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found",
                                                          Constants.Transform.PLUGINTYPE, transformConfig.getName()));
@@ -153,7 +153,7 @@ public abstract class ETLTemplate<T extends ETLConfig> extends ApplicationTempla
     }
   }
 
-  private void validateStages(EndPointStage source, EndPointStage sink, List<Transformation> transforms)
+  private void validateStages(PipelineConfigurable source, PipelineConfigurable sink, List<Transformation> transforms)
     throws Exception {
     ArrayList<Type> unresTypeList = Lists.newArrayListWithCapacity(transforms.size() + 2);
     Type inType = Transformation.class.getTypeParameters()[0];

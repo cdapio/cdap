@@ -22,7 +22,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.template.etl.api.EndPointStage;
+import co.cask.cdap.template.etl.api.PipelineConfigurable;
 import co.cask.cdap.template.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.template.etl.common.ETLStage;
 import co.cask.cdap.template.etl.common.Properties;
@@ -75,7 +75,7 @@ public class ETLWorkerTest extends TestBase {
     addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar",
       ProjectionTransform.class, ScriptFilterTransform.class, StructuredRecordToGenericRecordTransform.class);
     deployTemplate(NAMESPACE, TEMPLATE_ID, ETLRealtimeTemplate.class,
-      EndPointStage.class.getPackage().getName(),
+      PipelineConfigurable.class.getPackage().getName(),
       ETLStage.class.getPackage().getName(),
       RealtimeSource.class.getPackage().getName());
   }
