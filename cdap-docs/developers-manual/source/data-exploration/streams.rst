@@ -45,6 +45,9 @@ all events added to the stream are readable by the format you have set on a stre
 If any stream event cannot be read by the format you have set, your entire query will fail and you
 will not get any results.
 
+Accepted formats are ``avro``, ``csv`` (comma-separated), ``tsv`` (tab-separated), ``text``, ``clf``, 
+``grok``, and ``syslog``.
+
 Schema
 ------
 CDAP schemas are adopted from the `Avro Schema Declaration <http://avro.apache.org/docs/1.7.3/spec.html#schemas>`__
