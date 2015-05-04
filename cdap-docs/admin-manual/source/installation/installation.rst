@@ -599,10 +599,8 @@ to make sure the CDAP table definitions in HBase are up-to-date.
 These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
 and then restart CDAP.
 
-These steps will upgrade from CDAP 2.6.x to 2.8.0. (**Note:** Apps need to be both
-recompiled and re-deployed.) An upgrade from 2.7.x to 2.8.0 is not currently supported. If
-you have a use case for it, please reach out to us at `cdap-user@googlegroups.com
-<https://groups.google.com/d/forum/cdap-user>`__.
+These steps will upgrade from CDAP 2.8.0 to 3.0.0. (**Note:** Apps need to be both
+recompiled and re-deployed.) 
 
 .. highlight:: console
 
@@ -626,11 +624,7 @@ you have a use case for it, please reach out to us at `cdap-user@googlegroups.co
              cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
              cdap-kafka cdap-master cdap-security cdap-ui
 
-#  Remove link to older cdap-web-app service
-       $ rm -rf /etc/init.d/cdap-web-app
-
-   We have deprecated the cdap-web-app package. So the links to older cdap-web-app service
-   should be removed
+       **Note:** We have deprecated the cdap-web-app package in favor of cdap-ui package 
 
 #. Copy the ``logback-container.xml`` into your ``conf`` directory. 
    Please see :ref:`Configuration <install-configuration>`.
