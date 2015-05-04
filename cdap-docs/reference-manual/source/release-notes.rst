@@ -41,6 +41,7 @@ General
 New Features
 ------------
 
+- New :ref:`CDAP UI <cdap-ui>`, supports creating ETL applications directly in the web UI.
 - Workflow logs can now be retrieved using the :ref:`CDP HTTP Logging RESTful API 
   <http-restful-api-logging>`.
 - CDAP Tables are :ref:`now explorable <table-exploration>`.
