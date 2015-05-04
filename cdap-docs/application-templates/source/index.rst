@@ -9,7 +9,7 @@
 CDAP Application Templates (Beta)
 ==================================================
 
-.. _users-intro-application-templates:
+.. _apptemplates-intro-application-templates:
 
 Introduction to Application Templates
 =====================================

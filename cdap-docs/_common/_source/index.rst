@@ -54,16 +54,6 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
     technologies available from the Hadoop ecosystem and using CDAP
 
 
-.. |users-manual| replace:: **Users’ Manual:**
-.. _users-manual: users-manual/index.html
-
-- |users-manual|_
-
-  - **Big Data without Big Development:** How to use CDAP "out-of-the-box" to solve problems and use cases
-  - **Introduction to Application Templates:** A blueprint that can be configured for creating Adapters
-  - **ETL:** Making performing ETL possible without writing code (Beta)
-
-
 .. |developers-manual| replace:: **Developers’ Manual:**
 .. _developers-manual: developers-manual/index.html
 
@@ -76,6 +66,16 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Testing and Debugging:** Test framework plus tools and practices for debugging your applications
   - **Ingesting Data:** Different techniques for ingesting data into CDAP
   - **Advanced Topics:** Data exploration of datasets, best practices for CDAP development, adding a custom logback
+
+
+.. |application-templates| replace:: **Application Templates (Beta):**
+.. _application-templates: application-templates/index.html
+
+- |application-templates|_
+
+  - **Big Data without Big Development:** How to use CDAP "out-of-the-box" to solve problems and use cases (Beta)
+  - **Introduction to Application Templates:** A blueprint that can be configured for creating Adapters (Beta)
+  - **ETL:** Making performing ETL possible without writing code (Beta)
 
 
 .. |admin-manual| replace:: **Administration Manual:**

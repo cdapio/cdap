@@ -11,8 +11,8 @@ Creating Custom Application Templates, Plugins and Adapters (Beta)
 Overview
 ========
 This section is intended for developers writing custom Application Templates, Plugins and
-Adapters. Users of these should refer to the :ref:`Users’ Manual
-<users-intro-application-templates>`.
+Adapters. Users of these should refer to the :ref:`Application Templates
+<apptemplates-index>`.
 
 
 Creating Custom ETL Plugins
@@ -350,7 +350,7 @@ Methods
 Below is an example of a ``DuplicateTransform`` that emits copies of the incoming record
 based on the value in the record. In addition, a user metric indicating the number of
 copies in each transform is emitted. The user metrics can be queried by using the CDAP 
-:ref:`RESTful API<http-restful-api-adapter-metrics>`::
+:ref:`RESTful API<http-restful-api-apptemplates-adapter-metrics>`::
 
 
   @Plugin(type = "transform")
@@ -572,10 +572,10 @@ creating the source::
 
 **Prebuilt JARs:** In a case where you'd like to use prebuilt third party JARs (such as a
 JDBC Driver) as a plugin, please refer to the :ref:`Creating Plugins using Config file
-<users-etl-configuration-file-format>`. Copy the JAR and the JSON file to the :ref:`Plugin
+<apptemplates-etl-configuration-file-format>`. Copy the JAR and the JSON file to the :ref:`Plugin
 directory <advanced-custom-app-template-installation-directory>` and then update the
 Template by using the :ref:`HTTP RESTful API Application Template Update
-<http-restful-api-adapter-template-update>` endpoint.
+<http-restful-api-apptemplates-update>` endpoint.
 
 Sample JDBC Driver Plugin configuration::
 

@@ -24,6 +24,6 @@ plugins listed below are available for creating ETL Adapters.
 Application Template Details
 ============================
 
-.. include:: ../../../reference-manual/source/http-restful-api/adapter.rst 
-   :start-after: .. _http-restful-api-adapter-application-templates:
-   :end-before:  .. _http-restful-api-adapter-adapters:
+.. include:: ../../../reference-manual/source/http-restful-api/apptemplates.rst 
+   :start-after: .. _http-restful-api-apptemplates-available:
+   :end-before:  .. _http-restful-api-apptemplates-adapters:

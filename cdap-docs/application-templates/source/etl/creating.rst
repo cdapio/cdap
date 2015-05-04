@@ -12,14 +12,14 @@ Creating An ETL Adapter (Beta)
 
 Introduction
 ============
-Adapters can be created using the :ref:`RESTful API <http-restful-api-adapter-adapters>`,
+Adapters can be created using the :ref:`RESTful API <http-restful-api-apptemplates-adapters-creating>`,
 the :ref:`CDAP CLI <cli>`, or the :ref:`CDAP UI <cdap-ui>`. In order to create an Adapter,
 an Adapter configuration is required that specifies the source, transformations and sink
 along with their properties.  (In the CDAP UI, the interface prompts you for the required
 information.)
 
 
-.. _users-etl-configuration-file-format:
+.. _apptemplates-etl-configuration-file-format:
 
 Configuration File Format
 =========================
@@ -63,7 +63,7 @@ be specified and can use the timestamp of a Stream event for that.
 
 To create an instance of this Adaptor, called *streamAdapter*:
 
-- Using the :ref:`RESTful API <http-restful-api-adapter-creating-adapter>`::
+- Using the :ref:`RESTful API <http-restful-api-apptemplates-adapters-creating>`::
 
     PUT /v3/namespaces/default/adapters/streamAdapter -d @config.json 
 
@@ -71,7 +71,7 @@ To create an instance of this Adaptor, called *streamAdapter*:
 
     $ create adapter streamAdapter <path-to-config.json>
 
-where ``config.json`` is the file that contains the Adapter configuration
+where ``config.json`` is the file that contains the Adapter configuration.
 
 
 .. highlight:: console

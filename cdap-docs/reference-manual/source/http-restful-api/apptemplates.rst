@@ -3,19 +3,19 @@
     :description: HTTP RESTful Interface to the Cask Data Application Platform
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _http-restful-api-adapter:
+.. _http-restful-api-apptemplates:
 
-========================================================
-Application Template and Adapter HTTP RESTful API (Beta)
-========================================================
+=========================================================
+Application Template and Adapters HTTP RESTful API (Beta)
+=========================================================
 
 Use the CDAP Application Template and Adapter HTTP API to obtain a list of available
 Application Templates and Plugins, and create, delete, and manage the lifecycle of
 Adapters.
 
 Note that the ETL Templates are a type of Application Template, specifically designed for
-creating ETL Adapters. See the Users' Manual :ref:`Introduction to Application Templates
-and ETL <users-intro-application-templates>` for information on creating Adaptors and
+creating ETL Adapters. See the Application Templates :ref:`Introduction to Application Templates
+and ETL <apptemplates-intro-application-templates>` for information on creating Adaptors and
 operating them.
 
 See the Developers’ Manual Advanced section on :ref:`Creating Application Templates
@@ -28,7 +28,7 @@ Plugins and Adaptors.
 Application Templates
 =====================
 
-.. _http-restful-api-adapter-application-templates:
+.. _http-restful-api-apptemplates-available:
 
 Available Application Templates 
 -------------------------------
@@ -90,11 +90,11 @@ Example output of the ``etlBatch`` Application Template (pretty-printed)::
 Application Template.
 
 
-.. _http-restful-api-adapter-template-update:
+.. _http-restful-api-apptemplates-update:
 
 Template Update
 -----------------
-To update a particular Application Templates, submit an HTTP PUT request::
+To update a particular Application Template, submit an HTTP PUT request::
 
   PUT <base-url>/namespaces/<namespace-id>/templates/<template-id>
   
@@ -368,12 +368,12 @@ Application Template (pretty-printed and reformatted to fit)::
     }
   ]
 
-.. _http-restful-api-adapter-adapters:
+.. _http-restful-api-apptemplates-adapters:
 
 Adapters
 ========
 
-.. _http-restful-api-adapter-creating-adapter:
+.. _http-restful-api-apptemplates-adapters-creating:
 
 Creating an Adapter 
 -------------------
@@ -382,7 +382,7 @@ To create an Adapter, submit an HTTP PUT request::
   PUT <base-url>/namespaces/<namespace-id>/adapters/<adapter-id>
 
 with the path to the :ref:`Adapter configuration file
-<users-etl-configuration-file-format>` as the body of the request::
+<apptemplates-etl-configuration-file-format>` as the body of the request::
 
   <config-path>
 
@@ -401,8 +401,8 @@ where
    * - ``<config-path>``
      - Path to the configuration file
 
-The format of the configuration file is described in the Users’ Manual section
-on :ref:`Creating an Adapter <users-etl-configuration-file-format>`.
+The format of the configuration file is described in the Application Templates section
+on :ref:`Creating an ETL Adapter <apptemplates-etl-configuration-file-format>`.
 
 .. rubric::  Example
 
@@ -416,7 +416,7 @@ on :ref:`Creating an Adapter <users-etl-configuration-file-format>`.
      - Creates an Adapter *streamAdapter* in the namespace *default* using the configuration
        file ``config.json``
 
-.. _http-restful-api-adapter-listing-adapters:
+.. _http-restful-api-apptemplates-adapters-listing:
 
 Listing Existing Adapters
 -------------------------
@@ -728,7 +728,7 @@ you can formulate your request.
 
 The :ref:`CDAP CLI <cli>` has a command (``get adapter logs <adaptor-id>``) that does this directly.
 
-.. _http-restful-api-adapter-metrics:
+.. _http-restful-api-apptemplates-adapter-metrics:
 
 Retrieving Adapter Metrics
 --------------------------

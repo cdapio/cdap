@@ -13,7 +13,7 @@ CDAP Documentation Table of Contents
     Overview </index>
     Introduction to CDAP </introduction/index>
     Developers’ Manual </developers-manual/index>
-    Users’ Manual </users-manual/index>
+    Application Templates </application-templates/index>
     Administration Manual </admin-manual/index>
     Integrations </integrations/index>
     Examples, Guides, and Tutorials </examples-manual/index>
