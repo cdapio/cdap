@@ -20,6 +20,7 @@ import co.cask.cdap.cli.command.system.HelpCommand;
 import co.cask.cdap.cli.command.system.SearchCommandsCommand;
 import co.cask.cdap.cli.commandset.DefaultCommands;
 import co.cask.cdap.cli.completer.supplier.EndpointSupplier;
+import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.cli.util.table.AltStyleTableRenderer;
 import co.cask.cdap.cli.util.table.TableRenderer;
@@ -103,6 +104,7 @@ public class CLIMain {
   private final CLIConfig cliConfig;
   private final Injector injector;
   private final LaunchOptions options;
+  private final FilePathResolver filePathResolver;
 
   public CLIMain(final LaunchOptions options, final CLIConfig cliConfig) throws URISyntaxException, IOException {
     this.options = options;
@@ -128,6 +130,8 @@ public class CLIMain {
         new HelpCommand(getCommandsSupplier(), cliConfig),
         new SearchCommandsCommand(getCommandsSupplier(), cliConfig)
       )));
+    filePathResolver = injector.getInstance(FilePathResolver.class);
+
     Map<String, Completer> completers = injector.getInstance(DefaultCompleters.class).get();
     cli = new CLI<Command>(Iterables.concat(commands), completers);
     cli.setExceptionHandler(new CLIExceptionHandler<Exception>() {
@@ -181,6 +185,10 @@ public class CLIMain {
 
   public static URI getDefaultURI() {
     return ConnectionConfig.DEFAULT.getURI();
+  }
+
+  public FilePathResolver getFilePathResolver() {
+    return filePathResolver;
   }
 
   private String limit(String string, int maxLength) {
@@ -263,7 +271,7 @@ public class CLIMain {
         cliMain.updateCLIPrompt(cliConfig.getClientConfig());
 
         if (hasScriptFile) {
-          File script = new File(scriptFile);
+          File script = cliMain.getFilePathResolver().resolvePathToFile(scriptFile);
           if (!script.exists()) {
             output.println("ERROR: Script file '" + script.getAbsolutePath() + "' does not exist");
             System.exit(1);
