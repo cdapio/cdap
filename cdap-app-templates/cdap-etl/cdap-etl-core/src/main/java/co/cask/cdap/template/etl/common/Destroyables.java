@@ -31,7 +31,7 @@ public final class Destroyables {
     try {
       destroyable.destroy();
     } catch (Throwable t) {
-      LOG.warn("Exception when calling destroy on {}", destroyable);
+      LOG.warn("Exception when calling destroy on {}", destroyable, t);
     }
   }
 

@@ -98,7 +98,7 @@ public class TimePartitionedFileSetDatasetAvroSink extends
   }
 
   @Override
-  public void prepareJob(BatchSinkContext context) {
+  public void prepareRun(BatchSinkContext context) {
     Map<String, String> sinkArgs = Maps.newHashMap();
     TimePartitionedFileSetArguments.setOutputPartitionTime(sinkArgs, context.getLogicalStartTime());
     TimePartitionedFileSet sink = context.getDataset(tpfsAvroSinkConfig.name, sinkArgs);

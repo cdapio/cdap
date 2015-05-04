@@ -17,10 +17,10 @@
 package co.cask.cdap.template.etl.api.realtime;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.template.etl.api.Destroyable;
 import co.cask.cdap.template.etl.api.Emitter;
-import co.cask.cdap.template.etl.api.EndPointStage;
+import co.cask.cdap.template.etl.api.PipelineConfigurable;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
+import co.cask.cdap.template.etl.api.StageLifecycle;
 
 import javax.annotation.Nullable;
 
@@ -30,7 +30,7 @@ import javax.annotation.Nullable;
  * @param <T> Type of object that the source emits
  */
 @Beta
-public abstract class RealtimeSource<T> implements EndPointStage, Destroyable {
+public abstract class RealtimeSource<T> implements PipelineConfigurable, StageLifecycle<RealtimeContext> {
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
@@ -38,10 +38,12 @@ public abstract class RealtimeSource<T> implements EndPointStage, Destroyable {
   }
 
   /**
-   * Initialize the Source.
+   * Initialize the Source. This method is guaranteed to be invoked before any calls to {@link RealtimeSource#poll}
+   * are made.
 
    * @param context {@link RealtimeContext}
    */
+  @Override
   public void initialize(RealtimeContext context) throws Exception {
     // no-op
   }
