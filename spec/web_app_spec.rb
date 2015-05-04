@@ -3,13 +3,27 @@ require 'spec_helper'
 describe 'cdap::web_app' do
   context 'on Centos 6.5 x86_64' do
     let(:chef_run) do
-      ChefSpec::SoloRunner.new(platform: 'centos', version: 6.5) do |node|
+      ChefSpec::SoloRunner.new(platform: 'centos', version: 6.6) do |node|
         node.automatic['domain'] = 'example.com'
         node.default['hadoop']['hdfs_site']['dfs.datanode.max.transfer.threads'] = '4096'
         node.default['hadoop']['mapred_site']['mapreduce.framework.name'] = 'yarn'
         node.override['cdap']['version'] = '2.8.0-1'
         stub_command(/update-alternatives --display /).and_return(false)
         stub_command('test -e /usr/bin/node').and_return(true)
+      end.converge(described_recipe)
+    end
+
+  end
+
+  context 'using cdap <= 2.8.0' do
+    let(:chef_run) do
+      ChefSpec::SoloRunner.new(platform: 'centos', version: 6.6) do |node|
+        node.automatic['domain'] = 'example.com'
+        node.default['hadoop']['hdfs_site']['dfs.datanode.max.transfer.threads'] = '4096'
+        node.default['hadoop']['mapred_site']['mapreduce.framework.name'] = 'yarn'
+        node.override['cdap']['version'] = '2.8.0-1'
+        stub_command('test -e /usr/bin/node').and_return(true)
+        stub_command(/update-alternatives --display /).and_return(false)
       end.converge(described_recipe)
     end
 
@@ -30,9 +44,8 @@ describe 'cdap::web_app' do
 
   context 'using older nodejs cookbook' do
     let(:chef_run) do
-      ChefSpec::SoloRunner.new(platform: 'centos', version: 6.4) do |node|
+      ChefSpec::SoloRunner.new(platform: 'centos', version: 6.6) do |node|
         node.automatic['domain'] = 'example.com'
-        node.default['cdap']['repo']['url'] = 'https://USER:PASS@cdap.repo/path/to/repo'
         node.default['hadoop']['hdfs_site']['dfs.datanode.max.transfer.threads'] = '4096'
         node.default['hadoop']['mapred_site']['mapreduce.framework.name'] = 'yarn'
         node.override['cdap']['version'] = '2.8.0-1'
