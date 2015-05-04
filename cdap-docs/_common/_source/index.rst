@@ -60,6 +60,8 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 - |users-manual|_
 
   - **Big Data without Big Development:** How to use CDAP "out-of-the-box" to solve problems and use cases
+  - **Introduction to Application Templates:** A blueprint that can be configured for creating Adapters
+  - **ETL:** Making performing ETL possible without writing code (Beta)
 
 
 .. |developers-manual| replace:: **Developers’ Manual:**
