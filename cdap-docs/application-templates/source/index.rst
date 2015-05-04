@@ -31,9 +31,9 @@ constructed JAR file.
 
 The Application Template behave differently depending on the specific configuration of its
 plugins it is given. To create an instantiation of an Application Template
-|---| called an *Adapter* |---| you make a RESTful call (or use a CLI command) providing
-the configuration. Users of CDAP manage the lifecycle of the **Adapter** in a very similar
-manner to managing the life cycle of a CDAP program.
+|---| called an *Adapter* |---| you can make a RESTful call, use a CLI command, or use the
+CDAP UI, providing the configuration. Users of CDAP manage the lifecycle of the
+**Adapter** in a very similar manner to managing the life cycle of a CDAP program.
 
 CDAP comes packaged with two Application Templates to create ETL (Extract, Transform, and
 Load) pipelines, simply by configuring the ETL templates and not writing any code at all.
