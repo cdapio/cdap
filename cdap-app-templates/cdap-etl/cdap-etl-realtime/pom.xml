@@ -31,16 +31,10 @@
   <packaging>jar</packaging>
 
   <properties>
-    <app.main.class>co.cask.cdap.templates.etl.realtime.ETLRealtimeTemplate</app.main.class>
+    <app.main.class>co.cask.cdap.template.etl.realtime.ETLRealtimeTemplate</app.main.class>
   </properties>
 
   <dependencies>
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-api</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-etl-api</artifactId>
@@ -56,12 +50,6 @@
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-etl-core</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-unit-test</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -87,7 +75,7 @@
               <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
               <Embed-Transitive>true</Embed-Transitive>
               <Embed-Directory>lib</Embed-Directory>
-              <Export-Package>co.cask.cdap.templates.etl.api.*</Export-Package>
+              <Export-Package>co.cask.cdap.template.etl.api.*</Export-Package>
             </instructions>
           </configuration>
           <executions>

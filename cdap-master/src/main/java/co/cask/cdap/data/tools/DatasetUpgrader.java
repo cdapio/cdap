@@ -17,14 +17,9 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDSUpgrader;
-import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDSUpgrader;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
@@ -38,7 +33,6 @@ import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,15 +53,11 @@ public class DatasetUpgrader extends AbstractUpgrader {
   private final HBaseTableUtil hBaseTableUtil;
   private final DatasetFramework dsFramework;
   private final Pattern userTablePrefix;
-  private final DatasetInstanceMDSUpgrader datasetInstanceMDSUpgrader;
-  private final DatasetTypeMDSUpgrader datasetTypeMDSUpgrader;
 
   @Inject
   private DatasetUpgrader(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
                           NamespacedLocationFactory namespacedLocationFactory,
-                          HBaseTableUtil hBaseTableUtil, DatasetFramework dsFramework,
-                          DatasetInstanceMDSUpgrader datasetInstanceMDSUpgrader,
-                          DatasetTypeMDSUpgrader datasetTypeMDSUpgrader) {
+                          HBaseTableUtil hBaseTableUtil, DatasetFramework dsFramework) {
 
     super(locationFactory, namespacedLocationFactory);
     this.cConf = cConf;
@@ -75,8 +65,6 @@ public class DatasetUpgrader extends AbstractUpgrader {
     this.locationFactory = locationFactory;
     this.hBaseTableUtil = hBaseTableUtil;
     this.dsFramework = dsFramework;
-    this.datasetInstanceMDSUpgrader = datasetInstanceMDSUpgrader;
-    this.datasetTypeMDSUpgrader = datasetTypeMDSUpgrader;
     this.userTablePrefix = Pattern.compile(String.format("^%s\\.user\\..*", cConf.get(Constants.Dataset.TABLE_PREFIX)));
   }
 
@@ -88,44 +76,6 @@ public class DatasetUpgrader extends AbstractUpgrader {
     // Upgrade all user hbase tables
     upgradeUserTables();
 
-    // Upgrade the datasets meta meta table
-    datasetTypeMDSUpgrader.upgrade();
-
-    // Upgrade the datasets instance meta table
-    datasetInstanceMDSUpgrader.upgrade();
-
-    // upgrade all the filesets base paths
-    for (DatasetSpecification fileSetSpec : datasetInstanceMDSUpgrader.getFileSetsSpecs()) {
-      upgradeFileSet(fileSetSpec);
-    }
-  }
-
-  protected DatasetInstanceMDSUpgrader getDatasetInstanceMDSUpgrader() {
-    return datasetInstanceMDSUpgrader;
-  }
-
-  protected DatasetTypeMDSUpgrader getDatasetTypeMDSUpgrader() {
-    return datasetTypeMDSUpgrader;
-  }
-
-  /**
-   * Upgrades the {@link FileSet} and also its embedded filesets if any by moving the base path under
-   * namespaced directory
-   *
-   * @param dsSpec the {@link DatasetSpecification} of the {@link FileSet} to be upgraded
-   * @throws IOException
-   */
-  private void upgradeFileSet(DatasetSpecification dsSpec) throws IOException {
-    String basePath = FileSetProperties.getBasePath(dsSpec.getProperties());
-    if (basePath != null) {
-      Location oldLocation = locationFactory.create(basePath);
-      Location newlocation = namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID)
-        .append(cConf.get(Constants.Dataset.DATA_DIR)).append(basePath);
-      LOG.info("Upgrading base path for dataset {} from {} to {}", dsSpec.getName(), oldLocation, newlocation);
-      renameLocation(oldLocation, newlocation);
-    } else {
-      LOG.info("The basepath for files {} is null. No files will be moved");
-    }
   }
 
   private void upgradeSystemDatasets() throws Exception {

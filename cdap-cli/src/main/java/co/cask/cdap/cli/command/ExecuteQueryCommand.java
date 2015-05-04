@@ -32,6 +32,7 @@ import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.UnexpectedQueryStatusException;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryResult;
+import co.cask.cdap.proto.QueryStatus;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -85,6 +86,12 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
       List<QueryResult> rows = Lists.newArrayList(executionResult);
       executionResult.close();
 
+      QueryStatus.OpStatus opStatus = executionResult.getStatus().getStatus();
+      if (opStatus != QueryStatus.OpStatus.FINISHED) {
+        throw new SQLException(String.format("Query '%s' execution did not finish successfully. " +
+                                               "Got final state - %s", query, opStatus));
+      }
+
       Table table = Table.builder()
         .setHeader(header)
         .setRows(rows, new RowMaker<QueryResult>() {
@@ -104,7 +111,7 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
         throw Throwables.propagate(t);
       } else if (t instanceof UnexpectedQueryStatusException) {
         UnexpectedQueryStatusException sE = (UnexpectedQueryStatusException) t;
-        throw new SQLException(String.format("Statement '%s' execution did not finish successfully. " +
+        throw new SQLException(String.format("Query '%s' execution did not finish successfully. " +
                                              "Got final state - %s", query, sE.getStatus().toString()));
       }
       throw new SQLException(Throwables.getRootCause(e));

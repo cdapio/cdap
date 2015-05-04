@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.templates.ApplicationTemplate;
+import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.InMemoryProgramRunnerModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
@@ -187,7 +188,7 @@ public class ConfigurableTestBase {
     cConf.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
     cConf.set(Constants.Explore.LOCAL_DATA_DIR,
               tmpFolder.newFolder("hive").getAbsolutePath());
-    cConf.set(Constants.AppFabric.APP_TEMPLATE_DIR, tmpFolder.newFolder("plugins").getAbsolutePath());
+    cConf.set(Constants.AppFabric.APP_TEMPLATE_DIR, tmpFolder.newFolder("templates").getAbsolutePath());
 
     if (additionalConfiguration != null) {
       for (Map.Entry<String, String> entry : additionalConfiguration.entrySet()) {
@@ -429,6 +430,26 @@ public class ConfigurableTestBase {
   protected static void addTemplatePlugins(Id.ApplicationTemplate templateId, String jarName,
                                            Class<?> pluginClz, Class<?>... classes) throws IOException {
     getTestManager().addTemplatePlugins(templateId, jarName, pluginClz, classes);
+  }
+
+  /**
+   * Add a template plugin configuration file.
+   *
+   * @param templateId the id of the template to add the plugin config for
+   * @param fileName the name of the config file. The name should match the plugin jar file that it is for. For example,
+   *                 if you added a plugin named hsql-jdbc-1.0.0.jar, the config file must be named hsql-jdbc-1.0.0.json
+   * @param type the type of plugin
+   * @param name the name of the plugin
+   * @param description the description for the plugin
+   * @param className the class name of the plugin
+   * @param fields the fields the plugin uses
+   * @throws IOException
+   */
+  protected static void addTemplatePluginJson(Id.ApplicationTemplate templateId, String fileName,
+                                              String type, String name,
+                                              String description, String className,
+                                              PluginPropertyField... fields) throws IOException {
+    getTestManager().addTemplatePluginJson(templateId, fileName, type, name, description, className, fields);
   }
 
   /**

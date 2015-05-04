@@ -54,6 +54,6 @@ public class PreferencesCommandSet extends CommandSet<Command> implements Catego
 
   @Override
   public String getCategory() {
-    return CommandCategory.LIFECYCLE.getName();
+    return CommandCategory.APPLICATION_LIFECYCLE.getName();
   }
 }

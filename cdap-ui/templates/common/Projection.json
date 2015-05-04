@@ -15,7 +15,9 @@
          "drop": {
            "widget": "csv",
            "label" : "Fields to drop",
-           "delimiter" : ","
+           "properties": {
+              "delimiter" : ","
+           }
          },
 
          "rename": {

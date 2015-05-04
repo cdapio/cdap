@@ -66,7 +66,7 @@ function download_file() {
 }
 
 function download_includes() {
-  echo "Downloading source files includes from GitHub..."
+  echo_red_bold "Downloading source files includes from GitHub..."
   version
   local includes=${1}/${TUTORIAL_WISE}
   local project_version=${PROJECT_SHORT_VERSION}
@@ -93,15 +93,16 @@ function download_includes() {
   download_file $includes $project_main WiseWorkflow.java          8fe51eed165e85d95c4f5e25953e3489
   download_file $includes $project_main WiseService.java           dccfeb2d5726a031b5aff9897ccf8257
 
-  echo "Downloading image files from GitHub..."
+  echo_red_bold "Downloading image files from GitHub..."
   download_file $includes $project_img wise_architecture_diagram.png f01e52df149f10702d933d73935d9f29
   download_file $includes $project_img wise_explore_page.png         5136132e4e3232a216c12e2fe9d1b0c4
   download_file $includes $project_img wise_flow.png                 4a79853f2b5a0ac45929d0966f7cd7f5
   download_file $includes $project_img wise_store_page.png           15bcd8dac10ab5d1c643fff7bdecc52d
 
-  echo "Re-writes all the image links..."
+  echo_red_bold "Re-writes all the image links..."
 # version
   guide_rewrite_sed $1 cdap-bi-guide 
+  guide_rewrite_sed $1 cdap-cube-guide 
   guide_rewrite_sed $1 cdap-flow-guide
   guide_rewrite_sed $1 cdap-flume-guide
   guide_rewrite_sed $1 cdap-kafka-ingest-guide

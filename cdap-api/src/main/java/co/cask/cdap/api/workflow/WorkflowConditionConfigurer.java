@@ -45,6 +45,12 @@ public interface WorkflowConditionConfigurer<T> {
   WorkflowConditionConfigurer<T> addAction(WorkflowAction action);
 
   /**
+   * Forks the current branch of the {@link WorkflowConditionNode}.
+   * @return the configurer for the fork
+   */
+  WorkflowForkConfigurer<? extends WorkflowConditionConfigurer<T>> fork();
+
+  /**
    * Adds a nested condition to the current condition.
    * @return the configurer for the nested condition
    */

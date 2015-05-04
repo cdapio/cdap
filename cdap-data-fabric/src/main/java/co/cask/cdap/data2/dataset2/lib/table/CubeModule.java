@@ -34,7 +34,9 @@ public class CubeModule implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
     DatasetDefinition<Table, ? extends DatasetAdmin> tableDef = registry.get("table");
-    registry.add(new CubeDatasetDefinition(FULL_NAME, tableDef));
-    registry.add(new CubeDatasetDefinition(SHORT_NAME, tableDef));
+    DatasetDefinition<MetricsTable, ? extends DatasetAdmin> metricsTableDef =
+      registry.get(MetricsTable.class.getName());
+    registry.add(new CubeDatasetDefinition(FULL_NAME, tableDef, metricsTableDef));
+    registry.add(new CubeDatasetDefinition(SHORT_NAME, tableDef, metricsTableDef));
   }
 }

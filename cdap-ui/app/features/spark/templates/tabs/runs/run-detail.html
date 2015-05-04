@@ -22,7 +22,7 @@
         <tbody>
           <tr>
             <td ng-bind="status"></td>
-            <td ng-bind="startTime | date:'medium'"></td>
+            <td ng-bind="startTime | amDateFormat: 'MM/DD/YY h:mm:ss a'"></td>
             <td ng-bind="duration*1000 | amDurationFormat"></td>
           </tr>
         </tbody>

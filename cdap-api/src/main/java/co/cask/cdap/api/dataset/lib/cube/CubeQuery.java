@@ -30,14 +30,15 @@ import javax.annotation.Nullable;
  * Defines a query to perform on {@link Cube} data.
  * </p>
  * Another way to think about the query is to map it to the following statement::
- * <pre>
- * SELECT count('read.ops')                                           << measure name and aggregation function
- * FROM aggregation1.1min_resolution                                  << aggregation and resolution
- * GROUP BY dataset,                                                  << groupByDimensions
- * WHERE namespace='ns1' AND app='myApp' AND program='myFlow' AND     << dimensionValues
- *       ts>=1423370200 AND ts{@literal<}1423398198                             << startTs and endTs
- * LIMIT 100                                                          << limit
+ * <pre><code>
+ * SELECT count('read.ops')                                         {@literal <<} measure name and aggregation function
+ * FROM aggregation1.1min_resolution                                {@literal <<} aggregation and resolution
+ * GROUP BY dataset,                                                {@literal <<} groupByDimensions
+ * WHERE namespace='ns1' AND app='myApp' AND program='myFlow' AND   {@literal <<} dimensionValues
+ *       ts>=1423370200 AND ts{@literal <}1423398198                           {@literal <<} startTs and endTs
+ * LIMIT 100                                                        {@literal <<} limit
  *
+ * </code>
  * </pre>
  * See also {@link Cube#query(CubeQuery)}.
  */

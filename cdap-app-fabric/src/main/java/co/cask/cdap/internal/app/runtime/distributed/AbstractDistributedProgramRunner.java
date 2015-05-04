@@ -144,7 +144,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
             twillPreparer.enableDebugging();
           }
           // Add scheduler queue name if defined
-          if (schedulerQueueName != null) {
+          if (schedulerQueueName != null && !schedulerQueueName.isEmpty()) {
             LOG.info("Setting scheduler queue for app {} as {}", program.getId(), schedulerQueueName);
             twillPreparer.setSchedulerQueue(schedulerQueueName);
           }
@@ -191,21 +191,22 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     }
 
     File templateDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
-    File pluginDir = new File(templateDir, adapterSpec.getTemplate());
+    File templatePluginDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_PLUGIN_DIR),
+                                      adapterSpec.getTemplate());
 
-    // Localize all required plugin jars
-    // Use the template dir name as the target directory name.
+    String localizePrefix = templateDir.getName() + "/" +
+                            templateDir.toURI().relativize(templatePluginDir.toURI()).getPath();
+
+    // Localize all required plugin jars and maintain the template plugin directory structure
     // The AbstractProgramTwillRunnable will set the APP_TEMPLATE_DIR correspondingly.
     for (PluginInfo plugin : plugins) {
-      String localizedName = String.format("%s/%s/%s",
-                                           templateDir.getName(), adapterSpec.getTemplate(), plugin.getFileName());
-      localizeFiles.put(localizedName, new File(pluginDir, plugin.getFileName()));
+      String localizedName = String.format("%s/%s", localizePrefix, plugin.getFileName());
+      localizeFiles.put(localizedName, new File(templatePluginDir, plugin.getFileName()));
     }
 
     // Localize all files under template plugin "lib" directory
-    for (File libJar : DirUtils.listFiles(new File(pluginDir, "lib"), "jar")) {
-      String localizedName = String.format("%s/%s/lib/%s",
-                                           templateDir.getName(), adapterSpec.getTemplate(), libJar.getName());
+    for (File libJar : DirUtils.listFiles(new File(templatePluginDir, "lib"), "jar")) {
+      String localizedName = String.format("%s/lib/%s", localizePrefix, libJar.getName());
       localizeFiles.put(localizedName, libJar);
     }
 

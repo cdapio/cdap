@@ -33,10 +33,10 @@
 
           <a ng-if="!app.isdraft" ui-sref="adapters.detail.runs({adapterId: app.name})" class="content-panel">
 
-            <h3 tooltip="{{::app.name}}">
-              <i class="fa fa-heartbeat"></i>
-              <span>{{::app.name | myEllipsis:6}}</span>
-            </h3>
+            <h4 tooltip="{{::app.name}}">
+              <i class="icon-app"></i>
+              <span>{{::app.name | myEllipsis:15}}</span>
+            </h4>
 
             <small>
               Type: {{::app.template}}
@@ -48,10 +48,10 @@
           </a>
           <a href ng-if="app.isdraft" ng-click="$state.go('^.create', {data: app.name})"
               class="content-panel">
-              <h3 tooltip="{{::app.name}}">
-                <i class="fa fa-heartbeat"></i>
-                <span>{{::app.name | myEllipsis:6}}</span>
-              </h3>
+              <h4 tooltip="{{::app.name}}">
+                <i class="icon-app"></i>
+                <span>{{::app.name | myEllipsis:15}}</span>
+              </h4>
 
               <small>
                 Type: {{::app.template}}
@@ -61,12 +61,14 @@
               </p>
           </a>
 
-          <div class="clearfix action-panel" ng-class="{'invisible': app.isdraft === true}">
+          <div class="clearfix action-panel"
+               ng-class="{'invisible': app.isdraft === true}"
+               >
             <div class="pull-left">
-              <button class="text-success" ng-if="app.status === 'STOPPED'" ng-click="doAction('start', app.name)" ng-disabled="app.isdraft">
+              <button class="text-success" ng-if="app.status === 'STOPPED'" ng-click="doAction('start', app.name)">
                 <span class="fa fa-play"></span>
               </button>
-              <button class="text-danger" ng-if="app.status === 'STARTED'" ng-click="doAction('stop', app.name)" ng-disabled="app.isdraft">
+              <button class="text-danger" ng-if="app.status === 'STARTED'" ng-click="doAction('stop', app.name)">
                 <span class="fa fa-stop"></span>
               </button>
               <button ng-if="app.status === 'STARTING' || app.status === 'STOPPING'" class="text-default" >
@@ -74,9 +76,9 @@
               </button>
               <button class="text-danger"
                       ng-click="caskConfirm()"
+                      ng-class="{'invisible': (app.status == 'STARTED' || app.status == 'STARTING' || app.status === 'STOPPING')}"
                       cask-confirmable="deleteAdapter(app.name)"
-                      data-confirmable-content="Are you sure you want to delete this adapter?"
-                      ng-if="!app.isdraft">
+                      data-confirmable-content="Are you sure you want to delete this adapter?">
                 <span class="fa fa-trash"></span>
               </button>
             </div>

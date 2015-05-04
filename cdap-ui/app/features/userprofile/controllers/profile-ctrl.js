@@ -1,6 +1,7 @@
 angular.module(PKG.name + '.feature.userprofile')
-  .controller('UserProfileController', function($scope, $http, myAlert, myAuth) {
+  .controller('UserProfileController', function($scope, $http, myAlert, myAuth, MY_CONFIG) {
     $scope.reAuthenticated = false;
+    $scope.isAuthenticated = MY_CONFIG.securityEnabled;
     $scope.credentials = {
       username: myAuth.currentUser.username
     };

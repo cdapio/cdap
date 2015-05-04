@@ -325,7 +325,8 @@ public class AdapterService extends AbstractIdleService {
     AdapterSpecification adapterSpec = getAdapter(namespace, adapterName);
     Id.Application applicationId = Id.Application.from(namespace, adapterSpec.getTemplate());
     if (adapterStatus != AdapterStatus.STOPPED) {
-      throw new CannotBeDeletedException(Id.Adapter.from(namespace, adapterName));
+      throw new CannotBeDeletedException(Id.Adapter.from(namespace, adapterName), "The adapter has not been stopped." +
+        " Please stop it first.");
     }
     store.removeAdapter(namespace, adapterName);
     try {
@@ -333,6 +334,13 @@ public class AdapterService extends AbstractIdleService {
     } catch (Exception e) {
       LOG.warn("Failed to delete the template {} for after deleting the last adapter {} associated with it.",
                adapterSpec.getTemplate(), adapterName);
+    }
+  }
+
+  public synchronized void removeAdapters(Id.Namespace namespaceId)
+    throws AdapterNotFoundException, CannotBeDeletedException {
+    for (AdapterDefinition adapterDefinition : getAdapters(namespaceId)) {
+      removeAdapter(namespaceId, adapterDefinition.getName());
     }
   }
 
@@ -396,13 +404,18 @@ public class AdapterService extends AbstractIdleService {
   public synchronized void startAdapter(Id.Namespace namespace, String adapterName)
     throws NotFoundException, InvalidAdapterOperationException, SchedulerException, IOException {
     AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
+    AdapterDefinition adapterSpec = getAdapter(namespace, adapterName);
+    ProgramType programType = adapterSpec.getProgram().getType();
+
     if (AdapterStatus.STARTED.equals(adapterStatus)) {
-      throw new InvalidAdapterOperationException("Adapter is already started.");
+      // check if the actual program running or not.
+      Id.Program program = getProgramId(namespace, adapterName);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.findRuntimeInfo(program, programType);
+      if (runtimeInfo != null) {
+        throw new InvalidAdapterOperationException("Adapter is already started.");
+      }
     }
 
-    AdapterDefinition adapterSpec = getAdapter(namespace, adapterName);
-
-    ProgramType programType = adapterSpec.getProgram().getType();
     if (programType == ProgramType.WORKFLOW) {
       startWorkflowAdapter(namespace, adapterSpec);
     } else if (programType == ProgramType.WORKER) {
@@ -645,7 +658,7 @@ public class AdapterService extends AbstractIdleService {
 
   // Reads all the jars from the adapter directory and sets up required internal structures.
   @VisibleForTesting
-  void registerTemplates() {
+  public void registerTemplates() {
     try {
       // generate a completely new map in case some templates were removed
       Map<String, ApplicationTemplateInfo> newInfoMap = Maps.newHashMap();

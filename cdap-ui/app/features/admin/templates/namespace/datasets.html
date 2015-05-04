@@ -7,7 +7,7 @@
       <button class="btn btn-default pull-right" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})"><span class="fa fa-plus"></span> Add Stream</button>
     </div>
   </div>
-  <div ng-if="datasets.length > 0 || streams.length > 0">
+  <div ng-if="datasets.length > 0 || streams.length > 0" datasets-list>
     <div class="table-responsive">
       <table class="table table-curved" cask-sortable>
         <thead>
@@ -20,8 +20,11 @@
         <tbody>
           <tr ng-repeat="dataset in datasets | orderBy:sortable.predicate:sortable.reverse">
             <td class="col-xs-5">
-              <img class="type-icon" src="assets/img/ico_datasets_gray.png" alt="" />
-              <a ui-sref="admin.namespace.detail.data.datasetmetadata({datasetId: dataset.name})"><strong ng-bind="dataset.name"></strong></a>
+
+              <a ui-sref="admin.namespace.detail.data.datasetmetadata({datasetId: dataset.name})">
+                <strong class="icon-datasets"></strong>
+                <strong ng-bind="dataset.name"></strong>
+              </a>
             </td>
             <td class="col-xs-7">
               <span> {{dataset.type}} </span>
@@ -29,8 +32,10 @@
           </tr>
           <tr ng-repeat="stream in streams | orderBy:sortable.predicate:sortable.reverse">
             <td class="col-xs-5">
-              <img class="type-icon" src="assets/img/ico_stream_gray.png" alt="" />
-              <a ui-sref="admin.namespace.detail.data.streammetadata({streamId: stream.name})"><strong ng-bind="stream.name"></strong></a>
+              <a ui-sref="admin.namespace.detail.data.streammetadata({streamId: stream.name})">
+                <strong class="icon-streams"></strong>
+                <strong ng-bind="stream.name"></strong>
+              </a>
             </td>
             <td class="col-xs-7">
               <span> {{stream.type}} </span>

@@ -23,14 +23,22 @@ import co.cask.cdap.proto.Id;
  */
 public class NotFoundException extends Exception {
 
-  private final Id objectId;
+  private final Object object;
 
-  public NotFoundException(Id id) {
-    super(String.format("'%s' was not found", id.getIdRep()));
-    this.objectId = id;
+  public NotFoundException(Object object, String objectString) {
+    super(String.format("'%s' was not found", objectString));
+    this.object = object;
   }
 
-  public Id getObjectId() {
-    return objectId;
+  public NotFoundException(Object object) {
+    this(object, object.toString());
+  }
+
+  public NotFoundException(Id id) {
+    this(id, id.getIdRep());
+  }
+
+  public Object getObject() {
+    return object;
   }
 }

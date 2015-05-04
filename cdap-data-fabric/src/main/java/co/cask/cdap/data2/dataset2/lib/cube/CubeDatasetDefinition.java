@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.lib.CompositeDatasetAdmin;
 import co.cask.cdap.api.dataset.lib.cube.Cube;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -77,15 +78,23 @@ public class CubeDatasetDefinition extends AbstractDatasetDefinition<CubeDataset
   public static final int[] DEFAULT_RESOLUTIONS = new int[]{1};
 
   private final DatasetDefinition<? extends Table, ?> tableDef;
+  private final DatasetDefinition<MetricsTable, ? extends DatasetAdmin> metricsTableDef;
 
   /**
    * Creates instance of {@link CubeDatasetDefinition}.
    *
    * @param name this dataset type name
+   * @param tableDef {@link Table} dataset definition, used to create tables to store cube data
+   * @param metricsTableDef {@link MetricsTable} dataset definition, used to create tables to store encoding mappings
+   *                        (see "entity" table).
+   *                        Has to be non-transactional: Cube dataset uses in-memory non-transactional cache in front
+   *                        of it, so all writes must be durable independent on transaction completion.
    */
-  public CubeDatasetDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
+  public CubeDatasetDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef,
+                               DatasetDefinition<MetricsTable, ? extends DatasetAdmin> metricsTableDef) {
     super(name);
     this.tableDef = tableDef;
+    this.metricsTableDef = metricsTableDef;
   }
 
   @Override
@@ -94,7 +103,7 @@ public class CubeDatasetDefinition extends AbstractDatasetDefinition<CubeDataset
 
     // Configuring tables that hold data of specific resolution
     List<DatasetSpecification> datasetSpecs = Lists.newArrayList();
-    datasetSpecs.add(tableDef.configure("entity", properties));
+    datasetSpecs.add(metricsTableDef.configure("entity", properties));
     // NOTE: we create a table per resolution; we later will use that to e.g. configure ttl separately for each
     for (int resolution : resolutions) {
       datasetSpecs.add(tableDef.configure(String.valueOf(resolution), properties));
@@ -111,7 +120,7 @@ public class CubeDatasetDefinition extends AbstractDatasetDefinition<CubeDataset
                                ClassLoader classLoader) throws IOException {
     List<DatasetAdmin> admins = Lists.newArrayList();
 
-    admins.add(tableDef.getAdmin(datasetContext, spec.getSpecification("entity"), classLoader));
+    admins.add(metricsTableDef.getAdmin(datasetContext, spec.getSpecification("entity"), classLoader));
 
     int[] resolutions = getResolutions(spec.getProperties());
     for (int resolution : resolutions) {
@@ -125,7 +134,8 @@ public class CubeDatasetDefinition extends AbstractDatasetDefinition<CubeDataset
   public CubeDataset getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                 Map<String, String> arguments, ClassLoader classLoader) throws IOException {
 
-    Table entityTable = tableDef.getDataset(datasetContext, spec.getSpecification("entity"), arguments, classLoader);
+    MetricsTable entityTable =
+      metricsTableDef.getDataset(datasetContext, spec.getSpecification("entity"), arguments, classLoader);
 
     int[] resolutions = getResolutions(spec.getProperties());
     Map<Integer, Table> resolutionTables = Maps.newHashMap();

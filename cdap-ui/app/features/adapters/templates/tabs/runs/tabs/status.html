@@ -14,8 +14,8 @@
         <div class="wrapper transform-wrapper" id="transformsContainer">
           <div class="template transforms"
                ng-model="transforms">
-            <div class="default">
-              <div>No Transforms added</div>
+            <div class="plugin-added" ng-if="!transforms.length">
+              <span>No Transforms added</span>
             </div>
             <div ng-repeat="transform in transforms" id="transformWrapper{{$index}}" class="plugin-added">
               <span>{{transform.name}}</span>

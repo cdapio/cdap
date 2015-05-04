@@ -16,8 +16,12 @@
 
 package co.cask.cdap.internal.app.workflow;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.WorkflowAction;
+import co.cask.cdap.api.workflow.WorkflowConditionConfigurer;
+import co.cask.cdap.api.workflow.WorkflowConditionNode;
+import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
@@ -29,8 +33,8 @@ import java.util.List;
  * Default implementation of the {@link WorkflowForkConfigurer}
  * @param <T>
  */
-public class DefaultWorkflowForkConfigurer<T extends WorkflowForkJoiner>
-  implements WorkflowForkConfigurer<T>, WorkflowForkJoiner {
+public class DefaultWorkflowForkConfigurer<T extends WorkflowForkJoiner & WorkflowConditionAdder>
+  implements WorkflowForkConfigurer<T>, WorkflowForkJoiner, WorkflowConditionAdder {
 
   private final T parentForkConfigurer;
 
@@ -67,6 +71,13 @@ public class DefaultWorkflowForkConfigurer<T extends WorkflowForkJoiner>
   }
 
   @Override
+  public WorkflowConditionConfigurer<? extends WorkflowForkConfigurer<T>> condition(
+    Predicate<WorkflowContext> predicate) {
+    return new DefaultWorkflowConditionConfigurer<DefaultWorkflowForkConfigurer<T>>(this,
+                                                                                    predicate.getClass().getName());
+  }
+
+  @Override
   public WorkflowForkConfigurer<T> also() {
     branches.add(currentBranch);
     currentBranch = Lists.newArrayList();
@@ -84,5 +95,11 @@ public class DefaultWorkflowForkConfigurer<T extends WorkflowForkJoiner>
   @Override
   public void addWorkflowForkNode(List<List<WorkflowNode>> branches) {
     currentBranch.add(new WorkflowForkNode(null, branches));
+  }
+
+  @Override
+  public void addWorkflowConditionNode(String predicateClassName, List<WorkflowNode> ifBranch,
+                                       List<WorkflowNode> elseBranch) {
+    currentBranch.add(new WorkflowConditionNode(null, predicateClassName, ifBranch, elseBranch));
   }
 }

@@ -579,8 +579,15 @@
     <!-- Template configuration -->
     <property>
         <name>app.template.dir</name>
-        <value>/opt/cdap/master/plugins</value>
+        <value>/opt/cdap/master/templates</value>
         <description>Directory where all archives for app templates are stored</description>
+    </property>
+
+    <property>
+        <name>app.template.plugin.dir</name>
+        <value>${app.template.dir}/plugins</value>
+        <description>Directory where template plugins are stored</description>
+        <final>true</final>
     </property>
 
     <!-- App Fabric related changes -->

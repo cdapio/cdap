@@ -30,8 +30,9 @@ public class FilePathResolverTest {
   public void testResolve() {
     File homeDir = new File("/home/bob");
     File workingDir = new File("/working/dir");
+    File cdapHomeDir = new File("/opt/cdap");
 
-    FilePathResolver resolver = new FilePathResolver(homeDir, workingDir);
+    FilePathResolver resolver = new FilePathResolver(homeDir, workingDir, cdapHomeDir);
 
     // test paths using ~/
     File file = resolver.resolvePathToFile("~/~t~est..1~123");
@@ -65,6 +66,31 @@ public class FilePathResolverTest {
     file = resolver.resolvePathToFile("123/../~t~est..1~123");
     expectedFile = new File(workingDir, "~t~est..1~123");
     Assert.assertEquals(expectedFile, file);
-  }
 
+    // test $CDAP_HOME
+
+    file = resolver.resolvePathToFile("$CDAP_HOME/sdf");
+    expectedFile = new File(cdapHomeDir, "sdf");
+    Assert.assertEquals(expectedFile, file);
+
+    file = resolver.resolvePathToFile("$CDAP_HOME-ff/sdf");
+    expectedFile = new File(cdapHomeDir.getAbsolutePath() + "-ff", "sdf");
+    Assert.assertEquals(expectedFile, file);
+
+    file = resolver.resolvePathToFile("$CDAP_HOME_/sdf");
+    expectedFile = new File(workingDir, "$CDAP_HOME_/sdf");
+    Assert.assertEquals(expectedFile, file);
+
+    file = resolver.resolvePathToFile("$CDAP_HOME9/sdf");
+    expectedFile = new File(workingDir, "$CDAP_HOME9/sdf");
+    Assert.assertEquals(expectedFile, file);
+
+    file = resolver.resolvePathToFile("$CDAP_HOMEf/sdf");
+    expectedFile = new File(workingDir, "$CDAP_HOMEf/sdf");
+    Assert.assertEquals(expectedFile, file);
+
+    file = resolver.resolvePathToFile("$CDAP_HOMEF/sdf");
+    expectedFile = new File(workingDir, "$CDAP_HOMEF/sdf");
+    Assert.assertEquals(expectedFile, file);
+  }
 }

@@ -150,13 +150,13 @@ function copy_zip_file () {
   cp ${_local_dir}/${_zip_file} ${_local_dir}/${_version}/
 }
 
-# create remote directory prior to rsync
+# delete and create remote directory prior to rsync
 function make_remote_dir () {
   local _user=${1}
   local _host=${2}
   local _rdir=${3} # remote directory
-  decho "ssh ${SSH_OPTS} ${_user}@${_host} \"sudo mkdir -p ${_rdir}\""
-  ssh ${SSH_OPTS} ${_user}@${_host} "sudo mkdir -p ${_rdir}" || die "could not create ${_rdir} directory on ${_host}"
+  decho "ssh ${SSH_OPTS} ${_user}@${_host} \"sudo rm -rf ${_rdir} && sudo mkdir -p ${_rdir}\""
+  ssh ${SSH_OPTS} ${_user}@${_host} "sudo rm -rf ${_rdir} && sudo mkdir -p ${_rdir}" || die "could not create ${_rdir} directory on ${_host}"
   decho ""
 }
 
@@ -168,10 +168,6 @@ function sync_local_dir_to_remote_dir () {
   local _zip_file=${4}
   local _local_dir=${5}
   local _version=${6}
-  # if there is no branch name to append, append version to directory name, otherwise all files end up one level too high
-  if [ "${BRANCH}" == '' ]; then
-    _rdir=${_rdir}/${_version}
-  fi
   decho ""
   decho "rsync ${RSYNC_OPTS} -e \"${RSYNC_SSH_OPTS}\" --rsync-path=\"${RSYNC_PATH}\" ${_local_dir}/${_version} \"${_user}@${_host}:${_rdir}\"" 
   rsync ${RSYNC_OPTS} -e "${RSYNC_SSH_OPTS}" --rsync-path="${RSYNC_PATH}" ${_local_dir}/${_version}/.h* ${_local_dir}/${_version}/* "${_user}@${_host}:${_rdir}" || die "could not rsync ${_local_dir} to ${_rdir} on ${_host}" 
@@ -187,6 +183,12 @@ function deploy () {
   local _version=${6}
   local _branch=${7}
   decho "deploying to ${_host}"
+  # if there is no branch name to append, append version to directory name, otherwise:
+  #   cdap dir gets blown away in remote dir delete/create
+  #   otherwise all files end up one level too high after rsync
+  if [ "${BRANCH}" == '' ]; then
+    _remote_dir=${_remote_dir}/${_version}
+  fi
   copy_zip_file ${_zip_file} ${_local_dir} ${_version}
   make_remote_dir ${_user} ${_host} ${_remote_dir}
   sync_local_dir_to_remote_dir ${_user} ${_host} ${_remote_dir} ${_zip_file} ${_local_dir} ${_version}

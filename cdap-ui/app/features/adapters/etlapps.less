@@ -20,6 +20,12 @@ body.theme-cdap.state-adapters {
 body.theme-cdap.state-adapters-detail,
 body.theme-cdap.state-adapters-create {
 
+  .ui-select-container.ui-select-bootstrap {
+    .ui-select-toggle {
+      overflow-x: auto;
+    }
+  }
+
   .etlflowcontainer {
     position: relative;
     h4 {
@@ -139,6 +145,14 @@ body.theme-cdap.state-adapters-create {
             border-bottom: 1px solid lightgray;
             background-color: transparent;
             &:last-child { border: 1px solid transparent; }
+
+            .description-overflow {
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              color: darkgray;
+              font-size: 11px;
+            }
           }
         }
       }
@@ -174,7 +188,6 @@ body.theme-cdap.state-adapters-create {
     .panel-heading { cursor: pointer; }
   }
 
-  .tooltip.top { white-space: nowrap; }
 }
 
 body.theme-cdap.state-adapters-list {
@@ -211,6 +224,7 @@ body.theme-cdap.state-adapters-list {
       .well.well-lg {
         border: 2px dashed;
         margin-bottom: 0;
+        height: 163px;
         h1 { margin-bottom: 13px; }
       }
     }
@@ -232,10 +246,13 @@ body.theme-cdap.state-adapters-list {
         display: block;
         text-decoration: none;
         color: black;
-      }
-      h3 {
-        margin: 10px 0;
-        .fa-heartbeat { color: @cdap-orange; }
+        h4 {
+          margin: 10px 0 0 0;
+          .icon-app { color: @cdap-orange; }
+          span {
+            vertical-align: top;
+          }
+        }
       }
       p { margin: 0; }
     }

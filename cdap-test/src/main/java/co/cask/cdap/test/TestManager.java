@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.templates.ApplicationTemplate;
+import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -84,6 +85,23 @@ public interface TestManager {
    */
   void addTemplatePlugins(Id.ApplicationTemplate templateId, String jarName, Class<?> pluginClz,
                           Class<?>... classes) throws IOException;
+
+  /**
+   * Add a template plugin configuration file.
+   *
+   * @param templateId the id of the template to add the plugin config for
+   * @param fileName the name of the config file. The name should match the plugin jar file that it is for. For example,
+   *                 if you added a plugin named hsql-jdbc-1.0.0.jar, the config file must be named hsql-jdbc-1.0.0.json
+   * @param type the type of plugin
+   * @param name the name of the plugin
+   * @param description the description for the plugin
+   * @param className the class name of the plugin
+   * @param fields the fields the plugin uses
+   * @throws IOException
+   */
+  void addTemplatePluginJson(Id.ApplicationTemplate templateId, String fileName, String type, String name,
+                             String description, String className,
+                             PluginPropertyField... fields) throws IOException;
 
   /**
    * Creates an adapter.

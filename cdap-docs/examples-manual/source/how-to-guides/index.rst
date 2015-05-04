@@ -22,6 +22,7 @@ How-To Guides
    cdap-timeseries-guide
    cdap-twitter-ingest-guide
    cdap-spark-guide
+   cdap-cube-guide
 
 
 Designed to be completed in 15-30 minutes, these guides provide quick, hands-on
@@ -78,3 +79,8 @@ instructions for building the “Hello World” of any development task with CDA
 
 - |spark-guide|_ Learn how to **run a Spark program to process data in CDAP.**
 
+
+.. |cube-guide| replace:: **Data Analysis with OLAP Cube:**
+.. _cube-guide: cdap-cube-guide.html
+
+- |cube-guide|_ Use a **Cube Dataset** to perform **online analytical processing** of weblogs with CDAP.

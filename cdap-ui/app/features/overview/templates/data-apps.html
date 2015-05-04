@@ -30,14 +30,14 @@
           <a ng-if="data.type === 'Stream'" ui-sref="streams.detail.overview({streamId: data.name})" ng-click="MyOrderings.dataClicked(data.name)">
             <p ng-bind="data.name"> </p>
             <div class="title-type-image">
-              <img class="type-icon" src="assets/img/ico_stream.png" alt="" />
+              <span class="icon-streams"></span>
               <span> Stream </span>
             </div>
           </a>
           <a ng-if="data.type !== 'Stream'" ui-sref="datasets.detail.overview({datasetId: data.name})" ng-click="MyOrderings.dataClicked(data.name)">
             <p ng-bind="data.name"> </p>
             <div class="title-type-image">
-              <img class="type-icon" src="assets/img/ico_datasets.png" alt="" />
+              <span class="icon-datasets"></span>
               <span> Dataset </span>
             </div>
           </a>
@@ -52,12 +52,6 @@
       </div>
       <hr />
       <div class="text-left" ng-controller="AppsSectionCtrl">
-        <!-- <my-file-select
-            data-button-label="Add Data"
-            data-button-disabled="true"
-            data-button-icon="fa-plus"
-            on-file-select="onFileSelected($files)">
-        </my-file-select> -->
         <a class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $state.params.namespace})">
           <span class="fa fa-plus"></span>
           <span>Add Stream</span>
@@ -83,16 +77,12 @@
               <span class="fa fa-list-ul"></span>
                All Adapters
             </a>
-<!--             <a ui-sref="apps.list" class="btn btn-default">
-              <span class="fa fa-pencil-square-o"></span>
-               <span>ETL</span>
-            </a> -->
-            <my-file-select
-                data-button-label="Add App"
-                data-button-icon="fa-plus"
-                on-file-select="onFileSelected($files)"
-                ng-controller="AppsSectionCtrl">
-            </my-file-select>
+            <a ui-sref="admin.namespace.detail.apps({nsadmin: $state.params.namespace})"
+               class="btn btn-default">
+              <span class="fa fa-plus"></span>
+              <span> Add App </span>
+            </a>
+
           </div>
         </div>
       </div>
@@ -102,7 +92,7 @@
           <a ui-sref="apps.detail.overview({appId: app.id})"  ng-click="MyOrderings.appClicked(app.id)">
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
-              <img class="type-icon" src="assets/img/ico_cdap.png" alt="" />
+              <span class="icon-fist"></span>
               <span> CDAP </span>
             </div>
           </a>
@@ -117,14 +107,14 @@
       </div>
       <hr />
       <div class="text-left" ng-controller="AppsSectionCtrl">
-        <my-file-select
-            data-button-label="Add App"
-            data-button-icon="fa-plus"
-            on-file-select="onFileSelected($files)">
-        </my-file-select>
+        <a ui-sref="admin.namespace.detail.apps({nsadmin: $state.params.namespace})"
+           class="btn btn-default">
+          <span class="fa fa-plus"></span>
+          <span> Add App </span>
+        </a>
         <a ui-sref="adapters.create" class="btn btn-default">
           <span class="fa fa-plus"></span>
-          <span>Add ETL App</span>
+          <span>Add Adapter</span>
         </a>
       </div>
     </div>

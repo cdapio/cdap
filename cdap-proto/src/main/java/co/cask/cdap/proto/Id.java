@@ -184,15 +184,16 @@ public abstract class Id {
       return new Namespace(namespace);
     }
 
-    @Override
-    public String toString() {
-      return id;
-    }
-
     @Nullable
     @Override
     protected Id getParent() {
       return null;
+    }
+
+    // TODO: remove (use super toString() which returns getIdRep())
+    @Override
+    public String toString() {
+      return id;
     }
   }
 
@@ -646,6 +647,10 @@ public abstract class Id {
       return new Flow(Id.Application.from(Namespace.DEFAULT, appId), flowId);
     }
 
+    public static Flow from(String namespaceId, String appId, String flowId) {
+      return new Flow(Id.Application.from(namespaceId, appId), flowId);
+    }
+
     /**
      * Uniquely identifies a Flowlet.
      */
@@ -683,6 +688,39 @@ public abstract class Id {
       @Override
       public String getId() {
         return id;
+      }
+
+      /**
+       * Uniquely identifies a Flowlet Queue.
+       */
+      public static final class Queue extends NamespacedId {
+
+        private final Flowlet producer;
+        private final String id;
+
+        public Queue(Flowlet producer, String id) {
+          this.producer = producer;
+          this.id = id;
+        }
+
+        public Flowlet getProducer() {
+          return producer;
+        }
+
+        public String getId() {
+          return id;
+        }
+
+        @Nullable
+        @Override
+        protected Id getParent() {
+          return producer;
+        }
+
+        @Override
+        public Namespace getNamespace() {
+          return producer.getNamespace();
+        }
       }
     }
   }

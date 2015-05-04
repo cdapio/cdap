@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
-    :version: 2.8.0
+    :version: 3.0.0
 
 =================================================
 Cask Data Application Platform |version|
@@ -24,6 +24,8 @@ Cask Data Application Platform Distributed Dependencies
    "antlr.antlr-2.7.7.jar","2.7.7","\-","ANTLR 3 License (BSD License)","http://www.antlr2.org/license.html"
    "aopalliance.aopalliance-1.0.jar","1.0","\-","Public Domain","http://aopalliance.sourceforge.net/"
    "c3p0.c3p0-0.9.1.1.jar","0.9.1.1","\-","EPL, LGPLv2",""
+   "cdap-etl-batch-3.0.0-SNAPSHOT.jar","3.0.0","SNAPSHOT","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "cdap-etl-realtime-3.0.0-SNAPSHOT.jar","3.0.0","SNAPSHOT","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "ch.qos.logback.logback-classic-1.0.9.jar","1.0.9","\-","LGPL and EPL","http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html"
    "ch.qos.logback.logback-core-1.0.9.jar","1.0.9","\-","LGPL and EPL","http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html"
    "com.101tec.zkclient-0.3.jar","0.3","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -38,6 +40,7 @@ Cask Data Application Platform Distributed Dependencies
    "com.fasterxml.jackson.core.jackson-core-2.3.1.jar","2.3.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.fasterxml.jackson.core.jackson-databind-2.3.1.jar","2.3.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.github.stephenc.high-scale-lib.high-scale-lib-1.1.1.jar","1.1.1","\-","Public Domain",""
+   "com.github.tony19.named-regexp-0.2.3.jar","0.2.3","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.code.findbugs.jsr305-2.0.1.jar","2.0.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.code.gson.gson-2.2.4.jar","2.2.4","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.guava.guava-13.0.1.jar","13.0.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -45,6 +48,7 @@ Cask Data Application Platform Distributed Dependencies
    "com.google.inject.extensions.guice-multibindings-3.0.jar","3.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.inject.extensions.guice-servlet-3.0.jar","3.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.inject.guice-3.0.jar","3.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "com.google.protobuf.protobuf-java-2.5.0.jar","2.5.0","\-","BSD 2","http://opensource.org/licenses/bsd-license.php"
    "com.jamesmurty.utils.java-xmlbuilder-0.4.jar","0.4","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.jcraft.jsch-0.1.42.jar","0.1.42","\-","BSD style","http://www.jcraft.com/jsch/LICENSE.txt"
    "com.jolbox.bonecp-0.8.0.RELEASE.jar","0.8.0","RELEASE","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -69,17 +73,18 @@ Cask Data Application Platform Distributed Dependencies
    "commons-codec.commons-codec-1.6.jar","1.6","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-collections.commons-collections-3.2.1.jar","3.2.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-configuration.commons-configuration-1.6.jar","1.6","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "commons-daemon.commons-daemon-1.0.13.jar","1.0.13","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-digester.commons-digester-1.8.jar","1.8","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-el.commons-el-1.0.jar","1.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-httpclient.commons-httpclient-3.1.jar","3.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "commons-io.commons-io-2.1.jar","2.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-io.commons-io-2.4.jar","2.4","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-lang.commons-lang-2.5.jar","2.5","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-logging.commons-logging-1.1.1.jar","1.1.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-net.commons-net-3.1.jar","3.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "etlBatch","","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "etlRealtime","","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.netty.netty-3.6.6.Final.jar","3.6.6","Final","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.netty.netty-all-4.0.23.Final.jar","4.0.23","Final","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "io.thekraken.grok-0.1.0.jar","0.1.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "it.unimi.dsi.fastutil-6.5.6.jar","6.5.6","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "javax.activation.activation-1.1.jar","1.1","\-","Common Development And Distribution License (CCDL)","http://opensource.org/licenses/CDDL-1.0"
    "javax.annotation.jsr250-api-1.0.jar","1.0","\-","CCDL 1.0","https://glassfish.java.net/public/CDDLv1.0.html"
@@ -88,7 +93,6 @@ Cask Data Application Platform Distributed Dependencies
    "javax.mail.mail-1.4.1.jar","1.4.1","\-","CCDL 1.0","https://glassfish.java.net/public/CDDLv1.0.html"
    "javax.mail.mail-1.4.jar","1.4","\-","GPLv2+CE","https://glassfish.java.net/public/CDDL+GPL_1_1.html"
    "javax.servlet.javax.servlet-api-3.0.1.jar","3.0.1","\-","CCDL 1.0","https://glassfish.dev.java.net/public/CDDL+GPL.html"
-   "javax.servlet.jsp.jsp-api-2.1.jar","2.1","\-","CCDL 1.0","https://glassfish.java.net/public/CDDLv1.0.html"
    "javax.transaction.jta-1.1.jar","1.1","\-","CCDL 1.0","http://opensource.org/licenses/cddl1.php"
    "javax.ws.rs.javax.ws.rs-api-2.0.jar","2.0","\-","Best of CDDL and GPL 2.0","http://glassfish.java.net/public/CDDL+GPL_1_1.html"
    "javax.xml.bind.jaxb-api-2.1.jar","2.1","\-","Best of CDDL 1.1 and GPL 2.0",""
@@ -113,7 +117,7 @@ Cask Data Application Platform Distributed Dependencies
    "org.apache.avro.avro-ipc-1.6.2.jar","1.6.2","\-","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.apache.avro.avro-mapred-1.6.2.jar","1.6.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.commons.commons-compress-1.4.1.jar","1.4.1","\-","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
-   "org.apache.commons.commons-lang3-3.3.2.jar","3.3.2","\-","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
+   "org.apache.commons.commons-lang3-3.1.jar","3.1","\-","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.apache.commons.commons-math3-3.1.1.jar","3.1.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.curator.curator-client-2.4.0.jar","2.4.0","\-","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.apache.curator.curator-framework-2.4.0.jar","2.4.0","\-","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
@@ -181,7 +185,6 @@ Cask Data Application Platform Distributed Dependencies
    "org.json4s.json4s-jackson_2.10-3.2.10.jar","3.2.10","\-","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.mortbay.jetty.jetty-6.1.22.jar","6.1.22","\-","Eclipse Public License Version 1.0 + AL, V2","http://www.eclipse.org/legal/epl-v10.html"
    "org.mortbay.jetty.jetty-util-6.1.26.jar","6.1.26","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.mortbay.jetty.servlet-api-2.5-20081211.jar","2.5","20081211","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.objenesis.objenesis-1.2.jar","1.2","\-","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.ow2.asm.asm-all-4.0.jar","4.0","\-","BSD License","http://opensource.org/licenses/BSD-3-Clause"
    "org.quartz-scheduler.quartz-2.2.0.jar","2.2.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -209,5 +212,4 @@ Cask Data Application Platform Distributed Dependencies
    "org.xerial.snappy.snappy-java-1.0.5.jar","1.0.5","\-","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "oro.oro-2.0.8.jar","2.0.8","\-","Apache License, Version 1.1","http://www.apache.org/licenses/LICENSE-1.1"
    "stax.stax-api-1.0.1.jar","1.0.1","\-","GPL and CCDL","http://www.gnu.org/licenses/gpl.txt"
-   "tomcat.jasper-runtime-5.5.23.jar","5.5.23","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "xmlenc.xmlenc-0.52.jar","0.52","\-","BSD 2","http://opensource.org/licenses/bsd-license.php"

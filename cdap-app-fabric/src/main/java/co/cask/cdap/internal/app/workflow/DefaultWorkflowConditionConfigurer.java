@@ -22,6 +22,8 @@ import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowConditionConfigurer;
 import co.cask.cdap.api.workflow.WorkflowConditionNode;
 import co.cask.cdap.api.workflow.WorkflowContext;
+import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
+import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import com.google.common.collect.Lists;
 
@@ -31,8 +33,8 @@ import java.util.List;
  * Default implementation of the {@link WorkflowConditionConfigurer}.
  * @param <T> the type of the parent configurer
  */
-public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder>
-  implements WorkflowConditionConfigurer<T>, WorkflowConditionAdder {
+public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder & WorkflowForkJoiner>
+  implements WorkflowConditionConfigurer<T>, WorkflowConditionAdder, WorkflowForkJoiner {
 
   private final T parentConfigurer;
   private final List<WorkflowNode> ifBranch = Lists.newArrayList();
@@ -66,6 +68,11 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   }
 
   @Override
+  public WorkflowForkConfigurer<? extends WorkflowConditionConfigurer<T>> fork() {
+    return new DefaultWorkflowForkConfigurer<DefaultWorkflowConditionConfigurer<T>>(this);
+  }
+
+  @Override
   @SuppressWarnings("unchecked")
   public WorkflowConditionConfigurer<? extends WorkflowConditionConfigurer<T>> condition(
     Predicate<WorkflowContext> predicate) {
@@ -93,8 +100,13 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   }
 
   @Override
-  public void addWorkflowConditionNode(String predicateClassName, List<WorkflowNode> trueBranch,
-                                       List<WorkflowNode> falseBranch) {
+  public void addWorkflowConditionNode(String predicateClassName, List<WorkflowNode> ifBranch,
+                                       List<WorkflowNode> elseBranch) {
     currentBranch.add(new WorkflowConditionNode(null, predicateClassName, ifBranch, elseBranch));
+  }
+
+  @Override
+  public void addWorkflowForkNode(List<List<WorkflowNode>> branches) {
+    currentBranch.add(new WorkflowForkNode(null, branches));
   }
 }

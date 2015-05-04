@@ -19,29 +19,21 @@ package co.cask.cdap.internal.app.runtime.adapter;
 import co.cask.cdap.AppWithServices;
 import co.cask.cdap.DummyBatchTemplate;
 import co.cask.cdap.DummyWorkerTemplate;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterDetail;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
@@ -53,15 +45,10 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
   private static final Type ADAPTER_SPEC_LIST_TYPE =
     new TypeToken<List<AdapterDetail>>() { }.getType();
-  private static LocationFactory locationFactory;
-  private static File adapterDir;
   private static AdapterService adapterService;
 
   @BeforeClass
   public static void setup() throws Exception {
-    CConfiguration conf = getInjector().getInstance(CConfiguration.class);
-    locationFactory = getInjector().getInstance(LocationFactory.class);
-    adapterDir = new File(conf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
     setupAdapter(DummyBatchTemplate.class);
     setupAdapter(DummyWorkerTemplate.class);
     adapterService = getInjector().getInstance(AdapterService.class);
@@ -136,7 +123,7 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
     deleteApplication(1, deleteURL, 403);
 
     response = deleteAdapter(namespaceId, adapterName);
-    Assert.assertEquals(403, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(409, response.getStatusLine().getStatusCode());
 
     response = startStopAdapter(namespaceId, adapterName, "stop");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -279,12 +266,6 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     list = readResponse(response, ADAPTER_SPEC_LIST_TYPE);
     Assert.assertTrue(list.isEmpty());
-  }
-
-  private static void setupAdapter(Class<?> clz) throws IOException {
-    Location adapterJar = AppJarHelper.createDeploymentJar(locationFactory, clz);
-    File destination =  new File(String.format("%s/%s", adapterDir.getAbsolutePath(), adapterJar.getName()));
-    Files.copy(Locations.newInputSupplier(adapterJar), destination);
   }
 
   private HttpResponse createAdapter(String namespaceId, String name, AdapterConfig config) throws Exception {

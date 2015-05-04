@@ -116,6 +116,8 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
         || uriParts[5].equals("tables") || uriParts[5].equals("jdbc"))) {
       // namespaced explore operations. For example, /v3/namespaces/{namespace-id}/data/explore/streams/{stream}/enable
       return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
+    } else if ((uriParts.length == 3) && uriParts[1].equals("explore") && uriParts[2].equals("status")) {
+      return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
     } else if (uriParts.length == 7 && uriParts[3].equals("data") && uriParts[4].equals("datasets") &&
       (uriParts[6].equals("flows") || uriParts[6].equals("workers") || uriParts[6].equals("mapreduce"))) {
       // namespaced app fabric data operations:

@@ -108,12 +108,12 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Starting ProgramLifecycleService");
+    LOG.info("Starting ApplicationLifecycleService");
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("Shutting down ProgramLifecycleService");
+    LOG.info("Shutting down ApplicationLifecycleService");
   }
 
   /**
@@ -208,7 +208,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     Location appArchive = store.getApplicationArchiveLocation(appId);
     Preconditions.checkNotNull(appArchive, "Could not find the location of application", appId.getId());
-    appArchive.delete();
+    if (!appArchive.delete()) {
+      LOG.debug("Could not delete application archive");
+    }
     store.removeApplication(appId);
 
     try {

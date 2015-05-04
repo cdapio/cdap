@@ -5,12 +5,12 @@
       <span ng-bind="$state.params.datasetId"></span>
     </h2>
     <div class="type-block">
-      <img class="type-icon" src="assets/img/ico_datasets_gray.png" alt="" /><small> Type: Dataset </small>
+      <span class="icon-datasets"></span><small> Type: Dataset </small>
     </div>
   </div>
   <div class="col-sm-6 text-right">
 
-    <div class="btn-group h3" dropdown>
+    <div class="btn-group dropdown-right h3" dropdown>
       <button type="button" class="btn btn-default dropdown-toggle" dropdown-toggle>
         Actions <span class="caret"></span>
       </button>
@@ -37,5 +37,12 @@
 
 <my-tabs
   data-tabs-list="['Status', 'Explore', 'Programs', 'Metadata']"
-  data-tabs-partial-path="/assets/features/datasets/templates/tabs/">
+  data-tabs-partial-path="/assets/features/datasets/templates/tabs/"
+  ng-if="explorable">
+</my-tabs>
+
+<my-tabs
+  data-tabs-list="['Programs']"
+  data-tabs-partial-path="/assets/features/datasets/templates/tabs/"
+  ng-if="explorable === false">
 </my-tabs>
