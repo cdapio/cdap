@@ -18,7 +18,7 @@ angular.module(PKG.name + '.commons')
             modal && modal.close();
             isBackendDown = true;
             if (!message) {
-              $scope.message = 'CDAP service(s) are offline';
+              $scope.message = 'Service(s) are offline';
             } else {
               $scope.message = message;
             }
@@ -29,33 +29,33 @@ angular.module(PKG.name + '.commons')
           }
         }.bind($scope));
 
-        EventPipe.on('backendUp', function() {
+        EventPipe.on('backendUp', function(message) {
           if (isBackendDown) {
             modal.close();
             modal = null;
             isBackendDown = false;
+
             $alert({
-              title: 'We\'re Back!',
               type: 'success',
-              content: 'CDAP services are online'
+              content: message ? message : 'Services are online'
             });
           }
         }.bind($scope));
 
         EventPipe.on('hideLoadingIcon', function() {
           // Just making it smooth instead of being too 'speedy'
-          if (!isBackendDown) {
-            $timeout(function() {
+          $timeout(function() {
+            if (!isBackendDown) {
               modal && !modal.$state && modal.close();
               modal = null;
               isLoading = false;
-            }, 2000);
-          }
+            }
+          }, 2000);
         });
 
         EventPipe.on('showLoadingIcon', function() {
           if(!modal && !isBackendDown) {
-            $scope.message = ''
+            $scope.message = '';
             modal = $bootstrapModal.open(modalObj);
           }
         }.bind($scope));
