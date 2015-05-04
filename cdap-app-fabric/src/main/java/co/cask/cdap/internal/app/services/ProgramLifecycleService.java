@@ -16,6 +16,10 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -28,6 +32,7 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -221,7 +226,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @param store The data store that manages run records instances for all programs.
    * @param runtimeService The {@link ProgramRuntimeService} instance to check the actual state of the program.
    */
-  private  void validateAndCorrectRunningRunRecords(ProgramType programType, Store store,
+  private void validateAndCorrectRunningRunRecords(ProgramType programType, Store store,
                                                     ProgramRuntimeService runtimeService) {
     final Map<RunId, RuntimeInfo> runIdToRuntimeInfo = runtimeService.list(programType);
 
@@ -246,13 +251,89 @@ public class ProgramLifecycleService extends AbstractIdleService {
     for (RunRecord rr : invalidRunRecords) {
       String runId = rr.getPid();
 
-      // Get running programs based on type and check if any RunRecord id for that program.
+      // Get list of namespaces (borrow logic from AbstractAppFabricHttpHandler#listPrograms)
+      List<NamespaceMeta> namespaceMetas = store.listNamespaces();
+
+      // For each, get all programs under it
       Id.Program targetProgramId = null;
-      for (Map.Entry<RunId, RuntimeInfo> entry : runIdToRuntimeInfo.entrySet()) {
-        RuntimeInfo runtimeInfo = entry.getValue();
-        RunRecord runRecord = store.getRun(runtimeInfo.getProgramId(), runId);
-        if (runRecord != null && runRecord.getPid().equals(runId)) {
-          targetProgramId = runtimeInfo.getProgramId();
+      for (NamespaceMeta nm : namespaceMetas) {
+        Id.Namespace accId = Id.Namespace.from(nm.getName());
+        Collection<ApplicationSpecification> appSpecs = store.getAllApplications(accId);
+
+        // For each application get the programs checked against run records
+        for (ApplicationSpecification appSpec : appSpecs) {
+          switch (programType) {
+            case FLOW:
+              for (String programName : appSpec.getFlows().keySet()) {
+                Id.Program programId = validateProgramForRunRecord(store, nm.getName(), appSpec.getName(), programType,
+                                                                   programName, runId);
+                if (programId != null) {
+                  targetProgramId = programId;
+                  break;
+                }
+              }
+              break;
+            case MAPREDUCE:
+              for (String programName : appSpec.getMapReduce().keySet()) {
+                Id.Program programId = validateProgramForRunRecord(store, nm.getName(), appSpec.getName(), programType,
+                                                                   programName, runId);
+                if (programId != null) {
+                  targetProgramId = programId;
+                  break;
+                }
+              }
+              break;
+            case SPARK:
+              for (String programName : appSpec.getSpark().keySet()) {
+                Id.Program programId = validateProgramForRunRecord(store, nm.getName(), appSpec.getName(), programType,
+                                                                   programName, runId);
+                if (programId != null) {
+                  targetProgramId = programId;
+                  break;
+                }
+              }
+              break;
+            case SERVICE:
+              for (String programName : appSpec.getServices().keySet()) {
+                Id.Program programId = validateProgramForRunRecord(store, nm.getName(), appSpec.getName(), programType,
+                                                                   programName, runId);
+                if (programId != null) {
+                  targetProgramId = programId;
+                  break;
+                }
+              }
+              break;
+            case WORKER:
+              for (String programName : appSpec.getWorkers().keySet()) {
+                Id.Program programId = validateProgramForRunRecord(store, nm.getName(), appSpec.getName(), programType,
+                                                                   programName, runId);
+                if (programId != null) {
+                  targetProgramId = programId;
+                  break;
+                }
+              }
+              break;
+            case WORKFLOW:
+              for (String programName : appSpec.getWorkflows().keySet()) {
+                Id.Program programId = validateProgramForRunRecord(store, nm.getName(), appSpec.getName(), programType,
+                                                                   programName, runId);
+                if (programId != null) {
+                  targetProgramId = programId;
+                  break;
+                }
+              }
+              break;
+            default:
+              throw new RuntimeException("Unknown program type: " + programType.name());
+          }
+          if (targetProgramId != null) {
+            break;
+          }
+        }
+
+        // If we found the target program, lets bail.
+        if (targetProgramId != null) {
+          break;
         }
       }
 
@@ -265,7 +346,29 @@ public class ProgramLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Helper class to run in separate thread to validate t
+   * Helper method to get program id for a run record if it exists in the store.
+   *
+   * @param store
+   * @param namespaceName
+   * @param appName
+   * @param programType
+   * @param programName
+   * @param runId
+   * @return instance of {@link Id.Program} if existi for the runId or null if does not.
+   */
+  private static Id.Program validateProgramForRunRecord(Store store, String namespaceName, String appName,
+                                                        ProgramType programType, String programName, String runId) {
+    Id.Program programId = Id.Program.from(namespaceName, appName, programType, programName);
+    RunRecord runRecord = store.getRun(programId, runId);
+    if (runRecord != null) {
+      return programId;
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Helper class to run in separate thread to validate the invalid running run records
    */
   public static class RunRecordsCorrectorRunnable implements Runnable {
     private final ProgramLifecycleService programLifecycleService;
