@@ -30,7 +30,7 @@ The CDAP CSD consists of four mandatory roles:
 - Master
 - Gateway/Router
 - Kafka-Server
-- Web-App
+- UI
 
 and an optional role—Security Auth Service—plus a Gateway client configuration. 
 
@@ -41,7 +41,7 @@ the 'cdap' user installed by the parcel.
 Prerequisites
 =======================================
 
-#. Node.js (version 0.8.16 through 0.10.37) must be installed on the node(s) where the Web-App
+#. Node.js (version 0.8.16 through 0.10.37) must be installed on the node(s) where the UI
    role instance will run. You can download the appropriate version of Node.js from `nodejs.org
    <http://nodejs.org/dist/>`__.
 
@@ -167,6 +167,49 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 
 #. You have now completed verification of the installation.
 
+Upgrading an Existing Version
+=======================================
+
+.. rubric:: Upgrading Patch Release versions
+
+When a new compatible CDAP parcel is released, it will be available via the Parcels page in the Cloudera Manager UI
+
+#. Stop all Flows, Services, and other Programs in all your applications.
+
+#. Stop CDAP services
+
+#. Use the Cloudera Manager UI to download, distribute, and activate the parcel on all cluster hosts
+
+#. Start CDAP services
+
+.. rubric:: Upgrading Major/Minor Release versions
+
+These steps will upgrade from CDAP 2.8.0 to CDAP 3.0.0. (**Note:** Apps need to be both recompiled and re-deployed.)
+
+#. Stop all Flows, Services, and other Programs in all your applications.
+
+#. Stop CDAP services
+
+#. Ensure your installed version of the CSD matches the target version of CDAP. For example, CSD version 3.0.* is compatible
+   with CDAP version 3.0.*.  Download the latest version of the CSD `here <http://cask.co/resources/#cdap-integrations>`__.
+
+#. Use the Cloudera Manager UI to download, distribute, and activate the parcel on all cluster hosts
+
+#. Before starting services, run the Upgrade Tool to update any necessary CDAP table definitions.  From the CDAP Service page,
+   select "Run CDAP Upgrade Tool" from the Actions menu
+
+#. Start the CDAP services.  At this point it may be necessary to correct for any changes in the CSD.  For example, if new CDAP services
+   were added or removed, you must add or remove role instances as necessary.  When upgrading from 2.8.0 to 3.0.0, the CDAP Web-App role has
+   been replaced by the CDAP-UI role:
+
+   - From the CDAP Instances page, select Add Role Instances, and choose a host for the CDAP-UI role.
+
+   - From the CDAP Instances page, check the CDAP-Web-App role, and select Delete from the Actions menu.
+
+#. After CDAP services have started, run the Post-Upgrade tool to perform any necessary upgrade steps against the running services.  From the
+   CDAP Service page, select "Run CDAP Post-Upgrade Tasks"
+
+#. You must recompile and then redeploy your applications.
 
 Troubleshooting
 =======================================
@@ -202,3 +245,11 @@ If you are hosting your own internal parcel repository, you may also want the
   |http:|//repository.cask.co/parcels/cdap/latest/manifest.json
 
 The ``manifest.json`` can always be referred to for the list of latest available parcels.
+
+Previously released parcels can also be accessed from their version-specific URLs.  For example:
+
+.. parsed-literal::
+  |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-el6.parcel
+  |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-precise.parcel
+  |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-trusty.parcel
+  |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-wheezy.parcel
