@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.template.etl.api.PipelineConfigurable;
@@ -63,7 +64,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class ETLWorkerTest extends TestBase {
   private static final Gson GSON = new Gson();
-  private static final Id.Namespace NAMESPACE = Id.Namespace.from("default");
+  private static final Id.Namespace NAMESPACE = Constants.DEFAULT_NAMESPACE_ID;
   private static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("ETLRealtime");
 
   @BeforeClass

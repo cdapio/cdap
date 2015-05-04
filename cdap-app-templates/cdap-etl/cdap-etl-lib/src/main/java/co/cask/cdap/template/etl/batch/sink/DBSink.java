@@ -80,11 +80,10 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     Preconditions.checkArgument(!(dbSinkConfig.user != null && dbSinkConfig.password == null),
                                 "dbPassword is null. Please provide both user name and password if database requires" +
                                   "authentication. If not, please remove dbUser and retry.");
+    String jdbcPluginId = String.format("%s.%s.%s", "sink", dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName);
     Class<Object> jdbcDriverClass = pipelineConfigurer.usePluginClass(dbSinkConfig.jdbcPluginType,
                                                                       dbSinkConfig.jdbcPluginName,
-                                                                      String.format("%s.%s.%s", "sink",
-                                                                                    dbSinkConfig.jdbcPluginType,
-                                                                                    dbSinkConfig.jdbcPluginName),
+                                                                      jdbcPluginId,
                                                                       PluginProperties.builder().build());
     Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
   }
@@ -96,6 +95,9 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
 
     Job job = context.getHadoopJob();
     conf = job.getConfiguration();
+    String jdbcPluginId = String.format("%s.%s.%s", "sink", dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName);
+    // Load the plugin class to make sure it is available.
+    context.loadPluginClass(jdbcPluginId);
     if (dbSinkConfig.user == null && dbSinkConfig.password == null) {
       DBConfiguration.configureDB(conf, dbSinkConfig.driverClass, dbSinkConfig.connectionString);
     } else {
