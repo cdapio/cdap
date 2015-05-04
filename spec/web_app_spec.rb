@@ -12,7 +12,6 @@ describe 'cdap::web_app' do
         stub_command('test -e /usr/bin/node').and_return(true)
       end.converge(described_recipe)
     end
-
   end
 
   context 'using cdap <= 2.8.0' do
