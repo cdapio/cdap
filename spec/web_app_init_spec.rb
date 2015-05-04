@@ -4,7 +4,7 @@ describe 'cdap::web_app_init' do
   context 'on Centos 6.5 x86_64' do
     let(:chef_run) do
       ChefSpec::SoloRunner.new(platform: 'centos', version: 6.5) do |node|
-        node.automatic['domain'] = 'example.com'
+        node.override['cdap']['version'] = '2.8.0-1'
         stub_command('test -e /usr/bin/node').and_return(true)
       end.converge(described_recipe)
     end
@@ -18,6 +18,7 @@ describe 'cdap::web_app_init' do
     let(:chef_run) do
       ChefSpec::SoloRunner.new(platform: 'centos', version: 6.5) do |node|
         node.override['cdap']['cdap_site']['ssl.enabled'] = true
+        node.override['cdap']['version'] = '2.8.0-1'
         stub_command('test -e /usr/bin/node').and_return(true)
       end.converge(described_recipe)
     end
