@@ -31,7 +31,7 @@
 </div>
 
 <!-- CONTENT -->
-<table class="table table-curved">
+<table class="table table-curved" ng-if="metadata">
   <tr>
     <td>Table</td>
     <td>{{ metadata.table_name }}</td>
@@ -64,3 +64,7 @@
     <td>{{ metadata.from_dataset }}</td>
   </tr>
 </table>
+
+<div class="well text-center" ng-if="!metadata">
+  <h4>There is no metadata for this dataset</h4>
+</div>
