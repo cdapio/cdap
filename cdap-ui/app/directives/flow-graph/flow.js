@@ -400,17 +400,22 @@ module.directive('myWorkflowGraph', function ($filter, $state) {
             break;
         }
         return shapeName;
-      }
+      };
 
       scope.handleNodeClick = function(nodeId) {
-        // Temporary fix for 2.8.0. Should be removed first thing post 2.8.
-        if ($state.includes('**.workflows.**')) {
-          return;
-        }
         scope.handleHideTip(nodeId);
         var instance = scope.instanceMap[nodeId];
-        $state.go('flows.detail.runs.tabs.status.flowletsDetail', {flowletId: nodeId});
-      }
+
+        if (instance.type !== 'ACTION') {
+          return;
+        }
+
+        if (instance.program.programType === 'MAPREDUCE') {
+          $state.go('mapreduce.detail.runs', {programId: instance.program.programName});
+        } else if (instance.program.programType === 'SPARK') {
+          $state.go('spark.detail.runs', {programId: instance.program.programName});
+        }
+      };
 
     }
   }, baseDirective);
