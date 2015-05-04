@@ -403,18 +403,15 @@ module.directive('myWorkflowGraph', function ($filter, $state) {
       };
 
       scope.handleNodeClick = function(nodeId) {
+
         scope.handleHideTip(nodeId);
         var instance = scope.instanceMap[nodeId];
-
-        if (instance.type !== 'ACTION') {
-          return;
-        }
-
-        if (instance.program.programType === 'MAPREDUCE') {
-          $state.go('mapreduce.detail.runs', {programId: instance.program.programName});
-        } else if (instance.program.programType === 'SPARK') {
-          $state.go('spark.detail.runs', {programId: instance.program.programName});
-        }
+        scope.$apply(function(scope) {
+          var fn = scope.click();
+          if ('undefined' !== typeof fn) {
+            fn(instance);
+          }
+        });
       };
 
     }
@@ -476,6 +473,24 @@ function genericRender(scope) {
   // Run the renderer. This is what draws the final graph.
   renderer(d3.select(selector + ' g'), g);
 
+  /**
+   * Handles showing tooltip on mouseover of node name.
+   */
+  scope.handleShowTip = function(nodeId) {
+    tip
+      .html(function(d) {
+        return '<strong>' + scope.instanceMap[nodeId].type +':</strong> <span class="tip-node-name">'+ nodeId +'</span>';
+      })
+      .show();
+  };
+
+  /**
+   * Handles hiding tooltip on mouseout of node name.
+   */
+  scope.handleHideTip = function(nodeId) {
+    tip.hide();
+  };
+
   // Set up onclick after rendering.
   svg
     .selectAll('g.node')
@@ -496,22 +511,4 @@ function genericRender(scope) {
     .scale(initialScale)
     .event(svg);
   svg.attr('height', g.graph().height * initialScale + 40);
-
-  /**
-   * Handles showing tooltip on mouseover of node name.
-   */
-  scope.handleShowTip = function(nodeId) {
-    tip
-      .html(function(d) {
-        return '<strong>' + scope.instanceMap[nodeId].type +':</strong> <span class="tip-node-name">'+ nodeId +'</span>';
-      })
-      .show();
-  };
-
-  /**
-   * Handles hiding tooltip on mouseout of node name.
-   */
-  scope.handleHideTip = function(nodeId) {
-    tip.hide();
-  };
 }
