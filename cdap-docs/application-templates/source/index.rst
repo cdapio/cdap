@@ -3,10 +3,10 @@
     :description: Users' Manual
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _users-index:
+.. _apptemplates-index:
 
 ==================================================
-CDAP Users’ Manual
+CDAP Application Templates (Beta)
 ==================================================
 
 .. _users-intro-application-templates:

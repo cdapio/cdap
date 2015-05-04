@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _users-etl-operations:
+.. _apptemplates-etl-operations:
 
 ===============================
 Operating An ETL Adapter (Beta)

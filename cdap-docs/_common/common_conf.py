@@ -86,13 +86,13 @@ extensions = [
 ]
 
 intersphinx_mapping = {
-  'introduction': ('../../introduction/',        os.path.abspath('../../introduction/build/html/objects.inv')),
-  'users':        ('../../users-manual',         os.path.abspath('../../users-manual/build/html/objects.inv')),
-  'developers':   ('../../developers-manual/',   os.path.abspath('../../developers-manual/build/html/objects.inv')),
-  'admin':        ('../../admin-manual/',        os.path.abspath('../../admin-manual/build/html/objects.inv')),
-  'integrations': ('../../integrations/',        os.path.abspath('../../integrations/build/html/objects.inv')),
-  'examples':     ('../../examples-manual',      os.path.abspath('../../examples-manual/build/html/objects.inv')),
-  'reference':    ('../../reference-manual',     os.path.abspath('../../reference-manual/build/html/objects.inv')),
+  'introduction': ('../../introduction/',         os.path.abspath('../../introduction/build/html/objects.inv')),
+  'apptemplates': ('../../application-templates', os.path.abspath('../../application-templates/build/html/objects.inv')),
+  'developers':   ('../../developers-manual/',    os.path.abspath('../../developers-manual/build/html/objects.inv')),
+  'admin':        ('../../admin-manual/',         os.path.abspath('../../admin-manual/build/html/objects.inv')),
+  'integrations': ('../../integrations/',         os.path.abspath('../../integrations/build/html/objects.inv')),
+  'examples':     ('../../examples-manual',       os.path.abspath('../../examples-manual/build/html/objects.inv')),
+  'reference':    ('../../reference-manual',      os.path.abspath('../../reference-manual/build/html/objects.inv')),
 }
 
 # Add any paths that contain templates here, relative to this directory.
@@ -254,13 +254,13 @@ html_theme = 'cdap'
 # Fields: directory, manual name, icon 
 # icon: "" for none, "new-icon" for the ico_new.png
 manuals_list = [
-    ["introduction",        "Introduction to CDAP",            "",],
-    ["users-manual",        u"Users’ Manual",                  "",],
-    ["developers-manual",  u"Developers’ Manual",              "",],
-    ["admin-manual",        "Administration Manual",           "",],
-    ["integrations",        "Integrations",                    "",],
-    ["examples-manual",     "Examples, Guides, and Tutorials", "",],
-    ["reference-manual",    "Reference Manual",                "",],
+    ["introduction",          "Introduction to CDAP",            "",],
+    ["developers-manual",    u"Developers’ Manual",              "",],
+    ["application-templates", "Application Templates",           "new-icon",],
+    ["admin-manual",          "Administration Manual",           "",],
+    ["integrations",          "Integrations",                    "",],
+    ["examples-manual",       "Examples, Guides, and Tutorials", "",],
+    ["reference-manual",      "Reference Manual",                "",],
 ]
 manuals_dict = {}
 manual_titles_list = []

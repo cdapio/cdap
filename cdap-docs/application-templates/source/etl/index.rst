@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _users-etl-index:
+.. _apptemplates-etl-index:
 
 ===================
 ETL Overview (Beta)

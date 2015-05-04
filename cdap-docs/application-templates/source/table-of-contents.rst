@@ -3,7 +3,7 @@
     :copyright: Copyright © 2015 Cask Data, Inc.
 
 ============================================
-CDAP Users’ Manual Table of Contents
+CDAP Application Templates Table of Contents
 ============================================
 
 .. toctree::

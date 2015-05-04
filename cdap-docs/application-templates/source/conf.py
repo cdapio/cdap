@@ -12,10 +12,10 @@ from common_conf import *
 
 # Override the common config
 
-html_short_title_toc = manuals_dict["users-manual"]
+html_short_title_toc = manuals_dict["application-templates"]
 html_short_title = u'CDAP %s' % html_short_title_toc
 
 html_context = {"html_short_title_toc":html_short_title_toc}
 
 # Remove this guide from the mapping as it will fail as it has been deleted by clean
-intersphinx_mapping.pop("users", None)
+intersphinx_mapping.pop("apptemplates", None)
