@@ -15,14 +15,24 @@
           <div class="row">
             <div class="col-xs-12">
               <ul class="list-group" ng-if="defaultSources.length > 0">
-                <li class="list-group-item clearfix"
+                <li class="list-group-item"
                     ng-repeat="source in defaultSources">
-                  <div class="pull-left">
-                    <span class="fa {{source.icon}}" ></span>
-                    <span> {{source.name}} </span>
+
+                  <div class="clearfix">
+                    <div class="pull-left">
+                      <span class="fa {{source.icon}}" ></span>
+                      <span> {{source.name}} </span>
+                    </div>
+
+                    <span class="fa fa-plus-square pull-right" ng-click="handleSourceDrop(source.name)"></span>
                   </div>
 
-                  <span class="fa fa-plus-square pull-right" ng-click="handleSourceDrop(source.name)"></span>
+                  <div tooltip="{{source.description}}"
+                       tooltip-append-to-body="true"
+                       class="description-overflow">
+                    {{source.description}}
+                  </div>
+
                 </li>
               </ul>
               <div class="well well-xs text-center" ng-if="defaultSources.length === 0">
@@ -48,13 +58,19 @@
           <div class="row">
             <div class="col-xs-12">
               <ul class="list-group" ng-if="defaultTransforms.length > 0">
-                <li class="list-group-item clearfix"
+                <li class="list-group-item"
                     ng-repeat="transform in defaultTransforms">
-                  <div  class="pull-left">
-                    <span class="fa {{transform.icon}}"></span>
-                    <span> {{transform.name}} </span>
+
+                  <div class="clearfix">
+                    <div  class="pull-left">
+                      <span class="fa {{transform.icon}}"></span>
+                      <span> {{transform.name}} </span>
+                    </div>
+                    <span class="fa fa-plus-square pull-right" ng-click="handleTransformDrop(transform.name)"></span>
                   </div>
-                  <span class="fa fa-plus-square pull-right" ng-click="handleTransformDrop(transform.name)"></span>
+                  <div tooltip="{{transform.description}}"
+                       tooltip-append-to-body="true"
+                       class="description-overflow">{{transform.description}}</div>
                 </li>
               </ul>
               <div class="well well-xs text-center" ng-if="defaultTransforms.length === 0">
@@ -83,11 +99,20 @@
               <ul class="list-group" ng-if="defaultSinks.length > 0">
                 <li class="list-group-item clearfix"
                     ng-repeat="sink in defaultSinks">
-                  <div class="pull-left">
-                    <span class="fa {{sink.icon}}"></span>
-                    <span> {{sink.name}} </span>
-                  </div>
-                  <span class="fa fa-plus-square pull-right" ng-click="handleSinkDrop(sink.name)"></span>
+                    <div class="clearfix">
+                      <div class="pull-left">
+                        <span class="fa {{sink.icon}}"></span>
+                        <span> {{sink.name}} </span>
+                      </div>
+                      <span class="fa fa-plus-square pull-right" ng-click="handleSinkDrop(sink.name)"></span>
+                    </div>
+
+                    <div tooltip="{{sink.description}}"
+                         tooltip-append-to-body="true"
+                         class="description-overflow">
+                      {{sink.description}}
+                    </div>
+
                 </li>
               </ul>
               <div class="well well-xs text-center" ng-if="defaultSinks.length === 0">

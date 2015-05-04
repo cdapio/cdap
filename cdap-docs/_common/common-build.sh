@@ -88,6 +88,10 @@ BOLD='\033[1m'
 NC='\033[0m'
 WARNING="${RED}${BOLD}WARNING:${NC}"
 
+function echo_red_bold() {
+  echo -e "${RED}${BOLD}${1}${NC}${2}"
+}
+
 ZIP_FILE_NAME=$HTML
 ZIP="${ZIP_FILE_NAME}.zip"
 
@@ -296,7 +300,7 @@ function test_an_include() {
 function build_standalone() {
   cd ${PROJECT_PATH}
   set_mvn_environment
-  MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -P examples,templates -pl cdap-examples,cdap-app-templates -am -amd && MAVEN_OPTS="-Xmx512m" mvn package -pl cdap-standalone -am -DskipTests -P dist,release
+  MAVEN_OPTS="-Xmx1024m" mvn clean package -DskipTests -P examples,templates -pl cdap-examples,cdap-app-templates/cdap-etl -am -amd && MAVEN_OPTS="-Xmx1024m" mvn package -pl cdap-standalone -am -DskipTests -P dist,release
 }
 
 function build_sdk() {

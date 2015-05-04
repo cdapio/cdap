@@ -15,45 +15,50 @@
  */
 package co.cask.cdap.data.tools;
 
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
-import co.cask.cdap.app.guice.ServiceStoreModules;
+import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.ProjectInfo;
+import co.cask.cdap.config.DefaultConfigStore;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
-import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
-import co.cask.cdap.data.tools.flow.FlowQueuePendingCorrector;
+import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
+import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.queue.QueueClientFactory;
-import co.cask.cdap.data2.transaction.queue.QueueAdmin;
-import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
-import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueClientFactory;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
+import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.kv.HBaseKVTableDefinition;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
+import co.cask.cdap.gateway.handlers.DatasetServiceStore;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.schedule.AbstractSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.ExecutorThreadPool;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
+import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
-import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.logging.save.LogSaverTableUtil;
+import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
+import co.cask.cdap.metrics.store.DefaultMetricStore;
+import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
@@ -67,7 +72,10 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Provides;
+import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import com.google.inject.TypeLiteral;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
@@ -106,7 +114,6 @@ public class UpgradeTool {
   private final ZKClientService zkClientService;
   private final Injector injector;
   private final NamespacedLocationFactory namespacedLocationFactory;
-  private final FlowQueuePendingCorrector flowQueuePendingCorrector;
 
   private Store store;
   QuartzScheduler qs;
@@ -123,7 +130,6 @@ public class UpgradeTool {
               "  1. User Datasets (Upgrades only the coprocessor jars)\n" +
               "  2. System Datasets\n" +
               "  3. StreamConversionAdapter\n" +
-              "  4. queue.pending metrics for flowlets\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
     HELP("Show this help.");
 
@@ -147,7 +153,6 @@ public class UpgradeTool {
     this.namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
     this.dsFramework = injector.getInstance(DatasetFramework.class);
     this.adapterService = injector.getInstance(AdapterService.class);
-    this.flowQueuePendingCorrector = injector.getInstance(FlowQueuePendingCorrector.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -163,31 +168,38 @@ public class UpgradeTool {
 
   private Injector init() throws Exception {
     return Guice.createInjector(
-      new IOModule(),
       new ConfigModule(cConf, hConf),
-      new ZKClientModule(),
       new LocationRuntimeModule().getDistributedModules(),
+      new ZKClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new TwillModule(),
       new AuthModule(),
       new ExploreClientModule(),
-      new DataFabricDistributedModule(),
-      new ServiceStoreModules().getDistributedModule(),
-      new DataSetsModules().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SystemDatasetRuntimeModule().getDistributedModules(),
       new NotificationServiceRuntimeModule().getDistributedModules(),
-      new MetricsClientRuntimeModule().getDistributedModules(),
       new KafkaClientModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
-          bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);
-          bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
+          install(new DataFabricDistributedModule());
+          // the DataFabricDistributedModule needs MetricsCollectionService binding and since Upgrade tool does not do
+          // anything with Metrics we just bind it to NoOpMetricsCollectionService
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
+          install(new FactoryModuleBuilder()
+                    .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
+                    .build(DatasetDefinitionRegistryFactory.class));
+          bind(new TypeLiteral<DatasetModule>() {
+          }).annotatedWith(Names.named("serviceModule"))
+            .toInstance(new HBaseKVTableDefinition.Module());
+          bind(ServiceStore.class).to(DatasetServiceStore.class).in(Scopes.SINGLETON);
+
+          bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
+          bind(MetricStore.class).to(DefaultMetricStore.class);
+          bind(DatasetFramework.class).to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
         }
 
         @Provides
@@ -207,6 +219,7 @@ public class UpgradeTool {
         public DatasetFramework getInDsFramework(DatasetFramework dsFramework) {
           return dsFramework;
         }
+
       });
   }
 
@@ -217,7 +230,7 @@ public class UpgradeTool {
     // Start all the services.
     zkClientService.startAndWait();
     txService.startAndWait();
-    flowQueuePendingCorrector.startAndWait();
+    initializeDSFramework(cConf, dsFramework);
   }
 
   /**
@@ -230,7 +243,6 @@ public class UpgradeTool {
       if (qs != null) {
         qs.shutdown();
       }
-      flowQueuePendingCorrector.stopAndWait();
     } catch (Throwable e) {
       LOG.error("Exception while trying to stop upgrade process", e);
       Runtime.getRuntime().halt(1);
@@ -270,7 +282,6 @@ public class UpgradeTool {
             try {
               startUp();
               performUpgrade();
-              LOG.info("Upgrade completed.");
             } finally {
               stop();
             }
@@ -327,25 +338,7 @@ public class UpgradeTool {
     DatasetUpgrader dsUpgrade = injector.getInstance(DatasetUpgrader.class);
     dsUpgrade.upgrade();
 
-    LOG.info("Upgrading StreamConversionAdapters ...");
     upgradeAdapters();
-    populateFlowQueuePendingMetrics();
-  }
-
-  private void populateFlowQueuePendingMetrics() throws Exception {
-    NamespaceAdmin namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
-    List<NamespaceMeta> namespaceMetas = namespaceAdmin.listNamespaces();
-    for (NamespaceMeta namespaceMeta : namespaceMetas) {
-      Id.Namespace namespaceId = Id.Namespace.from(namespaceMeta.getName());
-      Collection<ApplicationSpecification> apps = getStore()
-        .getAllApplications(namespaceId);
-      for (ApplicationSpecification app : apps) {
-        Id.Application appId = Id.Application.from(namespaceId, app.getName());
-        for (FlowSpecification flow : app.getFlows().values()) {
-          flowQueuePendingCorrector.run(Id.Flow.from(appId, flow.getName()));
-        }
-      }
-    }
   }
 
   /**
@@ -376,6 +369,36 @@ public class UpgradeTool {
       datasetBasedTimeScheduleStore.removeJob(new JobKey(AbstractSchedulerService
                                                            .programIdFor(program, SchedulableProgramType.WORKFLOW)));
     }
+  }
+
+  public static void main(String[] args) {
+    try {
+      UpgradeTool upgradeTool = new UpgradeTool();
+      upgradeTool.doMain(args);
+    } catch (Throwable t) {
+      LOG.error("Failed to upgrade ...", t);
+    }
+  }
+
+  /**
+   * Sets up a {@link DatasetFramework} instance for standalone usage.  NOTE: should NOT be used by applications!!!
+   */
+  private void initializeDSFramework(CConfiguration cConf, DatasetFramework datasetFramework) throws IOException,
+    DatasetManagementException {
+    // dataset service
+    DatasetMetaTableUtil.setupDatasets(datasetFramework);
+    // app metadata
+    DefaultStore.setupDatasets(datasetFramework);
+    // config store
+    DefaultConfigStore.setupDatasets(datasetFramework);
+    // logs metadata
+    LogSaverTableUtil.setupDatasets(datasetFramework);
+    // scheduler metadata
+    ScheduleStoreTableUtil.setupDatasets(datasetFramework);
+
+    // metrics data
+    DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(cConf, datasetFramework);
+    DefaultMetricDatasetFactory.setupDatasets(factory);
   }
 
   /**
@@ -422,14 +445,5 @@ public class UpgradeTool {
       datasetBasedTimeScheduleStore.initialize(cch, qs.getSchedulerSignaler());
     }
     return datasetBasedTimeScheduleStore;
-  }
-
-  public static void main(String[] args) {
-    try {
-      UpgradeTool upgradeTool = new UpgradeTool();
-      upgradeTool.doMain(args);
-    } catch (Throwable t) {
-      LOG.error("Failed to upgrade ...", t);
-    }
   }
 }

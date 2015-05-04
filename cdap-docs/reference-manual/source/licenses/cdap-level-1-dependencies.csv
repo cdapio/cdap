@@ -12,15 +12,14 @@ commons-cli.commons-cli-1.2.jar,commons-cli,commons-cli
 commons-codec.commons-codec-1.6.jar,commons-codec,commons-codec
 commons-lang.commons-lang-2.6.jar,commons-lang,commons-lang
 io.netty.netty-3.6.6.Final.jar,io.netty,netty
+io.thekraken.grok-0.1.0.jar,io.thekraken,grok
 javax.servlet.javax.servlet-api-3.0.1.jar,javax.servlet,javax.servlet-api
 javax.ws.rs.javax.ws.rs-api-2.0.jar,javax.ws.rs,javax.ws.rs-api
 jline.jline-2.12.jar,jline,jline
 junit.junit-4.11.jar,junit,junit
 org.apache.avro.avro-1.6.2.jar,org.apache.avro,avro
-org.apache.avro.avro-1.7.7.jar,org.apache.avro,avro
 org.apache.avro.avro-ipc-1.6.2.jar,org.apache.avro,avro-ipc
 org.apache.avro.avro-mapred-1.6.2.jar,org.apache.avro,avro-mapred
-org.apache.avro.avro-mapred-hadoop2.jar,org.apache.avro,avro-mapred
 org.apache.flume.flume-ng-core-1.2.0.jar,org.apache.flume,flume-ng-core
 org.apache.flume.flume-ng-sdk-1.2.0.jar,org.apache.flume,flume-ng-sdk
 org.apache.geronimo.components.geronimo-jaspi-2.0.0.jar,org.apache.geronimo.components,geronimo-jaspi

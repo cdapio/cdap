@@ -1,9 +1,12 @@
 <div class="row">
-  <div class="col-xs-12 text-right">
-    <a ui-sref="adapters.list" class="btn btn-default">
-      <span class="fa fa-list-ul"></span>
-      <span>All Adapters</span>
-    </a>
+  <div class="col-xs-12">
+    <div class="clearfix">
+      <h2 class="pull-left" style="margin-top:0;">Create Adapter</h2>
+      <a ui-sref="adapters.list" class="btn btn-default pull-right">
+        <span class="fa fa-list-ul"></span>
+        <span>All Adapters</span>
+      </a>
+    </div>
   </div>
   <div class="col-xs-12">
     <div class="panel panel-default" ng-init="metadataTabOpen=true">
@@ -34,7 +37,7 @@
                reset-search-input="false"
                title="Create New or Select draft">
               <ui-select-match placeholder="Create New or Select draft" > {{selectedAdapterDraft}}</ui-select-match>
-              <ui-select-choices repeat="adapter in adapterDraftList| filter: $select.search">
+              <ui-select-choices repeat="adapter in adaptersDraftList| filter: $select.search">
                 <div ng-bind-html="adapter | highlight: $select.search"></div>
               </ui-select-choices>
             </ui-select>
@@ -52,17 +55,20 @@
 <div ng-if="onAdapterTypeSelected">
 
   <!-- Hiding just for the demo.-->
-  <div class="row" style="display:none">
+  <div class="row" ng-if="metadata.type == 'etlBatch'">
     <div class="col-xs-12">
-      <div class="panel panel-default" ng-init="configTabOpen=false">
+      <div class="panel panel-default" ng-init="configTabOpen=true">
         <div class="panel-heading clearfix" ng-click="configTabOpen = !configTabOpen">
           <span class="pull-left">Configurations</span>
           <i class="fa fa-fw pull-right"
             ng-class="{'fa-chevron-down': configTabOpen, 'fa-chevron-right': !configTabOpen}"></i>
         </div>
         <div class="panel-body" ng-if="configTabOpen">
-          <div class="well well-sm text-center">
-            Properties TBD
+          <div data-name="field"
+               class="my-widget-container"
+               data-model="schedule['cron']"
+               data-myconfig="{properties: {}, widget: 'schedule'}"
+               widget-container>
           </div>
         </div>
       </div>

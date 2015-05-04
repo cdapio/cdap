@@ -59,7 +59,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
       namespaceAdmin.getNamespace(Id.Namespace.from("random"));
       Assert.fail("Namespace 'random' should not exist.");
     } catch (NamespaceNotFoundException e) {
-      Assert.assertEquals(Id.Namespace.from("random"), e.getObjectId());
+      Assert.assertEquals(Id.Namespace.from("random"), e.getObject());
     }
 
     try {

@@ -38,7 +38,7 @@ angular.module(PKG.name+'.services')
       };
 
       socket.onopen = function (event) {
-        EventPipe.emit('backendUp');
+        EventPipe.emit('backendUp', 'User interface service is online');
         if(attempt>1) {
           $rootScope.$broadcast(MYSOCKET_EVENT.reconnected, event);
           attempt = 1;
@@ -51,7 +51,7 @@ angular.module(PKG.name+'.services')
 
       socket.onclose = function (event) {
         $log.error(event.reason);
-        EventPipe.emit('backendDown');
+        EventPipe.emit('backendDown', 'User interface service is down');
 
         if(attempt<2) {
           $rootScope.$broadcast(MYSOCKET_EVENT.closed, event);

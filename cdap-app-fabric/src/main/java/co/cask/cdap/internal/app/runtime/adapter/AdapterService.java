@@ -404,13 +404,18 @@ public class AdapterService extends AbstractIdleService {
   public synchronized void startAdapter(Id.Namespace namespace, String adapterName)
     throws NotFoundException, InvalidAdapterOperationException, SchedulerException, IOException {
     AdapterStatus adapterStatus = getAdapterStatus(namespace, adapterName);
+    AdapterDefinition adapterSpec = getAdapter(namespace, adapterName);
+    ProgramType programType = adapterSpec.getProgram().getType();
+
     if (AdapterStatus.STARTED.equals(adapterStatus)) {
-      throw new InvalidAdapterOperationException("Adapter is already started.");
+      // check if the actual program running or not.
+      Id.Program program = getProgramId(namespace, adapterName);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.findRuntimeInfo(program, programType);
+      if (runtimeInfo != null) {
+        throw new InvalidAdapterOperationException("Adapter is already started.");
+      }
     }
 
-    AdapterDefinition adapterSpec = getAdapter(namespace, adapterName);
-
-    ProgramType programType = adapterSpec.getProgram().getType();
     if (programType == ProgramType.WORKFLOW) {
       startWorkflowAdapter(namespace, adapterSpec);
     } else if (programType == ProgramType.WORKER) {

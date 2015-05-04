@@ -20,9 +20,9 @@
              "label": "Kafka Brokers",
              "description" : "Server names on which kafka server is running. Kafka is run as a cluster comprised of one or more servers each of which is called broker. Either we can specify zookeeper connection string or this configuration.",
              "properties": {
-               "width": "medium"
-             },
-             "delimiter" : ","
+               "width": "medium",
+               "delimiter" : ","
+             }
           },
 
           "kafka.partitions" : {

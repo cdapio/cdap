@@ -37,7 +37,7 @@
            }
         },
         "ConsumerSecret" : {
-           "widget": "password",
+           "widget": "json-editor",
            "label": "Consumer Secret",
            "description" : "Consumer secret and key together provide access to make requests on behalf of this application. Learn more here : https://dev.twitter.com/oauth/application-only",
            "properties": {
