@@ -43,6 +43,26 @@ angular.module(PKG.name + '.feature.workflows')
         $scope.actions = programs;
       });
 
+
+    $scope.workflowProgramClick = function (instance) {
+      if (['START', 'END'].indexOf(instance.type) > -1) {
+        return;
+      }
+      if ($scope.runs.length) {
+        if (instance.program.programType == 'MAPREDUCE') {
+          $state.go('mapreduce.detail.runs.run', {
+            programId: instance.program.programName,
+            runid: $scope.runs.selected.properties[instance.nodeId]
+          });
+        }
+      } else {
+        $alert({
+          type: 'info',
+          content: 'No runs for the workflow: '+ $state.params.programId +' yet.'
+        })
+      }
+    }
+
     $scope.stop = function() {
       $alert({
         type: 'info',
