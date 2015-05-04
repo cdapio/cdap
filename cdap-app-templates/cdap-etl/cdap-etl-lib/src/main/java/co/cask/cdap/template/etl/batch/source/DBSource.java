@@ -89,6 +89,7 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
     Configuration conf = job.getConfiguration();
     String jdbcPluginId = String.format("%s.%s.%s", "source", dbSourceConfig.jdbcPluginType,
                                         dbSourceConfig.jdbcPluginName);
+    // Load the plugin class to make sure it is available.
     context.loadPluginClass(jdbcPluginId);
     if (dbSourceConfig.user == null && dbSourceConfig.password == null) {
       DBConfiguration.configureDB(conf, dbSourceConfig.driverClass, dbSourceConfig.connectionString);

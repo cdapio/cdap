@@ -96,6 +96,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     Job job = context.getHadoopJob();
     conf = job.getConfiguration();
     String jdbcPluginId = String.format("%s.%s.%s", "sink", dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName);
+    // Load the plugin class to make sure it is available.
     context.loadPluginClass(jdbcPluginId);
     if (dbSinkConfig.user == null && dbSinkConfig.password == null) {
       DBConfiguration.configureDB(conf, dbSinkConfig.driverClass, dbSinkConfig.connectionString);
