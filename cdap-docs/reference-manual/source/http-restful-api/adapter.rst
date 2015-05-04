@@ -96,7 +96,7 @@ Template Update
 -----------------
 To update a particular Application Templates, submit an HTTP PUT request::
 
-  PUT <base-url>/templates/<template-id>
+  PUT <base-url>/namespaces/<namespace-id>/templates/<template-id>
   
 where
 
@@ -106,13 +106,21 @@ where
 
    * - Parameter
      - Description
+   * - ``<namespace-id>``
+     - Namespace ID of Adaptors that have used this Application Template
    * - ``<template-id>``
      - Name of the Application Template, such as ``etlBatch`` or ``etlRealtime``
   
 This will cause an Application Template to be updated, and can be used if you are
 deploying a custom JAR or Plugin and need to update an Application Template so that your
-changes are seen. Any other updates (such as the re-creation of Adapters based on that
-Template) are left to the developer or user of the custom Jar or Plugin.
+changes are seen. Any other updates required (such as the re-creation of Adapters based on that
+Template) are left to the developer or user of the custom JAR or Plugin.
+
+Note that even though Application Templates are not namespaced, this particular call is
+because it is governed by the Adapters that use a Template. If different Adapters in
+different namespaces have used the same Template, multiple calls are needed to make sure
+that any changes are promulgated. This is a behavior that will likely be addressed in a 
+future release to improve this process.
 
 Template Extensions 
 -------------------
