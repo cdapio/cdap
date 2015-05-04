@@ -313,11 +313,11 @@ Using Chef:
 
 Using Yum::
 
-  $ sudo yum install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app
+  $ sudo yum install cdap-gateway cdap-kafka cdap-master cdap-security cdap-ui
 
 Using APT::
 
-  $ sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app
+  $ sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-ui
 
 Do this on each of the boxes that are being used for the CDAP components; our
 recommended installation is a minimum of two boxes.
@@ -624,7 +624,7 @@ recompiled and re-deployed.)
              cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
              cdap-kafka cdap-master cdap-security cdap-ui
 
-       **Note:** We have deprecated the cdap-web-app package in favor of cdap-ui package 
+         **Note:** We have deprecated the cdap-web-app package in favor of cdap-ui package 
 
 #. Copy the ``logback-container.xml`` into your ``conf`` directory. 
    Please see :ref:`Configuration <install-configuration>`.
