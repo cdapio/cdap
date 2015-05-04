@@ -67,7 +67,7 @@ To create an instance of this Adaptor, called *streamAdapter*:
 
     PUT /v3/namespaces/default/adapters/streamAdapter -d @config.json 
 
-- Using `:ref:`CDAP CLI <cli>`::
+- Using :ref:`CDAP CLI <cli>`::
 
     $ create adapter streamAdapter <path-to-config.json>
 
