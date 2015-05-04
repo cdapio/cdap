@@ -64,7 +64,7 @@ import java.util.concurrent.TimeUnit;
 public class ETLWorkerTest extends TestBase {
   private static final Gson GSON = new Gson();
   private static final Id.Namespace NAMESPACE = Id.Namespace.from("default");
-  private static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("etlRealtime");
+  private static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("ETLRealtime");
 
   @BeforeClass
   public static void setupTests() throws IOException {

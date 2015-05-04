@@ -48,7 +48,7 @@ import java.io.IOException;
  */
 public class BaseETLBatchTest extends TestBase {
   protected static final Id.Namespace NAMESPACE = Id.Namespace.from("default");
-  protected static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("etlBatch");
+  protected static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("ETLBatch");
   protected static final Gson GSON = new Gson();
 
   @BeforeClass
