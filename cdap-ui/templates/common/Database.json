@@ -50,7 +50,7 @@
        }
     },
     "group3": {
-       "display" : "Import Query",
+       "display" : "Table Properties",
        "position" : [ "importQuery", "countQuery"],
        "fields" : {
           "importQuery" : {
