@@ -57,11 +57,11 @@ configuration for a Batch Adapter that runs every minute, reading data from a St
      }
   }
 
-The Adaptor launches a MapReduce program that runs every minute, reads data from the
+The Adapter launches a MapReduce program that runs every minute, reads data from the
 Stream *myStream* and writes to a Table *myTable*. A Table Sink needs a row key field to
 be specified and can use the timestamp of a Stream event for that.
 
-To create an instance of this Adaptor, called *streamAdapter*:
+To create an instance of this Adapter, called *streamAdapter*:
 
 - Using the :ref:`RESTful API <http-restful-api-apptemplates-adapters-creating>`::
 

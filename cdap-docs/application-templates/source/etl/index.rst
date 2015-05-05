@@ -128,7 +128,7 @@ Template and Plugin Details
 .. |creating| replace:: **Creating An ETL Adapter:**
 .. _creating: creating.html
 
-- |creating|_ Steps for creating an ETL Adaptor from an ETL Application Template.
+- |creating|_ Steps for creating an ETL Adapter from an ETL Application Template.
 
 .. |operations| replace:: **Operating An ETL Adapter:**
 .. _operations: operations.html

@@ -15,12 +15,12 @@ Adapters.
 
 Note that the ETL Templates are a type of Application Template, specifically designed for
 creating ETL Adapters. See the Application Templates :ref:`Introduction to Application Templates
-and ETL <apptemplates-intro-application-templates>` for information on creating Adaptors and
+and ETL <apptemplates-intro-application-templates>` for information on creating Adapters and
 operating them.
 
 See the Developers’ Manual Advanced section on :ref:`Creating Application Templates
 <advanced-custom-app-template>` for information on creating custom Application Templates,
-Plugins and Adaptors.
+Plugins and Adapters.
 
 
 .. highlight:: console
@@ -107,7 +107,7 @@ where
    * - Parameter
      - Description
    * - ``<namespace-id>``
-     - Namespace ID of Adaptors that have used this Application Template
+     - Namespace ID of Adapters that have used this Application Template
    * - ``<template-id>``
      - Name of the Application Template, such as ``ETLBatch`` or ``ETLRealtime``
   
@@ -601,9 +601,9 @@ where
    * - ``<adapter-id>``
      - Name of the Adapter
 
-It will return the status of the Adaptor, one of ``STOPPED``, ``STARTING``, ``STARTED``.
+It will return the status of the Adapter, one of ``STOPPED``, ``STARTING``, ``STARTED``.
 
-If there is an error (for instance, the Adaptor does not exist), a message and an
+If there is an error (for instance, the Adapter does not exist), a message and an
 appropriate status code (``404``) will be returned.
 
 Starting an Adapter
@@ -686,7 +686,7 @@ where
    * - ``<adapter-id>``
      - Name of the Adapter
 
-The command will return a list of runs for the Adaptor (pretty-printed and reformatted to
+The command will return a list of runs for the Adapter (pretty-printed and reformatted to
 fit)::
 
   [
@@ -715,9 +715,9 @@ fit)::
 
 Retrieving Adapter Logs
 -----------------------
-As an Adaptor is an instantiation of a particular program (a Workflow, MapReduce, Workers, etc.),
-the logs for an Adaptor are the logs of the underlying program. To retrieve these logs
-using a RESTful API, you need to know which underlying program the Adaptor uses
+As an Adapter is an instantiation of a particular program (a Workflow, MapReduce, Workers, etc.),
+the logs for an Adapter are the logs of the underlying program. To retrieve these logs
+using a RESTful API, you need to know which underlying program the Adapter uses
 and then use the CDAP :ref:`Logging API <http-restful-api-logging>` to retrieve its logs.
 
 To find the underlying programs, you can :ref:`list details of an Adapter
