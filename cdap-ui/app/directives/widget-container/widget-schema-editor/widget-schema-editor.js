@@ -84,7 +84,7 @@ angular.module(PKG.name + '.commons')
               fields: properties
             };
             // turn obj into JSON string
-            var json = JSON.stringify(obj);
+            var json = JSON.stringify(obj.schema);
 
             $scope.model = json;
           } else {
