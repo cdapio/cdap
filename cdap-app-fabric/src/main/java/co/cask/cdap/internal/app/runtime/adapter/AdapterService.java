@@ -584,7 +584,7 @@ public class AdapterService extends AbstractIdleService {
       RunId runId = RunIds.fromString(adapterRun.getPid());
       lifecycleService.stopProgram(workerId, runId);
     } else {
-      LOG.warn("RunRecord not found for Adapter {}", adapterSpec.getName());
+      LOG.warn("RunRecord not found for Adapter {} to be stopped", adapterSpec.getName());
     }
   }
 

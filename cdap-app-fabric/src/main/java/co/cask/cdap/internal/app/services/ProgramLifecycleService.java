@@ -196,7 +196,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     if (runtimeInfo != null) {
       runtimeInfo.getController().stop().get();
     } else {
-      LOG.warn("RunTimeInfo not found for Program {} RunId {}", programId, runId);
+      LOG.warn("RunTimeInfo not found for Program {} RunId {} to be stopped", programId, runId);
     }
   }
 
