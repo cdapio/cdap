@@ -83,12 +83,14 @@ angular.module(PKG.name + '.commons')
               name: 'etlSchemaBody',
               fields: properties
             };
+            // turn obj into JSON string
+            var json = JSON.stringify(obj);
+
+            $scope.model = json;
+          } else {
+            $scope.model = null;
           }
 
-          // turn obj into JSON string
-          var json = JSON.stringify(obj);
-
-          $scope.model = json;
         }
 
         // watch for changes
