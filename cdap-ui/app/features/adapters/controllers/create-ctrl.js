@@ -207,19 +207,41 @@ angular.module(PKG.name + '.feature.adapters')
     };
 
     $scope.doSave = function() {
+      var source, trans,sink;
       var transforms = [],
+          filterFilter = $filter('filter'),
           i;
+      source = angular.copy($scope.source);
+      sink = angular.copy($scope.sink);
+      trans = angular.copy($scope.transforms);
 
       if ($scope.source.placeHolderSource || $scope.sink.placeHolderSource) {
         return;
       }
-      delete $scope.source._backendProperties;
-      delete $scope.sink._backendProperties;
-      for(i=0; i<$scope.transforms.length; i+=1) {
-        if (!$scope.transforms[i].placeHolderTransform) {
-          delete $scope.transforms[i]._backendProperties;
-          delete $scope.transforms[i].$$hashkey;
-          transforms.push($scope.transforms[i]);
+
+      angular.forEach(source.properties, function(value, key) {
+        var match = source._backendProperties[key];
+        if (match && match.required === false && value === null) {
+          delete source.properties[key];
+        }
+      });
+      angular.forEach(sink.properties, function(value, key) {
+        var match = sink._backendProperties[key];
+        if (match && match.required === false && value === null) {
+          delete sink.properties[key];
+        }
+      });
+      for (var i=0; i<trans.length; i++) {
+        angular.forEach(trans[i].properties, function(value, key) {
+          var match = trans[i]._backendProperties[key];
+          if (match && match.required === false && value === null) {
+            delete trans[i].properties[key];
+          }
+        });
+        if (!trans[i].placeHolderTransform) {
+          delete trans[i]._backendProperties;
+          delete trans[i].$$hashkey;
+          transforms.push(transforms[i]);
         }
       }
 
@@ -227,14 +249,14 @@ angular.module(PKG.name + '.feature.adapters')
         template: $scope.metadata.type,
         description: $scope.metadata.description,
         config: {
-          source: $scope.source,
-          sink: $scope.sink,
+          source: source,
+          sink: sink,
           transforms: transforms
         }
       };
-      if ($scope.metadata.type === 'etlRealtime') {
+      if ($scope.metadata.type === 'ETLRealtime') {
         data.config.instances = 1;
-      } else if ($scope.metadata.type === 'etlBatch') {
+      } else if ($scope.metadata.type === 'ETLBatch') {
         // default value should be * * * * *
         data.config.schedule = $scope.schedule.cron;
       }
