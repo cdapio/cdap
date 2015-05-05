@@ -1,16 +1,19 @@
 require 'spec_helper'
 
 describe 'cdap::web_app' do
-  context 'on Centos 6.5 x86_64' do
+  context 'using default cdap version' do
     let(:chef_run) do
       ChefSpec::SoloRunner.new(platform: 'centos', version: 6.6) do |node|
         node.automatic['domain'] = 'example.com'
         node.default['hadoop']['hdfs_site']['dfs.datanode.max.transfer.threads'] = '4096'
         node.default['hadoop']['mapred_site']['mapreduce.framework.name'] = 'yarn'
-        node.override['cdap']['version'] = '2.8.0-1'
         stub_command(/update-alternatives --display /).and_return(false)
         stub_command('test -e /usr/bin/node').and_return(true)
       end.converge(described_recipe)
+    end
+
+    it 'does not install cdap-web-app package' do
+      expect(chef_run).not_to install_package('cdap-web-app')
     end
   end
 

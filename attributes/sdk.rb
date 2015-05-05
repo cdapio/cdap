@@ -21,8 +21,11 @@
 ver = node['cdap']['version'].gsub(/-.*/, '')
 default['cdap']['sdk']['url'] = "http://repository.cask.co/downloads/co/cask/cdap/cdap-sdk/#{ver}/cdap-sdk-#{ver}.zip"
 default['cdap']['sdk']['checksum'] =
-  if ver == '2.8.0'
+  case ver
+  when '2.8.0'
     '1f5824a67fcbb5b2fcec02524d59b7befd1c315ed4046d02221fe8f54bbf233a'
+  when '3.0.0'
+    'a45125208015c8ade3ac3a01002a9989ccc8432bcb5785e2625d17a406cabcff'
   end
 default['cdap']['sdk']['install_path'] = '/opt/cdap'
 default['cdap']['sdk']['user'] = 'cdap'
