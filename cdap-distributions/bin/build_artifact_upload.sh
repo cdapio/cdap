@@ -119,7 +119,7 @@ function sync_build_artifacts_to_server () {
     _snapshot_time=`echo ${_version_stub} | awk -F - '{ print $1 }' | sed 's/\([0-9]\.[0-9]\.[0-9]\)\.\([0-9]*\)/\2/'`
 
     # identify and create remote incoming directory
-    if [ "${_snapshot_time}" != '' ]; then  ### RELEASE => no snapshot artifacts
+    if [ "${_snapshot_time}" != '' ]; then  # send snapshots to a different directory
       _version="${_version}-SNAPSHOT"
     fi
     OUTGOING_DIR=${BUILD_PACKAGE}/${_version}
