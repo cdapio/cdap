@@ -29,6 +29,7 @@ import co.cask.cdap.template.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.template.etl.api.realtime.SourceState;
 import co.cask.cdap.template.etl.realtime.jms.JmsProvider;
 import co.cask.cdap.template.etl.realtime.jms.JndiBasedJmsProvider;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +60,6 @@ import javax.naming.Context;
 public class JmsSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(JmsSource.class);
 
-  public static final String JAVA_NAMING_PREFIX = "java.naming";
   public static final String JMS_DESTINATION_NAME = "jms.destination.name";
   public static final String JMS_MESSAGES_TO_RECEIVE = "jms.messages.receive";
   public static final String JMS_NAMING_FACTORY_INITIAL = "jms.factory.initial";
@@ -100,6 +100,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
    */
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
+
     Map<String, String> runtimeArguments = Maps.newHashMap();
     if (config.getProperties() != null) {
       runtimeArguments.putAll(config.getProperties().getProperties());
@@ -111,24 +112,29 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
     // Get environment vars - this would be prefixed with java.naming.*
     final Hashtable<String, String> envVars = new Hashtable<String, String>();
     for (Map.Entry<String, String> entry : runtimeArguments.entrySet()) {
-      if (entry.getKey() != null && entry.getKey().startsWith(JAVA_NAMING_PREFIX)) {
-        envVars.put(entry.getKey(), entry.getValue());
-      }
+      envVars.put(entry.getKey(), entry.getValue());
     }
 
     // Set initial context factory name and provider URL
     envVars.put(Context.INITIAL_CONTEXT_FACTORY, config.initialContextFactory);
     envVars.put(Context.PROVIDER_URL, config.providerUrl);
 
+    // load the class to this class loader
+    Class<Object> driver = context.loadPluginClass("jmsource.JMSProvider.Context");
+
     // Bootstrap the JMS consumer
-    initializeJMSConnection(envVars, config.destinationName, config.connectionFactoryName);
+    ClassLoader driverCL = null;
+    if (driver != null) {
+      driverCL = driver.getClassLoader();
+    }
+    initializeJMSConnection(envVars, config.destinationName, config.connectionFactoryName, driverCL);
   }
 
   /**
    * Helper method to initialize the JMS Connection to start listening messages.
    */
   private void initializeJMSConnection(Hashtable<String, String> envVars, String destinationName,
-                                       String connectionFactoryName) {
+                                       String connectionFactoryName, ClassLoader driverClassLoader) {
     if (jmsProvider == null) {
       LOG.trace("JMS provider is not set when trying to initialize JMS connection.");
       if (destinationName == null) {
@@ -136,7 +142,18 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
                                           "Please set the right JMSProvider");
       } else {
         LOG.trace("Using JNDI default JMS provider for destination: {}", destinationName);
-        jmsProvider = new JndiBasedJmsProvider(envVars, destinationName, connectionFactoryName);
+        ClassLoader oldClassLoader = null;
+        if (driverClassLoader != null) {
+          oldClassLoader = Thread.currentThread().getContextClassLoader();
+        }
+        try {
+          Thread.currentThread().setContextClassLoader(driverClassLoader);
+          jmsProvider = new JndiBasedJmsProvider(envVars, destinationName, connectionFactoryName);
+        } finally {
+          if (oldClassLoader != null) {
+            Thread.currentThread().setContextClassLoader(oldClassLoader);
+          }
+        }
       }
     }
     ConnectionFactory connectionFactory = jmsProvider.getConnectionFactory();
@@ -169,8 +186,11 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    pipelineConfigurer.usePluginClass("JMSProvider", Context.INITIAL_CONTEXT_FACTORY, "jmsource.JMSProvider.Context",
-                                      PluginProperties.builder().build());
+    Class<Object> driver  = pipelineConfigurer.usePluginClass("JMSProvider",
+                                                              Context.INITIAL_CONTEXT_FACTORY,
+                                                              "jmsource.JMSProvider.Context",
+                                                              PluginProperties.builder().build());
+    Preconditions.checkArgument(driver != null, "JMS Initial Connection Factory Context class must be found.");
   }
 
   @Nullable
