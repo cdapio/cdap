@@ -4,9 +4,9 @@
 
 .. _advanced-custom-app-template:
 
-===============================================
-Creating Custom ETL Plugins and Adapters (Beta)
-===============================================
+=========================================
+Creating Custom ETL Plugins and Adapters 
+=========================================
 
 Overview
 ========

@@ -5,7 +5,7 @@
 .. _apptemplates-etl-index:
 
 ===================
-ETL Overview (Beta)
+ETL Overview 
 ===================
 
 

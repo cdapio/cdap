@@ -68,16 +68,16 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Advanced Topics:** Best practices for CDAP development, adding a custom logback
 
 
-.. |application-templates| replace:: **Application Templates (Beta):**
+.. |application-templates| replace:: **Application Templates:**
 .. _application-templates: application-templates/index.html
 
 - |application-templates|_
 
-  - **Big Data without Big Development:** How to use CDAP "out-of-the-box" to solve problems and use cases (Beta)
+  - **Big Data without Big Development:** How to use CDAP "out-of-the-box" to solve problems and use cases 
   - **Introduction to Application Templates:** Applications that are reusable through configuration and
-    extensible through plugins (Beta)
-  - **ETL:** Making performing ETL possible without writing code (Beta)
-  - **Creating Custom ETL Plugins:**: For developers of custom ETL Plugins and Adapters (Beta)
+    extensible through plugins 
+  - **ETL:** Making performing ETL possible without writing code 
+  - **Creating Custom ETL Plugins:**: For developers of custom ETL Plugins and Adapters 
   
   
 .. |admin-manual| replace:: **Administration Manual:**

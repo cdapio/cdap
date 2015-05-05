@@ -5,7 +5,7 @@
 .. _apptemplates-etl-templates:
 
 ======================================
-ETL Template and Plugin Details (Beta)
+ETL Template and Plugin Details 
 ======================================
 
 Introduction
