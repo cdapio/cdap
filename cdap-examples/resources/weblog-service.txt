@@ -1,0 +1,3 @@
+deploy app \$CDAP_HOME/examples/CubeService/target/CubeServiceApp-3.0.0.jar
+start service CubeServiceApp.CubeService 
+call service CubeServiceApp.CubeService POST /searchMeasure body:file \$CDAP_HOME/examples/resources/weblog-query.json

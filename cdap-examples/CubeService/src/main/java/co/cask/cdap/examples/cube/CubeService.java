@@ -37,7 +37,7 @@ public class CubeService extends AbstractApplication {
    * Cube Handler
    */
   public final class CubeHandler extends AbstractCubeHttpHandler {
-    @UseDataSet("LogEventsAnalytics")
+    @UseDataSet("logEventCube")
     private Cube cube;
 
     @Override
