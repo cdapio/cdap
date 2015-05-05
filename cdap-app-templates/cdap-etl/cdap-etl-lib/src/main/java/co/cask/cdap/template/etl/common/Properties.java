@@ -78,6 +78,7 @@ public final class Properties {
     public static final String NAME = "name";
     public static final String PROPERTY_RESOLUTIONS = co.cask.cdap.api.dataset.lib.cube.Cube.PROPERTY_RESOLUTIONS;
     public static final String MAPPING_CONFIG_PROPERTY = "mapping.config";
+    public static final String CUSTOM_PROPERTIES = "custom.properties";
   }
 
   /**
