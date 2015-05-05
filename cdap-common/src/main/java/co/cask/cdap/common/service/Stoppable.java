@@ -29,13 +29,13 @@ public interface Stoppable {
    *
    * @param reason for stopping.
    */
-  public void stop(final String reason);
+  void stop(final String reason);
 
   /**
    * Returns status about whether the thread was stopped.
    *
    * @return true if stopped; false otherwise.
    */
-  public boolean isStopped();
+  boolean isStopped();
 
 }

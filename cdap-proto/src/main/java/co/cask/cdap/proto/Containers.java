@@ -26,14 +26,14 @@ public interface Containers {
   /**
    * @return List of {@link ContainerInfo}.
    */
-  public List<ContainerInfo> getContainers();
+  List<ContainerInfo> getContainers();
 
   /**
    * Add {@link ContainerInfo}.
    *
    * @param container instance of {@link ContainerInfo}.
    */
-  public void addContainer(Containers.ContainerInfo container);
+  void addContainer(Containers.ContainerInfo container);
 
   /**
    * ContainerTypes - System Service, Flowlet and Service
@@ -43,7 +43,7 @@ public interface Containers {
   /**
    * POJO holding information about container running in YARN.
    */
-  public static final class ContainerInfo {
+  final class ContainerInfo {
     private final String type;
     private final String name;
     private final int instance;

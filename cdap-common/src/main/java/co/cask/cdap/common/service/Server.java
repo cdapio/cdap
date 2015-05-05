@@ -30,7 +30,7 @@ public interface Server {
    *
    * @throws ServerException If there is an problem when starting the server.
    */
-  public void start(String[] args, CConfiguration conf) throws ServerException;
+  void start(String[] args, CConfiguration conf) throws ServerException;
 
   /**
    * Stops the {@link Server}.
@@ -38,6 +38,6 @@ public interface Server {
    *
    * @throws ServerException If there is an problem when stopping the server.
    */
-  public void stop(boolean now) throws ServerException;
+  void stop(boolean now) throws ServerException;
 
 }

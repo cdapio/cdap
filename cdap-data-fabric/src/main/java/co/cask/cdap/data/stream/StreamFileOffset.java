@@ -80,11 +80,11 @@ public final class StreamFileOffset {
     this.generation = generation;
   }
 
-  public final Location getEventLocation() {
+  public Location getEventLocation() {
     return eventLocation;
   }
 
-  public final Location getIndexLocation() {
+  public Location getIndexLocation() {
     return indexLocation;
   }
 
@@ -92,19 +92,19 @@ public final class StreamFileOffset {
     return offset;
   }
 
-  public final long getPartitionStart() {
+  public long getPartitionStart() {
     return partitionStart;
   }
 
-  public final long getPartitionEnd() {
+  public long getPartitionEnd() {
     return partitionEnd;
   }
 
-  public final String getNamePrefix() {
+  public String getNamePrefix() {
     return namePrefix;
   }
 
-  public final int getSequenceId() {
+  public int getSequenceId() {
     return seqId;
   }
 

@@ -211,6 +211,6 @@ public final class FileMetaDataManager {
    * Implement to receive a location before its meta data is removed.
    */
   public interface DeleteCallback {
-    public void handle(Location location, String namespacedLogBaseDir);
+    void handle(Location location, String namespacedLogBaseDir);
   }
 }

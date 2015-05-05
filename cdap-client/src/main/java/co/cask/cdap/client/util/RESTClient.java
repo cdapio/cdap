@@ -168,7 +168,7 @@ public class RESTClient {
   /**
    * Listener for when requests are made and when responses are received.
    */
-  public static interface Listener {
+  public interface Listener {
     void onRequest(HttpRequest request, int attempt);
     void onResponse(HttpRequest request, HttpResponse response, int attemptsMade);
   }

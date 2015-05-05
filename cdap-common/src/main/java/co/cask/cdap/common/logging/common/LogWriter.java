@@ -27,5 +27,5 @@ public interface LogWriter {
    * @param message log message
    * @return  true on successful write
    */
-  public boolean write(String tag, String level, String message);
+  boolean write(String tag, String level, String message);
 }

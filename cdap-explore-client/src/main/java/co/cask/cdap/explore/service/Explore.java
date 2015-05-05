@@ -137,8 +137,8 @@ public interface Explore {
    * @throws ExploreException on any error getting the columns.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  public QueryHandle getColumns(@Nullable String catalog, @Nullable String schemaPattern,
-                                String tableNamePattern, String columnNamePattern)
+  QueryHandle getColumns(@Nullable String catalog, @Nullable String schemaPattern,
+                         String tableNamePattern, String columnNamePattern)
     throws ExploreException, SQLException;
 
   /**
@@ -148,7 +148,7 @@ public interface Explore {
    * @throws ExploreException on any error getting the columns.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  public QueryHandle getCatalogs() throws ExploreException, SQLException;
+  QueryHandle getCatalogs() throws ExploreException, SQLException;
 
   /**
    * Retrieves the schema names available in this database.
@@ -165,7 +165,7 @@ public interface Explore {
    * @throws ExploreException on any error getting the schemas.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  public QueryHandle getSchemas(@Nullable String catalog, @Nullable String schemaPattern)
+  QueryHandle getSchemas(@Nullable String catalog, @Nullable String schemaPattern)
     throws ExploreException, SQLException;
 
   /**
@@ -185,7 +185,7 @@ public interface Explore {
    * @throws ExploreException on any error getting the functions.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  public QueryHandle getFunctions(@Nullable String catalog, @Nullable String schemaPattern, String functionNamePattern)
+  QueryHandle getFunctions(@Nullable String catalog, @Nullable String schemaPattern, String functionNamePattern)
     throws ExploreException, SQLException;
 
 
@@ -197,7 +197,7 @@ public interface Explore {
    * @throws ExploreException on any error getting the information.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  public MetaDataInfo getInfo(MetaDataInfo.InfoType infoType) throws ExploreException, SQLException;
+  MetaDataInfo getInfo(MetaDataInfo.InfoType infoType) throws ExploreException, SQLException;
 
   /**
    * Retrieves a description of the tables available in the given catalog. Only table descriptions
@@ -219,8 +219,8 @@ public interface Explore {
    * @throws ExploreException on any error getting the tables.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  public QueryHandle getTables(@Nullable String catalog, @Nullable String schemaPattern, String tableNamePattern,
-                               @Nullable List<String> tableTypes) throws ExploreException, SQLException;
+  QueryHandle getTables(@Nullable String catalog, @Nullable String schemaPattern, String tableNamePattern,
+                        @Nullable List<String> tableTypes) throws ExploreException, SQLException;
 
   /**
    * Retrieve a list of all the tables present in Hive Metastore that match the given database name.
@@ -230,7 +230,7 @@ public interface Explore {
    * @return list of table names present in the database.
    * @throws ExploreException on any error getting the tables.
    */
-  public List<TableNameInfo> getTables(@Nullable String database) throws ExploreException;
+  List<TableNameInfo> getTables(@Nullable String database) throws ExploreException;
 
   /**
    * Get information about a Hive table.
@@ -240,7 +240,7 @@ public interface Explore {
    * @return information about a table.
    * @throws ExploreException on any error getting the tables.
    */
-  public TableInfo getTableInfo(@Nullable String database, String table)
+  TableInfo getTableInfo(@Nullable String database, String table)
     throws ExploreException, TableNotFoundException;
 
   /**
@@ -252,7 +252,7 @@ public interface Explore {
    * @throws ExploreException on any error getting the table types.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  public QueryHandle getTableTypes() throws ExploreException, SQLException;
+  QueryHandle getTableTypes() throws ExploreException, SQLException;
 
   /**
    * Retrieves a description of all the data types supported by this database.
@@ -263,7 +263,7 @@ public interface Explore {
    * @throws ExploreException on any error getting the types info.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  public QueryHandle getTypeInfo() throws ExploreException, SQLException;
+  QueryHandle getTypeInfo() throws ExploreException, SQLException;
 
   /**
    * Creates a new namespace in Explore.
@@ -273,7 +273,7 @@ public interface Explore {
    * @throws ExploreException on any errors creating the namespace.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  public QueryHandle createNamespace(Id.Namespace namespace) throws ExploreException, SQLException;
+  QueryHandle createNamespace(Id.Namespace namespace) throws ExploreException, SQLException;
 
   /**
    * Deletes a new namespace in Explore.
@@ -283,12 +283,12 @@ public interface Explore {
    * @throws ExploreException on any errors deleting the namespace.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  public QueryHandle deleteNamespace(Id.Namespace namespace) throws ExploreException, SQLException;
+  QueryHandle deleteNamespace(Id.Namespace namespace) throws ExploreException, SQLException;
 
   /**
    * Upgrades Explore if needed. This method must be implemented in an idempotent way.
    *
    * @throws Exception if there was an exception during the upgrade
    */
-  public void upgrade() throws Exception;
+  void upgrade() throws Exception;
 }

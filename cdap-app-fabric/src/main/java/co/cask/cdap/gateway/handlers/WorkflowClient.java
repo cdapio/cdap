@@ -114,7 +114,7 @@ public class WorkflowClient {
   /**
    * Callback to implement to handle WorkflowStatus.
    */
-  public static interface Callback {
+  public interface Callback {
 
     /**
      * Handle to implement the status from workflow client.

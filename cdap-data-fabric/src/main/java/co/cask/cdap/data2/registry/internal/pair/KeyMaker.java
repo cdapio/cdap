@@ -31,7 +31,7 @@ public interface KeyMaker<T extends Id> {
    * @param id id
    * @return MDSKey for id
    */
-  public MDSKey getKey(T id);
+  MDSKey getKey(T id);
 
   /**
    * Given a {@link MDSKey.Splitter}, deserialize Id from it.
@@ -39,12 +39,12 @@ public interface KeyMaker<T extends Id> {
    * @param splitter splitter for id
    * @return id
    */
-  public T getElement(MDSKey.Splitter splitter);
+  T getElement(MDSKey.Splitter splitter);
 
   /**
    * Given {@link MDSKey.Splitter}, skip the fields of Id. This is used during de-serialization.
    *
    * @param splitter splitter for id
    */
-  public void skipKey(MDSKey.Splitter splitter);
+  void skipKey(MDSKey.Splitter splitter);
 }
