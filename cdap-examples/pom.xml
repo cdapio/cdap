@@ -41,6 +41,7 @@
     <module>UserProfiles</module>
     <module>WebAnalytics</module>
     <module>WordCount</module>
+    <module>CubeService</module>
   </modules>
 
   <repositories>
