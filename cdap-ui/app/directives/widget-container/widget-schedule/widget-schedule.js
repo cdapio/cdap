@@ -38,7 +38,7 @@ angular.module(PKG.name + '.commons')
           angular.forEach($scope.schedule, function(v, k) {
             schedule += v + ' ';
           });
-          schedule.trim();
+          schedule = schedule.trim();
 
           $scope.model = schedule;
         }, true);
