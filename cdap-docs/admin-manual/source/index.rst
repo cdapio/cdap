@@ -57,7 +57,7 @@ monitoring.** Appendices cover the XML files used to configure the CDAP installa
 .. _operations: installation/index.html
 
 |operations|_ Covers **logging, metrics, preferences, scaling instances, resource guarantees, 
-transaction service maintenance, troubleshooting, and introduces the CDAP Console.** 
+transaction service maintenance, troubleshooting, and introduces the CDAP UI.** 
 
 .. |logging| replace:: **Logging:**
 .. _logging: operations/logging.html
@@ -94,7 +94,7 @@ transaction service maintenance, troubleshooting, and introduces the CDAP Consol
 
 - |troubleshooting|_ Selected examples of potential **problems and possible resolutions.**
 
-.. |cdap-console| replace:: **CDAP Console:**
-.. _cdap-console: operations/cdap-console.html
+.. |cdap-ui| replace:: **CDAP UI:**
+.. _cdap-ui: operations/cdap-ui.html
 
-- |cdap-console|_ The CDAP Console is available for **deploying, querying and managing CDAP.** 
+- |cdap-ui|_ The CDAP UI is available for **deploying, querying and managing CDAP.** 

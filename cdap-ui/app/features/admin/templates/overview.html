@@ -5,12 +5,9 @@
         Welcome CDAP Admin!
       </h3>
     </div>
-    <div class="panel-body" ng-show="isEnterprise">
-      <p>This is the control console for CDAP (Enterprise mode). Here, you can view and manage your system configuration and define and manage namespaces, entities and access permissions to keep your team's work organized and secure.</p>
-      <p>Begin by configuring your default namespace.</p>
-    </div>
-    <div class="panel-body" ng-hide="isEnterprise">
-      <p>This is the control console for CDAP (Standalone mode).</p>
+    <div class="panel-body">
+      <p>This is the control console for CDAP. Here, you can view and manage your system configuration and define and manage namespaces and entities.
+         Begin by configuring your default namespace.</p>
     </div>
   </div>
 </div>
@@ -26,10 +23,10 @@
     </div>
   </div>
   <div class="table-responsive">
-    <table class="table table-curved" cask-sortable>
+    <table class="table table-curved namespace-table" cask-sortable>
         <thead>
           <tr ng-class="{'sort-enabled': nsList.length>0}">
-            <th data-predicate="name" data-predicate-default="reverse">Name</th>
+            <th data-predicate="name">Name</th>
             <th data-predicate="appsCount">Apps</th>
             <th>Datasets</th>
             <th>Streams</th>
@@ -38,16 +35,18 @@
         <tbody>
           <tr ng-repeat="namespace in nsList | orderBy:sortable.predicate:sortable.reverse">
             <td>
-              <span ng-bind="namespace.name | myEllipsis: 12"></span>
+              <div>
+                {{ ::namespace.name }}
+              </div>
             </td>
             <td>
               <span ng-bind="namespace.appsCount"></span>
             </td>
             <td>
-            <span ng-bind="namespace.datasetsCount"></span>
+              <span ng-bind="namespace.datasetsCount"></span>
             </td>
             <td>
-            <span ng-bind="namespace.streamsCount"></span>
+              <span ng-bind="namespace.streamsCount"></span>
             </td>
           </tr>
         </tbody>

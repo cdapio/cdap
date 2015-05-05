@@ -1,7 +1,7 @@
 <div class="row">
   <div class="col-xs-12">
     <strong> View Run: </strong>
-    <div class="btn-group"
+    <div class="btn-group dropdown-left"
           dropdown is-open="dropdown.isopen">
       <button type="button"
               class="btn btn-default dropdown-toggle"
@@ -20,7 +20,7 @@
 </div>
 <br/>
 <div>
-  <div ng-include="'/assets/features/etlapps/templates/tabs/runs/run-detail.html'"
+  <div ng-include="'/assets/features/adapters/templates/tabs/runs/run-detail.html'"
         ng-if="!$stateParams.runid">
   </div>
   <div ui-view  ng-if="$stateParams.runid"> </div>

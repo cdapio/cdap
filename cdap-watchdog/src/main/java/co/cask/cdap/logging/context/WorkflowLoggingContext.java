@@ -18,6 +18,8 @@ package co.cask.cdap.logging.context;
 
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
 
+import javax.annotation.Nullable;
+
 /**
  * Logging context for the Workflow.
  */
@@ -33,9 +35,13 @@ public class WorkflowLoggingContext extends ApplicationLoggingContext {
    * @param workflowId    workflow id
    * @param runId         run id of the application
    */
-  public WorkflowLoggingContext(String namespaceId, String applicationId, String workflowId, String runId) {
+  public WorkflowLoggingContext(String namespaceId, String applicationId, String workflowId, String runId,
+                                @Nullable String adapterId) {
     super(namespaceId, applicationId, runId);
     setSystemTag(TAG_WORKFLOW_ID, workflowId);
+    if (adapterId != null) {
+      setAdapterId(adapterId);
+    }
   }
 
   @Override

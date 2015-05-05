@@ -37,39 +37,33 @@ angular.module(PKG.name + '.feature.adapters')
       }
     };
 
-    // Default ETL Templates
-    $scope.adapterTypes = [
-      {
-        name: 'ETL Batch',
-        type: 'etlBatch'
-      },
-      {
-        name: 'ETL Realtime',
-        type: 'etlRealtime'
-      }
-    ];
+    apiFactory.fetchTemplates();
+    $scope.adapterTypes = [];
 
     // Metadata Model
     $scope.metadata = {
         name: '',
         description: '',
-        type: 'etlRealtime'
+        type: ''
     };
 
+    $scope.schedule = {
+      cron: ''
+    };
     var defaultSource = {
-      name: 'Add a Source',
+      name: 'Add a source',
       properties: {},
       placeHolderSource: true
     };
 
     var defaultSink = {
-      name: 'Add a Sink',
+      name: 'Add a sink',
       placeHolderSink: true,
       properties: {}
     };
 
     var defaultTransforms = [{
-      name: 'Add a Transforms',
+      name: 'Add a transform',
       placeHolderTransform: true,
       properties: {}
     }];
@@ -81,12 +75,13 @@ angular.module(PKG.name + '.feature.adapters')
     $scope.activePanel = 0;
 
     $scope.$watch('metadata.type',function(adapterType) {
+
       if (!adapterType.length) return;
       $scope.onAdapterTypeSelected = true;
       apiFactory.fetchSources(adapterType);
       apiFactory.fetchSinks(adapterType);
       apiFactory.fetchTransforms(adapterType);
-    });
+    }, true);
 
     $scope.handleSourceDrop = function(sourceName) {
       if ($scope.source.placeHolderSource) {
@@ -135,13 +130,16 @@ angular.module(PKG.name + '.feature.adapters')
         return;
       }
       var filterFilter = $filter('filter'),
+          icon,
           match;
       match = filterFilter($scope.tabs, {type: 'source'});
       if (match.length) {
         $scope.tabs[$scope.tabs.indexOf(match[0])].active = true;
       } else {
+        icon = filterFilter($scope.defaultSources, {name: $scope.source.name});
         $scope.tabs.push({
           title: $scope.source.name,
+          icon: icon[0].icon,
           type: 'source',
           active: true,
           partial: '/assets/features/adapters/templates/create/tabs/sourcePropertyEdit.html'
@@ -154,13 +152,16 @@ angular.module(PKG.name + '.feature.adapters')
       }
 
       var filterFilter = $filter('filter'),
+          icon,
           match;
       match = filterFilter($scope.tabs, {type: 'sink'});
       if (match.length) {
         $scope.tabs[$scope.tabs.indexOf(match[0])].active = true;
       } else {
+        icon = filterFilter($scope.defaultSinks, {name: $scope.sink.name});
         $scope.tabs.active = ($scope.tabs.push({
           title: $scope.sink.name,
+          icon: icon[0].icon,
           type: 'sink',
           active: true,
           partial: '/assets/features/adapters/templates/create/tabs/sinkPropertyEdit.html'
@@ -180,8 +181,10 @@ angular.module(PKG.name + '.feature.adapters')
       if (match.length) {
         $scope.tabs[$scope.tabs.indexOf(match[0])].active = true;
       } else {
+        icon = filterFilter($scope.defaultTransforms, {name: transform.name});
         $scope.tabs.active = ($scope.tabs.push({
           title: transform.name,
+          icon: icon[0].icon,
           transformid: transform.$$hashKey,
           transform: transform,
           active: true,
@@ -204,15 +207,42 @@ angular.module(PKG.name + '.feature.adapters')
     };
 
     $scope.doSave = function() {
+      var source, trans,sink;
       var transforms = [],
+          filterFilter = $filter('filter'),
           i;
+      source = angular.copy($scope.source);
+      sink = angular.copy($scope.sink);
+      trans = angular.copy($scope.transforms);
 
       if ($scope.source.placeHolderSource || $scope.sink.placeHolderSource) {
         return;
       }
-      for(i=0; i<$scope.transforms.length; i+=1) {
-        if (!$scope.transforms[i].placeHolderTransform) {
-          transforms.push($scope.transforms[i]);
+
+      angular.forEach(source.properties, function(value, key) {
+        var match = source._backendProperties[key];
+        if (match && match.required === false && value === null) {
+          delete source.properties[key];
+        }
+      });
+      angular.forEach(sink.properties, function(value, key) {
+        var match = sink._backendProperties[key];
+        if (match && match.required === false && value === null) {
+          delete sink.properties[key];
+        }
+      });
+      for (var i=0; i<trans.length; i++) {
+        angular.forEach(trans[i].properties, function(value, key) {
+          var match = trans[i]._backendProperties[key];
+          if (match && match.required === false && value === null) {
+            delete trans[i].properties[key];
+          }
+        });
+
+        if (!trans[i].placeHolderTransform) {
+          delete trans[i]._backendProperties;
+          delete trans[i].$$hashkey;
+          transforms.push(trans[i]);
         }
       }
 
@@ -220,15 +250,16 @@ angular.module(PKG.name + '.feature.adapters')
         template: $scope.metadata.type,
         description: $scope.metadata.description,
         config: {
-          source: $scope.source,
-          sink: $scope.sink,
+          source: source,
+          sink: sink,
           transforms: transforms
         }
       };
-      if ($scope.metadata.type === 'etlRealtime') {
+      if ($scope.metadata.type === 'ETLRealtime') {
         data.config.instances = 1;
-      } else if ($scope.metadata.type === 'etlBatch') {
-        data.config.schedule = '* * * * *';
+      } else if ($scope.metadata.type === 'ETLBatch') {
+        // default value should be * * * * *
+        data.config.schedule = $scope.schedule.cron;
       }
 
       apiFactory.save(data);
@@ -293,6 +324,7 @@ angular.module(PKG.name + '.feature.adapters')
     $scope.tabs = [
       {
         title: 'Default',
+        icon: 'cogs',
         isCloseable: false,
         partial: '/assets/features/adapters/templates/create/tabs/default.html'
       }

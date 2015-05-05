@@ -4,7 +4,7 @@
           <h2 ng-bind="apps.name"></h2>
       </div>
       <div class="col-xs-6 text-right">
-        <div class="btn-group" dropdown>
+        <div class="btn-group dropdown-right" dropdown>
           <a class="btn btn-default dropdown-toggle" dropdown-toggle="" aria-haspopup="true" aria-expanded="false">
               Actions
               <span class="caret"></span>
@@ -40,7 +40,11 @@
               </tr>
           </thead>
           <tbody>
-              <td>{{ ::apps.name }}</td>
+              <td>
+                <a ui-sref="apps.detail.overview({namespace: $state.params.nsadmin, appId: apps.name})">
+                  {{ ::apps.name }}
+                </a>
+              </td>
               <td>{{ ::apps.version}}</td>
               <td>{{ ::apps.description }}</td>
           </tbody>
@@ -62,7 +66,13 @@
 
         <tbody>
           <tr ng-repeat="program in apps.programs | orderBy:sortable.predicate:sortable.reverse">
-            <td>{{ ::program.name }}</td>
+            <td>
+              <a ui-sref="spark.detail.runs({namespace: $state.params.nsadmin, appId: apps.name, programId: program.name})" ng-if="program.type === 'Spark'">{{ ::program.name }}</a>
+              <a ui-sref="flows.detail.runs({namespace: $state.params.nsadmin, appId: apps.name, programId: program.name})" ng-if="program.type === 'Flow'">{{ ::program.name }}</a>
+              <a ui-sref="mapreduce.detail.runs({namespace: $state.params.nsadmin, appId: apps.name, programId: program.name})" ng-if="program.type === 'Mapreduce'">{{ ::program.name }}</a>
+              <a ui-sref="services.detail.status({namespace: $state.params.nsadmin, appId: apps.name, programId: program.name})" ng-if="program.type === 'Service'">{{ ::program.name }}</a>
+              <a ui-sref="workflows.detail.runs({namespace: $state.params.nsadmin, appId: apps.name, programId: program.name})" ng-if="program.type === 'Workflow'">{{ ::program.name }}</a>
+            </td>
             <td>{{ ::program.type }}</td>
             <td>{{ ::program.description }}</td>
           </tr>

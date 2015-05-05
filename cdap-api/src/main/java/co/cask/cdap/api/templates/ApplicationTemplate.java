@@ -22,20 +22,24 @@ import co.cask.cdap.api.app.Application;
 import javax.annotation.Nullable;
 
 /**
- * Abstract App Template class that provides additional functionality required for App Templates.
+ * An ApplicationTemplate is a special type of {@link Application} that can be given a configuration object to
+ * create an application instance. An instance of an ApplicationTemplate is called an Adapter. One template can
+ * be used to create multiple Adapters. Currently, an ApplicationTemplate must have exactly one Workflow, or
+ * exactly on Worker.
  *
  * @param <T> type of the configuration object
  */
-//TODO: Add more description about what an app template is.
 @Beta
 public abstract class ApplicationTemplate<T> implements Application {
 
   /**
-   * Given the adapter configuration, configures the {@link AdapterConfigurer}.
+   * Using the given configuration, configure an Adapter with the given configuration.
+   * This method is called when an adapter is created in order to define what Datasets, Streams, and
+   * Plugins, and runtime arguments should be available to the adapter.
    *
    * @param name name of the adapter
    * @param configuration adapter configuration. It will be {@code null} if there is no configuration provided.
-   * @param configurer {@link AdapterConfigurer}
+   * @param configurer {@link AdapterConfigurer} used to configure the adapter.
    * @throws IllegalArgumentException if the configuration is not valid
    * @throws Exception if there was some other error configuring the adapter
    */

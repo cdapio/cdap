@@ -22,10 +22,10 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.templates.ApplicationTemplate;
+import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.client.ApplicationClient;
-import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
@@ -54,7 +54,6 @@ public class IntegrationTestManager implements TestManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(IntegrationTestManager.class);
 
-  private final MetaClient metaClient;
   private final ApplicationClient applicationClient;
   private final ClientConfig clientConfig;
   private final LocationFactory locationFactory;
@@ -65,7 +64,6 @@ public class IntegrationTestManager implements TestManager {
   public IntegrationTestManager(ClientConfig clientConfig, LocationFactory locationFactory) {
     this.clientConfig = clientConfig;
     this.locationFactory = locationFactory;
-    this.metaClient = new MetaClient(clientConfig);
     this.applicationClient = new ApplicationClient(clientConfig);
     this.programClient = new ProgramClient(clientConfig);
     this.namespaceClient = new NamespaceClient(clientConfig);
@@ -108,6 +106,13 @@ public class IntegrationTestManager implements TestManager {
   @Override
   public void addTemplatePlugins(Id.ApplicationTemplate templateId, String jarName,
                                  Class<?> pluginClz, Class<?>... classes) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void addTemplatePluginJson(Id.ApplicationTemplate templateId, String fileName, String type, String name,
+                                    String description, String className,
+                                    PluginPropertyField... fields) throws IOException {
     throw new UnsupportedOperationException();
   }
 

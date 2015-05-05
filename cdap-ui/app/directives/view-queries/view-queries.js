@@ -7,7 +7,7 @@ angular.module(PKG.name + '.commons')
         panel: '='
       },
       templateUrl: 'view-queries/view-queries.html',
-      controller: function ($scope, MyDataSource, $state) {
+      controller: function ($scope, MyDataSource, $state, EventPipe) {
         var dataSrc = new MyDataSource($scope);
         $scope.queries = [];
 
@@ -21,11 +21,30 @@ angular.module(PKG.name + '.commons')
 
               $scope.queries = queries;
 
+              // Polling for status
+              angular.forEach($scope.queries, function(q) {
+                if (q.status !== 'FINISHED') {
+                  q.pollid = dataSrc.poll({
+                    _cdapPath: '/data/explore/queries/' +
+                                q.query_handle + '/status',
+                    interval: 1000
+                  }, function(res) {
+                    q.status = res.status;
+
+                    if (res.status === 'FINISHED') {
+                      dataSrc.stopPoll(q.pollid);
+                    }
+                  });
+                }
+              });
+
               angular.forEach($scope.queries, function(query) {
                 query.isOpen = false;
               });
             });
         };
+
+        EventPipe.on('explore.newQuery', $scope.getQueries);
 
         $scope.getQueries();
 
@@ -33,6 +52,10 @@ angular.module(PKG.name + '.commons')
         $scope.responses = {};
 
         $scope.fetchResult = function(query) {
+          if (query.status !== 'FINISHED') {
+            return;
+          }
+
           // Close other accordion
           angular.forEach($scope.queries, function(q) {
             q.isOpen = false;

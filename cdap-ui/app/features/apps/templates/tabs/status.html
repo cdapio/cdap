@@ -12,7 +12,7 @@
         <table class="table table-curved" cask-sortable>
           <thead>
             <tr ng-class="{'sort-enabled': programs.length>0}">
-              <th data-predicate="name" data-predicate-default="reverse"> Name </th>
+              <th data-predicate="name"> Name </th>
               <th data-predicate="status"> Status </th>
               <th data-predicate="description"> Description </th>
               <th data-predicate="type"> Type </th>
@@ -35,12 +35,33 @@
                   <strong> {{program.name}} </strong>
                 </a>
                 <a ng-if="program.type === 'Spark'" ui-sref="spark.detail.runs({programId: program.name})">
+
                   <strong> {{program.name}} </strong>
                 </a>
+                <!--No sref because there is no workers page-->
+                <span ng-if="program.type === 'Worker'">
+                  <strong> {{program.name}} </strong>
+                </span>
               </td>
               <td ng-bind="program.status"></td>
               <td ng-bind="program.description"></td>
-              <td ng-bind="program.type">
+              <td>
+                <strong ng-if="program.type === 'Spark'"
+                        class="icon-spark">
+                </strong>
+                <strong ng-if="program.type === 'Mapreduce'"
+                        class="icon-mapreduce">
+                </strong>
+                <strong ng-if="program.type === 'Service'"
+                        class="icon-service">
+                </strong>
+                <strong ng-if="program.type === 'Workflow'"
+                        class="icon-workflow">
+                </strong>
+                <strong ng-if="program.type === 'Flow'"
+                        class="icon-tigon">
+                </strong>
+                {{program.type}}
               </td>
             </tr>
           </tbody>

@@ -72,7 +72,7 @@ for (( i=1; i<$events; i++ )) ; do
     echo Sending event $i: $body
   fi
   status=`curl -qSfsw "%{http_code}\\n" -H "Authorization: Bearer $auth_token" \
-    -X POST -d"$body" http://$gateway:10000/v2/streams/events`
+    -X POST -d"$body" http://$gateway:10000/v3/namespaces/default/streams/events`
   if [ $status -ne 200 ]; then
     echo "Failed to send data."
     if [ $status == 401 ]; then

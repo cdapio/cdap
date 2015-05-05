@@ -49,14 +49,11 @@ angular.module(PKG.name + '.feature.datasets')
         $scope.storage = data;
       });
 
-
       dataSrc.request({
         _cdapNsPath: '/data/explore/tables/dataset_' + currentDataset + '/info'
       })
         .then(function(res) {
-
           $scope.schema = query(res, 'schema');
-
         });
 
   });

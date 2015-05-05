@@ -1,31 +1,34 @@
-<div class="clearfix delimiter">
-  <div class="col-xs-3 delimiter-label">
-    <strong>Delimiter</strong>
+<div class="dsv-container">
+  <div class="clearfix delimiter" ng-if="showDelimiter">
+    <div class="col-xs-1 delimiter-label">
+      <strong>Delimiter</strong>
+    </div>
+    <div class="col-xs-1">
+      <input type="text" class="form-control" ng-model="delimiter" />
+    </div>
   </div>
-  <div class="col-xs-2">
-    <input type="text" class="form-control" ng-model="delimiter" />
-  </div>
-</div>
-<div ng-repeat="property in properties" class="h4-margin clearfix">
-  <div class="col-xs-8">
-    <input type="text" class="form-control" ng-model="property.value" placeholder="value"/>
+  <div ng-repeat="property in properties" class="clearfix property-row">
+    <div class="col-xs-10">
+      <input type="text" class="form-control" ng-model="property.value" placeholder="value"/>
+    </div>
+
+    <div class="col-xs-1 text-center">
+      <a href="" class="btn btn-danger" ng-click="removeProperty(property)">
+        <span class="fa fa-fw fa-trash"> </span>
+      </a>
+    </div>
+    <div class="col-xs-1 text-center">
+      <a class="btn btn-info btn-transparent" ng-click="addProperty()" ng-if="$last">
+        <span class="fa fa-fw fa-plus"></span>
+      </a>
+    </div>
   </div>
 
-  <div class="col-xs-2">
-    <a href="" class="btn btn-danger" ng-click="removeProperty(property)">
-      <span class="fa fa-fw fa-trash"> </span>
-    </a>
-  </div>
-  <div class="col-xs-2">
-    <a class="btn btn-info btn-transparent" ng-click="addProperty()" ng-if="$last">
+  <div ng-if="properties.length === 0" class="empty-container">
+    <a class="btn btn-info btn-transparent" ng-click="addProperty()">
       <span class="fa fa-fw fa-plus"></span>
+      <span>Add Value</span>
     </a>
   </div>
-</div>
 
-<div ng-if="properties.length === 0">
-  <a class="btn btn-info btn-transparent" ng-click="addProperty()">
-    <span class="fa fa-fw fa-plus"></span>
-    <span>Add Property</span>
-  </a>
 </div>

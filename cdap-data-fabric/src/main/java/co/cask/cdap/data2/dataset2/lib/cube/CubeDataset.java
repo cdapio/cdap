@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
 import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
 import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.timeseries.EntityTable;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
 
@@ -38,10 +39,12 @@ import java.util.Map;
  */
 public class CubeDataset extends AbstractDataset implements Cube {
   private final Map<Integer, Table> resolutionTables;
-  private final Table entityTable;
+  private final MetricsTable entityTable;
   private final DefaultCube cube;
 
-  public CubeDataset(String name, Table entityTable,
+  // NOTE: entityTable has to be a non-transactional MetricsTable: DefaultCube internally uses in-memory caching for
+  //       data stored in it and requires the table writes to be durable independent on transaction commit success.
+  public CubeDataset(String name, MetricsTable entityTable,
                      Map<Integer, Table> resolutionTables,
                      Map<String, ? extends Aggregation> aggregations) {
     super(name, entityTable, resolutionTables.values().toArray(new Dataset[resolutionTables.values().size()]));
@@ -101,10 +104,10 @@ public class CubeDataset extends AbstractDataset implements Cube {
   }
 
   private static final class FactTableSupplierImpl implements FactTableSupplier {
-    private final Table entityTable;
+    private final MetricsTable entityTable;
     private final Map<Integer, Table> resolutionTables;
 
-    private FactTableSupplierImpl(Table entityTable, Map<Integer, Table> resolutionTables) {
+    private FactTableSupplierImpl(MetricsTable entityTable, Map<Integer, Table> resolutionTables) {
       this.entityTable = entityTable;
       this.resolutionTables = resolutionTables;
     }
@@ -112,7 +115,7 @@ public class CubeDataset extends AbstractDataset implements Cube {
     @Override
     public FactTable get(int resolution, int rollTime) {
       return new FactTable(new MetricsTableOnTable(resolutionTables.get(resolution)),
-                           new EntityTable(new MetricsTableOnTable(entityTable)),
+                           new EntityTable(entityTable),
                            resolution, rollTime);
     }
   }

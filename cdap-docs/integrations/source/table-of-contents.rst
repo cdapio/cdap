@@ -3,7 +3,7 @@
     :copyright: Copyright © 2015 Cask Data, Inc.
 
 ============================================
-Integrations Table of Contents
+CDAP Integrations Table of Contents
 ============================================
 
 .. toctree::

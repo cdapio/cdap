@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
-    :version: 2.8.0
+    :version: 3.0.0
 
 =================================================
 Cask Data Application Platform |version|
@@ -35,14 +35,13 @@ Cask Data Application Platform Level 1 Dependencies
    "commons-codec","commons-codec","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-lang","commons-lang","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.netty","netty","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "io.thekraken","grok","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "javax.servlet","javax.servlet-api","CCDL 1.0","https://glassfish.dev.java.net/public/CDDL+GPL.html"
    "javax.ws.rs","javax.ws.rs-api","Best of CDDL and GPL 2.0","http://glassfish.java.net/public/CDDL+GPL_1_1.html"
    "jline","jline","The BSD License","http://www.opensource.org/licenses/bsd-license.php"
    "junit","junit","Common Public License Version 1.0","http://www.opensource.org/licenses/cpl1.0.txt"
    "org.apache.avro","avro","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
-   "org.apache.avro","avro","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.apache.avro","avro-ipc","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
-   "org.apache.avro","avro-mapred","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.avro","avro-mapred","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.flume","flume-ng-core","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.flume","flume-ng-sdk","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"

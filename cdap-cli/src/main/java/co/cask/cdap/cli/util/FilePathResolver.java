@@ -21,24 +21,31 @@ import com.google.inject.Inject;
 
 import java.io.File;
 import java.util.LinkedList;
+import javax.annotation.Nullable;
 
 /**
  * Utilites for file path input.
  */
 public class FilePathResolver {
 
+  public static final String CDAP_HOME = "CDAP_HOME";
+
   private final File workingDir;
   private final File homeDir;
 
+  @Nullable
+  private final File cdapHomeDir;
+
   @Inject
   public FilePathResolver() {
-    this.homeDir = new File(System.getProperty("user.home"));
-    this.workingDir = new File(System.getProperty("user.dir"));
+    this(new File(System.getProperty("user.home")), new File(System.getProperty("user.dir")),
+         System.getenv(CDAP_HOME) == null ? null : new File(System.getenv(CDAP_HOME)));
   }
 
-  FilePathResolver(File homeDir, File workingDir) {
+  FilePathResolver(File homeDir, File workingDir, @Nullable File cdapHomeDir) {
     this.homeDir = homeDir;
     this.workingDir = workingDir;
+    this.cdapHomeDir = cdapHomeDir;
   }
 
   /**
@@ -50,6 +57,8 @@ public class FilePathResolver {
    * @return {@link File} of the resolved path
    */
   public File resolvePathToFile(String path) {
+    path = resolveVariables(path);
+
     if (path.contains("/") || path.contains("\\")) {
       path = path.replace("/", File.separator);
       path = path.replace("\\", File.separator);
@@ -79,6 +88,14 @@ public class FilePathResolver {
     }
 
     return new File(File.separator + Joiner.on(File.separator).join(finalTokens));
+  }
+
+  private String resolveVariables(String path) {
+    if (cdapHomeDir != null) {
+      path = path.replaceAll("\\$" + CDAP_HOME + "(?=[^a-zA-Z0-9_])", cdapHomeDir.getAbsolutePath());
+    }
+
+    return path;
   }
 
 }

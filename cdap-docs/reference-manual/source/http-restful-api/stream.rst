@@ -294,6 +294,8 @@ A Stream can be truncated with an HTTP POST method to the URL::
    * - Description
      - Delete all events in the Stream named *mystream* in the namespace *default*
 
+.. _http-restful-api-stream-setting-properties:
+
 Setting Stream Properties
 -------------------------
 There are a number of Stream properties that can be specified.
@@ -333,7 +335,9 @@ New properties are passed in the JSON request body.
    * - ``ttl``
      - Number of seconds that an event will be valid for since ingested
    * - ``format``
-     - JSON Object describing the format name, schema, and settings
+     - JSON Object describing the format name, schema, and settings. Accepted formats are
+       ``avro``, ``csv`` (comma-separated), ``tsv`` (tab-separated), ``text``, ``clf``, 
+       ``grok``, and ``syslog``.
    * - ``notification.threshold.mb``
      - Increment of data, in MB, that a Stream has to receive before
        publishing a notification.
@@ -388,3 +392,121 @@ the Stream and re-create it with the new schema.
      - Change the TTL property of the Stream named *mystream* in the namespace *default* to 1 day,
        and the format to CSV (comma separated values) with a three field schema
        that uses a space delimiter instead of a comma delimiter. 
+
+Streams used by an Application
+------------------------------
+
+You can retrieve a list of Streams used by an Application by issuing a HTTP GET request to the URL::
+
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/streams
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<app-id>``
+     - Application ID
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Request was successful
+
+Streams used by a Program
+-------------------------
+
+You can retrieve a list of Streams used by a program by issuing a HTTP GET request to the URL::
+
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/streams 
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<app-id>``
+     - Application ID
+   * - ``<program-type>``
+     - Program Type, one of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
+   * - ``<program-id>``
+     - Program ID
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Request was successful
+
+Streams used by an Adapter
+--------------------------
+
+You can retrieve a list of Streams used by an Adapter by issuing a HTTP GET request to the URL::
+
+  GET <base-url>/namespaces/<namespace>/adapters/<adapter-id>/streams 
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<adapter-id>``
+     - Adapter ID
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Request was successful
+
+Programs using a Stream 
+-----------------------
+
+You can retrieve a list of programs that are using a Stream by issuing a HTTP GET request to the URL::
+
+  GET <base-url>/namespaces/<namespace>/data/datasets/<dataset-id>/programs
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<dataset-id>``
+     - Dataset ID
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Request was successful
+
+

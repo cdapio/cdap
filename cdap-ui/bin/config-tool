@@ -32,6 +32,12 @@ else
   CLASSPATH=${CLASSPATH}:${lib}/*
 fi
 
+# Source common.sh
+source ${bin}/common.sh
+
+# Find java and set $JAVA
+set_java
+
 # Load the configuration too.
 if [ -d ${CDAP_CONF} ]; then
   CLASSPATH=${CLASSPATH}:${CDAP_CONF}
@@ -52,4 +58,4 @@ if [ ${containsTokenFileArg} -eq 0 ] && [ -r ${auth_file} ]; then
   TOKENFILE="--token-file ${auth_file}"
 fi
 
-java -cp ${CLASSPATH} -Dscript=${script} co.cask.cdap.ui.ConfigurationJsonTool ${@} ${TOKENFILE}
+${JAVA} -cp ${CLASSPATH} -Dscript=${script} co.cask.cdap.ui.ConfigurationJsonTool ${@} ${TOKENFILE}

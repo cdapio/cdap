@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('PluginEditController', function($scope, MyDataSource, PluginConfigFactory) {
+  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers) {
     var propertiesFromBackend = Object.keys($scope.plugin.properties);
     // Make a local copy that is a mix of properties from backend + config from nodejs
     $scope.groups = {
@@ -46,11 +46,12 @@ angular.module(PKG.name + '.feature.adapters')
                   $scope.groups[group].position.push(field);
                   $scope.groups[group].fields[field] = res.groups[group].fields[field];
                   // If there is a description in the config from nodejs use that otherwise fallback to description from backend.
-                  if (res.groups[group].fields[field].description && !res.groups[group].fields[field].description.length) {
-                    $scope.groups[group].fields[field].description = $scope.plugin.properties[field].description;
+
+                  if (!myHelpers.objectQuery(res, 'groups', group, 'fields', field, 'description', 'length')) {
+                    $scope.groups[group].fields[field].description = myHelpers.objectQuery($scope, 'plugin', '_backendProperties', field, 'description') || 'No Description Available';
                   }
-                  $scope.groups[group].fields[field].info = $scope.groups[group].fields[field].info || 'Info';
-                  if (!$scope.groups[group].fields[field].label) {
+                  $scope.groups[group].fields[field].info = myHelpers.objectQuery($scope, 'groups', group, 'fields', field, 'info') || 'Info';
+                  if (!myHelpers.objectQuery($scope, 'groups', group, 'fields', field, 'label')) {
                     $scope.groups[group].fields[field].label = field;
                   }
                 }
@@ -65,7 +66,9 @@ angular.module(PKG.name + '.feature.adapters')
                 missedFieldsGroup.position.push(property);
                 missedFieldsGroup.fields[property] = {
                   widget: 'textbox',
-                  label: property
+                  label: property,
+                  info: 'Info',
+                  description: myHelpers.objectQuery($scope, 'plugin', '_backendProperties', property, 'description') || 'No Description Available'
                 };
               });
               $scope.groups.position.push('generic');

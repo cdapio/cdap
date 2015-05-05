@@ -62,7 +62,7 @@ advantages of using CDAP include:
 #. **Easy Application Operations:**
    Once your Big Data application is in production, CDAP is designed specifically to monitor your
    applications and scale with your data processing needs: increase capacity with a click of a button
-   without taking your application offline. Use the CDAP Console or RESTful APIs to monitor and manage the
+   without taking your application offline. Use the CDAP UI or RESTful APIs to monitor and manage the
    lifecycle and scale of your application.
 
 
@@ -79,12 +79,12 @@ CDAP currently supports Java for developing applications.
 
 .. rubric:: What Version of Java SDK is Required by CDAP?
 
-The latest version of the JDK or JRE version 6 or 7 (JDK/JRE 1.6 or 1.7) must be installed
+The latest version of the JDK or JRE version 7 (JDK/JRE 1.7) must be installed
 in your environment; we recommend the Oracle JDK.
 
 .. rubric:: What Version of Node.JS is Required by CDAP?
 
-The version of Node.js must be from v0.8.16 through v0.10.37.
+The version of Node.js must be from |node-js-version|.
 
 
 Hadoop

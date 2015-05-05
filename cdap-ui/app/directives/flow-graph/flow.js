@@ -132,7 +132,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
             diagramWidth: leafDiagramWidth
           };
           drawLeafShape(parent, leafOptions);
-          
+
           parent.insert('text')
             .attr('x', calculateLeafBuffer(parent, leafOptions))
             .attr('y', metricCountPadding)
@@ -164,14 +164,14 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
           // Elements are positioned with respect to shapeSvg.
           var width = shapeSvg.node().getBBox().width+10;
           var circleXPos = -1 * width/2;
-          
+
           var leafOptions = {
             classNames: ['stream-events'],
             circleRadius: flowletCircleRadius,
             diagramWidth: leafDiagramWidth
           };
           drawLeafShape(parent, leafOptions);
-          
+
           parent.append('text')
             .attr('x', calculateLeafBuffer(parent, leafOptions))
             .attr('y', metricCountPadding)
@@ -238,7 +238,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
         var xFactor = leafXFactor;
         var circleRadius = flowletCircleRadius;
         var classNamesStr = 'flow-shapes leaf-shape';
-        
+
         if (properties && Object.prototype.toString.call(properties) === '[object Object]') {
           diagramWidth = properties.diagramWidth || diagramWidth;
           yFactor = properties.yFactor || yFactor;
@@ -268,7 +268,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
           .attr("d", line(pathinfo))
           .attr('class', classNamesStr)
           .attr("transform", function(d) {
-            return "translate(" 
+            return "translate("
               + (- circleRadius + leafBuffer) + ", 0) rotate(-180)";
           });
       }
@@ -400,23 +400,25 @@ module.directive('myWorkflowGraph', function ($filter, $state) {
             break;
         }
         return shapeName;
-      }
+      };
 
       scope.handleNodeClick = function(nodeId) {
-        // Temporary fix for 2.8.0. Should be removed first thing post 2.8.
-        if ($state.includes('**.workflows.**')) {
-          return;
-        }
+
         scope.handleHideTip(nodeId);
         var instance = scope.instanceMap[nodeId];
-        $state.go('flows.detail.runs.tabs.status.flowletsDetail', {flowletId: nodeId});
-      }
+        scope.$apply(function(scope) {
+          var fn = scope.click();
+          if ('undefined' !== typeof fn) {
+            fn(instance);
+          }
+        });
+      };
 
     }
   }, baseDirective);
 });
 
-function genericRender(scope, $filter) {
+function genericRender(scope) {
   var nodes = scope.model.nodes;
   var edges = scope.model.edges;
 
@@ -471,6 +473,24 @@ function genericRender(scope, $filter) {
   // Run the renderer. This is what draws the final graph.
   renderer(d3.select(selector + ' g'), g);
 
+  /**
+   * Handles showing tooltip on mouseover of node name.
+   */
+  scope.handleShowTip = function(nodeId) {
+    tip
+      .html(function(d) {
+        return '<strong>' + scope.instanceMap[nodeId].type +':</strong> <span class="tip-node-name">'+ nodeId +'</span>';
+      })
+      .show();
+  };
+
+  /**
+   * Handles hiding tooltip on mouseout of node name.
+   */
+  scope.handleHideTip = function(nodeId) {
+    tip.hide();
+  };
+
   // Set up onclick after rendering.
   svg
     .selectAll('g.node')
@@ -491,22 +511,4 @@ function genericRender(scope, $filter) {
     .scale(initialScale)
     .event(svg);
   svg.attr('height', g.graph().height * initialScale + 40);
-
-  /**
-   * Handles showing tooltip on mouseover of node name.
-   */
-  scope.handleShowTip = function(nodeId) {
-    tip
-      .html(function(d) {
-        return '<strong>' + scope.instanceMap[nodeId].type +':</strong> <span class="tip-node-name">'+ nodeId +'</span>';
-      })
-      .show();
-  };
-
-  /**
-   * Handles hiding tooltip on mouseout of node name.
-   */
-  scope.handleHideTip = function(nodeId) {
-    tip.hide();
-  };
 }

@@ -30,7 +30,7 @@ Things to check as possible solutions:
 
     java -version
 
-#. Check if the CDAP user is using a correct version of the JDK::
+#. Check if the CDAP user is using a :ref:`correct version of the JDK <install-java-runtime>`::
 
     sudo su - <cdap-user> 
     java -version
@@ -75,11 +75,11 @@ It's possible that YARN can't extract the .JARs to the ``/tmp``,
 either due to a lack of disk space or permissions.
 
 
-.. rubric:: Log Saver Process Throws an Out-of-Memory Error, CDAP Console Shows Service Not OK
+.. rubric:: Log Saver Process Throws an Out-of-Memory Error, CDAP UI Shows Service Not OK
 
 The CDAP Log Saver uses an internal buffer that may overflow and result in Out-of-Memory
 Errors when applications create excessive amounts of logs. One symptom of this is that the CDAP
-Console *Services Explorer* shows the ``log.saver`` Service as not OK, in addition to seeing error
+UI *Services Explorer* shows the ``log.saver`` Service as not OK, in addition to seeing error
 messages in the logs.
 
 By default, the Log Saver process is limited to 1GB of memory and the buffer keeps eight buckets of events

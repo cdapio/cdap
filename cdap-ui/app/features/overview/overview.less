@@ -10,6 +10,15 @@ body.state-overview {
       padding-bottom: 20px;
       margin-bottom: 20px;
       h2 { margin-top: 0; }
+
+      .nounderline {
+        color: @cdap-bluegray;
+
+        &:hover {
+          text-decoration: none;
+        }
+      }
+
       .col-xs-12.col-lg-4 {
         white-space: nowrap;
         @media (max-width: @screen-md-max) { text-align: center; }
@@ -17,8 +26,8 @@ body.state-overview {
           position: relative;
           top: -10px;
           left: 15px;
-          max-height: 119px;
-          max-width: 115px;
+          height: 119px;
+          width: 115px;
         }
         p {
           line-height: 119px;

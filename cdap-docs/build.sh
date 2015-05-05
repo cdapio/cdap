@@ -21,7 +21,7 @@
 # _common directory holds common files and scripts.
 
 # Optional Parameter (passed via Bamboo env variable or exported in shell)
-# BELL (set it to yes, if you want the bell commands to work in their script)
+# BELL (set it to either 'yes' or 'true', if you want the bell function to make a sound when called)
 
 source ./vars
 source _common/common-build.sh
@@ -83,7 +83,6 @@ function run_command() {
     * )                 usage; exit 0;;
   esac
 }
-################################################## new
 
 function clean() {
   cd ${SCRIPT_PATH}
@@ -114,18 +113,19 @@ function build_docs_outer_level() {
   echo ""
   echo "========================================================"
   echo "Building outer-level docs..."
-  echo "========================================================"
+  echo "--------------------------------------------------------"
   echo ""
   clean
   version
   
   # Copies placeholder file and renames it
-  copy_source introduction        "Introduction"
-  copy_source developers-manual   "Developers’ Manual"
-  copy_source admin-manual        "Administration Manual"
-  copy_source integrations        "Integrations"
-  copy_source examples-manual     "Examples, Guides, and Tutorials"
-  copy_source reference-manual    "Reference Manual"
+  copy_source introduction          "Introduction"
+  copy_source developers-manual     "Developers’ Manual"
+  copy_source application-templates "Application Templates"
+  copy_source admin-manual          "Administration Manual"
+  copy_source integrations          "Integrations"
+  copy_source examples-manual       "Examples, Guides, and Tutorials"
+  copy_source reference-manual      "Reference Manual"
 
   # Build outer-level docs
   cd ${SCRIPT_PATH}
@@ -143,8 +143,8 @@ function build_docs_outer_level() {
 function copy_docs_lower_level() {
   echo ""
   echo "========================================================"
-  echo "Copying lower-level docs..."
-  echo "========================================================"
+  echo "Copying lower-level documentation..."
+  echo "--------------------------------------------------------"
   echo ""
 
   for i in ${MANUALS}; do
@@ -167,24 +167,34 @@ function copy_docs_lower_level() {
 ################################################## current
 
 function build_all() {
-  echo "========================================================================="
+  echo ""
+  echo "========================================================"
   echo "Building GitHub Docs."
-  echo "========================================================================="
+  echo "--------------------------------------------------------"
+  echo ""
   run_command docs-github-part ${ARG_2} ${ARG_3}
   echo "Stashing GitHub Docs."
   cd ${SCRIPT_PATH}
   mkdir -p ${SCRIPT_PATH}/${BUILD_TEMP}
   mv ${SCRIPT_PATH}/${BUILD}/*.zip ${SCRIPT_PATH}/${BUILD_TEMP}
-  echo "========================================================================="
+  echo ""
+  echo "========================================================"
   echo "Building Web Docs."
-  echo "========================================================================="
+  echo "--------------------------------------------------------"
+  echo ""
   run_command docs-web-part ${ARG_2} ${ARG_3}
+  echo ""
+  echo "========================================================"
   echo "Replacing GitHub Docs."
+  echo "--------------------------------------------------------"
+  echo ""
   mv ${SCRIPT_PATH}/${BUILD_TEMP}/*.zip ${SCRIPT_PATH}/${BUILD}
   rm -rf ${SCRIPT_PATH}/${BUILD_TEMP}
-  if [ "${BELL}" == 'yes' ]; then
-    bell
-  fi
+  echo ""
+  echo "========================================================"
+  bell "Completed \"build_all\"."
+  echo "--------------------------------------------------------"
+  echo ""
   exit 0
 }
 
@@ -210,13 +220,22 @@ function build_docs_web() {
 }
 
 function _build_docs() {
+  echo ""
+  echo "========================================================"
+  echo "========================================================"
+  echo "Building target \"${1}\"..."
+  echo "--------------------------------------------------------"
   build_docs_inner_level ${1}
   build_docs_outer_level ${2}
   copy_docs_lower_level
   build_zip ${3}
   zip_extras ${4}
   display_version
-  bell "Building ${1} completed."
+  echo "--------------------------------------------------------"
+  bell "Building target \"${1}\" completed."
+  echo "========================================================"
+  echo "========================================================"
+  echo ""
 }
 
 function build_docs_inner_level() {
@@ -228,8 +247,8 @@ function build_docs_inner_level() {
 function build_specific_doc() {
   echo ""
   echo "========================================================"
-  echo "Building ${1}, target ${2}..."
-  echo "========================================================"
+  echo "Building \"${1}\", target \"${2}\"..."
+  echo "--------------------------------------------------------"
   echo ""
   cd $SCRIPT_PATH/${1}
   ./build.sh ${2} ${ARG_2} ${ARG_3}
@@ -274,12 +293,16 @@ function print_version() {
 
 function bell() {
   # Pass a message as ${1}
-  echo -e "\a${1}"
+  if [[ "x${BELL}" == "xyes" || "x${BELL}" == "x${TRUE}" ]]; then
+    echo -e "\a${1}"
+  else
+    echo -e "${1}"
+  fi
 }
 
 function test() {
   echo "Test..."
-  build_json
+  bell "A test message"
   echo "Test completed."
 }
 

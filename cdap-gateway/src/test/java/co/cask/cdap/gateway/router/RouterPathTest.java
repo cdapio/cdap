@@ -204,17 +204,17 @@ public class RouterPathTest {
     result = pathLookup.getRoutingService(FALLBACKSERVICE, streamPath, httpRequest);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
 
-    streamPath = "//v3/namespaces/default///streams/HelloStream//flows///";
+    streamPath = "//v3/namespaces/default///streams/HelloStream//programs///";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), streamPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, streamPath, httpRequest);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
 
-    streamPath = "//v3/namespaces/default///streams/HelloStream//flows///";
+    streamPath = "//v3/namespaces/default///streams/HelloStream//programs///";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), streamPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, streamPath, httpRequest);
     Assert.assertEquals(Constants.Service.STREAMS, result);
 
-    streamPath = "//v3/namespaces/default///streams/HelloStream//flows///";
+    streamPath = "//v3/namespaces/default///streams/HelloStream//programs///";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), streamPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, streamPath, httpRequest);
     Assert.assertEquals(Constants.Service.STREAMS, result);
@@ -224,12 +224,17 @@ public class RouterPathTest {
     result = pathLookup.getRoutingService(FALLBACKSERVICE, streamPath, httpRequest);
     Assert.assertEquals(Constants.Service.STREAMS, result);
 
-    streamPath = "v3/namespaces/default//streams/InvalidStreamName/flows/";
+    streamPath = "v3/namespaces/default//streams/InvalidStreamName/programs/";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), streamPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, streamPath, httpRequest);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
 
-    streamPath = "v3/namespaces/default//streams/InvalidStreamName/flows/";
+    streamPath = "v3/namespaces/default//streams/InvalidStreamName/programs";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), streamPath);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, streamPath, httpRequest);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
+
+    streamPath = "v3/namespaces/default//streams/InvalidStreamName/programs/";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), streamPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, streamPath, httpRequest);
     Assert.assertEquals(Constants.Service.STREAMS, result);
@@ -276,6 +281,14 @@ public class RouterPathTest {
   public void testRouterExplorePathLookUp() throws Exception {
     String explorePath = "/v3/namespaces/default//data///explore//datasets////mydataset//enable";
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), explorePath);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, explorePath, httpRequest);
+    Assert.assertEquals(Constants.Service.EXPLORE_HTTP_USER_SERVICE, result);
+  }
+
+  @Test
+  public void testRouterExploreStatusPathLookUp() throws Exception {
+    String explorePath = "/v3/explore/status";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), explorePath);
     String result = pathLookup.getRoutingService(FALLBACKSERVICE, explorePath, httpRequest);
     Assert.assertEquals(Constants.Service.EXPLORE_HTTP_USER_SERVICE, result);
   }

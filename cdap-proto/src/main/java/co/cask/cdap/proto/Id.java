@@ -34,25 +34,26 @@ public abstract class Id {
     return type.getSimpleName().toLowerCase();
   }
 
-  private static boolean isId(String name) {
-    return CharMatcher.inRange('A', 'Z')
-      .or(CharMatcher.inRange('a', 'z'))
-      .or(CharMatcher.is('-'))
-      .or(CharMatcher.is('_'))
-      .or(CharMatcher.inRange('0', '9')).matchesAllOf(name);
+  private static final CharMatcher namespaceMatcher =
+    CharMatcher.inRange('A', 'Z')
+    .or(CharMatcher.inRange('a', 'z'))
+    .or(CharMatcher.inRange('0', '9'))
+    .or(CharMatcher.is('_'));
+  // Allow hyphens for other ids.
+  private static final CharMatcher idMatcher = namespaceMatcher.or(CharMatcher.is('-'));
+  // Allow '.' and '$' for dataset ids since they can be fully qualified class names
+  private static final CharMatcher datasetIdCharMatcher = idMatcher.or(CharMatcher.is('.')).or(CharMatcher.is('$'));
+
+  private static boolean isValidNamespaceId(String name) {
+    return namespaceMatcher.matchesAllOf(name);
   }
 
-  /**
-   * Allow '.' and '$' for dataset ids since they can be fully qualified class names
-   */
+  private static boolean isValidId(String name) {
+    return idMatcher.matchesAllOf(name);
+  }
+
   private static boolean isValidDatasetId(String datasetId) {
-    return CharMatcher.inRange('A', 'Z')
-      .or(CharMatcher.inRange('a', 'z'))
-      .or(CharMatcher.is('-'))
-      .or(CharMatcher.is('_'))
-      .or(CharMatcher.inRange('0', '9'))
-      .or(CharMatcher.is('.'))
-      .or(CharMatcher.is('$')).matchesAllOf(datasetId);
+    return datasetIdCharMatcher.matchesAllOf(datasetId);
   }
 
   public String getIdType() {
@@ -153,7 +154,7 @@ public abstract class Id {
 
     public Namespace(String id) {
       Preconditions.checkNotNull(id, "Namespace '" + id + "' cannot be null.");
-      Preconditions.checkArgument(isId(id), "Namespace '" + id + "' has an incorrect format.");
+      Preconditions.checkArgument(isValidNamespaceId(id), "Namespace '" + id + "' has an incorrect format.");
       this.id = id;
     }
 
@@ -183,15 +184,16 @@ public abstract class Id {
       return new Namespace(namespace);
     }
 
-    @Override
-    public String toString() {
-      return id;
-    }
-
     @Nullable
     @Override
     protected Id getParent() {
       return null;
+    }
+
+    // TODO: remove (use super toString() which returns getIdRep())
+    @Override
+    public String toString() {
+      return id;
     }
   }
 
@@ -310,7 +312,7 @@ public abstract class Id {
     public Application(final Namespace namespace, final String applicationId) {
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
       Preconditions.checkNotNull(applicationId, "Application cannot be null.");
-      Preconditions.checkArgument(isId(applicationId), "Invalid Application ID.");
+      Preconditions.checkArgument(isValidId(applicationId), "Invalid Application ID.");
       this.namespace = namespace;
       this.applicationId = applicationId;
     }
@@ -645,6 +647,10 @@ public abstract class Id {
       return new Flow(Id.Application.from(Namespace.DEFAULT, appId), flowId);
     }
 
+    public static Flow from(String namespaceId, String appId, String flowId) {
+      return new Flow(Id.Application.from(namespaceId, appId), flowId);
+    }
+
     /**
      * Uniquely identifies a Flowlet.
      */
@@ -682,6 +688,39 @@ public abstract class Id {
       @Override
       public String getId() {
         return id;
+      }
+
+      /**
+       * Uniquely identifies a Flowlet Queue.
+       */
+      public static final class Queue extends NamespacedId {
+
+        private final Flowlet producer;
+        private final String id;
+
+        public Queue(Flowlet producer, String id) {
+          this.producer = producer;
+          this.id = id;
+        }
+
+        public Flowlet getProducer() {
+          return producer;
+        }
+
+        public String getId() {
+          return id;
+        }
+
+        @Nullable
+        @Override
+        protected Id getParent() {
+          return producer;
+        }
+
+        @Override
+        public Namespace getNamespace() {
+          return producer.getNamespace();
+        }
       }
     }
   }
@@ -764,7 +803,7 @@ public abstract class Id {
       Preconditions.checkArgument(category != null && !category.isEmpty(),
                                   "Category value cannot be null or empty.");
       Preconditions.checkArgument(name != null && !name.isEmpty(), "Name value cannot be null or empty.");
-      Preconditions.checkArgument(isId(namespace) && isId(category) && isId(name),
+      Preconditions.checkArgument(isValidId(namespace) && isValidId(category) && isValidId(name),
                                   "Namespace, category or name has a wrong format.");
 
       this.namespace = Namespace.from(namespace);
@@ -904,7 +943,7 @@ public abstract class Id {
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
       Preconditions.checkNotNull(streamName, "Stream name cannot be null.");
 
-      Preconditions.checkArgument(isId(streamName), "Stream name can only contain alphanumeric, " +
+      Preconditions.checkArgument(isValidId(streamName), "Stream name can only contain alphanumeric, " +
                                     "'-' and '_' characters: %s", streamName);
 
       this.namespace = namespace;

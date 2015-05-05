@@ -35,20 +35,22 @@ angular.module(PKG.name + '.commons')
         element: '<my-dsv></my-dsv>',
         attributes: {
           'ng-model': 'model',
-          'data-delimiter': ','
+          'data-delimiter': '{{ myconfig.properties.delimiter }}',
+          'data-type': 'csv'
         }
       },
       'dsv': {
         element: '<my-dsv></my-dsv>',
         attributes: {
           'ng-model': 'model',
-          'data-delimiter': '{{ myconfig.delimiter }}'
+          'data-delimiter': '{{ myconfig.properties.delimiter }}',
+          'data-type': 'dsv'
         }
       },
       'json-editor': {
         element: '<textarea></textarea>',
         attributes: {
-          'cask-json-edit': 'model',
+          'ng-model': 'model',
           'class': 'form-control',
           placeholder: '{{myconfig.properties.default || ""}}'
         }
@@ -70,6 +72,13 @@ angular.module(PKG.name + '.commons')
       },
       'keyvalue': {
         element: '<my-key-value></my-key-value>',
+        attributes: {
+          'ng-model': 'model',
+          'data-config': 'myconfig'
+        }
+      },
+      'schedule': {
+        element: '<my-schedule></my-schedule>',
         attributes: {
           'ng-model': 'model',
           'data-config': 'myconfig'

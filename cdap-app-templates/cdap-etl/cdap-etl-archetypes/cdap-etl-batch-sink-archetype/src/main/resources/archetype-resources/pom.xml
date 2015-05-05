@@ -27,7 +27,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <cdap.version>3.0.0-SNAPSHOT</cdap.version>
+    <cdap.version>3.1.0-SNAPSHOT</cdap.version>
     <hadoop.version>2.3.0</hadoop.version>
   </properties>
 
@@ -143,8 +143,8 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.1</version>
           <configuration>
-            <source>1.6</source>
-            <target>1.6</target>
+            <source>1.7</source>
+            <target>1.7</target>
           </configuration>
         </plugin>
         <plugin>

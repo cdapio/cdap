@@ -112,8 +112,6 @@ public class FileLogReader implements LogReader {
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
       throw  Throwables.propagate(e);
-    } finally {
-      callback.close();
     }
   }
 
@@ -158,8 +156,6 @@ public class FileLogReader implements LogReader {
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
       throw  Throwables.propagate(e);
-    } finally {
-      callback.close();
     }
   }
 
@@ -198,8 +194,6 @@ public class FileLogReader implements LogReader {
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
       throw  Throwables.propagate(e);
-    } finally {
-      callback.close();
     }
   }
 }

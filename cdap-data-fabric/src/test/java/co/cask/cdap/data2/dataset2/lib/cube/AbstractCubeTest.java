@@ -242,7 +242,7 @@ public abstract class AbstractCubeTest {
   }
 
 
-  private void writeInc(Cube cube, String measureName, long ts, long value, String... dims) throws Exception {
+  protected void writeInc(Cube cube, String measureName, long ts, long value, String... dims) throws Exception {
     cube.add(getFact(measureName, ts, value, dims));
   }
 
@@ -278,7 +278,7 @@ public abstract class AbstractCubeTest {
                      dimValues, groupByDims, expected, null);
   }
 
-  private void verifyCountQuery(Cube cube, long startTs, long endTs, int resolution,
+  protected void verifyCountQuery(Cube cube, long startTs, long endTs, int resolution,
                                 String measureName, AggregationFunction aggFunction,
                                 Map<String, String> dimValues, List<String> groupByDims,
                                 Collection<TimeSeries> expected) throws Exception {
@@ -319,7 +319,7 @@ public abstract class AbstractCubeTest {
     Assert.assertTrue(expected.containsAll(result));
   }
 
-  private List<TimeValue> timeValues(long... longs) {
+  protected List<TimeValue> timeValues(long... longs) {
     List<TimeValue> timeValues = Lists.newArrayList();
     for (int i = 0; i < longs.length; i += 2) {
       timeValues.add(new TimeValue(longs[i], longs[i + 1]));

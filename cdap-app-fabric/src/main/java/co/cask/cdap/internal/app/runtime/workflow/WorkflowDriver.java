@@ -43,6 +43,7 @@ import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
+import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -53,6 +54,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,6 +82,7 @@ import java.util.concurrent.locks.ReentrantLock;
 final class WorkflowDriver extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowDriver.class);
+  private static final Gson GSON = new Gson();
 
   private final Program program;
   private final InetAddress hostname;
@@ -107,10 +110,16 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       : System.currentTimeMillis();
     this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(workflowSpec, programRunnerFactory, program,
                                                                          options);
-    lock = new ReentrantLock();
-    condition = lock.newCondition();
-    loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(), program.getName(),
-                                                options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
+    this.lock = new ReentrantLock();
+    this.condition = lock.newCondition();
+    String adapterSpec = arguments.getOption(ProgramOptionConstants.ADAPTER_SPEC);
+    String adapterName = null;
+    if (adapterSpec != null) {
+      adapterName = GSON.fromJson(adapterSpec, AdapterDefinition.class).getName();
+    }
+    this.loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(),
+                                                     program.getName(),
+                                                     arguments.getOption(ProgramOptionConstants.RUN_ID), adapterName);
   }
 
   @Override
@@ -182,7 +191,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                              InstantiatorFactory instantiator, ClassLoader classLoader,
                              WorkflowToken token) throws Exception {
 
-    WorkflowActionSpecification actionSpec;
+    final WorkflowActionSpecification actionSpec;
     ScheduleProgramInfo actionInfo = node.getProgram();
     switch (actionInfo.getProgramType()) {
       case MAPREDUCE:
@@ -209,14 +218,19 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     status.put(node.getNodeId(), node);
 
     final WorkflowAction action = initialize(actionSpec, classLoader, instantiator, token, node.getNodeId());
+    ExecutorService executor = Executors.newSingleThreadExecutor();
     try {
       // Run the action in new thread
-      ExecutorService executor = Executors.newSingleThreadExecutor();
       Future<?> future = executor.submit(new Runnable() {
         @Override
         public void run() {
           ClassLoaders.setContextClassLoader(action.getClass().getClassLoader());
-          action.run();
+          try {
+            action.run();
+          } finally {
+            // Call action.destroy().
+            destroy(actionSpec, action);
+          }
         }
       });
       future.get();
@@ -225,8 +239,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       Throwables.propagateIfPossible(t, Exception.class);
       throw Throwables.propagate(t);
     } finally {
-      // Destroy the action.
-      destroy(actionSpec, action);
+      executor.shutdownNow();
       status.remove(node.getNodeId());
     }
   }
@@ -339,6 +352,11 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         WorkflowNode node = iterator.next();
         executeNode(appSpec, node, instantiator, classLoader, token);
       } catch (Throwable t) {
+        Throwable rootCause = Throwables.getRootCause(t);
+        if (rootCause instanceof InterruptedException) {
+          LOG.error("Workflow execution aborted.");
+          break;
+        }
         Throwables.propagate(t);
       }
     }

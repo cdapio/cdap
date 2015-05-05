@@ -32,6 +32,7 @@ import co.cask.cdap.data2.dataset2.lib.partitioned.TimePartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.lib.table.CubeModule;
 import co.cask.cdap.data2.dataset2.lib.table.ObjectMappedTableModule;
+import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.DefaultTransactionExecutor;
@@ -39,7 +40,6 @@ import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.inmemory.MinimalTxSystemClient;
-import co.cask.tephra.runtime.TransactionClientModule;
 import co.cask.tephra.runtime.TransactionInMemoryModule;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -61,6 +61,7 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
   private static final Id.DatasetModule tpfs = Id.DatasetModule.from(NAMESPACE_ID, "tpfs");
   private static final Id.DatasetModule pfs = Id.DatasetModule.from(NAMESPACE_ID, "pfs");
   private static final Id.DatasetModule omt = Id.DatasetModule.from(NAMESPACE_ID, "objectMappedTable");
+  private static final Id.DatasetModule metrics = Id.DatasetModule.from(NAMESPACE_ID, "metrics");
   private static final Id.DatasetModule cube = Id.DatasetModule.from(NAMESPACE_ID, "cube");
 
   private TemporaryFolder tmpFolder;
@@ -93,6 +94,7 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
     framework.addModule(tpfs, new TimePartitionedFileSetModule());
     framework.addModule(pfs, new PartitionedFileSetModule());
     framework.addModule(omt, new ObjectMappedTableModule());
+    framework.addModule(metrics, new InMemoryMetricsTableModule());
     framework.addModule(cube, new CubeModule());
   }
 
@@ -102,6 +104,7 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
     try {
       if (framework != null) {
         framework.deleteModule(cube);
+        framework.deleteModule(metrics);
         framework.deleteModule(omt);
         framework.deleteModule(pfs);
         framework.deleteModule(tpfs);

@@ -81,16 +81,16 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     } else if (matches(uriParts, "v3", "system", "services", null, "logs")) {
       //Log Handler Path /v3/system/services/<service-id>/logs
       return Constants.Service.METRICS;
+    } else if ((matches(uriParts, "v3", "namespaces", null, "streams", null, "adapters")
+      || matches(uriParts, "v3", "namespaces", null, "streams", null, "programs")
+      || matches(uriParts, "v3", "namespaces", null, "data", "datasets", null, "adapters")
+      || matches(uriParts, "v3", "namespaces", null, "data", "datasets", null, "programs")) &&
+      requestMethod.equals(AllowedMethod.GET)) {
+      return Constants.Service.APP_FABRIC_HTTP;
     } else if ((uriParts.length >= 4) && uriParts[1].equals("namespaces") && uriParts[3].equals("streams")) {
-      //     /v3/namespaces/<namespace>/streams goes to AppFabricHttp
-      //     /v3/namespaces/<namespace>/streams/<stream-id> PUT, POST should go to Stream Handler
-      // GET /v3/namespaces/<namespace>/streams/<stream-id>/flows should go to AppFabricHttp
+      // /v3/namespaces/<namespace>/streams goes to AppFabricHttp
       // All else go to Stream Handler
       if (uriParts.length == 4) {
-        return Constants.Service.APP_FABRIC_HTTP;
-      } else if (uriParts.length == 5) {
-        return Constants.Service.STREAMS;
-      } else if ((uriParts.length == 6) && uriParts[5].equals("flows") && requestMethod.equals(AllowedMethod.GET)) {
         return Constants.Service.APP_FABRIC_HTTP;
       } else {
         return Constants.Service.STREAMS;
@@ -116,17 +116,14 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
         || uriParts[5].equals("tables") || uriParts[5].equals("jdbc"))) {
       // namespaced explore operations. For example, /v3/namespaces/{namespace-id}/data/explore/streams/{stream}/enable
       return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
+    } else if ((uriParts.length == 3) && uriParts[1].equals("explore") && uriParts[2].equals("status")) {
+      return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
     } else if (uriParts.length == 7 && uriParts[3].equals("data") && uriParts[4].equals("datasets") &&
       (uriParts[6].equals("flows") || uriParts[6].equals("workers") || uriParts[6].equals("mapreduce"))) {
       // namespaced app fabric data operations:
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/flows
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/workers
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/mapreduce
-      return Constants.Service.APP_FABRIC_HTTP;
-    } else if (matches(uriParts, "v3", "namespaces", null, "streams", null, "adapters")
-      || matches(uriParts, "v3", "namespaces", null, "streams", null, "programs")
-      || matches(uriParts, "v3", "namespaces", null, "data", "datasets", null, "adapters")
-      || matches(uriParts, "v3", "namespaces", null, "data", "datasets", null, "programs")) {
       return Constants.Service.APP_FABRIC_HTTP;
     } else if ((uriParts.length >= 4) && uriParts[3].equals("data")) {
       // other data operations. For example:

@@ -7,32 +7,29 @@
        "position" : [ "kafka.zookeeper", "kafka.brokers", "kafka.partitions", "kafka.topic", "kafka.default.offset" ],
        "fields" : {
           "kafka.zookeeper" : {
-             "widget-type": "textbox",
-             "widget-label": "Zookeeper Qorum",
-             "widget-description" : "Specify the zookeeper connection string.",
-             "widget-info" : "E.g. host:2181,host2:2181,host3:2181",
-             "widget-properties": {
+             "widget": "textbox",
+             "label": "Zookeeper Quorum",
+             "description" : "Specify the zookeeper connection string. E.g. host:2181,host2:2181,host3:2181. Either we can specify zookeeper quorum or broker list.",
+             "properties": {
                "width": "large"
              }
           },
 
           "kafka.brokers" : {
-             "widget-type": "csv",
-             "widget-label": "Kafka Brokers",
-             "widget-description" : "Server names on which kafka server is running",
-             "widget-info" : "Kafka is run as a cluster comprised of one or more servers each of which is called broker",
-             "widget-properties": {
-               "width": "medium"
-             },
-             "delimiter" : ","
+             "widget": "csv",
+             "label": "Kafka Brokers",
+             "description" : "Server names on which kafka server is running. Kafka is run as a cluster comprised of one or more servers each of which is called broker. Either we can specify zookeeper connection string or this configuration.",
+             "properties": {
+               "width": "medium",
+               "delimiter" : ","
+             }
           },
 
           "kafka.partitions" : {
-             "widget-type": "number",
-             "widget-label": "Number of Partitions",
-             "widget-description": "Specific the number of partitions",
-             "widget-info": "Each partition is an ordered, immutable sequence of messages that is continually appended to—a commit log. The messages in the partitions are each assigned a sequential id number called the offset that uniquely identifies each message within the partition",
-             "widget-properties": {
+             "widget": "number",
+             "label": "Number of Partitions",
+             "description": "Specifies the number of partitions. Each partition is an ordered, immutable sequence of messages that is continually appended to—a commit log. The messages in the partitions are each assigned a sequential id number called the offset that uniquely identifies each message within the partition",
+             "properties": {
                "width": "extra-small",
                "default": 1
              },
@@ -41,21 +38,19 @@
           },
 
           "kafka.topic" : {
-             "widget-type": "textbox",
-             "widget-label": "Topic",
-             "widget-description" : "Specify the topic you want to subscribe to",
-             "widget-info" : "Kafka maintains feeds of messages in categories called topics",
-             "widget-properties": {
+             "widget": "textbox",
+             "label": "Topic",
+             "description" : "Topic you want to subscribe to. Kafka maintains feeds of messages in categories called topics",
+             "properties": {
                "width": "medium"
              }
           },
 
           "kafka.default.offset" : {
-             "widget-type": "number",
-             "widget-label": "Offset to start processing from",
-             "widget-description": "Integer specifying the offset to start processing from",
-             "widget-info": "",
-             "widget-properties": {
+             "widget": "number",
+             "label": "Start Offset",
+             "description": "Specifies the start offset for processing from the queue",
+             "properties": {
                "width": "extra-small",
                "default": 1
              },

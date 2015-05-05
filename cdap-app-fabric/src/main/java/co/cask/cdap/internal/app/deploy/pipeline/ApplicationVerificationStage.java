@@ -25,6 +25,7 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
+import co.cask.cdap.api.workflow.WorkflowConditionNode;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
@@ -201,6 +202,9 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
       case FORK:
         verifyWorkflowFork(appSpec, workflowSpec, node);
         break;
+      case CONDITION:
+        verifyWorkflowCondition(appSpec, workflowSpec, node);
+        break;
       default:
         break;
     }
@@ -213,9 +217,21 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
                                                                        " any branches", workflowSpec.getName()));
 
     for (List<WorkflowNode> branch : forkNode.getBranches()) {
-      for (WorkflowNode n : branch) {
-        verifyWorkflowNode(appSpec, workflowSpec, n);
-      }
+      verifyWorkflowBranch(appSpec, workflowSpec, branch);
+    }
+  }
+
+  private void verifyWorkflowCondition(ApplicationSpecification appSpec, WorkflowSpecification workflowSpec,
+                                       WorkflowNode node) {
+    WorkflowConditionNode condition = (WorkflowConditionNode) node;
+    verifyWorkflowBranch(appSpec, workflowSpec, condition.getIfBranch());
+    verifyWorkflowBranch(appSpec, workflowSpec, condition.getElseBranch());
+  }
+
+  private void verifyWorkflowBranch(ApplicationSpecification appSpec, WorkflowSpecification workflowSpec,
+                                    List<WorkflowNode> branch) {
+    for (WorkflowNode n : branch) {
+      verifyWorkflowNode(appSpec, workflowSpec, n);
     }
   }
 

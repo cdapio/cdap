@@ -71,6 +71,14 @@ public final class QueueName {
     return new QueueName(URI.create(new String(bytes, Charsets.US_ASCII)));
   }
 
+  public static QueueName fromFlowlet(Id.Flow flow, String flowlet, String output) {
+    return fromFlowlet(flow.getNamespaceId(), flow.getApplicationId(), flow.getId(), flowlet, output);
+  }
+
+  public static QueueName fromFlowlet(Id.Namespace namespace, String app, String flow, String flowlet, String output) {
+    return fromFlowlet(namespace.getId(), app, flow, flowlet, output);
+  }
+
   public static QueueName fromFlowlet(String namespace, String app, String flow, String flowlet, String output) {
     URI uri = URI.create(String.format("queue:///%s/%s/%s/%s/%s", namespace, app, flow, flowlet, output));
     return new QueueName(uri);

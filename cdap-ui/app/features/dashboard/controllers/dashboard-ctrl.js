@@ -9,7 +9,7 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
   $scope.unknownBoard = false;
   $scope.isEnterprise = MY_CONFIG.isEnterprise;
   $scope.dashboards = rDashboardsModel.data || [];
-  $scope.liveDashboard = null;
+  $scope.liveDashboard = false;
 
   // Available refresh rates.
   $scope.refreshIntervals = [
@@ -146,6 +146,7 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
       });
       return;
     }
+    $scope.liveDashboard = false;
     applyOnWidgets(rDashboardsModel, function (widget) {
       widget.metric.startTime = Math.floor($scope.timeOptions.startMs / 1000);
       widget.metric.endTime = Math.floor($scope.timeOptions.endMs / 1000);
@@ -156,6 +157,7 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
   };
 
   $scope.updateWithFrequency = function() {
+    $scope.liveDashboard = true;
     applyOnWidgets(rDashboardsModel, function (widget) {
       widget.metric.startTime = $scope.timeOptions.durationMs;
       widget.metric.endTime = 'now';
@@ -163,6 +165,14 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
       widget.isLive = true;
       widget.interval = $scope.timeOptions.refreshInterval.value * 1000;
       widget.reconfigure();
+    });
+  };
+
+  $scope.stopPolling = function() {
+    $scope.liveDashboard = false;
+    applyOnWidgets(rDashboardsModel, function (widget) {
+      widget.isLive = false;
+      widget.stopPolling();
     });
   };
 });

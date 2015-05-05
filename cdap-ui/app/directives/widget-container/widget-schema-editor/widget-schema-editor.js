@@ -13,17 +13,17 @@ angular.module(PKG.name + '.commons')
 
         // Format model
         function initialize() {
-          var obj = {};
+          var schema = {};
 
           if ($scope.model) {
             try {
-              obj = JSON.parse($scope.model);
+              schema = JSON.parse($scope.model);
             } catch (e) {
-              $scope.error = "Invalid JSON string";
+              $scope.error = 'Invalid JSON string';
             }
           }
 
-          var schema = myHelpers.objectQuery(obj, 'schema', 'fields');
+          var schema = myHelpers.objectQuery(schema, 'fields');
           $scope.properties = [];
           angular.forEach(schema, function(p) {
             if (angular.isArray(p.type)) {
@@ -47,16 +47,20 @@ angular.module(PKG.name + '.commons')
             }
           });
 
+          if ($scope.properties.length === 0) {
+            $scope.properties.push({
+              name: '',
+              type: defaultType,
+              nullable: false
+            });
+          }
+
         } // End of initialize
 
         initialize();
 
 
         function formatSchema() {
-          var obj =  {
-            name: $scope.format
-          };
-
           // Format Schema
           var properties = [];
           angular.forEach($scope.properties, function(p) {
@@ -70,17 +74,19 @@ angular.module(PKG.name + '.commons')
 
           // do not include properties on the request when schema field is empty
           if (properties.length !== 0) {
-            obj.schema = {
+            var schema = {
               type: 'record',
               name: 'etlSchemaBody',
               fields: properties
             };
+            // turn schema into JSON string
+            var json = JSON.stringify(schema);
+
+            $scope.model = json;
+          } else {
+            $scope.model = null;
           }
 
-          // turn obj into JSON string
-          var json = JSON.stringify(obj);
-
-          $scope.model = json;
         }
 
         // watch for changes
@@ -88,7 +94,7 @@ angular.module(PKG.name + '.commons')
 
 
         $scope.addProperties = function() {
-          $scope.properties.unshift({
+          $scope.properties.push({
             name: '',
             type: defaultType,
             nullable: false

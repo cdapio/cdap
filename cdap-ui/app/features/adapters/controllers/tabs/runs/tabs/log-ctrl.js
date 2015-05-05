@@ -5,12 +5,15 @@ angular.module(PKG.name + '.feature.adapters')
                    '/runs/' + $scope.runs.selected.runid,
         logPath = '';
 
+    if (!$scope.runs.length) {
+      return;
+    }
    dataSrc.request({
      _cdapPath: '/namespaces/' + $state.params.namespace +
                 '/adapters/' + $state.params.adapterId
    })
     .then(function(res) {
-      var appId = res.program.application.applicationId;
+      var appId = res.program.application;
       var programId = res.program.id;
       logPath = '/apps/' + appId +
                 '/'+ res.program.type.toLowerCase() + 's' +'/' + programId +

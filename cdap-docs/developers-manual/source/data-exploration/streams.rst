@@ -45,6 +45,9 @@ all events added to the stream are readable by the format you have set on a stre
 If any stream event cannot be read by the format you have set, your entire query will fail and you
 will not get any results.
 
+Accepted formats are ``avro``, ``csv`` (comma-separated), ``tsv`` (tab-separated), ``text``, ``clf``, 
+``grok``, and ``syslog``.
+
 Schema
 ------
 CDAP schemas are adopted from the `Avro Schema Declaration <http://avro.apache.org/docs/1.7.3/spec.html#schemas>`__
@@ -202,10 +205,13 @@ When creating your queries, keep these limitations in mind:
 - When addressing your streams in queries, you need to prefix the stream name with
   ``stream_``. For example, if your Stream is named ``Purchases``, then the corresponding table
   name is ``stream_purchases``. Note that the table name is all lower-case, regardless of how it was defined.
+- If your Stream name contains a '.' or a '-', those characters will be converted to '_' for the Hive table name.
+  For example, if your Stream is named ``my-stream.name``, the corresponding Hive table name will be ``stream_my_stream_name``.
+  Beware of name collisions. For example, ``my.stream`` will use the same Hive table name as ``my_stream``.
 - CDAP uses a custom storage handler to read Streams through Hive. This means that queries must be run through
   CDAP and not directly through Hive unless you place CDAP jars in your Hive classpath. This also means that
   Streams cannot be queried directly by Impala. If you wish to use Impala to explore data in a Stream, you can
-  create an Adapter that converts Stream data into a ``TimePartitionedFileSet``, as described in :ref:`advanced-adapters`. 
+  create an :ref:`Adapter <apptemplates-index>` that converts Stream data into a ``TimePartitionedFileSet``. 
 - Some versions of Hive may try to create a temporary staging directory at the table location when executing queries.
   If you are seeing permission errors, try setting ``hive.exec.stagingdir`` in your Hive configuration to ``/tmp/hive-staging``.
 

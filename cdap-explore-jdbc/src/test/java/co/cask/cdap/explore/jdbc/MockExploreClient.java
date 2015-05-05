@@ -24,6 +24,7 @@ import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
+import co.cask.cdap.proto.QueryStatus;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ForwardingListenableFuture;
@@ -235,6 +236,11 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
     @Override
     public boolean canContainResults() {
       return true;
+    }
+
+    @Override
+    public QueryStatus getStatus() {
+      return QueryStatus.NO_OP;
     }
   }
 

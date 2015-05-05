@@ -142,8 +142,7 @@ function makeApp (authAddress, cdapConfig) {
       var link = 'http://' + cdapConfig['router.server.address'] +
               ':' +
               cdapConfig['router.server.port'] +
-              '/v3/ping';
-      console.log('url', link);
+              '/v3/namespaces';
 
       request({
           method: 'GET',
@@ -152,11 +151,11 @@ function makeApp (authAddress, cdapConfig) {
           requestCert: true,
           agent: false
         }, function(err) {
-        if (!err) {
-          res.status(200).send();
-        } else {
-          res.status(404).send();
-        }
+          if (!err) {
+            res.status(200).send();
+          } else {
+            res.status(404).send();
+          }
       });
     }
   ]);

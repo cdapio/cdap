@@ -22,7 +22,8 @@ angular.module(PKG.name + '.feature.mapreduce')
         controller: 'MapreduceDetailController',
         ncyBreadcrumb: {
           parent: 'apps.detail.overview',
-          label: '{{$state.params.programId}}'
+          label: 'Mapreduce',
+          skip: true
         }
       })
         .state('mapreduce.detail.runs', {
@@ -30,7 +31,7 @@ angular.module(PKG.name + '.feature.mapreduce')
           templateUrl: '/assets/features/mapreduce/templates/tabs/runs.html',
           controller: 'MapreduceRunsController',
           ncyBreadcrumb: {
-            label: 'Runs'
+            label: '{{$state.params.programId}}'
           },
           resolve: {
             rRuns: function(MyDataSource, $stateParams, $q) {

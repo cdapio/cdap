@@ -123,7 +123,7 @@ Starting the Flow
 
 Once the application is deployed:
 
-- Click on the *Process* button in the left sidebar of the CDAP Console,
+- Click on the *Process* button in the left sidebar of the CDAP UI,
   then click ``WebAnalyticsFlow`` in the *Process* page to get to the
   Flow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
@@ -167,7 +167,7 @@ Query the Unique Visitor Page Views
 ---------------------------------------
 Once the log data has been processed by the ``WebAnalyticsFlow``, we can explore the
 Dataset ``UniqueVisitCount`` with a SQL query. You can easily execute SQL queries against
-Datasets using the CDAP Console by simply selecting **Store** on the left sidebar, then
+Datasets using the CDAP UI by simply selecting **Store** on the left sidebar, then
 clicking the **Explore** button on the right, and then selecting the **UniqueVisitCount**
 Dataset:
 
@@ -199,7 +199,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 **Stopping the Flow**
 
-- Click on the *Process* button in the left sidebar of the CDAP Console,
+- Click on the *Process* button in the left sidebar of the CDAP UI,
   then click *WebAnalyticsFlow* in the *Process* page to get to the
   Flow detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:

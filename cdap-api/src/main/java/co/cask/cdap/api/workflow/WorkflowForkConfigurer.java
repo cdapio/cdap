@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.workflow;
 
+import co.cask.cdap.api.Predicate;
+
 /**
  * Defines an interface for the fork in the {@link Workflow}.
  * @param <T> the type of the object returned by the join method. For the outer fork
@@ -50,6 +52,13 @@ public interface WorkflowForkConfigurer<T> {
    * @return the configurer for the nested fork
    */
   WorkflowForkConfigurer<? extends WorkflowForkConfigurer<T>> fork();
+
+  /**
+   * Adds a condition to the current branch of the fork.
+   * @param condition the {@link Predicate} to be evaluated at the condition node
+   * @return the configurer for the condition
+   */
+  WorkflowConditionConfigurer<? extends WorkflowForkConfigurer<T>> condition(Predicate<WorkflowContext> condition);
 
   /**
    * Adds a branch to the {@link WorkflowForkNode}

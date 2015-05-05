@@ -64,6 +64,6 @@ public class ProgramCommands extends CommandSet<Command> implements Categorized 
 
   @Override
   public String getCategory() {
-    return CommandCategory.LIFECYCLE.getName();
+    return CommandCategory.APPLICATION_LIFECYCLE.getName();
   }
 }

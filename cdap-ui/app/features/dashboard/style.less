@@ -5,9 +5,7 @@ body.state-dashboard {
 
   main {
 
-    .row:first-child {
-      margin-bottom: 25px;
-    }
+    .row:first-child { margin-bottom: 25px; }
 
     aside {
       float: right;
@@ -20,13 +18,14 @@ body.state-dashboard {
       div[dropdown] {
         display: inline-block;
         position: relative;
+        .dropdown-menu {
+          .border-radius(0);
+          > li:first-child a { .border-radius(0); }
+        }
         &.open {
           .dropdown-toggle {
             .border-radius(4px 4px 0 0);
-            + .dropdown-menu {
-              min-width: 97px;
-              > li:first-child a { .border-radius(0); }
-            }
+            + .dropdown-menu { min-width: 97px; }
           }
         }
       }
@@ -61,9 +60,7 @@ body.state-dashboard {
           > li {
             &:first-child a { .border-radius(0 8px 0 0); }
             &:last-child a { .border-radius(0 0 8px 8px ); }
-            &.divider {
-              margin: 0;
-            }
+            &.divider { margin: 0; }
             > a {
               color: white;
               padding: 10px;
@@ -129,7 +126,6 @@ body.state-dashboard {
           // A
           color: @cdap-gray;
 
-
           .dtitle::before {
             display: inline-block;
             width: 0;
@@ -140,19 +136,14 @@ body.state-dashboard {
             border-left: 4px solid transparent;
             content: '';
           }
-
         }
       }
-
     }
-
   }
 
   [as-sortable],
   .as-sortable-item,
-  .as-sortable-placeholder {
-    min-height: 100px;
-  }
+  .as-sortable-placeholder { min-height: 100px; }
 
   .as-sortable-placeholder {
     border: 1px dashed @gray-light;
@@ -163,9 +154,7 @@ body.state-dashboard {
     border-radius: @panel-border-radius;
   }
 
-  .as-sortable-drag {
-    opacity: .6;
-  }
+  .as-sortable-drag { opacity: .6; }
 
   .panel-heading {
     user-select: none;
@@ -180,14 +169,10 @@ body.state-dashboard {
     }
   }
 
-  .last-item {
-    margin-bottom: 50px;
-  }
+  .last-item { margin-bottom: 50px; }
 
+  ul.dropdown-menu { z-index: 1200; } // above modal
 
-  ul.dropdown-menu {
-    z-index: 1200; // above modal
-  }
 }
 
 // @red: red;
@@ -209,12 +194,8 @@ body.state-dashboard {
     .line { stroke: @color; }
     .area, .dot { fill: @color; }
   }
-  .arc.category1 path {
-    fill: @color;
-  }
-  .bar.category1 {
-    fill: @color;
-  }
+  .arc.category1 path { fill: @color; }
+  .bar.category1 { fill: @color; }
 }
 
 .loop(@counter) when (@counter > 0) {
@@ -225,7 +206,3 @@ body.state-dashboard {
 }
 
 .loop(11);
-
-// .chart-red > .epoch {
-//   .chart-color(red);
-// }

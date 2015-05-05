@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
-    :version: 2.8.0
+    :version: 3.0.0
 
 =================================================
 Cask Data Application Platform |version|
@@ -37,6 +37,7 @@ Cask Data Application Platform Standalone Dependencies
    "com.fasterxml.jackson.core.jackson-core-2.3.1.jar","2.3.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.fasterxml.jackson.core.jackson-databind-2.3.1.jar","2.3.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.github.stephenc.high-scale-lib.high-scale-lib-1.1.1.jar","1.1.1","\-","Public Domain",""
+   "com.github.tony19.named-regexp-0.2.3.jar","0.2.3","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.code.findbugs.jsr305-2.0.1.jar","2.0.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.code.gson.gson-2.2.4.jar","2.2.4","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.guava.guava-13.0.1.jar","13.0.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -79,6 +80,7 @@ Cask Data Application Platform Standalone Dependencies
    "hadoop.dll","","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.netty.netty-3.6.6.Final.jar","3.6.6","Final","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.netty.netty-all-4.0.23.Final.jar","4.0.23","Final","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "io.thekraken.grok-0.1.0.jar","0.1.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "it.unimi.dsi.fastutil-6.5.6.jar","6.5.6","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "javax.activation.activation-1.1.jar","1.1","\-","Common Development And Distribution License (CCDL)","http://opensource.org/licenses/CDDL-1.0"
    "javax.annotation.jsr250-api-1.0.jar","1.0","\-","CCDL 1.0","https://glassfish.java.net/public/CDDLv1.0.html"
@@ -107,7 +109,7 @@ Cask Data Application Platform Standalone Dependencies
    "org.apache.avro.avro-ipc-1.6.2.jar","1.6.2","\-","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.apache.avro.avro-mapred-1.6.2.jar","1.6.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.commons.commons-compress-1.4.1.jar","1.4.1","\-","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
-   "org.apache.commons.commons-lang3-3.3.2.jar","3.3.2","\-","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
+   "org.apache.commons.commons-lang3-3.1.jar","3.1","\-","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.apache.commons.commons-math3-3.1.1.jar","3.1.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.curator.curator-client-2.4.0.jar","2.4.0","\-","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.apache.curator.curator-framework-2.4.0.jar","2.4.0","\-","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"

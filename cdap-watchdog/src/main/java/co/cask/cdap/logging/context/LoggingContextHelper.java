@@ -97,8 +97,9 @@ public final class LoggingContextHelper {
                                        tags.get(ApplicationLoggingContext.TAG_INSTANCE_ID));
     } else if (tags.containsKey(WorkflowLoggingContext.TAG_WORKFLOW_ID)) {
       return new WorkflowLoggingContext(namespaceId, applicationId,
-                                         tags.get(WorkflowLoggingContext.TAG_WORKFLOW_ID),
-                                         tags.get(ApplicationLoggingContext.TAG_RUNID_ID));
+                                        tags.get(WorkflowLoggingContext.TAG_WORKFLOW_ID),
+                                        tags.get(ApplicationLoggingContext.TAG_RUNID_ID),
+                                        tags.get(ApplicationLoggingContext.TAG_ADAPTER_ID));
     } else if (tags.containsKey(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID)) {
       return new MapReduceLoggingContext(namespaceId, applicationId,
                                          tags.get(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID),
@@ -156,7 +157,7 @@ public final class LoggingContextHelper {
       case FLOW:
         return new FlowletLoggingContext(namespaceId, applicationId, entityId, "", runId, null);
       case WORKFLOW:
-        return new WorkflowLoggingContext(namespaceId, applicationId, entityId, runId);
+        return new WorkflowLoggingContext(namespaceId, applicationId, entityId, runId, adapterName);
       case MAPREDUCE:
         return new MapReduceLoggingContext(namespaceId, applicationId, entityId, runId, adapterName);
       case SPARK:

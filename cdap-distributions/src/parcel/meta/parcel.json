@@ -44,7 +44,7 @@
       "pkg_release": "{{VERSION}}"
     },
     {
-      "name": "cdap-web-app",
+      "name": "cdap-ui",
       "version": "{{VERSION}}",
       "pkg_version": "{{VERSION}}",
       "pkg_release": "{{VERSION}}"

@@ -19,14 +19,14 @@ body.theme-cdap.state-adapters {
 }
 body.theme-cdap.state-adapters-detail,
 body.theme-cdap.state-adapters-create {
-  [etl-canvas-template] {
-    &[class*="col-"] {
-      padding-right: 0;
+
+  .ui-select-container.ui-select-bootstrap {
+    .ui-select-toggle {
+      overflow-x: auto;
     }
   }
+
   .etlflowcontainer {
-    width: 100%;
-    padding: 0 10px;
     position: relative;
     h4 {
       margin-top: 0;
@@ -97,6 +97,10 @@ body.theme-cdap.state-adapters-create {
 }
 body.theme-cdap.state-adapters-create {
 
+  .tab-pane .panel-default {
+    .panel-heading > span.panel-title { line-height: 30px; }
+  }
+
   .etlflowcontainer {
     .wrapper {
       .template {
@@ -120,11 +124,6 @@ body.theme-cdap.state-adapters-create {
       }
     }
   }
-  [etl-canvas-template] {
-    &[class*="col-"] {
-      padding-right: 0;
-    }
-  }
 
   .plugins {
     h4 {
@@ -146,6 +145,14 @@ body.theme-cdap.state-adapters-create {
             border-bottom: 1px solid lightgray;
             background-color: transparent;
             &:last-child { border: 1px solid transparent; }
+
+            .description-overflow {
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              color: darkgray;
+              font-size: 11px;
+            }
           }
         }
       }
@@ -181,11 +188,13 @@ body.theme-cdap.state-adapters-create {
     .panel-heading { cursor: pointer; }
   }
 
-  .tooltip.top { white-space: nowrap; }
 }
 
 body.theme-cdap.state-adapters-list {
 
+  .tooltip.top {
+    word-wrap: break-word;
+  }
   .label.etlappcontainer {
     position: relative;
     left: 5px;
@@ -218,6 +227,7 @@ body.theme-cdap.state-adapters-list {
       .well.well-lg {
         border: 2px dashed;
         margin-bottom: 0;
+        height: 163px;
         h1 { margin-bottom: 13px; }
       }
     }
@@ -239,16 +249,22 @@ body.theme-cdap.state-adapters-list {
         display: block;
         text-decoration: none;
         color: black;
-      }
-      h3 {
-        margin: 10px 0;
-        .fa-heartbeat { color: @cdap-orange; }
+        h4 {
+          margin: 10px 0 0 0;
+          .icon-app { color: @cdap-orange; }
+          span {
+            vertical-align: top;
+          }
+        }
       }
       p { margin: 0; }
     }
     .running { color: @brand-success; }
     .stopped { color: @cdap-darkness; }
     .killed { color: @brand-danger; }
-    .description { color: @cdap-darkness; }
+    .description {
+      color: @cdap-darkness;
+      word-wrap: break-word;
+    }
   }
 }

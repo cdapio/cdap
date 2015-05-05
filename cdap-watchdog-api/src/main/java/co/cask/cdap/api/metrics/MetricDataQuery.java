@@ -41,8 +41,20 @@ import javax.annotation.Nullable;
  * </pre>
  */
 public final class MetricDataQuery {
+
+  /**
+   * Start timestamp, in seconds.
+   */
   private final long startTs;
+
+  /**
+   * End timestamp, in seconds.
+   */
   private final long endTs;
+
+  /**
+   * Resolution in seconds.
+   */
   private final int resolution;
   private final int limit;
   private final Map<String, AggregationFunction> metrics;
@@ -51,18 +63,33 @@ public final class MetricDataQuery {
 
   private final Interpolator interpolator;
 
+  /**
+   * @param startTs Start timestamp, in seconds.
+   * @param endTs End timestamp, in seconds.
+   * @param resolution Resolution in seconds.
+   */
   public MetricDataQuery(long startTs, long endTs, int resolution,
                          String metricName, AggregationFunction func,
                          Map<String, String> sliceByTagValues, List<String> groupByTags) {
     this(startTs, endTs, resolution, -1, ImmutableMap.of(metricName, func), sliceByTagValues, groupByTags, null);
   }
 
+  /**
+   * @param startTs Start timestamp, in seconds.
+   * @param endTs End timestamp, in seconds.
+   * @param resolution Resolution in seconds.
+   */
   public MetricDataQuery(long startTs, long endTs, int resolution,
                          Map<String, AggregationFunction> metrics,
                          Map<String, String> sliceByTagValues, List<String> groupByTags) {
     this(startTs, endTs, resolution, -1, metrics, sliceByTagValues, groupByTags, null);
   }
 
+  /**
+   * @param startTs Start timestamp, in seconds.
+   * @param endTs End timestamp, in seconds.
+   * @param resolution Resolution in seconds.
+   */
   public MetricDataQuery(long startTs, long endTs, int resolution, int limit,
                          Map<String, AggregationFunction> metrics,
                          Map<String, String> sliceByTagValues, List<String> groupByTags,

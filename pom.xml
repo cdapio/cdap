@@ -87,6 +87,9 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <surefire.redirectTestOutputToFile>true</surefire.redirectTestOutputToFile>
 
+    <etl.batch.plugin.name>etlBatch</etl.batch.plugin.name>
+    <etl.realtime.plugin.name>etlRealtime</etl.realtime.plugin.name>
+
     <asm.version>4.0</asm.version>
     <async.http.version>1.7.18</async.http.version>
     <avro.version>1.6.2</avro.version>
@@ -1268,8 +1271,8 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.1</version>
           <configuration>
-            <source>1.6</source>
-            <target>1.6</target>
+            <source>1.7</source>
+            <target>1.7</target>
           </configuration>
         </plugin>
         <plugin>

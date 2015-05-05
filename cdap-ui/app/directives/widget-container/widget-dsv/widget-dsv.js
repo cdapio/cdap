@@ -4,10 +4,16 @@ angular.module(PKG.name + '.commons')
       restrict: 'E',
       scope: {
         model: '=ngModel',
-        delimiter: '@'
+        delimiter: '@',
+        type: '@'
       },
       templateUrl: 'widget-container/widget-dsv/widget-dsv.html',
       controller: function($scope) {
+        if ($scope.type === 'csv') {
+          $scope.showDelimiter = false;
+        } else {
+          $scope.showDelimiter = true;
+        }
 
         var delimiter = $scope.delimiter || ',';
 
@@ -17,6 +23,10 @@ angular.module(PKG.name + '.commons')
           $scope.properties = [];
 
           if (!str) {
+            // initialize with empty value
+            $scope.properties.push({
+              value: ''
+            });
             return;
           }
           var arr = str.split(delimiter);
@@ -26,6 +36,7 @@ angular.module(PKG.name + '.commons')
               value: a
             });
           });
+
         }
 
         initialize();

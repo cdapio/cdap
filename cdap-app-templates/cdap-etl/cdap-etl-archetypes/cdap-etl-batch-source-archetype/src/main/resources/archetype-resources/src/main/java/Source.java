@@ -19,23 +19,20 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
-import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.PipelineConfigurer;
-import co.cask.cdap.templates.etl.api.config.ETLStage;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeContext;
-import co.cask.cdap.templates.etl.api.realtime.RealtimeSource;
-import co.cask.cdap.templates.etl.api.realtime.SourceState;
-
-import javax.annotation.Nullable;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.template.etl.api.Emitter;
+import co.cask.cdap.template.etl.api.batch.BatchSource;
+import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
 
 /**
- * Realtime Source to poll data from external sources.
+ * Batch Source to poll data from external sources.
  */
 @Plugin(type = "source")
 @Name("Source")
-@Description("Realtime Source")
-public class Source extends RealtimeSource<StructuredRecord> {
+@Description("Batch Source")
+public class Source extends BatchSource<byte[], byte[], StructuredRecord> {
 
   private final SourceConfig config;
 
@@ -56,23 +53,17 @@ public class Source extends RealtimeSource<StructuredRecord> {
 
   }
 
-  
-  @Nullable
   @Override
-  public SourceState poll(Emitter<StructuredRecord> writer, SourceState currentState) {
-    // Poll for new data
-    // Write structured record to the writer
-    //writer.emit(myStructuredRecord);
-    return currentState;
-  }
-
-  @Override
-  public void initialize(RealtimeContext context) throws Exception {
+  public void initialize(BatchSourceContext context) throws Exception {
     super.initialize(context);
-    // No-op
     // Get Config param and use to initialize
     // String param = config.param
     // Perform init operations, external operations etc.
+  }
+
+  @Override
+  public void prepareRun(BatchSourceContext context) {
+    // Configure hadoop job before running in batch.
   }
 
   @Override
@@ -80,5 +71,13 @@ public class Source extends RealtimeSource<StructuredRecord> {
     // No-op
     // Handle destroy life
   }
+
+
+
+  @Override
+  public void transform(KeyValue<byte[], byte[]> input, Emitter<StructuredRecord> emitter) throws Exception {
+    // emitter.emit(value);
+  }
 }
+
 

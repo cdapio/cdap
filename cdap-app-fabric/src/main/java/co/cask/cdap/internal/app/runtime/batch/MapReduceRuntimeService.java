@@ -35,6 +35,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.utils.ApplicationBundler;
 import co.cask.cdap.common.utils.DirUtils;
@@ -135,6 +136,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private Job job;
   private Transaction transaction;
   private Runnable cleanupTask;
+  private ClassLoader classLoader;
   private volatile boolean stopRequested;
 
   MapReduceRuntimeService(CConfiguration cConf, Configuration hConf,
@@ -163,7 +165,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   @Override
   protected void startUp() throws Exception {
     final Job job = Job.getInstance(new Configuration(hConf));
-    job.setJobName(getJobName(context));
     Configuration mapredConf = job.getConfiguration();
 
     if (UserGroupInformation.isSecurityEnabled()) {
@@ -177,10 +178,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       job.getCredentials().addAll(credentials);
     }
 
-    ClassLoader classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader());
-    ClassLoaders.setContextClassLoader(classLoader);
+    // We need to hold a strong reference to the ClassLoader until the end of the MapReduce job.
+    classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader());
+    job.getConfiguration().setClassLoader(new WeakReferenceDelegatorClassLoader(classLoader));
+    ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
 
-    job.getConfiguration().setClassLoader(classLoader);
     context.setJob(job);
 
     // both beforeSubmit() and setInput/OutputDataset() may call dataset methods. They must be run inside a tx
@@ -196,6 +198,14 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       }
     }, "startUp()");
 
+    // Override user-defined job name, since we set it and depend on the name.
+    // https://issues.cask.co/browse/CDAP-2441
+    String jobName = job.getJobName();
+    if (!jobName.isEmpty()) {
+      LOG.warn("Job name {} is being overridden.", jobName);
+    }
+    job.setJobName(getJobName(context));
+
     // After calling beforeSubmit, we know what plugins are needed for adapter, hence construct the proper
     // ClassLoader from here and use it for setting up the job
     Location pluginArchive = createPluginArchive(context.getAdapterSpecification(), context.getProgram().getId());
@@ -209,8 +219,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // It can only be constructed here because we need to have all adapter plugins information
       classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader(), context.getAdapterSpecification(),
                                              context.getPluginInstantiator());
-      ClassLoaders.setContextClassLoader(classLoader);
-      job.getConfiguration().setClassLoader(classLoader);
+      job.getConfiguration().setClassLoader(new WeakReferenceDelegatorClassLoader(classLoader));
+      ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
 
       setOutputClassesIfNeeded(job);
       setMapOutputClassesIfNeeded(job);
@@ -355,9 +365,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       } finally {
         context.close();
         cleanupTask.run();
-        // Need to reset the ClassLoader in the job conf, otherwise the MR framework will be holding a reference
-        // to the ProgramClassLoader, resulting in memory leak.
-        job.getConfiguration().setClassLoader(null);
       }
     }
   }
@@ -743,10 +750,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       LOG.warn("Not including HBaseTableUtil classes in submitted Job Jar since they are not available");
     }
 
-    ClassLoader oldCLassLoader = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(jobConf.getConfiguration().getClassLoader());
+    ClassLoader oldCLassLoader = ClassLoaders.setContextClassLoader(jobConf.getConfiguration().getClassLoader());
     appBundler.createBundle(jobJar, classes);
-    Thread.currentThread().setContextClassLoader(oldCLassLoader);
+    ClassLoaders.setContextClassLoader(oldCLassLoader);
 
     LOG.info("Built MapReduce Job Jar at {}", jobJar.toURI());
     return jobJar;
@@ -893,32 +899,31 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       return null;
     }
 
-    File templateDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
-    File pluginDir = new File(templateDir, adapterSpec.getTemplate());
+    // Find plugins that are used by this adapter.
+    File pluginDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_PLUGIN_DIR));
+    File templatePluginDir = new File(pluginDir, adapterSpec.getTemplate());
     File jarFile = File.createTempFile("plugin", ".jar");
     try {
-      JarOutputStream output = new JarOutputStream(new FileOutputStream(jarFile));
-      try {
+      String entryPrefix = pluginDir.getName() + "/" + adapterSpec.getTemplate();
+
+      try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jarFile))) {
         // Create the directory entries
-        output.putNextEntry(new JarEntry(adapterSpec.getTemplate() + "/"));
-        output.putNextEntry(new JarEntry(adapterSpec.getTemplate() + "/lib/"));
+        output.putNextEntry(new JarEntry(entryPrefix + "/"));
+        output.putNextEntry(new JarEntry(entryPrefix + "/lib/"));
 
         // copy the plugin jars
         for (PluginInfo plugin : pluginInfos) {
-          String entryName = String.format("%s/%s", adapterSpec.getTemplate(), plugin.getFileName());
+          String entryName = String.format("%s/%s", entryPrefix, plugin.getFileName());
           output.putNextEntry(new JarEntry(entryName));
-          Files.copy(new File(pluginDir, plugin.getFileName()), output);
+          Files.copy(new File(templatePluginDir, plugin.getFileName()), output);
         }
 
         // copy the common plugin lib jars
-        for (File libJar : DirUtils.listFiles(new File(pluginDir, "lib"), "jar")) {
-          String entryName = String.format("%s/lib/%s", adapterSpec.getTemplate(), libJar.getName());
+        for (File libJar : DirUtils.listFiles(new File(templatePluginDir, "lib"), "jar")) {
+          String entryName = String.format("%s/lib/%s", entryPrefix, libJar.getName());
           output.putNextEntry(new JarEntry(entryName));
           Files.copy(libJar, output);
         }
-
-      } finally {
-        output.close();
       }
 
       // Copy the jar to a location, based on the location factory

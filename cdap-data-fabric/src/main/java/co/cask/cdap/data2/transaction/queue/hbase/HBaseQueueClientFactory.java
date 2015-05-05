@@ -230,7 +230,11 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
     return queueAdmin;
   }
 
-  private HTable createHTable(TableId tableId) throws IOException {
+  public HBaseQueueAdmin getQueueAdmin() {
+    return queueAdmin;
+  }
+
+  public HTable createHTable(TableId tableId) throws IOException {
     HTable consumerTable = hBaseTableUtil.createHTable(hConf, tableId);
     // TODO: make configurable
     consumerTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
@@ -238,7 +242,7 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
     return consumerTable;
   }
 
-  private int getDistributorBuckets(HTableDescriptor htd) {
+  public int getDistributorBuckets(HTableDescriptor htd) {
     String value = htd.getValue(QueueConstants.DISTRIBUTOR_BUCKETS);
     // If the setting is not in the table meta, this is a old table, hence use the value in the cConf
     if (value == null) {

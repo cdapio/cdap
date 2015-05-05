@@ -1,0 +1,42 @@
+{
+  "id": "Cube",
+  "groups" : {
+    "position": [ "group1", "group2" ],
+    "group1": {
+      "display" : "General",
+      "position" : ["name"],
+      "fields": {
+        "name": {
+          "widget": "textbox",
+          "label" : "Name",
+          "description" : "Name of cube to be created."
+        }
+      }
+    },
+
+    "group2" : {
+      "display" : "Resolution & Aggregations",
+      "position" : [ "dataset.cube.resolutions", "mapping.config", "custom.properties" ],
+      "fields" : {
+         "dataset.cube.resolutions" : {
+           "widget" : "csv",
+           "label" : "Cube Resolution",
+           "description" : "Aggregates for multiple time resolutions to provide a better view of data for both small and large time ranges",
+           "properties": {
+              "delimiter": ","
+           }
+         },
+         "mapping.config" : {
+            "widget" : "json-editor",
+            "label" : "Cube Configuration",
+            "description" : "Provide the cube configuration"
+         },
+         "custom.properties" : {
+           "widget" : "json-editor",
+           "label"  : "Custom Dataset Properties",
+           "description" : "Provide any custom dataset properties"
+         }
+      }
+    }
+  }
+}

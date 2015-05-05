@@ -319,7 +319,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
               close(handle);
             }
             if (!resultFuture.set(new ClientExploreExecutionResult(AbstractExploreClient.this,
-                                                                   handle, status.hasResults()))) {
+                                                                   handle, status))) {
               close(handle);
             }
           }
@@ -357,20 +357,22 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
 
     private final ExploreHttpClient exploreClient;
     private final QueryHandle handle;
-    private final boolean canContainResults;
-    private final boolean hasResults;
+    private final QueryStatus status;
 
-    public ClientExploreExecutionResult(ExploreHttpClient exploreClient, QueryHandle handle,
-                                        boolean canContainResults) {
+    public ClientExploreExecutionResult(ExploreHttpClient exploreClient, QueryHandle handle, QueryStatus status) {
       this.exploreClient = exploreClient;
       this.handle = handle;
-      this.canContainResults = canContainResults;
-      this.hasResults = canContainResults;
+      this.status = status;
+    }
+
+    @Override
+    public QueryStatus getStatus() {
+      return status;
     }
 
     @Override
     protected QueryResult computeNext() {
-      if (!hasResults) {
+      if (!status.hasResults()) {
         return endOfData();
       }
 
@@ -496,7 +498,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
 
     @Override
     public boolean canContainResults() {
-      return canContainResults;
+      return status.hasResults();
     }
   }
 

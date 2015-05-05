@@ -43,7 +43,9 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.util.ShutdownHookManager;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnableSpecification;
@@ -145,6 +147,15 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void run() {
     LOG.info("Starting runnable " + name);
+
+    // Register shutdown hook to stop Log Saver before Hadoop Filesystem shuts down
+    ShutdownHookManager.get().addShutdownHook(new Runnable() {
+      @Override
+      public void run() {
+        LOG.info("Shutdown hook triggered.");
+        stop();
+      }
+    }, FileSystem.SHUTDOWN_HOOK_PRIORITY + 1);
 
     Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, logSaver,
                                              multiElection, logSaverStatusService));

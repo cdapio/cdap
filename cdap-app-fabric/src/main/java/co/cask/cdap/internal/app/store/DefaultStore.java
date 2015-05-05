@@ -78,6 +78,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -156,6 +157,39 @@ public class DefaultStore implements Store {
                                 "Application must be redeployed");
 
     return Programs.create(programLocation);
+  }
+
+  @Override
+  public void compareAndSetStatus(final Id.Program id, final String pid, final ProgramRunStatus expectedStatus,
+                                  final ProgramRunStatus updateStatus) {
+    Preconditions.checkArgument(expectedStatus != null, "Expected of program run should be defined");
+    Preconditions.checkArgument(updateStatus != null, "Updated state of program run should be defined");
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        RunRecord target = mds.apps.getRun(id, pid);
+        if (target.getStatus() == expectedStatus) {
+          switch (updateStatus) {
+            case RUNNING:
+              mds.apps.recordProgramResumed(id, pid);
+              break;
+            case SUSPENDED:
+              mds.apps.recordProgramSuspend(id, pid);
+              break;
+            case COMPLETED:
+            case KILLED:
+            case FAILED:
+              long now = System.currentTimeMillis();
+              long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
+              mds.apps.recordProgramStop(id, pid, nowSecs, updateStatus);
+              break;
+            default:
+              break;
+          }
+        }
+        return null;
+      }
+    });
   }
 
   @Override

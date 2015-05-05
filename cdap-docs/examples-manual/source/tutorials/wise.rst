@@ -135,7 +135,7 @@ Wise application’s architecture:
   to query the ``pageViewStore`` Dataset.
   
 - Finally, both the ``pageViewStore`` and ``bounceCountStore`` Datasets expose a SQL interface. They
-  can be queried using SQL queries through our Explore module in the CDAP Console. 
+  can be queried using SQL queries through our Explore module in the CDAP UI. 
 
 Now let’s talk about each of these components in more detail.
 
@@ -364,7 +364,7 @@ We also define the graph of their connections:
 - *logEventStream* Stream is connected to the *parser* Flowlet; and 
 - *parser* Flowlet is connected to the *pageViewCount* Flowlet. 
 
-Here is how ``WiseFlow`` looks in the CDAP Console:
+Here is how ``WiseFlow`` looks in the CDAP UI:
 
 .. image:: /../build/_includes/tutorial-wise/wise_flow.png
    :width: 8in
@@ -553,10 +553,10 @@ a specific IP address. For example, to query the pageview count of page ``/index
 Exploring Datasets through SQL
 ==============================
 With Wise, you can explore the Datasets using SQL queries. The SQL interface on CDAP,
-called *Explore*, can be accessed through the CDAP Console:
+called *Explore*, can be accessed through the CDAP UI:
 
 1. After deploying Wise in your Standalone CDAP instance, go to the **Store** page, which is one
-   of the five pages you can access from the left pane of the CDAP Console:
+   of the five pages you can access from the left pane of the CDAP UI:
 
 .. image:: /../build/_includes/tutorial-wise/wise_store_page.png 
     :width: 8in
