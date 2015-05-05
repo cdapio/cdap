@@ -20,10 +20,10 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.StageConfigurer;
-import co.cask.cdap.templates.etl.api.batch.BatchSink;
-import co.cask.cdap.templates.etl.api.batch.BatchSinkContext;
+import co.cask.cdap.template.etl.api.Emitter;
+import co.cask.cdap.template.etl.api.PipelineConfigurer;
+import co.cask.cdap.template.etl.api.batch.BatchSink;
+import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
 import org.apache.hadoop.io.NullWritable;
 
 /**
@@ -36,7 +36,7 @@ import org.apache.hadoop.io.NullWritable;
 public class Sink extends BatchSink<StructuredRecord, byte[], NullWritable> {
 
   @Override
-  public void configure(StageConfigurer configurer) {
+  public void configurePipeline(PipelineConfigurer configurer) {
     // Make sure any properties that are expected are valid
   }
 
@@ -47,7 +47,7 @@ public class Sink extends BatchSink<StructuredRecord, byte[], NullWritable> {
   }
 
   @Override
-  public void prepareJob(BatchSinkContext context) {
+  public void prepareRun(BatchSinkContext context) {
    // Configure hadoop job before running in batch.
   }
 
