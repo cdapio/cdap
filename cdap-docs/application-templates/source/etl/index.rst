@@ -41,44 +41,76 @@ transformations and sinks that are packaged together.
 The batch sources can write to any batch sinks that are available and realtime sources can
 write to any realtime sinks. Transformations work with either sinks or sources.
 
-This matrix depicts the list of available sources, transformations, and sinks:
+This lists the available sources, sinks and transformations (transforms):
 
 .. list-table::
-   :widths: 25 25 25 25
+   :widths: 30 30 40
    :header-rows: 1
 
-   * - Template Type
-     - Sources
-     - Transformations
-     - Sinks
+   * - Template
+     - Type
+     - Name
    * - **Batch**
+     - **Source**
+     - Database
+   * - 
+     - **Source**
+     - KVTable
+   * - 
+     - **Source**
      - Stream
-     - Filter
-     - Datasets (Table)
    * - 
-     - Datasets (Table)
-     - Projection
+     - **Source**
+     - Table
+   * - 
+     - **Sink**
+     - Cube
+   * - 
+     - **Sink**
      - Database
    * - 
-     - Database
-     - Script (Javascript)
-     - TimePartitionedFileSets
+     - **Sink**
+     - KVTable
    * - 
-     - 
-     - 
-     - 
+     - **Sink**
+     - TPFSAvro
+   * - 
+     - **Sink**
+     - Table
+
    * - **Realtime**
+     - **Source**
+     - JMS
+   * - 
+     - **Source**
+     - Kafka
+   * - 
+     - **Source**
      - Twitter
-     - Filter
+   * - 
+     - **Source**
+     - Test
+   * - 
+     - **Sink**
+     - Cube
+   * - 
+     - **Sink**
      - Stream
    * - 
-     - JMS
+     - **Sink**
+     - Table
+   * - **Transform**
+     - *either*
      - Projection
-     - Datasets (Table)
    * - 
-     - Kafka
-     - Script (Javascript)
-     - Cube Dataset
+     - *either*
+     - ScriptFilter
+   * - 
+     - *either*
+     - Script
+   * - 
+     - *either*
+     - StructuredRecordToGenericRecord
 
 
 ETL Adapters
