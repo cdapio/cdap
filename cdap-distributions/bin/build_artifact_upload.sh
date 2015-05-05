@@ -119,10 +119,11 @@ function sync_build_artifacts_to_server () {
     _snapshot_time=`echo ${_version_stub} | awk -F - '{ print $1 }' | sed 's/\([0-9]\.[0-9]\.[0-9]\)\.\([0-9]*\)/\2/'`
 
     # identify and create remote incoming directory
-    if [ "${_snapshot_time}" != '' ]; then  # send snapshots to a different directory
-      _version="${_version}-SNAPSHOT"
+    if [ "${_snapshot_time}" == '' ]; then
+      OUTGOING_DIR=${BUILD_PACKAGE}/${_version}
+    else
+      OUTGOING_DIR=snapshot/cask/${BUILD_PACKAGE}/${_version}  ## send snapshots to a different directory
     fi
-    OUTGOING_DIR=${BUILD_PACKAGE}/${_version}
     echo "Create remote directory ${REMOTE_INCOMING_DIR}/${OUTGOING_DIR} if necessary"
     ssh -l ${REMOTE_USER} ${REMOTE_HOST} "mkdir -p ${REMOTE_INCOMING_DIR}/${OUTGOING_DIR}" || die "could not create remote directory"
 
