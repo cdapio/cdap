@@ -153,8 +153,8 @@ application in the same namespace. WorkerContext can be used to discover the URL
 <span class="o">}</span>
 </pre></div>
 </div>
-<div class="section" id="writing-to-streams-beta">
-<h2>Writing to Streams (Beta)<a class="headerlink" href="#writing-to-streams-beta" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="writing-to-streams">
+<h2>Writing to Streams<a class="headerlink" href="#writing-to-streams" title="Permalink to this headline">¶</a></h2>
 <p>Workers have the ability to write to <code class="docutils literal"><span class="pre">Streams</span></code> through the <code class="docutils literal"><span class="pre">WorkerContext</span></code>. The implementation internally
 issues an HTTP request to the Stream Service to persist the data. Because of that, a write to a Stream
 cannot be rolled back, and thus the write differs in semantics compared to writing to <code class="docutils literal"><span class="pre">Datasets</span></code> from inside the
@@ -273,7 +273,7 @@ to the <a class="reference external" href="../source/../../reference-manual/http
 <li class="toctree-l2"><a class="reference internal" href="schedules.html"> Schedules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="spark-programs.html"> Spark Programs</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href=""> Workers</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#writing-to-streams-beta">Writing to Streams (Beta)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#writing-to-streams">Writing to Streams</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="services.html"> Services</a></li>

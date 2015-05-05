@@ -43,7 +43,7 @@
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <link rel="shortcut icon" href="../_static/favicon.ico"/>
     <link rel="top" title="Cask Data Application Platform 3.0.0 Documentation" href="../index.html" />
-    <link rel="next" title="Realtime Data Processing with a Flow" href="cdap-flow-guide.html" />
+    <link rel="next" title="Analyzing CDAP Data from BI Tools" href="cdap-bi-guide.html" />
     <link rel="prev" title="Word Count" href="../examples/word-count.html" /> 
   </head>
   <body role="document">
@@ -54,7 +54,7 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">Index</a></li>
         <li class="right" >
-          <a href="cdap-flow-guide.html" title="Realtime Data Processing with a Flow"
+          <a href="cdap-bi-guide.html" title="Analyzing CDAP Data from BI Tools"
              accesskey="N">Next</a> |</li>
         <li class="right" >
           <a href="../examples/word-count.html" title="Word Count"
@@ -77,19 +77,30 @@
 <span id="guides-index"></span><h1>How-To Guides<a class="headerlink" href="#how-to-guides" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="cdap-bi-guide.html">Analyzing CDAP Data from BI Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cdap-cube-guide.html">Data Analysis with OLAP Cube</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cdap-etl-adapter-guide.html">Creating ETL Pipelines using CDAP ETL Application Templates</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cdap-flow-guide.html">Realtime Data Processing with a Flow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cdap-flume-guide.html">Ingesting Data into CDAP using Apache Flume</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cdap-kafka-ingest-guide.html">Consuming Data from Kafka</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cdap-mapreduce-guide.html">Batch Data Processing with CDAP</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cdap-bi-guide.html">Analyzing CDAP Data from BI Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cdap-spark-guide.html">Iterative Data Processing with Apache Spark</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cdap-timeseries-guide.html">Storing Timeseries Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cdap-twitter-ingest-guide.html">Consuming Twitter Data in Realtime</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cdap-spark-guide.html">Iterative Data Processing with Apache Spark</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cdap-cube-guide.html">Data Analysis with OLAP Cube</a></li>
 </ul>
 </div>
 <p>Designed to be completed in 15-30 minutes, these guides provide quick, hands-on
 instructions for building the “Hello World” of any development task with CDAP.</p>
+<ul class="simple">
+<li><a class="reference external" href="cdap-bi-guide.html"><strong>Analyzing CDAP Data from BI Tools:</strong></a> Learn how to <strong>integrate CDAP Datasets with Business Intelligence tools</strong> to
+perform data analysis.</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="cdap-cube-guide.html"><strong>Data Analysis with OLAP Cube:</strong></a> Use a <strong>Cube Dataset</strong> to perform <strong>online analytical processing</strong> of weblogs with CDAP.</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="cdap-etl-adapter-guide.html"><strong>Creating ETL Pipelines:</strong></a> Using CDAP <strong>ETL Application Templates and Adapters</strong>.</li>
+</ul>
 <ul class="simple">
 <li><a class="reference external" href="cdap-flow-guide.html"><strong>Realtime Data Processing With a Flow:</strong></a>  Learn how to <strong>process data in realtime</strong> with CDAP. You will discover how
 easy it is to scale out applications on CDAP.</li>
@@ -104,8 +115,7 @@ easy it is to scale out applications on CDAP.</li>
 <li><a class="reference external" href="cdap-mapreduce-guide.html"><strong>Batch Data Processing With CDAP:</strong></a> Learn how to <strong>run MapReduce programs to process data in CDAP.</strong></li>
 </ul>
 <ul class="simple">
-<li><a class="reference external" href="cdap-bi-guide.html"><strong>Analyzing CDAP Data from BI Tools:</strong></a> Learn how to <strong>integrate CDAP Datasets with Business Intelligence tools</strong> to
-perform data analysis.</li>
+<li><a class="reference external" href="cdap-spark-guide.html"><strong>Iterative Data Processing with Apache Spark:</strong></a> Learn how to <strong>run a Spark program to process data in CDAP.</strong></li>
 </ul>
 <ul class="simple">
 <li><a class="reference external" href="cdap-timeseries-guide.html"><strong>Storing Timeseries Data:</strong></a> Learn how to <strong>store timeseries data in CDAP Datasets.</strong></li>
@@ -113,12 +123,6 @@ perform data analysis.</li>
 <ul class="simple">
 <li><a class="reference external" href="cdap-twitter-ingest-guide.html"><strong>Consuming Twitter Data in Realtime:</strong></a> Learn how to <strong>consume a live tweets stream in realtime,</strong> one of
 the common tasks of big data applications that power the social analytics.</li>
-</ul>
-<ul class="simple">
-<li><a class="reference external" href="cdap-spark-guide.html"><strong>Iterative Data Processing with Apache Spark:</strong></a> Learn how to <strong>run a Spark program to process data in CDAP.</strong></li>
-</ul>
-<ul class="simple">
-<li><a class="reference external" href="cdap-cube-guide.html"><strong>Data Analysis with OLAP Cube:</strong></a> Use a <strong>Cube Dataset</strong> to perform <strong>online analytical processing</strong> of weblogs with CDAP.</li>
 </ul>
 </div>
 
@@ -192,15 +196,16 @@ the common tasks of big data applications that power the social analytics.</li>
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">How-To Guides</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cdap-bi-guide.html">Analyzing CDAP Data from BI Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-cube-guide.html">Data Analysis with OLAP Cube</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-etl-adapter-guide.html">Creating ETL Pipelines using CDAP ETL Application Templates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cdap-flow-guide.html">Realtime Data Processing with a Flow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cdap-flume-guide.html">Ingesting Data into CDAP using Apache Flume</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cdap-kafka-ingest-guide.html">Consuming Data from Kafka</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cdap-mapreduce-guide.html">Batch Data Processing with CDAP</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cdap-bi-guide.html">Analyzing CDAP Data from BI Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-spark-guide.html">Iterative Data Processing with Apache Spark</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cdap-timeseries-guide.html">Storing Timeseries Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cdap-twitter-ingest-guide.html">Consuming Twitter Data in Realtime</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cdap-spark-guide.html">Iterative Data Processing with Apache Spark</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cdap-cube-guide.html">Data Analysis with OLAP Cube</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
@@ -212,8 +217,8 @@ the common tasks of big data applications that power the social analytics.</li>
   <p class="topless"><a href="../examples/word-count.html"
                         title="Previous Chapter">Word Count</a></p>
   <h4>Next Topic</h4>
-  <p class="topless"><a href="cdap-flow-guide.html"
-                        title="Next Chapter">Realtime Data Processing with a Flow</a></p>
+  <p class="topless"><a href="cdap-bi-guide.html"
+                        title="Next Chapter">Analyzing CDAP Data from BI Tools</a></p>
   <div role="note" aria-label="downloads links">
     <h3>Downloads</h3>
     <ul class="this-page-menu">
@@ -269,7 +274,7 @@ the common tasks of big data applications that power the social analytics.</li>
     
     </th>
     <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
-    <a title="Realtime Data Processing with a Flow" href="cdap-flow-guide.html" />Realtime Data Processing with a Flow</a>
+    <a title="Analyzing CDAP Data from BI Tools" href="cdap-bi-guide.html" />Analyzing CDAP Data from BI Tools</a>
     
     </th>
   </tr>
