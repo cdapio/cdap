@@ -33,6 +33,11 @@ REMOTE_INCOMING_DIR=${3}                                ### target directory on 
 REMOTE_BASE_DIR="${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_INCOMING_DIR}"
 BUILD_RELEASE_DIRS='*/target'                           ### Source directories
 BUILD_PACKAGE=${BUILD_PACKAGE:-cdap}
+BUILD_BRANCH="${BUILD_BRANCH:-DEVELOP}"
+COMPONENT='SNAPSHOT'
+if [ "${BUILD_BRANCH}" == 'RELEASE' ]; then
+  COMPONENT="${BUILD_BRANCH}"
+fi
 #############################
 # find top of repo
 find_repo_root() {
@@ -82,6 +87,7 @@ function sync_build_artifacts_to_server () {
   do
     decho "PACKAGE=${i}"
     _package=`basename ${i}`
+    _snapshot_time=''
 
     ##
     # most CDAP Debian packages will look like this: (typical, not just in CDAP)
@@ -116,8 +122,22 @@ function sync_build_artifacts_to_server () {
     _version=`echo ${_version_stub} | awk -F - '{ print $1 }' | awk -F . '{ print $1"."$2"."$3 }'`
     decho "version = ${_version}"
 
+    _snapshot_time=`echo ${_version_stub} | awk -F - '{ print $1 }' | sed 's/\([0-9]\.[0-9]\.[0-9]\)\.\([0-9]*\)/\2/'`
+    if [[ "${COMPONENT}" == 'RELEASE' && "${_snapshot_time}" != '' ]]; then  ### RELEASE => no snapshot artifacts
+      decho "release artifacts should not have a time stamp"
+      break 
+    elif [[ "${COMPONENT}" == 'SNAPSHOT' && "${_snapshot_time}" == '' ]]; then ## DEVELOP => snapshot artifacts
+      decho "snapshot artifacts should have a time stamp"
+      break
+    else
+      decho "artifact meets criteria: COMPONENT=${COMPONENT}, timestamp=${_snapshot_time}"
+    fi
+
     # identify and create remote incoming directory
     OUTGOING_DIR=${BUILD_PACKAGE}/${_version}
+    if [ "${COMPONENT}" == 'SNAPSHOT' ]; then
+      OUTGOING_DIR="${OUTGOING_DIR}-SNAPSHOT"
+    fi
     echo "Create remote directory ${REMOTE_INCOMING_DIR}/${OUTGOING_DIR} if necessary"
     ssh -l ${REMOTE_USER} ${REMOTE_HOST} "mkdir -p ${REMOTE_INCOMING_DIR}/${OUTGOING_DIR}" || die "could not create remote directory"
 
