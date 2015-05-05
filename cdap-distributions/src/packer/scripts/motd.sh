@@ -17,11 +17,11 @@
 echo "			Welcome to the CDAP SDK VM
 
 This virtual machine uses a simple graphical interface. The menu can be accessed
-by right clicking on the background. If you have a Mac, this is a two-finger tap
+by right-clicking on the background. If you have a Mac, this is a two-finger tap
 on the trackpad. Included are the Eclipse IDE and IntelliJ IDE, Firefox, Git,
 Subversion and the CDAP SDK.
 
-The login and password to the machine is "cdap" and the user has sudo privileges
+The login and password to the machine is 'cdap' and the user has sudo privileges
 without a password.
 
 The SDK can be stopped/started/restarted using the /etc/init.d/cdap-sdk init
