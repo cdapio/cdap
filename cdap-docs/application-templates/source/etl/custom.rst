@@ -4,13 +4,13 @@
 
 .. _advanced-custom-app-template:
 
-==================================================================
-Creating Custom Application Templates, Plugins and Adapters (Beta)
-==================================================================
+===============================================
+Creating Custom ETL Plugins and Adapters (Beta)
+===============================================
 
 Overview
 ========
-This section is intended for developers writing custom Application Templates, Plugins and
+This section is intended for developers writing custom ETL Plugins and
 Adapters. Users of these should refer to the :ref:`Application Templates
 <apptemplates-index>`.
 
@@ -588,5 +588,3 @@ Sample JDBC Driver Plugin configuration::
       "className" : "org.postgresql.Driver",
     }
   ]
-
-https://github.com/caskdata/cdap/tree/release/3.0/cdap-app-templates/cdap-etl/cdap-etl-lib

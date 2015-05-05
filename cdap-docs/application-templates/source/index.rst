@@ -77,11 +77,8 @@ These sections describe:
 - |etl-operations|_ Covers using an ETL Adapter to perform ETL.
 
 
-Creating Custom Application Templates (Beta)
-============================================
+.. |etl-custom| replace:: **Creating Custom ETL Plugins:**
+.. _etl-custom: etl/custom.html
 
-.. |custom| replace:: **Creating Custom Application Templates:**
-.. _custom: custom.html
-
-- |custom|_ Intended for developers writing custom Application Templates, Plugins and Adapters.
+- |etl-custom|_ Intended for developers writing custom ETL Plugins and Adapters.
 
