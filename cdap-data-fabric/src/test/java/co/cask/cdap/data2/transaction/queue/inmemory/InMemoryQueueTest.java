@@ -19,11 +19,12 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
-import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueTest;
@@ -31,8 +32,10 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.util.Modules;
 import org.junit.BeforeClass;
 
 /**
@@ -49,15 +52,25 @@ public class InMemoryQueueTest extends QueueTest {
       new ConfigModule(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new DataSetsModules().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
-      new TransactionMetricsModule());
+      new TransactionMetricsModule(),
+      Modules.override(new StreamAdminModules().getInMemoryModules())
+        .with(new AbstractModule() {
+          @Override
+          protected void configure() {
+            // The tests are actually testing stream on queue implementation, hence bind it to the queue implementation
+            bind(StreamAdmin.class).to(InMemoryStreamAdmin.class);
+            bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
+          }
+        }));
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);
-    streamAdmin = injector.getInstance(StreamAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
   }
 }

@@ -16,16 +16,15 @@
 
 package co.cask.cdap.streamevent;
 
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.SchemaHash;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.io.BinaryDecoder;
-import co.cask.cdap.common.stream.DefaultStreamEvent;
 import co.cask.cdap.common.stream.StreamEventCodec;
-import co.cask.cdap.internal.io.ByteBufferInputStream;
 import co.cask.cdap.internal.io.ReflectionDatumReader;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.internal.io.Schema;
-import co.cask.cdap.internal.io.SchemaHash;
-import co.cask.cdap.internal.io.UnsupportedTypeException;
+import co.cask.common.io.ByteBufferInputStream;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -42,8 +41,8 @@ public class StreamEventCodecTest {
 
   @Test
   public void testEncodeDecode() {
-    StreamEvent event = new DefaultStreamEvent(Maps.<String, String>newHashMap(),
-                                               ByteBuffer.wrap("Event string".getBytes(Charsets.UTF_8)));
+    StreamEvent event = new StreamEvent(Maps.<String, String>newHashMap(),
+                                        ByteBuffer.wrap("Event string".getBytes(Charsets.UTF_8)));
 
     StreamEventCodec codec = new StreamEventCodec();
     StreamEvent decodedEvent = codec.decodePayload(codec.encodePayload(event));
@@ -54,8 +53,8 @@ public class StreamEventCodecTest {
 
   @Test
   public void testEncodeDecodeWithDatumDecoder() throws UnsupportedTypeException, IOException {
-    StreamEvent event = new DefaultStreamEvent(Maps.<String, String>newHashMap(),
-                                               ByteBuffer.wrap("Event string".getBytes(Charsets.UTF_8)));
+    StreamEvent event = new StreamEvent(Maps.<String, String>newHashMap(),
+                                        ByteBuffer.wrap("Event string".getBytes(Charsets.UTF_8)));
 
     StreamEventCodec codec = new StreamEventCodec();
     ByteBuffer payload = ByteBuffer.wrap(codec.encodePayload(event));
@@ -65,7 +64,7 @@ public class StreamEventCodecTest {
 
     Assert.assertEquals(schema.getSchemaHash(), schemaHash);
 
-    StreamEvent decoded = new ReflectionDatumReader<DefaultStreamEvent>(schema, TypeToken.of(DefaultStreamEvent.class))
+    StreamEvent decoded = new ReflectionDatumReader<StreamEvent>(schema, TypeToken.of(StreamEvent.class))
           .read(new BinaryDecoder(new ByteBufferInputStream(payload)), schema);
 
     Assert.assertEquals(event.getHeaders(), decoded.getHeaders());

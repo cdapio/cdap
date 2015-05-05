@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.data.stream.StreamWriter;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.DataFabricFacadeModule;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
@@ -23,6 +25,9 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramResourceReporter;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.store.Store;
+import co.cask.cdap.app.stream.DefaultStreamWriter;
+import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -31,18 +36,24 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
+import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
+import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
+import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -53,6 +64,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -60,6 +72,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
@@ -90,6 +103,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 
 /**
  * A {@link TwillRunnable} for running a program through a {@link ProgramRunner}.
@@ -99,6 +113,10 @@ import java.util.concurrent.CountDownLatch;
 public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> implements TwillRunnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramTwillRunnable.class);
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+    .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
+    .create();
 
   private String name;
   private String hConfName;
@@ -113,6 +131,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private ZKClientService zkClientService;
   private KafkaClientService kafkaClientService;
   private MetricsCollectionService metricsCollectionService;
+  private StreamCoordinatorClient streamCoordinatorClient;
   private ProgramResourceReporter resourceReporter;
   private LogAppenderInitializer logAppenderInitializer;
   private CountDownLatch runlatch;
@@ -166,11 +185,18 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       cConf.clear();
       cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
 
+      // Alter the template directory to only the name part in the container directory.
+      // It works in pair with the ProgramRunner.
+      // See AbstractDistributedProgramRunner
+      File templateDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
+      cConf.set(Constants.AppFabric.APP_TEMPLATE_DIR, templateDir.getName());
+
       injector = Guice.createInjector(createModule(context));
 
       zkClientService = injector.getInstance(ZKClientService.class);
       kafkaClientService = injector.getInstance(KafkaClientService.class);
       metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+      streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
 
       // Initialize log appender
       logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
@@ -183,9 +209,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
         throw Throwables.propagate(e);
       }
 
-      Arguments runtimeArguments
-        = new Gson().fromJson(cmdLine.getOptionValue(RunnableOptions.RUNTIME_ARGS), BasicArguments.class);
-      programOpts =  new SimpleProgramOptions(name, createProgramArguments(context, configs), runtimeArguments);
+      programOpts = createProgramOptions(cmdLine, context, configs);
       resourceReporter = new ProgramRunnableResourceReporter(program, metricsCollectionService, context);
 
       LOG.info("Runnable initialized: " + name);
@@ -227,19 +251,34 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     }
   }
 
+  /**
+   * Returns {@code true} if service error is propagated as error for this controller state.
+   * If this method returns {@code false}, service error is just getting logged and state will just change
+   * to {@link ProgramController.State#KILLED}. This method returns {@code true} by default.
+   */
+  protected boolean propagateServiceError() {
+    return true;
+  }
+
   @Override
   public void run() {
     LOG.info("Starting metrics service");
     Futures.getUnchecked(
-      Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, resourceReporter));
+      Services.chainStart(zkClientService, kafkaClientService,
+                          metricsCollectionService, streamCoordinatorClient, resourceReporter));
 
     LOG.info("Starting runnable: {}", name);
     controller = injector.getInstance(getProgramClass()).run(program, programOpts);
     final SettableFuture<ProgramController.State> state = SettableFuture.create();
     controller.addListener(new AbstractListener() {
       @Override
-      public void stopped() {
-        state.set(ProgramController.State.STOPPED);
+      public void completed() {
+        state.set(ProgramController.State.COMPLETED);
+      }
+
+      @Override
+      public void killed() {
+        state.set(ProgramController.State.KILLED);
       }
 
       @Override
@@ -253,9 +292,13 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     try {
       state.get();
       LOG.info("Program stopped.");
-    } catch (Throwable t) {
-      LOG.error("Program terminated due to error.", t);
-      throw Throwables.propagate(t);
+    } catch (InterruptedException e) {
+      LOG.warn("Program interrupted.", e);
+    } catch (ExecutionException e) {
+      LOG.error("Program execution failed.", e);
+      if (propagateServiceError()) {
+        throw Throwables.propagate(Throwables.getRootCause(e));
+      }
     }
   }
 
@@ -263,14 +306,15 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   public void destroy() {
     LOG.info("Releasing resources: {}", name);
     Futures.getUnchecked(
-      Services.chainStop(resourceReporter, metricsCollectionService, kafkaClientService, zkClientService));
+      Services.chainStop(resourceReporter, streamCoordinatorClient,
+                         metricsCollectionService, kafkaClientService, zkClientService));
     LOG.info("Runnable stopped: {}", name);
   }
 
   private CommandLine parseArgs(String[] args) {
     Options opts = new Options()
       .addOption(createOption(RunnableOptions.JAR, "Program jar location"))
-      .addOption(createOption(RunnableOptions.RUNTIME_ARGS, "Runtime arguments"));
+      .addOption(createOption(RunnableOptions.PROGRAM_OPTIONS, "Program options"));
 
     try {
       return new PosixParser().parse(opts, args);
@@ -286,17 +330,25 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   }
 
   /**
-   * Creates program arguments. It includes all configurations from the specification, excluding hConf and cConf.
+   * Creates program options. It contains program and user arguments as passed form the distributed program runner.
+   * Extra program arguments are inserted based on the environment information (e.g. host, instance id). Also all
+   * configs available through the TwillRunnable configs are also available through program arguments.
    */
-  private Arguments createProgramArguments(TwillContext context, Map<String, String> configs) {
-    Map<String, String> args = ImmutableMap.<String, String>builder()
-      .put(ProgramOptionConstants.INSTANCE_ID, Integer.toString(context.getInstanceId()))
-      .put(ProgramOptionConstants.INSTANCES, Integer.toString(context.getInstanceCount()))
-      .put(ProgramOptionConstants.RUN_ID, context.getApplicationRunId().getId())
-      .putAll(Maps.filterKeys(configs, Predicates.not(Predicates.in(ImmutableSet.of("hConf", "cConf")))))
-      .build();
+  private ProgramOptions createProgramOptions(CommandLine cmdLine, TwillContext context, Map<String, String> configs) {
+    ProgramOptions original = GSON.fromJson(cmdLine.getOptionValue(RunnableOptions.PROGRAM_OPTIONS),
+                                            ProgramOptions.class);
 
-    return new BasicArguments(args);
+    // Overwrite them with environmental information
+    Map<String, String> arguments = Maps.newHashMap(original.getArguments().asMap());
+    arguments.put(ProgramOptionConstants.INSTANCE_ID, Integer.toString(context.getInstanceId()));
+    arguments.put(ProgramOptionConstants.INSTANCES, Integer.toString(context.getInstanceCount()));
+    arguments.put(ProgramOptionConstants.RUN_ID, original.getArguments().getOption(ProgramOptionConstants.RUN_ID));
+    arguments.put(ProgramOptionConstants.TWILL_RUN_ID, context.getApplicationRunId().getId());
+    arguments.put(ProgramOptionConstants.HOST, context.getHost().getCanonicalHostName());
+    arguments.putAll(Maps.filterKeys(configs, Predicates.not(Predicates.in(ImmutableSet.of("hConf", "cConf")))));
+
+    return new SimpleProgramOptions(context.getSpecification().getName(), new BasicArguments(arguments),
+                                    original.getUserArguments(), original.isDebug());
   }
 
   // TODO(terence) make this works for different mode
@@ -312,7 +364,10 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       new LoggingModules().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
-      new DataSetsModules().getDistributedModule(),
+      new DataSetsModules().getDistributedModules(),
+      new ExploreClientModule(),
+      new StreamAdminModules().getDistributedModules(),
+      new NotificationFeedClientModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -335,9 +390,24 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
             }
           });
 
+          bind(Store.class).to(DefaultStore.class);
+
+          // For binding StreamWriter
+          install(createStreamFactoryModule());
         }
       }
     );
+  }
+
+  private Module createStreamFactoryModule() {
+    return new PrivateModule() {
+      @Override
+      protected void configure() {
+        install(new FactoryModuleBuilder().implement(StreamWriter.class, DefaultStreamWriter.class)
+                  .build(StreamWriterFactory.class));
+        expose(StreamWriterFactory.class);
+      }
+    };
   }
 
   private Module createProgramFactoryModule() {

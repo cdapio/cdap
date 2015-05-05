@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasets;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.dataset2.tx.TxCallable;
+import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 
 import java.util.Collection;
@@ -38,53 +39,55 @@ public class DatasetInstanceManager {
 
   /**
    * Adds dataset instance metadata
-   * @param spec {@link co.cask.cdap.api.dataset.DatasetSpecification} of the dataset instance to be added
+   * @param namespaceId the {@link Id.Namespace} to add the dataset instance to
+   * @param spec {@link DatasetSpecification} of the dataset instance to be added
    */
-  public void add(final DatasetSpecification spec) {
+  public void add(final Id.Namespace namespaceId, final DatasetSpecification spec) {
     mdsDatasets.executeUnchecked(new TxCallable<MDSDatasets, Void>() {
       @Override
       public Void call(MDSDatasets datasets) throws Exception {
-        datasets.getInstanceMDS().write(spec);
+        datasets.getInstanceMDS().write(namespaceId, spec);
         return null;
       }
     });
   }
 
   /**
-   * @param instanceName name of the dataset instance
-   * @return dataset instance's {@link co.cask.cdap.api.dataset.DatasetSpecification}
+   * @param datasetInstanceId {@link Id.DatasetInstance} of the dataset instance
+   * @return dataset instance's {@link DatasetSpecification}
    */
-  public DatasetSpecification get(final String instanceName) {
+  public DatasetSpecification get(final Id.DatasetInstance datasetInstanceId) {
     return mdsDatasets.executeUnchecked(new TxCallable<MDSDatasets, DatasetSpecification>() {
       @Override
       public DatasetSpecification call(MDSDatasets datasets) throws Exception {
-        return datasets.getInstanceMDS().get(instanceName);
+        return datasets.getInstanceMDS().get(datasetInstanceId);
       }
     });
   }
 
   /**
-   * @return collection of {@link co.cask.cdap.api.dataset.DatasetSpecification} of all dataset instances
+   * @param namespaceId {@link Id.Namespace} for which dataset instances are required
+   * @return collection of {@link DatasetSpecification} of all dataset instances in the given namespace
    */
-  public Collection<DatasetSpecification> getAll() {
+  public Collection<DatasetSpecification> getAll(final Id.Namespace namespaceId) {
     return mdsDatasets.executeUnchecked(new TxCallable<MDSDatasets, Collection<DatasetSpecification>>() {
       @Override
       public Collection<DatasetSpecification> call(MDSDatasets datasets) throws Exception {
-        return datasets.getInstanceMDS().getAll();
+        return datasets.getInstanceMDS().getAll(namespaceId);
       }
     });
   }
 
   /**
    * Deletes dataset instance
-   * @param instanceName name of the instance to delete
+   * @param datasetInstanceId {@link Id.DatasetInstance} of the instance to delete
    * @return true if deletion succeeded, false otherwise
    */
-  public boolean delete(final String instanceName) {
+  public boolean delete(final Id.DatasetInstance datasetInstanceId) {
     return mdsDatasets.executeUnchecked(new TxCallable<MDSDatasets, Boolean>() {
       @Override
       public Boolean call(MDSDatasets datasets) throws Exception {
-        return datasets.getInstanceMDS().delete(instanceName);
+        return datasets.getInstanceMDS().delete(datasetInstanceId);
       }
     });
   }

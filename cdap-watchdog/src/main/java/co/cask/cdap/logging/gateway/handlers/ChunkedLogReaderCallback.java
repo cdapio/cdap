@@ -20,8 +20,11 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
 import co.cask.cdap.logging.read.Callback;
 import co.cask.cdap.logging.read.LogEvent;
+import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.io.Closeables;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
@@ -29,21 +32,28 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CoderResult;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * LogReader callback to encode log events, and send them as chunked stream.
  */
 class ChunkedLogReaderCallback implements Callback {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ChunkedLogReaderCallback.class);
+
   private final ByteBuffer chunkBuffer = ByteBuffer.allocate(8 * 1024);
   private final CharsetEncoder charsetEncoder = Charset.forName("UTF-8").newEncoder();
   private final HttpResponder responder;
   private final PatternLayout patternLayout;
   private final boolean escape;
+  private final AtomicInteger count = new AtomicInteger();
+  private ChunkResponder chunkResponder;
 
   ChunkedLogReaderCallback(HttpResponder responder, String logPattern, boolean escape) {
     this.responder = responder;
@@ -60,17 +70,30 @@ class ChunkedLogReaderCallback implements Callback {
 
   @Override
   public void init() {
-    this.patternLayout.start();
-    responder.sendChunkStart(HttpResponseStatus.OK,
-                             ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "text/plain; charset=utf-8"));
+    patternLayout.start();
+    chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK,
+                                              ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE,
+                                                                   "text/plain; charset=utf-8"));
   }
 
   @Override
   public void handle(LogEvent event) {
     String logLine = patternLayout.doLayout(event.getLoggingEvent());
     logLine = escape ? StringEscapeUtils.escapeHtml(logLine) : logLine;
-    // Encode logLine and send chunks
-    encodeSend(CharBuffer.wrap(logLine), false);
+
+    try {
+      // Encode logLine and send chunks
+      encodeSend(CharBuffer.wrap(logLine), false);
+      count.incrementAndGet();
+    } catch (IOException e) {
+      // Just propagate the exception, the caller of this Callback should be handling it.
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public int getCount() {
+    return count.get();
   }
 
   @Override
@@ -83,26 +106,29 @@ class ChunkedLogReaderCallback implements Callback {
       do {
         coderResult = charsetEncoder.flush(chunkBuffer);
         chunkBuffer.flip();
-        responder.sendChunk(ChannelBuffers.copiedBuffer(chunkBuffer));
+        chunkResponder.sendChunk(ChannelBuffers.copiedBuffer(chunkBuffer));
         chunkBuffer.clear();
       } while (coderResult.isOverflow());
-
+    } catch (IOException e) {
+      // If cannot send chunks, nothing can be done (since the client closed connection).
+      // Just log the error as debug.
+      LOG.debug("Failed to send chunk", e);
     } finally {
       try {
         patternLayout.stop();
       } finally {
-        responder.sendChunkEnd();
+        Closeables.closeQuietly(chunkResponder);
       }
     }
   }
 
-  private void encodeSend(CharBuffer inBuffer, boolean endOfInput) {
+  private void encodeSend(CharBuffer inBuffer, boolean endOfInput) throws IOException {
     while (true) {
       CoderResult coderResult = charsetEncoder.encode(inBuffer, chunkBuffer, endOfInput);
       if (coderResult.isOverflow()) {
         // if reached buffer capacity then flush chunk
         chunkBuffer.flip();
-        responder.sendChunk(ChannelBuffers.copiedBuffer(chunkBuffer));
+        chunkResponder.sendChunk(ChannelBuffers.copiedBuffer(chunkBuffer));
         chunkBuffer.clear();
       } else if (coderResult.isError()) {
         // skip characters causing error, and retry

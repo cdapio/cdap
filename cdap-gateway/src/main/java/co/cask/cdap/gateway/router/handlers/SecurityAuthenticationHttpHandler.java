@@ -153,6 +153,8 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
       logEntry.setUserName(accessTokenIdentifierPair.getAccessTokenIdentifierObj().getUsername());
       msg.setHeader(HttpHeaders.Names.AUTHORIZATION,
                     "CDAP-verified " + accessTokenIdentifierPair.getAccessTokenIdentifierStr());
+      msg.setHeader(Constants.Security.Headers.USER_ID,
+                    accessTokenIdentifierPair.getAccessTokenIdentifierObj().getUsername());
       return true;
     }
   }
@@ -174,7 +176,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
       port = configuration.getInt(Constants.Security.AuthenticationServer.SSL_PORT);
     } else {
       protocol = "http";
-      port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
+      port = configuration.getInt(Constants.Security.AUTH_SERVER_BIND_PORT);
     }
 
     do {

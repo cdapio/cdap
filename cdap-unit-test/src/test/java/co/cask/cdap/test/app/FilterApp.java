@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.test.app;
 
-import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
@@ -28,13 +27,15 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureRequest;
-import co.cask.cdap.api.procedure.ProcedureResponder;
-import co.cask.cdap.api.procedure.ProcedureResponse;
+import co.cask.cdap.api.service.BasicService;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
 
 import java.io.IOException;
 import java.util.Map;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 
 /**
  * App that filters based on a threshold.
@@ -50,7 +51,7 @@ public class FilterApp extends AbstractApplication {
     addStream(new Stream("input"));
     createDataset("count", KeyValueTable.class);
     addFlow(new FilterFlow());
-    addProcedure(new Count());
+    addService(new BasicService("CountService", new CountHandler()));
   }
 
   /**
@@ -81,7 +82,7 @@ public class FilterApp extends AbstractApplication {
     @ProcessInput
     public void process (StreamEvent event) {
       //highpass filter.
-      String value = Bytes.toString(event.getBody().array());
+      String value = Bytes.toString(event.getBody());
       if (Long.parseLong(value) > threshold) {
         counters.increment(highPass, 1L);
       }
@@ -101,18 +102,20 @@ public class FilterApp extends AbstractApplication {
   /**
    * return counts.
    */
-  public static class Count extends AbstractProcedure {
+  public static class CountHandler extends AbstractHttpServiceHandler {
     @UseDataSet("count")
     private KeyValueTable counters;
 
-    @Handle("result")
-    public void handle(ProcedureRequest request, ProcedureResponder responder) throws IOException {
-      byte[]  result = counters.read(highPass);
+    @GET
+    @Path("result")
+    public void handle(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
+      byte[] result = counters.read(highPass);
       if (result == null) {
-        responder.sendJson(ProcedureResponse.Code.NOT_FOUND, "No result");
+        responder.sendStatus(404);
       } else {
-        responder.sendJson(ProcedureResponse.Code.SUCCESS, Bytes.toLong(result));
+        responder.sendJson(Bytes.toLong(result));
       }
     }
   }
+
 }

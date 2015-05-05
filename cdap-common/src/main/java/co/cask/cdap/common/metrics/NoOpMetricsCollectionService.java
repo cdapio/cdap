@@ -16,7 +16,11 @@
 
 package co.cask.cdap.common.metrics;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import com.google.common.util.concurrent.AbstractIdleService;
+
+import java.util.Map;
 
 /**
  * No-op, to be used in unit-tests
@@ -34,11 +38,26 @@ public class NoOpMetricsCollectionService extends AbstractIdleService implements
   }
 
   @Override
-  public MetricsCollector getCollector(MetricsScope scope, String context, String runId) {
+  public MetricsCollector getCollector(Map<String, String> tags) {
     return new MetricsCollector() {
       @Override
-      public void increment(String metricName, int value, String... tags) {
+      public void increment(String metricName, long value) {
         // no-op
+      }
+
+      @Override
+      public void gauge(String metricName, long value) {
+        // no-op
+      }
+
+      @Override
+      public MetricsCollector childCollector(Map<String, String> tags) {
+        return this;
+      }
+
+      @Override
+      public MetricsCollector childCollector(String tagName, String tagValue) {
+        return this;
       }
     };
   }

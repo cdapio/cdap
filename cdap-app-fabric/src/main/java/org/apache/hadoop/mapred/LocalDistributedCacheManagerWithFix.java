@@ -19,15 +19,8 @@
 package org.apache.hadoop.mapred;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.ApiResourceListHolder;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.CombineClassLoader;
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.io.Files;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.fs.FileSystem;
@@ -44,20 +37,13 @@ import org.apache.hadoop.yarn.api.records.LocalResource;
 import org.apache.hadoop.yarn.api.records.LocalResourceType;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.hadoop.yarn.util.FSDownload;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -90,6 +76,11 @@ class LocalDistributedCacheManagerWithFix {
   private List<File> symlinksCreated = new ArrayList<File>();
 
   private boolean setupCalled = false;
+  private JobID jobId;
+
+  public LocalDistributedCacheManagerWithFix(JobID jobId) {
+    this.jobId = jobId;
+  }
 
   /**
    * Set up the distributed cache by localizing the resources, and updating
@@ -148,7 +139,8 @@ class LocalDistributedCacheManagerWithFix {
       for (LocalResource resource : localResources.values()) {
         Callable<Path> download =
           new FSDownload(localFSFileContext, ugi, conf,
-                         new Path(destPath, Long.toString(uniqueNumberGenerator.incrementAndGet())),
+                         new Path(destPath, jobId.toString() + "_" +
+                           Long.toString(uniqueNumberGenerator.incrementAndGet())),
                          resource);
         Future<Path> future = exec.submit(download);
         resourcesToPaths.put(resource, future);
@@ -244,54 +236,11 @@ class LocalDistributedCacheManagerWithFix {
    * Creates a class loader that includes the designated
    * files and archives.
    *
-   * Continnuuity fix : for each localClasspaths, if it is JAR file, uses the ProgramClassLoader instead
-   * so that it won't keep the file stream opened, but rather having all classes bytes loaded in memmory.
-   * If the class path is a directory, it will use URLClassLoader. The final ClassLoader is a CombineClassLoader
-   * that load classes from all the ProgramClassLoader and the URLClassLoader as described above.
+   * Cask fix : The ClassLoader has been setup through the MapReduceRuntimeService already.
+   * Hence just return the parent.
    */
-  public ClassLoader makeClassLoader(final ClassLoader parent)
-    throws MalformedURLException {
-
-    final LocationFactory lf = new LocalLocationFactory();
-    final List<ClassLoader> classLoaders = Lists.newArrayList();
-    final List<URL> urls = Lists.newArrayList();
-    for (final String classPath : localClasspaths) {
-      final URI uri = new File(classPath).toURI();
-      if (classPath.endsWith(".jar")) {
-        classLoaders.add(AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
-          @Override
-          public ClassLoader run() {
-            try {
-              File expandDir = Files.createTempDir();
-              jarExpandDirs.add(expandDir);
-              return ClassLoaders.newProgramClassLoader(
-                BundleJarUtil.unpackProgramJar(lf.create(uri), expandDir),
-                ApiResourceListHolder.getResourceList(), parent);
-            } catch (IOException e) {
-              throw Throwables.propagate(e);
-            }
-          }
-        }));
-      } else {
-        urls.add(uri.toURL());
-      }
-    }
-
-    if (!urls.isEmpty()) {
-      classLoaders.add(AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
-        @Override
-        public ClassLoader run() {
-          return new URLClassLoader(urls.toArray(new URL[urls.size()]), parent);
-        }
-      }));
-    }
-
-    return AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
-      @Override
-      public ClassLoader run() {
-        return new CombineClassLoader(parent, classLoaders);
-      }
-    });
+  public ClassLoader makeClassLoader(final ClassLoader parent) throws MalformedURLException {
+    return parent;
   }
 
   public void close() throws IOException {

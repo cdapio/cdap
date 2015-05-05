@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,19 +16,25 @@
 
 package co.cask.cdap.data2.metrics;
 
+import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
-import co.cask.cdap.data.Namespace;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
-import co.cask.cdap.data2.dataset2.DatasetNamespace;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
+import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
+import co.cask.cdap.proto.Id;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -39,24 +45,25 @@ import java.util.concurrent.TimeUnit;
  */
 // todo: consider extracting base class from HBaseDatasetMetricsReporter and LevelDBDatasetMetricsReporter
 public class LevelDBDatasetMetricsReporter extends AbstractScheduledService implements DatasetMetricsReporter {
+  private static final Logger LOG = LoggerFactory.getLogger(LevelDBDatasetMetricsReporter.class);
   private static final int BYTES_IN_MB = 1024 * 1024;
 
   private final int reportIntervalInSec;
 
   private final MetricsCollectionService metricsService;
-  private final LevelDBOrderedTableService ldbService;
-  private final DatasetNamespace userDsNamespace;
+  private final LevelDBTableService ldbService;
+  private final DatasetFramework dsFramework;
 
   private ScheduledExecutorService executor;
 
   @Inject
   public LevelDBDatasetMetricsReporter(MetricsCollectionService metricsService,
-                                       LevelDBOrderedTableService ldbService,
+                                       LevelDBTableService ldbService, DatasetFramework dsFramework,
                                        CConfiguration conf) {
     this.metricsService = metricsService;
     this.ldbService = ldbService;
     this.reportIntervalInSec = conf.getInt(Constants.Metrics.Dataset.LEVELDB_STATS_REPORT_INTERVAL);
-    this.userDsNamespace = new DefaultDatasetNamespace(conf, Namespace.USER);
+    this.dsFramework = dsFramework;
   }
 
   @Override
@@ -84,25 +91,36 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
   }
 
   private void reportStats() throws Exception {
-    Map<String, LevelDBOrderedTableService.TableStats> tableStats = ldbService.getTableStats();
+    Map<TableId, LevelDBTableService.TableStats> tableStats = ldbService.getTableStats();
     if (tableStats.size() > 0) {
       report(tableStats);
     }
   }
 
-  private void report(Map<String, LevelDBOrderedTableService.TableStats> datasetStat) {
-    // we use "0" as runId: it is required by metrics system to provide something at this point
-    MetricsCollector collector =
-      metricsService.getCollector(MetricsScope.SYSTEM, Constants.Metrics.DATASET_CONTEXT, "0");
-    for (Map.Entry<String, LevelDBOrderedTableService.TableStats> statEntry : datasetStat.entrySet()) {
-      String datasetName = userDsNamespace.fromNamespaced(statEntry.getKey());
-      if (datasetName == null) {
-        // not a user dataset
+  private void report(Map<TableId, LevelDBTableService.TableStats> datasetStat)
+    throws DatasetManagementException {
+    for (Map.Entry<TableId, LevelDBTableService.TableStats> statEntry : datasetStat.entrySet()) {
+      String namespace = statEntry.getKey().getNamespace().getId();
+      // emit metrics for only user datasets, tables in system namespace are ignored
+      if (namespace.equals(Constants.SYSTEM_NAMESPACE)) {
         continue;
       }
-      // legacy format: dataset name is in the tag. See DatasetInstantiator for more details
-      int sizeInMb = (int) (statEntry.getValue().getDiskSizeBytes() / BYTES_IN_MB);
-      collector.increment("dataset.size.mb", sizeInMb, datasetName);
+      String tableName = statEntry.getKey().getTableName();
+
+      Collection<DatasetSpecificationSummary> instances = dsFramework.getInstances(Id.Namespace.from(namespace));
+      for (DatasetSpecificationSummary spec : instances) {
+        DatasetSpecification specification = dsFramework.getDatasetSpec(Id.DatasetInstance.from(namespace,
+                                                                                                spec.getName()));
+        if (specification.isParent(tableName)) {
+          MetricsCollector collector =
+            metricsService.getCollector(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespace,
+                                                        Constants.Metrics.Tag.DATASET, spec.getName()));
+          int sizeInMb = (int) (statEntry.getValue().getDiskSizeBytes() / BYTES_IN_MB);
+          collector.gauge("dataset.size.mb", sizeInMb);
+          break;
+        }
+      }
     }
   }
+
 }

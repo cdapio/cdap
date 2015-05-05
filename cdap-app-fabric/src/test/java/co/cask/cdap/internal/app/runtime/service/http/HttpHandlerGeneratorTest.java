@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,13 +16,16 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.data.DataSetInstantiationException;
+import co.cask.cdap.api.data.DatasetInstantiationException;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.api.service.http.HttpServiceSpecification;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import co.cask.tephra.TransactionAware;
@@ -35,10 +38,10 @@ import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.Closeable;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.HashMap;
 import java.util.Map;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -50,7 +53,7 @@ import javax.ws.rs.PathParam;
  */
 public class HttpHandlerGeneratorTest {
 
-  @Path("/v1")
+  @Path("/p1")
   public abstract static class BaseHttpHandler extends AbstractHttpServiceHandler {
 
     @GET
@@ -60,7 +63,7 @@ public class HttpHandlerGeneratorTest {
     }
   }
 
-  @Path("/v2")
+  @Path("/p2")
   public static final class MyHttpHandler extends BaseHttpHandler {
 
     @Override
@@ -88,7 +91,9 @@ public class HttpHandlerGeneratorTest {
 
   @Test
   public void testHttpHandlerGenerator() throws Exception {
-    HttpHandlerFactory factory = new HttpHandlerFactory("/prefix");
+    MetricsCollector noOpsMetricsCollector =
+      new NoOpMetricsCollectionService().getCollector(new HashMap<String, String>());
+    HttpHandlerFactory factory = new HttpHandlerFactory("/prefix", noOpsMetricsCollector);
 
     HttpHandler httpHandler = factory.createHttpHandler(
       TypeToken.of(MyHttpHandler.class), new AbstractDelegatorContext<MyHttpHandler>() {
@@ -115,14 +120,14 @@ public class HttpHandlerGeneratorTest {
       InetSocketAddress bindAddress = service.getBindAddress();
 
       // Make a GET call
-      URLConnection urlConn = new URL(String.format("http://%s:%d/prefix/v2/handle",
+      URLConnection urlConn = new URL(String.format("http://%s:%d/prefix/p2/handle",
                                                     bindAddress.getHostName(), bindAddress.getPort())).openConnection();
       urlConn.setReadTimeout(2000);
 
       Assert.assertEquals("Hello World", new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8));
 
       // Make a POST call
-      urlConn = new URL(String.format("http://%s:%d/prefix/v2/echo/test",
+      urlConn = new URL(String.format("http://%s:%d/prefix/p2/echo/test",
                                       bindAddress.getHostName(), bindAddress.getPort())).openConnection();
       urlConn.setReadTimeout(2000);
       urlConn.setDoOutput(true);
@@ -172,8 +177,18 @@ public class HttpHandlerGeneratorTest {
   private static class NoOpHttpServiceContext implements TransactionalHttpServiceContext {
 
     @Override
-    public HttpServiceSpecification getSpecification() {
+    public HttpServiceHandlerSpecification getSpecification() {
       return null;
+    }
+
+    @Override
+    public int getInstanceCount() {
+      return 1;
+    }
+
+    @Override
+    public int getInstanceId() {
+      return 1;
     }
 
     @Override
@@ -182,14 +197,15 @@ public class HttpHandlerGeneratorTest {
     }
 
     @Override
-    public <T extends Closeable> T getDataSet(String name) throws DataSetInstantiationException {
-      return null;
+    public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
+      return getDataset(name, null);
     }
 
     @Override
-    public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments)
-      throws DataSetInstantiationException {
-      return null;
+    public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
+      throws DatasetInstantiationException {
+      throw new DatasetInstantiationException(
+        String.format("Dataset '%s' cannot be instantiated. Operation not supported", name));
     }
 
     @Override
@@ -221,6 +237,16 @@ public class HttpHandlerGeneratorTest {
           return;
         }
       };
+    }
+
+    @Override
+    public URL getServiceURL(String applicationId, String serviceId) {
+      return null;
+    }
+
+    @Override
+    public URL getServiceURL(String serviceId) {
+      return null;
     }
   }
 }

@@ -47,7 +47,7 @@
   </property>
 
   <!--
-    Gateway configuration
+    Router configuration
   -->
   <!-- Substitue the IP to which Router service should bind to and listen on -->
   <property>

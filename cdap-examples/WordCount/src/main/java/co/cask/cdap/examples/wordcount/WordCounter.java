@@ -34,7 +34,7 @@ import co.cask.cdap.api.flow.FlowSpecification;
  * The next Flowlet is the WordAssociater that will track word associations
  * between all of the words within the input string.
  * <p>
- * The next Flowlet is the WordCounter, which performs the necessary data
+ * The next Flowlet is the Counter, which performs the necessary data
  * operations to do the word count and count other word statistics.
  * <p>
  * The last Flowlet is the UniqueCounter, which calculates and updates the

@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package co.cask.cdap.api.dataset;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -78,8 +78,8 @@ public final class DatasetSpecification {
                                SortedMap<String, DatasetSpecification> datasetSpecs) {
     this.name = name;
     this.type = type;
-    this.properties = properties;
-    this.datasetSpecs = datasetSpecs;
+    this.properties = ImmutableSortedMap.copyOfSorted(properties);
+    this.datasetSpecs = ImmutableSortedMap.copyOfSorted(datasetSpecs);
   }
 
   /**
@@ -181,6 +181,33 @@ public final class DatasetSpecification {
   }
 
   /**
+   * Returns true if the tableName corresponds to the dataset specification.
+   * @param tableName
+   * @return <code>true</code> if the tableName represents the dataset spec;
+   *         <code>false</code> otherwise
+   */
+  public boolean isParent(String tableName) {
+    return isParent(tableName, this);
+  }
+
+  private boolean isParent(String tableName, DatasetSpecification specification) {
+    if (tableName == null) {
+      return false;
+    }
+    if (specification.getSpecifications().size() == 0 && specification.getName().equals(tableName)) {
+      return true;
+    }
+    if (tableName.startsWith(specification.getName())) {
+      for (DatasetSpecification spec : specification.getSpecifications().values()) {
+        if (isParent(tableName, spec)) {
+          return true;
+        }
+      }
+    }
+    return  false;
+  }
+
+  /**
    * Hash value.
    */
   @Override
@@ -199,7 +226,7 @@ public final class DatasetSpecification {
   }
 
   /**
-   * A Builder to construct DataSetSpecification instances.
+   * A Builder to construct DatasetSpecification instances.
    */
   public static final class Builder {
     // private fields
@@ -268,7 +295,7 @@ public final class DatasetSpecification {
 
     /**
      * Prefixes all DataSets embedded inside the given {@link DatasetSpecification} with the name of the enclosing
-     * DataSet.
+     * Dataset.
      */
     private DatasetSpecification namespace(DatasetSpecification spec) {
       return namespace(null, spec);
@@ -297,7 +324,7 @@ public final class DatasetSpecification {
         specifications.put(entry.getKey(), namespace(namespace, entry.getValue()));
       }
 
-      return new DatasetSpecification(name, type, spec.properties, specifications);
+      return new DatasetSpecification(name, spec.type, spec.properties, specifications);
     }
   }
 }

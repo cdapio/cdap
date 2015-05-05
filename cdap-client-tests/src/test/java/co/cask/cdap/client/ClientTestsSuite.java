@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,8 @@
 
 package co.cask.cdap.client;
 
-import co.cask.cdap.client.common.StandaloneTestBase;
 import co.cask.cdap.test.XSlowTests;
+import co.cask.cdap.test.standalone.StandaloneTestBase;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -28,8 +28,11 @@ import org.junit.runners.Suite;
 @Category(XSlowTests.class)
 @RunWith(Suite.class)
 @Suite.SuiteClasses({ ApplicationClientTestRun.class, DatasetClientTestRun.class, MetricsClientTestRun.class,
-                      MonitorClientTestRun.class, ProcedureClientTestRun.class, ProgramClientTestRun.class,
-                      QueryClientTestRun.class, StreamClientTestRun.class, ServiceClientTestRun.class })
+                      MonitorClientTestRun.class, ProgramClientTestRun.class,
+                      QueryClientTestRun.class, StreamClientTestRun.class, ServiceClientTestRun.class,
+                      MetaClientTestRun.class, NamespaceClientTestRun.class, PreferencesClientTestRun.class,
+                      ScheduleClientTestRun.class })
+//@Suite.SuiteClasses({ ApplicationClientTestRun.class, QueryClientTestRun.class })
 public class ClientTestsSuite extends StandaloneTestBase {
 
 }

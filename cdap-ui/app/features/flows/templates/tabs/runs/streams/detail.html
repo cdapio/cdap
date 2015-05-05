@@ -1,0 +1,26 @@
+<form name="injectStreamForm" class="form"
+      ng-submit="doInject($event)"
+      novalidate>
+
+  <div class="modal-header clearfix">
+    <h3 class="modal-title stream-title pull-left"> {{streamId}} </h3>
+    <a class="btn pull-right" ng-click="$close()">
+      <span class="fa fa-remove"></span>
+      <span class="sr-only"> Close </span>
+    </a>
+  </div>
+
+  <div class="modal-body">
+
+    <textarea class="flow-injector-input form-control" placeholder="Events injected here will be consumed by all attached programs." ng-model="userInput" ng-keyup="$event.keyCode == 13 ? doInject($event) : null"></textarea>
+
+  </div>
+
+  <div class="modal-footer text-right">
+    <button type="submit"
+      ng-disabled="injectStreamForm.$invalid"
+      class="btn btn-primary"
+    >Inject</button>
+  </div>
+
+</form>

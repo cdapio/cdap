@@ -16,16 +16,23 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.client.exception.BadRequestException;
-import co.cask.cdap.client.exception.StreamNotFoundException;
-import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.exception.BadRequestException;
+import co.cask.cdap.common.exception.CannotBeDeletedException;
+import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.exception.StreamNotFoundException;
+import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
+import com.google.common.io.ByteStreams;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -44,12 +52,17 @@ import java.util.concurrent.TimeUnit;
 public class StreamClientTestRun extends ClientTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamClientTestRun.class);
+  private static final Id.Namespace namespaceId = Id.Namespace.from("myspace");
 
+  private NamespaceClient namespaceClient;
   private StreamClient streamClient;
 
   @Before
   public void setUp() throws Throwable {
     super.setUp();
+    namespaceClient = new NamespaceClient(clientConfig);
+    namespaceClient.create(new NamespaceMeta.Builder().setName(namespaceId).build());
+    clientConfig.setNamespace(namespaceId);
     streamClient = new StreamClient(clientConfig);
   }
 
@@ -66,7 +79,6 @@ public class StreamClientTestRun extends ClientTestBase {
     Assert.assertEquals(baseStreamCount + 1, streamClient.list().size());
     StreamProperties config = streamClient.getConfig(testStreamId);
     Assert.assertNotNull(config);
-    Assert.assertEquals(testStreamId, config.getName());
     // TODO: getting and setting config for stream is not supported with in-memory
 //    streamClient.setTTL(testStreamId, 123);
 //    streamClient.sendEvent(testStreamId, testStreamEvent);
@@ -82,19 +94,25 @@ public class StreamClientTestRun extends ClientTestBase {
    */
   @Test
   public void testStreamEvents() throws IOException, BadRequestException,
-    StreamNotFoundException, UnAuthorizedAccessTokenException {
+    StreamNotFoundException, UnauthorizedException {
 
     String streamId = "testEvents";
 
     streamClient.create(streamId);
-    for (int i = 0; i < 10; i++) {
+
+    // Send 5000 events
+    int eventCount = 5000;
+    for (int i = 0; i < eventCount; i++) {
       streamClient.sendEvent(streamId, "Testing " + i);
     }
 
     // Read all events
     List<StreamEvent> events = streamClient.getEvents(streamId, 0, Long.MAX_VALUE,
                                                       Integer.MAX_VALUE, Lists.<StreamEvent>newArrayList());
-    Assert.assertEquals(10, events.size());
+    Assert.assertEquals(eventCount, events.size());
+    for (int i = 0; i < eventCount; i++) {
+      Assert.assertEquals("Testing " + i, Bytes.toString(events.get(i).getBody()));
+    }
 
     // Read first 5 only
     events.clear();
@@ -156,5 +174,49 @@ public class StreamClientTestRun extends ClientTestBase {
     }
 
     Assert.assertTrue(events.isEmpty());
+  }
+
+  @Test
+  public void testSendSmallFile() throws Exception {
+    testSendFile(50);
+  }
+
+  @Test
+  public void testSendLargeFile() throws Exception {
+    testSendFile(500000);
+  }
+
+
+  private void testSendFile(int msgCount) throws Exception {
+    String streamId = "testSendFile";
+
+    streamClient.create(streamId);
+
+    // Generate msgCount lines of events
+    StringWriter writer = new StringWriter();
+    for (int i = 0; i < msgCount; i++) {
+      writer.write("Event " + i);
+      writer.write("\n");
+    }
+    streamClient.sendBatch(streamId, "text/plain",
+                           ByteStreams.newInputStreamSupplier(writer.toString().getBytes(Charsets.UTF_8)));
+
+    // Reads the msgCount events back
+    List<StreamEvent> events = Lists.newArrayList();
+    streamClient.getEvents(streamId, 0, Long.MAX_VALUE, Integer.MAX_VALUE, events);
+
+    Assert.assertEquals(msgCount, events.size());
+
+    for (int i = 0; i < msgCount; i++) {
+      StreamEvent event = events.get(i);
+      Assert.assertEquals("Event " + i, Bytes.toString(event.getBody()));
+      Assert.assertEquals("text/plain", event.getHeaders().get("content.type"));
+    }
+  }
+
+  @After
+  public void tearDown() throws CannotBeDeletedException, UnauthorizedException, NotFoundException, IOException {
+    namespaceClient.delete(namespaceId.getId());
+    clientConfig.setNamespace(namespaceId);
   }
 }

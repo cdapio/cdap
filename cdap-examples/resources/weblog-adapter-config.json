@@ -1,0 +1,27 @@
+{
+    "template": "ETLBatch",
+    "description": "StreamConversion ETL",
+    "config": {
+        "schedule": "*/1 * * * *",
+        "source": {
+            "name": "Stream",
+            "properties": {
+                "name": "logEventStream",
+                "format": "clf",
+                "duration": "1h"
+            }
+        },
+        "sink": {
+            "name": "Cube",
+            "properties": {
+                "name": "logEventCube",
+                "dataset.cube.resolutions": "1",
+                "dataset.cube.aggregation.agg1.dimensions": "remote_host",
+                "dataset.cube.aggregation.agg2.dimensions": "status",
+                "mapping.config": "{\"timestamp\": {\"sourceField\": \"ts\"}, \"tags\": [], \"dimensions\": [{\"name\":\"remote_host\", \"sourceField\":\"remote_host\"}, {\"name\":\"status\",\"sourceField\":\"status\"}],\"measurements\": [{\"name\": \"count\", \"type\": \"COUNTER\", \"value\": \"1\"}]}"
+            }
+        },
+        "transforms": []
+    }
+}
+

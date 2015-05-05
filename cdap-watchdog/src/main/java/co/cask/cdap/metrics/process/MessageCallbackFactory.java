@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.metrics.process;
 
-import co.cask.cdap.common.metrics.MetricsScope;
 import org.apache.twill.kafka.client.KafkaConsumer;
 
 /**
@@ -24,5 +23,5 @@ import org.apache.twill.kafka.client.KafkaConsumer;
  */
 public interface MessageCallbackFactory {
 
-  KafkaConsumer.MessageCallback create(KafkaConsumerMetaTable metaTable, MetricsScope scope);
+  KafkaConsumer.MessageCallback create(KafkaConsumerMetaTable metaTable);
 }

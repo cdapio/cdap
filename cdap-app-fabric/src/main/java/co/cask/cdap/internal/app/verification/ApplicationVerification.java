@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,7 +30,7 @@ import co.cask.cdap.proto.Id;
  * Following are the checks done for Application
  * <ul>
  * <li>Application name is an ID</li>
- * <li>Application contains at one of the following: Flow, Procedure, Batch/MR</li>
+ * <li>Application contains at one of the following: Flow, Batch/MR</li>
  * </ul>
  * </p>
  */
@@ -50,14 +50,14 @@ public class ApplicationVerification extends AbstractVerifier<ApplicationSpecifi
       return verifyResult;
     }
 
-    // Check if there is at least one of the following : Flow & Procedure or MapReduce or Workflow for now.
+    // Check if there is at least one of the following : Flow or MapReduce or Workflow for now.
     // TODO (terence): Logic here is really not good. Need to refactor.
-    if (input.getProcedures().isEmpty()
-        && input.getFlows().isEmpty()
+    if (input.getFlows().isEmpty()
         && input.getMapReduce().isEmpty()
         && input.getSpark().isEmpty()
         && input.getWorkflows().isEmpty()
-        && input.getServices().isEmpty()) {
+        && input.getServices().isEmpty()
+        && input.getWorkers().isEmpty()) {
       return VerifyResult.failure(Err.Application.ATLEAST_ONE_PROCESSOR, input.getName());
     }
 

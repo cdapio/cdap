@@ -23,17 +23,14 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.http.HttpRequest;
-import co.cask.cdap.common.http.HttpRequests;
-import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -43,6 +40,10 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
+import co.cask.cdap.proto.Id;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -76,13 +77,15 @@ import java.util.concurrent.TimeUnit;
 public class DatasetOpExecutorServiceTest {
 
   private static final Gson GSON = new Gson();
+  private static final Id.Namespace namespace = Id.Namespace.from("myspace");
+  private static final Id.DatasetInstance bob = Id.DatasetInstance.from(namespace, "bob");
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private DatasetService managerService;
   private DatasetFramework dsFramework;
-  private TimeLimitEndpointStrategy endpointStrategy;
+  private EndpointStrategy endpointStrategy;
   private TransactionManager txManager;
 
   @Before
@@ -101,13 +104,14 @@ public class DatasetOpExecutorServiceTest {
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
-      new IOModule(), new ZKClientModule(),
+      new IOModule(),
+      new ZKClientModule(),
       new KafkaClientModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
-      new DataSetsModules().getLocalModule(),
-      new DataSetServiceModules().getInMemoryModule(),
+      new DataSetsModules().getStandaloneModules(),
+      new DataSetServiceModules().getInMemoryModules(),
       new AuthModule(),
       new TransactionMetricsModule(),
       new ExploreClientModule());
@@ -122,9 +126,7 @@ public class DatasetOpExecutorServiceTest {
 
     // find host
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
-    endpointStrategy = new TimeLimitEndpointStrategy(
-      new RandomEndpointStrategy(
-        discoveryClient.discover(Constants.Service.DATASET_MANAGER)), 1L, TimeUnit.SECONDS);
+    endpointStrategy = new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_MANAGER));
   }
 
   @After
@@ -138,16 +140,16 @@ public class DatasetOpExecutorServiceTest {
   @Test
   public void testRest() throws Exception {
     // check non-existence with 404
-    testAdminOp("bob", "exists", 404, null);
+    testAdminOp(bob, "exists", 404, null);
 
     // add instance, should automatically create an instance
-    dsFramework.addInstance("table", "bob", DatasetProperties.EMPTY);
-    testAdminOp("bob", "exists", 200, true);
+    dsFramework.addInstance("table", bob, DatasetProperties.EMPTY);
+    testAdminOp(bob, "exists", 200, true);
 
-    testAdminOp("joe", "exists", 404, null);
+    testAdminOp("bob", "exists", 404, null);
 
     // check truncate
-    final Table table = dsFramework.getDataset("bob", DatasetDefinition.NO_ARGUMENTS, null);
+    final Table table = dsFramework.getDataset(bob, DatasetDefinition.NO_ARGUMENTS, null);
     TransactionExecutor txExecutor =
       new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager),
                                      ImmutableList.of((TransactionAware) table));
@@ -168,7 +170,7 @@ public class DatasetOpExecutorServiceTest {
       }
     });
 
-    testAdminOp("bob", "truncate", 200, null);
+    testAdminOp(bob, "truncate", 200, null);
 
     // verify that data is no longer there
     txExecutor.execute(new TransactionExecutor.Subroutine() {
@@ -179,34 +181,42 @@ public class DatasetOpExecutorServiceTest {
     });
 
     // check upgrade
-    testAdminOp("bob", "upgrade", 200, null);
+    testAdminOp(bob, "upgrade", 200, null);
 
     // drop and check non-existence
-    dsFramework.deleteInstance("bob");
-    testAdminOp("bob", "exists", 404, null);
+    dsFramework.deleteInstance(bob);
+    testAdminOp(bob, "exists", 404, null);
   }
 
   @Test
   public void testUpdate() throws Exception {
     // check non-existence with 404
-    testAdminOp("bob", "exists", 404, null);
+    testAdminOp(bob, "exists", 404, null);
 
     // add instance, should automatically create an instance
-    dsFramework.addInstance("table", "bob", DatasetProperties.EMPTY);
-    testAdminOp("bob", "exists", 200, true);
+    dsFramework.addInstance("table", bob, DatasetProperties.EMPTY);
+    testAdminOp(bob, "exists", 200, true);
 
-    dsFramework.updateInstance("bob", DatasetProperties.builder().add("dataset.table.ttl", "10000").build());
+    dsFramework.updateInstance(bob, DatasetProperties.builder().add("dataset.table.ttl", "10000").build());
     // check upgrade
-    testAdminOp("bob", "upgrade", 200, null);
+    testAdminOp(bob, "upgrade", 200, null);
 
     // drop and check non-existence
-    dsFramework.deleteInstance("bob");
-    testAdminOp("bob", "exists", 404, null);
+    dsFramework.deleteInstance(bob);
+    testAdminOp(bob, "exists", 404, null);
   }
 
   private void testAdminOp(String instanceName, String opName, int expectedStatus, Object expectedResult)
     throws URISyntaxException, IOException {
-    String path = String.format("/data/datasets/%s/admin/%s", instanceName, opName);
+    testAdminOp(Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, instanceName), opName, expectedStatus,
+                expectedResult);
+  }
+
+  private void testAdminOp(Id.DatasetInstance datasetInstanceId, String opName, int expectedStatus,
+                           Object expectedResult)
+    throws URISyntaxException, IOException {
+    String path = String.format("/namespaces/%s/data/datasets/%s/admin/%s",
+                                datasetInstanceId.getNamespaceId(), datasetInstanceId.getId(), opName);
 
     URL targetUrl = resolve(path);
     HttpResponse response = HttpRequests.execute(HttpRequest.post(targetUrl).build());
@@ -216,9 +226,9 @@ public class DatasetOpExecutorServiceTest {
   }
 
   private URL resolve(String path) throws URISyntaxException, MalformedURLException {
-    InetSocketAddress socketAddress = endpointStrategy.pick().getSocketAddress();
+    InetSocketAddress socketAddress = endpointStrategy.pick(1, TimeUnit.SECONDS).getSocketAddress();
     return new URL(String.format("http://%s:%d%s%s", socketAddress.getHostName(),
-                                 socketAddress.getPort(), Constants.Gateway.GATEWAY_VERSION, path));
+                                 socketAddress.getPort(), Constants.Gateway.API_VERSION_3, path));
   }
 
   private DatasetAdminOpResponse getResponse(byte[] body) {

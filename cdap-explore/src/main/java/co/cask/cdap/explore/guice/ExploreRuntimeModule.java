@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,12 +24,14 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.executor.ExploreExecutorHttpHandler;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.executor.ExploreMetadataHttpHandler;
-import co.cask.cdap.explore.executor.ExplorePingHandler;
+import co.cask.cdap.explore.executor.ExploreStatusHandler;
+import co.cask.cdap.explore.executor.NamespacedExploreMetadataHttpHandler;
+import co.cask.cdap.explore.executor.NamespacedQueryExecutorHttpHandler;
 import co.cask.cdap.explore.executor.QueryExecutorHttpHandler;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.explore.service.hive.Hive13ExploreService;
-import co.cask.cdap.gateway.handlers.PingHandler;
+import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Joiner;
@@ -51,6 +53,7 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.HiveMetaStore;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,11 +97,13 @@ public class ExploreRuntimeModule extends RuntimeModule {
       Named exploreSeriveName = Names.named(Constants.Service.EXPLORE_HTTP_USER_SERVICE);
       Multibinder<HttpHandler> handlerBinder =
           Multibinder.newSetBinder(binder(), HttpHandler.class, exploreSeriveName);
+      handlerBinder.addBinding().to(NamespacedQueryExecutorHttpHandler.class);
       handlerBinder.addBinding().to(QueryExecutorHttpHandler.class);
-      handlerBinder.addBinding().to(ExploreExecutorHttpHandler.class);
-      handlerBinder.addBinding().to(ExplorePingHandler.class);
+      handlerBinder.addBinding().to(NamespacedExploreMetadataHttpHandler.class);
       handlerBinder.addBinding().to(ExploreMetadataHttpHandler.class);
-      handlerBinder.addBinding().to(PingHandler.class);
+      handlerBinder.addBinding().to(ExploreExecutorHttpHandler.class);
+      handlerBinder.addBinding().to(ExploreStatusHandler.class);
+      CommonHandlers.add(handlerBinder);
 
       bind(ExploreExecutorService.class).in(Scopes.SINGLETON);
       expose(ExploreExecutorService.class);
@@ -118,7 +123,6 @@ public class ExploreRuntimeModule extends RuntimeModule {
       bind(ExploreService.class).annotatedWith(Names.named("explore.service.impl")).to(Hive13ExploreService.class);
       bind(ExploreService.class).toProvider(ExploreServiceProvider.class).in(Scopes.SINGLETON);
       expose(ExploreService.class);
-
       bind(boolean.class).annotatedWith(Names.named("explore.inmemory")).toInstance(isInMemory);
 
       bind(File.class).annotatedWith(Names.named(Constants.Explore.PREVIEWS_DIR_NAME))
@@ -163,6 +167,11 @@ public class ExploreRuntimeModule extends RuntimeModule {
       @Override
       public ExploreService get() {
         File hiveDataDir = new File(cConf.get(Constants.Explore.LOCAL_DATA_DIR));
+
+        // The properties set using setProperty will be included to any new HiveConf object created,
+        // at the condition that the configuration is known by Hive, and so is one of the HiveConf.ConfVars
+        // variables.
+
         System.setProperty(HiveConf.ConfVars.SCRATCHDIR.toString(),
                            new File(hiveDataDir, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsolutePath());
 
@@ -201,6 +210,12 @@ public class ExploreRuntimeModule extends RuntimeModule {
         System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS.toString(), "false");
         System.setProperty(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.toString(), "false");
 
+        // In a unit-test context, if two test classes both extending TestBase have record scannable datasets,
+        // the initialization of the metastore for the second test class will not have the default
+        // databases created because the static boolean to check whether default should be created will
+        // be deactivated by the first init.
+        HiveMetaStore.HMSHandler.resetDefaultDBFlag();
+
         return exploreService;
       }
     }
@@ -220,12 +235,6 @@ public class ExploreRuntimeModule extends RuntimeModule {
         LOG.info("Setting {} to {}", HiveConf.ConfVars.LOCALSCRATCHDIR.toString(),
                  System.getProperty(HiveConf.ConfVars.LOCALSCRATCHDIR.toString()));
 
-
-        // We don't support security in Hive Server.
-        System.setProperty("hive.server2.authentication", "NONE");
-        System.setProperty("hive.server2.enable.doAs", "false");
-        System.setProperty("hive.server2.enable.impersonation", "false");
-
         File previewDir = Files.createTempDir();
         LOG.info("Storing preview files in {}", previewDir.getAbsolutePath());
         bind(File.class).annotatedWith(Names.named(Constants.Explore.PREVIEWS_DIR_NAME)).toInstance(previewDir);
@@ -237,9 +246,9 @@ public class ExploreRuntimeModule extends RuntimeModule {
     @Provides
     @Singleton
     @Exposed
-    public final ExploreService providesExploreService(Injector injector, Configuration hConf) {
+    public ExploreService providesExploreService(Injector injector) {
       // Figure out which HiveExploreService class to load
-      Class<? extends ExploreService> hiveExploreServiceCl = ExploreServiceUtils.getHiveService(hConf);
+      Class<? extends ExploreService> hiveExploreServiceCl = ExploreServiceUtils.getHiveService();
       LOG.info("Using Explore service class {}", hiveExploreServiceCl.getName());
       return injector.getInstance(hiveExploreServiceCl);
     }
@@ -254,8 +263,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
     Set<String> bootstrapClassPaths = ExploreServiceUtils.getBoostrapClasses();
 
     Set<File> hBaseTableDeps = ExploreServiceUtils.traceDependencies(
-      new HBaseTableUtilFactory().get().getClass().getCanonicalName(),
-      bootstrapClassPaths, null);
+      HBaseTableUtilFactory.getHBaseTableUtilClass().getName(), bootstrapClassPaths, null);
 
     // Note the order of dependency jars is important so that HBase jars come first in the classpath order
     // LinkedHashSet maintains insertion order while removing duplicate entries.

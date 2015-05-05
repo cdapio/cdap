@@ -22,34 +22,31 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.Namespace;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.kv.NoTxKeyValueTable;
+import co.cask.cdap.proto.Id;
+import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionFailureException;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 /**
- * DataSetService Store implements ServiceStore using DataSets without Transaction.
+ * DatasetService Store implements ServiceStore using Datasets without Transaction.
  */
-public final class DatasetServiceStore implements ServiceStore {
-  private final NoTxKeyValueTable table;
+public final class DatasetServiceStore extends AbstractIdleService implements ServiceStore {
+  private final DatasetFramework dsFramework;
+  private NoTxKeyValueTable table;
 
   @Inject
   public DatasetServiceStore(CConfiguration cConf, DatasetDefinitionRegistryFactory dsRegistryFactory,
-                             @Named("serviceModule") DatasetModule datasetModule) throws Exception {
-    DatasetFramework dsFramework =
-      new NamespacedDatasetFramework(new InMemoryDatasetFramework(dsRegistryFactory),
-                                     new DefaultDatasetNamespace(cConf, Namespace.SYSTEM));
-    dsFramework.addModule("basicKVTable", datasetModule);
-    table = DatasetsUtil.getOrCreateDataset(dsFramework, Constants.Service.SERVICE_INSTANCE_TABLE_NAME,
-                                            NoTxKeyValueTable.class.getName(),
-                                            DatasetProperties.EMPTY, null, null);
+                             @Named("serviceModule") DatasetModule datasetModule,
+                             TransactionExecutorFactory txExecutorFactory) throws Exception {
+    this.dsFramework = new InMemoryDatasetFramework(dsRegistryFactory, cConf, txExecutorFactory);
+    this.dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "basicKVTable"), datasetModule);
   }
 
   @Override
@@ -61,5 +58,19 @@ public final class DatasetServiceStore implements ServiceStore {
   @Override
   public synchronized void setServiceInstance(final String serviceName, final int instances) {
     table.put(Bytes.toBytes(serviceName), Bytes.toBytes(String.valueOf(instances)));
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    Id.DatasetInstance serviceStoreDatasetInstanceId =
+      Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, Constants.Service.SERVICE_INSTANCE_TABLE_NAME);
+    table = DatasetsUtil.getOrCreateDataset(dsFramework, serviceStoreDatasetInstanceId,
+                                            NoTxKeyValueTable.class.getName(),
+                                            DatasetProperties.EMPTY, null, null);
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    table.close();
   }
 }

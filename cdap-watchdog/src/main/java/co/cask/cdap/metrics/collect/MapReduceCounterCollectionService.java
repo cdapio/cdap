@@ -15,27 +15,24 @@
  */
 package co.cask.cdap.metrics.collect;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsScope;
-import co.cask.cdap.metrics.transport.MetricsRecord;
-import co.cask.cdap.metrics.transport.TagMetric;
+import co.cask.cdap.api.metrics.MetricType;
+import co.cask.cdap.api.metrics.MetricValue;
+import co.cask.cdap.api.metrics.MetricValues;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
-import java.util.regex.Pattern;
+import java.util.Map;
 
 /**
  * A {@link co.cask.cdap.metrics.collect.AggregatedMetricsCollectionService} that publish
- * {@link co.cask.cdap.metrics.transport.MetricsRecord} to MapReduce counters.
+ * {@link co.cask.cdap.api.metrics.MetricValues} to MapReduce counters.
  */
 @Singleton
 public final class MapReduceCounterCollectionService extends AggregatedMetricsCollectionService {
-  private static final Logger LOG = LoggerFactory.getLogger(MapReduceCounterCollectionService.class);
-  private static final Pattern splitPattern = Pattern.compile("\\.");
   private final TaskAttemptContext taskContext;
 
   @Inject
@@ -50,37 +47,49 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
 
 
   @Override
-  protected void publish(MetricsScope scope, Iterator<MetricsRecord> metrics) throws Exception {
+  protected void publish(Iterator<MetricValues> metrics) throws Exception {
     while (metrics.hasNext()) {
-      MetricsRecord record = metrics.next();
-      String context = record.getContext();
+      MetricValues record = metrics.next();
+      publishMetric(record);
+    }
+  }
 
-      // Context is expected to look like appId.b.programId.[m|r].[taskId]
-      String counterGroup;
-      String contextParts[] = splitPattern.split(context);
-      //TODO: Refactor to support any context
-      if (context.equals(Constants.Metrics.DATASET_CONTEXT)) {
-        counterGroup = "cdap.dataset";
-      } else if ("m".equals(contextParts[3])) {
-        counterGroup = "cdap.mapper";
-      } else if ("r".equals(contextParts[3])) {
-        counterGroup = "cdap.reducer";
+  private void publishMetric(MetricValues record) {
+    // The format of the counters:
+    // * counter group name: "cdap.<tag_name>.<tag_value>[.<tag_name>.<tag_value>[...]]
+    // * counter name: metric name
+
+    StringBuilder counterGroup = new StringBuilder("cdap");
+    // flatten tags
+    for (Map.Entry<String, String> tag : record.getTags().entrySet()) {
+      // escape dots with tilde
+      counterGroup.append(".").append(tag.getKey()).append(".").append(tag.getValue().replace(".", "~"));
+    }
+    for (MetricValue metric : record.getMetrics()) {
+      String counterName = getCounterName(metric.getName());
+      if (metric.getType() == MetricType.COUNTER) {
+        taskContext.getCounter(counterGroup.toString(), counterName).increment(metric.getValue());
       } else {
-        LOG.error("could not determine if the metric is a map or reduce metric from context {}, skipping...", context);
-        continue;
-      }
-
-      counterGroup += "." + scope.name();
-
-      String counterName = getCounterName(record.getName());
-      taskContext.getCounter(counterGroup, counterName).increment(record.getValue());
-      for (TagMetric tag : record.getTags()) {
-        counterName = getCounterName(record.getName(), tag.getTag());
-        if (counterName != null) {
-          taskContext.getCounter(counterGroup, counterName).increment(tag.getValue());
-        }
+        taskContext.getCounter(counterGroup.toString(), counterName).setValue(metric.getValue());
       }
     }
+  }
+
+  public static Map<String, String> parseTags(String counterGroupName) {
+    // see publish method for format info
+
+    Preconditions.checkArgument(counterGroupName.startsWith("cdap."),
+                                "Counters group was not created by CDAP: " + counterGroupName);
+    String[] parts = counterGroupName.split("\\.");
+    Map<String, String> tags = Maps.newHashMap();
+    // todo: assert that we have odd count of parts?
+    for (int i = 1; i < parts.length; i += 2) {
+      String tagName = parts[i];
+      String tagValue = parts[i + 1];
+      // replace tilde with dots as context with dots are escaped with tilde
+      tags.put(tagName, tagValue.replace("~", "."));
+    }
+    return tags;
   }
 
   private String getCounterName(String metric) {

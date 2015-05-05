@@ -17,8 +17,10 @@
 package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.http.AbstractHttpHandler;
+import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Supplier;
@@ -62,9 +64,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -356,6 +360,38 @@ public abstract class NettyRouterTestBase {
     Assert.assertArrayEquals(requestBody, byteArrayOutputStream.toByteArray());
   }
 
+  @Test
+  public void testConnectionClose() throws Exception {
+    URL[] urls = new URL[] {
+      new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/abc/v1/status")),
+      new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/def/v1/status"))
+    };
+
+    // Make bunch of requests to one service to 2 difference urls, with the first one keep-alive, second one not.
+    // This make router creates two backend service connections on the same inbound connection
+    // This is to verify on the close of the second one, it won't close the the inbound if there is an
+    // in-flight request happening already (if reached another round of the following for-loop).
+    int times = 1000;
+    boolean keepAlive = true;
+    for (int i = 0; i < times; i++) {
+      HttpURLConnection urlConn = openURL(urls[i % urls.length]);
+      try {
+        urlConn.setRequestProperty(HttpHeaders.Names.CONNECTION,
+                                   keepAlive ? HttpHeaders.Values.KEEP_ALIVE : HttpHeaders.Values.CLOSE);
+        Assert.assertEquals(HttpURLConnection.HTTP_OK, urlConn.getResponseCode());
+      } finally {
+        keepAlive = !keepAlive;
+        urlConn.disconnect();
+      }
+    }
+
+    Assert.assertEquals(times, defaultServer1.getNumRequests() + defaultServer2.getNumRequests());
+  }
+
+  protected HttpURLConnection openURL(URL url) throws Exception {
+    return (HttpURLConnection) url.openConnection();
+  }
+
   private void testSync(int numRequests) throws Exception {
     for (int i = 0; i < numRequests; ++i) {
       LOG.trace("Sending request " + i);
@@ -469,7 +505,7 @@ public abstract class NettyRouterTestBase {
     public void registerServer() {
       // Register services of test server
       log.info("Registering service {}", serviceNameSupplier.get());
-      cancelDiscovery = discoveryService.register(new Discoverable() {
+      cancelDiscovery = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
         @Override
         public String getName() {
           return serviceNameSupplier.get();
@@ -479,7 +515,7 @@ public abstract class NettyRouterTestBase {
         public InetSocketAddress getSocketAddress() {
           return httpService.getBindAddress();
         }
-      });
+      }));
     }
 
     public void cancelRegistration() {
@@ -530,19 +566,34 @@ public abstract class NettyRouterTestBase {
         responder.sendString(HttpResponseStatus.OK, serviceNameSupplier.get());
       }
 
+      @GET
+      @Path("/abc/v1/status")
+      public void abcStatus(HttpRequest request, HttpResponder responder) {
+        numRequests.incrementAndGet();
+        responder.sendStatus(HttpResponseStatus.OK);
+      }
+
+      @GET
+      @Path("/def/v1/status")
+      public void defStatus(HttpRequest request, HttpResponder responder) {
+        numRequests.incrementAndGet();
+        responder.sendStatus(HttpResponseStatus.OK);
+      }
+
       @POST
       @Path("/v1/upload")
-      public void upload(HttpRequest request, final HttpResponder responder) throws InterruptedException {
+      public void upload(HttpRequest request, final HttpResponder responder) throws InterruptedException, IOException {
         ChannelBuffer content = request.getContent();
 
         int readableBytes;
-        responder.sendChunkStart(HttpResponseStatus.OK, ImmutableMultimap.<String, String>of());
+        ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK,
+                                                                 ImmutableMultimap.<String, String>of());
         while ((readableBytes = content.readableBytes()) > 0) {
           int read = Math.min(readableBytes, CHUNK_SIZE);
-          responder.sendChunk(content.readSlice(read));
+          chunkResponder.sendChunk(content.readSlice(read));
           //TimeUnit.MILLISECONDS.sleep(RANDOM.nextInt(1));
         }
-        responder.sendChunkEnd();
+        chunkResponder.close();
       }
     }
   }

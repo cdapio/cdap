@@ -1,0 +1,74 @@
+<div ncy-breadcrumb></div>
+
+<div class="row" program-heading>
+  <div class="col-sm-6">
+    <h2 class="programTitle">
+      <span ng-bind="$state.params.programId"></span>
+    </h2>
+    <div class="type-block">
+      <span class="icon-mapreduce"></span>
+      <small> Type: Mapreduce </small>
+    </div>
+  </div>
+  <div class="col-sm-6 text-right">
+
+    <div class="btn-group" dropdown>
+      <div ng-hide="status === 'STARTING'"
+           class="btn btn-success btn-md"
+           ng-click="toggleFlow('start')">
+        <span class="fa fa-play"></span>
+        <span>Start</span>
+      </div>
+
+      <div ng-show="status === 'STARTING' || status === 'STOPPING'"
+           ng-class="{'btn-success': status === 'STARTING', 'btn-warning': status === 'STOPPING'}"
+           class="btn btn-default btn-md">
+        <span class="fa fa-refresh fa-spin"></span>
+        <span>{{status | caskCapitalizeFilter}}</span>
+      </div>
+
+      <button class="btn btn-md dropdown-toggle" ng-class="{'btn-success': status !== 'STOPPING', 'btn-warning': status === 'STOPPING'}" dropdown-toggle>
+        <span class="caret"></span>
+      </button>
+
+      <ul class="dropdown-menu dropdown-menu-right" role="menu">
+        <li role="presentation">
+          <a role="menuitem"
+             href="#"
+             ng-click="openRuntime()">
+            <span class="fa fa-wrench pull-right"></span>
+            <span> Runtime Arguments </span>
+          </a>
+        </li>
+        <li role="presentation">
+          <a role="menuitem"
+             href="#"
+             ng-click="openPreferences()">
+            <span class="fa fa-cog pull-right"></span>
+            <span> Preferences </span>
+          </a>
+        </li>
+      </ul>
+
+    </div>
+    <!-- END OF BUTTON GROUP -->
+
+  </div>
+</div>
+
+<div class="cdap-subnav-end"></div>
+
+<ul class="nav nav-tabs slanted-tabs" role="tablist">
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="mapreduce.detail.runs" ui-sref-opts="{reload: true}" role="tab">Runs</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="mapreduce.detail.data" role="tab">Datasets</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="mapreduce.detail.history" role="tab">History</a>
+  </li>
+</ul>
+
+<br />
+<ui-view role="tabpanel"/>

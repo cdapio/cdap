@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,10 +15,17 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Decoder;
 import co.cask.cdap.common.io.Encoder;
+import co.cask.cdap.common.io.LocationStatus;
+import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.io.Processor;
+import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -144,10 +151,34 @@ public final class StreamUtils {
    */
   public static long getPartitionStartTime(String partitionName) {
     int idx = partitionName.indexOf('.');
-    Preconditions.checkArgument(idx >= 0,
+    Preconditions.checkArgument(idx > 0,
                                 "Invalid partition name %s. Partition name should be of format %s",
                                 partitionName, "[startTimestamp].[duration]");
     return TimeUnit.MILLISECONDS.convert(Long.parseLong(partitionName.substring(0, idx)), TimeUnit.SECONDS);
+  }
+
+  /**
+   * Returns true if it is valid partition name, false other. The partition name must be
+   * {@code [0-9]+.[0-9]+}
+   */
+  public static boolean isPartition(String partitionName) {
+    int dotPos = -1;
+    for (int i = 0; i < partitionName.length(); i++) {
+      char c = partitionName.charAt(i);
+      if (c == '.') {
+        // Make sure there is only one '.'
+        if (dotPos >= 0) {
+          return false;
+        }
+        dotPos = i;
+        continue;
+      }
+      if (c < '0' || c > '9') {
+        return false;
+      }
+    }
+    // Must sure '.' is not the first character and not the last
+    return dotPos > 0 && dotPos < partitionName.length() - 1;
   }
 
   /**
@@ -267,15 +298,15 @@ public final class StreamUtils {
     return new StreamFileOffset(eventLocation, offset, generation);
   }
 
-  public static StreamConfig ensureExists(StreamAdmin admin, String streamName) throws IOException {
+  public static StreamConfig ensureExists(StreamAdmin admin, Id.Stream streamId) throws IOException {
     try {
-      return admin.getConfig(streamName);
+      return admin.getConfig(streamId);
     } catch (Exception e) {
       // Ignored
     }
     try {
-      admin.create(streamName);
-      return admin.getConfig(streamName);
+      admin.create(streamId);
+      return admin.getConfig(streamId);
     } catch (Exception e) {
       Throwables.propagateIfInstanceOf(e, IOException.class);
       throw new IOException(e);
@@ -290,8 +321,17 @@ public final class StreamUtils {
    * @return the generation id
    */
   public static int getGeneration(StreamConfig config) throws IOException {
-    Location streamLocation = config.getLocation();
+    return getGeneration(config.getLocation());
+  }
 
+  /**
+   * Finds the current generation if of a stream. It scans the stream directory to look for largest generation
+   * number in directory name.
+   *
+   * @param streamLocation location to scan for generation id
+   * @return the generation id
+   */
+  public static int getGeneration(Location streamLocation) throws IOException {
     // Default generation is 0.
     int genId = 0;
     CharMatcher numMatcher = CharMatcher.inRange('0', '9');
@@ -310,6 +350,110 @@ public final class StreamUtils {
       }
     }
     return genId;
+  }
+
+  /**
+   * Finds the next sequence id for the given partition with the given file prefix.
+   *
+   * @param partitionLocation the directory where the stream partition is
+   * @param filePrefix prefix of file name to match
+   * @return the next sequence id, which is the current max id + 1.
+   * @throws IOException if failed to find the next sequence id
+   */
+  public static int getNextSequenceId(Location partitionLocation, String filePrefix) throws IOException {
+    // Try to find the file of this bucket with the highest sequence number.
+    int maxSequence = -1;
+    for (Location location : partitionLocation.list()) {
+      String fileName = location.getName();
+      if (!fileName.startsWith(filePrefix)) {
+        continue;
+      }
+      StreamUtils.getSequenceId(fileName);
+
+      int idx = fileName.lastIndexOf('.');
+      if (idx < filePrefix.length()) {
+        // Ignore file with invalid stream file name
+        continue;
+      }
+
+      try {
+        // File name format is [prefix].[sequenceId].[dat|idx]
+        int seq = StreamUtils.getSequenceId(fileName);
+        if (seq > maxSequence) {
+          maxSequence = seq;
+        }
+      } catch (NumberFormatException e) {
+        // Ignore stream file with invalid sequence id
+      }
+    }
+    return maxSequence + 1;
+  }
+
+  /**
+   * Get the size of the data persisted for the stream under the given stream location.
+   *
+   * @param streamLocation stream to get data size of
+   * @return the size of the data persisted for the stream which config is the {@code streamName}
+   * @throws IOException in case of any error in fetching the size
+   */
+  public static long fetchStreamFilesSize(Location streamLocation) throws IOException {
+    Processor<LocationStatus, Long> processor = new Processor<LocationStatus, Long>() {
+      private long size = 0;
+      @Override
+      public boolean process(LocationStatus input) {
+        if (!input.isDir() && StreamFileType.EVENT.isMatched(input.getUri().getPath())) {
+          size += input.getLength();
+        }
+        return true;
+      }
+
+      @Override
+      public Long getResult() {
+        return size;
+      }
+    };
+
+    List<Location> locations = streamLocation.list();
+    // All directories are partition directories
+    for (Location location : locations) {
+      if (!location.isDirectory() || !isPartition(location.getName())) {
+        continue;
+      }
+      Locations.processLocations(location, false, processor);
+    }
+    return processor.getResult();
+  }
+
+  /**
+   * Gets a TableId for stream consumer state stores within a given namespace.
+   * @param namespace the namespace for which the table is for.
+   * @return constructed TableId
+   */
+  public static TableId getStateStoreTableId(Id.Namespace namespace) {
+    String tableName = String.format("%s.%s.state.store",
+                                     Constants.SYSTEM_NAMESPACE, QueueConstants.QueueType.STREAM.toString());
+    return TableId.from(namespace.getId(), tableName);
+  }
+
+  /**
+   * Gets a {@link Id.Stream} given a stream's base directory.
+   * @param streamBaseLocation the location of the stream's directory
+   * @return Id of the stream associated with the location
+   */
+  public static Id.Stream getStreamIdFromLocation(Location streamBaseLocation) {
+    // streamBaseLocation = /.../<namespace>/streams/<streamName>,
+    // as constructed by FileStreamAdmin#getStreamConfigLocation
+    Location streamsDir = Locations.getParent(streamBaseLocation);
+    Preconditions.checkNotNull(streamsDir,
+                               "Streams directory of stream base location %s was null.", streamBaseLocation);
+
+    Location namespaceDir = Locations.getParent(streamsDir);
+    Preconditions.checkNotNull(namespaceDir,
+                               "Namespace directory of stream base location %s was null.", streamBaseLocation);
+
+    String namespace = namespaceDir.getName();
+    String streamName = streamBaseLocation.getName();
+    return Id.Stream.from(namespace, streamName);
   }
 
   private StreamUtils() {

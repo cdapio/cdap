@@ -1,0 +1,46 @@
+<section class="panel-group explore"
+     ng-controller="CdapDatasetExploreController"
+     ng-model="activePanel"
+     data-allow-multiple="true"
+     bs-collapse>
+
+  <div class="panel panel-explore">
+    <div class="panel-heading" bs-collapse-toggle>
+      <h3 class="panel-title" >
+        <span
+          ng-class="{'fa-chevron-right': activePanel.indexOf(0) === -1,
+                     'fa-chevron-down': activePanel.indexOf(0) !== -1}"
+          class="fa fa-fw"
+        ></span>Write &amp; Execute SQL
+      </h3>
+    </div>
+    <div class="panel-collapse" bs-collapse-target>
+      <div class="panel-body">
+
+        <my-sql-query data-type="'dataset'" data-name="name"></my-sql-query>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="panel panel-explore">
+    <div class="panel-heading" bs-collapse-toggle>
+      <h3 class="panel-title" >
+        <span
+          ng-class="{'fa-chevron-right': activePanel.indexOf(1) === -1,
+                     'fa-chevron-down': activePanel.indexOf(1) !== -1}"
+          class="fa fa-fw"
+        ></span>View Queries
+      </h3>
+    </div>
+    <div class="panel-collapse" bs-collapse-target>
+      <div class="panel-body">
+
+        <my-view-queries></my-view-queries>
+
+      </div>
+    </div>
+  </div>
+
+
+</section>

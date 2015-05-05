@@ -1,0 +1,9 @@
+{ "id": "1234", "name": "Joe Black", "email": "joe@black-earth.org" }
+{ "id": "7895", "name": "Jim Crow", "email": "crow@birds-party.gov" }
+{ "id": "A42B", "name": "Jack White", "email": "jack@stripes.com" }
+{ "id": "FEDE", "name": "Paul Bing", "email": "pb@boing.com" }
+{ "id": "5637", "name": "Amanda King", "email": "amaki@blues.net" }
+{ "id": "A321", "name": "Wookie", "email": "wook@.tree.people.org" }
+{ "id": "342F", "name": "June Bug", "email": "junieb@jones.com" }
+{ "id": "98AC", "name": "Vik B. Ram", "email": "vik@cask.co" }
+{ "id": "428E", "name": "Marjorie Blue", "email": "mags@colors.net" }

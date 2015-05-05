@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,19 +16,14 @@
 
 package co.cask.cdap.internal.batch;
 
-import co.cask.cdap.api.mapreduce.MapReduce;
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.internal.specification.DataSetFieldExtractor;
-import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.google.common.reflect.TypeToken;
 
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -42,50 +37,21 @@ public class DefaultMapReduceSpecification implements MapReduceSpecification {
   private final Map<String, String> properties;
   private final String inputDataSet;
   private final String outputDataSet;
-  private final int mapperMemoryMB;
-  private final int reducerMemoryMB;
-
-  public DefaultMapReduceSpecification(String name, String description, String inputDataSet, String outputDataSet,
-                                       Set<String> dataSets, Map<String, String> properties, int mapperMemoryMB,
-                                       int reducerMemoryMB) {
-    this(null, name, description, inputDataSet, outputDataSet, dataSets, properties, mapperMemoryMB, reducerMemoryMB);
-  }
-
-  public DefaultMapReduceSpecification(MapReduce mapReduce) {
-    MapReduceSpecification configureSpec = mapReduce.configure();
-
-    Set<String> dataSets = Sets.newHashSet(configureSpec.getDataSets());
-    Map<String, String> properties = Maps.newHashMap(configureSpec.getProperties());
-
-    Reflections.visit(mapReduce, TypeToken.of(mapReduce.getClass()),
-                      new PropertyFieldExtractor(properties),
-                      new DataSetFieldExtractor(dataSets));
-
-    this.className = mapReduce.getClass().getName();
-    this.name = configureSpec.getName();
-    this.description = configureSpec.getDescription();
-    this.inputDataSet = configureSpec.getInputDataSet();
-    this.outputDataSet = configureSpec.getOutputDataSet();
-
-    this.dataSets = ImmutableSet.copyOf(dataSets);
-    this.properties = ImmutableMap.copyOf(properties);
-
-    this.mapperMemoryMB = configureSpec.getMapperMemoryMB();
-    this.reducerMemoryMB = configureSpec.getReducerMemoryMB();
-  }
+  private final Resources mapperResources;
+  private final Resources reducerResources;
 
   public DefaultMapReduceSpecification(String className, String name, String description, String inputDataSet,
                                        String outputDataSet, Set<String> dataSets, Map<String, String> properties,
-                                       int mapperMemoryMB, int reducerMemoryMB) {
+                                       Resources mapperResources, Resources reducerResources) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.inputDataSet = inputDataSet;
     this.outputDataSet = outputDataSet;
-    this.dataSets = ImmutableSet.copyOf(dataSets);
     this.properties = properties == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(properties);
-    this.mapperMemoryMB = mapperMemoryMB;
-    this.reducerMemoryMB = reducerMemoryMB;
+    this.mapperResources = mapperResources;
+    this.reducerResources = reducerResources;
+    this.dataSets = getAllDatasets(dataSets, inputDataSet, outputDataSet);
   }
 
   @Override
@@ -118,23 +84,42 @@ public class DefaultMapReduceSpecification implements MapReduceSpecification {
     return properties.get(key);
   }
 
+  @Nullable
   @Override
   public String getOutputDataSet() {
     return outputDataSet;
   }
 
+  @Nullable
   @Override
   public String getInputDataSet() {
     return inputDataSet;
   }
 
+  @Nullable
   @Override
-  public int getMapperMemoryMB() {
-    return mapperMemoryMB;
+  public Resources getMapperResources() {
+    return mapperResources;
   }
 
+  @Nullable
   @Override
-  public int getReducerMemoryMB() {
-    return reducerMemoryMB;
+  public Resources getReducerResources() {
+    return reducerResources;
+  }
+
+  private Set<String> getAllDatasets(Set<String> dataSets, String inputDataSet, String outputDataSet) {
+    ImmutableSet.Builder<String> builder = new ImmutableSet.Builder<String>();
+    builder.addAll(dataSets);
+
+    if (inputDataSet != null && !inputDataSet.isEmpty()) {
+      builder.add(inputDataSet);
+    }
+
+    if (outputDataSet != null && !outputDataSet.isEmpty()) {
+      builder.add(outputDataSet);
+    }
+
+    return builder.build();
   }
 }

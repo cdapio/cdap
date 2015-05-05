@@ -19,22 +19,30 @@ package co.cask.cdap.security.server;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
+import com.unboundid.ldap.listener.InMemoryListenerConfig;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.BeforeClass;
 
+import java.net.InetAddress;
+
 /**
- * Test External Authentication Server
+ * Tests for {@link ExternalAuthenticationServer}.
  */
 public class ExternalAuthenticationServerTest extends ExternalAuthenticationServerTestBase {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
     CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, "127.0.0.1");
     cConf.set(Constants.Security.SSL_ENABLED, "false");
+    cConf.set(Constants.Security.AUTH_SERVER_BIND_PORT, "0");
 
     configuration = cConf;
     sConfiguration = SConfiguration.create();
+
+    ldapListenerConfig = InMemoryListenerConfig.createLDAPConfig("LDAP", InetAddress.getByName("127.0.0.1"),
+                                                                 ldapPort, null);
     setup();
   }
 

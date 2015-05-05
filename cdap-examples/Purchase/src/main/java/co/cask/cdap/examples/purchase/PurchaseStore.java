@@ -13,12 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.examples.purchase;
 
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.ObjectStore;
+import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.metrics.Metrics;
 import com.google.common.base.Charsets;
@@ -35,7 +36,7 @@ import java.net.URL;
 public class PurchaseStore extends AbstractFlowlet {
 
   @UseDataSet("purchases")
-  private ObjectStore<Purchase> store;
+  private ObjectMappedTable<Purchase> store;
   private Metrics metrics; // Declare the custom metrics
 
   private static final Logger LOG = LoggerFactory.getLogger(PurchaseStore.class);
@@ -44,7 +45,7 @@ public class PurchaseStore extends AbstractFlowlet {
   public void process(Purchase purchase) {
     // Discover the CatalogLookup service via discovery service
     // the service name is the same as the one provided in the Application configure method
-    URL serviceURL = getContext().getServiceURL("PurchaseHistory", PurchaseApp.SERVICE_NAME);
+    URL serviceURL = getContext().getServiceURL(PurchaseApp.APP_NAME, CatalogLookupService.SERVICE_NAME);
     if (serviceURL != null) {
       String catalog = getCatalogId(serviceURL, purchase.getProduct());
       if (catalog != null) {

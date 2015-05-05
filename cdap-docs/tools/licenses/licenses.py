@@ -28,7 +28,9 @@ import os
 import subprocess
 import sys
 
-VERSION = "0.0.6"
+VERSION = "0.0.9"
+
+COPYRIGHT_YEAR = "2015"
 
 MASTER_CSV = "cdap-dependencies-master.csv"
 
@@ -36,7 +38,9 @@ ENTERPRISE = "cdap-enterprise-dependencies"
 LEVEL_1    = "cdap-level-1-dependencies"
 STANDALONE = "cdap-standalone-dependencies"
 
-LICENSES_SOURCE = "../../developer-guide/source/licenses"
+CASK_REVERSE_DOMAIN = "co.cask"
+
+LICENSES_SOURCE = "../../reference-manual/source/licenses"
 
 SPACE = " "*3
 BACK_DASH = "\-"
@@ -46,14 +50,14 @@ SCRIPT_DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 DEBUG = False
 
 def get_sdk_version():
-    # Sets the CDAP Build Version via maven
-    mvn_version_cmd = "mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate \
-    -Dexpression=project.version -f ../../../pom.xml | grep -v '^\['"
+    # Sets the Build Version
+    grep_version_cmd = "grep '<version>' ../../../pom.xml | awk 'NR==1;START{print $1}'"
     version = None
     try:
-        version = subprocess.check_output(mvn_version_cmd, shell=True).strip().replace("-SNAPSHOT", "")
+        full_version = subprocess.check_output(grep_version_cmd, shell=True).strip().replace("<version>", "").replace("</version>", "")
+        version = full_version.replace("-SNAPSHOT", "")
     except:
-        print "Could not get version from maven"
+        print "Could not get version using grep"
         sys.exit(1)
     return version
 
@@ -198,8 +202,9 @@ def master_print():
     # Print out the results
     keys = master_libs_dict.keys()
     keys.sort()
-    for k in keys:
-        master_libs_dict[k].pretty_print()    
+    max = len("%d" % len(keys)) # set max to maximum number of characters in keys
+    for i, k in enumerate(keys):
+        master_libs_dict[k].pretty_print(i+1, max)    
 
 
 def process_enterprise(input_file, options):
@@ -232,7 +237,7 @@ def process_level_1(input_file, options):
                     print 'lib.jar %s' % lib.jar
                     level_1_dict[key] = (group_id, artifact_id, lib.license, lib.license_url)
                     continue
-                if not missing_libs_dict.has_key(artifact_id):
+                if not missing_libs_dict.has_key(artifact_id) and not jar.startswith(CASK_REVERSE_DOMAIN):
                     missing_libs_dict[artifact_id] = jar
 
     print "Level 1: Row count: %s" % row_count
@@ -290,10 +295,10 @@ def process_dependencies(dependency):
     for lib_dict in [master_libs_dict]:
         keys = lib_dict.keys()
         keys.sort()
-        missing_licenses = 0
+        missing_licenses = []
         for k in keys:
             if lib_dict[k].license == "":
-                missing_licenses += 1
+                missing_licenses.append(lib_dict[k])
             if DEBUG:
                 lib_dict[k].pretty_print()
         print_debug("Records: %s" % len(keys))
@@ -301,7 +306,16 @@ def process_dependencies(dependency):
     print "New CSV: Rows: %s" % len(new_libs_dict.keys())
     print "New Master CSV: Rows: %s" % len(master_libs_dict.keys())
     print "New Master CSV: Missing Entry Rows: %s" % missing_entries
-    print "New Master CSV: Missing License Rows: %s" % missing_licenses
+    print "New Master CSV: Missing License Rows: %s" % len(missing_licenses)
+    if missing_licenses:
+        for miss in missing_licenses:
+            print "  %s" % miss
+    
+    if missing_entries:
+        i = 0
+        for key in missing_libs_dict.keys():
+            i += 1
+            print "Missing %2d: %s" % (i, missing_libs_dict[key])
 
     # Write out a new master cvs file, only if not already exists 
     if missing_entries or missing_licenses:
@@ -364,10 +378,10 @@ def print_rst_standalone(input_file, options):
    
 def print_dependencies(title, file_base, header, widths, data_list):
 # Example: "Level 1", LEVEL_1, ...
-    RST_HEADER=""".. :author: Cask Data, Inc.
-   :version: %(version)s
-
-:orphan:
+    RST_HEADER=""".. meta::
+    :author: Cask Data, Inc.
+    :copyright: Copyright © %(year)s Cask Data, Inc.
+    :version: %(version)s
 
 =================================================
 Cask Data Application Platform |version|
@@ -379,9 +393,9 @@ Cask Data Application Platform %(title)s Dependencies
 .. rst2pdf: PageBreak
 .. rst2pdf: .. contents::
 
-.. rst2pdf: build ../../../developer-guide/licenses-pdf/
-.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
-.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../../reference/licenses-pdf/
+.. rst2pdf: config ../../../_common/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../_common/_templates/pdf-stylesheet
 
 .. csv-table:: **Cask Data Application Platform %(title)s Dependencies**
    :header: %(header)s
@@ -389,7 +403,7 @@ Cask Data Application Platform %(title)s Dependencies
 
 """
     sdk_version = get_sdk_version()        
-    RST_HEADER = RST_HEADER % {'version': sdk_version, 'title': title, 'header': header, 'widths': widths}
+    RST_HEADER = RST_HEADER % {'version': sdk_version, 'title': title, 'header': header, 'widths': widths, 'year': COPYRIGHT_YEAR}
     rst_path = os.path.join(SCRIPT_DIR_PATH, file_base + ".rst")
 
     try:
@@ -466,13 +480,16 @@ class Library:
                     length = max(self.MAX_SIZES[element], length)
                 self.MAX_SIZES[element] = length
 
-    def pretty_print(self):
-        SPACER = 2
+    def pretty_print(self, i=0, digits=3):
+        SPACER = 1
         line = ""
         for element in self.PRINT_ORDER:
             if element[0] != "_":
                 length = self.MAX_SIZES[element]
                 line += self.__dict__[element].ljust(self.MAX_SIZES[element]+ SPACER)
+        if i != 0:
+            format = "%%%dd:%%s" % digits
+            line = format % (i, line)
         print line
 
     def get_row(self):

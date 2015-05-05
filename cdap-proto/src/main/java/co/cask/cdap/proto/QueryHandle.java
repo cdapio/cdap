@@ -23,7 +23,7 @@ import java.util.UUID;
 /**
  * Represents a submitted query operation.
  */
-public class QueryHandle {
+public final class QueryHandle {
 
   private static final String NO_OP_ID = "NO_OP";
   public static final QueryHandle NO_OP = new QueryHandle(NO_OP_ID);
@@ -41,6 +41,10 @@ public class QueryHandle {
     return new QueryHandle(id);
   }
 
+  /**
+   * Create a new QueryHandle.
+   * @param handle handle of the query.
+   */
   private QueryHandle(String handle) {
     this.handle = handle;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,34 +15,41 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.EventHandler;
+import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Map;
 
 /**
- *
+ * A {@link ProgramRunner} to start a {@link Flow} program in distributed mode.
  */
 public final class DistributedFlowProgramRunner extends AbstractDistributedProgramRunner {
 
@@ -50,20 +57,23 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
 
   private final QueueAdmin queueAdmin;
   private final StreamAdmin streamAdmin;
+  private final TransactionExecutorFactory txExecutorFactory;
 
   @Inject
   DistributedFlowProgramRunner(TwillRunner twillRunner, Configuration hConfig,
-                               CConfiguration cConfig, QueueAdmin queueAdmin, StreamAdmin streamAdmin) {
+                               CConfiguration cConfig, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
+                               TransactionExecutorFactory txExecutorFactory) {
     super(twillRunner, hConfig, cConfig);
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
+    this.txExecutorFactory = txExecutorFactory;
   }
 
   @Override
   protected ProgramController launch(Program program, ProgramOptions options,
-                                     File hConfFile, File cConfFile, ApplicationLauncher launcher) {
+                                     Map<String, File> localizeFiles, ApplicationLauncher launcher) {
     // Extract and verify parameters
-    ApplicationSpecification appSpec = program.getSpecification();
+    ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
     ProgramType processorType = program.getType();
@@ -75,17 +85,19 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
       Preconditions.checkNotNull(flowSpec, "Missing FlowSpecification for %s", program.getName());
 
       LOG.info("Configuring flowlets queues");
-      Multimap<String, QueueName> flowletQueues = FlowUtils.configureQueue(program, flowSpec, streamAdmin, queueAdmin);
+      Multimap<String, QueueName> flowletQueues = FlowUtils.configureQueue(program, flowSpec,
+                                                                           streamAdmin, queueAdmin, txExecutorFactory);
 
       // Launch flowlet program runners
       LOG.info("Launching distributed flow: " + program.getName() + ":" + flowSpec.getName());
 
       TwillController controller = launcher.launch(new FlowTwillApplication(program, flowSpec,
-                                                                            hConfFile, cConfFile, eventHandler));
-      DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(program, controller,
-                                                                                                queueAdmin, streamAdmin,
-                                                                                                flowletQueues);
-      return new FlowTwillProgramController(program.getName(), controller, instanceUpdater).startListen();
+                                                                            localizeFiles, eventHandler));
+      DistributedFlowletInstanceUpdater instanceUpdater =
+        new DistributedFlowletInstanceUpdater(program, controller, queueAdmin,
+                                              streamAdmin, flowletQueues, txExecutorFactory);
+      RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
+      return new FlowTwillProgramController(program.getName(), controller, instanceUpdater, runId).startListen();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

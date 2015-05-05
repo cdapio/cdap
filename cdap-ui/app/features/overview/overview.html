@@ -1,0 +1,99 @@
+<div ng-hide="welcomeIsHidden">
+  <div class="panel panel-message">
+    <a class="btn-close pull-right" ng-click="hideWelcome()">
+      <span class="fa fa-close"></span>
+      <span class="sr-only"> Hide Welcome Message </span>
+    </a>
+    <div class="panel-body text-center">
+
+      <div class="row">
+
+        <div class="col-xs-12 col-sm-3">
+          <div class="text-left">
+            <h2 class="text-uppercase"> Welcome! </h2>
+            <p> Your CDAP is designed to meet your needs, whether you are a developer, operator, or admin. </p>
+          </div>
+        </div>
+        <div class="col-xs-12 col-sm-3">
+          <img class="center-block" src="assets/img/ico_simplify.png" />
+          <h3 class="text-uppercase"> Simplify... </h3>
+          <p>
+            your way to actionable <br />
+            insights with Hadoop
+          </p>
+        </div>
+        <div class="col-xs-12 col-sm-3">
+          <img src="assets/img/ico_innovate.png" />
+            <h3 class="text-uppercase"> Innovate... </h3>
+            <p>
+              with your existing talent and <br />
+              domain experts on Hadoop
+            </p>
+        </div>
+        <div class="col-xs-12 col-sm-3">
+          <img src="assets/img/ico_accelerate.png" />
+            <h3 class="text-uppercase"> Accelerate... </h3>
+            <p>
+              Time-to-Market and <br />
+              Time-to-Value with Hadoop
+            </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="system-health"> <!-- ng-show="isEnterprise" -->
+  <h2> System Health </h2>
+  <div class="row">
+    <div class="col-xs-12 col-lg-4">
+      <div>
+        <svg xmlns="http://www.w3.org/2000/svg" version="1.1">
+          <circle cx="50" cy="70" r="30" stroke="#C9C9D1" stroke-width="10" fill="{{systemStatus}}" />
+        </svg>
+        <p ng-if="systemStatus === 'yellow'">
+          Some <a ui-sref="admin.system.services"> services</a> might have an issue.
+        </p>
+        <p ng-if="systemStatus === 'red'">
+          All <a ui-sref="admin.system.services"> services</a> are down.
+        </p>
+        <p ng-if="systemStatus === 'green'">
+          <a ui-sref="admin.system.services" class="nounderline">All services are up and running</a>
+        </p>
+      </div>
+    </div>
+
+
+    <div class="col-xs-12 col-lg-8">
+      <div class="row">
+        <div class="col-xs-12">
+          <p class="text-center">
+            <strong> Errors last hour </strong>
+          </p>
+        </div>
+      </div>
+
+
+        <div ng-controller="C3WidgetTimeseriesCtrl" ng-repeat="wdgt in wdgts" class="health-widget">
+          <br ng-hide="$first">
+          <c3-spline
+            data-chart-data="chartData"
+            chart-size="{ height: 100, width: 280 }"
+            chart-showx="false"
+            chart-showy="false"
+            chart-color="{ pattern: ['red', '#FFBF00'] }"
+            chart-legend="{ show: false, position: 'inset' }"
+            ></c3-spline>
+          <div class="health-metrics">
+            <span class="warn"> {{chartData.streams[1]}} </span>
+            <p class="text-center">{{wdgt.title}}</p>
+            <span class="error"> {{chartData.streams[0]}} </span>
+          </div>
+        </div>
+    </div>
+  </div>
+</section>
+
+<section class="data-apps">
+  <div ng-include="'/assets/features/overview/templates/data-apps.html'"> </div>
+</section>

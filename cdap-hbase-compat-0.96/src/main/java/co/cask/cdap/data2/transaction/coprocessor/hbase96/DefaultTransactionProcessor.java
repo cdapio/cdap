@@ -18,6 +18,7 @@ package co.cask.cdap.data2.transaction.coprocessor.hbase96;
 
 import co.cask.cdap.data2.increment.hbase96.IncrementFilter;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
+import co.cask.cdap.data2.util.hbase.HTable96NameConverter;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.coprocessor.TransactionStateCache;
 import co.cask.tephra.hbase96.coprocessor.TransactionProcessor;
@@ -25,6 +26,7 @@ import co.cask.tephra.hbase96.coprocessor.TransactionVisibilityFilter;
 import com.google.common.base.Supplier;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.regionserver.ScanType;
 
 /**
  * Implementation of the {@link co.cask.tephra.hbase96.coprocessor.TransactionProcessor}
@@ -34,17 +36,12 @@ import org.apache.hadoop.hbase.filter.Filter;
 public class DefaultTransactionProcessor extends TransactionProcessor {
   @Override
   protected Supplier<TransactionStateCache> getTransactionStateCacheSupplier(RegionCoprocessorEnvironment env) {
-    String tableName = env.getRegion().getTableDesc().getNameAsString();
-    String[] parts = tableName.split("\\.", 2);
-    String tableNamespace = "";
-    if (parts.length > 0) {
-      tableNamespace = parts[0];
-    }
-    return new DefaultTransactionStateCacheSupplier(tableNamespace, env.getConfiguration());
+    String sysConfigTablePrefix = new HTable96NameConverter().getSysConfigTablePrefix(env.getRegion().getTableDesc());
+    return new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, env.getConfiguration());
   }
 
   @Override
-  protected Filter getTransactionFilter(Transaction tx) {
-    return new TransactionVisibilityFilter(tx, ttlByFamily, allowEmptyValues, new IncrementFilter());
+  protected Filter getTransactionFilter(Transaction tx, ScanType scanType) {
+    return new TransactionVisibilityFilter(tx, ttlByFamily, allowEmptyValues, scanType, new IncrementFilter());
   }
 }

@@ -1,0 +1,27 @@
+@import "../../styles/variables.less";
+@import "../../styles/themes/cdap/mixins.less";
+
+body.theme-cdap {
+  .btn-group {
+    .dropdown-toggle + .dropdown-menu.dropdown-menu-right {
+      .border-radius(4px 0 4px 4px);
+      > li {
+        my-file-select > a {
+          background-color: @cdap-header;
+          color: white;
+          cursor: pointer;
+          display: block;
+          padding: 10px;
+          .border-radius(4px 0 4px 4px);
+          &:hover, &:focus {
+            background-color: white;
+            color: @cdap-header;
+            text-decoration: none;
+          }
+        }
+        &:only-child my-file-select > a { .border-radius(4px 0 4px 4px); }
+      }
+    }
+
+  }
+}

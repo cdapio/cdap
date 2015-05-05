@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,12 +16,18 @@
 
 package co.cask.cdap.common.conf;
 
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
+
 import java.util.concurrent.TimeUnit;
 
 /**
  * Constants used by different systems are all defined here.
  */
 public final class Constants {
+
+  public static final String ARCHIVE_DIR = "archive";
+  public static final String ROOT_NAMESPACE = "root.namespace";
 
   /**
    * Global Service names.
@@ -41,6 +47,8 @@ public final class Constants {
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
     public static final String EXPLORE_HTTP_USER_SERVICE = "explore.service";
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
+    /** Scheduler queue name to submit the master service app. */
+    public static final String SCHEDULER_QUEUE = "master.services.scheduler.queue";
   }
 
   /**
@@ -71,12 +79,6 @@ public final class Constants {
    * App Fabric Configuration.
    */
   public static final class AppFabric {
-    /**
-     * Default constants for common.
-     */
-
-    //TODO: THis temp
-    public static final String DEFAULT_SERVER_ADDRESS = "localhost";
 
     /**
      * App Fabric Server.
@@ -86,16 +88,43 @@ public final class Constants {
     public static final String TEMP_DIR = "app.temp.dir";
     public static final String REST_PORT = "app.rest.port";
     public static final String PROGRAM_JVM_OPTS = "app.program.jvm.opts";
+    public static final String BACKLOG_CONNECTIONS = "app.connection.backlog";
+    public static final String EXEC_THREADS = "app.exec.threads";
+    public static final String BOSS_THREADS = "app.boss.threads";
+    public static final String WORKER_THREADS = "app.worker.threads";
+    public static final String APP_TEMPLATE_DIR = "app.template.dir";
+    public static final String APP_TEMPLATE_PLUGIN_DIR = "app.template.plugin.dir";
+    public static final String APP_SCHEDULER_QUEUE = "apps.scheduler.queue";
+    public static final String MAPREDUCE_JOB_CLIENT_CONNECT_MAX_RETRIES = "mapreduce.jobclient.connect.max.retries";
+    public static final String MAPREDUCE_INCLUDE_CUSTOM_CLASSES = "mapreduce.include.custom.format.classes";
+
+    /**
+     * Guice named bindings.
+     */
+    public static final String HANDLERS_BINDING = "appfabric.http.handler";
+
+    /**
+     * Defaults.
+     */
+    public static final int DEFAULT_BACKLOG = 20000;
+    public static final int DEFAULT_EXEC_THREADS = 20;
+    public static final int DEFAULT_BOSS_THREADS = 1;
+    public static final int DEFAULT_WORKER_THREADS = 10;
 
     /**
      * Query parameter to indicate start time.
      */
-    public static final String QUERY_PARAM_START_TIME = "before";
+    public static final String QUERY_PARAM_START_TIME = "start";
+
+    /**
+     * Query parameter to indicate status of a program {active, completed, failed}
+     */
+    public static final String QUERY_PARAM_STATUS = "status";
 
     /**
      * Query parameter to indicate end time.
      */
-    public static final String QUERY_PARAM_END_TIME = "after";
+    public static final String QUERY_PARAM_END_TIME = "end";
 
     /**
      * Query parameter to indicate limits on results.
@@ -108,6 +137,7 @@ public final class Constants {
     public static final int DEFAULT_HISTORY_RESULTS_LIMIT = 100;
 
     public static final String SERVICE_DESCRIPTION = "Service for managing application lifecycle.";
+
   }
 
   /**
@@ -116,6 +146,20 @@ public final class Constants {
   public class Scheduler {
     public static final String CFG_SCHEDULER_MAX_THREAD_POOL_SIZE = "scheduler.max.thread.pool.size";
     public static final int DEFAULT_THREAD_POOL_SIZE = 30;
+    public static final String SCHEDULERS_LAZY_START = "schedulers.lazy.start";
+    // TODO: CDAP-2281 remove once unit tests have a better way to handle schedules
+    // lazy start is set in some unit tests so that schedules are suspended right away when created.
+    // including this key with a true value as a schedule property will ignore the suspend behavior and schedules
+    // will be created normally.
+    public static final String IGNORE_LAZY_START = "scheduler.ignore.lazy.start";
+  }
+
+  /**
+   * Configuration Store.
+   */
+  public static final class ConfigStore {
+    public static final String CONFIG_TABLE = "config.store.table";
+    public static final Byte VERSION = 0;
   }
 
   /**
@@ -144,6 +188,16 @@ public final class Constants {
   public static final class Dataset {
 
     public static final String TABLE_PREFIX = "dataset.table.prefix";
+
+    // Table dataset property that defines whether table is transactional or not.
+    // Currently it is hidden from user as only supported for specially treated Metrics System's HBase
+    // tables. Constant could be moved to Table after that is changed. See CDAP-1193 for more info
+    public static final String TABLE_TX_DISABLED = "dataset.table.tx.disabled";
+
+    public static final String DATA_DIR = "dataset.data.dir";
+    public static final String DEFAULT_DATA_DIR = "data";
+
+    public static final String DATASET_UNCHECKED_UPGRADE = "dataset.unchecked.upgrade";
 
     /**
      * DatasetManager service configuration.
@@ -203,7 +257,7 @@ public final class Constants {
   }
 
   /**
-   * Stream configurations.
+   * Stream configurations and constants.
    */
   public static final class Stream {
     /* Begin CConfiguration keys */
@@ -212,8 +266,11 @@ public final class Constants {
     public static final String PARTITION_DURATION = "stream.partition.duration";
     public static final String INDEX_INTERVAL = "stream.index.interval";
     public static final String FILE_PREFIX = "stream.file.prefix";
+    public static final String INSTANCE_FILE_PREFIX = "stream.instance.file.prefix";
     public static final String CONSUMER_TABLE_PRESPLITS = "stream.consumer.table.presplits";
     public static final String FILE_CLEANUP_PERIOD = "stream.file.cleanup.period";
+    public static final String BATCH_BUFFER_THRESHOLD = "stream.batch.buffer.threshold";
+    public static final String NOTIFICATION_THRESHOLD = "stream.notification.threshold";
 
     // Stream http service configurations.
     public static final String STREAM_HANDLER = "stream.handler";
@@ -237,64 +294,42 @@ public final class Constants {
     public static final long NEW_FILE_CHECK_INTERVAL = TimeUnit.SECONDS.toMillis(10);
     public static final int HBASE_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
 
+    public static final String URL_PREFIX = "stream://";
 
     /**
      * Contains HTTP headers used by Stream handler.
      */
     public static final class Headers {
-      public static final String CONSUMER_ID = "X-ConsumerId";
+      public static final String SCHEMA = "schema";
+      public static final String SCHEMA_HASH = "schema.hash";
     }
 
-    //max instances of stream handler service
+    // max instances of stream handler service
     public static final String MAX_INSTANCES = "stream.container.instances";
 
     public static final String SERVICE_DESCRIPTION = "Service that handles stream data ingestion.";
     /* End constants used by stream */
+
+    // Period in seconds between two heartbeats in a stream service
+    public static final int HEARTBEAT_INTERVAL = 2;
+
+    // Zookeeper namespace in which to keep the coordination metadata
+    public static final String STREAM_ZK_COORDINATION_NAMESPACE = String.format("/%s/coordination", Service.STREAMS);
   }
 
   /**
    * Gateway Configurations.
    */
   public static final class Gateway {
-    public static final String ADDRESS = "gateway.bind.address";
-    public static final String PORT = "gateway.bind.port";
-    public static final String BACKLOG_CONNECTIONS = "gateway.connection.backlog";
-    public static final String EXEC_THREADS = "gateway.exec.threads";
-    public static final String BOSS_THREADS = "gateway.boss.threads";
-    public static final String WORKER_THREADS = "gateway.worker.threads";
-    public static final String CONFIG_AUTHENTICATION_REQUIRED = "gateway.authenticate";
-    public static final String CLUSTER_NAME = "gateway.cluster.name";
-    public static final String NUM_CORES = "gateway.num.cores";
-    public static final String NUM_INSTANCES = "gateway.num.instances";
-    public static final String MEMORY_MB = "gateway.memory.mb";
-    public static final String STREAM_FLUME_THREADS = "stream.flume.threads";
-    public static final String STREAM_FLUME_PORT = "stream.flume.port";
-    /**
-     * Defaults.
-     */
-    public static final int DEFAULT_PORT = 10000;
-    public static final int DEFAULT_BACKLOG = 20000;
-    public static final int DEFAULT_EXEC_THREADS = 20;
-    public static final int DEFAULT_BOSS_THREADS = 1;
-    public static final int DEFAULT_WORKER_THREADS = 10;
-    public static final boolean CONFIG_AUTHENTICATION_REQUIRED_DEFAULT = false;
-    public static final String CLUSTER_NAME_DEFAULT = "localhost";
-    public static final int DEFAULT_NUM_CORES = 2;
-    public static final int DEFAULT_NUM_INSTANCES = 1;
-    public static final int DEFAULT_MEMORY_MB = 2048;
-    public static final int DEFAULT_STREAM_FLUME_THREADS = 10;
-    public static final int DEFAULT_STREAM_FLUME_PORT = 10004;
-
 
     /**
-     * Others.
+     * v3 API.
      */
-    public static final String GATEWAY_VERSION = "/v2";
-    public static final String STREAM_HANDLER_NAME = "stream.rest";
-    public static final String METRICS_CONTEXT = "gateway." + Gateway.STREAM_HANDLER_NAME;
-    public static final String HEADER_DESTINATION_STREAM = "X-Destination";
+    public static final String API_VERSION_3_TOKEN = "v3";
+    public static final String API_VERSION_3 = "/" + API_VERSION_3_TOKEN;
+    public static final String STREAM_HANDLER_NAME = "stream_rest";
+    public static final String METRICS_CONTEXT = "gateway";
     public static final String API_KEY = "X-ApiKey";
-    public static final String CFG_PASSPORT_SERVER_URI = "passport.server.uri";
   }
 
   /**
@@ -344,7 +379,6 @@ public final class Constants {
    * Metrics constants.
    */
   public static final class Metrics {
-    public static final String DATASET_CONTEXT = "-.dataset";
     public static final String ADDRESS = "metrics.bind.address";
     public static final String CLUSTER_NAME = "metrics.cluster.name";
     public static final String CONFIG_AUTHENTICATION_REQUIRED = "metrics.authenticate";
@@ -358,6 +392,33 @@ public final class Constants {
     public static final String MAX_INSTANCES = "metrics.max.instances";
     public static final String SERVICE_DESCRIPTION = "Service to handle metrics requests.";
 
+    public static final String ENTITY_TABLE_NAME = "metrics.data.entity.tableName";
+    public static final String METRICS_TABLE_PREFIX = "metrics.data.table.prefix";
+    public static final String TIME_SERIES_TABLE_ROLL_TIME = "metrics.data.table.ts.rollTime";
+
+    // Key prefix for retention seconds. The actual key is suffixed by the table resolution.
+    public static final String RETENTION_SECONDS = "metrics.data.table.retention.resolution";
+
+    public static final String SERVER_ADDRESS = "metrics.query.bind.address";
+    public static final String SERVER_PORT = "metrics.query.bind.port";
+
+    public static final String KAFKA_TOPIC_PREFIX = "metrics.kafka.topic.prefix";
+    public static final String KAFKA_PARTITION_SIZE = "metrics.kafka.partition.size";
+    public static final String KAFKA_CONSUMER_PERSIST_THRESHOLD = "metrics.kafka.consumer.persist.threshold";
+    public static final String KAFKA_META_TABLE = "metrics.kafka.meta.table";
+
+    public static final String DEFAULT_KAFKA_META_TABLE = "metrics.kafka.meta";
+    public static final String DEFAULT_KAFKA_TOPIC_PREFIX = "metrics";
+
+    // NOTE: "v2" to avoid conflict with data of older metrics system
+    public static final String DEFAULT_ENTITY_TABLE_NAME = "metrics.v2.entity";
+    public static final String DEFAULT_METRIC_TABLE_PREFIX = "metrics.v2.table";
+    public static final int DEFAULT_TIME_SERIES_TABLE_ROLL_TIME = 3600;
+    public static final long DEFAULT_RETENTION_HOURS = 2;
+
+    public static final int DEFAULT_KAFKA_CONSUMER_PERSIST_THRESHOLD = 100;
+    public static final int DEFAULT_KAFKA_PARTITION_SIZE = 1;
+
     /**
      * Metric's dataset related constants.
      */
@@ -366,6 +427,86 @@ public final class Constants {
       public static final String HBASE_STATS_REPORT_INTERVAL = "metrics.dataset.hbase.stats.report.interval";
       /** Defines reporting interval for LevelDB stats, in seconds */
       public static final String LEVELDB_STATS_REPORT_INTERVAL = "metrics.dataset.leveldb.stats.report.interval";
+    }
+
+    /**
+     * Metrics context tags
+     */
+    public static final class Tag {
+      // NOTES:
+      //   * tag names must be unique (keeping all possible here helps to ensure that)
+      //   * tag names better be short to reduce the serialized metric value size
+
+      public static final String NAMESPACE = "ns";
+
+      public static final String RUN_ID = "run";
+      public static final String INSTANCE_ID = "ins";
+
+      public static final String COMPONENT = "cmp";
+      public static final String HANDLER = "hnd";
+      public static final String METHOD = "mtd";
+
+      public static final String STREAM = "str";
+
+      public static final String DATASET = "ds";
+
+      public static final String APP = "app";
+
+      public static final String SERVICE = "srv";
+
+      public static final String WORKER = "wrk";
+
+      public static final String FLOW = "fl";
+      public static final String FLOWLET = "flt";
+      public static final String FLOWLET_QUEUE = "flq";
+
+      public static final String MAPREDUCE = "mr";
+      public static final String MR_TASK_TYPE = "mrt";
+
+      public static final String WORKFLOW = "wf";
+
+      public static final String SPARK = "sp";
+
+      // who emitted: user vs system (scope is historical name)
+      public static final String SCOPE = "scp";
+
+      public static final String ADAPTER = "adp";
+
+      public static final String PRODUCER = "pr";
+      public static final String CONSUMER = "co";
+    }
+
+    /**
+     * Metric names
+     */
+    public static final class Name {
+      /**
+       * Flow metrics
+       */
+      public static final class Flow {
+        public static final String FLOWLET_INPUT = "system.process.tuples.read";
+        public static final String FLOWLET_PROCESSED = "system.process.events.processed";
+        public static final String FLOWLET_EXCEPTIONS = "system.process.errors";
+      }
+
+      /**
+       * Service metrics
+       */
+      public static final class Service {
+        public static final String SERVICE_INPUT = "system.requests.count";
+        public static final String SERVICE_PROCESSED = "system.response.successful.count";
+        public static final String SERVICE_EXCEPTIONS = "system.response.server.error.count";
+      }
+    }
+
+    /**
+     * Metrics query constants and defaults
+     */
+    public static final class Query {
+      public static final long MAX_HOUR_RESOLUTION_QUERY_INTERVAL = 36000;
+      public static final long MAX_MINUTE_RESOLUTION_QUERY_INTERVAL = 600;
+      // Number of seconds to subtract from current timestamp when query without "end" time.
+      public static final long QUERY_SECOND_DELAY = 2;
     }
   }
 
@@ -385,6 +526,13 @@ public final class Constants {
   }
 
   /**
+   * Configurations for metrics collector.
+   */
+  public static final class MetricsCollector {
+    public static final long DEFAULT_FREQUENCY_SECONDS = 1;
+  }
+
+  /**
    * Configurations for log saver.
    */
   public static final class LogSaver {
@@ -396,6 +544,7 @@ public final class Constants {
     public static final String ADDRESS = "log.saver.status.bind.address";
 
     public static final String SERVICE_DESCRIPTION = "Service to collect and store logs.";
+    public static final String MESSAGE_PROCESSORS =  "log.saver.message.processors";
   }
 
   /**
@@ -411,7 +560,6 @@ public final class Constants {
    * Logging constants.
    */
   public static final class Logging {
-    public static final String SYSTEM_NAME = "cdap";
     public static final String COMPONENT_NAME = "services";
   }
 
@@ -419,7 +567,9 @@ public final class Constants {
    * Security configuration.
    */
   public static final class Security {
-    /** Enables Kerberos authentication */
+    /** Enables security. */
+    public static final String ENABLED = "security.enabled";
+    /** Enables Kerberos authentication. */
     public static final String KERBEROS_ENABLED = "kerberos.auth.enabled";
     /** Algorithm used to generate the digest for access tokens. */
     public static final String TOKEN_DIGEST_ALGO = "security.token.digest.algorithm";
@@ -429,10 +579,17 @@ public final class Constants {
     public static final String TOKEN_DIGEST_KEY_EXPIRATION = "security.token.digest.key.expiration.ms";
     /** Parent znode used for secret key distribution in ZooKeeper. */
     public static final String DIST_KEY_PARENT_ZNODE = "security.token.distributed.parent.znode";
-    /** Address the Authentication Server should bind to*/
+    /** Deprecated. Use AUTH_SERVER_BIND_ADDRESS instead. **/
     public static final String AUTH_SERVER_ADDRESS = "security.auth.server.address";
+    /**
+     * Address that clients should use to communicate with the Authentication Server.
+     * Leave empty to use default, generated by the Authentication Server.
+     */
+    public static final String AUTH_SERVER_ANNOUNCE_ADDRESS = "security.auth.server.announce.address";
+    /** Address the Authentication Server should bind to. */
+    public static final String AUTH_SERVER_BIND_ADDRESS = "security.auth.server.bind.address";
     /** Configuration for External Authentication Server. */
-    public static final String AUTH_SERVER_PORT = "security.auth.server.bind.port";
+    public static final String AUTH_SERVER_BIND_PORT = "security.auth.server.bind.port";
     /** Maximum number of handler threads for the Authentication Server embedded Jetty instance. */
     public static final String MAX_THREADS = "security.server.maxthreads";
     /** Access token expiration time in milliseconds. */
@@ -440,8 +597,6 @@ public final class Constants {
     /** Long lasting Access token expiration time in milliseconds. */
     public static final String EXTENDED_TOKEN_EXPIRATION = "security.server.extended.token.expiration.ms";
     public static final String CFG_FILE_BASED_KEYFILE_PATH = "security.data.keyfile.path";
-    /** Configuration for enabling the security. */
-    public static final String CFG_SECURITY_ENABLED = "security.enabled";
     /** Configuration for security realm. */
     public static final String CFG_REALM = "security.realm";
     /** Authentication Handler class name */
@@ -454,6 +609,14 @@ public final class Constants {
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
     /** Enables SSL */
     public static final String SSL_ENABLED = "ssl.enabled";
+
+    /**
+     * Headers for security.
+     */
+    public static final class Headers {
+      /** Internal user ID header passed from Router to downstream services */
+      public static final String USER_ID = "CDAP-UserId";
+    }
 
     /**
      * Security configuration for Router.
@@ -505,12 +668,22 @@ public final class Constants {
     public static final String HCONF_KEY = "explore.hconfiguration";
     public static final String TX_QUERY_KEY = "explore.hive.query.tx.id";
     public static final String TX_QUERY_CLOSED = "explore.hive.query.tx.commited";
+    public static final String QUERY_ID = "explore.query.id";
+
+    public static final String START_ON_DEMAND = "explore.start.on.demand";
 
     public static final String DATASET_NAME = "explore.dataset.name";
+    public static final String DATASET_NAMESPACE = "explore.dataset.namespace";
     public static final String DATASET_STORAGE_HANDLER_CLASS = "co.cask.cdap.hive.datasets.DatasetStorageHandler";
+    public static final String STREAM_NAME = "explore.stream.name";
+    public static final String STREAM_NAMESPACE = "explore.stream.namespace";
+    public static final String STREAM_STORAGE_HANDLER_CLASS = "co.cask.cdap.hive.stream.StreamStorageHandler";
     public static final String EXPLORE_CLASSPATH = "explore.classpath";
     public static final String EXPLORE_CONF_FILES = "explore.conf.files";
     public static final String PREVIEWS_DIR_NAME = "explore.previews.dir";
+    // a marker so that we know which tables are created by CDAP
+    public static final String CDAP_NAME = "cdap.name";
+    public static final String CDAP_VERSION = "cdap.version";
 
     public static final String SERVER_ADDRESS = "explore.service.bind.address";
 
@@ -525,6 +698,7 @@ public final class Constants {
 
     public static final String LOCAL_DATA_DIR = "explore.local.data.dir";
     public static final String EXPLORE_ENABLED = "explore.enabled";
+    public static final String WRITES_ENABLED = "explore.writes.enabled";
 
     //max-instances of explore HTTP service
     public static final String MAX_INSTANCES = "explore.executor.max.instances";
@@ -540,6 +714,23 @@ public final class Constants {
      */
     public static final class Jdbc {
       public static final String URL_PREFIX = "jdbc:cdap://";
+    }
+  }
+
+  /**
+   * Notification system configuration.
+   */
+  public static final class Notification {
+    public static final String TRANSPORT_SYSTEM = "notification.transport.system";
+
+    /**
+     * Notifications in Streams constants.
+     */
+    public static final class Stream {
+      public static final String STREAM_FEED_CATEGORY = "stream";
+      public static final String STREAM_INTERNAL_FEED_CATEGORY = "streamInternal";
+      public static final String STREAM_HEARTBEAT_FEED_NAME = "heartbeat";
+      public static final String STREAM_SIZE_SCHEDULE_POLLING_DELAY = "stream.size.schedule.polling.delay";
     }
   }
 
@@ -604,10 +795,28 @@ public final class Constants {
 
 
   /**
-   * Corresponds to account id used when running in local mode.
-   * NOTE: value should be in sync with the one used by UI.
+   * Default namespace to be used by v2 APIs
    */
-  public static final String DEVELOPER_ACCOUNT_ID = "developer";
+  public static final String DEFAULT_NAMESPACE = "default";
+  public static final Id.Namespace DEFAULT_NAMESPACE_ID = Id.Namespace.from(DEFAULT_NAMESPACE);
+  public static final NamespaceMeta DEFAULT_NAMESPACE_META =
+    new NamespaceMeta.Builder().setName(Constants.DEFAULT_NAMESPACE_ID).setDescription("Default Namespace").build();
+
+  /**
+   * Used for upgrade and backwards compatability
+   */
+  public static final String DEVELOPER_ACCOUNT = "developer";
+
+  /**
+   * 'system' reserved namespace name
+   */
+  public static final String SYSTEM_NAMESPACE = "system";
+  public static final Id.Namespace SYSTEM_NAMESPACE_ID = Id.Namespace.from(SYSTEM_NAMESPACE);
+
+  /**
+   * 'cdap' reserved namespace name. Unused right now (other than in logging. Reserved in case we need it in future.
+   */
+  public static final String CDAP_NAMESPACE = "cdap";
 
   /**
    * Constants related to external systems.
@@ -647,5 +856,22 @@ public final class Constants {
      * True to allow self-signed SSL certificates for endpoints accessed by the dashboard.
      */
     public static final String SSL_ALLOW_SELFSIGNEDCERT = "dashboard.selfsignedcertificate.enabled";
+  }
+
+  /**
+   * Constants for endpoints
+   */
+  public static final class EndPoints {
+    /**
+    * Status endpoint
+    */
+    public static final String STATUS = "/status";
+  }
+
+  /**
+   * Constants for namespaces
+   */
+  public static final class Namespace {
+    public static final String NAMESPACES_DIR = "namespaces.dir";
   }
 }

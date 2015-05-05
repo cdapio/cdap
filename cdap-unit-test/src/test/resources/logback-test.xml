@@ -25,8 +25,13 @@
 
 <configuration>
     <!--Supressing some chatty loggers -->
-    <logger name="org.apache.hadoop" level="INFO"/>
-    <logger name="org.mortbay.log" level="INFO"/>
+    <logger name="org.apache.commons.beanutils" level="ERROR"/>
+    <logger name="org.apache.zookeeper.server" level="ERROR"/>
+    <logger name="org.apache.zookeeper" level="ERROR"/>
+    <logger name="com.ning" level="WARN"/>
+    <logger name="org.apache.hadoop" level="WARN"/>
+    <logger name="org.apache.hive" level="WARN"/>
+    <logger name="org.quartz.core" level="WARN"/>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>

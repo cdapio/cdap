@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.queue;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.app.queue.QueueSpecification;
@@ -23,7 +24,6 @@ import co.cask.cdap.app.queue.QueueSpecificationGenerator;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.internal.app.SchemaFinder;
-import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
@@ -72,10 +72,10 @@ public abstract class AbstractQueueSpecificationGenerator implements QueueSpecif
       }
 
       if (connection.getSourceType() == FlowletConnection.Type.STREAM) {
-        builder.add(createSpec(QueueName.fromStream(outputName),
+        builder.add(createSpec(QueueName.fromStream(app.getNamespaceId(), outputName),
                                schemas.getFirst(), schemas.getSecond()));
       } else {
-        builder.add(createSpec(QueueName.fromFlowlet(app.getId(), flow,
+        builder.add(createSpec(QueueName.fromFlowlet(app.getNamespaceId(), app.getId(), flow,
                                                      connection.getSourceName(), outputName),
                                schemas.getFirst(), schemas.getSecond()));
       }

@@ -1,0 +1,51 @@
+<div ncy-breadcrumb></div>
+
+<div class="row" program-heading>
+  <div class="col-sm-6">
+    <h2 class="programTitle">
+      <span ng-bind="$state.params.programId"></span>
+    </h2>
+    <small ng-if="isEnterprise" class="badge text-info">
+      <span class="fa fa-exclamation-triangle"> </span>
+      <span> Spark programs are not supported in distributed yet.</span>
+    </small>
+    <div class="type-block">
+      <span class="icon-spark"></span>
+      <small> Type: Spark </small>
+    </div>
+  </div>
+  <div class="col-sm-6 text-right">
+    <div ng-show="status == 'RUNNING'"
+         class="btn btn-danger btn-md"
+         ng-click="stop()">
+      <span class="fa fa-stop"> </span>
+      <span>Stop</span>
+    </div>
+
+    <div ng-show="status == 'STOPPED'"
+         class="btn btn-success btn-md"
+         ng-click="start()">
+      <span class="fa fa-play"> </span>
+      <span>Start</span>
+    </div>
+    <div ng-show="status == 'STARTING' || status == 'STOPPING'"
+         class="btn btn-md"
+         ng-class="{'btn-success': status === 'STARTING', 'btn-danger': status === 'STOPPING'}">
+      <span class="fa fa-refresh fa-spin"></span>
+      <span>{{status | caskCapitalizeFilter}}</span>
+    </div>
+  </div>
+</div>
+
+<div class="cdap-subnav-end"></div>
+<ul class="nav nav-tabs slanted-tabs" role="tablist">
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="spark.detail.runs" role="tab">Runs</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="spark.detail.history" role="tab">History</a>
+  </li>
+</ul>
+
+<br />
+<ui-view role="tabpanel"/>

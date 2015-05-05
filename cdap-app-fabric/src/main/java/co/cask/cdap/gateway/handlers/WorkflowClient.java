@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Client to make calls to workflow http service and return the status.
@@ -51,10 +50,10 @@ public class WorkflowClient {
                                                configBuilder.build());
   }
 
-  public void getWorkflowStatus(String accountId, String appId, String workflowId, final Callback callback)
-                      throws IOException, ExecutionException, InterruptedException {
+  public void getWorkflowStatus(String accountId, String appId, String workflowId, String runId,
+                                final Callback callback) throws IOException {
     // determine the service provider for the given path
-    String serviceName = String.format("workflow.%s.%s.%s", accountId, appId, workflowId);
+    String serviceName = String.format("workflow.%s.%s.%s.%s", accountId, appId, workflowId, runId);
     Discoverable discoverable = new RandomEndpointStrategy(discoveryServiceClient.discover(serviceName)).pick();
 
     if (discoverable == null) {
@@ -70,20 +69,17 @@ public class WorkflowClient {
     Request workflowRequest = new RequestBuilder("GET").setUrl(url).build();
 
     httpClient.executeRequest(workflowRequest, new AsyncCompletionHandler<Void>() {
-                                @Override
-                                public Void onCompleted(Response response) throws Exception {
-                                  callback.handle(new Status(Status.Code.OK,
-                                                            response.getResponseBody(Charsets.UTF_8.name())));
-                                  return null;
-                                }
+      @Override
+      public Void onCompleted(Response response) throws Exception {
+        callback.handle(new Status(Status.Code.OK, response.getResponseBody(Charsets.UTF_8.name())));
+        return null;
+      }
 
-                                @Override
-                                public void onThrowable(Throwable t) {
-                                  LOG.warn("Failed to request for workflow status", t);
-                                  callback.handle(new Status(Status.Code.ERROR, ""));
-
-                                }
-
+      @Override
+      public void onThrowable(Throwable t) {
+        LOG.warn("Failed to request for workflow status", t);
+        callback.handle(new Status(Status.Code.ERROR, ""));
+      }
     });
 
   }

@@ -17,52 +17,38 @@
 package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.data.dataset.DatasetCreationSpec;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.InstanceConflictException;
 import co.cask.cdap.pipeline.AbstractStage;
+import co.cask.cdap.proto.Id;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 /**
  * This {@link co.cask.cdap.pipeline.Stage} is responsible for automatic
  * deploy of the {@link co.cask.cdap.api.dataset.module.DatasetModule}s specified by application.
  */
-public class CreateDatasetInstancesStage extends AbstractStage<ApplicationSpecLocation> {
-  private static final Logger LOG = LoggerFactory.getLogger(CreateDatasetInstancesStage.class);
-  private final DatasetFramework datasetFramework;
+public class CreateDatasetInstancesStage extends AbstractStage<ApplicationDeployable> {
+  private final DatasetInstanceCreator datasetInstanceCreator;
 
-  public CreateDatasetInstancesStage(DatasetFramework datasetFramework) {
-    super(TypeToken.of(ApplicationSpecLocation.class));
-    this.datasetFramework = datasetFramework;
+  public CreateDatasetInstancesStage(CConfiguration configuration, DatasetFramework datasetFramework,
+                                     Id.Namespace namespace) {
+    super(TypeToken.of(ApplicationDeployable.class));
+    this.datasetInstanceCreator = new DatasetInstanceCreator(configuration, datasetFramework, namespace);
   }
 
   /**
    * Receives an input containing application specification and location
    * and verifies both.
    *
-   * @param input An instance of {@link ApplicationSpecLocation}
+   * @param input An instance of {@link ApplicationDeployable}
    */
   @Override
-  public void process(ApplicationSpecLocation input) throws Exception {
+  public void process(ApplicationDeployable input) throws Exception {
     // create dataset instances
     ApplicationSpecification specification = input.getSpecification();
-    for (Map.Entry<String, DatasetCreationSpec> instanceEntry : specification.getDatasets().entrySet()) {
-      String instanceName = instanceEntry.getKey();
-      DatasetCreationSpec instanceSpec = instanceEntry.getValue();
-      try {
-        if (!datasetFramework.hasInstance(instanceName)) {
-          datasetFramework.addInstance(instanceSpec.getTypeName(), instanceName, instanceSpec.getProperties());
-        }
-      } catch (InstanceConflictException e) {
-        // NO-OP: Instance is simply already created, possibly by an older version of this app OR a different app
-        // TODO: verify that the created instance is from this app
-        LOG.warn("Couldn't create dataset instance '" + instanceName + "' of type '" + instanceSpec.getTypeName(), e);
-      }
-    }
+    datasetInstanceCreator.createInstances(specification.getDatasets());
 
     // Emit the input to next stage.
     emit(input);

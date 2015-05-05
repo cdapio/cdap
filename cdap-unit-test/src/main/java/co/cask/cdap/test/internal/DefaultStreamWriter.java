@@ -16,44 +16,35 @@
 
 package co.cask.cdap.test.internal;
 
-import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.stream.service.StreamHandler;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.StreamWriter;
 import com.google.common.base.Charsets;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.HttpVersion;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
- *
+ * @deprecated Use {@link DefaultStreamManager} instead
  */
+@Deprecated
 public final class DefaultStreamWriter implements StreamWriter {
 
-  private final String accountId;
-  private final QueueName streamName;
-  private final StreamHandler streamHandler;
+  private final StreamManager streamManager;
 
   @Inject
-  public DefaultStreamWriter(StreamHandler streamHandler,
-                             @Assisted QueueName streamName,
-                             @Assisted("accountId") String accountId) throws IOException {
+  public DefaultStreamWriter(StreamManagerFactory streamManagerFactory,
+                             @Assisted Id.Stream streamId) throws IOException {
+    this.streamManager = streamManagerFactory.create(streamId);
+  }
 
-    this.streamHandler = streamHandler;
-    this.streamName = streamName;
-    this.accountId = accountId;
+  @Override
+  public void createStream() throws IOException {
+    streamManager.createStream();
   }
 
   @Override
@@ -93,26 +84,7 @@ public final class DefaultStreamWriter implements StreamWriter {
 
   @Override
   public void send(Map<String, String> headers, ByteBuffer buffer) throws IOException {
-    HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
-                                                     "/v2/streams/" + streamName.getSimpleName());
-
-    for (Map.Entry<String, String> entry : headers.entrySet()) {
-      httpRequest.setHeader(streamName.getSimpleName() + "." + entry.getKey(), entry.getValue());
-    }
-    ChannelBuffer content = ChannelBuffers.wrappedBuffer(buffer);
-    httpRequest.setContent(content);
-    httpRequest.setHeader(HttpHeaders.Names.CONTENT_LENGTH, content.readableBytes());
-
-    MockResponder responder = new MockResponder();
-    try {
-      streamHandler.enqueue(httpRequest, responder, streamName.getSimpleName());
-    } catch (Exception e) {
-      Throwables.propagateIfPossible(e, IOException.class);
-      throw Throwables.propagate(e);
-    }
-    if (responder.getStatus() != HttpResponseStatus.OK) {
-      throw new IOException("Failed to write to stream. Status = " + responder.getStatus());
-    }
+    streamManager.send(headers, buffer);
   }
 
   @Override

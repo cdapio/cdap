@@ -4,7 +4,7 @@ This directory contains a CDAP Application Archetype for the Cask Data Applicati
 
 # Installing
 
-To install the archetype, enter from the CDAP root directory:
+To install the archetype, enter in the CDAP root directory:
 
 > mvn clean install -f cdap-archetypes/cdap-app-archetype/pom.xml
 
@@ -16,13 +16,13 @@ To create a project from the archetype, use this script as an example:
  mvn archetype:generate 					
   -DarchetypeGroupId=co.cask.cdap 			
   -DarchetypeArtifactId=cdap-app-archetype 	
-  -DarchetypeVersion=2.5.1
+  -DarchetypeVersion=2.6.0
   -DgroupId=com.example
   -DartifactId=MyExample
   -Dversion=1.0						
 
 ```  
-To confirm project creation, type Y and press ENTER
+To confirm project creation, type Y and press ENTER.
 
 ## License and Trademarks
 

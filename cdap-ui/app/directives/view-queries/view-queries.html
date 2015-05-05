@@ -1,0 +1,72 @@
+
+<div class="panel-container">
+  <div class="panel no-margin-top" ng-repeat="query in queries" ng-class="{ 'active': query.isOpen }">
+    <div class="panel-heading"  ng-click="fetchResult(query)">
+      <span class="fa fa-fw" ng-class="{'fa-caret-down': query.isOpen, 'fa-caret-right': !query.isOpen}"></span>
+      {{ query.statement }}
+      <span></span>
+      <span class="pull-right">
+        {{ query.timestamp | amDateFormat:'dddd, MMMM Do YYYY, h:mm:ss a'}}
+        <span class="status fa fa-circle" ng-class="{ 'green': query.status === 'FINISHED', 'red': query.status !== 'FINISHED' }"></span>
+      </span>
+    </div>
+    <div class="panel-body" ng-if="query.isOpen">
+      <!-- CONTENT -->
+      <div ng-show="responses.request.status === 'FINISHED'">
+        <br/>
+        <div class="row">
+          <div class="col-xs-12">
+            <p class="well">{{ responses.request.statement }}</p>
+          </div>
+        </div>
+
+        <div class="results">
+          <div class="row">
+            <div class="col-xs-6">
+              <h3>Results</h3>
+            </div>
+
+            <div class="col-xs-6 text-right">
+            <a
+              class="btn btn-default download"
+              ng-click="download(responses.request)"
+            >
+              <i class="fa fa-download"></i> Download All
+            </a>
+          </div>
+
+          </div>
+          <div class="table-responsive">
+            <table class="table table-curved table-explore">
+
+              <thead>
+                <tr>
+                  <th ng-repeat="header in responses.schema">{{ header.name }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr ng-repeat="results in responses.results">
+                  <td ng-repeat="result in results.columns track by $index">
+                    <span>{{ result }}</span>
+                    <span ng-if="!result && result !== 0">null</span>
+                  </td>
+                </tr>
+                <tr class="text-center" ng-if="responses.results.length === 0">
+                  <td colspan="{{ responses.schema.length }}">No Result</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <div class="well text-center" ng-if="queries.length === 0">
+    <p>No Query</p>
+  </div>
+</div>
+

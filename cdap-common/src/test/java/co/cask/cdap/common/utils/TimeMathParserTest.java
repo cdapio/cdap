@@ -60,6 +60,20 @@ public class TimeMathParserTest {
   }
 
   @Test
+  public void testResolutionParsing() {
+    String resolution = "60s";
+    Assert.assertEquals(60, TimeMathParser.resolutionInSeconds(resolution));
+    resolution = "2m";
+    Assert.assertEquals(120, TimeMathParser.resolutionInSeconds(resolution));
+    resolution = "3h";
+    Assert.assertEquals(10800, TimeMathParser.resolutionInSeconds(resolution));
+    resolution = "1d";
+    Assert.assertEquals(86400, TimeMathParser.resolutionInSeconds(resolution));
+    resolution = "1h3m";
+    Assert.assertEquals(3780, TimeMathParser.resolutionInSeconds(resolution));
+  }
+
+  @Test
   public void testMultipleOperations() {
     long now = TimeMathParser.nowInSeconds();
     Assert.assertEquals(now - 7 * 86400 + 3 * 3600 - 13 * 60 + 11,

@@ -16,7 +16,8 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.common.stream.DefaultStreamEvent;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -33,8 +34,13 @@ public class StreamFileTestUtils {
   private StreamFileTestUtils() {
   }
 
+  public static Location getStreamBaseLocation(NamespacedLocationFactory namespacedLocationFactory,
+                                               Id.Stream streamId) throws IOException {
+    return namespacedLocationFactory.get(streamId.getNamespace()).append(streamId.getId());
+  }
+
   public static StreamEvent createEvent(long timestamp, String body) {
-    return new DefaultStreamEvent(ImmutableMap.<String, String>of(), Charsets.UTF_8.encode(body), timestamp);
+    return new StreamEvent(ImmutableMap.<String, String>of(), Charsets.UTF_8.encode(body), timestamp);
   }
 
   public static Location createTempDir(LocationFactory locationFactory) {

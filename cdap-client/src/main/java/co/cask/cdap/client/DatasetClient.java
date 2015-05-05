@@ -18,16 +18,20 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.exception.DatasetAlreadyExistsException;
-import co.cask.cdap.client.exception.DatasetNotFoundException;
-import co.cask.cdap.client.exception.DatasetTypeNotFoundException;
-import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.http.HttpMethod;
-import co.cask.cdap.common.http.HttpRequest;
-import co.cask.cdap.common.http.HttpResponse;
-import co.cask.cdap.common.http.ObjectResponse;
+import co.cask.cdap.common.exception.DatasetAlreadyExistsException;
+import co.cask.cdap.common.exception.DatasetNotFoundException;
+import co.cask.cdap.common.exception.DatasetTypeNotFoundException;
+import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
+import co.cask.cdap.proto.Id;
+import co.cask.common.http.HttpMethod;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpResponse;
+import co.cask.common.http.ObjectResponse;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -36,6 +40,10 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.inject.Inject;
 
 /**
@@ -49,9 +57,14 @@ public class DatasetClient {
   private final ClientConfig config;
 
   @Inject
+  public DatasetClient(ClientConfig config, RESTClient restClient) {
+    this.config = config;
+    this.restClient = restClient;
+  }
+
   public DatasetClient(ClientConfig config) {
     this.config = config;
-    this.restClient = RESTClient.create(config);
+    this.restClient = new RESTClient(config);
   }
 
   /**
@@ -59,12 +72,13 @@ public class DatasetClient {
    *
    * @return list of {@link DatasetSpecification}.
    * @throws IOException if a network error occurred
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public List<DatasetSpecification> list() throws IOException, UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL("data/datasets");
+  public List<DatasetSpecificationSummary> list() throws IOException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3("data/datasets");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<DatasetSpecification>>() { }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response,
+                                       new TypeToken<List<DatasetSpecificationSummary>>() { }).getResponseObject();
   }
 
   /**
@@ -75,20 +89,21 @@ public class DatasetClient {
    * @throws DatasetTypeNotFoundException if the desired dataset type was not found
    * @throws DatasetAlreadyExistsException if a dataset by the same name already exists
    * @throws IOException if a network error occurred
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
   public void create(String datasetName, DatasetInstanceConfiguration properties)
-    throws DatasetTypeNotFoundException, DatasetAlreadyExistsException, IOException, UnAuthorizedAccessTokenException {
+    throws DatasetTypeNotFoundException, DatasetAlreadyExistsException, IOException, UnauthorizedException {
 
-    URL url = config.resolveURL(String.format("data/datasets/%s", datasetName));
+    Id.DatasetInstance instance = Id.DatasetInstance.from(config.getNamespace(), datasetName);
+    URL url = config.resolveNamespacedURLV3(String.format("data/datasets/%s", datasetName));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(properties)).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_CONFLICT);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new DatasetTypeNotFoundException(properties.getTypeName());
+      throw new DatasetTypeNotFoundException(Id.DatasetType.from(config.getNamespace(), properties.getTypeName()));
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
-      throw new DatasetAlreadyExistsException(datasetName);
+      throw new DatasetAlreadyExistsException(instance);
     }
   }
 
@@ -100,10 +115,10 @@ public class DatasetClient {
    * @throws DatasetTypeNotFoundException if the desired dataset type was not found
    * @throws DatasetAlreadyExistsException if a dataset by the same name already exists
    * @throws IOException if a network error occurred
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
   public void create(String datasetName, String typeName)
-    throws DatasetTypeNotFoundException, DatasetAlreadyExistsException, IOException, UnAuthorizedAccessTokenException {
+    throws DatasetTypeNotFoundException, DatasetAlreadyExistsException, IOException, UnauthorizedException {
     create(datasetName, new DatasetInstanceConfiguration(typeName, ImmutableMap.<String, String>of()));
   }
 
@@ -113,15 +128,82 @@ public class DatasetClient {
    * @param datasetName Name of the dataset to delete
    * @throws DatasetNotFoundException if the dataset with the specified name could not be found
    * @throws IOException if a network error occurred
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public void delete(String datasetName) throws DatasetNotFoundException, IOException,
-    UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL(String.format("data/datasets/%s", datasetName));
+  public void delete(String datasetName) throws DatasetNotFoundException, IOException, UnauthorizedException {
+    Id.DatasetInstance instance = Id.DatasetInstance.from(config.getNamespace(), datasetName);
+    URL url = config.resolveNamespacedURLV3(String.format("data/datasets/%s", datasetName));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new DatasetNotFoundException(datasetName);
+      throw new DatasetNotFoundException(instance);
+    }
+  }
+
+  /**
+   * Checks if a dataset exists.
+   *
+   * @param datasetName Name of the dataset to check
+   * @return true if the dataset exists
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public boolean exists(String datasetName) throws IOException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3(String.format("data/datasets/%s", datasetName));
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    return response.getResponseCode() != HttpURLConnection.HTTP_NOT_FOUND;
+  }
+
+  /**
+   * Waits for a dataset to exist.
+   *
+   * @param datasetName Name of the dataset to check
+   * @param timeout time to wait before timing out
+   * @param timeoutUnit time unit of timeout
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws TimeoutException if the dataset was not yet existent before {@code timeout} milliseconds
+   * @throws InterruptedException if interrupted while waiting
+   */
+  public void waitForExists(final String datasetName, long timeout, TimeUnit timeoutUnit)
+    throws IOException, UnauthorizedException, TimeoutException, InterruptedException {
+
+    try {
+      Tasks.waitFor(true, new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          return exists(datasetName);
+        }
+      }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
+    } catch (ExecutionException e) {
+      Throwables.propagateIfPossible(e.getCause(), IOException.class, UnauthorizedException.class);
+    }
+  }
+
+  /**
+   * Waits for a dataset to be deleted.
+   *
+   * @param datasetName Name of the dataset to check
+   * @param timeout time to wait before timing out
+   * @param timeoutUnit time unit of timeout
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws TimeoutException if the dataset was not yet deleted before {@code timeout} milliseconds
+   * @throws InterruptedException if interrupted while waiting
+   */
+  public void waitForDeleted(final String datasetName, long timeout, TimeUnit timeoutUnit)
+    throws IOException, UnauthorizedException, TimeoutException, InterruptedException {
+
+    try {
+      Tasks.waitFor(false, new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          return exists(datasetName);
+        }
+      }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
+    } catch (ExecutionException e) {
+      Throwables.propagateIfPossible(e.getCause(), IOException.class, UnauthorizedException.class);
     }
   }
 
@@ -130,10 +212,10 @@ public class DatasetClient {
    *
    * @param datasetName Name of the dataset to truncate
    * @throws IOException if a network error occurred
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public void truncate(String datasetName) throws IOException, UnAuthorizedAccessTokenException {
-    URL url = config.resolveURL(String.format("data/datasets/%s/admin/truncate", datasetName));
+  public void truncate(String datasetName) throws IOException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3(String.format("data/datasets/%s/admin/truncate", datasetName));
     restClient.execute(HttpMethod.POST, url, config.getAccessToken());
   }
 

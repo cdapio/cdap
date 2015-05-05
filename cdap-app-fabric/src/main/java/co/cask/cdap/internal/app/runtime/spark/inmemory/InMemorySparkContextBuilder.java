@@ -26,11 +26,13 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.runtime.spark.AbstractSparkContextBuilder;
 import co.cask.cdap.internal.app.runtime.spark.BasicSparkContext;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -73,11 +75,12 @@ public class InMemorySparkContextBuilder extends AbstractSparkContextBuilder {
       new AuthModule(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
-      new DataSetsModules().getLocalModule(),
-      new MetricsClientRuntimeModule().getNoopModules(),
-      new LoggingModules().getInMemoryModules()
+      new DataSetsModules().getStandaloneModules(),
+      new MetricsClientRuntimeModule().getInMemoryModules(),
+      new LoggingModules().getInMemoryModules(),
+      new StreamAdminModules().getInMemoryModules(),
+      new NotificationFeedServiceRuntimeModule().getInMemoryModules()
     );
 
     return Guice.createInjector(inMemoryModules);
@@ -91,11 +94,12 @@ public class InMemorySparkContextBuilder extends AbstractSparkContextBuilder {
       new AuthModule(),
       new LocationRuntimeModule().getStandaloneModules(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
-      new ProgramRunnerRuntimeModule().getStandaloneModules(),
       new DataFabricModules().getStandaloneModules(),
-      new DataSetsModules().getLocalModule(),
-      new MetricsClientRuntimeModule().getNoopModules(),
-      new LoggingModules().getStandaloneModules()
+      new DataSetsModules().getStandaloneModules(),
+      new MetricsClientRuntimeModule().getStandaloneModules(),
+      new LoggingModules().getStandaloneModules(),
+      new StreamAdminModules().getStandaloneModules(),
+      new NotificationFeedServiceRuntimeModule().getInMemoryModules()
     );
     return Guice.createInjector(standaloneModules);
   }

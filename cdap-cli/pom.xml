@@ -23,14 +23,14 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>2.5.1</version>
+    <version>3.0.0</version>
   </parent>
 
   <artifactId>cdap-cli</artifactId>
   <name>CDAP CLI</name>
 
   <properties>
-    <main.class>co.cask.cdap.shell.CLIMain</main.class>
+    <main.class>co.cask.cdap.cli.CLIMain</main.class>
   </properties>
 
   <dependencies>
@@ -40,8 +40,20 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-nop</artifactId>
+      <groupId>co.cask.common</groupId>
+      <artifactId>common-cli</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>commons-cli</groupId>
+      <artifactId>commons-cli</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
     </dependency>
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
@@ -62,6 +74,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -89,6 +102,7 @@
         </configuration>
         <executions>
           <execution>
+            <id>shade-jar</id>
             <phase>package</phase>
             <goals>
               <goal>shade</goal>
@@ -102,22 +116,89 @@
   <profiles>
     <profile>
       <id>dist</id>
+      <!-- Override to not package non-existent etc dir for cdap-cli -->
+      <properties>
+        <package.dirs>opt</package.dirs>
+      </properties>
       <build>
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>
             <version>2.4</version>
+            <executions>
+              <execution>
+                <id>default-jar</id>
+                <phase>prepare-package</phase>
+              </execution>
+            </executions>
           </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <version>2.8</version>
+            <artifactId>maven-shade-plugin</artifactId>
+            <version>2.3</version>
+            <executions>
+              <execution>
+                <id>shade-jar</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>shade</goal>
+                </goals>
+              </execution>
+            </executions>
           </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-resources-plugin</artifactId>
             <version>2.6</version>
+            <executions>
+              <!-- Copy CLI scripts -->
+              <execution>
+                <id>copy-cli-scripts</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.opt.dir}</outputDirectory>
+                  <useDefaultDelimiters>false</useDefaultDelimiters>
+                  <delimiters>
+                    <delimiter>@@</delimiter>
+                  </delimiters>
+                  <resources>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-cli/bin</directory>
+                      <targetPath>bin</targetPath>
+                      <includes>
+                        <include>cdap-cli.sh</include>
+                        <include>cdap-cli.bat</include>
+                      </includes>
+                      <filtering>true</filtering>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>1.7</version>
+            <executions>
+              <execution>
+                <id>copy-jar-to-stage-packaging</id>
+                <phase>package</phase>
+                <configuration>
+                  <target>
+                    <copy file="${project.build.directory}/${project.artifactId}-${project.version}.jar"
+                          tofile="${stage.opt.dir}/lib/${project.groupId}.${project.artifactId}-${project.version}.jar"/>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>
@@ -136,6 +217,17 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
             <version>1.7</version>
+            <executions>
+              <!-- Override parent to not generate init.d service script -->
+              <execution>
+                <id>rename-rpm-service</id>
+                <phase></phase>
+              </execution>
+              <execution>
+                <id>rpm-init-permission</id>
+                <phase></phase>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>
@@ -154,6 +246,17 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
             <version>1.7</version>
+            <executions>
+              <!-- Override parent to not generate init.d service script -->
+              <execution>
+                <id>rename-deb-service</id>
+                <phase></phase>
+              </execution>
+              <execution>
+                <id>deb-init-permission</id>
+                <phase></phase>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>

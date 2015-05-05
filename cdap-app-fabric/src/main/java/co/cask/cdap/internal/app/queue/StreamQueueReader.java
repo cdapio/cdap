@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.queue;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.app.queue.InputDatum;
 import co.cask.cdap.app.queue.QueueReader;
+import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
@@ -46,7 +47,7 @@ public final class StreamQueueReader<T> implements QueueReader<T> {
   @Override
   public InputDatum<T> dequeue(long timeout, TimeUnit timeoutUnit) throws IOException, InterruptedException {
     StreamConsumer consumer = consumerSupplier.get();
-    return new BasicInputDatum<StreamEvent, T>(consumer.getStreamName(),
+    return new BasicInputDatum<StreamEvent, T>(QueueName.fromStream(consumer.getStreamId()),
                                                consumer.poll(batchSize, timeout, timeoutUnit), eventTransform);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import com.google.common.collect.Lists;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -70,8 +71,43 @@ public abstract class TimePartitionedStreamTestBase {
     List<Location> partitionDirs = Lists.newArrayList(streamLocation.list());
     Assert.assertEquals(4, partitionDirs.size());
 
+    // The start time for the partitions should be 0, 1000, 2000, 3000
     Collections.sort(partitionDirs, LOCATION_COMPARATOR);
+    for (int i = 0; i < 4; i++) {
+      Assert.assertEquals(i * 1000, StreamUtils.getPartitionStartTime(partitionDirs.get(i).getName()));
+    }
+  }
 
-    // TODO: Test new sequence ID
+  @Test
+  public void testAppendAll() throws IOException {
+    // Create time partition file of 1 seconds each.
+    String streamName = "testAppendAll";
+    Location streamLocation = getLocationFactory().create(streamName);
+    streamLocation.mkdirs();
+    TimePartitionedStreamFileWriter writer = new TimePartitionedStreamFileWriter(streamLocation, 1000, "file", 100);
+
+    // Write 2 events per millis for 3 seconds, starting at 0.5 second.
+    List<StreamEvent> events = Lists.newArrayList();
+    long timeBase = 500;
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 1000; j++) {
+        long offset = i * 1000 + j;
+        long timestamp = timeBase + offset;
+        events.add(StreamFileTestUtils.createEvent(timestamp, "Testing " + offset + " 0"));
+        events.add(StreamFileTestUtils.createEvent(timestamp, "Testing " + offset + " 1"));
+      }
+    }
+    writer.appendAll(events.iterator());
+    writer.close();
+
+    // There should be four partition directory (500-1000, 1000-2000, 2000-3000, 3000-3500).
+    List<Location> partitionDirs = Lists.newArrayList(streamLocation.list());
+    Assert.assertEquals(4, partitionDirs.size());
+
+    // The start time for the partitions should be 0, 1000, 2000, 3000
+    Collections.sort(partitionDirs, LOCATION_COMPARATOR);
+    for (int i = 0; i < 4; i++) {
+      Assert.assertEquals(i * 1000, StreamUtils.getPartitionStartTime(partitionDirs.get(i).getName()));
+    }
   }
 }

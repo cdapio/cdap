@@ -15,66 +15,52 @@
  */
 package co.cask.cdap.metrics.collect;
 
-import co.cask.cdap.metrics.transport.MetricsRecord;
-import co.cask.cdap.metrics.transport.TagMetric;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableList;
+import co.cask.cdap.api.metrics.MetricType;
+import co.cask.cdap.api.metrics.MetricValue;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * A {@link co.cask.cdap.common.metrics.MetricsCollector} and {@link MetricsEmitter} that aggregates metric values
- * during collection and emit the aggregated values when emit.
+ * {@link MetricsEmitter} that aggregates  values for a metric
+ * during collection and emit the aggregated value when emit.
  */
 final class AggregatedMetricsEmitter implements MetricsEmitter {
+  private static final Logger LOG = LoggerFactory.getLogger(AggregatedMetricsEmitter.class);
 
-  private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(AggregatedMetricsEmitter.class);
-  private static final long CACHE_EXPIRE_MINUTES = 1;
-
-  private final String context;
-  private final String runId;
   private final String name;
-  private final AtomicInteger value;
-  private final LoadingCache<String, AtomicInteger> tagValues;
+  // metric value
+  private final AtomicLong value;
+  // specifies if the metric type is gauge or counter
+  private final AtomicBoolean gaugeUsed;
 
-  AggregatedMetricsEmitter(String context, String runId, String name) {
-    this.context = context;
-    this.runId = runId;
-    this.name = name;
-    this.value = new AtomicInteger();
-    this.tagValues = CacheBuilder.newBuilder()
-                                 .expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES)
-                                 .build(new CacheLoader<String, AtomicInteger>() {
-                                   @Override
-                                   public AtomicInteger load(String key) throws Exception {
-                                     return new AtomicInteger();
-                                   }
-                                 });
+  public AggregatedMetricsEmitter(String name) {
     if (name == null || name.isEmpty()) {
-      LOG.warn("Creating emmitter with " + (name == null ? "null" : "empty") + " name, " +
-        "for context " + context + " and runId " + runId);
+      LOG.warn("Creating emmitter with " + (name == null ? "null" : "empty") + " name, ");
     }
+
+    this.name = name;
+    this.value = new AtomicLong();
+    this.gaugeUsed = new AtomicBoolean(false);
   }
 
-  void increment(int value, String... tags) {
+  void increment(long value) {
     this.value.addAndGet(value);
-    for (String tag : tags) {
-      tagValues.getUnchecked(tag).addAndGet(value);
-    }
   }
+
 
   @Override
-  public MetricsRecord emit(long timestamp) {
-    ImmutableList.Builder<TagMetric> builder = ImmutableList.builder();
-    int value = this.value.getAndSet(0);
-    for (Map.Entry<String, AtomicInteger> entry : tagValues.asMap().entrySet()) {
-      builder.add(new TagMetric(entry.getKey(), entry.getValue().getAndSet(0)));
-    }
-    return new MetricsRecord(context, runId, name, builder.build(), timestamp, value);
+  public MetricValue emit() {
+    // todo CDAP-2195 - potential race condition , reseting value and type has to be done together
+    long value = this.value.getAndSet(0);
+    MetricType type = gaugeUsed.getAndSet(false) ? MetricType.GAUGE : MetricType.COUNTER;
+    return new MetricValue(name, type, value);
+  }
+
+  public void gauge(long value) {
+    this.value.set(value);
+    this.gaugeUsed.set(true);
   }
 }

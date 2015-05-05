@@ -28,17 +28,17 @@
  *    - The unique Flowlet calculates the unique number of words seen;
  *    - The associator stores word associations between all of the words in each input string.
  *
- * 3. A Procedure named RetrieveCounts serves read requests for the calculated word counts,
- *    statistics and associations. It supports two methods:
- *    - getCount() accesses the word count of a specified word and its word associations;
- *    - getStats() accesses the global word statistics.
+ * 3. A Service named ``RetrieveCounts`` that serves read requests for calculated statistics,
+ *    word counts and associations. It exposes these endpoints:
+ *    - ``/stats`` returns the total number of words, the number of unique words, and the average word length;
+ *    - ``/count/{word}`` returns the word count of a specified word and its word associations,
+ *      up to the specified limit or a pre-set limit of ten if not specified;
+ *    - ``/assoc/{word1}/{word2}`` returns the top associated words (those with the highest counts).
  *
- * 4. Four DataSets used by the Flow and Procedure to model, store, and serve the necessary data:
+ * 4. Four Datasets used by the Flow and Service to model, store, and serve the data:
  *    - A core Table named wordStats to track global word statistics;
- *    - A system KeyValueTable DataSet named wordCounts counts the occurrences of each word;
- *    - A custom UniqueCountTable DataSet named uniqueCount determines and counts the number of unique words seen;
- *    - A custom AssociationTable DataSet named wordAssocs tracks associations between words.
+ *    - A system KeyValueTable Dataset named wordCounts counts the occurrences of each word;
+ *    - A custom UniqueCountTable Dataset named uniqueCount determines and counts the number of unique words seen;
+ *    - A custom AssociationTable Dataset named wordAssocs tracks associations between words.
  */
 package co.cask.cdap.examples.wordcount;
-
-

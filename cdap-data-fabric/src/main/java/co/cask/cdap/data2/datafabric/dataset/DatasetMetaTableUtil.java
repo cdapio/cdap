@@ -17,13 +17,19 @@
 package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDS;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDS;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
+import co.cask.cdap.proto.Id;
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Utility for working with dataset metadata table.
@@ -32,42 +38,56 @@ public class DatasetMetaTableUtil {
   public static final String META_TABLE_NAME = "datasets.type";
   public static final String INSTANCE_TABLE_NAME = "datasets.instance";
 
+  private static final Id.DatasetInstance metaTableInstanceId =
+    Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE_ID, META_TABLE_NAME);
+  private static final Id.DatasetInstance instanceTableInstanceId =
+    Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE_ID, INSTANCE_TABLE_NAME);
+
   private final DatasetFramework framework;
 
   public DatasetMetaTableUtil(DatasetFramework framework) {
     this.framework = framework;
   }
 
-  public void init() throws DatasetManagementException {
-    addTypes(framework);
-  }
-
   public DatasetTypeMDS getTypeMetaTable() throws DatasetManagementException, IOException {
-    return (DatasetTypeMDS) DatasetsUtil.getOrCreateDataset(framework, META_TABLE_NAME,
+    return (DatasetTypeMDS) DatasetsUtil.getOrCreateDataset(framework, metaTableInstanceId,
                                                             DatasetTypeMDS.class.getName(),
                                                             DatasetProperties.EMPTY, null, null);
   }
 
   public DatasetInstanceMDS getInstanceMetaTable() throws DatasetManagementException, IOException {
-    return (DatasetInstanceMDS) DatasetsUtil.getOrCreateDataset(framework, INSTANCE_TABLE_NAME,
+    return (DatasetInstanceMDS) DatasetsUtil.getOrCreateDataset(framework, instanceTableInstanceId,
                                                                 DatasetInstanceMDS.class.getName(),
                                                                 DatasetProperties.EMPTY, null, null);
   }
 
   /**
    * Adds datasets and types to the given {@link DatasetFramework} used by dataset service mds.
+   *
    * @param datasetFramework framework to add types and datasets to
    */
   public static void setupDatasets(DatasetFramework datasetFramework) throws IOException, DatasetManagementException {
-    addTypes(datasetFramework);
-    datasetFramework.addInstance(DatasetTypeMDS.class.getName(),
-                                 DatasetMetaTableUtil.META_TABLE_NAME, DatasetProperties.EMPTY);
-    datasetFramework.addInstance(DatasetInstanceMDS.class.getName(),
-                                 DatasetMetaTableUtil.INSTANCE_TABLE_NAME, DatasetProperties.EMPTY);
+    for (Map.Entry<String, ? extends DatasetModule> entry : getModules().entrySet()) {
+      // meta tables should be in the system namespace
+      Id.DatasetModule moduleId = Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, entry.getKey());
+      datasetFramework.addModule(moduleId, entry.getValue());
+    }
+
+    datasetFramework.addInstance(DatasetTypeMDS.class.getName(), Id.DatasetInstance.from(
+                                   Constants.DEFAULT_NAMESPACE_ID, Joiner.on(".").join(Constants.SYSTEM_NAMESPACE,
+                                                                                       META_TABLE_NAME)),
+                                 DatasetProperties.EMPTY);
+    datasetFramework.addInstance(DatasetInstanceMDS.class.getName(), Id.DatasetInstance.from(
+                                   Constants.DEFAULT_NAMESPACE_ID, Joiner.on(".").join(Constants.SYSTEM_NAMESPACE,
+                                                                                       INSTANCE_TABLE_NAME)),
+                                 DatasetProperties.EMPTY);
   }
 
-  private static void addTypes(DatasetFramework framework) throws DatasetManagementException {
-    framework.addModule("typeMDSModule", new SingleTypeModule(DatasetTypeMDS.class));
-    framework.addModule("instanceMDSModule", new SingleTypeModule(DatasetInstanceMDS.class));
+  /**
+   * @return dataset modules used by dataset mds
+   */
+  public static Map<String, ? extends DatasetModule> getModules() {
+    return ImmutableMap.of("typeMDSModule", new SingleTypeModule(DatasetTypeMDS.class),
+                           "instanceMDSModule", new SingleTypeModule(DatasetInstanceMDS.class));
   }
 }

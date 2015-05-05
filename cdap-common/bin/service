@@ -64,7 +64,7 @@ CDAP_CONF=${CDAP_CONF:-/etc/cdap/conf}
 COMPONENT_HOME="$CDAP_HOME"/"$PKGNAME"; export COMPONENT_HOME
 COMPONENT_BIN="$COMPONENT_HOME"/bin
 
-# Load component comman.sh 
+# Load component common.sh
 source $COMPONENT_BIN/common.sh
 
 # Load component common environment file too
@@ -74,6 +74,11 @@ source $COMPONENT_BIN/common-env.sh
 SERVICE_ENVIRONMENT_FILE="$COMPONENT_HOME"/conf/"$APP"-env.sh
 if [ -f "$SERVICE_ENVIRONMENT_FILE" ]; then 
  . "$SERVICE_ENVIRONMENT_FILE"
+fi
+
+# Load user-modifiable configuration
+if [ -f "${CDAP_CONF}/cdap-env.sh" ]; then
+ . "${CDAP_CONF}/cdap-env.sh"
 fi
 
 # Set Log location
@@ -121,15 +126,19 @@ start() {
       # Adds the correct HBase support lib to the classpath
       set_hbase
 
+      check_or_create_master_local_dir
+
       check_before_start
 
       echo "`date` Starting Java $APP service on `hostname`"
       echo "`date` Starting Java $APP service on `hostname`" >> $loglog
+      "$JAVA" -version 2>> $loglog
       echo "`ulimit -a`" >> $loglog 2>&1
 
       nohup nice -n $NICENESS "$JAVA" -Dcdap.service=$APP "$JAVA_HEAPMAX" \
         -Dexplore.conf.files=$EXPLORE_CONF_FILES \
         -Dexplore.classpath=$EXPLORE_CLASSPATH "$OPTS" \
+        -Duser.dir=$LOCAL_DIR \
         -cp $CLASSPATH $MAIN_CLASS $MAIN_CLASS_ARGS </dev/null >>$loglog 2>&1 &
       echo $! >$pid
 
@@ -222,8 +231,10 @@ run() {
     # Adds the correct HBase support lib to the classpath
     set_hbase
 
+    check_or_create_master_local_dir
+
     echo "Running class $classname"
-    "$JAVA" "$JAVA_HEAPMAX" -Dhive.classpath=$HIVE_CLASSPATH "$OPTS" -cp $CLASSPATH $classname $@
+    "$JAVA" "$JAVA_HEAPMAX" -Dhive.classpath=$HIVE_CLASSPATH -Duser.dir=$LOCAL_DIR "$OPTS" -cp $CLASSPATH $classname $@
 }
 
 case "$1" in

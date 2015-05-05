@@ -15,18 +15,42 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.stream.GenericStreamEventData;
+import co.cask.cdap.api.stream.StreamEventData;
+import co.cask.cdap.api.stream.StreamEventDecoder;
+import co.cask.cdap.data.format.TextRecordFormat;
+import co.cask.cdap.data.stream.decoder.BytesStreamEventDecoder;
+import co.cask.cdap.data.stream.decoder.IdentityStreamEventDecoder;
+import co.cask.cdap.data.stream.decoder.StringStreamEventDecoder;
+import co.cask.cdap.data.stream.decoder.TextStreamEventDecoder;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.JobContextImpl;
+import org.apache.hadoop.mapred.JobID;
+import org.apache.hadoop.mapred.TaskAttemptID;
+import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -35,6 +59,9 @@ import org.junit.rules.TemporaryFolder;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -88,13 +115,13 @@ public class StreamInputFormatTest {
     });
 
     // Run MR with TTL = 1500, currentTime = CURRENT_TIME
-    runMR(inputDir, outputDir, 0, Long.MAX_VALUE, 2000, 1500);
+    runMR(inputDir, outputDir, 0, Long.MAX_VALUE, 2000, ttl);
 
     // Verify the result. It should have 1500 "nonExpiredEvent {timestamp}" for timestamp 500..1999 by 1.
     Map<String, Integer> output = loadMRResult(outputDir);
-    Assert.assertEquals(1501, output.size());
+    Assert.assertEquals(ttl + 1, output.size());
     Assert.assertEquals(null, output.get("expiredEvent"));
-    Assert.assertEquals(1500, output.get("nonExpiredEvent").intValue());
+    Assert.assertEquals(ttl, output.get("nonExpiredEvent").intValue());
     for (long i = (currentTime - ttl); i < currentTime; i++) {
       Assert.assertEquals(1, output.get(Long.toString(i)).intValue());
     }
@@ -208,6 +235,140 @@ public class StreamInputFormatTest {
     Assert.assertEquals(1, output.get("1").intValue());
   }
 
+  @Test
+  public void testIdentityStreamEventDecoder() {
+    ImmutableMap.Builder<String, String> headers = ImmutableMap.builder();
+    headers.put("key1", "value1");
+    headers.put("key2", "value2");
+    ByteBuffer buffer = Charsets.UTF_8.encode("testdata");
+    StreamEvent event = new StreamEvent(headers.build(), buffer, System.currentTimeMillis());
+    StreamEventDecoder<LongWritable, StreamEvent> decoder = new IdentityStreamEventDecoder();
+    StreamEventDecoder.DecodeResult<LongWritable, StreamEvent> result
+      = new StreamEventDecoder.DecodeResult<LongWritable, StreamEvent>();
+    result = decoder.decode(event, result);
+    Assert.assertEquals(new LongWritable(event.getTimestamp()), result.getKey());
+    Assert.assertEquals(event, result.getValue());
+  }
+
+  @Test
+  public void testStringStreamEventDecoder() {
+    String body = "Testing";
+    StreamEvent event = new StreamEvent(ImmutableMap.<String, String>of(), Charsets.UTF_8.encode(body));
+    StreamEventDecoder<LongWritable, String> decoder = new StringStreamEventDecoder();
+    StreamEventDecoder.DecodeResult<LongWritable, String> result
+      = new StreamEventDecoder.DecodeResult<LongWritable, String>();
+    result = decoder.decode(event, result);
+
+    Assert.assertEquals(event.getTimestamp(), result.getKey().get());
+    Assert.assertEquals(body, result.getValue());
+  }
+
+  @Test
+  public void testStreamDecoderInference() {
+    Configuration conf = new Configuration();
+    StreamInputFormat.inferDecoderClass(conf, BytesWritable.class);
+    Assert.assertEquals(BytesStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
+    StreamInputFormat.inferDecoderClass(conf, Text.class);
+    Assert.assertEquals(TextStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
+    StreamInputFormat.inferDecoderClass(conf, String.class);
+    Assert.assertEquals(StringStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
+    StreamInputFormat.inferDecoderClass(conf, StreamEvent.class);
+    Assert.assertEquals(IdentityStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
+    StreamInputFormat.inferDecoderClass(conf, StreamEventData.class);
+    Assert.assertEquals(IdentityStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
+  }
+
+  @Test
+  public void testStreamRecordReader() throws Exception {
+    File inputDir = tmpFolder.newFolder();
+    File partition = new File(inputDir,  "1.1000");
+    partition.mkdirs();
+    File eventFile = new File(partition, "bucket.1.0." + StreamFileType.EVENT.getSuffix());
+    File indexFile = new File(partition, "bucket.1.0." + StreamFileType.INDEX.getSuffix());
+
+    // write 1 event
+    StreamDataFileWriter writer = new StreamDataFileWriter(Files.newOutputStreamSupplier(eventFile),
+                                                           Files.newOutputStreamSupplier(indexFile),
+                                                           100L);
+    writer.append(StreamFileTestUtils.createEvent(1000, "test"));
+    writer.flush();
+
+    // get splits from the input format. Expect to get 2 splits,
+    // one from 0 - some offset and one from offset - Long.MAX_VALUE.
+    Configuration conf = new Configuration();
+    TaskAttemptContext context = new TaskAttemptContextImpl(conf, new TaskAttemptID());
+    StreamInputFormat.setStreamPath(conf, inputDir.toURI());
+    StreamInputFormat format = new StreamInputFormat();
+    List<InputSplit> splits = format.getSplits(new JobContextImpl(new JobConf(conf), new JobID()));
+    Assert.assertEquals(2, splits.size());
+
+    // write another event so that the 2nd split has something to read
+    writer.append(StreamFileTestUtils.createEvent(1001, "test"));
+    writer.close();
+
+    // create a record reader for the 2nd split
+    StreamRecordReader<LongWritable, StreamEvent> recordReader =
+      new StreamRecordReader<LongWritable, StreamEvent>(new IdentityStreamEventDecoder());
+    recordReader.initialize(splits.get(1), context);
+
+    // check that we read the 2nd stream event
+    Assert.assertTrue(recordReader.nextKeyValue());
+    StreamEvent output = recordReader.getCurrentValue();
+    Assert.assertEquals(1001, output.getTimestamp());
+    Assert.assertEquals("test", Bytes.toString(output.getBody()));
+    // check that there is nothing more to read
+    Assert.assertFalse(recordReader.nextKeyValue());
+  }
+
+  @Test
+  public void testFormatStreamRecordReader() throws IOException, InterruptedException {
+    File inputDir = tmpFolder.newFolder();
+    File partition = new File(inputDir,  "1.1000");
+    partition.mkdirs();
+    File eventFile = new File(partition, "bucket.1.0." + StreamFileType.EVENT.getSuffix());
+    File indexFile = new File(partition, "bucket.1.0." + StreamFileType.INDEX.getSuffix());
+
+    // write 1 event
+    StreamDataFileWriter writer = new StreamDataFileWriter(Files.newOutputStreamSupplier(eventFile),
+                                                           Files.newOutputStreamSupplier(indexFile),
+                                                           100L);
+
+    StreamEvent streamEvent = new StreamEvent(ImmutableMap.of("header1", "value1", "header2", "value2"),
+                                              Charsets.UTF_8.encode("hello world"),
+                                              1000);
+    writer.append(streamEvent);
+    writer.close();
+
+    FormatSpecification formatSpec =
+      new FormatSpecification(TextRecordFormat.class.getName(),
+                              Schema.recordOf("event", Schema.Field.of("body", Schema.of(Schema.Type.STRING))),
+                              Collections.<String, String>emptyMap());
+    Configuration conf = new Configuration();
+    StreamInputFormat.setBodyFormatSpecification(conf, formatSpec);
+    StreamInputFormat.setStreamPath(conf, inputDir.toURI());
+    TaskAttemptContext context = new TaskAttemptContextImpl(conf, new TaskAttemptID());
+
+    StreamInputFormat format = new StreamInputFormat();
+
+    // read all splits and store the results in the list
+    List<GenericStreamEventData<StructuredRecord>> recordsRead = Lists.newArrayList();
+    List<InputSplit> inputSplits = format.getSplits(context);
+    for (InputSplit split : inputSplits) {
+      RecordReader<LongWritable, GenericStreamEventData<StructuredRecord>> recordReader =
+        format.createRecordReader(split, context);
+      recordReader.initialize(split, context);
+      while (recordReader.nextKeyValue()) {
+        recordsRead.add(recordReader.getCurrentValue());
+      }
+    }
+
+    // should only have read 1 record
+    Assert.assertEquals(1, recordsRead.size());
+    GenericStreamEventData<StructuredRecord> eventData = recordsRead.get(0);
+    Assert.assertEquals(streamEvent.getHeaders(), eventData.getHeaders());
+    Assert.assertEquals("hello world", eventData.getBody().get("body"));
+  }
+
   private void generateEvents(File inputDir, int numEvents, long startTime, long timeIncrement,
                               GenerateEvent generator) throws IOException {
     File partition = new File(inputDir, Long.toString(startTime / 1000) + ".1000");
@@ -263,7 +424,7 @@ public class StreamInputFormatTest {
   }
 
   private Map<String, Integer> loadMRResult(File outputDir) throws IOException {
-    Map<String, Integer> output = Maps.newHashMap();
+    Map<String, Integer> output = Maps.newTreeMap();
     BufferedReader reader = Files.newReader(new File(outputDir, "part-r-00000"), Charsets.UTF_8);
     try {
       String line = reader.readLine();
@@ -285,7 +446,13 @@ public class StreamInputFormatTest {
   /**
    * StreamInputFormat for testing.
    */
-  private static final class TestStreamInputFormat extends TextStreamInputFormat {
+  private static final class TestStreamInputFormat extends StreamInputFormat<LongWritable, Text> {
+
+    @Override
+    protected StreamEventDecoder<LongWritable, Text> createStreamEventDecoder(Configuration conf) {
+      return new TextStreamEventDecoder();
+    }
+
     @Override
     protected long getCurrentTime() {
       return CURRENT_TIME;

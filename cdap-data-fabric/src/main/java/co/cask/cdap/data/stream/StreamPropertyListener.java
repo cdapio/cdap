@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.proto.Id;
+
 /**
  * Listener for changes in stream properties.
  */
@@ -24,38 +26,39 @@ public abstract class StreamPropertyListener {
    * Invoked when stream generation changed. Generation only increase monotonically, hence this method
    * is guaranteed to see only increasing generation across multiple calls.
    *
-   * @param streamName Name of the stream
+   * @param streamId Id of the stream
    * @param generation The generation id updated to.
    */
-  public void generationChanged(String streamName, int generation) {
-    // Default no-op
-  }
-
-  /**
-   * Invoked when the stream generation property is deleted.
-   *
-   * @param streamName Name of the stream
-   */
-  public void generationDeleted(String streamName) {
+  public void generationChanged(Id.Stream streamId, int generation) {
     // Default no-op
   }
 
   /**
    * Invoked when the stream TTL property is changed.
    *
-   * @param streamName Name of the stream
+   * @param streamId Id of the stream
    * @param ttl TTL of the stream
    */
-  public void ttlChanged(String streamName, long ttl) {
+  public void ttlChanged(Id.Stream streamId, long ttl) {
     // Default no-op
   }
 
   /**
-   * Invoked when the stream TTL property is deleted.
+   * Invoked when the stream Notification threshold property is changed.
    *
-   * @param streamName Name of the stream
+   * @param streamId Id of the stream
+   * @param threshold Notification threshold of the stream
    */
-  public void ttlDeleted(String streamName) {
+  public void thresholdChanged(Id.Stream streamId, int threshold) {
+    // Default no-op
+  }
+
+  /**
+   * Invoked when the stream property is deleted.
+   *
+   * @param streamId Id of the stream
+   */
+  public void deleted(Id.Stream streamId) {
     // Default no-op
   }
 }

@@ -54,6 +54,11 @@ public final class BasicArguments implements Arguments {
   }
 
   @Override
+  public Map<String, String> asMap() {
+    return options;
+  }
+
+  @Override
   public Iterator<Map.Entry<String, String>> iterator() {
     return options.entrySet().iterator();
   }

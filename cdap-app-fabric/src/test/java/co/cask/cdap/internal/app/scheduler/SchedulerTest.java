@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.scheduler;
 
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -29,9 +30,8 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
-import co.cask.cdap.internal.app.runtime.schedule.DataSetBasedScheduleStore;
-import co.cask.cdap.internal.app.runtime.schedule.ScheduleStoreTableUtil;
-import co.cask.cdap.internal.io.UnsupportedTypeException;
+import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
+import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.internal.TempFolder;
@@ -58,6 +58,7 @@ import org.quartz.simpl.SimpleThreadPool;
 import org.quartz.spi.JobStore;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
 *
@@ -84,8 +85,8 @@ public class SchedulerTest {
                                     new DiscoveryRuntimeModule().getInMemoryModules(),
                                     new MetricsClientRuntimeModule().getInMemoryModules(),
                                     new DataFabricModules().getInMemoryModules(),
-                                    new DataSetsModules().getLocalModule(),
-                                    new DataSetServiceModules().getInMemoryModule(),
+                                    new DataSetsModules().getStandaloneModules(),
+                                    new DataSetServiceModules().getInMemoryModules(),
                                     new AuthModule(),
                                     new ExploreClientModule());
     txService = injector.getInstance(TransactionManager.class);
@@ -110,7 +111,7 @@ public class SchedulerTest {
     JobStore js;
     if (enablePersistence) {
       CConfiguration conf = injector.getInstance(CConfiguration.class);
-      js = new DataSetBasedScheduleStore(factory, new ScheduleStoreTableUtil(dsFramework, conf));
+      js = new DatasetBasedTimeScheduleStore(factory, new ScheduleStoreTableUtil(dsFramework, conf));
     } else {
       js = new RAMJobStore();
     }
@@ -125,6 +126,29 @@ public class SchedulerTest {
 
   public static void schedulerTearDown() throws SchedulerException {
     scheduler.shutdown();
+  }
+
+  @Test
+  public void testJobProperties() throws SchedulerException, UnsupportedTypeException, InterruptedException {
+    String schedulerName = "testPropertiesScheduler";
+    schedulerSetup(true, schedulerName);
+    JobDetail job = JobBuilder.newJob(LogPrintingJob.class)
+      .withIdentity("developer:application1:mapreduce1")
+      .build();
+
+    Trigger trigger  = TriggerBuilder.newTrigger()
+      .withIdentity("g2")
+      .usingJobData(LogPrintingJob.KEY, LogPrintingJob.VALUE)
+      .startNow()
+      .withSchedule(CronScheduleBuilder.cronSchedule("0/1 * * * * ?"))
+      .build();
+
+    JobKey key =  job.getKey();
+    //Schedule job
+    scheduler.scheduleJob(job, trigger);
+    //Make sure that the job gets triggered more than once.
+    TimeUnit.SECONDS.sleep(3);
+    scheduler.deleteJob(key);
   }
 
   @Test

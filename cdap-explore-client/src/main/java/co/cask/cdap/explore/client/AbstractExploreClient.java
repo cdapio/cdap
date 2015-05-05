@@ -16,29 +16,36 @@
 
 package co.cask.cdap.explore.client;
 
+import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import com.google.common.base.Functions;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.gson.Gson;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -50,6 +57,8 @@ import javax.annotation.Nullable;
  * A base for an Explore Client that talks to a server implementing {@link Explore} over HTTP.
  */
 public abstract class AbstractExploreClient extends ExploreHttpClient implements ExploreClient {
+  private static final Gson GSON = new Gson();
+
   private final ListeningScheduledExecutorService executor;
 
   protected AbstractExploreClient() {
@@ -70,11 +79,11 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public ListenableFuture<Void> disableExplore(final String datasetInstance) {
+  public ListenableFuture<Void> disableExploreDataset(final Id.DatasetInstance datasetInstance) {
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doDisableExplore(datasetInstance);
+        return doDisableExploreDataset(datasetInstance);
       }
     });
 
@@ -83,11 +92,11 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public ListenableFuture<Void> enableExplore(final String datasetInstance) {
+  public ListenableFuture<Void> enableExploreDataset(final Id.DatasetInstance datasetInstance) {
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doEnableExplore(datasetInstance);
+        return doEnableExploreDataset(datasetInstance);
       }
     });
 
@@ -96,11 +105,64 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public ListenableFuture<ExploreExecutionResult> submit(final String statement) {
+  public ListenableFuture<Void> enableExploreStream(final Id.Stream stream) {
+    ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
+      @Override
+      public QueryHandle getHandle() throws ExploreException, SQLException {
+        return doEnableExploreStream(stream);
+      }
+    });
+
+    // Exceptions will be thrown in case of an error in the futureHandle
+    return Futures.transform(futureResults, Functions.<Void>constant(null));
+  }
+
+  @Override
+  public ListenableFuture<Void> disableExploreStream(final Id.Stream stream) {
+    ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
+      @Override
+      public QueryHandle getHandle() throws ExploreException, SQLException {
+        return doDisableExploreStream(stream);
+      }
+    });
+
+    // Exceptions will be thrown in case of an error in the futureHandle
+    return Futures.transform(futureResults, Functions.<Void>constant(null));
+  }
+
+  @Override
+  public ListenableFuture<Void> addPartition(final Id.DatasetInstance datasetInstance,
+                                             final PartitionKey key, final String path) {
+    ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
+      @Override
+      public QueryHandle getHandle() throws ExploreException, SQLException {
+        return doAddPartition(datasetInstance, key, path);
+      }
+    });
+
+    // Exceptions will be thrown in case of an error in the futureHandle
+    return Futures.transform(futureResults, Functions.<Void>constant(null));
+  }
+
+  @Override
+  public ListenableFuture<Void> dropPartition(final Id.DatasetInstance datasetInstance, final PartitionKey key) {
+    ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
+      @Override
+      public QueryHandle getHandle() throws ExploreException, SQLException {
+        return doDropPartition(datasetInstance, key);
+      }
+    });
+
+    // Exceptions will be thrown in case of an error in the futureHandle
+    return Futures.transform(futureResults, Functions.<Void>constant(null));
+  }
+
+  @Override
+  public ListenableFuture<ExploreExecutionResult> submit(final Id.Namespace namespace, final String statement) {
     return getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return execute(statement);
+        return execute(namespace, statement);
       }
     });
   }
@@ -194,6 +256,32 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     });
   }
 
+  @Override
+  public ListenableFuture<ExploreExecutionResult> addNamespace(final Id.Namespace namespace) {
+    return getResultsFuture(new HandleProducer() {
+      @Override
+      public QueryHandle getHandle() throws ExploreException, SQLException {
+        return createNamespace(namespace);
+      }
+    });
+  }
+
+  @Override
+  public ListenableFuture<ExploreExecutionResult> removeNamespace(final Id.Namespace namespace) {
+    return getResultsFuture(new HandleProducer() {
+      @Override
+      public QueryHandle getHandle() throws ExploreException, SQLException {
+        return deleteNamespace(namespace);
+      }
+    });
+  }
+
+  @Override
+  public void upgrade() throws Exception {
+    // TODO: implement once explore service can be started from the upgrade tool
+    throw new UnsupportedOperationException("Remote explore upgrade is not supported.");
+  }
+
   private ListenableFuture<ExploreExecutionResult> getResultsFuture(final HandleProducer handleProducer) {
     // NOTE: here we have two levels of Future because we want to return the future that actually
     // finishes the execution of the operation - it is not enough that the future handle
@@ -231,7 +319,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
               close(handle);
             }
             if (!resultFuture.set(new ClientExploreExecutionResult(AbstractExploreClient.this,
-                                                                   handle, status.hasResults()))) {
+                                                                   handle, status))) {
               close(handle);
             }
           }
@@ -265,20 +353,26 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
 
     private int fetchSize = DEFAULT_FETCH_SIZE;
     private Iterator<QueryResult> delegate;
+    private List<ColumnDesc> resultSchema = null;
 
     private final ExploreHttpClient exploreClient;
     private final QueryHandle handle;
-    private final boolean hasResults;
+    private final QueryStatus status;
 
-    public ClientExploreExecutionResult(ExploreHttpClient exploreClient, QueryHandle handle, boolean hasResults) {
+    public ClientExploreExecutionResult(ExploreHttpClient exploreClient, QueryHandle handle, QueryStatus status) {
       this.exploreClient = exploreClient;
       this.handle = handle;
-      this.hasResults = hasResults;
+      this.status = status;
+    }
+
+    @Override
+    public QueryStatus getStatus() {
+      return status;
     }
 
     @Override
     protected QueryResult computeNext() {
-      if (!hasResults) {
+      if (!status.hasResults()) {
         return endOfData();
       }
 
@@ -287,7 +381,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
       }
       try {
         // call the endpoint 'next' to get more results and set delegate
-        List<QueryResult> nextResults = exploreClient.nextResults(handle, fetchSize);
+        List<QueryResult> nextResults = convertRows(exploreClient.nextResults(handle, fetchSize));
         delegate = nextResults.iterator();
 
         // At this point, if delegate has no result, there are no more results at all
@@ -303,6 +397,67 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
         LOG.debug("Received exception", e);
         return endOfData();
       }
+    }
+
+    private List<QueryResult> convertRows(List<QueryResult> rows) throws ExploreException {
+      List<ColumnDesc> schema = getResultSchema();
+      ImmutableList.Builder<QueryResult> builder = ImmutableList.builder();
+
+      for (QueryResult row : rows) {
+        Preconditions.checkArgument(row.getColumns().size() == schema.size(), "Row and schema length differ.");
+        List<Object> newRow = Lists.newArrayList();
+        Iterator<Object> rowIterator = row.getColumns().iterator();
+        Iterator<ColumnDesc> schemaIterator = schema.iterator();
+        while (rowIterator.hasNext() && schemaIterator.hasNext()) {
+          Object columnValue = rowIterator.next();
+          ColumnDesc schemaColumn = schemaIterator.next();
+          String columnType = schemaColumn.getType();
+          if (columnValue != null && columnValue instanceof Double && columnType != null) {
+            if (schemaColumn.getType().equals("INT")) {
+              columnValue = ((Double) columnValue).intValue();
+            } else if (schemaColumn.getType().equals("SMALLINT")) {
+              columnValue = ((Double) columnValue).shortValue();
+            } else if (schemaColumn.getType().equals("BIGINT")) {
+              columnValue = ((Double) columnValue).longValue();
+            } else if (schemaColumn.getType().equals("TINYINT")) {
+              columnValue = ((Double) columnValue).byteValue();
+            }
+          } else if ("BINARY".equals(columnType)) {
+            // A BINARY value is a byte array, which is deserialized by GSon into a list of
+            // double objects - here we recreate a byte[] object.
+            List<Object> binary;
+            if (columnValue instanceof List) {
+              binary = (List) columnValue;
+            } else if (columnValue instanceof Double[]) {
+              binary = (List) Arrays.asList((Double[]) columnValue);
+            } else {
+              throw new ExploreException("Unsupported format for BINARY data type: " +
+                                           columnValue.getClass().getCanonicalName());
+            }
+            Object newColumnValue = new byte[binary.size()];
+            for (int i = 0; i < ((byte[]) newColumnValue).length; i++) {
+              if (!(binary.get(i) instanceof Double)) {
+                newColumnValue = columnValue;
+                break;
+              }
+              ((byte[]) newColumnValue)[i] = ((Double) binary.get(i)).byteValue();
+            }
+            columnValue = newColumnValue;
+          } else if ("array<tinyint>".equals(columnType)) {
+            // in some versions of hive, a byte[] gets translated to array<tinyint> instead of binary.
+            // weirdly enough, in our unit tests, if java6 is used, byte[] fields get changed to array<tinyint>
+            // but if java7 is used, byte[] fields get changed to binary...
+            // and on top of that it decides to return the byte array as a string... like "[98,111,98]".
+            // this entire thing could use a lot of improvement (CDAP-11)
+            if (columnValue instanceof String) {
+              columnValue = GSON.fromJson((String) columnValue, byte[].class);
+            }
+          }
+          newRow.add(columnValue);
+        }
+        builder.add(new QueryResult(newRow));
+      }
+      return builder.build();
     }
 
     @Override
@@ -329,13 +484,21 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     }
 
     @Override
-    public List<ColumnDesc> getResultSchema() throws ExploreException {
-      try {
-        return exploreClient.getResultSchema(handle);
-      } catch (HandleNotFoundException e) {
-        LOG.error("Caught exception when retrieving results schema", e);
-        throw new ExploreException(e);
+    public synchronized List<ColumnDesc> getResultSchema() throws ExploreException {
+      if (resultSchema == null) {
+        try {
+          resultSchema = exploreClient.getResultSchema(handle);
+        } catch (HandleNotFoundException e) {
+          LOG.error("Caught exception when retrieving results schema", e);
+          throw new ExploreException(e);
+        }
       }
+      return resultSchema;
+    }
+
+    @Override
+    public boolean canContainResults() {
+      return status.hasResults();
     }
   }
 

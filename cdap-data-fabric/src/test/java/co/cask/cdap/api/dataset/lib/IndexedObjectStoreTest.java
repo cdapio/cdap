@@ -18,10 +18,14 @@ package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import com.google.common.collect.ImmutableList;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
@@ -30,12 +34,27 @@ import java.util.List;
 /**
  * Test for {@link co.cask.cdap.api.dataset.lib.IndexedObjectStore}.
  */
-public class IndexedObjectStoreTest extends AbstractDatasetTest {
+public class IndexedObjectStoreTest {
+  @ClassRule
+  public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
+
+  private static final Id.DatasetInstance index =
+    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "index");
+
+  @Before
+  public void createDataset() throws Exception {
+    createIndexedObjectStoreInstance(index, Feed.class);
+  }
+
+  @After
+  public void deleteDataset() throws Exception {
+    dsFrameworkUtil.deleteInstance(index);
+  }
+
   @Test
   public void testLookupByIndex() throws Exception {
-    createIndexedObjectStoreInstance("index", Feed.class);
-    final IndexedObjectStore<Feed> indexedFeed = getInstance("index");
-    TransactionExecutor txnl = newTransactionExecutor(indexedFeed);
+    final IndexedObjectStore<Feed> indexedFeed = dsFrameworkUtil.getInstance(index);
+    TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(indexedFeed);
 
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
@@ -62,15 +81,12 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
         Assert.assertEquals(2, feedResult3.size());
       }
     });
-
-    deleteInstance("index");
   }
 
   @Test
   public void testIndexRewrites() throws Exception {
-    createIndexedObjectStoreInstance("index", Feed.class);
-    final IndexedObjectStore<Feed> indexedFeed = getInstance("index");
-    TransactionExecutor txnl = newTransactionExecutor(indexedFeed);
+    final IndexedObjectStore<Feed> indexedFeed = dsFrameworkUtil.getInstance(index);
+    TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(indexedFeed);
 
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
@@ -103,14 +119,12 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
         Assert.assertEquals(0, feedResult.size());
       }
     });
-    deleteInstance("index");
   }
 
   @Test
   public void testIndexPruning() throws Exception {
-    createIndexedObjectStoreInstance("index", Feed.class);
-    final IndexedObjectStore<Feed> indexedFeed = getInstance("index");
-    TransactionExecutor txnl = newTransactionExecutor(indexedFeed);
+    final IndexedObjectStore<Feed> indexedFeed = dsFrameworkUtil.getInstance(index);
+    TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(indexedFeed);
 
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
@@ -129,14 +143,11 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
         Assert.assertEquals(0, feeds.size());
       }
     });
-
-    deleteInstance("index");
   }
 
   @Test
   public void testIndexNoSecondaryKeyChanges() throws Exception {
-    createIndexedObjectStoreInstance("index", Feed.class);
-    IndexedObjectStore<Feed> indexedFeed = getInstance("index");
+    IndexedObjectStore<Feed> indexedFeed = dsFrameworkUtil.getInstance(index);
 
     List<String> categories = ImmutableList.of("C++", "C#");
 
@@ -161,15 +172,12 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
     Assert.assertEquals(1, feedResult.size());
 
     Assert.assertEquals("http://microsoft.com", feedResult.get(0).getUrl());
-
-    deleteInstance("index");
   }
 
   @Test
   public void testIndexUpdates() throws Exception {
-    createIndexedObjectStoreInstance("index", Feed.class);
-    final IndexedObjectStore<Feed> indexedFeed = getInstance("index");
-    TransactionExecutor txnl = newTransactionExecutor(indexedFeed);
+    final IndexedObjectStore<Feed> indexedFeed = dsFrameworkUtil.getInstance(index);
+    TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(indexedFeed);
 
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
@@ -190,13 +198,11 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
         Assert.assertEquals(1, feedResult.size());
       }
     });
-
-    deleteInstance("index");
   }
 
-  protected void createIndexedObjectStoreInstance(String instanceName, Type type) throws Exception {
-    createInstance("indexedObjectStore", instanceName,
-                   ObjectStores.objectStoreProperties(type, DatasetProperties.EMPTY));
+  protected void createIndexedObjectStoreInstance(Id.DatasetInstance datasetInstanceId, Type type) throws Exception {
+    dsFrameworkUtil.createInstance("indexedObjectStore", datasetInstanceId,
+                                   ObjectStores.objectStoreProperties(type, DatasetProperties.EMPTY));
   }
 
   private byte[][] getCategories(List<String> categories) {

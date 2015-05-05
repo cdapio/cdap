@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,134 +42,144 @@ public class RouterPathTest {
   }
 
   @Test
+  public void testSystemServicePath() {
+    String path = "/v3/system/services/foo/logs";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
+    Assert.assertEquals(Constants.Service.METRICS, result);
+
+    path = "/v3/system/services/foo/live-info";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
+
+    // this clashes with a rule for stream handler and fails if the rules are evaluated in wrong order [CDAP-2159]
+    path = "/v3/system/services/streams/logs";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
+    Assert.assertEquals(Constants.Service.METRICS, result);
+
+    // this clashes with a rule for stream handler and fails if the rules are evaluated in wrong order [CDAP-2159]
+    path = "/v3/system/services/streams/live-info";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
+  }
+
+  @Test
   public void testMetricsPath() throws Exception {
     //Following URIs might not give actual results but we want to test resilience of Router Path Lookup
-    String flowPath = "/v2///metrics/system/apps/InvalidApp//";
+    String flowPath = "/v3///metrics/system/apps/InvalidApp//";
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
     String result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
 
-    flowPath = "/v2/metrics";
+    flowPath = "/v3/metrics";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), flowPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
 
-    flowPath = "/v2/metrics//";
+    flowPath = "/v3/metrics//";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), flowPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
+    Assert.assertEquals(Constants.Service.METRICS, result);
+
+    testMetricsPath("/v3/metrics/search?target=childContext&context=user");
+    testMetricsPath("/v3/metrics/search?target=childContext&context=PurchaeHistory.f.PurchaseFlow");
+    testMetricsPath("/v3/metrics/search?target=metric&context=PurchaeHistory.f.PurchaseFlow");
+  }
+
+  private void testMetricsPath(String path) {
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
   }
 
   @Test
   public void testAppFabricPath() throws Exception {
     //Default destination for URIs will APP_FABRIC_HTTP
-    String flowPath = "/v2/ping/";
-    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
-    String result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
+    String path = "/v3/ping/";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
 
-    flowPath = "/status";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
+    path = "/status";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
 
-    flowPath = "/v2/monitor///abcd/";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), flowPath);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
+    path = "/v3/monitor///abcd/";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), path);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
   }
 
   @Test
   public void testLogPath() throws Exception {
     //Following URIs might not give actual results but we want to test resilience of Router Path Lookup
-    String flowPath = "/v2/apps//InvalidApp///procedures/ProcName/logs/";
+    String flowPath = "/v3/namespaces/default/apps//InvalidApp///flows/FlowName/logs/";
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
     String result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
 
-    flowPath = "///v2///apps/InvalidApp/flows/FlowName/////logs";
+    flowPath = "///v3/namespaces/default///apps/InvalidApp/flows/FlowName/////logs";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), flowPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
 
-    flowPath = "v2/apps/InvalidApp/procedures/ProName/logs/abcd";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), flowPath);
+    flowPath = "/v3/namespaces/default/apps/InvalidApp/service/ServiceName/runs/7e6adc79-0f5d-4252-70817ea47698/logs/";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
+    Assert.assertEquals(Constants.Service.METRICS, result);
+
+    flowPath = "/v3/namespaces/default/apps/InvalidApp/adapters/Adapter1/runs/7e6adc79-0f5d-b559-70817ea47698/logs/";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
   }
-
-  @Test
-  public void testProcedurePath() throws Exception {
-    //Following URIs might not give actual results but we want to test resilience of Router Path Lookup
-    //Procedure Path /v2/apps/<appid>/procedures/<procedureid>/methods/<methodName>
-    //Discoverable Service Name -> procedure.%s.%s.%s", accountId, appId, procedureName;
-    String accId = "developer";
-
-    String flowPath = "/v2/apps//InvalidApp///procedures/ProcName///methods//H?user=asd";
-    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
-    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
-    String result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals("procedure." + accId + ".InvalidApp.ProcName", result);
-
-    flowPath = "///v2///apps/Invali_-123//procedures/Hel123@!@!//methods/Asdad?das////";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), flowPath);
-    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals("procedure." + accId + ".Invali_-123.Hel123@!@!", result);
-
-    flowPath = "v2/apps/InvalidApp/procedures/ProName/methods/getCustomer";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
-    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals("procedure." + accId + ".InvalidApp.ProName", result);
-
-    flowPath = "v2/apps/InvalidApp/procedures/ProName/methods////";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
-    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
-
-    flowPath = "v2/apps/InvalidApp/procedures/ProName/methods////";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), flowPath);
-    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
-    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
-  }
-
 
   @Test
   public void testServicePath() throws Exception {
-    // Service Path "/v2/apps/{app-id}/services/{service-id}/methods/<user-defined-method-path>"
-    // Discoverable Service Name -> "service.%s.%s.%s", accountId, appId, serviceId
-    String accId = "developer";
-
-    String servicePath = "/v2/apps//PurchaseHistory///services/CatalogLookup///methods//ping/1";
-    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), servicePath);
+    // The following two should resort to resort to APP_FABRIC_HTTP, because there is no actual method being called.
+    String servicePath = "v3/namespaces/default/apps/AppName/services/CatalogLookup//methods////";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), servicePath);
     httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
     String result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
-    Assert.assertEquals("service." + accId + ".PurchaseHistory.CatalogLookup", result);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
 
-    servicePath = "///v2///apps/PurchaseHistory-123//services/weird!service@@NAme///methods/echo/someParam";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), servicePath);
-    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
-    Assert.assertEquals("service." + accId + ".PurchaseHistory-123.weird!service@@NAme", result);
-
-    servicePath = "v2/apps/SomeApp_Name/services/CatalogLookup/methods/getHistory/itemID";
+    servicePath = "v3/namespaces/some/apps/otherAppName/services/CatalogLookup//methods////";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), servicePath);
     httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
-    Assert.assertEquals("service." + accId + ".SomeApp_Name.CatalogLookup", result);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
 
-    // The following two should resort to resort to APP_FABRIC_HTTP, because there is no actual method being called.
-    // (Similar to how procedures methods are routed).
-    servicePath = "v2/apps/AppName/services/CatalogLookup//methods////";
+    // v3 servicePaths
+    servicePath = "/v3/namespaces/testnamespace/apps//PurchaseHistory///services/CatalogLookup///methods//ping/1";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), servicePath);
+    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
+    Assert.assertEquals("service.testnamespace.PurchaseHistory.CatalogLookup", result);
+
+    servicePath = "///v3/namespaces/testnamespace//apps/PurchaseHistory-123//services/weird!service@@NAme///methods/" +
+      "echo/someParam";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), servicePath);
+    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
+    Assert.assertEquals("service.testnamespace.PurchaseHistory-123.weird!service@@NAme", result);
+
+    servicePath = "v3/namespaces/testnamespace/apps/SomeApp_Name/services/CatalogLookup/methods/getHistory/itemID";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), servicePath);
+    httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
+    Assert.assertEquals("service.testnamespace.SomeApp_Name.CatalogLookup", result);
+
+    servicePath = "v3/namespaces/testnamespace/apps/AppName/services/CatalogLookup//methods////";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), servicePath);
     httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
 
-    servicePath = "v2/apps/otherAppName/services/CatalogLookup//methods////";
+    servicePath = "v3/namespaces/testnamespace/apps/AppName/services/CatalogLookup////methods////";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), servicePath);
     httpRequest.setHeader(Constants.Gateway.API_KEY, API_KEY);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, servicePath, httpRequest);
@@ -179,60 +189,65 @@ public class RouterPathTest {
   @Test
   public void testStreamPath() throws Exception {
     //Following URIs might not give actual results but we want to test resilience of Router Path Lookup
-    String flowPath = "/v2/streams";
-    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
-    String result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
+    String streamPath = "/v3/namespaces/default/streams";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), streamPath);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, streamPath, httpRequest);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
 
-    flowPath = "///v2/streams///";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), flowPath);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
+    streamPath = "///v3/namespaces/default/streams///";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), streamPath);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, streamPath, httpRequest);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
 
-    flowPath = "v2///streams///";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), flowPath);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
+    streamPath = "v3/namespaces/default///streams///";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), streamPath);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, streamPath, httpRequest);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
 
-    flowPath = "//v2///streams/HelloStream//flows///";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
+    streamPath = "//v3/namespaces/default///streams/HelloStream//programs///";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), streamPath);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, streamPath, httpRequest);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
 
-    flowPath = "//v2///streams/HelloStream//flows///";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), flowPath);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
+    streamPath = "//v3/namespaces/default///streams/HelloStream//programs///";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), streamPath);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, streamPath, httpRequest);
     Assert.assertEquals(Constants.Service.STREAMS, result);
 
-    flowPath = "//v2///streams/HelloStream//flows///";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), flowPath);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
+    streamPath = "//v3/namespaces/default///streams/HelloStream//programs///";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), streamPath);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, streamPath, httpRequest);
     Assert.assertEquals(Constants.Service.STREAMS, result);
 
-    flowPath = "v2//streams//flows///";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), flowPath);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
+    streamPath = "v3/namespaces/default//streams//flows///";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), streamPath);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, streamPath, httpRequest);
     Assert.assertEquals(Constants.Service.STREAMS, result);
 
-    flowPath = "v2//streams/InvalidStreamName/flows/";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
+    streamPath = "v3/namespaces/default//streams/InvalidStreamName/programs/";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), streamPath);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, streamPath, httpRequest);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
 
-    flowPath = "v2//streams/InvalidStreamName/flows/";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), flowPath);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
+    streamPath = "v3/namespaces/default//streams/InvalidStreamName/programs";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), streamPath);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, streamPath, httpRequest);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
+
+    streamPath = "v3/namespaces/default//streams/InvalidStreamName/programs/";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), streamPath);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, streamPath, httpRequest);
     Assert.assertEquals(Constants.Service.STREAMS, result);
 
-    flowPath = "v2//streams/InvalidStreamName/info/";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
+    streamPath = "v3/namespaces/default//streams/InvalidStreamName/info/";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), streamPath);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, streamPath, httpRequest);
     Assert.assertEquals(Constants.Service.STREAMS, result);
   }
 
   @Test
   public void testRouterFlowPathLookUp() throws Exception {
-    String flowPath = "/v2//apps/ResponseCodeAnalytics/flows/LogAnalyticsFlow/status";
+    String flowPath = "/v3/namespaces/default//apps/ResponseCodeAnalytics/flows/LogAnalyticsFlow/status";
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
     String result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
@@ -240,34 +255,42 @@ public class RouterPathTest {
 
   @Test
   public void testRouterWorkFlowPathLookUp() throws Exception {
-    String procPath = "/v2/apps///PurchaseHistory///workflows/PurchaseHistoryWorkflow/status";
-    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), procPath);
-    String result = pathLookup.getRoutingService(FALLBACKSERVICE, procPath, httpRequest);
-    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP,  result);
-  }
-
-  @Test
-  public void testRouterProcedurePathLookUp() throws Exception {
-    String procPath = "/v2//apps/ResponseCodeAnalytics/procedures/StatusCodeProcedure/status";
-    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), procPath);
-    String result = pathLookup.getRoutingService(FALLBACKSERVICE, procPath, httpRequest);
+    String path = "/v3/namespaces/default/apps///PurchaseHistory///workflows/PurchaseHistoryWorkflow/status";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP,  result);
   }
 
   @Test
   public void testRouterDeployPathLookUp() throws Exception {
-    String procPath = "/v2//apps/";
-    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), procPath);
-    String result = pathLookup.getRoutingService(FALLBACKSERVICE, procPath, httpRequest);
+    String path = "/v3/namespaces/default//apps/";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), path);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP,  result);
   }
 
   @Test
   public void testRouterFlowletInstancesLookUp() throws Exception {
-    String procPath = "/v2//apps/WordCount/flows/WordCountFlow/flowlets/StreamSource/instances";
-    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), procPath);
-    String result = pathLookup.getRoutingService(FALLBACKSERVICE, procPath, httpRequest);
+    String path = "/v3/namespaces/default//apps/WordCount/flows/WordCountFlow/flowlets/StreamSource/instances";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), path);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP,  result);
+  }
+
+  @Test
+  public void testRouterExplorePathLookUp() throws Exception {
+    String explorePath = "/v3/namespaces/default//data///explore//datasets////mydataset//enable";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), explorePath);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, explorePath, httpRequest);
+    Assert.assertEquals(Constants.Service.EXPLORE_HTTP_USER_SERVICE, result);
+  }
+
+  @Test
+  public void testRouterExploreStatusPathLookUp() throws Exception {
+    String explorePath = "/v3/explore/status";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), explorePath);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, explorePath, httpRequest);
+    Assert.assertEquals(Constants.Service.EXPLORE_HTTP_USER_SERVICE, result);
   }
 
   @Test
@@ -275,15 +298,30 @@ public class RouterPathTest {
     //Calls to webapp service with appName in the first split of URI will be routed to webappService
     //But if it has v2 then use the regular router lookup logic to find the appropriate service
     final String webAppService = "webapp$HOST";
-    String procPath = "/sentiApp/abcd/efgh///";
-    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), procPath);
-    String result = pathLookup.getRoutingService(webAppService, procPath, httpRequest);
+    String path = "/sentiApp/abcd/efgh///";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    String result = pathLookup.getRoutingService(webAppService, path, httpRequest);
     Assert.assertEquals(webAppService, result);
 
-    procPath = "/v2//metrics///";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), procPath);
-    result = pathLookup.getRoutingService(webAppService, procPath, httpRequest);
+    path = "/v3//metrics///";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    result = pathLookup.getRoutingService(webAppService, path, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
   }
 
+  @Test
+  public void testRouterV3PathLookup() {
+    final String namespacePath = "/v3////namespace/////";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), namespacePath);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, namespacePath, httpRequest);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
+  }
+
+  @Test
+  public void testRouterFeedsLookup() {
+    final String namespacePath = "/v3//feeds/test";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), namespacePath);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, namespacePath, httpRequest);
+    Assert.assertEquals(null, result);
+  }
 }

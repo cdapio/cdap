@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package net.fake.test.app;
 
-import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
@@ -29,14 +28,13 @@ import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureRequest;
-import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.workflow.Workflow;
+import co.cask.cdap.api.service.BasicService;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -46,9 +44,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
- * BundleJarApp contains a procedure that uses a third party library.
+ * BundleJarApp contains a service that uses a third party library.
  */
 public class BundleJarApp extends AbstractApplication {
   private static final Logger LOG = LoggerFactory.getLogger(BundleJarApp.class);
@@ -63,9 +64,9 @@ public class BundleJarApp extends AbstractApplication {
     createDataset("simpleInputDataset", KeyValueTable.class);
     createDataset("simpleOutputDataset", KeyValueTable.class);
     addFlow(new SimpleFlow());
-    addProcedure(new SimpleGetOutput());
-    addProcedure(new SimpleGetInput());
-    addProcedure(new PrintProcedure());
+    addService(new BasicService("SimpleGetOutput", new SimpleGetOutput()));
+    addService(new BasicService("SimpleGetInput", new SimpleGetInput()));
+    addService(new BasicService("PrintService", new PrintHandler()));
     addMapReduce(new SimpleMapReduce());
   }
 
@@ -84,14 +85,14 @@ public class BundleJarApp extends AbstractApplication {
   /**
    * Contains a method that can be run to check if expected classes are loaded.
    */
-  public static class PrintProcedure extends AbstractProcedure {
-    private static final Logger LOG = LoggerFactory.getLogger(PrintProcedure.class);
+  public static class PrintHandler extends AbstractHttpServiceHandler {
+    private static final Logger LOG = LoggerFactory.getLogger(PrintHandler.class);
 
-    @Handle("load")
-    public void load(ProcedureRequest request, ProcedureResponder responder)
+    @GET
+    @Path("load/{class}")
+    public void load(HttpServiceRequest request, HttpServiceResponder responder,
+                     @PathParam("class") String className)
       throws IOException, InterruptedException {
-
-      String className = request.getArgument("class");
 
       responder.sendJson(
         ImmutableMap.builder()
@@ -114,19 +115,20 @@ public class BundleJarApp extends AbstractApplication {
   /**
    * Queries simpleOutputDataset.
    */
-  public static class SimpleGetOutput extends AbstractProcedure {
+  public static class SimpleGetOutput extends AbstractHttpServiceHandler {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleGetOutput.class);
 
     @UseDataSet("simpleOutputDataset")
     private KeyValueTable output;
 
-    @Handle("get")
-    public void get(ProcedureRequest request, ProcedureResponder responder)
+    @GET
+    @Path("get/{key}")
+    public void get(HttpServiceRequest request, HttpServiceResponder responder,
+                    @PathParam("key") String key)
       throws IOException, InterruptedException {
 
       LOG.info("Hello " + loadTestClasses());
 
-      String key = request.getArgument("key");
       String value = Bytes.toString(output.read(Bytes.toBytes(key)));
       if (value == null) {
         value = "null";
@@ -139,19 +141,20 @@ public class BundleJarApp extends AbstractApplication {
   /**
    * Queries simpleInputDataset.
    */
-  public static class SimpleGetInput extends AbstractProcedure {
+  public static class SimpleGetInput extends AbstractHttpServiceHandler {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleGetInput.class);
 
     @UseDataSet("simpleInputDataset")
     private KeyValueTable input;
 
-    @Handle("get")
-    public void get(ProcedureRequest request, ProcedureResponder responder)
+    @GET
+    @Path("get/{key}")
+    public void get(HttpServiceRequest request, HttpServiceResponder responder,
+                    @PathParam("key") String key)
       throws IOException, InterruptedException {
 
       LOG.info("Hello " + loadTestClasses());
 
-      String key = request.getArgument("key");
       String value = Bytes.toString(input.read(Bytes.toBytes(key)));
       if (value == null) {
         value = "null";
@@ -170,18 +173,10 @@ public class BundleJarApp extends AbstractApplication {
     @UseDataSet("simpleInputDataset")
     private KeyValueTable input;
 
-    public SimpleMapReduce() {
-
-    }
-
     @Override
-    public MapReduceSpecification configure() {
-      return MapReduceSpecification.Builder.with()
-        .setName("SimpleMapReduce")
-        .setDescription("Description")
-        .useInputDataSet("simpleInputDataset")
-        .useOutputDataSet("simpleOutputDataset")
-        .build();
+    public void configure() {
+      setInputDataset("simpleInputDataset");
+      setOutputDataset("simpleOutputDataset");
     }
 
     /**
@@ -196,9 +191,6 @@ public class BundleJarApp extends AbstractApplication {
       Job job = context.getHadoopJob();
       context.setInput("simpleInputDataset", input.getSplits());
       job.setMapperClass(SimpleMapper.class);
-      job.setMapOutputKeyClass(BytesWritable.class);
-      job.setMapOutputValueClass(BytesWritable.class);
-
       job.setReducerClass(SimpleReducer.class);
     }
 
@@ -253,16 +245,14 @@ public class BundleJarApp extends AbstractApplication {
   /**
    * Runs a workflow action that calls loadTestClasses().
    */
-  public static class SimpleWorkflow implements Workflow {
+  public static class SimpleWorkflow extends AbstractWorkflow {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleWorkflow.class);
 
     @Override
-    public WorkflowSpecification configure() {
-      return WorkflowSpecification.Builder.with()
-        .setName("SimpleWorkflow")
-        .setDescription("Description")
-        .onlyWith(new SimpleWorkflowAction())
-        .build();
+    public void configure() {
+        setName("SimpleWorkflow");
+        setDescription("Description");
+        addAction(new SimpleWorkflowAction());
     }
 
     private class SimpleWorkflowAction extends co.cask.cdap.api.workflow.AbstractWorkflowAction {
@@ -306,7 +296,7 @@ public class BundleJarApp extends AbstractApplication {
       @ProcessInput
       public void process(StreamEvent event) {
         LOG.info("Hello " + loadTestClasses());
-        String body = new String(event.getBody().array());
+        String body = Bytes.toString(event.getBody());
         String key = body.split(":")[0];
         String value = body.split(":")[1];
         input.write(key, value + loadTestClasses());

@@ -16,6 +16,7 @@
 package co.cask.cdap.examples.purchase;
 
 import co.cask.cdap.api.annotation.ProcessInput;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
@@ -31,7 +32,7 @@ public class PurchaseStreamReader extends AbstractFlowlet {
 
   @ProcessInput
   public void process(StreamEvent event) {
-    String body = new String(event.getBody().array());
+    String body = Bytes.toString(event.getBody());
     // <name> bought <n> <items> for $<price>
     String[] tokens =  body.split(" ");
     if (tokens.length != 6) {

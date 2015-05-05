@@ -29,7 +29,7 @@ import java.net.URI;
 public class ServePathGenerator {
   public static final String SRC_PATH = "/src/";
   public static final String DEFAULT_DIR_NAME = "default";
-  private static final String GATEWAY_PATH = Constants.Gateway.GATEWAY_VERSION.substring(1) + "/";
+  private static final String GATEWAY_PATH_V3 = Constants.Gateway.API_VERSION_3.substring(1) + "/";
 
   private static final String DEFAULT_PORT_STR = ":80";
 
@@ -97,9 +97,9 @@ public class ServePathGenerator {
     Iterable<String> pathParts = Splitter.on('/').limit(2).split(path);
     String servePath;
     if (Iterables.size(pathParts) > 1) {
-      String pathPart1 = Iterables.get(pathParts, 1);
-      if (pathPart1.startsWith(GATEWAY_PATH) || pathPart1.equals("status")) {
-        return constructPath(pathPart1, query);
+      String part1 = Iterables.get(pathParts, 1);
+      if (part1.startsWith(GATEWAY_PATH_V3) || part1.equals("status")) {
+        return constructPath(part1, query);
       }
 
       servePath = String.format("%s/%s/%s%s%s", baseDir, hostHeader,
@@ -117,7 +117,7 @@ public class ServePathGenerator {
     }
 
     // Next try src/path
-    if (path.startsWith(GATEWAY_PATH) || path.equals("status")) {
+    if (path.startsWith(GATEWAY_PATH_V3) || path.equals("status")) {
       return constructPath(path, query);
     }
 

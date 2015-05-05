@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2014-2015 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 # the License.
 #
 
+
 # We need a larger PermSize for SparkProgramRunner to call SparkSubmit
 if [ -d /opt/cdap ]; then
  CDAP_HOME=/opt/cdap; export CDAP_HOME
@@ -28,7 +29,7 @@ fi
 CDAP_OPTS="-XX:+UseConcMarkSweepGC -Djava.security.krb5.realm= -Djava.security.krb5.kdc= -Djava.awt.headless=true"
 
 # Specifies Web App Path
-WEB_APP_PATH=${WEB_APP_PATH:-"web-app/local/server/main.js"}
+UI_PATH=${UI_PATH:-"ui/server.js"}
 
 APP_NAME="cask-cdap"
 APP_BASE_NAME=`basename "$0"`
@@ -70,7 +71,6 @@ done
 SAVED="`pwd`"
 cd "`dirname \"$PRG\"`/.." >&-
 APP_HOME="`pwd -P`"
-NUX_FILE="$APP_HOME/.nux_dashboard"
 
 CLASSPATH=$APP_HOME/lib/*:$APP_HOME/conf/
 
@@ -97,7 +97,7 @@ location of your Java installation."
 fi
 
 # java version check
-JAVA_VERSION=`java -version 2>&1 | grep "java version" | awk '{print $3}' | awk -F '.' '{print $2}'`
+JAVA_VERSION=`$JAVACMD -version 2>&1 | grep "java version" | awk '{print $3}' | awk -F '.' '{print $2}'`
 if [ $JAVA_VERSION -ne 6 ] && [ $JAVA_VERSION -ne 7 ]; then
   die "ERROR: Java version not supported
 Please install Java 6 or 7 - other versions of Java are not yet supported."
@@ -152,31 +152,9 @@ check_before_start() {
       exit 0
     fi
   else
-    nodejs_pid=`ps | grep web-app/ | grep -v grep | awk ' { print $1 } '`
+    nodejs_pid=`ps | grep ui/ | grep -v grep | awk ' { print $1 } '`
     if [[ "x{nodejs_pid}" != "x" ]]; then
       kill -9 $nodejs_pid 2>/dev/null >/dev/null
-    fi
-  fi
-}
-
-# checks for any updates of standalone
-check_for_updates() {
-  # check if connected to internet
-  l=`ping -c 3 $VERSION_HOST 2>/dev/null | grep "64 bytes" | wc -l`
-  if [ $l -eq 3 ]
-  then
-    new=`curl 'http://s3.amazonaws.com/cdap-docs/VERSION' 2>/dev/null`
-    if [[ "x${new}" != "x" ]]; then
-     current=`cat ${APP_HOME}/VERSION`
-     compare_versions $new $current
-     case $? in
-       0);;
-       1) echo ""
-          echo "UPDATE: There is a newer version of the CDAP SDK available."
-          echo "        Download it from http://cask.co/downloads"
-          echo "";;
-       2);;
-     esac
     fi
   fi
 }
@@ -229,29 +207,6 @@ rotate_log () {
     fi
 }
 
-#Delete the nux file to reenable nux flow
-reenable_nux () {
- rm -f $NUX_FILE
-}
-# Checks if this is first time user is using the Standalone CDAP
-nux_enabled() {
- if [ -f $NUX_FILE ];
- then
-  return 1;
- else
-  return 0;
- fi
-}
-
-nux() {
-  version=`cat ${APP_HOME}/VERSION`
-  # Deploy apps
-  curl -sL -o /dev/null -H "X-Archive-Name: LogAnalytics.jar" --data-binary "@$APP_HOME/examples/ResponseCodeAnalytics/target/ResponseCodeAnalytics-${version}.jar" -X POST http://127.0.0.1:10000/v2/apps
-  # Start flow and procedure
-  curl -sL -o /dev/null -X POST http://127.0.0.1:10000/v2/apps/ResponseCodeAnalytics/flows/LogAnalyticsFlow/start
-  curl -sL -o /dev/null -X POST http://127.0.0.1:10000/v2/apps/ResponseCodeAnalytics/procedures/StatusCodeProcedure/start
-}
-
 start() {
     debug=$1; shift
     port=$1; shift
@@ -262,12 +217,14 @@ start() {
     rotate_log $APP_HOME/logs/cdap.log
     rotate_log $APP_HOME/logs/cdap-debug.log
 
-    nohup nice -1 "$JAVACMD" "${JVM_OPTS[@]}" -classpath "$CLASSPATH" co.cask.cdap.StandaloneMain \
-        --web-app-path ${WEB_APP_PATH} \
-        >> $APP_HOME/logs/cdap.log 2>&1 < /dev/null &
+    if test -e /proc/1/cgroup && grep docker /proc/1/cgroup 2>&1 >/dev/null; then
+        ROUTER_OPTS="-Drouter.address=`hostname -i`"
+    fi
+
+    nohup nice -1 "$JAVACMD" "${JVM_OPTS[@]}" ${ROUTER_OPTS} -classpath "$CLASSPATH" co.cask.cdap.StandaloneMain >> \
+        $APP_HOME/logs/cdap.log 2>&1 < /dev/null &
     echo $! > $pid
 
-    check_for_updates
     echo -n "Starting Standalone CDAP ..."
 
     background_process=$!
@@ -293,16 +250,6 @@ start() {
     if ! kill -s 0 $background_process 2>/dev/null >/dev/null; then
       echo "Failed to start, please check logs for more information."
     fi
-
-    # Disabling NUX
-    # TODO: Enable NUX with new example, see CDAP-22
-    #nux_enabled
-
-    #NUX_ENABLED=$?
-    #if [ "x$NUX_ENABLED" == "x0" ]; then
-    #  nux
-    #  exit 0;
-    #fi
 }
 
 stop() {
@@ -354,18 +301,13 @@ case "$1" in
   start|restart)
     command=$1; shift
     debug=false
-    nux=false
     while [ $# -gt 0 ]
     do
       case "$1" in
         --enable-debug) shift; debug=true; port=$1; shift;;
-        --enable-nux) shift; nux=true;;
         *) shift; break;;
       esac
     done
-    if $nux; then
-      reenable_nux
-    fi
     if $debug ; then
       shopt -s extglob
       if [ -z "$port" ]; then
@@ -388,16 +330,16 @@ case "$1" in
     $1
   ;;
 
+  update)
+    check_for_updates
+  ;;
+  
   *)
     echo "Usage: $0 {start|stop|restart|status}"
     echo "Additional options with start, restart:"
-    echo "--enable-nux  to reenable new user experience flow"
     echo "--enable-debug [ <port> ] to connect to a debug port for Standalone CDAP (default port is 5005)"
     exit 1
   ;;
 
-
 esac
 exit $?
-
-VERSION_HOST="205.186.175.189"

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,14 +15,18 @@
  */
 package co.cask.cdap.data2.transaction.queue.hbase;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.transaction.queue.AbstractQueueProducer;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.QueueMetrics;
 import co.cask.tephra.Transaction;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -30,18 +34,36 @@ import org.apache.hadoop.hbase.client.Put;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 /**
- *
+ * A {@link co.cask.cdap.data2.queue.QueueProducer} that uses HBase as the storage for queue entries and consumers
+ * states.
  */
-public final class HBaseQueueProducer extends AbstractQueueProducer implements Closeable {
+public class HBaseQueueProducer extends AbstractQueueProducer implements Closeable {
 
+  private final HBaseQueueStrategy queueStrategy;
+  private final List<ConsumerGroupConfig> consumerGroupConfigs;
   private final byte[] queueRowPrefix;
   private final HTable hTable;
   private final List<byte[]> rollbackKeys;
 
-  public HBaseQueueProducer(HTable hTable, QueueName queueName, QueueMetrics queueMetrics) {
+  public HBaseQueueProducer(HTable hTable, QueueName queueName,
+                            QueueMetrics queueMetrics, HBaseQueueStrategy queueStrategy,
+                            Iterable<? extends ConsumerGroupConfig> consumerGroupConfigs) {
     super(queueMetrics, queueName);
+    this.queueStrategy = queueStrategy;
+    // Make sure only one config per consumer group
+    this.consumerGroupConfigs = ImmutableList.copyOf(
+      Iterables.filter(consumerGroupConfigs, new Predicate<ConsumerGroupConfig>() {
+        private final Set<Long> seenGroups = Sets.newHashSet();
+          @Override
+          public boolean apply(ConsumerGroupConfig config) {
+            return seenGroups.add(config.getGroupId());
+          }
+        }
+      )
+    );
     this.queueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);
     this.rollbackKeys = Lists.newArrayList();
     this.hTable = hTable;
@@ -62,30 +84,29 @@ public final class HBaseQueueProducer extends AbstractQueueProducer implements C
    * Persist queue entries into HBase.
    */
   protected int persist(Iterable<QueueEntry> entries, Transaction transaction) throws IOException {
-    long writePointer = transaction.getWritePointer();
-    byte[] rowKeyPrefix = Bytes.add(queueRowPrefix, Bytes.toBytes(writePointer));
     int count = 0;
     List<Put> puts = Lists.newArrayList();
     int bytes = 0;
 
+    List<byte[]> rowKeys = Lists.newArrayList();
+    long writePointer = transaction.getWritePointer();
     for (QueueEntry entry : entries) {
-      // Row key = queue_name + writePointer + counter
-      byte[] rowKey = Bytes.add(rowKeyPrefix, Bytes.toBytes(count++));
-      rowKey = HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR.getDistributedKey(rowKey);
+      rowKeys.clear();
+      queueStrategy.getRowKeys(consumerGroupConfigs, entry, queueRowPrefix, writePointer, count, rowKeys);
+      rollbackKeys.addAll(rowKeys);
 
-      rollbackKeys.add(rowKey);
-      // No need to write ts=writePointer, as the row key already contains the writePointer
-      Put put = new Put(rowKey);
-      put.add(QueueEntryRow.COLUMN_FAMILY,
-              QueueEntryRow.DATA_COLUMN,
-              entry.getData());
-      put.add(QueueEntryRow.COLUMN_FAMILY,
-              QueueEntryRow.META_COLUMN,
-              QueueEntry.serializeHashKeys(entry.getHashKeys()));
+      byte[] metaData = QueueEntry.serializeHashKeys(entry.getHashKeys());
+      for (byte[] rowKey : rowKeys) {
+        // No need to write ts=writePointer, as the row key already contains the writePointer
+        Put put = new Put(rowKey);
+        put.add(QueueEntryRow.COLUMN_FAMILY, QueueEntryRow.DATA_COLUMN, entry.getData());
+        put.add(QueueEntryRow.COLUMN_FAMILY, QueueEntryRow.META_COLUMN, metaData);
 
-      puts.add(put);
+        puts.add(put);
 
-      bytes += entry.getData().length;
+        bytes += entry.getData().length;
+      }
+      count++;
     }
     hTable.put(puts);
     hTable.flushCommits();

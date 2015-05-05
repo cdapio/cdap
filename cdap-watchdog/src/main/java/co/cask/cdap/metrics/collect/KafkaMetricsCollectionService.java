@@ -15,12 +15,11 @@
  */
 package co.cask.cdap.metrics.collect;
 
+import co.cask.cdap.api.metrics.MetricValues;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.BinaryEncoder;
 import co.cask.cdap.common.io.Encoder;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.internal.io.DatumWriter;
-import co.cask.cdap.metrics.MetricsConstants;
-import co.cask.cdap.metrics.transport.MetricsRecord;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -31,21 +30,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 
 /**
- * A {@link AggregatedMetricsCollectionService} that publish {@link MetricsRecord} to kafka. The partition
- * is determined by the metric context.
+ * A {@link AggregatedMetricsCollectionService} that publish {@link co.cask.cdap.api.metrics.MetricValues} to kafka.
+ * The partition is determined by the metric context.
  */
 @Singleton
-public final class KafkaMetricsCollectionService extends AggregatedMetricsCollectionService {
+public class KafkaMetricsCollectionService extends AggregatedMetricsCollectionService {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaMetricsCollectionService.class);
 
   private final KafkaClient kafkaClient;
   private final String topicPrefix;
   private final KafkaPublisher.Ack ack;
-  private final DatumWriter<MetricsRecord> recordWriter;
+  private final DatumWriter<MetricValues> recordWriter;
   private final ByteArrayOutputStream encoderOutputStream;
   private final Encoder encoder;
 
@@ -53,13 +53,13 @@ public final class KafkaMetricsCollectionService extends AggregatedMetricsCollec
 
   @Inject
   public KafkaMetricsCollectionService(KafkaClient kafkaClient,
-                                       @Named(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX) String topicPrefix,
-                                       DatumWriter<MetricsRecord> recordWriter) {
+                                       @Named(Constants.Metrics.KAFKA_TOPIC_PREFIX) String topicPrefix,
+                                       DatumWriter<MetricValues> recordWriter) {
     this(kafkaClient, topicPrefix, KafkaPublisher.Ack.FIRE_AND_FORGET, recordWriter);
   }
 
   public KafkaMetricsCollectionService(KafkaClient kafkaClient, String topicPrefix,
-                                       KafkaPublisher.Ack ack, DatumWriter<MetricsRecord> recordWriter) {
+                                       KafkaPublisher.Ack ack, DatumWriter<MetricValues> recordWriter) {
     this.kafkaClient = kafkaClient;
     this.topicPrefix = topicPrefix;
     this.ack = ack;
@@ -76,7 +76,7 @@ public final class KafkaMetricsCollectionService extends AggregatedMetricsCollec
   }
 
   @Override
-  protected void publish(MetricsScope scope, Iterator<MetricsRecord> metrics) throws Exception {
+  protected void publish(Iterator<MetricValues> metrics) throws Exception {
     KafkaPublisher publisher = getPublisher();
     if (publisher == null) {
       LOG.warn("Unable to get kafka publisher, will not be able to publish metrics.");
@@ -84,16 +84,26 @@ public final class KafkaMetricsCollectionService extends AggregatedMetricsCollec
     }
     encoderOutputStream.reset();
 
-    KafkaPublisher.Preparer preparer = publisher.prepare(topicPrefix + "." + scope.name().toLowerCase());
+    KafkaPublisher.Preparer preparer = publisher.prepare(topicPrefix);
     while (metrics.hasNext()) {
       // Encode each MetricRecord into bytes and make it an individual kafka message in a message set.
-      MetricsRecord record = metrics.next();
-      recordWriter.encode(record, encoder);
-      preparer.add(ByteBuffer.wrap(encoderOutputStream.toByteArray()), record.getContext());
-      encoderOutputStream.reset();
+      MetricValues value = metrics.next();
+      publishMetric(preparer, value);
     }
 
     preparer.send();
+  }
+
+  private void publishMetric(KafkaPublisher.Preparer preparer, MetricValues value) throws IOException {
+    recordWriter.encode(value, encoder);
+    // partitioning by the context
+    preparer.add(ByteBuffer.wrap(encoderOutputStream.toByteArray()), getPartitionKey(value));
+    encoderOutputStream.reset();
+  }
+
+  private Integer getPartitionKey(MetricValues value) {
+    // TODO: incredibly non-efficient: it is performed for each metrics data point,
+    return value.getTags().hashCode();
   }
 
   private KafkaPublisher getPublisher() {

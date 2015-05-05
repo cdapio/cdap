@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,18 +28,19 @@ import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionFailureException;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.util.Iterator;
 import java.util.List;
 
 /**
  * A Mock {@link StreamFileWriterFactory} that actually doesn't write to file, but to in memory queue instead.
  */
-final class InMemoryStreamFileWriterFactory implements StreamFileWriterFactory {
+public final class InMemoryStreamFileWriterFactory implements StreamFileWriterFactory {
 
   private static final StreamEventCodec STREAM_EVENT_CODEC = new StreamEventCodec();
 
@@ -53,8 +54,14 @@ final class InMemoryStreamFileWriterFactory implements StreamFileWriterFactory {
   }
 
   @Override
+  public String getFileNamePrefix() {
+    // There is no file being created
+    return "";
+  }
+
+  @Override
   public FileWriter<StreamEvent> create(StreamConfig config, int generation) throws IOException {
-    final QueueProducer producer = queueClientFactory.createProducer(QueueName.fromStream(config.getName()));
+    final QueueProducer producer = queueClientFactory.createProducer(QueueName.fromStream(config.getStreamId()));
     final List<TransactionAware> txAwares = Lists.newArrayList();
     if (producer instanceof TransactionAware) {
       txAwares.add((TransactionAware) producer);
@@ -72,10 +79,13 @@ final class InMemoryStreamFileWriterFactory implements StreamFileWriterFactory {
       }
 
       @Override
+      public void appendAll(Iterator<? extends StreamEvent> events) throws IOException {
+        Iterators.addAll(this.events, events);
+      }
+
+      @Override
       public void close() throws IOException {
-        if (producer instanceof Closeable) {
-          ((Closeable) producer).close();
-        }
+        producer.close();
       }
 
       @Override

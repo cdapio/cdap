@@ -56,7 +56,7 @@ public final class DataSetOutputFormat<KEY, VALUE> extends OutputFormat<KEY, VAL
     BasicMapReduceContext mrContext = contextProvider.get();
     mrContext.getMetricsCollectionService().startAndWait();
     @SuppressWarnings("unchecked")
-    BatchWritable<KEY, VALUE> dataset = (BatchWritable<KEY, VALUE>) mrContext.getDataSet(getOutputDataSet(conf));
+    BatchWritable<KEY, VALUE> dataset = (BatchWritable<KEY, VALUE>) mrContext.getDataset(getOutputDataSet(conf));
 
     // the record writer now owns the context and will close it
     return new DataSetRecordWriter<KEY, VALUE>(dataset, mrContext);

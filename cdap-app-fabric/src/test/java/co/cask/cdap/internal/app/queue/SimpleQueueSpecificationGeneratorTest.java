@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.queue.QueueSpecification;
 import co.cask.cdap.app.queue.QueueSpecificationGenerator;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.Specifications;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
@@ -45,7 +46,7 @@ import java.util.Set;
  */
 public class SimpleQueueSpecificationGeneratorTest {
 
-  private static final Id.Account TEST_ACCOUNT_ID = DefaultId.ACCOUNT;
+  private static final String TEST_NAMESPACE_ID = DefaultId.NAMESPACE.getId();
 
   private static Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> table
     = HashBasedTable.create();
@@ -76,34 +77,44 @@ public class SimpleQueueSpecificationGeneratorTest {
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
     QueueSpecificationGenerator generator =
-      new SimpleQueueSpecificationGenerator(Id.Application.from(TEST_ACCOUNT_ID, newSpec.getName()));
+      new SimpleQueueSpecificationGenerator(Id.Application.from(TEST_NAMESPACE_ID, newSpec.getName()));
     table = generator.create(newSpec.getFlows().values().iterator().next());
 
     dumpConnectionQueue(table);
 
     // Stream X
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "X", "A"), "stream:///X"));
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "Y", "B"), "stream:///Y"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "X", "A"),
+                                    String.format("stream:///%s/X", TEST_NAMESPACE_ID)));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.STREAM, "Y", "B"),
+                                    String.format("stream:///%s/Y", TEST_NAMESPACE_ID)));
 
     // Node A
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "A", "E"), "queue:///ToyApp/ToyFlow/A/out1"));
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "A", "C"), "queue:///ToyApp/ToyFlow/A/queue"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "A", "E"),
+                                    String.format("queue:///%s/ToyApp/ToyFlow/A/out1", Constants.DEFAULT_NAMESPACE)));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "A", "C"),
+                                    String.format("queue:///%s/ToyApp/ToyFlow/A/queue", Constants.DEFAULT_NAMESPACE)));
 
     // Node B
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "B", "E"), "queue:///ToyApp/ToyFlow/B/queue"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "B", "E"),
+                                    String.format("queue:///%s/ToyApp/ToyFlow/B/queue", Constants.DEFAULT_NAMESPACE)));
 
     // Node C
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "C", "D"), "queue:///ToyApp/ToyFlow/C/c1"));
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "C", "F"), "queue:///ToyApp/ToyFlow/C/c2"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "C", "D"),
+                                    String.format("queue:///%s/ToyApp/ToyFlow/C/c1", Constants.DEFAULT_NAMESPACE)));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "C", "F"),
+                                    String.format("queue:///%s/ToyApp/ToyFlow/C/c2", Constants.DEFAULT_NAMESPACE)));
 
     // Node D
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "D", "G"), "queue:///ToyApp/ToyFlow/D/d1"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "D", "G"),
+                                    String.format("queue:///%s/ToyApp/ToyFlow/D/d1", Constants.DEFAULT_NAMESPACE)));
 
     // Node E
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "E", "G"), "queue:///ToyApp/ToyFlow/E/queue"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "E", "G"),
+                                    String.format("queue:///%s/ToyApp/ToyFlow/E/queue", Constants.DEFAULT_NAMESPACE)));
 
     // Node F
-    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "F", "G"), "queue:///ToyApp/ToyFlow/F/f1"));
+    Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "F", "G"),
+                                    String.format("queue:///%s/ToyApp/ToyFlow/F/f1", Constants.DEFAULT_NAMESPACE)));
   }
 
   @Test
@@ -113,14 +124,16 @@ public class SimpleQueueSpecificationGeneratorTest {
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
     QueueSpecificationGenerator generator =
-      new SimpleQueueSpecificationGenerator(Id.Application.from(TEST_ACCOUNT_ID, newSpec.getName()));
+      new SimpleQueueSpecificationGenerator(Id.Application.from(TEST_NAMESPACE_ID, newSpec.getName()));
     table = generator.create(newSpec.getFlows().values().iterator().next());
 
     Assert.assertEquals(get(FlowletConnection.Type.STREAM, "text", "StreamSource")
-                          .iterator().next().getQueueName().toString(), "stream:///text");
+                          .iterator().next().getQueueName().toString(),
+                        String.format("stream:///%s/text", TEST_NAMESPACE_ID));
     Assert.assertEquals(get(FlowletConnection.Type.FLOWLET, "StreamSource", "Tokenizer")
                         .iterator().next().getQueueName().toString(),
-                        "queue:///WordCountApp/WordCountFlow/StreamSource/queue");
+                        String.format("queue:///%s/WordCountApp/WordCountFlow/StreamSource/queue",
+                                      Constants.DEFAULT_NAMESPACE));
     Assert.assertEquals(1, get(FlowletConnection.Type.FLOWLET, "Tokenizer", "CountByField").size());
   }
 

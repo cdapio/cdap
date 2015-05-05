@@ -35,6 +35,11 @@ public final class DatasetProperties {
   public static final DatasetProperties EMPTY =
     new DatasetProperties(Collections.<String, String>emptyMap());
 
+  /**
+   * Schema property. Not all datasets support schema.
+   */
+  public static final String SCHEMA = "schema";
+
   private final Map<String, String> properties;
 
   private DatasetProperties(Map<String, String> properties) {
@@ -60,12 +65,12 @@ public final class DatasetProperties {
   }
 
   /**
-   * A Builder to construct DatasetSpecification instances.
+   * A Builder to construct DatasetProperties instances.
    */
-  public static final class Builder {
+  public static class Builder {
     private Map<String, String> properties = Maps.newHashMap();
 
-    private Builder() {
+    protected Builder() {
     }
 
     /**
@@ -101,9 +106,8 @@ public final class DatasetProperties {
     }
 
     /**
-     * Create a DataSetSpecification from this builder, using the private DataSetSpecification
+     * Create a DatasetProperties from this builder, using the private DatasetProperties
      * constructor.
-     * @return a complete DataSetSpecification
      */
     public DatasetProperties build() {
       return new DatasetProperties(this.properties);

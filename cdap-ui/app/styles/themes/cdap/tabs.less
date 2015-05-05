@@ -1,0 +1,46 @@
+@import "../../variables.less";
+@import "../../../../bower_components/bootstrap/less/mixins.less";
+
+body.theme-cdap {
+  main {
+    .slanted-tabs.nav-tabs, my-tabs .nav-tabs {
+      > li {
+        min-width: 80px;
+        > a {
+          color: @cdap-gray;
+          font-weight: 500;
+          font-size: 14px;
+          &:hover {
+            background-color: transparent;
+            border: 1px solid transparent;
+            color: @cdap-orange;
+          }
+        }
+        &.active > a {
+          border-right: 0;
+          cursor: pointer;
+          &:hover {
+            background-color: #ebecf1;
+            border-right: 1px solid #d1d3da;
+            border-top: 1px solid #d1d3da;
+            border-left: 1px solid #d1d3da;
+            border-bottom: 1px solid transparent;
+            color: @cdap-orange;
+          }
+        }
+      }
+      > li.active::after {
+        content: '';
+        height: 100%;
+        width: 15%;
+        border-right: 1px solid #d1d3da;
+        border-top: 1px solid #d1d3da;
+        .skew(15deg, 0);
+        position: absolute;
+        top: 0;
+        right: -5px;
+        background-color: #ebecf1;
+      }
+    }
+  }
+}

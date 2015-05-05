@@ -1,0 +1,45 @@
+<div class="row">
+    <div class="col-xs-6">
+        <h2> Applications </h2>
+    </div>
+    <div class="col-xs-6 text-right" ng-if="apps.length > 0">
+    <!--     <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Previous</button>
+        <button type="button" class="btn btn-default" ng-model="button.active" bs-button>Next</button> -->
+        <my-file-select ng-controller="AdminNamespaceAppController" data-button-label="Add App" on-file-select="onFileSelected($files)"> </my-file-select>
+    </div>
+</div>
+
+<div ng-if="apps.length > 0">
+    <div class="table-responsive">
+        <table class="table table-curved" cask-sortable>
+            <thead>
+              <tr ng-class="{'sort-enabled': apps.length>0}">
+                <th data-predicate="name">Name</th>
+                <th data-predicate="version">Version</th>
+                <th data-predicate="type">Type</th>
+                <th data-predicate="description">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="app in apps | orderBy:sortable.predicate:sortable.reverse">
+                    <td>
+                        <strong class="icon-app"></strong>
+                        <a ui-sref="admin.namespace.detail.apps.metadata({appId: app.id})">
+                            <strong> {{ ::app.name }} </strong>
+                        </a>
+                    </td>
+                    <td>{{ ::app.version }}</td>
+                    <td>
+                        <span> {{ ::app.type }} </span>
+                    </td>
+                    <td>{{ ::app.description }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="well text-center" ng-if="apps.length === 0">
+    <p> You haven't deployed any apps. </p>
+    <my-file-select ng-controller="AdminNamespaceAppController" data-button-label="Add App" on-file-select="onFileSelected($files)"> </my-file-select>
+</div>

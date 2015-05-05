@@ -21,11 +21,9 @@ package co.cask.cdap.api.spark;
  */
 public interface Spark {
   /**
-   * Configures a {@link Spark} job by returning a {@link SparkSpecification}.
-   *
-   * @return An instance of {@link SparkSpecification}.
+   * Configures a {@link Spark} job using the given {@link SparkConfigurer}.
    */
-  SparkSpecification configure();
+  void configure(SparkConfigurer configurer);
 
   /**
    * Invoked before starting a Spark job.

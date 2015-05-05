@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,18 +15,35 @@
  */
 package co.cask.cdap.common.io;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.DistributedFileSystem;
+import org.apache.twill.filesystem.HDFSLocationFactory;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.Comparator;
+import java.util.Deque;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -35,6 +52,9 @@ import javax.annotation.Nullable;
 public final class Locations {
 
   private static final Logger LOG = LoggerFactory.getLogger(Locations.class);
+
+  // For converting local file into Location.
+  private static final LocalLocationFactory LOCAL_LOCATION_FACTORY = new LocalLocationFactory();
 
   public static final Comparator<Location> LOCATION_COMPARATOR = new Comparator<Location>() {
     @Override
@@ -54,7 +74,14 @@ public final class Locations {
     return new InputSupplier<SeekableInputStream>() {
       @Override
       public SeekableInputStream getInput() throws IOException {
-        return SeekableInputStream.create(fs.open(path));
+        FSDataInputStream input = fs.open(path);
+        try {
+          return new DFSSeekableInputStream(input, createDFSStreamSizeProvider(fs, path, input));
+        } catch (Throwable t) {
+          Closeables.closeQuietly(input);
+          Throwables.propagateIfInstanceOf(t, IOException.class);
+          throw new IOException(t);
+        }
       }
     };
   }
@@ -69,9 +96,105 @@ public final class Locations {
     return new InputSupplier<SeekableInputStream>() {
       @Override
       public SeekableInputStream getInput() throws IOException {
-        return SeekableInputStream.create(location.getInputStream());
+        InputStream input = location.getInputStream();
+        try {
+          if (input instanceof FileInputStream) {
+            return new FileSeekableInputStream((FileInputStream) input);
+          }
+          if (input instanceof FSDataInputStream) {
+            FSDataInputStream dataInput = (FSDataInputStream) input;
+            LocationFactory locationFactory = location.getLocationFactory();
+
+            // It should be HDFSLocationFactory
+            if (locationFactory instanceof HDFSLocationFactory) {
+              FileSystem fs = ((HDFSLocationFactory) locationFactory).getFileSystem();
+              return new DFSSeekableInputStream(dataInput,
+                                                createDFSStreamSizeProvider(fs, new Path(location.toURI()), dataInput));
+            } else {
+              // This shouldn't happen
+              return new DFSSeekableInputStream(dataInput, new StreamSizeProvider() {
+                @Override
+                public long size() throws IOException {
+                  // Assumption is if the FS is not a HDFS fs, the location length tells the stream size
+                  return location.length();
+                }
+              });
+            }
+          }
+
+          throw new IOException("Failed to create SeekableInputStream from location " + location.toURI());
+        } catch (Throwable t) {
+          Closeables.closeQuietly(input);
+          Throwables.propagateIfInstanceOf(t, IOException.class);
+          throw new IOException(t);
+        }
       }
     };
+  }
+
+  /**
+   * Do some processing on the locations contained in the {@code startLocation}, using the {@code processor}. If this
+   * location is a directory, all the locations contained in it will also be processed. If the {@code recursive} tag
+   * is set to true, those locations that are directories will also be processed recursively. If the
+   * {@code startLocation} is not a directory, this method will return the result of the processing of that location.
+   *
+   * @param startLocation location to start the processing from
+   * @param recursive {@code true} if this method should be called on the directory {@link Location}s found from
+   *                  {@code startLocation}. If the {@code startLocation} is a directory, all the locations under it
+   *                  will be processed, regardless of the value of {@code recursive}
+   * @param processor used to process locations. If the {@link Processor#process} method returns false on any
+   *                  {@link Location} object processed, this method will return the current result of the processor.
+   * @param <R> Type of the return value
+   * @throws IOException if the locations could not be read
+   */
+  public static <R> R processLocations(Location startLocation, boolean recursive,
+                                       Processor<LocationStatus, R> processor) throws IOException {
+    // Becomes true after adding the locations under the startLocation to the processing stack
+    boolean firstPass = false;
+    boolean process;
+
+    LocationFactory locationFactory = startLocation.getLocationFactory();
+    if (locationFactory instanceof HDFSLocationFactory) {
+      // Treat the HDFS case
+      FileSystem fs = ((HDFSLocationFactory) locationFactory).getFileSystem();
+      Deque<FileStatus> statusStack = Lists.newLinkedList();
+      statusStack.push(fs.getFileLinkStatus(new Path(startLocation.toURI())));
+      while (!statusStack.isEmpty()) {
+        FileStatus currentStatus = statusStack.poll();
+        process = processor.process(new LocationStatus(currentStatus.getPath().toUri(), currentStatus.getLen(),
+                                                       currentStatus.isDirectory()));
+        if (!process) {
+          return processor.getResult();
+        }
+        if (currentStatus.isDirectory() && (!firstPass || recursive)) {
+          FileStatus[] statuses = fs.listStatus(currentStatus.getPath());
+          for (FileStatus status : statuses) {
+            statusStack.push(status);
+          }
+          firstPass = true;
+        }
+      }
+    } else {
+      // Treat the local FS case, we can directly use the Location class APIs
+      Deque<Location> locationStack = Lists.newLinkedList();
+      locationStack.push(startLocation);
+      while (!locationStack.isEmpty()) {
+        Location currentLocation = locationStack.poll();
+        process = processor.process(new LocationStatus(currentLocation.toURI(), currentLocation.length(),
+                                                       currentLocation.isDirectory()));
+        if (!process) {
+          return processor.getResult();
+        }
+        if (currentLocation.isDirectory() && (!firstPass || recursive)) {
+          List<Location> locations = currentLocation.list();
+          for (Location location : locations) {
+            locationStack.push(location);
+          }
+          firstPass = true;
+        }
+      }
+    }
+    return processor.getResult();
   }
 
   /**
@@ -133,6 +256,80 @@ public final class Locations {
     }
   }
 
+  /**
+   * Converts the given file into a local {@link Location}.
+   */
+  public static Location toLocation(File file) {
+    return LOCAL_LOCATION_FACTORY.create(file.getAbsoluteFile().toURI());
+  }
+
+  /**
+   * Creates a {@link StreamSizeProvider} for determining the size of the given {@link FSDataInputStream}.
+   */
+  private static StreamSizeProvider createDFSStreamSizeProvider(final FileSystem fs,
+                                                                final Path path, FSDataInputStream input) {
+    // This is the default provider to use. It will try to determine if the file is closed and return the size of it.
+    final StreamSizeProvider defaultSizeProvider = new StreamSizeProvider() {
+      @Override
+      public long size() throws IOException {
+        if (fs instanceof DistributedFileSystem) {
+          if (((DistributedFileSystem) fs).isFileClosed(path)) {
+            return fs.getFileStatus(path).getLen();
+          } else {
+            return -1L;
+          }
+        }
+        // If the the underlying file system is not DistributedFileSystem, just assume the file length tells the size
+        return fs.getFileStatus(path).getLen();
+      }
+    };
+
+    // This supplier is to abstract out the logic for getting the DFSInputStream#getFileLength method using reflection
+    // Reflection is used to avoid ClassLoading error if the DFSInputStream class is moved or method get renamed
+    final InputStream wrappedStream = input.getWrappedStream();
+    final Supplier<Method> getFileLengthMethodSupplier = Suppliers.memoize(new Supplier<Method>() {
+      @Override
+      public Method get() {
+        try {
+          // This is a hack to get to the underlying DFSInputStream
+          // Need to revisit it when need to support different distributed file system
+          Class<? extends InputStream> cls = wrappedStream.getClass();
+          String expectedName = "org.apache.hadoop.hdfs.DFSInputStream";
+          if (!cls.getName().equals(expectedName)) {
+            throw new Exception("Expected wrapper class be " + expectedName + ", but got " + cls.getName());
+          }
+
+          Method getFileLengthMethod = cls.getMethod("getFileLength");
+          if (!getFileLengthMethod.isAccessible()) {
+            getFileLengthMethod.setAccessible(true);
+          }
+          return getFileLengthMethod;
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    });
+
+    return new StreamSizeProvider() {
+      @Override
+      public long size() throws IOException {
+        // Try to determine the size using default provider
+        long size = defaultSizeProvider.size();
+        if (size >= 0) {
+          return size;
+        }
+        try {
+          // If not able to get length from the default provider, use the DFSInputStream#getFileLength method
+          return (Long) getFileLengthMethodSupplier.get().invoke(wrappedStream);
+        } catch (Throwable t) {
+          LOG.warn("Unable to get actual file length from DFS input.", t);
+          return size;
+        }
+      }
+    };
+  }
+
   private Locations() {
   }
+
 }

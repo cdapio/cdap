@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.io;
 
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import com.google.common.base.Objects;
 
 import java.lang.reflect.ParameterizedType;

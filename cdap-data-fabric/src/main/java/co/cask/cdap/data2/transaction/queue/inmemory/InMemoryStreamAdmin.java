@@ -16,38 +16,96 @@
 
 package co.cask.cdap.data2.transaction.queue.inmemory;
 
+import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.StreamProperties;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.Properties;
+import javax.annotation.Nullable;
 
 /**
  * admin for queues in memory.
  */
 @Singleton
 public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdmin {
+  private final StreamMetaStore streamMetaStore;
+  private final UsageRegistry usageRegistry;
 
   @Inject
-  public InMemoryStreamAdmin(InMemoryQueueService queueService) {
+  public InMemoryStreamAdmin(InMemoryQueueService queueService,
+                             UsageRegistry usageRegistry,
+                             StreamMetaStore streamMetaStore) {
     super(queueService);
+    this.usageRegistry = usageRegistry;
+    this.streamMetaStore = streamMetaStore;
   }
 
   @Override
-  public void dropAll() throws Exception {
-    queueService.resetStreams();
+  public void dropAllInNamespace(Id.Namespace namespace) throws Exception {
+    queueService.resetStreamsWithPrefix(QueueName.prefixForNamedspacedStream(namespace.getId()));
+    for (StreamSpecification spec : streamMetaStore.listStreams(namespace)) {
+      streamMetaStore.removeStream(Id.Stream.from(namespace, spec.getName()));
+    }
   }
 
   @Override
-  public StreamConfig getConfig(String streamName) {
-    // TODO: add support for queue-based stream
-    throw new UnsupportedOperationException("Not yet supported");
+  public void configureInstances(Id.Stream streamId, long groupId, int instances) throws Exception {
+    // No-op
   }
 
   @Override
-  public void updateConfig(StreamConfig config) throws IOException {
-    throw new UnsupportedOperationException("Not yet supported");
+  public void configureGroups(Id.Stream streamId, Map<Long, Integer> groupInfo) throws Exception {
+    // No-op
   }
 
+  @Override
+  public StreamConfig getConfig(Id.Stream streamId) {
+    throw new UnsupportedOperationException("Stream config not supported for non-file based stream.");
+  }
+
+  @Override
+  public void updateConfig(Id.Stream streamId, StreamProperties properties) throws IOException {
+    throw new UnsupportedOperationException("Stream config not supported for non-file based stream.");
+  }
+
+  @Override
+  public boolean exists(Id.Stream streamId) throws Exception {
+    return exists(QueueName.fromStream(streamId));
+  }
+
+  @Override
+  public void create(Id.Stream streamId) throws Exception {
+    create(QueueName.fromStream(streamId));
+  }
+
+  @Override
+  public void create(Id.Stream streamId, @Nullable Properties props) throws Exception {
+    create(QueueName.fromStream(streamId), props);
+    streamMetaStore.addStream(streamId);
+  }
+
+  @Override
+  public void truncate(Id.Stream streamId) throws Exception {
+    truncate(QueueName.fromStream(streamId));
+  }
+
+  @Override
+  public void drop(Id.Stream streamId) throws Exception {
+    drop(QueueName.fromStream(streamId));
+    streamMetaStore.removeStream(streamId);
+  }
+
+  @Override
+  public void register(Iterable<? extends Id> owners, Id.Stream streamId) {
+    usageRegistry.registerAll(owners, streamId);
+  }
 }

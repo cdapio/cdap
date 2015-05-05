@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,28 +17,29 @@
 package co.cask.cdap.logging.write;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
+import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
-import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.tephra.TransactionManager;
-import co.cask.tephra.TransactionSystemClient;
-import co.cask.tephra.inmemory.InMemoryTxSystemClient;
+import co.cask.tephra.runtime.TransactionModules;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -47,17 +48,14 @@ import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 
 /**
  * Test LogCleanup class.
  */
 public class LogCleanupTest {
-  private static final Random RANDOM = new Random(System.currentTimeMillis());
   private static final Logger LOG = LoggerFactory.getLogger(LogCleanupTest.class);
 
   @ClassRule
@@ -65,29 +63,41 @@ public class LogCleanupTest {
 
   private static final int RETENTION_DURATION_MS = 100000;
 
-  private static LocationFactory locationFactory;
+  private static Injector injector;
+  private static TransactionManager txManager;
+  private static String logBaseDir;
+  private static String namespacesDir;
 
   @BeforeClass
-  public static void init() throws IOException {
-    locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
+  public static void init() throws Exception {
+    Configuration hConf = HBaseConfiguration.create();
+    final CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+    logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
+    namespacesDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
+    injector = Guice.createInjector(
+      new ConfigModule(cConf, hConf),
+      new LocationRuntimeModule().getInMemoryModules(),
+      new TransactionModules().getInMemoryModules(),
+      new DataSetsModules().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getInMemoryModules()
+    );
+
+    txManager = injector.getInstance(TransactionManager.class);
+    txManager.startAndWait();
+  }
+
+  @AfterClass
+  public static void finish() {
+    txManager.stopAndWait();
   }
 
   @Test
   public void testCleanup() throws Exception {
-    DatasetFramework dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
-    dsFramework.addModule("table", new InMemoryOrderedTableModule());
-
-    CConfiguration cConf = CConfiguration.create();
-
-    Configuration conf = HBaseConfiguration.create();
-    cConf.copyTxProperties(conf);
-    TransactionManager txManager = new TransactionManager(conf);
-    txManager.startAndWait();
-    TransactionSystemClient txClient = new InMemoryTxSystemClient(txManager);
-    FileMetaDataManager fileMetaDataManager =
-      new FileMetaDataManager(new LogSaverTableUtil(dsFramework, cConf), txClient, locationFactory);
+    FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
 
     // Create base dir
+    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     Location baseDir = locationFactory.create(TEMP_FOLDER.newFolder().toURI());
 
     // Deletion boundary
@@ -95,9 +105,10 @@ public class LogCleanupTest {
     LOG.info("deletionBoundary = {}", deletionBoundary);
 
     // Setup directories
-    LoggingContext dummyContext = new FlowletLoggingContext("act", "app", "flw", "flwt");
+    LoggingContext dummyContext = new FlowletLoggingContext("ns", "app", "flw", "flwt", "run", "instance");
 
-    Location contextDir = baseDir.append("act/app/flw");
+    Location namespacedLogsDir = baseDir.append(namespacesDir).append("ns").append(logBaseDir);
+    Location contextDir = namespacedLogsDir.append("app").append("flw");
     List<Location> toDelete = Lists.newArrayList();
     for (int i = 0; i < 5; ++i) {
       toDelete.add(contextDir.append("2012-12-1" + i + "/del-1"));
@@ -120,20 +131,23 @@ public class LogCleanupTest {
 
     Assert.assertFalse(notDelete.isEmpty());
 
+    int counter = 0;
     for (Location location : toDelete) {
-      fileMetaDataManager.writeMetaData(dummyContext, deletionBoundary - RANDOM.nextInt(50000) - 10000,
+      fileMetaDataManager.writeMetaData(dummyContext, deletionBoundary - counter - 10000,
                                         createFile(location));
+      counter++;
     }
 
     for (Location location : notDelete) {
-      fileMetaDataManager.writeMetaData(dummyContext, deletionBoundary + RANDOM.nextInt(50000) + 10000,
+      fileMetaDataManager.writeMetaData(dummyContext, deletionBoundary + counter + 10000,
                                         createFile(location));
+      counter++;
     }
 
     Assert.assertEquals(locationListsToString(toDelete, notDelete),
       toDelete.size() + notDelete.size(), fileMetaDataManager.listFiles(dummyContext).size());
 
-    LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, baseDir, RETENTION_DURATION_MS);
+    LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, baseDir, namespacesDir, RETENTION_DURATION_MS);
     logCleanup.run();
     logCleanup.run();
 
@@ -153,47 +167,50 @@ public class LogCleanupTest {
 
   @Test
   public void testDeleteEmptyDir1() throws Exception {
-    FileSystem fileSystem = FileSystem.get(new Configuration());
-
     // Create base dir
-    Location baseDir = locationFactory.create(TEMP_FOLDER.newFolder().toURI());
+    Location baseDir = injector.getInstance(LocationFactory.class).create(TEMP_FOLDER.newFolder().toURI());
+    // Create namespaced logs dirs
+    Location namespacedLogsDir1 = baseDir.append(namespacesDir).append("ns1").append(logBaseDir);
+    Location namespacedLogsDir2 = baseDir.append(namespacesDir).append("ns2").append(logBaseDir);
 
     // Create dirs with files
     Set<Location> files = Sets.newHashSet();
     Set<Location> nonEmptyDirs = Sets.newHashSet();
-    for (int i = 0; i < 5; ++i) {
-      files.add(createFile(baseDir.append(String.valueOf(i))));
+    for (int i = 0; i < 1; ++i) {
+      String name = String.valueOf(i);
+      files.add(createFile(namespacedLogsDir1.append(name)));
 
-      Location dir1 = createDir(baseDir.append("abc"));
+      Location dir1 = createDir(namespacedLogsDir1.append("abc"));
       files.add(dir1);
       nonEmptyDirs.add(dir1);
-      files.add(createFile(baseDir.append("abc/" + i)));
-      files.add(createFile(baseDir.append("abc/def/" + i)));
+      files.add(createFile(namespacedLogsDir1.append("abc").append(name)));
+      files.add(createFile(namespacedLogsDir1.append("abc").append("def").append(name)));
 
-      Location dir2 = createDir(baseDir.append("def"));
+      Location dir2 = createDir(namespacedLogsDir2.append("def"));
       files.add(dir2);
       nonEmptyDirs.add(dir2);
-      files.add(createFile(baseDir.append("def/" + i)));
-      files.add(createFile(baseDir.append("def/hij/" + i)));
+      files.add(createFile(namespacedLogsDir2.append("def").append(name)));
+      files.add(createFile(namespacedLogsDir2.append("def").append("hij").append(name)));
     }
 
     // Create empty dirs
     Set<Location> emptyDirs = Sets.newHashSet();
-    for (int i = 0; i < 5; ++i) {
-      emptyDirs.add(createDir(baseDir.append("dir_" + i)));
-      emptyDirs.add(createDir(baseDir.append("dir_" + i + "/emptyDir1")));
-      emptyDirs.add(createDir(baseDir.append("dir_" + i + "/emptyDir2")));
+    for (int i = 0; i < 1; ++i) {
+      emptyDirs.add(createDir(namespacedLogsDir1.append("dir_" + i)));
+      emptyDirs.add(createDir(namespacedLogsDir1.append("dir_" + i).append("emptyDir1")));
+      emptyDirs.add(createDir(namespacedLogsDir1.append("dir_" + i).append("emptyDir2")));
 
-      emptyDirs.add(createDir(baseDir.append("abc/dir_" + i)));
-      emptyDirs.add(createDir(baseDir.append("abc/def/dir_" + i)));
+      emptyDirs.add(createDir(namespacedLogsDir1.append("abc").append("dir_" + i)));
+      emptyDirs.add(createDir(namespacedLogsDir1.append("abc").append("def").append("dir_" + i)));
 
-      emptyDirs.add(createDir(baseDir.append("def/dir_" + i)));
-      emptyDirs.add(createDir(baseDir.append("def/hij/dir_" + i)));
+      emptyDirs.add(createDir(namespacedLogsDir2.append("def").append("dir_" + i)));
+      emptyDirs.add(createDir(namespacedLogsDir2.append("def").append("hij").append("dir_" + i)));
     }
 
-    LogCleanup logCleanup = new LogCleanup(null, baseDir, RETENTION_DURATION_MS);
+    LogCleanup logCleanup = new LogCleanup(null, baseDir, namespacesDir, RETENTION_DURATION_MS);
     for (Location location : Sets.newHashSet(Iterables.concat(nonEmptyDirs, emptyDirs))) {
-      logCleanup.deleteEmptyDir(location);
+      logCleanup.deleteEmptyDir("ns1/" + logBaseDir, location);
+      logCleanup.deleteEmptyDir("ns2/" + logBaseDir, location);
     }
 
     // Assert non-empty dirs (and their files) are still present
@@ -206,40 +223,44 @@ public class LogCleanupTest {
       Assert.assertFalse("Dir " + location.toURI() + " is still present!", location.exists());
     }
 
-    // Assert base dir exists
+    // Assert base dir and namespaced log dirs exist
     Assert.assertTrue(baseDir.exists());
-
-    fileSystem.close();
+    Assert.assertTrue(namespacedLogsDir1.exists());
+    Assert.assertTrue(namespacedLogsDir2.exists());
   }
 
   @Test
   public void testDeleteEmptyDir2() throws Exception {
-    FileSystem fileSystem = FileSystem.get(new Configuration());
-
     // Create base dir
+    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     Location baseDir = locationFactory.create(TEMP_FOLDER.newFolder().toURI());
 
-    LogCleanup logCleanup = new LogCleanup(null, baseDir, RETENTION_DURATION_MS);
+    LogCleanup logCleanup = new LogCleanup(null, baseDir, namespacesDir, RETENTION_DURATION_MS);
 
-    logCleanup.deleteEmptyDir(baseDir);
+    logCleanup.deleteEmptyDir(namespacesDir + "/ns/" + logBaseDir, baseDir);
     // Assert base dir exists
     Assert.assertTrue(baseDir.exists());
 
-    Location rootPath = locationFactory.create("/");
-    rootPath.mkdirs();
-    Assert.assertTrue(rootPath.exists());
-    logCleanup.deleteEmptyDir(rootPath);
+    baseDir.mkdirs();
+    // Assert root exists
+    Assert.assertTrue(baseDir.exists());
+    logCleanup.deleteEmptyDir(namespacesDir + "/ns/" + logBaseDir, baseDir);
     // Assert root still exists
-    Assert.assertTrue(rootPath.exists());
+    Assert.assertTrue(baseDir.exists());
+
+    Location namespaceDir = baseDir.append(namespacesDir).append("ns");
+    namespaceDir.mkdirs();
+    Assert.assertTrue(namespaceDir.exists());
+    logCleanup.deleteEmptyDir("ns/" + logBaseDir, namespaceDir);
+    // Assert root still exists
+    Assert.assertTrue(namespaceDir.exists());
 
     Location tmpPath = locationFactory.create("/tmp");
     tmpPath.mkdirs();
     Assert.assertTrue(tmpPath.exists());
-    logCleanup.deleteEmptyDir(tmpPath);
+    logCleanup.deleteEmptyDir("ns/" + logBaseDir, tmpPath);
     // Assert tmp still exists
     Assert.assertTrue(tmpPath.exists());
-
-    fileSystem.close();
   }
 
   private Location createFile(Location path) throws Exception {

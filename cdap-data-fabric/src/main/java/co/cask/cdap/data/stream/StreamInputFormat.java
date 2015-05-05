@@ -15,14 +15,27 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.format.RecordFormat;
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventDecoder;
+import co.cask.cdap.data.format.RecordFormats;
+import co.cask.cdap.data.stream.decoder.BytesStreamEventDecoder;
+import co.cask.cdap.data.stream.decoder.FormatStreamEventDecoder;
+import co.cask.cdap.data.stream.decoder.IdentityStreamEventDecoder;
+import co.cask.cdap.data.stream.decoder.StringStreamEventDecoder;
+import co.cask.cdap.data.stream.decoder.TextStreamEventDecoder;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
+import com.google.common.base.Throwables;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.Job;
@@ -31,13 +44,13 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.URI;
-import java.util.Collection;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
- * A {@link InputFormat} for reading stream data. Stream data files are organized by partition directories with
- * bucket files inside.
+ * Stream mapreduce input format. Stream data files are organized by partition directories with bucket files inside.
  *
  * <br/><br/>
  *   Each file has path pattern
@@ -70,24 +83,47 @@ import java.util.List;
  * @param <K> Key type of input
  * @param <V> Value type of input
  */
-public abstract class StreamInputFormat<K, V> extends InputFormat<K, V> {
+public class StreamInputFormat<K, V> extends InputFormat<K, V> {
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .create();
+  private static final StreamInputSplitFactory<InputSplit> splitFactory = new StreamInputSplitFactory<InputSplit>() {
+    @Override
+    public InputSplit createSplit(Path path, Path indexPath, long startTime, long endTime,
+                                  long start, long length, @Nullable String[] locations) {
+      return new StreamInputSplit(path, indexPath, startTime, endTime, start, length, locations);
+    }
+  };
 
+  // Keys for storing in job configuration
   private static final String EVENT_START_TIME = "input.streaminputformat.event.starttime";
   private static final String EVENT_END_TIME = "input.streaminputformat.event.endtime";
   private static final String STREAM_PATH = "input.streaminputformat.stream.path";
   private static final String STREAM_TTL = "input.streaminputformat.stream.event.ttl";
   private static final String MAX_SPLIT_SIZE = "input.streaminputformat.max.splits.size";
   private static final String MIN_SPLIT_SIZE = "input.streaminputformat.min.splits.size";
+  private static final String DECODER_TYPE = "input.streaminputformat.decoder.type";
+  private static final String BODY_FORMAT = "input.streaminputformat.stream.body.format";
 
   /**
    * Sets the TTL for the stream events.
    *
-   * @param job The job to modify
+   * @param job  The job to modify
    * @param ttl TTL of the stream in milliseconds.
    */
   public static void setTTL(Job job, long ttl) {
+    setTTL(job.getConfiguration(), ttl);
+  }
+
+  /**
+   * Sets the TTL for the stream events.
+   *
+   * @param conf  The configuration to modify
+   * @param ttl TTL of the stream in milliseconds.
+   */
+  public static void setTTL(Configuration conf, long ttl) {
     Preconditions.checkArgument(ttl >= 0, "TTL must be >= 0");
-    job.getConfiguration().setLong(STREAM_TTL, ttl);
+    conf.setLong(STREAM_TTL, ttl);
   }
 
   /**
@@ -98,11 +134,22 @@ public abstract class StreamInputFormat<K, V> extends InputFormat<K, V> {
    * @param endTime Timestamp in milliseconds of the event end time (exclusive).
    */
   public static void setTimeRange(Job job, long startTime, long endTime) {
+    setTimeRange(job.getConfiguration(), startTime, endTime);
+  }
+
+  /**
+   * Sets the time range for the stream events.
+   *
+   * @param conf The configuration to modify
+   * @param startTime Timestamp in milliseconds of the event start time (inclusive).
+   * @param endTime Timestamp in milliseconds of the event end time (exclusive).
+   */
+  public static void setTimeRange(Configuration conf, long startTime, long endTime) {
     Preconditions.checkArgument(startTime >= 0, "Start time must be >= 0");
     Preconditions.checkArgument(endTime >= 0, "End time must be >= 0");
 
-    job.getConfiguration().setLong(EVENT_START_TIME, startTime);
-    job.getConfiguration().setLong(EVENT_END_TIME, endTime);
+    conf.setLong(EVENT_START_TIME, startTime);
+    conf.setLong(EVENT_END_TIME, endTime);
   }
 
   /**
@@ -112,7 +159,17 @@ public abstract class StreamInputFormat<K, V> extends InputFormat<K, V> {
    * @param path The file path to stream base directory.
    */
   public static void setStreamPath(Job job, URI path) {
-    job.getConfiguration().set(STREAM_PATH, path.toString());
+    setStreamPath(job.getConfiguration(), path);
+  }
+
+  /**
+   * Sets the base path to stream files.
+   *
+   * @param conf The conf to modify.
+   * @param path The file path to stream base directory.
+   */
+  public static void setStreamPath(Configuration conf, URI path) {
+    conf.set(STREAM_PATH, path.toString());
   }
 
   /**
@@ -122,7 +179,17 @@ public abstract class StreamInputFormat<K, V> extends InputFormat<K, V> {
    * @param maxSplits Maximum split size in bytes.
    */
   public static void setMaxSplitSize(Job job, long maxSplits) {
-    job.getConfiguration().setLong(MAX_SPLIT_SIZE, maxSplits);
+    setMaxSplitSize(job.getConfiguration(), maxSplits);
+  }
+
+  /**
+   * Sets the maximum split size.
+   *
+   * @param conf The conf to modify.
+   * @param maxSplits Maximum split size in bytes.
+   */
+  public static void setMaxSplitSize(Configuration conf, long maxSplits) {
+    conf.setLong(MAX_SPLIT_SIZE, maxSplits);
   }
 
   /**
@@ -132,83 +199,155 @@ public abstract class StreamInputFormat<K, V> extends InputFormat<K, V> {
    * @param minSplits Minimum split size in bytes.
    */
   public static void setMinSplitSize(Job job, long minSplits) {
-    job.getConfiguration().setLong(MIN_SPLIT_SIZE, minSplits);
+    setMinSplitSize(job.getConfiguration(), minSplits);
   }
 
   /**
-   * Factory method for creating {@link co.cask.cdap.api.stream.StreamEventDecoder} to decode stream event.
+   * Sets the minimum split size.
    *
-   * @return An instance of {@link co.cask.cdap.api.stream.StreamEventDecoder}.
+   * @param conf The conf to modify.
+   * @param minSplits Minimum split size in bytes.
    */
-  protected abstract StreamEventDecoder<K, V> createStreamEventDecoder();
+  public static void setMinSplitSize(Configuration conf, long minSplits) {
+    conf.setLong(MIN_SPLIT_SIZE, minSplits);
+  }
+
+  /**
+   * Sets the class name for the {@link StreamEventDecoder}.
+   *
+   * @param job The job to modify.
+   * @param decoderClassName Class name of the decoder class
+   */
+  public static void setDecoderClassName(Job job, String decoderClassName) {
+    setDecoderClassName(job.getConfiguration(), decoderClassName);
+  }
+
+  /**
+   * Sets the class name for the {@link StreamEventDecoder}.
+   *
+   * @param conf The conf to modify.
+   * @param decoderClassName Class name of the decoder class
+   */
+  public static void setDecoderClassName(Configuration conf, String decoderClassName) {
+    conf.set(DECODER_TYPE, decoderClassName);
+  }
+
+  /**
+   * Returns the {@link StreamEventDecoder} class as specified in the job configuration.
+   *
+   * @param conf The job configuration
+   * @return The {@link StreamEventDecoder} class or {@code null} if it is not set.
+   */
+  public static Class<? extends StreamEventDecoder> getDecoderClass(Configuration conf) {
+    return conf.getClass(DECODER_TYPE, null, StreamEventDecoder.class);
+  }
+
+  /**
+   * Set the format specification for reading the body of stream events. Will also set the decoder class appropriately.
+   *
+   * @param job The job to modify.
+   * @param formatSpecification Format specification for reading the body of stream events.
+   */
+  public static void setBodyFormatSpecification(Job job, FormatSpecification formatSpecification) {
+    setBodyFormatSpecification(job.getConfiguration(), formatSpecification);
+  }
+
+  /**
+   * Set the format specification for reading the body of stream events. Will also set the decoder class appropriately.
+   *
+   * @param conf The job configuration.
+   * @param formatSpecification Format specification for reading the body of stream events.
+   */
+  public static void setBodyFormatSpecification(Configuration conf, FormatSpecification formatSpecification) {
+    conf.set(BODY_FORMAT, GSON.toJson(formatSpecification));
+    setDecoderClassName(conf, FormatStreamEventDecoder.class.getName());
+  }
+
+  /**
+   * Tries to set the {@link StreamInputFormat#DECODER_TYPE} depending upon the supplied value class
+   *
+   * @param conf   the conf to modify
+   * @param vClass the value class Type
+   */
+  public static void inferDecoderClass(Configuration conf, Type vClass) {
+    if (Text.class.equals(vClass)) {
+      setDecoderClassName(conf, TextStreamEventDecoder.class.getName());
+      return;
+    }
+    if (String.class.equals(vClass)) {
+      setDecoderClassName(conf, StringStreamEventDecoder.class.getName());
+      return;
+    }
+    if (BytesWritable.class.equals(vClass)) {
+      setDecoderClassName(conf, BytesStreamEventDecoder.class.getName());
+      return;
+    }
+    if (vClass instanceof Class && ((Class<?>) vClass).isAssignableFrom(StreamEvent.class)) {
+      setDecoderClassName(conf, IdentityStreamEventDecoder.class.getName());
+      return;
+    }
+
+    throw new IllegalArgumentException("The value class must be of type BytesWritable, Text, StreamEvent or " +
+                                         "StreamEventData if no decoder type is provided");
+  }
 
   @Override
   public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
     Configuration conf = context.getConfiguration();
-
     long ttl = conf.getLong(STREAM_TTL, Long.MAX_VALUE);
     long endTime = conf.getLong(EVENT_END_TIME, Long.MAX_VALUE);
     long startTime = Math.max(conf.getLong(EVENT_START_TIME, 0L), getCurrentTime() - ttl);
-    Path path = new Path(URI.create(conf.get(STREAM_PATH)));
     long maxSplitSize = conf.getLong(MAX_SPLIT_SIZE, Long.MAX_VALUE);
     long minSplitSize = Math.min(conf.getLong(MIN_SPLIT_SIZE, 1L), maxSplitSize);
-
-    Preconditions.checkArgument(startTime >= 0, "Invalid start time %s", startTime);
-    Preconditions.checkArgument(endTime >= 0, "Invalid end time %s", endTime);
-
-    List<InputSplit> splits = Lists.newArrayList();
-
-    // Collects all stream event files timestamp, size and block locations information
-
-    // First grab all directories (partition) that matches with the time range.
-    FileSystem fs = path.getFileSystem(conf);
-    for (FileStatus partitionStatus : fs.listStatus(path)) {
-
-      // partition should be directory
-      if (!partitionStatus.isDirectory()) {
-        continue;
-      }
-
-      // Match the time range
-      long partitionStartTime = StreamUtils.getPartitionStartTime(partitionStatus.getPath().getName());
-      long partitionEndTime = StreamUtils.getPartitionEndTime(partitionStatus.getPath().getName());
-      if (partitionStartTime > endTime || partitionEndTime <= startTime) {
-        continue;
-      }
-
-      // Collects all bucket file status in the partition.
-      Collection<StreamDataFileSplitter> eventFiles = collectBuckets(fs, partitionStatus.getPath());
-
-      // For each bucket inside the partition directory, compute the splits
-      for (StreamDataFileSplitter splitter : eventFiles) {
-        splitter.computeSplits(fs, minSplitSize, maxSplitSize, startTime, endTime, splits);
-      }
-    }
-
-    return splits;
+    StreamInputSplitFinder<InputSplit> splitFinder = StreamInputSplitFinder.builder(URI.create(conf.get(STREAM_PATH)))
+      .setStartTime(startTime)
+      .setEndTime(endTime)
+      .setMinSplitSize(minSplitSize)
+      .setMaxSplitSize(maxSplitSize)
+      .build(splitFactory);
+    return splitFinder.getSplits(conf);
   }
 
   @Override
   public RecordReader<K, V> createRecordReader(InputSplit split,
                                                TaskAttemptContext context) throws IOException, InterruptedException {
-    return new StreamRecordReader<K, V>(createStreamEventDecoder());
+    return new StreamRecordReader<K, V>(createStreamEventDecoder(context.getConfiguration()));
   }
 
   protected long getCurrentTime() {
     return System.currentTimeMillis();
   }
 
-  /**
-   * Collects file status of all buckets under a given partition.
-   */
-  private Collection<StreamDataFileSplitter> collectBuckets(FileSystem fs, Path partitionPath) throws IOException {
-    ImmutableList.Builder<StreamDataFileSplitter> builder = ImmutableList.builder();
-
-    for (FileStatus fileStatus : fs.listStatus(partitionPath)) {
-      if (StreamFileType.EVENT.isMatched(fileStatus.getPath().getName())) {
-        builder.add(new StreamDataFileSplitter(fileStatus));
+  @SuppressWarnings("unchecked")
+  protected StreamEventDecoder<K, V> createStreamEventDecoder(Configuration conf) {
+    Class<? extends StreamEventDecoder> decoderClass = getDecoderClass(conf);
+    Preconditions.checkNotNull(decoderClass, "Failed to load stream event decoder %s", conf.get(DECODER_TYPE));
+    try {
+      // if this is a FormatStreamEventDecoder, we need to create and initialize the format that will be used
+      // to format the stream body.
+      if (decoderClass.isAssignableFrom(FormatStreamEventDecoder.class)) {
+        try {
+          RecordFormat<StreamEvent, V> bodyFormat = getInitializedFormat(conf);
+          return (StreamEventDecoder<K, V>) new FormatStreamEventDecoder(bodyFormat);
+        } catch (Exception e) {
+          throw new IllegalArgumentException("Unable to get the stream body format.");
+        }
+      } else {
+        return (StreamEventDecoder<K, V>) decoderClass.newInstance();
       }
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
     }
-    return builder.build();
+  }
+
+  private RecordFormat<StreamEvent, V> getInitializedFormat(Configuration conf)
+    throws UnsupportedTypeException, IllegalAccessException, ClassNotFoundException, InstantiationException {
+    String formatSpecStr = conf.get(BODY_FORMAT);
+    if (formatSpecStr == null || formatSpecStr.isEmpty()) {
+      throw new IllegalArgumentException(
+        BODY_FORMAT + " must be set in the configuration in order to use a format for the stream body.");
+    }
+    FormatSpecification formatSpec = GSON.fromJson(formatSpecStr, FormatSpecification.class);
+    return RecordFormats.createInitializedFormat(formatSpec);
   }
 }

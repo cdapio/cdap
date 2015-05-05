@@ -1,0 +1,122 @@
+<div class="row">
+  <div class="col-xs-12 col-md-6">
+    <div ng-if="dataList.length > 0">
+      <h3 class="text-uppercase"> Data </h3>
+      <div class="row">
+        <div class="col-xs-12 col-sm-3">
+          <p ng-if="dataList.length < 5"> Showing {{ dataList.length }} of {{ dataList.length }}</p>
+          <p ng-if="dataList.length >= 5"> Showing 5 of {{ dataList.length }}</p>
+        </div>
+        <div class="col-xs-12 col-sm-9 text-right">
+          <div class="btn-group">
+            <a ui-sref="data.list" class="btn btn-default">
+              <span class="fa fa-list-ul"></span>
+              <span>All Datasets</span>
+            </a>
+            <a ui-sref="explore" class="btn btn-default">
+              <span class="fa fa-eye"></span>
+              <span>Explore</span>
+            </a>
+            <a ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $state.params.namespace})" class="btn btn-default">
+              <span class="fa fa-plus"></span>
+              <span>Add Stream</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <ul class="list-group" >
+        <li class="list-group-item" ng-repeat="data in dataList | orderBy:MyOrderings.dataOrdering | limitTo: 5 track by $index ">
+          <a ng-if="data.type === 'Stream'" ui-sref="streams.detail.overview({streamId: data.name})" ng-click="MyOrderings.dataClicked(data.name)">
+            <p ng-bind="data.name"> </p>
+            <div class="title-type-image">
+              <span class="icon-streams"></span>
+              <span> Stream </span>
+            </div>
+          </a>
+          <a ng-if="data.type !== 'Stream'" ui-sref="datasets.detail.overview({datasetId: data.name})" ng-click="MyOrderings.dataClicked(data.name)">
+            <p ng-bind="data.name"> </p>
+            <div class="title-type-image">
+              <span class="icon-datasets"></span>
+              <span> Dataset </span>
+            </div>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div ng-if="dataList.length === 0">
+      <div class="clearfix">
+        <h3 class="text-uppercase"> Data </h3>
+        <p> You haven't deployed any datasets. Add one! </p>
+      </div>
+      <hr />
+      <div class="text-left" ng-controller="AppsSectionCtrl">
+        <a class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $state.params.namespace})">
+          <span class="fa fa-plus"></span>
+          <span>Add Stream</span>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="col-xs-12 col-md-6">
+    <div ng-if="apps.length > 0">
+      <h3 class="text-uppercase"> Apps </h3>
+      <div class="row">
+        <div class="col-xs-12 col-sm-3">
+          <p ng-if="apps.length < 5"> Showing {{ apps.length }} of {{ apps.length }}</p>
+          <p ng-if="apps.length >= 5"> Showing 5 of {{ apps.length }}</p>
+        </div>
+        <div class="col-xs-12 col-sm-9 text-right">
+          <div class="btn-group">
+            <a ui-sref="apps.list" class="btn btn-default">
+              <span class="fa fa-list-ul"></span>
+               <span>All Apps</span>
+            </a>
+            <a ui-sref="adapters.list" class="btn btn-default">
+              <span class="fa fa-list-ul"></span>
+               All Adapters
+            </a>
+            <a ui-sref="admin.namespace.detail.apps({nsadmin: $state.params.namespace})"
+               class="btn btn-default">
+              <span class="fa fa-plus"></span>
+              <span> Add App </span>
+            </a>
+
+          </div>
+        </div>
+      </div>
+
+      <ul class="list-group">
+        <li class="list-group-item" ng-repeat="app in apps | orderBy:MyOrderings.appOrdering | limitTo:5">
+          <a ui-sref="apps.detail.overview({appId: app.id})"  ng-click="MyOrderings.appClicked(app.id)">
+            <p ng-bind="app.name"> </p>
+            <div class="title-type-image">
+              <span class="icon-fist"></span>
+              <span> CDAP </span>
+            </div>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div ng-if="apps.length === 0">
+      <div class="clearfix">
+        <h3 class="text-uppercase"> Apps </h3>
+        <p> You haven't deployed any apps. Add one! </p>
+      </div>
+      <hr />
+      <div class="text-left" ng-controller="AppsSectionCtrl">
+        <a ui-sref="admin.namespace.detail.apps({nsadmin: $state.params.namespace})"
+           class="btn btn-default">
+          <span class="fa fa-plus"></span>
+          <span> Add App </span>
+        </a>
+        <a ui-sref="adapters.create" class="btn btn-default">
+          <span class="fa fa-plus"></span>
+          <span>Add Adapter</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.api.common;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSortedMap;
 
 import java.io.DataOutput;
@@ -23,10 +24,12 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NavigableMap;
+import java.util.UUID;
 import javax.annotation.Nullable;
 
 /**
@@ -76,6 +79,8 @@ public class Bytes {
    * Size of short in bytes.
    */
   public static final int SIZEOF_SHORT = Short.SIZE / Byte.SIZE;
+
+  private static final char[] hexDigits = "0123456789abcdef".toCharArray();
 
   /**
    * Byte array comparator class.
@@ -132,9 +137,11 @@ public class Bytes {
    * @return the byte array
    */
   public static byte[] toBytes(ByteBuffer bb) {
-    int length = bb.limit();
+    int length = bb.remaining();
     byte [] result = new byte[length];
-    System.arraycopy(bb.array(), bb.arrayOffset(), result, 0, length);
+    int pos = bb.position();
+    bb.get(result);
+    bb.position(pos);
     return result;
   }
 
@@ -194,6 +201,35 @@ public class Bytes {
   }
 
   /**
+   * This method will convert the remaining bytes of a UTF8
+   * encoded byte buffer into a string.
+   *
+   * @param buf Presumed UTF-8 encoded byte buffer.
+   * @return String made from <code>buf</code> or null
+   */
+  public static String toString(ByteBuffer buf) {
+    return toString(buf, Charsets.UTF_8);
+  }
+
+  /**
+   * This method will convert the remaining bytes of an
+   * encoded byte buffer into a string of the given charset.
+   *
+   * @param buf Encoded byte buffer.
+   * @param charset Charset of the string encoded in the byte buffer.
+   * @return String made from <code>buf</code> or null
+   */
+  public static String toString(ByteBuffer buf, Charset charset) {
+    if (buf == null) {
+      return null;
+    }
+    buf.mark();
+    String s = charset.decode(buf).toString();
+    buf.reset();
+    return s;
+  }
+
+  /**
    * Write a printable representation of a byte array.
    *
    * @param b byte array
@@ -205,6 +241,18 @@ public class Bytes {
       return "null";
     }
     return toStringBinary(b, 0, b.length);
+  }
+
+  /**
+   * Returns a string containing each byte, in order, as a two-digit unsigned
+   * hexadecimal number in lower case.
+   */
+  public static String toHexString(byte [] bytes) {
+    StringBuilder sb = new StringBuilder(2 * bytes.length);
+    for (byte b : bytes) {
+      sb.append(hexDigits[(b >> 4) & 0xf]).append(hexDigits[b & 0xf]);
+    }
+    return sb.toString();
   }
 
   /**
@@ -701,6 +749,27 @@ public class Bytes {
     return result;
   }
 
+  /**
+   * Returns a copy of the byte representation of the given UUID.
+   * @param uuid UUID to get the byte representation of
+   * @return byte representation of the given UUID
+   */
+  public static byte[] toBytes(UUID uuid) {
+    ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
+    bb.putLong(uuid.getMostSignificantBits());
+    bb.putLong(uuid.getLeastSignificantBits());
+    return bb.array();
+  }
+
+  /**
+   * Convert the given byte representation of a UUID into a UUID.
+   * @param bytes byte representation of a UUID
+   * @return UUID
+   */
+  public static UUID toUUID(byte [] bytes) {
+    ByteBuffer bb = ByteBuffer.wrap(bytes);
+    return new UUID(bb.getLong(), bb.getLong());
+  }
 
   /**
    * Converts a byte array to a BigDecimal.
@@ -1397,8 +1466,8 @@ public class Bytes {
    * @param value value of the entry
    * @return instance of {@link NavigableMap}
    */
-  public static NavigableMap<byte[], byte[]> immutableSortedMapOf(byte[] key, byte[] value) {
-    return ImmutableSortedMap.<byte[], byte[]>orderedBy(Bytes.BYTES_COMPARATOR).put(key, value).build();
+  public static <T> NavigableMap<byte[], T> immutableSortedMapOf(byte[] key, T value) {
+    return ImmutableSortedMap.<byte[], T>orderedBy(Bytes.BYTES_COMPARATOR).put(key, value).build();
   }
 
   /**
@@ -1409,9 +1478,9 @@ public class Bytes {
    * @param value2 value of the second entry
    * @return instance of {@link NavigableMap}
    */
-  public static NavigableMap<byte[], byte[]> immutableSortedMapOf(byte[] key1, byte[] value1,
-                                                                  byte[] key2, byte[] value2) {
-    return ImmutableSortedMap.<byte[], byte[]>orderedBy(Bytes.BYTES_COMPARATOR)
+  public static <T> NavigableMap<byte[], T> immutableSortedMapOf(byte[] key1, T value1,
+                                                                  byte[] key2, T value2) {
+    return ImmutableSortedMap.<byte[], T>orderedBy(Bytes.BYTES_COMPARATOR)
       .put(key1, value1)
       .put(key2, value2).build();
   }

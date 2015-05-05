@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,17 +17,16 @@
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
-import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
@@ -36,6 +35,7 @@ import java.util.Map;
 /**
  * HBase based implementation for {@link MetricsTable}.
  */
+// todo: re-use HBase table based dataset instead of having separate classes hierarchies, see CDAP-1193
 public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<MetricsTable, DatasetAdmin> {
   @Inject
   private Configuration hConf;
@@ -44,44 +44,40 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
   @Inject
   private LocationFactory locationFactory;
   @Inject
-  private CConfiguration conf;
+  private CConfiguration cConf;
 
   public HBaseMetricsTableDefinition(String name) {
     super(name);
+  }
+
+  // for unit-test purposes only
+  HBaseMetricsTableDefinition(String name, Configuration hConf, HBaseTableUtil hBaseTableUtil,
+                              LocationFactory locationFactory, CConfiguration cConf) {
+    super(name);
+    this.hConf = hConf;
+    this.hBaseTableUtil = hBaseTableUtil;
+    this.locationFactory = locationFactory;
+    this.cConf = cConf;
   }
 
   @Override
   public DatasetSpecification configure(String name, DatasetProperties properties) {
     return DatasetSpecification.builder(name, getName())
       .properties(properties.getProperties())
+      .property(Constants.Dataset.TABLE_TX_DISABLED, "true")
       .build();
   }
 
+
   @Override
-  public MetricsTable getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
-    throws IOException {
-    return new HBaseMetricsTable(spec.getName(), hConf);
+  public MetricsTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                 Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+    return new HBaseMetricsTable(datasetContext, spec, hConf, hBaseTableUtil);
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
-    return new HTableDatasetAdmin(getHTableDescriptor(spec), hConf, hBaseTableUtil);
-  }
-
-  private HTableDescriptor getHTableDescriptor(DatasetSpecification spec) {
-    final String tableName = HBaseTableUtil.getHBaseTableName(spec.getName());
-
-    final HColumnDescriptor columnDescriptor = new HColumnDescriptor(HBaseMetricsTable.DATA_COLUMN_FAMILY);
-    hBaseTableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
-    columnDescriptor.setMaxVersions(1);
-
-    int ttl = spec.getIntProperty(OrderedTable.PROPERTY_TTL, -1);
-    if (ttl > 0) {
-      columnDescriptor.setTimeToLive(ttl);
-    }
-
-    final HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
-    tableDescriptor.addFamily(columnDescriptor);
-    return tableDescriptor;
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
+    return new HBaseTableAdmin(datasetContext, spec, hConf, hBaseTableUtil, cConf, locationFactory);
   }
 }

@@ -17,8 +17,7 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.data.dataset.DataSetInstantiator;
-import com.google.inject.name.Named;
+import co.cask.cdap.data.dataset.DatasetInstantiator;
 
 /**
  * A Guice assisted inject factory for creating different types of {@link DataFabricFacade}.
@@ -28,10 +27,5 @@ public interface DataFabricFacadeFactory {
   /**
    * Creates a {@link DataFabricFacade} for the given program, with transaction supports.
    */
-  DataFabricFacade create(Program program, DataSetInstantiator instantiator);
-
-  /**
-   * Creates a {@link DataFabricFacade} for the given program, without transaction supports.
-   */
-  @Named("transaction.off") DataFabricFacade createNoTransaction(Program program, DataSetInstantiator instantiator);
+  DataFabricFacade create(Program program, DatasetInstantiator instantiator);
 }

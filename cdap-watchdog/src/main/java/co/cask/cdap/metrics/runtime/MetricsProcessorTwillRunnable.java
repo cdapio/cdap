@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,16 +32,14 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
-import co.cask.cdap.metrics.MetricsConstants;
-import co.cask.cdap.metrics.data.DefaultMetricsTableFactory;
-import co.cask.cdap.metrics.data.MetricsTableFactory;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
-import co.cask.cdap.metrics.guice.MetricsProcessorModule;
 import co.cask.cdap.metrics.guice.MetricsProcessorStatusServiceModule;
 import co.cask.cdap.metrics.process.KafkaMetricsProcessorServiceFactory;
 import co.cask.cdap.metrics.process.MessageCallbackFactory;
 import co.cask.cdap.metrics.process.MetricsMessageCallbackFactory;
 import co.cask.cdap.metrics.process.MetricsProcessorStatusService;
+import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
+import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
@@ -81,7 +79,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
       getCConfiguration().set(Constants.MetricsProcessor.ADDRESS, context.getHost().getCanonicalHostName());
       Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration());
       injector.getInstance(LogAppenderInitializer.class).initialize();
-      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
+      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.SYSTEM_NAMESPACE,
                                                                          Constants.Logging.COMPONENT_NAME,
                                                                          Constants.Service.METRICS_PROCESSOR));
 
@@ -120,7 +118,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
       new LoggingModules().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
-      new DataSetsModules().getDistributedModule(),
+      new DataSetsModules().getDistributedModules(),
       new KafkaMetricsProcessorModule(),
       new MetricsProcessorStatusServiceModule()
      );
@@ -129,9 +127,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
   static final class KafkaMetricsProcessorModule extends PrivateModule {
    @Override
     protected void configure() {
-      install(new MetricsProcessorModule());
-      bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class)
-        .in(Scopes.SINGLETON);
+      bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
       bind(MessageCallbackFactory.class).to(MetricsMessageCallbackFactory.class);
       install(new FactoryModuleBuilder()
                 .build(KafkaMetricsProcessorServiceFactory.class));
@@ -139,17 +135,17 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
       expose(KafkaMetricsProcessorServiceFactory.class);
     }
     @Provides
-    @Named(MetricsConstants.ConfigKeys.KAFKA_CONSUMER_PERSIST_THRESHOLD)
+    @Named(Constants.Metrics.KAFKA_CONSUMER_PERSIST_THRESHOLD)
     public int providesConsumerPersistThreshold(CConfiguration cConf) {
-      return cConf.getInt(MetricsConstants.ConfigKeys.KAFKA_CONSUMER_PERSIST_THRESHOLD,
-                          MetricsConstants.DEFAULT_KAFKA_CONSUMER_PERSIST_THRESHOLD);
+      return cConf.getInt(Constants.Metrics.KAFKA_CONSUMER_PERSIST_THRESHOLD,
+                          Constants.Metrics.DEFAULT_KAFKA_CONSUMER_PERSIST_THRESHOLD);
     }
 
     @Provides
-    @Named(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX)
+    @Named(Constants.Metrics.KAFKA_TOPIC_PREFIX)
     public String providesKafkaTopicPrefix(CConfiguration cConf) {
-      return cConf.get(MetricsConstants.ConfigKeys.KAFKA_TOPIC_PREFIX,
-                       MetricsConstants.DEFAULT_KAFKA_TOPIC_PREFIX);
+      return cConf.get(Constants.Metrics.KAFKA_TOPIC_PREFIX,
+                       Constants.Metrics.DEFAULT_KAFKA_TOPIC_PREFIX);
     }
   }
 }

@@ -16,7 +16,10 @@
 
 package co.cask.cdap.internal.asm;
 
+import com.google.common.collect.ImmutableList;
 import org.objectweb.asm.Type;
+
+import java.util.List;
 
 /**
  * Class for carrying information of the generated class.
@@ -24,10 +27,16 @@ import org.objectweb.asm.Type;
 public final class ClassDefinition {
   private final byte[] bytecode;
   private final String internalName;
+  private final List<Class<?>> preservedClasses;
 
   public ClassDefinition(byte[] bytecode, String internalName) {
+    this(bytecode, internalName, ImmutableList.<Class<?>>of());
+  }
+
+  public ClassDefinition(byte[] bytecode, String internalName, Iterable<? extends Class<?>> preservedClasses) {
     this.bytecode = bytecode;
     this.internalName = internalName;
+    this.preservedClasses = ImmutableList.copyOf(preservedClasses);
   }
 
   public byte[] getBytecode() {
@@ -40,5 +49,13 @@ public final class ClassDefinition {
 
   public String getClassName() {
     return Type.getObjectType(internalName).getClassName();
+  }
+
+  /**
+   * Returns list of Classes that are used by the generated class which should be used as is,
+   * instead of loaded again by the {@link ByteCodeClassLoader}.
+   */
+  public List<Class<?>> getPreservedClasses() {
+    return preservedClasses;
   }
 }

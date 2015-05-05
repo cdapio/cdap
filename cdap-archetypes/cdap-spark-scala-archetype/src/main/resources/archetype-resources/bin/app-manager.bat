@@ -23,7 +23,7 @@ SET APP_JAR_PREFIX=SparkKMeans
 
 SET APP_NAME=SparkKMeans
 SET FLOW_NAME=PointsFlow
-SET PROCEDURE_NAME=CentersProcedure
+SET SERVICE_NAME=CentersService
 SET SPARK_NAME=SparkKMeansProgram
 
 REM Set the base directory
@@ -72,17 +72,17 @@ GOTO :EOF
 
 :START
 CALL :POST %APP_NAME% flows %FLOW_NAME% start
-CALL :POST %APP_NAME% procedures %PROCEDURE_NAME% start
+CALL :POST %APP_NAME% services %SERVICE_NAME% start
 GOTO :EOF
 
 :STOP
 CALL :POST %APP_NAME% flows %FLOW_NAME% stop
-CALL :POST %APP_NAME% procedures %PROCEDURE_NAME% stop
+CALL :POST %APP_NAME% services %SERVICE_NAME% stop
 GOTO :EOF
 
 :STATUS
 CALL :GET %APP_NAME% flows %FLOW_NAME% status
-CALL :GET %APP_NAME% procedures %PROCEDURE_NAME% status
+CALL :GET %APP_NAME% services %SERVICE_NAME% status
 CALL :GET %APP_NAME% spark %SPARK_NAME% status
 GOTO :EOF
 

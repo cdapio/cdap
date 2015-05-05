@@ -16,12 +16,15 @@
 
 package co.cask.cdap.explore.jdbc;
 
+import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
+import co.cask.cdap.proto.QueryStatus;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ForwardingListenableFuture;
@@ -54,17 +57,37 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
-  public ListenableFuture<Void> enableExplore(String datasetInstance) {
+  public ListenableFuture<Void> enableExploreDataset(Id.DatasetInstance datasetInstance) {
     return null;
   }
 
   @Override
-  public ListenableFuture<Void> disableExplore(String datasetInstance) {
+  public ListenableFuture<Void> disableExploreDataset(Id.DatasetInstance datasetInstance) {
     return null;
   }
 
   @Override
-  public ListenableFuture<ExploreExecutionResult> submit(final String statement) {
+  public ListenableFuture<Void> enableExploreStream(Id.Stream stream) {
+    return null;
+  }
+
+  @Override
+  public ListenableFuture<Void> disableExploreStream(Id.Stream stream) {
+    return null;
+  }
+
+  @Override
+  public ListenableFuture<Void> addPartition(Id.DatasetInstance datasetInstance, PartitionKey key, String path) {
+    return null;
+  }
+
+  @Override
+  public ListenableFuture<Void> dropPartition(Id.DatasetInstance datasetInstance, PartitionKey key) {
+    return null;
+  }
+
+  @Override
+  public ListenableFuture<ExploreExecutionResult> submit(Id.Namespace namespace, final String statement) {
     SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
     futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get(statement).iterator(),
                                                       statementsToMetadata.get(statement)));
@@ -141,6 +164,16 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
+  public ListenableFuture<ExploreExecutionResult> addNamespace(Id.Namespace namespace) {
+    return null;
+  }
+
+  @Override
+  public ListenableFuture<ExploreExecutionResult> removeNamespace(Id.Namespace namespace) {
+    return null;
+  }
+
+  @Override
   protected void startUp() throws Exception {
     // Do nothing
   }
@@ -198,6 +231,16 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
     @Override
     public List<ColumnDesc> getResultSchema() throws ExploreException {
       return schema;
+    }
+
+    @Override
+    public boolean canContainResults() {
+      return true;
+    }
+
+    @Override
+    public QueryStatus getStatus() {
+      return QueryStatus.NO_OP;
     }
   }
 

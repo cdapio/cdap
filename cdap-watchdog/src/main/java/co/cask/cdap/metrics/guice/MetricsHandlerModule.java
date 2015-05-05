@@ -17,14 +17,9 @@
 package co.cask.cdap.metrics.guice;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.handlers.PingHandler;
+import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.logging.gateway.handlers.LogHandler;
-import co.cask.cdap.metrics.data.DefaultMetricsTableFactory;
-import co.cask.cdap.metrics.data.MetricsTableFactory;
-import co.cask.cdap.metrics.query.BatchMetricsHandler;
-import co.cask.cdap.metrics.query.DeleteMetricsHandler;
-import co.cask.cdap.metrics.query.MetricsDiscoveryHandler;
-import co.cask.cdap.metrics.query.MetricsQueryHandler;
+import co.cask.cdap.metrics.query.MetricsHandler;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.http.HttpHandler;
 import com.google.inject.PrivateModule;
@@ -38,18 +33,13 @@ import com.google.inject.name.Names;
 public class MetricsHandlerModule extends PrivateModule {
   @Override
   protected void configure() {
-    bind(MetricsTableFactory.class).to(DefaultMetricsTableFactory.class).in(Scopes.SINGLETON);
-
     bind(MetricsQueryService.class).in(Scopes.SINGLETON);
     expose(MetricsQueryService.class);
 
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
                                                                       Names.named(Constants.Service.METRICS));
-    handlerBinder.addBinding().to(BatchMetricsHandler.class);
-    handlerBinder.addBinding().to(DeleteMetricsHandler.class);
-    handlerBinder.addBinding().to(MetricsDiscoveryHandler.class);
-    handlerBinder.addBinding().to(MetricsQueryHandler.class);
+    handlerBinder.addBinding().to(MetricsHandler.class);
     handlerBinder.addBinding().to(LogHandler.class);
-    handlerBinder.addBinding().to(PingHandler.class);
+    CommonHandlers.add(handlerBinder);
   }
 }

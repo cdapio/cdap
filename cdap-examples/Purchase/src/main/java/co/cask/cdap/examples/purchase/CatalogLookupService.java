@@ -31,9 +31,11 @@ import javax.ws.rs.PathParam;
  */
 public class CatalogLookupService extends AbstractService {
 
+  public static final String SERVICE_NAME = "CatalogLookup";
+
   @Override
   protected void configure() {
-    setName(PurchaseApp.SERVICE_NAME);
+    setName(SERVICE_NAME);
     setDescription("Service to lookup product ids.");
     addHandler(new ProductCatalogLookup());
   }

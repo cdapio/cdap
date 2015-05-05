@@ -16,11 +16,10 @@
 
 package co.cask.cdap.data2.transaction.queue.hbase;
 
-import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueStrategy;
-import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.tephra.Transaction;
+import co.cask.tephra.TransactionType;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
@@ -38,11 +37,12 @@ import javax.annotation.Nullable;
 public class DequeueScanAttributes {
   private static final String ATTR_CONSUMER_CONFIG = "cdap.queue.dequeue.consumerConfig";
   private static final String ATTR_TX = "cdap.queue.dequeue.transaction";
-  private static final String ATTR_QUEUE_ROW_PREFIX = "cdap.queue.dequeue.queueRowPrefix";
 
-  public static void setQueueRowPrefix(Scan scan, QueueName queueName) {
-    scan.setAttribute(ATTR_QUEUE_ROW_PREFIX, QueueEntryRow.getQueueRowPrefix(queueName));
-  }
+  /**
+   * Deprecated. It is maintained for old queue table only.
+   */
+  @Deprecated
+  private static final String ATTR_QUEUE_ROW_PREFIX = "cdap.queue.dequeue.queueRowPrefix";
 
   public static void set(Scan scan, ConsumerConfig consumerConfig) {
     try {
@@ -84,9 +84,12 @@ public class DequeueScanAttributes {
     }
   }
 
-  @Nullable
-  public static byte[] getQueueRowPrefix(Scan scan) {
-    return scan.getAttribute(ATTR_QUEUE_ROW_PREFIX);
+  /**
+   * TODO: Remove when {@link #ATTR_QUEUE_ROW_PREFIX} is removed.
+   */
+  @Deprecated
+  public static void setQueueRowPrefix(Scan scan, byte[] queueNamePrefix) {
+    scan.setAttribute(ATTR_QUEUE_ROW_PREFIX, queueNamePrefix);
   }
 
   private static byte[] toBytes(ConsumerConfig consumerConfig) throws IOException {
@@ -143,7 +146,8 @@ public class DequeueScanAttributes {
     long firstShortInProgress = dataInput.readLong();
     long[] inProgress = readLongArray(dataInput);
     long[] invalids = readLongArray(dataInput);
-    return new Transaction(readPointer, writePointer, invalids, inProgress, firstShortInProgress);
+    return new Transaction(readPointer, writePointer, invalids, inProgress, firstShortInProgress, 
+                           TransactionType.SHORT);
   }
 
   private static void write(DataOutput dataOutput, long[] array) throws IOException {

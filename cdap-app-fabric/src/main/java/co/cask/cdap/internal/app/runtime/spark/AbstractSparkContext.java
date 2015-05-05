@@ -16,26 +16,39 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.api.stream.StreamEventDecoder;
+import co.cask.cdap.data.stream.StreamInputFormat;
+import co.cask.cdap.data.stream.StreamUtils;
+import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetInputFormat;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
-import com.google.common.collect.ImmutableMap;
+import co.cask.cdap.proto.Id;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.rdd.NewHadoopRDD;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -48,26 +61,29 @@ import java.util.regex.Pattern;
 abstract class AbstractSparkContext implements SparkContext {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractSparkContext.class);
+  private static final Gson GSON = new Gson();
   private static final Pattern SPACES = Pattern.compile("\\s+");
   private static final String[] NO_ARGS = {};
+  private static final String SPARK_METRICS_CONF_KEY = "spark.metrics.conf";
 
+  protected final BasicSparkContext basicSparkContext;
   private final Configuration hConf;
   private final long logicalStartTime;
   private final SparkSpecification spec;
-  private final Arguments runtimeArguments;
-  final BasicSparkContext basicSparkContext;
+  private final Map<String, String> runtimeArguments;
   private final SparkConf sparkConf;
 
-  public AbstractSparkContext() {
+  public AbstractSparkContext(BasicSparkContext basicSparkContext) {
     hConf = loadHConf();
-    // Create an instance of BasicSparkContext from the Hadoop Configuration file which was just loaded
-    SparkContextProvider sparkContextProvider = new SparkContextProvider(hConf);
-    basicSparkContext = sparkContextProvider.get();
+    this.basicSparkContext = basicSparkContext;
     this.logicalStartTime = basicSparkContext.getLogicalStartTime();
     this.spec = basicSparkContext.getSpecification();
-    this.runtimeArguments = basicSparkContext.getRuntimeArgs();
+    this.runtimeArguments = basicSparkContext.getRuntimeArguments();
     this.sparkConf = initializeSparkConf();
   }
+
+  protected abstract <T> T doReadFromStream(String streamName, Class<?> vClass, long startTime, long endTime,
+                                            Class<? extends StreamEventDecoder> decoderType);
 
   /**
    * Initializes the {@link SparkConf} with proper settings.
@@ -77,6 +93,7 @@ abstract class AbstractSparkContext implements SparkContext {
   private SparkConf initializeSparkConf() {
     SparkConf sparkConf = new SparkConf();
     sparkConf.setAppName(basicSparkContext.getProgramName());
+    sparkConf.set(SPARK_METRICS_CONF_KEY, basicSparkContext.getMetricsPropertyFile().getAbsolutePath());
     return sparkConf;
   }
 
@@ -116,11 +133,11 @@ abstract class AbstractSparkContext implements SparkContext {
    *
    * @param datasetName the name of the {@link Dataset} to read from
    * @return updated {@link Configuration}
-   * @throws {@link IllegalArgumentException} if the {@link Dataset} to read is not {@link BatchReadable}
+   * @throws IllegalArgumentException if the {@link Dataset} to read is not {@link BatchReadable}
    */
   Configuration setInputDataset(String datasetName) {
     Configuration hConf = new Configuration(getHConf());
-    Dataset dataset = basicSparkContext.getDataSet(datasetName);
+    Dataset dataset = basicSparkContext.getDataset(datasetName);
     List<Split> inputSplits;
     if (dataset instanceof BatchReadable) {
       BatchReadable curDataset = (BatchReadable) dataset;
@@ -134,6 +151,99 @@ abstract class AbstractSparkContext implements SparkContext {
     hConf.set(SparkContextConfig.HCONF_ATTR_INPUT_SPLIT_CLASS, inputSplits.get(0).getClass().getName());
     hConf.set(SparkContextConfig.HCONF_ATTR_INPUT_SPLITS, new Gson().toJson(inputSplits));
     return hConf;
+  }
+
+  @Override
+  public <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime,
+                              Class<? extends StreamEventDecoder> decoderType) {
+    T result = doReadFromStream(streamName, vClass, startTime, endTime, decoderType);
+
+    Id.Stream streamId = Id.Stream.from(basicSparkContext.getNamespaceId(), streamName);
+    try {
+      basicSparkContext.getStreamAdmin().register(basicSparkContext.getOwners(), streamId);
+    } catch (Exception e) {
+      LOG.info("Failed to registry usage of {} -> {}", GSON.toJson(basicSparkContext.getOwners()), streamId, e);
+    }
+
+    return result;
+  }
+
+  /**
+   * Gets a {@link Stream} as a {@link JavaPairRDD} for Java program and {@link NewHadoopRDD} for Scala Program
+   *
+   * @param streamName the name of the {@link Stream} to be read as an RDD
+   * @param vClass     the value class
+   * @return the RDD created from the {@link Stream} to be read
+   */
+  @Override
+  public <T> T readFromStream(String streamName, Class<?> vClass) {
+    return readFromStream(streamName, vClass, 0, System.currentTimeMillis(), null);
+  }
+
+  /**
+   * Gets a {@link Stream} as a {@link JavaPairRDD} for Java program and {@link NewHadoopRDD} for Scala Program
+   *
+   * @param streamName the name of the {@link Stream} to be read as an RDD
+   * @param vClass     the value class
+   * @param startTime  the starting time of the stream to be read
+   * @param endTime    the ending time of the streams to be read
+   * @return the RDD created from the {@link Stream} to be read
+   */
+  @Override
+  public <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime) {
+    return readFromStream(streamName, vClass, startTime, endTime, null);
+  }
+
+  /**
+   * Sets the input to a {@link Stream}
+   *
+   * @param stream the stream to which input will be set to
+   * @param vClass the value class which can be either {@link Text} or {@link BytesWritable}
+   * @return updated {@link Configuration}
+   * @throws IOException if the given {@link Stream} is not found or the {@link StreamEventDecoder} was not identified
+   */
+  Configuration setStreamInputDataset(StreamBatchReadable stream, Class<?> vClass) throws IOException {
+    Configuration hConf = new Configuration(getHConf());
+    configureStreamInput(hConf, stream, vClass);
+    return hConf;
+  }
+
+  /**
+   * Adds the needed information to read from the given {@link Stream} in the {@link Configuration}
+   *
+   * @param hConf  the {@link Configuration} to which the stream info will be added
+   * @param stream a {@link StreamBatchReadable} for the given stream
+   * @param vClass the value class which can be either {@link Text} or {@link BytesWritable}
+   * @throws IOException
+   */
+  private void configureStreamInput(Configuration hConf, StreamBatchReadable stream, Class<?> vClass)
+    throws IOException {
+
+    Id.Stream streamId = Id.Stream.from(basicSparkContext.getNamespaceId(), stream.getStreamName());
+
+    try {
+      basicSparkContext.getStreamAdmin().register(basicSparkContext.getOwners(), streamId);
+    } catch (Exception e) {
+      LOG.info("Failed to registry usage of {} -> {}", GSON.toJson(basicSparkContext.getOwners()), streamId, e);
+    }
+
+    StreamConfig streamConfig = basicSparkContext.getStreamAdmin().getConfig(streamId);
+    Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
+                                                               StreamUtils.getGeneration(streamConfig));
+    StreamInputFormat.setTTL(hConf, streamConfig.getTTL());
+    StreamInputFormat.setStreamPath(hConf, streamPath.toURI());
+    StreamInputFormat.setTimeRange(hConf, stream.getStartTime(), stream.getEndTime());
+
+    String decoderType = stream.getDecoderType();
+    if (decoderType == null) {
+      // If the user don't specify the decoder, detect the type
+      StreamInputFormat.inferDecoderClass(hConf, vClass);
+    } else {
+      StreamInputFormat.setDecoderClassName(hConf, decoderType);
+    }
+    hConf.setClass(MRJobConfig.INPUT_FORMAT_CLASS_ATTR, StreamInputFormat.class, InputFormat.class);
+
+    LOG.info("Using Stream as input from {}", stream.toURI());
   }
 
   /**
@@ -157,8 +267,8 @@ abstract class AbstractSparkContext implements SparkContext {
    */
   @Override
   public String[] getRuntimeArguments(String argsKey) {
-    if (runtimeArguments.hasOption(argsKey)) {
-      return SPACES.split(runtimeArguments.getOption(argsKey).trim());
+    if (runtimeArguments.containsKey(argsKey)) {
+      return SPACES.split(runtimeArguments.get(argsKey).trim());
     } else {
       LOG.warn("Argument with key {} not found in Runtime Arguments", argsKey);
       return NO_ARGS;
@@ -177,11 +287,16 @@ abstract class AbstractSparkContext implements SparkContext {
 
   @Override
   public Map<String, String> getRuntimeArguments() {
-    ImmutableMap.Builder<String, String> arguments = ImmutableMap.builder();
-    for (Map.Entry<String, String> runtimeArgument : runtimeArguments) {
-      arguments.put(runtimeArgument);
-    }
-    return arguments.build();
+    return runtimeArguments;
   }
 
+  @Override
+  public ServiceDiscoverer getServiceDiscoverer() {
+    return basicSparkContext.getSerializableServiceDiscoverer();
+  }
+
+  @Override
+  public Metrics getMetrics() {
+    return basicSparkContext.getMetrics();
+  }
 }

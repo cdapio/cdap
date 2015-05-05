@@ -16,7 +16,6 @@
 
 package co.cask.cdap.metrics.process;
 
-import co.cask.cdap.data2.OperationException;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.kafka.client.FetchedMessage;
@@ -76,7 +75,7 @@ public final class PersistedMessageCallback implements KafkaConsumer.MessageCall
   private void persist() {
     try {
       metaTable.save(ImmutableMap.copyOf(offsets));
-    } catch (OperationException e) {
+    } catch (Exception e) {
       // Simple log and ignore the error.
       LOG.error("Failed to persist consumed message offset. {}", e.getMessage(), e);
     }

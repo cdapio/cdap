@@ -1,0 +1,127 @@
+<div class="plugins">
+  <div class="row">
+    <div class="col-xs-4">
+      <div class="panel panel-default" ng-init="sourcesTabOpen=true">
+        <div class="panel-heading clearfix" ng-click="sourcesTabOpen = !sourcesTabOpen">
+          <div class="pull-left">
+            <span class="icon-ETLsources"></span>
+            <span> Source ({{defaultSources.length}}) </span>
+          </div>
+          <i class="fa fa-fw pull-right"
+              ng-class="{'fa-chevron-down': sourcesTabOpen, 'fa-chevron-right': !sourcesTabOpen}"></i>
+        </div>
+
+        <div class="panel-body" ng-if="sourcesTabOpen">
+          <div class="row">
+            <div class="col-xs-12">
+              <ul class="list-group" ng-if="defaultSources.length > 0">
+                <li class="list-group-item"
+                    ng-repeat="source in defaultSources">
+
+                  <div class="clearfix">
+                    <div class="pull-left">
+                      <span class="fa {{source.icon}}" ></span>
+                      <span> {{source.name}} </span>
+                    </div>
+
+                    <span class="fa fa-plus-square pull-right" ng-click="handleSourceDrop(source.name)"></span>
+                  </div>
+
+                  <div tooltip="{{source.description}}"
+                       tooltip-append-to-body="true"
+                       class="description-overflow">
+                    {{source.description}}
+                  </div>
+
+                </li>
+              </ul>
+              <div class="well well-xs text-center" ng-if="defaultSources.length === 0">
+                <span> No Sources Found </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xs-4">
+      <div class="panel panel-default" ng-init="transformsTabOpen=true">
+        <div class="panel-heading clearfix" ng-click="transformsTabOpen =!transformsTabOpen">
+          <div class="pull-left">
+            <span class="icon-ETLtransforms"></span>
+            <span> Transforms ({{defaultTransforms.length}}) </span>
+          </div>
+          <i class="fa fa-fw pull-right"
+              ng-class="{'fa-chevron-down': transformsTabOpen, 'fa-chevron-right': !transformsTabOpen}"></i>
+        </div>
+
+        <div class="panel-body" ng-if="transformsTabOpen">
+          <div class="row">
+            <div class="col-xs-12">
+              <ul class="list-group" ng-if="defaultTransforms.length > 0">
+                <li class="list-group-item"
+                    ng-repeat="transform in defaultTransforms">
+
+                  <div class="clearfix">
+                    <div  class="pull-left">
+                      <span class="fa {{transform.icon}}"></span>
+                      <span> {{transform.name}} </span>
+                    </div>
+                    <span class="fa fa-plus-square pull-right" ng-click="handleTransformDrop(transform.name)"></span>
+                  </div>
+                  <div tooltip="{{transform.description}}"
+                       tooltip-append-to-body="true"
+                       class="description-overflow">{{transform.description}}</div>
+                </li>
+              </ul>
+              <div class="well well-xs text-center" ng-if="defaultTransforms.length === 0">
+                <span> No Transforms Found </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xs-4">
+      <div class="panel panel-default" ng-init="sinksTabOpen=true">
+        <div class="panel-heading clearfix" ng-click="sinksTabOpen = !sinksTabOpen">
+          <div class="pull-left">
+            <span class="icon-ETLsink"></span>
+            <span> Sinks ({{defaultSinks.length}}) </span>
+          </div>
+
+          <i class="fa fa-fw pull-right"
+              ng-class="{'fa-chevron-down': sinksTabOpen, 'fa-chevron-right': !sinksTabOpen}"></i>
+        </div>
+
+        <div class="panel-body" ng-if="sinksTabOpen">
+          <div class="row">
+            <div class="col-xs-12">
+              <ul class="list-group" ng-if="defaultSinks.length > 0">
+                <li class="list-group-item clearfix"
+                    ng-repeat="sink in defaultSinks">
+                    <div class="clearfix">
+                      <div class="pull-left">
+                        <span class="fa {{sink.icon}}"></span>
+                        <span> {{sink.name}} </span>
+                      </div>
+                      <span class="fa fa-plus-square pull-right" ng-click="handleSinkDrop(sink.name)"></span>
+                    </div>
+
+                    <div tooltip="{{sink.description}}"
+                         tooltip-append-to-body="true"
+                         class="description-overflow">
+                      {{sink.description}}
+                    </div>
+
+                </li>
+              </ul>
+              <div class="well well-xs text-center" ng-if="defaultSinks.length === 0">
+                <span> No Sinks Found </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

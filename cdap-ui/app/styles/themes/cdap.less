@@ -1,0 +1,86 @@
+@import "../variables.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
+
+// Mixins specific to the CDAP theme
+@import "../../styles/themes/cdap/mixins.less";
+@import "cdap/header.less";
+@import "cdap/buttons.less";
+@import "cdap/theme.less";
+@import "cdap/tabs.less";
+
+html {  }
+body.theme-cdap {
+  visibility: visible;
+
+  main.container {
+    @cdap-tabs-height: 20px;
+    @cdap-tabs-hpad: extract(@nav-link-padding, 1);
+    @cdap-subnav-height: 300px;
+
+    blockquote { border: 0; }
+    h2 {
+      > span {
+        display: block;
+        margin-top: 10px;
+        margin-bottom: 8px;
+        font-size: 28px;
+      }
+    }
+    section.tab-pane h2 {
+        margin: 0;
+        font-weight: 400px;
+        font-size: 20px;
+    }
+
+    /* we need to be able to calc tab height
+        for .cdap-subnav-end to work */
+    .nav-tabs > li > a {
+      line-height: @cdap-tabs-height;
+    }
+
+    .cdap-subnav-end {
+      content: ' ';
+      background-color: white;
+      position: absolute;
+      z-index: -1;
+      right: 0;
+      width: 100%;
+      height: @cdap-subnav-height;
+      margin-top: -(@cdap-subnav-height - (@cdap-tabs-height + (@cdap-tabs-hpad*2) + 2));
+      border-bottom: 1px solid @nav-tabs-border-color;
+      &.immediate { margin-top: -(@cdap-subnav-height); }
+    }
+
+    .type-block {
+      padding: 5px 0 20px;
+      small, span {
+        display: inline-block;
+        font-size: 16px;
+        color: @brand-primary;
+        line-height: 15px;
+        vertical-align: middle;
+      }
+      [class*="icon-"] {
+        font-size: 23px;
+      }
+    }
+    .type-icon {
+      margin-right: 5px;
+    }
+    // All custom icons we added need to be a little bigger.
+    [class*="icon-"] {
+      font-size: 15px;
+    }
+  } // end main.container
+
+  #loading-bar {
+    .bar {
+      height: 5px;
+    }
+  }
+
+  footer {
+    background-color: white;
+    font-weight: 600;
+  }
+}

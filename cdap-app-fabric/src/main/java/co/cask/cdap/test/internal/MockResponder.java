@@ -15,123 +15,68 @@
  */
 package co.cask.cdap.test.internal;
 
+import co.cask.http.AbstractHttpResponder;
+import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.buffer.ChannelBufferOutputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 
 /**
  * A mock implementation of {@link HttpResponder} that only record the response status.
  */
-public final class MockResponder implements HttpResponder {
+public final class MockResponder extends AbstractHttpResponder {
   private HttpResponseStatus status = null;
   private ChannelBuffer content = null;
   private static final Gson GSON = new Gson();
-
 
   public HttpResponseStatus getStatus() {
     return status;
   }
 
-  public <T> T decodeResponseContent(TypeToken<T> type) {
+  public <T> T decodeResponseContent(Type type) {
+    return decodeResponseContent(type, GSON);
+  }
+
+  public <T> T decodeResponseContent(Type type, Gson gson) {
     JsonReader jsonReader = new JsonReader(new InputStreamReader
                                              (new ChannelBufferInputStream(content), Charsets.UTF_8));
-    return GSON.fromJson(jsonReader, type.getType());
+    return gson.fromJson(jsonReader, type);
   }
 
   @Override
-  public void sendJson(HttpResponseStatus status, Object object) {
-    sendJson(status, object, object.getClass());
-  }
-
-  @Override
-  public void sendJson(HttpResponseStatus status, Object object, Type type) {
-    sendJson(status, object, type, GSON);
-  }
-
-  @Override
-  public void sendJson(HttpResponseStatus status, Object object, Type type, Gson gson) {
-    try {
-      ChannelBuffer channelBuffer = ChannelBuffers.dynamicBuffer();
-      JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(new ChannelBufferOutputStream(channelBuffer),
-                                                                    Charsets.UTF_8));
-      try {
-        gson.toJson(object, type, jsonWriter);
-      } finally {
-        jsonWriter.close();
+  public ChunkResponder sendChunkStart(HttpResponseStatus status, Multimap<String, String> headers) {
+    this.status = status;
+    return new ChunkResponder() {
+      @Override
+      public void sendChunk(ByteBuffer chunk) throws IOException {
+        sendChunk(ChannelBuffers.wrappedBuffer(chunk));
       }
 
-      sendContent(status, channelBuffer, "application/json", ImmutableMultimap.<String, String>of());
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
-  }
+      @Override
+      public void sendChunk(ChannelBuffer chunk) throws IOException {
+        if (content == null) {
+          content = ChannelBuffers.dynamicBuffer();
+        }
+        content.writeBytes(chunk);
+      }
 
-  @Override
-  public void sendString(HttpResponseStatus status, String data) {
-    this.status = status;
-  }
-
-  @Override
-  public void sendStatus(HttpResponseStatus status) {
-    sendContent(status, null, null, ImmutableMultimap.<String, String>of());
-  }
-
-  @Override
-  public void sendStatus(HttpResponseStatus status, Multimap<String, String> headers) {
-    sendContent(status, null, null, headers);
-  }
-
-  @Override
-  public void sendByteArray(HttpResponseStatus status, byte[] bytes, Multimap<String, String> headers) {
-    ChannelBuffer channelBuffer = ChannelBuffers.wrappedBuffer(bytes);
-    sendContent(status, channelBuffer, "application/octet-stream", headers);
-  }
-
-  @Override
-  public void sendBytes(HttpResponseStatus status, ByteBuffer buffer, Multimap<String, String> headers) {
-    sendContent(status, ChannelBuffers.wrappedBuffer(buffer), "application/octet-stream", headers);
-  }
-
-  @Override
-  public void sendError(HttpResponseStatus status, String errorMessage) {
-    Preconditions.checkArgument(!status.equals(HttpResponseStatus.OK), "Response status cannot be OK for errors");
-
-    ChannelBuffer errorContent = ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(errorMessage));
-    sendContent(status, errorContent, "text/plain; charset=utf-8", ImmutableMultimap.<String, String>of());
-  }
-
-  @Override
-  public void sendChunkStart(HttpResponseStatus status, Multimap<String, String> headers) {
-    this.status = status;
-  }
-
-  @Override
-  public void sendChunk(ChannelBuffer content) {
-    // No-op
-  }
-
-  @Override
-  public void sendChunkEnd() {
-    // No-op
+      @Override
+      public void close() throws IOException {
+        // No-op
+      }
+    };
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,25 +16,29 @@
 
 package net.fake.test.app;
 
+import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
-import co.cask.cdap.test.ProcedureClient;
-import co.cask.cdap.test.ProcedureManager;
-import co.cask.cdap.test.RuntimeMetrics;
 import co.cask.cdap.test.RuntimeStats;
+import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
-import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.concurrent.TimeoutException;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests bundle jar feature, in which the application jar contains
@@ -44,51 +48,47 @@ import java.util.concurrent.TimeoutException;
 public class TestBundleJarApp extends TestBase {
 
   @Test
-  public void testFlow() throws IOException, URISyntaxException, TimeoutException, InterruptedException {
+  public void testBundleJar() throws Exception {
     File helloWorldJar = new File(TestBundleJarApp.class.getClassLoader().getResource("helloworld.jar").toURI());
     ApplicationManager applicationManager = deployApplication(BundleJarApp.class, helloWorldJar);
-
     FlowManager flowManager = applicationManager.startFlow("SimpleFlow");
-    StreamWriter streamWriter = applicationManager.getStreamWriter("simpleInputStream");
+    StreamManager streamManager = getStreamManager("simpleInputStream");
     for (int i = 0; i < 5; i++) {
-      streamWriter.send("test" + i + ":" + i);
+      streamManager.send("test" + i + ":" + i);
     }
 
     // Check the flowlet metrics
-    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("BundleJarApp", "SimpleFlow", "SimpleFlowlet");
-    Thread.sleep(3000);
-
-    // TODO: not working
-    //flowletMetrics.waitForProcessed(100, 5, TimeUnit.SECONDS);
-    // Assert.assertEquals(0L, flowletMetrics.getException());
+    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("BundleJarApp", "SimpleFlow", "simpleFlowlet");
+    flowletMetrics.waitForProcessed(5, 5, TimeUnit.SECONDS);
+    Assert.assertEquals(0L, flowletMetrics.getException());
+    flowManager.stop();
 
     // Query the result
-    ProcedureManager procedureManager = applicationManager.startProcedure("SimpleGetInput");
-    ProcedureClient procedureClient = procedureManager.getClient();
+    ServiceManager serviceManager = applicationManager.startService("SimpleGetInput");
 
     // Verify the query result
-    String queryResult = procedureClient.query("get", ImmutableMap.of("key", "test1"));
+    String queryResult = callServiceGet(serviceManager.getServiceURL(), "/get/test1");
     String expectedQueryResult = new Gson().toJson(
       ImmutableMap.of("test1", "1" + BundleJarApp.EXPECTED_LOAD_TEST_CLASSES_OUTPUT));
     Assert.assertEquals(expectedQueryResult, queryResult);
-  }
+    serviceManager.stop();
 
-  @Test
-  public void testProcedure() throws IOException, URISyntaxException {
-    File helloWorldJar = new File(TestBundleJarApp.class.getClassLoader().getResource("helloworld.jar").toURI());
-    ApplicationManager appManager = deployApplication(BundleJarApp.class, helloWorldJar);
-    ProcedureManager procedureManager = appManager.startProcedure("PrintProcedure");
+    serviceManager = applicationManager.startService("PrintService");
 
     String helloWorldClassName = "hello.HelloWorld";
-    String result = procedureManager.getClient().query("load", ImmutableMap.of("class", helloWorldClassName));
-
+    String result = callServiceGet(serviceManager.getServiceURL(), "/load/" + helloWorldClassName);
     String expected = new Gson().toJson(
-      ImmutableMap.builder()
-        .put("Class.forName", helloWorldClassName)
-        .build());
-
+      ImmutableMap.of("Class.forName", helloWorldClassName));
     Assert.assertEquals(expected, result);
-    procedureManager.stop();
   }
 
+  private String callServiceGet(URL serviceURL, String path) throws IOException {
+    URLConnection connection = new URL(serviceURL.toString() + path).openConnection();
+    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8));
+    try {
+      return reader.readLine();
+    } finally {
+      Closeables.closeQuietly(reader);
+    }
+  }
 }

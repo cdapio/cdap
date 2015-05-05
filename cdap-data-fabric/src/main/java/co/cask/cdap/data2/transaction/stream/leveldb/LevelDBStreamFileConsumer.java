@@ -24,7 +24,7 @@ import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.stream.StreamEventOffset;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.KeyValue;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableCore;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableCore;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.transaction.stream.AbstractStreamFileConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -47,7 +47,7 @@ public final class LevelDBStreamFileConsumer extends AbstractStreamFileConsumer 
   // used for undoing state. The value does not matter, but the OcTable interface was written to expect some value.
   private static final byte[] DUMMY_STATE_CONTENT = { };
 
-  private final LevelDBOrderedTableCore tableCore;
+  private final LevelDBTableCore tableCore;
   private final Object dbLock;
   private final NavigableMap<byte[], NavigableMap<byte[], byte[]>> rowMapForClaim;
   private final NavigableMap<byte[], byte[]> colMapForClaim;
@@ -63,7 +63,7 @@ public final class LevelDBStreamFileConsumer extends AbstractStreamFileConsumer 
                                    FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
                                    StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
                                    @Nullable ReadFilter extraFilter,
-                                   LevelDBOrderedTableCore tableCore, Object dbLock) {
+                                   LevelDBTableCore tableCore, Object dbLock) {
     super(cConf, streamConfig, consumerConfig, reader, stateStore, beginConsumerState, extraFilter);
     this.tableCore = tableCore;
     this.dbLock = dbLock;

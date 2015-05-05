@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,11 +23,14 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
-import co.cask.cdap.api.procedure.Procedure;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.service.Service;
-import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.spark.Spark;
+import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.Workflow;
+
+import java.util.Map;
 
 /**
  * Configures a CDAP Application.
@@ -105,21 +108,6 @@ public interface ApplicationConfigurer {
   void addFlow(Flow flow);
 
   /**
-   * Adds a {@link Procedure} to the Application with a single instance.
-   *
-   * @param procedure The {@link Procedure} to include in the Application
-   */
-  void addProcedure(Procedure procedure);
-
-  /**
-   * Adds a {@link Procedure} to the Application with a number of instances.
-   *
-   * @param procedure The {@link Procedure} to include in the Application
-   * @param instances Number of instances to be included
-   */
-  void addProcedure(Procedure procedure, int instances);
-
-  /**
    * Adds a {@link MapReduce MapReduce job} to the Application. Use it when you need to re-use existing MapReduce jobs
    * that rely on Hadoop MapReduce APIs.
    *
@@ -142,23 +130,27 @@ public interface ApplicationConfigurer {
   void addWorkflow(Workflow workflow);
 
   /**
-   * Adds a list of {@link HttpServiceHandler} as a Custom Service to the Application.
-   *
-   * @param handlers The handlers to include in the Application
-   */
-  void addService(String name, Iterable<? extends HttpServiceHandler> handlers);
-
-  /**
-   * Adds a {@link HttpServiceHandler} as a Custom Service to the Application.
-   *
-   * @param handler The handler to include in the Application
-   */
-  void addService(String name, HttpServiceHandler handler);
-
-  /**
    * Adds a custom {@link Service} to the Application.
    *
    * @param service The service to include in the Application
    */
   void addService(Service service);
+
+  /**
+   * Adds a {@link Worker} to the Application.
+   *
+   * @param worker The worker to include in the Application
+   */
+  void addWorker(Worker worker);
+
+  /**
+   * Adds a {@link Schedule} to the specified program in the Application
+   *
+   * @param schedule the schedule to be included for the program
+   * @param programType the type of the program
+   * @param programName the name of the program
+   * @param properties the properties for the schedule
+   */
+  void addSchedule(Schedule schedule, SchedulableProgramType programType, String programName,
+                   Map<String, String> properties);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.test.app;
 
-import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.Output;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
@@ -35,12 +34,11 @@ import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureRequest;
-import co.cask.cdap.api.procedure.ProcedureResponder;
-import co.cask.cdap.api.procedure.ProcedureResponse;
+import co.cask.cdap.api.service.BasicService;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.io.BytesWritable;
@@ -56,6 +54,9 @@ import java.nio.charset.CharacterCodingException;
 import java.util.Map;
 import java.util.StringTokenizer;
 import javax.annotation.Nullable;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  *
@@ -69,7 +70,7 @@ public class WordCountApp extends AbstractApplication {
     createDataset("mydataset", "myKeyValueTable", DatasetProperties.EMPTY);
     createDataset("totals", "myKeyValueTable", DatasetProperties.EMPTY);
     addFlow(new WordCountFlow());
-    addProcedure(new WordFrequency());
+    addService(new BasicService("WordFrequency", new WordFrequencyHandler()));
     addMapReduce(new CountTotal());
     addMapReduce(new CountFromStream());
   }
@@ -217,33 +218,36 @@ public class WordCountApp extends AbstractApplication {
   }
 
   /**
-   * Procedure to query word counts.
+   * Service handler to query word counts.
    */
-  public static class WordFrequency extends AbstractProcedure {
+  public static class WordFrequencyHandler extends AbstractHttpServiceHandler {
     @UseDataSet("mydataset")
     private MyKeyValueTableDefinition.KeyValueTable counters;
 
     @UseDataSet("totals")
     private MyKeyValueTableDefinition.KeyValueTable totals;
 
-    @Handle("wordfreq")
-    private void wordfreq(ProcedureRequest request, ProcedureResponder responder)
+    @GET
+    @Path("wordfreq/{word}")
+    public void wordfreq(HttpServiceRequest request, HttpServiceResponder responder,
+                          @PathParam("word") String word)
       throws IOException {
-      String word = request.getArgument("word");
       Map<String, Long> result = ImmutableMap.of(word, Long.valueOf(this.counters.get(word, "0")));
-      responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), result);
+      responder.sendJson(result);
     }
 
-    @Handle("total")
-    private void total(ProcedureRequest request, ProcedureResponder responder) throws IOException {
+    @GET
+    @Path("total")
+    public void total(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
       long result = Long.valueOf(this.totals.get("total_words_count"));
-      responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), result);
+      responder.sendJson(result);
     }
 
-    @Handle("stream_total")
-    public void streamTotal(ProcedureRequest request, ProcedureResponder responder) throws IOException {
+    @GET
+    @Path("stream_total")
+    public void streamTotal(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
       long result = Long.valueOf(this.totals.get("stream_total_words_count"));
-      responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), result);
+      responder.sendJson(result);
     }
   }
 
@@ -252,21 +256,16 @@ public class WordCountApp extends AbstractApplication {
    */
   public static class CountTotal extends AbstractMapReduce {
     @Override
-    public MapReduceSpecification configure() {
-      return MapReduceSpecification.Builder.with()
-        .setName("countTotal")
-        .setDescription("Counts total words count")
-        .useInputDataSet("mydataset")
-        .useOutputDataSet("totals")
-        .build();
+    public void configure() {
+      setName("countTotal");
+      setInputDataset("mydataset");
+      setOutputDataset("totals");
     }
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       job.setMapperClass(MyMapper.class);
-      job.setMapOutputKeyClass(BytesWritable.class);
-      job.setMapOutputValueClass(LongWritable.class);
       job.setReducerClass(MyReducer.class);
     }
 
@@ -304,13 +303,10 @@ public class WordCountApp extends AbstractApplication {
   public static final class CountFromStream extends AbstractMapReduce {
 
     @Override
-    public MapReduceSpecification configure() {
-      return MapReduceSpecification.Builder.with()
-        .setName("countFromStream")
-        .setDescription("Word count from stream")
-        .useOutputDataSet("totals")
-        .useInputDataSet("stream://text")
-        .build();
+    public void configure() {
+      setName("countFromStream");
+      useStreamInput("text");
+      setOutputDataset("totals");
     }
 
     @Override

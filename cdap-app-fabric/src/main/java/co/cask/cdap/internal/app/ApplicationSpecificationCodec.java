@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,12 +19,14 @@ package co.cask.cdap.internal.app;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.procedure.ProcedureSpecification;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
+import co.cask.cdap.proto.codec.AbstractSpecificationCodec;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -36,7 +38,7 @@ import java.lang.reflect.Type;
 import java.util.Map;
 
 /**
- *
+ * TODO: Move to cdap-proto
  */
 final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<ApplicationSpecification> {
 
@@ -45,16 +47,20 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     JsonObject jsonObj = new JsonObject();
 
     jsonObj.add("name", new JsonPrimitive(src.getName()));
+    if (src.getVersion() != null) {
+      jsonObj.add("version", new JsonPrimitive(src.getVersion()));
+    }
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
     jsonObj.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
     jsonObj.add("datasetModules", serializeMap(src.getDatasetModules(), context, String.class));
     jsonObj.add("datasetInstances", serializeMap(src.getDatasets(), context, DatasetCreationSpec.class));
     jsonObj.add("flows", serializeMap(src.getFlows(), context, FlowSpecification.class));
-    jsonObj.add("procedures", serializeMap(src.getProcedures(), context, ProcedureSpecification.class));
     jsonObj.add("mapReduces", serializeMap(src.getMapReduce(), context, MapReduceSpecification.class));
     jsonObj.add("sparks", serializeMap(src.getSpark(), context, SparkSpecification.class));
     jsonObj.add("workflows", serializeMap(src.getWorkflows(), context, WorkflowSpecification.class));
     jsonObj.add("services", serializeMap(src.getServices(), context, ServiceSpecification.class));
+    jsonObj.add("schedules", serializeMap(src.getSchedules(), context, ScheduleSpecification.class));
+    jsonObj.add("workers", serializeMap(src.getWorkers(), context, WorkerSpecification.class));
 
     return jsonObj;
   }
@@ -65,31 +71,40 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     JsonObject jsonObj = json.getAsJsonObject();
 
     String name = jsonObj.get("name").getAsString();
+
+    String version = null;
+    if (jsonObj.has("version")) {
+      version = jsonObj.get("version").getAsString();
+    }
     String description = jsonObj.get("description").getAsString();
 
     Map<String, StreamSpecification> streams = deserializeMap(jsonObj.get("streams"),
                                                               context, StreamSpecification.class);
     Map<String, String> datasetModules = deserializeMap(jsonObj.get("datasetModules"), context, String.class);
     Map<String, DatasetCreationSpec> datasetInstances = deserializeMap(jsonObj.get("datasetInstances"),
-                                                                               context,
-                                                                               DatasetCreationSpec.class);
+                                                                       context,
+                                                                       DatasetCreationSpec.class);
     Map<String, FlowSpecification> flows = deserializeMap(jsonObj.get("flows"),
                                                           context, FlowSpecification.class);
-    Map<String, ProcedureSpecification> procedures = deserializeMap(jsonObj.get("procedures"),
-                                                                    context, ProcedureSpecification.class);
     Map<String, MapReduceSpecification> mapReduces = deserializeMap(jsonObj.get("mapReduces"),
                                                                     context, MapReduceSpecification.class);
     Map<String, SparkSpecification> sparks = deserializeMap(jsonObj.get("sparks"),
-                                                                    context, SparkSpecification.class);
+                                                            context, SparkSpecification.class);
     Map<String, WorkflowSpecification> workflows = deserializeMap(jsonObj.get("workflows"),
                                                                   context, WorkflowSpecification.class);
 
     Map<String, ServiceSpecification> services = deserializeMap(jsonObj.get("services"),
                                                                 context, ServiceSpecification.class);
 
-    return new DefaultApplicationSpecification(name, description, streams,
+    Map<String, ScheduleSpecification> schedules = deserializeMap(jsonObj.get("schedules"),
+                                                                context, ScheduleSpecification.class);
+
+    Map<String, WorkerSpecification> workers = deserializeMap(jsonObj.get("workers"), context,
+                                                              WorkerSpecification.class);
+
+    return new DefaultApplicationSpecification(name, version, description, streams,
                                                datasetModules, datasetInstances,
-                                               flows, procedures, mapReduces, sparks,
-                                               workflows, services);
+                                               flows, mapReduces, sparks,
+                                               workflows, services, schedules, workers);
   }
 }

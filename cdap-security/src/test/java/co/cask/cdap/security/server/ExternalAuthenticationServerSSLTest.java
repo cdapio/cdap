@@ -19,6 +19,10 @@ package co.cask.cdap.security.server;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
+import com.unboundid.ldap.listener.InMemoryListenerConfig;
+import com.unboundid.util.ssl.KeyStoreKeyManager;
+import com.unboundid.util.ssl.SSLUtil;
+import com.unboundid.util.ssl.TrustAllTrustManager;
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.scheme.Scheme;
@@ -29,6 +33,7 @@ import org.apache.http.impl.conn.BasicClientConnectionManager;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 
+import java.net.InetAddress;
 import java.net.URL;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
@@ -37,7 +42,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 /**
- * Test SSL External Authentication Server
+ * Tests for {@link ExternalAuthenticationServer} with SSL enabled.
  */
 public class ExternalAuthenticationServerSSLTest extends ExternalAuthenticationServerTestBase {
 
@@ -46,13 +51,26 @@ public class ExternalAuthenticationServerSSLTest extends ExternalAuthenticationS
     URL certUrl = ExternalAuthenticationServerSSLTest.class.getClassLoader().getResource("cert.jks");
     Assert.assertNotNull(certUrl);
 
+    String authHandlerConfigBase = Constants.Security.AUTH_HANDLER_CONFIG_BASE;
+
     CConfiguration cConf = CConfiguration.create();
     SConfiguration sConf = SConfiguration.create();
+    cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, "127.0.0.1");
     cConf.set(Constants.Security.SSL_ENABLED, "true");
+    cConf.set(Constants.Security.AuthenticationServer.SSL_PORT, "0");
+    cConf.set(authHandlerConfigBase.concat("useLdaps"), "true");
+    cConf.set(authHandlerConfigBase.concat("ldapsVerifyCertificate"), "false");
     sConf.set(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH, certUrl.getPath());
-
     configuration = cConf;
     sConfiguration = sConf;
+
+    String keystorePassword = sConf.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PASSWORD);
+    KeyStoreKeyManager keyManager = new KeyStoreKeyManager(certUrl.getFile(), keystorePassword.toCharArray());
+    SSLUtil sslUtil = new SSLUtil(keyManager, new TrustAllTrustManager());
+    ldapListenerConfig = InMemoryListenerConfig.createLDAPSConfig("LDAP", InetAddress.getByName("127.0.0.1"),
+                                                                  ldapPort, sslUtil.createSSLServerSocketFactory(),
+                                                                  sslUtil.createSSLSocketFactory());
+
     setup();
   }
 

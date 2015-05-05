@@ -50,7 +50,7 @@ public class ExploreStatementTest {
     );
 
     // Make sure an empty query still has a ResultSet associated to it
-    ExploreStatement statement = new ExploreStatement(null, exploreClient);
+    ExploreStatement statement = new ExploreStatement(null, exploreClient, "");
     Assert.assertTrue(statement.execute("mock_query_1"));
     ResultSet rs = statement.getResultSet();
     Assert.assertNotNull(rs);

@@ -18,20 +18,23 @@
 package co.cask.cdap.client.util;
 
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
-import co.cask.cdap.common.http.HttpRequest;
-import co.cask.cdap.common.http.HttpResponse;
+import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.security.authentication.client.AccessToken;
-import co.cask.cdap.security.authentication.client.AuthenticationClient;
-import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
+import co.cask.common.http.HttpMethod;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequestConfig;
+import co.cask.common.http.HttpResponse;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
+import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.gson.Gson;
 import com.google.inject.matcher.Matcher;
 import org.apache.commons.lang.StringUtils;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
@@ -39,6 +42,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -57,16 +62,16 @@ import static com.google.inject.matcher.Matchers.only;
 public class RESTClientTest {
 
   private static final String ACCESS_TOKEN = "ssdw221e2ffderrfg33322rr";
+  private static final int RETRY_LIMIT = 25;
 
   private TestHttpService httpService;
   private RESTClient restClient;
 
   @Before
   public void setUp() throws IOException {
-    ClientConfig clientConfig = new ClientConfig("localhost", null);
-    restClient = RESTClient.create(clientConfig);
     httpService = new TestHttpService();
     httpService.startAndWait();
+    restClient = new RESTClient();
   }
 
   @After
@@ -79,10 +84,10 @@ public class RESTClientTest {
     URL url = getBaseURI().resolve("/api/testPostAuth").toURL();
     HttpRequest request = HttpRequest.post(url).build();
     HttpResponse response = restClient.execute(request, new AccessToken(ACCESS_TOKEN, 82000L, "Bearer"));
-    verifyResponse(response, only(200),  any(),  only("Access token received: " + ACCESS_TOKEN));
+    verifyResponse(response, only(200), any(), only("Access token received: " + ACCESS_TOKEN));
   }
 
-  @Test(expected = UnAuthorizedAccessTokenException.class)
+  @Test(expected = UnauthorizedException.class)
   public void testPostUnauthorizedWithAccessToken() throws Exception {
     URL url = getBaseURI().resolve("/api/testPostAuth").toURL();
     HttpRequest request = HttpRequest.post(url).build();
@@ -94,10 +99,10 @@ public class RESTClientTest {
     URL url = getBaseURI().resolve("/api/testPutAuth").toURL();
     HttpRequest request = HttpRequest.put(url).build();
     HttpResponse response = restClient.execute(request, new AccessToken(ACCESS_TOKEN, 82000L, "Bearer"));
-    verifyResponse(response, only(200),  any(),  only("Access token received: " + ACCESS_TOKEN));
+    verifyResponse(response, only(200), any(), only("Access token received: " + ACCESS_TOKEN));
   }
 
-  @Test(expected = UnAuthorizedAccessTokenException.class)
+  @Test(expected = UnauthorizedException.class)
   public void testPutUnauthorizedWithAccessToken() throws Exception {
     URL url = getBaseURI().resolve("/api/testPutAuth").toURL();
     HttpRequest request = HttpRequest.put(url).build();
@@ -109,10 +114,10 @@ public class RESTClientTest {
     URL url = getBaseURI().resolve("/api/testGetAuth").toURL();
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = restClient.execute(request, new AccessToken(ACCESS_TOKEN, 82000L, "Bearer"));
-    verifyResponse(response, only(200),  any(),  only("Access token received: " + ACCESS_TOKEN));
+    verifyResponse(response, only(200), any(), only("Access token received: " + ACCESS_TOKEN));
   }
 
-  @Test(expected = UnAuthorizedAccessTokenException.class)
+  @Test(expected = UnauthorizedException.class)
   public void testGetUnauthorizedWithAccessToken() throws Exception {
     URL url = getBaseURI().resolve("/api/testGetAuth").toURL();
     HttpRequest request = HttpRequest.get(url).build();
@@ -124,14 +129,39 @@ public class RESTClientTest {
     URL url = getBaseURI().resolve("/api/testDeleteAuth").toURL();
     HttpRequest request = HttpRequest.delete(url).build();
     HttpResponse response = restClient.execute(request, new AccessToken(ACCESS_TOKEN, 82000L, "Bearer"));
-    verifyResponse(response, only(200),  any(),  only("Access token received: " + ACCESS_TOKEN));
+    verifyResponse(response, only(200), any(), only("Access token received: " + ACCESS_TOKEN));
   }
 
-  @Test(expected = UnAuthorizedAccessTokenException.class)
+  @Test(expected = UnauthorizedException.class)
   public void testDeleteUnauthorizedWithAccessToken() throws Exception {
     URL url = getBaseURI().resolve("/api/testDeleteAuth").toURL();
     HttpRequest request = HttpRequest.delete(url).build();
     restClient.execute(request, new AccessToken("Unknown", 82000L, "Bearer"));
+  }
+
+  @Test
+  public void testUnavailableLimit() throws Exception {
+    URL url = getBaseURI().resolve("/api/testUnavail").toURL();
+    HttpRequest request = HttpRequest.get(url).build();
+    HttpResponse response = restClient.execute(request, new AccessToken(ACCESS_TOKEN, 82000L, "Bearer"));
+    verifyResponse(response, only(200), any(), any());
+  }
+
+  @Test
+  public void testBody() throws Exception {
+    URL url = getBaseURI().resolve("/api/testCount").toURL();
+    HttpResponse response = restClient.execute(HttpMethod.POST, url, "increment", null,
+                                               new AccessToken(ACCESS_TOKEN, 82000L, "Bearer"), 200);
+    Assert.assertEquals("1", response.getResponseBodyAsString());
+    response = restClient.execute(HttpMethod.POST, url, "increment", null,
+                                               new AccessToken(ACCESS_TOKEN, 82000L, "Bearer"), 200);
+    Assert.assertEquals("2", response.getResponseBodyAsString());
+    response = restClient.execute(HttpMethod.POST, url, "decrement", null,
+                                  new AccessToken(ACCESS_TOKEN, 82000L, "Bearer"), 200);
+    Assert.assertEquals("1", response.getResponseBodyAsString());
+    response = restClient.execute(HttpMethod.POST, url, "decrement", null,
+                                  new AccessToken(ACCESS_TOKEN, 82000L, "Bearer"), 200);
+    Assert.assertEquals("0", response.getResponseBodyAsString());
   }
 
   private void verifyResponse(HttpResponse response, Matcher<Object> expectedResponseCode,
@@ -146,8 +176,7 @@ public class RESTClientTest {
                       expectedMessage.matches(response.getResponseMessage()));
 
     String actualResponseBody = new String(response.getResponseBody());
-    Assert.assertTrue("Response body - expected: " + expectedBody.toString()
-                        + " actual: " + actualResponseBody,
+    Assert.assertTrue("Response body - expected: " + expectedBody.toString() + " actual: " + actualResponseBody,
                       expectedBody.matches(actualResponseBody));
   }
 
@@ -194,6 +223,24 @@ public class RESTClientTest {
 
   @Path("/api")
   public final class TestHandler extends AbstractHttpHandler {
+    private int unavailEnpointCount = 0;
+    private int integer = 0;
+
+    @POST
+    @Path("/testCount")
+    public void testIncrement(org.jboss.netty.handler.codec.http.HttpRequest request,
+                              HttpResponder responder) throws Exception {
+      Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
+      String content = (new Gson()).fromJson(reader, String.class);
+      if (content.equals("increment")) {
+        responder.sendString(HttpResponseStatus.OK, String.valueOf(++integer));
+      } else if (content.equals("decrement")) {
+        responder.sendString(HttpResponseStatus.OK, String.valueOf(--integer));
+      } else {
+        responder.sendString(HttpResponseStatus.OK, String.valueOf(integer));
+      }
+    }
+
     @POST
     @Path("/testPostAuth")
     public void testPostAuth(org.jboss.netty.handler.codec.http.HttpRequest request,
@@ -243,6 +290,21 @@ public class RESTClientTest {
           + request.getHeader(HttpHeaders.AUTHORIZATION).replace("Bearer ", StringUtils.EMPTY));
       } else {
         responder.sendString(HttpResponseStatus.UNAUTHORIZED, "Access token received: Unknown");
+      }
+    }
+
+    @GET
+    @Path("/testUnavail")
+    public void testUnavail(org.jboss.netty.handler.codec.http.HttpRequest request,
+                            HttpResponder responder) throws Exception {
+      unavailEnpointCount++;
+      //Max number of calls to this endpoint should be 1 (Original request) + RETRY_LIMIT.
+      if (unavailEnpointCount < (RETRY_LIMIT + 1)) {
+        responder.sendStatus(HttpResponseStatus.SERVICE_UNAVAILABLE);
+      } else if (unavailEnpointCount == (RETRY_LIMIT + 1)) {
+        responder.sendStatus(HttpResponseStatus.OK);
+      } else {
+        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
     }
   }

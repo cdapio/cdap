@@ -1,0 +1,115 @@
+<section class="panel-group explore"
+     ng-controller="CdapStreamExploreController"
+     ng-model="activePanel"
+     data-allow-multiple="true"
+     bs-collapse>
+
+  <!-- VIEW DATA -->
+  <div class="panel panel-explore">
+    <div class="panel-heading" bs-collapse-toggle>
+      <h3 class="panel-title">
+        <span
+          ng-class="{'fa-chevron-right': activePanel.indexOf(0) === -1,
+                     'fa-chevron-down': activePanel.indexOf(0) !== -1}"
+          class="fa fa-fw"
+        ></span>View Data
+      </h3>
+    </div>
+    <div class="panel-collapse" bs-collapse-target>
+      <div class="panel-body">
+
+        <form ng-submit="doEventSearch()">
+          <div class="row">
+            <div class="col-xs-4">
+              <my-timestamp-picker
+                data-label="From:"
+                ng-model="eventSearch.startMs"
+              ></my-timestamp-picker>
+
+            </div>
+            <div class="col-xs-4">
+              <my-timestamp-picker
+                data-label="To:"
+                ng-model="eventSearch.endMs"
+              ></my-timestamp-picker>
+            </div>
+            <div class="col-xs-2">
+              <div class="input-group">
+                <label class="input-group-addon" for="exploreEventsLimit">Limit</label>
+                <input type="number" class="form-control" id="exploreEventsLimit" ng-model="eventSearch.limit" min="1" max="100" />
+              </div>
+            </div>
+            <div class="col-xs-2">
+              <button class="btn btn-default btn-block" type="submit">
+                <span class="fa fa-search"></span>
+                Find events
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <table class="table" ng-if="eventSearch.results.length">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Event Time</th>
+              <th>Body</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="event in eventSearch.results | orderBy:'-timestamp'">
+              <td>
+                {{event.timestamp | amDateFormat: 'MM/DD/YY h:mm:ss a'}}
+              </td>
+              <td>{{event.timestamp | amTimeAgo}}</td>
+              <td>{{event.body | json | myEllipsis: 80 }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p ng-hide="eventSearch.results.length">
+          (no events)
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- WRITE & EXECUTE SQL -->
+  <div class="panel panel-explore">
+    <div class="panel-heading" bs-collapse-toggle>
+      <h3 class="panel-title">
+        <span
+          ng-class="{'fa-chevron-right': activePanel.indexOf(1) === -1,
+                     'fa-chevron-down': activePanel.indexOf(1) !== -1}"
+          class="fa fa-fw"
+        ></span>Write &amp; Execute SQL
+      </h3>
+    </div>
+    <div class="panel-collapse" bs-collapse-target>
+      <div class="panel-body">
+        <my-sql-query data-type="'stream'" data-name="name"></my-sql-query>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW QUERIES -->
+  <div class="panel panel-explore">
+    <div class="panel-heading" bs-collapse-toggle>
+      <h3 class="panel-title">
+        <span
+          ng-class="{'fa-chevron-right': activePanel.indexOf(2) === -1,
+                     'fa-chevron-down': activePanel.indexOf(2) !== -1}"
+          class="fa fa-fw"
+        ></span>View Queries
+      </h3>
+    </div>
+    <div class="panel-collapse" bs-collapse-target>
+      <div class="panel-body">
+
+        <my-view-queries></my-view-queries>
+
+      </div>
+    </div>
+  </div>
+
+
+</section>

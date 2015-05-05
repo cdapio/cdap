@@ -1,0 +1,10 @@
+
+<button class="btn btn-default" ng-class="buttonClass" ng-disabled="buttonDisabled" ng-if="!isDropdown">
+  <span class="fa fa-plus"> </span>
+  <span> {{buttonLabel}} </span>
+</button>
+
+<a role="menuitem" ng-if="isDropdown">
+  <span class="fa fa-plus pull-right"></span>
+  <span> {{ buttonLabel }} </span>
+</a>

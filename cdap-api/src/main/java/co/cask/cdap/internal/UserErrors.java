@@ -37,4 +37,5 @@ public final class UserErrors {
   public static final String FLOW_SPEC_NAME = "flow-spec-name";
   public static final String FLOW_SPEC_DESC = "flow-spec-desc";
   public static final String RESET_FAIL = "reset-fail";
+  public static final String DATASETS_DELETE_FAIL = "datasets-delete-fail";
 }

@@ -21,7 +21,7 @@
   <parent>
     <artifactId>cdap-examples</artifactId>
     <groupId>co.cask.cdap</groupId>
-    <version>2.5.1</version>
+    <version>3.0.0</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -49,6 +49,10 @@
     <dependency>
       <groupId>co.cask.http</groupId>
       <artifactId>netty-http</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.common</groupId>
+      <artifactId>common-http</artifactId>
     </dependency>
   </dependencies>
 </project>

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,26 +17,27 @@
 package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.Namespace;
-import co.cask.cdap.data.dataset.DataSetInstantiator;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
+import co.cask.cdap.test.internal.DefaultId;
 import co.cask.cdap.test.internal.TempFolder;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -45,6 +46,7 @@ import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TxConstants;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.inject.Injector;
 import org.apache.twill.common.Threads;
@@ -76,7 +78,7 @@ public class SparkProgramRunnerTest {
 
   private static TransactionManager txService;
   private static DatasetFramework dsFramework;
-  private static DataSetInstantiator dataSetInstantiator;
+  private static DatasetInstantiator datasetInstantiator;
 
   final String testString1 = "persisted data";
   final String testString2 = "distributed systems";
@@ -106,13 +108,10 @@ public class SparkProgramRunnerTest {
     injector = AppFabricTestHelper.getInjector(conf);
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
-    dsFramework = new NamespacedDatasetFramework(injector.getInstance(DatasetFramework.class),
-                                                 new DefaultDatasetNamespace(conf, Namespace.USER));
-
-    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    dataSetInstantiator =
-      new DataSetInstantiator(datasetFramework, injector.getInstance(CConfiguration.class),
-                              SparkProgramRunnerTest.class.getClassLoader(), null, null);
+    dsFramework = injector.getInstance(DatasetFramework.class);
+    datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, dsFramework,
+                                                  SparkProgramRunnerTest.class.getClassLoader(),
+                                                  null, null);
 
     txService.startAndWait();
   }
@@ -125,8 +124,8 @@ public class SparkProgramRunnerTest {
   @After
   public void after() throws Exception {
     // cleanup user data (only user datasets)
-    for (DatasetSpecification spec : dsFramework.getInstances()) {
-      dsFramework.deleteInstance(spec.getName());
+    for (DatasetSpecificationSummary spec : dsFramework.getInstances(DefaultId.NAMESPACE)) {
+      dsFramework.deleteInstance(Id.DatasetInstance.from(DefaultId.NAMESPACE, spec.getName()));
     }
   }
 
@@ -151,10 +150,10 @@ public class SparkProgramRunnerTest {
   }
 
   private void prepareInputData() throws TransactionFailureException, InterruptedException {
-    final ObjectStore<String> input = dataSetInstantiator.getDataSet("keys");
+    final ObjectStore<String> input = datasetInstantiator.getDataset("keys");
 
     //Populate some input
-    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
+    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -165,9 +164,9 @@ public class SparkProgramRunnerTest {
   }
 
   private void checkOutputData() throws TransactionFailureException, InterruptedException {
-    final KeyValueTable output = dataSetInstantiator.getDataSet("count");
+    final KeyValueTable output = datasetInstantiator.getDataset("count");
     //read output and verify result
-    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
+    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -191,14 +190,7 @@ public class SparkProgramRunnerTest {
     final CountDownLatch completion = new CountDownLatch(1);
     controller.addListener(new AbstractListener() {
       @Override
-      public void init(ProgramController.State currentState) {
-        if (currentState == ProgramController.State.STOPPED || currentState == ProgramController.State.ERROR) {
-          completion.countDown();
-        }
-      }
-
-      @Override
-      public void stopped() {
+      public void completed() {
         completion.countDown();
       }
 
@@ -217,8 +209,10 @@ public class SparkProgramRunnerTest {
     ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
 
     HashMap<String, String> userArgs = Maps.newHashMap();
-    return runner.run(program, new SimpleProgramOptions(program.getName(), new BasicArguments(),
-                                                        new BasicArguments(userArgs)));
+    BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
+                                                                   RunIds.generate().getId()));
+
+    return runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs, new BasicArguments(userArgs)));
   }
 
   private Program getProgram(ApplicationWithPrograms app, Class<?> programClass) throws ClassNotFoundException {

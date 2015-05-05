@@ -26,6 +26,7 @@ import com.google.common.base.Charsets;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.apache.commons.codec.binary.Base64;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -129,8 +130,8 @@ public class GrantAccessToken {
 
     // Set response headers
     response.setContentType("application/json;charset=UTF-8");
-    response.addHeader("Cache-Control", "no-store");
-    response.addHeader("Pragma", "no-cache");
+    response.addHeader(HttpHeaders.Names.CACHE_CONTROL, "no-store");
+    response.addHeader(HttpHeaders.Names.PRAGMA, "no-cache");
 
     // Set response body
     JsonObject json = new JsonObject();

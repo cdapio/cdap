@@ -1,0 +1,12 @@
+<div class="input-group">
+  <button type="button" class="btn btn-default form-control mp-dropdown-toggle"
+          ng-model="durationType"
+          bs-options="t.name for t in durationTypes"
+          bs-select>
+    <strong ng-bind="durationType"></strong>
+    <span class="caret"></span>
+  </button>
+  <span class="input-group-addon">
+    <span class="addon-label" ng-bind="label"></span>
+  </span>
+</div>

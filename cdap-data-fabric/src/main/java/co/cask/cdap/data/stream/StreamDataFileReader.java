@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,17 +16,18 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.io.BinaryDecoder;
+import co.cask.cdap.common.io.ByteBuffers;
 import co.cask.cdap.common.io.Decoder;
 import co.cask.cdap.common.io.SeekableInputStream;
 import co.cask.cdap.common.stream.StreamEventDataCodec;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.ReadFilter;
-import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.InputSupplier;
 import com.google.gson.JsonSyntaxException;
@@ -37,7 +38,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
@@ -52,21 +52,20 @@ import javax.annotation.concurrent.NotThreadSafe;
 @NotThreadSafe
 public final class StreamDataFileReader implements FileReader<PositionStreamEvent, Long> {
 
-  private static final byte[] MAGIC_HEADER = {'E', '1'};
-
   private final InputSupplier<? extends SeekableInputStream> eventInputSupplier;
   private final InputSupplier<? extends InputStream> indexInputSupplier;
   private final long startTime;
   private final long offset;
+  private final byte[] timestampBuffer;
+  private final StreamEventBuffer streamEventBuffer;
   private StreamDataFileIndex index;
   private SeekableInputStream eventInput;
   private long position;
-  private byte[] timestampBuffer;
   private long timestamp;
-  private int length;
   private boolean closed;
   private boolean eof;
   private Decoder decoder;
+  private StreamEvent eventTemplate;
 
   /**
    * Opens a new {@link StreamDataFileReader} with the given inputs.
@@ -113,11 +112,11 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
                                long startTime, long offset) {
     this.eventInputSupplier = eventInputSupplier;
     this.indexInputSupplier = indexInputSupplier;
+    this.streamEventBuffer = new StreamEventBuffer();
     this.startTime = startTime;
     this.offset = offset;
     this.timestampBuffer = new byte[8];
     this.timestamp = -1L;
-    this.length = -1;
   }
 
   @Override
@@ -194,8 +193,6 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
             break;
           }
 
-          position = eventInput.getPos();
-
         } catch (IOException e) {
           if (eventInput != null) {
             eventInput.close();
@@ -211,13 +208,13 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
             break;
           }
 
-          if (stopwatch.elapsedTime(unit) > timeout) {
+          if (stopwatch.elapsedTime(unit) >= timeout) {
             break;
           }
 
           TimeUnit.NANOSECONDS.sleep(sleepNano);
 
-          if (stopwatch.elapsedTime(unit) > timeout) {
+          if (stopwatch.elapsedTime(unit) >= timeout) {
             break;
           }
         }
@@ -234,7 +231,7 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
   /**
    * Returns the index for the stream data or {@code null} if index is absent.
    */
-  StreamDataFileIndex getIndex() {
+  private StreamDataFileIndex getIndex() {
     if (index == null && indexInputSupplier != null) {
       index = new StreamDataFileIndex(indexInputSupplier);
     }
@@ -249,10 +246,21 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
       eventInput = eventInputSupplier.getInput();
       decoder = new BinaryDecoder(eventInput);
 
+      // If position is <= 0, the reader is not being used yet, hence needs to initialize.
       if (position <= 0) {
         init();
+      } else {
+        // If position > 0, the reader has already been initialized.
+        // We just need to seek to beginning of a data-block, depending on whether there is event in the buffer
+        if (streamEventBuffer.hasEvent()) {
+          // If there is event in the buffer, we seek to the data block that come after the buffered events
+          // to prepare for the reading of the data block after the current buffered events are fully consumed.
+          eventInput.seek(streamEventBuffer.getEndPosition());
+        } else {
+          // Otherwise, we seek to the current position, which should be pointing to the beginning of a data block
+          eventInput.seek(position);
+        }
       }
-      eventInput.seek(position);
     } catch (IOException e) {
       position = 0;
       if (eventInput != null) {
@@ -273,7 +281,7 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
 
     // If it is constructed with an arbitrary offset, need to find an event position
     if (offset > 0) {
-      initByOffset();
+      initByOffset(offset);
     } else if (startTime > 0) {
       initByTime(startTime);
     }
@@ -282,21 +290,77 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
   private void readHeader() throws IOException {
     // Read the header of the event file
     // First 2 bytes should be 'E' '1'
-    byte[] magic = new byte[MAGIC_HEADER.length];
+    byte[] magic = new byte[StreamDataFileConstants.MAGIC_HEADER_SIZE];
     ByteStreams.readFully(eventInput, magic);
 
-    if (!Arrays.equals(magic, MAGIC_HEADER)) {
-      throw new IOException("Unsupported stream file format. Expected magic bytes as 'E' '1'");
-    }
+    int fileVersion = decodeFileVersion(magic);
 
     // Read the properties map.
     Map<String, String> properties = StreamUtils.decodeMap(new BinaryDecoder(eventInput));
-    verifySchema(properties.get("stream.schema"));
+
+    verifySchema(properties);
+
+    // Create event template
+    if (fileVersion >= 2) {
+      eventTemplate = createEventTemplate(properties);
+    } else {
+      eventTemplate = new StreamEvent(ImmutableMap.<String, String>of(), ByteBuffers.EMPTY_BUFFER, -1L);
+    }
 
     position = eventInput.getPos();
   }
 
-  private void initByOffset() throws IOException {
+  /**
+   * Decodes the file version from the magic header.
+   *
+   * @return the file version
+   * @throws IOException if failed to decode file version from the magic header
+   */
+  private int decodeFileVersion(byte[] magic) throws IOException {
+    if (Arrays.equals(magic, StreamDataFileConstants.MAGIC_HEADER_V1)) {
+      return 1;
+    }
+    if (Arrays.equals(magic, StreamDataFileConstants.MAGIC_HEADER_V2)) {
+      return 2;
+    }
+    throw new IOException(
+      String.format("Unsupported stream file format. First two bytes must be %s or %s",
+                    Bytes.toStringBinary(StreamDataFileConstants.MAGIC_HEADER_V1),
+                    Bytes.toStringBinary(StreamDataFileConstants.MAGIC_HEADER_V2))
+    );
+  }
+
+  /**
+   * Creates a {@link StreamEvent} that will be used as a template for all events consumable from this reader.
+   */
+  private StreamEvent createEventTemplate(Map<String, String> properties) throws IOException {
+    long timestamp = -1L;
+
+    // See if all events in the file are of the same timestamp
+    String uniTimestamp = properties.get(StreamDataFileConstants.Property.Key.UNI_TIMESTAMP);
+    if (StreamDataFileConstants.Property.Value.CLOSE_TIMESTAMP.equals(uniTimestamp)) {
+      // Seek to the end - 8 of the stream to read the close timestamp
+      long pos = eventInput.getPos();
+      eventInput.seek(eventInput.size() - 8);
+      timestamp = Math.abs(readTimestamp());
+      eventInput.seek(pos);
+    } else if (uniTimestamp != null) {
+      timestamp = Long.parseLong(uniTimestamp);
+    }
+
+    // Grab the set of default headers for all events
+    ImmutableMap.Builder<String, String> headers = ImmutableMap.builder();
+    String prefix = StreamDataFileConstants.Property.Key.EVENT_HEADER_PREFIX;
+    for (Map.Entry<String, String> entry : properties.entrySet()) {
+      if (entry.getKey().startsWith(prefix)) {
+        headers.put(entry.getKey().substring(prefix.length()), entry.getValue());
+      }
+    }
+
+    return new StreamEvent(headers.build(), ByteBuffers.EMPTY_BUFFER, timestamp);
+  }
+
+  private void initByOffset(final long offset) throws IOException {
     // If index is provided, lookup the position smaller but closest to the offset.
     StreamDataFileIndex index = getIndex();
     long pos = index == null ? 0 : index.floorPosition(offset);
@@ -337,13 +401,12 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
 
     try {
       while (!eof) {
-        positionBound = eventInput.getPos();
-
         // Read timestamp
         long timestamp = readTimestamp();
 
         // If EOF or condition match, upper bound found. Break the loop.
-        if (timestamp == -1L || condition.apply(positionBound, timestamp)) {
+        eof = timestamp < 0;
+        if (eof || condition.apply(positionBound, timestamp)) {
           break;
         }
 
@@ -352,6 +415,13 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
 
         // Jump to next timestamp
         eventInput.seek(eventInput.getPos() + len);
+        positionBound = eventInput.getPos();
+
+        // need to check this here before we loop around again because it's possible the condition was
+        // satisfied by moving up the position even though the timestamp has not changed yet.
+        if (condition.apply(positionBound, timestamp)) {
+          break;
+        }
       }
 
       if (eof) {
@@ -361,15 +431,12 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
 
       // search for the exact StreamData position within the bound.
       eventInput.seek(position);
+      readDataBlock(ReadFilter.ALWAYS_ACCEPT);
       while (position < positionBound) {
-        if (timestamp < 0) {
-          timestamp = readTimestamp();
-        }
-        if (condition.apply(position, timestamp)) {
+        if (condition.apply(streamEventBuffer.getPosition(), timestamp)) {
           break;
         }
         nextStreamEvent(ReadFilter.ALWAYS_REJECT_OFFSET);
-        position = eventInput.getPos();
       }
     } catch (IOException e) {
       // It's ok if hitting EOF, meaning it's could be a live stream file or closed by a dead stream handler.
@@ -379,9 +446,11 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
     }
   }
 
-  private void verifySchema(String schemaStr) throws IOException {
+  private void verifySchema(Map<String, String> properties) throws IOException {
+    String schemaKey = StreamDataFileConstants.Property.Key.SCHEMA;
+    String schemaStr = properties.get(schemaKey);
     if (schemaStr == null) {
-      throw new IOException("Missing 'stream.schema' property.");
+      throw new IOException("Missing '" + schemaKey + "' property.");
     }
 
     try {
@@ -401,22 +470,45 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
   }
 
   private int readLength() throws IOException {
-    try {
-      return decoder.readInt();
-    } catch (IOException e) {
-      // If failed to read data block length, reset the timestamp as well,
-      // since the position hasn't been updated yet, and is still pointing to timestamp position.
-      timestamp = -1L;
-      throw e;
+    return decoder.readInt();
+  }
+
+  private void readDataBlock(ReadFilter filter) throws IOException {
+    // Data block is <timestamp> <length> <stream_data>+
+    position = eventInput.getPos();
+    long timestamp = readTimestamp();
+    if (timestamp < 0) {
+      eof = true;
+      return;
     }
-  }
 
-  private StreamEventData readStreamData() throws IOException {
-    return StreamEventDataCodec.decode(decoder);
-  }
+    // Use the template timestamp if available
+    timestamp = eventTemplate.getTimestamp() >= 0 ? eventTemplate.getTimestamp() : timestamp;
+    if (acceptTimestamp(filter, timestamp)) {
+      streamEventBuffer.fillBuffer(eventInput, readLength());
+      this.timestamp = timestamp;
+      return;
+    }
 
-  private void skipStreamData() throws IOException {
-    StreamEventDataCodec.skip(decoder);
+    // If timestamp is not accepted and the timestamp comes from event template, then the whole file can be skipped
+    if (eventTemplate.getTimestamp() >= 0) {
+      eof = true;
+      return;
+    }
+
+    long nextTimestamp = filter.getNextTimestampHint();
+    if (nextTimestamp > timestamp) {
+      eventInput.seek(position);
+      initByTime(nextTimestamp);
+      return;
+    }
+
+    int length = readLength();
+    long bytesSkipped = eventInput.skip(length);
+    if (bytesSkipped != length) {
+      throw new EOFException("Expected to skip " + length + " but only " + bytesSkipped + " was skipped.");
+    }
+    position = eventInput.getPos();
   }
 
   /**
@@ -427,122 +519,21 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
    * @return The next StreamEvent or {@code null} if the event is rejected by the filter or reached EOF.
    */
   private PositionStreamEvent nextStreamEvent(ReadFilter filter) throws IOException {
-    // Data block is <timestamp> <length> <stream_data>+
-    PositionStreamEvent event = null;
-    boolean done = false;
-
-    while (!done) {
-      boolean acceptTimestamp = true;
-      if (timestamp < 0) {
-        timestamp = readTimestamp();
-        if (timestamp >= 0) {
-          // See if this timestamp is accepted by the filter
-          filter.reset();
-          acceptTimestamp = filter.acceptTimestamp(timestamp);
-          if (!acceptTimestamp) {
-            // If not accepted, try to get a hint.
-            long nextTimestamp = filter.getNextTimestampHint();
-
-            // If have hint, re-init this reader with the hinted timestamp.
-            // The hint must be > timestamp of current block, as stream file can only read forward.
-            if (nextTimestamp > timestamp) {
-              timestamp = -1L;
-              initByTime(nextTimestamp);
-              continue;
-            }
-          }
-        }
-      }
-
-      // Timestamp == -1 indicate that's the end of file.
-      if (timestamp == -1L) {
-        eof = true;
-        break;
-      }
-
-      boolean isReadBlockLength = length < 0;
-      if (isReadBlockLength) {
-        length = readLength();
-      }
-
-      if (isReadBlockLength && !acceptTimestamp) {
-        // If able to read block length, but the timestamp filter return false without providing hint,
-        // just skip this timestamp block.
-        long bytesSkipped = eventInput.skip(length);
-        boolean skippedExpected = (bytesSkipped == length);
-        timestamp = -1L;
-        length = -1;
-
-        if (skippedExpected) {
-          continue;
-        } else {
-          throw new EOFException();
-        }
-      }
-
-      if (length > 0) {
-        long startPos = eventInput.getPos();
-
-        try {
-          if (filter.acceptOffset(startPos)) {
-            event = new DefaultPositionStreamEvent(readStreamData(), timestamp, startPos);
-          } else {
-            skipStreamData();
-          }
-        } catch (IOException e) {
-          // If failed to read first event in the data block, reset the timestamp and length to -1
-          // This is because position hasn't been updated yet and retry will start from the timestamp position.
-          if (isReadBlockLength) {
-            timestamp = -1L;
-            length = -1;
-          }
-          throw e;
-        }
-        long endPos = eventInput.getPos();
-        done = true;
-        length -= (int) (endPos - startPos);
-      }
-      if (length == 0) {
-        timestamp = -1L;
-        length = -1;
-      }
+    while (!eof && !(streamEventBuffer.hasEvent() && acceptTimestamp(filter, timestamp))) {
+      readDataBlock(filter);
+    }
+    if (eof) {
+      return null;
     }
 
+    PositionStreamEvent event = streamEventBuffer.nextEvent(timestamp, eventTemplate.getHeaders(), filter);
+    position = streamEventBuffer.getPosition();
     return event;
   }
 
-
-  private static final class DefaultPositionStreamEvent implements PositionStreamEvent {
-
-    private final StreamEventData delegate;
-    private final long timestamp;
-    private final long position;
-
-    private DefaultPositionStreamEvent(StreamEventData delegate, long timestamp, long position) {
-      this.delegate = delegate;
-      this.timestamp = timestamp;
-      this.position = position;
-    }
-
-    @Override
-    public long getTimestamp() {
-      return timestamp;
-    }
-
-    @Override
-    public ByteBuffer getBody() {
-      return delegate.getBody();
-    }
-
-    @Override
-    public Map<String, String> getHeaders() {
-      return delegate.getHeaders();
-    }
-
-    @Override
-    public long getStart() {
-      return position;
-    }
+  private boolean acceptTimestamp(ReadFilter filter, long timestamp) {
+    filter.reset();
+    return filter.acceptTimestamp(timestamp);
   }
 
   private interface SkipCondition {

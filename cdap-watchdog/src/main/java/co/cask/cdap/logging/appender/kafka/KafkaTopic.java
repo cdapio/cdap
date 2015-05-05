@@ -16,21 +16,18 @@
 
 package co.cask.cdap.logging.appender.kafka;
 
-import java.io.IOException;
-
 /**
  * Generates Kafka topic containing schema for logging.
  */
 public final class KafkaTopic {
   // Kafka topic on which log messages will get published.
   // If there is an incompatible log schema change, then the topic version needs to be updated.
-  private static final String KAFKA_TOPIC = "logs.user-v1";
+  private static final String KAFKA_TOPIC = "logs.user-v2";
 
   /**
    * @return Kafka topic with schema.
-   * @throws IOException
    */
-  public static String getTopic() throws IOException {
+  public static String getTopic() {
     return KAFKA_TOPIC;
   }
 }

@@ -18,17 +18,12 @@ package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.ScalaSparkProgram;
+import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.api.spark.SparkProgram;
 import com.google.common.base.Throwables;
-import org.apache.spark.network.ConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.nio.channels.Selector;
 
 /**
  * Class which wraps around user's program class to integrate the spark program with CDAP.
@@ -57,7 +52,8 @@ public class SparkProgramWrapper {
   private static final Logger LOG = LoggerFactory.getLogger(SparkProgramWrapper.class);
   private static final int PROGRAM_WRAPPER_ARGUMENTS_SIZE = 1;
   private final String[] arguments;
-  private final Class userProgramClass;
+  private final Class<? extends SparkProgram> userProgramClass;
+  private static BasicSparkContext basicSparkContext;
   private static SparkContext sparkContext;
   private static boolean scalaProgram;
 
@@ -72,21 +68,20 @@ public class SparkProgramWrapper {
    * @param args the command line arguments
    * @throws RuntimeException if the user's program class is not found
    */
+  @SuppressWarnings("unchecked")
   private SparkProgramWrapper(String[] args) {
     arguments = validateArgs(args);
     try {
-      // get the Spark program main class with the custom classloader created by spark which has the program and
-      // dependency jar.
-      userProgramClass = Class.forName(arguments[0], true, Thread.currentThread().getContextClassLoader());
-    } catch (ClassNotFoundException cnfe) {
-      LOG.warn("Unable to find the program class: {}", arguments[0], cnfe);
-      throw Throwables.propagate(cnfe);
+      // Load the user class from the ProgramClassLoader
+      userProgramClass = loadUserSparkClass(arguments[0]);
+    } catch (ClassNotFoundException e) {
+      LOG.error("Unable to load program class: {}", arguments[0], e);
+      throw Throwables.propagate(e);
     }
-    setSparkContext();
   }
 
   public static void main(String[] args) {
-    new SparkProgramWrapper(args).instantiateUserProgramClass();
+    new SparkProgramWrapper(args).runUserProgram();
   }
 
   /**
@@ -106,20 +101,23 @@ public class SparkProgramWrapper {
   }
 
   /**
-   * Instantiate an object of user's program class and call {@link #runUserProgram(Object)} to run it
+   * Instantiate an object of user's program class and call {@link #runUserProgram(SparkProgram)} to run it
    *
    * @throws RuntimeException if failed to instantiate an object of user's program class
    */
-  private void instantiateUserProgramClass() {
+  private void runUserProgram() {
+    sparkContext = createSparkContext();
+
     try {
-      Object userProgramObject = userProgramClass.newInstance();
-      runUserProgram(userProgramObject);
+      runUserProgram(userProgramClass.newInstance());
     } catch (InstantiationException ie) {
       LOG.warn("Unable to instantiate an object of program class: {}", arguments[0], ie);
       throw Throwables.propagate(ie);
     } catch (IllegalAccessException iae) {
       LOG.warn("Illegal access to class: {}", arguments[0] + "or to its constructor", iae);
       throw Throwables.propagate(iae);
+    } finally {
+      stopSparkProgram();
     }
   }
 
@@ -127,12 +125,12 @@ public class SparkProgramWrapper {
    * Sets the {@link SparkContext} to {@link JavaSparkContext} or to {@link ScalaSparkContext} depending on whether
    * the user class implements {@link JavaSparkProgram} or {@link ScalaSparkProgram}
    */
-  void setSparkContext() {
+  private SparkContext createSparkContext() {
     if (JavaSparkProgram.class.isAssignableFrom(userProgramClass)) {
-      sparkContext = new JavaSparkContext();
+      return new JavaSparkContext(basicSparkContext);
     } else if (ScalaSparkProgram.class.isAssignableFrom(userProgramClass)) {
-      sparkContext = new ScalaSparkContext();
-      setScalaProgram(true);
+      scalaProgram = true;
+      return new ScalaSparkContext(basicSparkContext);
     } else {
       String error = "Spark program must implement either JavaSparkProgram or ScalaSparkProgram";
       throw new IllegalArgumentException(error);
@@ -143,101 +141,47 @@ public class SparkProgramWrapper {
    * Extracts arguments which belongs to user's program and then invokes the run method on the user's program object
    * with the arguments and the appropriate implementation {@link SparkContext}
    *
-   * @param userProgramObject the user program's object
+   * @param sparkProgram the user program's object
    * @throws RuntimeException if failed to invokeUserProgram main function on the user's program object
    */
-  private void runUserProgram(Object userProgramObject) {
+  private void runUserProgram(SparkProgram sparkProgram) {
     try {
-      Method userProgramMain = userProgramClass.getMethod("run", SparkContext.class);
-      userProgramMain.invoke(userProgramObject, sparkContext);
-    } catch (NoSuchMethodException nsme) {
-      LOG.warn("Unable to find run method in program class: {}", userProgramObject.getClass().getName(), nsme);
-      throw Throwables.propagate(nsme);
-    } catch (IllegalAccessException iae) {
-      LOG.warn("Unable to access run method in program class: {}", userProgramObject.getClass().getName(), iae);
-      throw Throwables.propagate(iae);
-    } catch (InvocationTargetException ite) {
-      LOG.warn("Program class run method threw an exception", ite);
-      throw Throwables.propagate(ite);
+      sparkProgram.run(sparkContext);
+    } catch (Throwable t) {
+      LOG.warn("Program class run method threw an exception", t);
+      throw Throwables.propagate(t);
     }
+  }
+
+  private Class<? extends SparkProgram> loadUserSparkClass(String className) throws ClassNotFoundException {
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    Class<?> cls = classLoader.loadClass(className);
+    if (!SparkProgram.class.isAssignableFrom(cls)) {
+      throw new IllegalArgumentException("User class " + arguments[0] +
+                                           " does not implements " + SparkProgram.class.getName());
+    }
+    return (Class<? extends SparkProgram>) cls;
   }
 
   /**
    * Stops the Spark program by calling {@link org.apache.spark.SparkContext#stop()}
    */
   public static void stopSparkProgram() {
-
-    sparkContextStopBugFixer(); // to close the selector which causes a thread deadlock
-
-    // Now stop the program
-    if (isScalaProgram()) {
-      ((org.apache.spark.SparkContext) getSparkContext().getOriginalSparkContext()).stop();
-    } else {
-      ((org.apache.spark.api.java.JavaSparkContext) getSparkContext().getOriginalSparkContext()).stop();
-    }
-  }
-
-  /**
-   * Fixes the thread deadlock issue in {@link org.apache.spark.SparkContext#stop} where the {@link Selector} field
-   * in {@link ConnectionManager} waits for an interrupt.
-   */
-  private static void sparkContextStopBugFixer() {
-    ConnectionManager connectionManager = getConnectionManager(getSparkContext());
-    if (!closeSelector(connectionManager)) {
-      LOG.warn("Failed to get the Selector which can cause thread deadlock in SparkContext.stop()");
-    }
-  }
-
-  /**
-   * Gets the {@link Selector} field in the {@link ConnectionManager} and closes it which makes it come out of deadlock
-   *
-   * @param connectionManager : the {@link ConnectionManager} of this {@link SparkContext}
-   */
-  private static boolean closeSelector(ConnectionManager connectionManager) {
-    // Get the selector field from the ConnectionManager and make it accessible
-    boolean selectorClosed = false;
-    for (Field field : connectionManager.getClass().getDeclaredFields()) {
-      if (Selector.class.isAssignableFrom(field.getType())) {
-        if (!field.isAccessible()) {
-          field.setAccessible(true);
+    if (sparkContext != null) {
+      try {
+        if (isScalaProgram()) {
+          ((org.apache.spark.SparkContext) sparkContext.getOriginalSparkContext()).stop();
+        } else {
+          ((org.apache.spark.api.java.JavaSparkContext) sparkContext.getOriginalSparkContext()).stop();
         }
-        try {
-          Selector selector = (Selector) field.get(connectionManager);
-          selector.close();
-          selectorClosed = true;
-          break;
-        } catch (IllegalAccessException iae) {
-          LOG.warn("Unable to access the selector field", iae);
-          throw Throwables.propagate(iae);
-        } catch (IOException ioe) {
-          LOG.info("Close on Selector threw IOException", ioe);
-          throw Throwables.propagate(ioe);
-        }
+      } finally {
+        // Need to reset the spark context so that the program ClassLoader can be freed.
+        // It is needed because sparkContext is a static field.
+        // Same applies to basicSparkContext
+        sparkContext = null;
+        basicSparkContext = null;
       }
     }
-    return selectorClosed;
-  }
-
-  /**
-   * @return {@link ConnectionManager} from the {@link SparkContext}
-   */
-  private static ConnectionManager getConnectionManager(SparkContext sparkContext) {
-    ConnectionManager connectionManager;
-    if (isScalaProgram()) {
-      connectionManager = ((org.apache.spark.SparkContext) sparkContext.getOriginalSparkContext()).env()
-        .blockManager().connectionManager();
-    } else {
-      connectionManager = ((org.apache.spark.api.java.JavaSparkContext) sparkContext.getOriginalSparkContext())
-        .env().blockManager().connectionManager();
-    }
-    return connectionManager;
-  }
-
-  /**
-   * @return {@link SparkContext}
-   */
-  public static SparkContext getSparkContext() {
-    return sparkContext;
   }
 
   /**
@@ -276,9 +220,19 @@ public class SparkProgramWrapper {
   }
 
   /**
-   * @param scalaProgram a boolean which sets whether the user's program is in Scala or not
+   * Used to set the same {@link BasicSparkContext} which is inside {@link SparkRuntimeService} for accessing resources
+   * like Service Discovery, Metrics collection etc.
+   *
+   * @param basicSparkContext the {@link BasicSparkContext} to set from
    */
-  public static void setScalaProgram(boolean scalaProgram) {
-    SparkProgramWrapper.scalaProgram = scalaProgram;
+  public static void setBasicSparkContext(BasicSparkContext basicSparkContext) {
+    SparkProgramWrapper.basicSparkContext = basicSparkContext;
+  }
+
+  /**
+   * @return The {@link BasicSparkContext} which will be used to run the user's {@link Spark} program
+   */
+  public static BasicSparkContext getBasicSparkContext() {
+    return basicSparkContext;
   }
 }

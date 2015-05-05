@@ -19,6 +19,7 @@ package co.cask.cdap.explore.client;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryResult;
+import co.cask.cdap.proto.QueryStatus;
 
 import java.io.Closeable;
 import java.util.Iterator;
@@ -49,5 +50,18 @@ public interface ExploreExecutionResult extends Iterator<QueryResult>, Closeable
    * @return list of {@link ColumnDesc} representing the schema of the results. Empty list if there are no results.
    * @throws ExploreException on any error fetching schema.
    */
-  public abstract List<ColumnDesc> getResultSchema() throws ExploreException;
+  List<ColumnDesc> getResultSchema() throws ExploreException;
+
+  /**
+   * Some SQL statememt never return results - like CREATE statements - for which this method will return false.
+   * SQL queries should always return true.
+   *
+   * @return true if this {@link ExploreExecutionResult} may contain results.
+   */
+  boolean canContainResults();
+
+  /**
+   * @return the {@link QueryStatus} of the execution.
+   */
+  QueryStatus getStatus();
 }

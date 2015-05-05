@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,15 +24,14 @@ import co.cask.cdap.common.logging.ApplicationLoggingContext;
 public class UserServiceLoggingContext extends ApplicationLoggingContext {
 
   public static final String TAG_USERSERVICE_ID = ".userserviceid";
-  public static final String TAG_RUNNABLE_ID = ".userrunnableid";
+  public static final String TAG_HANDLER_ID = ".userhandlerid";
 
-  public UserServiceLoggingContext(final String accountId,
-                                   final String applicationId,
-                                   final String serviceId,
-                                   final String runnableId) {
-    super(accountId, applicationId);
+  public UserServiceLoggingContext(String namespaceId, String applicationId, String serviceId, String handlerId,
+                                   String runId, String instanceId) {
+    super(namespaceId, applicationId, runId);
     setSystemTag(TAG_USERSERVICE_ID, serviceId);
-    setSystemTag(TAG_RUNNABLE_ID, runnableId);
+    setSystemTag(TAG_HANDLER_ID, handlerId);
+    setInstanceId(instanceId);
   }
 
   @Override
@@ -41,8 +40,8 @@ public class UserServiceLoggingContext extends ApplicationLoggingContext {
   }
 
   @Override
-  public String getLogPathFragment() {
-    return String.format("%s/userservice-%s", super.getLogPathFragment(), getSystemTag(TAG_USERSERVICE_ID));
+  public String getLogPathFragment(String logBaseDir) {
+    return String.format("%s/userservice-%s", super.getLogPathFragment(logBaseDir), getSystemTag(TAG_USERSERVICE_ID));
   }
 
 }

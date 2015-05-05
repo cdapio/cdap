@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.runtime.main;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
@@ -29,15 +30,15 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.security.HBaseSecureStoreUpdater;
+import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
@@ -46,18 +47,26 @@ import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.Files;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.security.User;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
@@ -78,6 +87,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.InetAddress;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
@@ -120,14 +130,14 @@ public class MasterServiceMain extends DaemonMain {
   private MetricsCollectionService metricsCollectionService;
   private DatasetService dsService;
   private ServiceStore serviceStore;
-  private HBaseSecureStoreUpdater secureStoreUpdater;
+  private TokenSecureStoreUpdater secureStoreUpdater;
   private ExploreClient exploreClient;
 
   private String serviceName;
   private TwillApplication twillApplication;
   private long lastRunTimeMs = System.currentTimeMillis();
   private int currentRun = 0;
-  private boolean isExploreEnabled;
+  private boolean exploreEnabled;
 
   public static void main(final String[] args) throws Exception {
     LOG.info("Starting {}", MasterServiceMain.class.getSimpleName());
@@ -136,9 +146,16 @@ public class MasterServiceMain extends DaemonMain {
 
   @Override
   public void init(String[] args) {
-    isExploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
+    exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     serviceName = Constants.Service.MASTER_SERVICES;
     cConf.set(Constants.Dataset.Manager.ADDRESS, getLocalHost().getCanonicalHostName());
+
+    try {
+      SecurityUtil.loginForMasterService(cConf);
+    } catch (Exception e) {
+      LOG.error("Failed to login as CDAP user", e);
+      throw Throwables.propagate(e);
+    }
 
     baseInjector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
@@ -152,12 +169,15 @@ public class MasterServiceMain extends DaemonMain {
       new DiscoveryRuntimeModule().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
-      new DataSetServiceModules().getDistributedModule(),
+      new DataSetServiceModules().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
-      new DataSetsModules().getDistributedModule(),
+      new DataSetsModules().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new ServiceStoreModules().getDistributedModule(),
-      new ExploreClientModule()
+      new ExploreClientModule(),
+      new NotificationFeedServiceRuntimeModule().getDistributedModules(),
+      new NotificationServiceRuntimeModule().getDistributedModules(),
+      new StreamAdminModules().getDistributedModules()
     );
 
     // Initialize ZK client
@@ -167,11 +187,26 @@ public class MasterServiceMain extends DaemonMain {
     dsService = baseInjector.getInstance(DatasetService.class);
     serviceStore = baseInjector.getInstance(ServiceStore.class);
     exploreClient = baseInjector.getInstance(ExploreClient.class);
+    secureStoreUpdater = baseInjector.getInstance(TokenSecureStoreUpdater.class);
 
-    secureStoreUpdater = baseInjector.getInstance(HBaseSecureStoreUpdater.class);
-
+    // this should probably be done in NamespaceService#init()
+    createSystemHBaseNamespace();
     checkTransactionRequirements();
     checkExploreRequirements();
+  }
+
+  private void createSystemHBaseNamespace() {
+    HBaseTableUtil tableUtil = baseInjector.getInstance(HBaseTableUtil.class);
+    try {
+      HBaseAdmin admin = new HBaseAdmin(hConf);
+      tableUtil.createNamespaceIfNotExists(admin, Constants.SYSTEM_NAMESPACE_ID);
+    } catch (MasterNotRunningException e) {
+      Throwables.propagate(e);
+    } catch (ZooKeeperConnectionException e) {
+      Throwables.propagate(e);
+    } catch (IOException e) {
+      Throwables.propagate(e);
+    }
   }
 
   /**
@@ -191,12 +226,12 @@ public class MasterServiceMain extends DaemonMain {
    * and that the distribution of Hive is supported.
    */
   private void checkExploreRequirements() {
-    if (!isExploreEnabled) {
+    if (!exploreEnabled) {
       return;
     }
 
-    // This checking will throw an exception if Hive is not present or if its distribution is unsupported
-    ExploreServiceUtils.checkHiveSupportWithSecurity(hConf);
+    // This check will throw an exception if Hive is not present or if it's distribution is unsupported
+    ExploreServiceUtils.checkHiveSupport();
   }
 
   @Override
@@ -204,8 +239,8 @@ public class MasterServiceMain extends DaemonMain {
     LogAppenderInitializer logAppenderInitializer = baseInjector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
 
-    Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService);
-
+    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService,
+                                             serviceStore));
     leaderElection = new LeaderElection(zkClientService, "/election/" + serviceName, new ElectionHandler() {
       @Override
       public void leader() {
@@ -216,6 +251,7 @@ public class MasterServiceMain extends DaemonMain {
         }
 
         LOG.info("Became leader");
+
         Injector injector = baseInjector.createChildInjector();
 
         twillRunnerService = injector.getInstance(TwillRunnerService.class);
@@ -235,6 +271,7 @@ public class MasterServiceMain extends DaemonMain {
 
         dsService.stopAndWait();
         if (twillRunnerService != null) {
+          // this shuts down the twill runner service but not the twill services themselves
           twillRunnerService.stopAndWait();
         }
         if (appFabricServer != null) {
@@ -251,7 +288,10 @@ public class MasterServiceMain extends DaemonMain {
     LOG.info("Stopping {}", serviceName);
     stopFlag = true;
 
-    dsService.stopAndWait();
+    if (dsService != null) {
+      dsService.stopAndWait();
+    }
+
     if (isLeader.get() && twillController != null) {
       twillController.stopAndWait();
     }
@@ -259,7 +299,8 @@ public class MasterServiceMain extends DaemonMain {
     if (leaderElection != null) {
       leaderElection.stopAndWait();
     }
-    Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService);
+    Futures.getUnchecked(Services.chainStop(serviceStore, metricsCollectionService, kafkaClientService,
+                                            zkClientService));
 
     try {
       exploreClient.close();
@@ -342,23 +383,23 @@ public class MasterServiceMain extends DaemonMain {
 
   private TwillApplication createTwillApplication(final Map<String, Integer> instanceCountMap) {
     try {
-      return new MasterTwillApplication(cConf, getSavedCConf(), getSavedHConf(), isExploreEnabled, instanceCountMap);
+      return new MasterTwillApplication(cConf, getSavedCConf(), getSavedHConf(), exploreEnabled, instanceCountMap);
     } catch (Exception e) {
       throw  Throwables.propagate(e);
     }
   }
 
   private void scheduleSecureStoreUpdate(TwillRunner twillRunner) {
-    if (User.isHBaseSecurityEnabled(hConf)) {
+    if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
       twillRunner.scheduleSecureStoreUpdate(secureStoreUpdater, 30000L, secureStoreUpdater.getUpdateInterval(),
                                             TimeUnit.MILLISECONDS);
     }
   }
 
-
   private TwillPreparer prepare(TwillPreparer preparer) {
-    return preparer.withDependencies(new HBaseTableUtilFactory().get().getClass())
-      .addSecureStore(secureStoreUpdater.update(null, null)); // HBaseSecureStoreUpdater.update() ignores parameters
+    return preparer.withDependencies(baseInjector.getInstance(HBaseTableUtil.class).getClass())
+      // TokenSecureStoreUpdater.update() ignores parameters
+      .addSecureStore(secureStoreUpdater.update(null, null));
   }
 
   private void runTwillApps() {
@@ -379,6 +420,16 @@ public class MasterServiceMain extends DaemonMain {
         }
         LOG.warn("Stopped extra instances of {}", serviceName);
       }
+
+      // we have to start the dataset service. Because twill services are already running,
+      // it will not be started by the service listener callback below.
+      if (!dsService.isRunning()) {
+        // we need a new dataset service (the old one may have run before and can't be restarted)
+        dsService = baseInjector.getInstance(DatasetService.class); // not a singleton
+        LOG.info("Starting Dataset service");
+        dsService.startAndWait();
+      }
+
     } else {
       LOG.info("Starting {} application", serviceName);
       TwillPreparer twillPreparer = getPreparer();
@@ -389,6 +440,8 @@ public class MasterServiceMain extends DaemonMain {
         @Override
         public void running() {
           if (!dsService.isRunning()) {
+            // we need a new dataset service (the old one may have run before and can't be restarted)
+            dsService = baseInjector.getInstance(DatasetService.class); // not a singleton
             LOG.info("Starting Dataset service");
             dsService.startAndWait();
           }
@@ -452,7 +505,7 @@ public class MasterServiceMain extends DaemonMain {
    * runnable.
    */
   private TwillPreparer prepareExploreContainer(TwillPreparer preparer) {
-    if (!isExploreEnabled) {
+    if (!exploreEnabled) {
       return preparer;
     }
 
@@ -477,9 +530,15 @@ public class MasterServiceMain extends DaemonMain {
 
     // Add all the conf files needed by hive as resources available to containers
     Iterable<File> hiveConfFilesFiles = ExploreServiceUtils.getClassPathJarsFiles(hiveConfFiles);
+    Set<String> addedFiles = Sets.newHashSet();
     for (File file : hiveConfFilesFiles) {
-      if (file.getName().matches(".*\\.xml")) {
-        preparer = preparer.withResources(ExploreServiceUtils.hijackHiveConfFile(file).toURI());
+      if (file.getName().matches(".*\\.xml") && !file.getName().equals("logback.xml")) {
+        if (addedFiles.add(file.getName())) {
+          LOG.debug("Adding config file: {}", file.getAbsolutePath());
+          preparer = preparer.withResources(ExploreServiceUtils.hijackHiveConfFile(file).toURI());
+        } else {
+          LOG.warn("Ignoring duplicate config file: {}", file.getAbsolutePath());
+        }
       }
     }
 
@@ -489,18 +548,45 @@ public class MasterServiceMain extends DaemonMain {
   private TwillPreparer getPreparer() {
     TwillPreparer preparer = twillRunnerService.prepare(twillApplication)
       .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+    
+    // Add yarn queue name if defined
+    String queueName = cConf.get(Constants.Service.SCHEDULER_QUEUE);
+    if (queueName != null) {
+      LOG.info("Setting scheduler queue to {} for master services", queueName);
+      preparer.setSchedulerQueue(queueName);
+    }
 
-    // Add system logback file to the preparer
-    URL logbackUrl = getClass().getResource("/logback.xml");
-    if (logbackUrl == null) {
-      LOG.warn("Cannot find logback.xml to pass onto Twill Runnables!");
-    } else {
+    URL containerLogbackURL = getClass().getResource("/logback-container.xml");
+    if (containerLogbackURL != null) {
       try {
-        preparer.withResources(logbackUrl.toURI());
+        File tempDir = Files.createTempDir();
+        tempDir.deleteOnExit();
+        File file = new File(tempDir.getPath(), "logback.xml");
+
+        Files.copy(new File(containerLogbackURL.toURI()), file);
+        URI copiedLogbackURI = file.toURI();
+        preparer.withResources(copiedLogbackURI);
+      } catch (IOException e) {
+        LOG.error("Got exception while copying logback-container.xml", e);
       } catch (URISyntaxException e) {
-        LOG.error("Got exception while getting URI for logback.xml - {}", logbackUrl);
+        LOG.error("Got exception while getting URI for logback-container.xml - {}", containerLogbackURL, e);
+      }
+    } else {
+      // Default to system logback if the container logback is not found.
+      LOG.debug("Could not load logback specific for containers. Defaulting to system logback.");
+
+      containerLogbackURL = getClass().getResource("/logback.xml");
+      if (containerLogbackURL == null) {
+        LOG.warn("Cannot find logback.xml to pass onto Twill Runnables!");
+      } else {
+        try {
+          preparer.withResources(containerLogbackURL.toURI());
+        } catch (URISyntaxException e) {
+          LOG.error("Got exception while getting URI for logback.xml - {}", containerLogbackURL, e);
+        }
       }
     }
+
     preparer = prepareExploreContainer(preparer);
     return prepare(preparer);
   }

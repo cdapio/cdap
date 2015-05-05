@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,21 +16,23 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
+import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.stream.service.StreamHttpService;
+import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.explore.client.ExploreClient;
@@ -38,29 +40,27 @@ import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
-import co.cask.cdap.gateway.Gateway;
 import co.cask.cdap.gateway.auth.AuthModule;
-import co.cask.cdap.gateway.collector.NettyFlumeCollector;
 import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.gateway.router.RouterModules;
-import co.cask.cdap.gateway.runtime.GatewayModule;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
-import co.cask.cdap.passport.http.client.PassportClient;
+import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.tephra.inmemory.InMemoryTransactionService;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.Provider;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
@@ -69,7 +69,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.PrintStream;
-import java.net.InetAddress;
 import java.util.List;
 
 /**
@@ -79,14 +78,12 @@ import java.util.List;
 public class StandaloneMain {
   private static final Logger LOG = LoggerFactory.getLogger(StandaloneMain.class);
 
-  private final WebCloudAppService webCloudAppService;
+  private final UserInterfaceService userInterfaceService;
   private final NettyRouter router;
-  private final Gateway gatewayV2;
   private final MetricsQueryService metricsQueryService;
-  private final NettyFlumeCollector flumeCollector;
   private final AppFabricServer appFabricServer;
-  private final StreamHttpService streamHttpService;
-
+  private final ServiceStore serviceStore;
+  private final StreamService streamService;
   private final MetricsCollectionService metricsCollectionService;
 
   private final LogAppenderInitializer logAppenderInitializer;
@@ -101,34 +98,32 @@ public class StandaloneMain {
   private ExploreExecutorService exploreExecutorService;
   private final ExploreClient exploreClient;
 
-  private StandaloneMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
+  private StandaloneMain(List<Module> modules, CConfiguration configuration, String uiPath) {
     this.configuration = configuration;
 
     Injector injector = Guice.createInjector(modules);
     txService = injector.getInstance(InMemoryTransactionService.class);
     router = injector.getInstance(NettyRouter.class);
-    gatewayV2 = injector.getInstance(Gateway.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
-    flumeCollector = injector.getInstance(NettyFlumeCollector.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
 
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     datasetService = injector.getInstance(DatasetService.class);
+    serviceStore = injector.getInstance(ServiceStore.class);
+    streamService = injector.getInstance(StreamService.class);
 
-    this.webCloudAppService = (webAppPath == null) ? null : injector.getInstance(WebCloudAppService.class);
-
-    streamHttpService = injector.getInstance(StreamHttpService.class);
+    userInterfaceService = injector.getInstance(UserInterfaceService.class);
 
     sslEnabled = configuration.getBoolean(Constants.Security.SSL_ENABLED);
-    securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
+    securityEnabled = configuration.getBoolean(Constants.Security.ENABLED);
     if (securityEnabled) {
       externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
     }
 
     boolean exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     if (exploreEnabled) {
-      ExploreServiceUtils.checkHiveSupportWithoutSecurity(this.getClass().getClassLoader());
+      ExploreServiceUtils.checkHiveSupport(getClass().getClassLoader());
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     }
 
@@ -157,6 +152,8 @@ public class StandaloneMain {
     txService.startAndWait();
     metricsCollectionService.startAndWait();
     datasetService.startAndWait();
+    serviceStore.startAndWait();
+    streamService.startAndWait();
 
     // It is recommended to initialize log appender after datasetService is started,
     // since log appender instantiates a dataset.
@@ -167,14 +164,11 @@ public class StandaloneMain {
       throw new Exception("Failed to start Application Fabric");
     }
 
-    gatewayV2.startAndWait();
     metricsQueryService.startAndWait();
     router.startAndWait();
-    flumeCollector.startAndWait();
-    if (webCloudAppService != null) {
-      webCloudAppService.startAndWait();
+    if (userInterfaceService != null) {
+      userInterfaceService.startAndWait();
     }
-    streamHttpService.startAndWait();
 
     if (securityEnabled) {
       externalAuthenticationServer.startAndWait();
@@ -184,13 +178,12 @@ public class StandaloneMain {
       exploreExecutorService.startAndWait();
     }
 
-    String hostname = InetAddress.getLocalHost().getHostName();
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
       configuration.getInt(Constants.Dashboard.SSL_BIND_PORT) :
       configuration.getInt(Constants.Dashboard.BIND_PORT);
     System.out.println("Standalone CDAP started successfully.");
-    System.out.printf("Connect to the Console at %s://%s:%d\n", protocol, hostname, dashboardPort);
+    System.out.printf("Connect to the Console at %s://%s:%d\n", protocol, "localhost", dashboardPort);
   }
 
   /**
@@ -200,20 +193,19 @@ public class StandaloneMain {
     LOG.info("Shutting down Standalone CDAP");
 
     try {
-      // order matters: first shut down web app 'cause it will stop working after router is down
-      if (webCloudAppService != null) {
-        webCloudAppService.stopAndWait();
+      // order matters: first shut down UI 'cause it will stop working after router is down
+      if (userInterfaceService != null) {
+        userInterfaceService.stopAndWait();
       }
-      //  shut down router, gateway and flume, to stop all incoming traffic
+      //  shut down router to stop all incoming traffic
       router.stopAndWait();
-      gatewayV2.stopAndWait();
-      flumeCollector.stopAndWait();
       // now the stream writer and the explore service (they need tx)
-      streamHttpService.stopAndWait();
+      streamService.stopAndWait();
       if (exploreExecutorService != null) {
         exploreExecutorService.stopAndWait();
       }
       exploreClient.close();
+      serviceStore.stopAndWait();
       // app fabric will also stop all programs
       appFabricServer.stopAndWait();
       // all programs are stopped: dataset service, metrics, transactions can stop now
@@ -256,12 +248,11 @@ public class StandaloneMain {
     if (OSDetector.isWindows()) {
       out.println("  cdap.bat [options]");
     } else {
-      out.println("  ./cdap.sh [options]");
+      out.println("  cdap.sh [options]");
     }
     out.println("");
     out.println("Additional options:");
-    out.println("  --web-app-path  Path to Webapp");
-    out.println("  --help          To print this message");
+    out.println("  --help     To print this message");
     out.println("");
 
     if (error) {
@@ -270,14 +261,12 @@ public class StandaloneMain {
   }
 
   public static void main(String[] args) {
-    String webAppPath = WebCloudAppService.WEB_APP;
+    String uiPath = UserInterfaceService.UI;
 
     if (args.length > 0) {
       if ("--help".equals(args[0]) || "-h".equals(args[0])) {
         usage(false);
         return;
-      } else if ("--web-app-path".equals(args[0])) {
-        webAppPath = args[1];
       } else {
         usage(true);
       }
@@ -286,7 +275,7 @@ public class StandaloneMain {
     StandaloneMain main = null;
 
     try {
-      main = create(webAppPath);
+      main = create(uiPath);
       main.startUp();
     } catch (Throwable e) {
       System.err.println("Failed to start Standalone CDAP. " + e.getMessage());
@@ -299,21 +288,21 @@ public class StandaloneMain {
   }
 
   public static StandaloneMain create() {
-    return create(WebCloudAppService.WEB_APP);
+    return create(UserInterfaceService.UI);
   }
 
   /**
    * The root of all goodness!
    */
-  public static StandaloneMain create(String webAppPath) {
-    return create(webAppPath, CConfiguration.create(), new Configuration());
+  public static StandaloneMain create(String uiPath) {
+    return create(uiPath, CConfiguration.create(), new Configuration());
   }
 
   public static StandaloneMain create(CConfiguration cConf, Configuration hConf) {
-    return create(WebCloudAppService.WEB_APP, cConf, hConf);
+    return create(UserInterfaceService.UI, cConf, hConf);
   }
 
-  public static StandaloneMain create(String webAppPath, CConfiguration cConf, Configuration hConf) {
+  public static StandaloneMain create(String uiPath, CConfiguration cConf, Configuration hConf) {
     // This is needed to use LocalJobRunner with fixes (we have it in app-fabric).
     // For the modified local job runner
     hConf.addResource("mapred-site-local.xml");
@@ -330,21 +319,26 @@ public class StandaloneMain {
 
     // Windows specific requirements
     if (OSDetector.isWindows()) {
-      String userDir = System.getProperty("user.dir");
-      System.load(userDir + "/lib/native/hadoop.dll");
+      // not set anywhere by the project, expected to be set from IDEs if running from the project instead of sdk
+      // hadoop.dll is at cdap-unit-test\src\main\resources\hadoop.dll for some reason
+      String hadoopDLLPath = System.getProperty("hadoop.dll.path");
+      if (hadoopDLLPath != null) {
+        System.load(hadoopDLLPath);
+      } else {
+        // this is where it is when the standalone sdk is built
+        String userDir = System.getProperty("user.dir");
+        System.load(Joiner.on(File.separator).join(userDir, "lib", "native", "hadoop.dll"));
+      }
     }
 
-    //Run gateway on random port and forward using router.
-    cConf.setInt(Constants.Gateway.PORT, 0);
-
     //Run dataset service on random port
-    List<Module> modules = createPersistentModules(cConf, hConf, webAppPath);
+    List<Module> modules = createPersistentModules(cConf, hConf, uiPath);
 
-    return new StandaloneMain(modules, cConf, webAppPath);
+    return new StandaloneMain(modules, cConf, uiPath);
   }
 
   private static List<Module> createPersistentModules(CConfiguration configuration, Configuration hConf,
-                                                      final String webAppPath) {
+                                                      final String uiPath) {
     configuration.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, Constants.DEFAULT_DATA_LEVELDB_DIR);
 
     String environment =
@@ -355,22 +349,14 @@ public class StandaloneMain {
 
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
 
-    String passportUri = configuration.get(Constants.Gateway.CFG_PASSPORT_SERVER_URI);
-    final PassportClient client = passportUri == null || passportUri.isEmpty() ? new PassportClient()
-      : PassportClient.create(passportUri);
-
     return ImmutableList.of(
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(PassportClient.class).toProvider(new Provider<PassportClient>() {
-            @Override
-            public PassportClient get() {
-              return client;
-            }
-          });
-          if (webAppPath != null) {
-            bindConstant().annotatedWith(Names.named("web-app-path")).to(webAppPath);
+          if (uiPath != null) {
+            bindConstant().annotatedWith(Names.named("ui-path")).to(uiPath);
+          } else {
+            bindConstant().annotatedWith(Names.named("ui-path")).to("");
           }
         }
       },
@@ -382,10 +368,9 @@ public class StandaloneMain {
       new LocationRuntimeModule().getStandaloneModules(),
       new AppFabricServiceRuntimeModule().getStandaloneModules(),
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
-      new GatewayModule().getStandaloneModules(),
       new DataFabricModules().getStandaloneModules(),
-      new DataSetsModules().getLocalModule(),
-      new DataSetServiceModules().getLocalModule(),
+      new DataSetsModules().getStandaloneModules(),
+      new DataSetServiceModules().getStandaloneModules(),
       new MetricsClientRuntimeModule().getStandaloneModules(),
       new LoggingModules().getStandaloneModules(),
       new RouterModules().getStandaloneModules(),
@@ -393,7 +378,10 @@ public class StandaloneMain {
       new StreamServiceRuntimeModule().getStandaloneModules(),
       new ExploreRuntimeModule().getStandaloneModules(),
       new ServiceStoreModules().getStandaloneModule(),
-      new ExploreClientModule()
+      new ExploreClientModule(),
+      new NotificationFeedServiceRuntimeModule().getStandaloneModules(),
+      new NotificationServiceRuntimeModule().getStandaloneModules(),
+      new StreamAdminModules().getStandaloneModules()
     );
   }
 }

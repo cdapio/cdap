@@ -17,6 +17,8 @@ package co.cask.cdap.common.guice;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
@@ -60,6 +62,7 @@ public final class LocationRuntimeModule extends RuntimeModule {
     @Override
     protected void configure() {
       bind(LocationFactory.class).to(LocalLocationFactory.class);
+      bind(NamespacedLocationFactory.class).to(DefaultNamespacedLocationFactory.class);
     }
 
     @Provides
@@ -74,6 +77,7 @@ public final class LocationRuntimeModule extends RuntimeModule {
     @Override
     protected void configure() {
       bind(LocationFactory.class).to(HDFSLocationFactory.class);
+      bind(NamespacedLocationFactory.class).to(DefaultNamespacedLocationFactory.class);
     }
 
     @Provides
@@ -86,11 +90,13 @@ public final class LocationRuntimeModule extends RuntimeModule {
 
       try {
         if (hdfsUser == null || UserGroupInformation.isSecurityEnabled()) {
-          if (hdfsUser != null && LOG.isDebugEnabled()) {
+          if (hdfsUser != null) {
             LOG.debug("Ignoring configuration {}={}, running on secure Hadoop", Constants.CFG_HDFS_USER, hdfsUser);
           }
+          LOG.debug("Getting filesystem for current user");
           fileSystem = FileSystem.get(FileSystem.getDefaultUri(hConf), hConf);
         } else {
+          LOG.debug("Getting filesystem for user {}", hdfsUser);
           fileSystem = FileSystem.get(FileSystem.getDefaultUri(hConf), hConf, hdfsUser);
         }
         return new HDFSLocationFactory(fileSystem, namespace);

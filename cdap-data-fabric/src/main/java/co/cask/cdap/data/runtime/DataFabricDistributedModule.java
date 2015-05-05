@@ -17,20 +17,11 @@
 package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.stream.DistributedStreamCoordinator;
-import co.cask.cdap.data.stream.StreamCoordinator;
-import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueClientFactory;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
-import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
-import co.cask.cdap.data2.transaction.stream.hbase.HBaseStreamConsumerStateStoreFactory;
-import co.cask.cdap.data2.transaction.stream.hbase.HBaseStreamFileAdmin;
-import co.cask.cdap.data2.transaction.stream.hbase.HBaseStreamFileConsumerFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.tephra.TxConstants;
@@ -66,14 +57,6 @@ public class DataFabricDistributedModule extends AbstractModule {
     bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
     bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);
     bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
-
-    // Stream bindings
-    bind(StreamCoordinator.class).to(DistributedStreamCoordinator.class).in(Singleton.class);
-
-    bind(StreamConsumerStateStoreFactory.class).to(HBaseStreamConsumerStateStoreFactory.class).in(Singleton.class);
-    bind(StreamAdmin.class).to(HBaseStreamFileAdmin.class).in(Singleton.class);
-    bind(StreamConsumerFactory.class).to(HBaseStreamFileConsumerFactory.class).in(Singleton.class);
-    bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
 
     // bind transactions
     bind(TxMetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);

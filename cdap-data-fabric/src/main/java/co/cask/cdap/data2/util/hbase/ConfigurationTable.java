@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,7 @@ package co.cask.cdap.data2.util.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.Namespace;
+import co.cask.cdap.data2.util.TableId;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -66,31 +66,29 @@ public class ConfigurationTable {
    * Writes the {@link CConfiguration} instance as a new row to the HBase table.  The {@link Type} given is used as
    * the row key (allowing multiple configurations to be stored).  After the new configuration is written, this will
    * delete any configurations written with an earlier timestamp (to prevent removed values from being visible).
-   * @param conf The CConfiguration instance to store
+   * @param cConf The CConfiguration instance to store
    * @throws IOException If an error occurs while writing the configuration
    */
-  public void write(Type type, CConfiguration conf) throws IOException {
-    String tableName = getTableName(conf.get(Constants.Dataset.TABLE_PREFIX));
-    byte[] tableBytes = Bytes.toBytes(tableName);
-
+  public void write(Type type, CConfiguration cConf) throws IOException {
+    TableId tableId = TableId.from(Constants.SYSTEM_NAMESPACE, TABLE_NAME);
     // must create the table if it doesn't exist
     HBaseAdmin admin = new HBaseAdmin(hbaseConf);
     HTable table = null;
     try {
-      HTableDescriptor htd = new HTableDescriptor(tableBytes);
+      HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
+      HTableDescriptor htd = tableUtil.createHTableDescriptor(tableId);
       htd.addFamily(new HColumnDescriptor(FAMILY));
-      HBaseTableUtil tableUtil = new HBaseTableUtilFactory().get();
-      tableUtil.createTableIfNotExists(admin, tableName, htd);
+      tableUtil.createTableIfNotExists(admin, tableId, htd);
 
       long now = System.currentTimeMillis();
       long previous = now - 1;
       byte[] typeBytes = Bytes.toBytes(type.name());
       LOG.info("Writing new config row with key " + type);
       // populate the configuration data
-      table = new HTable(hbaseConf, tableBytes);
+      table = tableUtil.createHTable(hbaseConf, tableId);
       table.setAutoFlush(false);
       Put p = new Put(typeBytes);
-      for (Map.Entry<String, String> e : conf) {
+      for (Map.Entry<String, String> e : cConf) {
         p.add(FAMILY, Bytes.toBytes(e.getKey()), now, Bytes.toBytes(e.getValue()));
       }
       table.put(p);
@@ -103,13 +101,13 @@ public class ConfigurationTable {
       try {
         admin.close();
       } catch (IOException ioe) {
-        LOG.error("Error closing HBaseAdmin: " + ioe.getMessage(), ioe);
+        LOG.error("Error closing HBaseAdmin: ", ioe);
       }
       if (table != null) {
         try {
           table.close();
         } catch (IOException ioe) {
-          LOG.error("Error closing HTable for " + tableName, ioe);
+          LOG.error("Error closing HBaseAdmin: " + ioe.getMessage(), ioe);
         }
       }
     }
@@ -117,19 +115,21 @@ public class ConfigurationTable {
 
   /**
    * Reads the given configuration type from the HBase table, looking for the HBase table name under the
-   * given "namespace".
+   * given "sysConfigTablePrefix".
    * @param type Type of configuration to read in
-   * @param namespace Namespace to use in constructing the table name (should be the same as root.namespace)
+   * @param sysConfigTablePrefix table prefix of the configuration table. (The full table name of the configuration
+   *                             table minus the table qualifier). Example: 'cdap.system:'
    * @return The {@link CConfiguration} instance populated with the stored values, or {@code null} if no row
    *         was found for the given type.
    * @throws IOException If an error occurs while attempting to read the table or the table does not exist.
    */
-  public CConfiguration read(Type type, String namespace) throws IOException {
-    String tableName = getTableName(namespace);
-
-    CConfiguration conf = null;
+  public CConfiguration read(Type type, String sysConfigTablePrefix) throws IOException {
+    String tableName = sysConfigTablePrefix + TABLE_NAME;
     HTable table = null;
+    CConfiguration conf = null;
     try {
+      // tableUtil is not used to create the HTable because this code is used from coprocessors which are already HBase
+      // version specific. Because of that, the sysConfigTablePrefix parameter passed in is already version-specific.
       table = new HTable(hbaseConf, tableName);
       Get get = new Get(Bytes.toBytes(type.name()));
       get.addFamily(FAMILY);
@@ -145,7 +145,7 @@ public class ConfigurationTable {
         }
       }
       LOG.info("Read " + propertyCnt + " properties from configuration table = " +
-                 tableName + ", row = " + type.name());
+                 Bytes.toString(table.getTableName()) + ", row = " + type.name());
     } catch (TableNotFoundException e) {
       // it's expected that this may occur when tables are created before MasterServiceMain has started
       LOG.warn("Configuration table " + tableName + " does not yet exist.");
@@ -159,9 +159,5 @@ public class ConfigurationTable {
       }
     }
     return conf;
-  }
-
-  private static String getTableName(String namespace) {
-    return namespace + "." + Namespace.SYSTEM.namespace(TABLE_NAME);
   }
 }

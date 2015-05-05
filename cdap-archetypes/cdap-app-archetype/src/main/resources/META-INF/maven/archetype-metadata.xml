@@ -18,6 +18,13 @@
   xsi:schemaLocation="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.0.0 http://maven.apache.org/xsd/archetype-descriptor-1.0.0.xsd"
   name="cdap-app-archetype">
   <fileSets>
+    <fileSet encoding="UTF-8">
+      <directory>bin</directory>
+      <includes>
+        <include>*.sh</include>
+        <include>*.bat</include>
+      </includes>
+    </fileSet>
     <fileSet encoding="UTF-8" filtered="true" packaged="true">
       <directory>src/main/java</directory>
       <includes>

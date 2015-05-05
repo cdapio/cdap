@@ -20,7 +20,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -38,14 +38,14 @@ public class LevelDBKVTableTest extends NoTxKeyValueTableTest {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  static LevelDBOrderedTableService service;
+  static LevelDBTableService service;
 
   @BeforeClass
   public static void init() throws Exception {
     CConfiguration conf = CConfiguration.create();
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     conf.set(Constants.CFG_DATA_LEVELDB_DIR, tmpFolder.newFolder().getAbsolutePath());
-    service = new LevelDBOrderedTableService();
+    service = new LevelDBTableService();
     service.setConfiguration(conf);
   }
 
@@ -58,7 +58,7 @@ public class LevelDBKVTableTest extends NoTxKeyValueTableTest {
         CConfiguration conf = CConfiguration.create();
         conf.set(Constants.CFG_DATA_LEVELDB_DIR, dataDir);
         bind(CConfiguration.class).toInstance(conf);
-        bind(LevelDBOrderedTableService.class).toInstance(service);
+        bind(LevelDBTableService.class).toInstance(service);
       }
     });
 

@@ -22,9 +22,9 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.TimeseriesTable;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.mapreduce.MapReduce;
+import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.metrics.Metrics;
 import org.apache.hadoop.mapreduce.Job;
 
 /**
@@ -48,17 +48,9 @@ public class AppWithMapReduce extends AbstractApplication {
   /**
    *
    */
-  public static final class ClassicWordCount implements MapReduce {
+  public static final class ClassicWordCount extends AbstractMapReduce {
     @UseDataSet("jobConfig")
     private KeyValueTable table;
-
-    @Override
-    public MapReduceSpecification configure() {
-      return MapReduceSpecification.Builder.with()
-        .setName("ClassicWordCount")
-        .setDescription("WordCount job from Hadoop examples")
-        .build();
-    }
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
@@ -76,7 +68,7 @@ public class AppWithMapReduce extends AbstractApplication {
   /**
    *
    */
-  public static final class AggregateTimeseriesByTag implements MapReduce {
+  public static final class AggregateTimeseriesByTag extends AbstractMapReduce {
     @UseDataSet("beforeSubmit")
     private KeyValueTable beforeSubmitTable;
     @UseDataSet("onFinish")
@@ -84,20 +76,17 @@ public class AppWithMapReduce extends AbstractApplication {
     @UseDataSet("timeSeries")
     private TimeseriesTable table;
 
+    private Metrics metrics;
+
     @Override
-    public MapReduceSpecification configure() {
-      return MapReduceSpecification.Builder.with()
-        .setName("AggMetricsByTag")
-        .setDescription("Aggregates metrics values by tag")
-          // no need to specify input dataset here as it is defined in beforeSubmit() below
-//        .useInputDataSet("timeSeries")
-        .useOutputDataSet("timeSeries")
-        .build();
+    protected void configure() {
+      setOutputDataset("timeSeries");
     }
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
-      Job hadoopJob = (Job) context.getHadoopJob();
+      metrics.count("beforeSubmit", 1);
+      Job hadoopJob = context.getHadoopJob();
       AggregateMetricsByTag.configureJob(hadoopJob);
       String metricName = context.getRuntimeArguments().get("metric");
       Long startTs = Long.valueOf(context.getRuntimeArguments().get("startTs"));
@@ -111,12 +100,15 @@ public class AppWithMapReduce extends AbstractApplication {
         hadoopJob.getConfiguration().setInt("c.mapper.flush.freq", 1);
         hadoopJob.getConfiguration().setInt("c.reducer.flush.freq", 1);
       }
+      metrics.count("beforeSubmit", 1);
     }
 
     @Override
     public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
+      metrics.count("onFinish", 1);
       System.out.println("Action taken on MapReduce job " + (succeeded ? "" : "un") + "successful completion");
       onFinishTable.write(Bytes.toBytes("onFinish"), Bytes.toBytes("onFinish:done"));
+      metrics.count("onFinish", 1);
     }
   }
 }

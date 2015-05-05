@@ -18,10 +18,10 @@ package co.cask.cdap.internal.app.runtime.flow;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueConsumer;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
-import co.cask.tephra.TransactionContext;
-import co.cask.tephra.TransactionFailureException;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.List;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -44,21 +45,31 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
   private final DataFabricFacade dataFabricFacade;
   private final QueueName queueName;
   private final int numGroups;
+  private final UsageRegistry usageRegistry;
+  private final Id.Namespace namespace;
+  private final List<Id> owners;
   private ConsumerConfig consumerConfig;
-  private Object consumer;
+  private Closeable consumer;
 
-  static <T> ConsumerSupplier<T> create(DataFabricFacade dataFabricFacade,
+  static <T> ConsumerSupplier<T> create(Id.Namespace namespace, List<Id> owners, UsageRegistry usageRegistry,
+                                        DataFabricFacade dataFabricFacade,
                                         QueueName queueName, ConsumerConfig consumerConfig) {
-    return create(dataFabricFacade, queueName, consumerConfig, -1);
+    return create(namespace, owners, usageRegistry, dataFabricFacade, queueName, consumerConfig, -1);
   }
 
-  static <T> ConsumerSupplier<T> create(DataFabricFacade dataFabricFacade, QueueName queueName,
+  static <T> ConsumerSupplier<T> create(Id.Namespace namespace, List<Id> owners, UsageRegistry usageRegistry,
+                                        DataFabricFacade dataFabricFacade, QueueName queueName,
                                         ConsumerConfig consumerConfig, int numGroups) {
-    return new ConsumerSupplier<T>(dataFabricFacade, queueName, consumerConfig, numGroups);
+    return new ConsumerSupplier<T>(namespace, owners, usageRegistry, dataFabricFacade,
+                                   queueName, consumerConfig, numGroups);
   }
 
-  private ConsumerSupplier(DataFabricFacade dataFabricFacade, QueueName queueName,
+  private ConsumerSupplier(Id.Namespace namespace, List<Id> owners, UsageRegistry usageRegistry,
+                           DataFabricFacade dataFabricFacade, QueueName queueName,
                            ConsumerConfig consumerConfig, int numGroups) {
+    this.namespace = namespace;
+    this.owners = owners;
+    this.usageRegistry = usageRegistry;
     this.dataFabricFacade = dataFabricFacade;
     this.queueName = queueName;
     this.numGroups = numGroups;
@@ -88,7 +99,14 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
         consumerConfig = queueConsumer.getConfig();
         consumer = queueConsumer;
       } else {
-        StreamConsumer streamConsumer = dataFabricFacade.createStreamConsumer(queueName, config);
+        for (Id owner : owners) {
+          try {
+            usageRegistry.register(owner, queueName.toStreamId());
+          } catch (Exception e) {
+            LOG.warn("Failed to register usage of {} -> {}", owner, queueName.toStreamId(), e);
+          }
+        }
+        StreamConsumer streamConsumer = dataFabricFacade.createStreamConsumer(queueName.toStreamId(), config);
         consumerConfig = streamConsumer.getConsumerConfig();
         consumer = streamConsumer;
       }
@@ -107,18 +125,8 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
   @Override
   public void close() throws IOException {
     try {
-      if (consumer != null && consumer instanceof Closeable) {
-        // Call close in a new transaction.
-        // TODO (terence): Actually need to coordinates with other flowlets to drain the queue.
-        TransactionContext txContext = dataFabricFacade.createTransactionManager();
-        txContext.start();
-        try {
-          ((Closeable) consumer).close();
-          txContext.finish();
-        } catch (TransactionFailureException e) {
-          LOG.warn("Fail to commit transaction when closing consumer.");
-          txContext.abort();
-        }
+      if (consumer != null) {
+        consumer.close();
       }
     } catch (Exception e) {
       LOG.warn("Fail to close queue consumer.", e);

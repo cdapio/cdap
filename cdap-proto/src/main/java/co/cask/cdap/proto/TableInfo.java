@@ -103,6 +103,14 @@ public class TableInfo {
     this.isBackedByDataset = isBackedByDataset;
   }
 
+  public String getTableName() {
+    return tableName;
+  }
+
+  public String getDbName() {
+    return dbName;
+  }
+
   public long getCreationTime() {
     return creationTime;
   }
@@ -117,6 +125,18 @@ public class TableInfo {
 
   public List<ColumnInfo> getSchema() {
     return schema;
+  }
+
+  public List<ColumnInfo> getPartitionKeys() {
+    return partitionKeys;
+  }
+
+  public boolean isBackedByDataset() {
+    return isBackedByDataset;
+  }
+
+  public Map<String, String> getSerdeParameters() {
+    return serdeParameters;
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,9 +19,10 @@ package co.cask.cdap.internal.app;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.procedure.ProcedureSpecification;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
@@ -45,6 +46,11 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
   }
 
   @Override
+  public String getVersion() {
+    return delegate.getVersion();
+  }
+
+  @Override
   public String getDescription() {
     return delegate.getDescription();
   }
@@ -57,11 +63,6 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
   @Override
   public Map<String, FlowSpecification> getFlows() {
     return delegate.getFlows();
-  }
-
-  @Override
-  public Map<String, ProcedureSpecification> getProcedures() {
-    return delegate.getProcedures();
   }
 
   @Override
@@ -92,5 +93,15 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
   @Override
   public Map<String, ServiceSpecification> getServices() {
     return delegate.getServices();
+  }
+
+  @Override
+  public Map<String, WorkerSpecification> getWorkers() {
+    return delegate.getWorkers();
+  }
+
+  @Override
+  public Map<String, ScheduleSpecification> getSchedules() {
+    return delegate.getSchedules();
   }
 }

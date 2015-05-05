@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,12 +19,10 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
+import co.cask.cdap.api.metrics.MetricDeleteQuery;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
-import co.cask.cdap.common.metrics.MetricsScope;
-import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
@@ -33,68 +31,55 @@ import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
-import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.reflect.TypeToken;
-import com.ning.http.client.SimpleAsyncHttpClient;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Deleted program handler stage. Figures out which programs are deleted and handles callback.
  */
-public class DeletedProgramHandlerStage extends AbstractStage<ApplicationSpecLocation> {
+public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeployable> {
 
-  private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(DeletedProgramHandlerStage.class);
-
-  /**
-   * Number of seconds for timing out a service endpoint discovery.
-   */
-  private static final long DISCOVERY_TIMEOUT_SECONDS = 3;
-
-  /**
-   * Timeout to get response from metrics system.
-   */
-  private static final long METRICS_SERVER_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
+  private static final Logger LOG = LoggerFactory.getLogger(DeletedProgramHandlerStage.class);
 
   private final Store store;
   private final ProgramTerminator programTerminator;
   private final StreamConsumerFactory streamConsumerFactory;
   private final QueueAdmin queueAdmin;
-  private final DiscoveryServiceClient discoveryServiceClient;
+  private final MetricStore metricStore;
 
   public DeletedProgramHandlerStage(Store store, ProgramTerminator programTerminator,
                                     StreamConsumerFactory streamConsumerFactory,
-                                    QueueAdmin queueAdmin, DiscoveryServiceClient discoveryServiceClient) {
-    super(TypeToken.of(ApplicationSpecLocation.class));
+                                    QueueAdmin queueAdmin, MetricStore metricStore) {
+    super(TypeToken.of(ApplicationDeployable.class));
     this.store = store;
     this.programTerminator = programTerminator;
     this.streamConsumerFactory = streamConsumerFactory;
     this.queueAdmin = queueAdmin;
-    this.discoveryServiceClient = discoveryServiceClient;
+    this.metricStore = metricStore;
   }
 
   @Override
-  public void process(ApplicationSpecLocation appSpec) throws Exception {
-    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appSpec.getApplicationId(),
+  public void process(ApplicationDeployable appSpec) throws Exception {
+    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appSpec.getId(),
                                                                                     appSpec.getSpecification());
+
+    // TODO: this should also delete logs and run records (or not?), and do it for all prohgram types [CDAP-2187]
 
     List<String> deletedFlows = Lists.newArrayList();
     for (ProgramSpecification spec : deletedSpecs) {
       //call the deleted spec
       ProgramType type = ProgramTypes.fromSpecification(spec);
-      Id.Program programId = Id.Program.from(appSpec.getApplicationId(), spec.getName());
-      programTerminator.stop(Id.Account.from(appSpec.getApplicationId().getAccountId()),
-                                   programId, type);
+      Id.Program programId = Id.Program.from(appSpec.getId(), type, spec.getName());
+      programTerminator.stop(Id.Namespace.from(appSpec.getId().getNamespaceId()), programId, type);
 
       // TODO: Unify with AppFabricHttpHandler.removeApplication
       // drop all queues and stream states of a deleted flow
@@ -112,54 +97,31 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationSpecLoc
         // Remove all process states and group states for each stream
         String namespace = String.format("%s.%s", programId.getApplicationId(), programId.getId());
         for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
-          streamConsumerFactory.dropAll(QueueName.fromStream(entry.getKey()), namespace, entry.getValue());
+          streamConsumerFactory.dropAll(Id.Stream.from(appSpec.getId().getNamespaceId(), entry.getKey()),
+                                        namespace, entry.getValue());
         }
 
-        queueAdmin.dropAllForFlow(programId.getApplicationId(), programId.getId());
+        queueAdmin.dropAllForFlow(programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
         deletedFlows.add(programId.getId());
       }
     }
     if (!deletedFlows.isEmpty()) {
-      deleteMetrics(appSpec.getApplicationId().getAccountId(), appSpec.getApplicationId().getId(), deletedFlows);
+      deleteMetrics(appSpec.getId().getNamespaceId(), appSpec.getId().getId(), deletedFlows);
     }
 
     emit(appSpec);
   }
 
-  private void deleteMetrics(String account, String application, Iterable<String> flows) throws IOException {
-    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.GATEWAY);
-    Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
-                                                              DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
-
-    if (discoverable == null) {
-      LOG.error("Fail to get any metrics endpoint for deleting metrics.");
-      return;
-    }
-
+  private void deleteMetrics(String namespace, String application, Iterable<String> flows) throws Exception {
     LOG.debug("Deleting metrics for application {}", application);
-    for (MetricsScope scope : MetricsScope.values()) {
-      for (String flow : flows) {
-        String url = String.format("http://%s:%d%s/metrics/%s/apps/%s/flows/%s",
-                                   discoverable.getSocketAddress().getHostName(),
-                                   discoverable.getSocketAddress().getPort(),
-                                   Constants.Gateway.GATEWAY_VERSION,
-                                   scope.name().toLowerCase(),
-                                   application, flow);
-
-        SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-          .setUrl(url)
-          .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
-          .build();
-
-        try {
-          client.delete().get(METRICS_SERVER_RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-          LOG.error("exception making metrics delete call", e);
-          Throwables.propagate(e);
-        } finally {
-          client.close();
-        }
-      }
+    for (String flow : flows) {
+      long endTs = System.currentTimeMillis() / 1000;
+      Map<String, String> tags = Maps.newHashMap();
+      tags.put(Constants.Metrics.Tag.NAMESPACE, namespace);
+      tags.put(Constants.Metrics.Tag.APP, application);
+      tags.put(Constants.Metrics.Tag.FLOW, flow);
+      MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, null, tags);
+      metricStore.delete(deleteQuery);
     }
   }
 }

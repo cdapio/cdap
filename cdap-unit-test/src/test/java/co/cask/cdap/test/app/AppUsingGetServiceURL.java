@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,22 +16,19 @@
 
 package co.cask.cdap.test.app;
 
-import co.cask.cdap.api.annotation.Handle;
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.DataSetContext;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureRequest;
-import co.cask.cdap.api.procedure.ProcedureResponder;
-import co.cask.cdap.api.procedure.ProcedureResponse;
 import co.cask.cdap.api.service.AbstractService;
-import co.cask.cdap.api.service.AbstractServiceWorker;
-import co.cask.cdap.api.service.TxRunnable;
+import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.api.worker.AbstractWorker;
+import co.cask.cdap.api.worker.WorkerContext;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import org.slf4j.Logger;
@@ -41,44 +38,53 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  * AppWithServices with a CentralService, which other programs will hit via their context's getServiceURL method.
- * This CentralService returns a constant string value {@link ANSWER}, which is checked for in the test cases.
+ * This CentralService returns a constant string value {@link #ANSWER}, which is checked for in the test cases.
  */
 public class AppUsingGetServiceURL extends AbstractApplication {
   public static final String APP_NAME = "AppUsingGetServiceURL";
   public static final String CENTRAL_SERVICE = "CentralService";
-  public static final String SERVICE_WITH_WORKER = "ServiceWithWorker";
-  public static final String PROCEDURE = "ForwardingProcedure";
+  public static final String LIFECYCLE_WORKER = "LifecycleWorker";
+  public static final String PINGING_WORKER = "PingingWorker";
+  public static final String FORWARDING = "ForwardingService";
   public static final String ANSWER = "MagicalString";
   public static final String DATASET_NAME = "SharedDataSet";
   public static final String DATASET_WHICH_KEY = "WhichKey";
   public static final String DATASET_KEY = "Key";
+  public static final String WORKER_INSTANCES_DATASET = "WorkerInstancesDataset";
 
   @Override
   public void configure() {
-      setName(APP_NAME);
-      addProcedure(new ForwardingProcedure());
-      addService(new CentralService());
-      addService(new ServiceWithWorker());
-      createDataset(DATASET_NAME, KeyValueTable.class);
+    setName(APP_NAME);
+    addService(new BasicService("ForwardingService", new ForwardingHandler()));
+    addService(new CentralService());
+    addWorker(new PingingWorker());
+    addWorker(new LifecycleWorker());
+    createDataset(DATASET_NAME, KeyValueTable.class);
+    createDataset(WORKER_INSTANCES_DATASET, KeyValueTable.class);
   }
 
-
-  public static final class ForwardingProcedure extends AbstractProcedure {
+  /**
+   *
+   */
+  public static final class ForwardingHandler extends AbstractHttpServiceHandler {
 
     @UseDataSet(DATASET_NAME)
     private KeyValueTable table;
 
-    @Handle("ping")
-    public void ping(ProcedureRequest request, ProcedureResponder responder) throws IOException {
+    @GET
+    @Path("ping")
+    public void ping(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
       // Discover the CatalogLookup service via discovery service
       URL serviceURL = getContext().getServiceURL(CENTRAL_SERVICE);
       if (serviceURL == null) {
-        responder.error(ProcedureResponse.Code.NOT_FOUND, "serviceURL is null");
+        responder.sendError(404, "serviceURL is null");
         return;
       }
       URL url = new URL(serviceURL, "ping");
@@ -86,91 +92,126 @@ public class AppUsingGetServiceURL extends AbstractApplication {
       try {
         if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
           String response = new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
-          responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), response);
+          responder.sendJson(response);
         } else {
-          responder.error(ProcedureResponse.Code.FAILURE, "Failed to retrieve a response from the service");
+          responder.sendError(500, "Failed to retrieve a response from the service");
         }
       } finally {
           conn.disconnect();
       }
-
     }
 
-    @Handle("readDataSet")
-    public void readDataSet(ProcedureRequest request, ProcedureResponder responder) throws IOException {
-      String key = request.getArgument(DATASET_WHICH_KEY);
+    @GET
+    @Path("read/{key}")
+    public void readDataSet(HttpServiceRequest request, HttpServiceResponder responder,
+                            @PathParam("key") String key) throws IOException {
       byte[] value = table.read(key);
       if (value == null) {
-        responder.error(ProcedureResponse.Code.NOT_FOUND, "Table returned null for value: " + key);
+        responder.sendError(404, "Table returned null for value: " + key);
         return;
       }
-      responder.sendJson(ProcedureResponse.Code.SUCCESS, Bytes.toString(value));
+      responder.sendJson(Bytes.toString(value));
+    }
+  }
+
+  private static void writeToDataSet(final WorkerContext context,
+                                     final String tableName, final String key, final byte[] value) {
+    context.execute(new TxRunnable() {
+      @Override
+      public void run(DatasetContext context) throws Exception {
+        KeyValueTable table = context.getDataset(tableName);
+        table.write(key, value);
+      }
+    });
+  }
+
+  /**
+   *
+   */
+  public static final class LifecycleWorker extends AbstractWorker {
+    private static final Logger LOG = LoggerFactory.getLogger(LifecycleWorker.class);
+    private volatile boolean isRunning;
+
+    @Override
+    protected void configure() {
+      setName(LIFECYCLE_WORKER);
+      useDatasets(WORKER_INSTANCES_DATASET);
+      setInstances(3);
+    }
+
+    @Override
+    public void initialize(WorkerContext context) throws Exception {
+      super.initialize(context);
+
+      String key = String.format("init.%d", getContext().getInstanceId());
+      byte[] value = Bytes.toBytes(getContext().getInstanceCount());
+      writeToDataSet(getContext(), WORKER_INSTANCES_DATASET, key, value);
+    }
+
+    @Override
+    public void run() {
+      isRunning = true;
+      while (isRunning) {
+        try {
+          TimeUnit.MILLISECONDS.sleep(50);
+        } catch (InterruptedException e) {
+          LOG.error("Error sleeping in LifecycleWorker", e);
+        }
+      }
+    }
+
+    @Override
+    public void stop() {
+      isRunning = false;
+
+      String key = String.format("stop.%d", getContext().getInstanceId());
+      byte[] value = Bytes.toBytes(getContext().getInstanceCount());
+      writeToDataSet(getContext(), WORKER_INSTANCES_DATASET, key, value);
     }
   }
 
   /**
-   * A service whose sole purpose is to check the ability for its worker to hit another service (via getServiceURL).
+   *
    */
-  private static final class ServiceWithWorker extends AbstractService {
+  public static final class PingingWorker extends AbstractWorker {
+    private static final Logger LOG = LoggerFactory.getLogger(PingingWorker.class);
 
     @Override
     protected void configure() {
-      setName(SERVICE_WITH_WORKER);
-      addHandler(new NoOpHandler());
-      addWorker(new PingingWorker());
-      useDataset(DATASET_NAME);
-    }
-    public static final class NoOpHandler extends AbstractHttpServiceHandler {
-      // handles nothing.
+      setName(PINGING_WORKER);
+      useDatasets(DATASET_NAME);
+      setInstances(5);
     }
 
-    private static final class PingingWorker extends AbstractServiceWorker {
-      private static final Logger LOG = LoggerFactory.getLogger(PingingWorker.class);
-
-      private void writeToDataSet(final String key, final String val) {
-        getContext().execute(new TxRunnable() {
-          @Override
-          public void run(DataSetContext context) throws Exception {
-            KeyValueTable table = context.getDataSet(DATASET_NAME);
-            table.write(key, val);
-          }
-        });
+    @Override
+    public void run() {
+      URL baseURL = getContext().getServiceURL(CENTRAL_SERVICE);
+      if (baseURL == null) {
+        return;
       }
 
-      @Override
-      public void run() {
-        URL baseURL = getContext().getServiceURL(CENTRAL_SERVICE);
-        if (baseURL == null) {
-          return;
-        }
+      URL url;
+      try {
+        url = new URL(baseURL, "ping");
+      } catch (MalformedURLException e) {
+        return;
+      }
 
-        URL url = null;
-        String response = null;
+      try {
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         try {
-          url = new URL(baseURL, "ping");
-        } catch (MalformedURLException e) {
-          return;
-        }
-
-        try {
-          HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-          try {
-            if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
-              response = new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
-              // Write the response to dataset, so that we can verify it from a test.
-              writeToDataSet(DATASET_KEY, response);
-            }
-          } finally {
-            conn.disconnect();
+          if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
+            // Write the response to dataset, so that we can verify it from a test.
+            writeToDataSet(getContext(), DATASET_NAME, DATASET_KEY, ByteStreams.toByteArray(conn.getInputStream()));
           }
-        } catch (IOException e) {
-          LOG.error("Got exception {}", e);
-          return;
+        } finally {
+          conn.disconnect();
         }
+      } catch (IOException e) {
+        LOG.error("Got exception {}", e);
       }
     }
   }
-
 
   /**
    * The central service which other programs will ping via their context's getServiceURL method.
@@ -180,10 +221,10 @@ public class AppUsingGetServiceURL extends AbstractApplication {
     @Override
     protected void configure() {
       setName("CentralService");
-      addHandler(new NoOpHandler());
+      addHandler(new PingHandler());
     }
 
-    public static final class NoOpHandler extends AbstractHttpServiceHandler {
+    public static final class PingHandler extends AbstractHttpServiceHandler {
       @Path("/ping")
       @GET
       public void handler(HttpServiceRequest request, HttpServiceResponder responder) {

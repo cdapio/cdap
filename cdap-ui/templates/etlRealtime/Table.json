@@ -1,0 +1,31 @@
+{
+  "id": "Table",
+  "groups" : {
+    "position": [ "group1" ],
+    "group1": {
+       "display" : "General",
+       "position" : [ "name", "schema", "schema.row.field" ],
+       "fields" : {
+          "name" : {
+             "widget": "textbox",
+             "label": "Name",
+             "description" : "Specifies the name of the table to which data will be written to"
+          },
+
+          "schema" : {
+             "widget": "schema",
+             "label": "Schema",
+             "description" : "Specify the schema for the table",
+             "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
+             "schema-default-type" : "string"
+          },
+
+          "schema.row.field" : {
+             "widget": "textbox",
+             "label" : "Row Field",
+             "description" : "Specify the field from the record above that should be used as key"
+          }
+       }
+    }
+  }
+}

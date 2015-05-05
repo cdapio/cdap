@@ -39,8 +39,7 @@ public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
           instance = createInstance(getHBase96Classname());
           break;
         case HBASE_98:
-          // for our needs HBase 0.98 is API compatible with 0.96
-          instance = createInstance(getHBase96Classname());
+          instance = createInstance(getHBase98Classname());
           break;
         case UNKNOWN:
           throw new ProvisionException("Unknown HBase version: " + HBaseVersion.getVersionString());
@@ -51,11 +50,12 @@ public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
     return instance;
   }
 
-  private T createInstance(String className) throws ClassNotFoundException {
+  protected T createInstance(String className) throws ClassNotFoundException {
     Class clz = Class.forName(className);
     return (T) Instances.newInstance(clz);
   }
 
   protected abstract String getHBase94Classname();
   protected abstract String getHBase96Classname();
+  protected abstract String getHBase98Classname();
 }

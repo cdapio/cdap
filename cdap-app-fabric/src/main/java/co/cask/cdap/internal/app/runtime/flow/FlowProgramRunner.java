@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -33,6 +34,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -47,7 +49,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
-import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,18 +69,21 @@ public final class FlowProgramRunner implements ProgramRunner {
   private final Map<RunId, ProgramOptions> programOptions = Maps.newHashMap();
   private final StreamAdmin streamAdmin;
   private final QueueAdmin queueAdmin;
+  private final TransactionExecutorFactory txExecutorFactory;
 
   @Inject
-  public FlowProgramRunner(ProgramRunnerFactory programRunnerFactory, StreamAdmin streamAdmin, QueueAdmin queueAdmin) {
+  public FlowProgramRunner(ProgramRunnerFactory programRunnerFactory, StreamAdmin streamAdmin,
+                           QueueAdmin queueAdmin, TransactionExecutorFactory txExecutorFactory) {
     this.programRunnerFactory = programRunnerFactory;
     this.streamAdmin = streamAdmin;
     this.queueAdmin = queueAdmin;
+    this.txExecutorFactory = txExecutorFactory;
   }
 
   @Override
   public ProgramController run(Program program, ProgramOptions options) {
     // Extract and verify parameters
-    ApplicationSpecification appSpec = program.getSpecification();
+    ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
     ProgramType processorType = program.getType();
@@ -91,9 +95,10 @@ public final class FlowProgramRunner implements ProgramRunner {
 
     try {
       // Launch flowlet program runners
-      RunId runId = RunIds.generate();
+      RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
       programOptions.put(runId, options);
-      Multimap<String, QueueName> consumerQueues = FlowUtils.configureQueue(program, flowSpec, streamAdmin, queueAdmin);
+      Multimap<String, QueueName> consumerQueues = FlowUtils.configureQueue(program, flowSpec,
+                                                                            streamAdmin, queueAdmin, txExecutorFactory);
       final Table<String, Integer, ProgramController> flowlets = createFlowlets(program, runId, flowSpec);
       return new FlowProgramController(flowlets, runId, program, flowSpec, consumerQueues);
     } catch (Exception e) {
@@ -238,7 +243,7 @@ public final class FlowProgramRunner implements ProgramRunner {
     @Override
     @SuppressWarnings("unchecked")
     protected void doCommand(String name, Object value) throws Exception {
-      if (!ProgramOptionConstants.FLOWLET_INSTANCES.equals(name) || !(value instanceof Map)) {
+      if (!ProgramOptionConstants.INSTANCES.equals(name) || !(value instanceof Map)) {
         return;
       }
       Map<String, String> command = (Map<String, String>) value;
@@ -290,7 +295,7 @@ public final class FlowProgramRunner implements ProgramRunner {
       // Then reconfigure stream/queue consumers
       FlowUtils.reconfigure(consumerQueues.get(flowletName),
                             FlowUtils.generateConsumerGroupId(program, flowletName), newInstanceCount,
-                            streamAdmin, queueAdmin);
+                            streamAdmin, queueAdmin, txExecutorFactory);
 
       // Then change instance count of current flowlets
       Futures.successfulAsList(Iterables.transform(
@@ -345,7 +350,7 @@ public final class FlowProgramRunner implements ProgramRunner {
       // Then reconfigure stream/queue consumers
       FlowUtils.reconfigure(consumerQueues.get(flowletName),
                             FlowUtils.generateConsumerGroupId(program, flowletName), newInstanceCount,
-                            streamAdmin, queueAdmin);
+                            streamAdmin, queueAdmin, txExecutorFactory);
 
       // Next updates instance count for each flowlets
       Futures.successfulAsList(Iterables.transform(

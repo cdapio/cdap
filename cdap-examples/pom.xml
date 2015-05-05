@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014 Cask Data, Inc.
+  Copyright © 2014-2015 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -22,21 +22,26 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>2.5.1</version>
+    <version>3.0.0</version>
   </parent>
 
   <artifactId>cdap-examples</artifactId>
   <packaging>pom</packaging>
-  <name>Cask Data Application Platform (CDAP) Examples</name>
+  <name>CDAP Examples</name>
 
   <modules>
     <module>CountRandom</module>
+    <module>FileSetExample</module>
     <module>HelloWorld</module>
     <module>Purchase</module>
-    <module>WordCount</module>
     <module>SparkKMeans</module>
     <module>SparkPageRank</module>
+    <module>SportResults</module>
+    <module>StreamConversion</module>
+    <module>UserProfiles</module>
     <module>WebAnalytics</module>
+    <module>WordCount</module>
+    <module>CubeService</module>
   </modules>
 
   <repositories>
@@ -47,8 +52,6 @@
   </repositories>
 
   <properties>
-    <hadoop.version>2.3.0</hadoop.version>
-    <spark.core.version>1.1.0</spark.core.version>
     <power.pack.version>[2.0.0,)</power.pack.version>
   </properties>
 
@@ -74,6 +77,7 @@
                   <exclude>logs/**</exclude>
                   <exclude>docs/**</exclude>
                   <exclude>conf/**</exclude>
+                  <exclude>resources/**</exclude>                  
                   <exclude>**/data/**</exclude>
                   <exclude>**/Apache-LICENSE-2.0</exclude>
                   <exclude>**/VERSION</exclude>
@@ -82,6 +86,7 @@
                   <exclude>**/limits.d/**</exclude>
                   <exclude>**/resources/**/*.txt</exclude>
                   <exclude>**/resources/**/*.log</exclude>
+                  <exclude>**/resources/**/*.csv</exclude>
                   <exclude>**/resources/**/*.css</exclude>
                   <exclude>**/resources/**/*.scss</exclude>
                   <exclude>**/resources/**/*.js</exclude>
@@ -124,9 +129,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.14.1</version>
-        <configuration>
-          <argLine>-Xmx2048m</argLine>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.felix</groupId>
@@ -178,9 +180,14 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
+        <groupId>co.cask.common</groupId>
+        <artifactId>common-http</artifactId>
+        <version>${cask.common.version}</version>
+      </dependency>
+      <dependency>
         <groupId>co.cask.http</groupId>
         <artifactId>netty-http</artifactId>
-        <version>0.4.1</version>
+        <version>${netty.http.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.commons</groupId>
@@ -190,7 +197,7 @@
       <dependency> <!-- Spark dependency -->
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-core_2.10</artifactId>
-        <version>${spark.core.version}</version>
+        <version>${spark.version}</version>
         <scope>provided</scope>
         <exclusions>
           <exclusion>

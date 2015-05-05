@@ -18,16 +18,20 @@ package co.cask.cdap.data.stream;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Performs deletion of unused stream files.
@@ -37,23 +41,40 @@ public final class StreamFileJanitor {
   private static final Logger LOG = LoggerFactory.getLogger(StreamFileJanitor.class);
 
   private final StreamAdmin streamAdmin;
-  private final Location streamBaseLocation;
+  private final NamespacedLocationFactory namespacedLocationFactory;
+  private final String streamBaseDirPath;
 
   @Inject
-  public StreamFileJanitor(CConfiguration cConf, StreamAdmin streamAdmin, LocationFactory locationFactory) {
+  public StreamFileJanitor(CConfiguration cConf, StreamAdmin streamAdmin,
+                           NamespacedLocationFactory namespacedLocationFactory) {
     this.streamAdmin = streamAdmin;
-    this.streamBaseLocation = locationFactory.create(cConf.get(Constants.Stream.BASE_DIR));
+    this.streamBaseDirPath = cConf.get(Constants.Stream.BASE_DIR);
+    this.namespacedLocationFactory = namespacedLocationFactory;
   }
 
   /**
    * Performs file cleanup for all streams.
    */
   public void cleanAll() throws IOException {
-    if (!streamBaseLocation.exists()) {
+    Map<Id.Namespace, Location> namespaceLocations = namespacedLocationFactory.list();
+    if (namespaceLocations.size() == 0) {
       return;
     }
-    for (Location streamLocation : streamBaseLocation.list()) {
-      clean(streamAdmin.getConfig(streamLocation.getName()), System.currentTimeMillis());
+    Collection<Location> namespaceDirs = namespaceLocations.values();
+    for (Location namespaceDir : namespaceDirs) {
+      Location streamBaseLocation = namespaceDir.append(streamBaseDirPath);
+      if (!streamBaseLocation.exists()) {
+        continue;
+      }
+
+      for (Location streamLocation : streamBaseLocation.list()) {
+        Id.Stream streamId = StreamUtils.getStreamIdFromLocation(streamLocation);
+        long ttl = 0L;
+        if (isStreamExists(streamId)) {
+          ttl = streamAdmin.getConfig(streamId).getTTL();
+        }
+        clean(streamLocation, ttl, System.currentTimeMillis());
+      }
     }
   }
 
@@ -61,21 +82,22 @@ public final class StreamFileJanitor {
    * Performs deletion of unused stream file based on the given {@link StreamConfig}.
    * This method is package visible so that it can be test easily by providing a custom timestamp for current time.
    *
-   * @param config Configuration of the stream to cleanup.
+   * @param streamLocation stream location
+   * @param ttl ttl for the cleanup
    * @param currentTime Current timestamp. Used for computing timestamp for expired partitions based on TTL.
    */
   @VisibleForTesting
-  void clean(StreamConfig config, long currentTime) throws IOException {
-    LOG.debug("Cleanup stream file for {}", config);
+  void clean(Location streamLocation, long ttl, long currentTime) throws IOException {
+    LOG.debug("Cleanup stream file in {}", streamLocation);
 
     // Get the current generation and remove every generations smaller then the current one.
-    int generation = StreamUtils.getGeneration(config);
+    int generation = StreamUtils.getGeneration(streamLocation);
 
     for (int i = 0; i < generation; i++) {
-      Location generationLocation = StreamUtils.createGenerationLocation(config.getLocation(), i);
+      Location generationLocation = StreamUtils.createGenerationLocation(streamLocation, i);
 
       // Special case for generation 0
-      if (generationLocation.equals(config.getLocation())) {
+      if (generationLocation.equals(streamLocation)) {
         for (Location location : generationLocation.list()) {
           // Only delete partition directories
           if (isPartitionDirector(location)) {
@@ -88,8 +110,8 @@ public final class StreamFileJanitor {
     }
 
     // For current generation, remove all partition directories ended older than TTL
-    long expireTime = currentTime - config.getTTL();
-    Location generationLocation = StreamUtils.createGenerationLocation(config.getLocation(), generation);
+    long expireTime = currentTime - ttl;
+    Location generationLocation = StreamUtils.createGenerationLocation(streamLocation, generation);
     for (Location location : generationLocation.list()) {
       // Only interested in partition directories
       if (!isPartitionDirector(location)) {
@@ -104,5 +126,13 @@ public final class StreamFileJanitor {
 
   private boolean isPartitionDirector(Location location) throws IOException {
     return (location.isDirectory() && location.getName().indexOf('.') > 0);
+  }
+
+  private boolean isStreamExists(Id.Stream streamId) throws IOException {
+    try {
+      return streamAdmin.exists(streamId);
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
   }
 }

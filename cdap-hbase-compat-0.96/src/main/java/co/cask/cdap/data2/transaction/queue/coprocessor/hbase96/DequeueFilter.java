@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,8 @@ import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.tephra.Transaction;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
-import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterBase;
@@ -47,8 +48,6 @@ public class DequeueFilter extends FilterBase {
   private Transaction transaction;
   private byte[] stateColumnName;
 
-  private int queueNamePrefixLength;
-
   private boolean stopScan;
   private boolean skipRow;
 
@@ -59,11 +58,9 @@ public class DequeueFilter extends FilterBase {
   private DequeueFilter() {
   }
 
-  public DequeueFilter(byte[] queueRowPrefix, ConsumerConfig consumerConfig, Transaction transaction) {
+  public DequeueFilter(ConsumerConfig consumerConfig, Transaction transaction) {
     this.consumerConfig = consumerConfig;
     this.transaction = transaction;
-    // +1 for salting
-    this.queueNamePrefixLength = queueRowPrefix.length + HBaseQueueAdmin.SALT_BYTES;
     this.stateColumnName = Bytes.add(QueueEntryRow.STATE_COLUMN_PREFIX,
                                      Bytes.toBytes(consumerConfig.getGroupId()));
   }
@@ -82,9 +79,9 @@ public class DequeueFilter extends FilterBase {
   @Override
   public boolean filterRowKey(byte[] buffer, int offset, int length) {
     // last 4 bytes in a row key
-    counter = Bytes.toInt(buffer, offset + length - 4, Ints.BYTES);
+    counter = Bytes.toInt(buffer, offset + length - Ints.BYTES, Ints.BYTES);
     // row key is queue_name + writePointer + counter
-    writePointer = Bytes.toLong(buffer, offset + queueNamePrefixLength, Longs.BYTES);
+    writePointer = Bytes.toLong(buffer, offset + length - Longs.BYTES - Ints.BYTES, Longs.BYTES);
 
     // If writes later than the reader pointer, abort the loop, as entries that comes later are all uncommitted.
     // this is probably not needed due to the limit of the scan to the stop row, but to be safe...
@@ -107,18 +104,18 @@ public class DequeueFilter extends FilterBase {
   }
 
   @Override
-  public void filterRow(List<KeyValue> kvs) {
+  public void filterRowCells(List<Cell> cells) {
     byte[] dataBytes = null;
     byte[] metaBytes = null;
     byte[] stateBytes = null;
     // list is very short so it is ok to loop thru to find columns
-    for (KeyValue kv : kvs) {
-      if (hasQualifier(kv, QueueEntryRow.DATA_COLUMN)) {
-        dataBytes = kv.getValue();
-      } else if (hasQualifier(kv, QueueEntryRow.META_COLUMN)) {
-        metaBytes = kv.getValue();
-      } else if (hasQualifier(kv, stateColumnName)) {
-        stateBytes = kv.getValue();
+    for (Cell cell : cells) {
+      if (CellUtil.matchingQualifier(cell, QueueEntryRow.DATA_COLUMN)) {
+        dataBytes = CellUtil.cloneValue(cell);
+      } else if (CellUtil.matchingQualifier(cell, QueueEntryRow.META_COLUMN)) {
+        metaBytes = CellUtil.cloneValue(cell);
+      } else if (CellUtil.matchingQualifier(cell, stateColumnName)) {
+        stateBytes = CellUtil.cloneValue(cell);
       }
     }
 
@@ -140,23 +137,16 @@ public class DequeueFilter extends FilterBase {
     return skipRow;
   }
 
-  private static boolean hasQualifier(KeyValue kv, byte[] qual) {
-    return Bytes.equals(kv.getBuffer(), kv.getQualifierOffset(), kv.getQualifierLength(),
-                        qual, 0, qual.length);
-  }
-
   /* Writable implementation for HBase 0.94 */
 
   public void write(DataOutput out) throws IOException {
     DequeueScanAttributes.write(out, consumerConfig);
     DequeueScanAttributes.write(out, transaction);
-    out.writeInt(queueNamePrefixLength);
   }
 
   public void readFields(DataInput in) throws IOException {
     this.consumerConfig = DequeueScanAttributes.readConsumerConfig(in);
     this.transaction = DequeueScanAttributes.readTx(in);
-    this.queueNamePrefixLength = in.readInt();
   }
 
   /* Serialization support for HBase 0.96+ */

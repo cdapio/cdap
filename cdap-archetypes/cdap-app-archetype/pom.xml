@@ -21,10 +21,10 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap-archetypes</artifactId>
-    <version>2.5.1</version>
+    <version>3.0.0</version>
   </parent>
 
   <artifactId>cdap-app-archetype</artifactId>
   <packaging>jar</packaging>
-  <name>Cask Data Application Platform (CDAP) Application Archetype</name>
+  <name>CDAP Application Archetype</name>
 </project>

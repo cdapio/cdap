@@ -16,6 +16,7 @@
 package co.cask.cdap.common.discovery;
 
 import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.ServiceDiscovered;
 
 /**
  * An {@link EndpointStrategy} that will always return the same endpoint once it's picked
@@ -25,15 +26,14 @@ import org.apache.twill.discovery.Discoverable;
  * that they get different result if there was no endpoint being picked yet or the previously
  * picked endpoint is no longer value. The pick will be eventually settled to the same one.
  */
-public final class StickyEndpointStrategy implements EndpointStrategy {
+public final class StickyEndpointStrategy extends AbstractEndpointStrategy {
 
-  private final Iterable<Discoverable> discoverables;
   private final EndpointStrategy picker;
   private volatile Discoverable lastPick;
 
-  public StickyEndpointStrategy(Iterable<Discoverable> discoverables) {
-    this.discoverables = discoverables;
-    this.picker = new RandomEndpointStrategy(discoverables);
+  public StickyEndpointStrategy(ServiceDiscovered serviceDiscovered) {
+    super(serviceDiscovered);
+    this.picker = new RandomEndpointStrategy(serviceDiscovered);
   }
 
   @Override
@@ -46,7 +46,7 @@ public final class StickyEndpointStrategy implements EndpointStrategy {
   }
 
   private boolean isValid(Discoverable endpoint) {
-    for (Discoverable discoverable : discoverables) {
+    for (Discoverable discoverable : serviceDiscovered) {
       if (discoverable.getSocketAddress().equals(endpoint.getSocketAddress())) {
         return true;
       }

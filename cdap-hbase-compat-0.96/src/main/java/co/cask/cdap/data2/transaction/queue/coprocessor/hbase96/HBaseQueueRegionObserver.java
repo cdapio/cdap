@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,17 +16,26 @@
 package co.cask.cdap.data2.transaction.queue.coprocessor.hbase96;
 
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
 import co.cask.cdap.data2.transaction.queue.ConsumerEntryState;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
-import co.cask.cdap.data2.transaction.queue.QueueUtils;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
+import co.cask.cdap.data2.transaction.queue.hbase.SaltedHBaseQueueStrategy;
+import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerInstance;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.QueueConsumerConfig;
+import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.HTable96NameConverter;
+import co.cask.tephra.coprocessor.TransactionStateCache;
+import co.cask.tephra.persist.TransactionSnapshot;
+import com.google.common.base.Supplier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
@@ -53,22 +62,54 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
   private static final Log LOG = LogFactory.getLog(HBaseQueueRegionObserver.class);
 
+  private Configuration conf;
+  private byte[] configTableNameBytes;
+  private CConfigurationReader cConfReader;
+  private TransactionStateCache txStateCache;
+  private Supplier<TransactionSnapshot> txSnapshotSupplier;
   private ConsumerConfigCache configCache;
 
+  private int prefixBytes;
+  private String namespaceId;
   private String appName;
   private String flowName;
 
   @Override
   public void start(CoprocessorEnvironment env) {
     if (env instanceof RegionCoprocessorEnvironment) {
-      String tableName = ((RegionCoprocessorEnvironment) env).getRegion().getTableDesc().getNameAsString();
-      String configTableName = QueueUtils.determineQueueConfigTableName(tableName);
+      HTableDescriptor tableDesc = ((RegionCoprocessorEnvironment) env).getRegion().getTableDesc();
+      String hTableName = tableDesc.getNameAsString();
 
-      appName = HBaseQueueAdmin.getApplicationName(tableName);
-      flowName = HBaseQueueAdmin.getFlowName(tableName);
+      String prefixBytes = tableDesc.getValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES);
+      try {
+        // Default to SALT_BYTES for the older salted queue implementation.
+        this.prefixBytes = prefixBytes == null ? SaltedHBaseQueueStrategy.SALT_BYTES : Integer.parseInt(prefixBytes);
+      } catch (NumberFormatException e) {
+        // Shouldn't happen for table created by cdap.
+        LOG.error("Unable to parse value of '" + HBaseQueueAdmin.PROPERTY_PREFIX_BYTES + "' property. " +
+                    "Default to " + SaltedHBaseQueueStrategy.SALT_BYTES, e);
+        this.prefixBytes = SaltedHBaseQueueStrategy.SALT_BYTES;
+      }
 
-      configCache = ConsumerConfigCache.getInstance(env.getConfiguration(),
-                                                    Bytes.toBytes(configTableName));
+      HTable96NameConverter nameConverter = new HTable96NameConverter();
+      namespaceId = nameConverter.from(tableDesc).getNamespace().getId();
+      appName = HBaseQueueAdmin.getApplicationName(hTableName);
+      flowName = HBaseQueueAdmin.getFlowName(hTableName);
+
+      conf = env.getConfiguration();
+      String hbaseNamespacePrefix = nameConverter.getNamespacePrefix(tableDesc);
+      TableId queueConfigTableId = HBaseQueueAdmin.getConfigTableId(namespaceId);
+      final String sysConfigTablePrefix = nameConverter.getSysConfigTablePrefix(tableDesc);
+      txStateCache = new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf).get();
+      txSnapshotSupplier = new Supplier<TransactionSnapshot>() {
+        @Override
+        public TransactionSnapshot get() {
+          return txStateCache.getLatestState();
+        }
+      };
+      configTableNameBytes = nameConverter.toTableName(hbaseNamespacePrefix, queueConfigTableId).getName();
+      cConfReader = new CConfigurationReader(conf, sysConfigTablePrefix);
+      configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, cConfReader, txSnapshotSupplier);
     }
   }
 
@@ -85,7 +126,8 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
   @Override
   public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
-      InternalScanner scanner, ScanType type, CompactionRequest request) throws IOException {
+                                    InternalScanner scanner, ScanType type,
+                                    CompactionRequest request) throws IOException {
     if (!e.getEnvironment().getRegion().isAvailable()) {
       return scanner;
     }
@@ -96,7 +138,15 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
   // needed for queue unit-test
   private ConsumerConfigCache getConfigCache() {
+    if (!configCache.isAlive()) {
+      configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, cConfReader, txSnapshotSupplier);
+    }
     return configCache;
+  }
+
+  // need for queue unit-test
+  private TransactionStateCache getTxStateCache() {
+    return txStateCache;
   }
 
   /**
@@ -141,7 +191,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
         // If current queue is unknown or the row is not a queue entry of current queue,
         // it either because it scans into next queue entry or simply current queue is not known.
         // Hence needs to find the currentQueue
-        if (currentQueue == null || !QueueEntryRow.isQueueEntry(currentQueueRowPrefix, cell.getRowArray(),
+        if (currentQueue == null || !QueueEntryRow.isQueueEntry(currentQueueRowPrefix, prefixBytes, cell.getRowArray(),
                                                                 cell.getRowOffset(), cell.getRowLength())) {
           // If not eligible, it either because it scans into next queue entry or simply current queue is not known.
           currentQueue = null;
@@ -149,11 +199,12 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
         // This row is a queue entry. If currentQueue is null, meaning it's a new queue encountered during scan.
         if (currentQueue == null) {
-          QueueName queueName = QueueEntryRow.getQueueName(
-              appName, flowName, cell.getRowArray(), cell.getRowOffset(), cell.getRowLength());
+          QueueName queueName = QueueEntryRow.getQueueName(namespaceId, appName, flowName, prefixBytes,
+                                                           cell.getRowArray(), cell.getRowOffset(),
+                                                           cell.getRowLength());
           currentQueue = queueName.toBytes();
           currentQueueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);
-          consumerConfig = configCache.getConsumerConfig(currentQueue);
+          consumerConfig = getConfigCache().getConsumerConfig(currentQueue);
         }
 
         if (consumerConfig == null) {
@@ -250,12 +301,12 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       // However, the second condition alone is not good enough as it's possible that in hash partitioning,
       // only one consumer is keep consuming when the other consumer never proceed.
       return consumedGroups == consumerConfig.getNumGroups()
-          || compareRowKey(result.get(0), consumerConfig.getSmallestStartRow()) < 0;
+        || compareRowKey(result.get(0), consumerConfig.getSmallestStartRow()) < 0;
     }
 
     private int compareRowKey(Cell cell, byte[] row) {
-      return Bytes.compareTo(cell.getRowArray(), cell.getRowOffset() + HBaseQueueAdmin.SALT_BYTES,
-                             cell.getRowLength() - HBaseQueueAdmin.SALT_BYTES, row, 0, row.length);
+      return Bytes.compareTo(cell.getRowArray(), cell.getRowOffset() + prefixBytes,
+                             cell.getRowLength() - prefixBytes, row, 0, row.length);
     }
 
     /**

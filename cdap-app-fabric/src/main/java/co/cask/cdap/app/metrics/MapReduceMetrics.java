@@ -16,13 +16,22 @@
 
 package co.cask.cdap.app.metrics;
 
-import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsScope;
-
 /**
  * Metrics collector for MapReduce job.
+ * todo: extract TaskType enum in its own class
  */
-public final class MapReduceMetrics extends AbstractProgramMetrics {
+public final class MapReduceMetrics {
+  public static final String METRIC_INPUT_RECORDS = "process.entries.in";
+  public static final String METRIC_OUTPUT_RECORDS = "process.entries.out";
+  public static final String METRIC_BYTES = "process.bytes";
+  public static final String METRIC_COMPLETION = "process.completion";
+  public static final String METRIC_TASK_INPUT_RECORDS = "process.entries.task.in";
+  public static final String METRIC_TASK_OUTPUT_RECORDS = "process.entries.task.out";
+  public static final String METRIC_TASK_BYTES = "process.task.bytes";
+
+  public static final String METRIC_TASK_COMPLETION = "process.completion.task";
+  public static final String METRIC_USED_CONTAINERS = "resources.used.containers";
+  public static final String METRIC_USED_MEMORY = "resources.used.memory";
 
   /**
    * Type of map reduce task.
@@ -42,10 +51,4 @@ public final class MapReduceMetrics extends AbstractProgramMetrics {
     }
   }
 
-  public MapReduceMetrics(MetricsCollectionService collectionService, String applicationId,
-                          String mapReduceId, TaskType type) {
-    super(collectionService.getCollector(
-      MetricsScope.USER,
-      String.format("%s.b.%s.%s", applicationId, mapReduceId, type.getId()), "0"));
-  }
 }

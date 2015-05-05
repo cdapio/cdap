@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,35 +16,35 @@
 
 package co.cask.cdap.test.internal;
 
+import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.proto.ServiceInstances;
+import co.cask.cdap.test.AbstractServiceManager;
+import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import org.apache.twill.common.Cancellable;
-import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.NoSuchElementException;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
  * A default implementation of {@link ServiceManager}.
  */
-public class DefaultServiceManager implements ServiceManager {
+public class DefaultServiceManager extends AbstractServiceManager {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceManager.class);
 
   private final DefaultApplicationManager.ProgramId serviceId;
-  private final String accountId;
+  private final String namespace;
   private final String applicationId;
   private final String serviceName;
 
@@ -52,13 +52,13 @@ public class DefaultServiceManager implements ServiceManager {
   private final AppFabricClient appFabricClient;
   private final DefaultApplicationManager applicationManager;
 
-  public DefaultServiceManager(String accountId, DefaultApplicationManager.ProgramId serviceId,
+  public DefaultServiceManager(String namespace, DefaultApplicationManager.ProgramId serviceId,
                                AppFabricClient appFabricClient, DiscoveryServiceClient discoveryServiceClient,
                                DefaultApplicationManager applicationManager) {
     this.serviceId = serviceId;
-    this.accountId = accountId;
+    this.namespace = namespace;
     this.applicationId = serviceId.getApplicationId();
-    this.serviceName = serviceId.getRunnableId();
+    this.serviceName = serviceId.getProgramId();
 
     this.discoveryServiceClient = discoveryServiceClient;
     this.appFabricClient = appFabricClient;
@@ -67,19 +67,30 @@ public class DefaultServiceManager implements ServiceManager {
   }
 
   @Override
-  public void setRunnableInstances(String runnableName, int instances) {
-    Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
+  public void setInstances(int instances) {
+    Preconditions.checkArgument(instances > 0, "Instance count should be > 0.");
     try {
-      appFabricClient.setRunnableInstances(applicationId, serviceName, runnableName, instances);
+      appFabricClient.setServiceInstances(namespace, applicationId, serviceName, instances);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
 
   @Override
-  public int getRunnableInstances(String runnableName) {
+  public int getRequestedInstances() {
+    ServiceInstances instances = getInstances();
+    return instances.getRequested();
+  }
+
+  @Override
+  public int getProvisionedInstances() {
+    ServiceInstances instances = getInstances();
+    return instances.getProvisioned();
+  }
+
+  private ServiceInstances getInstances() {
     try {
-      return appFabricClient.getRunnableInstances(applicationId, serviceName, runnableName);
+      return appFabricClient.getServiceInstances(namespace, applicationId, serviceName);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -96,51 +107,30 @@ public class DefaultServiceManager implements ServiceManager {
 
   @Override
   public URL getServiceURL() {
-    ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(String.format("service.%s.%s.%s",
-                                                                                        accountId,
-                                                                                        applicationId,
-                                                                                        serviceName));
-    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(serviceDiscovered);
-    Discoverable discoverable = endpointStrategy.pick();
-    if (discoverable != null) {
-      return createURL(discoverable, applicationId, serviceName);
-    }
-
-    final SynchronousQueue<URL> discoverableQueue = new SynchronousQueue<URL>();
-    Cancellable discoveryCancel = serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
-      @Override
-      public void onChange(ServiceDiscovered serviceDiscovered) {
-        try {
-          URL url = createURL(serviceDiscovered.iterator().next(), applicationId, serviceName);
-          discoverableQueue.offer(url);
-        } catch (NoSuchElementException e) {
-          LOG.debug("serviceDiscovered is empty");
-        }
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
-
-    try {
-      URL url = discoverableQueue.poll(1, TimeUnit.SECONDS);
-      if (url == null) {
-        LOG.debug("Discoverable endpoint not found for appID: {}, serviceName: {}.", applicationId, serviceName);
-      }
-      return url;
-    } catch (InterruptedException e) {
-      LOG.error("Got exception: ", e);
-      return null;
-    } finally {
-      discoveryCancel.cancel();
-    }
+    return getServiceURL(1, TimeUnit.SECONDS);
   }
 
+  @Override
+  public URL getServiceURL(long timeout, TimeUnit timeoutUnit) {
+    String discoveryName = String.format("service.%s.%s.%s", namespace, applicationId, serviceName);
+    ServiceDiscovered discovered = discoveryServiceClient.discover(discoveryName);
+    return createURL(new RandomEndpointStrategy(discovered).pick(timeout, timeoutUnit), applicationId, serviceName);
+  }
+
+  @Override
+  public RuntimeMetrics getMetrics() {
+    return RuntimeStats.getServiceMetrics(namespace, applicationId, serviceName);
+  }
+
+  @Nullable
   private URL createURL(@Nullable Discoverable discoverable, String applicationId, String serviceName) {
     if (discoverable == null) {
       return null;
     }
-    String hostName = discoverable.getSocketAddress().getHostName();
-    int port = discoverable.getSocketAddress().getPort();
-    String path = String.format("http://%s:%d%s/apps/%s/services/%s/methods/", hostName, port,
-                                Constants.Gateway.GATEWAY_VERSION, applicationId, serviceName);
+    InetSocketAddress address = discoverable.getSocketAddress();
+    String path = String.format("http://%s:%d%s/namespaces/%s/apps/%s/services/%s/methods/",
+                                address.getHostName(), address.getPort(),
+                                Constants.Gateway.API_VERSION_3, namespace, applicationId, serviceName);
     try {
       return new URL(path);
     } catch (MalformedURLException e) {

@@ -1,0 +1,43 @@
+<div class="container" ng-controller="StreamsDetailStatusController">
+  <div class="row">
+    <div class="col-xs-8 h2">
+      <h2><span> Schema </span></h2>
+    </div>
+    <div class="col-xs-4">
+        <table class="table table-curved table-status">
+          <thead>
+            <th>Storage</th>
+            <th>Total Events</th>
+          </thead>
+          <tbody>
+            <td ng-if="storage"> {{storage | bytes}} </td>
+            <td ng-if="!storage"> &mdash; </td>
+            <td ng-if="events"> {{events}} </td>
+            <td ng-if="!events"> &mdash; </td>
+          </tbody>
+        </table>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-xs-12">
+      <table class="table table-curved" cask-sortable ng-show="schema.length > 0">
+        <thead>
+          <tr ng-class="{'sort-enabled': schema.length > 1}">
+            <th data-predicate="name"> Name </th>
+            <th data-predicate="type"> Type </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="field in schema | orderBy:sortable.predicate:sortable.reverse">
+            <td ng-bind="field.name"> </td>
+            <td ng-bind="field.type"> </td>
+          </tr>
+        </tbody>
+      </table>
+      <div ng-show="schema.length == 0" class="well well-lg text-center">
+        <span> No Schema defined for this Dataset </span>
+      </div>
+    </div>
+  </div>
+</div>

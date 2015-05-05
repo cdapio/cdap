@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,17 +15,19 @@
  */
 package co.cask.cdap.metrics.collect;
 
-import co.cask.cdap.common.metrics.MetricsScope;
-import co.cask.cdap.metrics.transport.MetricsRecord;
-import co.cask.cdap.metrics.transport.TagMetric;
+import co.cask.cdap.api.metrics.MetricValue;
+import co.cask.cdap.api.metrics.MetricValues;
+import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -37,14 +39,34 @@ import java.util.concurrent.TimeUnit;
  */
 public class AggregatedMetricsCollectionServiceTest {
 
+  private static final HashMap<String, String> EMPTY_TAGS = new HashMap<String, String>();
+  private static final String NAMESPACE = "testnamespace";
+  private static final String APP = "testapp";
+  private static final String FLOW = "testprogram";
+  private static final String RUNID = "testrun";
+  private static final String FLOWLET = "testflowlet";
+  private static final String INSTANCE = "testInstance";
+  private static final String METRIC = "metric";
+
+  private long getMetricValue(Collection<MetricValue> metrics, String metricName) {
+    Iterator<MetricValue> metricsItor = metrics.iterator();
+    while (metricsItor.hasNext()) {
+      MetricValue metricValue = metricsItor.next();
+      if (metricValue.getName().equals(metricName)) {
+        return metricValue.getValue();
+      }
+    }
+    return 0;
+  }
+
   @Category(SlowTests.class)
   @Test
   public void testPublish() throws InterruptedException {
-    final BlockingQueue<MetricsRecord> published = new LinkedBlockingQueue<MetricsRecord>();
+    final BlockingQueue<MetricValues> published = new LinkedBlockingQueue<MetricValues>();
 
     AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService() {
       @Override
-      protected void publish(MetricsScope scope, Iterator<MetricsRecord> metrics) {
+      protected void publish(Iterator<MetricValues> metrics) {
         Iterators.addAll(published, metrics);
       }
 
@@ -52,44 +74,122 @@ public class AggregatedMetricsCollectionServiceTest {
       protected Scheduler scheduler() {
         return Scheduler.newFixedRateSchedule(5, 1, TimeUnit.SECONDS);
       }
+
+      @Override
+      protected boolean isPublishMetaMetrics() {
+        return false;
+      }
     };
 
     service.startAndWait();
-    try {
-      // Publish couple metrics, they should be aggregated.
-      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 1);
-      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 2);
-      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 3);
-      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 4);
 
-      MetricsRecord record = published.poll(10, TimeUnit.SECONDS);
+    // non-empty tags.
+    final Map baseTags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NAMESPACE,
+                                         Constants.Metrics.Tag.APP, APP,
+                                         Constants.Metrics.Tag.FLOW, FLOW,
+                                         Constants.Metrics.Tag.RUN_ID, RUNID);
+
+    try {
+      // The first section tests with empty tags.
+      // Publish couple metrics with empty tags, they should be aggregated.
+      service.getCollector(EMPTY_TAGS).increment(METRIC, Integer.MAX_VALUE);
+      service.getCollector(EMPTY_TAGS).increment(METRIC, 2);
+      service.getCollector(EMPTY_TAGS).increment(METRIC, 3);
+      service.getCollector(EMPTY_TAGS).increment(METRIC, 4);
+
+      MetricValues record = published.poll(10, TimeUnit.SECONDS);
       Assert.assertNotNull(record);
-      Assert.assertEquals(10, record.getValue());
+
+      Assert.assertEquals(((long) Integer.MAX_VALUE) + 9L, getMetricValue(record.getMetrics(), METRIC));
 
       // No publishing for 0 value metrics
       Assert.assertNull(published.poll(3, TimeUnit.SECONDS));
 
       // Publish a metric and wait for it so that we know there is around 1 second to publish more metrics to test.
-      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 1);
+      service.getCollector(EMPTY_TAGS).increment(METRIC, 1);
       Assert.assertNotNull(published.poll(3, TimeUnit.SECONDS));
 
-      // Publish metrics with tags
-      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 3, "tag1", "tag2");
-      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 4, "tag2", "tag3");
+      //update the metrics multiple times with gauge.
+      service.getCollector(EMPTY_TAGS).gauge(METRIC, 1);
+      service.getCollector(EMPTY_TAGS).gauge(METRIC, 2);
+      service.getCollector(EMPTY_TAGS).gauge(METRIC, 3);
 
+      // gauge just updates the value, so polling should return the most recent value written
       record = published.poll(3, TimeUnit.SECONDS);
       Assert.assertNotNull(record);
-      Assert.assertEquals(7, record.getValue());
+      Assert.assertEquals(3, getMetricValue(record.getMetrics(), METRIC));
 
-      // Verify tags are aggregated individually.
-      Map<String, Integer> tagMetrics = Maps.newHashMap();
-      for (TagMetric tagMetric : record.getTags()) {
-        tagMetrics.put(tagMetric.getTag(), tagMetric.getValue());
-      }
-      Assert.assertEquals(ImmutableMap.of("tag1", 3, "tag2", 7, "tag3", 4), tagMetrics);
+      // define collectors for non-empty tags
+      MetricsCollector baseCollector = service.getCollector(baseTags);
+      MetricsCollector flowletInstanceCollector = baseCollector.childCollector(Constants.Metrics.Tag.FLOWLET, FLOWLET)
+        .childCollector(Constants.Metrics.Tag.INSTANCE_ID, INSTANCE);
 
+      // increment metrics for various collectors
+      baseCollector.increment(METRIC, Integer.MAX_VALUE);
+      flowletInstanceCollector.increment(METRIC, 5);
+      baseCollector.increment(METRIC, 10);
+      baseCollector.increment(METRIC, 3);
+      flowletInstanceCollector.increment(METRIC, 2);
+      flowletInstanceCollector.increment(METRIC, 4);
+      flowletInstanceCollector.increment(METRIC, 3);
+      flowletInstanceCollector.increment(METRIC, 1);
+
+      // there are two collectors, verify their metrics values
+      verifyCounterMetricsValue(published.poll(10, TimeUnit.SECONDS));
+      verifyCounterMetricsValue(published.poll(10, TimeUnit.SECONDS));
+
+      // No publishing for 0 value metrics
+      Assert.assertNull(published.poll(3, TimeUnit.SECONDS));
+
+      // gauge metrics for various collectors
+      baseCollector.gauge(METRIC, Integer.MAX_VALUE);
+      baseCollector.gauge(METRIC, 3);
+      flowletInstanceCollector.gauge(METRIC, 6);
+      flowletInstanceCollector.gauge(METRIC, 2);
+      baseCollector.gauge(METRIC, 1);
+      flowletInstanceCollector.gauge(METRIC, Integer.MAX_VALUE);
+
+      // gauge just updates the value, so polling should return the most recent value written
+      verifyGaugeMetricsValue(published.poll(10, TimeUnit.SECONDS));
+      verifyGaugeMetricsValue(published.poll(10, TimeUnit.SECONDS));
+
+      flowletInstanceCollector.gauge(METRIC, 0);
+      verifyMetricsValue(published.poll(10, TimeUnit.SECONDS), 0L);
     } finally {
       service.stopAndWait();
     }
+  }
+
+  private void verifyCounterMetricsValue(MetricValues metricValues) {
+    Assert.assertNotNull(metricValues);
+    Map<String, String> tags = metricValues.getTags();
+    if (tags.size() == 4) {
+      // base collector
+      Assert.assertEquals(((long) Integer.MAX_VALUE) + 13L, getMetricValue(metricValues.getMetrics(), METRIC));
+    } else if (tags.size() == 6) {
+      // flowlet collector
+      Assert.assertEquals(15L, getMetricValue(metricValues.getMetrics(), METRIC));
+    } else {
+      Assert.fail("Unexpected number of tags while verifying counter metrics value - " + tags.size());
+    }
+  }
+
+  private void verifyGaugeMetricsValue(MetricValues metricValues) {
+    Assert.assertNotNull(metricValues);
+    Map<String, String> tags = metricValues.getTags();
+    if (tags.size() == 4) {
+      // base collector
+      Assert.assertEquals(1L, getMetricValue(metricValues.getMetrics(), METRIC));
+    } else if (tags.size() == 6) {
+      // flowlet collector
+      Assert.assertEquals((long) Integer.MAX_VALUE, getMetricValue(metricValues.getMetrics(), METRIC));
+    } else {
+      Assert.fail("Unexpected number of tags while verifying gauge metrics value - " + tags.size());
+    }
+  }
+
+  private void verifyMetricsValue(MetricValues metricValues, long expected) {
+    Assert.assertNotNull(metricValues);
+    Assert.assertEquals(expected, getMetricValue(metricValues.getMetrics(), METRIC));
   }
 }

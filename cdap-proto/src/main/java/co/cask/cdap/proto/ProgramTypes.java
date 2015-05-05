@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,10 +19,10 @@ package co.cask.cdap.proto;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.webapp.WebappSpecification;
+import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import com.google.common.collect.ImmutableMap;
 
@@ -35,14 +35,14 @@ public class ProgramTypes {
 
   private static final Map<Class<? extends ProgramSpecification>, ProgramType> specClassToProgramType =
     ImmutableMap.<Class<? extends ProgramSpecification>, ProgramType>builder()
-    .put(FlowSpecification.class, ProgramType.FLOW)
-    .put(ProcedureSpecification.class, ProgramType.PROCEDURE)
-    .put(MapReduceSpecification.class, ProgramType.MAPREDUCE)
-    .put(SparkSpecification.class, ProgramType.SPARK)
-    .put(WorkflowSpecification.class, ProgramType.WORKFLOW)
-    .put(WebappSpecification.class, ProgramType.WEBAPP)
-    .put(ServiceSpecification.class, ProgramType.SERVICE)
-    .build();
+      .put(FlowSpecification.class, ProgramType.FLOW)
+      .put(MapReduceSpecification.class, ProgramType.MAPREDUCE)
+      .put(SparkSpecification.class, ProgramType.SPARK)
+      .put(WorkflowSpecification.class, ProgramType.WORKFLOW)
+      .put(WebappSpecification.class, ProgramType.WEBAPP)
+      .put(ServiceSpecification.class, ProgramType.SERVICE)
+      .put(WorkerSpecification.class, ProgramType.WORKER)
+      .build();
 
   /**
    * Maps from {@link ProgramSpecification} to {@link ProgramType}.

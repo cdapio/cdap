@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.lang;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
@@ -25,29 +26,34 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Enumeration;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 /**
- * A {@link ClassLoader} that load classes from list of other {@link ClassLoader}s. Node that
+ * A {@link ClassLoader} that load classes from list of other {@link ClassLoader}s. Note that
  * this ClassLoader just delegates to other ClassLoaders, but never define class, hence no Class
  * loaded by this class would have {@link Class#getClassLoader()}} returning this ClassLoader.
  */
-public final class CombineClassLoader extends ClassLoader {
+public class CombineClassLoader extends ClassLoader {
 
   private static final Logger LOG = LoggerFactory.getLogger(CombineClassLoader.class);
-  private final Iterable<ClassLoader> delegates;
+  private final List<ClassLoader> delegates;
 
-  public CombineClassLoader(ClassLoader parent, Iterable<ClassLoader> delegates) {
+  public CombineClassLoader(ClassLoader parent, Iterable<? extends ClassLoader> delegates) {
     super(parent);
-    this.delegates = delegates;
+    this.delegates = ImmutableList.copyOf(delegates);
+  }
+
+  /**
+   * Returns the list of {@link ClassLoader}s that this class delegates to.
+   */
+  public List<ClassLoader> getDelegates() {
+    return delegates;
   }
 
   @Override
   protected Class<?> findClass(String name) throws ClassNotFoundException {
-    Iterator<ClassLoader> iterator = delegates.iterator();
-    while (iterator.hasNext()) {
-      ClassLoader classLoader = iterator.next();
+    for (ClassLoader classLoader : delegates) {
       try {
         return classLoader.loadClass(name);
       } catch (ClassNotFoundException e) {

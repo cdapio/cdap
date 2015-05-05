@@ -15,7 +15,12 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,13 +35,14 @@ import java.util.concurrent.locks.ReentrantLock;
 final class FlowTwillProgramController extends AbstractTwillProgramController {
 
   private static final Logger LOG = LoggerFactory.getLogger(FlowTwillProgramController.class);
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
 
   private final Lock lock;
   private final DistributedFlowletInstanceUpdater instanceUpdater;
 
   FlowTwillProgramController(String programId, TwillController controller,
-                             DistributedFlowletInstanceUpdater instanceUpdater) {
-    super(programId, controller);
+                             DistributedFlowletInstanceUpdater instanceUpdater, RunId runId) {
+    super(programId, controller, runId);
     this.lock = new ReentrantLock();
     this.instanceUpdater = instanceUpdater;
   }
@@ -44,7 +50,7 @@ final class FlowTwillProgramController extends AbstractTwillProgramController {
   @SuppressWarnings("unchecked")
   @Override
   protected void doCommand(String name, Object value) throws Exception {
-    if (!ProgramOptionConstants.FLOWLET_INSTANCES.equals(name) || !(value instanceof Map)) {
+    if (!ProgramOptionConstants.INSTANCES.equals(name) || !(value instanceof Map)) {
       return;
     }
     Map<String, String> command = (Map<String, String>) value;
@@ -52,9 +58,10 @@ final class FlowTwillProgramController extends AbstractTwillProgramController {
     try {
       changeInstances(command.get("flowlet"),
                       Integer.valueOf(command.get("newInstances")),
-                      Integer.valueOf(command.get("oldInstances")));
+                      GSON.fromJson(command.get("oldFlowSpec"), FlowSpecification.class));
     } catch (Throwable t) {
-      LOG.error(String.format("Fail to change instances: %s", command), t);
+      LOG.error("Fail to change instances. Terminating flow: {}", command, t);
+      stop();
     } finally {
       lock.unlock();
     }
@@ -65,12 +72,12 @@ final class FlowTwillProgramController extends AbstractTwillProgramController {
    * synchronized as change of instances involves multiple steps that need to be completed all at once.
    * @param flowletId Name of the flowlet.
    * @param newInstanceCount New instance count.
-   * @param oldInstanceCount Old instance count.
+   * @param flowSpec The flow specification before the instance change
    * @throws java.util.concurrent.ExecutionException
    * @throws InterruptedException
    */
-  private synchronized void changeInstances(String flowletId, int newInstanceCount, int oldInstanceCount)
-    throws Exception {
-    instanceUpdater.update(flowletId, newInstanceCount, oldInstanceCount);
+  private synchronized void changeInstances(String flowletId, int newInstanceCount,
+                                            FlowSpecification flowSpec) throws Exception {
+    instanceUpdater.update(flowletId, newInstanceCount, flowSpec);
   }
 }

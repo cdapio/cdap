@@ -1,0 +1,168 @@
+@import (less) "./fonts.less"; // must be first to support external @import (css)
+@import (less) "./variables.less";
+@import (less) "../../bower_components/bootstrap/less/mixins.less";
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  visibility: hidden; // themes start the show
+  margin-bottom: 80px;
+  .dropdown-menu {
+    > li > a, > li.dropdown-header { padding-left: 14px; }
+    > li > a > span.fa-fw { margin-right: 5px; }
+    &.typeahead {
+      cursor: default;
+      max-height: 200px;
+      overflow: auto;
+    }
+  }
+  div.progress { margin: 1px; /* by default they have just margin-bottom: 20px */ }
+}
+
+header.navbar { border-bottom-color: @body-bg; }
+main.container {
+  margin-top: 100px;
+  padding-top: 1em;
+  > div { margin-bottom: 80px; }
+  .sidebar {
+    ul li a {
+      display: block;
+      &.abstract {
+        &.pull-left { width: 80%; }
+        // Create namespace "+"
+        + a { display: inline-block; width: 20%; }
+      }
+    }
+  }
+}
+
+#alerts {
+  position: fixed;
+  z-index: 2001;
+  top: 15px;
+  left: 0;
+  right: 0;
+}
+
+.modal {
+  &.center {
+    .modal-dialog {
+      position: fixed;
+      top: 40%;
+      left: 50%;
+      min-width: 320px;
+      max-width: 630px;
+      width: 50%;
+      transform: translateX(-50%) translateY(-50%);
+    }
+  }
+  .modal-body { max-height: 400px; overflow: auto; }
+}
+
+.modal-backdrop {
+  // see https://github.com/twbs/bootstrap/pull/14724
+  z-index: ( @zindex-modal - 1 );
+  height: 100%;
+}
+
+fieldset {
+  &.row { margin-bottom: 1px; }
+  &.tab-pane {
+    padding-top: 1em;
+    &.am-fade.active-add {
+      // cf http://mgcrea.github.io/angular-strap/##tabs-usage
+      animation-name: fadeIn;
+    }
+  }
+}
+
+.form-control {
+  &.ng-dirty.ng-invalid {
+    border-color: #a94442;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+    &:focus {
+      border-color: #843534;
+      box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 6px #ce8483;
+    }
+    @media (max-width: @screen-xs-max) { margin-bottom: 1px; }
+  }
+}
+
+span.text-info[bs-tooltip] { cursor: help; }
+hr { border-color: lighten(@text-color, 50%); }
+.jumbotron { margin-top: 1em; }
+.nav-tabs > li > a { cursor: pointer; }
+
+footer {
+  font-size: 14px;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  > .container { padding-right: 15px; padding-left: 15px; }
+  div.text-muted {
+    margin: 10px 0;
+
+    > div {
+      @media (min-width: @screen-md-max) {
+        &:first-child { text-align: left; }
+        &:last-child { text-align: right; }
+      }
+      @media (max-width: @screen-md-max) { text-align: center; }
+    }
+  }
+  img { height: 32px; width: 32px; }
+  @media (min-width: @screen-md-max) {
+    p, ul { height: 32px; margin: 0; }
+    span, li { line-height: 32px; vertical-align: middle; }
+  }
+}
+
+.mapreduce-components {
+  margin-top: 15px;
+
+  .run-status-box {
+    background: darken(white, 10%);
+    margin-left: 0;
+    border-radius: 4px;
+
+    .item {
+      border-right: 1px solid #93969F;
+      min-height: 60px;
+      padding-top: 15px;
+      text-align: left;
+
+      &:last-child {
+        border-right: 0;
+      }
+
+    }
+  }
+
+  .component-box {
+    .task-item {
+      width: 12.5%;
+      float: left;
+      padding-left: 15px;
+      padding-right: 15px;
+      text-align: center;
+    }
+  }
+
+}
+
+.breadcrumb {
+  margin: 0;
+  padding: 0;
+}
+
+[program-heading] {
+  margin-top: 10px;
+  margin-bottom: 5px;
+  .programTitle {
+    vertical-align: middle;
+    margin: 0;
+  }
+}

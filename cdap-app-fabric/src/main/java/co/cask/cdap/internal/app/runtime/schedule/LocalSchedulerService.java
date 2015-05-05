@@ -17,7 +17,9 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.store.StoreFactory;
+import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.config.PreferencesStore;
 import com.google.common.base.Supplier;
 import com.google.inject.Inject;
 import org.quartz.Scheduler;
@@ -32,14 +34,14 @@ public final class LocalSchedulerService extends AbstractSchedulerService {
   private static final Logger LOG = LoggerFactory.getLogger(LocalSchedulerService.class);
 
   @Inject
-  public LocalSchedulerService(Supplier<Scheduler> schedulerSupplier, StoreFactory storeFactory,
-                               ProgramRuntimeService programRuntimeService) {
-    super(schedulerSupplier, storeFactory, programRuntimeService);
+  public LocalSchedulerService(TimeScheduler timeScheduler, StreamSizeScheduler streamSizeScheduler,
+                               CConfiguration cConf, Store store) {
+    super(timeScheduler, streamSizeScheduler, cConf, store);
   }
 
   @Override
   protected void startUp() throws Exception {
-    startScheduler();
+    startSchedulers();
   }
 
   @Override

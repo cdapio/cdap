@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,13 +38,12 @@ public class DequeueScanObserver extends BaseRegionObserver {
     throws IOException {
     ConsumerConfig consumerConfig = DequeueScanAttributes.getConsumerConfig(scan);
     Transaction tx = DequeueScanAttributes.getTx(scan);
-    byte[] queueRowPrefix = DequeueScanAttributes.getQueueRowPrefix(scan);
 
-    if (consumerConfig == null || tx == null || queueRowPrefix == null) {
+    if (consumerConfig == null || tx == null) {
       return super.preScannerOpen(e, scan, s);
     }
 
-    Filter dequeueFilter = new DequeueFilter(queueRowPrefix, consumerConfig, tx);
+    Filter dequeueFilter = new DequeueFilter(consumerConfig, tx);
 
     Filter existing = scan.getFilter();
     if (existing != null) {

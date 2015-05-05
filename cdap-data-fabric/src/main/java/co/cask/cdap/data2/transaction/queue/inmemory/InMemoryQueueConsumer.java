@@ -126,6 +126,11 @@ public class InMemoryQueueConsumer implements QueueConsumer, TransactionAware {
     return true;
   }
 
+  @Override
+  public void close() throws IOException {
+    // No-op
+  }
+
   private final class InMemoryDequeueResult implements DequeueResult<byte[]> {
 
     private final List<InMemoryQueue.Key> keys;

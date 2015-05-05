@@ -16,11 +16,11 @@
 
 package co.cask.cdap.internal.app.runtime;
 
-import co.cask.cdap.api.data.DataSetContext;
-import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionExecutor;
 
@@ -31,11 +31,11 @@ import java.io.IOException;
  */
 public interface DataFabricFacade extends QueueClientFactory {
 
-  DataSetContext getDataSetContext();
+  DatasetContext getDataSetContext();
 
   TransactionContext createTransactionManager();
 
   TransactionExecutor createTransactionExecutor();
 
-  StreamConsumer createStreamConsumer(QueueName streamName, ConsumerConfig consumerConfig) throws IOException;
+  StreamConsumer createStreamConsumer(Id.Stream streamName, ConsumerConfig consumerConfig) throws IOException;
 }

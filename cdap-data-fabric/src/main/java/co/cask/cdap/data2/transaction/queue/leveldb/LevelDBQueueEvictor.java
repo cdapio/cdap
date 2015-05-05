@@ -19,7 +19,7 @@ package co.cask.cdap.data2.transaction.queue.leveldb;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableCore;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableCore;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.QueueEvictor;
 import co.cask.tephra.Transaction;
@@ -41,13 +41,13 @@ public class LevelDBQueueEvictor implements QueueEvictor {
 
   private static final Logger LOG = LoggerFactory.getLogger(LevelDBQueueEvictor.class);
 
-  private final LevelDBOrderedTableCore core;
+  private final LevelDBTableCore core;
   private final byte[] queueRowPrefix;
   private final Executor executor;
   private final int numGroups;
   private final QueueName name;
 
-  public LevelDBQueueEvictor(LevelDBOrderedTableCore core, QueueName queueName, int numGroups, Executor executor) {
+  public LevelDBQueueEvictor(LevelDBTableCore core, QueueName queueName, int numGroups, Executor executor) {
     this.core = core;
     this.executor = executor;
     this.queueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);

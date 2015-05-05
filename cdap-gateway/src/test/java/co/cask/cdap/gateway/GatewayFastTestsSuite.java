@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,12 +18,10 @@ package co.cask.cdap.gateway;
 
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.collector.NettyFlumeCollectorTest;
-import co.cask.cdap.gateway.handlers.PingHandlerTest;
-import co.cask.cdap.gateway.handlers.ProcedureHandlerTest;
-import co.cask.cdap.gateway.handlers.RuntimeArgumentTest;
-import co.cask.cdap.gateway.handlers.StreamHandlerTest;
-import co.cask.cdap.gateway.handlers.hooks.MetricsReporterHookTest;
+import co.cask.cdap.gateway.handlers.PingHandlerTestRun;
+import co.cask.cdap.gateway.handlers.RuntimeArgumentTestRun;
+import co.cask.cdap.gateway.handlers.hooks.MetricsReporterHookTestRun;
+import co.cask.cdap.gateway.run.StreamWriterTestRun;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ObjectArrays;
@@ -47,7 +45,6 @@ import org.junit.runners.Suite;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.jar.JarEntry;
@@ -61,12 +58,10 @@ import javax.annotation.Nullable;
  */
 @RunWith(value = Suite.class)
 @Suite.SuiteClasses(value = {
-  PingHandlerTest.class,
-  ProcedureHandlerTest.class,
-  NettyFlumeCollectorTest.class,
-  MetricsReporterHookTest.class,
-  StreamHandlerTest.class,
-  RuntimeArgumentTest.class
+  PingHandlerTestRun.class,
+  MetricsReporterHookTestRun.class,
+  RuntimeArgumentTestRun.class,
+  StreamWriterTestRun.class
 })
 
 public class GatewayFastTestsSuite {
@@ -200,9 +195,9 @@ public class GatewayFastTestsSuite {
 
     HttpEntityEnclosingRequestBase request;
     if (appName == null) {
-      request = getPost("/v2/apps");
+      request = getPost("/v3/namespaces/default/apps");
     } else {
-      request = getPut("/v2/apps/" + appName);
+      request = getPut("/v3/namespaces/default/apps/" + appName);
     }
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
@@ -211,7 +206,7 @@ public class GatewayFastTestsSuite {
   }
 
   @BeforeClass
-  public static void beforeClass() throws IOException {
+  public static void beforeClass() throws Exception {
     GatewayTestBase.beforeClass();
     GatewayTestBase.runBefore = false;
     GatewayTestBase.runAfter = false;
@@ -219,7 +214,7 @@ public class GatewayFastTestsSuite {
   }
 
   @AfterClass
-  public static void afterClass() {
+  public static void afterClass() throws Exception {
     GatewayTestBase.runAfter = true;
     GatewayTestBase.afterClass();
   }

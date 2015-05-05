@@ -16,11 +16,8 @@
 
 package co.cask.cdap.metrics.process;
 
-import co.cask.cdap.common.metrics.MetricsScope;
-import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.metrics.MetricsConstants.ConfigKeys;
-import co.cask.cdap.metrics.data.MetricsTableFactory;
-import com.google.common.collect.Lists;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -32,7 +29,6 @@ import org.apache.twill.kafka.client.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -48,7 +44,7 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
   private final String topicPrefix;
   private final Set<Integer> partitions;
   private Cancellable unsubscribe;
-  private final MetricsTableFactory metricsTableFactory;
+  private final MetricDatasetFactory metricDatasetFactory;
 
   private volatile boolean stopping = false;
 
@@ -56,15 +52,15 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
 
   @Inject
   public KafkaMetricsProcessorService(KafkaClientService kafkaClient,
-                                      MetricsTableFactory metricsTableFactory,
+                                      MetricDatasetFactory metricDatasetFactory,
                                       MessageCallbackFactory callbackFactory,
-                                      @Named(ConfigKeys.KAFKA_TOPIC_PREFIX) String topicPrefix,
+                                      @Named(Constants.Metrics.KAFKA_TOPIC_PREFIX) String topicPrefix,
                                       @Assisted Set<Integer> partitions) {
     this.kafkaClient = kafkaClient;
     this.callbackFactory = callbackFactory;
     this.topicPrefix = topicPrefix;
     this.partitions = partitions;
-    this.metricsTableFactory = metricsTableFactory;
+    this.metricDatasetFactory = metricDatasetFactory;
   }
 
   @Override
@@ -75,7 +71,9 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
   @Override
   protected void run() {
     LOG.info("Starting Metrics Processing for partitions {}.", partitions);
-    subscribe();
+    if (!subscribe()) {
+      return;
+    }
     LOG.info("Metrics Processing Service started for partitions {}.", partitions);
 
     while (isRunning()) {
@@ -114,7 +112,7 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
         break;
       }
       try {
-        metaTable = metricsTableFactory.createKafkaConsumerMeta("default");
+        metaTable = metricDatasetFactory.createKafkaConsumerMeta();
       } catch (Exception e) {
         LOG.warn("Cannot access kafka consumer metaTable, will retry in 1 sec.");
         try {
@@ -129,53 +127,37 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
     return metaTable;
   }
 
-  private void subscribe() {
-    List<Cancellable> cancels = Lists.newArrayList();
-    for (MetricsScope scope : MetricsScope.values()) {
-      // Assuming there is only one process that pulling in all metrics.
-      KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
+  private boolean subscribe() {
+    // Assuming there is only one process that pulling in all metrics.
+    KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
 
-      String topic = topicPrefix + "." + scope.name().toLowerCase();
-      for (int i : partitions) {
-        long offset = getOffset(topic, i);
-        if (offset >= 0) {
-          preparer.add(topic, i, offset);
-        } else {
-          preparer.addFromBeginning(topic, i);
+    String topic = topicPrefix;
+
+    for (int partition : partitions) {
+      long offset;
+      try {
+        LOG.info("Retrieve offset for topic: {}, partition: {}", topic, partition);
+        KafkaConsumerMetaTable metaTable = getMetaTable();
+        if (metaTable == null) {
+          LOG.info("Could not get KafkaConsumerMetaTable, seems like we are being shut down");
+          return false;
         }
+        offset = metaTable.get(new TopicPartition(topic, partition));
+        LOG.info("Offset for topic: {}, partition: {} is {}", topic, partition, offset);
+      } catch (Exception e) {
+        LOG.info("Failed to get KafkaConsumerMetaTable, shutting down");
+        return false;
       }
 
-      cancels.add(preparer.consume(callbackFactory.create(getMetaTable(), scope)));
-      LOG.info("Consumer created for topic {}, partitions {}", topic, partitions);
+      if (offset >= 0) {
+        preparer.add(topic, partition, offset);
+      } else {
+        preparer.addFromBeginning(topic, partition);
+      }
     }
-    unsubscribe = createCancelAll(cancels);
-  }
 
-  private long getOffset(String topic, int partition) {
-    LOG.info("Retrieve offset for topic: {}, partition: {}", topic, partition);
-    try {
-      KafkaConsumerMetaTable metaTable = getMetaTable();
-      if (metaTable == null) {
-        LOG.info("Could not get KafkaConsumerMetaTable, seems like we are being shut down");
-        return -1L;
-      }
-      long offset = metaTable.get(new TopicPartition(topic, partition));
-      LOG.info("Offset for topic: {}, partition: {} is {}", topic, partition, offset);
-      return offset;
-    } catch (OperationException e) {
-      LOG.error("Failed to get offset from meta table. Defaulting to beginning. {}", e.getMessage(), e);
-    }
-    return -1L;
-  }
-
-  private Cancellable createCancelAll(final Iterable<? extends Cancellable> cancels) {
-    return new Cancellable() {
-      @Override
-      public void cancel() {
-        for (Cancellable cancel : cancels) {
-          cancel.cancel();
-        }
-      }
-    };
+    unsubscribe = preparer.consume(callbackFactory.create(getMetaTable()));
+    LOG.info("Consumer created for topic {}, partitions {}", topic, partitions);
+    return true;
   }
 }

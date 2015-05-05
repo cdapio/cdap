@@ -1,0 +1,57 @@
+@import "../../styles/variables.less";
+
+body.state-streams {
+  .modal-body {
+    .panel.panel-default {
+      .panel-heading {
+        cursor: pointer;
+      }
+      .panel-body {
+        .form-group {
+          .row {
+            input {
+              display: inline-block;
+              width: 45%;
+            }
+            button {
+              width: 100%;
+            }
+          }
+        }
+      }
+    }
+  }
+
+
+  textarea.flow-injector-input {
+    width: 100%;
+    height: 100px;
+    color: black; // Because we have a dark background and a white text
+  }
+  div.container {
+    .table {
+      tr > td:first-child {
+        font-weight: 700;
+      }
+    }
+  }
+}
+
+body.state-streams-detail {
+
+  section.explore {
+    padding: @grid-gutter-width 0;
+
+    h4.panel-title {
+      cursor: pointer;
+      > span.fa {
+        margin-right: 10px;
+      }
+    }
+
+    .panel-body > form {
+      margin-bottom: 2em;
+    }
+
+  }
+}

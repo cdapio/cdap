@@ -97,7 +97,7 @@ set_hbase()
         hbasecompat="$CDAP_HOME/hbase-compat-0.96/lib/*"
         ;;
       0.98*)
-        hbasecompat="$CDAP_HOME/hbase-compat-0.96/lib/*"
+        hbasecompat="$CDAP_HOME/hbase-compat-0.98/lib/*"
         ;;
       *)
         echo "ERROR: Unknown/unsupported version of HBase found: $HBASE_VERSION"
@@ -154,15 +154,15 @@ set_hive_classpath() {
       HIVE_VAR_OUT=`hive -e 'set -v' 2>/dev/null`
 
       if [ "x$HIVE_HOME" = "x" ]; then
-        HIVE_HOME=`echo $HIVE_VAR_OUT | tr ' ' '\n' | grep 'HIVE_HOME' | cut -f 2 -d '='`
+        HIVE_HOME=`echo $HIVE_VAR_OUT | tr ' ' '\n' | grep '^env:HIVE_HOME=' | cut -f 2 -d '='`
       fi
 
       if [ "x$HIVE_CONF_DIR" = "x" ]; then
-        HIVE_CONF_DIR=`echo $HIVE_VAR_OUT | tr ' ' '\n' | grep 'HIVE_CONF_DIR' | cut -f 2 -d '='`
+        HIVE_CONF_DIR=`echo $HIVE_VAR_OUT | tr ' ' '\n' | grep '^env:HIVE_CONF_DIR=' | cut -f 2 -d '='`
       fi
 
       if [ "x$HADOOP_CONF_DIR" = "x" ]; then
-        HADOOP_CONF_DIR=`echo $HIVE_VAR_OUT | tr ' ' '\n' | grep 'HADOOP_CONF_DIR=' | cut -f 2 -d '='`
+        HADOOP_CONF_DIR=`echo $HIVE_VAR_OUT | tr ' ' '\n' | grep '^env:HADOOP_CONF_DIR=' | cut -f 2 -d '='`
       fi
     fi
   fi
@@ -191,6 +191,13 @@ set_hive_classpath() {
     EXPLORE_CLASSPATH=$HIVE_EXEC:$OTHER_HIVE_JARS
 
     export EXPLORE_CLASSPATH
+  fi
+}
+
+# Check that directory /var/tmp/cdap exists in the master node, or create it
+check_or_create_master_local_dir() {
+  if [ ! -d "$LOCAL_DIR" ]; then
+    mkdir -p "$LOCAL_DIR"
   fi
 }
 

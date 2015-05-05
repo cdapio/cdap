@@ -1,0 +1,83 @@
+<div ncy-breadcrumb></div>
+
+<div class="row" program-heading>
+  <div class="col-sm-6">
+    <h2 class="programTitle">
+      <span ng-bind="$state.params.programId"> </span>
+    </h2>
+    <div class="type-block">
+      <span class="icon-service"></span>
+      <small> Type: Service </small>
+    </div>
+  </div>
+  <div class="col-sm-6 text-right">
+
+    <div class="btn-group" dropdown>
+      <div ng-if="status == 'RUNNING'"
+           class="btn btn-danger btn-md"
+           ng-click="stop()">
+        <span class="fa fa-stop"> </span>
+        <span>Stop</span>
+      </div>
+
+      <div ng-if="status == 'STOPPED'"
+           class="btn btn-success btn-md"
+           ng-click="start()">
+        <span class="fa fa-play"> </span>
+        <span>Start</span>
+      </div>
+      <div ng-if="status == 'STARTING' || status == 'STOPPING'"
+           class="btn btn-md"
+           ng-class="{'btn-success': status === 'STARTING', 'btn-danger': status === 'STOPPING'}">
+        <span class="fa fa-refresh fa-spin"></span>
+        <span>{{status | caskCapitalizeFilter}}</span>
+      </div>
+
+      <button class="btn btn-md btn-success dropdown-toggle" dropdown-toggle ng-if="status === 'STOPPED'">
+        <span class="caret"></span>
+      </button>
+
+      <ul class="dropdown-menu dropdown-menu-right" role="menu" ng-if="status === 'STOPPED'">
+        <li role="presentation">
+          <a role="menuitem"
+             href="#"
+             ng-click="openRuntime()">
+            <span class="fa fa-wrench pull-right"></span>
+            <span> Runtime Arguments </span>
+          </a>
+        </li>
+        <li role="presentation">
+          <a role="menuitem"
+             href="#"
+             ng-click="openPreferences()">
+            <span class="fa fa-cog pull-right"></span>
+            <span> Preferences </span>
+          </a>
+        </li>
+      </ul>
+
+    </div>
+    <!-- END OF BUTTON GROUP -->
+
+
+  </div>
+</div>
+
+<div class="cdap-subnav-end"></div>
+<ul class="nav nav-tabs slanted-tabs" role="tablist">
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="services.detail.status" ui-sref-opts="{reload: true}" role="tab">Status</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="services.detail.data" role="tab">Datasets</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="services.detail.history" role="tab">History</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="services.detail.logs" ui-sref-opts="{reload: true}" role="tab">Logs</a>
+  </li>
+</ul>
+
+<br/>
+<ui-view role="tabpanel"/>

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,14 +15,14 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
-import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -32,16 +32,19 @@ final class BasicWorkflowContext implements WorkflowContext {
   private final WorkflowSpecification workflowSpec;
   private final WorkflowActionSpecification specification;
   private final long logicalStartTime;
-  private final MapReduceRunnerFactory runnerFactory;
+  private final ProgramWorkflowRunner programWorkflowRunner;
   private final Map<String, String> runtimeArgs;
+  private final WorkflowToken token;
 
-  BasicWorkflowContext(WorkflowSpecification workflowSpec, WorkflowActionSpecification specification,
-                       long logicalStartTime, MapReduceRunnerFactory runnerFactory, Map<String, String> runtimeArgs) {
+  BasicWorkflowContext(WorkflowSpecification workflowSpec, @Nullable WorkflowActionSpecification specification,
+                       long logicalStartTime, @Nullable ProgramWorkflowRunner programWorkflowRunner,
+                       Map<String, String> runtimeArgs, WorkflowToken token) {
     this.workflowSpec = workflowSpec;
     this.specification = specification;
     this.logicalStartTime = logicalStartTime;
-    this.runnerFactory = runnerFactory;
+    this.programWorkflowRunner = programWorkflowRunner;
     this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);
+    this.token = token;
   }
 
   @Override
@@ -51,6 +54,9 @@ final class BasicWorkflowContext implements WorkflowContext {
 
   @Override
   public WorkflowActionSpecification getSpecification() {
+    if (specification == null) {
+      throw new UnsupportedOperationException("Operation not allowed.");
+    }
     return specification;
   }
 
@@ -60,12 +66,20 @@ final class BasicWorkflowContext implements WorkflowContext {
   }
 
   @Override
-  public Callable<MapReduceContext> getMapReduceRunner(String name) {
-    return runnerFactory.create(name);
+  public Runnable getProgramRunner(String name) {
+    if (programWorkflowRunner == null) {
+      throw new UnsupportedOperationException("Operation not allowed.");
+    }
+    return programWorkflowRunner.create(name);
   }
 
   @Override
   public Map<String, String> getRuntimeArguments() {
     return runtimeArgs;
+  }
+
+  @Override
+  public WorkflowToken getToken() {
+    return token;
   }
 }

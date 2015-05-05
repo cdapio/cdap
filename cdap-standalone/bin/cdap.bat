@@ -2,7 +2,7 @@
 
 REM #################################################################################
 REM ##
-REM ## Copyright © 2014 Cask Data, Inc.
+REM ## Copyright © 2014-2015 Cask Data, Inc.
 REM ##
 REM ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
 REM ## use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,7 @@ SET CDAP_HOME=%CDAP_HOME:~0,-5%
 SET JAVACMD=%JAVA_HOME%\bin\java.exe
 
 REM Specifies Web App Path
-SET WEB_APP_PATH=%CDAP_HOME%\web-app\local\server\main.js
+SET UI_PATH=%CDAP_HOME%\ui\server.js
 
 REM %CDAP_HOME%
 SET CLASSPATH=%CDAP_HOME%\lib\*;%CDAP_HOME%\conf\
@@ -155,23 +155,6 @@ if exist %~dsp0MyProg.pid (
 )
 attrib +h %~dsp0MyProg.pid >NUL
 
-REM Check for new version of CDAP
-bitsadmin /Transfer NAME http://s3.amazonaws.com/cdap-docs/VERSION %~f0_version.txt > NUL 2>&1
-if exist %~f0_version.txt (
-  for /f "tokens=* delims= " %%f in (%~f0_version.txt) do (
-    SET new_version = %%f
-  )
-  for /f "tokens=* delims= " %%g in (%~f0\..\..\VERSION) do (
-    SET current_version = %%g
-  )
-  del %~f0_version.txt > NUL 2>&1
-
-  if not "%current_version%" == "%new_version%" (
-    echo UPDATE: There is a newer version of the CDAP SDK available.
-    echo         Download it from http://cask.co/downloads
-  )
-)
-
 mkdir %CDAP_HOME%\logs > NUL 2>&1
 
 REM Log rotation
@@ -209,7 +192,7 @@ IF "%2" == "--enable-debug" (
   set DEBUG_OPTIONS="-agentlib:jdwp=transport=dt_socket,address=localhost:!port!,server=y,suspend=n"
 )
 
-start /B %JAVACMD% !DEBUG_OPTIONS! -Dhadoop.security.group.mapping=org.apache.hadoop.security.JniBasedUnixGroupsMappingWithFallback -Dhadoop.home.dir=%CDAP_HOME%\libexec -classpath %CLASSPATH% co.cask.cdap.StandaloneMain --web-app-path %WEB_APP_PATH% >> %CDAP_HOME%\logs\cdap-process.log 2>&1 < NUL
+start /B %JAVACMD% !DEBUG_OPTIONS! -Dhadoop.security.group.mapping=org.apache.hadoop.security.JniBasedUnixGroupsMappingWithFallback -Dhadoop.home.dir=%CDAP_HOME%\libexec -classpath %CLASSPATH% co.cask.cdap.StandaloneMain --ui-path %UI_PATH% >> %CDAP_HOME%\logs\cdap-process.log 2>&1 < NUL
 echo Starting Standalone CDAP...
 
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq java.exe"') DO SET MyPID=%%b
@@ -244,25 +227,7 @@ PING 127.0.0.1 -n 6 > NUL 2>&1
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq node.exe"') DO SET MyNodePID=%%b
 echo %MyNodePID% > %~dsp0MyProgNode.pid
 attrib +h %~dsp0MyProgNode.pid >NUL
-
-REM Disable NUX
-REM TODO: Enable NUX with new app, see CDAP-22
-REM CALL :NUX
 GOTO :FINALLY
-
-:NUX
-REM New user experience, enable if it is not enabled already
-if not exist %CDAP_HOME%\.nux_dashboard (
-
-  REM Deploy app
-  FOR /F %%i IN ('curl -X POST -sL -w %%{http_code} -H "X-Archive-Name: LogAnalytics.jar" --data-binary @"%JAR_PATH%" http://127.0.0.1:10000/v2/apps') DO SET RESPONSE=%%i
-  REM IF  NOT %RESPONSE% == 200  (GOTO :EOF)
-  REM Start flow
-  curl -sL -X POST http://127.0.0.1:10000/v2/apps/ResponseCodeAnalytics/flows/LogAnalyticsFlow/start
-  REM Start procedure
-  curl -sL -X POST http://127.0.0.1:10000/v2/apps/ResponseCodeAnalytics/procedures/StatusCodeProcedure/start
-)
-GOTO :EOF
 
 :STOP
 echo Stopping Standalone CDAP ...

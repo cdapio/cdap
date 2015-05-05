@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,24 +19,21 @@ package co.cask.cdap.data.stream;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.file.FileWriter;
-import co.cask.cdap.data2.transaction.stream.AbstractStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
-import com.google.inject.Inject;
+import co.cask.cdap.proto.Id;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.Properties;
-import javax.annotation.Nullable;
 
 /**
  * Base test class for stream file janitor.
@@ -46,39 +43,53 @@ public abstract class StreamFileJanitorTestBase {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
+  protected static CConfiguration cConf = CConfiguration.create();
+
   protected abstract LocationFactory getLocationFactory();
+
+  protected abstract NamespacedLocationFactory getNamespacedLocationFactory();
 
   protected abstract StreamAdmin getStreamAdmin();
 
   protected abstract CConfiguration getCConfiguration();
 
-  protected abstract FileWriter<StreamEvent> createWriter(String streamName) throws IOException;
+  protected abstract FileWriter<StreamEvent> createWriter(Id.Stream streamId) throws IOException;
+
+  @Before
+  public void setup() throws IOException {
+    // FileStreamAdmin expects namespace directory to exist.
+    // Simulate namespace create
+    getNamespacedLocationFactory().get(Constants.DEFAULT_NAMESPACE_ID).mkdirs();
+  }
 
   @Test
   public void testCleanupGeneration() throws Exception {
     // Create a stream and performs couple truncate
     String streamName = "testCleanupGeneration";
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+
     StreamAdmin streamAdmin = getStreamAdmin();
-    streamAdmin.create(streamName);
-    StreamConfig streamConfig = streamAdmin.getConfig(streamName);
-    StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), getStreamAdmin(), getLocationFactory());
+    streamAdmin.create(streamId);
+    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
+    StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), getStreamAdmin(),
+                                                      getNamespacedLocationFactory());
 
     for (int i = 0; i < 5; i++) {
-      FileWriter<StreamEvent> writer = createWriter(streamName);
+      FileWriter<StreamEvent> writer = createWriter(streamId);
       writer.append(StreamFileTestUtils.createEvent(System.currentTimeMillis(), "Testing"));
       writer.close();
 
       // Call cleanup before truncate. The current generation should stand.
-      janitor.clean(streamConfig, System.currentTimeMillis());
+      janitor.clean(streamConfig.getLocation(), streamConfig.getTTL(), System.currentTimeMillis());
       verifyGeneration(streamConfig, i);
 
-      streamAdmin.truncate(streamName);
+      streamAdmin.truncate(streamId);
     }
 
     int generation = StreamUtils.getGeneration(streamConfig);
     Assert.assertEquals(5, generation);
 
-    janitor.clean(streamConfig, System.currentTimeMillis());
+    janitor.clean(streamConfig.getLocation(), streamConfig.getTTL(), System.currentTimeMillis());
 
     // Verify the stream directory should only contains the generation directory
     for (Location location : streamConfig.getLocation().list()) {
@@ -92,21 +103,24 @@ public abstract class StreamFileJanitorTestBase {
   public void testCleanupTTL() throws Exception {
     // Create a stream with 5 seconds TTL, partition duration of 2 seconds
     String streamName = "testCleanupTTL";
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+
     StreamAdmin streamAdmin = getStreamAdmin();
-    StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), getStreamAdmin(), getLocationFactory());
+    StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), getStreamAdmin(),
+                                                      getNamespacedLocationFactory());
 
     Properties properties = new Properties();
     properties.setProperty(Constants.Stream.PARTITION_DURATION, "2000");
     properties.setProperty(Constants.Stream.TTL, "5000");
 
-    streamAdmin.create(streamName, properties);
+    streamAdmin.create(streamId, properties);
 
     // Truncate to increment generation to 1. This make verification condition easier (won't affect correctness).
-    streamAdmin.truncate(streamName);
-    StreamConfig config = streamAdmin.getConfig(streamName);
+    streamAdmin.truncate(streamId);
+    StreamConfig config = streamAdmin.getConfig(streamId);
 
     // Write data with different timestamps that spans across 5 partitions
-    FileWriter<StreamEvent> writer = createWriter(streamName);
+    FileWriter<StreamEvent> writer = createWriter(streamId);
 
     for (int i = 0; i < 10; i++) {
       writer.append(StreamFileTestUtils.createEvent(i * 1000, "Testing " + i));
@@ -119,13 +133,37 @@ public abstract class StreamFileJanitorTestBase {
 
     // Perform clean with current time = 10000 (10 seconds since epoch).
     // Since TTL = 5 seconds, 2 partitions will be remove (Ends at 2000 and ends at 4000).
-    janitor.clean(config, 10000);
+    janitor.clean(config.getLocation(), config.getTTL(), 10000);
 
     Assert.assertEquals(3, generationLocation.list().size());
 
     // Cleanup again with current time = 16000, all partitions should be deleted.
-    janitor.clean(config, 16000);
+    janitor.clean(config.getLocation(), config.getTTL(), 16000);
     Assert.assertTrue(generationLocation.list().isEmpty());
+  }
+
+  @Test
+  public void testCleanupDeletedStream() throws Exception {
+    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, "cleanupDelete");
+    StreamAdmin streamAdmin = getStreamAdmin();
+    StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), streamAdmin, getNamespacedLocationFactory());
+    streamAdmin.create(streamId);
+
+    // Write some data
+    FileWriter<StreamEvent> writer = createWriter(streamId);
+    try {
+      for (int i = 0; i < 10; i++) {
+        writer.append(StreamFileTestUtils.createEvent(i * 1000, "Testing " + i));
+      }
+    } finally {
+      writer.close();
+    }
+
+    // Delete the stream
+    streamAdmin.drop(streamId);
+
+    // Run janitor. Should be running fine without exception.
+    janitor.cleanAll();
   }
 
   private void verifyGeneration(StreamConfig config, int generation) throws IOException {
@@ -140,73 +178,5 @@ public abstract class StreamFileJanitorTestBase {
     }
 
     throw new IOException("Not a valid generation directory");
-  }
-
-  /**
-   * A stream admin for interact with files only (the product one operations on both file and HBase).
-   */
-  protected static final class TestStreamFileAdmin extends AbstractStreamFileAdmin {
-
-    @Inject
-    TestStreamFileAdmin(LocationFactory locationFactory, CConfiguration cConf, StreamCoordinator
-                        streamCoordinator, StreamConsumerStateStoreFactory stateStoreFactory) {
-      super(locationFactory, cConf, streamCoordinator, stateStoreFactory, new NoopStreamAdmin());
-    }
-  }
-
-  /**
-   * A {@link StreamAdmin} that does nothing.
-   */
-  protected static final class NoopStreamAdmin implements StreamAdmin {
-
-    @Override
-    public void dropAll() throws Exception {
-    }
-
-    @Override
-    public void configureInstances(QueueName streamName, long groupId, int instances) throws Exception {
-    }
-
-    @Override
-    public void configureGroups(QueueName streamName, Map<Long, Integer> groupInfo) throws Exception {
-    }
-
-    @Override
-    public void upgrade() throws Exception {
-    }
-
-    @Override
-    public StreamConfig getConfig(String streamName) throws IOException {
-      throw new IllegalStateException("Stream " + streamName + " not exists.");
-    }
-
-    @Override
-    public void updateConfig(StreamConfig config) throws IOException {
-    }
-
-    @Override
-    public boolean exists(String name) throws Exception {
-      return false;
-    }
-
-    @Override
-    public void create(String name) throws Exception {
-    }
-
-    @Override
-    public void create(String name, @Nullable Properties props) throws Exception {
-    }
-
-    @Override
-    public void truncate(String name) throws Exception {
-    }
-
-    @Override
-    public void drop(String name) throws Exception {
-    }
-
-    @Override
-    public void upgrade(String name, Properties properties) throws Exception {
-    }
   }
 }

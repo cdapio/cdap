@@ -1,0 +1,85 @@
+<div ng-if="$state.current.name === 'admin.namespace.detail.apps.metadata'">
+  <div class="row">
+      <div class="col-xs-6">
+          <h2 ng-bind="apps.name"></h2>
+      </div>
+      <div class="col-xs-6 text-right">
+        <div class="btn-group dropdown-right" dropdown>
+          <a class="btn btn-default dropdown-toggle" dropdown-toggle="" aria-haspopup="true" aria-expanded="false">
+              Actions
+              <span class="caret"></span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-right" role="menu">
+            <li role="presentation">
+              <a role="menuitem" ui-sref="admin.namespace.detail.apps.metadata.preference">
+                <span class="fa fa-fw fa-cog pull-right"></span>
+                <span> Preferences </span>
+              </a>
+            </li>
+            <li role="presentation">
+              <a role="menuitem" href=""
+                ng-click="caskConfirm()"
+                cask-confirmable="deleteApp(apps.id)"
+                data-confirmable-content="Are you sure you want to delete this app?">
+                <span class="fa fa-fw fa-trash pull-right"></span>
+                <span> Delete </span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+  </div>
+
+  <div class="table-responsive">
+      <table class="table table-curved" cask-sortable>
+          <thead>
+              <tr>
+                <th>Name</th>
+                <th>Version</th>
+                <th>Description</th>
+              </tr>
+          </thead>
+          <tbody>
+              <td>
+                <a ui-sref="apps.detail.overview({namespace: $state.params.nsadmin, appId: apps.name})">
+                  {{ ::apps.name }}
+                </a>
+              </td>
+              <td>{{ ::apps.version}}</td>
+              <td>{{ ::apps.description }}</td>
+          </tbody>
+      </table>
+  </div>
+
+  <div class="row">
+    <div class="col-xs-12">
+      <h3>Programs</h3>
+
+      <table class="table table-curved" cask-sortable>
+        <thead>
+          <tr ng-class="{'sort-enabled': apps.programs.length > 0}">
+            <th data-predicate="name">Name</th>
+            <th data-predicate="type">Type</th>
+            <th data-predicate="description">Description</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr ng-repeat="program in apps.programs | orderBy:sortable.predicate:sortable.reverse">
+            <td>
+              <a ui-sref="spark.detail.runs({namespace: $state.params.nsadmin, appId: apps.name, programId: program.name})" ng-if="program.type === 'Spark'">{{ ::program.name }}</a>
+              <a ui-sref="flows.detail.runs({namespace: $state.params.nsadmin, appId: apps.name, programId: program.name})" ng-if="program.type === 'Flow'">{{ ::program.name }}</a>
+              <a ui-sref="mapreduce.detail.runs({namespace: $state.params.nsadmin, appId: apps.name, programId: program.name})" ng-if="program.type === 'Mapreduce'">{{ ::program.name }}</a>
+              <a ui-sref="services.detail.status({namespace: $state.params.nsadmin, appId: apps.name, programId: program.name})" ng-if="program.type === 'Service'">{{ ::program.name }}</a>
+              <a ui-sref="workflows.detail.runs({namespace: $state.params.nsadmin, appId: apps.name, programId: program.name})" ng-if="program.type === 'Workflow'">{{ ::program.name }}</a>
+            </td>
+            <td>{{ ::program.type }}</td>
+            <td>{{ ::program.description }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div ui-view></div>

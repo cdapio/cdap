@@ -16,17 +16,17 @@
 
 package co.cask.cdap.common.stream;
 
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.SchemaHash;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.io.BinaryEncoder;
 import co.cask.cdap.common.io.Decoder;
 import co.cask.cdap.common.io.Encoder;
-import co.cask.cdap.internal.io.ByteBufferInputStream;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.internal.io.Schema;
-import co.cask.cdap.internal.io.SchemaHash;
-import co.cask.cdap.internal.io.UnsupportedTypeException;
+import co.cask.common.io.ByteBufferInputStream;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 
@@ -105,7 +105,7 @@ public final class StreamEventCodec {
 
       // Read the timestamp
       long timestamp = decoder.readLong();
-      return new DefaultStreamEvent(data, timestamp);
+      return new StreamEvent(data, timestamp);
 
     } catch (IOException e) {
       // It should never happens, otherwise something very wrong.

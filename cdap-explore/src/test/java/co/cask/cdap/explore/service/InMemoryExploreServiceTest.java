@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.service;
 
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -25,13 +26,18 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.auth.AuthModule;
+import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
@@ -39,14 +45,19 @@ import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.net.URL;
@@ -58,18 +69,22 @@ import java.util.concurrent.TimeUnit;
  */
 @Category(SlowTests.class)
 public class InMemoryExploreServiceTest {
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
   private static TransactionManager transactionManager;
   private static ExploreService exploreService;
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
+
+  private final String otherNamespace = "otherNamespace";
 
   @BeforeClass
   public static void start() throws Exception {
     CConfiguration configuration = CConfiguration.create();
     Configuration hConf = new Configuration();
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
-    configuration.set(Constants.Explore.LOCAL_DATA_DIR,
-                      new File(System.getProperty("java.io.tmpdir"), "hive").getAbsolutePath());
+    configuration.set(Constants.Explore.LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
     Injector injector = Guice.createInjector(
         new ConfigModule(configuration, hConf),
@@ -77,12 +92,20 @@ public class InMemoryExploreServiceTest {
         new DiscoveryRuntimeModule().getInMemoryModules(),
         new LocationRuntimeModule().getInMemoryModules(),
         new DataFabricModules().getInMemoryModules(),
-        new DataSetsModules().getLocalModule(),
-        new DataSetServiceModules().getInMemoryModule(),
+        new DataSetsModules().getStandaloneModules(),
+        new DataSetServiceModules().getInMemoryModules(),
         new MetricsClientRuntimeModule().getInMemoryModules(),
         new AuthModule(),
         new ExploreRuntimeModule().getInMemoryModules(),
-        new ExploreClientModule());
+        new ExploreClientModule(),
+        new StreamAdminModules().getInMemoryModules(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+            bind(Store.class).to(DefaultStore.class);
+          }
+        });
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
 
@@ -106,81 +129,104 @@ public class InMemoryExploreServiceTest {
 
   @Test
   public void testHiveIntegration() throws Exception {
+    waitForCompletionStatus(exploreService.createNamespace(Id.Namespace.from(otherNamespace)));
 
+    runCleanup(ImmutableList.of(Constants.DEFAULT_NAMESPACE, otherNamespace));
+
+    runNamespacedTest(Constants.DEFAULT_NAMESPACE);
+    runNamespacedTest(otherNamespace);
+
+    runCleanup(ImmutableList.of(Constants.DEFAULT_NAMESPACE, otherNamespace));
+
+    waitForCompletionStatus(exploreService.deleteNamespace(Id.Namespace.from(otherNamespace)));
+  }
+
+  private void runNamespacedTest(String namespace) throws Exception {
     URL loadFileUrl = getClass().getResource("/test_table.dat");
     Assert.assertNotNull(loadFileUrl);
 
+    // Should have no tables
+    runCommand(namespace, "show tables",
+               true,
+               Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
+               ImmutableList.<QueryResult>of());
 
-    runCommand("drop table if exists test",
-        false,
-        ImmutableList.<ColumnDesc>of(),
-        ImmutableList.<QueryResult>of());
-
-    runCommand("create table test (first INT, second STRING) ROW FORMAT " +
-               "DELIMITED FIELDS TERMINATED BY '\\t'",
-        false,
-        ImmutableList.<ColumnDesc>of(),
-        ImmutableList.<QueryResult>of()
+    runCommand(namespace, "create table test (first INT, second STRING) ROW FORMAT " +
+                 "DELIMITED FIELDS TERMINATED BY '\\t'",
+               false,
+               ImmutableList.<ColumnDesc>of(),
+               ImmutableList.<QueryResult>of()
     );
 
-    runCommand("show tables",
-        true,
-        Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
-        Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("test"))));
+    runCommand(namespace, "show tables",
+               true,
+               Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
+               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("test"))));
 
-    runCommand("describe test",
-        true,
-        Lists.newArrayList(
-            new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
-            new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
-            new ColumnDesc("comment", "STRING", 3, "from deserializer")
-        ),
-        Lists.newArrayList(
-            new QueryResult(Lists.<Object>newArrayList("first", "int", "")),
-            new QueryResult(Lists.<Object>newArrayList("second", "string", ""))
-        )
+    runCommand(namespace, "describe test",
+               true,
+               Lists.newArrayList(
+                 new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
+                 new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
+                 new ColumnDesc("comment", "STRING", 3, "from deserializer")
+               ),
+               Lists.newArrayList(
+                 new QueryResult(Lists.<Object>newArrayList("first", "int", "")),
+                 new QueryResult(Lists.<Object>newArrayList("second", "string", ""))
+               )
     );
 
-    runCommand("LOAD DATA LOCAL INPATH '" + new File(loadFileUrl.toURI()).getAbsolutePath() +
-               "' INTO TABLE test",
-        false,
-        ImmutableList.<ColumnDesc>of(),
-        ImmutableList.<QueryResult>of()
+    // Should have no data
+    runCommand(namespace, "select * from test",
+               true,
+               Lists.newArrayList(new ColumnDesc("test.first", "INT", 1, null),
+                                  new ColumnDesc("test.second", "STRING", 2, null)),
+               ImmutableList.<QueryResult>of());
+
+    runCommand(namespace, "LOAD DATA LOCAL INPATH '"
+                 + new File(loadFileUrl.toURI()).getAbsolutePath() + "' INTO TABLE test",
+               false,
+               ImmutableList.<ColumnDesc>of(),
+               ImmutableList.<QueryResult>of()
     );
 
-    runCommand("select first, second from test",
-        true,
-        Lists.newArrayList(new ColumnDesc("first", "INT", 1, null),
-                           new ColumnDesc("second", "STRING", 2, null)),
-        Lists.newArrayList(
-            new QueryResult(Lists.<Object>newArrayList("1", "one")),
-            new QueryResult(Lists.<Object>newArrayList("2", "two")),
-            new QueryResult(Lists.<Object>newArrayList("3", "three")),
-            new QueryResult(Lists.<Object>newArrayList("4", "four")),
-            new QueryResult(Lists.<Object>newArrayList("5", "five")))
+    runCommand(namespace, "select first, second from test",
+               true,
+               Lists.newArrayList(new ColumnDesc("first", "INT", 1, null),
+                                  new ColumnDesc("second", "STRING", 2, null)),
+               Lists.newArrayList(
+                 new QueryResult(Lists.<Object>newArrayList("1", "one")),
+                 new QueryResult(Lists.<Object>newArrayList("2", "two")),
+                 new QueryResult(Lists.<Object>newArrayList("3", "three")),
+                 new QueryResult(Lists.<Object>newArrayList("4", "four")),
+                 new QueryResult(Lists.<Object>newArrayList("5", "five")))
     );
 
-    runCommand("select * from test",
-        true,
-        Lists.newArrayList(new ColumnDesc("test.first", "INT", 1, null),
-                           new ColumnDesc("test.second", "STRING", 2, null)),
-        Lists.newArrayList(
-            new QueryResult(Lists.<Object>newArrayList("1", "one")),
-            new QueryResult(Lists.<Object>newArrayList("2", "two")),
-            new QueryResult(Lists.<Object>newArrayList("3", "three")),
-            new QueryResult(Lists.<Object>newArrayList("4", "four")),
-            new QueryResult(Lists.<Object>newArrayList("5", "five"))));
-
-    runCommand("drop table if exists test",
-        false,
-        ImmutableList.<ColumnDesc>of(),
-        ImmutableList.<QueryResult>of());
+    runCommand(namespace, "select * from test",
+               true,
+               Lists.newArrayList(new ColumnDesc("test.first", "INT", 1, null),
+                                  new ColumnDesc("test.second", "STRING", 2, null)),
+               Lists.newArrayList(
+                 new QueryResult(Lists.<Object>newArrayList("1", "one")),
+                 new QueryResult(Lists.<Object>newArrayList("2", "two")),
+                 new QueryResult(Lists.<Object>newArrayList("3", "three")),
+                 new QueryResult(Lists.<Object>newArrayList("4", "four")),
+                 new QueryResult(Lists.<Object>newArrayList("5", "five"))));
   }
 
-  private static void runCommand(String command, boolean expectedHasResult,
+  private void runCleanup(List<String> namespaces) throws Exception {
+    for (String namespace : namespaces) {
+      runCommand(namespace, "drop table if exists test",
+                 false,
+                 ImmutableList.<ColumnDesc>of(),
+                 ImmutableList.<QueryResult>of());
+    }
+  }
+
+  private static void runCommand(String namespace, String command, boolean expectedHasResult,
                                  List<ColumnDesc> expectedColumnDescs,
                                  List<QueryResult> expectedResults) throws Exception {
-    QueryHandle handle = exploreService.execute(command);
+    QueryHandle handle = exploreService.execute(Id.Namespace.from(namespace), command);
 
     QueryStatus status = waitForCompletionStatus(handle);
     Assert.assertEquals(QueryStatus.OpStatus.FINISHED, status.getStatus());

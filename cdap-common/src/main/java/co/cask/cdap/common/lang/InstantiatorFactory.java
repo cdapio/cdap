@@ -16,8 +16,6 @@
 
 package co.cask.cdap.common.lang;
 
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.common.stream.DefaultStreamEvent;
 import co.cask.cdap.internal.lang.Reflections;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
@@ -170,14 +168,6 @@ public final class InstantiatorFactory {
         @Override
         public T create() {
           return (T) Maps.newHashMap();
-        }
-      };
-    }
-    if (StreamEvent.class.isAssignableFrom(rawType)) {
-      return new Instantiator<T>() {
-        @Override
-        public T create() {
-          return (T) new DefaultStreamEvent();
         }
       };
     }

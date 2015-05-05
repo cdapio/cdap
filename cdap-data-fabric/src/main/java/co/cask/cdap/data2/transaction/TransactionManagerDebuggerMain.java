@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.transaction;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.tephra.ChangeId;
 import co.cask.tephra.TransactionManager;
@@ -129,7 +130,7 @@ public class TransactionManagerDebuggerMain {
     options.addOption(null, TRANSACTION_OPTION, true, "To specify a transaction ID. Mandatory in invalidate mode, " +
                                                       "optional in view mode");
     options.addOption(null, PORT_OPTION, true, "To specify the port to use. The default value is --port " +
-                                               Constants.Gateway.DEFAULT_PORT);
+                                               Constants.Router.DEFAULT_ROUTER_PORT);
     options.addOption(null, HELP_OPTION, false, "To print this message");
     options.addOption(null, TOKEN_OPTION, true, "To specify the access token for secure connections");
     options.addOption(null, TOKEN_FILE_OPTION, true, "Alternative to --token, to specify a file that contains " +
@@ -161,7 +162,7 @@ public class TransactionManagerDebuggerMain {
       tokenFile = line.hasOption(TOKEN_FILE_OPTION) ? line.getOptionValue(TOKEN_FILE_OPTION).replaceAll("(\r|\n)", "")
         : null;
       portNumber = line.hasOption(PORT_OPTION) ? Integer.valueOf(line.getOptionValue(PORT_OPTION)) :
-                   conf.getInt(Constants.Gateway.PORT, Constants.Gateway.DEFAULT_PORT);
+                   conf.getInt(Constants.Router.ROUTER_PORT, Integer.parseInt(Constants.Router.DEFAULT_ROUTER_PORT));
 
       // if both tokenfile and accessToken are given, just use the access token
       if (tokenFile != null) {
@@ -281,7 +282,7 @@ public class TransactionManagerDebuggerMain {
     URL url;
     HttpURLConnection connection = null;
     try {
-      url = new URL("http://" + hostname + ":" + portNumber + "/v2/transactions/" + txId + "/invalidate");
+      url = new URL("http://" + hostname + ":" + portNumber + "/v3/transactions/" + txId + "/invalidate");
       connection = (HttpURLConnection) url.openConnection();
       connection.setRequestMethod("POST");
       if (accessToken != null) {
@@ -315,7 +316,7 @@ public class TransactionManagerDebuggerMain {
     URL url;
     HttpURLConnection connection = null;
     try {
-      url = new URL("http://" + hostname + ":" + portNumber + "/v2/transactions/state");
+      url = new URL("http://" + hostname + ":" + portNumber + "/v3/transactions/state");
       connection = (HttpURLConnection) url.openConnection();
       connection.setRequestMethod("POST");
       if (accessToken != null) {
@@ -410,7 +411,7 @@ public class TransactionManagerDebuggerMain {
     URL url;
     HttpURLConnection connection = null;
     try {
-      url = new URL("http://" + hostname + ":" + portNumber + "/v2/transactions/state");
+      url = new URL("http://" + hostname + ":" + portNumber + "/v3/transactions/state");
       connection = (HttpURLConnection) url.openConnection();
       if (accessToken != null) {
         connection.setRequestProperty("Authorization", "Bearer " + accessToken);
@@ -704,7 +705,7 @@ public class TransactionManagerDebuggerMain {
     // create a config and load the gateway properties
     CConfiguration cConf = CConfiguration.create();
     Configuration hConf = new Configuration();
-    cConf.copyTxProperties(hConf);
+    CConfigurationUtil.copyTxProperties(cConf, hConf);
 
     TransactionManagerDebuggerMain instance = new TransactionManagerDebuggerMain(hConf);
     boolean success = instance.execute(args);

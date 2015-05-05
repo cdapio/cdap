@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,17 +20,21 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Map;
 
 /**
  * Runs Mapreduce programm in distributed environment
@@ -46,9 +50,9 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
 
   @Override
   protected ProgramController launch(Program program, ProgramOptions options,
-                                     File hConfFile, File cConfFile, ApplicationLauncher launcher) {
+                                     Map<String, File> localizeFiles, ApplicationLauncher launcher) {
     // Extract and verify parameters
-    ApplicationSpecification appSpec = program.getSpecification();
+    ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
     ProgramType processorType = program.getType();
@@ -60,8 +64,9 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
 
     LOG.info("Launching MapReduce program: " + program.getName() + ":" + spec.getName());
     TwillController controller = launcher.launch(new MapReduceTwillApplication(program, spec,
-                                                                               hConfFile, cConfFile, eventHandler));
+                                                                               localizeFiles, eventHandler));
 
-    return new MapReduceTwillProgramController(program.getName(), controller).startListen();
+    RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
+    return new MapReduceTwillProgramController(program.getName(), controller, runId).startListen();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
@@ -26,8 +27,12 @@ import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.lang.Reflections;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.map.WrappedMapper;
+import org.apache.hadoop.yarn.util.ApplicationClassLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,9 +44,22 @@ import java.util.concurrent.TimeUnit;
  */
 public class MapperWrapper extends Mapper {
 
-  public static final String ATTR_MAPPER_CLASS = "c.mapper.class";
-
   private static final Logger LOG = LoggerFactory.getLogger(MapperWrapper.class);
+  private static final String ATTR_MAPPER_CLASS = "c.mapper.class";
+
+  /**
+   * Wraps the mapper defined in the job with this {@link MapperWrapper} if it is defined.
+   * @param job The MapReduce job
+   */
+  public static void wrap(Job job) {
+    // NOTE: we don't use job.getMapperClass() as we don't need to load user class here
+    Configuration conf = job.getConfiguration();
+    String mapClass = conf.get(MRJobConfig.MAP_CLASS_ATTR);
+    if (mapClass != null) {
+      conf.set(MapperWrapper.ATTR_MAPPER_CLASS, mapClass);
+      job.setMapperClass(MapperWrapper.class);
+    }
+  }
 
   @SuppressWarnings("unchecked")
   @Override
@@ -49,13 +67,13 @@ public class MapperWrapper extends Mapper {
     MapReduceContextProvider mrContextProvider =
       new MapReduceContextProvider(context, MapReduceMetrics.TaskType.Mapper);
     final BasicMapReduceContext basicMapReduceContext = mrContextProvider.get();
-    context.getConfiguration().setClassLoader(basicMapReduceContext.getProgram().getClassLoader());
+    ClassLoader programClassLoader = MapReduceContextProvider.getProgramClassLoader(context.getConfiguration());
     basicMapReduceContext.getMetricsCollectionService().startAndWait();
 
     // now that the context is created, we need to make sure to properly close all datasets of the context
     try {
       String userMapper = context.getConfiguration().get(ATTR_MAPPER_CLASS);
-      Mapper delegate = createMapperInstance(basicMapReduceContext.getProgram().getClassLoader(), userMapper);
+      Mapper delegate = createMapperInstance(programClassLoader, userMapper);
 
       // injecting runtime components, like datasets, etc.
       try {
@@ -73,16 +91,26 @@ public class MapperWrapper extends Mapper {
       // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
       WrappedMapper.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext);
 
+      ClassLoader oldClassLoader;
       if (delegate instanceof ProgramLifecycle) {
+        oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
         try {
           ((ProgramLifecycle<BasicMapReduceContext>) delegate).initialize(basicMapReduceContext);
         } catch (Exception e) {
           LOG.error("Failed to initialize mapper with {}", basicMapReduceContext, e);
           throw Throwables.propagate(e);
+        } finally {
+          ClassLoaders.setContextClassLoader(oldClassLoader);
         }
       }
 
-      delegate.run(flushingContext);
+      oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
+      try {
+        delegate.run(flushingContext);
+      } finally {
+        ClassLoaders.setContextClassLoader(oldClassLoader);
+      }
+
       // sleep to allow metrics to be written
       TimeUnit.SECONDS.sleep(2L);
 
@@ -96,11 +124,14 @@ public class MapperWrapper extends Mapper {
       }
 
       if (delegate instanceof ProgramLifecycle) {
+        oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
         try {
           ((ProgramLifecycle<? extends RuntimeContext>) delegate).destroy();
         } catch (Exception e) {
           LOG.error("Error during destroy of mapper {}", basicMapReduceContext, e);
           // Do nothing, try to finish
+        } finally {
+          ClassLoaders.setContextClassLoader(oldClassLoader);
         }
       }
 

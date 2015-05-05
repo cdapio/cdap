@@ -39,7 +39,7 @@ public class CheckpointingLogFileWriter implements LogFileWriter<KafkaLogEvent> 
   private final long flushIntervalMs;
 
   private long lastCheckpointTime = System.currentTimeMillis();
-  private Map<Integer, Long> partitionOffsetMap = Maps.newHashMap();
+  private final Map<Integer, Checkpoint> partitionCheckpointMap = Maps.newHashMap();
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
@@ -58,16 +58,16 @@ public class CheckpointingLogFileWriter implements LogFileWriter<KafkaLogEvent> 
 
     KafkaLogEvent event = events.get(0);
     int partition = event.getPartition();
-    Long currentMaxOffset = partitionOffsetMap.get(partition);
-    currentMaxOffset = currentMaxOffset == null ? -1 : currentMaxOffset;
+    Checkpoint maxCheckpoint = partitionCheckpointMap.get(partition);
+    maxCheckpoint = maxCheckpoint == null ? new Checkpoint(-1, -1) : maxCheckpoint;
 
     for (KafkaLogEvent e : events) {
-      if (e.getNextOffset() > currentMaxOffset) {
-        currentMaxOffset = e.getNextOffset();
+      if (e.getNextOffset() > maxCheckpoint.getNextOffset()) {
+        maxCheckpoint = new Checkpoint(e.getNextOffset(), e.getLogEvent().getTimeStamp());
       }
     }
 
-    partitionOffsetMap.put(partition, currentMaxOffset);
+    partitionCheckpointMap.put(partition, maxCheckpoint);
 
     avroFileWriter.append(events);
     flush(false);
@@ -102,8 +102,8 @@ public class CheckpointingLogFileWriter implements LogFileWriter<KafkaLogEvent> 
     avroFileWriter.flush();
 
     // Save the max checkpoint seen for each partition
-    for (Map.Entry<Integer, Long> entry : partitionOffsetMap.entrySet()) {
-      LOG.debug("Saving checkpoint offset {} for partition {}", entry.getValue(), entry.getKey());
+    for (Map.Entry<Integer, Checkpoint> entry : partitionCheckpointMap.entrySet()) {
+      LOG.trace("Saving checkpoint {} for partition {}", entry.getValue(), entry.getKey());
       checkpointManager.saveCheckpoint(entry.getKey(), entry.getValue());
     }
     lastCheckpointTime = currentTs;

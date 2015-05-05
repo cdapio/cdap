@@ -1,0 +1,70 @@
+{
+  "id": "DB",
+  "groups" : {
+    "position": [ "group1", "group2", "group3" ],
+    "group1": {
+       "display" : "General",
+       "position" : [ "user", "password", "tableName"],
+       "fields" : {
+          "user" : {
+             "widget": "textbox",
+             "label": "Username",
+             "description" : "Username to connect to dashboard"
+          },
+
+          "password" : {
+             "widget": "password",
+             "label": "Password"
+          },
+
+          "tableName" : {
+             "widget": "textbox",
+             "label" : "Table Name",
+             "description" : "Name of the table you want to import from"
+          }
+       }
+    },
+    "group2": {
+       "display" : "JDBC Information",
+       "position" : [ "jdbcPluginName", "jdbcPluginType", "driverClass", "connectionString"],
+       "fields" : {
+          "jdbcPluginName" : {
+             "widget": "textbox",
+             "label": "Plugin Name"
+          },
+
+          "jdbcPluginType" : {
+             "widget": "textbox",
+             "label": "Plugin Type"
+          },
+
+          "driverClass" : {
+             "widget": "textbox",
+             "label": "Driver class"
+          },
+
+          "connectionString" : {
+             "widget": "textbox",
+             "label" : "Connection String"
+          }
+       }
+    },
+    "group3": {
+       "display" : "Table Properties",
+       "position" : [ "importQuery", "countQuery"],
+       "fields" : {
+          "importQuery" : {
+             "widget": "textbox",
+             "label": "Import SQL",
+             "description" : "SQL query used to import the rows from the RDBMS"
+          },
+
+          "countQuery" : {
+             "widget": "textbox",
+             "label": "Count SQL",
+             "description" : "SQL query specifying how the counts need to be computed. This information is used in determining the degree of parallelism."
+          }
+       }
+    }
+  }
+}

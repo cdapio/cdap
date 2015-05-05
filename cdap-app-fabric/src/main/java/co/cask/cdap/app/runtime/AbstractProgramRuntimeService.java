@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,14 +16,21 @@
 package co.cask.cdap.app.runtime;
 
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.twill.api.RunId;
@@ -31,6 +38,7 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -52,25 +60,73 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   public synchronized RuntimeInfo run(Program program, ProgramOptions options) {
     ProgramRunner runner = programRunnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
     Preconditions.checkNotNull(runner, "Fail to get ProgramRunner for type " + program.getType());
-    final SimpleRuntimeInfo runtimeInfo = new SimpleRuntimeInfo(runner.run(program, options), program);
-    addRemover(runtimeInfo);
+    ProgramOptions optionsWithRunId = addRunId(options, RunIds.generate());
+    final RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(program, optionsWithRunId), program);
+    programStarted(runtimeInfo);
     runtimeInfos.put(runtimeInfo.getType(), runtimeInfo.getController().getRunId(), runtimeInfo);
     return runtimeInfo;
   }
 
+  /**
+   * Return the copy of the {@link ProgramOptions} including RunId in it.
+   * @param options The {@link ProgramOptions} in which the RunId to be included
+   * @param runId   The RunId to be included
+   * @return the copy of the program options with RunId included in them
+   */
+  private ProgramOptions addRunId(ProgramOptions options, RunId runId) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.putAll(options.getArguments().asMap());
+    builder.put(ProgramOptionConstants.RUN_ID, runId.getId());
+
+    return new SimpleProgramOptions(options.getName(), new BasicArguments(builder.build()), options.getUserArguments(),
+                                    options.isDebug());
+  }
+
+  protected RuntimeInfo createRuntimeInfo(ProgramController controller, Program program) {
+    return new SimpleRuntimeInfo(controller, program);
+  }
+
+  protected synchronized List<RuntimeInfo> getRuntimeInfos() {
+    return ImmutableList.copyOf(runtimeInfos.values());
+  }
+
   @Override
-  public synchronized RuntimeInfo lookup(RunId runId) {
-    Map<ProgramType, RuntimeInfo> column = runtimeInfos.column(runId);
-    if (column.size() != 1) {
-      // It should be exactly one if the the program is running.
-      return null;
-    }
-    return column.values().iterator().next();
+  public synchronized RuntimeInfo lookup(Id.Program programId, RunId runId) {
+    return runtimeInfos.get(programId.getType(), runId);
   }
 
   @Override
   public synchronized Map<RunId, RuntimeInfo> list(ProgramType type) {
     return ImmutableMap.copyOf(runtimeInfos.row(type));
+  }
+
+  @Override
+  public synchronized Map<RunId, RuntimeInfo> list(final Id.Program program) {
+    return Maps.filterValues(list(program.getType()), new Predicate<RuntimeInfo>() {
+      @Override
+      public boolean apply(RuntimeInfo info) {
+        return info.getProgramId().equals(program);
+      }
+    });
+  }
+
+  @Override
+  public boolean checkAnyRunning(Predicate<Id.Program> predicate, ProgramType... types) {
+    for (ProgramType type : types) {
+      for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry :  list(type).entrySet()) {
+        ProgramController.State programState = entry.getValue().getController().getState();
+        if (programState.isDone()) {
+          continue;
+        }
+        Id.Program programId = entry.getValue().getProgramId();
+        if (predicate.apply(programId)) {
+          LOG.trace("Program still running in checkAnyRunning: {} {} {} {}",
+                    programId.getApplicationId(), type, programId.getId(), entry.getValue().getController().getRunId());
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Override
@@ -85,14 +141,21 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   protected synchronized void updateRuntimeInfo(ProgramType type, RunId runId, RuntimeInfo runtimeInfo) {
     if (!runtimeInfos.contains(type, runId)) {
-      runtimeInfos.put(type, runId, addRemover(runtimeInfo));
+      runtimeInfos.put(type, runId, programStarted(runtimeInfo));
     }
   }
 
-  private RuntimeInfo addRemover(final RuntimeInfo runtimeInfo) {
-    runtimeInfo.getController().addListener(new AbstractListener() {
+  private RuntimeInfo programStarted(final RuntimeInfo runtimeInfo) {
+    final ProgramController controller = runtimeInfo.getController();
+    controller.addListener(new AbstractListener() {
+
       @Override
-      public void stopped() {
+      public void completed() {
+        remove(runtimeInfo);
+      }
+
+      @Override
+      public void killed() {
         remove(runtimeInfo);
       }
 

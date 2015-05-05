@@ -1,0 +1,43 @@
+<div ncy-breadcrumb></div>
+  <div class="row">
+    <div class="col-sm-6">
+      <h2>
+        <span ng-bind="$state.params.appId"></span>
+      </h2>
+      <div class="type-block">
+        <span class="icon-app"></span>
+        <small> Type: App </small>
+      </div>
+    </div>
+    <div class="col-sm-6 text-right">
+
+      <div class="btn-group dropdown-right h3" dropdown>
+        <button type="button" class="btn btn-default dropdown-toggle" dropdown-toggle>
+          Actions <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+          <li role="presentation">
+            <a ui-sref="admin.namespace.detail.apps.metadata.preference({ nsadmin: $state.params.namespace, appId: $state.params.appId })"
+               role="menuitem">
+              <span class="fa fa-fw fa-cog pull-right"></span>
+              <span> Preferences </span>
+            </a>
+          </li>
+          <li role="presentation">
+            <a ui-sref="admin.namespace.detail.apps.metadata({ nsadmin: $state.params.namespace, appId: $state.params.appId })"
+               role="menuitem"
+              >
+              <span> Manage </span>
+              <span class="fa fa-wrench pull-right"></span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+  <div class="cdap-subnav-end"></div>
+  <my-tabs
+    data-tabs-list="['Status', 'Datasets']"
+    data-tabs-partial-path="/assets/features/apps/templates/tabs/">
+  </my-tabs>

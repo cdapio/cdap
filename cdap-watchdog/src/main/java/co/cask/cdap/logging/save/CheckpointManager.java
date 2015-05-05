@@ -17,14 +17,12 @@
 package co.cask.cdap.logging.save;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.tx.DatasetContext;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
-import co.cask.tephra.DefaultTransactionExecutor;
-import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 
@@ -33,56 +31,50 @@ import com.google.common.base.Throwables;
  */
 public final class CheckpointManager {
 
-  private static final byte [] ROW_KEY_PREFIX = Bytes.toBytes(100);
   private static final byte [] OFFSET_COLNAME = Bytes.toBytes("nextOffset");
+  private static final byte [] MAX_TIME_COLNAME = Bytes.toBytes("maxEventTime");
 
-  private final Transactional<DatasetContext<OrderedTable>, OrderedTable> mds;
+  private final Transactional<DatasetContext<Table>, Table> mds;
   private final byte [] rowKeyPrefix;
 
-  public CheckpointManager(final LogSaverTableUtil tableUtil, final TransactionSystemClient txClient, String topic) {
-    this.rowKeyPrefix = Bytes.add(ROW_KEY_PREFIX, Bytes.toBytes(topic));
-    this.mds = Transactional.of(
-      new TransactionExecutorFactory() {
-        @Override
-        public TransactionExecutor createExecutor(Iterable<TransactionAware> txAwares) {
-          return new DefaultTransactionExecutor(txClient, txAwares);
+  public CheckpointManager(final LogSaverTableUtil tableUtil,
+                           TransactionExecutorFactory txExecutorFactory, String topic, int prefix) {
+    this.rowKeyPrefix = Bytes.add(Bytes.toBytes(prefix), Bytes.toBytes(topic));
+    this.mds = Transactional.of(txExecutorFactory, new Supplier<DatasetContext<Table>>() {
+      @Override
+      public DatasetContext<Table> get() {
+        try {
+          return DatasetContext.of(tableUtil.getMetaTable());
+        } catch (Exception e) {
+          // there's nothing much we can do here
+          throw Throwables.propagate(e);
         }
-      },
-      new Supplier<DatasetContext<OrderedTable>>() {
-        @Override
-        public DatasetContext<OrderedTable> get() {
-          try {
-            return DatasetContext.of(tableUtil.getMetaTable());
-          } catch (Exception e) {
-            // there's nothing much we can do here
-            throw Throwables.propagate(e);
-          }
-        }
-      });
+      }
+    });
   }
 
 
-  public void saveCheckpoint(final int partition, final long nextOffset) throws Exception {
-    mds.execute(new TransactionExecutor.Function<DatasetContext<OrderedTable>, Void>() {
+  public void saveCheckpoint(final int partition, final Checkpoint checkpoint) throws Exception {
+    mds.execute(new TransactionExecutor.Function<DatasetContext<Table>, Void>() {
       @Override
-      public Void apply(DatasetContext<OrderedTable> ctx) throws Exception {
-        ctx.get().put(Bytes.add(rowKeyPrefix, Bytes.toBytes(partition)), OFFSET_COLNAME, Bytes.toBytes(nextOffset));
+      public Void apply(DatasetContext<Table> ctx) throws Exception {
+        Table table = ctx.get();
+        byte[] key = Bytes.add(rowKeyPrefix, Bytes.toBytes(partition));
+        table.put(key, OFFSET_COLNAME, Bytes.toBytes(checkpoint.getNextOffset()));
+        table.put(key, MAX_TIME_COLNAME, Bytes.toBytes(checkpoint.getMaxEventTime()));
         return null;
       }
     });
   }
 
-  public long getCheckpoint(final int partition) throws Exception {
-    return mds.execute(new TransactionExecutor.Function<DatasetContext<OrderedTable>, Long>() {
+  public Checkpoint getCheckpoint(final int partition) throws Exception {
+    return mds.execute(new TransactionExecutor.Function<DatasetContext<Table>, Checkpoint>() {
       @Override
-      public Long apply(DatasetContext<OrderedTable> ctx) throws Exception {
-        byte [] result =
-          ctx.get().get(Bytes.add(rowKeyPrefix, Bytes.toBytes(partition)), OFFSET_COLNAME);
-        if (result == null) {
-          return -1L;
-        }
-
-        return Bytes.toLong(result);
+      public Checkpoint apply(DatasetContext<Table> ctx) throws Exception {
+        Row result =
+          ctx.get().get(Bytes.add(rowKeyPrefix, Bytes.toBytes(partition)));
+        return result == null ? new Checkpoint(-1, -1) :
+          new Checkpoint(result.getLong(OFFSET_COLNAME, -1), result.getLong(MAX_TIME_COLNAME, -1));
       }
     });
   }

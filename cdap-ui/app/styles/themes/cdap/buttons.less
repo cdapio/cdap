@@ -1,0 +1,131 @@
+@import "../../variables.less";
+@import "../../../../bower_components/bootstrap/less/mixins.less";
+@import "mixins.less";
+
+body.theme-cdap {
+
+  //
+  // Buttons
+  // --------------------------------------------------
+
+  // Common styles
+  .btn-default,
+  .btn-primary,
+  .btn-success,
+  .btn-info,
+  .btn-warning,
+  .btn-danger {
+    background-image:none;
+    // Reset the shadow
+    &:active,
+    &.active {
+      .box-shadow(inset 0 3px 5px rgba(0,0,0,.125));
+    }
+
+    .badge {
+      text-shadow: none;
+    }
+  }
+
+  // Mixin for generating new styles
+  .btn-styles(@btn-color: #555) {
+    #gradient > .vertical(@start-color: @btn-color; @end-color: darken(@btn-color, 12%));
+    .reset-filter(); // Disable gradients for IE9 because filter bleeds through rounded corners
+    background-repeat: repeat-x;
+    border-color: darken(@btn-color, 14%);
+
+    &:hover,
+    &:focus  {
+      background-color: darken(@btn-color, 12%);
+      background-position: 0 -15px;
+      color: @cdap-white;
+    }
+
+    &:active,
+    &.active {
+      background-color: darken(@btn-color, 12%);
+      border-color: darken(@btn-color, 14%);
+    }
+
+    &:disabled,
+    &[disabled] {
+      background-color: darken(@btn-color, 12%);
+      background-image: none;
+      color: @cdap-white;
+    }
+  }
+
+  // Common styles
+  .btn {
+    // Remove the gradient for the pressed/active state
+    &:focus { outline: none; }
+    &:active,
+    &.active {
+      background-image: none;
+    }
+  }
+
+  // Apply the mixin to the buttons
+  .btn-default {
+    border-color: #dfe2e9;
+  }
+  .btn-primary { .btn-styles(@btn-primary-bg); background-image:none; border:none;}
+  .btn-success { .btn-styles(@btn-success-bg); background-image:none; border:none;}
+  .btn-info    { .btn-styles(@btn-info-bg);background-image:none; border:none;}
+  .btn-warning { .btn-styles(@btn-warning-bg); background-image:none; border:none;}
+  .btn-danger  { .btn-styles(@btn-danger-bg); background-image:none; border:none;}
+
+  .btn-transparent {
+    background-color: @brand-primary;
+
+    &:hover,
+    &:focus  {
+      background-color: darken(@brand-primary, 12%);
+    }
+  }
+  // Nested tabs
+  .nested-tabs .btn-default {
+    border: 1px solid #d1d3da;
+    font-weight: 500;
+    padding: 10px 30px;
+    &:first-child { .border-radius(4px 0 0 4px); }
+    &:last-child { .border-radius(0 4px 4px 0); }
+    &.active {
+      background-color: #6a7387;
+      color: white;
+    }
+  }
+
+  // Sets default border/margin/padding for state dropdown menus
+  .btn-default.dropdown-toggle {
+    background-color: @cdap-header;
+    border: 0;
+    color: white;
+    .dropdown-defaults();
+    .dropdown-blue();
+    .dropdown-left();
+  }
+
+  .dropdown-right {
+    .dropdown-right();
+  }
+
+  .dropdown-left {
+    .dropdown-left();
+  }
+  // Sets navy blue-colored dropdown menu
+  .btn-success.dropdown-toggle {
+    border: 0;
+    .dropdown-defaults();
+    .dropdown-right();
+  }
+
+  .txt-running {
+    color: @btn-success-bg;
+    font-weight: 700;
+  }
+  .txt-failed {
+    color: @btn-danger-bg;
+    font-weight: 700;
+  }
+}

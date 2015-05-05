@@ -65,17 +65,25 @@ public class ExploreDriver implements Driver {
     ConnectionParams params = parseConnectionUrl(url);
 
     String authToken = null;
+    String namespace;
 
     List<String> tokenParams = Lists.newArrayList(params.getExtraInfos().get(ConnectionParams.Info.EXPLORE_AUTH_TOKEN));
-    if (tokenParams != null && !tokenParams.isEmpty() && !tokenParams.get(0).isEmpty()) {
+    if (!tokenParams.isEmpty() && !tokenParams.get(0).isEmpty()) {
       authToken = tokenParams.get(0);
+    }
+
+    List<String> namespaceParams = Lists.newArrayList(params.getExtraInfos().get(ConnectionParams.Info.NAMESPACE));
+    if (!namespaceParams.isEmpty() && !namespaceParams.get(0).isEmpty()) {
+      namespace = namespaceParams.get(0);
+    } else {
+      namespace = Constants.DEFAULT_NAMESPACE;
     }
 
     ExploreClient exploreClient = new FixedAddressExploreClient(params.getHost(), params.getPort(), authToken);
     if (!exploreClient.isServiceAvailable()) {
       throw new SQLException("Cannot connect to " + url + ", service unavailable");
     }
-    return new ExploreConnection(exploreClient);
+    return new ExploreConnection(exploreClient, namespace);
   }
 
   @Override
@@ -163,9 +171,10 @@ public class ExploreDriver implements Driver {
      * Extra Explore connection parameter.
      */
     public enum Info {
-      EXPLORE_AUTH_TOKEN("auth.token");
+      EXPLORE_AUTH_TOKEN("auth.token"),
+      NAMESPACE("namespace");
 
-      private String name;
+      private final String name;
 
       private Info(String name) {
         this.name = name;

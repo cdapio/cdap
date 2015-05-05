@@ -36,9 +36,15 @@ public interface Pipeline<T> {
   void addLast(Stage stage);
 
   /**
+   * Sets a {@link Stage} that always be executed when the pipeline execution completed.
+   * The context object of the last stage being executed will be provided to this final stage.
+   */
+  void setFinally(Stage stage);
+
+  /**
    * Runs this pipeline passing in the parameter to run with.
    *
    * @param o argument to run the pipeline.
    */
-  ListenableFuture<T> execute(Object o);
+  ListenableFuture<T> execute(Object o) throws Exception;
 }

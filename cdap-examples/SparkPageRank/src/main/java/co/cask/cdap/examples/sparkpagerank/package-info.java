@@ -17,7 +17,7 @@
 /**
  * Package for SparkPageRank Application.
  *
- * An Application that demonstrates streaming text analysis using a Spark job.
+ * An Application that demonstrates streaming text analysis using a Spark program.
  * It computes the page rank of URLs from an input stream.
  */
 package co.cask.cdap.examples.sparkpagerank;

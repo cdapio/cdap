@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,12 @@
 
 package co.cask.cdap.explore.service.hive;
 
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.proto.QueryHandle;
@@ -38,9 +41,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Hive patched for CDH4 implementation of {@link co.cask.cdap.explore.service.ExploreService}.
@@ -61,9 +67,15 @@ public class HiveCDH4ExploreService extends BaseHiveExploreService {
   @Inject
   protected HiveCDH4ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
-                                   @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir) {
-    super(txClient, datasetFramework, cConf, hConf, hiveConf, previewsDir);
+                                   @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir,
+                                   StreamAdmin streamAdmin, Store store) {
+    super(txClient, datasetFramework, cConf, hConf, hiveConf, previewsDir, streamAdmin, store);
     System.setProperty("hive.server2.blocking.query", "false");
+    if (cConf.getBoolean(Constants.Explore.WRITES_ENABLED)) {
+      LOG.warn("Writing to datasets through Hive is not supported in CDH4.x, overriding {} setting to false.",
+               Constants.Explore.WRITES_ENABLED);
+      cConf.setBoolean(Constants.Explore.WRITES_ENABLED, false);
+    }
   }
 
   @Override
@@ -93,6 +105,22 @@ public class HiveCDH4ExploreService extends BaseHiveExploreService {
   protected OperationHandle doExecute(SessionHandle sessionHandle, String statement)
     throws HiveSQLException, ExploreException {
     return getCliService().executeStatement(sessionHandle, statement, ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  protected void setCurrentDatabase(String dbName) throws IOException, HiveSQLException, ExploreException {
+    final OperationHandle opHandle = doExecute(getCliService().openSession("", "", startSession()), "USE " + dbName);
+    try {
+      Tasks.waitFor(QueryStatus.OpStatus.FINISHED, new Callable<QueryStatus.OpStatus>() {
+        @Override
+        public QueryStatus.OpStatus call() throws Exception {
+          return fetchStatus(opHandle).getStatus();
+        }
+      }, 5, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
+    } catch (Exception e) {
+      // Rethrow exception and don't execute query i.e. return 500
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override

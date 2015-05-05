@@ -18,12 +18,14 @@ package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -35,24 +37,29 @@ import java.util.concurrent.TimeUnit;
 /**
  * Time series table tests.
  */
-public class TimeseriesTableTest extends AbstractDatasetTest {
+public class TimeseriesTableTest {
+  @ClassRule
+  public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
+
+  private static final Id.DatasetInstance metricsTableInstance =
+    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "metricsTable");
   private static TimeseriesTable table;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    createInstance("timeseriesTable", "metricsTable", DatasetProperties.EMPTY);
-    table = getInstance("metricsTable");
+    dsFrameworkUtil.createInstance("timeseriesTable", metricsTableInstance, DatasetProperties.EMPTY);
+    table = dsFrameworkUtil.getInstance(metricsTableInstance);
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    deleteInstance("metricsTable");
+    dsFrameworkUtil.deleteInstance(metricsTableInstance);
   }
 
   @Test
   public void testDataSet() throws Exception {
 
-    TransactionExecutor txnl = newTransactionExecutor(table);
+    TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(table);
 
     // this test runs all operations synchronously
     txnl.execute(new TransactionExecutor.Subroutine() {
@@ -121,7 +128,7 @@ public class TimeseriesTableTest extends AbstractDatasetTest {
 
   @Test(expected = TransactionFailureException.class)
   public void testInvalidTimeRangeCondition() throws Exception {
-    TransactionExecutor txnl = newTransactionExecutor(table);
+    TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(table);
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
@@ -133,7 +140,7 @@ public class TimeseriesTableTest extends AbstractDatasetTest {
 
   @Test
   public void testValidTimeRangesAreAllowed() throws Exception {
-    TransactionExecutor txnl = newTransactionExecutor(table);
+    TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(table);
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {

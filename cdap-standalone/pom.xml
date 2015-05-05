@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014 Cask Data, Inc.
+  Copyright © 2014-2015 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>2.5.1</version>
+    <version>3.0.0</version>
   </parent>
 
 
@@ -61,12 +61,6 @@
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-cli</artifactId>
       <version>${project.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-nop</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
@@ -120,6 +114,11 @@
       <groupId>org.apache.twill</groupId>
       <artifactId>twill-discovery-core</artifactId>
     </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-ui</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -144,14 +143,8 @@
         <sdk.dir>${project.build.directory}/sdk</sdk.dir>
         <stage.opt.dir>${sdk.dir}/cdap-sdk-${project.version}</stage.opt.dir>
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
+        <stage.plugins.dir>${stage.opt.dir}/plugins</stage.plugins.dir>
       </properties>
-      <dependencies>
-        <dependency>
-          <groupId>co.cask.cdap</groupId>
-          <artifactId>cdap-web-app</artifactId>
-          <version>${project.version}</version>
-        </dependency>
-      </dependencies>
       <build>
         <plugins>
           <plugin>
@@ -176,10 +169,10 @@
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
                   <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper,org.apache.kafka</excludeGroupIds>
-                  <excludeArtifactIds>hadoop-hdfs,zkclient,servlet-api</excludeArtifactIds>
+                  <excludeArtifactIds>zkclient,servlet-api</excludeArtifactIds>
                   <prependGroupId>true</prependGroupId>
                   <silent>true</silent>
-                  <includeScope>compile</includeScope>
+                  <includeScope>runtime</includeScope>
                 </configuration>
               </execution>
             </executions>
@@ -268,20 +261,139 @@
                     <resource>
                       <directory>${project.parent.basedir}/cdap-api/target</directory>
                       <includes>
-                        <include>api-${project.version}*.jar</include>
+                        <include>cdap-api-${project.version}*.jar</include>
                       </includes>
                     </resource>
-                    <!-- Copy web-app -->
+                    <!-- Copy cdap-ui -->
                     <resource>
-                      <directory>${project.parent.basedir}/cdap-web-app/target/local</directory>
-                      <targetPath>web-app/local</targetPath>
+                      <directory>${project.parent.basedir}/cdap-ui/server</directory>
+                      <targetPath>ui/server</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-ui/dist</directory>
+                      <targetPath>ui/dist</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-ui/node_modules</directory>
+                      <targetPath>ui/node_modules</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-ui/templates</directory>
+                      <targetPath>ui/templates</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-ui/</directory>
+                      <targetPath>ui/</targetPath>
+                      <includes>
+                        <include>server.js</include>
+                        <include>package.json</include>
+                      </includes>
                     </resource>
                     <!-- Copy api javadocs -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-api/target/apidocs</directory>
                       <targetPath>javadocs</targetPath>
                     </resource>
-                    <!-- Copy CLI scripts -->
+                    <!-- Copy examples. The assume the example is already built -->
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-examples</directory>
+                      <targetPath>examples</targetPath>
+                      <includes>
+                        <include>README*</include>
+                        <include>resources/**</include>
+                        <include>**/src/**</include>
+                        <include>**/bin/**</include>
+                        <include>**/resources/**</include>
+                        <include>**/pom.xml</include>
+                        <include>**/target/*.jar</include>
+                      </includes>
+                      <excludes>
+                        <exclude>pom.xml</exclude>
+                        <exclude>build.gradle</exclude>
+                        <exclude>**/target/original*.jar</exclude>
+                      </excludes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-templates</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.opt.dir}/templates</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-batch/target
+                      </directory>
+                      <includes>
+                        <include>cdap-etl-batch-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-realtime/target
+                      </directory>
+                      <includes>
+                        <include>cdap-etl-realtime-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-realtime-plugins</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.opt.dir}/templates/plugins/${etl.realtime.plugin.name}</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target</directory>
+                      <includes>
+                        <include>cdap-etl-lib-${project.version}-realtime.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-batch-plugins</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.opt.dir}/templates/plugins/${etl.batch.plugin.name}</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target</directory>
+                      <includes>
+                        <include>cdap-etl-lib-${project.version}-batch.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <!-- Copy CLI scripts -->
+              <execution>
+                <id>copy-cli-scripts</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.opt.dir}</outputDirectory>
+                  <useDefaultDelimiters>false</useDefaultDelimiters>
+                  <delimiters>
+                    <delimiter>@@</delimiter>
+                  </delimiters>
+                  <resources>
                     <resource>
                       <directory>${project.parent.basedir}/cdap-cli/target</directory>
                       <targetPath>bin</targetPath>
@@ -296,24 +408,7 @@
                         <include>cdap-cli.sh</include>
                         <include>cdap-cli.bat</include>
                       </includes>
-                    </resource>
-                    <!-- Copy examples. The assume the example is already built -->
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-examples</directory>
-                      <targetPath>examples</targetPath>
-                      <includes>
-                        <include>README*</include>
-                        <include>**/src/**</include>
-                        <include>**/bin/**</include>
-                        <include>**/resources/**</include>
-                        <include>**/pom.xml</include>
-                        <include>**/target/*.jar</include>
-                      </includes>
-                      <excludes>
-                        <exclude>pom.xml</exclude>
-                        <exclude>build.gradle</exclude>
-                        <exclude>**/target/original*.jar</exclude>
-                      </excludes>
+                      <filtering>true</filtering>
                     </resource>
                   </resources>
                 </configuration>

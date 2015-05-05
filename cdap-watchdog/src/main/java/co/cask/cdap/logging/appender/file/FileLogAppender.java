@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,8 @@
 package co.cask.cdap.logging.appender.file;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.LogAppender;
@@ -30,7 +32,7 @@ import co.cask.cdap.logging.write.LogCleanup;
 import co.cask.cdap.logging.write.LogFileWriter;
 import co.cask.cdap.logging.write.LogWriteEvent;
 import co.cask.cdap.logging.write.SimpleLogFileWriter;
-import co.cask.tephra.TransactionSystemClient;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -40,7 +42,6 @@ import com.google.inject.Inject;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.twill.common.Threads;
-import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,10 +59,12 @@ public class FileLogAppender extends LogAppender {
 
   public static final String APPENDER_NAME = "FileLogAppender";
 
+  private final CConfiguration cConf;
   private final LogSaverTableUtil tableUtil;
-  private final TransactionSystemClient txClient;
+  private final TransactionExecutorFactory txExecutorFactory;
   private final LocationFactory locationFactory;
-  private final Location logBaseDir;
+  private final NamespacedLocationFactory namespacedLocationFactory;
+  private final String logBaseDir;
   private final int syncIntervalBytes;
   private final long retentionDurationMs;
   private final long maxLogFileSizeBytes;
@@ -69,6 +72,7 @@ public class FileLogAppender extends LogAppender {
   private final long checkpointIntervalMs;
   private final int logCleanupIntervalMins;
   private final ListeningScheduledExecutorService scheduledExecutor;
+  private final DatasetFramework dsFramework;
 
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
@@ -78,17 +82,19 @@ public class FileLogAppender extends LogAppender {
   @Inject
   public FileLogAppender(CConfiguration cConfig,
                          DatasetFramework dsFramework,
-                         TransactionSystemClient txClient,
-                         LocationFactory locationFactory) {
+                         TransactionExecutorFactory txExecutorFactory,
+                         LocationFactory locationFactory,
+                         NamespacedLocationFactory namespacedLocationFactory) {
     setName(APPENDER_NAME);
-
+    this.cConf = cConfig;
     this.tableUtil = new LogSaverTableUtil(dsFramework, cConfig);
-    this.txClient = txClient;
+    this.txExecutorFactory = txExecutorFactory;
     this.locationFactory = locationFactory;
+    this.namespacedLocationFactory = namespacedLocationFactory;
+    this.dsFramework = dsFramework;
 
-    String baseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
-    Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
-    this.logBaseDir = locationFactory.create(baseDir);
+    this.logBaseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
+    Preconditions.checkNotNull(logBaseDir, "Log base dir cannot be null");
 
     this.syncIntervalBytes = cConfig.getInt(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, 50 * 1024);
     Preconditions.checkArgument(this.syncIntervalBytes > 0,
@@ -128,17 +134,17 @@ public class FileLogAppender extends LogAppender {
     super.start();
     try {
       logSchema = new LogSchema().getAvroSchema();
-      FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(tableUtil,
-                                                                        txClient,
-                                                                        locationFactory);
+      FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(tableUtil, txExecutorFactory,
+                                                                        locationFactory, cConf);
 
-      AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, logBaseDir,
-                                                         logSchema,
-                                                         maxLogFileSizeBytes, syncIntervalBytes,
+      AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, cConf, locationFactory.create(""),
+                                                         logBaseDir, logSchema, maxLogFileSizeBytes, syncIntervalBytes,
                                                          inactiveIntervalMs);
       logFileWriter = new SimpleLogFileWriter(avroFileWriter, checkpointIntervalMs);
 
-      LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, logBaseDir, retentionDurationMs);
+      String namespacesDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
+      LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, locationFactory.create(""), namespacesDir,
+                                             retentionDurationMs);
       scheduledExecutor.scheduleAtFixedRate(logCleanup, 10,
                                             logCleanupIntervalMins, TimeUnit.MINUTES);
     } catch (Exception e) {

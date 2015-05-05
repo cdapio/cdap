@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,8 +29,11 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 public final class RouterPathLookup extends AuthenticatedHttpHandler {
 
   @Inject
-  public RouterPathLookup(Authenticator authenticator) { super(authenticator); }
+  public RouterPathLookup(Authenticator authenticator) {
+    super(authenticator);
+  }
 
+  @SuppressWarnings("unused")
   private enum AllowedMethod {
     GET, PUT, POST, DELETE
   }
@@ -52,67 +55,110 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       //Check if the call should go to webapp
       //If service contains "$HOST" and if first split element is NOT the gateway version, then send it to WebApp
       //WebApp serves only static files (HTML, CSS, JS) and so /<appname> calls should go to WebApp
-      //But procedure/stream calls issued by the UI should be routed to the appropriate CDAP service
+      //But stream calls issued by the UI should be routed to the appropriate CDAP service
       if (fallbackService.contains("$HOST") && (uriParts.length >= 1)
-                                            && (!(("/" + uriParts[0]).equals(Constants.Gateway.GATEWAY_VERSION)))) {
+        && !("/" + uriParts[0]).equals(Constants.Gateway.API_VERSION_3)) {
         return fallbackService;
       }
-
-      if ((uriParts.length >= 2) && uriParts[1].equals("acls")) {
-        return Constants.Service.ACL;
-      } else if ((uriParts.length >= 2) && uriParts[1].equals("metrics")) {
-        return Constants.Service.METRICS;
-      } else if ((uriParts.length >= 2) && uriParts[1].equals("data")) {
-        if ((uriParts.length >= 3) && uriParts[2].equals("explore")
-          && (uriParts[3].equals("queries") || uriParts[3].equals("jdbc") || uriParts[3].equals("tables"))) {
-          return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
-        } else if ((uriParts.length == 6) && uriParts[2].equals("explore") && uriParts[3].equals("datasets")
-          && uriParts[5].equals("schema")) {
-          // v2/data/explore/datasets/<dataset>/schema
-          return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
-        }
-        return Constants.Service.DATASET_MANAGER;
-      } else if ((uriParts.length == 3) && uriParts[1].equals("explore") && uriParts[2].equals("status")) {
-        return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
-      } else if ((uriParts.length >= 2) && uriParts[1].equals("streams")) {
-        // /v2/streams/<stream-id> GET should go to AppFabricHttp, PUT, POST should go to Stream Handler
-        // /v2/streams should go to AppFabricHttp
-        // GET /v2/streams/flows should go to AppFabricHttp, rest should go Stream Handler
-        if (uriParts.length == 2) {
-          return Constants.Service.APP_FABRIC_HTTP;
-        } else if (uriParts.length == 3) {
-          return (requestMethod.equals(AllowedMethod.GET)) ?
-            Constants.Service.APP_FABRIC_HTTP : Constants.Service.STREAMS;
-        } else if ((uriParts.length == 4) && uriParts[3].equals("flows") && requestMethod.equals(AllowedMethod.GET)) {
-          return Constants.Service.APP_FABRIC_HTTP;
-        } else {
-          return Constants.Service.STREAMS;
-        }
-      } else if ((uriParts.length >= 6) && uriParts[5].equals("logs")) {
-        //Log Handler Path /v2/apps/<appid>/<programid-type>/<programid>/logs
-        return Constants.Service.METRICS;
-      } else if ((uriParts.length >= 5) && uriParts[4].equals("logs")) {
-        //Log Handler Path /v2/system/services/<service-id>/logs
-        return Constants.Service.METRICS;
-      } else if ((uriParts.length >= 7) && uriParts[3].equals("procedures") && uriParts[5].equals("methods")) {
-        //Procedure Path /v2/apps/<appid>/procedures/<procedureid>/methods/<methodName>
-        String accId = getAuthenticatedAccountId(httpRequest);
-        //Discoverable Service Name -> procedure.%s.%s.%s", accountId, appId, procedureName ;
-        String serviceName = String.format("procedure.%s.%s.%s", accId, uriParts[2], uriParts[4]);
-        return serviceName;
-      } else if ((uriParts.length >= 7) && uriParts[3].equals("services") && uriParts[5].equals("methods")) {
-        //User defined services handle methods on them:
-        //Service Path:  "/v2/apps/{app-id}/services/{service-id}/methods/<user-defined-method-path>"
-        String accId = getAuthenticatedAccountId(httpRequest);
-        //Discoverable Service Name -> "service.%s.%s.%s", accountId, appId, serviceId
-        String serviceName = String.format("service.%s.%s.%s", accId, uriParts[2], uriParts[4]);
-        return serviceName;
-      } else {
-        return Constants.Service.APP_FABRIC_HTTP;
+      if (uriParts[0].equals(Constants.Gateway.API_VERSION_3_TOKEN)) {
+        return getV3RoutingService(uriParts, requestMethod);
       }
     } catch (Exception e) {
-
+      // Ignore exception. Default routing to app-fabric.
     }
     return Constants.Service.APP_FABRIC_HTTP;
+  }
+
+  private String getV3RoutingService(String [] uriParts, AllowedMethod requestMethod) {
+    if ((uriParts.length >= 2) && uriParts[1].equals("feeds")) {
+      // TODO find a better way to handle that - this looks hackish
+      return null;
+    } else if ((uriParts.length >= 9) && "services".equals(uriParts[5]) && "methods".equals(uriParts[7])) {
+      //User defined services handle methods on them:
+      //Path: "/v3/namespaces/{namespace-id}/apps/{app-id}/services/{service-id}/methods/<user-defined-method-path>"
+      //Discoverable Service Name -> "service.%s.%s.%s", namespaceId, appId, serviceId
+      return String.format("service.%s.%s.%s", uriParts[2], uriParts[4], uriParts[6]);
+    } else if (matches(uriParts, "v3", "system", "services", null, "logs")) {
+      //Log Handler Path /v3/system/services/<service-id>/logs
+      return Constants.Service.METRICS;
+    } else if ((matches(uriParts, "v3", "namespaces", null, "streams", null, "adapters")
+      || matches(uriParts, "v3", "namespaces", null, "streams", null, "programs")
+      || matches(uriParts, "v3", "namespaces", null, "data", "datasets", null, "adapters")
+      || matches(uriParts, "v3", "namespaces", null, "data", "datasets", null, "programs")) &&
+      requestMethod.equals(AllowedMethod.GET)) {
+      return Constants.Service.APP_FABRIC_HTTP;
+    } else if ((uriParts.length >= 4) && uriParts[1].equals("namespaces") && uriParts[3].equals("streams")) {
+      // /v3/namespaces/<namespace>/streams goes to AppFabricHttp
+      // All else go to Stream Handler
+      if (uriParts.length == 4) {
+        return Constants.Service.APP_FABRIC_HTTP;
+      } else {
+        return Constants.Service.STREAMS;
+      }
+    } else if ((uriParts.length >= 8 && uriParts[7].equals("logs")) ||
+      (uriParts.length >= 10 && uriParts[9].equals("logs")) ||
+      (uriParts.length >= 6 && uriParts[5].equals("logs"))) {
+      //Log Handler Paths:
+      // /v3/namespaces/<namespaceid>/apps/<appid>/<programid-type>/<programid>/logs
+      // /v3/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/logs
+      // /v3/namespaces/<namespaceid>/adapters/<adapterid>/logs
+      // /v3/namespaces/{namespace-id}/adapters/{adapter-id}/runs/{run-id}/logs (same as case 1)
+      return Constants.Service.METRICS;
+    } else if (uriParts.length >= 2 && uriParts[1].equals("metrics")) {
+      //Metrics Search Handler Path /v3/metrics
+      return Constants.Service.METRICS;
+    } else if (uriParts.length >= 5 && uriParts[1].equals("data") && uriParts[2].equals("explore") &&
+      (uriParts[3].equals("queries") || uriParts[3].equals("jdbc") || uriParts[3].equals("namespaces"))) {
+      // non-namespaced explore operations. For example, /v3/data/explore/queries/{id}
+      return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
+    } else if (uriParts.length >= 6 && uriParts[3].equals("data") && uriParts[4].equals("explore") &&
+      (uriParts[5].equals("queries") || uriParts[5].equals("streams") || uriParts[5].equals("datasets")
+        || uriParts[5].equals("tables") || uriParts[5].equals("jdbc"))) {
+      // namespaced explore operations. For example, /v3/namespaces/{namespace-id}/data/explore/streams/{stream}/enable
+      return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
+    } else if ((uriParts.length == 3) && uriParts[1].equals("explore") && uriParts[2].equals("status")) {
+      return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
+    } else if (uriParts.length == 7 && uriParts[3].equals("data") && uriParts[4].equals("datasets") &&
+      (uriParts[6].equals("flows") || uriParts[6].equals("workers") || uriParts[6].equals("mapreduce"))) {
+      // namespaced app fabric data operations:
+      // /v3/namespaces/{namespace-id}/data/datasets/{name}/flows
+      // /v3/namespaces/{namespace-id}/data/datasets/{name}/workers
+      // /v3/namespaces/{namespace-id}/data/datasets/{name}/mapreduce
+      return Constants.Service.APP_FABRIC_HTTP;
+    } else if ((uriParts.length >= 4) && uriParts[3].equals("data")) {
+      // other data operations. For example:
+      // /v3/namespaces/{namespace-id}/data/datasets
+      // /v3/namespaces/{namespace-id}/data/datasets/{name}
+      // /v3/namespaces/{namespace-id}/data/datasets/{name}/properties
+      // /v3/namespaces/{namespace-id}/data/datasets/{name}/admin/{method}
+      return Constants.Service.DATASET_MANAGER;
+    }
+    return Constants.Service.APP_FABRIC_HTTP;
+  }
+
+  /**
+   * Determines if actual matches expected.
+   *
+   * - actual may be longer than expected, but we'll return true as long as expected was found
+   * - null in expected means "accept any string"
+   *
+   * @param actual actual string array to check
+   * @param expected expected string array format
+   * @return true if actual matches expected
+   */
+  private boolean matches(String[] actual, String... expected) {
+    if (actual.length < expected.length) {
+      return false;
+    }
+
+    for (int i = 0; i < expected.length; i++) {
+      if (expected[i] == null) {
+        continue;
+      }
+      if (!expected[i].equals(actual[i])) {
+        return false;
+      }
+    }
+    return true;
   }
 }

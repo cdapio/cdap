@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.lang.jar;
 
+import co.cask.cdap.common.io.Locations;
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
@@ -145,28 +146,54 @@ public class BundleJarUtil {
     };
   }
 
-  public static File unpackProgramJar(Location programJarLocation, File destinationFolder) throws IOException {
-    Preconditions.checkArgument(programJarLocation != null);
-    Preconditions.checkArgument(programJarLocation.exists());
+  /**
+   * Unpack a jar file in the given location to a directory.
+   *
+   * @param jarLocation Location containing the jar file
+   * @param destinationFolder Directory to expand into
+   * @return The {@code destinationFolder}
+   * @throws IOException If failed to expand the jar
+   */
+  public static File unpackProgramJar(Location jarLocation, File destinationFolder) throws IOException {
+    Preconditions.checkArgument(jarLocation != null);
+    return unpackProgramJar(Locations.newInputSupplier(jarLocation), destinationFolder);
+  }
+
+  /**
+   * Unpack a jar source to a directory.
+   *
+   * @param inputSupplier Supplier for the jar source
+   * @param destinationFolder Directory to expand into
+   * @return The {@code destinationFolder}
+   * @throws IOException If failed to expand the jar
+   */
+  public static File unpackProgramJar(InputSupplier<? extends InputStream> inputSupplier,
+                                      File destinationFolder) throws IOException {
+    Preconditions.checkArgument(inputSupplier != null);
     Preconditions.checkArgument(destinationFolder != null);
     Preconditions.checkArgument(destinationFolder.canWrite());
 
     destinationFolder.mkdirs();
     Preconditions.checkState(destinationFolder.exists());
-    unJar(new ZipInputStream(programJarLocation.getInputStream()), destinationFolder);
-    return destinationFolder;
+    ZipInputStream input = new ZipInputStream(inputSupplier.getInput());
+    try {
+      unJar(input, destinationFolder);
+      return destinationFolder;
+    } finally {
+      Closeables.closeQuietly(input);
+    }
   }
 
-  private static void unJar(ZipInputStream jarInputStream, File targetDirectory) throws IOException {
+  private static void unJar(ZipInputStream input, File targetDirectory) throws IOException {
     ZipEntry entry;
-    while ((entry = jarInputStream.getNextEntry()) != null) {
+    while ((entry = input.getNextEntry()) != null) {
       File output = new File(targetDirectory, entry.getName());
 
       if (entry.isDirectory()) {
         output.mkdirs();
       } else {
         output.getParentFile().mkdirs();
-        ByteStreams.copy(jarInputStream, Files.newOutputStreamSupplier(output));
+        ByteStreams.copy(input, Files.newOutputStreamSupplier(output));
       }
     }
   }

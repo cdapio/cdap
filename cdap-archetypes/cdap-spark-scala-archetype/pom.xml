@@ -21,12 +21,12 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap-archetypes</artifactId>
-    <version>2.5.1</version>
+    <version>3.0.0</version>
   </parent>
 
   <artifactId>cdap-spark-scala-archetype</artifactId>
   <packaging>jar</packaging>
-  <name>Cask Data Application Platform (CDAP) Spark Scala Archetype</name>
+  <name>CDAP Spark Scala Archetype</name>
 
   <build>
     <pluginManagement>

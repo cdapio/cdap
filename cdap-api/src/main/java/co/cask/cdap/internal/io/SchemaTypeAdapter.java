@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.io;
 
+import co.cask.cdap.api.data.schema.Schema;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.gson.TypeAdapter;

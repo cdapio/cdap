@@ -19,6 +19,7 @@ package co.cask.cdap.security.server;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
+import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -29,6 +30,7 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
 import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
@@ -45,6 +47,7 @@ import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nullable;
 
 /**
  * Jetty service for External Authentication.
@@ -65,7 +68,10 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   private final AbstractAuthenticationHandler authenticationHandler;
   private static final Logger LOG = LoggerFactory.getLogger(ExternalAuthenticationServer.class);
   private Server server;
-  private InetAddress address;
+  private InetAddress bindAddress;
+
+  @Nullable
+  private String announceAddress;
 
   /**
    * Constants for a valid JSON response.
@@ -90,7 +96,10 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
                                       DiscoveryService discoveryService,
                                       @Named("security.handlers") Map<String, Object> handlers,
                                       @Named(NAMED_EXTERNAL_AUTH) AuditLogHandler auditLogHandler) {
-    this.port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
+    this.announceAddress = configuration.get(Constants.Security.AUTH_SERVER_ANNOUNCE_ADDRESS);
+    this.port = configuration.getBoolean(Constants.Security.SSL_ENABLED) ?
+      configuration.getInt(Constants.Security.AuthenticationServer.SSL_PORT) :
+      configuration.getInt(Constants.Security.AUTH_SERVER_BIND_PORT);
     this.maxThreads = configuration.getInt(Constants.Security.MAX_THREADS);
     this.handlers = handlers;
     this.discoveryService = discoveryService;
@@ -106,12 +115,22 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
    * @return InetSocketAddress of server.
    */
   public InetSocketAddress getSocketAddress() {
-    return new InetSocketAddress(address, port);
+    if (!server.isRunning()) {
+      throw new IllegalStateException("Server not started yet");
+    }
+
+    // assumes we only have one connector
+    final Connector connector = server.getConnectors()[0];
+    return new InetSocketAddress(connector.getHost(), connector.getLocalPort());
   }
 
   @Override
   protected void run() throws Exception {
-    serviceCancellable = discoveryService.register(new Discoverable() {
+    server.start();
+
+    // assumes we only have one connector
+    final Connector connector = server.getConnectors()[0];
+    serviceCancellable = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
       @Override
       public String getName() {
         return Constants.Service.EXTERNAL_AUTHENTICATION;
@@ -119,10 +138,12 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
       @Override
       public InetSocketAddress getSocketAddress() throws RuntimeException {
-        return new InetSocketAddress(address, port);
+        if (announceAddress != null) {
+          return new InetSocketAddress(announceAddress, connector.getLocalPort());
+        }
+        return new InetSocketAddress(connector.getHost(), connector.getLocalPort());
       }
-    });
-    server.start();
+    }));
   }
 
   @Override
@@ -131,7 +152,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       server = new Server();
 
       try {
-        address = InetAddress.getByName(configuration.get(Constants.Security.AUTH_SERVER_ADDRESS));
+        bindAddress = InetAddress.getByName(configuration.get(Constants.Security.AUTH_SERVER_BIND_ADDRESS));
       } catch (UnknownHostException e) {
         LOG.error("Error finding host to connect to.", e);
         throw Throwables.propagate(e);
@@ -149,9 +170,11 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       context.addEventListener(new AuthenticationGuiceServletContextListener(handlers));
       context.setSecurityHandler(authenticationHandler);
 
-      SelectChannelConnector connector = new SelectChannelConnector();
-      connector.setHost(address.getCanonicalHostName());
-      connector.setPort(port);
+      // Status endpoint should be handled without the authentication
+      ContextHandler statusContext = new ContextHandler();
+      statusContext.setContextPath(Constants.EndPoints.STATUS);
+      statusContext.setServer(server);
+      statusContext.setHandler(new StatusRequestHandler());
 
       if (configuration.getBoolean(Constants.Security.SSL_ENABLED, false)) {
         SslContextFactory sslContextFactory = new SslContextFactory();
@@ -173,15 +196,18 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
         // TODO Figure out how to pick a certificate from key store
 
         SslSelectChannelConnector sslConnector = new SslSelectChannelConnector(sslContextFactory);
-        int sslPort = configuration.getInt(Constants.Security.AuthenticationServer.SSL_PORT);
-        sslConnector.setHost(address.getCanonicalHostName());
-        sslConnector.setPort(sslPort);
+        sslConnector.setHost(bindAddress.getCanonicalHostName());
+        sslConnector.setPort(port);
         server.setConnectors(new Connector[]{sslConnector});
       } else {
+        SelectChannelConnector connector = new SelectChannelConnector();
+        connector.setHost(bindAddress.getCanonicalHostName());
+        connector.setPort(port);
         server.setConnectors(new Connector[]{connector});
       }
 
       HandlerCollection handlers = new HandlerCollection();
+      handlers.addHandler(statusContext);
       handlers.addHandler(context);
       // AuditLogHandler must be last, since it needs the response that was sent to the client
       handlers.addHandler(auditLogHandler);

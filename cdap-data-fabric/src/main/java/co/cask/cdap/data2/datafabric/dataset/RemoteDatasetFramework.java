@@ -18,11 +18,14 @@ package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.utils.ApplicationBundler;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -31,9 +34,14 @@ import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetModuleMeta;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
@@ -41,7 +49,6 @@ import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.internal.ApplicationBundler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,25 +66,30 @@ import javax.annotation.Nullable;
 /**
  * {@link co.cask.cdap.data2.dataset2.DatasetFramework} implementation that talks to DatasetFramework Service
  */
+@SuppressWarnings("unchecked")
 public class RemoteDatasetFramework implements DatasetFramework {
   private static final Logger LOG = LoggerFactory.getLogger(RemoteDatasetFramework.class);
 
-  private final DatasetServiceClient client;
+  private final LoadingCache<Id.Namespace, DatasetServiceClient> clientCache;
   private final DatasetDefinitionRegistryFactory registryFactory;
   private final DatasetTypeClassLoaderFactory typeLoader;
 
   @Inject
-  public RemoteDatasetFramework(DiscoveryServiceClient discoveryClient,
+  public RemoteDatasetFramework(final DiscoveryServiceClient discoveryClient,
                                 DatasetDefinitionRegistryFactory registryFactory,
                                 DatasetTypeClassLoaderFactory typeLoader) {
-
-    this.client = new DatasetServiceClient(discoveryClient);
+    this.clientCache = CacheBuilder.newBuilder().build(new CacheLoader<Id.Namespace, DatasetServiceClient>() {
+      @Override
+      public DatasetServiceClient load(Id.Namespace namespace) throws Exception {
+        return new DatasetServiceClient(discoveryClient, namespace);
+      }
+    });
     this.registryFactory = registryFactory;
     this.typeLoader = typeLoader;
   }
 
   @Override
-  public void addModule(String moduleName, DatasetModule module)
+  public void addModule(Id.DatasetModule moduleId, DatasetModule module)
     throws DatasetManagementException {
 
     // We support easier APIs for custom datasets: user can implement dataset and make it available for others to use
@@ -95,102 +107,136 @@ public class RemoteDatasetFramework implements DatasetFramework {
       typeClass = module.getClass();
     }
 
-    addModule(moduleName, typeClass);
+    addModule(moduleId, typeClass);
   }
 
   @Override
-  public void deleteModule(String moduleName) throws DatasetManagementException {
-    client.deleteModule(moduleName);
+  public void deleteModule(Id.DatasetModule moduleId) throws DatasetManagementException {
+    clientCache.getUnchecked(moduleId.getNamespace()).deleteModule(moduleId.getId());
   }
 
   @Override
-  public void deleteAllModules() throws DatasetManagementException {
-    client.deleteModules();
+  public void deleteAllModules(Id.Namespace namespaceId) throws DatasetManagementException {
+    clientCache.getUnchecked(namespaceId).deleteModules();
   }
 
   @Override
-  public void addInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
+  public void addInstance(String datasetType, Id.DatasetInstance datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException {
-
-    client.addInstance(datasetInstanceName, datasetType, props);
+    clientCache.getUnchecked(datasetInstanceId.getNamespace())
+      .addInstance(datasetInstanceId.getId(), datasetType, props);
   }
 
   @Override
-  public void updateInstance(String datasetInstanceName, DatasetProperties props)
+  public void updateInstance(Id.DatasetInstance datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException {
-    client.updateInstance(datasetInstanceName, props);
+    clientCache.getUnchecked(datasetInstanceId.getNamespace())
+      .updateInstance(datasetInstanceId.getId(), props);
   }
 
   @Override
-  public Collection<DatasetSpecification> getInstances() throws DatasetManagementException {
-    return client.getAllInstances();
+  public Collection<DatasetSpecificationSummary> getInstances(Id.Namespace namespaceId)
+    throws DatasetManagementException {
+    return clientCache.getUnchecked(namespaceId).getAllInstances();
   }
 
   @Nullable
   @Override
-  public DatasetSpecification getDatasetSpec(String name) throws DatasetManagementException {
-    DatasetMeta meta = client.getInstance(name);
+  public DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
+    DatasetMeta meta = clientCache.getUnchecked(datasetInstanceId.getNamespace())
+      .getInstance(datasetInstanceId.getId());
     return meta == null ? null : meta.getSpec();
   }
 
   @Override
-  public boolean hasInstance(String instanceName) throws DatasetManagementException {
-    return client.getInstance(instanceName) != null;
+  public boolean hasInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
+    return clientCache.getUnchecked(datasetInstanceId.getNamespace()).getInstance(datasetInstanceId.getId()) != null;
   }
 
   @Override
-  public boolean hasType(String typeName) throws DatasetManagementException {
-    return client.getType(typeName) != null;
+  public boolean hasSystemType(String typeName) throws DatasetManagementException {
+    return hasType(Id.DatasetType.from(Constants.SYSTEM_NAMESPACE, typeName));
   }
 
   @Override
-  public void deleteInstance(String datasetInstanceName) throws DatasetManagementException {
-    client.deleteInstance(datasetInstanceName);
+  public boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException {
+    return clientCache.getUnchecked(datasetTypeId.getNamespace()).getType(datasetTypeId.getTypeName()) != null;
   }
 
   @Override
-  public void deleteAllInstances() throws DatasetManagementException, IOException {
-    client.deleteInstances();
+  public void deleteInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
+    clientCache.getUnchecked(datasetInstanceId.getNamespace()).deleteInstance(datasetInstanceId.getId());
   }
 
   @Override
-  public <T extends DatasetAdmin> T getAdmin(String datasetInstanceName, ClassLoader classLoader)
+  public void deleteAllInstances(Id.Namespace namespaceId) throws DatasetManagementException, IOException {
+    // delete all one by one
+    for (DatasetSpecificationSummary metaSummary : getInstances(namespaceId)) {
+      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, metaSummary.getName());
+      deleteInstance(datasetInstanceId);
+    }
+  }
+
+  @Override
+  public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId, ClassLoader classLoader)
     throws DatasetManagementException, IOException {
-
-    DatasetMeta instanceInfo = client.getInstance(datasetInstanceName);
+    DatasetMeta instanceInfo = clientCache.getUnchecked(datasetInstanceId.getNamespace())
+      .getInstance(datasetInstanceId.getId());
     if (instanceInfo == null) {
       return null;
     }
 
     DatasetType type = getDatasetType(instanceInfo.getType(), classLoader);
-    return (T) type.getAdmin(instanceInfo.getSpec());
+    return (T) type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), instanceInfo.getSpec());
   }
 
   @Override
-  public <T extends Dataset> T getDataset(String datasetInstanceName, Map<String, String> arguments,
-                                          ClassLoader classLoader) throws DatasetManagementException, IOException {
+  public <T extends Dataset> T getDataset(
+    Id.DatasetInstance datasetInstanceId, Map<String, String> arguments,
+    @Nullable ClassLoader classLoader,
+    @Nullable Iterable<? extends Id> owners) throws DatasetManagementException, IOException {
 
-    DatasetMeta instanceInfo = client.getInstance(datasetInstanceName);
+    DatasetMeta instanceInfo = clientCache.getUnchecked(datasetInstanceId.getNamespace())
+      .getInstance(datasetInstanceId.getId(), owners);
     if (instanceInfo == null) {
       return null;
     }
 
     DatasetType type = getDatasetType(instanceInfo.getType(), classLoader);
-    return (T) type.getDataset(instanceInfo.getSpec(), arguments);
+    return (T) type.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()),
+                               instanceInfo.getSpec(), arguments);
   }
 
-  private void addModule(String moduleName, Class<?> typeClass) throws DatasetManagementException {
+  @Override
+  public <T extends Dataset> T getDataset(
+    Id.DatasetInstance datasetInstanceId, Map<String, String> arguments,
+    @Nullable ClassLoader classLoader) throws DatasetManagementException, IOException {
+
+    return getDataset(datasetInstanceId, arguments, classLoader, null);
+  }
+
+  @Override
+  public void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
+    clientCache.getUnchecked(namespaceId).createNamespace();
+  }
+
+  @Override
+  public void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
+    clientCache.getUnchecked(namespaceId).deleteNamespace();
+  }
+
+  private void addModule(Id.DatasetModule moduleId, Class<?> typeClass) throws DatasetManagementException {
     try {
       File tempFile = File.createTempFile(typeClass.getName(), ".jar");
       try {
         Location tempJarPath = createDeploymentJar(typeClass, new LocalLocationFactory().create(tempFile.toURI()));
-        client.addModule(moduleName, typeClass.getName(), tempJarPath);
+        clientCache.getUnchecked(moduleId.getNamespace()).addModule(moduleId.getId(), typeClass.getName(), tempJarPath);
       } finally {
         tempFile.delete();
       }
     } catch (IOException e) {
       String msg = String.format("Could not create jar for deploying dataset module %s with main class %s",
-                                 moduleName, typeClass.getName());
+                                 moduleId, typeClass.getName());
       LOG.error(msg, e);
       throw new DatasetManagementException(msg, e);
     }

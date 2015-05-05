@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,28 +16,35 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.app.services.SerializableServiceDiscoverer;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.program.TypeId;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
+import co.cask.cdap.internal.app.runtime.spark.metrics.SparkUserMetrics;
 import co.cask.cdap.logging.context.SparkLoggingContext;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionAware;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -56,33 +63,52 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
   private static final Pattern SPACES = Pattern.compile("\\s+");
   private static final String[] NO_ARGS = {};
 
-  // TODO: InstanceId is not supported in Spark jobs, see CDAP-2.
-  public static final String INSTANCE_ID = "0";
-  private final Arguments runtimeArguments;
+  private File metricsPropertyFile;
+
   private final SparkSpecification sparkSpec;
   private final long logicalStartTime;
-  private final String accountId;
   private final String workflowBatch;
-  private final MetricsCollectionService metricsCollectionService;
+  private final StreamAdmin streamAdmin;
   private final SparkLoggingContext loggingContext;
+  private final SerializableServiceDiscoverer serializableServiceDiscoverer;
+  private final SparkUserMetrics userMetrics;
+
+  public void setMetricsPropertyFile(File file) {
+    metricsPropertyFile = file;
+  }
+
+  public File getMetricsPropertyFile() {
+    return metricsPropertyFile;
+  }
 
   public BasicSparkContext(Program program, RunId runId, Arguments runtimeArguments, Set<String> datasets,
                            SparkSpecification sparkSpec, long logicalStartTime, String workflowBatch,
                            MetricsCollectionService metricsCollectionService,
-                           DatasetFramework dsFramework, CConfiguration conf,
-                           DiscoveryServiceClient discoveryServiceClient) {
-    super(program, runId, datasets, getMetricContext(program), metricsCollectionService, dsFramework, conf,
-          discoveryServiceClient);
-    this.accountId = program.getAccountId();
-    this.runtimeArguments = runtimeArguments;
+                           DatasetFramework dsFramework,
+                           DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin) {
+    super(program, runId, runtimeArguments, datasets,
+          getMetricCollector(metricsCollectionService, program, runId.getId()),
+          dsFramework, discoveryServiceClient);
     this.logicalStartTime = logicalStartTime;
     this.workflowBatch = workflowBatch;
-    this.metricsCollectionService = metricsCollectionService;
-
-    //TODO: Metrics needs to be initialized here properly when implemented.
-
-    this.loggingContext = new SparkLoggingContext(getAccountId(), getApplicationId(), getProgramName());
+    this.streamAdmin = streamAdmin;
+    SerializableServiceDiscoverer.setDiscoveryServiceClient(getDiscoveryServiceClient());
+    this.serializableServiceDiscoverer = new SerializableServiceDiscoverer(getProgram());
+    SparkUserMetrics.setMetricsCollector(getProgramMetrics());
+    this.userMetrics = new SparkUserMetrics();
+    this.loggingContext = new SparkLoggingContext(getNamespaceId(), getApplicationId(), getProgramName(),
+                                                  getRunId().getId());
     this.sparkSpec = sparkSpec;
+  }
+
+  /**
+   * Returns a {@link Serializable} {@link ServiceDiscoverer} for Service Discovery in Spark Program which can be
+   * passed in Spark program's closures.
+   *
+   * @return A {@link Serializable} {@link ServiceDiscoverer} which is {@link SerializableServiceDiscoverer}
+   */
+  public SerializableServiceDiscoverer getSerializableServiceDiscoverer() {
+    return serializableServiceDiscoverer;
   }
 
   @Override
@@ -111,9 +137,31 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
     throw new IllegalStateException("Writing  dataset is not supported here");
   }
 
-  private static String getMetricContext(Program program) {
-    return String.format("%s.%s.%s.%s", program.getApplicationId(), TypeId.getMetricContextId(ProgramType.SPARK),
-                         program.getName(), INSTANCE_ID);
+  @Override
+  public <T> T readFromStream(String streamName, Class<?> vClass) {
+    throw new IllegalStateException("Reading stream is not supported here");
+  }
+
+  @Override
+  public <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime) {
+    throw new IllegalStateException("Reading stream is not supported here");
+  }
+
+  @Override
+  public <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime,
+                              Class<? extends StreamEventDecoder> decoderType) {
+    throw new IllegalStateException("Reading stream is not supported here");
+  }
+
+  private static MetricsCollector getMetricCollector(MetricsCollectionService service, Program program, String runId) {
+    if (service == null) {
+      return null;
+    }
+    Map<String, String> tags = Maps.newHashMap(getMetricsContext(program, runId));
+    // todo: use proper spark instance id. For now we have to emit smth for test framework's waitFor metric to work
+    tags.put(Constants.Metrics.Tag.INSTANCE_ID, "0");
+
+    return service.getCollector(tags);
   }
 
   @Override
@@ -129,8 +177,8 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
    */
   @Override
   public String[] getRuntimeArguments(String argsKey) {
-    if (runtimeArguments.hasOption(argsKey)) {
-      return SPACES.split(runtimeArguments.getOption(argsKey).trim());
+    if (getRuntimeArguments().containsKey(argsKey)) {
+      return SPACES.split(getRuntimeArguments().get(argsKey).trim());
     } else {
       LOG.warn("Argument with key {} not found in Runtime Arguments", argsKey);
       return NO_ARGS;
@@ -138,18 +186,20 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
   }
 
   @Override
-  public Map<String, String> getRuntimeArguments() {
-    ImmutableMap.Builder<String, String> arguments = ImmutableMap.builder();
-    for (Map.Entry<String, String> runtimeArgument : runtimeArguments) {
-      arguments.put(runtimeArgument);
-    }
-    return arguments.build();
+  public ServiceDiscoverer getServiceDiscoverer() {
+    throw new IllegalStateException("Service Discovery is not supported in this Context");
   }
 
-  //TODO: Change this once we have metrics is supported
+  /**
+   * @return the {@link StreamAdmin} to access Streams in Spark through {@link AbstractSparkContext}
+   */
+  public StreamAdmin getStreamAdmin() {
+    return streamAdmin;
+  }
+
   @Override
   public Metrics getMetrics() {
-    throw new UnsupportedOperationException("Metrics are not not supported in Spark yet");
+    return userMetrics;
   }
 
   /**
@@ -168,12 +218,5 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
     for (TransactionAware txAware : getDatasetInstantiator().getTransactionAware()) {
       txAware.commitTx();
     }
-  }
-
-  /**
-   * @return {@link Arguments} for this job
-   */
-  public Arguments getRuntimeArgs() {
-    return runtimeArguments;
   }
 }

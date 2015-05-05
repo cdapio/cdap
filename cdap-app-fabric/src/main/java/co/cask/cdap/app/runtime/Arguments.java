@@ -34,4 +34,9 @@ public interface Arguments extends Iterable<Map.Entry<String, String>> {
   String getOption(String name);
 
   String getOption(String name, String defaultOption);
+
+  /**
+   * Returns an immutable map that represents all arguments.
+   */
+  Map<String, String> asMap();
 }

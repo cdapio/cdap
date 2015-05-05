@@ -1,0 +1,55 @@
+<div ng-hide="welcomeIsHidden">
+  <div class="panel panel-message">
+    <div class="panel-heading clearfix">
+      <h3>
+        Welcome CDAP Admin!
+      </h3>
+    </div>
+    <div class="panel-body">
+      <p>This is the control console for CDAP. Here, you can view and manage your system configuration and define and manage namespaces and entities.
+         Begin by configuring your default namespace.</p>
+    </div>
+  </div>
+</div>
+
+<div>
+
+  <div class="row">
+    <div class="col-xs-6">
+      <h3>Namespaces</h3>
+    </div>
+    <div class="col-xs-6 text-right h3">
+      <a ui-sref="admin.namespace.create" class="btn btn-default"><span class="fa fa-plus"></span> Add Namespace</a>
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-curved namespace-table" cask-sortable>
+        <thead>
+          <tr ng-class="{'sort-enabled': nsList.length>0}">
+            <th data-predicate="name">Name</th>
+            <th data-predicate="appsCount">Apps</th>
+            <th>Datasets</th>
+            <th>Streams</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="namespace in nsList | orderBy:sortable.predicate:sortable.reverse">
+            <td>
+              <div>
+                {{ ::namespace.name }}
+              </div>
+            </td>
+            <td>
+              <span ng-bind="namespace.appsCount"></span>
+            </td>
+            <td>
+              <span ng-bind="namespace.datasetsCount"></span>
+            </td>
+            <td>
+              <span ng-bind="namespace.streamsCount"></span>
+            </td>
+          </tr>
+        </tbody>
+    </table>
+  </div>
+</div>

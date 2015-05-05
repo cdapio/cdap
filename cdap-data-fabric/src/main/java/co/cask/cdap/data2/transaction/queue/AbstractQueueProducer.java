@@ -108,6 +108,11 @@ public abstract class AbstractQueueProducer implements QueueProducer, Transactio
     return true;
   }
 
+  @Override
+  public void close() throws IOException {
+    // No-op
+  }
+
   /**
    * Persists queue entries.
    * @param entries queue entries to persist.

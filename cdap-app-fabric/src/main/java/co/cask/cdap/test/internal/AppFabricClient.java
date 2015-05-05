@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,213 +16,286 @@
 
 package co.cask.cdap.test.internal;
 
-import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
-import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
+import co.cask.cdap.gateway.handlers.AdapterHttpHandler;
+import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
+import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
+import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
+import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
+import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.proto.AdapterConfig;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.Instances;
+import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.ServiceInstances;
+import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.http.BodyConsumer;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.ApplicationBundler;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
-import java.util.zip.ZipException;
 
 /**
  * Client tool for AppFabricHttpHandler.
  */
 public class AppFabricClient {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricClient.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
+    .create();
+  private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type RUN_RECORDS_TYPE = new TypeToken<List<RunRecord>>() { }.getType();
+  private static final Type SCHEDULES_TYPE = new TypeToken<List<ScheduleSpecification>>() { }.getType();
 
-  private final AppFabricHttpHandler httpHandler;
-  private final ServiceHttpHandler serviceHttpHandler;
   private final LocationFactory locationFactory;
+  private final AppLifecycleHttpHandler appLifecycleHttpHandler;
+  private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
+  private final WorkflowHttpHandler workflowHttpHandler;
+  private final NamespaceHttpHandler namespaceHttpHandler;
+  private final NamespaceAdmin namespaceAdmin;
+  private final AdapterHttpHandler adapterHttpHandler;
 
-  public AppFabricClient(AppFabricHttpHandler httpHandler, ServiceHttpHandler serviceHttpHandler,
-                         LocationFactory locationFactory) {
-    this.httpHandler = httpHandler;
-    this.serviceHttpHandler = serviceHttpHandler;
+  @Inject
+  public AppFabricClient(LocationFactory locationFactory,
+                         AppLifecycleHttpHandler appLifecycleHttpHandler,
+                         ProgramLifecycleHttpHandler programLifecycleHttpHandler,
+                         NamespaceHttpHandler namespaceHttpHandler,
+                         NamespaceAdmin namespaceAdmin,
+                         WorkflowHttpHandler workflowHttpHandler,
+                         AdapterHttpHandler adapterHttpHandler) {
     this.locationFactory = locationFactory;
+    this.appLifecycleHttpHandler = appLifecycleHttpHandler;
+    this.programLifecycleHttpHandler = programLifecycleHttpHandler;
+    this.namespaceHttpHandler = namespaceHttpHandler;
+    this.namespaceAdmin = namespaceAdmin;
+    this.workflowHttpHandler = workflowHttpHandler;
+    this.adapterHttpHandler = adapterHttpHandler;
   }
 
-  public void reset() {
-    MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/unrecoverable/reset");
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
-    httpHandler.resetCDAP(request, responder);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "reset application failed");
+  private String getNamespacePath(String namespaceId) {
+    return String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, namespaceId);
   }
 
-  public void startProgram(String appId, String flowId, String type, Map<String, String> args) {
+  public void reset() throws Exception {
+    MockResponder responder;
+    HttpRequest request;
+
+    // delete all namespaces
+    for (NamespaceMeta namespaceMeta : namespaceAdmin.listNamespaces()) {
+      Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getName());
+
+      responder = new MockResponder();
+      request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE, String.format(
+        "%s/unrecoverable/namespaces/%s/datasets", Constants.Gateway.API_VERSION_3, namespace.getId()));
+      namespaceHttpHandler.deleteDatasets(request, responder, namespaceMeta.getName());
+      verifyResponse(HttpResponseStatus.OK, responder.getStatus(),
+                     String.format("could not delete datasets in namespace '%s'", namespace.getId()));
+
+      responder = new MockResponder();
+      request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE,
+                                       String.format("/v3/unrecoverable/namespaces/%s", namespace.getId()));
+      namespaceHttpHandler.delete(request, responder, namespaceMeta.getName());
+      verifyResponse(HttpResponseStatus.OK, responder.getStatus(),
+                     String.format("could not delete namespace '%s'", namespace.getId()));
+    }
+  }
+
+  public void startProgram(String namespaceId, String appId,
+                           String flowId, ProgramType type, Map<String, String> args) {
 
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/%s/%s/start", appId, type, flowId);
+    String uri = String.format("%s/apps/%s/%s/%s/start",
+                               getNamespacePath(namespaceId), appId, type.getCategoryName(), flowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     String argString = GSON.toJson(args);
     if (argString != null) {
       request.setContent(ChannelBuffers.wrappedBuffer(argString.getBytes(Charsets.UTF_8)));
     }
-    httpHandler.startProgram(request, responder, appId, type, flowId);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "start " + type + " failed");
+    programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId,
+                                              type.getCategoryName(), flowId, "start");
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Start " + type + " failed");
   }
 
-  public void stopProgram(String appId, String flowId, String type) {
-
+  public void stopProgram(String namespaceId, String appId, String flowId, ProgramType type) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/%s/%s/stop", appId, type, flowId);
+    String uri = String.format("%s/apps/%s/%s/%s/stop",
+                               getNamespacePath(namespaceId), appId, type.getCategoryName(), flowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
-    httpHandler.stopProgram(request, responder, appId, type, flowId);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "stop " + type + " failed");
+    programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId,
+                                              type.getCategoryName(), flowId, "stop");
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Stop " + type + " failed");
   }
 
-  public String getStatus(String appId, String flowId, String type) {
-
+  public String getStatus(String namespaceId, String appId, String flowId, ProgramType type) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/%s/%s/status", appId, type, flowId);
+    String uri = String.format("%s/apps/%s/%s/%s/status", getNamespacePath(namespaceId), appId, type, flowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
-    httpHandler.getStatus(request, responder, appId, type, flowId);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "get status " + type + " failed");
-    Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
+    programLifecycleHttpHandler.getStatus(request, responder, namespaceId, appId, type.getCategoryName(), flowId);
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get status " + type + " failed");
+    Map<String, String> json = responder.decodeResponseContent(MAP_TYPE);
     return json.get("status");
   }
 
-  public void setRunnableInstances(String applicationId, String serviceName, String runnableName, int instances) {
+  public void setWorkerInstances(String namespaceId, String appId, String workerId, int instances) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/services/%s/runnables/%s/instances",
-                               applicationId, serviceName, runnableName);
+    String uri = String.format("%s/apps/%s/worker/%s/instances", getNamespacePath(namespaceId), appId, workerId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
     JsonObject json = new JsonObject();
     json.addProperty("instances", instances);
     request.setContent(ChannelBuffers.wrappedBuffer(json.toString().getBytes()));
-    serviceHttpHandler.setInstances(request, responder, applicationId, serviceName, runnableName);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "set runnable instances failed");
+    programLifecycleHttpHandler.setWorkerInstances(request, responder, namespaceId, appId, workerId);
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set worker instances failed");
   }
 
-  public int getRunnableInstances(String applicationId, String serviceName, String runnableName) {
-
+  public Instances getWorkerInstances(String namespaceId, String appId, String workerId) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/services/%s/runnables/%s/instances",
-                               applicationId, serviceName, runnableName);
+    String uri = String.format("%s/apps/%s/worker/%s/instances", getNamespacePath(namespaceId), appId, workerId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    serviceHttpHandler.getInstances(request, responder, applicationId, serviceName, runnableName);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "get runnable instances failed");
-    Map<String, String> instances = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
-    return Integer.parseInt(instances.get("provisioned"));
+    programLifecycleHttpHandler.getWorkerInstances(request, responder, namespaceId, appId, workerId);
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get worker instances failed");
+    return responder.decodeResponseContent(Instances.class);
   }
 
-  public void setFlowletInstances(String applicationId, String flowId, String flowletName, int instances) {
-
+  public void setServiceInstances(String namespaceId, String applicationId, String serviceName, int instances) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/flows/%s/flowlets/%s/instances/%s",
-                               applicationId, flowId, flowletName, instances);
+    String uri = String.format("%s/apps/%s/services/%s/instances",
+                               getNamespacePath(namespaceId), applicationId, serviceName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
     JsonObject json = new JsonObject();
     json.addProperty("instances", instances);
     request.setContent(ChannelBuffers.wrappedBuffer(json.toString().getBytes()));
-    httpHandler.setFlowletInstances(request, responder, applicationId, flowId, flowletName);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "set flowlet instances failed");
+    programLifecycleHttpHandler.setServiceInstances(request, responder, namespaceId, applicationId, serviceName);
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set service instances failed");
   }
 
-  public List<String> getSchedules(String appId, String wflowId) {
+  public ServiceInstances getServiceInstances(String namespaceId, String applicationId, String serviceName) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/workflows/%s/schedules", appId, wflowId);
+    String uri = String.format("%s/apps/%s/services/%s/instances",
+                               getNamespacePath(namespaceId), applicationId, serviceName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    httpHandler.workflowSchedules(request, responder, appId, wflowId);
+    programLifecycleHttpHandler.getServiceInstances(request, responder, namespaceId, applicationId, serviceName);
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get service instances failed");
+    return responder.decodeResponseContent(ServiceInstances.class);
+  }
 
-    List<String> schedules = responder.decodeResponseContent(new TypeToken<List<String>>() { });
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
+  public void setFlowletInstances(String namespaceId, String applicationId,
+                                  String flowId, String flowletName, int instances) {
+    MockResponder responder = new MockResponder();
+    String uri = String.format("%s/apps/%s/flows/%s/flowlets/%s/instances/%s",
+                               getNamespacePath(namespaceId), applicationId, flowId, flowletName, instances);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
+    JsonObject json = new JsonObject();
+    json.addProperty("instances", instances);
+    request.setContent(ChannelBuffers.wrappedBuffer(json.toString().getBytes()));
+    programLifecycleHttpHandler.setFlowletInstances(request, responder, namespaceId,
+      applicationId, flowId, flowletName);
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set flowlet instances failed");
+  }
+
+  public List<ScheduleSpecification> getSchedules(String namespaceId, String appId, String wflowId) {
+    MockResponder responder = new MockResponder();
+    String uri = String.format("%s/apps/%s/workflows/%s/schedules",
+                               getNamespacePath(namespaceId), appId, wflowId);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
+    workflowHttpHandler.getWorkflowSchedules(request, responder, namespaceId, appId, wflowId);
+
+    List<ScheduleSpecification> schedules = responder.decodeResponseContent(SCHEDULES_TYPE, GSON);
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow schedules failed");
     return schedules;
   }
 
-  public List<RunRecord> getHistory(String appId, String wflowId) {
+  public List<RunRecord> getHistory(String namespaceId, String appId, String wflowId) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/workflows/%s/history", appId, wflowId);
+    String uri = String.format("%s/apps/%s/workflows/%s/runs?status=completed",
+                               getNamespacePath(namespaceId), appId, wflowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    httpHandler.runnableHistory(request, responder, appId, "workflows", wflowId);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
+    programLifecycleHttpHandler.programHistory(request, responder, namespaceId, appId,
+                                               "workflows", wflowId, null, null, null, 100);
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow history failed");
 
-    return responder.decodeResponseContent(new TypeToken<List<RunRecord>>() { });
+    return responder.decodeResponseContent(RUN_RECORDS_TYPE);
   }
 
-  public void suspend(String appId, String wflowId, String schedId) {
+  public void suspend(String namespaceId, String appId, String scheduleName) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/workflows/%s/schedules/%s/suspend", appId, wflowId, schedId);
+    String uri = String.format("%s/apps/%s/schedules/%s/suspend", getNamespacePath(namespaceId), appId, scheduleName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    httpHandler.workflowScheduleSuspend(request, responder, appId, wflowId, schedId);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
+    programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId,
+                                              "schedules", scheduleName, "suspend");
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Suspend workflow schedules failed");
   }
 
-  public void resume(String appId, String wflowId, String schedId) {
+  public void resume(String namespaceId, String appId, String schedName) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/workflows/%s/schedules/%s/resume", appId, wflowId, schedId);
+    String uri = String.format("%s/apps/%s/schedules/%s/resume", getNamespacePath(namespaceId), appId, schedName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    httpHandler.workflowScheduleResume(request, responder, appId, wflowId, schedId);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
+    programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId,
+                                              "schedules", schedName, "resume");
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Resume workflow schedules failed");
   }
 
-  public String scheduleStatus(String appId, String wflowId, String schedId) {
+  public String scheduleStatus(String namespaceId, String appId, String schedId, int expectedResponseCode) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/workflows/%s/schedules/%s/status", appId, wflowId, schedId);
+    String uri = String.format("%s/apps/%s/schedules/%s/status", getNamespacePath(namespaceId), appId, schedId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    httpHandler.getScheuleState(request, responder, appId, wflowId, schedId);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
-    Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
-    return json.get("status");
+    programLifecycleHttpHandler.getStatus(request, responder, namespaceId, appId, "schedules", schedId);
+    verifyResponse(HttpResponseStatus.valueOf(expectedResponseCode), responder.getStatus(),
+                   "Get schedules status failed");
+    if (HttpResponseStatus.NOT_FOUND.getCode() == expectedResponseCode) {
+      return "NOT_FOUND";
+    } else {
+      Map<String, String> json = responder.decodeResponseContent(MAP_TYPE);
+      return json.get("status");
+    }
   }
 
-  /**
-   * Given a class generates a manifest file with main-class as class.
-   *
-   * @param klass to set as Main-Class in manifest file.
-   * @return An instance {@link java.util.jar.Manifest}
-   */
-  public static Manifest getManifestWithMainClass(Class<?> klass) {
-    Manifest manifest = new Manifest();
-    manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
-    manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, klass.getName());
-    return manifest;
+  private void verifyResponse(HttpResponseStatus expected, HttpResponseStatus actual, String errorMsg) {
+    if (!expected.equals(actual)) {
+      throw new IllegalStateException(String.format("Expected %s, got %s. Error: %s",
+                                                    expected, actual, errorMsg));
+    }
   }
 
-  public Location deployApplication(final String applicationId, Class<?> applicationClz, File...bundleEmbeddedJars)
-    throws Exception {
+  public Location deployApplication(Id.Namespace namespace, String appName,
+                                    Class<?> applicationClz, File...bundleEmbeddedJars) throws Exception {
 
     Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
 
-    Location deployedJar =
-      locationFactory.create(createDeploymentJar(locationFactory, applicationClz, bundleEmbeddedJars).toURI());
+    Location deployedJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClz, bundleEmbeddedJars);
     LOG.info("Created deployedJar at {}", deployedJar.toURI().toASCIIString());
 
-    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/v2/apps");
+    String archiveName = appName + ".jar";
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
+                                                        String.format("/v3/namespaces/%s/apps", namespace.getId()));
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
-    request.setHeader("X-Archive-Name", applicationId + ".jar");
+    request.setHeader("X-Archive-Name", archiveName);
     MockResponder mockResponder = new MockResponder();
-    BodyConsumer bodyConsumer = httpHandler.deploy(request, mockResponder);
+    BodyConsumer bodyConsumer = appLifecycleHttpHandler.deploy(request, mockResponder, namespace.getId(), archiveName);
+    Preconditions.checkNotNull(bodyConsumer, "BodyConsumer from deploy call should not be null");
 
     BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024);
     try {
@@ -235,7 +308,7 @@ public class AppFabricClient {
       }
       mockResponder = new MockResponder();
       bodyConsumer.finished(mockResponder);
-      Preconditions.checkState(mockResponder.getStatus().getCode() == 200, "failed to deploy app");
+      verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app");
     } catch (Exception e) {
       throw Throwables.propagate(e);
     } finally {
@@ -244,70 +317,54 @@ public class AppFabricClient {
     return deployedJar;
   }
 
-  private static File createDeploymentJar(LocationFactory locationFactory, Class<?> clz, File...bundleEmbeddedJars)
-    throws IOException {
-
-    ApplicationBundler bundler = new ApplicationBundler(ImmutableList.of("co.cask.cdap.api",
-                                                                         "org.apache.hadoop",
-                                                                         "org.apache.hbase",
-                                                                         "org.apache.hive"));
-    Location jarLocation = locationFactory.create(clz.getName()).getTempFile(".jar");
-    bundler.createBundle(jarLocation, clz);
-
-    Location deployJar = locationFactory.create(clz.getName()).getTempFile(".jar");
-
-    // Creates Manifest
-    Manifest manifest = new Manifest();
-    manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
-    manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, clz.getName());
-
-    // Create the program jar for deployment. It removes the "classes/" prefix as that's the convention taken
-    // by the ApplicationBundler inside Twill.
-    JarOutputStream jarOutput = new JarOutputStream(deployJar.getOutputStream(), manifest);
-    try {
-      JarInputStream jarInput = new JarInputStream(jarLocation.getInputStream());
-      try {
-        JarEntry jarEntry = jarInput.getNextJarEntry();
-        while (jarEntry != null) {
-          boolean isDir = jarEntry.isDirectory();
-          String entryName = jarEntry.getName();
-          if (!entryName.equals("classes/")) {
-            if (entryName.startsWith("classes/")) {
-              jarEntry = new JarEntry(entryName.substring("classes/".length()));
-            } else {
-              jarEntry = new JarEntry(entryName);
-            }
-
-            // TODO: this is due to manifest possibly already existing in the jar, but we also
-            // create a manifest programatically so it's possible to have a duplicate entry here
-            if ("META-INF/MANIFEST.MF".equalsIgnoreCase(jarEntry.getName())) {
-              jarEntry = jarInput.getNextJarEntry();
-              continue;
-            }
-
-            jarOutput.putNextEntry(jarEntry);
-            if (!isDir) {
-              ByteStreams.copy(jarInput, jarOutput);
-            }
-          }
-
-          jarEntry = jarInput.getNextJarEntry();
-        }
-      } finally {
-        jarInput.close();
-      }
-
-      for (File embeddedJar : bundleEmbeddedJars) {
-        JarEntry jarEntry = new JarEntry("lib/" + embeddedJar.getName());
-        jarOutput.putNextEntry(jarEntry);
-        Files.copy(embeddedJar, jarOutput);
-      }
-
-    } finally {
-      jarOutput.close();
-    }
-
-    return new File(deployJar.toURI());
+  public void deployTemplate(Id.Namespace namespace, Id.ApplicationTemplate templateId) {
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT,
+      String.format("%s/templates/%s", getNamespacePath(namespace.getId()), templateId.getId()));
+    MockResponder responder = new MockResponder();
+    adapterHttpHandler.deployTemplate(request, responder, namespace.getId(), templateId.getId());
+    verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to deploy template.");
   }
 
+  public void createAdapter(Id.Adapter id, AdapterConfig config) {
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT,
+      String.format("%s/adapters/%s", getNamespacePath(id.getNamespaceId()), id.getId()));
+    request.setContent(ChannelBuffers.wrappedBuffer(GSON.toJson(config).getBytes(Charsets.UTF_8)));
+    MockResponder responder = new MockResponder();
+    adapterHttpHandler.createAdapter(request, responder, id.getNamespaceId(), id.getId());
+    verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to create adapter.");
+  }
+
+  public void startAdapter(Id.Adapter id) {
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
+      String.format("%s/adapters/%s/start", getNamespacePath(id.getNamespaceId()), id.getId()));
+    MockResponder responder = new MockResponder();
+    adapterHttpHandler.startStopAdapter(request, responder, id.getNamespaceId(), id.getId(), "start");
+    verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to start adapter.");
+  }
+
+  public void stopAdapter(Id.Adapter id) {
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
+      String.format("%s/adapters/%s/stop", getNamespacePath(id.getNamespaceId()), id.getId()));
+    MockResponder responder = new MockResponder();
+    adapterHttpHandler.startStopAdapter(request, responder, id.getNamespaceId(), id.getId(), "stop");
+    verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to stop adapter.");
+  }
+
+  public List<RunRecord> getAdapterRuns(Id.Adapter id) {
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
+      String.format("%s/adapters/%s/runs", getNamespacePath(id.getNamespaceId()), id.getId()));
+    MockResponder responder = new MockResponder();
+    adapterHttpHandler.getAdapterRuns(request, responder, id.getNamespaceId(), id.getId(), null, null, null, 100);
+    verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to get runs for adapter.");
+    return responder.decodeResponseContent(RUN_RECORDS_TYPE);
+  }
+
+  public RunRecord getAdapterRun(Id.Adapter adapterId, String runId) {
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
+      String.format("%s/adapters/%s/runs/%s", getNamespacePath(adapterId.getNamespaceId()), adapterId.getId(), runId));
+    MockResponder responder = new MockResponder();
+    adapterHttpHandler.getAdapterRun(request, responder, adapterId.getNamespaceId(), adapterId.getId(), runId);
+    verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to get run for adapter.");
+    return responder.decodeResponseContent(RunRecord.class);
+  }
 }

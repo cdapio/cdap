@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,13 +17,20 @@
 package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
+import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.proto.Id;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableSet;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.constraint.ConstraintException;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -34,6 +41,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -45,6 +54,7 @@ public abstract class AbstractHBaseTableUtilTest {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
+  protected static CConfiguration cConf;
   private static HBaseTestBase testHBase;
   private static HBaseAdmin hAdmin;
 
@@ -53,6 +63,7 @@ public abstract class AbstractHBaseTableUtilTest {
     testHBase = new HBaseTestFactory().get();
     testHBase.startHBase();
     hAdmin = new HBaseAdmin(testHBase.getConfiguration());
+    cConf = CConfiguration.create();
   }
 
   @AfterClass
@@ -63,41 +74,224 @@ public abstract class AbstractHBaseTableUtilTest {
 
   protected abstract HBaseTableUtil getTableUtil();
 
+  protected abstract HTableNameConverter getNameConverter();
+
+  protected abstract String getTableNameAsString(TableId tableId);
+
+  protected abstract boolean namespacesSupported();
+
   @Test
   public void testTableSizeMetrics() throws Exception {
-    Assert.assertNull(getTableStats("table1"));
-    Assert.assertNull(getTableStats("table2"));
-    Assert.assertNull(getTableStats("table3"));
+    HBaseTableUtil tableUtil = getTableUtil();
+    // namespace should not exist
+    if (namespacesSupported()) {
+      Assert.assertFalse(tableUtil.hasNamespace(hAdmin, Id.Namespace.from("namespace")));
+    }
 
-    create("table1");
-    create("table2");
-    create("table3");
+    Assert.assertNull(getTableStats("namespace", "table1"));
+    Assert.assertNull(getTableStats("namespace", "table2"));
+    Assert.assertNull(getTableStats("namespace", "table3"));
+
+    if (namespacesSupported()) {
+      createNamespace("namespace");
+      createNamespace("namespace2");
+      Assert.assertTrue(tableUtil.hasNamespace(hAdmin, Id.Namespace.from("namespace")));
+    }
+
+    create("namespace", "table1");
+    create("namespace2", "table1");
+    create("namespace", "table2");
+    create("namespace", "table3");
+
+    Assert.assertTrue(exists("namespace", "table1"));
+    Assert.assertTrue(exists("namespace2", "table1"));
+    Assert.assertTrue(exists("namespace", "table2"));
+    Assert.assertTrue(exists("namespace", "table3"));
 
     waitForMetricsToUpdate();
 
-    Assert.assertEquals(0, getTableStats("table1").getTotalSizeMB());
-    Assert.assertEquals(0, getTableStats("table2").getTotalSizeMB());
-    Assert.assertEquals(0, getTableStats("table3").getTotalSizeMB());
+    Assert.assertEquals(0, getTableStats("namespace", "table1").getTotalSizeMB());
+    Assert.assertEquals(0, getTableStats("namespace2", "table1").getTotalSizeMB());
+    Assert.assertEquals(0, getTableStats("namespace", "table2").getTotalSizeMB());
+    Assert.assertEquals(0, getTableStats("namespace", "table3").getTotalSizeMB());
 
-    writeSome("table2");
-    writeSome("table3");
-
-    waitForMetricsToUpdate();
-
-    Assert.assertEquals(0, getTableStats("table1").getTotalSizeMB());
-    Assert.assertTrue(getTableStats("table2").getTotalSizeMB() > 0);
-    Assert.assertTrue(getTableStats("table3").getTotalSizeMB() > 0);
-
-    drop("table1");
-    testHBase.forceRegionFlush(Bytes.toBytes("table2"));
-    truncate("table3");
+    writeSome("namespace2", "table1");
+    writeSome("namespace", "table2");
+    writeSome("namespace", "table3");
 
     waitForMetricsToUpdate();
 
-    Assert.assertNull(getTableStats("table1"));
-    Assert.assertTrue(getTableStats("table2").getTotalSizeMB() > 0);
-    Assert.assertTrue(getTableStats("table2").getStoreFileSizeMB() > 0);
-    Assert.assertEquals(0, getTableStats("table3").getTotalSizeMB());
+    Assert.assertEquals(0, getTableStats("namespace", "table1").getTotalSizeMB());
+    Assert.assertTrue(getTableStats("namespace2", "table1").getTotalSizeMB() > 0);
+    Assert.assertTrue(getTableStats("namespace", "table2").getTotalSizeMB() > 0);
+    Assert.assertTrue(getTableStats("namespace", "table3").getTotalSizeMB() > 0);
+
+    drop("namespace", "table1");
+    Assert.assertFalse(exists("namespace", "table1"));
+    //TODO: TestHBase methods should eventually accept namespace as a param, but will add them incrementally
+    testHBase.forceRegionFlush(Bytes.toBytes(getTableNameAsString(TableId.from("namespace", "table2"))));
+    truncate("namespace", "table3");
+
+    waitForMetricsToUpdate();
+
+    Assert.assertNull(getTableStats("namespace", "table1"));
+    Assert.assertTrue(getTableStats("namespace", "table2").getTotalSizeMB() > 0);
+    Assert.assertTrue(getTableStats("namespace", "table2").getStoreFileSizeMB() > 0);
+    Assert.assertEquals(0, getTableStats("namespace", "table3").getTotalSizeMB());
+
+    // modify
+    HTableDescriptor desc = getTableDescriptor("namespace2", "table1");
+    desc.setValue("mykey", "myvalue");
+    disable("namespace2", "table1");
+    getTableUtil().modifyTable(hAdmin, desc);
+    desc = getTableDescriptor("namespace2", "table1");
+    Assert.assertTrue(desc.getValue("mykey").equals("myvalue"));
+    enable("namespace2", "table1");
+    desc = getTableDescriptor("namespace", "table2");
+    Assert.assertNull(desc.getValue("myKey"));
+
+    if (namespacesSupported()) {
+      try {
+        deleteNamespace("namespace");
+        Assert.fail("Should not be able to delete a non-empty namespace.");
+      } catch (ConstraintException e) {
+        // Expected exception
+      }
+    }
+
+    drop("namespace2", "table1");
+    drop("namespace", "table2");
+    drop("namespace", "table3");
+
+    if (namespacesSupported()) {
+      deleteNamespace("namespace");
+      deleteNamespace("namespace2");
+      Assert.assertFalse(tableUtil.hasNamespace(hAdmin, Id.Namespace.from("namespace")));
+      Assert.assertFalse(tableUtil.hasNamespace(hAdmin, Id.Namespace.from("namespace2")));
+    }
+  }
+
+  @Test
+  public void testBackwardCompatibility() throws IOException, InterruptedException {
+    HBaseTableUtil tableUtil = getTableUtil();
+    String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+    TableId tableId = TableId.from("default", "my.dataset");
+    create(tableId);
+    Assert.assertEquals("default", getNameConverter().toHBaseNamespace(tablePrefix, tableId.getNamespace()));
+    Assert.assertEquals("cdap.user.my.dataset",
+                        getNameConverter().getHBaseTableName(tablePrefix, tableId));
+    Assert.assertEquals(getTableNameAsString(tableId),
+                        Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
+    drop(tableId);
+    tableId = TableId.from("default", "system.queue.config");
+    create(tableId);
+    Assert.assertEquals("default", getNameConverter().toHBaseNamespace(tablePrefix, tableId.getNamespace()));
+    Assert.assertEquals("cdap.system.queue.config",
+                        getNameConverter().getHBaseTableName(tablePrefix, tableId));
+    Assert.assertEquals(getTableNameAsString(tableId),
+                        Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
+    drop(tableId);
+    tableId = TableId.from("myspace", "could.be.any.table.name");
+    createNamespace("myspace");
+    create(tableId);
+    Assert.assertEquals("cdap_myspace", getNameConverter().toHBaseNamespace(tablePrefix, tableId.getNamespace()));
+    Assert.assertEquals("could.be.any.table.name",
+                        getNameConverter().getHBaseTableName(tablePrefix, tableId));
+    Assert.assertEquals(getTableNameAsString(tableId),
+                        Bytes.toString(tableUtil.createHTable(testHBase.getConfiguration(), tableId).getTableName()));
+    drop(tableId);
+    deleteNamespace("myspace");
+  }
+
+  @Test
+  public void testListAllInNamespace() throws IOException, InterruptedException {
+    HBaseTableUtil tableUtil = getTableUtil();
+    Set<TableId> fooNamespaceTableIds = ImmutableSet.of(TableId.from("foo", "some.table1"),
+                                                        TableId.from("foo", "other.table"),
+                                                        TableId.from("foo", "some.table2"));
+    createNamespace("foo");
+    for (TableId tableId : fooNamespaceTableIds) {
+      create(tableId);
+    }
+
+    createNamespace("foo_bar");
+    TableId tableIdInOtherNamespace = TableId.from("foo_bar", "my.dataset");
+    create(tableIdInOtherNamespace);
+
+
+    Set<TableId> retrievedTableIds =
+      ImmutableSet.copyOf(tableUtil.listTablesInNamespace(hAdmin, Id.Namespace.from("foo")));
+    Assert.assertEquals(fooNamespaceTableIds, retrievedTableIds);
+
+    Set<TableId> allTableIds =
+      ImmutableSet.<TableId>builder().addAll(fooNamespaceTableIds).add(tableIdInOtherNamespace).build();
+    Assert.assertEquals(allTableIds, ImmutableSet.copyOf(tableUtil.listTables(hAdmin)));
+
+    Assert.assertEquals(4, hAdmin.listTables().length);
+    tableUtil.deleteAllInNamespace(hAdmin, Id.Namespace.from("foo"));
+    Assert.assertEquals(1, hAdmin.listTables().length);
+
+    drop(tableIdInOtherNamespace);
+    Assert.assertEquals(0, hAdmin.listTables().length);
+    deleteNamespace("foo_bar");
+  }
+
+  @Test
+  public void testDropAllInDefaultNamespace() throws IOException, InterruptedException {
+    HBaseTableUtil tableUtil = getTableUtil();
+    TableId tableId = TableId.from("default", "some.table1");
+    create(tableId);
+
+    tableId = TableId.from("default", "other.table");
+    create(tableId);
+
+    tableId = TableId.from("default", "some.table2");
+    create(tableId);
+
+    createNamespace("default2");
+    TableId tableIdInOtherNamespace = TableId.from("default2", "my.dataset");
+    create(tableIdInOtherNamespace);
+
+    Assert.assertEquals(4, hAdmin.listTables().length);
+    tableUtil.deleteAllInNamespace(hAdmin, Constants.DEFAULT_NAMESPACE_ID);
+    Assert.assertEquals(1, hAdmin.listTables().length);
+
+    drop(tableIdInOtherNamespace);
+    Assert.assertEquals(0, hAdmin.listTables().length);
+    deleteNamespace("default2");
+  }
+
+  @Test
+  public void testDropAllInOtherNamespaceWithPrefix() throws IOException, InterruptedException {
+    HBaseTableUtil tableUtil = getTableUtil();
+    createNamespace("foonamespace");
+    createNamespace("barnamespace");
+    TableId tableId = TableId.from("foonamespace", "some.table1");
+    create(tableId);
+
+    TableId tableIdWithOtherPrefix = TableId.from("foonamespace", "other.table");
+    create(tableIdWithOtherPrefix);
+
+    tableId = TableId.from("foonamespace", "some.table2");
+    create(tableId);
+
+    TableId tableIdInOtherNamespace = TableId.from("default", "some.table1");
+    create(tableIdInOtherNamespace);
+
+    Assert.assertEquals(4, hAdmin.listTables().length);
+    tableUtil.deleteAllInNamespace(hAdmin, Id.Namespace.from("foonamespace"), new Predicate<TableId>() {
+      @Override
+      public boolean apply(TableId input) {
+        return input.getTableName().startsWith("some");
+      }
+    });
+    Assert.assertEquals(2, hAdmin.listTables().length);
+
+    drop(tableIdInOtherNamespace);
+    drop(tableIdWithOtherPrefix);
+    Assert.assertEquals(0, hAdmin.listTables().length);
+    deleteNamespace("foonamespace");
+    deleteNamespace("barnamespace");
   }
 
   private void waitForMetricsToUpdate() throws InterruptedException {
@@ -107,8 +301,8 @@ public abstract class AbstractHBaseTableUtilTest {
     TimeUnit.SECONDS.sleep(4);
   }
 
-  private void writeSome(String tableName) throws IOException {
-    HTable table = new HTable(testHBase.getConfiguration(), tableName);
+  private void writeSome(String namespace, String tableName) throws IOException {
+    HTable table = getTableUtil().createHTable(testHBase.getConfiguration(), TableId.from(namespace, tableName));
     try {
       // writing at least couple megs to reflect in "megabyte"-based metrics
       for (int i = 0; i < 8; i++) {
@@ -121,25 +315,67 @@ public abstract class AbstractHBaseTableUtilTest {
     }
   }
 
-  private void create(String tableName) throws IOException {
-    HTableDescriptor desc = new HTableDescriptor(tableName);
+  private void createNamespace(String namespace) throws IOException {
+    getTableUtil().createNamespaceIfNotExists(hAdmin, Id.Namespace.from(namespace));
+  }
+
+
+  private void deleteNamespace(String namespace) throws IOException {
+    getTableUtil().deleteNamespaceIfExists(hAdmin, Id.Namespace.from(namespace));
+  }
+
+  private void create(String namespace, String tableName) throws IOException {
+    create(TableId.from(namespace, tableName));
+  }
+
+  private void create(TableId tableId) throws IOException {
+    HBaseTableUtil tableUtil = getTableUtil();
+    HTableDescriptor desc = tableUtil.createHTableDescriptor(tableId);
     desc.addFamily(new HColumnDescriptor("d"));
-    getTableUtil().createTableIfNotExists(hAdmin, tableName, desc);
+    tableUtil.createTableIfNotExists(hAdmin, tableId, desc);
   }
 
-  private void truncate(String tableName) throws IOException {
-    HTableDescriptor tableDescriptor = hAdmin.getTableDescriptor(Bytes.toBytes(tableName));
-    hAdmin.disableTable(tableName);
-    hAdmin.deleteTable(tableName);
-    hAdmin.createTable(tableDescriptor);
+  private boolean exists(String namespace, String tableName) throws IOException {
+    return exists(TableId.from(namespace, tableName));
   }
 
-  private void drop(String tableName) throws IOException {
-    hAdmin.disableTable(tableName);
-    hAdmin.deleteTable(tableName);
+  private boolean exists(TableId tableId) throws IOException {
+    HBaseTableUtil tableUtil = getTableUtil();
+    return tableUtil.tableExists(hAdmin, tableId);
   }
 
-  private HBaseTableUtil.TableStats getTableStats(String tableName) throws IOException {
-    return getTableUtil().getTableStats(hAdmin).get(tableName);
+  private HTableDescriptor getTableDescriptor(String namespace, String name) throws IOException {
+    return getTableUtil().getHTableDescriptor(hAdmin, TableId.from(namespace, name));
+  }
+
+  private void truncate(String namespace, String tableName) throws IOException {
+    HBaseTableUtil tableUtil = getTableUtil();
+    TableId tableId = TableId.from(namespace, tableName);
+    tableUtil.truncateTable(hAdmin, tableId);
+  }
+
+  private void disable(String namespace, String tableName) throws IOException {
+    getTableUtil().disableTable(hAdmin, TableId.from(namespace, tableName));
+  }
+
+  private void enable(String namespace, String tableName) throws IOException {
+    getTableUtil().enableTable(hAdmin, TableId.from(namespace, tableName));
+  }
+
+  private void drop(String namespace, String tableName) throws IOException {
+    drop(TableId.from(namespace, tableName));
+  }
+
+  private void drop(TableId tableId) throws IOException {
+    HBaseTableUtil tableUtil = getTableUtil();
+    tableUtil.dropTable(hAdmin, tableId);
+  }
+
+  private HBaseTableUtil.TableStats getTableStats(String namespace, String tableName) throws IOException {
+    HBaseTableUtil tableUtil = getTableUtil();
+    // todo : should support custom table-prefix
+    TableId tableId = TableId.from(namespace, tableName);
+    Map<TableId, HBaseTableUtil.TableStats> statsMap = tableUtil.getTableStats(hAdmin);
+    return statsMap.get(tableId);
   }
 }

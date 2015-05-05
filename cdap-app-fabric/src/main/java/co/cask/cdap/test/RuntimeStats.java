@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,70 +16,118 @@
 
 package co.cask.cdap.test;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Maps;
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
+import co.cask.cdap.api.dataset.lib.cube.TimeValue;
+import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricDeleteQuery;
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricTimeSeries;
+import co.cask.cdap.api.metrics.RuntimeMetrics;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricsContexts;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Stopwatch;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicLong;
+import javax.annotation.Nullable;
 
 /**
  *
  */
 public final class RuntimeStats {
 
-  private static ConcurrentMap<String, AtomicLong> counters = Maps.newConcurrentMap();
+  // ugly attempt to suport existing APIs
+  // todo: non-thread safe? or fine as long as in-memory datasets underneath are used?
+  public static MetricStore metricStore;
 
-  public static void count(String name, int count) {
-    AtomicLong oldValue = counters.putIfAbsent(name, new AtomicLong(count));
-    if (oldValue != null) {
-      oldValue.addAndGet(count);
-    }
+  private RuntimeStats() {
+  }
+
+  public static void resetAll() throws Exception {
+    metricStore.deleteAll();
+  }
+
+  public static RuntimeMetrics getFlowletMetrics(String namespace, String applicationId,
+                                                 String flowId, String flowletId) {
+    Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.FLOW, flowId);
+    return getMetrics(MetricsContexts.forFlowlet(id, flowletId),
+                      Constants.Metrics.Name.Flow.FLOWLET_INPUT,
+                      Constants.Metrics.Name.Flow.FLOWLET_PROCESSED,
+                      Constants.Metrics.Name.Flow.FLOWLET_EXCEPTIONS);
   }
 
   public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {
-    String prefix = String.format("%s.f.%s.%s", applicationId, flowId, flowletId);
-    String inputName = String.format("%s.process.tuples.read", prefix);
-    String processedName = String.format("%s.process.events.processed", prefix);
-    String exceptionName = String.format("%s.process.errors", prefix);
-
-    return getMetrics(prefix, inputName, processedName, exceptionName);
+    return getFlowletMetrics(Constants.DEFAULT_NAMESPACE, applicationId, flowId, flowletId);
   }
 
-  public static RuntimeMetrics getProcedureMetrics(String applicationId, String procedureId) {
-    String prefix = String.format("%s.p.%s", applicationId, procedureId);
-    String inputName = String.format("%s.query.requests", prefix);
-    String processedName = String.format("%s.query.processed", prefix);
-    String exceptionName = String.format("%s.query.failures", prefix);
-
-    return getMetrics(prefix, inputName, processedName, exceptionName);
+  public static RuntimeMetrics getServiceMetrics(String namespace, String applicationId, String serviceId) {
+    Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.SERVICE, serviceId);
+    return getMetrics(MetricsContexts.forService(id),
+                      Constants.Metrics.Name.Service.SERVICE_INPUT,
+                      Constants.Metrics.Name.Service.SERVICE_PROCESSED,
+                      Constants.Metrics.Name.Service.SERVICE_EXCEPTIONS);
   }
 
-  private static RuntimeMetrics getMetrics(final String prefix,
+  public static RuntimeMetrics getServiceHandlerMetrics(String namespace, String applicationId, String serviceId,
+                                                        String handlerId) {
+    Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.SERVICE, serviceId);
+    return getMetrics(MetricsContexts.forServiceHandler(id, handlerId),
+                      Constants.Metrics.Name.Service.SERVICE_INPUT,
+                      Constants.Metrics.Name.Service.SERVICE_PROCESSED,
+                      Constants.Metrics.Name.Service.SERVICE_EXCEPTIONS);
+  }
+
+
+  public static RuntimeMetrics getServiceMetrics(String applicationId, String serviceId) {
+    return getServiceMetrics(Constants.DEFAULT_NAMESPACE, applicationId, serviceId);
+  }
+
+  public static RuntimeMetrics getServiceHandlerMetrics(String applicationId, String serviceId, String handlerId) {
+    return getServiceHandlerMetrics(Constants.DEFAULT_NAMESPACE, applicationId, serviceId, handlerId);
+  }
+
+  @Deprecated
+  public static void clearStats(final String applicationId) {
+    try {
+      metricStore.delete(
+        new MetricDeleteQuery(0, System.currentTimeMillis() / 1000,
+                              ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
+                                              Constants.Metrics.Tag.APP, applicationId)));
+    } catch (Exception e) {
+      // Should never happen in unit test
+      throw Throwables.propagate(e);
+    }
+  }
+
+  private static RuntimeMetrics getMetrics(final Map<String, String> context,
                                            final String inputName,
                                            final String processedName,
-                                           final String exceptionName) {
+                                           @Nullable final String exceptionName) {
     return new RuntimeMetrics() {
       @Override
       public long getInput() {
-        AtomicLong input = counters.get(inputName);
-        return input == null ? 0 : input.get();
+        return getTotalCounter(context, inputName);
       }
 
       @Override
       public long getProcessed() {
-        AtomicLong processed = counters.get(processedName);
-        return processed == null ? 0 : processed.get();
-
+        return getTotalCounter(context, processedName);
       }
 
       @Override
       public long getException() {
-        AtomicLong exception = counters.get(exceptionName);
-        return exception == null ? 0 : exception.get();
+        Preconditions.checkArgument(exceptionName != null, "exception count not supported");
+        return getTotalCounter(context, exceptionName);
       }
 
       @Override
@@ -103,40 +151,57 @@ public final class RuntimeStats {
       @Override
       public void waitFor(String name, long count,
                           long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
-        doWaitFor(prefix + "." + name, count, timeout, timeoutUnit);
+        doWaitFor(name, count, timeout, timeoutUnit);
       }
 
       private void doWaitFor(String name, long count, long timeout, TimeUnit timeoutUnit)
                                           throws TimeoutException, InterruptedException {
-        AtomicLong value = counters.get(name);
-        while (timeout > 0 && (value == null || value.get() < count)) {
-          timeoutUnit.sleep(1);
-          value = counters.get(name);
-          timeout--;
+        long value = getTotalCounter(context, name);
+
+        // Min sleep time is 10ms, max sleep time is 1 seconds
+        long sleepMillis = Math.max(10, Math.min(timeoutUnit.toMillis(timeout) / 10, TimeUnit.SECONDS.toMillis(1)));
+        Stopwatch stopwatch = new Stopwatch().start();
+        while (value < count && stopwatch.elapsedTime(timeoutUnit) < timeout) {
+          TimeUnit.MILLISECONDS.sleep(sleepMillis);
+          value = getTotalCounter(context, name);
         }
 
-        if (timeout == 0 && (value == null || value.get() < count)) {
-          throw new TimeoutException("Time limit reached.");
+        if (value < count) {
+          throw new TimeoutException("Time limit reached: Expected '" + count + "' but got '" + value + "'");
         }
       }
 
       @Override
       public String toString() {
         return String.format("%s; input=%d, processed=%d, exception=%d",
-                             prefix, getInput(), getProcessed(), getException());
+                             Joiner.on(",").withKeyValueSeparator(":").join(context),
+                             getInput(), getProcessed(), getException());
       }
     };
   }
 
-  public static void clearStats(final String prefix) {
-    Iterators.removeIf(counters.entrySet().iterator(), new Predicate<Map.Entry<String, AtomicLong>>() {
-      @Override
-      public boolean apply(Map.Entry<String, AtomicLong> input) {
-        return input.getKey().startsWith(prefix);
+  private static long getTotalCounter(Map<String, String> context, String metricName) {
+    MetricDataQuery query = getTotalCounterQuery(context, metricName);
+    try {
+      Collection<MetricTimeSeries> result = metricStore.query(query);
+      if (result.isEmpty()) {
+        return 0;
       }
-    });
+      // since it is totals query and not groupBy specified, we know there's one time series
+      List<TimeValue> timeValues = result.iterator().next().getTimeValues();
+      if (timeValues.isEmpty()) {
+        return 0;
+      }
+
+      // since it is totals, we know there's one value only
+      return timeValues.get(0).getValue();
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
-  private RuntimeStats() {
+  private static MetricDataQuery getTotalCounterQuery(Map<String, String> context, String metricName) {
+    return new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
+                         context, new ArrayList<String>());
   }
 }

@@ -27,10 +27,12 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import javax.annotation.Nullable;
 
 /**
  * ArchiveBundler is a utlity class that allows to clone a JAR file with modifications
@@ -111,11 +113,11 @@ public final class ArchiveBundler {
 
     // Create a input stream based on the original archive file.
     JarInputStream zin = new JarInputStream(archive.getInputStream());
-
-    // Create a new output JAR file with new MANIFEST.
-    JarOutputStream zout = new JarOutputStream(new BufferedOutputStream(output.getOutputStream()), manifest);
-
     try {
+      // Create a new output JAR file with new MANIFEST.
+      JarOutputStream zout = new JarOutputStream(new BufferedOutputStream(output.getOutputStream()),
+                                                 combineManifest(zin.getManifest(), manifest));
+
       try {
         // Iterates through the input zip entry and make sure, the new files
         // being added are not already present. If not, they are added to the
@@ -137,24 +139,38 @@ public final class ArchiveBundler {
           }
           entry = zin.getNextJarEntry();
         }
-      } finally {
-        // Close the stream
-        zin.close();
-      }
 
-      // Add the new files.
-      for (Map.Entry<String, ? extends InputSupplier<? extends InputStream>> toAdd : files.entrySet()) {
-        zout.putNextEntry(new JarEntry(jarEntryPrefix + toAdd.getKey()));
-        InputStream in = toAdd.getValue().getInput();
-        try {
-          ByteStreams.copy(in, zout);
-        } finally {
-          zout.closeEntry();
-          in.close();
+        // Add the new files.
+        for (Map.Entry<String, ? extends InputSupplier<? extends InputStream>> toAdd : files.entrySet()) {
+          zout.putNextEntry(new JarEntry(jarEntryPrefix + toAdd.getKey()));
+          try {
+            ByteStreams.copy(toAdd.getValue(), zout);
+          } finally {
+            zout.closeEntry();
+          }
         }
+      } finally {
+        zout.close();
       }
     } finally {
-      zout.close();
+      zin.close();
     }
+  }
+
+  /**
+   * Combines two manifests into one. Same attributes in the second manifest will overwrite the first one.
+   * If the first one is null, the second Manifest is returned.
+   */
+  private Manifest combineManifest(@Nullable Manifest first, Manifest second) {
+    if (first == null) {
+      return second;
+    }
+
+    Manifest manifest = new Manifest(first);
+    manifest.getMainAttributes().putAll(second.getMainAttributes());
+    for (Map.Entry<String, Attributes> entry : second.getEntries().entrySet()) {
+      manifest.getAttributes(entry.getKey()).putAll(entry.getValue());
+    }
+    return manifest;
   }
 }

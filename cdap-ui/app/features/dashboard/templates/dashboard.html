@@ -1,0 +1,33 @@
+
+<aside role="toolbar">
+  <a class="btn btn-xs btn-info" title="add dashboard"
+    ng-click="caskPrompt('New dashboard name', 'Dashboard '+(dashboards.length+1))"
+    cask-promptable="addDashboard($value)">
+    <span class="fa fa-plus"></span>
+  </a>
+</aside>
+
+<div class="cdap-subnav-end"></div>
+
+<ul class="nav nav-tabs slanted-tabs" role="tablist">
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="dashboard.standard.cdap" role="tab" tooltip="System" data-toggle="tab">System</a>
+  </li>
+  <li role="presentation"
+      ui-sref-active="active"
+      ng-repeat="dashboard in dashboards | orderBy:$index">
+    <a ui-sref="dashboard.user({tab: $index})"
+        role="tab"
+        ng-click="activeTabClick($event, $index)"
+        tooltip="{{dashboard.title}}"
+        data-toggle="tab"
+        class="dropdown-toggle">
+        <span class="dtitle">
+        {{dashboard.title}}
+        </span>
+    </a>
+  </li>
+</ul>
+
+
+<ui-view role="tabpanel"/>

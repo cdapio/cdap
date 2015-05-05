@@ -23,12 +23,14 @@ import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.TableTest;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -39,7 +41,13 @@ import static org.junit.Assert.fail;
 /**
  * Tests for Index table.
  */
-public class IndexedTableTest extends AbstractDatasetTest {
+public class IndexedTableTest {
+
+  @ClassRule
+  public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
+
+  private static final Id.DatasetInstance tabInstance =
+    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "tab");
 
   private static IndexedTable table;
 
@@ -64,15 +72,15 @@ public class IndexedTableTest extends AbstractDatasetTest {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    createInstance("indexedTable", "tab", DatasetProperties.builder()
+    dsFrameworkUtil.createInstance("indexedTable", tabInstance, DatasetProperties.builder()
       .add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY, idxColString)
       .build());
-    table = getInstance("tab");
+    table = dsFrameworkUtil.getInstance(tabInstance);
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    deleteInstance("tab");
+    dsFrameworkUtil.deleteInstance(tabInstance);
   }
 
   @Test
@@ -94,7 +102,7 @@ public class IndexedTableTest extends AbstractDatasetTest {
 
   @Test
   public void testIndexedOperations() throws Exception {
-    TransactionExecutor txnl = newTransactionExecutor(table);
+    TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(table);
 
     // start a new transaction
     txnl.execute(new TransactionExecutor.Subroutine() {
@@ -257,17 +265,19 @@ public class IndexedTableTest extends AbstractDatasetTest {
 
   @Test
   public void testMultipleIndexedColumns() throws Exception {
-    createInstance("indexedTable", "multicolumntab", DatasetProperties.builder()
+    Id.DatasetInstance multiColumnTabInstance =
+      Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "multicolumntab");
+    dsFrameworkUtil.createInstance("indexedTable", multiColumnTabInstance, DatasetProperties.builder()
       .add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY, "idx1,idx2,idx3")
       .build());
     final byte[] idxCol1 = Bytes.toBytes("idx1");
     final byte[] idxCol2 = Bytes.toBytes("idx2");
     final byte[] idxCol3 = Bytes.toBytes("idx3");
 
-    final IndexedTable mcTable = getInstance("multicolumntab");
+    final IndexedTable mcTable = dsFrameworkUtil.getInstance(multiColumnTabInstance);
 
     try {
-      TransactionExecutor tx = newTransactionExecutor(mcTable);
+      TransactionExecutor tx = dsFrameworkUtil.newTransactionExecutor(mcTable);
       tx.execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
@@ -441,7 +451,7 @@ public class IndexedTableTest extends AbstractDatasetTest {
 
       // rows 2 & 4 should be returned for idx2b
     } finally {
-      deleteInstance("multicolumntab");
+      dsFrameworkUtil.deleteInstance(multiColumnTabInstance);
     }
   }
 
@@ -451,14 +461,15 @@ public class IndexedTableTest extends AbstractDatasetTest {
    */
   @Test
   public void testIndexKeyDelimiterHandling() throws Exception {
-    createInstance("indexedTable", "delimtab", DatasetProperties.builder()
+    Id.DatasetInstance delimTabInstance = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "delimtab");
+    dsFrameworkUtil.createInstance("indexedTable", delimTabInstance, DatasetProperties.builder()
       .add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY, idxColString)
       .build());
-    final IndexedTable iTable = getInstance("delimtab");
+    final IndexedTable iTable = dsFrameworkUtil.getInstance(delimTabInstance);
     final byte[] delim = new byte[]{ 0 };
     try {
       final byte[] valueWithDelimiter = Bytes.concat(idx1, delim, idx2);
-      TransactionExecutor tx = newTransactionExecutor(iTable);
+      TransactionExecutor tx = dsFrameworkUtil.newTransactionExecutor(iTable);
       tx.execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
@@ -500,16 +511,17 @@ public class IndexedTableTest extends AbstractDatasetTest {
         }
       });
     } finally {
-      deleteInstance("delimtab");
+      dsFrameworkUtil.deleteInstance(delimTabInstance);
     }
   }
 
   @Test
   public void testIncrementIndexing() throws Exception {
-    createInstance("indexedTable", "incrtab", DatasetProperties.builder()
+    Id.DatasetInstance incrTabInstance = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "incrtab");
+    dsFrameworkUtil.createInstance("indexedTable", incrTabInstance, DatasetProperties.builder()
       .add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY, "idx1,idx2,idx3")
       .build());
-    final IndexedTable iTable = getInstance("incrtab");
+    final IndexedTable iTable = dsFrameworkUtil.getInstance(incrTabInstance);
     final byte[] idxCol1 = Bytes.toBytes("idx1");
     final byte[] idxCol2 = Bytes.toBytes("idx2");
     final byte[] idxCol3 = Bytes.toBytes("idx3");
@@ -517,7 +529,7 @@ public class IndexedTableTest extends AbstractDatasetTest {
     final byte[] row1 = Bytes.toBytes("row1");
 
     try {
-      TransactionExecutor tx = newTransactionExecutor(iTable);
+      TransactionExecutor tx = dsFrameworkUtil.newTransactionExecutor(iTable);
       tx.execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
@@ -656,7 +668,7 @@ public class IndexedTableTest extends AbstractDatasetTest {
         }
       });
     } finally {
-      deleteInstance("incrtab");
+      dsFrameworkUtil.deleteInstance(incrTabInstance);
     }
   }
   /**

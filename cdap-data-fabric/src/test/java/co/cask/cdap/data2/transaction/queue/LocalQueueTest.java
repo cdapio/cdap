@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,18 +26,24 @@ import co.cask.cdap.data.runtime.DataFabricLocalModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
+import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueProducer;
 import co.cask.cdap.data2.transaction.queue.leveldb.LevelDBQueueProducer;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.util.Modules;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -47,7 +53,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.IOException;
 
 /**
- * Tests that injection for local mode uses in-memory for queues and levelDB for streams.
+ * Tests that injection for local mode uses in-memory for queues.
  */
 public class LocalQueueTest extends QueueTest {
 
@@ -66,6 +72,8 @@ public class LocalQueueTest extends QueueTest {
       new LocationRuntimeModule().getStandaloneModules(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new TransactionMetricsModule(),
+      new DiscoveryRuntimeModule().getStandaloneModules(),
+      new DataSetsModules().getStandaloneModules(),
       new DataFabricLocalModule());
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(TransactionManager.class);
@@ -73,9 +81,8 @@ public class LocalQueueTest extends QueueTest {
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);
-    streamAdmin = injector.getInstance(StreamAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
-    LevelDBOrderedTableService.getInstance().clearTables();
+    LevelDBTableService.getInstance().clearTables();
   }
 
   @Test
@@ -86,11 +93,20 @@ public class LocalQueueTest extends QueueTest {
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new TransactionMetricsModule(),
       new DataFabricModules().getStandaloneModules(),
-      new DataSetsModules().getLocalModule());
+      new DataSetsModules().getStandaloneModules(),
+      Modules.override(new StreamAdminModules().getStandaloneModules())
+        .with(new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
+            bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+          }
+        }));
     QueueClientFactory factory = injector.getInstance(QueueClientFactory.class);
-    QueueProducer producer = factory.createProducer(QueueName.fromStream("bigriver"));
+    QueueProducer producer = factory.createProducer(QueueName.fromStream(Constants.DEFAULT_NAMESPACE, "bigriver"));
     Assert.assertTrue(producer instanceof LevelDBQueueProducer);
-    producer = factory.createProducer(QueueName.fromFlowlet("app", "my", "flowlet", "output"));
+    producer = factory.createProducer(QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "my", "flowlet",
+                                                            "output"));
     Assert.assertTrue(producer instanceof InMemoryQueueProducer);
   }
 

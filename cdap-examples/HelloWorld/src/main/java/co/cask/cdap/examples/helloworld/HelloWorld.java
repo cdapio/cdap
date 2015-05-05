@@ -13,9 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.examples.helloworld;
 
-import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
@@ -27,19 +27,22 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureRequest;
-import co.cask.cdap.api.procedure.ProcedureResponder;
-import co.cask.cdap.api.procedure.ProcedureResponse;
+import co.cask.cdap.api.service.AbstractService;
+import co.cask.cdap.api.service.Service;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
+import com.google.common.base.Charsets;
 
-import static co.cask.cdap.api.procedure.ProcedureResponse.Code.SUCCESS;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 
 /**
- * This is a simple HelloWorld example that uses one stream, one dataset, one flow and one procedure.
+ * This is a simple HelloWorld example that uses one stream, one dataset, one flow and one service.
  * <uL>
  *   <li>A stream to send names to.</li>
  *   <li>A flow with a single flowlet that reads the stream and stores each name in a KeyValueTable</li>
- *   <li>A procedure that reads the name from the KeyValueTable and prints 'Hello [Name]!'</li>
+ *   <li>A service that reads the name from the KeyValueTable and responds with 'Hello [Name]!'</li>
  * </uL>
  */
 public class HelloWorld extends AbstractApplication {
@@ -51,13 +54,13 @@ public class HelloWorld extends AbstractApplication {
     addStream(new Stream("who"));
     createDataset("whom", KeyValueTable.class);
     addFlow(new WhoFlow());
-    addProcedure(new Greeting());
+    addService(new Greeting());
   }
 
   /**
    * Sample Flow.
    */
-  public static class WhoFlow implements Flow {
+  public static final class WhoFlow implements Flow {
 
     @Override
     public FlowSpecification configure() {
@@ -73,45 +76,63 @@ public class HelloWorld extends AbstractApplication {
   /**
    * Sample Flowlet.
    */
-  public static class NameSaver extends AbstractFlowlet {
+  public static final class NameSaver extends AbstractFlowlet {
 
     static final byte[] NAME = { 'n', 'a', 'm', 'e' };
 
     @UseDataSet("whom")
-    KeyValueTable whom;
-    Metrics flowletMetrics;
+    private KeyValueTable whom;
+
+    private Metrics metrics;
 
     @ProcessInput
     public void process(StreamEvent event) {
       byte[] name = Bytes.toBytes(event.getBody());
-      if (name != null && name.length > 0) {
+      if (name.length > 0) {
         whom.write(NAME, name);
+
+        if (name.length > 10) {
+          metrics.count("names.longnames", 1);
+        }
+        metrics.count("names.bytes", name.length);
       }
-      if (name.length > 10) {
-        flowletMetrics.count("names.longnames", 1);
-      }
-      flowletMetrics.count("names.bytes", name.length);
     }
   }
 
   /**
-   * Sample Procedure.
+   * A {@link Service} that creates a greeting using a user's name.
    */
-  public static class Greeting extends AbstractProcedure {
+  public static final class Greeting extends AbstractService {
+
+    public static final String SERVICE_NAME = "Greeting";
+
+    @Override
+    protected void configure() {
+      setName(SERVICE_NAME);
+      setDescription("Service that creates a greeting using a user's name.");
+      addHandler(new GreetingHandler());
+    }
+  }
+
+  /**
+   * Greeting Service handler.
+   */
+  public static final class GreetingHandler extends AbstractHttpServiceHandler {
 
     @UseDataSet("whom")
-    KeyValueTable whom;
-    Metrics procedureMetrics;
+    private KeyValueTable whom;
 
-    @Handle("greet")
-    public void greet(ProcedureRequest request, ProcedureResponder responder) throws Exception {
+    private Metrics metrics;
+
+    @Path("greet")
+    @GET
+    public void greet(HttpServiceRequest request, HttpServiceResponder responder) {
       byte[] name = whom.read(NameSaver.NAME);
-      String toGreet = name != null ? new String(name) : "World";
+      String toGreet = name != null ? new String(name, Charsets.UTF_8) : "World";
       if (toGreet.equals("Jane Doe")) {
-        procedureMetrics.count("greetings.count.jane_doe", 1);
+        metrics.count("greetings.count.jane_doe", 1);
       }
-      responder.sendJson(new ProcedureResponse(SUCCESS), "Hello " + toGreet + "!");
+      responder.sendString(String.format("Hello %s!", toGreet));
     }
   }
 }
-

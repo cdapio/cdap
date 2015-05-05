@@ -16,11 +16,8 @@
 
 package co.cask.cdap.api.service;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Interface for configurers used to create custom Services.
@@ -40,80 +37,20 @@ public interface ServiceConfigurer {
   void setDescription(String description);
 
   /**
-   * Add a worker to the Service.
-   * @param worker to add as worker.
-   */
-  <T extends ServiceWorker> void addWorker(T worker);
-
-  /**
-   * Add a list of workers to the Service.
-   * @param worker
-   */
-  <T extends ServiceWorker> void addWorkers(Iterable<T> worker);
-
-  /**
-   * Add a request handler to the Service.
-   * @param handler to serve requests.
-   */
-  <T extends HttpServiceHandler> void addHandler(T handler);
-
-  /**
    * Add a a list of request handlers to the Service.
    * @param handlers to serve requests.
    */
-  <T extends HttpServiceHandler> void addHandlers(Iterable<T> handlers);
+  void addHandlers(Iterable<? extends HttpServiceHandler> handlers);
 
   /**
-   * Set the properties for the Service.
-   * @param properties
+   * Sets the resources requirements for the server that runs all {@link HttpServiceHandler}s of this Service.
+   * @param resources The requirements.
    */
-  void setProperties(Map<String, String> properties);
+  void setResources(Resources resources);
 
   /**
-   * Get the primary handler used to service requests.
-   * @return the handler that serves requests.
+   * Sets the number of instances needed for the server that runs all {@link HttpServiceHandler}s of this Service.
+   * @param instances Number of instances, must be > 0.
    */
-  List<HttpServiceHandler> getHandlers();
-
-  /**
-   * Get a list of workers for the Service.
-   * @return a list of workers for the Service.
-   */
-  List<ServiceWorker> getWorkers();
-
-  /**
-   * Get the name of the Service.
-   * @return name of the service.
-   */
-  String getName();
-
-  /**
-   * Get the description of the Service.
-   * @return description of the Service.
-   */
-  String getDescription();
-
-  /**
-   * Get the properties for the Service.
-   * @return properties of the Service.
-   */
-  Map<String, String> getProperties();
-
-  /**
-   * Specify a dataset to be used by the Service.
-   * @param dataset name of dataset used.
-   */
-  void useDataset(String dataset);
-
-  /**
-   * Specify a list of datasets that will be used by the Service.
-   * @param datasets names of datasets used.
-   */
-  void useDatasets(Iterable<String> datasets);
-
-  /**
-   * Get a set of datasets used by the Service.
-   * @return set of datasets.
-   */
-  Set<String> getDatasets();
+  void setInstances(int instances);
 }

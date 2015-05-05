@@ -16,10 +16,142 @@
 
 package co.cask.cdap.api.mapreduce;
 
+import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.data.stream.StreamBatchReadable;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
 /**
  * This abstract class provides a default implementation of {@link MapReduce} methods for easy extension.
  */
 public abstract class AbstractMapReduce implements MapReduce {
+
+  private MapReduceConfigurer configurer;
+
+  @Override
+  public final void configure(MapReduceConfigurer configurer) {
+    this.configurer = configurer;
+    configure();
+  }
+
+  /**
+   * Override this method to configure this {@link MapReduce} job.
+   */
+  protected void configure() {
+    // Default no-op
+  }
+
+  /**
+   * Returns the {@link MapReduceConfigurer}, only available at configuration time.
+   */
+  protected final MapReduceConfigurer getConfigurer() {
+    return configurer;
+  }
+
+  /**
+   * Sets the name of the {@link MapReduce}.
+   */
+  protected final void setName(String name) {
+    configurer.setName(name);
+  }
+
+  /**
+   * Sets the description of the {@link MapReduce}.
+   */
+  protected final void setDescription(String description) {
+    configurer.setDescription(description);
+  }
+
+  /**
+   * Sets a set of properties that will be available through the {@link MapReduceSpecification#getProperties()}
+   * at runtime.
+   *
+   * @param properties the properties to set
+   */
+  protected final void setProperties(Map<String, String> properties) {
+    configurer.setProperties(properties);
+  }
+
+  /**
+   * Sets the resources requirement for Mapper task of the {@link MapReduce}.
+   */
+  protected final void setMapperResources(Resources resources) {
+    configurer.setMapperResources(resources);
+  }
+
+  /**
+   * Sets the resources requirement for Reducer task of the {@link MapReduce}.
+   */
+  protected final void setReducerResources(Resources resources) {
+    configurer.setReducerResources(resources);
+  }
+
+  /**
+   * Specifies set of Dataset names that are used by the {@link MapReduce}.
+   * @deprecated datasets used in runtime need not be specified in {@link MapReduce#configure}
+   */
+  @Deprecated
+  protected final void useDatasets(String dataset, String...moreDatasets) {
+    List<String> datasets = new ArrayList<String>();
+    datasets.add(dataset);
+    datasets.addAll(Arrays.asList(moreDatasets));
+    configurer.useDatasets(datasets);
+  }
+
+  /**
+   * Specifies set of Dataset names that are used by the {@link MapReduce}.
+   * @deprecated datasets used in runtime need not be specified in {@link MapReduce#configure}
+   */
+  @Deprecated
+  protected final void useDatasets(Iterable<String> datasets) {
+    configurer.useDatasets(datasets);
+  }
+
+  /**
+   * Sets the name of the Dataset used as input for the {@link MapReduce}.
+   */
+  protected final void setInputDataset(String dataset) {
+    configurer.setInputDataset(dataset);
+  }
+
+  /**
+   * Uses Stream as input for the {@link MapReduce}.
+   *
+   * @param stream Name of the stream
+   */
+  protected final void useStreamInput(String stream) {
+    useStreamInput(new StreamBatchReadable(stream));
+  }
+
+  /**
+   * Uses Stream as input for the {@link MapReduce} with specific time range. Same as calling
+   * {@link #useStreamInput(StreamBatchReadable) setInputStream(new StreamBatchReadable(stream, startTime, endTime))}.
+   *
+   * @see StreamBatchReadable
+   */
+  protected final void useStreamInput(String stream, long startTime, long endTime) {
+    useStreamInput(new StreamBatchReadable(stream, startTime, endTime));
+  }
+
+  /**
+   * Uses Stream as input for the {@link MapReduce}.
+   *
+   * @see StreamBatchReadable
+   */
+  protected final void useStreamInput(StreamBatchReadable streamBatchReadable) {
+    configurer.setInputDataset(streamBatchReadable.toURI().toString());
+  }
+
+  /**
+   * Sets the name of the Dataset used as output for the {@link MapReduce}.
+   */
+  protected final void setOutputDataset(String dataset) {
+    configurer.setOutputDataset(dataset);
+  }
+
   @Override
   public void beforeSubmit(MapReduceContext context) throws Exception {
     // Do nothing by default

@@ -21,17 +21,25 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
+import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
+import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
+import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
+import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
+import co.cask.cdap.proto.Id;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
@@ -41,37 +49,59 @@ import java.io.IOException;
  */
 public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
 
-  private static CConfiguration cConf;
   private static LocationFactory locationFactory;
+  private static NamespacedLocationFactory namespacedLocationFactory;
   private static StreamAdmin streamAdmin;
   private static StreamFileWriterFactory fileWriterFactory;
+  private static StreamCoordinatorClient streamCoordinatorClient;
 
   @BeforeClass
   public static void init() throws IOException {
-    cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new DataSetsModules().getInMemoryModules(),
       new TransactionMetricsModule(),
-      Modules.override(new DataFabricLevelDBModule()).with(new AbstractModule() {
-
+      new DataFabricLevelDBModule(),
+      Modules.override(new StreamAdminModules().getStandaloneModules()).with(new AbstractModule() {
         @Override
         protected void configure() {
-          bind(StreamAdmin.class).to(TestStreamFileAdmin.class).in(Scopes.SINGLETON);
+          bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
         }
-      })
+      }),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          // We don't need notification in this test, hence inject an no-op one
+          bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+        }
+      }
     );
 
     locationFactory = injector.getInstance(LocationFactory.class);
+    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
+    streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
+    streamCoordinatorClient.startAndWait();
+  }
+
+  @AfterClass
+  public static void shutdown() throws Exception {
+    streamCoordinatorClient.stopAndWait();
   }
 
   @Override
   protected LocationFactory getLocationFactory() {
     return locationFactory;
+  }
+
+  @Override
+  protected NamespacedLocationFactory getNamespacedLocationFactory() {
+    return namespacedLocationFactory;
   }
 
   @Override
@@ -85,8 +115,8 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
   }
 
   @Override
-  protected FileWriter<StreamEvent> createWriter(String streamName) throws IOException {
-    StreamConfig config = streamAdmin.getConfig(streamName);
+  protected FileWriter<StreamEvent> createWriter(Id.Stream streamId) throws IOException {
+    StreamConfig config = streamAdmin.getConfig(streamId);
     return fileWriterFactory.create(config, StreamUtils.getGeneration(config));
   }
 }

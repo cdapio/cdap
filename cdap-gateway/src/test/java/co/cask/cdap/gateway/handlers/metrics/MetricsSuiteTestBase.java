@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,32 +15,29 @@
  */
 package co.cask.cdap.gateway.handlers.metrics;
 
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.gateway.MockMetricsCollectionService;
-import co.cask.cdap.gateway.MockedPassportClient;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
-import co.cask.cdap.passport.http.client.PassportClient;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.ImmutableList;
@@ -50,20 +47,18 @@ import com.google.common.collect.ObjectArrays;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.rules.TemporaryFolder;
@@ -100,8 +95,6 @@ public abstract class MetricsSuiteTestBase {
   protected static MetricsCollectionService collectionService;
   protected static Store store;
   protected static LocationFactory locationFactory;
-  protected static List<String> validResources;
-  protected static List<String> malformedResources;
   protected static List<String> nonExistingResources;
   private static CConfiguration conf;
   private static TemporaryFolder tmpFolder;
@@ -109,6 +102,9 @@ public abstract class MetricsSuiteTestBase {
   private static TransactionManager transactionManager;
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
+
+  protected static MetricStore metricStore;
+  protected static LogReader logReader;
 
   private static Injector injector;
 
@@ -128,9 +124,10 @@ public abstract class MetricsSuiteTestBase {
 
     injector = startMetricsService(conf);
 
-    StoreFactory storeFactory = injector.getInstance(StoreFactory.class);
-    store = storeFactory.create();
+    store = injector.getInstance(Store.class);
     locationFactory = injector.getInstance(LocationFactory.class);
+    metricStore = injector.getInstance(MetricStore.class);
+
     tmpFolder.create();
     dataDir = tmpFolder.newFolder();
     initialize();
@@ -144,14 +141,19 @@ public abstract class MetricsSuiteTestBase {
     stopMetricsService(conf);
     try {
       stop();
-    } catch (OperationException e) {
+    } catch (Exception e) {
       e.printStackTrace();
     } finally {
       tmpFolder.delete();
     }
   }
 
-  public static void initialize() throws IOException, OperationException {
+  @After
+  public void after() throws Exception {
+    metricStore.deleteAll();
+  }
+
+  public static void initialize() throws IOException {
     CConfiguration cConf = CConfiguration.create();
 
     // use this injector instead of the one in startMetricsService because that one uses a
@@ -161,10 +163,11 @@ public abstract class MetricsSuiteTestBase {
       new AuthModule(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
+      new MetricsHandlerModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
-      new DataSetsModules().getLocalModule(),
-      new DataSetServiceModules().getInMemoryModule(),
+      new DataSetsModules().getStandaloneModules(),
+      new DataSetServiceModules().getInMemoryModules(),
       new ExploreClientModule()
     ).with(new AbstractModule() {
       @Override
@@ -178,7 +181,7 @@ public abstract class MetricsSuiteTestBase {
     setupMeta();
   }
 
-  public static void stop() throws OperationException {
+  public static void stop() {
     collectionService.stopAndWait();
 
     Deque<File> files = Lists.newLinkedList();
@@ -197,19 +200,11 @@ public abstract class MetricsSuiteTestBase {
   }
 
   public static Injector startMetricsService(CConfiguration conf) {
-    final Map<String, List<String>> keysAndClusters = ImmutableMap.of(API_KEY, Collections.singletonList(CLUSTER));
-
     // Set up our Guice injections
     injector = Guice.createInjector(Modules.override(
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(PassportClient.class).toProvider(new Provider<PassportClient>() {
-            @Override
-            public PassportClient get() {
-              return new MockedPassportClient(keysAndClusters);
-            }
-          });
         }
       },
       new AppFabricTestModule(conf)
@@ -220,11 +215,6 @@ public abstract class MetricsSuiteTestBase {
                // these bindings out as it overlaps with
                // AppFabricServiceModule
                bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-
-               MockMetricsCollectionService metricsCollectionService =
-                 new MockMetricsCollectionService();
-               bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
-               bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
              }
            }
     ));
@@ -241,13 +231,14 @@ public abstract class MetricsSuiteTestBase {
     metrics = injector.getInstance(MetricsQueryService.class);
     metrics.startAndWait();
 
+    logReader = injector.getInstance(LogReader.class);
+
     // initialize the dataset instantiator
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
 
-    EndpointStrategy metricsEndPoints = new TimeLimitEndpointStrategy(
-      new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.METRICS)), 1L, TimeUnit.SECONDS);
+    EndpointStrategy metricsEndPoints = new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.METRICS));
 
-    port = metricsEndPoints.pick().getSocketAddress().getPort();
+    port = metricsEndPoints.pick(1L, TimeUnit.SECONDS).getSocketAddress().getPort();
 
     return injector;
   }
@@ -261,33 +252,7 @@ public abstract class MetricsSuiteTestBase {
   }
 
   // write WordCount app to metadata store
-  public static void setupMeta() throws OperationException {
-    validResources = ImmutableList.of(
-      "/system/reads?aggregate=true",
-      "/system/apps/WordCount/reads?aggregate=true",
-      "/system/apps/WordCount/flows/reads?aggregate=true",
-      "/system/apps/WordCount/flows/WordCounter/reads?aggregate=true",
-      "/system/apps/WordCount/flows/WordCounter/flowlets/counter/reads?aggregate=true",
-      "/system/datasets/wordStats/reads?aggregate=true",
-      "/system/datasets/wordStats/apps/WordCount/reads?aggregate=true",
-      "/system/datasets/wordStats/apps/WordCount/flows/WordCounter/reads?aggregate=true",
-      "/system/datasets/wordStats/apps/WordCount/flows/WordCounter/flowlets/counter/reads?aggregate=true",
-      "/system/streams/wordStream/collect.events?aggregate=true",
-      "/system/cluster/resources.total.storage?aggregate=true"
-    );
-
-    malformedResources = ImmutableList.of(
-      "/syste/reads?aggregate=true",
-      "/system/app/WordCount/reads?aggregate=true",
-      "/system/apps/WordCount/flow/WordCounter/reads?aggregate=true",
-      "/system/apps/WordCount/flows/WordCounter/flowlets/reads?aggregate=true",
-      "/system/apps/WordCount/flows/WordCounter/flowlet/counter/reads?aggregate=true",
-      "/system/dataset/wordStats/reads?aggregate=true",
-      "/system/datasets/wordStats/app/WordCount/reads?aggregate=true",
-      "/system/datasets/wordStats/apps/WordCount/flow/counter/reads?aggregate=true",
-      "/system/datasets/wordStats/apps/WordCount/flows/WordCounter/flowlet/counter/reads?aggregate=true"
-    );
-
+  public static void setupMeta() {
     nonExistingResources = ImmutableList.of(
       "/system/apps/WordCont/reads?aggregate=true",
       "/system/apps/WordCount/flows/WordCouner/reads?aggregate=true",
@@ -298,14 +263,6 @@ public abstract class MetricsSuiteTestBase {
       "/system/datasets/wordStts/apps/WordCount/flows/WordCounter/flowlets/counter/reads?aggregate=true",
       "/system/streams/wordStrea/collect.events?aggregate=true"
     );
-  }
-
-  public static int getPort() {
-    return port;
-  }
-
-  public static Header getAuthHeader() {
-    return AUTH_HEADER;
   }
 
   public static URI getEndPoint(String path) throws URISyntaxException {
@@ -327,35 +284,6 @@ public abstract class MetricsSuiteTestBase {
     return client.execute(get);
   }
 
-  public static HttpResponse doPut(String resource) throws Exception {
-    DefaultHttpClient client = new DefaultHttpClient();
-    HttpPut put = new HttpPut(MetricsSuiteTestBase.getEndPoint(resource));
-    put.setHeader(AUTH_HEADER);
-    return client.execute(put);
-  }
-
-  public static HttpResponse doPut(String resource, String body) throws Exception {
-    DefaultHttpClient client = new DefaultHttpClient();
-    HttpPut put = new HttpPut(MetricsSuiteTestBase.getEndPoint(resource));
-    if (body != null) {
-      put.setEntity(new StringEntity(body));
-    }
-    put.setHeader(AUTH_HEADER);
-    return client.execute(put);
-  }
-
-  public static HttpResponse doPost(HttpPost post) throws Exception {
-    DefaultHttpClient client = new DefaultHttpClient();
-    post.setHeader(AUTH_HEADER);
-    return client.execute(post);
-  }
-
-  public static HttpPost getPost(String resource) throws Exception {
-    HttpPost post = new HttpPost(MetricsSuiteTestBase.getEndPoint(resource));
-    post.setHeader(AUTH_HEADER);
-    return post;
-  }
-
   public static HttpResponse doPost(String resource, String body) throws Exception {
     return doPost(resource, body, null);
   }
@@ -375,10 +303,63 @@ public abstract class MetricsSuiteTestBase {
     return client.execute(post);
   }
 
-  public static HttpResponse doDelete(String resource) throws Exception {
-    DefaultHttpClient client = new DefaultHttpClient();
-    HttpDelete delete = new HttpDelete(MetricsSuiteTestBase.getEndPoint(resource));
-    delete.setHeader(AUTH_HEADER);
-    return client.execute(delete);
+  /**
+   * Given a non-versioned API path, returns its corresponding versioned API path with v3 and default namespace.
+   *
+   * @param nonVersionedApiPath API path without version
+   * @param namespace the namespace
+   */
+  public static String getVersionedAPIPath(String nonVersionedApiPath, String namespace) {
+    String version = Constants.Gateway.API_VERSION_3_TOKEN;
+    return String.format("/%s/namespaces/%s/%s", version, namespace, nonVersionedApiPath);
+  }
+
+  protected static Map<String, String> getFlowletContext(String namespaceId, String appName, String flowName,
+                                                         String runId, String flowletName) {
+    return ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
+      .put(Constants.Metrics.Tag.APP, appName)
+      .put(Constants.Metrics.Tag.FLOW, flowName)
+      .put(Constants.Metrics.Tag.RUN_ID, runId)
+      .put(Constants.Metrics.Tag.FLOWLET, flowletName).build();
+  }
+
+  protected static Map<String, String> getMapReduceTaskContext(String namespaceId, String appName, String jobName,
+                                                               MapReduceMetrics.TaskType type,
+                                                               String runId, String instanceId) {
+    return ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
+      .put(Constants.Metrics.Tag.APP, appName)
+      .put(Constants.Metrics.Tag.MAPREDUCE, jobName)
+      .put(Constants.Metrics.Tag.MR_TASK_TYPE, type.getId())
+      .put(Constants.Metrics.Tag.RUN_ID, runId)
+      .put(Constants.Metrics.Tag.INSTANCE_ID, instanceId)
+      .build();
+  }
+
+  protected static Map<String, String> getAdapterContext(String namespaceId, String appName, String jobName,
+                                                         MapReduceMetrics.TaskType type, String runId,
+                                                         String instanceId, String adapterName) {
+    return ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
+      .put(Constants.Metrics.Tag.APP, appName)
+      .put(Constants.Metrics.Tag.MAPREDUCE, jobName)
+      .put(Constants.Metrics.Tag.MR_TASK_TYPE, type.getId())
+      .put(Constants.Metrics.Tag.RUN_ID, runId)
+      .put(Constants.Metrics.Tag.INSTANCE_ID, instanceId)
+      .put(Constants.Metrics.Tag.ADAPTER, adapterName)
+      .build();
+  }
+
+  protected static Map<String, String> getWorkerAdapterContext(String namespaceId, String appName, String jobName,
+                                                               String runId, String instanceId, String adapterName) {
+    return ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
+      .put(Constants.Metrics.Tag.APP, appName)
+      .put(Constants.Metrics.Tag.WORKER, jobName)
+      .put(Constants.Metrics.Tag.RUN_ID, runId)
+      .put(Constants.Metrics.Tag.INSTANCE_ID, instanceId)
+      .put(Constants.Metrics.Tag.ADAPTER, adapterName)
+      .build();
   }
 }

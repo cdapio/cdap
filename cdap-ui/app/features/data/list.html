@@ -1,0 +1,27 @@
+<div ncy-breadcrumb></div>
+<h2> All Datasets </h2>
+<div class="table-responsive">
+  <table class="table table-curved" cask-sortable>
+    <thead>
+      <tr ng-class="{'sort-enabled': dataList.length>0}">
+        <th data-predicate="name"> Name </th>
+        <th data-predicate="dataType"> Type </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="data in dataList | orderBy:sortable.predicate:sortable.reverse">
+          <td>
+            <a ng-click="goToDetail(data)"
+                href="">
+                <strong ng-bind="data.name"> </strong>
+            </a>
+          </td>
+          <td>
+            <span class="icon-streams" ng-if="data.dataType === 'Stream'"></span>
+            <span class="icon-datasets" ng-if="data.dataType === 'Dataset'"></span>
+            <span> {{data.dataType}} </span>
+          </td>
+      </tr>
+    <tbody>
+  </table>
+</div>

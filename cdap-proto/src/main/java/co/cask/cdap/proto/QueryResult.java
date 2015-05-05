@@ -17,7 +17,10 @@
 package co.cask.cdap.proto;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
 
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -44,8 +47,24 @@ public class QueryResult {
     }
 
     QueryResult that = (QueryResult) o;
-
-    return Objects.equal(this.columns, that.columns);
+    if (this.columns.size() != that.columns.size()) {
+      return false;
+    }
+    // Handle byte[] equality
+    Iterator<Object> thisIte = this.columns.iterator();
+    Iterator<Object> thatIte = that.columns.iterator();
+    while (thisIte.hasNext() && thatIte.hasNext()) {
+      Object thisCol = thisIte.next();
+      Object thatCol = thatIte.next();
+      if (thisCol instanceof byte[] && thatCol instanceof byte[]) {
+        if (!Arrays.equals((byte[]) thisCol, (byte[]) thatCol)) {
+          return false;
+        }
+      } else if (!Objects.equal(thisCol, thatCol)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override

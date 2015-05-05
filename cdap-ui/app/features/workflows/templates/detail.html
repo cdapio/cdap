@@ -1,0 +1,78 @@
+<div ncy-breadcrumb></div>
+<div class="row" program-heading>
+  <div class="col-sm-6">
+    <h2 class="programTitle">
+      <span ng-bind="$state.params.programId"></span>
+    </h2>
+    <div class="type-block">
+      <span class="icon-workflow"></span>
+      <small> Type: WorkFlow </small>
+    </div>
+  </div>
+  <div class="col-sm-6 text-right">
+
+    <div class="btn-group" dropdown>
+
+      <div ng-if="status !== 'STARTING'"
+           class="btn btn-success btn-md"
+           ng-click="start()">
+        <span class="fa fa-play"> </span>
+        <span>Start</span>
+      </div>
+
+      <div ng-show="status === 'STARTING'"
+           class="btn btn-success btn-md">
+        <span class="fa fa-refresh fa-spin"></span>
+        <span>{{status | caskCapitalizeFilter}}</span>
+      </div>
+
+
+      <button class="btn btn-md btn-success dropdown-toggle" dropdown-toggle ng-if="status !== STARTING">
+        <span class="caret"></span>
+      </button>
+
+      <ul class="dropdown-menu dropdown-menu-right" role="menu" ng-if="status !== STARTING">
+        <li role="presentation">
+          <a role="menuitem"
+             href="#"
+             ng-click="openRuntime()">
+            <span class="fa fa-wrench pull-right"></span>
+            <span> Runtime Arguments </span>
+          </a>
+        </li>
+        <li role="presentation">
+          <a role="menuitem"
+             href="#"
+             ng-click="openPreferences()">
+            <span class="fa fa-cog pull-right"></span>
+            <span> Preferences </span>
+          </a>
+        </li>
+      </ul>
+
+    </div>
+    <!-- END OF BUTTON GROUP -->
+
+
+  </div>
+</div>
+
+<div class="cdap-subnav-end"></div>
+<ul class="nav nav-tabs slanted-tabs" role="tablist">
+
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="workflows.detail.runs" ui-sref-opts="{reload: true}" role="tab">Runs</a>
+  </li>
+
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="workflows.detail.schedules" ui-sref-opts="{reload: true}" role="tab">Schedules</a>
+  </li>
+
+
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="workflows.detail.history" role="tab" >History</a>
+  </li>
+</ul>
+
+<br />
+<ui-view role="tabpanel"/>

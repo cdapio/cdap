@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data.runtime.main;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -25,16 +26,20 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamHttpService;
+import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
+import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
@@ -79,14 +84,19 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
         new LocationRuntimeModule().getDistributedModules(),
         new MetricsClientRuntimeModule().getDistributedModules(),
         new DataFabricModules().getDistributedModules(),
-        new DataSetsModules().getDistributedModule(),
+        new DataSetsModules().getDistributedModules(),
         new LoggingModules().getDistributedModules(),
         new AuthModule(),
-        new StreamServiceRuntimeModule().getDistributedModules()
+        new ExploreClientModule(),
+        new StreamServiceRuntimeModule().getDistributedModules(),
+        new StreamAdminModules().getDistributedModules(),
+        new NotificationFeedClientModule(),
+        new NotificationServiceRuntimeModule().getDistributedModules(),
+        new StreamAdminModules().getDistributedModules()
       );
 
       injector.getInstance(LogAppenderInitializer.class).initialize();
-      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
+      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.SYSTEM_NAMESPACE,
                                                                          Constants.Logging.COMPONENT_NAME,
                                                                          Constants.Service.STREAMS));
 
@@ -101,6 +111,6 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
     services.add(injector.getInstance(KafkaClientService.class));
     services.add(injector.getInstance(MetricsCollectionService.class));
     services.add(injector.getInstance(StreamHttpService.class));
-
+    services.add(injector.getInstance(StreamService.class));
   }
 }

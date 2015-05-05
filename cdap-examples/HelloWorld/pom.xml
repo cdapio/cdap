@@ -21,7 +21,7 @@
     <parent>
         <artifactId>cdap-examples</artifactId>
         <groupId>co.cask.cdap</groupId>
-        <version>2.5.1</version>
+        <version>3.0.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 

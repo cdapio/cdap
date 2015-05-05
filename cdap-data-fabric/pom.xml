@@ -23,7 +23,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>2.5.1</version>
+    <version>3.0.0</version>
   </parent>
 
   <artifactId>cdap-data-fabric</artifactId>
@@ -42,12 +42,26 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-watchdog-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-notifications-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>co.cask.tephra</groupId>
       <artifactId>tephra-core</artifactId>
     </dependency>
     <dependency>
       <groupId>co.cask.http</groupId>
       <artifactId>netty-http</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.thekraken</groupId>
+      <artifactId>grok</artifactId>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>

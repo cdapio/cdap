@@ -16,34 +16,40 @@
 
 package co.cask.cdap.explore.service;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 @Category(XSlowTests.class)
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-  ExploreExtensiveSchemaTableTest.class,
-  ExploreMetadataTest.class,
-  HiveExploreServiceTest.class,
-  WritableDatasetTest.class,
-  HiveExploreServiceStopTest.class
+  ExploreExtensiveSchemaTableTestRun.class,
+  ExploreMetadataTestRun.class,
+  HiveExploreServiceTestRun.class,
+  WritableDatasetTestRun.class,
+  HiveExploreObjectMappedTableTestRun.class,
+  HiveExploreServiceFileSetTestRun.class
 })
 public class ExploreServiceTestsSuite {
 
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
   @BeforeClass
   public static void init() throws Exception {
-    BaseHiveExploreServiceTest.startServices(CConfiguration.create());
+    BaseHiveExploreServiceTest.initialize(tmpFolder);
     BaseHiveExploreServiceTest.runBefore = false;
     BaseHiveExploreServiceTest.runAfter = false;
   }
 
   @AfterClass
   public static void finish() throws Exception {
+    BaseHiveExploreServiceTest.runBefore = true;
     BaseHiveExploreServiceTest.runAfter = true;
     BaseHiveExploreServiceTest.stopServices();
   }

@@ -1,0 +1,72 @@
+<br />
+<div class="status" ng-controller="CdapAppDetailStatusController">
+  <!-- <div class="btn-group pull-right">
+    <button class="btn btn-default" type="button" ng-bind="programs.runningCount + ' Running'" disabled></button>
+    <button class="btn btn-default" type="button" ng-bind="programs.failedCount + ' Failed'" disabled></button>
+    <button class="btn btn-default" type="button" ng-bind="programs.deployedCount + ' Deployed'" disabled></button>
+  </div> -->
+  <div class="row">
+    <div class="col-xs-12">
+      <h2> Programs </h2>
+      <div class="table-responsive">
+        <table class="table table-curved" cask-sortable>
+          <thead>
+            <tr ng-class="{'sort-enabled': programs.length>0}">
+              <th data-predicate="name"> Name </th>
+              <th data-predicate="status"> Status </th>
+              <th data-predicate="description"> Description </th>
+              <th data-predicate="type"> Type </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="program in programs | orderBy:sortable.predicate:sortable.reverse">
+              <td>
+                <span ng-class="{'status-green': program.status === 'RUNNING' || program.status === 'PAUSED', 'status-grey': program.status === 'STOPPED' || program.status === 'STARTING'}"> </span>
+                <a ng-if="program.type === 'Flow'" ui-sref="flows.detail.runs({programId: program.name})">
+                  <strong> {{program.name}} </strong>
+                </a>
+                <a ng-if="program.type === 'Workflow'" ui-sref="workflows.detail.runs({programId: program.name})">
+                  <strong> {{program.name}} </strong>
+                </a>
+                <a ng-if="program.type === 'Service'" ui-sref="services.detail.status({programId: program.name})">
+                  <strong> {{program.name}} </strong>
+                </a>
+                <a ng-if="program.type === 'Mapreduce'" ui-sref="mapreduce.detail.runs({programId: program.name})">
+                  <strong> {{program.name}} </strong>
+                </a>
+                <a ng-if="program.type === 'Spark'" ui-sref="spark.detail.runs({programId: program.name})">
+
+                  <strong> {{program.name}} </strong>
+                </a>
+                <!--No sref because there is no workers page-->
+                <span ng-if="program.type === 'Worker'">
+                  <strong> {{program.name}} </strong>
+                </span>
+              </td>
+              <td ng-bind="program.status"></td>
+              <td ng-bind="program.description"></td>
+              <td>
+                <strong ng-if="program.type === 'Spark'"
+                        class="icon-spark">
+                </strong>
+                <strong ng-if="program.type === 'Mapreduce'"
+                        class="icon-mapreduce">
+                </strong>
+                <strong ng-if="program.type === 'Service'"
+                        class="icon-service">
+                </strong>
+                <strong ng-if="program.type === 'Workflow'"
+                        class="icon-workflow">
+                </strong>
+                <strong ng-if="program.type === 'Flow'"
+                        class="icon-tigon">
+                </strong>
+                {{program.type}}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

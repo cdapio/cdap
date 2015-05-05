@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,9 +27,8 @@ import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
+import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.proto.Id;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
@@ -62,8 +61,7 @@ public final class InMemoryConfigurator implements Configurator {
    *
    * @param archive name of the archive file for which configure is invoked in-memory.
    */
-  public InMemoryConfigurator(Id.Account id, Location archive) {
-    Preconditions.checkNotNull(id);
+  public InMemoryConfigurator(Location archive) {
     Preconditions.checkNotNull(archive);
     this.archive = archive;
   }
@@ -84,6 +82,9 @@ public final class InMemoryConfigurator implements Configurator {
       // Load the JAR using the JAR class load and load the manifest file.
       Manifest manifest = BundleJarUtil.getManifest(archive);
       Preconditions.checkArgument(manifest != null, "Failed to load manifest from %s", archive.toURI());
+      Preconditions.checkArgument(manifest.getMainAttributes() != null,
+                                  "Failed to load manifest attributes from %s", archive.toURI());
+
       String mainClassName = manifest.getMainAttributes().getValue(ManifestFields.MAIN_CLASS);
       Preconditions.checkArgument(mainClassName != null && !mainClassName.isEmpty(),
                                   "Main class attribute cannot be empty");
@@ -97,8 +98,11 @@ public final class InMemoryConfigurator implements Configurator {
                                                         appMain.getClass().getName()));
         }
 
+        String bundleVersion = manifest.getMainAttributes().getValue(ManifestFields.BUNDLE_VERSION);
+
         Application app = (Application) appMain;
-        result.set(createResponse(app));
+        ConfigResponse response = createResponse(app, bundleVersion);
+        result.set(response);
       } finally {
         removeDir(unpackedJarDir);
       }
@@ -110,16 +114,16 @@ public final class InMemoryConfigurator implements Configurator {
     }
   }
 
-  private ConfigResponse createResponse(Application app) {
-    return new DefaultConfigResponse(0, CharStreams.newReaderSupplier(getSpecJson(app)));
+  private ConfigResponse createResponse(Application app, String bundleVersion) {
+    String specJson = getSpecJson(app, bundleVersion);
+    return new DefaultConfigResponse(0, CharStreams.newReaderSupplier(specJson));
   }
 
-  @VisibleForTesting
-  static final String getSpecJson(Application app) {
+  private static String getSpecJson(Application app, final String bundleVersion) {
     // Now, we call configure, which returns application specification.
     DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
     app.configure(configurer, new ApplicationContext());
-    ApplicationSpecification specification = configurer.createApplicationSpec();
+    ApplicationSpecification specification = configurer.createSpecification(bundleVersion);
 
     // Convert the specification to JSON.
     // We write the Application specification to output file in JSON format.

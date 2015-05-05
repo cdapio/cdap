@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,63 +16,40 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.proto.ProgramType;
-import com.google.common.base.Preconditions;
 import org.apache.twill.api.EventHandler;
-import org.apache.twill.api.ResourceSpecification;
-import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillApplication;
-import org.apache.twill.api.TwillSpecification;
-import org.apache.twill.filesystem.Location;
 
 import java.io.File;
 import java.util.Map;
 
 /**
- * TwillApplication for service. Used to localize program jar location before running the TwillApplication.
+ * The {@link TwillApplication} for running {@link Service} in distributed mode.
  */
-public class ServiceTwillApplication implements TwillApplication {
+public class ServiceTwillApplication extends AbstractProgramTwillApplication {
 
   private final ServiceSpecification spec;
-  private final Program program;
-  private final File hConfig;
-  private final File cConfig;
-  private final EventHandler eventHandler;
 
-  public ServiceTwillApplication(Program program, ServiceSpecification spec, File hConfig, File cConfig,
-                                 EventHandler eventHandler) {
-    this.program = program;
+  public ServiceTwillApplication(Program program, ServiceSpecification spec,
+                                 Map<String, File> localizeFiles, EventHandler eventHandler) {
+    super(program, localizeFiles, eventHandler);
     this.spec = spec;
-    this.hConfig = hConfig;
-    this.cConfig = cConfig;
-    this.eventHandler = eventHandler;
   }
 
   @Override
-  public TwillSpecification configure() {
-    TwillSpecification.Builder.MoreRunnable moreRunnable = TwillSpecification.Builder.with()
-      .setName(String.format("%s.%s.%s.%s", ProgramType.SERVICE.name().toLowerCase(), program.getAccountId(),
-                             program.getApplicationId(), spec.getName()))
-      .withRunnable();
+  protected ProgramType getType() {
+    return ProgramType.SERVICE;
+  }
 
-    Location programLocation = program.getJarLocation();
-    String programName = programLocation.getName();
-    TwillSpecification.Builder.RunnableSetter runnableSetter = null;
-    for (Map.Entry<String, RuntimeSpecification> entry : spec.getRunnables().entrySet()) {
-      RuntimeSpecification runtimeSpec = entry.getValue();
-      ResourceSpecification resourceSpec = runtimeSpec.getResourceSpecification();
-
-      String runnableName = entry.getKey();
-      runnableSetter = moreRunnable
-        .add(runnableName, new ServiceTwillRunnable(runnableName, "hConf.xml", "cConf.xml"), resourceSpec)
-        .withLocalFiles().add(programName, programLocation.toURI())
-                         .add("hConf.xml", hConfig.toURI())
-                         .add("cConf.xml", cConfig.toURI()).apply();
-    }
-
-    Preconditions.checkState(runnableSetter != null, "No Runnable for the Service.");
-    return runnableSetter.anyOrder().withEventHandler(eventHandler).build();
+  @Override
+  protected void addRunnables(Map<String, RunnableResource> runnables) {
+    // Add a runnable for the service handler
+    runnables.put(spec.getName(), new RunnableResource(
+      new ServiceTwillRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
+      createResourceSpec(spec.getResources(), spec.getInstances())
+    ));
   }
 }

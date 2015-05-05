@@ -15,15 +15,7 @@
  */
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
-import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.BeforeClass;
 
@@ -35,31 +27,14 @@ import java.io.IOException;
 public class LocalMultiLiveStreamFileReaderTest extends MultiLiveStreamFileReaderTestBase {
 
   private static LocationFactory locationFactory;
-  private static StreamAdmin streamAdmin;
 
   @BeforeClass
   public static void init() throws IOException {
-    CConfiguration cConf = CConfiguration.create();
-    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
-
-    Injector injector = Guice.createInjector(
-      new ConfigModule(cConf),
-      new LocationRuntimeModule().getInMemoryModules(),
-      new DataFabricLevelDBModule(),
-      new TransactionMetricsModule()
-    );
-
-    locationFactory = injector.getInstance(LocationFactory.class);
-    streamAdmin = injector.getInstance(StreamAdmin.class);
+    locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
   }
 
   @Override
   protected LocationFactory getLocationFactory() {
     return locationFactory;
-  }
-
-  @Override
-  protected StreamAdmin getStreamAdmin() {
-    return streamAdmin;
   }
 }

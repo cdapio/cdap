@@ -1,0 +1,38 @@
+<div etl-canvas-template ng-controller="AdapterRunDetailStatusController">
+  <div class="etlflowcontainer" id="etlFlowContainer">
+    <div class="row">
+      <div class="col-xs-4">
+        <div class="wrapper" id="sourceWrapper">
+          <div class="template plugin-added">
+            <div>
+              <span>{{source.name}}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xs-4">
+        <div class="wrapper transform-wrapper" id="transformsContainer">
+          <div class="template transforms"
+               ng-model="transforms">
+            <div class="plugin-added" ng-if="!transforms.length">
+              <span>No Transforms added</span>
+            </div>
+            <div ng-repeat="transform in transforms" id="transformWrapper{{$index}}" class="plugin-added">
+              <span>{{transform.name}}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xs-4">
+        <div class="wrapper" id="sinkWrapper">
+          <div class="template plugin-added">
+            <div>
+              <span>{{sink.name}}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,241 +15,77 @@
  */
 package co.cask.cdap.api.workflow;
 
-import co.cask.cdap.api.builder.Creator;
-import co.cask.cdap.api.builder.DescriptionSetter;
-import co.cask.cdap.api.builder.NameSetter;
-import co.cask.cdap.api.mapreduce.MapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.schedule.SchedulableProgramSpecification;
-import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.internal.batch.DefaultMapReduceSpecification;
-import co.cask.cdap.internal.batch.ForwardingMapReduceSpecification;
-import co.cask.cdap.internal.builder.BaseBuilder;
-import co.cask.cdap.internal.builder.SimpleDescriptionSetter;
-import co.cask.cdap.internal.builder.SimpleNameSetter;
-import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
-import co.cask.cdap.internal.workflow.DefaultWorkflowSpecification;
-import co.cask.cdap.internal.workflow.MapReduceWorkflowAction;
-import com.google.common.base.Preconditions;
+import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.common.PropertyProvider;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
 /**
- * Specification for a {@link Workflow} -- an instance of this class is created by the {@link Builder} class.
- *
- * <p>
- * Example WorkflowSpecification for a scheduled workflow:
- *
- *  <pre>
- *    <code>
- *      {@literal @}Override
- *      public WorkflowSpecification configure() {
- *        return WorkflowSpecification.Builder.with()
- *        .setName("PurchaseHistoryWorkflow")
- *        .setDescription("PurchaseHistoryWorkflow description")
- *        .onlyWith(new PurchaseHistoryBuilder())
- *        .addSchedule(new Schedule("DailySchedule", "Run every day at 4:00 A.M.", "0 4 * * *", 
- *                     Schedule.Action.START))
- *        .build();
- *      }
- *    </code>
- *  </pre>
- * 
- * See the Purchase example application.
+ * Specification for a {@link Workflow}
  */
-public interface WorkflowSpecification extends SchedulableProgramSpecification {
+public final class WorkflowSpecification implements ProgramSpecification, PropertyProvider {
+  private final String className;
+  private final String name;
+  private final String description;
+  private final Map<String, String> properties;
 
-  List<WorkflowActionSpecification> getActions();
+  private List<WorkflowNode> nodes = Lists.newArrayList();
 
-  Map<String, MapReduceSpecification> getMapReduce();
-
-  /**
-   * Builder for adding the first action to the workflow.
-   * @param <T> Type of the next builder object.
-   */
-  public interface FirstAction<T> {
-
-    MoreAction<T> startWith(WorkflowAction action);
-
-    MoreAction<T> startWith(MapReduce mapReduce);
-
-    T onlyWith(WorkflowAction action);
-
-    T onlyWith(MapReduce mapReduce);
+  public WorkflowSpecification(String className, String name, String description,
+                                      Map<String, String> properties, List<WorkflowNode> nodes) {
+    this.className = className;
+    this.name = name;
+    this.description = description;
+    this.properties = properties == null ? Collections.<String, String>emptyMap() :
+                                           Collections.unmodifiableMap(new HashMap<String, String>(properties));
+    this.nodes = Collections.unmodifiableList(new ArrayList<WorkflowNode>(nodes));
   }
 
-  /**
-   * Builder for adding more actions to the workflow.
-   * @param <T> Type of the next builder object.
-   */
-  public interface MoreAction<T> {
-
-    MoreAction<T> then(WorkflowAction action);
-
-    MoreAction<T> then(MapReduce mapReduce);
-
-    T last(WorkflowAction action);
-
-    T last(MapReduce mapReduce);
+  @Override
+  public String getClassName() {
+    return className;
   }
 
-  /**
-   * Builder for setting up the schedule of the workflow.
-   * @param <T> Type of the next builder object.
-   */
-  public interface ScheduleSetter<T> {
-    T addSchedule(Schedule schedule);
+  @Override
+  public String getName() {
+    return name;
   }
 
-  /**
-   * Builder interface for the last stage of building the {@link WorkflowSpecification}.
-   */
-  interface SpecificationCreator extends Creator<WorkflowSpecification>,
-                                         ScheduleSetter<SpecificationCreator> { }
+  @Override
+  public String getDescription() {
+    return description;
+  }
 
-  /**
-   * Builder class for constructing the {@link WorkflowSpecification}.
-   */
-  final class Builder extends BaseBuilder<WorkflowSpecification> implements SpecificationCreator {
+  @Override
+  public Map<String, String> getProperties() {
+    return properties;
+  }
 
-    private final List<WorkflowActionSpecification> actions = Lists.newArrayList();
-    private final Map<String, MapReduceSpecification> mapReduces = Maps.newHashMap();
-    private final List<Schedule> schedules = Lists.newArrayList();
+  @Override
+  public String getProperty(String key) {
+    return properties.get(key);
+  }
 
-    /**
-     * Returns an instance of builder.
-     */
-    public static NameSetter<DescriptionSetter<FirstAction<SpecificationCreator>>> with() {
-      Builder builder = new Builder();
+  public List<WorkflowNode> getNodes() {
+    return nodes;
+  }
 
-      return SimpleNameSetter.create(
-        getNameSetter(builder), SimpleDescriptionSetter.create(
-        getDescriptionSetter(builder), FirstActionImpl.create(
-        builder, (SpecificationCreator) builder)));
-    }
-
-    @Override
-    public WorkflowSpecification build() {
-      return new DefaultWorkflowSpecification(name, description, actions, mapReduces, schedules);
-    }
-
-    /**
-     * Adds a {@link MapReduce} job to this workflow.
-     * @param mapReduce The map reduce job to add.
-     * @return A {@link MapReduceSpecification} used for the given MapReduce job.
-     */
-    private MapReduceSpecification addWorkflowMapReduce(MapReduce mapReduce) {
-      MapReduceSpecification mapReduceSpec = new DefaultMapReduceSpecification(mapReduce);
-
-      // Rename the MapReduce job based on the step in the workflow.
-      final String mapReduceName = String.format("%s_%s", name, mapReduceSpec.getName());
-      mapReduceSpec = new ForwardingMapReduceSpecification(mapReduceSpec) {
-        @Override
-        public String getName() {
-          return mapReduceName;
-        }
-      };
-
-      // Add the MapReduce job and the MapReduce actionto this workflow.
-      mapReduces.put(mapReduceName, mapReduceSpec);
-      return mapReduceSpec;
-    }
-
-
-    @Override
-    public SpecificationCreator addSchedule(Schedule schedule) {
-      schedules.add(schedule);
-      return this;
-    }
-
-    private static final class FirstActionImpl<T> implements FirstAction<T> {
-
-      private final Builder builder;
-      private final T next;
-
-      static <T> FirstAction<T> create(Builder builder, T next) {
-        return new FirstActionImpl<T>(builder, next);
-      }
-
-      private FirstActionImpl(Builder builder, T next) {
-        this.builder = builder;
-        this.next = next;
-      }
-
-      @Override
-      public MoreAction<T> startWith(WorkflowAction action) {
-        Preconditions.checkArgument(action != null, "WorkflowAction is null.");
-        builder.actions.add(new DefaultWorkflowActionSpecification(action));
-        return new MoreActionImpl<T>(builder, next);
-      }
-
-      @Override
-      public MoreAction<T> startWith(MapReduce mapReduce) {
-        Preconditions.checkArgument(mapReduce != null, "MapReduce is null.");
-        MapReduceSpecification mapReduceSpec = builder.addWorkflowMapReduce(mapReduce);
-        return startWith(new MapReduceWorkflowAction(mapReduce.configure().getName(), mapReduceSpec.getName()));
-      }
-
-      @Override
-      public T onlyWith(WorkflowAction action) {
-        Preconditions.checkArgument(action != null, "WorkflowAction is null.");
-        builder.actions.add(new DefaultWorkflowActionSpecification(action));
-        return next;
-      }
-
-      @Override
-      public T onlyWith(MapReduce mapReduce) {
-        Preconditions.checkArgument(mapReduce != null, "MapReduce is null.");
-        MapReduceSpecification mapReduceSpec = builder.addWorkflowMapReduce(mapReduce);
-        return onlyWith(new MapReduceWorkflowAction(mapReduce.configure().getName(), mapReduceSpec.getName()));
-      }
-    }
-
-    private static final class MoreActionImpl<T> implements MoreAction<T> {
-
-      private final Builder builder;
-      private final T next;
-
-      static <T> MoreAction<T> create(Builder builder, T next) {
-        return new MoreActionImpl<T>(builder, next);
-      }
-
-      private MoreActionImpl(Builder builder, T next) {
-        this.builder = builder;
-        this.next = next;
-      }
-
-      @Override
-      public MoreAction<T> then(WorkflowAction action) {
-        Preconditions.checkArgument(action != null, "WorkflowAction is null.");
-        builder.actions.add(new DefaultWorkflowActionSpecification(action));
-        return this;
-      }
-
-      @Override
-      public MoreAction<T> then(MapReduce mapReduce) {
-        Preconditions.checkArgument(mapReduce != null, "MapReduce is null.");
-        MapReduceSpecification mapReduceSpec = builder.addWorkflowMapReduce(mapReduce);
-        return then(new MapReduceWorkflowAction(mapReduce.configure().getName(), mapReduceSpec.getName()));
-      }
-
-      @Override
-      public T last(WorkflowAction action) {
-        then(action);
-        return next;
-      }
-
-      @Override
-      public T last(MapReduce mapReduce) {
-        then(mapReduce);
-        return next;
-      }
-    }
-
-    private Builder() {
-    }
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder("WorkflowSpecification{");
+    sb.append("className='").append(className).append('\'');
+    sb.append(", name='").append(name).append('\'');
+    sb.append(", description='").append(description).append('\'');
+    sb.append(", properties=").append(properties);
+    sb.append(", nodes=").append(nodes);
+    sb.append('}');
+    return sb.toString();
   }
 }

@@ -16,13 +16,14 @@
 
 package co.cask.cdap.internal.app.runtime.flow;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.common.io.BinaryEncoder;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.internal.io.DatumWriter;
-import co.cask.cdap.internal.io.Schema;
 import com.google.common.base.Function;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -39,12 +40,12 @@ public final class DatumOutputEmitter<T> implements OutputEmitter<T> {
 
   public static final Function<Object, Integer> PARTITION_MAP_TRANSFORMER = new PartitionMapTransformer();
 
-  private final QueueProducer queueProducer;
+  private final Supplier<QueueProducer> producerSupplier;
   private final byte[] schemaHash;
   private final DatumWriter<T> writer;
 
-  public DatumOutputEmitter(QueueProducer queueProducer, Schema schema, DatumWriter<T> writer) {
-    this.queueProducer = queueProducer;
+  public DatumOutputEmitter(Supplier<QueueProducer> producerSupplier, Schema schema, DatumWriter<T> writer) {
+    this.producerSupplier = producerSupplier;
     this.schemaHash = schema.getSchemaHash().toByteArray();
     this.writer = writer;
   }
@@ -65,8 +66,8 @@ public final class DatumOutputEmitter<T> implements OutputEmitter<T> {
       ByteArrayOutputStream output = new ByteArrayOutputStream();
       output.write(schemaHash);
       writer.encode(data, new BinaryEncoder(output));
-      queueProducer.enqueue(new QueueEntry(Maps.transformValues(partitions, PARTITION_MAP_TRANSFORMER),
-                                           output.toByteArray()));
+      producerSupplier.get().enqueue(new QueueEntry(Maps.transformValues(partitions, PARTITION_MAP_TRANSFORMER),
+                                                    output.toByteArray()));
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }

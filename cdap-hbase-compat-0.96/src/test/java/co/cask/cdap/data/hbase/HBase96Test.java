@@ -20,10 +20,12 @@ import com.google.common.base.Function;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -41,6 +43,33 @@ import java.util.TreeMap;
  */
 public class HBase96Test extends HBaseTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(HBase96Test.class);
+
+  private HBaseTestingUtility testUtil = new HBaseTestingUtility();
+
+  @Override
+  public Configuration getConfiguration() {
+    return testUtil.getConfiguration();
+  }
+
+  @Override
+  public int getZKClientPort() {
+    return testUtil.getZkCluster().getClientPort();
+  }
+
+  @Override
+  public void startHBase() throws Exception {
+    testUtil.startMiniCluster();
+  }
+
+  @Override
+  public void stopHBase() throws Exception {
+    testUtil.shutdownMiniCluster();
+  }
+
+  @Override
+  public MiniHBaseCluster getHBaseCluster() {
+    return testUtil.getHBaseCluster();
+  }
 
   @Override
   public HRegion createHRegion(byte[] tableName, byte[] startKey,
@@ -67,6 +96,7 @@ public class HBase96Test extends HBaseTestBase {
 
   @Override
   public void forceRegionFlush(byte[] tableName) throws IOException {
+    MiniHBaseCluster hbaseCluster = getHBaseCluster();
     if (hbaseCluster != null) {
       TableName qualifiedTableName = TableName.valueOf(tableName);
       for (JVMClusterUtil.RegionServerThread t : hbaseCluster.getRegionServerThreads()) {
@@ -84,6 +114,7 @@ public class HBase96Test extends HBaseTestBase {
 
   @Override
   public void forceRegionCompact(byte[] tableName, boolean majorCompact) throws IOException {
+    MiniHBaseCluster hbaseCluster = getHBaseCluster();
     if (hbaseCluster != null) {
       TableName qualifiedTableName = TableName.valueOf(tableName);
       for (JVMClusterUtil.RegionServerThread t : hbaseCluster.getRegionServerThreads()) {
@@ -101,6 +132,7 @@ public class HBase96Test extends HBaseTestBase {
 
   @Override
   public <T> Map<byte[], T> forEachRegion(byte[] tableName, Function<HRegion, T> function) {
+    MiniHBaseCluster hbaseCluster = getHBaseCluster();
     Map<byte[], T> results = new TreeMap<byte[], T>(Bytes.BYTES_COMPARATOR);
     // make sure consumer config cache is updated
     for (JVMClusterUtil.RegionServerThread t : hbaseCluster.getRegionServerThreads()) {
@@ -110,5 +142,12 @@ public class HBase96Test extends HBaseTestBase {
       }
     }
     return results;
+  }
+
+  @Override
+  public void waitUntilTableAvailable(byte[] tableName, long timeoutInMillis)
+      throws IOException, InterruptedException {
+    testUtil.waitTableAvailable(tableName, timeoutInMillis);
+    testUtil.waitUntilAllRegionsAssigned(TableName.valueOf(tableName), timeoutInMillis);
   }
 }

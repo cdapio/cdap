@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,50 +17,69 @@
 package co.cask.cdap.data2.transaction.queue;
 
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data2.transaction.EntityAdmin;
 
-import java.util.Map;
+import java.util.Properties;
+import javax.annotation.Nullable;
 
 /**
  *
  */
-public interface QueueAdmin extends EntityAdmin {
+public interface QueueAdmin {
 
   /**
-   * Deletes all entries for all queues.
+   * Deletes all queues in a namespace
+   * @param namespaceId the namespace to delete flows in
    */
-  void dropAll() throws Exception;
+  void dropAllInNamespace(String namespaceId) throws Exception;
 
   /**
    * Deletes all queues for a flow, for example if the flow is deleted.
    * todo: make this independent of the concept of a flow
    */
-  void dropAllForFlow(String app, String flow) throws Exception;
+  void dropAllForFlow(String namespaceId, String app, String flow) throws Exception;
 
   /**
-   * Clears all queues for a flow, for example if the flow is upgraded and old .
+   * Clears all queues for a flow, for example if the flow is upgraded and old.
    * todo: make this independent of the concept of a flow
    */
-  void clearAllForFlow(String app, String flow) throws Exception;
+  void clearAllForFlow(String namespaceId, String app, String flow) throws Exception;
 
   /**
-   * Sets the number of consumer instances for the given consumer group in a queue.
-   * @param queueName Name of the queue.
-   * @param groupId The consumer group to alter.
-   * @param instances Number of instances.
+   * Returns a {@link QueueConfigurer} for configuring the queue.
    */
-  void configureInstances(QueueName queueName, long groupId, int instances) throws Exception;
-
-
-  /**
-   * Sets the consumer groups information for the given queue.
-   * @param queueName Name of the queue.
-   * @param groupInfo A map from groupId to number of instances of each group.
-   */
-  void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) throws Exception;
+  QueueConfigurer getQueueConfigurer(QueueName queueName) throws Exception;
 
   /**
    * Performs upgrade action for all queues.
    */
   void upgrade() throws Exception;
+
+  /**
+   * @param queueName Name of the queue
+   * @return true if queue with given name exists, otherwise false
+   * @throws Exception if check fails
+   */
+  boolean exists(QueueName queueName) throws Exception;
+
+  /**
+   * Creates queue if doesn't exist. If queue exists does nothing.
+   * @param queueName Name of the queue
+   * @throws Exception if creation fails
+   */
+  void create(QueueName queueName) throws Exception;
+
+  /**
+   * Creates queue if doesn't exist. If queue exists does nothing.
+   * @param queueName Name of the queue
+   * @param props additional properties
+   * @throws Exception if creation fails
+   */
+  void create(QueueName queueName, @Nullable Properties props) throws Exception;
+
+  /**
+   * Wipes out queue data.
+   * @param queueName Name of the queue
+   * @throws Exception if cleanup fails
+   */
+  void truncate(QueueName queueName) throws Exception;
 }

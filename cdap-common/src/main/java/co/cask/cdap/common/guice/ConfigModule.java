@@ -16,6 +16,7 @@
 package co.cask.cdap.common.guice;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.SConfiguration;
 import com.google.inject.AbstractModule;
 import org.apache.hadoop.conf.Configuration;
@@ -48,10 +49,11 @@ public final class ConfigModule extends AbstractModule {
   }
 
   public ConfigModule(CConfiguration cConf, Configuration hConf, SConfiguration sConf) {
+    CConfigurationUtil.verify(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
     this.sConf = sConf;
-    cConf.copyTxProperties(hConf);
+    CConfigurationUtil.copyTxProperties(cConf, hConf);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,34 +18,36 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.AbstractBodyConsumer;
+import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetModuleConflictException;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import co.cask.cdap.proto.Id;
 import co.cask.http.AbstractHttpHandler;
+import co.cask.http.BodyConsumer;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -54,24 +56,22 @@ import javax.ws.rs.PathParam;
  * Handles dataset type management calls.
  */
 // todo: do we want to make it authenticated? or do we treat it always as "internal" piece?
-@Path(Constants.Gateway.GATEWAY_VERSION)
+@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class DatasetTypeHandler extends AbstractHttpHandler {
   public static final String HEADER_CLASS_NAME = "X-Class-Name";
 
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeHandler.class);
 
   private final DatasetTypeManager manager;
-  private final LocationFactory locationFactory;
-  private final String archiveDir;
+  private final CConfiguration cConf;
+  private final NamespacedLocationFactory namespacedLocationFactory;
 
   @Inject
-  public DatasetTypeHandler(DatasetTypeManager manager,
-                            LocationFactory locationFactory,
-                            CConfiguration conf) {
+  public DatasetTypeHandler(DatasetTypeManager manager, CConfiguration conf,
+                            NamespacedLocationFactory namespacedLocationFactory) {
     this.manager = manager;
-    this.locationFactory = locationFactory;
-    String dataFabricDir = conf.get(Constants.Dataset.Manager.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
-    this.archiveDir = dataFabricDir + "/archive";
+    this.cConf = conf;
+    this.namespacedLocationFactory = namespacedLocationFactory;
   }
 
   @Override
@@ -86,9 +86,9 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
   @GET
   @Path("/data/modules")
-  public void listModules(HttpRequest request, final HttpResponder responder) {
+  public void listModules(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
     // Sorting by name for convenience
-    List<DatasetModuleMeta> list = Lists.newArrayList(manager.getModules());
+    List<DatasetModuleMeta> list = Lists.newArrayList(manager.getModules(Id.Namespace.from(namespaceId)));
     Collections.sort(list, new Comparator<DatasetModuleMeta>() {
       @Override
       public int compare(DatasetModuleMeta o1, DatasetModuleMeta o2) {
@@ -100,81 +100,133 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
   @DELETE
   @Path("/data/modules")
-  public void deleteModules(HttpRequest request, final HttpResponder responder) {
+  public void deleteModules(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId) {
+    if (Constants.SYSTEM_NAMESPACE.equals(namespaceId)) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN,
+                           String.format("Cannot delete modules from '%s' namespace.", namespaceId));
+      return;
+    }
     try {
-      manager.deleteModules();
+      manager.deleteModules(Id.Namespace.from(namespaceId));
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (DatasetModuleConflictException e) {
-      responder.sendError(HttpResponseStatus.CONFLICT, e.getMessage());
+      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
     }
   }
 
   @PUT
   @Path("/data/modules/{name}")
-  public void addModule(HttpRequest request, final HttpResponder responder,
-                       @PathParam("name") String name) throws IOException {
-
-    String className = request.getHeader(HEADER_CLASS_NAME);
-    Preconditions.checkArgument(className != null, "Required header 'class-name' is absent.");
-    LOG.info("Adding module {}, class name: {}", name, className);
-
-    DatasetModuleMeta existing = manager.getModule(name);
-    if (existing != null) {
-      String message = String.format("Cannot add module %s: module with same name already exists: %s",
-                                     name, existing);
-      LOG.warn(message);
-      responder.sendError(HttpResponseStatus.CONFLICT, message);
-      return;
+  public BodyConsumer addModule(HttpRequest request, HttpResponder responder,
+                                @PathParam("namespace-id") String namespaceId, @PathParam("name") final String name,
+                                @HeaderParam(HEADER_CLASS_NAME) final String className) throws IOException {
+    if (Constants.SYSTEM_NAMESPACE.equals(namespaceId)) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN,
+                           String.format("Cannot add module to '%s' namespace.", namespaceId));
+      return null;
     }
 
-    ChannelBuffer content = request.getContent();
-    if (content == null) {
-      LOG.warn("Cannot add module {}: content is null", name);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Content is null");
-      return;
+    // verify namespace directory exists
+    // TODO: CDAP-1366 - should have a namespaceClient to make a REST API call to check if the namespace exists
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    final Location namespaceHomeLocation = namespacedLocationFactory.get(namespace);
+    if (!namespaceHomeLocation.exists()) {
+      String msg = String.format("Home directory %s for namespace %s not found",
+                                 namespaceHomeLocation.toURI().getPath(), namespaceId);
+      LOG.error(msg);
+      responder.sendString(HttpResponseStatus.NOT_FOUND, msg);
+      return null;
     }
 
-    Location uploadDir = locationFactory.create(archiveDir).append("account_placeholder");
-    String archiveName = name + ".jar";
-    Location archive = uploadDir.append(archiveName);
-    LOG.info("Storing module {} jar at {}", name, archive.toURI().toString());
-
-    if (!uploadDir.exists() && !uploadDir.mkdirs()) {
-      LOG.warn("Unable to create directory '{}'", uploadDir.getName());
+    // Store uploaded content to a local temp file
+    String namespacesDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
+    File localDataDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR));
+    File namespaceBase = new File(localDataDir, namespacesDir);
+    File tempDir = new File(new File(namespaceBase, namespaceId),
+                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    if (!DirUtils.mkdirs(tempDir)) {
+      throw new IOException("Could not create temporary directory at: " + tempDir);
     }
 
-    InputStream inputStream = new ChannelBufferInputStream(content);
-    try {
-      // todo: store to temp file first and do some verifications? Or even datasetFramework should persist file?
-      OutputStream outStream = archive.getOutputStream();
-      try {
-        ByteStreams.copy(inputStream, outStream);
-      } finally {
-        outStream.close();
+    final Id.DatasetModule datasetModuleId = Id.DatasetModule.from(namespace, name);
+
+    return new AbstractBodyConsumer(File.createTempFile("dataset-", ".jar", tempDir)) {
+      @Override
+      protected void onFinish(HttpResponder responder, File uploadedFile) throws Exception {
+        if (className == null) {
+          // We have to delay until body upload is completed due to the fact that not all client is
+          // requesting with "Expect: 100-continue" header and the client library we have cannot handle
+          // connection close, and yet be able to read response reliably.
+          // In longer term we should fix the client, as well as the netty-http server. However, since
+          // this handler will be gone in near future, it's ok to have this workaround.
+          responder.sendString(HttpResponseStatus.BAD_REQUEST, "Required header 'class-name' is absent.");
+          return;
+        }
+
+        LOG.info("Adding module {}, class name: {}", datasetModuleId, className);
+
+        String dataFabricDir = cConf.get(Constants.Dataset.Manager.OUTPUT_DIR);
+        Location archiveDir = namespaceHomeLocation.append(dataFabricDir).append(name)
+          .append(Constants.ARCHIVE_DIR);
+        String archiveName = name + ".jar";
+        Location archive = archiveDir.append(archiveName);
+
+        // Copy uploaded content to a temporary location
+        Location tmpLocation = archive.getTempFile(".tmp");
+        try {
+          conflictIfModuleExists(datasetModuleId);
+
+          Locations.mkdirsIfNotExists(archiveDir);
+
+          LOG.debug("Copy from {} to {}", uploadedFile, tmpLocation.toURI());
+          Files.copy(uploadedFile, Locations.newOutputSupplier(tmpLocation));
+
+          // Check if the module exists one more time to minimize the window of possible conflict
+          conflictIfModuleExists(datasetModuleId);
+
+          // Finally, move archive to final location
+          LOG.debug("Storing module {} jar at {}", datasetModuleId, archive.toURI());
+          if (tmpLocation.renameTo(archive) == null) {
+            throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
+                                                tmpLocation.toURI(), archive.toURI()));
+          }
+
+          manager.addModule(datasetModuleId, className, archive);
+          // todo: response with DatasetModuleMeta of just added module (and log this info)
+          LOG.info("Added module {}", datasetModuleId);
+          responder.sendStatus(HttpResponseStatus.OK);
+        } catch (Exception e) {
+          // In case copy to temporary file failed, or rename failed
+          try {
+            tmpLocation.delete();
+          } catch (IOException ex) {
+            LOG.warn("Failed to cleanup temporary location {}", tmpLocation.toURI());
+          }
+          if (e instanceof DatasetModuleConflictException) {
+            responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+          } else {
+            LOG.error("Failed to add module {}", name, e);
+            throw e;
+          }
+        }
       }
-    } finally {
-      inputStream.close();
-    }
-
-    try {
-      manager.addModule(name, className, archive);
-    } catch (DatasetModuleConflictException e) {
-      responder.sendError(HttpResponseStatus.CONFLICT, e.getMessage());
-      return;
-    }
-    // todo: response with DatasetModuleMeta of just added module (and log this info)
-    LOG.info("Added module {}", name);
-    responder.sendStatus(HttpResponseStatus.OK);
+    };
   }
 
   @DELETE
   @Path("/data/modules/{name}")
-  public void deleteModule(HttpRequest request, final HttpResponder responder, @PathParam("name") String name) {
+  public void deleteModule(HttpRequest request, HttpResponder responder,
+                           @PathParam("namespace-id") String namespaceId, @PathParam("name") String name) {
+    if (Constants.SYSTEM_NAMESPACE.equals(namespaceId)) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN,
+                           String.format("Cannot delete module '%s' from '%s' namespace.", name, namespaceId));
+      return;
+    }
     boolean deleted;
     try {
-      deleted = manager.deleteModule(name);
+      deleted = manager.deleteModule(Id.DatasetModule.from(namespaceId, name));
     } catch (DatasetModuleConflictException e) {
-      responder.sendError(HttpResponseStatus.CONFLICT, e.getMessage());
+      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
       return;
     }
 
@@ -188,8 +240,9 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
   @GET
   @Path("/data/modules/{name}")
-  public void getModuleInfo(HttpRequest request, final HttpResponder responder, @PathParam("name") String name) {
-    DatasetModuleMeta moduleMeta = manager.getModule(name);
+  public void getModuleInfo(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId, @PathParam("name") String name) {
+    DatasetModuleMeta moduleMeta = manager.getModule(Id.DatasetModule.from(namespaceId, name));
     if (moduleMeta == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
@@ -199,9 +252,10 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
   @GET
   @Path("/data/types")
-  public void listTypes(HttpRequest request, final HttpResponder responder) {
+  public void listTypes(HttpRequest request, HttpResponder responder,
+                        @PathParam("namespace-id") String namespaceId) {
     // Sorting by name for convenience
-    List<DatasetTypeMeta> list = Lists.newArrayList(manager.getTypes());
+    List<DatasetTypeMeta> list = Lists.newArrayList(manager.getTypes(Id.Namespace.from(namespaceId)));
     Collections.sort(list, new Comparator<DatasetTypeMeta>() {
       @Override
       public int compare(DatasetTypeMeta o1, DatasetTypeMeta o2) {
@@ -213,10 +267,10 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
   @GET
   @Path("/data/types/{name}")
-  public void getTypeInfo(HttpRequest request, final HttpResponder responder,
-                      @PathParam("name") String name) {
+  public void getTypeInfo(HttpRequest request, HttpResponder responder,
+                          @PathParam("namespace-id") String namespaceId, @PathParam("name") String name) {
 
-    DatasetTypeMeta typeMeta = manager.getTypeInfo(name);
+    DatasetTypeMeta typeMeta = manager.getTypeInfo(Id.DatasetType.from(namespaceId, name));
     if (typeMeta == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
@@ -224,4 +278,21 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     }
   }
 
+  /**
+   * Checks if the given module name already exists.
+   *
+   * @param datasetModuleId {@link Id.DatasetModule} of the module to check
+   * @throws DatasetModuleConflictException if the module exists
+   */
+  private void conflictIfModuleExists(Id.DatasetModule datasetModuleId) throws DatasetModuleConflictException {
+    if (cConf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE)) {
+      return;
+    }
+    DatasetModuleMeta existing = manager.getModule(datasetModuleId);
+    if (existing != null) {
+      String message = String.format("Cannot add module %s: module with same name already exists: %s",
+                                     datasetModuleId, existing);
+      throw new DatasetModuleConflictException(message);
+    }
+  }
 }

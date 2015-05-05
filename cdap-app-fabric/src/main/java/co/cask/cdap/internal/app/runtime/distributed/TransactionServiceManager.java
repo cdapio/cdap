@@ -18,15 +18,14 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.twill.AbstractDistributedMasterServiceManager;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.inject.Inject;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,10 +55,8 @@ public class TransactionServiceManager extends AbstractDistributedMasterServiceM
   @Override
   public boolean isServiceAvailable() {
     try {
-      Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(serviceName);
-      EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(
-        new RandomEndpointStrategy(discoverables), discoveryTimeout, TimeUnit.SECONDS);
-      Discoverable discoverable = endpointStrategy.pick();
+      ServiceDiscovered discovered = discoveryServiceClient.discover(serviceName);
+      Discoverable discoverable = new RandomEndpointStrategy(discovered).pick(discoveryTimeout, TimeUnit.SECONDS);
       if (discoverable == null) {
         return false;
       }

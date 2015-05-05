@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014 Cask Data, Inc.
+  Copyright © 2014-2015 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,7 @@
 
   <groupId>co.cask.cdap</groupId>
   <artifactId>cdap</artifactId>
-  <version>2.5.1</version>
+  <version>3.0.0</version>
   <packaging>pom</packaging>
   <name>Cask Data Application Platform (CDAP)</name>
   <description>Data Application Platform for Hadoop</description>
@@ -58,10 +58,6 @@
 
   <repositories>
     <repository>
-      <id>apache.snapshots</id>
-      <url>https://repository.apache.org/content/repositories/snapshots</url>
-    </repository>
-    <repository>
       <id>sonatype</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
     </repository>
@@ -91,21 +87,29 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <surefire.redirectTestOutputToFile>true</surefire.redirectTestOutputToFile>
 
+    <etl.batch.plugin.name>ETLBatch</etl.batch.plugin.name>
+    <etl.realtime.plugin.name>ETLRealtime</etl.realtime.plugin.name>
+
     <asm.version>4.0</asm.version>
     <async.http.version>1.7.18</async.http.version>
     <avro.version>1.6.2</avro.version>
     <commons.codec.version>1.6</commons.codec.version>
+    <commons.cli.version>1.2</commons.cli.version>
     <concurrent.trees.version>2.4.0</concurrent.trees.version>
+    <cask.common.cli.version>0.5.0</cask.common.cli.version>
+    <cask.common.version>0.6.1</cask.common.version>
     <cdap.hive.version>0.13.0</cdap.hive.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
     <flume.version>1.2.0</flume.version>
     <geronimo.version>2.0.0</geronimo.version>
+    <grok.version>0.1.0</grok.version>
     <gson.version>2.2.4</gson.version>
     <guava.version>13.0.1</guava.version>
     <guice.version>3.0</guice.version>
     <hadoop.version>2.3.0</hadoop.version>
     <hbase94.version>0.94.6.1.continuuity</hbase94.version>
-    <hbase96.version>0.96.0-hadoop2</hbase96.version>
+    <hbase96.version>0.96.2-hadoop2</hbase96.version>
+    <hbase98.version>0.98.6.1-hadoop2</hbase98.version>
     <hive.version>0.13.0</hive.version>
     <hsql.version>2.2.4</hsql.version>
     <http.component.version>4.2.5</http.component.version>
@@ -119,22 +123,24 @@
     <mockito.version>1.9.5</mockito.version>
     <mysql.version>5.1.21</mysql.version>
     <netty.version>3.6.6.Final</netty.version>
-    <netty.http.version>0.4.1</netty.http.version>
+    <netty.http.version>0.11.0</netty.http.version>
     <rs-api.version>2.0</rs-api.version>
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
     <servlet.api.version>3.0.1</servlet.api.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <tephra.version>0.3.0</tephra.version>
+    <tephra.version>0.4.1</tephra.version>
     <thrift.version>0.9.0</thrift.version>
-    <twill.version>[0.4.0-incubating-SNAPSHOT,0.5.0-incubating-SNAPSHOT)</twill.version>
+    <twill.version>0.5.0-incubating</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
-    <spark.version>1.1.0</spark.version>
-    <cdap.client.version>1.0.1</cdap.client.version>
+    <spark.version>1.2.0</spark.version>
+    <cdap.client.version>1.2.0</cdap.client.version>
+    <twitter4j.version>4.0.3</twitter4j.version>
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
+    <release.iteration>1</release.iteration>
   </properties>
 
   <modules>
@@ -147,25 +153,30 @@
     <module>cdap-data-fabric-tests</module>
     <module>cdap-hbase-compat-0.94</module>
     <module>cdap-hbase-compat-0.96</module>
+    <module>cdap-hbase-compat-0.98</module>
     <module>cdap-watchdog</module>
-    <module>cdap-watchdog-tests</module>
     <module>cdap-app-fabric</module>
     <module>cdap-security</module>
-    <module>cdap-security-service</module>
     <module>cdap-gateway</module>
     <module>cdap-explore-client</module>
     <module>cdap-explore-jdbc</module>
     <module>cdap-explore</module>
     <module>cdap-unit-test</module>
+    <module>cdap-unit-test-standalone</module>
     <module>cdap-master</module>
-    <module>cdap-web-app</module>
     <module>cdap-proto</module>
+    <module>cdap-notifications</module>
+    <module>cdap-notifications-api</module>
     <module>cdap-client</module>
     <module>cdap-client-tests</module>
     <module>cdap-cli</module>
+    <module>cdap-cli-tests</module>
     <module>cdap-standalone</module>
     <module>cdap-distributions</module>
     <module>cdap-archetypes</module>
+    <module>cdap-test</module>
+    <module>cdap-integration-test</module>
+    <module>cdap-ui</module>
   </modules>
 
   <dependencyManagement>
@@ -176,9 +187,9 @@
         <version>${slf4j.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-nop</artifactId>
-        <version>${slf4j.version}</version>
+        <groupId>co.cask.common</groupId>
+        <artifactId>common-cli</artifactId>
+        <version>${cask.common.cli.version}</version>
       </dependency>
       <dependency>
         <groupId>javax.ws.rs</groupId>
@@ -231,6 +242,17 @@
       <dependency>
         <groupId>co.cask.tephra</groupId>
         <artifactId>tephra-hbase-compat-0.96</artifactId>
+        <version>${tephra.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>co.cask.tephra</groupId>
+        <artifactId>tephra-hbase-compat-0.98</artifactId>
         <version>${tephra.version}</version>
         <exclusions>
           <exclusion>
@@ -475,6 +497,11 @@
         <groupId>commons-codec</groupId>
         <artifactId>commons-codec</artifactId>
         <version>${commons.codec.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-cli</groupId>
+        <artifactId>commons-cli</artifactId>
+        <version>${commons.cli.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.twill</groupId>
@@ -859,6 +886,17 @@
         </exclusions>
       </dependency>
       <dependency>
+        <groupId>io.thekraken</groupId>
+        <artifactId>grok</artifactId>
+        <version>${grok.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
         <groupId>org.apache.shiro</groupId>
         <artifactId>shiro-core</artifactId>
         <version>${shiro.version}</version>
@@ -1080,6 +1118,10 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -1144,6 +1186,12 @@
         <artifactId>hbase-testing-util</artifactId>
         <version>${hbase96.version}</version>
         <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.hsqldb</groupId>
@@ -1181,6 +1229,37 @@
         <artifactId>cdap-authentication-client</artifactId>
         <version>${cdap.client.version}</version>
       </dependency>
+      <dependency>
+        <groupId>co.cask.common</groupId>
+        <artifactId>common-http</artifactId>
+        <version>${cask.common.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>co.cask.common</groupId>
+        <artifactId>common-io</artifactId>
+        <version>${cask.common.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
+        <version>${hadoop.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.twitter4j</groupId>
+        <artifactId>twitter4j-core</artifactId>
+        <version>${twitter4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.twitter4j</groupId>
+        <artifactId>twitter4j-stream</artifactId>
+        <version>${twitter4j.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -1192,8 +1271,8 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.1</version>
           <configuration>
-            <source>1.6</source>
-            <target>1.6</target>
+            <source>1.7</source>
+            <target>1.7</target>
           </configuration>
         </plugin>
         <plugin>
@@ -1201,7 +1280,7 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.14.1</version>
           <configuration>
-            <argLine>-Xmx4096m -Djava.awt.headless=true -XX:MaxPermSize=256m</argLine>
+            <argLine>-Xmx5000m -Djava.awt.headless=true -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC -XX:OnOutOfMemoryError="kill -9 %p"</argLine>
             <redirectTestOutputToFile>${surefire.redirectTestOutputToFile}</redirectTestOutputToFile>
             <reuseForks>false</reuseForks>
             <reportFormat>plain</reportFormat>
@@ -1246,18 +1325,26 @@
                   <exclude>**/*.md</exclude>
                   <exclude>logs/**</exclude>
                   <exclude>cdap-docs/**</exclude>
+                  <exclude>**/grok/patterns/**</exclude>
                   <exclude>conf/**</exclude>
                   <exclude>data/**</exclude>
+                  <exclude>plugins/**</exclude>
                   <exclude>**/Apache-LICENSE-2.0</exclude>
                   <exclude>**/VERSION</exclude>
                   <exlcude>**/*.patch</exlcude>
                   <exclude>**/logrotate.d/**</exclude>
                   <exclude>**/limits.d/**</exclude>
+                  <!-- Disable cdap-ui from rat-check temproarily until integrated completely into cdap-->
+                  <exclude>cdap-ui/**</exclude>
                   <!-- Excludes AVRO schema files -->
                   <exclude>**/*.avsc</exclude>
                   <!-- Excludes examples by default, include it in the examples profile -->
                   <exclude>cdap-examples/**</exclude>
+                  <!-- Excludes app-templates by default, include it in the templates profile -->
+                  <exclude>cdap-app-templates/**</exclude>
+                  <exclude>**/*.json</exclude>
                   <exclude>archetypes/**/resources/**/*.txt</exclude>
+                  <exclude>**/MANIFEST.MF</exclude>
                 </excludes>
               </configuration>
             </execution>
@@ -1364,6 +1451,14 @@
       <id>examples</id>
       <modules>
         <module>cdap-examples</module>
+      </modules>
+    </profile>
+
+    <!-- Profile to turn on inclusion of all cdap-app-templates -->
+    <profile>
+      <id>templates</id>
+      <modules>
+        <module>cdap-app-templates</module>
       </modules>
     </profile>
 
@@ -1492,6 +1587,7 @@
         <stage.dir>${project.build.directory}/stage-packaging</stage.dir>
         <stage.opt.dir>${stage.dir}/opt/cdap/${package.name}</stage.opt.dir>
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
+        <stage.plugins.dir>${stage.opt.dir}/plugins</stage.plugins.dir>
         <package.depends>--depends cdap</package.depends>
         <package.dirs>opt etc</package.dirs>
       </properties>
@@ -1536,7 +1632,7 @@
                     <excludeArtifactIds>hive-exec</excludeArtifactIds>
                     <prependGroupId>true</prependGroupId>
                     <silent>true</silent>
-                    <includeScope>compile</includeScope>
+                    <includeScope>runtime</includeScope>
                   </configuration>
                 </execution>
               </executions>
@@ -1945,7 +2041,7 @@
                       --after-install "${project.parent.basedir}/cdap-distributions/src/rpm/scripts/postinst"
                       --before-remove "${project.parent.basedir}/cdap-distributions/src/rpm/scripts/prerm"
                       --after-remove "${project.parent.basedir}/cdap-distributions/src/rpm/scripts/postrm"
-                      --iteration 1
+                      --iteration "${release.iteration}"
                       ${package.depends}
                       ${package.dirs}
                     </commandlineArgs>
@@ -1996,7 +2092,7 @@
                       --after-install "${project.parent.basedir}/cdap-distributions/src/debian/scripts/postinst"
                       --before-remove "${project.parent.basedir}/cdap-distributions/src/debian/scripts/prerm"
                       --after-remove "${project.parent.basedir}/cdap-distributions/src/debian/scripts/postrm"
-                      --iteration 1
+                      --iteration "${release.iteration}"
                       ${package.depends}
                       ${package.dirs}
                     </commandlineArgs>
@@ -2039,6 +2135,32 @@
             </plugin>
           </plugins>
         </pluginManagement>
+      </build>
+    </profile>
+
+    <!-- For running findbugs plugin -->
+    <profile>
+      <id>findbugs</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>findbugs-maven-plugin</artifactId>
+            <version>2.5.5</version>
+            <executions>
+              <execution>
+                <id>findbugs-check</id>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>process-test-classes</phase>
+                <configuration>
+                  <failOnError>false</failOnError>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
       </build>
     </profile>
   </profiles>

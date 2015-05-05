@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+
+# Copyright © 2014-2015 Cask Data, Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under
+# the License.
+  
+# Build script for docs
+# Builds the docs (all except javadocs and PDFs) from the .rst source files using Sphinx
+# Builds the javadocs and copies them into place
+# Zips everything up so it can be staged
+# REST PDF is built as a separate target and checked in, as it is only used in SDK and not website
+# Target for building the SDK
+# Targets for both a limited and complete set of javadocs
+# Targets not included in usage are intended for internal usage by script
+
+source ../_common/common-build.sh
+
+CHECK_INCLUDES=$TRUE
+CDAP_CLIENTS_RELEASE_VERSION="1.2.0"
+
+function download_readme_file_and_test() {
+  # Downloads a README.rst file to a target directory, and checks that it hasn't changed.
+  # Uses md5 hashes to monitor if any files have changed.
+
+  local file_name='README.rst'
+  
+  local includes_dir=${1}
+  local source_url=${2}
+  local md5_hash=${3}
+  local relative_path=${4}
+
+  # Replace any path components with dashes
+  local target_file_name=${relative_path//\//-}.rst
+
+  echo "Downloading using curl ${file_name} from ${source_url}"
+  curl ${source_url}/${relative_path}/${file_name} --output ${includes_dir}/${target_file_name} --silent
+  test_an_include ${md5_hash} ${includes_dir}/${target_file_name}
+}
+
+function download_includes() {
+  echo "Downloading source files includes from GitHub..."
+  local github_url="https://raw.githubusercontent.com/caskdata"
+  
+  local includes_dir=${1}
+  if [ ! -d "${includes_dir}" ]; then
+    mkdir ${includes_dir}
+    echo "Creating Includes Directory: ${includes_dir}"
+  fi
+
+  version
+
+# For clients, current release branch is 1.2.0
+  local clients_branch="release/${CDAP_CLIENTS_RELEASE_VERSION}"
+  local ingest_branch="release/cdap-${PROJECT_SHORT_VERSION}-compatible"
+  if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
+    clients_branch="develop"
+    ingest_branch="develop"
+  fi
+
+# cdap-clients
+# https://raw.githubusercontent.com/caskdata/cdap-clients/develop/cdap-authentication-clients/java/README.rst
+  local clients_url="${github_url}/cdap-clients/${clients_branch}"
+
+  download_readme_file_and_test ${includes_dir} ${clients_url} bf10a586e605be8191b3b554c425c3aa cdap-authentication-clients/java
+  download_readme_file_and_test ${includes_dir} ${clients_url} f075935545e48a132d014c6a8d32122a cdap-authentication-clients/javascript
+  download_readme_file_and_test ${includes_dir} ${clients_url} 1f8330e0370b3895c38452f9af72506a cdap-authentication-clients/python
+  download_readme_file_and_test ${includes_dir} ${clients_url} 33b06b7ca1e423e93f2bb2c6f7d00e21 cdap-authentication-clients/ruby
+  
+# cdap-ingest
+# https://raw.githubusercontent.com/caskdata/cdap-ingest/develop/cdap-file-drop-zone/README.rst
+  local ingest_url="${github_url}/cdap-ingest/${ingest_branch}"
+
+  download_readme_file_and_test ${includes_dir} ${ingest_url} c9b6db1741afa823c362237488c2d8f0 cdap-flume
+  download_readme_file_and_test ${includes_dir} ${ingest_url} f300df291b910f0bd416a5ea160fdbe1 cdap-stream-clients/java
+#   download_readme_file_and_test ${includes_dir} ${ingest_url} 277ded1924cb8d9b52a007f262820002 cdap-stream-clients/javascript
+  download_readme_file_and_test ${includes_dir} ${ingest_url} b6dedd629c708dbc68bc918b768edda5 cdap-stream-clients/python
+  download_readme_file_and_test ${includes_dir} ${ingest_url} 5fc88ec3a658062775403f5be30afbe9 cdap-stream-clients/ruby
+}
+
+function test_includes () {
+  echo "All includes tested."
+}
+
+run_command ${1}

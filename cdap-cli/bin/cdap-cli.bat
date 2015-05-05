@@ -22,7 +22,7 @@ SET CDAP_HOME=%~dp0
 SET CDAP_HOME=%CDAP_HOME:~0,-5%
 SET JAVACMD=%JAVA_HOME%\bin\java.exe
 
-SET CLASSPATH=%CDAP_HOME%\lib\co.cask.cdap.cdap-cli-2.5.1.jar;%CDAP_HOME%\conf\
+SET CLASSPATH=%CDAP_HOME%\lib\co.cask.cdap.cdap-cli-@@project.version@@.jar;%CDAP_HOME%\conf
 
 REM Check for 64-bit version of OS. Currently not supporting 32-bit Windows
 IF NOT EXIST "%PROGRAMFILES(X86)%" (
@@ -31,7 +31,7 @@ IF NOT EXIST "%PROGRAMFILES(X86)%" (
 )
 
 REM Check for correct setting for JAVA_HOME path
-if [%JAVA_HOME%] == [] (
+if "%JAVA_HOME%" == "" (
   echo ERROR: JAVA_HOME is set to an invalid directory: %JAVA_HOME%
   echo Please set the JAVA_HOME variable in your environment to match the location of your Java installation.
   GOTO :FINALLY
@@ -40,7 +40,7 @@ if [%JAVA_HOME%] == [] (
 REM Check for Java version
 setlocal ENABLEDELAYEDEXPANSION
 set /a counter=0
-for /f "tokens=* delims= " %%f in ('%JAVACMD% -version 2^>^&1') do @(
+for /f "tokens=* delims= " %%f in ('"%JAVACMD%" -version 2^>^&1') do @(
   if "!counter!"=="0" set line=%%f
   set /a counter+=1
 )
@@ -54,6 +54,6 @@ if NOT "%line%" == "6" (
 )
 endlocal
 
-%JAVACMD% -classpath %CLASSPATH% co.cask.cdap.shell.CLIMain %*
+"%JAVACMD%" -classpath "%CLASSPATH%" co.cask.cdap.cli.CLIMain %*
 
 :FINALLY

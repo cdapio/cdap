@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,11 +23,18 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
-import co.cask.cdap.api.procedure.Procedure;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.Schedules;
+import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.spark.Spark;
+import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.Workflow;
+
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * A support class for {@link Application Applications} which reduces repetition and results in
@@ -36,7 +43,7 @@ import co.cask.cdap.api.workflow.Workflow;
  * <p>
  * Implement the {@link #configure()} method to define your application.
  * </p>
- * 
+ *
  * @see co.cask.cdap.api.app
  */
 public abstract class AbstractApplication implements Application {
@@ -158,20 +165,6 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
-   * @see ApplicationConfigurer#addProcedure(Procedure)
-   */
-  protected void addProcedure(Procedure procedure) {
-    configurer.addProcedure(procedure);
-  }
-
-  /**
-   * @see ApplicationConfigurer#addProcedure(Procedure, int)
-   */
-  protected void addProcedure(Procedure procedure, int instances) {
-    configurer.addProcedure(procedure, instances);
-  }
-
-  /**
    * @see ApplicationConfigurer#addMapReduce(MapReduce)
    */
   protected void addMapReduce(MapReduce mapReduce) {
@@ -193,24 +186,78 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
-   * @see ApplicationConfigurer#addService(String, Iterable) ApplicationConfigurer.addService(String, 
-   * Iterable&lt;HttpServiceHandler&gt;)
-   */
-  protected void addService(String name, Iterable<HttpServiceHandler> handlers) {
-    configurer.addService(name, handlers);
-  }
-
-  /**
-   * @see ApplicationConfigurer#addService(String, HttpServiceHandler)
-   */
-  protected void addService(String name, HttpServiceHandler handler) {
-    configurer.addService(name, handler);
-  }
-
-  /**
    * @see ApplicationConfigurer#addService(Service)
    */
   protected void addService(Service service) {
     configurer.addService(service);
+  }
+
+  /**
+   * @see ApplicationConfigurer#addWorker(Worker)
+   */
+  protected void addWorker(Worker worker) {
+    configurer.addWorker(worker);
+  }
+
+  /**
+   * Adds a {@link Service} that consists of the given {@link HttpServiceHandler}.
+   *
+   * @param name Name of the Service
+   * @param handler handler for the Service
+   * @param handlers more handlers for the Service
+   */
+  protected void addService(String name, HttpServiceHandler handler, HttpServiceHandler...handlers) {
+    configurer.addService(new BasicService(name, handler, handlers));
+  }
+
+  /**
+   * Schedules the specified {@link Workflow}
+   * @param schedule the schedule to be added for the Workflow
+   * @param workflowName the name of the Workflow
+   */
+  protected void scheduleWorkflow(Schedule schedule, String workflowName) {
+    scheduleWorkflow(schedule, workflowName, Collections.<String, String>emptyMap());
+  }
+
+  /**
+   * Schedules the specified {@link Workflow} using a time-based schedule.
+   * @param scheduleName the name of the Schedule
+   * @param cronTab the crontab entry for the Schedule
+   * @param workflowName the name of the Workflow
+   * @deprecated As of version 2.8.0, replaced by {@link #scheduleWorkflow(Schedule, String)}
+   */
+  @Deprecated
+  protected void scheduleWorkflow(String scheduleName, String cronTab, String workflowName) {
+    String scheduleDescription = scheduleName + " with crontab " + cronTab;
+    scheduleWorkflow(Schedules.createTimeSchedule(scheduleName, scheduleDescription, cronTab),
+                     workflowName, Collections.<String, String>emptyMap());
+  }
+
+  /**
+   * Schedules the specified {@link Workflow} using a time-based schedule.
+   * @param scheduleName the name of the Schedule
+   * @param cronTab the crontab entry for the Schedule
+   * @param workflowName the name of the Workflow
+   * @param properties properties to be added for the Schedule
+   * @deprecated As of version 2.8.0, replaced by 
+   *            {@link #scheduleWorkflow(Schedule, String, Map) 
+   *             scheduleWorkflow(Schedule, String, Map&lt;String, String&gt;)}
+   */
+  @Deprecated
+  protected void scheduleWorkflow(String scheduleName, String cronTab, String workflowName,
+                                  Map<String, String> properties) {
+    String scheduleDescription = scheduleName + " with crontab " + cronTab;
+    scheduleWorkflow(Schedules.createTimeSchedule(scheduleName, scheduleDescription, cronTab),
+                     workflowName, properties);
+  }
+
+  /**
+   * Schedule the specified {@link Workflow}
+   * @param schedule the schedule to be added for the Workflow
+   * @param workflowName the name of the Workflow
+   * @param properties properties to be added for the Schedule
+   */
+  protected void scheduleWorkflow(Schedule schedule, String workflowName, Map<String, String> properties) {
+    configurer.addSchedule(schedule, SchedulableProgramType.WORKFLOW, workflowName, properties);
   }
 }

@@ -20,7 +20,6 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.SparkSpecification;
 import com.google.common.base.Throwables;
 
 /**
@@ -42,12 +41,10 @@ public class ScalaSparkAppUsingObjectStore extends AbstractApplication {
 
   public static final class CharCountSpecification extends AbstractSpark {
     @Override
-    public SparkSpecification configure() {
-      return SparkSpecification.Builder.with()
-        .setName("SparkComputeChars")
-        .setDescription("Use Objectstore dataset as input job")
-        .setMainClassName(ScalaCharCountProgram.class.getName())
-        .build();
+    public void configure() {
+      setName("SparkComputeChars");
+      setDescription("Use Objectstore dataset as input job");
+      setMainClass(ScalaCharCountProgram.class);
     }
   }
 }

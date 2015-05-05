@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,14 +15,21 @@
  */
 package co.cask.cdap.runtime;
 
+import co.cask.cdap.AppWithAnonymousWorkflow;
+import co.cask.cdap.MissingMapReduceWorkflowApp;
+import co.cask.cdap.MissingSparkWorkflowApp;
 import co.cask.cdap.OneActionWorkflowApp;
+import co.cask.cdap.ScheduleAppWithMissingWorkflow;
 import co.cask.cdap.WorkflowApp;
+import co.cask.cdap.WorkflowSchedulesWithSameNameApp;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.ProgramType;
@@ -89,14 +96,16 @@ public class WorkflowTest {
 
     String inputPath = createInput();
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
+    BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
+                                                                   RunIds.generate().getId()));
     BasicArguments userArgs = new BasicArguments(ImmutableMap.of("inputPath", inputPath, "outputPath", outputPath));
-    ProgramOptions options = new SimpleProgramOptions(program.getName(), new BasicArguments(), userArgs);
+    ProgramOptions options = new SimpleProgramOptions(program.getName(), systemArgs, userArgs);
 
     final SettableFuture<String> completion = SettableFuture.create();
     programRunner.run(program, options).addListener(new AbstractListener() {
       @Override
-      public void stopped() {
-        LOG.info("Stopped");
+      public void completed() {
+        LOG.info("Completed");
         completion.set("Completed");
       }
 
@@ -108,6 +117,62 @@ public class WorkflowTest {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     completion.get();
+  }
+
+  @Test(timeout = 120 * 1000L)
+  public void testBadInputInWorkflow() throws Exception {
+    // try deploying app containing Workflow configured with non-existent MapReduce program
+    try {
+      final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(
+        MissingMapReduceWorkflowApp.class,
+        TEMP_FOLDER_SUPPLIER);
+      Assert.fail("Should have thrown Exception because MapReduce program is missing in the Application.");
+    } catch (Exception ex) {
+      Assert.assertEquals(ex.getCause().getMessage(),
+                          "MapReduce program 'SomeMapReduceProgram' is not configured with the Application.");
+    }
+
+    // try deploying app containing Workflow configured with non-existent Spark program
+    try {
+      final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(
+        MissingSparkWorkflowApp.class,
+        TEMP_FOLDER_SUPPLIER);
+      Assert.fail("Should have thrown Exception because Spark program is missing in the Application.");
+    } catch (Exception ex) {
+      Assert.assertEquals(ex.getCause().getMessage(),
+                          "Spark program 'SomeSparkProgram' is not configured with the Application.");
+    }
+
+    // try deploying app containing Workflow configured with multiple schedules with the same name
+    try {
+      final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(
+        WorkflowSchedulesWithSameNameApp.class,
+        TEMP_FOLDER_SUPPLIER);
+      Assert.fail("Should have thrown Exception because Workflow is configured with schedules having same name.");
+    } catch (Exception ex) {
+      Assert.assertEquals(ex.getCause().getCause().getMessage(),
+                          "Schedule with the name 'DailySchedule' already exists.");
+    }
+
+    // try deploying app containing a schedule for non existent workflow
+    try {
+      final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(
+        ScheduleAppWithMissingWorkflow.class, TEMP_FOLDER_SUPPLIER);
+      Assert.fail("Should have thrown Exception because Schedule is configured for non existent Workflow.");
+    } catch (Exception ex) {
+      Assert.assertEquals(ex.getCause().getMessage(),
+                          "Workflow 'NonExistentWorkflow' is not configured with the Application.");
+    }
+
+    // try deploying app containing anonymous workflow
+    try {
+      final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(
+        AppWithAnonymousWorkflow.class, TEMP_FOLDER_SUPPLIER);
+      Assert.fail("Should have thrown Exception because Workflow does not have name.");
+    } catch (Exception ex) {
+      Assert.assertEquals(ex.getCause().getMessage(),
+                          "'' name is not an ID. ID should be non empty and can contain only characters A-Za-z0-9_-");
+    }
   }
 
   @Test(timeout = 120 * 1000L)
@@ -124,13 +189,15 @@ public class WorkflowTest {
       }
     }).next();
 
-    ProgramOptions options = new SimpleProgramOptions(program.getName(), new BasicArguments(), new BasicArguments());
+    BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
+                                                                   RunIds.generate().getId()));
+    ProgramOptions options = new SimpleProgramOptions(program.getName(), systemArgs, new BasicArguments());
 
     final SettableFuture<String> completion = SettableFuture.create();
     programRunner.run(program, options).addListener(new AbstractListener() {
       @Override
-      public void stopped() {
-        LOG.info("Stopped");
+      public void completed() {
+        LOG.info("Completed");
         completion.set("Completed");
       }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,34 +15,62 @@
  */
 package co.cask.cdap.app.guice;
 
-import co.cask.cdap.app.authorization.AuthorizationFactory;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
-import co.cask.cdap.app.store.StoreFactory;
+import co.cask.cdap.app.mapreduce.DistributedMRJobInfoFetcher;
+import co.cask.cdap.app.mapreduce.LocalMRJobInfoFetcher;
+import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.common.utils.Networks;
+import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.stream.StreamServiceManager;
+import co.cask.cdap.data.stream.service.StreamFetchHandler;
+import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.explore.service.ExploreServiceManager;
-import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
+import co.cask.cdap.gateway.handlers.AdapterHttpHandler;
+import co.cask.cdap.gateway.handlers.AppFabricDataHttpHandler;
+import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
+import co.cask.cdap.gateway.handlers.ApplicationTemplateHandler;
+import co.cask.cdap.gateway.handlers.CommonHandlers;
+import co.cask.cdap.gateway.handlers.ConfigHandler;
+import co.cask.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
+import co.cask.cdap.gateway.handlers.DashboardHttpHandler;
 import co.cask.cdap.gateway.handlers.MonitorHandler;
-import co.cask.cdap.gateway.handlers.PingHandler;
-import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
-import co.cask.cdap.internal.app.authorization.PassportAuthorizationFactory;
-import co.cask.cdap.internal.app.deploy.LocalManager;
+import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
+import co.cask.cdap.gateway.handlers.NotificationFeedHttpHandler;
+import co.cask.cdap.gateway.handlers.PreferencesHttpHandler;
+import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
+import co.cask.cdap.gateway.handlers.TransactionHttpHandler;
+import co.cask.cdap.gateway.handlers.UsageHandler;
+import co.cask.cdap.gateway.handlers.VersionHandler;
+import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
+import co.cask.cdap.internal.app.deploy.LocalAdapterManager;
+import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
+import co.cask.cdap.internal.app.deploy.LocalApplicationTemplateManager;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
+import co.cask.cdap.internal.app.deploy.pipeline.adapter.AdapterDeploymentInfo;
+import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
+import co.cask.cdap.internal.app.runtime.adapter.PluginRepository;
 import co.cask.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager;
 import co.cask.cdap.internal.app.runtime.distributed.TransactionServiceManager;
-import co.cask.cdap.internal.app.runtime.schedule.DataSetBasedScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.DistributedSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.ExecutorThreadPool;
 import co.cask.cdap.internal.app.runtime.schedule.LocalSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
-import co.cask.cdap.internal.app.store.DefaultStoreFactory;
+import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
+import co.cask.cdap.internal.app.services.AppFabricServer;
+import co.cask.cdap.internal.app.services.ProgramLifecycleService;
+import co.cask.cdap.internal.app.services.StandaloneAppFabricServer;
+import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
 import co.cask.cdap.logging.run.AppFabricServiceManager;
 import co.cask.cdap.logging.run.InMemoryDatasetExecutorServiceManager;
@@ -55,10 +83,13 @@ import co.cask.cdap.logging.run.LogSaverStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
 import co.cask.cdap.pipeline.PipelineFactory;
+import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
@@ -69,7 +100,6 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
-import org.apache.twill.filesystem.Location;
 import org.quartz.SchedulerException;
 import org.quartz.core.JobRunShellFactory;
 import org.quartz.core.QuartzScheduler;
@@ -84,6 +114,7 @@ import org.quartz.spi.JobStore;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.List;
 
 /**
  * AppFabric Service Runtime Module.
@@ -92,12 +123,14 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return Modules.combine(new AppFabricServiceModule(),
+    return Modules.combine(new AppFabricServiceModule(StreamHandler.class, StreamFetchHandler.class),
+                           new ConfigStoreModule().getInMemoryModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
                                bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
+                               bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
 
                                MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(
                                  binder(), String.class, MasterServiceManager.class);
@@ -117,6 +150,18 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                         .to(InMemoryDatasetExecutorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
                                         .to(InMemoryExploreServiceManager.class);
+
+                               Multibinder<String> servicesNamesBinder =
+                                 Multibinder.newSetBinder(binder(), String.class,
+                                                          Names.named("appfabric.services.names"));
+                               servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
+                               servicesNamesBinder.addBinding().toInstance(Constants.Service.STREAMS);
+
+                               Multibinder<String> handlerHookNamesBinder =
+                                 Multibinder.newSetBinder(binder(), String.class,
+                                                          Names.named("appfabric.handler.hooks"));
+                               handlerHookNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
+                               handlerHookNamesBinder.addBinding().toInstance(Constants.Stream.STREAM_HANDLER);
                              }
                            });
   }
@@ -124,12 +169,15 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   @Override
   public Module getStandaloneModules() {
 
-    return Modules.combine(new AppFabricServiceModule(),
+    return Modules.combine(new AppFabricServiceModule(StreamHandler.class, StreamFetchHandler.class),
+                           new ConfigStoreModule().getStandaloneModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
+                               bind(AppFabricServer.class).to(StandaloneAppFabricServer.class).in(Scopes.SINGLETON);
                                bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
+                               bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
 
                                MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(
                                  binder(), String.class, MasterServiceManager.class);
@@ -149,6 +197,18 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                         .to(InMemoryDatasetExecutorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
                                         .to(InMemoryExploreServiceManager.class);
+
+                               Multibinder<String> servicesNamesBinder =
+                                 Multibinder.newSetBinder(binder(), String.class,
+                                                          Names.named("appfabric.services.names"));
+                               servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
+                               servicesNamesBinder.addBinding().toInstance(Constants.Service.STREAMS);
+
+                               Multibinder<String> handlerHookNamesBinder =
+                                 Multibinder.newSetBinder(binder(), String.class,
+                                                          Names.named("appfabric.handler.hooks"));
+                               handlerHookNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
+                               handlerHookNamesBinder.addBinding().toInstance(Constants.Stream.STREAM_HANDLER);
                              }
                            });
   }
@@ -156,13 +216,14 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   @Override
   public Module getDistributedModules() {
 
-
     return Modules.combine(new AppFabricServiceModule(),
+                           new ConfigStoreModule().getDistributedModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
                                bind(SchedulerService.class).to(DistributedSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
+                               bind(MRJobInfoFetcher.class).to(DistributedMRJobInfoFetcher.class);
 
                                MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(
                                  binder(), String.class, MasterServiceManager.class);
@@ -182,6 +243,16 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                         .to(DatasetExecutorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
                                         .to(ExploreServiceManager.class);
+
+                               Multibinder<String> servicesNamesBinder =
+                                 Multibinder.newSetBinder(binder(), String.class,
+                                                          Names.named("appfabric.services.names"));
+                               servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
+
+                               Multibinder<String> handlerHookNamesBinder =
+                                 Multibinder.newSetBinder(binder(), String.class,
+                                                          Names.named("appfabric.handler.hooks"));
+                               handlerHookNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
                              }
                            });
   }
@@ -191,27 +262,67 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
    */
   private static final class AppFabricServiceModule extends AbstractModule {
 
+    private final List<Class<? extends HttpHandler>> handlerClasses;
+
+    private AppFabricServiceModule(Class<? extends HttpHandler>... handlerClasses) {
+      this.handlerClasses = ImmutableList.copyOf(handlerClasses);
+    }
+
     @Override
     protected void configure() {
       bind(PipelineFactory.class).to(SynchronousPipelineFactory.class);
 
       install(
         new FactoryModuleBuilder()
-          .implement(new TypeLiteral<Manager<Location, ApplicationWithPrograms>>() { },
-                     new TypeLiteral<LocalManager<Location, ApplicationWithPrograms>>() { })
-          .build(new TypeLiteral<ManagerFactory<Location, ApplicationWithPrograms>>() { })
+          .implement(new TypeLiteral<Manager<DeploymentInfo, ApplicationWithPrograms>>() { },
+                     new TypeLiteral<LocalApplicationManager<DeploymentInfo, ApplicationWithPrograms>>() { })
+          .build(new TypeLiteral<ManagerFactory<DeploymentInfo, ApplicationWithPrograms>>() { })
+      );
+      install(
+        new FactoryModuleBuilder()
+          .implement(new TypeLiteral<Manager<DeploymentInfo, ApplicationWithPrograms>>() { },
+                     LocalApplicationTemplateManager.class)
+          .build(Key.get(new TypeLiteral<ManagerFactory<DeploymentInfo, ApplicationWithPrograms>>() { },
+                         Names.named("templates")))
+      );
+      install(
+        new FactoryModuleBuilder()
+          .implement(new TypeLiteral<Manager<AdapterDeploymentInfo, AdapterDefinition>> () { },
+                     LocalAdapterManager.class)
+          .build(Key.get(new TypeLiteral<ManagerFactory<AdapterDeploymentInfo, AdapterDefinition>>() { },
+                         Names.named("adapters")))
       );
 
-      bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
+      bind(Store.class).to(DefaultStore.class);
+      bind(AdapterService.class).in(Scopes.SINGLETON);
+      bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
+      bind(PluginRepository.class).in(Scopes.SINGLETON);
+      bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
 
-      bind(StoreFactory.class).to(DefaultStoreFactory.class);
+      Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
+        binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
 
-      Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
-                                                                        Names.named("appfabric.http.handler"));
-      handlerBinder.addBinding().to(AppFabricHttpHandler.class);
-      handlerBinder.addBinding().to(PingHandler.class);
+      CommonHandlers.add(handlerBinder);
+      handlerBinder.addBinding().to(ConfigHandler.class);
+      handlerBinder.addBinding().to(AppFabricDataHttpHandler.class);
+      handlerBinder.addBinding().to(VersionHandler.class);
       handlerBinder.addBinding().to(MonitorHandler.class);
-      handlerBinder.addBinding().to(ServiceHttpHandler.class);
+      handlerBinder.addBinding().to(UsageHandler.class);
+      handlerBinder.addBinding().to(NamespaceHttpHandler.class);
+      handlerBinder.addBinding().to(NotificationFeedHttpHandler.class);
+      handlerBinder.addBinding().to(AppLifecycleHttpHandler.class);
+      handlerBinder.addBinding().to(DashboardHttpHandler.class);
+      handlerBinder.addBinding().to(ProgramLifecycleHttpHandler.class);
+      handlerBinder.addBinding().to(PreferencesHttpHandler.class);
+      handlerBinder.addBinding().to(ConsoleSettingsHttpHandler.class);
+      handlerBinder.addBinding().to(TransactionHttpHandler.class);
+      handlerBinder.addBinding().to(AdapterHttpHandler.class);
+      handlerBinder.addBinding().to(ApplicationTemplateHandler.class);
+      handlerBinder.addBinding().to(WorkflowHttpHandler.class);
+
+      for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
+        handlerBinder.addBinding().to(handlerClass);
+      }
     }
 
     @Provides
@@ -226,7 +337,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
      * injection. It returns a singleton of Scheduler.
      */
     @Provides
-    public Supplier<org.quartz.Scheduler> providesSchedulerSupplier(final DataSetBasedScheduleStore scheduleStore,
+    public Supplier<org.quartz.Scheduler> providesSchedulerSupplier(final DatasetBasedTimeScheduleStore scheduleStore,
                                                                     final CConfiguration cConf) {
       return new Supplier<org.quartz.Scheduler>() {
         private org.quartz.Scheduler scheduler;

@@ -15,21 +15,27 @@
  */
 package co.cask.cdap.metrics.collect;
 
-import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
-import co.cask.cdap.metrics.transport.MetricsRecord;
-import com.google.common.base.Objects;
+import co.cask.cdap.api.metrics.MetricType;
+import co.cask.cdap.api.metrics.MetricValue;
+import co.cask.cdap.api.metrics.MetricValues;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.metrics.iterator.MetricsCollectorIterator;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -44,10 +50,11 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
 
   private static final Logger LOG = LoggerFactory.getLogger(AggregatedMetricsCollectionService.class);
   private static final long CACHE_EXPIRE_MINUTES = 1;
-  private static final long DEFAULT_FREQUENCY_SECONDS = 1;
 
-  private final LoadingCache<CollectorKey, MetricsCollector> collectors;
-  private final LoadingCache<EmitterKey, AggregatedMetricsEmitter> emitters;
+  private final LoadingCache<Map<String, String>, MetricsCollector> collectors;
+  private final LoadingCache<Map<String, String>, LoadingCache<String, AggregatedMetricsEmitter>> emitters;
+
+  private ScheduledExecutorService executorService;
 
   public AggregatedMetricsCollectionService() {
     this.collectors = CacheBuilder.newBuilder()
@@ -55,209 +62,184 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
       .build(createCollectorLoader());
 
     this.emitters = CacheBuilder.newBuilder()
+      // NOTE : we don't need to have removalListener to  emit metrics, as we have expireAfterAccess set for a minute,
+      // emitters.get() is used to increment/gauge and that would reset the access time,
+      // and since runOneIteration() emits all the metrics for the scheduled duration (every 1 second)
+      // there wont be any loss of emitter entries.
       .expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES)
-      .build(new CacheLoader<EmitterKey, AggregatedMetricsEmitter>() {
+      .build(new CacheLoader<Map<String, String>, LoadingCache<String, AggregatedMetricsEmitter>>() {
         @Override
-        public AggregatedMetricsEmitter load(EmitterKey key) throws Exception {
-          return new AggregatedMetricsEmitter(key.getCollectorKey().getContext(),
-                                              key.getCollectorKey().getRunId(),
-                                              key.getMetric());
+        public LoadingCache<String, AggregatedMetricsEmitter> load(Map<String, String> tags) throws Exception {
+          return CacheBuilder.newBuilder().expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES).
+            build(new CacheLoader<String, AggregatedMetricsEmitter>() {
+              @Override
+              public AggregatedMetricsEmitter load(String metricName) throws Exception {
+                return new AggregatedMetricsEmitter(metricName);
+              }
+            });
         }
       });
   }
 
   /**
-   * Publishes the given collection of {@link MetricsRecord}. When this method returns, the
+   * Publishes the given collection of {@link co.cask.cdap.api.metrics.MetricValues}. When this method returns, the
    * given {@link Iterator} will no longer be valid. This method should process the input
    * iterator and returns quickly. Any long operations should be run in a separated thread.
    * This method is guaranteed not to get concurrent calls.
    *
-   * @param scope The scope of metrics to be published.
-   * @param metrics collection of {@link co.cask.cdap.metrics.transport.MetricsRecord} to publish.
+   * @param metrics collection of {@link co.cask.cdap.api.metrics.MetricValues} to publish.
    * @throws Exception if there is error raised during publish.
    */
-  protected abstract void publish(MetricsScope scope, Iterator<MetricsRecord> metrics) throws Exception;
+  protected abstract void publish(Iterator<MetricValues> metrics) throws Exception;
+
+  /**
+   * @return true if we want to publish metrics about
+   *              the received metrics in {@link #publish(java.util.Iterator)}.
+   */
+  protected boolean isPublishMetaMetrics() {
+    return true;
+  }
 
   @Override
   protected final void runOneIteration() throws Exception {
     final long timestamp = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     LOG.trace("Start log collection for timestamp {}", timestamp);
-    for (MetricsScope scope : MetricsScope.values()) {
-      Iterator<MetricsRecord> metricsItor = getMetrics(scope, timestamp);
 
+    final MetricsCollectorIterator metricsItor = new MetricsCollectorIterator(getMetrics(timestamp));
+    publishMetrics(timestamp, metricsItor);
+  }
+
+  private void publishMetrics(long timestamp, MetricsCollectorIterator metricsItor) {
+    try {
+      publish(metricsItor);
+    } catch (Throwable t) {
+      LOG.error("Failed in publishing metrics for timestamp {}.", timestamp, t);
+    }
+
+    if (isPublishMetaMetrics()) {
       try {
-        publish(scope, metricsItor);
+        publish(metricsItor.getMetaMetrics());
       } catch (Throwable t) {
-        LOG.error("Failed in publishing metrics for timestamp {}.", timestamp, t);
+        LOG.error("Failed in publishing meta metrics for timestamp {}.", timestamp, t);
       }
+    }
 
-      // Consume the whole iterator if it is not yet consumed inside publish. This is to make sure metrics are reset.
-      while (metricsItor.hasNext()) {
-        metricsItor.next();
-      }
+    // Consume the whole iterator if it is not yet consumed inside publish. This is to make sure metrics are reset.
+    while (metricsItor.hasNext()) {
+      metricsItor.next();
     }
     LOG.trace("Completed log collection for timestamp {}", timestamp);
   }
 
   @Override
   protected ScheduledExecutorService executor() {
-    return Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-collection"));
+    executorService = Executors.newSingleThreadScheduledExecutor(
+      Threads.createDaemonThreadFactory("metrics-collection"));
+    return executorService;
   }
 
   @Override
   protected Scheduler scheduler() {
-    return Scheduler.newFixedRateSchedule(DEFAULT_FREQUENCY_SECONDS, DEFAULT_FREQUENCY_SECONDS, TimeUnit.SECONDS);
+    return Scheduler.newFixedRateSchedule(Constants.MetricsCollector.DEFAULT_FREQUENCY_SECONDS,
+                                          Constants.MetricsCollector.DEFAULT_FREQUENCY_SECONDS,
+                                          TimeUnit.SECONDS);
   }
 
   @Override
-  public final MetricsCollector getCollector(final MetricsScope scope, final String context, final String runId) {
-    return collectors.getUnchecked(new CollectorKey(scope, context, runId));
+  public final MetricsCollector getCollector(final Map<String, String> tags) {
+    return collectors.getUnchecked(tags);
   }
 
   @Override
   protected void shutDown() throws Exception {
     // Flush the metrics when shutting down.
-    runOneIteration();
+    try {
+      runOneIteration();
+    } finally {
+      if (executorService != null) {
+        executorService.shutdownNow();
+      }
+    }
   }
 
-  private Iterator<MetricsRecord> getMetrics(final MetricsScope scope, final long timestamp) {
-    final Iterator<Map.Entry<EmitterKey, AggregatedMetricsEmitter>> iterator = emitters.asMap().entrySet().iterator();
-    return new AbstractIterator<MetricsRecord>() {
+  private Iterator<MetricValues> getMetrics(final long timestamp) {
+    // NOTE : emitters.asMap does not reset the access time in cache,
+    // so it's the preferred way to access the cache entries. as we access and emit metrics every second.
+    final Iterator<Map.Entry<Map<String, String>, LoadingCache<String, AggregatedMetricsEmitter>>> iterator =
+      emitters.asMap().entrySet().iterator();
+    return new AbstractIterator<MetricValues>() {
       @Override
-      protected MetricsRecord computeNext() {
+      protected MetricValues computeNext() {
         while (iterator.hasNext()) {
-          Map.Entry<EmitterKey, AggregatedMetricsEmitter> entry = iterator.next();
-          if (entry.getKey().getCollectorKey().getScope() != scope) {
+          Map.Entry<Map<String, String>, LoadingCache<String, AggregatedMetricsEmitter>> entry = iterator.next();
+          Map<String, AggregatedMetricsEmitter> metricEmitters = entry.getValue().asMap();
+          List<MetricValue> metricValues = Lists.newArrayListWithCapacity(metricEmitters.size());
+          for (Map.Entry<String, AggregatedMetricsEmitter> emitterEntry : metricEmitters.entrySet()) {
+            MetricValue metricValue = emitterEntry.getValue().emit();
+            // skip increment by 0
+            if (metricValue.getType() == MetricType.COUNTER && metricValue.getValue() == 0) {
+              continue;
+            }
+            metricValues.add(metricValue);
+          }
+
+          if (metricValues.isEmpty()) {
+            // skip if there are no metric values to send
             continue;
           }
 
-          MetricsRecord metricsRecord = entry.getValue().emit(timestamp);
-          if (metricsRecord.getValue() != 0) {
-            LOG.trace("Emit metric {}", metricsRecord);
-            return metricsRecord;
-          }
+          LOG.trace("Emit metric {}", metricValues);
+          return new MetricValues(entry.getKey(), timestamp, metricValues);
         }
         return endOfData();
       }
     };
   }
 
-  private CacheLoader<CollectorKey, MetricsCollector> createCollectorLoader() {
-    return new CacheLoader<CollectorKey, MetricsCollector>() {
+  private CacheLoader<Map<String, String>, MetricsCollector> createCollectorLoader() {
+    return new CacheLoader<Map<String, String>, MetricsCollector>() {
       @Override
-      public MetricsCollector load(final CollectorKey collectorKey) throws Exception {
-        return new MetricsCollector() {
-
-          // Cache for minimizing creating new MetricKey object.
-          private final LoadingCache<String, EmitterKey> keys =
-            CacheBuilder.newBuilder()
-              .expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES)
-              .build(new CacheLoader<String, EmitterKey>() {
-                @Override
-                public EmitterKey load(String metric) throws Exception {
-                  return new EmitterKey(collectorKey, metric);
-                }
-              });
-
-          @Override
-          public void increment(String metricName, int value, String... tags) {
-            emitters.getUnchecked(keys.getUnchecked(metricName)).increment(value, tags);
-          }
-        };
+      public MetricsCollector load(final Map<String, String> collectorKey) throws Exception {
+        return new MetricsCollectorImpl(collectorKey);
       }
     };
   }
 
-  /**
-   * Inner class for cache key for looking up {@link MetricsCollector}.
-   */
-  private static final class CollectorKey {
-    private final MetricsScope scope;
-    private final String context;
-    private final String runId;
+  private final class MetricsCollectorImpl implements MetricsCollector {
 
-    private CollectorKey(MetricsScope scope, String context, String runId) {
-      this.scope = scope;
-      this.context = context;
-      this.runId = runId;
-    }
+    private final Map<String, String> tags;
 
-    private MetricsScope getScope() {
-      return scope;
-    }
-
-    private String getContext() {
-      return context;
-    }
-
-    private String getRunId() {
-      return runId;
+    private MetricsCollectorImpl(final Map<String, String> tags) {
+      this.tags = tags;
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      CollectorKey other = (CollectorKey) o;
-
-      return scope == other.scope
-        && Objects.equal(context, other.context)
-        && Objects.equal(runId, other.runId);
+    public void increment(String metricName, long value) {
+      emitters.getUnchecked(tags).getUnchecked(metricName).increment(value);
     }
 
     @Override
-    public int hashCode() {
-      int result = scope.hashCode();
-      result = 31 * result + context.hashCode();
-      result = 31 * result + runId.hashCode();
-      return result;
-    }
-  }
-
-  /**
-   * Inner class for the cache key for looking up {@link AggregatedMetricsEmitter}.
-   */
-  private static final class EmitterKey {
-    private final CollectorKey collectorKey;
-    private final String metric;
-
-    private EmitterKey(CollectorKey collectorKey, String metric) {
-      this.collectorKey = collectorKey;
-      this.metric = metric;
-    }
-
-    private CollectorKey getCollectorKey() {
-      return collectorKey;
-    }
-
-    private String getMetric() {
-      return metric;
+    public void gauge(String metricName, long value) {
+      emitters.getUnchecked(tags).getUnchecked(metricName).gauge(value);
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      EmitterKey other = (EmitterKey) o;
-      return Objects.equal(collectorKey, other.collectorKey)
-        && Objects.equal(metric, other.metric);
+    public MetricsCollector childCollector(String tagName, String tagValue) {
+      ImmutableMap<String, String> allTags = ImmutableMap.<String, String>builder()
+        .putAll(tags).put(tagName, tagValue).build();
+      return collectors.getUnchecked(allTags);
     }
 
     @Override
-    public int hashCode() {
-      int result = collectorKey.hashCode();
-      result = 31 * result + metric.hashCode();
-      return result;
+    public MetricsCollector childCollector(Map<String, String> tags) {
+      if (tags.isEmpty()) {
+        return this;
+      }
+      // todo: may be warn when duplicate tag is provided? for now ok
+      Map<String, String> allTags = Maps.newHashMap();
+      allTags.putAll(this.tags);
+      allTags.putAll(tags);
+      return collectors.getUnchecked(allTags);
     }
   }
 }

@@ -21,16 +21,15 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.exception.HandlerException;
-import co.cask.cdap.common.http.HttpRequest;
-import co.cask.cdap.common.http.HttpRequests;
-import co.cask.cdap.common.http.HttpResponse;
-import co.cask.cdap.common.http.ObjectResponse;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import co.cask.cdap.proto.Id;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
+import co.cask.common.http.ObjectResponse;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -42,7 +41,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -59,26 +57,24 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
-        return new TimeLimitEndpointStrategy(
-          new RandomEndpointStrategy(
-            discoveryClient.discover(Constants.Service.DATASET_EXECUTOR)), 2L, TimeUnit.SECONDS);
+        return new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_EXECUTOR));
       }
     });
   }
 
   @Override
-  public boolean exists(String instanceName) throws Exception {
-    return (Boolean) executeAdminOp(instanceName, "exists").getResult();
+  public boolean exists(Id.DatasetInstance datasetInstanceId) throws Exception {
+    return (Boolean) executeAdminOp(datasetInstanceId, "exists").getResult();
   }
 
   @Override
-  public DatasetSpecification create(String instanceName, DatasetTypeMeta typeMeta, DatasetProperties props)
-    throws Exception {
+  public DatasetSpecification create(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta,
+                                     DatasetProperties props) throws Exception {
 
-
-    Map<String, String> headers = ImmutableMap.of("instance-props", GSON.toJson(props),
-                                                  "type-meta", GSON.toJson(typeMeta));
-    HttpRequest request = HttpRequest.post(resolve(instanceName, "create")).addHeaders(headers).build();
+    InternalDatasetCreationParams creationParams = new InternalDatasetCreationParams(typeMeta, props);
+    HttpRequest request = HttpRequest.post(resolve(datasetInstanceId, "create"))
+      .withBody(GSON.toJson(creationParams))
+      .build();
     HttpResponse response = HttpRequests.execute(request);
     verifyResponse(response);
 
@@ -86,49 +82,48 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
   }
 
   @Override
-  public void drop(DatasetSpecification spec, DatasetTypeMeta typeMeta) throws Exception {
-    Map<String, String> headers = ImmutableMap.of("instance-spec", GSON.toJson(spec),
-                                                  "type-meta", GSON.toJson(typeMeta));
-    HttpRequest request = HttpRequest.post(resolve(spec.getName(), "drop")).addHeaders(headers).build();
+  public void drop(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta, DatasetSpecification spec)
+    throws Exception {
+    InternalDatasetDropParams dropParams = new InternalDatasetDropParams(typeMeta, spec);
+    HttpRequest request = HttpRequest.post(resolve(datasetInstanceId, "drop"))
+      .withBody(GSON.toJson(dropParams)).build();
     HttpResponse response = HttpRequests.execute(request);
     verifyResponse(response);
   }
 
   @Override
-  public void truncate(String instanceName) throws Exception {
-    executeAdminOp(instanceName, "truncate");
+  public void truncate(Id.DatasetInstance datasetInstanceId) throws Exception {
+    executeAdminOp(datasetInstanceId, "truncate");
   }
 
   @Override
-  public void upgrade(String instanceName) throws Exception {
-    executeAdminOp(instanceName, "upgrade");
+  public void upgrade(Id.DatasetInstance datasetInstanceId) throws Exception {
+    executeAdminOp(datasetInstanceId, "upgrade");
   }
 
-  private DatasetAdminOpResponse executeAdminOp(String instanceName, String opName)
+  private DatasetAdminOpResponse executeAdminOp(Id.DatasetInstance datasetInstanceId, String opName)
     throws IOException, HandlerException {
 
-    HttpResponse httpResponse = HttpRequests.execute(HttpRequest.post(resolve(instanceName, opName)).build());
-    if (httpResponse.getResponseCode() != 200) {
-      throw new HandlerException(HttpResponseStatus.valueOf(httpResponse.getResponseCode()),
-                                 httpResponse.getResponseMessage());
-    }
+    HttpResponse httpResponse = HttpRequests.execute(HttpRequest.post(resolve(datasetInstanceId, opName)).build());
+    verifyResponse(httpResponse);
 
     return GSON.fromJson(new String(httpResponse.getResponseBody()), DatasetAdminOpResponse.class);
   }
 
-  private URL resolve(String instanceName, String opName) throws MalformedURLException {
-    return resolve(String.format("datasets/%s/admin/%s", instanceName, opName));
+  private URL resolve(Id.DatasetInstance datasetInstanceId, String opName) throws MalformedURLException {
+    return resolve(String.format("namespaces/%s/data/datasets/%s/admin/%s", datasetInstanceId.getNamespaceId(),
+                                 datasetInstanceId.getId(), opName));
   }
 
   private URL resolve(String path) throws MalformedURLException {
-    Discoverable endpoint = endpointStrategySupplier.get().pick();
+    Discoverable endpoint = endpointStrategySupplier.get().pick(2L, TimeUnit.SECONDS);
     if (endpoint == null) {
       throw new IllegalStateException("No endpoint for " + Constants.Service.DATASET_EXECUTOR);
     }
     InetSocketAddress addr = endpoint.getSocketAddress();
-    return new URL(String.format("http://%s:%s%s/data/%s",
+    return new URL(String.format("http://%s:%s%s/%s",
                          addr.getHostName(), addr.getPort(),
-                         Constants.Gateway.GATEWAY_VERSION,
+                         Constants.Gateway.API_VERSION_3,
                          path));
   }
 

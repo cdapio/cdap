@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,14 +16,16 @@
 
 package co.cask.cdap.data2.dataset2;
 
-import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
-
 /**
  *
  */
 public class InMemoryDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
+
   @Override
-  protected DatasetFramework getFramework() {
-    return new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
+  protected DatasetFramework getFramework() throws DatasetManagementException {
+    DatasetFramework framework = new InMemoryDatasetFramework(registryFactory, DEFAULT_MODULES,
+                                                              cConf, txExecutorFactory);
+    framework.createNamespace(NAMESPACE_ID);
+    return framework;
   }
 }

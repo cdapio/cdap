@@ -25,15 +25,19 @@ import co.cask.cdap.api.data.batch.RecordWritable;
 import co.cask.cdap.api.data.batch.Scannables;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
+import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -73,6 +77,27 @@ public class KeyValueTable extends AbstractDataset implements
   @Nullable
   public byte[] read(byte[] key) {
     return table.get(key, KEY_COLUMN);
+  }
+
+  /**
+   * Reads the values for an array of given keys.
+   *
+   * @param keys the keys to be read
+   * @return a map of the stored values, keyed by key
+   */
+  public Map<byte[], byte[]> readAll(byte[][] keys) {
+    List<Get> gets = Lists.newArrayListWithCapacity(keys.length);
+    for (byte[] key : keys) {
+      gets.add(new Get(key).add(KEY_COLUMN));
+    }
+    List<Row> results = table.get(gets);
+    Map<byte[], byte[]> values = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (Row row : results) {
+      if (row.get(KEY_COLUMN) != null) {
+        values.put(row.getRow(), row.get(KEY_COLUMN));
+      }
+    }
+    return values;
   }
 
   /**
@@ -145,7 +170,7 @@ public class KeyValueTable extends AbstractDataset implements
    * @param newValue value to set
    * @return true if compare and swap succeeded, false otherwise (stored value is different from expected)
    */
-  public boolean compareAndSwap(byte[] key, byte[] oldValue, byte[] newValue) throws Exception {
+  public boolean compareAndSwap(byte[] key, byte[] oldValue, byte[] newValue) {
     return this.table.compareAndSwap(key, KEY_COLUMN, oldValue, newValue);
   }
 

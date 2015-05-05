@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,132 +16,119 @@
 
 package co.cask.cdap.logging.appender.file;
 
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.core.util.StatusPrinter;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.logging.LoggingConfiguration;
-import co.cask.cdap.logging.appender.AsyncLogAppender;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.appender.LoggingTester;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
+import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
-import co.cask.cdap.logging.read.StandaloneLogReader;
+import co.cask.cdap.logging.read.ReadRange;
 import co.cask.tephra.TransactionManager;
-import co.cask.tephra.inmemory.InMemoryTxSystemClient;
-import org.apache.commons.io.FileUtils;
+import co.cask.tephra.runtime.TransactionModules;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.PrintStream;
 import java.util.List;
-import java.util.Random;
 
 /**
  * Test logging to Avro file.
  */
 public class TestFileLogging {
-  private static String logBaseDir;
 
-  private static DatasetFramework dsFramework;
-  private static InMemoryTxSystemClient txClient;
+  @ClassRule
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
+
+  private static Injector injector;
+  private static TransactionManager txManager;
 
   @BeforeClass
   public static void setUpContext() throws Exception {
-    dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
-    dsFramework.addModule("table", new InMemoryOrderedTableModule());
-
-    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"));
-    logBaseDir = "/tmp/log_files_" + new Random(System.currentTimeMillis()).nextLong();
-
-
-    CConfiguration cConf = CConfiguration.create();
-    cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
+    Configuration hConf = HBaseConfiguration.create();
+    final CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
     cConf.setInt(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024);
+    String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR) + "/" + TestFileLogging.class.getSimpleName();
+    cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
 
+    injector = Guice.createInjector(
+      new ConfigModule(cConf, hConf),
+      new LocationRuntimeModule().getInMemoryModules(),
+      new TransactionModules().getInMemoryModules(),
+      new LoggingModules().getInMemoryModules(),
+      new DataSetsModules().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
+        }
+      }
+    );
 
-    Configuration conf = HBaseConfiguration.create();
-    cConf.copyTxProperties(conf);
-    TransactionManager txManager = new TransactionManager(conf);
+    txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
-    txClient = new InMemoryTxSystemClient(txManager);
 
-    LogAppender appender = new AsyncLogAppender(new FileLogAppender(cConf, dsFramework, txClient,
-                                                                         new LocalLocationFactory()));
+    LogAppender appender = injector.getInstance(FileLogAppender.class);
     new LogAppenderInitializer(appender).initialize("TestFileLogging");
 
     Logger logger = LoggerFactory.getLogger("TestFileLogging");
-    for (int i = 0; i < 60; ++i) {
-      Exception e1 = new Exception("Test Exception1");
-      Exception e2 = new Exception("Test Exception2", e1);
-      logger.warn("Test log message " + i + " {} {}", "arg1", "arg2", e2);
-    }
-
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    StatusPrinter.setPrintStream(new PrintStream(bos));
-    StatusPrinter.print((LoggerContext) LoggerFactory.getILoggerFactory());
-    System.out.println(bos.toString());
-
+    LoggingTester loggingTester = new LoggingTester();
+    loggingTester.generateLogs(logger, new FlowletLoggingContext("TFL_NS_1", "APP_1", "FLOW_1", "FLOWLET_1",
+                                                                 "RUN1", "INSTANCE1"));
     appender.stop();
   }
 
   @AfterClass
   public static void cleanUp() throws Exception {
-    FileUtils.deleteDirectory(new File(logBaseDir));
+    txManager.stopAndWait();
   }
 
   @Test
   public void testGetLogNext() throws Exception {
-    CConfiguration cConf = CConfiguration.create();
-    cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
-
-    LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
-    StandaloneLogReader logReader =
-      new StandaloneLogReader(cConf, dsFramework, txClient, new LocalLocationFactory());
+    LoggingContext loggingContext = new FlowletLoggingContext("TFL_NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE1");
+    FileLogReader logReader = injector.getInstance(FileLogReader.class);
     LoggingTester tester = new LoggingTester();
     tester.testGetNext(logReader, loggingContext);
-    logReader.close();
   }
 
   @Test
   public void testGetLogPrev() throws Exception {
-    CConfiguration cConf = CConfiguration.create();
-    cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
-
-    LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
-    StandaloneLogReader logReader =
-      new StandaloneLogReader(cConf, dsFramework, txClient, new LocalLocationFactory());
+    LoggingContext loggingContext = new FlowletLoggingContext("TFL_NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE1");
+    FileLogReader logReader = injector.getInstance(FileLogReader.class);
     LoggingTester tester = new LoggingTester();
     tester.testGetPrev(logReader, loggingContext);
-    logReader.close();
   }
 
   @Test
   public void testGetLog() throws Exception {
-    CConfiguration cConf = CConfiguration.create();
-    cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
-
-    LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
-    StandaloneLogReader logTail =
-      new StandaloneLogReader(cConf, dsFramework, txClient, new LocalLocationFactory());
+    // LogReader.getLog is tested in LogSaverTest for distributed mode
+    LoggingContext loggingContext = new FlowletLoggingContext("TFL_NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE1");
+    FileLogReader logTail = injector.getInstance(FileLogReader.class);
     LoggingTester.LogCallback logCallback1 = new LoggingTester.LogCallback();
-    logTail.getLogPrev(loggingContext, -1, 60, Filter.EMPTY_FILTER,
+    logTail.getLogPrev(loggingContext, ReadRange.LATEST, 60, Filter.EMPTY_FILTER,
                        logCallback1);
     List<LogEvent> allEvents = logCallback1.getEvents();
     Assert.assertEquals(60, allEvents.size());
@@ -196,6 +183,11 @@ public class TestFileLogging {
     Assert.assertEquals(allEvents.get(58).getLoggingEvent().getFormattedMessage(),
                         events.get(17).getLoggingEvent().getFormattedMessage());
 
+    // Try with null run id, should get all logs for FLOW_1
+    LoggingContext loggingContext1 = new FlowletLoggingContext("TFL_NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE1");
+    LoggingTester.LogCallback logCallback7 = new LoggingTester.LogCallback();
+    logTail.getLog(loggingContext1, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback7);
+    events = logCallback7.getEvents();
+    Assert.assertEquals(100, events.size());
   }
-
 }

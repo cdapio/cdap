@@ -19,6 +19,7 @@ package co.cask.cdap.data2.dataset2.lib.table;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.IntegerStore;
@@ -28,10 +29,10 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
+import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.TypeRepresentation;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Preconditions;
@@ -42,6 +43,7 @@ import com.google.common.reflect.TypeToken;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
@@ -57,29 +59,36 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Test for {@link co.cask.cdap.data2.dataset2.lib.table.ObjectStoreDataset}.
  */
-public class ObjectStoreDatasetTest extends AbstractDatasetTest {
+public class ObjectStoreDatasetTest {
+
+  @ClassRule
+  public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
   private static final byte[] a = { 'a' };
 
+  private static final Id.DatasetModule integerStore = 
+    Id.DatasetModule.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "integerStore");
+
   @BeforeClass
   public static void beforeClass() throws Exception {
-    addModule("integerStore", new IntegerStoreModule());
+    dsFrameworkUtil.addModule(integerStore, new IntegerStoreModule());
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    deleteModule("integerStore");
+    dsFrameworkUtil.deleteModule(integerStore);
   }
 
-  private void addIntegerStoreInstance(String instanceName) throws Exception {
-    createInstance("integerStore", instanceName, DatasetProperties.EMPTY);
+  private void addIntegerStoreInstance(Id.DatasetInstance datasetInstanceId) throws Exception {
+    dsFrameworkUtil.createInstance("integerStore", datasetInstanceId, DatasetProperties.EMPTY);
   }
 
   @Test
   public void testStringStore() throws Exception {
-    createObjectStoreInstance("strings", String.class);
+    Id.DatasetInstance strings = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "strings");
+    createObjectStoreInstance(strings, String.class);
     
-    ObjectStoreDataset<String> stringStore = getInstance("strings");
+    ObjectStoreDataset<String> stringStore = dsFrameworkUtil.getInstance(strings);
     String string = "this is a string";
     stringStore.write(a, string);
     String result = stringStore.read(a);
@@ -87,14 +96,15 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
 
     deleteAndVerify(stringStore, a);
 
-    deleteInstance("strings");
+    dsFrameworkUtil.deleteInstance(strings);
   }
 
   @Test
   public void testPairStore() throws Exception {
-    createObjectStoreInstance("pairs", new TypeToken<ImmutablePair<Integer, String>>() { }.getType());
+    Id.DatasetInstance pairs = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "pairs");
+    createObjectStoreInstance(pairs, new TypeToken<ImmutablePair<Integer, String>>() { }.getType());
 
-    ObjectStoreDataset<ImmutablePair<Integer, String>> pairStore = getInstance("pairs");
+    ObjectStoreDataset<ImmutablePair<Integer, String>> pairStore = dsFrameworkUtil.getInstance(pairs);
     ImmutablePair<Integer, String> pair = new ImmutablePair<Integer, String>(1, "second");
     pairStore.write(a, pair);
     ImmutablePair<Integer, String> result = pairStore.read(a);
@@ -102,14 +112,15 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
 
     deleteAndVerify(pairStore, a);
 
-    deleteInstance("pairs");
+    dsFrameworkUtil.deleteInstance(pairs);
   }
 
   @Test
   public void testCustomStore() throws Exception {
-    createObjectStoreInstance("customs", new TypeToken<Custom>() { }.getType());
+    Id.DatasetInstance customs = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "customs");
+    createObjectStoreInstance(customs, new TypeToken<Custom>() { }.getType());
 
-    ObjectStoreDataset<Custom> customStore = getInstance("customs");
+    ObjectStoreDataset<Custom> customStore = dsFrameworkUtil.getInstance(customs);
     Custom custom = new Custom(42, Lists.newArrayList("one", "two"));
     customStore.write(a, custom);
     Custom result = customStore.read(a);
@@ -121,14 +132,15 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
 
     deleteAndVerify(customStore, a);
 
-    deleteInstance("customs");
+    dsFrameworkUtil.deleteInstance(customs);
   }
 
   @Test
   public void testInnerStore() throws Exception {
-    createObjectStoreInstance("inners", new TypeToken<CustomWithInner.Inner<Integer>>() { }.getType());
+    Id.DatasetInstance inners = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "inners");
+    createObjectStoreInstance(inners, new TypeToken<CustomWithInner.Inner<Integer>>() { }.getType());
 
-    ObjectStoreDataset<CustomWithInner.Inner<Integer>> innerStore = getInstance("inners");
+    ObjectStoreDataset<CustomWithInner.Inner<Integer>> innerStore = dsFrameworkUtil.getInstance(inners);
     CustomWithInner.Inner<Integer> inner = new CustomWithInner.Inner<Integer>(42, new Integer(99));
     innerStore.write(a, inner);
     CustomWithInner.Inner<Integer> result = innerStore.read(a);
@@ -136,16 +148,17 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
 
     deleteAndVerify(innerStore, a);
 
-    deleteInstance("inners");
+    dsFrameworkUtil.deleteInstance(inners);
   }
 
   @Test
   public void testInstantiateWrongClass() throws Exception {
-    createObjectStoreInstance("pairs", new TypeToken<ImmutablePair<Integer, String>>() { }.getType());
+    Id.DatasetInstance pairs = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "pairs");
+    createObjectStoreInstance(pairs, new TypeToken<ImmutablePair<Integer, String>>() { }.getType());
 
     // note: due to type erasure, this succeeds
-    final ObjectStoreDataset<Custom> store = getInstance("pairs");
-    TransactionExecutor storeTxnl = newTransactionExecutor(store);
+    final ObjectStoreDataset<Custom> store = dsFrameworkUtil.getInstance(pairs);
+    TransactionExecutor storeTxnl = dsFrameworkUtil.newTransactionExecutor(store);
     // but now it must fail with incompatible type
     try {
       storeTxnl.execute(new TransactionExecutor.Subroutine() {
@@ -161,8 +174,8 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
     }
 
     // write a correct object to the pair store
-    final ObjectStoreDataset<ImmutablePair<Integer, String>> pairStore = getInstance("pairs");
-    TransactionExecutor pairStoreTxnl = newTransactionExecutor(store);
+    final ObjectStoreDataset<ImmutablePair<Integer, String>> pairStore = dsFrameworkUtil.getInstance(pairs);
+    TransactionExecutor pairStoreTxnl = dsFrameworkUtil.newTransactionExecutor(store);
 
     final ImmutablePair<Integer, String> pair = new ImmutablePair<Integer, String>(1, "second");
     pairStoreTxnl.execute(new TransactionExecutor.Subroutine() {
@@ -196,12 +209,12 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
 
     deleteAndVerify(pairStore, a);
 
-    deleteInstance("pairs");
+    dsFrameworkUtil.deleteInstance(pairs);
   }
 
   @Test
   public void testWithCustomClassLoader() throws Exception {
-
+    Id.DatasetInstance kv = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "kv");
     // create a dummy class loader that records the name of the class it loaded
     final AtomicReference<String> lastClassLoaded = new AtomicReference<String>(null);
     ClassLoader loader = new ClassLoader() {
@@ -212,9 +225,9 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
       }
     };
 
-    createInstance("keyValueTable", "kv", DatasetProperties.EMPTY);
+    dsFrameworkUtil.createInstance("keyValueTable", kv, DatasetProperties.EMPTY);
 
-    KeyValueTable kvTable = getInstance("kv");
+    KeyValueTable kvTable = dsFrameworkUtil.getInstance(kv);
     Type type = Custom.class;
     TypeRepresentation typeRep = new TypeRepresentation(type);
     Schema schema = new ReflectionSchemaGenerator().generate(type);
@@ -226,15 +239,16 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
 
     deleteAndVerify(objectStore, Bytes.toBytes("dummy"));
 
-    deleteInstance("kv");
+    dsFrameworkUtil.deleteInstance(kv);
   }
 
   @Test
   public void testBatchCustomList() throws Exception {
-    createObjectStoreInstance("customlist", new TypeToken<List<Custom>>() { }.getType());
+    Id.DatasetInstance customlist = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "customlist");
+    createObjectStoreInstance(customlist, new TypeToken<List<Custom>>() { }.getType());
 
-    final ObjectStoreDataset<List<Custom>> customStore = getInstance("customlist");
-    TransactionExecutor txnl = newTransactionExecutor(customStore);
+    final ObjectStoreDataset<List<Custom>> customStore = dsFrameworkUtil.getInstance(customlist);
+    TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(customStore);
 
     final SortedSet<Long> keysWritten = Sets.newTreeSet();
 
@@ -284,15 +298,16 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
 
     deleteAndVerifyInBatch(customStore, txnl, keysWrittenCopy);
 
-    deleteInstance("customlist");
+    dsFrameworkUtil.deleteInstance(customlist);
   }
 
   @Test
   public void testBatchReads() throws Exception {
-    createObjectStoreInstance("batch", String.class);
+    Id.DatasetInstance batch = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "batch");
+    createObjectStoreInstance(batch, String.class);
 
-    final ObjectStoreDataset<String> t = getInstance("batch");
-    TransactionExecutor txnl = newTransactionExecutor(t);
+    final ObjectStoreDataset<String> t = dsFrameworkUtil.getInstance(batch);
+    TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(t);
 
     final SortedSet<Long> keysWritten = Sets.newTreeSet();
 
@@ -335,15 +350,16 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
 
     deleteAndVerifyInBatch(t, txnl, keysWritten);
 
-    deleteInstance("batch");
+    dsFrameworkUtil.deleteInstance(batch);
   }
 
   @Test
   public void testScanObjectStore() throws Exception {
-    createObjectStoreInstance("scan", String.class);
+    Id.DatasetInstance scan = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "scan");
+    createObjectStoreInstance(scan, String.class);
 
-    final ObjectStoreDataset<String> t = getInstance("scan");
-    TransactionExecutor txnl = newTransactionExecutor(t);
+    final ObjectStoreDataset<String> t = dsFrameworkUtil.getInstance(scan);
+    TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(t);
 
     // write 10 values
     txnl.execute(new TransactionExecutor.Subroutine() {
@@ -389,7 +405,7 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
     });
 
 
-    deleteInstance("scan");
+    dsFrameworkUtil.deleteInstance(scan);
   }
 
   // helper to verify that the split readers for the given splits return exactly a set of keys
@@ -416,9 +432,10 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
 
   @Test
   public void testSubclass() throws Exception {
-    addIntegerStoreInstance("ints");
+    Id.DatasetInstance intsInstance = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "ints");
+    addIntegerStoreInstance(intsInstance);
 
-    IntegerStore ints = getInstance("ints");
+    IntegerStore ints = dsFrameworkUtil.getInstance(intsInstance);
     ints.write(42, 101);
     Assert.assertEquals((Integer) 101, ints.read(42));
 
@@ -426,11 +443,12 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
     ints.delete(42);
     Assert.assertNull(ints.read(42));
 
-    deleteInstance("ints");
+    dsFrameworkUtil.deleteInstance(intsInstance);
   }
 
-  private void createObjectStoreInstance(String instanceName, Type type) throws Exception {
-    createInstance("objectStore", instanceName, ObjectStores.objectStoreProperties(type, DatasetProperties.EMPTY));
+  private void createObjectStoreInstance(Id.DatasetInstance datasetInstanceId, Type type) throws Exception {
+    dsFrameworkUtil.createInstance("objectStore", datasetInstanceId, 
+                                   ObjectStores.objectStoreProperties(type, DatasetProperties.EMPTY));
   }
 
   private void deleteAndVerify(ObjectStore store, byte[] key) {

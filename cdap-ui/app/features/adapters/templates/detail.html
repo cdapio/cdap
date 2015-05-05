@@ -1,0 +1,76 @@
+<div ncy-breadcrumb></div>
+
+<div class="row" program-heading>
+  <div class="col-sm-6">
+    <h2 class="programTitle">
+      <span ng-bind="$state.params.adapterId"></span>
+    </h2>
+    <div class="type-block">
+      <span class="icon-ETLtemplates"></span>
+      <small> Type: Adapter </small>
+    </div>
+  </div>
+  <div class="col-sm-6 text-right">
+
+    <div class="btn-group" dropdown>
+      <div ng-if="status == 'STOPPED'"
+           class="btn btn-success btn-md"
+           ng-click="start()">
+        <span class="fa fa-play"> </span>
+        <span>Start</span>
+      </div>
+
+      <div ng-if="status == 'STARTED'"
+           class="btn btn-danger btn-md"
+           ng-click="stop()">
+        <span class="fa fa-stop"> </span>
+        <span>Stop</span>
+      </div>
+
+      <div ng-if="status == 'STARTING' || status == 'STOPPING'"
+           class="btn btn-md"
+           ng-class="{'btn-success': status === 'STARTING', 'btn-danger': status === 'STOPPING'}">
+        <span class="fa fa-refresh fa-spin"></span>
+        <span>{{status | caskCapitalizeFilter}}</span>
+      </div>
+
+      <button class="btn btn-md btn-success dropdown-toggle" dropdown-toggle ng-if="status === 'STOPPED'">
+        <span class="caret"></span>
+      </button>
+
+      <ul class="dropdown-menu dropdown-menu-right" role="menu" ng-if="status === 'STOPPED'">
+        <li>
+          <a href="#" ng-click="openRuntime()">
+            <span class="fa fa-wrench"></span>
+            Runtime Arguments
+          </a>
+        </li>
+        <li>
+          <a href="#" ng-click="openPreferences()">
+            <span class="fa fa-cog"></span>
+            Preferences
+          </a>
+        </li>
+      </ul>
+
+    </div>
+    <!-- END OF BUTTON GROUP -->
+
+  </div>
+</div>
+
+<div class="cdap-subnav-end"></div>
+<ul class="nav nav-tabs slanted-tabs" role="tablist">
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="adapters.detail.runs" role="tab">Runs</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="adapters.detail.history" role="tab">History</a>
+  </li>
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="adapters.detail.datasets" role="tab">Datasets</a>
+  </li>
+</ul>
+
+<br />
+<ui-view role="tabpanel"/>

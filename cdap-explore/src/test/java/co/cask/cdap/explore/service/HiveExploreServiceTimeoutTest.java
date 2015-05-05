@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinition;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryStatus;
@@ -31,8 +32,10 @@ import com.google.common.collect.Sets;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 
 import java.util.List;
 import java.util.Set;
@@ -47,32 +50,31 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
   private static final long INACTIVE_OPERATION_TIMEOUT_SECS = 5;
   private static final long CLEANUP_JOB_SCHEDULE_SECS = 1;
 
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
   private static ExploreService exploreService;
 
   @BeforeClass
   public static void start() throws Exception {
-    // Need to specify that when this test is run after ExploreServiceTestsSuite has run in the same JVM
-    BaseHiveExploreServiceTest.runBefore = true;
-    BaseHiveExploreServiceTest.runAfter = true;
-
     // Set smaller values for timeouts for testing
     CConfiguration cConfiguration = CConfiguration.create();
     cConfiguration.setLong(Constants.Explore.ACTIVE_OPERATION_TIMEOUT_SECS, ACTIVE_OPERATION_TIMEOUT_SECS);
     cConfiguration.setLong(Constants.Explore.INACTIVE_OPERATION_TIMEOUT_SECS, INACTIVE_OPERATION_TIMEOUT_SECS);
     cConfiguration.setLong(Constants.Explore.CLEANUP_JOB_SCHEDULE_SECS, CLEANUP_JOB_SCHEDULE_SECS);
 
-    startServices(cConfiguration);
+    initialize(cConfiguration, tmpFolder);
 
     exploreService = injector.getInstance(ExploreService.class);
 
-    datasetFramework.addModule("keyStructValue", new KeyStructValueTableDefinition.KeyStructValueTableModule());
+    datasetFramework.addModule(KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
     // Performing admin operations to create dataset instance
-    datasetFramework.addInstance("keyStructValueTable", "my_table", DatasetProperties.EMPTY);
+    datasetFramework.addInstance("keyStructValueTable", MY_TABLE, DatasetProperties.EMPTY);
 
     // Accessing dataset instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table =
-      datasetFramework.getDataset("my_table", DatasetDefinition.NO_ARGUMENTS, null);
+      datasetFramework.getDataset(MY_TABLE, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(table);
 
     Transaction tx1 = transactionManager.startShort(100);
@@ -101,15 +103,15 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
 
   @AfterClass
   public static void stop() throws Exception {
-    datasetFramework.deleteInstance("my_table");
-    datasetFramework.deleteModule("keyStructValue");
+    datasetFramework.deleteInstance(MY_TABLE);
+    datasetFramework.deleteModule(KEY_STRUCT_VALUE);
   }
 
   @Test
   public void testTimeoutRunning() throws Exception {
     Set<Long> beforeTxns = transactionManager.getCurrentState().getInProgress().keySet();
 
-    QueryHandle handle = exploreService.execute("select key, value from my_table");
+    QueryHandle handle = exploreService.execute(NAMESPACE_ID, "select key, value from " + MY_TABLE_NAME);
 
     Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
     Assert.assertFalse(queryTxns.isEmpty());
@@ -136,7 +138,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
   public void testTimeoutFetchAllResults() throws Exception {
     Set<Long> beforeTxns = transactionManager.getCurrentState().getInProgress().keySet();
 
-    QueryHandle handle = exploreService.execute("select key, value from my_table");
+    QueryHandle handle = exploreService.execute(NAMESPACE_ID, "select key, value from " + MY_TABLE_NAME);
 
     Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
     Assert.assertFalse(queryTxns.isEmpty());
@@ -181,7 +183,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
   public void testTimeoutNoResults() throws Exception {
     Set<Long> beforeTxns = transactionManager.getCurrentState().getInProgress().keySet();
 
-    QueryHandle handle = exploreService.execute("drop table if exists not_existing_table_name");
+    QueryHandle handle = exploreService.execute(NAMESPACE_ID, "drop table if exists not_existing_table_name");
 
     Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
     Assert.assertFalse(queryTxns.isEmpty());
@@ -220,7 +222,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testCloseQuery() throws Exception {
-    QueryHandle handle = exploreService.execute("drop table if exists not_existing_table_name");
+    QueryHandle handle = exploreService.execute(NAMESPACE_ID, "drop table if exists not_existing_table_name");
     exploreService.close(handle);
     try {
       exploreService.getStatus(handle);

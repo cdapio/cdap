@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,90 +17,125 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.api.data.DataSetContext;
+import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.data.DatasetInstantiationException;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.templates.AdapterContext;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.services.AbstractServiceDiscoverer;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
-import co.cask.cdap.data.dataset.DataSetInstantiator;
+import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.templates.AdapterDefinition;
+import co.cask.cdap.templates.AdapterPlugin;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
-import org.apache.twill.common.Cancellable;
-import org.apache.twill.common.Threads;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.IOException;
+import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
  * Base class for program runtime context
  */
-public abstract class AbstractContext implements DataSetContext, RuntimeContext {
+public abstract class AbstractContext extends AbstractServiceDiscoverer
+                                      implements DatasetContext, RuntimeContext, AdapterContext {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
 
   private final Program program;
   private final RunId runId;
-  private final Map<String, Closeable> datasets;
+  private final Map<String, String> runtimeArguments;
+  private final Map<String, Dataset> datasets;
 
   private final MetricsCollector programMetrics;
 
-  private final DataSetInstantiator dsInstantiator;
-
+  private final DatasetInstantiator dsInstantiator;
   private final DiscoveryServiceClient discoveryServiceClient;
 
-  public AbstractContext(Program program, RunId runId,
-                         Set<String> datasets,
-                         String metricsContext,
-                         MetricsCollectionService metricsCollectionService,
-                         DatasetFramework dsFramework,
-                         CConfiguration conf,
-                         DiscoveryServiceClient discoveryServiceClient) {
+  private final AdapterDefinition adapterSpec;
+  private final PluginInstantiator pluginInstantiator;
+
+  /**
+   * Constructs a context without application template adapter support.
+   */
+  protected AbstractContext(Program program, RunId runId, Arguments arguments,
+                            Set<String> datasets, MetricsCollector metricsCollector,
+                            DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient) {
+    this(program, runId, arguments, datasets, metricsCollector, dsFramework, discoveryServiceClient, null, null);
+  }
+
+  /**
+   * Constructs a context. To have application template adapter support,
+   * both the {@code adapterSpec} and {@code pluginInstantiator} must not be null.
+   */
+  protected AbstractContext(Program program, RunId runId, Arguments arguments,
+                            Set<String> datasets, MetricsCollector metricsCollector,
+                            DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
+                            @Nullable AdapterDefinition adapterSpec,
+                            @Nullable PluginInstantiator pluginInstantiator) {
+    super(program);
     this.program = program;
     this.runId = runId;
+    this.runtimeArguments = ImmutableMap.copyOf(arguments.asMap());
     this.discoveryServiceClient = discoveryServiceClient;
 
-    MetricsCollector datasetMetrics;
-    if (metricsCollectionService != null) {
-      // NOTE: RunId metric is not supported now. Need UI refactoring to enable it.
-      this.programMetrics = metricsCollectionService.getCollector(MetricsScope.SYSTEM, metricsContext, "0");
-      datasetMetrics = metricsCollectionService.getCollector(MetricsScope.SYSTEM,
-                                                             Constants.Metrics.DATASET_CONTEXT, "0");
-    } else {
-      this.programMetrics = null;
-      datasetMetrics = null;
-    }
-
-    this.dsInstantiator = new DataSetInstantiator(dsFramework, conf, program.getClassLoader(),
-                                                  datasetMetrics, programMetrics);
+    this.programMetrics = metricsCollector;
+    this.dsInstantiator = new DatasetInstantiator(program.getId().getNamespace(), dsFramework,
+                                                  program.getClassLoader(), getOwners(), programMetrics);
 
     // todo: this should be instantiated on demand, at run-time dynamically. Esp. bad to do that in ctor...
     // todo: initialized datasets should be managed by DatasetContext (ie. DatasetInstantiator): refactor further
-    this.datasets = DataSets.createDataSets(dsInstantiator, datasets);
+    this.datasets = Datasets.createDatasets(dsInstantiator, datasets, runtimeArguments);
+    this.adapterSpec = adapterSpec;
+    this.pluginInstantiator = pluginInstantiator;
+  }
+
+  public List<Id> getOwners() {
+    ImmutableList.Builder<Id> result = ImmutableList.builder();
+    result.add(program.getId());
+    if (adapterSpec != null) {
+      result.add(Id.Adapter.from(program.getId().getNamespace(), adapterSpec.getName()));
+    }
+    return result.build();
   }
 
   public abstract Metrics getMetrics();
 
+  @Nullable
+  public AdapterDefinition getAdapterSpecification() {
+    return adapterSpec;
+  }
+
+  /**
+   * Returns the {@link PluginInstantiator} used by this context or {@code null} if there is no plugin supported.
+   */
+  @Nullable
+  public PluginInstantiator getPluginInstantiator() {
+    return pluginInstantiator;
+  }
+
   @Override
   public String toString() {
-    return String.format("accountId=%s, applicationId=%s, program=%s, runid=%s",
-                         getAccountId(), getApplicationId(), getProgramName(), runId);
+    return String.format("namespaceId=%s, applicationId=%s, program=%s, runid=%s",
+                         getNamespaceId(), getApplicationId(), getProgramName(), runId);
   }
 
   public MetricsCollector getProgramMetrics() {
@@ -108,30 +143,34 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
   }
 
   // todo: this may be refactored further: avoid leaking dataset instantiator from context
-  public DataSetInstantiator getDatasetInstantiator() {
+  public DatasetInstantiator getDatasetInstantiator() {
     return dsInstantiator;
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <T extends Closeable> T getDataSet(String name) {
-    // TODO this should allow to get a dataset that was not declared with @UseDataSet. Then we can support arguments.
-    T dataSet = (T) datasets.get(name);
-    Preconditions.checkArgument(dataSet != null, "%s is not a known DataSet.", name);
-    return dataSet;
+  public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
+    return getDataset(name, RuntimeArguments.NO_ARGUMENTS);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments) {
+  public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
+    throws DatasetInstantiationException {
     // TODO this should allow to get a dataset that was not declared with @UseDataSet. Then we can support arguments.
-    T dataSet = (T) datasets.get(name);
-    Preconditions.checkArgument(dataSet != null, "%s is not a known DataSet.", name);
-    return dataSet;
+    try {
+      @SuppressWarnings("unchecked")
+      T dataset = (T) datasets.get(name);
+      if (dataset != null) {
+        return dataset;
+      }
+    } catch (Throwable t) {
+      throw new DatasetInstantiationException(String.format("Can't instantiate dataset '%s'", name), t);
+    }
+    // if execution gets here, then dataset was null
+    throw new DatasetInstantiationException(String.format("'%s' is not a known Dataset", name));
   }
 
-  public String getAccountId() {
-    return program.getAccountId();
+  public String getNamespaceId() {
+    return program.getNamespaceId();
   }
 
   public String getApplicationId() {
@@ -151,63 +190,8 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
   }
 
   @Override
-  public URL getServiceURL(final String applicationId, final String serviceId) {
-    ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(String.format("service.%s.%s.%s",
-                                                                                        getAccountId(),
-                                                                                        applicationId,
-                                                                                        serviceId));
-    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(serviceDiscovered);
-    Discoverable discoverable = endpointStrategy.pick();
-    if (discoverable != null) {
-      return createURL(discoverable, applicationId, serviceId);
-    }
-
-    final SynchronousQueue<URL> discoverableQueue = new SynchronousQueue<URL>();
-    Cancellable discoveryCancel = serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
-      @Override
-      public void onChange(ServiceDiscovered serviceDiscovered) {
-        try {
-          URL url = createURL(serviceDiscovered.iterator().next(), applicationId, serviceId);
-          discoverableQueue.offer(url);
-        } catch (NoSuchElementException e) {
-          LOG.debug("serviceDiscovered is empty");
-        }
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
-
-    try {
-      URL url = discoverableQueue.poll(1, TimeUnit.SECONDS);
-      if (url == null) {
-        LOG.debug("Discoverable endpoint not found for appID: {}, serviceID: {}.", applicationId, serviceId);
-      }
-      return url;
-    } catch (InterruptedException e) {
-      LOG.error("Got exception: ", e);
-      return null;
-    } finally {
-      discoveryCancel.cancel();
-    }
-  }
-
-  @Override
-  public URL getServiceURL(String serviceId) {
-    return getServiceURL(getApplicationId(), serviceId);
-  }
-
-  private URL createURL(@Nullable Discoverable discoverable, String applicationId, String serviceId) {
-    if (discoverable == null) {
-      return null;
-    }
-    String hostName = discoverable.getSocketAddress().getHostName();
-    int port = discoverable.getSocketAddress().getPort();
-    String path = String.format("http://%s:%d%s/apps/%s/services/%s/methods/", hostName, port,
-                                Constants.Gateway.GATEWAY_VERSION, applicationId, serviceId);
-    try {
-      return new URL(path);
-    } catch (MalformedURLException e) {
-      LOG.error("Got exception while creating serviceURL", e);
-      return null;
-    }
+  public Map<String, String> getRuntimeArguments() {
+    return runtimeArguments;
   }
 
   /**
@@ -229,5 +213,71 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
     } catch (Throwable t) {
       LOG.error("Dataset throws exceptions during close:" + ds.toString() + ", in context: " + this);
     }
+  }
+
+  @Override
+  public DiscoveryServiceClient getDiscoveryServiceClient() {
+    return discoveryServiceClient;
+  }
+
+  @Override
+  public PluginProperties getPluginProperties(String pluginId) {
+    return getAdapterPlugin(pluginId).getProperties();
+  }
+
+  @Override
+  public <T> Class<T> loadPluginClass(String pluginId) {
+    if (pluginInstantiator == null) {
+      throw new UnsupportedOperationException("Plugin not supported for non-adapter program");
+    }
+    AdapterPlugin plugin = getAdapterPlugin(pluginId);
+    try {
+      return pluginInstantiator.loadClass(plugin.getPluginInfo(), plugin.getPluginClass());
+    } catch (ClassNotFoundException e) {
+      // Shouldn't happen, unless there is bug in file localization
+      throw new IllegalArgumentException("Plugin class not found", e);
+    } catch (IOException e) {
+      // This is fatal, since jar cannot be expanded.
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public <T> T newPluginInstance(String pluginId) throws InstantiationException {
+    if (pluginInstantiator == null) {
+      throw new UnsupportedOperationException("Plugin not supported for non-adapter program");
+    }
+    AdapterPlugin plugin = getAdapterPlugin(pluginId);
+    try {
+      return pluginInstantiator.newInstance(plugin.getPluginInfo(), plugin.getPluginClass(), plugin.getProperties());
+    } catch (ClassNotFoundException e) {
+      // Shouldn't happen, unless there is bug in file localization
+      throw new IllegalArgumentException("Plugin class not found", e);
+    } catch (IOException e) {
+      // This is fatal, since jar cannot be expanded.
+      throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Returns the {@link AdapterPlugin} as stored in the adapter spec for the given type and name.
+   */
+  private AdapterPlugin getAdapterPlugin(String pluginId) {
+    if (adapterSpec == null) {
+      throw new UnsupportedOperationException("Plugin not supported for non-adapter program");
+    }
+    AdapterPlugin plugin = adapterSpec.getPlugins().get(pluginId);
+    Preconditions.checkArgument(plugin != null, "Plugin with id %s not exists in adapter %s of template %s.",
+                                pluginId, adapterSpec.getName(), adapterSpec.getTemplate());
+    return plugin;
+  }
+
+  public static Map<String, String> getMetricsContext(Program program, String runId) {
+    Map<String, String> tags = Maps.newHashMap();
+    tags.put(Constants.Metrics.Tag.NAMESPACE, program.getNamespaceId());
+    tags.put(Constants.Metrics.Tag.APP, program.getApplicationId());
+    tags.put(ProgramTypeMetricTag.getTagName(program.getType()), program.getName());
+    tags.put(Constants.Metrics.Tag.RUN_ID, runId);
+    return tags;
   }
 }

@@ -15,22 +15,24 @@
  */
 package co.cask.cdap.metrics.collect;
 
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.metrics.MetricValue;
+import co.cask.cdap.api.metrics.MetricValues;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.io.BinaryDecoder;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.internal.io.ASMDatumWriterFactory;
 import co.cask.cdap.internal.io.ASMFieldAccessorFactory;
-import co.cask.cdap.internal.io.ByteBufferInputStream;
 import co.cask.cdap.internal.io.DatumWriter;
 import co.cask.cdap.internal.io.ReflectionDatumReader;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.internal.io.Schema;
-import co.cask.cdap.internal.io.UnsupportedTypeException;
-import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.test.SlowTests;
+import co.cask.common.io.ByteBufferInputStream;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Table;
 import com.google.common.reflect.TypeToken;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
 import org.apache.twill.internal.kafka.client.ZKKafkaClientService;
@@ -39,6 +41,7 @@ import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.kafka.client.FetchedMessage;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.kafka.client.KafkaConsumer;
+import org.apache.twill.kafka.client.KafkaPublisher;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.After;
 import org.junit.Assert;
@@ -87,18 +90,24 @@ public class KafkaMetricsCollectionServiceTest {
     KafkaClientService kafkaClient = new ZKKafkaClientService(zkClient);
     kafkaClient.startAndWait();
 
-    final TypeToken<MetricsRecord> metricRecordType = TypeToken.of(MetricsRecord.class);
-    final Schema schema = new ReflectionSchemaGenerator().generate(metricRecordType.getType());
-    DatumWriter<MetricsRecord> metricRecordDatumWriter = new ASMDatumWriterFactory(new ASMFieldAccessorFactory())
-      .create(metricRecordType, schema);
+    final TypeToken<MetricValues> metricValueType = TypeToken.of(MetricValues.class);
+    final Schema schema = new ReflectionSchemaGenerator().generate(metricValueType.getType());
+    DatumWriter<MetricValues> metricRecordDatumWriter = new ASMDatumWriterFactory(new ASMFieldAccessorFactory())
+      .create(metricValueType, schema);
 
     MetricsCollectionService collectionService = new KafkaMetricsCollectionService(kafkaClient, "metrics",
-                                                                                   metricRecordDatumWriter);
+                                                                                   KafkaPublisher.Ack.FIRE_AND_FORGET,
+                                                                                   metricRecordDatumWriter) {
+      @Override
+      protected boolean isPublishMetaMetrics() {
+        return false;
+      }
+    };
     collectionService.startAndWait();
 
     // publish metrics for different context
     for (int i = 1; i <= 3; i++) {
-      collectionService.getCollector(MetricsScope.USER, "test.context." + i, "runId").increment("processed", i);
+      collectionService.getCollector(ImmutableMap.of("tag", "" + i)).increment("processed", i);
     }
 
     // Sleep to make sure metrics get published
@@ -106,11 +115,13 @@ public class KafkaMetricsCollectionServiceTest {
 
     collectionService.stopAndWait();
 
-    assertMetricsFromKafka(kafkaClient, schema, metricRecordType,
-                           ImmutableMap.of(
-                             "test.context.1", 1,
-                             "test.context.2", 2,
-                             "test.context.3", 3));
+    // <Context, metricName, value>
+    Table<String, String, Long> expected = HashBasedTable.create();
+    expected.put("tag.1", "processed", 1L);
+    expected.put("tag.2", "processed", 2L);
+    expected.put("tag.3", "processed", 3L);
+
+    assertMetricsFromKafka(kafkaClient, schema, metricValueType, expected);
   }
 
   @Test
@@ -123,13 +134,19 @@ public class KafkaMetricsCollectionServiceTest {
     KafkaClientService kafkaClient = new ZKKafkaClientService(zkClient);
     kafkaClient.startAndWait();
 
-    final TypeToken<MetricsRecord> metricRecordType = TypeToken.of(MetricsRecord.class);
+    final TypeToken<MetricValues> metricRecordType = TypeToken.of(MetricValues.class);
     final Schema schema = new ReflectionSchemaGenerator().generate(metricRecordType.getType());
-    DatumWriter<MetricsRecord> metricRecordDatumWriter = new ASMDatumWriterFactory(new ASMFieldAccessorFactory())
+    DatumWriter<MetricValues> metricRecordDatumWriter = new ASMDatumWriterFactory(new ASMFieldAccessorFactory())
       .create(metricRecordType, schema);
 
     MetricsCollectionService collectionService = new KafkaMetricsCollectionService(kafkaClient, "metrics",
-                                                                                   metricRecordDatumWriter);
+                                                                                   KafkaPublisher.Ack.FIRE_AND_FORGET,
+                                                                                   metricRecordDatumWriter) {
+      @Override
+      protected boolean isPublishMetaMetrics() {
+        return false;
+      }
+    };
     collectionService.startAndWait();
 
     // start the kafka server
@@ -141,35 +158,49 @@ public class KafkaMetricsCollectionServiceTest {
     TimeUnit.SECONDS.sleep(5);
 
     // public a metric
-    collectionService.getCollector(MetricsScope.USER, "test.context", "runId").increment("metric", 5);
+    collectionService.getCollector(ImmutableMap.of("tag", "test")).increment("metric", 5);
 
     // Sleep to make sure metrics get published
     TimeUnit.SECONDS.sleep(2);
 
     collectionService.stopAndWait();
 
-    assertMetricsFromKafka(kafkaClient, schema, metricRecordType, ImmutableMap.of("test.context", 5));
+    // <Context, metricName, value>
+    Table<String, String, Long> expected = HashBasedTable.create();
+    expected.put("tag.test", "metric", 5L);
+    assertMetricsFromKafka(kafkaClient, schema, metricRecordType, expected);
   }
 
   private void assertMetricsFromKafka(KafkaClientService kafkaClient, final Schema schema,
-                                      final TypeToken<MetricsRecord> metricRecordType,
-                                      Map<String, Integer> expected) throws InterruptedException {
+                                      final TypeToken<MetricValues> metricRecordType,
+                                      Table<String, String, Long> expected) throws InterruptedException {
 
     // Consume from kafka
-    final Map<String, MetricsRecord> metrics = Maps.newHashMap();
+    final Map<String, MetricValues> metrics = Maps.newHashMap();
     final Semaphore semaphore = new Semaphore(0);
-    kafkaClient.getConsumer().prepare().addFromBeginning("metrics." + MetricsScope.USER.name().toLowerCase(), 0)
+    kafkaClient.getConsumer().prepare().addFromBeginning("metrics", 0)
                                        .consume(new KafkaConsumer.MessageCallback() {
 
-      ReflectionDatumReader<MetricsRecord> reader = new ReflectionDatumReader<MetricsRecord>(schema, metricRecordType);
+      ReflectionDatumReader<MetricValues> reader = new ReflectionDatumReader<MetricValues>(schema, metricRecordType);
 
       @Override
       public void onReceived(Iterator<FetchedMessage> messages) {
         try {
           while (messages.hasNext()) {
             ByteBuffer payload = messages.next().getPayload();
-            MetricsRecord metricsRecord = reader.read(new BinaryDecoder(new ByteBufferInputStream(payload)), schema);
-            metrics.put(metricsRecord.getContext(), metricsRecord);
+            MetricValues metricsRecord = reader.read(new BinaryDecoder(new ByteBufferInputStream(payload)), schema);
+            StringBuilder flattenContext = new StringBuilder();
+            // for verifying expected results, sorting tags
+            Map<String, String> tags = Maps.newTreeMap();
+            tags.putAll(metricsRecord.getTags());
+            for (Map.Entry<String, String> tag : tags.entrySet()) {
+              flattenContext.append(tag.getKey()).append(".").append(tag.getValue()).append(".");
+            }
+            // removing trailing "."
+            if (flattenContext.length() > 0) {
+              flattenContext.deleteCharAt(flattenContext.length() - 1);
+            }
+            metrics.put(flattenContext.toString(), metricsRecord);
             semaphore.release();
           }
         } catch (Exception e) {
@@ -185,10 +216,17 @@ public class KafkaMetricsCollectionServiceTest {
     });
 
     Assert.assertTrue(semaphore.tryAcquire(expected.size(), 5, TimeUnit.SECONDS));
+    Assert.assertEquals(expected.rowKeySet().size(), metrics.size());
 
-    Assert.assertEquals(expected.size(), metrics.size());
-    for (Map.Entry<String, Integer> expectedEntry : expected.entrySet()) {
-      Assert.assertEquals(expectedEntry.getValue().intValue(), metrics.get(expectedEntry.getKey()).getValue());
+    for (String expectedContext : expected.rowKeySet()) {
+      MetricValues metric = metrics.get(expectedContext);
+      Assert.assertNotNull("Missing expected value for " + expectedContext, metric);
+
+      // validate metrics and their values
+      for (MetricValue metricValue : metric.getMetrics()) {
+        Assert.assertNotNull(expected.contains(expectedContext, metricValue));
+        Assert.assertEquals((long) expected.get(expectedContext, metricValue.getName()), metricValue.getValue());
+      }
     }
 
     kafkaClient.stopAndWait();

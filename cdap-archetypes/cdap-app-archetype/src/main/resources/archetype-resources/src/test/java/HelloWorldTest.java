@@ -13,20 +13,24 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package $package;
 
+import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
-import co.cask.cdap.test.ProcedureManager;
-import co.cask.cdap.test.RuntimeMetrics;
 import co.cask.cdap.test.RuntimeStats;
+import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.StreamWriter;
 import co.cask.cdap.test.TestBase;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.base.Charsets;
+import com.google.common.io.ByteStreams;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -59,12 +63,23 @@ public class HelloWorldTest extends TestBase {
       flowManager.stop();
     }
 
-    // Start Greeting procedure and query
-    ProcedureManager procedureManager = appManager.startProcedure("Greeting");
-    String response = procedureManager.getClient().query("greet", ImmutableMap.<String, String>of());
-    Assert.assertEquals("\"Hello 5!\"", response);
+    // Start Greeting service and use it
+    ServiceManager serviceManager = appManager.startService(HelloWorld.Greeting.SERVICE_NAME);
+
+    // Wait service startup
+    serviceManager.waitForStatus(true);
+
+    URL url = new URL(serviceManager.getServiceURL(), "greet");
+    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());
+    String response;
+    try {
+      response = new String(ByteStreams.toByteArray(connection.getInputStream()), Charsets.UTF_8);
+    } finally {
+      connection.disconnect();
+    }
+    Assert.assertEquals("Hello 5!", response);
 
     appManager.stopAll();
   }
-
 }

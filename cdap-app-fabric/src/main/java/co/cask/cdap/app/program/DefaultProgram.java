@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,8 +17,7 @@
 package co.cask.cdap.app.program;
 
 import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.common.lang.ApiResourceListHolder;
-import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.proto.Id;
@@ -76,9 +75,10 @@ public final class DefaultProgram implements Program {
     mainClassName = getAttribute(manifest, ManifestFields.MAIN_CLASS);
     id = Id.Program.from(getAttribute(manifest, ManifestFields.ACCOUNT_ID),
                          getAttribute(manifest, ManifestFields.APPLICATION_ID),
+                         ProgramType.valueOf(getAttribute(manifest, ManifestFields.PROGRAM_TYPE)),
                          getAttribute(manifest, ManifestFields.PROGRAM_NAME));
 
-    this.processorType = ProgramType.valueOfPrettyName(getAttribute(manifest, ManifestFields.PROCESSOR_TYPE));
+    this.processorType = ProgramType.valueOfPrettyName(getAttribute(manifest, ManifestFields.PROGRAM_TYPE));
 
     // Load the app spec from the jar file if no expand folder is provided. Otherwise do lazy loading after the jar
     // is expanded.
@@ -124,8 +124,8 @@ public final class DefaultProgram implements Program {
   }
 
   @Override
-  public String getAccountId() {
-    return id.getAccountId();
+  public String getNamespaceId() {
+    return id.getNamespaceId();
   }
 
   @Override
@@ -134,7 +134,7 @@ public final class DefaultProgram implements Program {
   }
 
   @Override
-  public synchronized ApplicationSpecification getSpecification() {
+  public synchronized ApplicationSpecification getApplicationSpecification() {
     if (specification == null) {
       expandIfNeeded();
       try {
@@ -157,8 +157,7 @@ public final class DefaultProgram implements Program {
     if (classLoader == null) {
       expandIfNeeded();
       try {
-        classLoader = ClassLoaders.newProgramClassLoader(
-          expandFolder, ApiResourceListHolder.getResourceList(), parentClassLoader);
+        classLoader = ProgramClassLoader.create(expandFolder, parentClassLoader, processorType);
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }

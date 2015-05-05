@@ -15,15 +15,11 @@
  */
 package co.cask.cdap.metrics.collect;
 
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.metrics.MetricsScope;
-import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.metrics.MetricsConstants;
-import co.cask.cdap.metrics.data.MetricsTableFactory;
-import co.cask.cdap.metrics.data.TimeSeriesTable;
-import co.cask.cdap.metrics.process.MetricsProcessor;
-import co.cask.cdap.metrics.transport.MetricsRecord;
-import com.google.common.collect.ImmutableList;
+import co.cask.cdap.common.conf.Constants;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.twill.common.Threads;
@@ -31,14 +27,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A {@link co.cask.cdap.common.metrics.MetricsCollectionService} that writes to MetricsTable directly.
+ * A {@link co.cask.cdap.api.metrics.MetricsCollectionService} that writes to MetricsTable directly.
  * It also has a scheduling job that clean up old metrics periodically.
  */
 @Singleton
@@ -47,23 +41,20 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
   private static final Logger LOG = LoggerFactory.getLogger(LocalMetricsCollectionService.class);
 
   private final CConfiguration cConf;
-  private final Set<MetricsProcessor> processors;
-  private final MetricsTableFactory tableFactory;
+  private final MetricStore metricStore;
   private ScheduledExecutorService scheduler;
 
   @Inject
-  public LocalMetricsCollectionService(CConfiguration cConf, MetricsTableFactory tableFactory,
-                                       Set<MetricsProcessor> processors) {
+  public LocalMetricsCollectionService(CConfiguration cConf, MetricStore metricStore) {
     this.cConf = cConf;
-    this.processors = processors;
-    this.tableFactory = tableFactory;
+    this.metricStore = metricStore;
   }
 
   @Override
-  protected void publish(MetricsScope scope, Iterator<MetricsRecord> metrics) throws Exception {
-    List<MetricsRecord> records = ImmutableList.copyOf(metrics);
-    for (MetricsProcessor processor : processors) {
-      processor.process(scope, records.iterator());
+  protected void publish(Iterator<MetricValues> metrics) throws Exception {
+    while (metrics.hasNext()) {
+      MetricValues metric = metrics.next();
+      metricStore.add(metric);
     }
   }
 
@@ -73,8 +64,8 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
 
     // It will only do cleanup if the underlying table doesn't supports TTL.
     scheduler = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-cleanup"));
-    long retention = cConf.getLong(MetricsConstants.ConfigKeys.RETENTION_SECONDS + ".1.seconds",
-                                   MetricsConstants.DEFAULT_RETENTION_HOURS);
+    long retention = cConf.getLong(Constants.Metrics.RETENTION_SECONDS + ".1.seconds",
+                                   Constants.Metrics.DEFAULT_RETENTION_HOURS);
 
     // Try right away if there's anything to cleanup, then we'll schedule to do that periodically
     scheduler.schedule(createCleanupTask(retention), 1, TimeUnit.SECONDS);
@@ -96,29 +87,15 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
     return new Runnable() {
       @Override
       public void run() {
-        // Only do cleanup if the underlying table doesn't supports TTL.
-        try {
-          if (tableFactory.isTTLSupported()) {
-            return;
-          }
-        } catch (Exception e) {
-          // If we cannot determine that ttl is supported then try again in 1 second
-          scheduler.schedule(this, 1, TimeUnit.SECONDS);
-          return;
-        }
-
+        // We perform CleanUp only in LocalMetricsCollectionService , where TTL is NOT supported
+        // by underlying data store.
         long currentTime = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
         long deleteBefore = currentTime - retention;
-
-        for (MetricsScope scope : MetricsScope.values()) {
-          TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries(scope.name(), 1);
-          try {
-            timeSeriesTable.deleteBefore(deleteBefore);
-          } catch (OperationException e) {
-            LOG.error("Failed in cleaning up metrics table: {}", e.getMessage(), e);
-          }
+        try {
+          metricStore.deleteBefore(deleteBefore);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
         }
-
         scheduler.schedule(this, 1, TimeUnit.HOURS);
       }
     };

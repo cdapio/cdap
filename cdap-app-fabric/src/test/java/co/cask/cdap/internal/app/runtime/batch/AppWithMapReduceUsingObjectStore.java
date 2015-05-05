@@ -20,9 +20,8 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
-import co.cask.cdap.api.mapreduce.MapReduce;
+import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -51,24 +50,18 @@ public class AppWithMapReduceUsingObjectStore extends AbstractApplication {
   /**
    *
    */
-  public static final class ComputeCounts implements MapReduce {
+  public static final class ComputeCounts extends AbstractMapReduce {
     @Override
-    public MapReduceSpecification configure() {
-      return MapReduceSpecification.Builder.with()
-        .setName("ComputeCounts")
-        .setDescription("Use Objectstore dataset as input job")
-        .useInputDataSet("keys")
-        .useOutputDataSet("count")
-        .build();
+    public void configure() {
+      setInputDataset("keys");
+      setOutputDataset("count");
     }
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
-      Job job = (Job) context.getHadoopJob();
+      Job job = context.getHadoopJob();
       job.setMapperClass(ObjectStoreMapper.class);
       job.setReducerClass(KeyValueStoreReducer.class);
-      job.setMapOutputKeyClass(Text.class);
-      job.setMapOutputValueClass(Text.class);
     }
 
     @Override

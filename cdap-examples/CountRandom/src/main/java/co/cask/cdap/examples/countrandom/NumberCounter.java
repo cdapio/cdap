@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.examples.countrandom;
 
+import co.cask.cdap.api.annotation.HashPartition;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
@@ -29,6 +30,7 @@ public class NumberCounter extends AbstractFlowlet {
   KeyValueTable counters;
 
   @ProcessInput
+  @HashPartition("n")
   public void process(Integer number) {
     counters.increment(number.toString().getBytes(), 1L);
   }

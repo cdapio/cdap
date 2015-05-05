@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,17 +16,20 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service;
 
+import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.http.HttpRequest;
-import co.cask.cdap.common.http.HttpRequests;
-import co.cask.cdap.common.http.ObjectResponse;
-import co.cask.cdap.common.lang.jar.JarFinder;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
-import co.cask.cdap.data.runtime.DataSetServiceModules;
-import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
@@ -35,20 +38,37 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.InMemoryDatasetOpE
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.datafabric.dataset.type.LocalDatasetTypeClassLoaderFactory;
+import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
+import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
-import co.cask.cdap.explore.client.DatasetExploreFacade;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
+import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.gateway.auth.NoAuthenticator;
+import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.DatasetModuleMeta;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.ObjectResponse;
 import co.cask.http.HttpHandler;
+import co.cask.tephra.TransactionAware;
+import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
+import co.cask.tephra.runtime.TransactionInMemoryModule;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.reflect.TypeToken;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
+import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.common.Services;
@@ -56,24 +76,23 @@ import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
 
 /**
  * Base class for unit-tests that require running of {@link DatasetService}
@@ -82,6 +101,7 @@ public abstract class DatasetServiceTestBase {
   private InMemoryDiscoveryService discoveryService;
   private DatasetOpExecutorService opExecutorService;
   private DatasetService service;
+  private LocationFactory locationFactory;
   protected TransactionManager txManager;
   protected RemoteDatasetFramework dsFramework;
 
@@ -93,12 +113,12 @@ public abstract class DatasetServiceTestBase {
   @Before
   public void before() throws Exception {
     CConfiguration cConf = CConfiguration.create();
-    File datasetDir = new File(tmpFolder.newFolder(), "dataset");
-    if (!datasetDir.mkdirs()) {
-      throw
-        new RuntimeException(String.format("Could not create DatasetFramework output dir %s", datasetDir.getPath()));
+    File dataDir = new File(tmpFolder.newFolder(), "data");
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, dataDir.getAbsolutePath());
+    if (!DirUtils.mkdirs(dataDir)) {
+      throw new RuntimeException(String.format("Could not create DatasetFramework output dir %s", dataDir));
     }
-    cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
+    cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, dataDir.getAbsolutePath());
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
 
@@ -108,13 +128,29 @@ public abstract class DatasetServiceTestBase {
 
     // Tx Manager to support working with datasets
     Configuration txConf = HBaseConfiguration.create();
-    cConf.copyTxProperties(txConf);
+    CConfigurationUtil.copyTxProperties(cConf, txConf);
     txManager = new TransactionManager(txConf);
     txManager.startAndWait();
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 
-    LocalLocationFactory locationFactory = new LocalLocationFactory();
-    dsFramework = new RemoteDatasetFramework(discoveryService, new InMemoryDefinitionRegistryFactory(),
+    final Injector injector = Guice.createInjector(
+      new ConfigModule(cConf),
+      new LocationRuntimeModule().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new TransactionInMemoryModule());
+
+    DatasetDefinitionRegistryFactory registryFactory = new DatasetDefinitionRegistryFactory() {
+      @Override
+      public DatasetDefinitionRegistry create() {
+        DefaultDatasetDefinitionRegistry registry = new DefaultDatasetDefinitionRegistry();
+        injector.injectMembers(registry);
+        return registry;
+      }
+    };
+
+    locationFactory = injector.getInstance(LocationFactory.class);
+    NamespacedLocationFactory namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    dsFramework = new RemoteDatasetFramework(discoveryService, registryFactory,
                                              new LocalDatasetTypeClassLoaderFactory());
 
     ImmutableSet<HttpHandler> handlers =
@@ -123,24 +159,35 @@ public abstract class DatasetServiceTestBase {
 
     opExecutorService.startAndWait();
 
-    MDSDatasetsRegistry mdsDatasetsRegistry =
-      new MDSDatasetsRegistry(txSystemClient,
-                              new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(),
-                                                           DataSetServiceModules.INMEMORY_DATASET_MODULES), cConf);
+    ImmutableMap<String, DatasetModule> modules = ImmutableMap.<String, DatasetModule>builder()
+      .putAll(injector.getInstance(Key.get(new TypeLiteral<Map<String, DatasetModule>>() { },
+                                           Names.named("defaultDatasetModules"))))
+      .putAll(DatasetMetaTableUtil.getModules())
+      .build();
 
+    TransactionExecutorFactory txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
+
+    MDSDatasetsRegistry mdsDatasetsRegistry =
+      new MDSDatasetsRegistry(txSystemClient, new InMemoryDatasetFramework(
+        registryFactory, modules, cConf, injector.getInstance(TransactionExecutorFactory.class)));
+
+    ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
     service = new DatasetService(cConf,
-                                 locationFactory,
+                                 namespacedLocationFactory,
                                  discoveryService,
                                  discoveryService,
-                                 new DatasetTypeManager(mdsDatasetsRegistry, locationFactory,
+                                 new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory,
                                                         // we don't need any default modules in this test
                                                         Collections.<String, DatasetModule>emptyMap()),
                                  new DatasetInstanceManager(mdsDatasetsRegistry),
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(dsFramework),
                                  mdsDatasetsRegistry,
-                                 new DatasetExploreFacade(new DiscoveryExploreClient(discoveryService), cConf),
-                                 new HashSet<DatasetMetricsReporter>());
+                                 exploreFacade,
+                                 new HashSet<DatasetMetricsReporter>(),
+                                 new LocalUnderlyingSystemNamespaceAdmin(cConf, namespacedLocationFactory,
+                                                                         exploreFacade),
+                                 new UsageRegistry(txExecutorFactory, dsFramework));
 
     // Start dataset service, wait for it to be discoverable
     service.start();
@@ -155,11 +202,14 @@ public abstract class DatasetServiceTestBase {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     startLatch.await(5, TimeUnit.SECONDS);
+    // this usually happens while creating a namespace, however not doing that in data fabric tests
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID));
   }
 
   @After
   public void after() {
     Services.chainStop(service, opExecutorService, txManager);
+    Locations.deleteQuietly(locationFactory.create(Constants.DEFAULT_NAMESPACE));
   }
 
   private synchronized int getPort() {
@@ -176,56 +226,51 @@ public abstract class DatasetServiceTestBase {
     return port;
   }
 
-  protected URL getUrl(String resource) throws MalformedURLException {
-    return new URL("http://" + "localhost" + ":" + getPort() + Constants.Gateway.GATEWAY_VERSION + resource);
+  protected URL getUrl(String path) throws MalformedURLException {
+    return new URL(String.format("http://localhost:%d/%s/namespaces/%s%s",
+                                 getPort(), Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE, path));
+  }
+
+  protected URL getUnderlyingNamespaceAdminUrl(String namespace, String operation) throws MalformedURLException {
+    String resource = String.format("%s/namespaces/%s/data/admin/%s",
+                                    Constants.Gateway.API_VERSION_3, namespace, operation);
+    return new URL("http://" + "localhost" + ":" + getPort() + resource);
+  }
+
+  protected Location createModuleJar(Class moduleClass, Location...bundleEmbeddedJars) throws IOException {
+    LocationFactory lf = new LocalLocationFactory(tmpFolder.newFolder());
+    File[] embeddedJars = new File[bundleEmbeddedJars.length];
+    for (int i = 0; i < bundleEmbeddedJars.length; i++) {
+      File file = tmpFolder.newFile();
+      Files.copy(Locations.newInputSupplier(bundleEmbeddedJars[i]), file);
+      embeddedJars[i] = file;
+    }
+
+    return AppJarHelper.createDeploymentJar(lf, moduleClass, embeddedJars);
   }
 
   protected int deployModule(String moduleName, Class moduleClass) throws Exception {
-    String jarPath = JarFinder.getJar(moduleClass);
-    final FileInputStream is = new FileInputStream(jarPath);
-    try {
-      HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
-        .addHeader("X-Class-Name", moduleClass.getName())
-        .withBody(new File(jarPath)).build();
-      return HttpRequests.execute(request).getResponseCode();
-    } finally {
-      is.close();
-    }
+    Location moduleJar = createModuleJar(moduleClass);
+    HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
+      .addHeader("X-Class-Name", moduleClass.getName())
+      .withBody(Locations.newInputSupplier(moduleJar)).build();
+    return HttpRequests.execute(request).getResponseCode();
   }
 
   // creates a bundled jar with moduleClass and list of bundleEmbeddedJar files, moduleName and moduleClassName are
   // used to make request for deploying module.
   protected int deployModuleBundled(String moduleName, String moduleClassName, Class moduleClass,
-                                    File...bundleEmbeddedJars) throws IOException {
-    String jarPath = JarFinder.getJar(moduleClass);
-    JarOutputStream jarOutput = new JarOutputStream(new FileOutputStream(jarPath));
-    try {
-      for (File embeddedJar : bundleEmbeddedJars) {
-        JarEntry jarEntry = new JarEntry("lib/" + embeddedJar.getName());
-        jarOutput.putNextEntry(jarEntry);
-        Files.copy(embeddedJar, jarOutput);
-      }
-    } finally {
-      jarOutput.close();
-    }
-    final FileInputStream is = new FileInputStream(jarPath);
-    try {
-      HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
-        .addHeader("X-Class-Name", moduleClassName)
-        .withBody(new File(jarPath)).build();
-      return HttpRequests.execute(request).getResponseCode();
-    } finally {
-      is.close();
-    }
+                                    Location...bundleEmbeddedJars) throws IOException {
+    Location moduleJar = createModuleJar(moduleClass, bundleEmbeddedJars);
+    HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
+      .addHeader("X-Class-Name", moduleClassName)
+      .withBody(Locations.newInputSupplier(moduleJar)).build();
+    return HttpRequests.execute(request).getResponseCode();
   }
 
   protected ObjectResponse<List<DatasetModuleMeta>> getModules() throws IOException {
     return ObjectResponse.fromJsonBody(HttpRequests.execute(HttpRequest.get(getUrl("/data/modules")).build()),
                                        new TypeToken<List<DatasetModuleMeta>>() { }.getType());
-  }
-
-  protected int deleteInstances() throws IOException {
-    return HttpRequests.execute(HttpRequest.delete(getUrl("/data/unrecoverable/datasets")).build()).getResponseCode();
   }
 
   protected int deleteModule(String moduleName) throws Exception {

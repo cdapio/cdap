@@ -39,16 +39,13 @@ import com.google.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
-import org.apache.twill.discovery.Discoverable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -80,9 +77,20 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
 
       Program bundleJarProgram = Programs.createWithUnpack(program.getJarLocation(), destinationUnpackedJarDir);
       RuntimeInfo info = super.run(bundleJarProgram, options);
-      info.getController().addListener(new AbstractListener() {
+      final ProgramController controller = info.getController();
+      controller.addListener(new AbstractListener() {
+
         @Override
-        public void stopped() {
+        public void killed() {
+          try {
+            FileUtils.deleteDirectory(destinationUnpackedJarDir);
+          } catch (IOException e) {
+            LOG.warn("Failed to cleanup temporary program directory {}.", destinationUnpackedJarDir, e);
+          }
+        }
+
+        @Override
+        public void completed() {
           try {
             FileUtils.deleteDirectory(destinationUnpackedJarDir);
           } catch (IOException e) {
@@ -109,28 +117,8 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
 
   @Override
   public ProgramLiveInfo getLiveInfo(Id.Program programId, ProgramType type) {
-    if (!isRunning(programId, type)) {
-      return new NotRunningProgramLiveInfo(programId, type);
-    }
-
-    if (type.equals(ProgramType.SERVICE)) {
-      Set<String> discoverableNames = new HashSet<String>();
-      for (Map.Entry<RunId, RuntimeInfo> entry : list(type).entrySet()) {
-        RuntimeInfo runtimeInfo = entry.getValue();
-        InMemoryServiceRunner.ServiceProgramController controller = (InMemoryServiceRunner.ServiceProgramController)
-                                                                      runtimeInfo.getController();
-        List<ProgramController> programControllers = controller.getProgramControllers();
-        for (ProgramController programController : programControllers) {
-          List<Discoverable> discoverables = ((InMemoryRunnableProgramController) programController).getDiscoverables();
-          for (Discoverable discoverable : discoverables) {
-            discoverableNames.add(discoverable.getName());
-          }
-        }
-      }
-      return new InMemoryProgramLiveInfo(programId, type, Lists.newArrayList(discoverableNames));
-    } else {
-      return new InMemoryProgramLiveInfo(programId, type);
-    }
+    return isRunning(programId, type) ? new InMemoryProgramLiveInfo(programId, type)
+                                      : new NotRunningProgramLiveInfo(programId, type);
   }
 
   @Override

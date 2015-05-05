@@ -1,0 +1,42 @@
+@import "../../styles/variables.less";
+
+body.state-flows {
+  .run-status { margin-bottom: 25px; }
+  .table.table-status { margin-top: 0; }
+  textarea.flow-injector-input {
+    width: 100%;
+    height: 100px;
+    color: black; // Because we have a dark background and a white text
+  }
+  .panel-group {
+    .panel.panel-default {
+      > .panel-heading {
+        > a {
+          color: white;
+          &:hover { text-decoration: none; }
+        }
+      }
+    }
+  }
+  div.modal-dialog.lrg-modal {
+    width: 50%;
+    min-width: 706px;
+  }
+  .stream-title { text-transform: uppercase; }
+  div.instances {
+    table > tbody > tr > td {
+      padding: 5px 10px;
+      vertical-align: middle;
+    }
+  }
+  .col-sm-6 > div.btn-group { margin-top: 14px; }
+  .col-xs-12 > strong {
+    color: @cdap-header;
+    font-size: 14px;
+    padding-right: 5px;
+  }
+  /**
+  * Epoch requires specifying width on the parent element
+  **/
+  td.table-graph { width: 50%; }
+}

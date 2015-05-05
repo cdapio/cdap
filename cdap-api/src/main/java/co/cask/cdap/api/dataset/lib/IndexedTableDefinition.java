@@ -19,6 +19,7 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -60,21 +61,22 @@ public class IndexedTableDefinition
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+                               ClassLoader classLoader) throws IOException {
     return new CompositeDatasetAdmin(Lists.newArrayList(
-      tableDef.getAdmin(spec.getSpecification("d"), classLoader),
-      tableDef.getAdmin(spec.getSpecification("i"), classLoader)
+      tableDef.getAdmin(datasetContext, spec.getSpecification("d"), classLoader),
+      tableDef.getAdmin(datasetContext, spec.getSpecification("i"), classLoader)
     ));
   }
 
   @Override
-  public IndexedTable getDataset(DatasetSpecification spec,
+  public IndexedTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                  Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     DatasetSpecification tableInstance = spec.getSpecification("d");
-    Table table = tableDef.getDataset(tableInstance, arguments, classLoader);
+    Table table = tableDef.getDataset(datasetContext, tableInstance, arguments, classLoader);
 
     DatasetSpecification indexTableInstance = spec.getSpecification("i");
-    Table index = tableDef.getDataset(indexTableInstance, arguments, classLoader);
+    Table index = tableDef.getDataset(datasetContext, indexTableInstance, arguments, classLoader);
 
     String columnNamesToIndex = spec.getProperty(INDEX_COLUMNS_CONF_KEY);
     Preconditions.checkNotNull(columnNamesToIndex, "columnsToIndex must be specified");

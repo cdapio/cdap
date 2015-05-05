@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -146,33 +146,8 @@ public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<Strea
       // Always try to create the directory
       partitionDirectory.mkdirs();
 
-      // Try to find the file of this bucket with the highest sequence number.
-      int maxSequence = -1;
-      for (Location location : partitionDirectory.list()) {
-        String fileName = location.getName();
-        if (fileName.startsWith(fileNamePrefix)) {
-          StreamUtils.getSequenceId(fileName);
-
-          int idx = fileName.lastIndexOf('.');
-          if (idx < fileNamePrefix.length()) {
-            LOG.warn("Ignore file with invalid stream file name {}", location.toURI());
-            continue;
-          }
-
-          try {
-            // File name format is [prefix].[sequenceId].[dat|idx]
-            int seq = StreamUtils.getSequenceId(fileName);
-            if (seq > maxSequence) {
-              maxSequence = seq;
-            }
-          } catch (NumberFormatException e) {
-            LOG.warn("Ignore stream file with invalid sequence id {}", location.toURI());
-          }
-        }
-      }
-
-      // Create the event and index file with the max sequence + 1
-      int fileSequence = maxSequence + 1;
+      // Create the event and index file with the next sequence id
+      int fileSequence = StreamUtils.getNextSequenceId(partitionDirectory, fileNamePrefix);
       Location eventFile = StreamUtils.createStreamLocation(partitionDirectory, fileNamePrefix,
                                                             fileSequence, StreamFileType.EVENT);
       Location indexFile = StreamUtils.createStreamLocation(partitionDirectory, fileNamePrefix,

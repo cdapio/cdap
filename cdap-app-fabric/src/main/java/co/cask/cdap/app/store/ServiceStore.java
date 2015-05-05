@@ -17,11 +17,12 @@
 package co.cask.cdap.app.store;
 
 import co.cask.tephra.TransactionFailureException;
+import com.google.common.util.concurrent.Service;
 
 /**
  * Stores/Retrieves Information about System Services.
  */
-public interface ServiceStore {
+public interface ServiceStore extends Service {
 
   /**
    * Get the service instance count.

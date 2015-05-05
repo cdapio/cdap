@@ -20,33 +20,37 @@ import co.cask.cdap.logging.kafka.KafkaLogEvent;
 import co.cask.cdap.logging.write.LogFileWriter;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Table;
+import com.google.common.collect.RowSortedTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.SortedSet;
 
 /**
- * Persists bucketized logs stored by {@link LogCollectorCallback}.
+ * Persists bucketized logs stored by {@link KafkaMessageCallback}.
  */
 public class LogWriter implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(LogWriter.class);
   private final LogFileWriter<KafkaLogEvent> logFileWriter;
-  private final Table<Long, String, List<KafkaLogEvent>> messageTable;
-  private final long eventProcessingDelayMs;
+  private final RowSortedTable<Long, String, Entry<Long, List<KafkaLogEvent>>> messageTable;
   private final long eventBucketIntervalMs;
+  private final long maxNumberOfBucketsInTable;
 
   private final ListMultimap<String, KafkaLogEvent> writeListMap = ArrayListMultimap.create();
-  private int messages = 0;
 
-  public LogWriter(LogFileWriter<KafkaLogEvent> logFileWriter, Table<Long, String, List<KafkaLogEvent>> messageTable,
-                   long eventProcessingDelayMs, long eventBucketIntervalMs) {
+  public LogWriter(LogFileWriter<KafkaLogEvent> logFileWriter,
+                   RowSortedTable<Long, String, Entry<Long, List<KafkaLogEvent>>> messageTable,
+                   long eventBucketIntervalMs, long maxNumberOfBucketsInTable) {
     this.logFileWriter = logFileWriter;
     this.messageTable = messageTable;
-    this.eventProcessingDelayMs = eventProcessingDelayMs;
     this.eventBucketIntervalMs = eventBucketIntervalMs;
+    this.maxNumberOfBucketsInTable = maxNumberOfBucketsInTable;
   }
 
   @Override
@@ -54,33 +58,40 @@ public class LogWriter implements Runnable {
     try {
       // Read new messages only if previous write was successful.
       if (writeListMap.isEmpty()) {
-        messages = 0;
-        long processKey = (System.currentTimeMillis() - eventProcessingDelayMs) / eventBucketIntervalMs;
-        synchronized (messageTable) {
-          for (Iterator<Table.Cell<Long, String, List<KafkaLogEvent>>> it = messageTable.cellSet().iterator();
-               it.hasNext(); ) {
-            Table.Cell<Long, String, List<KafkaLogEvent>> cell = it.next();
-            // Process only messages older than eventProcessingDelayMs
-            if (cell.getRowKey() >= processKey) {
-              continue;
-            }
+        int messages = 0;
 
-            writeListMap.putAll(cell.getColumnKey(), cell.getValue());
-            messages += cell.getValue().size();
-            it.remove();
+        long limitKey = System.currentTimeMillis() / eventBucketIntervalMs;
+        synchronized (messageTable) {
+          SortedSet<Long> rowKeySet = messageTable.rowKeySet();
+          if (!rowKeySet.isEmpty()) {
+            // Get the oldest bucket in the table
+            long oldestBucketKey = rowKeySet.first();
+
+            Map<String, Entry<Long, List<KafkaLogEvent>>> row = messageTable.row(oldestBucketKey);
+            for (Iterator<Map.Entry<String, Entry<Long, List<KafkaLogEvent>>>> it = row.entrySet().iterator();
+                   it.hasNext(); ) {
+              Map.Entry<String, Entry<Long, List<KafkaLogEvent>>> mapEntry = it.next();
+              if (limitKey < (mapEntry.getValue().getKey() + maxNumberOfBucketsInTable)) {
+                break;
+              }
+              writeListMap.putAll(mapEntry.getKey(), mapEntry.getValue().getValue());
+              messages += mapEntry.getValue().getValue().size();
+              it.remove();
+            }
           }
         }
-      }
 
-      LOG.debug("Got {} log messages to save", messages);
+        LOG.trace("Got {} log messages to save", messages);
 
-      for (Iterator<String> it = writeListMap.keySet().iterator(); it.hasNext(); ) {
-        String key = it.next();
-        List<KafkaLogEvent> list = writeListMap.get(key);
-        Collections.sort(list);
-        logFileWriter.append(list);
-        // Remove successfully written message
-        it.remove();
+        for (Iterator<Map.Entry<String, Collection<KafkaLogEvent>>> it = writeListMap.asMap().entrySet().iterator();
+             it.hasNext(); ) {
+          Map.Entry<String, Collection<KafkaLogEvent>> mapEntry = it.next();
+          List<KafkaLogEvent> list = (List<KafkaLogEvent>) mapEntry.getValue();
+          Collections.sort(list);
+          logFileWriter.append(list);
+          // Remove successfully written message
+          it.remove();
+        }
       }
     } catch (Throwable e) {
       LOG.error("Caught exception during save, will try again.", e);

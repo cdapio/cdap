@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,18 +22,19 @@ import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.procedure.Procedure;
-import co.cask.cdap.api.procedure.ProcedureSpecification;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
- * Application Specification used in core code
+ * Application Specification used in core code.
  */
 public interface ApplicationSpecification {
 
@@ -41,6 +42,12 @@ public interface ApplicationSpecification {
    * @return Name of the Application.
    */
   String getName();
+
+  /**
+   * @return Version of the Application, according to the Bundle-Version in the jar manifest.
+   */
+  @Nullable
+  String getVersion();
 
   /**
    * @return Description of the Application.
@@ -74,12 +81,6 @@ public interface ApplicationSpecification {
   Map<String, FlowSpecification> getFlows();
 
   /**
-   * @return An immutable {@link Map} from {@link Procedure} name to {@link ProcedureSpecification}
-   *         for {@link Procedure}s configured for the Application.
-   */
-  Map<String, ProcedureSpecification> getProcedures();
-
-  /**
    * @return An immutable {@link Map} from {@link MapReduce} name to {@link MapReduceSpecification}
    *         for {@link MapReduce} jobs configured for the Application.
    */
@@ -102,4 +103,15 @@ public interface ApplicationSpecification {
    *         for services configured for the Application.
    */
   Map<String, ServiceSpecification> getServices();
+
+  /**
+   * @return An immutable {@link Map} from worker name to {@link WorkerSpecification}
+   *         for workers configured for the Application.
+   */
+  Map<String, WorkerSpecification> getWorkers();
+
+  /**
+   * @return An immutable {@link Map} from Schedule name to {@link ScheduleSpecification}
+   */
+  Map<String, ScheduleSpecification> getSchedules();
 }

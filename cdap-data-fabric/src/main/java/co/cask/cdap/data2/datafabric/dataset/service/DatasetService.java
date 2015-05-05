@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,16 +16,20 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.hooks.MetricsReporterHook;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.common.discovery.ResolvingDiscoverable;
+import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
+import co.cask.cdap.common.metrics.MetricsReporterHook;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
-import co.cask.cdap.explore.client.DatasetExploreFacade;
+import co.cask.cdap.data2.registry.UsageRegistry;
+import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
@@ -39,7 +43,6 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,7 +74,7 @@ public class DatasetService extends AbstractExecutionThreadService {
 
   @Inject
   public DatasetService(CConfiguration cConf,
-                        LocationFactory locationFactory,
+                        NamespacedLocationFactory namespacedLocationFactory,
                         DiscoveryService discoveryService,
                         DiscoveryServiceClient discoveryServiceClient,
                         DatasetTypeManager typeManager,
@@ -79,16 +82,22 @@ public class DatasetService extends AbstractExecutionThreadService {
                         MetricsCollectionService metricsCollectionService,
                         DatasetOpExecutor opExecutorClient,
                         MDSDatasetsRegistry mdsDatasets,
-                        DatasetExploreFacade datasetExploreFacade,
-                        Set<DatasetMetricsReporter> metricReporters) throws Exception {
-
-    NettyHttpService.Builder builder = NettyHttpService.builder();
+                        ExploreFacade exploreFacade,
+                        Set<DatasetMetricsReporter> metricReporters,
+                        UnderlyingSystemNamespaceAdmin underlyingSystemNamespaceAdmin,
+                        UsageRegistry usageRegistry) throws Exception {
 
     this.typeManager = typeManager;
-
-    builder.addHttpHandlers(ImmutableList.of(new DatasetTypeHandler(typeManager, locationFactory, cConf),
-                                             new DatasetInstanceHandler(typeManager, instanceManager, opExecutorClient,
-                                                                        datasetExploreFacade, cConf)));
+    DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(typeManager, cConf, namespacedLocationFactory);
+    DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(typeManager, instanceManager,
+                                                                               opExecutorClient, exploreFacade, cConf,
+                                                                               usageRegistry);
+    UnderlyingSystemNamespaceHandler underlyingSystemNamespaceHandler =
+      new UnderlyingSystemNamespaceHandler(underlyingSystemNamespaceAdmin);
+    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);
+    builder.addHttpHandlers(ImmutableList.of(datasetTypeHandler,
+                                             datasetInstanceHandler,
+                                             underlyingSystemNamespaceHandler));
 
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.DATASET_MANAGER)));
@@ -151,7 +160,7 @@ public class DatasetService extends AbstractExecutionThreadService {
 
     LOG.info("Announcing DatasetService for discovery...");
     // Register the service
-    cancelDiscovery = discoveryService.register(new Discoverable() {
+    cancelDiscovery = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
       @Override
       public String getName() {
         return Constants.Service.DATASET_MANAGER;
@@ -161,7 +170,7 @@ public class DatasetService extends AbstractExecutionThreadService {
       public InetSocketAddress getSocketAddress() {
         return httpService.getBindAddress();
       }
-    });
+    }));
 
     LOG.info("DatasetService started successfully on {}", httpService.getBindAddress());
     while (isRunning()) {
@@ -215,7 +224,7 @@ public class DatasetService extends AbstractExecutionThreadService {
     if (opExecutorServiceWatch != null) {
       opExecutorServiceWatch.cancel();
     }
-    
+
     mdsDatasets.shutDown();
 
     typeManager.stopAndWait();

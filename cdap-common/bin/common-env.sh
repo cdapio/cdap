@@ -47,11 +47,16 @@ export IDENT_STRING=$USER
 # The directory where pid files are stored. /tmp by default.
 export PID_DIR=/var/cdap/run
 
+# The directory serving as the user directory for master
+export LOCAL_DIR=/var/tmp/cdap
+
 # Specifies the JAVA_HEAPMAX
 export JAVA_HEAPMAX=${JAVA_HEAPMAX:--Xmx128m}
 
+# The options below can be set in the sourced component-specific conf/[component]-env.sh scripts
+
 # Main class to be invoked.
-MAIN_CLASS=
+#MAIN_CLASS=
 
 # Arguments for main class.
 #MAIN_CLASS_ARGS=""

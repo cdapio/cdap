@@ -26,7 +26,7 @@ import com.google.common.base.CharMatcher;
 public abstract class AbstractVerifier<T> implements Verifier<T> {
 
   protected boolean isId(final String name) {
-    return CharMatcher.inRange('A', 'Z')
+    return !name.isEmpty() && CharMatcher.inRange('A', 'Z')
              .or(CharMatcher.inRange('a', 'z'))
              .or(CharMatcher.is('-'))
              .or(CharMatcher.is('_'))

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,50 +20,55 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.logging.AccountLoggingContext;
+import co.cask.cdap.common.conf.KafkaConstants;
+import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.KafkaClientModule;
+import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.ComponentLoggingContext;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.logging.SystemLoggingContext;
-import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
+import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import co.cask.cdap.logging.KafkaTestBase;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
-import co.cask.cdap.logging.appender.kafka.KafkaTopic;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
-import co.cask.cdap.logging.read.AvroFileLogReader;
-import co.cask.cdap.logging.read.DistributedLogReader;
+import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.logging.read.AvroFileReader;
+import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.serialize.LogSchema;
+import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.watchdog.election.MultiLeaderElection;
 import co.cask.tephra.TransactionManager;
-import co.cask.tephra.inmemory.InMemoryTxSystemClient;
+import co.cask.tephra.runtime.TransactionModules;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
+import com.google.inject.name.Names;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.kafka.client.ZKKafkaClientService;
 import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.RetryStrategies;
 import org.apache.twill.zookeeper.ZKClientService;
-import org.apache.twill.zookeeper.ZKClientServices;
-import org.apache.twill.zookeeper.ZKClients;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -75,11 +80,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -96,56 +101,53 @@ public class LogSaverTest extends KafkaTestBase {
   @ClassRule
   public static TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  private static InMemoryTxSystemClient txClient = null;
-  private static DatasetFramework dsFramework;
-  private static LogSaverTableUtil tableUtil;
-  private static CConfiguration cConf;
+  private static Injector injector;
+  private static TransactionManager txManager;
+  private static String logBaseDir;
 
   @BeforeClass
   public static void startLogSaver() throws Exception {
-    dsFramework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
-    dsFramework.addModule("table", new InMemoryOrderedTableModule());
-
-    String logBaseDir = temporaryFolder.newFolder().getAbsolutePath();
-    LOG.info("Log base dir {}", logBaseDir);
-
-    cConf = CConfiguration.create();
+    final CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, temporaryFolder.newFolder().getAbsolutePath());
+    cConf.set(Constants.Zookeeper.QUORUM, getZkConnectString());
+    cConf.unset(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
     cConf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + getKafkaPort());
     cConf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
     cConf.set(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "sync");
     cConf.set(LoggingConfiguration.KAFKA_PROCUDER_BUFFER_MS, "100");
-    cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
     cConf.set(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS, "10");
     cConf.set(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, "10240");
     cConf.set(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, "5120");
-    cConf.set(LoggingConfiguration.LOG_SAVER_EVENT_BUCKET_INTERVAL_MS, "300");
-    cConf.set(LoggingConfiguration.LOG_SAVER_EVENT_PROCESSING_DELAY_MS, "600");
+    cConf.set(LoggingConfiguration.LOG_SAVER_EVENT_BUCKET_INTERVAL_MS, "100");
+    cConf.set(LoggingConfiguration.LOG_SAVER_MAXIMUM_INMEMORY_EVENT_BUCKETS, "2");
     cConf.set(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS, "10");
 
-    Configuration conf = HBaseConfiguration.create();
-    cConf.copyTxProperties(conf);
-    TransactionManager txManager = new TransactionManager(conf);
-    txManager.startAndWait();
-    txClient = new InMemoryTxSystemClient(txManager);
+    Configuration hConf = HBaseConfiguration.create();
+    logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR) + "/" + LogSaverTest.class.getSimpleName();
+    cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
 
-    ZKClientService zkClientService = ZKClientServices.delegate(
-      ZKClients.reWatchOnExpire(
-        ZKClients.retryOnFailure(
-          ZKClientService.Builder.of(getZkConnectString()).build(),
-          RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS)
-        )
-      ));
+    injector = Guice.createInjector(
+      new ConfigModule(cConf, hConf),
+      new ZKClientModule(),
+      new KafkaClientModule(),
+      new LocationRuntimeModule().getInMemoryModules(),
+      new TransactionModules().getInMemoryModules(),
+      new DataSetsModules().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new MetricsClientRuntimeModule().getNoopModules(),
+      new LoggingModules().getDistributedModules()
+    );
+
+    txManager = injector.getInstance(TransactionManager.class);
+    txManager.startAndWait();
+
+    ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
     zkClientService.startAndWait();
 
-    KafkaClientService kafkaClient = new ZKKafkaClientService(zkClientService);
+    KafkaClientService kafkaClient = injector.getInstance(KafkaClientService.class);
     kafkaClient.startAndWait();
 
-    tableUtil = new LogSaverTableUtil(dsFramework, cConf);
-    LogSaver logSaver =
-      new LogSaver(tableUtil, txClient, kafkaClient,
-                   cConf, new LocalLocationFactory());
-
+    LogSaver logSaver = injector.getInstance(LogSaver.class);
     logSaver.startAndWait();
 
     MultiLeaderElection multiElection = new MultiLeaderElection(zkClientService, "log-saver", 2, logSaver);
@@ -157,9 +159,16 @@ public class LogSaverTest extends KafkaTestBase {
 
     publishLogs();
 
-    waitTillLogSaverDone(logBaseDir, "ACCT_1/APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
-    waitTillLogSaverDone(logBaseDir, "ACCT_2/APP_2/flow-FLOW_2/%s", "Test log message 59 arg1 arg2");
-    waitTillLogSaverDone(logBaseDir, "cdap/services/service-metrics/%s", "Test log message 59 arg1 arg2");
+    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
+    String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
+    String namespacesDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
+    Location ns1LogBaseDir = locationFactory.create(namespacesDir).append("NS_1").append(logBaseDir);
+    Location ns2LogBaseDir = locationFactory.create(namespacesDir).append("NS_2").append(logBaseDir);
+    Location systemLogBaseDir = locationFactory.create(namespacesDir).append("system").append(logBaseDir);
+
+    waitTillLogSaverDone(ns1LogBaseDir, "APP_1/flow-FLOW_1/%s", "Test log message 119 arg1 arg2");
+    waitTillLogSaverDone(ns2LogBaseDir, "APP_2/flow-FLOW_2/%s", "Test log message 119 arg1 arg2");
+    waitTillLogSaverDone(systemLogBaseDir, "services/service-metrics/%s", "Test log message 59 arg1 arg2");
 
     logSaver.stopAndWait();
     multiElection.stopAndWait();
@@ -168,37 +177,89 @@ public class LogSaverTest extends KafkaTestBase {
   }
 
   @AfterClass
-  public static void testCheckpoint() throws Exception {
-    CheckpointManager checkpointManager = new CheckpointManager(tableUtil, txClient, KafkaTopic.getTopic());
-    Assert.assertEquals(120, checkpointManager.getCheckpoint(0));
-    Assert.assertEquals(60, checkpointManager.getCheckpoint(1));
+  public static void cleanUp() throws Exception {
+    InMemoryTableService.reset();
+    txManager.stopAndWait();
+  }
+
+  @Test
+  public void testCheckpoint() throws Exception {
+    TypeLiteral<Set<KafkaLogProcessor>> type = new TypeLiteral<Set<KafkaLogProcessor>>() { };
+    Set<KafkaLogProcessor> processors =
+      injector.getInstance(Key.get(type, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS)));
+
+    for (KafkaLogProcessor processor : processors) {
+      CheckpointManager checkpointManager = getCheckPointManager(processor);
+
+      // Verify checkpoint offset
+      Assert.assertEquals(180, checkpointManager.getCheckpoint(0).getNextOffset());
+      Assert.assertEquals(120, checkpointManager.getCheckpoint(1).getNextOffset());
+
+      // Verify checkpoint time
+      // Read with null runid should give 120 results back
+      long checkpointTimeApp1 =
+        getCheckpointTime(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"), 120);
+      long checkpointTimeApp2 =
+        getCheckpointTime(new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "", null, "INSTANCE"), 120);
+      long checkpointTimeService = getCheckpointTime(new ServiceLoggingContext("system", "services", "metrics"), 60);
+
+      // Checkpoint time should be within last 10 minutes
+      long currentTime = System.currentTimeMillis();
+      Assert.assertTrue(checkpointTimeApp1 > currentTime - TimeUnit.MINUTES.toMillis(10));
+      Assert.assertTrue(checkpointTimeApp2 > currentTime - TimeUnit.MINUTES.toMillis(10));
+      Assert.assertTrue(checkpointTimeService > currentTime - TimeUnit.MINUTES.toMillis(10));
+
+      // Saved checkpoint must be equal to time on last message for a partition.
+      Assert.assertEquals(checkpointTimeApp1, checkpointManager.getCheckpoint(0).getMaxEventTime());
+      Assert.assertTrue(checkpointManager.getCheckpoint(1).getMaxEventTime() == checkpointTimeApp2 ||
+                          checkpointManager.getCheckpoint(1).getMaxEventTime() == checkpointTimeService);
+    }
+  }
+
+  private static CheckpointManager getCheckPointManager(KafkaLogProcessor processor) {
+    if (processor instanceof KafkaLogWriterPlugin) {
+      KafkaLogWriterPlugin plugin = (KafkaLogWriterPlugin) processor;
+      return plugin.getCheckPointManager();
+    } else if (processor instanceof LogMetricsPlugin) {
+      LogMetricsPlugin plugin = (LogMetricsPlugin) processor;
+      return plugin.getCheckPointManager();
+    }
+    throw new IllegalArgumentException("Invalid processor");
+  }
+
+
+  @Test
+  public void testLogRead1() throws Exception {
+    testLogRead(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE"));
   }
 
   @Test
   public void testLogRead2() throws Exception {
-    testLogRead(new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", ""));
-  }
-
-  @Test
-  public void testLogRead1() throws Exception {
-    testLogRead(new FlowletLoggingContext("ACCT_2", "APP_2", "FLOW_2", ""));
+    testLogRead(new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "", "RUN1", "INSTANCE"));
   }
 
   @Test
   public void testLogRead3() throws Exception {
-    testLogRead(new ServiceLoggingContext("cdap", "services", "metrics"));
+    testLogRead(new ServiceLoggingContext("system", "services", "metrics"));
+  }
+
+  private long getCheckpointTime(LoggingContext loggingContext, int numExpectedEvents) throws Exception {
+    LogCallback logCallback = new LogCallback();
+    FileLogReader distributedLogReader = injector.getInstance(FileLogReader.class);
+    distributedLogReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback);
+    Assert.assertEquals(numExpectedEvents, logCallback.getEvents().size());
+
+    return logCallback.getEvents().get(numExpectedEvents - 1).getLoggingEvent().getTimeStamp();
   }
 
   private void testLogRead(LoggingContext loggingContext) throws Exception {
-    LOG.info("Verifying logging context {}", loggingContext.getLogPathFragment());
-    DistributedLogReader distributedLogReader =
-      new DistributedLogReader(dsFramework, txClient, cConf, new LocalLocationFactory());
+    LOG.info("Verifying logging context {}", loggingContext.getLogPathFragment(logBaseDir));
+    FileLogReader distributedLogReader = injector.getInstance(FileLogReader.class);
 
     LogCallback logCallback1 = new LogCallback();
     distributedLogReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback1);
     List<LogEvent> allEvents = logCallback1.getEvents();
 
-    Assert.assertEquals(60, allEvents.size());
     for (int i = 0; i < 60; ++i) {
       Assert.assertEquals(String.format("Test log message %d arg1 arg2", i),
                           allEvents.get(i).getLoggingEvent().getFormattedMessage());
@@ -214,8 +275,8 @@ public class LogSaverTest extends KafkaTestBase {
           allEvents.get(i).getLoggingEvent().getMDCPropertyMap().get(ServiceLoggingContext.TAG_SERVICE_ID));
       } else {
         Assert.assertEquals(
-          loggingContext.getSystemTagsMap().get(AccountLoggingContext.TAG_ACCOUNT_ID).getValue(),
-          allEvents.get(i).getLoggingEvent().getMDCPropertyMap().get(AccountLoggingContext.TAG_ACCOUNT_ID));
+          loggingContext.getSystemTagsMap().get(NamespaceLoggingContext.TAG_NAMESPACE_ID).getValue(),
+          allEvents.get(i).getLoggingEvent().getMDCPropertyMap().get(NamespaceLoggingContext.TAG_NAMESPACE_ID));
         Assert.assertEquals(
           loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_APPLICATION_ID).getValue(),
           allEvents.get(i).getLoggingEvent().getMDCPropertyMap().get(ApplicationLoggingContext.TAG_APPLICATION_ID));
@@ -305,18 +366,26 @@ public class LogSaverTest extends KafkaTestBase {
   }
 
   private static void publishLogs() throws Exception {
-    KafkaLogAppender appender = new KafkaLogAppender(cConf);
+    KafkaLogAppender appender = injector.getInstance(KafkaLogAppender.class);
     new LogAppenderInitializer(appender).initialize("LogSaverTest");
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     StatusPrinter.setPrintStream(new PrintStream(bos));
     StatusPrinter.print((LoggerContext) LoggerFactory.getILoggerFactory());
 
-    ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(2));
+    ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(3));
     List<ListenableFuture<?>> futures = Lists.newArrayList();
-    futures.add(executor.submit(new LogPublisher(new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"))));
-    futures.add(executor.submit(new LogPublisher(new FlowletLoggingContext("ACCT_2", "APP_2", "FLOW_2", "FLOWLET_2"))));
-    futures.add(executor.submit(new LogPublisher(new ServiceLoggingContext("cdap", "services", "metrics"))));
+    futures.add(executor.submit(new LogPublisher(0, new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "FLOWLET_1",
+                                                                           "RUN1", "INSTANCE1"))));
+    futures.add(executor.submit(new LogPublisher(0, new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "FLOWLET_2",
+                                                                           "RUN1", "INSTANCE1"))));
+    futures.add(executor.submit(new LogPublisher(0, new ServiceLoggingContext("system", "services", "metrics"))));
+
+    // Make sure the final segments of logs are added at end to simplify checking for done in waitTillLogSaverDone
+    futures.add(executor.submit(new LogPublisher(60, new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "FLOWLET_1",
+                                                                               "RUN2", "INSTANCE2"))));
+    futures.add(executor.submit(new LogPublisher(60, new FlowletLoggingContext("NS_2", "APP_2", "FLOW_2", "FLOWLET_2",
+                                                                           "RUN2", "INSTANCE2"))));
 
     Futures.allAsList(futures).get();
 
@@ -326,9 +395,11 @@ public class LogSaverTest extends KafkaTestBase {
   }
 
   private static class LogPublisher implements Runnable {
+    private final int startIndex;
     private final LoggingContext loggingContext;
 
-    private LogPublisher(LoggingContext loggingContext) {
+    private LogPublisher(int startIndex, LoggingContext loggingContext) {
+      this.startIndex = startIndex;
       this.loggingContext = loggingContext;
     }
 
@@ -340,11 +411,17 @@ public class LogSaverTest extends KafkaTestBase {
       Exception e1 = new Exception("Test Exception1");
       Exception e2 = new Exception("Test Exception2", e1);
 
+      int startBatch = startIndex / 10;
       try {
-        for (int j = 0; j < 6; ++j) {
+        for (int j = startBatch; j < startBatch + 6; ++j) {
           for (int i = 0; i < 10; ++i) {
             logger.warn("Test log message " + (10 * j + i) + " {} {}", "arg1", "arg2", e2);
-            TimeUnit.MILLISECONDS.sleep(1);
+            if (j == startIndex && (i <= 3)) {
+              // For some events introduce the sleep of more than 8 seconds for windowing to take effect
+              TimeUnit.MILLISECONDS.sleep(300);
+            } else {
+              TimeUnit.MILLISECONDS.sleep(1);
+            }
           }
           TimeUnit.MILLISECONDS.sleep(1200);
         }
@@ -355,19 +432,16 @@ public class LogSaverTest extends KafkaTestBase {
     }
   }
 
-  private static void waitTillLogSaverDone(String logBaseDir, String filePattern, String logLine) throws Exception {
+  private static void waitTillLogSaverDone(Location logBaseDir, String filePattern, String logLine) throws Exception {
     long start = System.currentTimeMillis();
 
-    LocationFactory locationFactory = new LocalLocationFactory();
-
     while (true) {
-      String latestFile = getLatestFile(logBaseDir, filePattern);
+      Location latestFile = getLatestFile(logBaseDir, filePattern);
       if (latestFile != null) {
-        AvroFileLogReader logReader = new AvroFileLogReader(new LogSchema().getAvroSchema());
+        AvroFileReader logReader = new AvroFileReader(new LogSchema().getAvroSchema());
         LogCallback logCallback = new LogCallback();
         logCallback.init();
-        logReader.readLog(locationFactory.create(latestFile), Filter.EMPTY_FILTER, 0,
-                          Long.MAX_VALUE, Integer.MAX_VALUE, logCallback);
+        logReader.readLog(latestFile, Filter.EMPTY_FILTER, 0, Long.MAX_VALUE, Integer.MAX_VALUE, logCallback);
         logCallback.close();
         List<LogEvent> events = logCallback.getEvents();
         if (events.size() > 0) {
@@ -386,23 +460,23 @@ public class LogSaverTest extends KafkaTestBase {
     TimeUnit.SECONDS.sleep(1);
   }
 
-  private static String getLatestFile(String logBaseDir, String filePattern) throws Exception {
+  private static Location getLatestFile(Location logBaseDir, String filePattern) throws Exception {
     String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-    File dir = new File(logBaseDir, String.format(filePattern, date));
+    Location dir = logBaseDir.append(String.format(filePattern, date));
 
     if (!dir.exists()) {
       return null;
     }
 
-    File[] files = FileUtil.listFiles(dir);
-    if (files.length == 0) {
+    List<Location> files = dir.list();
+    if (files.isEmpty()) {
       return null;
     }
 
-    SortedMap<Long, String> map = Maps.newTreeMap();
-    for (File file : files) {
-      String filename = FilenameUtils.getBaseName(file.getAbsolutePath());
-      map.put(Long.parseLong(filename), file.getAbsolutePath());
+    SortedMap<Long, Location> map = Maps.newTreeMap();
+    for (Location file : files) {
+      String filename = FilenameUtils.getBaseName(file.getName());
+      map.put(Long.parseLong(filename), file);
     }
     return map.get(map.lastKey());
   }

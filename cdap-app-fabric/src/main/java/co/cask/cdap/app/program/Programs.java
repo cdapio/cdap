@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,16 +15,15 @@
  */
 package co.cask.cdap.app.program;
 
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Objects;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Locale;
 
 /**
  * Factory helper to create {@link Program}.
@@ -42,12 +41,16 @@ public final class Programs {
 
   /**
    * Creates a {@link Program} without expanding the location jar. The {@link Program#getClassLoader()}
-   * would not function from the program this method returns.
+   * will be the given ClassLoader.
    */
   public static Program create(Location location, ClassLoader classLoader) throws IOException {
     return new DefaultProgram(location, classLoader);
   }
 
+  /**
+   * Creates a {@link Program} without expanding the location jar. The {@link Program#getClassLoader()}
+   * will be the context class loader or cdap system ClassLoader.
+   */
   public static Program create(Location location) throws IOException {
     return new DefaultProgram(location, getClassLoader());
   }
@@ -55,23 +58,25 @@ public final class Programs {
   /**
    * Get program location
    *
-   * @param factory  location factory
-   * @param filePath app fabric output directory path
-   * @param id       program id
-   * @param type     type of the program
-   * @return         Location corresponding to the program id
+   * @param namespacedLocationFactory the namespaced location on the file system
+   * @param appFabricDir app fabric output directory path
+   * @param id program id
+   * @param type type of the program    @return Location corresponding to the program id
    * @throws IOException incase of errors
    */
-  public static Location programLocation(LocationFactory factory, String filePath, Id.Program id, ProgramType type)
-                                         throws IOException {
-    Location allAppsLocation = factory.create(filePath);
+  public static Location programLocation(NamespacedLocationFactory namespacedLocationFactory, String appFabricDir,
+                                         Id.Program id, ProgramType type) throws IOException {
+    Location namespaceHome = namespacedLocationFactory.get(id.getApplication().getNamespace());
+    if (!namespaceHome.exists()) {
+      throw new FileNotFoundException("Unable to locate the Program, namespace location doesn't exist: " +
+                                        namespaceHome.toURI().getPath());
+    }
+    Location appFabricLocation = namespaceHome.append(appFabricDir);
 
-    Location accountAppsLocation = allAppsLocation.append(id.getAccountId());
-    String name = String.format(Locale.ENGLISH, "%s/%s", type.toString(), id.getApplicationId());
-    Location applicationProgramsLocation = accountAppsLocation.append(name);
+    Location applicationProgramsLocation = appFabricLocation.append(id.getApplicationId()).append(type.toString());
     if (!applicationProgramsLocation.exists()) {
-      throw new FileNotFoundException("Unable to locate the Program,  location doesn't exist: "
-                                   + applicationProgramsLocation.toURI().getPath());
+      throw new FileNotFoundException("Unable to locate the Program,  location doesn't exist: " +
+                                        applicationProgramsLocation.toURI().getPath());
     }
     Location programLocation = applicationProgramsLocation.append(String.format("%s.jar", id.getId()));
     if (!programLocation.exists()) {

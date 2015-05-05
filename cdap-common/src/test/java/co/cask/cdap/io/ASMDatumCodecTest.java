@@ -16,18 +16,17 @@
 
 package co.cask.cdap.io;
 
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.io.BinaryEncoder;
-import co.cask.cdap.common.stream.DefaultStreamEvent;
 import co.cask.cdap.internal.io.ASMDatumWriterFactory;
 import co.cask.cdap.internal.io.ASMFieldAccessorFactory;
 import co.cask.cdap.internal.io.DatumWriter;
 import co.cask.cdap.internal.io.ReflectionDatumReader;
 import co.cask.cdap.internal.io.ReflectionDatumWriter;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.internal.io.Schema;
-import co.cask.cdap.internal.io.UnsupportedTypeException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
@@ -389,8 +388,8 @@ public class ASMDatumCodecTest {
     PipedInputStream is = new PipedInputStream(os);
 
     DatumWriter<StreamEvent> writer = getWriter(type);
-    StreamEvent event = new DefaultStreamEvent(ImmutableMap.of("key", "value"),
-                                               ByteBuffer.wrap("Testing message".getBytes(Charsets.UTF_8)));
+    StreamEvent event = new StreamEvent(ImmutableMap.of("key", "value"),
+                                        ByteBuffer.wrap("Testing message".getBytes(Charsets.UTF_8)));
     writer.encode(event, new BinaryEncoder(os));
 
     ReflectionDatumReader<StreamEvent> reader = new ReflectionDatumReader<StreamEvent>(getSchema(type), type);

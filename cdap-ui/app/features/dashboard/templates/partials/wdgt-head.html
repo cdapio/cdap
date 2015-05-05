@@ -1,0 +1,9 @@
+<div class="dropdown">
+  <a class="btn dropdown-toggle"
+     role="toolbar"
+     ng-click="ddWidget($event)"
+     no-drag>
+    <span class="fa fa-ellipsis-h"></span>
+  </a>
+</div>
+<span ng-bind="wdgt.title | myEllipsis: 36 " tooltip="{{wdgt.title}}"></span>

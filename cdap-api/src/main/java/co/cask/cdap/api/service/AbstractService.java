@@ -16,8 +16,10 @@
 
 package co.cask.cdap.api.service;
 
-import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
+
+import java.util.Arrays;
 
 /**
  * An abstract implementation of {@link Service}. Users may extend this to write a {@link Service}.
@@ -54,7 +56,7 @@ public abstract class AbstractService implements Service {
    * @param handler to serve requests with.
    */
   protected void addHandler(HttpServiceHandler handler) {
-    configurer.addHandler(handler);
+    addHandlers(Arrays.asList(handler));
   }
 
   /**
@@ -66,43 +68,30 @@ public abstract class AbstractService implements Service {
   }
 
   /**
-   * Add a worker to the Service.
-   * @param worker for the service.
+   * Sets the number of instances needed for the server that runs all {@link HttpServiceHandler}s of this Service.
+   * @param instances Number of instances, must be > 0.
    */
-  @Beta
-  protected void addWorker(ServiceWorker worker) {
-    configurer.addWorker(worker);
+  protected void setInstances(int instances) {
+    configurer.setInstances(instances);
   }
 
   /**
-   * Add a list of workers to the Service.
-   * @param workers for the service.
+   * Sets the resources requirements for the server that runs all {@link HttpServiceHandler}s of this Service.
+   * @param resources The requirements.
    */
-  @Beta
-  protected void addWorkers(Iterable<? extends ServiceWorker> workers) {
-    configurer.addWorkers(workers);
+  protected void setResources(Resources resources) {
+    configurer.setResources(resources);
   }
 
   /**
-   * Specify a dataset that will be used by the Service.
-   * @param dataset name of dataset.
+   * Returns the {@link ServiceConfigurer}, only available at configuration time.
    */
-  protected void useDataset(String dataset) {
-    configurer.useDataset(dataset);
+  protected final ServiceConfigurer getConfigurer() {
+    return configurer;
   }
 
   /**
-   * Specify a list of datasets that will be used by the Service.
-   * @param datasets names of datasets.
-   */
-  protected void useDatasets(Iterable<String> datasets) {
-    configurer.useDatasets(datasets);
-  }
-
-  /**
-   * Implement this method and use a {@link ServiceConfigurer} to add a request handler
-   * and workers.
+   * Implements this method to configure this Service.
    */
   protected abstract void configure();
-
 }

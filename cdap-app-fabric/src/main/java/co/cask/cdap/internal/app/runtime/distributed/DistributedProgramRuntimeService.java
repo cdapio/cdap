@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,8 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.queue.QueueSpecification;
 import co.cask.cdap.app.queue.QueueSpecificationGenerator;
@@ -24,15 +26,13 @@ import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramResourceReporter;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.app.store.StoreFactory;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.internal.app.program.TypeId;
+import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
 import co.cask.cdap.internal.app.runtime.AbstractResourceReporter;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
@@ -43,18 +43,24 @@ import co.cask.cdap.proto.DistributedProgramLiveInfo;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunRecord;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.ContentSummary;
@@ -77,9 +83,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -105,72 +114,90 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   private final Store store;
   private final QueueAdmin queueAdmin;
   private final StreamAdmin streamAdmin;
+  private final TransactionExecutorFactory txExecutorFactory;
   private final ProgramResourceReporter resourceReporter;
-
 
   @Inject
   DistributedProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, TwillRunner twillRunner,
-                                   StoreFactory storeFactory, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
+                                   Store store, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
                                    MetricsCollectionService metricsCollectionService,
-                                   Configuration hConf, CConfiguration cConf) {
+                                   Configuration hConf, CConfiguration cConf,
+                                   TransactionExecutorFactory txExecutorFactory) {
     super(programRunnerFactory);
     this.twillRunner = twillRunner;
-    this.store = storeFactory.create();
+    this.store = store;
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
+    this.txExecutorFactory = txExecutorFactory;
     this.resourceReporter = new ClusterResourceReporter(metricsCollectionService, hConf, cConf);
   }
 
   @Override
-  public synchronized RuntimeInfo lookup(final RunId runId) {
-    RuntimeInfo runtimeInfo = super.lookup(runId);
+  protected RuntimeInfo createRuntimeInfo(ProgramController controller, Program program) {
+    if (controller instanceof AbstractTwillProgramController) {
+      RunId twillRunId = ((AbstractTwillProgramController) controller).getTwillRunId();
+      return new SimpleRuntimeInfo(controller, program, twillRunId);
+    }
+    return null;
+  }
+
+  // TODO SAGAR better data structure to support this efficiently
+  private synchronized boolean isTwillRunIdCached(RunId twillRunId) {
+    for (RuntimeInfo runtimeInfo : getRuntimeInfos()) {
+      if (twillRunId.equals(runtimeInfo.getTwillRunId())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public synchronized RuntimeInfo lookup(Id.Program programId, final RunId runId) {
+    RuntimeInfo runtimeInfo = super.lookup(programId, runId);
     if (runtimeInfo != null) {
       return runtimeInfo;
     }
 
-    // Lookup all live applications and look for the one that matches runId
-    String appName = null;
-    TwillController controller = null;
+    // Goes through all live application and fill the twillProgramInfo table
     for (TwillRunner.LiveInfo liveInfo : twillRunner.lookupLive()) {
-      for (TwillController c : liveInfo.getControllers()) {
-        if (c.getRunId().equals(runId)) {
-          appName = liveInfo.getApplicationName();
-          controller = c;
-          break;
+      String appName = liveInfo.getApplicationName();
+      Matcher matcher = APP_NAME_PATTERN.matcher(appName);
+      if (!matcher.matches()) {
+        continue;
+      }
+
+      ProgramType type = getType(matcher.group(1));
+      Id.Program id = Id.Program.from(matcher.group(2), matcher.group(3), type, matcher.group(4));
+      if (!id.equals(programId)) {
+        continue;
+      }
+
+      // Program matched
+      RunRecord record = store.getRun(programId, runId.getId());
+      if (record == null) {
+        return null;
+      }
+      if (record.getTwillRunId() == null) {
+        LOG.warn("Twill RunId does not exist for the program {}, runId {}", programId, runId.getId());
+        return null;
+      }
+      RunId twillRunIdFromRecord = org.apache.twill.internal.RunIds.fromString(record.getTwillRunId());
+
+      for (TwillController controller : liveInfo.getControllers()) {
+        RunId twillRunId = controller.getRunId();
+        if (!twillRunId.equals(twillRunIdFromRecord)) {
+          continue;
         }
+        runtimeInfo = createRuntimeInfo(programId.getType(), programId, controller, runId);
+        if (runtimeInfo != null) {
+          updateRuntimeInfo(programId.getType(), runId, runtimeInfo);
+        } else {
+          LOG.warn("Unable to find program for runId {}", runId);
+        }
+        return runtimeInfo;
       }
-      if (controller != null) {
-        break;
-      }
     }
-
-    if (controller == null) {
-      LOG.info("No running instance found for RunId {}", runId);
-      // TODO (ENG-2623): How about mapreduce job?
-      return null;
-    }
-
-    Matcher matcher = APP_NAME_PATTERN.matcher(appName);
-    if (!matcher.matches()) {
-      LOG.warn("Unrecognized application name pattern {}", appName);
-      return null;
-    }
-
-    ProgramType type = getType(matcher.group(1));
-    if (type == null) {
-      LOG.warn("Unrecognized program type {}", appName);
-      return null;
-    }
-    Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), matcher.group(4));
-
-    if (runtimeInfo != null) {
-      runtimeInfo = createRuntimeInfo(type, programId, controller);
-      updateRuntimeInfo(type, runId, runtimeInfo);
-      return runtimeInfo;
-    } else {
-      LOG.warn("Unable to find program {} {}", type, programId);
-      return null;
-    }
+    return null;
   }
 
   @Override
@@ -178,79 +205,111 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     Map<RunId, RuntimeInfo> result = Maps.newHashMap();
     result.putAll(super.list(type));
 
-    // Goes through all live application, filter out the one that match the given type.
+    // Table holds the Twill RunId and TwillController associated with the program matching the input type
+    Table<Id.Program, RunId, TwillController> twillProgramInfo = HashBasedTable.create();
+
+    // Goes through all live application and fill the twillProgramInfo table
     for (TwillRunner.LiveInfo liveInfo : twillRunner.lookupLive()) {
       String appName = liveInfo.getApplicationName();
       Matcher matcher = APP_NAME_PATTERN.matcher(appName);
       if (!matcher.matches()) {
         continue;
       }
-      ProgramType appType = getType(matcher.group(1));
-      if (appType != type) {
+      if (!type.equals(getType(matcher.group(1)))) {
         continue;
       }
 
       for (TwillController controller : liveInfo.getControllers()) {
-        RunId runId = controller.getRunId();
-        if (result.containsKey(runId)) {
+        RunId twillRunId = controller.getRunId();
+        if (isTwillRunIdCached(twillRunId)) {
           continue;
         }
 
-        Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), matcher.group(4));
-        RuntimeInfo runtimeInfo = createRuntimeInfo(type, programId, controller);
-        if (runtimeInfo != null) {
-          result.put(runId, runtimeInfo);
-          updateRuntimeInfo(type, runId, runtimeInfo);
-        } else {
-          LOG.warn("Unable to find program {} {}", type, programId);
-        }
+        Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), type, matcher.group(4));
+        twillProgramInfo.put(programId, twillRunId, controller);
       }
     }
+
+    if (twillProgramInfo.isEmpty()) {
+      return ImmutableMap.copyOf(result);
+    }
+
+    final Set<RunId> twillRunIds = twillProgramInfo.columnKeySet();
+    List<RunRecord> activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecord>() {
+      @Override
+      public boolean apply(RunRecord record) {
+        if (record.getTwillRunId() == null) {
+          return false;
+        }
+        return twillRunIds.contains(record.getTwillRunId());
+      }
+    });
+
+    for (RunRecord record : activeRunRecords) {
+      RunId twillRunIdFromRecord = org.apache.twill.internal.RunIds.fromString(record.getTwillRunId());
+      // Get the CDAP RunId from RunRecord
+      RunId runId = RunIds.fromString(record.getPid());
+      // Get the Program and TwillController for the current twillRunId
+      Map<Id.Program, TwillController> mapForTwillId = twillProgramInfo.columnMap().get(twillRunIdFromRecord);
+      Map.Entry<Id.Program, TwillController> entry = mapForTwillId.entrySet().iterator().next();
+
+      // Create RuntimeInfo for the current Twill RunId
+      RuntimeInfo runtimeInfo = createRuntimeInfo(type, entry.getKey(), entry.getValue(), runId);
+      if (runtimeInfo != null) {
+        result.put(runId, runtimeInfo);
+        updateRuntimeInfo(type, runId, runtimeInfo);
+      } else {
+        LOG.warn("Unable to find program {} {}", type, entry.getKey());
+      }
+    }
+
     return ImmutableMap.copyOf(result);
   }
 
-  private RuntimeInfo createRuntimeInfo(ProgramType type, Id.Program programId, TwillController controller) {
+  private RuntimeInfo createRuntimeInfo(ProgramType type, Id.Program programId, TwillController controller,
+                                        RunId runId) {
     try {
       Program program = store.loadProgram(programId, type);
       Preconditions.checkNotNull(program, "Program not found");
 
-      ProgramController programController = createController(program, controller);
-      return programController == null ? null : new SimpleRuntimeInfo(programController, type, programId);
+      ProgramController programController = createController(program, controller, runId);
+      return programController == null ? null : new SimpleRuntimeInfo(programController, programId,
+                                                                      controller.getRunId());
     } catch (Exception e) {
       LOG.error("Got exception: ", e);
       return null;
     }
   }
 
-  private ProgramController createController(Program program, TwillController controller) {
+  private ProgramController createController(Program program, TwillController controller, RunId runId) {
     AbstractTwillProgramController programController = null;
     String programId = program.getId().getId();
 
     switch (program.getType()) {
       case FLOW: {
-        FlowSpecification flowSpec = program.getSpecification().getFlows().get(programId);
+        FlowSpecification flowSpec = program.getApplicationSpecification().getFlows().get(programId);
         DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(
-          program, controller, queueAdmin, streamAdmin, getFlowletQueues(program, flowSpec)
+          program, controller, queueAdmin, streamAdmin, getFlowletQueues(program, flowSpec), txExecutorFactory
         );
-        programController = new FlowTwillProgramController(programId, controller, instanceUpdater);
+        programController = new FlowTwillProgramController(programId, controller, instanceUpdater, runId);
         break;
       }
-      case PROCEDURE:
-        programController = new ProcedureTwillProgramController(programId, controller);
-        break;
       case MAPREDUCE:
-        programController = new MapReduceTwillProgramController(programId, controller);
+        programController = new MapReduceTwillProgramController(programId, controller, runId);
         break;
       case WORKFLOW:
-        programController = new WorkflowTwillProgramController(programId, controller);
+        programController = new WorkflowTwillProgramController(programId, controller, runId);
         break;
       case WEBAPP:
-        programController = new WebappTwillProgramController(programId, controller);
+        programController = new WebappTwillProgramController(programId, controller, runId);
         break;
       case SERVICE:
         DistributedServiceRunnableInstanceUpdater instanceUpdater = new DistributedServiceRunnableInstanceUpdater(
           program, controller);
-        programController = new ServiceTwillProgramController(programId, controller, instanceUpdater);
+        programController = new ServiceTwillProgramController(programId, controller, instanceUpdater, runId);
+        break;
+      case WORKER:
+        programController = new WorkerTwillProgramController(programId, controller, runId);
         break;
     }
     return programController == null ? null : programController.startListen();
@@ -268,7 +327,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   // FlowProgramRunner moved to run in AM.
   private Multimap<String, QueueName> getFlowletQueues(Program program, FlowSpecification flowSpec) {
     // Generate all queues specifications
-    Id.Application appId = Id.Application.from(program.getAccountId(), program.getApplicationId());
+    Id.Application appId = Id.Application.from(program.getNamespaceId(), program.getApplicationId());
     Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queueSpecs
       = new SimpleQueueSpecificationGenerator(appId).create(flowSpec);
 
@@ -292,9 +351,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   @Override
   public ProgramLiveInfo getLiveInfo(Id.Program program, ProgramType type) {
     String twillAppName = String.format("%s.%s.%s.%s", type.name().toLowerCase(),
-                                      program.getAccountId(), program.getApplicationId(), program.getId());
+                                      program.getNamespaceId(), program.getApplicationId(), program.getId());
     Iterator<TwillController> controllers = twillRunner.lookup(twillAppName).iterator();
-    JsonObject json = new JsonObject();
     // this will return an empty Json if there is no live instance
     if (controllers.hasNext()) {
       TwillController controller = controllers.next();
@@ -335,17 +393,17 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
    */
   private class ClusterResourceReporter extends AbstractResourceReporter {
     private static final String RM_CLUSTER_METRICS_PATH = "/ws/v1/cluster/metrics";
-    private static final String CLUSTER_METRICS_CONTEXT = "-.cluster";
     private final Path hbasePath;
     private final Path namedspacedPath;
     private final PathFilter namespacedFilter;
-    private final String rmUrl;
+    private final List<URL> rmUrls;
     private final String namespace;
     private FileSystem hdfs;
 
     public ClusterResourceReporter(MetricsCollectionService metricsCollectionService, Configuration hConf,
                                    CConfiguration cConf) {
-      super(metricsCollectionService);
+      super(metricsCollectionService.getCollector(
+        ImmutableMap.<String, String>of()));
       try {
         this.hdfs = FileSystem.get(hConf);
       } catch (IOException e) {
@@ -357,59 +415,133 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       this.namedspacedPath = new Path(namespace);
       this.hbasePath = new Path(hConf.get(HConstants.HBASE_DIR));
       this.namespacedFilter = new NamespacedPathFilter();
-      this.rmUrl = "http://" + hConf.get(YarnConfiguration.RM_WEBAPP_ADDRESS) + RM_CLUSTER_METRICS_PATH;
+      List<URL> rmUrls = Collections.emptyList();
+      try {
+        rmUrls = getResourceManagerURLs(hConf);
+      } catch (MalformedURLException e) {
+        LOG.error("webapp address for the resourcemanager is malformed." +
+                    " Cluster memory metrics will not be collected.", e);
+      }
+      LOG.trace("RM urls determined... {}", rmUrls);
+      this.rmUrls = rmUrls;
+    }
+
+    // if ha resourcemanager is being used, need to read the config differently
+    // HA rm has a setting for the rm ids, which is a comma separated list of ids.
+    // it then has a separate webapp.address.<id> setting for each rm.
+    private List<URL> getResourceManagerURLs(Configuration hConf) throws MalformedURLException {
+      List<URL> urls = Lists.newArrayList();
+
+      // if HA resource manager is enabled
+      if (hConf.getBoolean(YarnConfiguration.RM_HA_ENABLED, false)) {
+        LOG.trace("HA RM is enabled, determining webapp urls...");
+        // for each resource manager
+        for (String rmID : hConf.getStrings(YarnConfiguration.RM_HA_IDS)) {
+          urls.add(getResourceURL(hConf, rmID));
+        }
+      } else {
+        LOG.trace("HA RM is not enabled, determining webapp url...");
+        urls.add(getResourceURL(hConf, null));
+      }
+      return urls;
+    }
+
+    // get the url for resource manager cluster metrics, given the id of the resource manager.
+    private URL getResourceURL(Configuration hConf, String rmID) throws MalformedURLException {
+      String setting = YarnConfiguration.RM_WEBAPP_ADDRESS;
+      if (rmID != null) {
+        setting += "." + rmID;
+      }
+      String addrStr = hConf.get(setting);
+      // in HA mode, you can either set yarn.resourcemanager.hostname.<rm-id>,
+      // or you can set yarn.resourcemanager.webapp.address.<rm-id>. In non-HA mode, the webapp address
+      // is populated based on the resourcemanager hostname, but this is not the case in HA mode.
+      // Therefore, if the webapp address is null, check for the resourcemanager hostname to derive the webapp address.
+      if (addrStr == null) {
+        // this setting is not a constant for some reason...
+        setting = YarnConfiguration.RM_PREFIX + "hostname";
+        if (rmID != null) {
+          setting += "." + rmID;
+        }
+        addrStr = hConf.get(setting) + ":" + YarnConfiguration.DEFAULT_RM_WEBAPP_PORT;
+      }
+      addrStr = "http://" + addrStr + RM_CLUSTER_METRICS_PATH;
+      LOG.trace("Adding {} as a rm address.", addrStr);
+      return new URL(addrStr);
     }
 
     @Override
     public void reportResources() {
       for (TwillRunner.LiveInfo info : twillRunner.lookupLive()) {
-        String metricContext = getMetricContext(info);
+        Map<String, String> metricContext = getMetricContext(info);
         if (metricContext == null) {
           continue;
         }
-        int containers = 0;
-        int memory = 0;
-        int vcores = 0;
+
         // will have multiple controllers if there are multiple runs of the same application
         for (TwillController controller : info.getControllers()) {
           ResourceReport report = controller.getResourceReport();
           if (report == null) {
             continue;
           }
-          containers++;
-          memory += report.getAppMasterResources().getMemoryMB();
-          vcores += report.getAppMasterResources().getVirtualCores();
+          int memory = report.getAppMasterResources().getMemoryMB();
+          int vcores = report.getAppMasterResources().getVirtualCores();
+
+          Map<String, String> runContext = ImmutableMap.<String, String>builder()
+            .putAll(metricContext)
+            .put(Constants.Metrics.Tag.RUN_ID, controller.getRunId().getId()).build();
+
+          sendMetrics(runContext, 1, memory, vcores);
         }
-        sendMetrics(metricContext, containers, memory, vcores);
       }
       reportClusterStorage();
-      reportClusterMemory();
+      boolean reported = false;
+      // if we have HA resourcemanager, need to cycle through possible webapps in case one is down.
+      for (URL url : rmUrls) {
+        // if we were able to hit the resource manager webapp, we don't have to try the others.
+        if (reportClusterMemory(url)) {
+          reported = true;
+          break;
+        }
+      }
+      if (!reported) {
+        LOG.warn("unable to get resource manager metrics, cluster memory metrics will be unavailable");
+      }
     }
 
     // YARN api is unstable, hit the webservice instead
-    private void reportClusterMemory() {
+    // returns whether or not it was able to hit the webservice.
+    private boolean reportClusterMemory(URL url) {
       Reader reader = null;
       HttpURLConnection conn = null;
+      LOG.trace("getting cluster memory from url {}", url);
       try {
-        URL url = new URL(rmUrl);
         conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
 
         reader = new InputStreamReader(conn.getInputStream(), Charsets.UTF_8);
-        JsonObject response = new Gson().fromJson(reader, JsonObject.class);
+        JsonObject response;
+        try {
+          response = new Gson().fromJson(reader, JsonObject.class);
+        } catch (JsonParseException e) {
+          // this is normal if this is not the active RM
+          return false;
+        }
+
         if (response != null) {
           JsonObject clusterMetrics = response.getAsJsonObject("clusterMetrics");
           long totalMemory = clusterMetrics.get("totalMB").getAsLong();
           long availableMemory = clusterMetrics.get("availableMB").getAsLong();
-          MetricsCollector collector = getCollector(CLUSTER_METRICS_CONTEXT);
+          MetricsCollector collector = getCollector();
           LOG.trace("resource manager, total memory = " + totalMemory + " available = " + availableMemory);
-          collector.increment("resources.total.memory", (int) totalMemory);
-          collector.increment("resources.available.memory", (int) availableMemory);
-        } else {
-          LOG.warn("unable to get resource manager metrics, cluster memory metrics will be unavailable");
+          collector.gauge("resources.total.memory", totalMemory);
+          collector.gauge("resources.available.memory", availableMemory);
+          return true;
         }
-      } catch (IOException e) {
+        return false;
+      } catch (Exception e) {
         LOG.error("Exception getting cluster memory from ", e);
+        return false;
       } finally {
         if (reader != null) {
           try {
@@ -443,14 +575,13 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         long storageCapacity = hdfsStatus.getCapacity();
         long storageAvailable = hdfsStatus.getRemaining();
 
-        MetricsCollector collector = getCollector(CLUSTER_METRICS_CONTEXT);
-        // TODO: metrics should support longs
+        MetricsCollector collector = getCollector();
         LOG.trace("total cluster storage = " + storageCapacity + " total used = " + totalUsed);
-        collector.increment("resources.total.storage", (int) (storageCapacity / 1024 / 1024));
-        collector.increment("resources.available.storage", (int) (storageAvailable / 1024 / 1024));
-        collector.increment("resources.used.storage", (int) (totalUsed / 1024 / 1024));
-        collector.increment("resources.used.files", (int) totalFiles);
-        collector.increment("resources.used.directories", (int) totalDirectories);
+        collector.gauge("resources.total.storage", (storageCapacity / 1024 / 1024));
+        collector.gauge("resources.available.storage", (storageAvailable / 1024 / 1024));
+        collector.gauge("resources.used.storage", (totalUsed / 1024 / 1024));
+        collector.gauge("resources.used.files", totalFiles);
+        collector.gauge("resources.used.directories", totalDirectories);
       } catch (IOException e) {
         LOG.warn("Exception getting hdfs metrics", e);
       }
@@ -463,7 +594,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       }
     }
 
-    private String getMetricContext(TwillRunner.LiveInfo info) {
+    private Map<String, String> getMetricContext(TwillRunner.LiveInfo info) {
       Matcher matcher = APP_NAME_PATTERN.matcher(info.getApplicationName());
       if (!matcher.matches()) {
         return null;
@@ -473,11 +604,16 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       if (type == null) {
         return null;
       }
-      Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), matcher.group(4));
-      return Joiner.on(".").join(programId.getApplicationId(),
-                                 TypeId.getMetricContextId(type),
-                                 programId.getId());
+
+      Id.Program programId = Id.Program.from(matcher.group(2), matcher.group(3), type, matcher.group(4));
+      return getMetricsContext(type, programId);
     }
+  }
+
+  private static Map<String, String> getMetricsContext(ProgramType type, Id.Program programId) {
+    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, programId.getNamespaceId(),
+                           Constants.Metrics.Tag.APP, programId.getApplicationId(),
+                           ProgramTypeMetricTag.getTagName(type), programId.getId());
   }
 
   @Override

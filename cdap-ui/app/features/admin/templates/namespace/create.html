@@ -1,0 +1,79 @@
+<div class="modal-header clearfix">
+  <h3 class="modal-title pull-left"> Add Namespace </h3>
+  <a class="btn pull-right" ng-click="closeModal()">
+    <span class="fa fa-remove"></span>
+    <span class="sr-only"> Close </span>
+  </a>
+</div>
+<div class="modal-body">
+  <form class="form-horizontal"
+        role="form"
+        name="namespaceCreateForm"
+        no-validate
+  >
+
+    <div class="form-group">
+      <label class="col-xs-12 col-sm-2 control-label" for="namespaceDisplayName"> Name: </label>
+      <div class="col-xs-12 col-sm-10">
+        <input type="text"
+               id="namespaceDisplayName"
+               ng-model="model.name"
+               class="form-control"
+               required
+
+        >
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label  class="col-xs-12 col-sm-2 control-label" for="namespaceDescription"> Description: </label>
+      <div class="col-xs-12 col-sm-10">
+        <textarea type="text"
+               id="namespaceDescription"
+               ng-model="model.description"
+               class="form-control"
+        ></textarea>
+      </div>
+    </div>
+
+  <!--   <div class="form-group">
+      <label  class="col-sm-2 control-label" for="namespaceProperties">Properties</label>
+      <div class="col-sm-2">
+        <input type="text"
+               id="namespaceProperties"
+               ng-model="model.properties"
+               class="form-control"
+               placeholder="Key"
+        >
+      </div>
+      <div class="col-sm-2">
+        <input type="text"
+               id="namespaceProperties"
+               ng-model="model.properties"
+               class="form-control"
+               placeholder="Value"
+        >
+      </div>
+      <div class="col-sm-1">
+        <a type="button"
+               id="addKeyValue"
+               class="btn btn-default"
+        >+</a>
+      </div>
+    </div> -->
+
+<!--     <div class="form-group">
+      <div class="col-sm-offset-2 col-sm-10">
+        <a ui-sref="admin.overview" class="btn btn-default">Cancel</a>
+        <button ng-disabled="namespaceCreateForm.$invalid" type="submit" class="btn btn-primary">Create</button>
+      </div>
+    </div> -->
+
+  </form>
+</div>
+<div class="modal-footer">
+  <div class="form-group">
+    <a ui-sref="admin.overview" class="btn btn-default" ng-click="closeModal()">Cancel</a>
+    <a ng-disabled="namespaceCreateForm.$invalid" class="btn btn-primary" ng-click="submitHandler()">Create</a>
+  </div>
+</div>

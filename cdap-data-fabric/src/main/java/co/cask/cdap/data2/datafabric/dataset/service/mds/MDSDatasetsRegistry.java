@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,13 +17,9 @@
 package co.cask.cdap.data2.datafabric.dataset.service.mds;
 
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.Namespace;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.tx.TransactionalDatasetRegistry;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableMap;
@@ -43,17 +39,14 @@ public class MDSDatasetsRegistry extends TransactionalDatasetRegistry<MDSDataset
 
   @Inject
   public MDSDatasetsRegistry(TransactionSystemClient txClient,
-                             @Named("datasetMDS") DatasetFramework framework,
-                             CConfiguration conf) {
+                             @Named("datasetMDS") DatasetFramework framework) {
     super(txClient);
-    this.dsFramework =
-      new NamespacedDatasetFramework(framework, new DefaultDatasetNamespace(conf, Namespace.SYSTEM));
+    this.dsFramework = framework;
   }
 
   @Override
   public void startUp() throws Exception {
     this.util = new DatasetMetaTableUtil(dsFramework);
-    this.util.init();
   }
 
   @Override

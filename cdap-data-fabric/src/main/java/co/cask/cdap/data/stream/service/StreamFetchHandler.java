@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,14 +27,18 @@ import co.cask.cdap.data.stream.StreamEventOffset;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamFileType;
 import co.cask.cdap.data.stream.StreamUtils;
+import co.cask.cdap.data.stream.TimeRangeReadFilter;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
+import co.cask.cdap.proto.Id;
+import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
@@ -46,27 +50,27 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * A HTTP handler for handling getting stream events.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION + "/streams")
+@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/streams")
 public final class StreamFetchHandler extends AuthenticatedHttpHandler {
 
   private static final Gson GSON = StreamEventTypeAdapter.register(new GsonBuilder()).create();
   private static final int MAX_EVENTS_PER_READ = 100;
-  private static final int CHUNK_SIZE = 20;
+  private static final int CHUNK_SIZE = 8192;
 
   private final CConfiguration cConf;
   private final StreamAdmin streamAdmin;
@@ -84,41 +88,47 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
 
   /**
    * Handler for the HTTP API {@code /streams/[stream_name]/events?start=[start_ts]&end=[end_ts]&limit=[event_limit]}
+   * <p>
+   * Responds with:
+   * <ul>
+   * <li>404 if stream does not exist</li>
+   * <li>204 if no event in the given start/end time range exists</li>
+   * <li>200 if there is are one or more events</li>
+   * </ul>
+   * </p>
+   * <p>
+   * Response body is a JSON array of the StreamEvent object.
+   * </p>
    *
-   * Response with
-   *   404 if stream not exists.
-   *   204 if no event in the given start/end time range
-   *   200 if there is event
-   *
-   * Response body is an Json array of StreamEvent object
-   *
-   * @see StreamEventTypeAdapter for the format of StreamEvent object.
+   * @see StreamEventTypeAdapter StreamEventTypeAdapter for the format of the StreamEvent object
    */
   @GET
   @Path("/{stream}/events")
   public void fetch(HttpRequest request, HttpResponder responder,
-                        @PathParam("stream") String stream) throws Exception {
+                    @PathParam("namespace-id") String namespaceId,
+                    @PathParam("stream") String stream,
+                    @QueryParam("start") long startTime,
+                    @QueryParam("end") @DefaultValue("9223372036854775807") long endTime,
+                    @QueryParam("limit") @DefaultValue("2147483647") int limit) throws Exception {
 
-    String accountID = getAuthenticatedAccountId(request);
-
-    Map<String, List<String>> parameters = new QueryStringDecoder(request.getUri()).getParameters();
-    long startTime = getTimestamp("start", parameters, 0);
-    long endTime = getTimestamp("end", parameters, Long.MAX_VALUE);
-    int limit = getLimit("limit", parameters, Integer.MAX_VALUE);
-
-    if (!verifyGetEventsRequest(accountID, stream, startTime, endTime, limit, responder)) {
+    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
+    if (!verifyGetEventsRequest(streamId, startTime, endTime, limit, responder)) {
       return;
     }
 
-    StreamConfig streamConfig = streamAdmin.getConfig(stream);
-    startTime = Math.max(startTime, System.currentTimeMillis() - streamConfig.getTTL());
+    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
+    long now = System.currentTimeMillis();
+    startTime = Math.max(startTime, now - streamConfig.getTTL());
+    endTime = Math.min(endTime, now);
 
     // Create the stream event reader
     FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader = createReader(streamConfig, startTime);
     try {
-      ReadFilter readFilter = createReadFilter(startTime, endTime);
+      TimeRangeReadFilter readFilter = new TimeRangeReadFilter(startTime, endTime);
       List<StreamEvent> events = Lists.newArrayListWithCapacity(100);
-      int eventsRead = reader.read(events, getReadLimit(limit), 0, TimeUnit.SECONDS, readFilter);
+
+      // Reads the first batch of events from the stream.
+      int eventsRead = readEvents(reader, events, limit, readFilter);
 
       // If empty already, return 204 no content
       if (eventsRead <= 0) {
@@ -127,8 +137,9 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
       }
 
       // Send with chunk response, as we don't want to buffer all events in memory to determine the content-length.
-      responder.sendChunkStart(HttpResponseStatus.OK,
-                               ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json; charset=utf-8"));
+      ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK,
+                                                               ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE,
+                                                                                    "application/json; charset=utf-8"));
       ChannelBuffer buffer = ChannelBuffers.dynamicBuffer();
       JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(new ChannelBufferOutputStream(buffer),
                                                                     Charsets.UTF_8));
@@ -143,15 +154,18 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
 
           // If exceeded chunk size limit, send a new chunk.
           if (buffer.readableBytes() >= CHUNK_SIZE) {
-            // No way to know if it is ok to send chunk or not. See ENG-4168
-            responder.sendChunk(buffer);
+            // If the connect is closed, sendChunk will throw IOException.
+            // No need to handle the exception as it will just propagated back to the netty-http library
+            // and it will handle it.
+            // Need to copy the buffer because the buffer will get reused and send chunk is an async operation
+            chunkResponder.sendChunk(buffer.copy());
             buffer.clear();
           }
         }
         events.clear();
 
         if (limit > 0) {
-          eventsRead = reader.read(events, getReadLimit(limit), 0, TimeUnit.SECONDS, readFilter);
+          eventsRead = readEvents(reader, events, limit, readFilter);
         }
       }
       jsonWriter.endArray();
@@ -159,77 +173,53 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
 
       // Send the last chunk that still has data
       if (buffer.readable()) {
-        responder.sendChunk(buffer);
+        // No need to copy the last chunk, since the buffer will not be reused
+        chunkResponder.sendChunk(buffer);
       }
-      responder.sendChunkEnd();
+      Closeables.closeQuietly(chunkResponder);
     } finally {
       reader.close();
     }
   }
 
   /**
-   * Parses and returns a timestamp from the query string.
-   *
-   * @param key Name of the key in the query string.
-   * @param parameters The query string represented as a map.
-   * @param defaultValue Value to return if the key is absent from the query string.
-   * @return A long value parsed from the query string, or the {@code defaultValue} if the key is absent.
-   *         If the key exists but fails to parse the number, {@code -1} is returned.
+   * Reads events from the given reader.
    */
-  private long getTimestamp(String key, Map<String, List<String>> parameters, long defaultValue) {
-    List<String> values = parameters.get(key);
-    if (values == null || values.isEmpty()) {
-      return defaultValue;
+  private int readEvents(FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
+                         List<StreamEvent> events, int limit,
+                         TimeRangeReadFilter readFilter) throws IOException, InterruptedException {
+    // Keeps reading as long as the filter is active.
+    // This mean there are events in the stream, just that they are rejected by the filter.
+    int eventsRead = reader.read(events, getReadLimit(limit), 0, TimeUnit.SECONDS, readFilter);
+    while (eventsRead == 0 && readFilter.isActive()) {
+      readFilter.reset();
+      eventsRead = reader.read(events, getReadLimit(limit), 0, TimeUnit.SECONDS, readFilter);
     }
-    try {
-      return Long.parseLong(values.get(0));
-    } catch (NumberFormatException e) {
-      return -1L;
-    }
-  }
-
-  /**
-   * Parses and returns the limit from the query string.
-   *
-   * @param key Name of the key in the query string.
-   * @param parameters The query string represented as a map.
-   * @param defaultValue Value to return if the key is absent from the query string.
-   * @return An int value parsed from the query string, or the {@code defaultValue} if the key is absent.
-   *         If the key exists but fails to parse the number, {@code -1} is returned.
-   */
-  private int getLimit(String key, Map<String, List<String>> parameters, int defaultValue) {
-    List<String> values = parameters.get(key);
-    if (values == null || values.isEmpty()) {
-      return defaultValue;
-    }
-    try {
-      return Integer.parseInt(values.get(0));
-    } catch (NumberFormatException e) {
-      return -1;
-    }
+    return eventsRead;
   }
 
   /**
    * Verifies query properties.
    */
-  private boolean verifyGetEventsRequest(String accountID, String stream, long startTime, long endTime,
+  private boolean verifyGetEventsRequest(Id.Stream streamId, long startTime, long endTime,
                                          int count, HttpResponder responder) throws Exception {
     if (startTime < 0) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, "Start time must be >= 0");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Start time must be >= 0");
       return false;
     }
     if (endTime < 0) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, "End time must be >= 0");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "End time must be >= 0");
       return false;
     }
     if (startTime >= endTime) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, "Start time must be smaller than end time");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Start time must be smaller than end time");
       return false;
     }
     if (count <= 0) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, "Cannot request for <=0 events");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Cannot request for <=0 events");
+      return false;
     }
-    if (!streamMetaStore.streamExists(accountID, stream)) {
+    if (!streamMetaStore.streamExists(streamId)) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return false;
     }
@@ -256,7 +246,7 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
 
     for (Location location : baseLocation.list()) {
       // Partition must be a directory
-      if (!location.isDirectory()) {
+      if (!location.isDirectory() || !StreamUtils.isPartition(location.getName())) {
         continue;
       }
       long partitionStartTime = StreamUtils.getPartitionStartTime(location.getName());
@@ -331,43 +321,6 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
       @Override
       public P getPosition() {
         throw new UnsupportedOperationException("Position not supported for empty FileReader");
-      }
-    };
-  }
-
-  /**
-   * Creates a {@link ReadFilter} to only read events that are within the given time range.
-   *
-   * @param startTime Start timestamp for event to be valid (inclusive).
-   * @param endTime End timestamp fo event to be valid (exclusive).
-   * @return A {@link ReadFilter} with the specific filtering property.
-   */
-  private ReadFilter createReadFilter(final long startTime, final long endTime) {
-    return new ReadFilter() {
-
-      private long hint;
-
-      @Override
-      public void reset() {
-        hint = -1L;
-      }
-
-      @Override
-      public long getNextTimestampHint() {
-        return hint;
-      }
-
-      @Override
-      public boolean acceptTimestamp(long timestamp) {
-        if (timestamp < startTime) {
-          hint = startTime;
-          return false;
-        }
-        if (timestamp >= endTime) {
-          hint = Long.MAX_VALUE;
-          return false;
-        }
-        return true;
       }
     };
   }

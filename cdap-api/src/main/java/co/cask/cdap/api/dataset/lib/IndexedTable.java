@@ -17,14 +17,17 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.RecordScanner;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
+import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.table.Delete;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Increment;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Result;
 import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import com.google.common.base.Preconditions;
@@ -34,6 +37,7 @@ import com.google.common.primitives.Longs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +52,7 @@ import javax.annotation.Nullable;
  * <p>
  * This dataset uses two tables:
  * <ul>
- *   <li>the actual data table, which stores the raw, unmodified rows which are written</li>
+ *   <li>the actual data table, which stores the raw, unmodified rows which are written; and</li>
  *   <li>an index table, with rows keyed by the indexed column and value (plus data row key for uniqueness),
  *   which contains a reference to the row key in the data table matching the indexed value.</li>
  * </ul>
@@ -67,21 +71,21 @@ import javax.annotation.Nullable;
  * <p>The columns to index can be configured in the {@link co.cask.cdap.api.dataset.DatasetProperties} used
  * when the dataset instance in created.  Multiple column names should be listed as a comma-separated string
  * (with no spaces):
- * <pre>
- * {@code
- * public class MyApp extends AbstractApplication &#123;
- *   public void configure() &#123;
+ *
+ * <p>
+ * <pre><code>public class MyApp extends AbstractApplication {
+ *   public void configure() {
  *     setName("MyApp");
  *     ...
  *     createDataset("indexedData", IndexedTable.class,
  *                   DatasetProperties.builder().add(
  *                       IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY, "col1,col2").build());
  *     ...
- *   &#125;
- * &#125;
- * }
- * </pre>
- *
+ *   }
+ * }</code></pre>
+ * </p>
+ * 
+ * <p>
  * Note that this means that the column names which should be indexed cannot contain the comma character,
  * as it would break parsing of the configuration property.
  * </p>
@@ -150,6 +154,11 @@ public class IndexedTable extends AbstractDataset implements Table {
   @Override
   public Row get(byte[] row, byte[] startColumn, byte[] stopColumn, int limit) {
     return table.get(row, startColumn, stopColumn, limit);
+  }
+
+  @Override
+  public List<Row> get(List<Get> gets) {
+    return table.get(gets);
   }
 
   /**
@@ -299,7 +308,7 @@ public class IndexedTable extends AbstractDataset implements Table {
    * pass-through to the underlying table.
    */
   @Override
-  public boolean compareAndSwap(byte[] row, byte[] column, byte[] expected, byte[] newValue) throws Exception {
+  public boolean compareAndSwap(byte[] row, byte[] column, byte[] expected, byte[] newValue) {
     // if the swap is on a column other than the column key, then
     // the index is not affected - just execute the swap.
     // also, if the swap is on the index column, but the old value
@@ -470,6 +479,11 @@ public class IndexedTable extends AbstractDataset implements Table {
     return table.scan(startRow, stopRow);
   }
 
+  @Override
+  public Scanner scan(Scan scan) {
+    return table.scan(scan);
+  }
+
   /* BatchReadable implementation */
 
   @Override
@@ -478,8 +492,18 @@ public class IndexedTable extends AbstractDataset implements Table {
   }
 
   @Override
+  public Type getRecordType() {
+    return table.getRecordType();
+  }
+
+  @Override
   public List<Split> getSplits() {
     return table.getSplits();
+  }
+
+  @Override
+  public RecordScanner<StructuredRecord> createSplitRecordScanner(Split split) {
+    return table.createSplitRecordScanner(split);
   }
 
   @Override

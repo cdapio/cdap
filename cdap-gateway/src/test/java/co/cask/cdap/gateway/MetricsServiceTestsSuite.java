@@ -16,10 +16,8 @@
 
 package co.cask.cdap.gateway;
 
-import co.cask.cdap.gateway.handlers.log.LogHandlerTest;
-import co.cask.cdap.gateway.handlers.metrics.MetricsDeleteTest;
-import co.cask.cdap.gateway.handlers.metrics.MetricsDiscoveryQueryTest;
-import co.cask.cdap.gateway.handlers.metrics.MetricsQueryTest;
+import co.cask.cdap.gateway.handlers.log.LogHandlerTestRun;
+import co.cask.cdap.gateway.handlers.metrics.MetricsHandlerTestRun;
 import co.cask.cdap.gateway.handlers.metrics.MetricsSuiteTestBase;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -31,10 +29,8 @@ import org.junit.runners.Suite;
  */
 @RunWith(value = Suite.class)
 @Suite.SuiteClasses(value = {
-  MetricsQueryTest.class,
-  MetricsDeleteTest.class,
-  MetricsDiscoveryQueryTest.class,
-  LogHandlerTest.class
+  MetricsHandlerTestRun.class,
+  LogHandlerTestRun.class
 })
 
 public class MetricsServiceTestsSuite  {

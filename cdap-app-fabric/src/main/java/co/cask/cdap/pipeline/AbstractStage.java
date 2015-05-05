@@ -46,8 +46,12 @@ public abstract class AbstractStage<T> implements Stage {
   public final void process(Context ctx) throws Exception {
     this.ctx = ctx;
     Object upStream = ctx.getUpStream();
+
+    // If the type match, call process. Otherwise, just pass the object to next stage.
     if (typeToken.getRawType().isAssignableFrom(upStream.getClass())) {
       process((T) typeToken.getRawType().cast(upStream));
+    } else {
+      emit(upStream);
     }
   }
 

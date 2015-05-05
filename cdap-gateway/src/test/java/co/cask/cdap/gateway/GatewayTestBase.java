@@ -16,29 +16,32 @@
 
 package co.cask.cdap.gateway;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
-import co.cask.cdap.data.stream.service.StreamHttpService;
+import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.transaction.stream.FileStreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
-import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
 import co.cask.cdap.gateway.router.NettyRouter;
-import co.cask.cdap.gateway.runtime.GatewayModule;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.query.MetricsQueryService;
-import co.cask.cdap.passport.http.client.PassportClient;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.notifications.service.NotificationService;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.security.guice.InMemorySecurityModule;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
@@ -49,7 +52,6 @@ import com.google.gson.JsonObject;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
@@ -64,7 +66,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -85,19 +86,29 @@ public abstract class GatewayTestBase {
   private static final String CLUSTER = "SampleTestClusterName";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.API_KEY, API_KEY);
 
-  private static Gateway gateway;
   private static final String hostname = "127.0.0.1";
   private static int port;
+
+  protected static final String TEST_NAMESPACE1 = "testnamespace1";
+  protected static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder().setName(TEST_NAMESPACE1)
+    .setDescription(TEST_NAMESPACE1).build();
+  protected static final String TEST_NAMESPACE2 = "testnamespace2";
+  protected static final NamespaceMeta TEST_NAMESPACE_META2 = new NamespaceMeta.Builder().setName(TEST_NAMESPACE2)
+    .setDescription(TEST_NAMESPACE2).build();
+
   private static CConfiguration conf;
 
   private static Injector injector;
   private static AppFabricServer appFabricServer;
   private static NettyRouter router;
-  private static MetricsQueryService metrics;
-  private static StreamHttpService streamHttpService;
+  private static MetricsQueryService metricsQueryService;
+  private static MetricsCollectionService metricsCollectionService;
   private static TransactionManager txService;
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
+  private static NotificationService notificationService;
+  private static StreamService streamService;
+  protected static NamespaceAdmin namespaceAdmin;
   private static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   // Controls for test suite for whether to run BeforeClass/AfterClass
@@ -105,17 +116,13 @@ public abstract class GatewayTestBase {
   public static boolean runAfter = true;
 
   @BeforeClass
-  public static void beforeClass() throws IOException {
+  public static void beforeClass() throws Exception {
     if (!runBefore) {
       return;
     }
     tmpFolder.create();
     conf = CConfiguration.create();
-    conf.setInt(Constants.Gateway.PORT, 0);
-    conf.set(Constants.Gateway.ADDRESS, hostname);
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-    conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, true);
-    conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
     conf.set(Constants.Router.ADDRESS, hostname);
     conf.setInt(Constants.Router.ROUTER_PORT, 0);
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
@@ -123,7 +130,7 @@ public abstract class GatewayTestBase {
   }
 
   @AfterClass
-  public static void afterClass() {
+  public static void afterClass() throws Exception {
     if (!runAfter) {
       return;
     }
@@ -131,7 +138,7 @@ public abstract class GatewayTestBase {
     tmpFolder.delete();
   }
 
-  public static Injector startGateway(final CConfiguration conf) {
+  public static Injector startGateway(final CConfiguration conf) throws Exception {
     final Map<String, List<String>> keysAndClusters = ImmutableMap.of(API_KEY, Collections.singletonList(CLUSTER));
 
     // Set up our Guice injections
@@ -140,13 +147,6 @@ public abstract class GatewayTestBase {
         new AbstractModule() {
           @Override
           protected void configure() {
-            bind(PassportClient.class).toProvider(
-              new Provider<PassportClient>() {
-                @Override
-                public PassportClient get() {
-                  return new MockedPassportClient(keysAndClusters);
-                }
-              });
           }
 
           @Provides
@@ -158,32 +158,26 @@ public abstract class GatewayTestBase {
           }
         },
         new InMemorySecurityModule(),
-        new GatewayModule().getInMemoryModules(),
-        new AppFabricTestModule(conf),
-        new StreamServiceRuntimeModule().getStandaloneModules()
+        new NotificationServiceRuntimeModule().getInMemoryModules(),
+        new AppFabricTestModule(conf)
       ).with(new AbstractModule() {
         @Override
         protected void configure() {
+          install(new StreamServiceRuntimeModule().getStandaloneModules());
+
           // It's a bit hacky to add it here. Need to refactor these
           // bindings out as it overlaps with
           // AppFabricServiceModule
           bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-
-          MockMetricsCollectionService metricsCollectionService = new
-            MockMetricsCollectionService();
-          bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
-          bind(MockMetricsCollectionService.class).toInstance(metricsCollectionService);
-
           bind(StreamConsumerStateStoreFactory.class)
             .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
-          bind(StreamAdmin.class).to(LevelDBStreamFileAdmin.class).in(Singleton.class);
+          bind(StreamAdmin.class).to(FileStreamAdmin.class).in(Singleton.class);
           bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
           bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
         }
       })
     );
 
-    gateway = injector.getInstance(Gateway.class);
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
@@ -191,17 +185,21 @@ public abstract class GatewayTestBase {
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    metrics = injector.getInstance(MetricsQueryService.class);
-    streamHttpService = injector.getInstance(StreamHttpService.class);
     appFabricServer.startAndWait();
-    metrics.startAndWait();
-    streamHttpService.startAndWait();
-    gateway.startAndWait();
+    metricsQueryService = injector.getInstance(MetricsQueryService.class);
+    metricsQueryService.startAndWait();
+    metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    metricsCollectionService.startAndWait();
+    notificationService = injector.getInstance(NotificationService.class);
+    notificationService.startAndWait();
+    streamService = injector.getInstance(StreamService.class);
+    streamService.startAndWait();
+
+    namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
+    namespaceAdmin.createNamespace(TEST_NAMESPACE_META1);
+    namespaceAdmin.createNamespace(TEST_NAMESPACE_META2);
 
     // Restart handlers to check if they are resilient across restarts.
-    gateway.stopAndWait();
-    gateway = injector.getInstance(Gateway.class);
-    gateway.startAndWait();
     router = injector.getInstance(NettyRouter.class);
     router.startAndWait();
     Map<String, Integer> serviceMap = Maps.newHashMap();
@@ -213,11 +211,15 @@ public abstract class GatewayTestBase {
     return injector;
   }
 
-  public static void stopGateway(CConfiguration conf) {
-    gateway.stopAndWait();
+  public static void stopGateway(CConfiguration conf) throws Exception {
+    namespaceAdmin.deleteNamespace(Id.Namespace.from(TEST_NAMESPACE1));
+    namespaceAdmin.deleteNamespace(Id.Namespace.from(TEST_NAMESPACE2));
+    namespaceAdmin.deleteNamespace(Constants.DEFAULT_NAMESPACE_ID);
+    streamService.stopAndWait();
+    notificationService.stopAndWait();
     appFabricServer.stopAndWait();
-    metrics.stopAndWait();
-    streamHttpService.stopAndWait();
+    metricsCollectionService.stopAndWait();
+    metricsQueryService.stopAndWait();
     router.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
@@ -241,12 +243,12 @@ public abstract class GatewayTestBase {
     return new URI("http://" + hostname + ":" + port + path);
   }
 
-  protected static void waitState(String runnableType, String appId, String runnableId, String state) throws Exception {
+  protected static void waitState(String programType, String appId, String programId, String state) throws Exception {
     int trials = 0;
     // it may take a while for workflow/mr to start...
     while (trials++ < 20) {
-      HttpResponse response = GatewayFastTestsSuite.doGet(String.format("/v2/apps/%s/%s/%s/status",
-                                                                        appId, runnableType, runnableId));
+      HttpResponse response = GatewayFastTestsSuite.doGet(String.format("/v3/namespaces/default/apps/%s/%s/%s/status",
+                                                                        appId, programType, programId));
       JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
       if (status != null && status.has("status") && state.equals(status.get("status").getAsString())) {
         break;

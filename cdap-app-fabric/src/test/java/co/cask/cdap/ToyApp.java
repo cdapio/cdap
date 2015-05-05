@@ -105,7 +105,7 @@ public class ToyApp extends AbstractApplication {
 
     @ProcessInput
     public void process(StreamEvent event) {
-      KeyValueTable table = getContext().getDataSet("data2");
+      KeyValueTable table = getContext().getDataset("data2");
       out.emit("out");
       out1.emit(2.3f);
     }

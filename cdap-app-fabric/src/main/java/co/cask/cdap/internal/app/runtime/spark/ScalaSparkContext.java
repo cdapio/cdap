@@ -17,10 +17,15 @@
 package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.data.batch.BatchReadable;
+import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.stream.StreamEventDecoder;
+import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetInputFormat;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.spark.SparkContext;
 import org.apache.spark.rdd.NewHadoopRDD;
 import org.apache.spark.rdd.PairRDDFunctions;
@@ -29,8 +34,7 @@ import scala.Tuple2;
 import scala.reflect.ClassTag;
 import scala.reflect.ClassTag$;
 
-import java.net.URL;
-
+import java.io.IOException;
 
 /**
  * A concrete implementation of {@link AbstractSparkContext} which is used if the user's spark job is written in Scala.
@@ -39,8 +43,8 @@ class ScalaSparkContext extends AbstractSparkContext {
 
   private final SparkContext originalSparkContext;
 
-  public ScalaSparkContext() {
-    super();
+  public ScalaSparkContext(BasicSparkContext basicSparkContext) {
+    super(basicSparkContext);
     this.originalSparkContext = new SparkContext(getSparkConf());
     originalSparkContext.addSparkListener(new SparkProgramListener());
   }
@@ -75,6 +79,33 @@ class ScalaSparkContext extends AbstractSparkContext {
     writeToDatasetHelper(rdd, datasetName, kClass, vClass);
   }
 
+  /**
+   * Gets a {@link Stream} as a {@link NewHadoopRDD}
+   *
+   * @param streamName  the name of the {@link Stream} to be read as an RDD
+   * @param vClass      the value class
+   * @param startTime   the starting time of the stream to be read
+   * @param endTime     the ending time of the streams to be read
+   * @param decoderType the decoder to use while reading streams
+   * @return the RDD created from {@link Stream}
+   */
+  @Override
+  public <T> T doReadFromStream(String streamName, Class<?> vClass, long startTime, long endTime,
+                                Class<? extends StreamEventDecoder> decoderType) {
+      Configuration hConf;
+      try {
+        if (decoderType == null) {
+          hConf = setStreamInputDataset(new StreamBatchReadable(streamName, startTime, endTime), vClass);
+        } else {
+          hConf = setStreamInputDataset(new StreamBatchReadable(streamName, startTime, endTime, decoderType), vClass);
+        }
+      } catch (IOException e) {
+        throw new RuntimeException("Failed to set input to specified stream: " + streamName);
+      }
+      return (T) originalSparkContext.newAPIHadoopFile(streamName, StreamInputFormat.class, LongWritable.class, vClass,
+                                                       hConf);
+  }
+
   private <T, K, V> void writeToDatasetHelper(T rdd, String datasetName, Class<K> kClass, Class<V> vClass) {
     Configuration hConf = setOutputDataset(datasetName);
     ClassTag<K> kClassTag = ClassTag$.MODULE$.apply(kClass);
@@ -92,15 +123,5 @@ class ScalaSparkContext extends AbstractSparkContext {
   @Override
   public <T> T getOriginalSparkContext() {
     return (T) originalSparkContext;
-  }
-
-  @Override
-  public URL getServiceURL(String applicationId, String serviceId) {
-    throw new UnsupportedOperationException("Does not support service discovery");
-  }
-
-  @Override
-  public URL getServiceURL(String serviceId) {
-    throw new UnsupportedOperationException("Does not support service discovery");
   }
 }

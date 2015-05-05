@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,17 +20,22 @@ import co.cask.cdap.ToyApp;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.jar.JarFinder;
+import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.Specifications;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.pipeline.StageContext;
+import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.test.internal.DefaultId;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * Tests the program generation stage of the deploy pipeline.
@@ -38,17 +43,27 @@ import org.junit.Test;
 public class ProgramGenerationStageTest {
   private static CConfiguration configuration = CConfiguration.create();
 
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   @Test
   public void testProgramGenerationForToyApp() throws Exception {
-    configuration.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
-    LocationFactory lf = new LocalLocationFactory();
-    Location appArchive = lf.create(JarFinder.getJar(ToyApp.class));
+    configuration.set(Constants.AppFabric.OUTPUT_DIR, "programs");
+    LocationFactory lf = new LocalLocationFactory(TEMP_FOLDER.newFolder());
+    // have to do this since we are not going through the route of create namespace -> deploy application
+    // in real scenarios, the namespace directory would already be created
+    Location namespaceLocation = lf.create(DefaultId.APPLICATION.getNamespaceId());
+    Locations.mkdirsIfNotExists(namespaceLocation);
+    LocationFactory jarLf = new LocalLocationFactory(TEMP_FOLDER.newFolder());
+    Location appArchive = AppJarHelper.createDeploymentJar(jarLf, ToyApp.class);
     ApplicationSpecification appSpec = Specifications.from(new ToyApp());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
-    ProgramGenerationStage pgmStage = new ProgramGenerationStage(configuration, lf);
+    NamespacedLocationFactory namespacedLocationFactory = new DefaultNamespacedLocationFactory(configuration, lf);
+    ProgramGenerationStage pgmStage = new ProgramGenerationStage(configuration, namespacedLocationFactory);
     pgmStage.process(new StageContext(Object.class));  // Can do better here - fixed right now to run the test.
-    pgmStage.process(new ApplicationSpecLocation(DefaultId.APPLICATION, newSpec, appArchive));
+    pgmStage.process(new ApplicationDeployable(DefaultId.APPLICATION, newSpec, null,
+                                               ApplicationDeployScope.USER, appArchive));
     Assert.assertTrue(true);
   }
 

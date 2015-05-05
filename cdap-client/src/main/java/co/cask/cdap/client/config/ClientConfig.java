@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,165 +16,320 @@
 
 package co.cask.cdap.client.config;
 
-import co.cask.cdap.common.http.HttpRequestConfig;
+import co.cask.cdap.client.exception.DisconnectedException;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.authentication.client.AccessToken;
+import co.cask.common.http.HttpRequestConfig;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
+import javax.annotation.Nullable;
 
 /**
  * Configuration for the Java client API
  */
 public class ClientConfig {
 
-  private static final HttpRequestConfig DEFAULT_UPLOAD_CONFIG = new HttpRequestConfig(0, 0);
-  private static final HttpRequestConfig DEFAULT_CONFIG = new HttpRequestConfig(15000, 15000);
+  private static final boolean DEFAULT_VERIFY_SSL_CERTIFICATE = true;
 
-  private static final boolean DEFAULT_IS_SSL_ENABLED = false;
-  private static final String DEFAULT_VERSION = "v2";
-  private static final String HTTP = "http";
-  private static final String HTTPS = "https";
-  private static final int DEFAULT_PORT = 10000;
+  private static final int DEFAULT_UPLOAD_READ_TIMEOUT = 15000;
+  private static final int DEFAULT_UPLOAD_CONNECT_TIMEOUT = 15000;
+  private static final int DEFAULT_SERVICE_UNAVAILABLE_RETRY_LIMIT = 50;
 
-  private final HttpRequestConfig defaultConfig;
-  private final HttpRequestConfig uploadConfig;
+  private static final int DEFAULT_READ_TIMEOUT = 15000;
+  private static final int DEFAULT_CONNECT_TIMEOUT = 15000;
 
-  private String protocol;
-  private URI baseURI;
-  private String hostname;
-  private int port;
-  private AccessToken accessToken;
+  private static final String DEFAULT_VERSION = Constants.Gateway.API_VERSION_3_TOKEN;
 
-  /**
-   * @param hostname Hostname of the CDAP instance (e.g. example.com)
-   * @param port Port of the CDAP server (e.g. 10000)
-   * @param defaultConfig {@link HttpRequestConfig} to use by default
-   * @param uploadConfig {@link HttpRequestConfig} to use when uploading a file
-   */
-  public ClientConfig(String hostname, int port, HttpRequestConfig defaultConfig, HttpRequestConfig uploadConfig,
-                      AccessToken accessToken) {
-    this(hostname, port, defaultConfig, uploadConfig, DEFAULT_IS_SSL_ENABLED, accessToken);
-  }
+  @Nullable
+  private ConnectionConfig connectionConfig;
+  private boolean verifySSLCert;
 
-  /**
-   * @param hostname hostname of the CDAP instance (e.g. example.com)
-   * @param port port of the CDAP server (e.g. 10000)
-   * @param defaultConfig {@link HttpRequestConfig} to use by default
-   * @param uploadConfig {@link HttpRequestConfig} to use when uploading a file
-   * @param isSslEnabled true, if SSL is enabled in the gateway server
-   * @param accessToken access token to use when executing requests
-   */
-  public ClientConfig(String hostname, int port, HttpRequestConfig defaultConfig, HttpRequestConfig uploadConfig,
-                      boolean isSslEnabled, AccessToken accessToken) {
-    this.defaultConfig = defaultConfig;
-    this.uploadConfig = uploadConfig;
-    this.hostname = hostname;
-    this.port = port;
-    this.protocol = isSslEnabled ? HTTPS : HTTP;
+  private int defaultReadTimeout;
+  private int defaultConnectTimeout;
+  private int uploadReadTimeout;
+  private int uploadConnectTimeout;
+
+  private int unavailableRetryLimit;
+  private String apiVersion;
+  private Supplier<AccessToken> accessToken;
+
+  private ClientConfig(@Nullable ConnectionConfig connectionConfig,
+                       boolean verifySSLCert, int unavailableRetryLimit,
+                       String apiVersion, Supplier<AccessToken> accessToken,
+                       int defaultReadTimeout, int defaultConnectTimeout,
+                       int uploadReadTimeout, int uploadConnectTimeout) {
+    this.connectionConfig = connectionConfig;
+    this.verifySSLCert = verifySSLCert;
+    this.apiVersion = apiVersion;
+    this.unavailableRetryLimit = unavailableRetryLimit;
     this.accessToken = accessToken;
-    this.baseURI = URI.create(String.format("%s://%s:%d", protocol, hostname, port));
+    this.defaultReadTimeout = defaultReadTimeout;
+    this.defaultConnectTimeout = defaultConnectTimeout;
+    this.uploadReadTimeout = uploadReadTimeout;
+    this.uploadConnectTimeout = uploadConnectTimeout;
   }
 
-  /**
-   * @param uri URI of the CDAP instance (e.g. http://example.com:10000)
-   * @param accessToken the authenticationClient to set
-   */
-  public ClientConfig(URI uri, AccessToken accessToken) {
-    this(uri.getHost(), uri.getPort(), DEFAULT_CONFIG, DEFAULT_UPLOAD_CONFIG,
-         "https".equals(uri.getScheme()), accessToken);
+  public static ClientConfig getDefault() {
+    return ClientConfig.builder().build();
   }
 
-  /**
-   * @param hostname Hostname of the CDAP instance (i.e. example.com)
-   * @param port Port of the CDAP server (e.g. 10000)
-   */
-  public ClientConfig(String hostname, int port, AccessToken accessToken) {
-    this(hostname, port, DEFAULT_CONFIG, DEFAULT_UPLOAD_CONFIG, accessToken);
-  }
-
-  /**
-   * @param hostname Hostname of the CDAP instance (e.g. example.com)
-   */
-  public ClientConfig(String hostname, AccessToken accessToken) {
-    this(hostname, DEFAULT_PORT, DEFAULT_CONFIG, DEFAULT_UPLOAD_CONFIG, accessToken);
+  private URL resolveURL(String apiVersion, String path) throws DisconnectedException, MalformedURLException {
+    return getConnectionConfig().resolveURI(apiVersion, path).toURL();
   }
 
   /**
    * Resolves a path against the target CDAP server
+   *
    * @param path Path to the HTTP endpoint. For example, "apps" would result
    *             in a URL like "http://example.com:10000/v2/apps".
    * @return URL of the resolved path
+   */
+  public URL resolveURL(String path) throws DisconnectedException, MalformedURLException {
+    return resolveURL(apiVersion, path);
+  }
+
+  public URL resolveURL(String format, Object... args) throws MalformedURLException {
+    return resolveURL(apiVersion, String.format(format, args));
+  }
+
+  /**
+   * Resolves a path against the target CDAP server
+   *
+   * @param path Path to the HTTP endpoint. For example, "apps" would result
+   *             in a URL like "http://example.com:10000/v2/apps".
+   * @return URL of the resolved path
+   */
+  public URL resolveURLV3(String path) throws MalformedURLException {
+    return resolveURL(Constants.Gateway.API_VERSION_3_TOKEN, path);
+  }
+
+  /**
+   * Resolves a path aginst the CDAP server, without applying an API version. For example, /ping
+   */
+  public URL resolveURLNoVersion(String path) throws MalformedURLException {
+    return getConnectionConfig().resolveURI(path).toURL();
+  }
+
+  /**
+   * Resolves a path against the target CDAP server with the provided namespace, using V3 APIs
+   *
+   * @param path Path to the HTTP endpoint. For example, "apps" would result
+   *             in a URL like "http://example.com:10000/v3/&lt;namespace&gt;/apps".
+   * @return URL of the resolved path
    * @throws MalformedURLException
    */
-  public URL resolveURL(String path) throws MalformedURLException {
-    return baseURI.resolve("/" + DEFAULT_VERSION + "/" + path).toURL();
+  public URL resolveNamespacedURLV3(String path) throws MalformedURLException {
+    return getConnectionConfig().resolveNamespacedURI(Constants.Gateway.API_VERSION_3_TOKEN, path).toURL();
   }
 
-  /**
-   * @return {@link HttpRequestConfig} to use by default
-   */
-  public HttpRequestConfig getDefaultConfig() {
-    return defaultConfig;
+  public HttpRequestConfig getDefaultRequestConfig() {
+    if (connectionConfig == null) {
+      throw new DisconnectedException();
+    }
+    return new HttpRequestConfig(defaultConnectTimeout, defaultReadTimeout, verifySSLCert);
   }
 
-  /**
-   * @return {@link HttpRequestConfig} to use when uploading a file
-   */
-  public HttpRequestConfig getUploadConfig() {
-    return uploadConfig;
+  public HttpRequestConfig getUploadRequestConfig() {
+    if (connectionConfig == null) {
+      throw new DisconnectedException();
+    }
+    return new HttpRequestConfig(uploadConnectTimeout, uploadReadTimeout, verifySSLCert);
   }
 
-  /**
-   * @return hostname of the target CDAP instance
-   */
-  public String getHostname() {
-    return hostname;
+  public int getDefaultReadTimeout() {
+    return defaultReadTimeout;
   }
 
-  /**
-   * @return port of the target CDAP instance
-   */
-  public int getPort() {
-    return port;
+  public int getDefaultConnectTimeout() {
+    return defaultConnectTimeout;
   }
 
-  /**
-   * @param hostname Hostname of the CDAP server (i.e. example.com)
-   * @param port Port of the CDAP server (i.e. 10000)
-   */
-  public void setHostnameAndPort(String hostname, int port, boolean isSslEnabled) {
-    this.hostname = hostname;
-    this.port = port;
-    this.protocol = isSslEnabled ? HTTPS : HTTP;
-    this.baseURI = URI.create(String.format("%s://%s:%d", protocol, hostname, port));
+  public int getUploadReadTimeout() {
+    return uploadReadTimeout;
   }
 
-  /**
-   * @return the base URI of the target CDAP instance
-   */
-  public URI getBaseURI() {
-    return baseURI;
+  public int getUploadConnectTimeout() {
+    return uploadConnectTimeout;
   }
 
-  /**
-   * @return the accessToken
-   */
+  public void setConnectionConfig(@Nullable ConnectionConfig connectionConfig) {
+    this.connectionConfig = connectionConfig;
+  }
+
+  public ConnectionConfig getConnectionConfig() {
+    if (connectionConfig == null) {
+      throw new DisconnectedException();
+    }
+    return connectionConfig;
+  }
+
+  public boolean isVerifySSLCert() {
+    return verifySSLCert;
+  }
+
+  public void setVerifySSLCert(boolean verifySSLCert) {
+    this.verifySSLCert = verifySSLCert;
+  }
+
+  public void setDefaultReadTimeout(int defaultReadTimeout) {
+    this.defaultReadTimeout = defaultReadTimeout;
+  }
+
+  public void setDefaultConnectTimeout(int defaultConnectTimeout) {
+    this.defaultConnectTimeout = defaultConnectTimeout;
+  }
+
+  public void setUploadReadTimeout(int uploadReadTimeout) {
+    this.uploadReadTimeout = uploadReadTimeout;
+  }
+
+  public void setUploadConnectTimeout(int uploadConnectTimeout) {
+    this.uploadConnectTimeout = uploadConnectTimeout;
+  }
+
+  public void setUnavailableRetryLimit(int unavailableRetryLimit) {
+    this.unavailableRetryLimit = unavailableRetryLimit;
+  }
+
+  public Id.Namespace getNamespace() {
+    return this.connectionConfig.getNamespace();
+  }
+
+  public void setNamespace(Id.Namespace namespace) {
+    this.connectionConfig = ConnectionConfig.builder(connectionConfig).setNamespace(namespace).build();
+  }
+
+  public String getApiVersion() {
+    return apiVersion;
+  }
+
+  public int getUnavailableRetryLimit() {
+    return unavailableRetryLimit;
+  }
+
+  public void setApiVersion(String apiVersion) {
+    this.apiVersion = apiVersion;
+  }
+
+  public void setAllTimeouts(int timeout) {
+    this.defaultConnectTimeout = timeout;
+    this.defaultReadTimeout = timeout;
+    this.uploadConnectTimeout = timeout;
+    this.uploadReadTimeout = timeout;
+  }
+
+  @Nullable
   public AccessToken getAccessToken() {
+    return accessToken.get();
+  }
+
+  public Supplier<AccessToken> getAccessTokenSupplier() {
     return accessToken;
   }
 
-  /**
-   * @param accessToken the access token to set
-   */
-  public void setAccessToken(AccessToken accessToken) {
+  public void setAccessToken(Supplier<AccessToken> accessToken) {
     this.accessToken = accessToken;
   }
 
-  /**
-   * @param protocol the protocol to set
-   */
-  public void setProtocol(String protocol) {
-    this.protocol = protocol;
+  public void setAccessToken(AccessToken accessToken) {
+    this.accessToken = Suppliers.ofInstance(accessToken);
   }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  /**
+   * Builder for {@link ClientConfig}.
+   */
+  public static final class Builder {
+
+    private ConnectionConfig connectionConfig = ConnectionConfig.DEFAULT;
+    private String apiVersion = DEFAULT_VERSION;
+    private Supplier<AccessToken> accessToken = Suppliers.ofInstance(null);
+    private boolean verifySSLCert = DEFAULT_VERIFY_SSL_CERTIFICATE;
+
+    private int uploadReadTimeout = DEFAULT_UPLOAD_READ_TIMEOUT;
+    private int uploadConnectTimeout = DEFAULT_UPLOAD_CONNECT_TIMEOUT;
+    private int defaultReadTimeout = DEFAULT_READ_TIMEOUT;
+    private int defaultConnectTimeout = DEFAULT_CONNECT_TIMEOUT;
+
+    private int unavailableRetryLimit = DEFAULT_SERVICE_UNAVAILABLE_RETRY_LIMIT;
+
+    public Builder() { }
+
+    public Builder(ClientConfig clientConfig) {
+      this.connectionConfig = clientConfig.connectionConfig;
+      this.verifySSLCert = clientConfig.verifySSLCert;
+      this.apiVersion = clientConfig.apiVersion;
+      this.accessToken = clientConfig.accessToken;
+      this.uploadReadTimeout = clientConfig.uploadReadTimeout;
+      this.uploadConnectTimeout = clientConfig.uploadConnectTimeout;
+      this.defaultReadTimeout = clientConfig.defaultReadTimeout;
+      this.defaultConnectTimeout = clientConfig.defaultConnectTimeout;
+      this.unavailableRetryLimit = clientConfig.unavailableRetryLimit;
+    }
+
+    public Builder setConnectionConfig(ConnectionConfig connectionConfig) {
+      this.connectionConfig = connectionConfig;
+      return this;
+    }
+
+    public Builder setVerifySSLCert(boolean verifySSLCert) {
+      this.verifySSLCert = verifySSLCert;
+      return this;
+    }
+
+    public Builder setUploadReadTimeout(int uploadReadTimeout) {
+      this.uploadReadTimeout = uploadReadTimeout;
+      return this;
+    }
+
+    public Builder setUploadConnectTimeout(int uploadConnectTimeout) {
+      this.uploadConnectTimeout = uploadConnectTimeout;
+      return this;
+    }
+
+    public Builder setDefaultReadTimeout(int defaultReadTimeout) {
+      this.defaultReadTimeout = defaultReadTimeout;
+      return this;
+    }
+
+    public Builder setDefaultConnectTimeout(int defaultConnectTimeout) {
+      this.defaultConnectTimeout = defaultConnectTimeout;
+      return this;
+    }
+
+    public Builder setAccessToken(Supplier<AccessToken> accessToken) {
+      this.accessToken = accessToken;
+      return this;
+    }
+
+    public Builder setAccessToken(AccessToken accessToken) {
+      this.accessToken = Suppliers.ofInstance(accessToken);
+      return this;
+    }
+
+    public Builder setApiVersion(String apiVersion) {
+      this.apiVersion = apiVersion;
+      return this;
+    }
+
+    public Builder setUnavailableRetryLimit(int retry) {
+      this.unavailableRetryLimit = retry;
+      return this;
+    }
+
+    public ClientConfig build() {
+      return new ClientConfig(connectionConfig, verifySSLCert,
+                              unavailableRetryLimit, apiVersion, accessToken,
+                              defaultConnectTimeout, defaultReadTimeout,
+                              uploadConnectTimeout, uploadReadTimeout);
+    }
+  }
+
 }

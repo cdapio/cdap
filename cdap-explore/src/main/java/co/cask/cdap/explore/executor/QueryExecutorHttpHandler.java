@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,44 +17,26 @@
 package co.cask.cdap.explore.executor;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
-import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
-import co.cask.http.AbstractHttpHandler;
+import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
-import com.google.common.base.Predicate;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.primitives.Longs;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
+import com.google.common.io.Closeables;
 import com.google.inject.Inject;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.lang.reflect.Type;
 import java.sql.SQLException;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -62,16 +44,11 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * Provides REST endpoints for {@link co.cask.cdap.explore.service.ExploreService} operations.
+ *
  */
-@Path(Constants.Gateway.GATEWAY_VERSION)
-public class QueryExecutorHttpHandler extends AbstractHttpHandler {
+@Path(Constants.Gateway.API_VERSION_3)
+public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(QueryExecutorHttpHandler.class);
-  private static final Gson GSON = new Gson();
-  private static final int DOWNLOAD_FETCH_CHUNK_SIZE = 1000;
-
-  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-
   private final ExploreService exploreService;
 
   @Inject
@@ -79,31 +56,9 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     this.exploreService = exploreService;
   }
 
-  @POST
-  @Path("data/explore/queries")
-  public void query(HttpRequest request, HttpResponder responder) {
-    try {
-      Map<String, String> args = decodeArguments(request);
-      String query = args.get("query");
-      LOG.trace("Received query: {}", query);
-      responder.sendJson(HttpResponseStatus.OK, exploreService.execute(query));
-    } catch (IllegalArgumentException e) {
-      LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (SQLException e) {
-      LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, String.format("[SQLState %s] %s",
-                                                                        e.getSQLState(), e.getMessage()));
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
   @DELETE
   @Path("data/explore/queries/{id}")
-  public void closeQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                         @PathParam("id") final String id) {
+  public void closeQuery(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
     try {
       QueryHandle handle = QueryHandle.fromId(id);
       if (!handle.equals(QueryHandle.NO_OP)) {
@@ -112,7 +67,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
@@ -123,8 +78,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
 
   @GET
   @Path("data/explore/queries/{id}/status")
-  public void getQueryStatus(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                             @PathParam("id") final String id) {
+  public void getQueryStatus(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
     try {
       QueryHandle handle = QueryHandle.fromId(id);
       QueryStatus status;
@@ -136,11 +90,11 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, status);
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (SQLException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
@@ -151,8 +105,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
 
   @GET
   @Path("data/explore/queries/{id}/schema")
-  public void getQueryResultsSchema(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                                    @PathParam("id") final String id) {
+  public void getQueryResultsSchema(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
     try {
       QueryHandle handle = QueryHandle.fromId(id);
       List<ColumnDesc> schema;
@@ -164,11 +117,11 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, schema);
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (SQLException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
@@ -179,7 +132,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("data/explore/queries/{id}/next")
-  public void getQueryNextResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
+  public void getQueryNextResults(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     try {
       QueryHandle handle = QueryHandle.fromId(id);
@@ -194,11 +147,11 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, results);
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (SQLException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (Throwable e) {
@@ -207,30 +160,9 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  @GET
-  @Path("/data/explore/queries")
-  public void getQueryLiveHandles(HttpRequest request, HttpResponder responder) {
-    try {
-      Map<String, List<String>> args = new QueryStringDecoder(request.getUri()).getParameters();
-
-      int limit = args.containsKey("limit") ? Integer.parseInt(args.get("limit").get(0)) : 50;
-      long offset = args.containsKey("offset") ? Long.parseLong(args.get("offset").get(0)) : Long.MAX_VALUE;
-      String cursor = args.containsKey("cursor") ? args.get("cursor").get(0).toLowerCase() : "next";
-
-      boolean isForward = "next".equals(cursor) ? true : false;
-
-      List<QueryInfo> queries = exploreService.getQueries();
-      // return the queries by after filtering (> offset) and limiting number of queries
-      responder.sendJson(HttpResponseStatus.OK, filterQueries(queries, offset, isForward, limit));
-    } catch (Exception e) {
-      LOG.error("Got exception:", e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error");
-    }
-  }
-
   @POST
-  @Path("/data/explore/queries/{id}/preview")
-  public void getQueryResultPreview(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
+  @Path("data/explore/queries/{id}/preview")
+  public void getQueryResultPreview(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     try {
       QueryHandle handle = QueryHandle.fromId(id);
@@ -243,11 +175,11 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, results);
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (SQLException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
       if (e.isInactive()) {
         responder.sendString(HttpResponseStatus.CONFLICT, "Preview is unavailable for inactive queries.");
@@ -261,14 +193,14 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/data/explore/queries/{id}/download")
+  @Path("data/explore/queries/{id}/download")
   public void downloadQueryResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     boolean responseStarted = false;
     try {
       QueryHandle handle = QueryHandle.fromId(id);
       if (handle.equals(QueryHandle.NO_OP) ||
-          !exploreService.getStatus(handle).getStatus().equals(QueryStatus.OpStatus.FINISHED)) {
+        !exploreService.getStatus(handle).getStatus().equals(QueryStatus.OpStatus.FINISHED)) {
         responder.sendStatus(HttpResponseStatus.CONFLICT);
         return;
       }
@@ -283,32 +215,31 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
         results = exploreService.nextResults(handle, DOWNLOAD_FETCH_CHUNK_SIZE);
       }
 
-      try {
-        responder.sendChunkStart(HttpResponseStatus.OK, null);
-        responseStarted = true;
-        while (!results.isEmpty()) {
-          for (QueryResult result : results) {
-            appendCSVRow(sb, result);
-            sb.append('\n');
-          }
-          responder.sendChunk(ChannelBuffers.wrappedBuffer(sb.toString().getBytes("UTF-8")));
-          sb.delete(0, sb.length());
-          results = exploreService.nextResults(handle, DOWNLOAD_FETCH_CHUNK_SIZE);
+      ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK, null);
+      responseStarted = true;
+      while (!results.isEmpty()) {
+        for (QueryResult result : results) {
+          appendCSVRow(sb, result);
+          sb.append('\n');
         }
-      } finally {
-        responder.sendChunkEnd();
+        // If failed to send to client, just propagate the IOException and let netty-http to handle
+        chunkResponder.sendChunk(ChannelBuffers.wrappedBuffer(sb.toString().getBytes("UTF-8")));
+        sb.delete(0, sb.length());
+        results = exploreService.nextResults(handle, DOWNLOAD_FETCH_CHUNK_SIZE);
       }
+      Closeables.closeQuietly(chunkResponder);
+
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
       // We can't send another response if sendChunkStart has been called
       if (!responseStarted) {
-        responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
       }
     } catch (SQLException e) {
       LOG.debug("Got exception:", e);
       if (!responseStarted) {
-        responder.sendError(HttpResponseStatus.BAD_REQUEST, String.format("[SQLState %s] %s",
-                                                                          e.getSQLState(), e.getMessage()));
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format("[SQLState %s] %s",
+                                                                           e.getSQLState(), e.getMessage()));
       }
     } catch (HandleNotFoundException e) {
       if (!responseStarted) {
@@ -324,79 +255,5 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
     }
-  }
-
-  private List<QueryInfo> filterQueries(List<QueryInfo> queries, final long offset,
-                                        final boolean isForward, final int limit) {
-    // Reverse the list if the pagination is in the reverse from the offset until the max limit
-    if (!isForward) {
-     queries =  Lists.reverse(queries);
-    }
-
-    return FluentIterable.from(queries)
-                         .filter(new Predicate<QueryInfo>() {
-                           @Override
-                           public boolean apply(@Nullable QueryInfo queryInfo) {
-                             if (isForward) {
-                               return queryInfo.getTimestamp() < offset;
-                             } else {
-                               return queryInfo.getTimestamp() > offset;
-                             }
-                           }
-                         })
-                         .limit(limit)
-                         .toSortedImmutableList(new Comparator<QueryInfo>() {
-                           @Override
-                           public int compare(QueryInfo first, QueryInfo second) {
-                             //sort descending.
-                             return Longs.compare(second.getTimestamp(), first.getTimestamp());
-                           }
-                         });
-  }
-
-  private Map<String, String> decodeArguments(HttpRequest request) throws IOException {
-    ChannelBuffer content = request.getContent();
-    if (!content.readable()) {
-      return ImmutableMap.of();
-    }
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
-    try {
-      Map<String, String> args = GSON.fromJson(reader, STRING_MAP_TYPE);
-      return args == null ? ImmutableMap.<String, String>of() : args;
-    } catch (JsonSyntaxException e) {
-      LOG.info("Failed to parse runtime arguments on {}", request.getUri(), e);
-      throw e;
-    } finally {
-      reader.close();
-    }
-  }
-
-  private String getCSVHeaders(List<ColumnDesc> schema) throws HandleNotFoundException, SQLException, ExploreException {
-    StringBuffer sb = new StringBuffer();
-    boolean first = true;
-    for (ColumnDesc columnDesc : schema) {
-      if (first) {
-        first = false;
-      } else {
-        sb.append(',');
-      }
-      sb.append(columnDesc.getName());
-    }
-    return sb.toString();
-  }
-
-  private String appendCSVRow(StringBuffer sb, QueryResult result)
-    throws HandleNotFoundException, SQLException, ExploreException {
-    boolean first = true;
-    for (Object o : result.getColumns()) {
-      if (first) {
-        first = false;
-      } else {
-        sb.append(',');
-      }
-      // Using GSON toJson will serialize objects - in particular, strings will be quoted
-      sb.append(GSON.toJson(o));
-    }
-    return sb.toString();
   }
 }

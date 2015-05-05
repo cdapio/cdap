@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <!--
-  Copyright © 2014 Cask Data, Inc.
+  Copyright © 2014-2015 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -92,6 +92,12 @@
     </property>
 
     <property>
+        <name>namespaces.dir</name>
+        <value>namespaces</value>
+        <description>The sub-directory of ${hdfs.namespace} in which namespaces are stored.</description>
+    </property>
+
+    <property>
         <name>local.data.dir</name>
         <value>data</value>
         <description>Data directory for local mode</description>
@@ -108,67 +114,25 @@
         Gateway configuration
     -->
     <property>
-        <name>gateway.bind.address</name>
-        <value>localhost</value>
-        <description>Specifies the hostname on which the Gateway will listen (single node only)</description>
-    </property>
-
-    <property>
-        <name>gateway.connectors</name>
-        <value>stream.flume</value>
-        <description>Specifies the list of Collectors we will use</description>
-    </property>
-
-    <property>
-        <name>gateway.connection.backlog</name>
+        <name>app.connection.backlog</name>
         <value>20000</value>
-        <description>Max connection backlog of gateway</description>
+        <description>Max connection backlog of AppFabricServer</description>
     </property>
 
     <property>
-        <name>gateway.max.cached.stream.events.num</name>
-        <value>10000</value>
-        <description>Max number of stream events cached before flushing</description>
-    </property>
-
-    <property>
-        <name>gateway.max.cached.events.per.stream.num</name>
-        <value>5000</value>
-        <description>Max number of stream events of a single stream cached before flushing</description>
-    </property>
-
-    <property>
-        <name>gateway.max.cached.stream.events.bytes</name>
-        <value>52428800</value>
-        <description>Max size of stream events cached before flushing</description>
-    </property>
-
-    <property>
-        <name>gateway.stream.events.flush.interval.ms</name>
-        <value>150</value>
-        <description>Specifies the interval at which cached stream events get flushed</description>
-    </property>
-
-    <property>
-        <name>gateway.stream.callback.exec.num.threads</name>
-        <value>5</value>
-        <description>Number of threads in stream events callback executor</description>
-    </property>
-
-    <property>
-        <name>gateway.exec.threads</name>
+        <name>app.exec.threads</name>
         <value>20</value>
         <description>Number of netty server executor threads</description>
     </property>
 
     <property>
-        <name>gateway.boss.threads</name>
+        <name>app.boss.threads</name>
         <value>1</value>
         <description>Number of netty server boss threads</description>
     </property>
 
     <property>
-        <name>gateway.worker.threads</name>
+        <name>app.worker.threads</name>
         <value>10</value>
         <description>Number of netty server worker threads</description>
     </property>
@@ -263,9 +227,37 @@
     </property>
 
     <property>
+        <name>stream.container.instance.id</name>
+        <value>0</value>
+        <description>
+            Instance ID for stream service container.
+            The actual value will be set at runtime by the system automatically.
+        </description>
+    </property>
+
+    <property>
+        <name>stream.notification.threshold</name>
+        <value>1024</value>
+        <description>Default size of data, in MB, to be ingested by a Stream before a notification is published</description>
+    </property>
+
+    <property>
+        <name>stream.size.schedule.polling.delay</name>
+        <value>600</value>
+        <description>Delay, in seconds, to poll a stream in a StreamSizeSchedule if no notification is received</description>
+    </property>
+
+    <property>
         <name>stream.file.prefix</name>
         <value>file</value>
         <description>Prefix of file name for Stream file</description>
+    </property>
+
+    <property>
+        <name>stream.instance.file.prefix</name>
+        <value>${stream.file.prefix}.${stream.container.instance.id}</value>
+        <description>Prefix of file name for Stream file per writer instance.</description>
+        <final>true</final>
     </property>
 
     <property>
@@ -276,7 +268,7 @@
 
     <property>
       <name>stream.bind.address</name>
-      <value>127.0.0.1</value>
+      <value>0.0.0.0</value>
       <description>Default inet address for binding Stream http service</description>
     </property>
 
@@ -322,6 +314,12 @@
       <description>Queue size per async worker thread for queuing up async write request</description>
     </property>
 
+    <property>
+      <name>stream.batch.buffer.threshold</name>
+      <value>1048576</value>
+      <description>Bytes retained in-memory before writing to a new stream file</description>
+    </property>
+
     <!--
         Data Fabric Configuration
     -->
@@ -352,7 +350,7 @@
 
     <property>
         <name>data.tx.bind.address</name>
-        <value>127.0.0.1</value>
+        <value>0.0.0.0</value>
         <description>The inet address for the transaction
             service</description>
     </property>
@@ -408,12 +406,6 @@
     </property>
 
     <property>
-        <name>data.queue.table.name</name>
-        <value>queues</value>
-        <description>Specifies the name of the table for queues</description>
-    </property>
-
-    <property>
         <name>data.tx.snapshot.codecs</name>
         <value>
           co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV1,
@@ -438,7 +430,7 @@
 
     <property>
         <name>data.tx.snapshot.interval</name>
-        <value>300</value>
+        <value>60</value>
         <description>Frequency, in seconds, at which snapshots of transaction
             state should be written</description>
     </property>
@@ -455,6 +447,15 @@
         <value>true</value>
         <description>Whether or not the TransactionDataJanitor coprocessor
         should be enabled on tables; should normally be true</description>
+    </property>
+
+    <property>
+        <name>data.tx.timeout</name>
+        <value>30</value>
+        <description>
+            The timeout for a transaction, in seconds.
+            If the transaction is not finished in that time, it is marked invalid.
+        </description>
     </property>
 
     <property>
@@ -477,9 +478,30 @@
         <value>${master.service.memory.mb}</value>
     </property>
 
+    <property>
+        <name>dataset.data.dir</name>
+        <value>data</value>
+        <description>Base directory for user data on the filesystem</description>
+    </property>
+
     <!--
         Queue-related Configuration
     -->
+    <property>
+        <name>data.queue.table.name</name>
+        <value>queues</value>
+        <description>Specifies the name of the table for queues</description>
+    </property>
+
+    <property>
+        <name>data.queue.dequeue.tx.percent</name>
+        <value>30</value>
+        <description>
+          Percentage of transaction time allowed to spend in dequeue. It should be an integer
+          between 1-100.
+        </description>
+    </property>
+
     <property>
         <name>data.queue.config.update.interval</name>
         <value>5</value>
@@ -488,12 +510,18 @@
         </description>
     </property>
 
+    <property>
+        <name>data.queue.table.presplits</name>
+        <value>16</value>
+        <description>Number of splits in the queue table.</description>
+    </property>
+
     <!--
         Metadata Service Configuration
     -->
     <property>
         <name>metadata.bind.address</name>
-        <value>127.0.0.1</value>
+        <value>0.0.0.0</value>
         <description>Specifies the server address of metadata
             server</description>
     </property>
@@ -518,7 +546,7 @@
     -->
     <property>
         <name>log.query.bind.address</name>
-        <value>127.0.0.1</value>
+        <value>0.0.0.0</value>
         <description>Specifies the server address of metrics frontend
             server</description>
     </property>
@@ -532,7 +560,7 @@
 
     <property>
         <name>log.collection.bind.address</name>
-        <value>127.0.0.1</value>
+        <value>0.0.0.0</value>
         <description>Specifies the hostname where the collection service runs</description>
     </property>
 
@@ -548,25 +576,24 @@
         <description>Root location for collecting logs</description>
     </property>
 
-    <!--
-        Account Service Configuration
-    -->
+    <!-- Template configuration -->
     <property>
-        <name>account.server.host</name>
-        <value>127.0.0.1</value>
-        <description>Specifies the host for account server</description>
+        <name>app.template.dir</name>
+        <value>/opt/cdap/master/templates</value>
+        <description>Directory where all archives for app templates are stored</description>
     </property>
 
     <property>
-        <name>account.server.port</name>
-        <value>8080</value>
-        <description>Specifies the port for account server</description>
+        <name>app.template.plugin.dir</name>
+        <value>${app.template.dir}/plugins</value>
+        <description>Directory where template plugins are stored</description>
+        <final>true</final>
     </property>
 
     <!-- App Fabric related changes -->
     <property>
         <name>app.bind.address</name>
-        <value>127.0.0.1</value>
+        <value>0.0.0.0</value>
         <description>Host address on which the app fabric server is started</description>
     </property>
 
@@ -590,7 +617,7 @@
 
     <property>
         <name>dataset.service.bind.address</name>
-        <value>127.0.0.1</value>
+        <value>0.0.0.0</value>
         <description>DataSet service hostname</description>
     </property>
 
@@ -616,6 +643,23 @@
         <name>app.program.jvm.opts</name>
         <value>${twill.jvm.gc.opts}</value>
         <description>Java options for all program containers</description>
+    </property>
+
+  <!-- Used for MapReduce Info endpoint -->
+    <property>
+      <name>mapreduce.jobclient.connect.max.retries</name>
+      <value>2</value>
+      <description>Indicates the maximum number of retries JobClient will make to establish
+        a server connection when retrieving job status and history.</description>
+    </property>
+
+    <property>
+        <name>mapreduce.include.custom.format.classes</name>
+        <value>true</value>
+        <description>
+            Indicates to include custom input / output format classes in the job.jar or not. If set to true,
+            custom format classes will be added to the job.jar and available as part of the MR system classpath.
+        </description>
     </property>
 
     <!-- scheduler related changes -->
@@ -685,7 +729,7 @@
     <!-- New Metrics system settings -->
     <property>
         <name>metrics.query.bind.address</name>
-        <value>127.0.0.1</value>
+        <value>0.0.0.0</value>
         <description>Host address where the metrics query server is started</description>
     </property>
 
@@ -699,6 +743,30 @@
         <name>metrics.data.table.retention.resolution.1.seconds</name>
         <value>7200</value>
         <description>Retention resolution 1 sec table in seconds</description>
+    </property>
+
+    <property>
+        <name>metrics.data.table.retention.resolution.60.seconds</name>
+        <value>2592000</value>
+        <description>Retention resolution for 1 minute table (in seconds). Default retention period is 30 days</description>
+    </property>
+
+    <property>
+        <name>metrics.data.table.retention.resolution.3600.seconds</name>
+        <value>2592000</value>
+        <description>Retention resolution 1 hour table (in seconds). Default retention period is 30 days</description>
+    </property>
+
+    <property>
+        <name>metrics.data.table.ts.rollTime.60</name>
+        <value>60</value>
+        <description>Number of columns in a 1 minute time series table</description>
+    </property>
+
+    <property>
+        <name>metrics.data.table.ts.rollTime.3600</name>
+        <value>24</value>
+        <description>Number of columns in 1 hour time series table</description>
     </property>
 
     <property>
@@ -780,7 +848,7 @@
 
     <property>
         <name>metrics.processor.status.bind.address</name>
-        <value>127.0.0.1</value>
+        <value>0.0.0.0</value>
         <description>Default inet address for binding metrics processor http service</description>
     </property>
 
@@ -848,7 +916,7 @@
 
     <property>
         <name>log.saver.status.bind.address</name>
-        <value>127.0.0.1</value>
+        <value>0.0.0.0</value>
         <description>Default inet address for binding logsaver http service</description>
     </property>
 
@@ -903,6 +971,15 @@
         </description>
     </property>
 
+    <property>
+      <name>dataset.unchecked.upgrade</name>
+      <value>false</value>
+      <description>
+        By default, any changes made to existing datasets are not deployed when an app is redeployed.
+        Setting this value to true allows the dataset changes to be deployed upon app redeployment.
+      </description>
+    </property>
+
     <!---
          Web App Settings
      -->
@@ -917,8 +994,18 @@
     </property>
 
     <property>
+        <name>dashboard.ssl.bind.port</name>
+        <value>9443</value>
+    </property>
+
+    <property>
+        <name>dashboard.ssl.disable.cert.check</name>
+        <value>false</value>
+    </property>
+
+    <property>
         <name>router.server.address</name>
-        <value>localhost</value>
+        <value>127.0.0.1</value>
     </property>
 
     <!---
@@ -926,6 +1013,16 @@
      -->
     <property>
         <name>explore.enabled</name>
+        <value>false</value>
+        <description>Whether ad-hoc SQL queries are enabled</description>
+    </property>
+    <property>
+        <name>explore.writes.enabled</name>
+        <value>true</value>
+        <description>Whether writing to a table through ad-hoc SQL queries is enabled</description>
+    </property>
+    <property>
+        <name>explore.start.on.demand</name>
         <value>false</value>
     </property>
     <property>
@@ -960,6 +1057,15 @@
     </property>
 
     <!--
+        Notification System Settings
+    -->
+    <property>
+        <name>notification.transport.system</name>
+        <value>kafka</value>
+        <description>Transport system used by the Notification system - can be kafka/stream</description>
+    </property>
+
+    <!--
         External Authentication Settings
     -->
     <property>
@@ -974,7 +1080,13 @@
 
     <property>
       <name>security.auth.server.address</name>
-      <value>127.0.0.1</value>
+      <value></value>
+      <description>Deprecated. Use security.auth.server.bind.address instead.</description>
+    </property>
+
+    <property>
+      <name>security.auth.server.bind.address</name>
+      <value>0.0.0.0</value>
     </property>
 
     <property>
@@ -1026,7 +1138,7 @@
     <property>
         <name>security.server.extended.token.expiration.ms</name>
         <value>604800000</value>
-        <description>Admin Tools AccessToken expiration time in milliseconds (defaults to 
+        <description>Admin Tools AccessToken expiration time in milliseconds (defaults to
         1 week) (internal)</description>
     </property>
 
@@ -1046,6 +1158,12 @@
   </property>
 
   <property>
+      <name>security.authorization.enabled</name>
+      <value>false</value>
+      <description>If this is set to true, authorization checks will be made</description>
+  </property>
+
+  <property>
     <name>kerberos.auth.enabled</name>
     <value>${security.enabled}</value>
     <description>If true, Kerberos authentication will be enabled</description>
@@ -1056,6 +1174,28 @@
       <value>cdap</value>
       <description>Security realm used for authentication</description>
   </property>
+
+  <!--
+      Security configurations for Kerberos authentication
+  -->
+  <property>
+    <name>cdap.master.kerberos.keytab</name>
+    <value></value>
+    <description>The full path to the Kerberos keytab file containing the CDAP Master's
+    credentials.</description>
+  </property>
+
+  <property>
+    <name>cdap.master.kerberos.principal</name>
+    <value></value>
+    <description>
+      Example: "cdap/_HOST@EXAMPLE.COM".
+      The Kerberos principal name that should be used to login the CDAP Master process.
+      The principal name should be in the form "user/hostname@REALM".  If the hostname portion
+      contains the string "_HOST", it will be substituted with the local hostname.
+    </description>
+  </property>
+
 
   <!-- Configuration for enabling SSL -->
 
@@ -1069,30 +1209,6 @@
   <property>
     <name>security.auth.server.ssl.bind.port</name>
     <value>10010</value>
-  </property>
-
-  <!-- Router configuration-->
-
-  <property>
-    <name>router.server.address</name>
-    <value>localhost</value>
-  </property>
-
-  <!-- Frontend configuration -->
-
-  <property>
-    <name>dashboard.bind.port</name>
-    <value>9999</value>
-  </property>
-
-  <property>
-    <name>dashboard.ssl.bind.port</name>
-    <value>9443</value>
-  </property>
-
-  <property>
-    <name>dashboard.ssl.disable.cert.check</name>
-    <value>false</value>
   </property>
 
 </configuration>

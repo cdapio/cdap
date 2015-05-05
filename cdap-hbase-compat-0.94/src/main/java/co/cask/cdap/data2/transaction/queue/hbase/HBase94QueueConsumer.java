@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.transaction.queue.hbase;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.transaction.queue.ConsumerEntryState;
@@ -37,19 +38,17 @@ import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 final class HBase94QueueConsumer extends HBaseQueueConsumer {
   private final Filter processedStateFilter;
 
-  HBase94QueueConsumer(ConsumerConfig consumerConfig, HTable hTable, QueueName queueName,
-                       HBaseConsumerState consumerState, HBaseConsumerStateStore stateStore) {
-    super(consumerConfig, hTable, queueName, consumerState, stateStore);
-    processedStateFilter = createStateFilter();
+  HBase94QueueConsumer(CConfiguration cConf, HTable hTable, QueueName queueName,
+                       HBaseConsumerState consumerState, HBaseConsumerStateStore stateStore,
+                       HBaseQueueStrategy queueStrategy) {
+    super(cConf, hTable, queueName, consumerState, stateStore, queueStrategy);
+    this.processedStateFilter = createStateFilter();
   }
 
   @Override
   protected Scan createScan(byte[] startRow, byte[] stopRow, int numRows) {
     // Scan the table for queue entries.
     Scan scan = new Scan();
-    // we should roughly divide by number of buckets, but don't want another RPC for the case we are not exactly right
-    int caching = (int) (1.1 * numRows / HBaseQueueAdmin.ROW_KEY_DISTRIBUTION_BUCKETS);
-    scan.setCaching(caching);
     scan.setStartRow(startRow);
     scan.setStopRow(stopRow);
     scan.addColumn(QueueEntryRow.COLUMN_FAMILY, QueueEntryRow.DATA_COLUMN);

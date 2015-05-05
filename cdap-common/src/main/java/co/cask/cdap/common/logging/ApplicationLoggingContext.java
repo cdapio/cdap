@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,17 +19,30 @@ package co.cask.cdap.common.logging;
 /**
  * Application logging context.
  */
-public abstract class ApplicationLoggingContext extends AccountLoggingContext {
+public abstract class ApplicationLoggingContext extends NamespaceLoggingContext {
   public static final String TAG_APPLICATION_ID = ".applicationId";
+  public static final String TAG_ADAPTER_ID = ".adapterId";
+  public static final String TAG_RUNID_ID = ".runId";
+  public static final String TAG_INSTANCE_ID = ".instanceId";
 
   /**
    * Constructs ApplicationLoggingContext.
-   * @param accountId account id
+   * @param namespaceId namespace id
    * @param applicationId application id
+   * @param runId run id of the application
    */
-  public ApplicationLoggingContext(final String accountId, final String applicationId) {
-    super(accountId);
+  public ApplicationLoggingContext(String namespaceId, String applicationId, String runId) {
+    super(namespaceId);
     setSystemTag(TAG_APPLICATION_ID, applicationId);
+    setSystemTag(TAG_RUNID_ID, runId);
+  }
+
+  protected void setAdapterId(String adapterId) {
+    setSystemTag(TAG_ADAPTER_ID, adapterId);
+  }
+
+  protected void setInstanceId(String instanceId) {
+    setSystemTag(TAG_INSTANCE_ID, instanceId);
   }
 
   @Override
@@ -38,7 +51,7 @@ public abstract class ApplicationLoggingContext extends AccountLoggingContext {
   }
 
   @Override
-  public String getLogPathFragment() {
-    return String.format("%s/%s", super.getLogPathFragment(), getSystemTag(TAG_APPLICATION_ID));
+  public String getLogPathFragment(String logBaseDir) {
+    return String.format("%s/%s", super.getLogPathFragment(logBaseDir), getSystemTag(TAG_APPLICATION_ID));
   }
 }

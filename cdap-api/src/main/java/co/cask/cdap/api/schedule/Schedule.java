@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,9 @@
 
 package co.cask.cdap.api.schedule;
 
+
 /**
- * Defines a cron-based schedule for running a program. 
+ * Defines a cron-based schedule for running a program.
  */
 public class Schedule {
 
@@ -25,15 +26,20 @@ public class Schedule {
 
   private final String description;
 
+  // NOTE: the below attribute is left for backwards compatibility
   private final String cronEntry;
 
-  private final Action action;
-
-  public Schedule(String name, String description, String cronEntry, Action action) {
+  @Deprecated
+  public Schedule(String name, String description, String cronEntry) {
     this.name = name;
     this.description = description;
     this.cronEntry = cronEntry;
-    this.action = action;
+  }
+
+  protected Schedule(String name, String description) {
+    this.name = name;
+    this.description = description;
+    this.cronEntry = null;
   }
 
   /**
@@ -52,20 +58,55 @@ public class Schedule {
 
   /**
    * @return Cron expression for the schedule.
+   * @deprecated As of version 2.8.0, do not use this method anymore
    */
+  @Deprecated
   public String getCronEntry() {
     return cronEntry;
   }
 
-  /**
-   * @return Action for the schedule.
-   */
-  public Action getAction() {
-    return action;
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Schedule schedule = (Schedule) o;
+
+    if (cronEntry != null
+          ? !cronEntry.equals(schedule.cronEntry)
+          : schedule.cronEntry != null) {
+      return false;
+    }
+    if (description != null ? !description.equals(schedule.description) :
+         schedule.description != null) {
+      return false;
+    }
+    if (name != null ? !name.equals(schedule.name) : schedule.name != null) {
+      return false;
+    }
+
+    return true;
   }
 
-  /**
-   * Defines the ScheduleAction.
-   */
-  public enum Action { START, STOP };
+  @Override
+  public int hashCode() {
+    int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (description != null ? description.hashCode() : 0);
+    result = 31 * result + (cronEntry != null ? cronEntry.hashCode() : 0);
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder("Schedule{");
+    sb.append("name='").append(name).append('\'');
+    sb.append(", description='").append(description).append('\'');
+    sb.append(", cronEntry='").append(cronEntry).append('\'');
+    sb.append('}');
+    return sb.toString();
+  }
 }

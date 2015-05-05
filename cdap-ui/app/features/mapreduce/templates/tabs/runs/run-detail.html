@@ -1,0 +1,31 @@
+<div class="btn-group pull-right nested-tabs">
+  <button class="btn btn-default"
+      ng-repeat="tab in tabs"
+      ng-click="selectTab(tab)"
+      ng-class="{'active': tab.title == activeTab.title}"
+  >
+    {{ tab.title }}
+  </button>
+</div>
+
+<div class="mapreduce-components">
+  <div class="row run-status">
+    <div class="col-sm-6">
+      <table class="table table-curved table-status">
+        <thead>
+          <th> Status </th>
+          <th> Started </th>
+          <th> Duration </th>
+        </thead>
+        <tbody>
+          <td ng-class="{'txt-failed': info.state === 'FAILED', 'txt-running': info.state === 'RUNNING'}"> {{info.state}} </td>
+          <td> {{info.startTime | amDateFormat: 'MM/DD/YY h:mm:ss a' }} </td>
+          <td ng-if="info.stopTime"> {{ (info.stopTime - info.startTime) | amDurationFormat}} </td>
+          <td ng-if="!info.stopTime"> &mdash; </td>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div ng-include="activeTab.template"></div>

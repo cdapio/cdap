@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,13 +16,14 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeFlow;
-import co.cask.cdap.client.app.FakeProcedure;
+import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.XSlowTests;
-import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,7 +31,8 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
+import java.io.File;
+import java.util.List;
 
 /**
  * Test for {@link ProgramClient}.
@@ -41,14 +43,12 @@ public class ProgramClientTestRun extends ClientTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramClientTestRun.class);
 
   private ApplicationClient appClient;
-  private ProcedureClient procedureClient;
   private ProgramClient programClient;
 
   @Before
   public void setUp() throws Throwable {
     super.setUp();
     appClient = new ApplicationClient(clientConfig);
-    procedureClient = new ProcedureClient(clientConfig);
     programClient = new ProgramClient(clientConfig);
   }
 
@@ -56,63 +56,58 @@ public class ProgramClientTestRun extends ClientTestBase {
   public void testAll() throws Exception {
     appClient.deploy(createAppJarFile(FakeApp.class));
 
-    // start, scale, and stop procedure
-    LOG.info("Fetching procedure list");
-    verifyProgramNames(FakeApp.PROCEDURES, procedureClient.list());
+    try {
+      // start, scale, and stop flow
+      verifyProgramNames(FakeApp.FLOWS, appClient.listPrograms(FakeApp.NAME, ProgramType.FLOW));
 
-    LOG.info("Fetching runtime args");
-    Map<String, String> emptyRuntimeArgs = programClient.getRuntimeArgs(FakeApp.NAME, ProgramType.PROCEDURE,
-                                                                        FakeProcedure.NAME);
-    Assert.assertEquals(0, emptyRuntimeArgs.size());
+      LOG.info("Starting flow");
+      programClient.start(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
+      assertProgramRunning(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
 
-    LOG.info("Setting runtime args");
-    programClient.setRuntimeArgs(FakeApp.NAME, ProgramType.PROCEDURE,
-                                 FakeProcedure.NAME, ImmutableMap.of("a", "b", "c", "d"));
+      LOG.info("Getting flow history");
+      programClient.getAllProgramRuns(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME, 0, Long.MAX_VALUE,
+                                   Integer.MAX_VALUE);
 
-    LOG.info("Fetching runtime args");
-    Map<String, String> runtimeArgs = programClient.getRuntimeArgs(FakeApp.NAME, ProgramType.PROCEDURE,
-                                                                   FakeProcedure.NAME);
-    Assert.assertEquals(2, runtimeArgs.size());
-    Assert.assertEquals("b", runtimeArgs.get("a"));
-    Assert.assertEquals("d", runtimeArgs.get("c"));
+      LOG.info("Scaling flowlet");
+      Assert.assertEquals(1, programClient.getFlowletInstances(FakeApp.NAME, FakeFlow.NAME, FakeFlow.FLOWLET_NAME));
+      programClient.setFlowletInstances(FakeApp.NAME, FakeFlow.NAME, FakeFlow.FLOWLET_NAME, 3);
+      assertFlowletInstances(programClient, FakeApp.NAME, FakeFlow.NAME, FakeFlow.FLOWLET_NAME, 3);
 
-    LOG.info("Starting procedure");
-    programClient.start(FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
-    assertProgramRunning(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
+      LOG.info("Stopping flow");
+      programClient.stop(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
+      assertProgramStopped(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
 
-    LOG.info("Getting live info");
-    programClient.getLiveInfo(FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
+      testWorkflowCommand();
 
-    LOG.info("Getting program logs");
-    programClient.getProgramLogs(FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, 0, Long.MAX_VALUE);
+    } finally {
+      appClient.delete(FakeApp.NAME);
+    }
+  }
 
-    LOG.info("Scaling procedure");
-    Assert.assertEquals(1, programClient.getProcedureInstances(FakeApp.NAME, FakeProcedure.NAME));
-    programClient.setProcedureInstances(FakeApp.NAME, FakeProcedure.NAME, 3);
-    assertProcedureInstances(programClient, FakeApp.NAME, FakeProcedure.NAME, 3);
+  private void testWorkflowCommand() throws Exception {
+    // File is used to synchronized between the test case and the FakeWorkflow
+    File doneFile = new File("/tmp/fakeworkflow.done");
+    if (doneFile.exists()) {
+      doneFile.delete();
+    }
 
-    LOG.info("Stopping procedure");
-    programClient.stop(FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
-    assertProgramStopped(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
+    LOG.info("Starting workflow");
 
-    // start, scale, and stop flow
-    verifyProgramNames(FakeApp.FLOWS, appClient.listPrograms(FakeApp.NAME, ProgramType.FLOW));
+    programClient.start(FakeApp.NAME, ProgramType.WORKFLOW, FakeWorkflow.NAME);
+    assertProgramRunning(programClient, FakeApp.NAME, ProgramType.WORKFLOW, FakeWorkflow.NAME);
+    List<RunRecord> runRecords = programClient.getProgramRuns(FakeApp.NAME, ProgramType.WORKFLOW, FakeWorkflow.NAME,
+                                                              "running", Long.MIN_VALUE, Long.MAX_VALUE, 100);
+    Assert.assertEquals(1, runRecords.size());
+    List<WorkflowActionNode> nodes = programClient.getWorkflowCurrent(FakeApp.NAME, FakeWorkflow.NAME,
+                                                                      runRecords.get(0).getPid());
+    Assert.assertEquals(1, nodes.size());
 
-    LOG.info("Starting flow");
-    programClient.start(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
-    assertProgramRunning(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
+    // Signal the FakeWorkflow that execution can be continued by creating temp file
+    doneFile.createNewFile();
 
-    LOG.info("Getting flow history");
-    programClient.getProgramHistory(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
+    assertProgramStopped(programClient, FakeApp.NAME, ProgramType.WORKFLOW, FakeWorkflow.NAME);
+    LOG.info("Workflow stopped");
 
-    LOG.info("Scaling flowlet");
-    Assert.assertEquals(1, programClient.getFlowletInstances(FakeApp.NAME, FakeFlow.NAME, FakeFlow.FLOWLET_NAME));
-    programClient.setFlowletInstances(FakeApp.NAME, FakeFlow.NAME, FakeFlow.FLOWLET_NAME, 3);
-    assertFlowletInstances(programClient, FakeApp.NAME, FakeFlow.NAME, FakeFlow.FLOWLET_NAME, 3);
-
-    LOG.info("Stopping flow");
-    programClient.stop(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
-    assertProgramStopped(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
-
+    doneFile.delete();
   }
 }

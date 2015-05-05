@@ -1,0 +1,24 @@
+<div class="panel panel-default">
+  <div class="panel-heading">User Profile: {{currentUser.username}} </div>
+  <div class="panel-body">
+    <div ng-hide="reAuthenticated">
+      <div> Please login again to see your access token </div>
+      <div ng-include="'/assets/features/login/login.html'"> </div>
+    </div>
+
+    <table ng-show="reAuthenticated" class="table">
+      <thead>
+        <tr>
+          <th> Token </th>
+          <th> Expiration Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td> {{token}} </td>
+          <td> {{expirationTime | amTimeAgo}} </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

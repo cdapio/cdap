@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,12 +17,12 @@
 package co.cask.cdap.data2.transaction.queue.inmemory;
 
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data2.transaction.queue.NoopQueueConfigurer;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
+import co.cask.cdap.data2.transaction.queue.QueueConfigurer;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import java.net.URI;
-import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -38,61 +38,49 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   }
 
   @Override
-  public boolean exists(String name) throws Exception {
+  public boolean exists(QueueName queueName) throws Exception {
     // no special actions needed to create it
-    return queueService.exists(name);
+    return queueService.exists(queueName);
   }
 
   @Override
-  public void create(String name) throws Exception {
-    queueService.getQueue(QueueName.from(URI.create(name)));
+  public void create(QueueName queueName) throws Exception {
+    queueService.getQueue(queueName);
   }
 
   @Override
-  public void create(String name, @SuppressWarnings("unused") Properties props) throws Exception {
-    create(name);
+  public void create(QueueName queueName, @SuppressWarnings("unused") Properties props) throws Exception {
+    create(queueName);
   }
 
   @Override
-  public void truncate(String name) throws Exception {
-    queueService.truncate(name);
+  public void truncate(QueueName queueName) throws Exception {
+    queueService.truncate(queueName);
   }
 
   @Override
-  public void clearAllForFlow(String app, String flow) throws Exception {
-    queueService.truncateAllWithPrefix(QueueName.prefixForFlow(app, flow));
+  public void clearAllForFlow(String namespaceId, String app, String flow) throws Exception {
+    queueService.truncateAllWithPrefix(QueueName.prefixForFlow(namespaceId, app, flow));
   }
 
   @Override
-  public void drop(String name) throws Exception {
-    queueService.drop(name);
+  public QueueConfigurer getQueueConfigurer(QueueName queueName) {
+    return new NoopQueueConfigurer();
+  }
+
+  // Only used by InMemoryStreadmAdmin
+  void drop(QueueName queueName) throws Exception {
+    queueService.drop(queueName);
   }
 
   @Override
-  public void upgrade(String name, Properties properties) throws Exception {
-    // no-op
+  public void dropAllInNamespace(String namespaceId) throws Exception {
+    queueService.resetQueuesWithPrefix(QueueName.prefixForNamespacedQueue(namespaceId));
   }
 
   @Override
-  public void dropAll() throws Exception {
-    queueService.resetQueues();
-  }
-
-  @Override
-  public void dropAllForFlow(String app, String flow) throws Exception {
-    queueService.resetQueuesWithPrefix(QueueName.prefixForFlow(app, flow));
-  }
-
-  @Override
-  public void configureInstances(QueueName queueName, long groupId, int instances) {
-    // No-op for InMemoryQueueAdmin
-    // Potentially refactor QueueClientFactory to have better way to handle instances and group info.
-  }
-
-  @Override
-  public void configureGroups(QueueName queueName, Map<Long, Integer> groupInfo) {
-    // No-op for InMemoryQueueAdmin
-    // Potentially refactor QueueClientFactory to have better way to handle instances and group info.
+  public void dropAllForFlow(String namespaceId, String app, String flow) throws Exception {
+    queueService.resetQueuesWithPrefix(QueueName.prefixForFlow(namespaceId, app, flow));
   }
 
   @Override
