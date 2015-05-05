@@ -41,6 +41,6 @@ angular.module(PKG.name + '.feature.flows')
           defer.resolve(this.data[flowId]);
         }.bind(this));
       return defer.promise;
-    }
+    };
 
   });

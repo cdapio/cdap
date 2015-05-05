@@ -31,7 +31,7 @@ angular.module(PKG.name + '.commons')
            },
            false
        );
-    }
+    };
   })
 
   .directive('droppable', function() {
@@ -47,7 +47,9 @@ angular.module(PKG.name + '.commons')
             function(e) {
               e.dataTransfer.dropEffect = 'copy';
               this.classList.add('over');
-              if (e.preventDefault) e.preventDefault();
+              if (e.preventDefault) {
+                e.preventDefault();
+              }
               return false;
             },
             false
@@ -79,7 +81,9 @@ angular.module(PKG.name + '.commons')
                 'drop',
                 function(e) {
                     // Stops some browsers from redirecting.
-                    if (e.stopPropagation) e.stopPropagation();
+                    if (e.stopPropagation) {
+                      e.stopPropagation();
+                    }
                     counter = 0;
                     this.classList.remove('over');
                     var id = e.dataTransfer.getData('Id'),
@@ -101,5 +105,5 @@ angular.module(PKG.name + '.commons')
                 false
             );
         }
-    }
+    };
   });

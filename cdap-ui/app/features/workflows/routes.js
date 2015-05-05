@@ -94,5 +94,5 @@ angular.module(PKG.name + '.feature.workflows')
             },
             templateUrl: '/assets/features/workflows/templates/tabs/schedules.html',
             controller: 'WorkflowsSchedulesController'
-          })
+          });
   });

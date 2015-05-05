@@ -66,7 +66,7 @@ angular.module(PKG.name + '.feature.spark')
         case 'failed':
           return $scope.data.schedulerFailedStages * 100 / total;
       }
-    }
+    };
 
     function pollMetrics(runId) {
       var metricsBasePath = '/metrics/query?' +

@@ -2,7 +2,7 @@ angular.module(PKG.name + '.feature.flows')
   .controller('FlowsRunDetailController', function($scope, $state, MyDataSource, $filter) {
     var dataSrc = new MyDataSource($scope),
         filterFilter = $filter('filter'),
-        basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;;
+        basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
     $scope.status = null;
     $scope.duration = null;
     $scope.startTime = null;

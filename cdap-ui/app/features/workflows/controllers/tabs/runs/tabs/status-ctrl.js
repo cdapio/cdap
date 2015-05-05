@@ -69,7 +69,7 @@ angular.module(PKG.name + '.feature.workflows')
         return;
       }
       if ($scope.runs.length) {
-        if (instance.program.programType == 'MAPREDUCE') {
+        if (instance.program.programType === 'MAPREDUCE') {
           $state.go('mapreduce.detail.runs.run', {
             programId: instance.program.programName,
             runid: $scope.runs.selected.properties[instance.nodeId]
@@ -79,9 +79,9 @@ angular.module(PKG.name + '.feature.workflows')
         $alert({
           type: 'info',
           content: 'No runs for the workflow: '+ $state.params.programId +' yet.'
-        })
+        });
       }
-    }
+    };
 
     $scope.stop = function() {
       $alert({

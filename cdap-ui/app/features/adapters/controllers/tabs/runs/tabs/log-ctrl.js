@@ -27,7 +27,7 @@ angular.module(PKG.name + '.feature.adapters')
         }, function(res) {
           $scope.logs = res;
         });
-      })
+      });
 
     $scope.logs = [];
   });

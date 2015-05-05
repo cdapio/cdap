@@ -17,7 +17,7 @@ angular.module(PKG.name + '.feature.flows')
       });
 
     if ($scope.runs.length) {
-      metricFlowletPath = '/metrics/query?metric=system.process.events.processed' +
+      var metricFlowletPath = '/metrics/query?metric=system.process.events.processed' +
                             '&context=ns.' +
                             $state.params.namespace +
                             '.app.' + $state.params.appId +

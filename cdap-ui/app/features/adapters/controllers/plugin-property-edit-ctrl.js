@@ -4,7 +4,7 @@ angular.module(PKG.name + '.feature.adapters')
     // Make a local copy that is a mix of properties from backend + config from nodejs
     $scope.groups = {
       position: []
-    }
+    };
     var missedFieldsGroup = {
       display: '',
       position: [],

@@ -73,7 +73,7 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
       return;
     }
     $state.go('dashboard.user.addwdgt', {tab: $state.params.tab}, {reload: false});
-  }
+  };
 
   $scope.addDashboard = function (title) {
     rDashboardsModel.add({title: title}).then(function() {

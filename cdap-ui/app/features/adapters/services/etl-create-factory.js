@@ -43,8 +43,7 @@ angular.module(PKG.name + '.feature.adapters')
           this.scope.adapterTypes = res || [];
           this.scope.metadata.type = myHelpers.objectQuery(this.scope, 'adapterTypes', 0, 'name');
         }.bind(this));
-
-    }
+    };
 
     AdapterApiFactory.prototype.fetchSources = function(adapterType) {
       this.dataSrc.request({
@@ -56,7 +55,7 @@ angular.module(PKG.name + '.feature.adapters')
             source.icon = getIcon(source.name);
           }.bind(this));
         }.bind(this));
-    }
+    };
 
     AdapterApiFactory.prototype.fetchSinks = function(adapterType) {
       this.dataSrc.request({
@@ -68,7 +67,7 @@ angular.module(PKG.name + '.feature.adapters')
             sink.icon = getIcon(sink.name);
           }.bind(this));
         }.bind(this));
-    }
+    };
 
     AdapterApiFactory.prototype.fetchTransforms = function(adapterType) {
       this.dataSrc.request({
@@ -80,7 +79,7 @@ angular.module(PKG.name + '.feature.adapters')
             transform.icon = getIcon(transform.name);
           }.bind(this));
         }.bind(this));
-    }
+    };
 
     AdapterApiFactory.prototype.fetchUIConfigurations = function(templateId, pluginId) {
       this.dataSrc.config({
@@ -90,7 +89,7 @@ angular.module(PKG.name + '.feature.adapters')
        .then(function(res) {
          this.scope.templatePluginConfig = res;
        }.bind(this));
-    }
+    };
 
     AdapterApiFactory.prototype.fetchSourceProperties = function(source) {
       if (!source) return;
@@ -107,7 +106,7 @@ angular.module(PKG.name + '.feature.adapters')
           });
           this.scope.source.properties = obj;
         }.bind(this));
-    }
+    };
 
     AdapterApiFactory.prototype.fetchSinkProperties = function(sink){
       if (!sink) return;
@@ -124,7 +123,7 @@ angular.module(PKG.name + '.feature.adapters')
           });
           this.scope.sink.properties = obj;
         }.bind(this));
-    }
+    };
 
     AdapterApiFactory.prototype.fetchTransformProperties = function(transform, index) {
       if(!transform) return;
@@ -141,7 +140,7 @@ angular.module(PKG.name + '.feature.adapters')
           this.scope.transforms[index].properties = obj;
           this.scope.transforms[index]._backendProperties = t.properties;
         }.bind(this));
-    }
+    };
 
     AdapterApiFactory.prototype.save = function (data) {
       this.dataSrc.request({
@@ -154,7 +153,7 @@ angular.module(PKG.name + '.feature.adapters')
       })
         .then(function(res) {
           delete this.scope.adapterDrafts[this.scope.metadata.name];
-          return mySettings.set('adapterdrafts', this.scope.adapterDrafts)
+          return mySettings.set('adapterdrafts', this.scope.adapterDrafts);
         }.bind(this))
         .then(function() {
           this.scope.isSaved = true;
@@ -165,8 +164,8 @@ angular.module(PKG.name + '.feature.adapters')
             type: 'success',
             content: 'Adapter Template created successfully!'
           });
-        }.bind(this))
-    }
+        }.bind(this));
+    };
     return AdapterApiFactory;
 
   });

@@ -35,7 +35,7 @@ angular.module(PKG.name + '.commons')
       };
 
       $scope.deleteMetric = function(idx) {
-        if ($scope.metric.names.length == 1) {
+        if ($scope.metric.names.length === 1) {
           // If its the only metric, simply clear it instead of removing it
           $scope.metric.resetNames();
         } else {
@@ -191,7 +191,7 @@ angular.module(PKG.name + '.commons')
 
           }
 
-        }
+        };
         scope.$watch('metric', metricChanged, true);
 
         fetchAhead();

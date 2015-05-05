@@ -51,7 +51,7 @@ angular.module(PKG.name + '.services')
       var ns = this.namespaceList.filter(function(namespace) {
         return namespace.name === name;
       });
-      return ns[0].name || id;
+      return ns[0].name || name;
     };
 
     function startPolling() {

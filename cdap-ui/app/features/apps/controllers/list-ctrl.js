@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.apps')
-  .controller('CdapAppListController', function CdapAppList( $timeout, $scope, MyDataSource, myAppUploader, $alert, $state, MyOrderings) {
+  .controller('CdapAppListController', function CdapAppList($timeout, $scope, MyDataSource, myAppUploader, $alert, $state, MyOrderings) {
     $scope.MyOrderings = MyOrderings;
     var data = new MyDataSource($scope);
 
@@ -10,10 +10,5 @@ angular.module(PKG.name + '.feature.apps')
         $scope.apps = apps;
       });
     $scope.onFileSelected = myAppUploader.upload;
-
-    $scope.closeModal = function() {
-      $modalInstance.close();
-
-    };
 
   });

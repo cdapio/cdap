@@ -123,7 +123,7 @@ angular.module(PKG.name+'.services')
         var finalKey = timeValues[roundedDown];
         aggregated[finalKey] = 0;
         for (var i = roundedDown; i < timeValues.length; i++) {
-          aggregated[finalKey] += inputMetrics[timeValues[j]]
+          aggregated[finalKey] += inputMetrics[timeValues[i]];
         }
       }
       return aggregated;
