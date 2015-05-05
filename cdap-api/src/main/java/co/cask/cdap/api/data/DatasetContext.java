@@ -37,7 +37,7 @@ public interface DatasetContext {
    *         cannot be opened (for example, one of the underlying tables in the DataFabric
    *         cannot be accessed).
    */
-  public <T extends Dataset> T getDataset(String name)
+  <T extends Dataset> T getDataset(String name)
     throws DatasetInstantiationException;
 
   /**
@@ -53,7 +53,7 @@ public interface DatasetContext {
    *         cannot be accessed).
    */
   @Beta
-  public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
+  <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
     throws DatasetInstantiationException;
 
 }

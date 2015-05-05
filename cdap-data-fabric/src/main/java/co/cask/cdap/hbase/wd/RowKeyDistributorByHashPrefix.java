@@ -37,7 +37,7 @@ public class RowKeyDistributorByHashPrefix extends AbstractRowKeyDistributor {
   /**
    * todo
    */
-  public static interface Hasher extends Parametrizable {
+  public interface Hasher extends Parametrizable {
     byte[] getHashPrefix(byte[] originalKey);
     byte[][] getAllPossiblePrefixes();
     int getPrefixLength(byte[] adjustedKey);

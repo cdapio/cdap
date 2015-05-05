@@ -29,5 +29,5 @@ public interface WorkflowToken {
    * @return the Hadoop MapReduce counters set by the previous MapReduce program
    */
   @Nullable
-  public Map<String, Map<String, Long>> getMapReduceCounters();
+  Map<String, Map<String, Long>> getMapReduceCounters();
 }

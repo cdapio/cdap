@@ -39,7 +39,7 @@ public interface StreamWriter {
    *
    * @throws IOException if an error occurred during write
    */
-  public void write(String stream, String data) throws IOException;
+  void write(String stream, String data) throws IOException;
 
   /**
    * Writes a string to a stream with headers
@@ -50,7 +50,7 @@ public interface StreamWriter {
    *
    * @throws IOException if an error occurred during write
    */
-  public void write(String stream, String data, Map<String, String> headers) throws IOException;
+  void write(String stream, String data, Map<String, String> headers) throws IOException;
 
   /**
    * Writes a {@link ByteBuffer} to a stream
@@ -60,7 +60,7 @@ public interface StreamWriter {
    *
    * @throws IOException if an error occurred during write
    */
-  public void write(String stream, ByteBuffer data) throws IOException;
+  void write(String stream, ByteBuffer data) throws IOException;
 
   /**
    * Writes a {@link StreamEventData} to a stream
@@ -70,7 +70,7 @@ public interface StreamWriter {
    *
    * @throws IOException if an error occurred during write
    */
-  public void write(String stream, StreamEventData data) throws IOException;
+  void write(String stream, StreamEventData data) throws IOException;
 
   /**
    * Writes a File to a stream in batch
@@ -80,7 +80,7 @@ public interface StreamWriter {
    *
    * @throws IOException if an error occurred during write
    */
-  public void writeFile(String stream, File file, String contentType) throws IOException;
+  void writeFile(String stream, File file, String contentType) throws IOException;
 
   /**
    * Writes in batch using {@link StreamBatchWriter} to a stream
@@ -90,5 +90,5 @@ public interface StreamWriter {
    *
    * @throws IOException if an error occurred during write
    */
-  public StreamBatchWriter createBatchWriter(String stream, String contentType) throws IOException;
+  StreamBatchWriter createBatchWriter(String stream, String contentType) throws IOException;
 }

@@ -111,5 +111,5 @@ public interface StreamAdmin {
    * @param owners the ids that are using the stream
    * @param streamId the stream being used
    */
-  public void register(Iterable<? extends Id> owners, Id.Stream streamId);
+  void register(Iterable<? extends Id> owners, Id.Stream streamId);
 }

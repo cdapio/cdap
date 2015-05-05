@@ -37,12 +37,12 @@ public interface KafkaLogProcessor {
    *
    * @param event instance of {@link KafkaLogEvent}
    */
-  public void process(KafkaLogEvent event);
+  void process(KafkaLogEvent event);
 
   /**
    * Called to stop processing for the current set of kafka partitions. Stop can be called before init.
    */
-  public void stop();
+  void stop();
 
 
   /**
@@ -53,5 +53,5 @@ public interface KafkaLogProcessor {
    * @param partition partition number in kafka
    * @return checkpoint offset
    */
- public Checkpoint getCheckpoint(int partition);
+ Checkpoint getCheckpoint(int partition);
 }

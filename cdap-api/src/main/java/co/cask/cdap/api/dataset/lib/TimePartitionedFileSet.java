@@ -48,58 +48,58 @@ public interface TimePartitionedFileSet extends PartitionedFileSet {
   /**
    * Add a partition for a given time, stored at a given path (relative to the file set's base path).
    */
-  public void addPartition(long time, String path);
+  void addPartition(long time, String path);
 
   /**
    * Remove a partition for a given time.
    */
-  public void dropPartition(long time);
+  void dropPartition(long time);
 
   /**
    * Return the partition associated with the given time, rounded to the minute;
    * or null if no such partition exists.
    */
   @Nullable
-  public TimePartition getPartitionByTime(long time);
+  TimePartition getPartitionByTime(long time);
 
   /**
    * Return all partitions within the time range given by startTime (inclusive) and endTime (exclusive),
    * both rounded to the full minute.
    */
-  public Set<TimePartition> getPartitionsByTime(long startTime, long endTime);
+  Set<TimePartition> getPartitionsByTime(long startTime, long endTime);
 
   /**
    * Return a partition output for a specific time, rounded to the minute, in preparation for creating a new partition.
    * Obtain the location to write from the PartitionOutput, then call the {@link PartitionOutput#addPartition}
    * to add the partition to this dataset.
    */
-  public TimePartitionOutput getPartitionOutput(long time);
+  TimePartitionOutput getPartitionOutput(long time);
 
   /**
    * @return the relative path of the partition for a specific time, rounded to the minute.
    */
   @Deprecated
   @Nullable
-  public String getPartition(long time);
+  String getPartition(long time);
 
   /**
    * @return a mapping from the partition time to the relative path, of all partitions with a time
    *         that is between startTime (inclusive) and endTime (exclusive), both rounded to the full minute.
    */
   @Deprecated
-  public Map<Long, String> getPartitions(long startTime, long endTime);
+  Map<Long, String> getPartitions(long startTime, long endTime);
 
   /**
    * @return the relative paths of all partitions with a time that is between startTime (inclusive)
    *         and endTime (exclusive), both rounded to the full minute.
    */
   @Deprecated
-  public Collection<String> getPartitionPaths(long startTime, long endTime);
+  Collection<String> getPartitionPaths(long startTime, long endTime);
 
   /**
    * @return the underlying (embedded) file set.
    * @deprecated use {@link #getEmbeddedFileSet} instead.
    */
   @Deprecated
-  public FileSet getUnderlyingFileSet();
+  FileSet getUnderlyingFileSet();
 }

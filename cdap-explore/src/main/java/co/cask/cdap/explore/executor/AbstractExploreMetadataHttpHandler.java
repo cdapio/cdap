@@ -95,7 +95,7 @@ public class AbstractExploreMetadataHttpHandler extends AbstractHttpHandler {
   /**
    * Represents the core execution of an endpoint.
    */
-  protected static interface EndpointCoreExecution<T> {
+  protected interface EndpointCoreExecution<T> {
     T execute(HttpRequest request, HttpResponder responder)
       throws IllegalArgumentException, SQLException, ExploreException, IOException;
   }

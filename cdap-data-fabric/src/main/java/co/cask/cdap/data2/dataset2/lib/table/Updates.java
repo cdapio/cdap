@@ -41,7 +41,7 @@ public final class Updates {
    *
    * <p><emphasis>Note:</emphasis> the map returned is <strong>not thread safe</strong>.</p>
    */
-  public static final NavigableMap<byte[], NavigableMap<Long, byte[]>> rowToBytes(
+  public static NavigableMap<byte[], NavigableMap<Long, byte[]>> rowToBytes(
     NavigableMap<byte[], NavigableMap<Long, Update>> row) {
     if (row == null) {
       return null;
@@ -79,7 +79,7 @@ public final class Updates {
    * @param modifier The new update to combine
    * @return A new update combining the base update and modifier, according to the rules above
    */
-  public static final Update mergeUpdates(Update base, Update modifier) {
+  public static Update mergeUpdates(Update base, Update modifier) {
     if (base == null || modifier instanceof PutValue) {
       return modifier;
     }
@@ -101,19 +101,5 @@ public final class Updates {
     }
     // should not happen: modifier is neither Put nor Increment!
     return base;
-  }
-
-  /**
-   * Returns a new {@link PutValue} representing the update.
-   */
-  public static final PutValue toPut(Update update) {
-    if (update == null) {
-      return null;
-    } else if (update instanceof PutValue) {
-      return (PutValue) update;
-    } else if (update instanceof IncrementValue) {
-      return new PutValue(((IncrementValue) update).getBytes());
-    }
-    throw new IllegalArgumentException("Unknown update type " + update);
   }
 }

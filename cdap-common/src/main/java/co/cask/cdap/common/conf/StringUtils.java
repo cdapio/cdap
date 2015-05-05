@@ -91,7 +91,9 @@ public class StringUtils {
    */
 
   public static String arrayToString(String[] strs) {
-    if (strs.length == 0) { return ""; }
+    if (strs.length == 0) {
+      return "";
+    }
     StringBuilder sbuf = new StringBuilder();
     sbuf.append(strs[0]);
     for (int idx = 1; idx < strs.length; idx++) {

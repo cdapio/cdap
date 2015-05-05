@@ -34,5 +34,5 @@ public interface SparkProgram extends Serializable {
    *
    * @param context {@link SparkContext} for this job
    */
-  public void run(SparkContext context);
+  void run(SparkContext context);
 }

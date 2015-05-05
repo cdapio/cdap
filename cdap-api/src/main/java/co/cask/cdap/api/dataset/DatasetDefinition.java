@@ -51,7 +51,7 @@ public interface DatasetDefinition<D extends Dataset, A extends DatasetAdmin> {
   /**
    * Convenience constant for passing in no arguments.
    */
-  public static final Map<String, String> NO_ARGUMENTS = Collections.emptyMap();
+  Map<String, String> NO_ARGUMENTS = Collections.emptyMap();
 
   /**
    * @return name of this dataset implementation

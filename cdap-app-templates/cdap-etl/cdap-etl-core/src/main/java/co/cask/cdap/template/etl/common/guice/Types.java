@@ -504,7 +504,7 @@ final class Types {
     abstract Type newArrayType(Type componentType);
     abstract Type usedInGenericType(Type type);
 
-    final ImmutableList<Type> usedInGenericType(Type[] types) {
+    ImmutableList<Type> usedInGenericType(Type[] types) {
       ImmutableList.Builder<Type> builder = ImmutableList.builder();
       for (Type type : types) {
         builder.add(usedInGenericType(type));

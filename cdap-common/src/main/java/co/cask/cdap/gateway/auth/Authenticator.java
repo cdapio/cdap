@@ -32,7 +32,7 @@ public interface Authenticator {
    *
    * @return true if authentication (and thus token) are required, false if not
    */
-  public boolean isAuthenticationRequired();
+  boolean isAuthenticationRequired();
 
   /**
    * Authenticates the specified HTTP request.
@@ -40,7 +40,7 @@ public interface Authenticator {
    * @param httpRequest http request
    * @return true if authentication succeeds, false if not
    */
-  public boolean authenticateRequest(HttpRequest httpRequest);
+  boolean authenticateRequest(HttpRequest httpRequest);
 
   // Note: we could actually have one of these instead of this API:
   // * return Account. But we don't want it as account has id as int, and we need String
@@ -53,5 +53,5 @@ public interface Authenticator {
    * @param httpRequest http request
    * @return account
    */
-  public String getAccountId(HttpRequest httpRequest);
+  String getAccountId(HttpRequest httpRequest);
 }

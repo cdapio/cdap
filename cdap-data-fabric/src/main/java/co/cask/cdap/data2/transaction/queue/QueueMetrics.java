@@ -24,7 +24,7 @@ public interface QueueMetrics {
 
   void emitEnqueueBytes(int bytes);
 
-  static final QueueMetrics NOOP_QUEUE_METRICS = new QueueMetrics() {
+  QueueMetrics NOOP_QUEUE_METRICS = new QueueMetrics() {
     @Override
     public void emitEnqueue(int count) {
       // no-op

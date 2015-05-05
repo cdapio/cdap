@@ -23,15 +23,15 @@ public interface ScheduleManager {
   /**
    * suspends the workflow schedule
    */
-  public void suspend();
+  void suspend();
 
   /**
    * Resumes the workflow schedule
    */
-  public void resume();
+  void resume();
 
   /**
    * returns the status of the workflow schedule
    */
-  public String status(int expectedCode);
+  String status(int expectedCode);
 }

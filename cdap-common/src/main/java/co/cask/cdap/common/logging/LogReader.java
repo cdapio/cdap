@@ -28,7 +28,7 @@ public interface LogReader {
    * Configures this reader.
    * @param config specifies what log to read
    */
-  public void configure(LogConfiguration config) throws IOException;
+  void configure(LogConfiguration config) throws IOException;
 
   /**
    * retrieves the tail of the log, up to size bytes, line by line.
@@ -39,5 +39,5 @@ public interface LogReader {
    *                 file while it is still open for write, and hence the
    *                 file system status will not give us a precise file length.
    */
-  public List<String> tail(int sizeToRead, long writePos) throws IOException;
+  List<String> tail(int sizeToRead, long writePos) throws IOException;
 }

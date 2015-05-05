@@ -28,6 +28,6 @@ public interface MRJobInfoFetcher {
    * @param runId for which information will be returned.
    * @return a {@link MRJobInfo} containing information about a particular MapReduce program run.
    */
-  public MRJobInfo getMRJobInfo(Id.Run runId) throws Exception;
+  MRJobInfo getMRJobInfo(Id.Run runId) throws Exception;
 
 }

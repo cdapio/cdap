@@ -194,7 +194,7 @@ public class DataMigration {
     new DataMigration().doMain(args);
   }
 
-  private static interface MigrationAction {
+  private interface MigrationAction {
     void perform(Injector injector);
   }
 

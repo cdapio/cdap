@@ -96,7 +96,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     }
   }
 
-  private final void lazyStart(Scheduler scheduler) throws SchedulerException {
+  private void lazyStart(Scheduler scheduler) throws SchedulerException {
     if (scheduler instanceof TimeScheduler) {
       try {
         timeScheduler.lazyStart();
