@@ -183,11 +183,11 @@ API Changes
   in a later version of CDAP (`CDAP-1998 <https://issues.cask.co/browse/CDAP-1998>`__). A
   :ref:`replacement endpoint <http-restful-api-metrics-querying-a-metric>` is available.
   
-- Metrics: The tag name for Service Handlers in previous releases was wrongly "runnable",
-  and internally represented as "srn". These metrics are now tagged as "handler" ("hnd"), and
+- Metrics: The tag name for Service Handlers in previous releases was wrongly ``"runnable"``,
+  and internally represented as ``"srn"``. These metrics are now tagged as ``"handler"`` (``"hnd"``), and
   metrics queries will only account for this tag name. If you need to query historic metrics
-  that were emitted with the old tag "runnable", use "srn" to query them (instead of either
-  "runnable" or "handler").
+  that were emitted with the old tag ``"runnable"``, use ``"srn"`` to query them (instead of either
+  ``"runnable"`` or ``"handler"``).
 
 - The :ref:`CDAP CLI <cli>` startup options have been changed to accommodate a new option
   of executing a file containing a series of CLI commands, line-by-line.
