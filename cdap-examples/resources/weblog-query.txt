@@ -1,0 +1,1 @@
+call service CubeServiceApp.CubeService POST /query body:file \$CDAP_HOME/examples/resources/weblog-query.json

@@ -14,7 +14,7 @@
         <table class="table table-curved" cask-sortable>
             <thead>
               <tr ng-class="{'sort-enabled': apps.length>0}">
-                <th data-predicate="name" data-predicate-default="reverse">Name</th>
+                <th data-predicate="name">Name</th>
                 <th data-predicate="version">Version</th>
                 <th data-predicate="type">Type</th>
                 <th data-predicate="description">Description</th>
@@ -23,8 +23,8 @@
             <tbody>
                 <tr ng-repeat="app in apps | orderBy:sortable.predicate:sortable.reverse">
                     <td>
+                        <strong class="icon-app"></strong>
                         <a ui-sref="admin.namespace.detail.apps.metadata({appId: app.id})">
-                            <strong class="icon-app"></strong>
                             <strong> {{ ::app.name }} </strong>
                         </a>
                     </td>

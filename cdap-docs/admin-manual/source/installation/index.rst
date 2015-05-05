@@ -77,13 +77,13 @@ CDAPs.
 
 The in-memory CDAP allows you to easily run CDAP for use in unit tests. In this mode, the
 underlying Big Data infrastructure is emulated using in-memory data structures and there
-is no persistence. The CDAP Console is not available in this mode.
+is no persistence. The CDAP UI is not available in this mode.
 
 
 .. rubric:: Standalone CDAP
 
 The Standalone CDAP allows you to run the entire CDAP stack in a single Java Virtual
-Machine on your local machine and includes a local version of the CDAP Console. The
+Machine on your local machine and includes a local version of the CDAP UI. The
 underlying Big Data infrastructure is emulated on top of your local file system. All data
 is persisted.
 

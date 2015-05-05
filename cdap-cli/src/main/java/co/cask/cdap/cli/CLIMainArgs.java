@@ -78,18 +78,18 @@ public class CLIMainArgs {
       if (inOptionsPart) {
         if (!token.startsWith("-")) {
           inOptionsPart = false;
+        } else if (!options.hasOption(token)) {
+          inOptionsPart = true;
+        } else if (!options.getOption(token).hasArg()) {
+          inOptionsPart = true;
+        } else if (options.getOption(token).hasArg() && i + 1 < args.length) {
+          inOptionsPart = true;
+          // add the option and option value
+          optionsPart.add(token);
+          optionsPart.add(args[++i]);
+          continue;
         } else {
-          if (!options.getOption(token).hasArg()) {
-            inOptionsPart = true;
-          } else if (options.getOption(token).hasArg() && i + 1 < args.length) {
-            inOptionsPart = true;
-            // add the option and option value
-            optionsPart.add(token);
-            optionsPart.add(args[++i]);
-            continue;
-          } else {
-            inOptionsPart = false;
-          }
+          inOptionsPart = false;
         }
       }
 

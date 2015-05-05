@@ -32,7 +32,7 @@ public class DBConfig extends PluginConfig {
   @Description("JDBC connection string including database name.")
   public String connectionString;
 
-  @Description("Table name to export to.")
+  @Description("Table name to import/export from/to.")
   public String tableName;
 
   @Description("User to use to connect to the specified database. Required for databases that " +

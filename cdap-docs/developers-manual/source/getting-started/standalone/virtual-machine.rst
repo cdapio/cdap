@@ -29,7 +29,7 @@ It has pre-installed all the software that you need to run and develop CDAP appl
 - The Standalone CDAP SDK is installed under ``/Software/cdap-sdk-``\ |literal-release|
   and will automatically start when the virtual machine starts.
 - Both IntelliJ and Eclipse IDE are installed and will start when the virtual machine starts.
-- The Firefox web browser starts when the machine starts. Its default home page is the CDAP Console,
+- The Firefox web browser starts when the machine starts. Its default home page is the CDAP UI,
   ``http://localhost:9999``.
 
 No password is required to enter the virtual machine; however, should you need to install or

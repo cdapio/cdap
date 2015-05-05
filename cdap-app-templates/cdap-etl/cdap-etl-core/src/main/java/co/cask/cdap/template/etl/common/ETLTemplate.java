@@ -120,8 +120,8 @@ public abstract class ETLTemplate<T extends ETLConfig> extends ApplicationTempla
     // Validate Source -> Transform -> Sink hookup
     validateStages(source, sink, transforms);
 
-    configure(source, configurer, Constants.Source.PLUGINID);
-    configure(sink, configurer, Constants.Sink.PLUGINID);
+    configure(source, configurer, sourcePluginId);
+    configure(sink, configurer, sinkPluginId);
 
     configurer.addRuntimeArgument(Constants.ADAPTER_NAME, adapterName);
     configurer.addRuntimeArgument(Constants.Source.PLUGINID, sourcePluginId);

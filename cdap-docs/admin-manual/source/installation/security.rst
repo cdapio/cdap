@@ -136,7 +136,7 @@ Property                                          Default Value        Descripti
                                                                        HTTP Connections
 ``security.auth.server.bind.port``                ``10009``            Port number that the CDAP Authentication Server should
                                                                        bind to for HTTP Connections
-``dashboard.bind.port``                           ``9999``             Port number that the CDAP Console should
+``dashboard.bind.port``                           ``9999``             Port number that the CDAP UI should
                                                                        bind to for HTTP Connections
 ================================================= ==================== ======================================================
 
@@ -149,7 +149,7 @@ Property                                          Default Value        Descripti
                                                                        HTTPS Connections
 ``security.auth.server.ssl.bind.port``            ``10010``            Port number that the CDAP Authentication Server should
                                                                        bind to for HTTPS Connections
-``dashboard.ssl.bind.port``                       ``9443``             Port number that the CDAP Console should bind to for 
+``dashboard.ssl.bind.port``                       ``9443``             Port number that the CDAP UI should bind to for 
                                                                        HTTPS Connections
 ================================================= ==================== ======================================================
 
@@ -185,9 +185,9 @@ Property                                          Default Value        Descripti
 ``router.ssl.keystore.type``                      ``JKS``              Keystore file type
 ================================================= ==================== ======================================================
 
-Configuring SSL for the CDAP Console
-....................................
-To enable SSL for the CDAP Console, add these properties to ``cdap-security.xml``:
+Configuring SSL for the CDAP UI
+...............................
+To enable SSL for the CDAP UI, add these properties to ``cdap-security.xml``:
 
 ================================================= ==================== ======================================================
 Property                                          Default Value        Description
@@ -444,5 +444,5 @@ security components are working as expected:
 
  This should return a ``200 OK`` response.
 
-- Visiting the CDAP Console should redirect you to a login page that prompts for credentials.
-  Entering the credentials that you have configured should let you work with the CDAP Console as normal.
+- Visiting the CDAP UI should redirect you to a login page that prompts for credentials.
+  Entering the credentials that you have configured should let you work with the CDAP UI as normal.

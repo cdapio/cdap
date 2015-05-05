@@ -18,6 +18,26 @@ angular.module(PKG.name + '.feature.workflows')
         var edges = [],
             nodes = [];
 
+        res.nodes.unshift({
+          name: 'start',
+          type: 'START',
+          nodeType: 'ACTION',
+          nodeId: 'start',
+          program: {
+            programName: ''
+          }
+        });
+
+        res.nodes.push({
+          name: 'end',
+          type: 'END',
+          nodeType: 'ACTION',
+          nodeId: 'end',
+          program: {
+            programName: ''
+          }
+        });
+
         convert(angular.copy(res.nodes), edges);
         expandForks(res.nodes, nodes);
 
@@ -28,7 +48,7 @@ angular.module(PKG.name + '.feature.workflows')
           }, item);
         });
 
-        addStartAndEndNodes(nodes, edges);
+        // addStartAndEndNodes(nodes, edges);
 
         $scope.data = {
           nodes: nodes,
@@ -42,6 +62,26 @@ angular.module(PKG.name + '.feature.workflows')
         });
         $scope.actions = programs;
       });
+
+
+    $scope.workflowProgramClick = function (instance) {
+      if (['START', 'END'].indexOf(instance.type) > -1) {
+        return;
+      }
+      if ($scope.runs.length) {
+        if (instance.program.programType == 'MAPREDUCE') {
+          $state.go('mapreduce.detail.runs.run', {
+            programId: instance.program.programName,
+            runid: $scope.runs.selected.properties[instance.nodeId]
+          });
+        }
+      } else {
+        $alert({
+          type: 'info',
+          content: 'No runs for the workflow: '+ $state.params.programId +' yet.'
+        })
+      }
+    }
 
     $scope.stop = function() {
       $alert({
@@ -157,11 +197,7 @@ function addStartAndEndNodes(nodes, edges) {
 */
 function convert(nodes, connections) {
 
-  for (var i=0; i+1 < nodes.length; i++) {
-
-    if ( i === 0 && nodes[i].nodeType === 'FORK') {
-      flatten(null, nodes[i], nodes[i+1], connections);
-    }
+  for (var i=0; i < nodes.length -1; i++) {
 
     if (nodes[i].nodeType === 'ACTION' && nodes[i+1].nodeType === 'ACTION') {
       connections.push({
@@ -171,10 +207,6 @@ function convert(nodes, connections) {
       });
     } else if (nodes[i].nodeType === 'FORK') {
       flatten(nodes[i-1], nodes[i], nodes[i+1], connections);
-    }
-
-    if ( (i+1 === nodes.length-1) && nodes[i+1].nodeType === 'FORK') {
-      flatten(nodes[i], nodes[i+1], null, connections);
     }
   }
 }

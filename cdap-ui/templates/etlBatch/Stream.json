@@ -38,8 +38,8 @@
              "widget" : "select",
              "label"  : "Format",
              "properties" : {
-               "values" : [ "csv", "tsv" ],
-               "default" : "csv"
+               "values" : [ "", "csv", "tsv" ],
+               "default" : ""
              }
           },
           "schema" : {
@@ -48,7 +48,7 @@
              "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
              "schema-default-type" : "string"
           }
-       } 
+       }
     }
   }
 }

@@ -25,7 +25,7 @@ see the :ref:`configuration-security` section.
      - Description
    * - ``dashboard.ssl.cert``
      -
-     - SSL certificate file to be used for the CDAP Console
+     - SSL certificate file to be used for the CDAP UI
    * - ``dashboard.ssl.key``
      -
      - SSL key file corresponding to the SSL certificate specified in ``dashboard.ssl.cert``

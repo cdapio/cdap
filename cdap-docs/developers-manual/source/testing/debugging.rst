@@ -20,7 +20,7 @@ debugging:
    ``Remote debugger agent started on port 5005``.
 
 #. Deploy (for example) the *HelloWorld* Application to the CDAP by dragging and dropping the
-   ``HelloWorld.jar`` file from the ``/examples/HelloWorld`` directory onto the CDAP Console.
+   ``HelloWorld.jar`` file from the ``/examples/HelloWorld`` directory onto the CDAP UI.
 
 #. Open the *HelloWorld* Application in an IDE and connect to the remote debugger.
 
@@ -138,7 +138,7 @@ You may need to adjust them for your installation or version.
 
    .. image:: ../_images/debugging/intellij_3.png
 
-#. Start the Flow in the Console.
+#. Start the Flow in the CDAP UI.
 #. Send an event to the Stream. The control will stop at the breakpoint
    and you can proceed with debugging.
 
@@ -170,7 +170,7 @@ You may need to adjust them for your installation or version.
 
    .. image:: ../_images/debugging/eclipse_3.png
 
-#. Start the Flow in the Console.
+#. Start the Flow in the CDAP UI.
 #. Send an event to the Stream.
 #. The control stops at the breakpoint and you can proceed with debugging.
 

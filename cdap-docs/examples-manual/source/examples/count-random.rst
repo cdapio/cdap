@@ -90,7 +90,7 @@ Starting the Flow
 
 Once the application is deployed:
 
-- Click on the *Process* button in the left sidebar of the CDAP Console,
+- Click on the *Process* button in the left sidebar of the CDAP UI,
   then click ``CountRandom`` in the *Process* page to get to the
   Flow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
@@ -114,7 +114,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 **Stopping the Flow**
 
-- Click on the *Process* button in the left sidebar of the CDAP Console,
+- Click on the *Process* button in the left sidebar of the CDAP UI,
   then click ``CountRandom`` in the *Process* page to get to the
   Flow detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:

@@ -52,7 +52,7 @@ angular.module(PKG.name + '.feature.spark')
         templateUrl: '/assets/features/spark/templates/tabs/runs.html',
         controller: 'SparkRunsController',
         ncyBreadcrumb: {
-          label: 'Runs'
+          label: '{{$state.params.programId}}'
         }
       })
         .state('spark.detail.runs.run', {

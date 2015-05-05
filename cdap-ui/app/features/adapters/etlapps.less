@@ -192,6 +192,9 @@ body.theme-cdap.state-adapters-create {
 
 body.theme-cdap.state-adapters-list {
 
+  .tooltip.top {
+    word-wrap: break-word;
+  }
   .label.etlappcontainer {
     position: relative;
     left: 5px;
@@ -259,6 +262,9 @@ body.theme-cdap.state-adapters-list {
     .running { color: @brand-success; }
     .stopped { color: @cdap-darkness; }
     .killed { color: @brand-danger; }
-    .description { color: @cdap-darkness; }
+    .description {
+      color: @cdap-darkness;
+      word-wrap: break-word;
+    }
   }
 }

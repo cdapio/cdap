@@ -17,13 +17,13 @@
 
 package $package;
 
-import co.cask.cdap.templates.etl.api.Emitter;
-import co.cask.cdap.templates.etl.api.TransformStage;
+import co.cask.cdap.template.etl.api.Emitter;
+import co.cask.cdap.template.etl.api.Transform;
 
 /**
- * Transform.
+ * ETL Transform.
  */
-public class Transform<T> extends TransformStage<T, T> {
+public class TransformPlugin<T> extends Transform<T, T> {
 
   @Override
   public void transform(T input, Emitter<T> emitter) throws Exception {

@@ -82,6 +82,7 @@ function sync_build_artifacts_to_server () {
   do
     decho "PACKAGE=${i}"
     _package=`basename ${i}`
+    _snapshot_time=''
 
     ##
     # most CDAP Debian packages will look like this: (typical, not just in CDAP)
@@ -115,9 +116,14 @@ function sync_build_artifacts_to_server () {
     decho "version stub=${_version_stub}"
     _version=`echo ${_version_stub} | awk -F - '{ print $1 }' | awk -F . '{ print $1"."$2"."$3 }'`
     decho "version = ${_version}"
+    _snapshot_time=`echo ${_version_stub} | awk -F - '{ print $1 }' | sed 's/\([0-9]\.[0-9]\.[0-9]\)\.\([0-9]*\)/\2/'`
 
     # identify and create remote incoming directory
-    OUTGOING_DIR=${BUILD_PACKAGE}/${_version}
+    if [ "${_snapshot_time}" == '' ]; then
+      OUTGOING_DIR=${BUILD_PACKAGE}/${_version}
+    else
+      OUTGOING_DIR=snapshot/cask/${BUILD_PACKAGE}/${_version}  ## send snapshots to a different directory
+    fi
     echo "Create remote directory ${REMOTE_INCOMING_DIR}/${OUTGOING_DIR} if necessary"
     ssh -l ${REMOTE_USER} ${REMOTE_HOST} "mkdir -p ${REMOTE_INCOMING_DIR}/${OUTGOING_DIR}" || die "could not create remote directory"
 

@@ -22,7 +22,7 @@ and write to an ObjectStore Dataset.
 
   - Send sentences of the form "Tom bought 5 apples for $10" to the ``purchaseStream``.
     You can send sentences either by using a ``curl`` call, using the ``inject-data`` script
-    included in the example's ``/bin`` directory, or by using the CDAP Console.
+    included in the example's ``/bin`` directory, or by using the CDAP UI.
   - The ``PurchaseFlow`` reads the ``purchaseStream`` and converts every input String into a
     Purchase object and stores the object in the *purchases* Dataset.
   - User profile information for the user can be added by using ``curl`` calls (or another method) which are
@@ -38,7 +38,7 @@ and write to an ObjectStore Dataset.
     the ``UserProfileService`` and creates a purchase history. It stores the purchase history in the
     ``history`` Dataset every morning at 4:00 A.M. using a Time Schedule, and also every time 1MB of data
     is ingested by the ``purchaseStream`` using a Data Schedule.
-  - You can either manually (in the Process screen of the CDAP Console) or 
+  - You can either manually (in the Process screen of the CDAP UI) or 
     programmatically execute the ``PurchaseHistoryBuilder`` MapReduce to store 
     customers' purchase history in the ``history`` Dataset.
   - Use the ``PurchaseHistoryService`` to retrieve from the ``history`` Dataset the purchase history of a user.
@@ -145,7 +145,7 @@ Starting the Flow
 
 Once the application is deployed:
 
-- Click on the *Process* button in the left sidebar of the CDAP Console,
+- Click on the *Process* button in the left sidebar of the CDAP UI,
   then click *PurchaseFlow* in the *Process* page to get to the
   Flow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
@@ -157,7 +157,7 @@ Starting the Services
 
 Once the application is deployed:
 
-- Click on *PurchaseHistory* in the Overview page of the CDAP Console to get to the
+- Click on *PurchaseHistory* in the Overview page of the CDAP UI to get to the
   Application detail page, click *PurchaseHistoryService* in the *Service* pane to get to the
   Service detail page, then click the *Start* button; do the same for the *CatalogLookupService*
   and *UserProfileService*; or
@@ -201,7 +201,7 @@ Starting the Workflow
 
 Once the sentences have been injected:
 
-- Click on *PurchaseHistory* in the Overview page of the CDAP Console to get to the
+- Click on *PurchaseHistory* in the Overview page of the CDAP UI to get to the
   Application detail page, click *PurchaseHistoryWorkflow* in the *Workflow* pane to get to the
   Workflow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
@@ -313,7 +313,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 **Stopping the Flow**
 
-- Click on the *Process* button in the left sidebar of the CDAP Console,
+- Click on the *Process* button in the left sidebar of the CDAP UI,
   then click *PurchaseFlow* in the *Process* page to get to the
   Flow detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
@@ -322,7 +322,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 **Stopping the Services**
 
-- Click on *PurchaseHistory* in the Overview page of the CDAP Console to get to the
+- Click on *PurchaseHistory* in the Overview page of the CDAP UI to get to the
   Application detail page, then click the *Stop* button (with a red square) in the
   *Service* pane; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::

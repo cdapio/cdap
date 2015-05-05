@@ -75,7 +75,7 @@ Starting the Services
 
 Once the application is deployed:
 
-- Click on ``SparkPageRank`` in the Overview page of the CDAP Console to get to the
+- Click on ``SparkPageRank`` in the Overview page of the CDAP UI to get to the
   Application detail page, then click the triangular *Start* button in the right-hand of 
   the Service pane; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
@@ -113,7 +113,7 @@ Running the Spark Program
 
 There are three ways to start the Spark program:
 
-1. Click on the *Process* button in the left sidebar of the CDAP Console,
+1. Click on the *Process* button in the left sidebar of the CDAP UI,
    then click *SparkPageRankProgram* in the *Process* page to get to the
    Spark detail page, then click the *Start* button; or
 
@@ -166,7 +166,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 **Stopping the Spark Program**
 
-- Click on the *Process* button in the left sidebar of the CDAP Console,
+- Click on the *Process* button in the left sidebar of the CDAP UI,
   then click *SparkKMeansProgram* in the *Process* page to get to the
   Spark detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
@@ -182,7 +182,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 **Stopping the Services**
 
-- Click on *SparkPageRank* in the Overview page of the CDAP Console to get to the
+- Click on *SparkPageRank* in the Overview page of the CDAP UI to get to the
   Application detail page, then click the square *Stop* button in the right-hand of 
   the Service pane; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:

@@ -46,13 +46,13 @@ see the :ref:`configuration-security` section.
      - Temp directory
    * - ``dashboard.bind.port``
      - ``9999``
-     - CDAP Console bind port
+     - CDAP UI bind port
    * - ``dashboard.ssl.bind.port``
      - ``9443``
-     - CDAP Console bind port for HTTPS
+     - CDAP UI bind port for HTTPS
    * - ``dashboard.ssl.disable.cert.check``
      - ``false``
-     - True to disable SSL certificate check from the CDAP Console
+     - True to disable SSL certificate check from the CDAP UI
    * - ``data.local.storage``
      - ``${local.data.dir}/ldb``
      - Database directory
@@ -275,13 +275,13 @@ see the :ref:`configuration-security` section.
      - Maximum router connection backlog
    * - ``router.server.address``
      - ``localhost``
-     - Router address to which Console connects
+     - Router address to which CDAP UI connects
    * - ``router.server.boss.threads``
      - ``1``
      - Number of router server boss threads
    * - ``router.server.port``
      - ``10000``
-     - Router port to which Console connects
+     - Router port to which CDAP UI connects
    * - ``router.server.worker.threads``
      - ``10``
      - Number of router server worker threads

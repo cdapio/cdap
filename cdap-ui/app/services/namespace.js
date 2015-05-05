@@ -57,7 +57,7 @@ angular.module(PKG.name + '.services')
     function startPolling() {
 
       _.debounce(function() {
-        $http.get('http://' + window.location.host + '/backendstatus')
+        $http.get('http://' + window.location.host + '/backendstatus', {ignoreLoadingBar: true})
                 .success(success).error(error);
               }, 2000)();
 

@@ -87,7 +87,7 @@ application in the same namespace. WorkerContext can be used to discover the URL
     url = getContext().getServiceURL("anotherAppName", "anotherServiceId");
   }
 
-Writing to Streams (Beta)
+Writing to Streams 
 =========================
 
 Workers have the ability to write to ``Streams`` through the ``WorkerContext``. The implementation internally
