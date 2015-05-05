@@ -26,7 +26,12 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-cdap_apps_version = "0.4.0-SNAPSHOT"
+# Component versions used in replacements:
+
+cdap_apps_version = "0.4.0"
+
+node_js_version = "v0.10.* through v0.12.*"
+
 
 import sys
 import os
@@ -160,6 +165,11 @@ rst_epilog = """
    
 .. |non-breaking-space| unicode:: U+00A0 .. non-breaking space
 """
+
+if node_js_version:
+    rst_epilog = rst_epilog + """
+.. |node-js-version| replace:: %(node_js_version)s
+""" % {'node_js_version': node_js_version}
 
 if version:
     rst_epilog = rst_epilog + """
