@@ -150,14 +150,6 @@ angular.module(PKG.name + '.feature.workflows')
 
     for (var i=0; i < nodes.length -1; i++) {
 
-      if ( i === 1 && nodes[i].nodeType === 'FORK') {
-        flatten(nodes[i-1], nodes[i], nodes[i+1], connections);
-      }
-
-      if ( (i+1 === nodes.length-1) && nodes[i].nodeType === 'FORK') {
-        flatten(nodes[i-1], nodes[i], nodes[i+1], connections);
-      }
-
       if (nodes[i].nodeType === 'ACTION' && nodes[i+1].nodeType === 'ACTION') {
         connections.push({
           sourceName: nodes[i].program.programName + nodes[i].nodeId,
