@@ -1,0 +1,278 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Users' Manual" name="description" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>CDAP Application Templates (Beta) &mdash; Cask Data Application Platform 3.0.0 Documentation</title>
+    
+    <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.0.0 Documentation" href="#" />
+    <link rel="next" title="ETL Overview (Beta)" href="etl/index.html" />
+    <link rel="prev" title="CDAP Application Templates Table of Contents" href="table-of-contents.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="etl/index.html" title="ETL Overview (Beta)"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="table-of-contents.html" title="CDAP Application Templates Table of Contents"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.0.0');</script>
+       
+        <li><a href="table-of-contents.html">CDAP Application Templates</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cdap-application-templates-beta">
+<span id="apptemplates-index"></span><h1>CDAP Application Templates (Beta)<a class="headerlink" href="#cdap-application-templates-beta" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction-to-application-templates">
+<span id="apptemplates-intro-application-templates"></span><h2>Introduction to Application Templates<a class="headerlink" href="#introduction-to-application-templates" title="Permalink to this headline">¶</a></h2>
+<p>CDAP allows developers to create distributed applications using the foundational
+application building blocks (Datasets, Streams, Flows, MapReduce, Services, Workflows and
+Workers). However, there are use cases that require that a similar type of action be
+performed in different circumstances, differing only slightly in each case.</p>
+<p>For example, perhaps you need to copy data from five different relational tables to CDAP
+Datasets periodically; you wouldn&#8217;t want to deploy five different applications to
+perform these tasks. Instead, you would want to reuse code or a common program that can be
+configured to perform similar actions on differently configured data sources. In situations
+like these, you can create or use an <em>Application Template</em>.</p>
+<p>An <strong>Application Template</strong> is an application that is reusable through configuration and
+extensible through plugins. Plugins extend the Application Template by implementing an
+interface expected by the template. One or more plugins are packaged in a specifically
+constructed JAR file.</p>
+<p>To create an instantiation of an Application Template—called an <strong>Adapter</strong>—you
+can make a RESTful call, use a CLI command, or use the CDAP UI, providing the
+configuration at the time. Users of CDAP manage the lifecycle of an Adapter in a very
+similar manner to managing the life cycle of a CDAP program.</p>
+<p>CDAP comes packaged with two Application Templates to create ETL (Extract, Transform, and
+Load) pipelines, simply by configuring the ETL templates and not writing any code at all.
+An Adapter created from an ETL Application Template is referred to as an <em>ETL Pipeline</em> or
+<em>ETL Adapter</em>.</p>
+<p>In the future, a variety of application templates will be delivered. The framework is
+extensible: users can write their own application templates if they so chose, and can
+manage the lifecycle of their custom application templates using CDAP.</p>
+</div>
+<div class="section" id="etl-beta">
+<h2>ETL (Beta)<a class="headerlink" href="#etl-beta" title="Permalink to this headline">¶</a></h2>
+<p>ETL is <strong>Extract</strong>, <strong>Transform</strong> and <strong>Load</strong> of data, a common first-step in any data
+application. CDAP endeavors to make performing ETL possible out-of-box without writing
+code; instead, you just configure CDAP appropriately and operate it.</p>
+<p>These sections describe:</p>
+<ul class="simple">
+<li><a class="reference external" href="etl/index.html"><strong>ETL Overview:</strong></a> An introduction to ETL, ETL Templates, Adapters, and Plugins.</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="etl/templates.html"><strong>ETL Templates:</strong></a> Details on exploring Application Templates using RESTful APIs.</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="etl/creating.html"><strong>Creating An ETL Adapter:</strong></a> Covers using the ETL Application Templates and Plugins included with CDAP to create an ETL Adapter.</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="etl/operations.html"><strong>Adapter Lifecycle Management:</strong></a> Covers using an ETL Adapter to perform ETL.</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="etl/custom.html"><strong>Creating Custom ETL Plugins:</strong></a> Intended for developers writing custom ETL Plugins and Adapters.</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v3.0.0</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../index.html"
+            rel="nofollow">Overview</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../introduction/index.html"
+            rel="nofollow">Introduction to CDAP</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class="new-icon"></div><b><a href="table-of-contents/../../application-templates/index.html"
+            rel="nofollow">Application Templates</a></b></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="table-of-contents.html">Application Templates:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href=""> Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction-to-application-templates">Introduction to Application Templates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#etl-beta">ETL (Beta)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="etl/index.html"> ETL Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etl/templates.html"> ETL Templates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etl/creating.html"> Creating An ETL Adapter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etl/operations.html"> Adapter Lifecycle Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etl/custom.html"> Creating Custom ETL Plugins</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="table-of-contents.html"
+                        title="Previous Chapter">CDAP Application Templates Table of Contents</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="etl/index.html"
+                        title="Next Chapter">ETL Overview (Beta)</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.0.0/cdap-docs-3.0.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="CDAP Application Templates Table of Contents" href="table-of-contents.html" />CDAP Application Templates Table of Contents</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="ETL Overview (Beta)" href="etl/index.html" />ETL Overview (Beta)</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

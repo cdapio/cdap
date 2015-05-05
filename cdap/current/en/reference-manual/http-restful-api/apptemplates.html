@@ -1,0 +1,1138 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="HTTP RESTful Interface to the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Application Template and Adapters HTTP RESTful API (Beta) &mdash; Cask Data Application Platform 3.0.0 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.0.0 Documentation" href="../index.html" />
+    <link rel="up" title="CDAP HTTP RESTful API v3" href="index.html" />
+    <link rel="next" title="Stream HTTP RESTful API" href="stream.html" />
+    <link rel="prev" title="Preferences HTTP RESTful API" href="preferences.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="stream.html" title="Stream HTTP RESTful API"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="preferences.html" title="Preferences HTTP RESTful API"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.0.0');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Reference Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">CDAP HTTP RESTful API v3</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="application-template-and-adapters-http-restful-api-beta">
+<span id="http-restful-api-apptemplates"></span><h1>Application Template and Adapters HTTP RESTful API (Beta)<a class="headerlink" href="#application-template-and-adapters-http-restful-api-beta" title="Permalink to this headline">¶</a></h1>
+<p>Use the CDAP Application Template and Adapter HTTP API to obtain a list of available
+Application Templates and Plugins, and create, delete, and manage the lifecycle of
+Adapters.</p>
+<p>Note that the ETL Templates are a type of Application Template, specifically designed for
+creating ETL Adapters. See the Application Templates <a class="reference external" href="../source/../../application-templates/index.html#apptemplates-intro-application-templates" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">Introduction to Application Templates
+and ETL</span></a> for information on creating Adapters and
+operating them.</p>
+<p>See the Developers’ Manual Advanced section on <a class="reference external" href="../source/../../application-templates/etl/custom.html#advanced-custom-app-template" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">Creating Application Templates</span></a> for information on creating custom Application Templates,
+Plugins and Adapters.</p>
+<div class="section" id="application-templates">
+<h2>Application Templates<a class="headerlink" href="#application-templates" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="available-application-templates">
+<span id="http-restful-api-apptemplates-available"></span><h3>Available Application Templates<a class="headerlink" href="#available-application-templates" title="Permalink to this headline">¶</a></h3>
+<p>To retrieve a list of available Application Templates, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/templates/</span>
+</pre></div>
+</div>
+<p>This will return a JSON String map that lists each Application Template with its name,
+description and type of program that it creates. Example output (pretty-printed):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[</span>
+<span class="go">  {</span>
+<span class="go">    &quot;name&quot;: &quot;ETLBatch&quot;,</span>
+<span class="go">    &quot;description&quot;: &quot;Batch Extract-Transform-Load (ETL) Adapter&quot;,</span>
+<span class="go">    &quot;programType&quot;: &quot;Workflow&quot;</span>
+<span class="go">  },</span>
+<span class="go">  {</span>
+<span class="go">    &quot;name&quot;: &quot;ETLRealtime&quot;,</span>
+<span class="go">    &quot;description&quot;: &quot;Realtime Extract-Transform-Load (ETL) Adapter&quot;,</span>
+<span class="go">    &quot;programType&quot;: &quot;Worker&quot;</span>
+<span class="go">  }</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="template-details">
+<h3>Template Details<a class="headerlink" href="#template-details" title="Permalink to this headline">¶</a></h3>
+<p>To retrieve the details of a particular Application Templates, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/templates/&lt;template-id&gt;</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;template-id&gt;</span></code></td>
+<td>Name of the Application Template, such as <code class="docutils literal"><span class="pre">ETLBatch</span></code> or <code class="docutils literal"><span class="pre">ETLRealtime</span></code></td>
+</tr>
+</tbody>
+</table>
+<p>This will return a JSON String map that lists the details of the Application Template.
+Example output of the <code class="docutils literal"><span class="pre">ETLBatch</span></code> Application Template (pretty-printed):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> GET &lt;base-url&gt;/templates/ETLBatch
+
+<span class="go">{</span>
+<span class="go">  &quot;extensions&quot;: [</span>
+<span class="go">      &quot;sink&quot;,</span>
+<span class="go">      &quot;source&quot;,</span>
+<span class="go">      &quot;transform&quot;</span>
+<span class="go">  ],</span>
+<span class="go">  &quot;name&quot;: &quot;ETLBatch&quot;,</span>
+<span class="go">  &quot;description&quot;: &quot;Batch Extract-Transform-Load (ETL) Adapter&quot;,</span>
+<span class="go">  &quot;programType&quot;: &quot;Workflow&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">extensions</span></code> is an array of the types of Plugins that are available for use by the
+Application Template.</p>
+</div>
+<div class="section" id="template-update">
+<span id="http-restful-api-apptemplates-update"></span><h3>Template Update<a class="headerlink" href="#template-update" title="Permalink to this headline">¶</a></h3>
+<p>To update a particular Application Template, submit an HTTP PUT request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">PUT &lt;base-url&gt;/namespaces/&lt;namespace-id&gt;/templates/&lt;template-id&gt;</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID of Adapters that have used this Application Template</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;template-id&gt;</span></code></td>
+<td>Name of the Application Template, such as <code class="docutils literal"><span class="pre">ETLBatch</span></code> or <code class="docutils literal"><span class="pre">ETLRealtime</span></code></td>
+</tr>
+</tbody>
+</table>
+<p>This will cause an Application Template to be updated, and can be used if you are
+deploying a custom JAR or Plugin and need to update an Application Template so that your
+changes are seen. Any other updates required (such as the re-creation of Adapters based on that
+Template) are left to the developer or user of the custom JAR or Plugin.</p>
+<p>Note that even though Application Templates are not namespaced, this particular call is
+because it is governed by the Adapters that use a Template. If different Adapters in
+different namespaces have used the same Template, multiple calls are needed to make sure
+that any changes are promulgated. This is a behavior that will likely be addressed in a
+future release to improve this process.</p>
+</div>
+<div class="section" id="template-extensions">
+<h3>Template Extensions<a class="headerlink" href="#template-extensions" title="Permalink to this headline">¶</a></h3>
+<p>To retrieve a list of all the extensions of a particular type for an Application
+Template, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/templates/&lt;template-id&gt;/extensions/&lt;extension-type&gt;</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;template-id&gt;</span></code></td>
+<td>Name of the Application Template, such as <code class="docutils literal"><span class="pre">ETLBatch</span></code> or <code class="docutils literal"><span class="pre">ETLRealtime</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;extension-type&gt;</span></code></td>
+<td>Extension type, such as (for ETL Templates) <code class="docutils literal"><span class="pre">source</span></code>, <code class="docutils literal"><span class="pre">sink</span></code>, or <code class="docutils literal"><span class="pre">transform</span></code></td>
+</tr>
+</tbody>
+</table>
+<p>This will return a JSON String map that lists all the extensions of particular type for
+that Application Template, including their name, description, and the source files that
+contain the extension.</p>
+<p>Example output for the <code class="docutils literal"><span class="pre">source</span></code> extensions of the <code class="docutils literal"><span class="pre">ETLBatch</span></code> Application Template
+(pretty-printed and reformatted to fit):</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> GET &lt;base-url&gt;/templates/ETLBatch/extensions/source
+
+[
+  {
+    &quot;template&quot;: {
+      &quot;name&quot;: &quot;ETLBatch&quot;,
+      &quot;description&quot;: &quot;Batch Extract-Transform-Load (ETL) Adapter&quot;,
+      &quot;programType&quot;: &quot;Workflow&quot;
+    },
+    &quot;source&quot;: {
+      &quot;fileName&quot;: &quot;cdap-etl-lib-3.0.0-batch.jar&quot;,
+      &quot;name&quot;: &quot;cdap-etl-lib&quot;,
+      &quot;version&quot;: {
+        &quot;version&quot;: &quot;3.0.0-batch&quot;,
+        &quot;major&quot;: 3,
+        &quot;minor&quot;: 0,
+        &quot;fix&quot;: 0,
+        &quot;suffix&quot;: &quot;batch&quot;
+      }
+    },
+    &quot;type&quot;: &quot;source&quot;,
+    &quot;name&quot;: &quot;Database&quot;,
+    &quot;description&quot;: &quot;Batch source for a database.&quot;
+  },
+  {
+    &quot;template&quot;: {
+      &quot;name&quot;: &quot;ETLBatch&quot;,
+      &quot;description&quot;: &quot;Batch Extract-Transform-Load (ETL) Adapter&quot;,
+      &quot;programType&quot;: &quot;Workflow&quot;
+    },
+    &quot;source&quot;: {
+      &quot;fileName&quot;: &quot;cdap-etl-lib-3.0.0-batch.jar&quot;,
+      &quot;name&quot;: &quot;cdap-etl-lib&quot;,
+      &quot;version&quot;: {
+        &quot;version&quot;: &quot;3.0.0-batch&quot;,
+        &quot;major&quot;: 3,
+        &quot;minor&quot;: 0,
+        &quot;fix&quot;: 0,
+        &quot;suffix&quot;: &quot;batch&quot;
+      }
+    },
+    &quot;type&quot;: &quot;source&quot;,
+    &quot;name&quot;: &quot;KVTable&quot;,
+    &quot;description&quot;: &quot;CDAP KeyValue Table Dataset Batch Source. Outputs records with a
+      'key' field and a 'value' field. Both fields are of type bytes.&quot;
+  },
+  {
+    &quot;template&quot;: {
+      &quot;name&quot;: &quot;ETLBatch&quot;,
+      &quot;description&quot;: &quot;Batch Extract-Transform-Load (ETL) Adapter&quot;,
+      &quot;programType&quot;: &quot;Workflow&quot;
+    },
+    &quot;source&quot;: {
+      &quot;fileName&quot;: &quot;cdap-etl-lib-3.0.0-batch.jar&quot;,
+      &quot;name&quot;: &quot;cdap-etl-lib&quot;,
+      &quot;version&quot;: {
+        &quot;version&quot;: &quot;3.0.0-batch&quot;,
+        &quot;major&quot;: 3,
+        &quot;minor&quot;: 0,
+        &quot;fix&quot;: 0,
+        &quot;suffix&quot;: &quot;batch&quot;
+      }
+    },
+    &quot;type&quot;: &quot;source&quot;,
+    &quot;name&quot;: &quot;Stream&quot;,
+    &quot;description&quot;: &quot;Batch source for a stream. If a format is given, any property
+      prefixed with 'format.setting.' will be passed to the format. For example, if a
+      property with key 'format.setting.delimiter' and value '|' is given, the setting
+      'delimiter' with value '|' will be passed to the format.&quot;
+  },
+  {
+    &quot;template&quot;: {
+      &quot;name&quot;: &quot;ETLBatch&quot;,
+      &quot;description&quot;: &quot;Batch Extract-Transform-Load (ETL) Adapter&quot;,
+      &quot;programType&quot;: &quot;Workflow&quot;
+    },
+    &quot;source&quot;: {
+      &quot;fileName&quot;: &quot;cdap-etl-lib-3.0.0-batch.jar&quot;,
+      &quot;name&quot;: &quot;cdap-etl-lib&quot;,
+      &quot;version&quot;: {
+        &quot;version&quot;: &quot;3.0.0-batch&quot;,
+        &quot;major&quot;: 3,
+        &quot;minor&quot;: 0,
+        &quot;fix&quot;: 0,
+        &quot;suffix&quot;: &quot;batch&quot;
+      }
+    },
+    &quot;type&quot;: &quot;source&quot;,
+    &quot;name&quot;: &quot;Table&quot;,
+    &quot;description&quot;: &quot;CDAP Table Dataset Batch Source&quot;
+  }
+]
+</pre>
+</div>
+</div>
+<div class="section" id="details-of-an-extension-plugin">
+<h3>Details of an Extension (Plugin)<a class="headerlink" href="#details-of-an-extension-plugin" title="Permalink to this headline">¶</a></h3>
+<p>To retrieve the details of an extension (plugin) used in an Application Template, submit
+an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/templates/&lt;template-id&gt;/extensions/&lt;extension-type&gt;/plugins/&lt;plugin-id&gt;</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;template-id&gt;</span></code></td>
+<td>Name of the Application Template, such as <code class="docutils literal"><span class="pre">ETLBatch</span></code> or <code class="docutils literal"><span class="pre">ETLRealtime</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;extension-type&gt;</span></code></td>
+<td>Extension type, such as (for ETL Templates) <code class="docutils literal"><span class="pre">source</span></code>, <code class="docutils literal"><span class="pre">sink</span></code>, or <code class="docutils literal"><span class="pre">transform</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;plugin-id&gt;</span></code></td>
+<td>Plugin name</td>
+</tr>
+</tbody>
+</table>
+<p>This will return a JSON String map that lists the details of the Plugin. This is the
+information needed when configuring an Adapter using the Plugin, the type of each
+property, and whether it is a mandatory property (<em>&#8220;required&#8221;</em>).</p>
+<p>Example output for the <code class="docutils literal"><span class="pre">Database</span></code> plugin of type <code class="docutils literal"><span class="pre">source</span></code> of the <code class="docutils literal"><span class="pre">ETLBatch</span></code>
+Application Template (pretty-printed and reformatted to fit):</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> GET &lt;base-url&gt;/templates/ETLBatch/extensions/source/plugins/Database
+
+[
+  {
+    &quot;className&quot;: &quot;co.cask.cdap.templates.etl.batch.sources.DBSource&quot;,
+    &quot;properties&quot;: {
+      &quot;jdbcPluginType&quot;: {
+        &quot;name&quot;: &quot;jdbcPluginType&quot;,
+        &quot;description&quot;: &quot;Type of the JDBC plugin to use. This is the value of the 'type'
+        key defined in the json file for the JDBC plugin. Defaults to 'jdbc'.&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;required&quot;: false
+      },
+      &quot;tableName&quot;: {
+        &quot;name&quot;: &quot;tableName&quot;,
+        &quot;description&quot;: &quot;Table name to export to.&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;required&quot;: true
+      },
+      &quot;jdbcPluginName&quot;: {
+        &quot;name&quot;: &quot;jdbcPluginName&quot;,
+        &quot;description&quot;: &quot;Name of the JDBC plugin to use. This is the value of the 'name'
+        key defined in the json file for the JDBC plugin. Defaults to 'jdbc'.&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;required&quot;: false
+      },
+      &quot;driverClass&quot;: {
+        &quot;name&quot;: &quot;driverClass&quot;,
+        &quot;description&quot;: &quot;Driver class to connect to the database.&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;required&quot;: true
+      },
+      &quot;importQuery&quot;: {
+        &quot;name&quot;: &quot;importQuery&quot;,
+        &quot;description&quot;: &quot;The SELECT query to use to import data from the specified table.
+        You can specify an arbitrary number of columns to import, or import all columns
+        using *. You can also specify a number of WHERE clauses or ORDER BY clauses.
+        However, LIMIT and OFFSET clauses should not be used in this query.&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;required&quot;: true
+      },
+      &quot;connectionString&quot;: {
+        &quot;name&quot;: &quot;connectionString&quot;,
+        &quot;description&quot;: &quot;JDBC connection string including database name.&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;required&quot;: true
+      },
+      &quot;password&quot;: {
+        &quot;name&quot;: &quot;password&quot;,
+        &quot;description&quot;: &quot;Password to use to connect to the specified database. Required
+        for databases that need authentication. Optional for databases that do not
+        require authentication.&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;required&quot;: false
+      },
+      &quot;user&quot;: {
+        &quot;name&quot;: &quot;user&quot;,
+        &quot;description&quot;: &quot;User to use to connect to the specified database. Required for
+        databases that need authentication. Optional for databases that do not require
+        authentication.&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;required&quot;: false
+      },
+      &quot;countQuery&quot;: {
+        &quot;name&quot;: &quot;countQuery&quot;,
+        &quot;description&quot;: &quot;The SELECT query to use to get the count of records to import
+        from the specified table. Examples: SELECT COUNT(*) from &lt;my_table&gt; where
+        &lt;my_column&gt; 1, SELECT COUNT(my_column) from my_table). NOTE: Please include the
+        same WHERE clauses in this query as the ones used in the import query to reflect
+        an accurate number of records to import.&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;required&quot;: true
+      }
+    },
+    &quot;template&quot;: {
+      &quot;name&quot;: &quot;ETLBatch&quot;,
+      &quot;description&quot;: &quot;Batch Extract-Transform-Load (ETL) Adapter&quot;,
+      &quot;programType&quot;: &quot;Workflow&quot;
+    },
+    &quot;source&quot;: {
+      &quot;fileName&quot;: &quot;cdap-etl-lib-3.0.0-batch.jar&quot;,
+      &quot;name&quot;: &quot;cdap-etl-lib&quot;,
+      &quot;version&quot;: {
+        &quot;version&quot;: &quot;3.0.0-batch&quot;,
+        &quot;major&quot;: 3,
+        &quot;minor&quot;: 0,
+        &quot;fix&quot;: 0,
+        &quot;suffix&quot;: &quot;batch&quot;
+      }
+    },
+    &quot;type&quot;: &quot;source&quot;,
+    &quot;name&quot;: &quot;Database&quot;,
+    &quot;description&quot;: &quot;Batch source for a database.&quot;
+  }
+]
+</pre>
+</div>
+</div>
+</div>
+<div class="section" id="adapters">
+<span id="http-restful-api-apptemplates-adapters"></span><h2>Adapters<a class="headerlink" href="#adapters" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="creating-an-adapter">
+<span id="http-restful-api-apptemplates-adapters-creating"></span><h3>Creating an Adapter<a class="headerlink" href="#creating-an-adapter" title="Permalink to this headline">¶</a></h3>
+<p>To create an Adapter, submit an HTTP PUT request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">PUT &lt;base-url&gt;/namespaces/&lt;namespace-id&gt;/adapters/&lt;adapter-id&gt;</span>
+</pre></div>
+</div>
+<p>with the path to the <a class="reference external" href="../source/../../application-templates/etl/creating.html#apptemplates-etl-configuration-file-format" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">Adapter configuration file</span></a> as the body of the request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">&lt;config-path&gt;</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;adapter-id&gt;</span></code></td>
+<td>Name of the Adapter</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;config-path&gt;</span></code></td>
+<td>Path to the configuration file</td>
+</tr>
+</tbody>
+</table>
+<p>The format of the configuration file is described in the Application Templates section
+on <a class="reference external" href="../source/../../application-templates/etl/creating.html#apptemplates-etl-configuration-file-format" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">Creating an ETL Adapter</span></a>.</p>
+<p class="rubric">Example</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">HTTP Method</th>
+<td><code class="docutils literal"><span class="pre">PUT</span> <span class="pre">&lt;base-url&gt;/namespaces/default/adapters/streamAdapter</span> <span class="pre">-d</span> <span class="pre">&#64;config.json</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">Description</th>
+<td>Creates an Adapter <em>streamAdapter</em> in the namespace <em>default</em> using the configuration
+file <code class="docutils literal"><span class="pre">config.json</span></code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="listing-existing-adapters">
+<span id="http-restful-api-apptemplates-adapters-listing"></span><h3>Listing Existing Adapters<a class="headerlink" href="#listing-existing-adapters" title="Permalink to this headline">¶</a></h3>
+<p>To retrieve a list of the existing Adapters, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/namespaces/&lt;namespace-id&gt;/adapters</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+</tbody>
+</table>
+<p>This will return a JSON String map that lists all the current Adapters and all of their details.</p>
+<p>For example, if an adapter <em>streamAdapter</em> has been created as in the previous command, the
+command will return a list of adapters (pretty-printed and reformatted to fit):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[</span>
+<span class="go">  {</span>
+<span class="go">    &quot;name&quot;: &quot;streamAdapter&quot;,</span>
+<span class="go">    &quot;description&quot;: &quot;Batch ETL&quot;,</span>
+<span class="go">    &quot;template&quot;: &quot;ETLBatch&quot;,</span>
+<span class="go">    &quot;program&quot;: {</span>
+<span class="go">      &quot;namespace&quot;: &quot;default&quot;,</span>
+<span class="go">      &quot;application&quot;: &quot;ETLBatch&quot;,</span>
+<span class="go">      &quot;type&quot;: &quot;Workflow&quot;,</span>
+<span class="go">      &quot;id&quot;: &quot;ETLWorkflow&quot;</span>
+<span class="go">    },</span>
+<span class="go">    &quot;config&quot;: {</span>
+<span class="go">      &quot;schedule&quot;: &quot;* * * * *&quot;,</span>
+<span class="go">      &quot;source&quot;: {</span>
+<span class="go">        &quot;name&quot;: &quot;Stream&quot;,</span>
+<span class="go">        &quot;properties&quot;: {</span>
+<span class="go">            &quot;name&quot;: &quot;myStream&quot;,</span>
+<span class="go">            &quot;duration&quot;: &quot;1m&quot;</span>
+<span class="go">        }</span>
+<span class="go">      },</span>
+<span class="go">      &quot;sink&quot;: {</span>
+<span class="go">        &quot;name&quot;: &quot;Table&quot;,</span>
+<span class="go">        &quot;properties&quot;: {</span>
+<span class="go">            &quot;name&quot;: &quot;myTable&quot;,</span>
+<span class="go">            &quot;schema.row.field&quot;: &quot;ts&quot;</span>
+<span class="go">        }</span>
+<span class="go">      },</span>
+<span class="go">      &quot;transforms&quot;: [</span>
+
+<span class="go">      ]</span>
+<span class="go">    },</span>
+<span class="go">    &quot;schedule&quot;: {</span>
+<span class="go">      &quot;schedule&quot;: {</span>
+<span class="go">        &quot;cronExpression&quot;: &quot;* * * * *&quot;,</span>
+<span class="go">        &quot;name&quot;: &quot;streamAdapter.etl.batch.adapter.streamAdapter.schedule&quot;,</span>
+<span class="go">        &quot;description&quot;: &quot;Schedule for streamAdapter Adapter&quot;</span>
+<span class="go">      },</span>
+<span class="go">      &quot;program&quot;: {</span>
+<span class="go">        &quot;programName&quot;: &quot;ETLWorkflow&quot;,</span>
+<span class="go">        &quot;programType&quot;: &quot;WORKFLOW&quot;</span>
+<span class="go">      },</span>
+<span class="go">      &quot;properties&quot;: {</span>
+<span class="go">        &quot;transformIds&quot;: &quot;[]&quot;,</span>
+<span class="go">        &quot;name&quot;: &quot;streamAdapter&quot;,</span>
+<span class="go">        &quot;sinkId&quot;: &quot;sink:Table&quot;,</span>
+<span class="go">        &quot;config&quot;: &quot;{\&quot;schedule\&quot;:\&quot;* * * * *\&quot;,\&quot;source\&quot;:{\&quot;name\&quot;:\&quot;Stream\&quot;,</span>
+<span class="go">        \&quot;properties\&quot;:{\&quot;duration\&quot;:\&quot;1m\&quot;,\&quot;name\&quot;:\&quot;myStream\&quot;}},\&quot;sink\&quot;:{\&quot;name\&quot;:</span>
+<span class="go">        \&quot;Table\&quot;,\&quot;properties\&quot;:{\&quot;name\&quot;:\&quot;myTable\&quot;,\&quot;schema.row.field\&quot;:\&quot;ts\&quot;}},</span>
+<span class="go">        \&quot;transforms\&quot;:[]}&quot;,</span>
+<span class="go">        &quot;sourceId&quot;: &quot;source:Stream&quot;</span>
+<span class="go">      }</span>
+<span class="go">    },</span>
+<span class="go">    &quot;instances&quot;: 1</span>
+<span class="go">  }</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="list-details-of-an-adapter">
+<span id="http-restful-api-apptemplates-adapters-details"></span><h3>List Details of an Adapter<a class="headerlink" href="#list-details-of-an-adapter" title="Permalink to this headline">¶</a></h3>
+<p>To retrieve the details of a particular Adapter, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/namespaces/&lt;namespace-id&gt;/adapters/&lt;adapter-id&gt;</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;adapter-id&gt;</span></code></td>
+<td>Name of the Adapter</td>
+</tr>
+</tbody>
+</table>
+<p>For example, if an adapter <em>streamAdapter</em> has been created as in a previous command, the
+command will return (pretty-printed and reformatted to fit):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;name&quot;: &quot;streamAdapter&quot;,</span>
+<span class="go">  &quot;description&quot;: &quot;Batch ETL&quot;,</span>
+<span class="go">  &quot;template&quot;: &quot;ETLBatch&quot;,</span>
+<span class="go">  &quot;program&quot;: {</span>
+<span class="go">    &quot;namespace&quot;: &quot;default&quot;,</span>
+<span class="go">    &quot;application&quot;: &quot;ETLBatch&quot;,</span>
+<span class="go">    &quot;type&quot;: &quot;Workflow&quot;,</span>
+<span class="go">    &quot;id&quot;: &quot;ETLWorkflow&quot;</span>
+<span class="go">  },</span>
+<span class="go">  &quot;config&quot;: {</span>
+<span class="go">    &quot;schedule&quot;: &quot;* * * * *&quot;,</span>
+<span class="go">    &quot;source&quot;: {</span>
+<span class="go">      &quot;name&quot;: &quot;Stream&quot;,</span>
+<span class="go">      &quot;properties&quot;: {</span>
+<span class="go">          &quot;name&quot;: &quot;myStream&quot;,</span>
+<span class="go">          &quot;duration&quot;: &quot;1m&quot;</span>
+<span class="go">      }</span>
+<span class="go">    },</span>
+<span class="go">    &quot;sink&quot;: {</span>
+<span class="go">      &quot;name&quot;: &quot;Table&quot;,</span>
+<span class="go">      &quot;properties&quot;: {</span>
+<span class="go">          &quot;name&quot;: &quot;myTable&quot;,</span>
+<span class="go">          &quot;schema.row.field&quot;: &quot;ts&quot;</span>
+<span class="go">      }</span>
+<span class="go">    },</span>
+<span class="go">    &quot;transforms&quot;: [</span>
+
+<span class="go">    ]</span>
+<span class="go">  },</span>
+<span class="go">  &quot;schedule&quot;: {</span>
+<span class="go">    &quot;schedule&quot;: {</span>
+<span class="go">      &quot;cronExpression&quot;: &quot;* * * * *&quot;,</span>
+<span class="go">      &quot;name&quot;: &quot;streamAdapter.etl.batch.adapter.streamAdapter.schedule&quot;,</span>
+<span class="go">      &quot;description&quot;: &quot;Schedule for streamAdapter Adapter&quot;</span>
+<span class="go">    },</span>
+<span class="go">    &quot;program&quot;: {</span>
+<span class="go">      &quot;programName&quot;: &quot;ETLWorkflow&quot;,</span>
+<span class="go">      &quot;programType&quot;: &quot;WORKFLOW&quot;</span>
+<span class="go">    },</span>
+<span class="go">    &quot;properties&quot;: {</span>
+<span class="go">      &quot;transformIds&quot;: &quot;[]&quot;,</span>
+<span class="go">      &quot;name&quot;: &quot;streamAdapter&quot;,</span>
+<span class="go">      &quot;sinkId&quot;: &quot;sink:Table&quot;,</span>
+<span class="go">      &quot;config&quot;: &quot;{\&quot;schedule\&quot;:\&quot;* * * * *\&quot;,\&quot;source\&quot;:{\&quot;name\&quot;:\&quot;Stream\&quot;,</span>
+<span class="go">      \&quot;properties\&quot;:{\&quot;duration\&quot;:\&quot;1m\&quot;,\&quot;name\&quot;:\&quot;myStream\&quot;}},\&quot;sink\&quot;:{\&quot;name\&quot;:</span>
+<span class="go">      \&quot;Table\&quot;,\&quot;properties\&quot;:{\&quot;name\&quot;:\&quot;myTable\&quot;,\&quot;schema.row.field\&quot;:\&quot;ts\&quot;}},</span>
+<span class="go">      \&quot;transforms\&quot;:[]}&quot;,</span>
+<span class="go">      &quot;sourceId&quot;: &quot;source:Stream&quot;</span>
+<span class="go">    }</span>
+<span class="go">  },</span>
+<span class="go">  &quot;instances&quot;: 1</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="status-of-an-adapter">
+<h3>Status of an Adapter<a class="headerlink" href="#status-of-an-adapter" title="Permalink to this headline">¶</a></h3>
+<p>To retrieve the status of an Adapter, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/namespaces/&lt;namespace-id&gt;/adapters/&lt;adapter-id&gt;/status</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;adapter-id&gt;</span></code></td>
+<td>Name of the Adapter</td>
+</tr>
+</tbody>
+</table>
+<p>It will return the status of the Adapter, one of <code class="docutils literal"><span class="pre">STOPPED</span></code>, <code class="docutils literal"><span class="pre">STARTING</span></code>, <code class="docutils literal"><span class="pre">STARTED</span></code>.</p>
+<p>If there is an error (for instance, the Adapter does not exist), a message and an
+appropriate status code (<code class="docutils literal"><span class="pre">404</span></code>) will be returned.</p>
+</div>
+<div class="section" id="starting-an-adapter">
+<h3>Starting an Adapter<a class="headerlink" href="#starting-an-adapter" title="Permalink to this headline">¶</a></h3>
+<p>Starting a Batch Adapter schedules a Workflow to be run periodically based on the cron
+schedule that is configured in the Adapter. Starting a Realtime Adapter starts a CDAP
+Worker.</p>
+<p>To start an Adapter, submit an HTTP POST request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &lt;base-url&gt;/namespaces/&lt;namespace-id&gt;/adapters/&lt;adapter-id&gt;/start</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;adapter-id&gt;</span></code></td>
+<td>Name of the Adapter</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="stopping-an-adapter">
+<h3>Stopping an Adapter<a class="headerlink" href="#stopping-an-adapter" title="Permalink to this headline">¶</a></h3>
+<p>To stop an Adapter, submit an HTTP POST request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &lt;base-url&gt;/namespaces/&lt;namespace-id&gt;/adapters/&lt;adapter-id&gt;/stop</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;adapter-id&gt;</span></code></td>
+<td>Name of the Adapter</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="deleting-an-adapter">
+<h3>Deleting an Adapter<a class="headerlink" href="#deleting-an-adapter" title="Permalink to this headline">¶</a></h3>
+<p>To delete an Adapter, submit an HTTP DELETE request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE &lt;base-url&gt;/namespaces/&lt;namespace-id&gt;/adapters/&lt;adapter-id&gt;</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;adapter-id&gt;</span></code></td>
+<td>Name of the Adapter</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="retrieving-adapter-runs">
+<h3>Retrieving Adapter Runs<a class="headerlink" href="#retrieving-adapter-runs" title="Permalink to this headline">¶</a></h3>
+<p>To retrieve a list of runs of an Adapter, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/namespaces/&lt;namespace-id&gt;/adapters/&lt;adapter-id&gt;/runs</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;adapter-id&gt;</span></code></td>
+<td>Name of the Adapter</td>
+</tr>
+</tbody>
+</table>
+<p>The command will return a list of runs for the Adapter (pretty-printed and reformatted to
+fit):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[</span>
+<span class="go">  {</span>
+<span class="go">    &quot;runid&quot;: &quot;f0697b83-ef7e-11e4-8f65-22d805694e6a&quot;,</span>
+<span class="go">    &quot;start&quot;: 1430428920,</span>
+<span class="go">    &quot;end&quot;: 1430428922,</span>
+<span class="go">    &quot;status&quot;: &quot;FAILED&quot;,</span>
+<span class="go">    &quot;adapter&quot;: &quot;streamAdapter&quot;,</span>
+<span class="go">    &quot;properties&quot;: {</span>
+<span class="go">      &quot;0&quot;: &quot;f06eaba4-ef7e-11e4-9586-22d805694e6a&quot;</span>
+<span class="go">    }</span>
+<span class="go">  },</span>
+<span class="go">  {</span>
+<span class="go">    &quot;runid&quot;: &quot;cc502641-ef7e-11e4-b47a-22d805694e6a&quot;,</span>
+<span class="go">    &quot;start&quot;: 1430428860,</span>
+<span class="go">    &quot;end&quot;: 1430428869,</span>
+<span class="go">    &quot;status&quot;: &quot;COMPLETED&quot;,</span>
+<span class="go">    &quot;adapter&quot;: &quot;streamAdapter&quot;,</span>
+<span class="go">    &quot;properties&quot;: {</span>
+<span class="go">      &quot;0&quot;: &quot;cc5b49d2-ef7e-11e4-9c24-22d805694e6a&quot;</span>
+<span class="go">    }</span>
+<span class="go">  }</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="retrieving-adapter-logs">
+<h3>Retrieving Adapter Logs<a class="headerlink" href="#retrieving-adapter-logs" title="Permalink to this headline">¶</a></h3>
+<p>As an Adapter is an instantiation of a particular program (a Workflow, MapReduce, Workers, etc.),
+the logs for an Adapter are the logs of the underlying program. To retrieve these logs
+using a RESTful API, you need to know which underlying program the Adapter uses
+and then use the CDAP <a class="reference internal" href="logging.html#http-restful-api-logging"><span>Logging API</span></a> to retrieve its logs.</p>
+<p>To find the underlying programs, you can <a class="reference internal" href="#http-restful-api-apptemplates-adapters-details"><span>list details of an Adapter</span></a> and then use its <code class="docutils literal"><span class="pre">program</span></code> information
+to determine how to build your request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">&quot;program&quot;: {</span>
+<span class="go">  &quot;namespace&quot;: &quot;default&quot;,</span>
+<span class="go">  &quot;application&quot;: &quot;ETLBatch&quot;,</span>
+<span class="go">  &quot;type&quot;: &quot;Workflow&quot;,</span>
+<span class="go">  &quot;id&quot;: &quot;ETLWorkflow&quot;</span>
+<span class="go">},</span>
+</pre></div>
+</div>
+<p>For example, using the previous <code class="docutils literal"><span class="pre">streamAdapter</span></code>, you would be interested in the logs of the
+Workflow <em>ETLWorkflow</em> of the Application <em>ETLBatch</em> of the namespace <em>default</em>. From this,
+you can formulate your request.</p>
+<p>The <a class="reference internal" href="../cli-api.html#cli"><span>CDAP CLI</span></a> has a command (<code class="docutils literal"><span class="pre">get</span> <span class="pre">adapter</span> <span class="pre">logs</span> <span class="pre">&lt;adapter-id&gt;</span></code>) that does this directly.</p>
+</div>
+<div class="section" id="retrieving-adapter-metrics">
+<span id="http-restful-api-apptemplates-adapter-metrics"></span><h3>Retrieving Adapter Metrics<a class="headerlink" href="#retrieving-adapter-metrics" title="Permalink to this headline">¶</a></h3>
+<p>To retrieve the metrics of an Adapter, use these RESTful API endpoints.</p>
+<p class="rubric">Find Available Adapters</p>
+<p>To search for the available Adapters, if metrics have been emitted by the adapters, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/metrics/search?target=tags&amp;tag=namespace:&lt;namespace-id&gt;</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+</tbody>
+</table>
+<p>The command will return available Adapters in <em>namespace-id</em> if metrics have been emitted by the Adapters.</p>
+<p class="rubric">Find Available Metrics</p>
+<p>To search for the available metrics for an Adapter, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/metrics/search?target=metric&amp;tag=namespace:&lt;namespace-id&gt;&amp;tag=adapter:&lt;adapter-id&gt;</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;adapter-id&gt;</span></code></td>
+<td>Adapter ID</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Aggregate Available Values</p>
+<p>To retrieve the aggregated value for a metric emitted by an Adapter, submit an HTTP GET request:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/metrics/query?tag=namespace:&lt;namespace-id&gt;&amp;tag=adapter:&lt;adapter-id&gt;&amp;metric=&lt;metric-id&gt;&amp;aggregate=true</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;adapter-id&gt;</span></code></td>
+<td>Adapter ID</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;metric-id&gt;</span></code></td>
+<td>Metric ID</td>
+</tr>
+</tbody>
+</table>
+<p>The command will return the aggregate value for the metric <em>metric-id</em> emitted by <em>adapter-id</em> in
+<em>namespace-id</em> across all runs of the Adapter. If you would like the metrics for a
+particular run, specify an additional tag of <code class="docutils literal"><span class="pre">tag=run:&lt;run-id&gt;</span></code> in the above query.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v3.0.0</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Overview</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html"
+            rel="nofollow">Introduction to CDAP</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class="new-icon"></div><a href="../table-of-contents/../../application-templates/index.html"
+            rel="nofollow">Application Templates</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><b><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Reference Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html"> Supported Characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli-api.html"> Command Line Interface API</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> HTTP RESTful API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespace.html">Namespace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifecycle.html">Lifecycle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="preferences.html">Preferences</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Application Templates and Adapters</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#application-templates">Application Templates</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#available-application-templates">Available Application Templates</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#template-details">Template Details</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#template-update">Template Update</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#template-extensions">Template Extensions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#details-of-an-extension-plugin">Details of an Extension (Plugin)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#adapters">Adapters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#creating-an-adapter">Creating an Adapter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#listing-existing-adapters">Listing Existing Adapters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#list-details-of-an-adapter">List Details of an Adapter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#status-of-an-adapter">Status of an Adapter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#starting-an-adapter">Starting an Adapter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stopping-an-adapter">Stopping an Adapter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deleting-an-adapter">Deleting an Adapter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#retrieving-adapter-runs">Retrieving Adapter Runs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#retrieving-adapter-logs">Retrieving Adapter Logs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#retrieving-adapter-metrics">Retrieving Adapter Metrics</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html">Stream</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html">Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="query.html">Query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="service.html">Service</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html">Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="monitor.html">Monitor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transactions.html">Transactions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../java-client-api.html"> Java Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../javadocs/index.html"> Javadocs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../licenses/index.html"> Trademarks, Licenses, and Dependencies</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="preferences.html"
+                        title="Previous Chapter">Preferences HTTP RESTful API</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="stream.html"
+                        title="Next Chapter">Stream HTTP RESTful API</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.0.0/cdap-docs-3.0.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Preferences HTTP RESTful API" href="preferences.html" />Preferences HTTP RESTful API</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Stream HTTP RESTful API" href="stream.html" />Stream HTTP RESTful API</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

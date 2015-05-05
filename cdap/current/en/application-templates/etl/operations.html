@@ -1,0 +1,679 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Adapter Lifecycle Management (Beta) &mdash; Cask Data Application Platform 3.0.0 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.0.0 Documentation" href="../index.html" />
+    <link rel="next" title="Creating Custom ETL Plugins and Adapters (Beta)" href="custom.html" />
+    <link rel="prev" title="Creating An ETL Adapter (Beta)" href="creating.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="custom.html" title="Creating Custom ETL Plugins and Adapters (Beta)"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="creating.html" title="Creating An ETL Adapter (Beta)"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.0.0');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Application Templates</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="adapter-lifecycle-management-beta">
+<span id="apptemplates-etl-operations"></span><h1>Adapter Lifecycle Management (Beta)<a class="headerlink" href="#adapter-lifecycle-management-beta" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>These lifecycle operations can be performed with ETL Adapters once they are created.</p>
+</div>
+<div class="section" id="listing-existing-adapters">
+<h2>Listing Existing Adapters<a class="headerlink" href="#listing-existing-adapters" title="Permalink to this headline">¶</a></h2>
+<p>To retrieve a list of the existing Adapters, submit an HTTP GET request:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">GET</span> <span class="o">&lt;</span><span class="n">base</span><span class="o">-</span><span class="n">url</span><span class="o">&gt;/</span><span class="n">namespaces</span><span class="o">/&lt;</span><span class="n">namespace</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;/</span><span class="n">adapters</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+</tbody>
+</table>
+<p>This will return a JSON String map that lists all the current Adapters and all of their details.</p>
+<p>For example, if an adapter <em>streamAdapter</em> has been created as in the previous command, the
+command will return a list of adapters (pretty-printed and reformatted to fit):</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">[</span>
+  <span class="o">{</span>
+    <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;streamAdapter&quot;</span><span class="o">,</span>
+    <span class="s">&quot;description&quot;</span><span class="o">:</span> <span class="s">&quot;Batch ETL&quot;</span><span class="o">,</span>
+    <span class="s">&quot;template&quot;</span><span class="o">:</span> <span class="s">&quot;ETLBatch&quot;</span><span class="o">,</span>
+    <span class="s">&quot;program&quot;</span><span class="o">:</span> <span class="o">{</span>
+      <span class="s">&quot;namespace&quot;</span><span class="o">:</span> <span class="s">&quot;default&quot;</span><span class="o">,</span>
+      <span class="s">&quot;application&quot;</span><span class="o">:</span> <span class="s">&quot;ETLBatch&quot;</span><span class="o">,</span>
+      <span class="s">&quot;type&quot;</span><span class="o">:</span> <span class="s">&quot;Workflow&quot;</span><span class="o">,</span>
+      <span class="s">&quot;id&quot;</span><span class="o">:</span> <span class="s">&quot;ETLWorkflow&quot;</span>
+    <span class="o">},</span>
+    <span class="s">&quot;config&quot;</span><span class="o">:</span> <span class="o">{</span>
+      <span class="s">&quot;schedule&quot;</span><span class="o">:</span> <span class="s">&quot;* * * * *&quot;</span><span class="o">,</span>
+      <span class="s">&quot;source&quot;</span><span class="o">:</span> <span class="o">{</span>
+        <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;Stream&quot;</span><span class="o">,</span>
+        <span class="s">&quot;properties&quot;</span><span class="o">:</span> <span class="o">{</span>
+            <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;myStream&quot;</span><span class="o">,</span>
+            <span class="s">&quot;duration&quot;</span><span class="o">:</span> <span class="s">&quot;1m&quot;</span>
+        <span class="o">}</span>
+      <span class="o">},</span>
+      <span class="s">&quot;sink&quot;</span><span class="o">:</span> <span class="o">{</span>
+        <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;Table&quot;</span><span class="o">,</span>
+        <span class="s">&quot;properties&quot;</span><span class="o">:</span> <span class="o">{</span>
+            <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;myTable&quot;</span><span class="o">,</span>
+            <span class="s">&quot;schema.row.field&quot;</span><span class="o">:</span> <span class="s">&quot;ts&quot;</span>
+        <span class="o">}</span>
+      <span class="o">},</span>
+      <span class="s">&quot;transforms&quot;</span><span class="o">:</span> <span class="o">[</span>
+
+      <span class="o">]</span>
+    <span class="o">},</span>
+    <span class="s">&quot;schedule&quot;</span><span class="o">:</span> <span class="o">{</span>
+      <span class="s">&quot;schedule&quot;</span><span class="o">:</span> <span class="o">{</span>
+        <span class="s">&quot;cronExpression&quot;</span><span class="o">:</span> <span class="s">&quot;* * * * *&quot;</span><span class="o">,</span>
+        <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;streamAdapter.etl.batch.adapter.streamAdapter.schedule&quot;</span><span class="o">,</span>
+        <span class="s">&quot;description&quot;</span><span class="o">:</span> <span class="s">&quot;Schedule for streamAdapter Adapter&quot;</span>
+      <span class="o">},</span>
+      <span class="s">&quot;program&quot;</span><span class="o">:</span> <span class="o">{</span>
+        <span class="s">&quot;programName&quot;</span><span class="o">:</span> <span class="s">&quot;ETLWorkflow&quot;</span><span class="o">,</span>
+        <span class="s">&quot;programType&quot;</span><span class="o">:</span> <span class="s">&quot;WORKFLOW&quot;</span>
+      <span class="o">},</span>
+      <span class="s">&quot;properties&quot;</span><span class="o">:</span> <span class="o">{</span>
+        <span class="s">&quot;transformIds&quot;</span><span class="o">:</span> <span class="s">&quot;[]&quot;</span><span class="o">,</span>
+        <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;streamAdapter&quot;</span><span class="o">,</span>
+        <span class="s">&quot;sinkId&quot;</span><span class="o">:</span> <span class="s">&quot;sink:Table&quot;</span><span class="o">,</span>
+        <span class="s">&quot;config&quot;</span><span class="o">:</span> <span class="s">&quot;{\&quot;schedule\&quot;:\&quot;* * * * *\&quot;,\&quot;source\&quot;:{\&quot;name\&quot;:\&quot;Stream\&quot;,</span>
+<span class="s">        \&quot;properties\&quot;:{\&quot;duration\&quot;:\&quot;1m\&quot;,\&quot;name\&quot;:\&quot;myStream\&quot;}},\&quot;sink\&quot;:{\&quot;name\&quot;:</span>
+<span class="s">        \&quot;Table\&quot;,\&quot;properties\&quot;:{\&quot;name\&quot;:\&quot;myTable\&quot;,\&quot;schema.row.field\&quot;:\&quot;ts\&quot;}},</span>
+<span class="s">        \&quot;transforms\&quot;:[]}&quot;</span><span class="o">,</span>
+        <span class="s">&quot;sourceId&quot;</span><span class="o">:</span> <span class="s">&quot;source:Stream&quot;</span>
+      <span class="o">}</span>
+    <span class="o">},</span>
+    <span class="s">&quot;instances&quot;</span><span class="o">:</span> <span class="mi">1</span>
+  <span class="o">}</span>
+<span class="o">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="list-details-of-an-adapter">
+<span id="http-restful-api-apptemplates-adapters-details"></span><h2>List Details of an Adapter<a class="headerlink" href="#list-details-of-an-adapter" title="Permalink to this headline">¶</a></h2>
+<p>To retrieve the details of a particular Adapter, submit an HTTP GET request:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">GET</span> <span class="o">&lt;</span><span class="n">base</span><span class="o">-</span><span class="n">url</span><span class="o">&gt;/</span><span class="n">namespaces</span><span class="o">/&lt;</span><span class="n">namespace</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;/</span><span class="n">adapters</span><span class="o">/&lt;</span><span class="n">adapter</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;adapter-id&gt;</span></code></td>
+<td>Name of the Adapter</td>
+</tr>
+</tbody>
+</table>
+<p>For example, if an adapter <em>streamAdapter</em> has been created as in a previous command, the
+command will return (pretty-printed and reformatted to fit):</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">{</span>
+  <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;streamAdapter&quot;</span><span class="o">,</span>
+  <span class="s">&quot;description&quot;</span><span class="o">:</span> <span class="s">&quot;Batch ETL&quot;</span><span class="o">,</span>
+  <span class="s">&quot;template&quot;</span><span class="o">:</span> <span class="s">&quot;ETLBatch&quot;</span><span class="o">,</span>
+  <span class="s">&quot;program&quot;</span><span class="o">:</span> <span class="o">{</span>
+    <span class="s">&quot;namespace&quot;</span><span class="o">:</span> <span class="s">&quot;default&quot;</span><span class="o">,</span>
+    <span class="s">&quot;application&quot;</span><span class="o">:</span> <span class="s">&quot;ETLBatch&quot;</span><span class="o">,</span>
+    <span class="s">&quot;type&quot;</span><span class="o">:</span> <span class="s">&quot;Workflow&quot;</span><span class="o">,</span>
+    <span class="s">&quot;id&quot;</span><span class="o">:</span> <span class="s">&quot;ETLWorkflow&quot;</span>
+  <span class="o">},</span>
+  <span class="s">&quot;config&quot;</span><span class="o">:</span> <span class="o">{</span>
+    <span class="s">&quot;schedule&quot;</span><span class="o">:</span> <span class="s">&quot;* * * * *&quot;</span><span class="o">,</span>
+    <span class="s">&quot;source&quot;</span><span class="o">:</span> <span class="o">{</span>
+      <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;Stream&quot;</span><span class="o">,</span>
+      <span class="s">&quot;properties&quot;</span><span class="o">:</span> <span class="o">{</span>
+          <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;myStream&quot;</span><span class="o">,</span>
+          <span class="s">&quot;duration&quot;</span><span class="o">:</span> <span class="s">&quot;1m&quot;</span>
+      <span class="o">}</span>
+    <span class="o">},</span>
+    <span class="s">&quot;sink&quot;</span><span class="o">:</span> <span class="o">{</span>
+      <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;Table&quot;</span><span class="o">,</span>
+      <span class="s">&quot;properties&quot;</span><span class="o">:</span> <span class="o">{</span>
+          <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;myTable&quot;</span><span class="o">,</span>
+          <span class="s">&quot;schema.row.field&quot;</span><span class="o">:</span> <span class="s">&quot;ts&quot;</span>
+      <span class="o">}</span>
+    <span class="o">},</span>
+    <span class="s">&quot;transforms&quot;</span><span class="o">:</span> <span class="o">[</span>
+
+    <span class="o">]</span>
+  <span class="o">},</span>
+  <span class="s">&quot;schedule&quot;</span><span class="o">:</span> <span class="o">{</span>
+    <span class="s">&quot;schedule&quot;</span><span class="o">:</span> <span class="o">{</span>
+      <span class="s">&quot;cronExpression&quot;</span><span class="o">:</span> <span class="s">&quot;* * * * *&quot;</span><span class="o">,</span>
+      <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;streamAdapter.etl.batch.adapter.streamAdapter.schedule&quot;</span><span class="o">,</span>
+      <span class="s">&quot;description&quot;</span><span class="o">:</span> <span class="s">&quot;Schedule for streamAdapter Adapter&quot;</span>
+    <span class="o">},</span>
+    <span class="s">&quot;program&quot;</span><span class="o">:</span> <span class="o">{</span>
+      <span class="s">&quot;programName&quot;</span><span class="o">:</span> <span class="s">&quot;ETLWorkflow&quot;</span><span class="o">,</span>
+      <span class="s">&quot;programType&quot;</span><span class="o">:</span> <span class="s">&quot;WORKFLOW&quot;</span>
+    <span class="o">},</span>
+    <span class="s">&quot;properties&quot;</span><span class="o">:</span> <span class="o">{</span>
+      <span class="s">&quot;transformIds&quot;</span><span class="o">:</span> <span class="s">&quot;[]&quot;</span><span class="o">,</span>
+      <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;streamAdapter&quot;</span><span class="o">,</span>
+      <span class="s">&quot;sinkId&quot;</span><span class="o">:</span> <span class="s">&quot;sink:Table&quot;</span><span class="o">,</span>
+      <span class="s">&quot;config&quot;</span><span class="o">:</span> <span class="s">&quot;{\&quot;schedule\&quot;:\&quot;* * * * *\&quot;,\&quot;source\&quot;:{\&quot;name\&quot;:\&quot;Stream\&quot;,</span>
+<span class="s">      \&quot;properties\&quot;:{\&quot;duration\&quot;:\&quot;1m\&quot;,\&quot;name\&quot;:\&quot;myStream\&quot;}},\&quot;sink\&quot;:{\&quot;name\&quot;:</span>
+<span class="s">      \&quot;Table\&quot;,\&quot;properties\&quot;:{\&quot;name\&quot;:\&quot;myTable\&quot;,\&quot;schema.row.field\&quot;:\&quot;ts\&quot;}},</span>
+<span class="s">      \&quot;transforms\&quot;:[]}&quot;</span><span class="o">,</span>
+      <span class="s">&quot;sourceId&quot;</span><span class="o">:</span> <span class="s">&quot;source:Stream&quot;</span>
+    <span class="o">}</span>
+  <span class="o">},</span>
+  <span class="s">&quot;instances&quot;</span><span class="o">:</span> <span class="mi">1</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="status-of-an-adapter">
+<h2>Status of an Adapter<a class="headerlink" href="#status-of-an-adapter" title="Permalink to this headline">¶</a></h2>
+<p>To retrieve the status of an Adapter, submit an HTTP GET request:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">GET</span> <span class="o">&lt;</span><span class="n">base</span><span class="o">-</span><span class="n">url</span><span class="o">&gt;/</span><span class="n">namespaces</span><span class="o">/&lt;</span><span class="n">namespace</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;/</span><span class="n">adapters</span><span class="o">/&lt;</span><span class="n">adapter</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;/</span><span class="n">status</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;adapter-id&gt;</span></code></td>
+<td>Name of the Adapter</td>
+</tr>
+</tbody>
+</table>
+<p>It will return the status of the Adapter, one of <code class="docutils literal"><span class="pre">STOPPED</span></code>, <code class="docutils literal"><span class="pre">STARTING</span></code>, <code class="docutils literal"><span class="pre">STARTED</span></code>.</p>
+<p>If there is an error (for instance, the Adapter does not exist), a message and an
+appropriate status code (<code class="docutils literal"><span class="pre">404</span></code>) will be returned.</p>
+</div>
+<div class="section" id="starting-an-adapter">
+<h2>Starting an Adapter<a class="headerlink" href="#starting-an-adapter" title="Permalink to this headline">¶</a></h2>
+<p>Starting a Batch Adapter schedules a Workflow to be run periodically based on the cron
+schedule that is configured in the Adapter. Starting a Realtime Adapter starts a CDAP
+Worker.</p>
+<p>To start an Adapter, submit an HTTP POST request:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">POST</span> <span class="o">&lt;</span><span class="n">base</span><span class="o">-</span><span class="n">url</span><span class="o">&gt;/</span><span class="n">namespaces</span><span class="o">/&lt;</span><span class="n">namespace</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;/</span><span class="n">adapters</span><span class="o">/&lt;</span><span class="n">adapter</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;/</span><span class="n">start</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;adapter-id&gt;</span></code></td>
+<td>Name of the Adapter</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="stopping-an-adapter">
+<h2>Stopping an Adapter<a class="headerlink" href="#stopping-an-adapter" title="Permalink to this headline">¶</a></h2>
+<p>To stop an Adapter, submit an HTTP POST request:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">POST</span> <span class="o">&lt;</span><span class="n">base</span><span class="o">-</span><span class="n">url</span><span class="o">&gt;/</span><span class="n">namespaces</span><span class="o">/&lt;</span><span class="n">namespace</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;/</span><span class="n">adapters</span><span class="o">/&lt;</span><span class="n">adapter</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;/</span><span class="n">stop</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;adapter-id&gt;</span></code></td>
+<td>Name of the Adapter</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="deleting-an-adapter">
+<h2>Deleting an Adapter<a class="headerlink" href="#deleting-an-adapter" title="Permalink to this headline">¶</a></h2>
+<p>To delete an Adapter, submit an HTTP DELETE request:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">DELETE</span> <span class="o">&lt;</span><span class="n">base</span><span class="o">-</span><span class="n">url</span><span class="o">&gt;/</span><span class="n">namespaces</span><span class="o">/&lt;</span><span class="n">namespace</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;/</span><span class="n">adapters</span><span class="o">/&lt;</span><span class="n">adapter</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;adapter-id&gt;</span></code></td>
+<td>Name of the Adapter</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="retrieving-adapter-runs">
+<h2>Retrieving Adapter Runs<a class="headerlink" href="#retrieving-adapter-runs" title="Permalink to this headline">¶</a></h2>
+<p>To retrieve a list of runs of an Adapter, submit an HTTP GET request:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">GET</span> <span class="o">&lt;</span><span class="n">base</span><span class="o">-</span><span class="n">url</span><span class="o">&gt;/</span><span class="n">namespaces</span><span class="o">/&lt;</span><span class="n">namespace</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;/</span><span class="n">adapters</span><span class="o">/&lt;</span><span class="n">adapter</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;/</span><span class="n">runs</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;adapter-id&gt;</span></code></td>
+<td>Name of the Adapter</td>
+</tr>
+</tbody>
+</table>
+<p>The command will return a list of runs for the Adapter (pretty-printed and reformatted to
+fit):</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">[</span>
+  <span class="o">{</span>
+    <span class="s">&quot;runid&quot;</span><span class="o">:</span> <span class="s">&quot;f0697b83-ef7e-11e4-8f65-22d805694e6a&quot;</span><span class="o">,</span>
+    <span class="s">&quot;start&quot;</span><span class="o">:</span> <span class="mi">1430428920</span><span class="o">,</span>
+    <span class="s">&quot;end&quot;</span><span class="o">:</span> <span class="mi">1430428922</span><span class="o">,</span>
+    <span class="s">&quot;status&quot;</span><span class="o">:</span> <span class="s">&quot;FAILED&quot;</span><span class="o">,</span>
+    <span class="s">&quot;adapter&quot;</span><span class="o">:</span> <span class="s">&quot;streamAdapter&quot;</span><span class="o">,</span>
+    <span class="s">&quot;properties&quot;</span><span class="o">:</span> <span class="o">{</span>
+      <span class="s">&quot;0&quot;</span><span class="o">:</span> <span class="s">&quot;f06eaba4-ef7e-11e4-9586-22d805694e6a&quot;</span>
+    <span class="o">}</span>
+  <span class="o">},</span>
+  <span class="o">{</span>
+    <span class="s">&quot;runid&quot;</span><span class="o">:</span> <span class="s">&quot;cc502641-ef7e-11e4-b47a-22d805694e6a&quot;</span><span class="o">,</span>
+    <span class="s">&quot;start&quot;</span><span class="o">:</span> <span class="mi">1430428860</span><span class="o">,</span>
+    <span class="s">&quot;end&quot;</span><span class="o">:</span> <span class="mi">1430428869</span><span class="o">,</span>
+    <span class="s">&quot;status&quot;</span><span class="o">:</span> <span class="s">&quot;COMPLETED&quot;</span><span class="o">,</span>
+    <span class="s">&quot;adapter&quot;</span><span class="o">:</span> <span class="s">&quot;streamAdapter&quot;</span><span class="o">,</span>
+    <span class="s">&quot;properties&quot;</span><span class="o">:</span> <span class="o">{</span>
+      <span class="s">&quot;0&quot;</span><span class="o">:</span> <span class="s">&quot;cc5b49d2-ef7e-11e4-9c24-22d805694e6a&quot;</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="retrieving-adapter-logs">
+<h2>Retrieving Adapter Logs<a class="headerlink" href="#retrieving-adapter-logs" title="Permalink to this headline">¶</a></h2>
+<p>As an Adapter is an instantiation of a particular program (a Workflow, MapReduce, Workers, etc.),
+the logs for an Adapter are the logs of the underlying program. To retrieve these logs
+using a RESTful API, you need to know which underlying program the Adapter uses
+and then use the CDAP <a class="reference external" href="../source/../../reference-manual/http-restful-api/logging.html#http-restful-api-logging" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">Logging API</span></a> to retrieve its logs.</p>
+<p>To find the underlying programs, you can <a class="reference internal" href="#http-restful-api-apptemplates-adapters-details"><span>list details of an Adapter</span></a> and then use its <code class="docutils literal"><span class="pre">program</span></code> information
+to determine how to build your request:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="s">&quot;program&quot;</span><span class="o">:</span> <span class="o">{</span>
+  <span class="s">&quot;namespace&quot;</span><span class="o">:</span> <span class="s">&quot;default&quot;</span><span class="o">,</span>
+  <span class="s">&quot;application&quot;</span><span class="o">:</span> <span class="s">&quot;ETLBatch&quot;</span><span class="o">,</span>
+  <span class="s">&quot;type&quot;</span><span class="o">:</span> <span class="s">&quot;Workflow&quot;</span><span class="o">,</span>
+  <span class="s">&quot;id&quot;</span><span class="o">:</span> <span class="s">&quot;ETLWorkflow&quot;</span>
+<span class="o">},</span>
+</pre></div>
+</div>
+<p>For example, using the previous <code class="docutils literal"><span class="pre">streamAdapter</span></code>, you would be interested in the logs of the
+Workflow <em>ETLWorkflow</em> of the Application <em>ETLBatch</em> of the namespace <em>default</em>. From this,
+you can formulate your request.</p>
+<p>The <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">CDAP CLI</span></a> has a command (<code class="docutils literal"><span class="pre">get</span> <span class="pre">adapter</span> <span class="pre">logs</span> <span class="pre">&lt;adapter-id&gt;</span></code>) that does this directly.</p>
+</div>
+<div class="section" id="retrieving-adapter-metrics">
+<span id="http-restful-api-apptemplates-adapter-metrics"></span><h2>Retrieving Adapter Metrics<a class="headerlink" href="#retrieving-adapter-metrics" title="Permalink to this headline">¶</a></h2>
+<p>To retrieve the metrics of an Adapter, use these RESTful API endpoints.</p>
+<p class="rubric">Find Available Adapters</p>
+<p>To search for the available Adapters, if metrics have been emitted by the adapters, submit an HTTP GET request:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">GET</span> <span class="o">&lt;</span><span class="n">base</span><span class="o">-</span><span class="n">url</span><span class="o">&gt;/</span><span class="n">metrics</span><span class="o">/</span><span class="n">search</span><span class="o">?</span><span class="n">target</span><span class="o">=</span><span class="n">tags</span><span class="o">&amp;</span><span class="n">tag</span><span class="o">=</span><span class="n">namespace</span><span class="o">:&lt;</span><span class="n">namespace</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+</tbody>
+</table>
+<p>The command will return available Adapters in <em>namespace-id</em> if metrics have been emitted by the Adapters.</p>
+<p class="rubric">Find Available Metrics</p>
+<p>To search for the available metrics for an Adapter, submit an HTTP GET request:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">GET</span> <span class="o">&lt;</span><span class="n">base</span><span class="o">-</span><span class="n">url</span><span class="o">&gt;/</span><span class="n">metrics</span><span class="o">/</span><span class="n">search</span><span class="o">?</span><span class="n">target</span><span class="o">=</span><span class="n">metric</span><span class="o">&amp;</span><span class="n">tag</span><span class="o">=</span><span class="n">namespace</span><span class="o">:&lt;</span><span class="n">namespace</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;&amp;</span><span class="n">tag</span><span class="o">=</span><span class="n">adapter</span><span class="o">:&lt;</span><span class="n">adapter</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;adapter-id&gt;</span></code></td>
+<td>Adapter ID</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Aggregate Available Values</p>
+<p>To retrieve the aggregated value for a metric emitted by an Adapter, submit an HTTP GET request:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">GET</span> <span class="o">&lt;</span><span class="n">base</span><span class="o">-</span><span class="n">url</span><span class="o">&gt;/</span><span class="n">metrics</span><span class="o">/</span><span class="n">query</span><span class="o">?</span><span class="n">tag</span><span class="o">=</span><span class="n">namespace</span><span class="o">:&lt;</span><span class="n">namespace</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;&amp;</span><span class="n">tag</span><span class="o">=</span><span class="n">adapter</span><span class="o">:&lt;</span><span class="n">adapter</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;&amp;</span><span class="n">metric</span><span class="o">=&lt;</span><span class="n">metric</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;&amp;</span><span class="n">aggregate</span><span class="o">=</span><span class="kc">true</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;adapter-id&gt;</span></code></td>
+<td>Adapter ID</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;metric-id&gt;</span></code></td>
+<td>Metric ID</td>
+</tr>
+</tbody>
+</table>
+<p>The command will return the aggregate value for the metric <em>metric-id</em> emitted by <em>adapter-id</em> in
+<em>namespace-id</em> across all runs of the Adapter. If you would like the metrics for a
+particular run, specify an additional tag of <code class="docutils literal"><span class="pre">tag=run:&lt;run-id&gt;</span></code> in the above query.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v3.0.0</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Overview</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html"
+            rel="nofollow">Introduction to CDAP</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class="new-icon"></div><b><a href="../table-of-contents/../../application-templates/index.html"
+            rel="nofollow">Application Templates</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Application Templates:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html"> ETL Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="templates.html"> ETL Templates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="creating.html"> Creating An ETL Adapter</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> Adapter Lifecycle Management</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#listing-existing-adapters">Listing Existing Adapters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#list-details-of-an-adapter">List Details of an Adapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#status-of-an-adapter">Status of an Adapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#starting-an-adapter">Starting an Adapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#stopping-an-adapter">Stopping an Adapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#deleting-an-adapter">Deleting an Adapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#retrieving-adapter-runs">Retrieving Adapter Runs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#retrieving-adapter-logs">Retrieving Adapter Logs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#retrieving-adapter-metrics">Retrieving Adapter Metrics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="custom.html"> Creating Custom ETL Plugins</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="creating.html"
+                        title="Previous Chapter">Creating An ETL Adapter (Beta)</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="custom.html"
+                        title="Next Chapter">Creating Custom ETL Plugins and Adapters (Beta)</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.0.0/cdap-docs-3.0.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Creating An ETL Adapter (Beta)" href="creating.html" />Creating An ETL Adapter (Beta)</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Creating Custom ETL Plugins and Adapters (Beta)" href="custom.html" />Creating Custom ETL Plugins and Adapters (Beta)</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
