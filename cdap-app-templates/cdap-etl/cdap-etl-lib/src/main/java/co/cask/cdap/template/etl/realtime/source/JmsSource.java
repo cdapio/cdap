@@ -121,10 +121,13 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
 
     // load the class to this class loader
     Class<Object> driver = context.loadPluginClass("jmsource.JMSProvider.Context");
-    Preconditions.checkArgument(driver != null, "JMS Initial Connection Factory Context class must be found.");
 
     // Bootstrap the JMS consumer
-    initializeJMSConnection(envVars, config.destinationName, config.connectionFactoryName, driver.getClassLoader());
+    ClassLoader driverCL = null;
+    if (driver != null) {
+      driverCL = driver.getClassLoader();
+    }
+    initializeJMSConnection(envVars, config.destinationName, config.connectionFactoryName, driverCL);
   }
 
   /**
@@ -139,12 +142,17 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
                                           "Please set the right JMSProvider");
       } else {
         LOG.trace("Using JNDI default JMS provider for destination: {}", destinationName);
-        ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+        ClassLoader oldClassLoader = null;
+        if (driverClassLoader != null) {
+          oldClassLoader = Thread.currentThread().getContextClassLoader();
+        }
         try {
           Thread.currentThread().setContextClassLoader(driverClassLoader);
           jmsProvider = new JndiBasedJmsProvider(envVars, destinationName, connectionFactoryName);
         } finally {
-          Thread.currentThread().setContextClassLoader(oldClassLoader);
+          if (oldClassLoader != null) {
+            Thread.currentThread().setContextClassLoader(oldClassLoader);
+          }
         }
       }
     }
