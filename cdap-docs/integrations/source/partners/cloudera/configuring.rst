@@ -150,8 +150,7 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
    from the processed dataset.  Navigate to Application -> PurchaseHistory ->
    PurchaseHistoryService.  Click the Start button to start the Service.  (This will launch another YARN container)
 
-#. Send an HTTP RESTful API request to the Gateway/Router service to read back the data you injected.
-   From the *PurchaseHistoryService* page, click *Make Request* for the */history/{customer}* endpoint listed.
+#. From the *PurchaseHistoryService* page, click *Make Request* for the */history/{customer}* endpoint listed.
    In the dialog that pops up, enter ``Tom`` in the *Path Params* field and click *Make Request*.
 
 #. You should get back a response similar to::
