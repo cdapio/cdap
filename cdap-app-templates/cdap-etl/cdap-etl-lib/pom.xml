@@ -221,9 +221,10 @@
                 <!-- build bundle jar for realtime. excluding batch-->
                 <Export-Package>co.cask.cdap.template.etl.realtime.*;co.cask.cdap.template.etl.transform.*;
                   co.cask.cdap.template.etl.common</Export-Package>
-                <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
+                <Embed-Dependency>*;inline=false;scope=compile;artifactId=!geronimo-jms_1.1_spec</Embed-Dependency>
                 <Embed-Transitive>true</Embed-Transitive>
                 <Embed-Directory>lib</Embed-Directory>
+                javax/jms
               </instructions>
             </configuration>
            <goals>
