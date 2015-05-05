@@ -13,10 +13,6 @@ The **CDAP UI** is available for deploying, querying and managing the Cask Data
 Application Platform in all modes of CDAP except an 
 :ref:`In-memory CDAP. <in-memory-data-application-platform>`
 
-.. image:: ../_images/console/console_01_overview.png
-   :width: 600px
-   :align: center
-
 Here is a screen-capture of the CDAP UI running on a Distributed CDAP.
 
 .. figure:: ../_images/console/console_01_overview.png
@@ -26,7 +22,7 @@ Here is a screen-capture of the CDAP UI running on a Distributed CDAP.
    :align: center
    :class: bordered-image
 
-   **CDAP UI:** Showing started-up with applications deployed.
+   **CDAP UI:** Showing started-up with applications deployed
 
 
 Across the top, are three buttons: *Development*, *Operations, and *Management.* 
