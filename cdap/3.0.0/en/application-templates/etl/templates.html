@@ -1,0 +1,612 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>ETL Template and Plugin Details &mdash; Cask Data Application Platform 3.0.0 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.0.0 Documentation" href="../index.html" />
+    <link rel="next" title="Creating An ETL Adapter" href="creating.html" />
+    <link rel="prev" title="ETL Overview" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="creating.html" title="Creating An ETL Adapter"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="ETL Overview"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.0.0');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Application Templates</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="etl-template-and-plugin-details">
+<span id="apptemplates-etl-templates"></span><h1>ETL Template and Plugin Details<a class="headerlink" href="#etl-template-and-plugin-details" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>Details of templates and the required properties for sources, transformations, and sinks
+can be explored using RESTful APIs.</p>
+<p>If you are creating a custom Plugin to add to either the existing Templates or your own
+Template, its name needs to not collide with existing names.</p>
+<p>Shipped with CDAP as part of the ETL Batch and ETL Realtime Application Templates, the
+plugins listed below are available for creating ETL Adapters.</p>
+</div>
+<div class="section" id="application-template-details">
+<h2>Application Template Details<a class="headerlink" href="#application-template-details" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="available-application-templates">
+<h3>Available Application Templates<a class="headerlink" href="#available-application-templates" title="Permalink to this headline">¶</a></h3>
+<p>To retrieve a list of available Application Templates, submit an HTTP GET request:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">GET</span> <span class="o">&lt;</span><span class="n">base</span><span class="o">-</span><span class="n">url</span><span class="o">&gt;/</span><span class="n">templates</span><span class="o">/</span>
+</pre></div>
+</div>
+<p>This will return a JSON String map that lists each Application Template with its name,
+description and type of program that it creates. Example output (pretty-printed):</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">[</span>
+  <span class="o">{</span>
+    <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;ETLBatch&quot;</span><span class="o">,</span>
+    <span class="s">&quot;description&quot;</span><span class="o">:</span> <span class="s">&quot;Batch Extract-Transform-Load (ETL) Adapter&quot;</span><span class="o">,</span>
+    <span class="s">&quot;programType&quot;</span><span class="o">:</span> <span class="s">&quot;Workflow&quot;</span>
+  <span class="o">},</span>
+  <span class="o">{</span>
+    <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;ETLRealtime&quot;</span><span class="o">,</span>
+    <span class="s">&quot;description&quot;</span><span class="o">:</span> <span class="s">&quot;Realtime Extract-Transform-Load (ETL) Adapter&quot;</span><span class="o">,</span>
+    <span class="s">&quot;programType&quot;</span><span class="o">:</span> <span class="s">&quot;Worker&quot;</span>
+  <span class="o">}</span>
+<span class="o">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="template-details">
+<h3>Template Details<a class="headerlink" href="#template-details" title="Permalink to this headline">¶</a></h3>
+<p>To retrieve the details of a particular Application Templates, submit an HTTP GET request:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">GET</span> <span class="o">&lt;</span><span class="n">base</span><span class="o">-</span><span class="n">url</span><span class="o">&gt;/</span><span class="n">templates</span><span class="o">/&lt;</span><span class="n">template</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;template-id&gt;</span></code></td>
+<td>Name of the Application Template, such as <code class="docutils literal"><span class="pre">ETLBatch</span></code> or <code class="docutils literal"><span class="pre">ETLRealtime</span></code></td>
+</tr>
+</tbody>
+</table>
+<p>This will return a JSON String map that lists the details of the Application Template.
+Example output of the <code class="docutils literal"><span class="pre">ETLBatch</span></code> Application Template (pretty-printed):</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">$</span> <span class="n">GET</span> <span class="o">&lt;</span><span class="n">base</span><span class="o">-</span><span class="n">url</span><span class="o">&gt;/</span><span class="n">templates</span><span class="o">/</span><span class="n">ETLBatch</span>
+
+<span class="o">{</span>
+  <span class="s">&quot;extensions&quot;</span><span class="o">:</span> <span class="o">[</span>
+      <span class="s">&quot;sink&quot;</span><span class="o">,</span>
+      <span class="s">&quot;source&quot;</span><span class="o">,</span>
+      <span class="s">&quot;transform&quot;</span>
+  <span class="o">],</span>
+  <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;ETLBatch&quot;</span><span class="o">,</span>
+  <span class="s">&quot;description&quot;</span><span class="o">:</span> <span class="s">&quot;Batch Extract-Transform-Load (ETL) Adapter&quot;</span><span class="o">,</span>
+  <span class="s">&quot;programType&quot;</span><span class="o">:</span> <span class="s">&quot;Workflow&quot;</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">extensions</span></code> is an array of the types of Plugins that are available for use by the
+Application Template.</p>
+</div>
+<div class="section" id="template-update">
+<span id="http-restful-api-apptemplates-update"></span><h3>Template Update<a class="headerlink" href="#template-update" title="Permalink to this headline">¶</a></h3>
+<p>To update a particular Application Template, submit an HTTP PUT request:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">PUT</span> <span class="o">&lt;</span><span class="n">base</span><span class="o">-</span><span class="n">url</span><span class="o">&gt;/</span><span class="n">namespaces</span><span class="o">/&lt;</span><span class="n">namespace</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;/</span><span class="n">templates</span><span class="o">/&lt;</span><span class="n">template</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace-id&gt;</span></code></td>
+<td>Namespace ID of Adapters that have used this Application Template</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;template-id&gt;</span></code></td>
+<td>Name of the Application Template, such as <code class="docutils literal"><span class="pre">ETLBatch</span></code> or <code class="docutils literal"><span class="pre">ETLRealtime</span></code></td>
+</tr>
+</tbody>
+</table>
+<p>This will cause an Application Template to be updated, and can be used if you are
+deploying a custom JAR or Plugin and need to update an Application Template so that your
+changes are seen. Any other updates required (such as the re-creation of Adapters based on that
+Template) are left to the developer or user of the custom JAR or Plugin.</p>
+<p>Note that even though Application Templates are not namespaced, this particular call is
+because it is governed by the Adapters that use a Template. If different Adapters in
+different namespaces have used the same Template, multiple calls are needed to make sure
+that any changes are promulgated. This is a behavior that will likely be addressed in a
+future release to improve this process.</p>
+</div>
+<div class="section" id="template-extensions">
+<h3>Template Extensions<a class="headerlink" href="#template-extensions" title="Permalink to this headline">¶</a></h3>
+<p>To retrieve a list of all the extensions of a particular type for an Application
+Template, submit an HTTP GET request:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">GET</span> <span class="o">&lt;</span><span class="n">base</span><span class="o">-</span><span class="n">url</span><span class="o">&gt;/</span><span class="n">templates</span><span class="o">/&lt;</span><span class="n">template</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;/</span><span class="n">extensions</span><span class="o">/&lt;</span><span class="n">extension</span><span class="o">-</span><span class="n">type</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;template-id&gt;</span></code></td>
+<td>Name of the Application Template, such as <code class="docutils literal"><span class="pre">ETLBatch</span></code> or <code class="docutils literal"><span class="pre">ETLRealtime</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;extension-type&gt;</span></code></td>
+<td>Extension type, such as (for ETL Templates) <code class="docutils literal"><span class="pre">source</span></code>, <code class="docutils literal"><span class="pre">sink</span></code>, or <code class="docutils literal"><span class="pre">transform</span></code></td>
+</tr>
+</tbody>
+</table>
+<p>This will return a JSON String map that lists all the extensions of particular type for
+that Application Template, including their name, description, and the source files that
+contain the extension.</p>
+<p>Example output for the <code class="docutils literal"><span class="pre">source</span></code> extensions of the <code class="docutils literal"><span class="pre">ETLBatch</span></code> Application Template
+(pretty-printed and reformatted to fit):</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> GET &lt;base-url&gt;/templates/ETLBatch/extensions/source
+
+[
+  {
+    &quot;template&quot;: {
+      &quot;name&quot;: &quot;ETLBatch&quot;,
+      &quot;description&quot;: &quot;Batch Extract-Transform-Load (ETL) Adapter&quot;,
+      &quot;programType&quot;: &quot;Workflow&quot;
+    },
+    &quot;source&quot;: {
+      &quot;fileName&quot;: &quot;cdap-etl-lib-3.0.0-batch.jar&quot;,
+      &quot;name&quot;: &quot;cdap-etl-lib&quot;,
+      &quot;version&quot;: {
+        &quot;version&quot;: &quot;3.0.0-batch&quot;,
+        &quot;major&quot;: 3,
+        &quot;minor&quot;: 0,
+        &quot;fix&quot;: 0,
+        &quot;suffix&quot;: &quot;batch&quot;
+      }
+    },
+    &quot;type&quot;: &quot;source&quot;,
+    &quot;name&quot;: &quot;Database&quot;,
+    &quot;description&quot;: &quot;Batch source for a database.&quot;
+  },
+  {
+    &quot;template&quot;: {
+      &quot;name&quot;: &quot;ETLBatch&quot;,
+      &quot;description&quot;: &quot;Batch Extract-Transform-Load (ETL) Adapter&quot;,
+      &quot;programType&quot;: &quot;Workflow&quot;
+    },
+    &quot;source&quot;: {
+      &quot;fileName&quot;: &quot;cdap-etl-lib-3.0.0-batch.jar&quot;,
+      &quot;name&quot;: &quot;cdap-etl-lib&quot;,
+      &quot;version&quot;: {
+        &quot;version&quot;: &quot;3.0.0-batch&quot;,
+        &quot;major&quot;: 3,
+        &quot;minor&quot;: 0,
+        &quot;fix&quot;: 0,
+        &quot;suffix&quot;: &quot;batch&quot;
+      }
+    },
+    &quot;type&quot;: &quot;source&quot;,
+    &quot;name&quot;: &quot;KVTable&quot;,
+    &quot;description&quot;: &quot;CDAP KeyValue Table Dataset Batch Source. Outputs records with a
+      'key' field and a 'value' field. Both fields are of type bytes.&quot;
+  },
+  {
+    &quot;template&quot;: {
+      &quot;name&quot;: &quot;ETLBatch&quot;,
+      &quot;description&quot;: &quot;Batch Extract-Transform-Load (ETL) Adapter&quot;,
+      &quot;programType&quot;: &quot;Workflow&quot;
+    },
+    &quot;source&quot;: {
+      &quot;fileName&quot;: &quot;cdap-etl-lib-3.0.0-batch.jar&quot;,
+      &quot;name&quot;: &quot;cdap-etl-lib&quot;,
+      &quot;version&quot;: {
+        &quot;version&quot;: &quot;3.0.0-batch&quot;,
+        &quot;major&quot;: 3,
+        &quot;minor&quot;: 0,
+        &quot;fix&quot;: 0,
+        &quot;suffix&quot;: &quot;batch&quot;
+      }
+    },
+    &quot;type&quot;: &quot;source&quot;,
+    &quot;name&quot;: &quot;Stream&quot;,
+    &quot;description&quot;: &quot;Batch source for a stream. If a format is given, any property
+      prefixed with 'format.setting.' will be passed to the format. For example, if a
+      property with key 'format.setting.delimiter' and value '|' is given, the setting
+      'delimiter' with value '|' will be passed to the format.&quot;
+  },
+  {
+    &quot;template&quot;: {
+      &quot;name&quot;: &quot;ETLBatch&quot;,
+      &quot;description&quot;: &quot;Batch Extract-Transform-Load (ETL) Adapter&quot;,
+      &quot;programType&quot;: &quot;Workflow&quot;
+    },
+    &quot;source&quot;: {
+      &quot;fileName&quot;: &quot;cdap-etl-lib-3.0.0-batch.jar&quot;,
+      &quot;name&quot;: &quot;cdap-etl-lib&quot;,
+      &quot;version&quot;: {
+        &quot;version&quot;: &quot;3.0.0-batch&quot;,
+        &quot;major&quot;: 3,
+        &quot;minor&quot;: 0,
+        &quot;fix&quot;: 0,
+        &quot;suffix&quot;: &quot;batch&quot;
+      }
+    },
+    &quot;type&quot;: &quot;source&quot;,
+    &quot;name&quot;: &quot;Table&quot;,
+    &quot;description&quot;: &quot;CDAP Table Dataset Batch Source&quot;
+  }
+]
+</pre>
+</div>
+</div>
+<div class="section" id="details-of-an-extension-plugin">
+<h3>Details of an Extension (Plugin)<a class="headerlink" href="#details-of-an-extension-plugin" title="Permalink to this headline">¶</a></h3>
+<p>To retrieve the details of an extension (plugin) used in an Application Template, submit
+an HTTP GET request:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">GET</span> <span class="o">&lt;</span><span class="n">base</span><span class="o">-</span><span class="n">url</span><span class="o">&gt;/</span><span class="n">templates</span><span class="o">/&lt;</span><span class="n">template</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;/</span><span class="n">extensions</span><span class="o">/&lt;</span><span class="n">extension</span><span class="o">-</span><span class="n">type</span><span class="o">&gt;/</span><span class="n">plugins</span><span class="o">/&lt;</span><span class="n">plugin</span><span class="o">-</span><span class="n">id</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>where</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;template-id&gt;</span></code></td>
+<td>Name of the Application Template, such as <code class="docutils literal"><span class="pre">ETLBatch</span></code> or <code class="docutils literal"><span class="pre">ETLRealtime</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;extension-type&gt;</span></code></td>
+<td>Extension type, such as (for ETL Templates) <code class="docutils literal"><span class="pre">source</span></code>, <code class="docutils literal"><span class="pre">sink</span></code>, or <code class="docutils literal"><span class="pre">transform</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;plugin-id&gt;</span></code></td>
+<td>Plugin name</td>
+</tr>
+</tbody>
+</table>
+<p>This will return a JSON String map that lists the details of the Plugin. This is the
+information needed when configuring an Adapter using the Plugin, the type of each
+property, and whether it is a mandatory property (<em>&#8220;required&#8221;</em>).</p>
+<p>Example output for the <code class="docutils literal"><span class="pre">Database</span></code> plugin of type <code class="docutils literal"><span class="pre">source</span></code> of the <code class="docutils literal"><span class="pre">ETLBatch</span></code>
+Application Template (pretty-printed and reformatted to fit):</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> GET &lt;base-url&gt;/templates/ETLBatch/extensions/source/plugins/Database
+
+[
+  {
+    &quot;className&quot;: &quot;co.cask.cdap.templates.etl.batch.sources.DBSource&quot;,
+    &quot;properties&quot;: {
+      &quot;jdbcPluginType&quot;: {
+        &quot;name&quot;: &quot;jdbcPluginType&quot;,
+        &quot;description&quot;: &quot;Type of the JDBC plugin to use. This is the value of the 'type'
+        key defined in the json file for the JDBC plugin. Defaults to 'jdbc'.&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;required&quot;: false
+      },
+      &quot;tableName&quot;: {
+        &quot;name&quot;: &quot;tableName&quot;,
+        &quot;description&quot;: &quot;Table name to export to.&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;required&quot;: true
+      },
+      &quot;jdbcPluginName&quot;: {
+        &quot;name&quot;: &quot;jdbcPluginName&quot;,
+        &quot;description&quot;: &quot;Name of the JDBC plugin to use. This is the value of the 'name'
+        key defined in the json file for the JDBC plugin. Defaults to 'jdbc'.&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;required&quot;: false
+      },
+      &quot;driverClass&quot;: {
+        &quot;name&quot;: &quot;driverClass&quot;,
+        &quot;description&quot;: &quot;Driver class to connect to the database.&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;required&quot;: true
+      },
+      &quot;importQuery&quot;: {
+        &quot;name&quot;: &quot;importQuery&quot;,
+        &quot;description&quot;: &quot;The SELECT query to use to import data from the specified table.
+        You can specify an arbitrary number of columns to import, or import all columns
+        using *. You can also specify a number of WHERE clauses or ORDER BY clauses.
+        However, LIMIT and OFFSET clauses should not be used in this query.&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;required&quot;: true
+      },
+      &quot;connectionString&quot;: {
+        &quot;name&quot;: &quot;connectionString&quot;,
+        &quot;description&quot;: &quot;JDBC connection string including database name.&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;required&quot;: true
+      },
+      &quot;password&quot;: {
+        &quot;name&quot;: &quot;password&quot;,
+        &quot;description&quot;: &quot;Password to use to connect to the specified database. Required
+        for databases that need authentication. Optional for databases that do not
+        require authentication.&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;required&quot;: false
+      },
+      &quot;user&quot;: {
+        &quot;name&quot;: &quot;user&quot;,
+        &quot;description&quot;: &quot;User to use to connect to the specified database. Required for
+        databases that need authentication. Optional for databases that do not require
+        authentication.&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;required&quot;: false
+      },
+      &quot;countQuery&quot;: {
+        &quot;name&quot;: &quot;countQuery&quot;,
+        &quot;description&quot;: &quot;The SELECT query to use to get the count of records to import
+        from the specified table. Examples: SELECT COUNT(*) from &lt;my_table&gt; where
+        &lt;my_column&gt; 1, SELECT COUNT(my_column) from my_table). NOTE: Please include the
+        same WHERE clauses in this query as the ones used in the import query to reflect
+        an accurate number of records to import.&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;required&quot;: true
+      }
+    },
+    &quot;template&quot;: {
+      &quot;name&quot;: &quot;ETLBatch&quot;,
+      &quot;description&quot;: &quot;Batch Extract-Transform-Load (ETL) Adapter&quot;,
+      &quot;programType&quot;: &quot;Workflow&quot;
+    },
+    &quot;source&quot;: {
+      &quot;fileName&quot;: &quot;cdap-etl-lib-3.0.0-batch.jar&quot;,
+      &quot;name&quot;: &quot;cdap-etl-lib&quot;,
+      &quot;version&quot;: {
+        &quot;version&quot;: &quot;3.0.0-batch&quot;,
+        &quot;major&quot;: 3,
+        &quot;minor&quot;: 0,
+        &quot;fix&quot;: 0,
+        &quot;suffix&quot;: &quot;batch&quot;
+      }
+    },
+    &quot;type&quot;: &quot;source&quot;,
+    &quot;name&quot;: &quot;Database&quot;,
+    &quot;description&quot;: &quot;Batch source for a database.&quot;
+  }
+]
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v3.0.0</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Overview</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html"
+            rel="nofollow">Introduction to CDAP</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class="new-icon"></div><b><a href="../table-of-contents/../../application-templates/index.html"
+            rel="nofollow">Application Templates</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Application Templates:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index.html"> ETL Overview</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> ETL Templates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#application-template-details">Application Template Details</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#available-application-templates">Available Application Templates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#template-details">Template Details</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#template-update">Template Update</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#template-extensions">Template Extensions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#details-of-an-extension-plugin">Details of an Extension (Plugin)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="creating.html"> Creating An ETL Adapter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="operations.html"> Adapter Lifecycle Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom.html"> Creating Custom ETL Plugins</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="Previous Chapter">ETL Overview</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="creating.html"
+                        title="Next Chapter">Creating An ETL Adapter</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.0.0/cdap-docs-3.0.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="ETL Overview" href="index.html" />ETL Overview</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Creating An ETL Adapter" href="creating.html" />Creating An ETL Adapter</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
