@@ -1,0 +1,9 @@
+{
+"startTs": 1430796137,
+"endTs":   1588648937,
+"measurements": {"count": "SUM"},
+"resolution": 1,
+"dimensionValues": {"remote_host" : "195.110.40.7"},
+"groupByDimensions": [],
+"limit": 1000
+}

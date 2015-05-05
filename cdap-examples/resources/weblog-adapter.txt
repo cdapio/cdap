@@ -1,0 +1,3 @@
+create adapter cubeAnalytics \$CDAP_HOME/examples/resources/weblog-adapter-config.json
+start adapter cubeAnalytics
+load stream logEventStream \$CDAP_HOME/examples/resources/accesslog.txt
