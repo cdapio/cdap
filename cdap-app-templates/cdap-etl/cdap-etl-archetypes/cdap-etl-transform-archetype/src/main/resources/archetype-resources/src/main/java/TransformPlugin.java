@@ -23,7 +23,7 @@ import co.cask.cdap.template.etl.api.Transform;
 /**
  * ETL Transform.
  */
-public class Transformation<T> extends Transform<T, T> {
+public class TransformPlugin<T> extends Transform<T, T> {
 
   @Override
   public void transform(T input, Emitter<T> emitter) throws Exception {
