@@ -142,18 +142,10 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
                                           "Please set the right JMSProvider");
       } else {
         LOG.trace("Using JNDI default JMS provider for destination: {}", destinationName);
-        ClassLoader oldClassLoader = null;
-        try {
-          if (driverClassLoader != null) {
-            oldClassLoader = Thread.currentThread().getContextClassLoader();
-            Thread.currentThread().setContextClassLoader(driverClassLoader);
-          }
-          jmsProvider = new JndiBasedJmsProvider(envVars, destinationName, connectionFactoryName);
-        } finally {
-          if (oldClassLoader != null) {
-            Thread.currentThread().setContextClassLoader(oldClassLoader);
-          }
+        if (driverClassLoader != null) {
+          Thread.currentThread().setContextClassLoader(driverClassLoader);
         }
+        jmsProvider = new JndiBasedJmsProvider(envVars, destinationName, connectionFactoryName);
       }
     }
     ConnectionFactory connectionFactory = jmsProvider.getConnectionFactory();
