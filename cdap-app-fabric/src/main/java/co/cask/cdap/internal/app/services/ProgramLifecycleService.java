@@ -323,7 +323,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
               }
               break;
             default:
-              throw new RuntimeException("Unknown program type: " + programType.name());
+              LOG.debug("Unknown program type: " + programType.name());
+              break;
           }
           if (targetProgramId != null) {
             break;
