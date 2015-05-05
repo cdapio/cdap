@@ -1,5 +1,5 @@
 angular.module(PKG.name+'.services')
-  .service('myAlert', function($rootScope){
+  .service('myAlert', function(){
     var __list = [];
     function alert(item) {
       if (angular.isObject(item) && Object.keys(item).length) {

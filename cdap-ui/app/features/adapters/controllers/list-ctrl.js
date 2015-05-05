@@ -52,7 +52,7 @@ angular.module(PKG.name + '.feature.adapters')
         _cdapNsPath: '/adapters/' + appName,
         method: 'DELETE'
       })
-        .then(function(res) {
+        .then(function() {
           $alert({
             type: 'success',
             content: 'Adapter ' + appName + ' deleted successfully.'

@@ -18,8 +18,8 @@ module.factory('dagreD3', function ($window) {
   return $window.dagreD3;
 });
 
-module.controller('myFlowController', function($scope, d3, dagreD3) {
-  function update(newVal, oldVal) {
+module.controller('myFlowController', function($scope) {
+  function update(newVal) {
     if (angular.isObject(newVal) && Object.keys(newVal).length) {
       $scope.render();
     }
@@ -96,16 +96,6 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
       scope.getShapes = function() {
         var shapes = {};
         shapes.flowlet = function(parent, bbox, node) {
-          var w = bbox.width;
-          var h = bbox.height;
-          var points = [
-            //clockwise points from top
-            { x: -streamDiagramWidth, y: streamDiagramHeight}, //e
-            { x: -streamDiagramWidth, y: -h - streamDiagramHeight}, //a
-            { x: w/2, y: -h - streamDiagramHeight}, //b
-            { x: w, y: -h/2}, //c
-            { x: w/2, y: streamDiagramHeight} //d
-          ];
           var instances = scope.getInstances(node.elem.__data__); // No other way to get name from node.
           var instanceCircleScaled = scope.getInstancesScaledRadius(instances, instanceCircleRadius);
           var shapeSvg = parent.insert('circle', ':first-child')
@@ -160,10 +150,6 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
             .attr('points', points.map(function(d) { return d.x + ',' + d.y; }).join(' '))
             .attr('transform', 'translate(' + (-w/8) + ',' + (h * 1/2) + ')')
             .attr('class', 'flow-shapes foundation-shape stream-svg');
-
-          // Elements are positioned with respect to shapeSvg.
-          var width = shapeSvg.node().getBBox().width+10;
-          var circleXPos = -1 * width/2;
 
           var leafOptions = {
             classNames: ['stream-events'],
@@ -267,7 +253,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
         svgParent.insert("svg:path")
           .attr("d", line(pathinfo))
           .attr('class', classNamesStr)
-          .attr("transform", function(d) {
+          .attr("transform", function() {
             return "translate("
               + (- circleRadius + leafBuffer) + ", 0) rotate(-180)";
           });
@@ -285,16 +271,14 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
   }, baseDirective);
 });
 
-module.directive('myWorkflowGraph', function ($filter, $state) {
+module.directive('myWorkflowGraph', function ($filter) {
   return angular.extend({
-    link: function (scope, elem, attr) {
+    link: function (scope) {
       scope.render = genericRender.bind(null, scope, $filter);
       var defaultRadius = 50;
       scope.getShapes = function() {
         var shapes = {};
-        shapes.job = function(parent, bbox, node) {
-          var w = bbox.width;
-          var h = bbox.height;
+        shapes.job = function(parent, node) {
           var points = [
             //clockwise points from top
             { x: -defaultRadius * 2/3, y: -defaultRadius * 2/3}, //a
@@ -319,7 +303,6 @@ module.directive('myWorkflowGraph', function ($filter, $state) {
 
         shapes.start = function(parent, bbox, node) {
           var w = bbox.width;
-          var h = bbox.height;
           var points = [
             // draw a triangle facing right
             { x: -30, y: -40},
@@ -340,7 +323,6 @@ module.directive('myWorkflowGraph', function ($filter, $state) {
 
         shapes.end = function(parent, bbox, node) {
           var w = bbox.width;
-          var h = bbox.height;
           var points = [
             // draw a triangle facing right
             { x: -30, y: 0},
@@ -359,10 +341,8 @@ module.directive('myWorkflowGraph', function ($filter, $state) {
           return shapeSvg;
         };
 
-        shapes.conditional = function(parent, bbox, node) {
-          var w = (bbox.width * Math.SQRT2) / 2,
-          h = (bbox.height * Math.SQRT2) / 2,
-          points = [
+        shapes.conditional = function(parent, node) {
+          var points = [
             // draw a diamond
             { x:  0, y: -defaultRadius },
             { x: -defaultRadius, y:  0 },
@@ -478,7 +458,7 @@ function genericRender(scope) {
    */
   scope.handleShowTip = function(nodeId) {
     tip
-      .html(function(d) {
+      .html(function() {
         return '<strong>' + scope.instanceMap[nodeId].type +':</strong> <span class="tip-node-name">'+ nodeId +'</span>';
       })
       .show();
@@ -487,7 +467,7 @@ function genericRender(scope) {
   /**
    * Handles hiding tooltip on mouseout of node name.
    */
-  scope.handleHideTip = function(nodeId) {
+  scope.handleHideTip = function() {
     tip.hide();
   };
 

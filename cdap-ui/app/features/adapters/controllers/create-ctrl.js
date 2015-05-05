@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdapterCreateController', function($scope, $q, $alert, $state, AdapterApiFactory, mySettings, $filter, $rootScope) {
+  .controller('AdapterCreateController', function($scope, $q, $alert, $state, AdapterApiFactory, mySettings, $filter) {
     var apiFactory = new AdapterApiFactory($scope);
 
     // Loading flag to indicate source & sinks have
@@ -16,10 +16,7 @@ angular.module(PKG.name + '.feature.adapters')
     $scope.selectedAdapterDraft = undefined;
     $scope.adaptersDraftList = [];
 
-    $scope.onDraftChange = function(item, model) {
-      var filterFilter = $filter('filter'),
-          match = null,
-          swapObj = {};
+    $scope.onDraftChange = function(item) {
       if (!item) {
         return; //un-necessary.
       }
@@ -211,7 +208,6 @@ angular.module(PKG.name + '.feature.adapters')
     $scope.doSave = function() {
       var source, trans,sink;
       var transforms = [],
-          filterFilter = $filter('filter'),
           i;
       source = angular.copy($scope.source);
       sink = angular.copy($scope.sink);
@@ -312,7 +308,7 @@ angular.module(PKG.name + '.feature.adapters')
       };
 
       mySettings.set('adapterDrafts', $scope.adapterDrafts)
-      .then(function(res) {
+      .then(function() {
         $scope.isSaved = true;
         $alert({
           type: 'success',
@@ -335,7 +331,7 @@ angular.module(PKG.name + '.feature.adapters')
       $scope.tabs.splice(index, 1);
     };
 
-    $scope.$on('$stateChangeStart', function(event, toState, toParams, fromState, fromParams) {
+    $scope.$on('$stateChangeStart', function(event, toState, toParams, fromState) {
       if (fromState.name === 'adapters.create' && !$scope.isSaved) {
         if(!confirm("Are you sure you want to leave this page?")) {
           event.preventDefault();

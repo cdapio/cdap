@@ -34,7 +34,7 @@ angular.module(PKG.name + '.feature.spark')
       "title": 'Failed'
     };
 
-    $scope.$watch('runs.selected.runid', function (newVal, oldVal) {
+    $scope.$watch('runs.selected.runid', function (newVal) {
       if(newVal) {
         pollMetrics(newVal);
       }

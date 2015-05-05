@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.services')
-  .service('myNamespace', function myNamespace($q, MyDataSource, EventPipe, $http, MY_CONFIG) {
+  .service('myNamespace', function myNamespace($q, MyDataSource, EventPipe, $http) {
 
     this.namespaceList = [];
 

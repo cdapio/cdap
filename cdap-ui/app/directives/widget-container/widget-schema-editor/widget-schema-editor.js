@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .directive('mySchemaEditor', function($window) {
+  .directive('mySchemaEditor', function() {
     return {
       restrict: 'EA',
       scope: {

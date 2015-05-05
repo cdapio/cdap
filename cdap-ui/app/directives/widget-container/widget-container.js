@@ -8,9 +8,8 @@ angular.module(PKG.name + '.commons')
         myconfig: '='
       },
       replace: false,
-      link: function (scope, element, attrs) {
+      link: function (scope, element) {
         var angularElement,
-            infoElement,
             widget;
         if (WidgetFactory.registry[scope.myconfig.widget]) {
           widget = WidgetFactory.registry[scope.myconfig.widget];

@@ -1,7 +1,6 @@
 angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsStatusController', function($scope, MyDataSource, $state, $filter) {
+  .controller('WorkflowsStatusController', function($scope, MyDataSource, $state) {
       var dataSrc = new MyDataSource($scope),
-          filterFilter = $filter('filter'),
           basePath = '/apps/' + $state.params.appId + '/workflows/' + $state.params.programId;
       $scope.status = null;
       $scope.duration = null;
@@ -43,8 +42,6 @@ angular.module(PKG.name + '.feature.workflows')
             }, item);
           });
 
-          // addStartAndEndNodes(nodes, edges);
-
           $scope.data = {
             nodes: nodes,
             edges: edges,
@@ -52,100 +49,13 @@ angular.module(PKG.name + '.feature.workflows')
           };
 
           var programs = [];
-          angular.forEach(res.nodes, function(value, key) {
+          angular.forEach(res.nodes, function(value) {
             programs.push(value.program);
           });
           $scope.actions = programs;
         });
     });
 
-  /**
-   * Adds start and end nodes to nodes list.
-   * @param {Array} of nodes.
-   */
-  function addStartAndEndNodes(nodes, edges) {
-    if (nodes.length) {
-      nodes.unshift({
-        name: 'start',
-        type: 'START',
-        nodeType: 'START'
-      });
-      edges.unshift({
-        sourceName: nodes[0].name,
-        sourceType: nodes[0].nodeType,
-        targetName: nodes[1].name
-      });
-
-      nodes.push({
-        name: 'end',
-        type: 'END',
-        nodeType: 'END'
-      });
-      edges.push({
-        sourceName: nodes[nodes.length - 2].name,
-        sourceType: nodes[nodes.length - 2].nodeType,
-        targetName: nodes[nodes.length - 1].name
-      });
-
-    }
-
-  }
-
-  /**
-    * Purpose: Converts a list of nodes to a list of connections
-    * @param  [Array] of nodes
-    * @return [Array] of connections
-    * Usage: Can handle all cases, including:
-        1. Fork in the middle
-        2. Only a fork
-        3. Fork at the beginning
-        4. Fork at the end
-        5. Only an Action node
-
-        var z = [
-          {
-            nodeType: 'ACTION',
-            program: {
-              programName: "asd"
-            }
-          }, {
-            nodeType: 'FORK',
-            branches: [
-              [
-                [
-                  {
-                    nodeType: 'ACTION',
-                    program: {
-                      programName: "1"
-                    }
-                  }
-                ],
-                [
-                  {
-                    nodeType: 'ACTION',
-                    program: {
-                      programName: "2"
-                    }
-                  }
-                ]
-              ],
-              [
-                {
-                  nodeType: 'ACTION',
-                  program: {
-                    programName: "3"
-                  }
-                }
-              ]
-            ]
-          }, {
-            nodeType: 'ACTION',
-            program: {
-              programName: "4"
-            }
-          }
-        ];
-  */
   function convert(nodes, connections) {
 
     for (var i=0; i < nodes.length -1; i++) {
@@ -169,8 +79,7 @@ angular.module(PKG.name + '.feature.workflows')
     * @param  [Array] of nodes
     * @param  [Array] of nodes
     * @return [Array] of connections
-
-  */
+    */
   function flatten(source, fork, target, connections) {
     var branches = fork.branches,
         temp = [];
@@ -191,8 +100,7 @@ angular.module(PKG.name + '.feature.workflows')
     Purpose: Expand a fork and convert branched nodes to a list of connections
     * @param  [Array] of nodes
     * @return [Array] of connections
-
-  */
+    */
   function expandForks(nodes, expandedNodes) {
     for(var i=0; i<nodes.length; i++) {
       if (nodes[i].nodeType === 'ACTION') {

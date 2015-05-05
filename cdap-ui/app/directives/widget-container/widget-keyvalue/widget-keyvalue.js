@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .directive('myKeyValue', function($window) {
+  .directive('myKeyValue', function() {
     return {
       restrict: 'E',
       scope: {

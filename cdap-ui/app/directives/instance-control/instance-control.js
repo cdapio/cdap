@@ -9,7 +9,7 @@ angular.module(PKG.name + '.commons')
         basePath: '='
       },
       templateUrl: 'instance-control/instance-control.html',
-      link: function (scope, element, attrs) {
+      link: function (scope) {
 
         scope.processing = false;
 
@@ -30,9 +30,9 @@ angular.module(PKG.name + '.commons')
             method: 'PUT',
             _cdapPath: scope.basePath + '/instances',
             body: {'instances': scope.model.requested}
-          }).then(function success (response) {
+          }).then(function success () {
             scope.model.provisioned = scope.model.requested;
-          }, function error (err) {
+          }, function error () {
             //pass
           }).finally(function () {
             scope.processing = false;

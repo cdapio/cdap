@@ -19,7 +19,7 @@ angular.module(PKG.name + '.commons')
 
         var fileElement = angular.element('<input class="sr-only" type="file" multiple="true">');
         element.append(fileElement);
-        element.bind('click', function(e) {
+        element.bind('click', function() {
           fileElement[0].click();
         });
 

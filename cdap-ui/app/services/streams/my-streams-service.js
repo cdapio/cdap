@@ -27,7 +27,7 @@ angular.module(PKG.name + '.services')
     var dataSrc = new MyDataSource($scope);
 
 
-    $scope.doInject = function (event) {
+    $scope.doInject = function () {
       if(!$scope.userInput) {
         $scope.userInput = null;
         return;

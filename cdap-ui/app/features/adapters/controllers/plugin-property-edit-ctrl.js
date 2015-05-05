@@ -79,7 +79,7 @@ angular.module(PKG.name + '.feature.adapters')
             $scope.configfetched = true;
             $scope.config = res;
           },
-          function error(err) {
+          function error() {
             // Didn't receive a configuration from the backend. Fallback to all textboxes.
             $scope.noconfig = true;
           }

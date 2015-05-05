@@ -20,7 +20,6 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrd
 
 
   var dataSrc = new MyDataSource($scope),
-      partialPath = '/assets/features/overview/templates/',
       PREFKEY = 'feature.overview.welcomeIsHidden';
 
   myLocalStorage.get(PREFKEY)
@@ -39,7 +38,7 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrd
     _cdapPath: '/system/services/status',
     interval: 10000
   }, function(res) {
-    var serviceStatuses = Object.keys(res).map(function(value, i) {
+    var serviceStatuses = Object.keys(res).map(function(value) {
       return res[value];
     });
     if (serviceStatuses.indexOf('NOT OK') > -1) {

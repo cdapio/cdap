@@ -14,7 +14,7 @@ angular.module(PKG.name + '.feature.admin')
           description: $scope.model.description
         }
       })
-        .then(function(res) {
+        .then(function() {
           $modalInstance.close();
           $alert({
             title: 'Success!',

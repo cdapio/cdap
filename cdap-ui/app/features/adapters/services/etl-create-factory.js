@@ -1,6 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .factory('AdapterApiFactory', function(MyDataSource, $filter, $state, $alert, $timeout, mySettings, myHelpers) {
-    var filterFilter = $filter('filter');
+  .factory('AdapterApiFactory', function(MyDataSource, $state, $alert, $timeout, mySettings, myHelpers) {
     function AdapterApiFactory(scope) {
       this.scope = scope;
       this.scope.defaultSources = [];
@@ -151,7 +150,7 @@ angular.module(PKG.name + '.feature.adapters')
                     this.scope.metadata.name,
         body: data
       })
-        .then(function(res) {
+        .then(function() {
           delete this.scope.adapterDrafts[this.scope.metadata.name];
           return mySettings.set('adapterdrafts', this.scope.adapterDrafts);
         }.bind(this))
