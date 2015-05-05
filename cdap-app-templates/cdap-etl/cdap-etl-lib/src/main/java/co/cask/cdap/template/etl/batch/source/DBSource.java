@@ -70,11 +70,11 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
     Preconditions.checkArgument(!(dbSourceConfig.user != null && dbSourceConfig.password == null),
                                 "dbPassword is null. Please provide both user name and password if database requires" +
                                   "authentication. If not, please remove dbUser and retry.");
+    String jdbcPluginId = String.format("%s.%s.%s", "source", dbSourceConfig.jdbcPluginType,
+                                        dbSourceConfig.jdbcPluginName);
     Class<Object> jdbcDriverClass = pipelineConfigurer.usePluginClass(dbSourceConfig.jdbcPluginType,
                                                                       dbSourceConfig.jdbcPluginName,
-                                                                      String.format("%s.%s.%s", "source",
-                                                                                    dbSourceConfig.jdbcPluginType,
-                                                                                    dbSourceConfig.jdbcPluginName),
+                                                                      jdbcPluginId,
                                                                       PluginProperties.builder().build());
     Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
   }
@@ -87,7 +87,10 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
 
     Job job = context.getHadoopJob();
     Configuration conf = job.getConfiguration();
-    job.setInputFormatClass(ETLDBInputFormat.class);
+    String jdbcPluginId = String.format("%s.%s.%s", "source", dbSourceConfig.jdbcPluginType,
+                                        dbSourceConfig.jdbcPluginName);
+    // Load the plugin class to make sure it is available.
+    context.loadPluginClass(jdbcPluginId);
     if (dbSourceConfig.user == null && dbSourceConfig.password == null) {
       DBConfiguration.configureDB(conf, dbSourceConfig.driverClass, dbSourceConfig.connectionString);
     } else {

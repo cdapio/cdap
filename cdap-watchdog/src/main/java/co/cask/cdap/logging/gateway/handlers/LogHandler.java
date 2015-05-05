@@ -122,6 +122,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
 
       ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
       logReader.getLog(loggingContext, readRange.getFromMillis(), readRange.getToMillis(), filter, logCallback);
+      logCallback.close();
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
@@ -178,6 +179,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
       ReadRange readRange = ReadRange.createFromRange(logOffset);
       readRange = adjustReadRange(readRange, runRecord);
       logReader.getLogNext(loggingContext, readRange, maxEvents, filter, logCallback);
+      logCallback.close();
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
@@ -257,6 +259,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
       readRange = adjustReadRange(readRange, runRecord);
       logReader.getLogPrev(loggingContext, readRange,
                            maxEvents, filter, logCallback);
+      logCallback.close();
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
@@ -286,6 +289,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
                                                                              serviceId);
       ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
       logReader.getLog(loggingContext, timeRange.getFromMillis(), timeRange.getToMillis(), filter, logCallback);
+      logCallback.close();
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Throwable e) {
@@ -311,6 +315,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
       ReadRange readRange = ReadRange.createFromRange(logOffset);
       logReader.getLogNext(loggingContext, readRange,
                            maxEvents, filter, logCallback);
+      logCallback.close();
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Throwable e) {
@@ -336,6 +341,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
       ReadRange readRange = ReadRange.createToRange(logOffset);
       logReader.getLogPrev(loggingContext, readRange,
                            maxEvents, filter, logCallback);
+      logCallback.close();
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Throwable e) {

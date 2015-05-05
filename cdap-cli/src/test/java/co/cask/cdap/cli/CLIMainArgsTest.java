@@ -57,6 +57,11 @@ public class CLIMainArgsTest {
     Assert.assertEquals(
       new CLIMainArgs(new String[] {}, new String[] {"hello", "world", withArgFlag}),
       CLIMainArgs.parse(new String[]{"hello", "world", withArgFlag}, CLIMain.getOptions()));
+
+    // test invalid flag
+    Assert.assertEquals(
+      new CLIMainArgs(new String[] {"--sdflkjsdlkfjsjdlf"}, new String[] {}),
+      CLIMainArgs.parse(new String[]{"--sdflkjsdlkfjsjdlf"}, CLIMain.getOptions()));
   }
 
 }

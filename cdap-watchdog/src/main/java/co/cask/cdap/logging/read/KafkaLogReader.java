@@ -75,7 +75,7 @@ public class KafkaLogReader implements LogReader {
   @Override
   public void getLogNext(LoggingContext loggingContext, ReadRange readRange, int maxEvents,
                          Filter filter, Callback callback) {
-    if (readRange == ReadRange.LATEST) {
+    if (readRange.getKafkaOffset() == ReadRange.LATEST.getKafkaOffset()) {
       getLogPrev(loggingContext, readRange, maxEvents, filter, callback);
       return;
     }
@@ -110,11 +110,7 @@ public class KafkaLogReader implements LogReader {
       throw  Throwables.propagate(e);
     } finally {
       try {
-        try {
-          callback.close();
-        } finally {
-          kafkaConsumer.close();
-        }
+        kafkaConsumer.close();
       } catch (IOException e) {
         LOG.error(String.format("Caught exception when closing KafkaConsumer for topic %s, partition %d",
                                 topic, partition), e);
@@ -126,7 +122,7 @@ public class KafkaLogReader implements LogReader {
   public void getLogPrev(LoggingContext loggingContext, ReadRange readRange, int maxEvents,
                          Filter filter, Callback callback) {
     if (readRange.getKafkaOffset() == LogOffset.INVALID_KAFKA_OFFSET) {
-      readRange = ReadRange.LATEST;
+      readRange = new ReadRange(readRange.getFromMillis(), readRange.getToMillis(), ReadRange.LATEST.getKafkaOffset());
     }
 
     int partition = partitioner.partition(loggingContext.getLogPartition(), -1);
@@ -180,11 +176,7 @@ public class KafkaLogReader implements LogReader {
       throw  Throwables.propagate(e);
     } finally {
       try {
-        try {
-          callback.close();
-        } finally {
-          kafkaConsumer.close();
-        }
+        kafkaConsumer.close();
       } catch (IOException e) {
         LOG.error(String.format("Caught exception when closing KafkaConsumer for topic %s, partition %d",
                                 topic, partition), e);
