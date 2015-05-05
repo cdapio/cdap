@@ -164,3 +164,4 @@ public final class InMemoryAdapterConfigurator implements Configurator {
     }
   }
 }
+

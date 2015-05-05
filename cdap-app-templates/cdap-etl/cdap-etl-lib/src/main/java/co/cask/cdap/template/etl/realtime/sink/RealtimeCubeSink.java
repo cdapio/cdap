@@ -30,8 +30,13 @@ import co.cask.cdap.template.etl.api.realtime.RealtimeSink;
 import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.template.etl.common.StructuredRecordToCubeFact;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * A {@link RealtimeSink} that writes data to a {@link Cube} dataset.
@@ -53,11 +58,17 @@ import java.util.Map;
 @Name("Cube")
 @Description("CDAP Cube Dataset Realtime Sink")
 public class RealtimeCubeSink extends RealtimeSink<StructuredRecord> {
+  private static final Gson GSON = new Gson();
+  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+
   private static final String NAME_PROPERTY_DESC = "Name of the Cube dataset. If the Cube does not already exist, " +
     "one will be created.";
   private static final String PROPERTY_RESOLUTIONS_DESC = "Aggregation resolutions. See Cube dataset configuration " +
     "details for more information";
   private static final String MAPPING_CONFIG_PROPERTY_DESC = "The StructuredRecord to CubeFact mapping configuration.";
+
+  private static final String CUSTOM_PROPERTIES_DESC = "Provide any custom properties " +
+    "(such as Aggregations) as a JSON Map";
 
   /**
    * Config class for RealtimeCube
@@ -73,6 +84,11 @@ public class RealtimeCubeSink extends RealtimeSink<StructuredRecord> {
     @Name(Properties.Cube.MAPPING_CONFIG_PROPERTY)
     @Description(MAPPING_CONFIG_PROPERTY_DESC)
     String configAsString;
+
+    @Name(Properties.Cube.CUSTOM_PROPERTIES)
+    @Description(CUSTOM_PROPERTIES_DESC)
+    @Nullable
+    String customProperties;
 
     public RealtimeCubeConfig(String name, String resProp, String configAsString) {
       this.name = name;
@@ -93,6 +109,11 @@ public class RealtimeCubeSink extends RealtimeSink<StructuredRecord> {
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     String datasetName = realtimeCubeConfig.name;
     Map<String, String> properties = realtimeCubeConfig.getProperties().getProperties();
+    if (!Strings.isNullOrEmpty(realtimeCubeConfig.customProperties)) {
+      properties.remove(Properties.Cube.CUSTOM_PROPERTIES);
+      Map<String, String> customProperties = GSON.fromJson(realtimeCubeConfig.customProperties, STRING_MAP_TYPE);
+      properties.putAll(customProperties);
+    }
     Preconditions.checkArgument(datasetName != null && !datasetName.isEmpty(), "Dataset name must be given.");
     pipelineConfigurer.createDataset(datasetName, Cube.class.getName(), DatasetProperties.builder()
       .addAll(properties)

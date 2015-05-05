@@ -50,7 +50,7 @@ angular.module(PKG.name + '.commons')
       'json-editor': {
         element: '<textarea></textarea>',
         attributes: {
-          'cask-json-edit': 'model',
+          'ng-model': 'model',
           'class': 'form-control',
           placeholder: '{{myconfig.properties.default || ""}}'
         }
