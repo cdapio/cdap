@@ -15,10 +15,10 @@ Integrating CDAP with Impala
 
 When using CDAP with Impala:
 
-.. |adapters| replace:: **CDAP Adapters:**
-.. _adapters: ../../../developers-manual/advanced/adapters.html
+  .. |adapters| replace:: **CDAP Adapters:**
+  .. _adapters: ../../../developers-manual/advanced/adapters.html
 
-- |adapters|_ **Stream-conversion** and **custom adapter** types
+  .. - |adapters|_ **Stream-conversion** and **custom adapter** types
 
 
 .. |stream| replace:: **Stream Exploration:**

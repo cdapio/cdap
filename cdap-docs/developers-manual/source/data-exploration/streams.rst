@@ -211,7 +211,7 @@ When creating your queries, keep these limitations in mind:
 - CDAP uses a custom storage handler to read Streams through Hive. This means that queries must be run through
   CDAP and not directly through Hive unless you place CDAP jars in your Hive classpath. This also means that
   Streams cannot be queried directly by Impala. If you wish to use Impala to explore data in a Stream, you can
-  create an Adapter that converts Stream data into a ``TimePartitionedFileSet``, as described in :ref:`advanced-adapters`. 
+  create an :ref:`Adapter <apptemplates-index>` that converts Stream data into a ``TimePartitionedFileSet``. 
 - Some versions of Hive may try to create a temporary staging directory at the table location when executing queries.
   If you are seeing permission errors, try setting ``hive.exec.stagingdir`` in your Hive configuration to ``/tmp/hive-staging``.
 

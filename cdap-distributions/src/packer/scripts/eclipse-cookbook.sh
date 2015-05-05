@@ -15,19 +15,13 @@
 # the License.
 
 #
-# Install X.org and remove unused drivers
+# Download Eclipse cookbook for Chef from https://github.com/geocent-cookbooks/eclipse
 #
 
-# Install xorg
-apt-get install -y xorg
+cd /var/chef/cookbooks
 
-# Remove X11 video drivers
-for i in ati cirrus fbdev intel mach64 mga neomagic nouveau openchrome qxl r128 radeon s3 savage siliconmotion sis sisusb tdfx trident ; do 
-  apt-get purge -y xserver-xorg-video-$i
-done
+# Check out the cookbook from GitHub
+git clone https://github.com/geocent-cookbooks/eclipse.git
 
-# Remove X11 input drivers
-for i in mouse synaptics wacom ; do
-  apt-get purge -y xserver-xorg-input-$i
-done
-
+# Remove .git, so it's no longer tracked by git
+rm -rf eclipse/.git

@@ -103,8 +103,12 @@ Glossary
       A directed acyclic graph. Flows are wired together and displayed as a DAG in the CDAP UI.
       
    CDAP UI
-      The CDAP UI is a web-based application used to deploy CDAP Applications, and
-      query and manage the Cask Data Application Platform instance.
+      The CDAP UI is a web-based application used to deploy CDAP Applications, create 
+      :term:`ETL Adapters <ETL Adapter>`, and query and manage the Cask Data Application 
+      Platform instance.
+
+   CDAP Console
+      See :term:`CDAP UI`.
 
    Apache Spark
       See :term:`Spark Program <spark>`.
@@ -148,5 +152,52 @@ Glossary
    Exploring
       Streams and Datasets in CDAP can be explored through ad-hoc SQL-like queries. To
       enable exploration, you must set several properties when creating the Stream or
-      Dataset, and the files in a Dataset must meet certain requirements. 
+      Dataset, and the files in a Dataset must meet certain requirements.
+
+   .. ETL and Application Templates
+
+   Structured Record
+      The data format used to exchange events between most of the pre-built CDAP ETL :term:`Plugins <plugin>`.
       
+   Adapter Configuration
+      A JSON String that defines an :term:`Adapter`.
+      
+   Application Template
+      An application that is reusable through configuration and extensible through plugins.
+  
+   Template
+      See :term:`Application Template`.
+
+   App Template
+      See :term:`Application Template`.
+
+   Adapter
+      An Adapter is an instantiation of an :term:`Application Template` that has been created
+      from a specific configuration. Adapters combine :term:`Plugins <plugin>` to access
+      CDAP programs and resources.
+   
+   ETL
+      Refers to the *Extract*, *Transform* and *Load* of data. 
+    
+   ETL Application Template
+      Also referred to as an ETL Template. A type of :term:`Application Template`,
+      designed to create an :term:`ETL Adapter`. Two ETL Templates are shipped with CDAP:
+      ``ETLBatch`` and ``ETLRealtime``, for the creation of either batch or realtime
+      :term:`ETL` pipelines.
+  
+   ETL Template
+      See :term:`ETL Application Template`.
+
+   ETL Adapter
+      An ETL :term:`Adapter` is an Adapter created from an :term:`ETL Template`,
+      specifically for creating :term:`ETL` applications.
+
+   ETL Plugin
+      A :term:`Plugin` of type BatchSource, RealtimeSource, BatchSink, RealtimeSink, or
+      Transformation, packaged in a JAR file format, for use as a :term:`Plugin`
+      in an ETL Adapter.
+
+   Plugin
+      A Plugin extends an :term:`Application Template` by implementing an interface
+      expected by the Template. One or more Plugins are packaged in a specifically
+      constructed JAR file.

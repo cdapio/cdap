@@ -39,7 +39,7 @@ angular.module(PKG.name+'.feature.home')
             return myNamespace.getList();
           }
         },
-        controller: function ($state, rNsList, mySessionStorage, myLoadingService) {
+        controller: function ($state, rNsList, mySessionStorage, myLoadingService, myAlert, $filter) {
           // check that $state.params.namespace is valid
           var n = rNsList.filter(function (one) {
             return one.name === $state.params.namespace;
@@ -51,11 +51,24 @@ angular.module(PKG.name+'.feature.home')
           if(!n.length) {
             mySessionStorage.get(PREFKEY)
               .then(function (latest) {
-                var d = latest || rNsList[0].name;
-                console.warn('invalid namespace, defaulting to', d);
+
+                var def = $filter('filter')(rNsList, {name: 'default'}, true);
+
+                if (def.length === 0) {
+                  def = rNsList[0];
+                  myAlert({
+                    title: 'Cannot find default namespace',
+                    content: 'Reverting to ' + def.name + ' namespace.'
+                  });
+                } else {
+                  def = def[0];
+                }
+
+                var defaultNs = latest || def.name;
+                console.warn('invalid namespace, defaulting to', defaultNs);
                 $state.go(
                   $state.current,
-                  { namespace: d },
+                  { namespace: defaultNs },
                   { reload: true }
                 );
               });

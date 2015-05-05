@@ -64,7 +64,7 @@ New Features
   <https://issues.cask.co/browse/CDAP-946>`__).
 
 - The :ref:`CDAP CLI <cli>` supports the new :ref:`Application Template and Adapters APIs 
-  <users-index>`. (`CDAP-1773 <https://issues.cask.co/browse/CDAP-1773>`__).
+  <apptemplates-index>`. (`CDAP-1773 <https://issues.cask.co/browse/CDAP-1773>`__).
   
 - The :ref:`CDAP CLI <cli>` startup options have been changed to accommodate a new option
   of executing a file containing a series of CLI commands, line-by-line.
