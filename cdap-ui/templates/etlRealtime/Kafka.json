@@ -8,8 +8,8 @@
        "fields" : {
           "kafka.zookeeper" : {
              "widget": "textbox",
-             "label": "Zookeeper Qorum",
-             "description" : "Specify the zookeeper connection string. E.g. host:2181,host2:2181,host3:2181. Either we can specify zookeeper qorum or broker list.",
+             "label": "Zookeeper Quorum",
+             "description" : "Specify the zookeeper connection string. E.g. host:2181,host2:2181,host3:2181. Either we can specify zookeeper quorum or broker list.",
              "properties": {
                "width": "large"
              }
@@ -28,7 +28,7 @@
           "kafka.partitions" : {
              "widget": "number",
              "label": "Number of Partitions",
-             "description": "Specifies the number of parititions. Each partition is an ordered, immutable sequence of messages that is continually appended to—a commit log. The messages in the partitions are each assigned a sequential id number called the offset that uniquely identifies each message within the partition",
+             "description": "Specifies the number of partitions. Each partition is an ordered, immutable sequence of messages that is continually appended to—a commit log. The messages in the partitions are each assigned a sequential id number called the offset that uniquely identifies each message within the partition",
              "properties": {
                "width": "extra-small",
                "default": 1
