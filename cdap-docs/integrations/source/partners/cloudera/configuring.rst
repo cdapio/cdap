@@ -130,40 +130,34 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 #. Open a web browser to the CDAP Console. It is located on port ``9999`` of the box where
    you installed CDAP.
 
-#. From the CDAP Console Overview page, click "Load App” and navigate to the jar.
-   (You can also drag-and-drop to the browser window)
+#. From the CDAP UI Development tab, under "Apps" click "Add App” and navigate to the jar.
 
-#. Once it is deployed, click on the *Process* button in the left sidebar of the CDAP Console,
-   then click *PurchaseFlow* in the Process page to get to the *Flow* detail page, then
-   click the *Start* button. (This will launch additional YARN containers.)
+#. Once it is deployed, click on it in the list of Applications (*PurchaseHistory*), then click on
+   *PurchaseFlow* in the list of Programs to get to the *Flow* detail page, then click the *Start*
+   button.  (this will launch additional YARN containers.)
 
 #. Once the Flow is *RUNNING*, inject data by clicking on the *purchaseStream* icon in
    the Flow diagram.  In the dialog that pops up, type ``Tom bought 5 apples for $3`` and click
    *Inject*.  You should see activity in the graphs and the Flowlet counters increment.
 
-#. Run a MapReduce program against this data by click on the *Process* button in the left
-   sidebar of the CDAP Console, select *PurchaseHistoryWorkflow_PurchaseHistoryBuilder*,
-   and click the *Start* button.  This will launch an additional container and a MapReduce
-   job in YARN.  After it starts you should see the Map and Reduce progress bars complete.
-   Failures at this stage are often due to YARN MapReduce misconfiguration or a lack of
-   YARN capacity.
+#. Run a MapReduce program against this data by navigating back to the *PurchaseHistory* list of 
+   programs, select *PurchaseHistoryBuilder*, and click the *Start* button.  This will launch an
+   additional container and a MapReduce job in YARN.  After it starts you should see the Map and
+   Reduce progress bars complete.  Failures at this stage are often due to YARN MapReduce misconfiguration
+   or a lack of YARN capacity.
 
 #. After the MapReduce job is complete, we can startup a query service which will read
    from the processed dataset.  Navigate to Application -> PurchaseHistory ->
-   PurchaseHistoryService (under the “Service” section).  Click the Start button to start
-   the Service.  (This will launch another YARN container)
+   PurchaseHistoryService.  Click the Start button to start the Service.  (This will launch another YARN container)
 
-#. Send an HTTP RESTful API request to the Gateway/Router service to read back the data you injected. 
-   The API listens on the host where the Gateway/Router role instance is running, port
-   11015 by default (though you may have changed it in the Wizard).  Make a ``curl`` request::
-
-     $ curl -w'\n' -v \
-       'http://[router-host]:[router-port]/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Tom'
+#. Send an HTTP RESTful API request to the Gateway/Router service to read back the data you injected.
+   From the *PurchaseHistoryService* page, click *Make Request* for the */history/{customer}* endpoint listed.
+   In the dialog that pops up, enter ``Tom`` in the *Path Params* field and click *Make Request*.
 
 #. You should get back a response similar to::
 
      {"customer":"Tom","purchases":[{"customer":"Tom","product":"apple","quantity":5,"price":3,
-      "purchaseTime":1421470224780,"catalogId":""}]}
+      "purchaseTime":1421470224780}]}
 
 #. You have now completed verification of the installation.
 
