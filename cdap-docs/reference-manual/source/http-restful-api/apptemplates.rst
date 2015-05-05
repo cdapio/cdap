@@ -6,7 +6,7 @@
 .. _http-restful-api-apptemplates:
 
 =========================================================
-Application Template and Adapters HTTP RESTful API (Beta)
+Application Template and Adapters HTTP RESTful API 
 =========================================================
 
 Use the CDAP Application Template and Adapter HTTP API to obtain a list of available

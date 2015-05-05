@@ -6,7 +6,7 @@
 .. _apptemplates-index:
 
 ==================================================
-CDAP Application Templates (Beta)
+CDAP Application Templates 
 ==================================================
 
 
@@ -45,7 +45,7 @@ extensible: users can write their own application templates if they so chose, an
 manage the lifecycle of their custom application templates using CDAP.
 
 
-ETL (Beta)
+ETL 
 ==========
 ETL is **Extract**, **Transform** and **Load** of data, a common first-step in any data
 application. CDAP endeavors to make performing ETL possible out-of-box without writing

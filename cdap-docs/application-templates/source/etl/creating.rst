@@ -5,7 +5,7 @@
 .. _apptemplates-etl-creating:
 
 ==============================
-Creating An ETL Adapter (Beta)
+Creating An ETL Adapter 
 ==============================
 
 .. highlight:: console

@@ -5,7 +5,7 @@
 .. _apptemplates-etl-operations:
 
 ===================================
-Adapter Lifecycle Management (Beta)
+Adapter Lifecycle Management 
 ===================================
 
 Introduction
