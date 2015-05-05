@@ -54,7 +54,7 @@ angular.module(PKG.name+'.feature.home')
 
                 var def = $filter('filter')(rNsList, {name: 'default'}, true);
 
-                if (def.length < 1) {
+                if (def.length === 0) {
                   def = rNsList[0];
                   myAlert({
                     title: 'Cannot find default namespace',
@@ -64,11 +64,11 @@ angular.module(PKG.name+'.feature.home')
                   def = def[0];
                 }
 
-                var d = latest || def.name;
-                console.warn('invalid namespace, defaulting to', d);
+                var defaultNs = latest || def.name;
+                console.warn('invalid namespace, defaulting to', defaultNs);
                 $state.go(
                   $state.current,
-                  { namespace: d },
+                  { namespace: defaultNs },
                   { reload: true }
                 );
               });
