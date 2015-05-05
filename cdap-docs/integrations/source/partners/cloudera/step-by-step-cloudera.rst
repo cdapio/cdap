@@ -131,12 +131,12 @@ UI in the upper right will show the status of the CDAP services.
 
 .. figure:: ../../../../admin-manual/source/_images/console/console_01_overview.png
    :figwidth: 100%
-   :height: 526px
+   :height: 714px
    :width: 800px
    :align: center
    :class: bordered-image
 
-   **CDAP UI:** Showing started-up with two applications deployed.
+   **CDAP UI:** Showing started-up with applications deployed.
 
 Further instructions, including verifying your installation, are contained in :ref:`Configuring
 and Installing: Verification <cloudera-verification>`.
