@@ -30,6 +30,10 @@ Cask Data Application Platform Release Notes
 New Features
 ------------
 
+- Support for Application Templates has been added (`CDAP-1753 <https://issues.cask.co/browse/CDAP-1753>`__).
+
+- Built-in ETL Application Templates and Plugins have been added (`CDAP-1767 <https://issues.cask.co/browse/CDAP-1767>`__).
+
 - New :ref:`CDAP UI <cdap-ui>`, supports creating ETL applications directly in the web UI.
   See section below (:ref:`New User Interface <new-user-interface-300>`) for details.
 
@@ -72,10 +76,6 @@ New Features
   Flowlet queue (`CDAP-2105 <https://issues.cask.co/browse/CDAP-2105>`__).
 
 - Support for CDAP SDK VM build automation has been added (`CDAP-2030 <https://issues.cask.co/browse/CDAP-2030>`__).
-
-- Support for Application Templates has been added (`CDAP-1753 <https://issues.cask.co/browse/CDAP-1753>`__).
-
-- Built-in ETL Application Templates and Plugins have been added (`CDAP-1767 <https://issues.cask.co/browse/CDAP-1767>`__).
 
 - A Cube Dataset has been added (`CDAP-1520 <https://issues.cask.co/browse/CDAP-1520>`__).
 
