@@ -28,7 +28,7 @@ angular.module(PKG.name+'.feature.datasets')
       };
 
       QueryModel.prototype.add = function (entry) {
-        if(this.data.indexOf(entry) == -1) {
+        if(this.data.indexOf(entry) === -1) {
           this.data.push(entry);
           this.sync();
         }
@@ -76,13 +76,13 @@ angular.module(PKG.name+'.feature.datasets')
         if (apiQueries) {
           apiQueries.forEach(function (query) {
             queryMap[query.query_handle] = query;
-          });  
+          });
         }
         var queries = [];
         for (var handle in queryMap) {
           if (this.queryHandles.hasOwnProperty(handle)) {
             var query = queryMap[handle];
-            queries.push(query);  
+            queries.push(query);
           }
         }
         return queries;

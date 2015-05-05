@@ -44,7 +44,7 @@ angular.module(PKG.name+'.services')
      */
     var generateUUID = function() {
       return uuid.v4();
-    }
+    };
 
     /**
      * Start polling of the resource - sends the action 'poll-start' to
@@ -136,7 +136,7 @@ angular.module(PKG.name+'.services')
      * Start polling of a resource when in scope.
      */
     DataSource.prototype.poll = function (resource, cb, errorCb) {
-      var id = generateUUID()
+      var id = generateUUID();
       resource.id = id;
       this.bindings.push({
         poll: true,
@@ -190,9 +190,9 @@ angular.module(PKG.name+'.services')
       mySocket.send({
         action: 'template-config',
         resource: resource
-      })
+      });
       return deferred.promise;
-    }
+    };
 
     /**
      * Fetch a resource on-demand. Send the action 'request' to

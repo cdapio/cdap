@@ -105,5 +105,5 @@ angular.module(PKG.name + '.feature.adapters')
           ncyBreadcrumb: {
             label: 'History'
           }
-        })
+        });
   });

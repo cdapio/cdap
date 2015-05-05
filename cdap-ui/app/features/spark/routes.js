@@ -76,6 +76,6 @@ angular.module(PKG.name + '.feature.spark')
         ncyBreadcrumb: {
           label: 'History'
         }
-      })
+      });
 
   });

@@ -29,8 +29,8 @@ angular.module(PKG.name+'.feature.dashboard')
         // For an empty context, we want no tags. Splitting it by '.' yields [""]
         parts = [];
       }
-      if (parts.length % 2 != 0) {
-        throw "Metrics context has uneven number of parts: " + context
+      if (parts.length % 2 !== 0) {
+        throw "Metrics context has uneven number of parts: " + context;
       }
       tags = {};
       for (i = 0; i < parts.length; i+=2) {
@@ -46,7 +46,7 @@ angular.module(PKG.name+'.feature.dashboard')
       timeRange = {'start': metric.startTime || 'now-60s',
                   'end': metric.endTime || 'now'};
       if (metric.resolution) {
-        timeRange['resolution'] = metric.resolution;
+        timeRange.resolution = metric.resolution;
       }
       retObj = {};
       retObj[queryId] = {tags: tags, metrics: metric.names, groupBy: [], timeRange: timeRange};
@@ -76,7 +76,7 @@ angular.module(PKG.name+'.feature.dashboard')
       } else {
         this.fetchData(scope);
       }
-    }
+    };
 
     Widget.prototype.startPolling = function (scope) {
       if (!this.dataSrc) {
@@ -119,7 +119,7 @@ angular.module(PKG.name+'.feature.dashboard')
         return '1m';
       }
       return '1h';
-    }
+    };
 
     var skipAmtFromResolution = function(resolution) {
       switch(resolution) {
@@ -133,7 +133,7 @@ angular.module(PKG.name+'.feature.dashboard')
             // backend defaults to '1s'
             return 1;
       }
-    }
+    };
     var zeroFill = function(resolution, result) {
         // interpolating (filling with zeros) the data since backend returns only metrics at specific time periods
         // instead of for the whole range. We have to interpolate the rest with 0s to draw the graph.
@@ -145,7 +145,7 @@ angular.module(PKG.name+'.feature.dashboard')
         var startTime = myHelpers.roundUpToNearest(result.startTime, skipAmt);
         var endTime = myHelpers.roundDownToNearest(result.endTime, skipAmt);
         var tempMap = {};
-        for (j = startTime; j <= endTime; j += skipAmt) {
+        for (var j = startTime; j <= endTime; j += skipAmt) {
           tempMap[j] = 0;
         }
         return tempMap;
@@ -154,7 +154,7 @@ angular.module(PKG.name+'.feature.dashboard')
     Widget.prototype.processData = function (queryResults) {
       var metrics, metric, data, dataPt, result;
       var i, j;
-      var tempMap = {}
+      var tempMap = {};
       var tmpData = [];
       result = queryResults[queryId];
       metrics = this.metric.names;
@@ -164,7 +164,7 @@ angular.module(PKG.name+'.feature.dashboard')
       }
       for (i = 0; i < result.series.length; i++) {
         data = result.series[i].data;
-        metric = result.series[i].metricName
+        metric = result.series[i].metricName;
         for (j = 0 ; j < data.length; j++) {
           dataPt = data[j];
           tempMap[metric][dataPt.time] = dataPt.value;
@@ -220,7 +220,7 @@ angular.module(PKG.name+'.feature.dashboard')
       scope.$on('wdgt-tab-dd.hide', function () {
         dd.destroy();
       });
-    }
+    };
   })
 
   .controller('WidgetColCtrl', function ($scope) {
@@ -285,7 +285,7 @@ angular.module(PKG.name+'.feature.dashboard')
     $scope.chartData = null;
     $scope.wdgt.reconfigure($scope);
     $scope.$watch('wdgt.data', function (newVal) {
-      var metricMap, arr, columns, hist;
+      var metricMap, arr, columns, hist, streams;
       if(angular.isObject(newVal) && newVal.length) {
 
         var metricNames = $scope.wdgt.metric.names.map(function(metricName) {
@@ -315,7 +315,7 @@ angular.module(PKG.name+'.feature.dashboard')
 
         streams = [];
         columns.forEach(function(column) {
-          if (!column.length || column[0] == 'x') {
+          if (!column.length || column[0] === 'x') {
             return;
           }
           streams.push(column[column.length - 1]);
@@ -335,21 +335,21 @@ angular.module(PKG.name+'.feature.dashboard')
       }
       var tableData = [];
       chartData.xCoords.forEach(function(timestamp, index) {
-        if (index == 0) {
+        if (index === 0) {
           // the first index of each column is just 'x' or the metric name
           return;
         }
         var rowData = [timestamp];
         chartData.columns.forEach(function(column) {
           // If it begins with 'x', it is timestamps
-          if (column.length && column[0] != 'x') {
+          if (column.length && column[0] !== 'x') {
             rowData.push(column[index]);
           }
         });
         tableData.push(rowData);
       });
       $scope.tableData = tableData;
-    })
+    });
   })
 
   .controller('WidgetPieCtrl', function ($scope, $alert, MyDataSource) {

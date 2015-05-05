@@ -9,15 +9,15 @@ angular.module(PKG.name+'.services')
 
     alert['clear'] = function() {
       __list = [];
-    }
+    };
 
     alert['isEmpty'] = function() {
       return __list.length === 0;
-    }
+    };
 
     alert['getAlerts'] = function() {
       return __list;
-    }
+    };
 
     alert['count'] = function() {
       return __list.length;

@@ -116,7 +116,7 @@ function (Widget, MyDataSource, mySettings, $q, myHelpers) {
    */
   Dashboard.prototype.canAddWidget = function () {
     return this.numWidgets() < this.WIDGET_LIMIT;
-  }
+  };
 
   /**
    * Returns the number of widgets in this dashboard
@@ -127,7 +127,7 @@ function (Widget, MyDataSource, mySettings, $q, myHelpers) {
       sum += column.length;
     });
     return sum;
-  }
+  };
 
 
   /**

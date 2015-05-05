@@ -76,7 +76,9 @@ angular.module(PKG.name + '.feature.adapters')
 
     $scope.$watch('metadata.type',function(adapterType) {
 
-      if (!adapterType.length) return;
+      if (!adapterType.length) {
+        return;
+      }
       $scope.onAdapterTypeSelected = true;
       apiFactory.fetchSources(adapterType);
       apiFactory.fetchSinks(adapterType);
@@ -143,7 +145,7 @@ angular.module(PKG.name + '.feature.adapters')
           type: 'source',
           active: true,
           partial: '/assets/features/adapters/templates/create/tabs/sourcePropertyEdit.html'
-        })
+        });
       }
     };
     $scope.editSinkProperties = function() {
@@ -231,7 +233,7 @@ angular.module(PKG.name + '.feature.adapters')
           delete sink.properties[key];
         }
       });
-      for (var i=0; i<trans.length; i++) {
+      for (i=0; i<trans.length; i++) {
         angular.forEach(trans[i].properties, function(value, key) {
           var match = trans[i]._backendProperties[key];
           if (match && match.required === false && value === null) {
@@ -263,7 +265,7 @@ angular.module(PKG.name + '.feature.adapters')
       }
 
       apiFactory.save(data);
-    }
+    };
 
     $scope.dragdrop = {
       dragStart: function (drag) {
@@ -282,7 +284,6 @@ angular.module(PKG.name + '.feature.adapters')
           $scope.adaptersDraftList = Object.keys($scope.adapterDrafts);
           defer.resolve();
         });
-      return defer.promise;
     };
     if ($state.params.data) {
       $scope.getDrafts()
@@ -290,7 +291,7 @@ angular.module(PKG.name + '.feature.adapters')
           $scope.selectedAdapterDraft = $state.params.data;
           $scope.onDraftChange($state.params.data);
         });
-    };
+    }
     $scope.getDrafts();
 
     $scope.saveAsDraft = function() {
@@ -319,7 +320,7 @@ angular.module(PKG.name + '.feature.adapters')
         });
         $state.go('^.list');
       });
-    }
+    };
 
     $scope.tabs = [
       {
@@ -332,7 +333,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     $scope.closeTab = function(index) {
       $scope.tabs.splice(index, 1);
-    }
+    };
 
     $scope.$on('$stateChangeStart', function(event, toState, toParams, fromState, fromParams) {
       if (fromState.name === 'adapters.create' && !$scope.isSaved) {

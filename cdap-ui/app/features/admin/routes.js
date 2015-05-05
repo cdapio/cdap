@@ -228,7 +228,7 @@ angular.module(PKG.name + '.feature.admin')
                   controller: 'PreferencesController',
                   resolve: {
                     rSource: function () {
-                      return 'APPLICATION'
+                      return 'APPLICATION';
                     }
                   }
                 });

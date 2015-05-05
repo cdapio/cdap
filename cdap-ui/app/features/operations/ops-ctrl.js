@@ -86,7 +86,7 @@ angular.module(PKG.name+'.feature.dashboard')
           resolution: '1m'
         },
         interval: 15000
-      })
+      });
     }
 
     function createBoardFromPanels(panels) {

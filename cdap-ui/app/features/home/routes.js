@@ -23,7 +23,7 @@ angular.module(PKG.name+'.feature.home')
             // Skip even the login view. Don't show login if security is disabled.
             myAuth.login({username:'admin'})
               .then(function() {
-                myLoadingService.showLoadingIcon()
+                myLoadingService.showLoadingIcon();
                 $state.go('overview');
               });
           }
@@ -76,7 +76,7 @@ angular.module(PKG.name+'.feature.home')
           else {
             mySessionStorage.set(PREFKEY, $state.params.namespace);
           }
-          myLoadingService.hideLoadingIcon()
+          myLoadingService.hideLoadingIcon();
         }
       })
 
