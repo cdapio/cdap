@@ -42,29 +42,76 @@ New Features
 ------------
 
 - New :ref:`CDAP UI <cdap-ui>`, supports creating ETL applications directly in the web UI.
+
 - Workflow logs can now be retrieved using the :ref:`CDP HTTP Logging RESTful API 
-  <http-restful-api-logging>`.
-- CDAP Tables are :ref:`now explorable <table-exploration>`.
+  <http-restful-api-logging>` (`CDAP-1089 <https://issues.cask.co/browse/CDAP-1089>`__).
+  
+- Support has been added for suspending and resuming of a Workflow (`CDAP-1610
+  <https://issues.cask.co/browse/CDAP-1610>`__).
+  
+- Condition nodes in a Workflow now allow branching based on a boolean predicate
+  (`CDAP-1928 <https://issues.cask.co/browse/CDAP-1928>`__).
+  
+- Condition nodes in a Workflow now allow passing the Hadoop counters from a MapReduce
+  program to following Condition nodes in the Workflow (`CDAP-1611
+  <https://issues.cask.co/browse/CDAP-1611>`__).
+  
+- Logs can now be fetched based on the ``run-id`` (`CDAP-1582
+  <https://issues.cask.co/browse/CDAP-1582>`__).
+  
+- CDAP Tables are :ref:`now explorable <table-exploration>` (`CDAP-946
+  <https://issues.cask.co/browse/CDAP-946>`__).
+
 - The :ref:`CDAP CLI <cli>` supports the new :ref:`Application Template and Adapters APIs 
   <users-index>`. (`CDAP-1773 <https://issues.cask.co/browse/CDAP-1773>`__).
+  
 - The :ref:`CDAP CLI <cli>` startup options have been changed to accommodate a new option
   of executing a file containing a series of CLI commands, line-by-line.
+  
 - Both `grok <http://logstash.net/docs/1.4.2/filters/grok>`__ and 
   `syslog <http://en.wikipedia.org/wiki/Syslog>`__ record formats can now be used when 
   :ref:`setting the format of a Stream <http-restful-api-stream-setting-properties>`
   (`CDAP-1949 <https://issues.cask.co/browse/CDAP-1949>`__).
+  
 - Added HTTP RESTful endpoints for listing Datasets and Streams as used by Adapters, 
   Programs, and Applications, and vice-versa 
   (`CDAP-2214 <https://issues.cask.co/browse/CDAP-2214>`__).
+  
 - Created a `queue introspection tool <https://github.com/caskdata/cdap/pull/2290>`__, 
   for counting processed and unprocessed entries in a 
   Flowlet queue (`CDAP-2105 <https://issues.cask.co/browse/CDAP-2105>`__).
 
+- Support for CDAP SDK VM build automation has been added (`CDAP-2030 <https://issues.cask.co/browse/CDAP-2030>`__).
+
+- Support for Application Templates has been added (`CDAP-1753 <https://issues.cask.co/browse/CDAP-1753>`__).
+
+- Built-in ETL Application Templates and Plugins have been added (`CDAP-1767 <https://issues.cask.co/browse/CDAP-1767>`__).
+
+- A Cube Dataset has been added (`CDAP-1520 <https://issues.cask.co/browse/CDAP-1520>`__).
+
+- A Batch and realtime Cube dataset sink has been added (`CDAP-1520 <https://issues.cask.co/browse/CDAP-1966>`__).
+
+- Metrics and status information for MapReduce on a task level is now exposed (`CDAP-1520 <https://issues.cask.co/browse/CDAP-1958>`__).
+
+
 Improvement
 -----------
 
+- The :ref:`Metrics system APIs<http-restful-api-metrics>` have been revised and improved
+  (`CDAP-1596 <https://issues.cask.co/browse/CDAP-1596>`__).
+- The Metrics system performance has been improved
+  (`CDAP-2124 <https://issues.cask.co/browse/CDAP-2124>`__, 
+  `CDAP-2125 <https://issues.cask.co/browse/CDAP-2125>`__).
+
+Bug Fixes
+---------
+
 - The CDAP Authentication server now reports the port correctly when the port is set to 0
   (`CDAP-614 <https://issues.cask.co/browse/CDAP-614>`__).
+
+- History of the programs running under Workflow (Spark and MapReduce) is now updated correctly
+  (`CDAP-1293 <https://issues.cask.co/browse/CDAP-1293>`__).
+
 
 API Changes
 -----------
