@@ -41,7 +41,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 
 /**
  *
@@ -280,7 +279,6 @@ public class LoggingTester {
     private LogOffset firstOffset;
     private LogOffset lastOffset;
     private List<LogEvent> events;
-    private final CountDownLatch latch = new CountDownLatch(1);
 
     @Override
     public void init() {
@@ -303,11 +301,9 @@ public class LoggingTester {
 
     @Override
     public void close() {
-      latch.countDown();
     }
 
     public List<LogEvent> getEvents() throws Exception {
-      latch.await();
       return events;
     }
 

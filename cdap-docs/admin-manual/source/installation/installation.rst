@@ -26,7 +26,7 @@ There are specific instructions for :ref:`upgrading existing CDAP installations<
 
 These are the CDAP components:
 
-- **CDAP Webapp:** User interface—the *Console*—for managing CDAP applications;
+- **CDAP UI:** User interface—the *Console*—for managing CDAP applications;
 - **CDAP Router:** Service supporting REST endpoints for CDAP;
 - **CDAP Master:** Service for managing runtime, lifecycle and resources of CDAP applications;
 - **CDAP Kafka:** Metrics and logging transport service, using an embedded version of *Kafka*; and
@@ -68,7 +68,7 @@ in addition to having CPUs with a minimum speed of 2 GHz:
 +---------------------------------------+--------------------+-----------------------------------------------+
 | CDAP Component                        | Hardware Component | Specifications                                |
 +=======================================+====================+===============================================+
-| **CDAP Webapp**                       | RAM                | 1 GB minimum, 2 GB recommended                |
+| **CDAP UI**                           | RAM                | 1 GB minimum, 2 GB recommended                |
 +---------------------------------------+--------------------+-----------------------------------------------+
 | **CDAP Router**                       | RAM                | 2 GB minimum, 4 GB recommended                |
 +---------------------------------------+--------------------+-----------------------------------------------+
@@ -127,12 +127,13 @@ Once you have installed the JDK, you'll need to set the JAVA_HOME environment va
 
 Node.js Runtime
 +++++++++++++++
-You can download the appropriate version of Node.js (from v0.8.16 through v0.10.37) from `nodejs.org <http://nodejs.org>`__:
+You can download the appropriate version of Node.js (from |node-js-version|) from `nodejs.org <http://nodejs.org>`__:
 
-#. The version of Node.js must be from v0.8.16 through v0.10.37.
+#. The version of Node.js must be from |node-js-version|.
 #. Download the appropriate Linux or Solaris binary ``.tar.gz`` from
    `nodejs.org/download/ <http://nodejs.org/dist/>`__.
- #. Extract somewhere such as ``/opt/node-[version]/``
+
+#. Extract somewhere such as ``/opt/node-[version]/``
 #. Build node.js; instructions that may assist are available at
    `github <https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager>`__
 #. Ensure that ``nodejs`` is in the ``$PATH``. One method is to use a symlink from the installation:
@@ -313,11 +314,11 @@ Using Chef:
 
 Using Yum::
 
-  $ sudo yum install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app
+  $ sudo yum install cdap-gateway cdap-kafka cdap-master cdap-security cdap-ui
 
 Using APT::
 
-  $ sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app
+  $ sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-ui
 
 Do this on each of the boxes that are being used for the CDAP components; our
 recommended installation is a minimum of two boxes.
@@ -399,7 +400,7 @@ Depending on your installation, you may want to set these properties:
   #. Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
 
 - Set the ``router.server.address`` property in ``conf/cdap-site.xml`` to the **hostname of the CDAP Router**.
-  The CDAP Console uses this property to connect to the Router::
+  The CDAP UI uses this property to connect to the Router::
 
       <property>
         <name>router.server.address</name>
@@ -530,7 +531,7 @@ command::
 
   $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i restart ; done
 
-When all the services have completed starting, the CDAP Console should then be
+When all the services have completed starting, the CDAP UI should then be
 accessible through a browser at port ``9999``. 
 
 The URL will be ``http://<host>:9999`` where ``<host>`` is the IP address of
@@ -577,9 +578,9 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 #. Open a command prompt and navigate to ``CDAP_HOME/examples``.
 #. Each example folder has a ``.jar`` file in its ``target`` directory.
    For verification, we will use the ``WordCount`` example.
-#. Open a web browser to the CDAP Console.
+#. Open a web browser to the CDAP UI.
    It is located on port ``9999`` of the box where you installed CDAP.
-#. On the Console, click the button *Load an App*.
+#. On the UI, click the button *Add App*.
 #. Find the pre-built ``WordCount-``\ |literal-release|\ ``.jar`` using the dialog box to navigate to
    ``CDAP_HOME/examples/WordCount/target/``. 
 #. Once the application is deployed, instructions on running the example can be found at the
@@ -599,10 +600,8 @@ to make sure the CDAP table definitions in HBase are up-to-date.
 These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
 and then restart CDAP.
 
-These steps will upgrade from CDAP 2.6.x to 2.8.0. (**Note:** Apps need to be both
-recompiled and re-deployed.) An upgrade from 2.7.x to 2.8.0 is not currently supported. If
-you have a use case for it, please reach out to us at `cdap-user@googlegroups.com
-<https://groups.google.com/d/forum/cdap-user>`__.
+These steps will upgrade from CDAP 2.8.0 to 3.0.0. (**Note:** Apps need to be both
+recompiled and re-deployed.) 
 
 .. highlight:: console
 
@@ -618,13 +617,15 @@ you have a use case for it, please reach out to us at `cdap-user@googlegroups.co
 
        $ sudo yum install cdap cdap-gateway \
              cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
-             cdap-kafka cdap-master cdap-security cdap-web-app
+             cdap-kafka cdap-master cdap-security cdap-ui
 
    - Using APT (on one line)::
 
        $ sudo apt-get install cdap cdap-gateway \
              cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
-             cdap-kafka cdap-master cdap-security cdap-web-app
+             cdap-kafka cdap-master cdap-security cdap-ui
+
+   **Note:** We have deprecated the cdap-web-app package in favor of cdap-ui package 
 
 #. Copy the ``logback-container.xml`` into your ``conf`` directory. 
    Please see :ref:`Configuration <install-configuration>`.
@@ -638,23 +639,17 @@ you have a use case for it, please reach out to us at `cdap-user@googlegroups.co
 
      $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
 
-#. Run the Data Migration Tool for metrics::
-
-     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.DataMigration metrics [--keep-old-metrics-data]
-
-   This will migrate aggregate metrics data from the CDAP 2.6.x tables to the CDAP 2.8 metrics system. 
-   The old metrics tables are deleted by default unless the optional argument ``--keep-old-metrics-data`` is specified.
-
 #. Restart the CDAP processes::
 
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
      
-#. This will allow you to see your old run history, logs, and |---| if you migrated your 
-   old metrics with the *Data Migration Tool* |---| metrics.
+#. Run the Flow Queue pending metrics corrector::
 
-   **Note:** You will no longer be able to see your previous logs in the CDAP Console (UI). 
-   To access your previous logs, please see the section on downloading logs in the
-   :ref:`Logging HTTP RESTful API <http-restful-api-logging>`.
+     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.flow.FlowQueuePendingCorrector
+
+   This will correct the pending metrics for flows. This is a new metric that was introduced in 
+   CDAP 3.0; flows that existed before the upgrade to 3.0 do not have a correct value for this
+   metric and running the tool provides a one-time correction.
 
 #. You must recompile and then redeploy your applications. 
 

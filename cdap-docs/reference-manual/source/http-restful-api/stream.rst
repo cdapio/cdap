@@ -294,6 +294,8 @@ A Stream can be truncated with an HTTP POST method to the URL::
    * - Description
      - Delete all events in the Stream named *mystream* in the namespace *default*
 
+.. _http-restful-api-stream-setting-properties:
+
 Setting Stream Properties
 -------------------------
 There are a number of Stream properties that can be specified.
@@ -333,7 +335,9 @@ New properties are passed in the JSON request body.
    * - ``ttl``
      - Number of seconds that an event will be valid for since ingested
    * - ``format``
-     - JSON Object describing the format name, schema, and settings
+     - JSON Object describing the format name, schema, and settings. Accepted formats are
+       ``avro``, ``csv`` (comma-separated), ``tsv`` (tab-separated), ``text``, ``clf``, 
+       ``grok``, and ``syslog``.
    * - ``notification.threshold.mb``
      - Increment of data, in MB, that a Stream has to receive before
        publishing a notification.

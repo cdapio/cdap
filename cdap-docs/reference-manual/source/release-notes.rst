@@ -27,19 +27,132 @@ Cask Data Application Platform Release Notes
 `Release 3.0.0 <http://docs.cask.co/cdap/3.0.0/index.html>`__
 =============================================================
 
-General
--------
-
-- The `File DropZone <http://docs.cask.co/cdap/2.8.0/en/developers-manual/ingesting-tools/cdap-file-drop-zone.html>`__ 
-  and `File Tailer <http://docs.cask.co/cdap/2.8.0/en/developers-manual/ingesting-tools/cdap-file-tailer.html>`__
-  are no longer supported as of Release 3.0.
-
-
 New Features
 ------------
 
+- Support for Application Templates has been added (`CDAP-1753 <https://issues.cask.co/browse/CDAP-1753>`__).
+
+- Built-in ETL Application Templates and Plugins have been added (`CDAP-1767 <https://issues.cask.co/browse/CDAP-1767>`__).
+
+- New :ref:`CDAP UI <cdap-ui>`, supports creating ETL applications directly in the web UI.
+  See section below (:ref:`New User Interface <new-user-interface-300>`) for details.
+
+- Workflow logs can now be retrieved using the :ref:`CDP HTTP Logging RESTful API 
+  <http-restful-api-logging>` (`CDAP-1089 <https://issues.cask.co/browse/CDAP-1089>`__).
+  
+- Support has been added for suspending and resuming of a Workflow (`CDAP-1610
+  <https://issues.cask.co/browse/CDAP-1610>`__).
+  
+- Condition nodes in a Workflow now allow branching based on a boolean predicate
+  (`CDAP-1928 <https://issues.cask.co/browse/CDAP-1928>`__).
+  
+- Condition nodes in a Workflow now allow passing the Hadoop counters from a MapReduce
+  program to following Condition nodes in the Workflow (`CDAP-1611
+  <https://issues.cask.co/browse/CDAP-1611>`__).
+  
+- Logs can now be fetched based on the ``run-id`` (`CDAP-1582
+  <https://issues.cask.co/browse/CDAP-1582>`__).
+  
+- CDAP Tables are :ref:`now explorable <table-exploration>` (`CDAP-946
+  <https://issues.cask.co/browse/CDAP-946>`__).
+
+- The :ref:`CDAP CLI <cli>` supports the new :ref:`Application Template and Adapters APIs 
+  <apptemplates-index>`. (`CDAP-1773 <https://issues.cask.co/browse/CDAP-1773>`__).
+  
+- The :ref:`CDAP CLI <cli>` startup options have been changed to accommodate a new option
+  of executing a file containing a series of CLI commands, line-by-line.
+  
+- Both `grok <http://logstash.net/docs/1.4.2/filters/grok>`__ and 
+  `syslog <http://en.wikipedia.org/wiki/Syslog>`__ record formats can now be used when 
+  :ref:`setting the format of a Stream <http-restful-api-stream-setting-properties>`
+  (`CDAP-1949 <https://issues.cask.co/browse/CDAP-1949>`__).
+  
+- Added HTTP RESTful endpoints for listing Datasets and Streams as used by Adapters, 
+  Programs, and Applications, and vice-versa 
+  (`CDAP-2214 <https://issues.cask.co/browse/CDAP-2214>`__).
+  
+- Created a `queue introspection tool <https://github.com/caskdata/cdap/pull/2290>`__, 
+  for counting processed and unprocessed entries in a 
+  Flowlet queue (`CDAP-2105 <https://issues.cask.co/browse/CDAP-2105>`__).
+
+- Support for CDAP SDK VM build automation has been added (`CDAP-2030 <https://issues.cask.co/browse/CDAP-2030>`__).
+
+- A Cube Dataset has been added (`CDAP-1520 <https://issues.cask.co/browse/CDAP-1520>`__).
+
+- A Batch and realtime Cube dataset sink has been added (`CDAP-1520 <https://issues.cask.co/browse/CDAP-1966>`__).
+
+- Metrics and status information for MapReduce on a task level is now exposed (`CDAP-1520 <https://issues.cask.co/browse/CDAP-1958>`__).
+
+
+.. _new-user-interface-300:
+
+New User Interface
+------------------
+- Introduced a new UI, organization based on namespaces and users.
+- Users can switch between namespaces. 
+- Uses web sockets to retrieve updates from the backend.
+- **Development Section**
+
+  - Introduces a UI for programs based on run-ids.
+  - Users can view logs and, in certain cases |---| Flows |---| Flowlets, of a program based on run ids.
+  - Shows a list of Datasets and Streams used by a program, and shows programs using a specific Dataset and Stream.
+  - Shows the history of a program (list of runs).
+  - Datasets or Streams are explorable on a Dataset/Stream level or on a global level.
+  - Shows program level metrics on under each program.
+  
+- **Operations section**
+
+  - Introduces an operations section to explore metrics.
+  - Allows users to create custom dashboard with custom metrics.
+  - Users can add different types of charts (line, bar, area, pie, donut, scatter, spline,
+    area-spline, area-spline-stacked, area-stacked, step, table).
+  - Users can add multiple metrics on a single dashboard, or on a single widget on a single dashboard.
+  - Users can organize the widgets in either a two, three, or four-column layout.
+  - Users can toggle the frequency at which data is polled for a metric.
+  - Users can toggle the resolution of data displayed in a graph.
+  
+- **Admin Section**
+
+  - Users can manage different objects of CDAP (Applications, Programs, Datasets, and Streams).
+  - Users can create namespaces.
+  - Through the Admin view, users can configure their preferences at the CDAP level, namespace level, or Application level.
+  - Users can manage the System Services, Applications, and Streams through the Admin view.
+  
+- **Adapters**
+
+  - Users can create ETLBatch and ETLRealtime Adapters from within the UI.
+  - Users can choose from a list of Plugins that comes by default with CDAP when creating an Adapter.
+  - Users can save an Adapter as a draft, to be created at a later point-in-time.
+  - Users can configure plugin properties with appropriate editors from within the UI when creating an Adapter.
+  
+- The Old CDAP Console has been deprecated.
+
 Improvement
 -----------
+
+- The :ref:`Metrics system APIs<http-restful-api-metrics>` have been revised and improved
+  (`CDAP-1596 <https://issues.cask.co/browse/CDAP-1596>`__).
+- The Metrics system performance has been improved
+  (`CDAP-2124 <https://issues.cask.co/browse/CDAP-2124>`__, 
+  `CDAP-2125 <https://issues.cask.co/browse/CDAP-2125>`__).
+
+Bug Fixes
+---------
+
+- The CDAP Authentication server now reports the port correctly when the port is set to 0
+  (`CDAP-614 <https://issues.cask.co/browse/CDAP-614>`__).
+
+- History of the programs running under Workflow (Spark and MapReduce) is now updated correctly
+  (`CDAP-1293 <https://issues.cask.co/browse/CDAP-1293>`__).
+
+- Programs running under a Workflow now receive a unique ``run-id``
+  (`CDAP-2025 <https://issues.cask.co/browse/CDAP-2025>`__).
+
+- RunRecords are now updated with the RuntimeService to account for node failures
+  (`CDAP-2202 <https://issues.cask.co/browse/CDAP-2202>`__).
+
+- MapReduce metrics are now available on a secure cluster
+  (`CDAP-64 <https://issues.cask.co/browse/CDAP-64>`__).
 
 API Changes
 -----------
@@ -58,6 +171,47 @@ API Changes
   that queried for a metric has been deprecated, pending removal
   in a later version of CDAP (`CDAP-1998 <https://issues.cask.co/browse/CDAP-1998>`__). A
   :ref:`replacement endpoint <http-restful-api-metrics-querying-a-metric>` is available.
+  
+- Metrics: The tag name for Service Handlers in previous releases was wrongly ``"runnable"``,
+  and internally represented as ``"srn"``. These metrics are now tagged as ``"handler"`` (``"hnd"``), and
+  metrics queries will only account for this tag name. If you need to query historic metrics
+  that were emitted with the old tag ``"runnable"``, use ``"srn"`` to query them (instead of either
+  ``"runnable"`` or ``"handler"``).
+
+- The :ref:`CDAP CLI <cli>` startup options have been changed to accommodate a new option
+  of executing a file containing a series of CLI commands, line-by-line.
+
+- The metrics system APIs have been improved (`CDAP-1596 <https://issues.cask.co/browse/CDAP-1596>`__).
+
+- The rules for :ref:`resolving resolution <http-restful-api-metrics-time-range>`
+  when using ``resolution=auto`` in metrics query have been changed
+  (`CDAP-1922 <https://issues.cask.co/browse/CDAP-1922>`__).
+
+- Backward incompatible changes in ``InputFormatProvider`` and ``OutputFormatProvider``. 
+  It won't affect user code that uses ``FileSet`` or ``PartitionedFileSet``. 
+  It only affects classes who implement the ``InputFormatProvider`` or ``OutputFormatProvider``:
+
+  - ``InputFormatProvider.getInputFormatClass()`` is removed and
+  
+    - replaced with ``InputFormatProvider.getInputFormatClassName()``;
+    
+  - ``OutputFormatProvider.getOutputFormatClass()`` is removed and
+  
+    - replaced with ``OutputFormatProvider.getOutputFormatClassName()``.
+
+
+Deprecated and Removed Features
+-------------------------------
+
+- The `File DropZone <http://docs.cask.co/cdap/2.8.0/en/developers-manual/ingesting-tools/cdap-file-drop-zone.html>`__ 
+  and `File Tailer <http://docs.cask.co/cdap/2.8.0/en/developers-manual/ingesting-tools/cdap-file-tailer.html>`__
+  are no longer supported as of Release 3.0.
+- Support for *Procedures* has been removed. After upgrading, an Application that
+  contained a Procedure must be redeployed. 
+- Support for *Service Workers* have been removed. After upgrading, an Application that
+  contained a Service Worker must be redeployed.  
+- The Old CDAP Console has been deprecated.
+
 
 .. _known-issues-300:
 
@@ -67,6 +221,12 @@ Known Issues
 - CDAP has been tested on and supports CDH 4.2.x through CDH 5.3.x, HDP 2.0 through 2.1, and
   Apache Bigtop 0.8.0. It has not been tested on more recent versions of CDH. 
   See :ref:`our Hadoop/HBase Environment configurations <install-hadoop-hbase>`.
+  
+- After upgrading CDAP from a pre-3.0 version, any unprocessed metrics data in Kafka will
+  be lost and *WARN* log messages will be logged that tell about the inability to process
+  old data in the old format.
+
+- See the above section (*API Changes*) for alterations that can affect existing installations.
 
 - See also the *Known Issues* of `version 2.8.0 <#known-issues-280>`_\ .
 

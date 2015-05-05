@@ -119,12 +119,13 @@ function build_docs_outer_level() {
   version
   
   # Copies placeholder file and renames it
-  copy_source introduction        "Introduction"
-  copy_source developers-manual   "Developers’ Manual"
-  copy_source admin-manual        "Administration Manual"
-  copy_source integrations        "Integrations"
-  copy_source examples-manual     "Examples, Guides, and Tutorials"
-  copy_source reference-manual    "Reference Manual"
+  copy_source introduction          "Introduction"
+  copy_source developers-manual     "Developers’ Manual"
+  copy_source application-templates "Application Templates"
+  copy_source admin-manual          "Administration Manual"
+  copy_source integrations          "Integrations"
+  copy_source examples-manual       "Examples, Guides, and Tutorials"
+  copy_source reference-manual      "Reference Manual"
 
   # Build outer-level docs
   cd ${SCRIPT_PATH}
@@ -221,6 +222,7 @@ function build_docs_web() {
 function _build_docs() {
   echo ""
   echo "========================================================"
+  echo "========================================================"
   echo "Building target \"${1}\"..."
   echo "--------------------------------------------------------"
   build_docs_inner_level ${1}
@@ -229,9 +231,10 @@ function _build_docs() {
   build_zip ${3}
   zip_extras ${4}
   display_version
-  echo "========================================================"
-  bell "Building target \"${1}\" completed."
   echo "--------------------------------------------------------"
+  bell "Building target \"${1}\" completed."
+  echo "========================================================"
+  echo "========================================================"
   echo ""
 }
 

@@ -30,7 +30,7 @@ The CDAP CSD consists of four mandatory roles:
 - Master
 - Gateway/Router
 - Kafka-Server
-- Web-App
+- UI
 
 and an optional role—Security Auth Service—plus a Gateway client configuration. 
 
@@ -41,7 +41,7 @@ the 'cdap' user installed by the parcel.
 Prerequisites
 =======================================
 
-#. Node.js (version 0.8.16 through 0.10.37) must be installed on the node(s) where the Web-App
+#. Node.js (from |node-js-version|) must be installed on the node(s) where the UI
    role instance will run. You can download the appropriate version of Node.js from `nodejs.org
    <http://nodejs.org/dist/>`__.
 
@@ -101,7 +101,7 @@ When completing the Wizard, these notes may help:
      secure Hadoop cluster.
 
    - *Add Service* Wizard, Page 5: **Router Server Port:** This should match the "Router Bind
-     Port"; it’s used by the CDAP Console to connect to the Router service.
+     Port"; it’s used by the CDAP UI to connect to the Router service.
 
 Complete instructions, step-by-step, for using the Admin Console *Add Service* Wizard to install CDAP
 :ref:`are available <step-by-step-cloudera-add-service>`.
@@ -113,7 +113,7 @@ Verification
 
 After CDAP has started up, the best way to verify the installation is to deploy an application,
 ingest some data, run a MapReduce program on it, and then query the results out.  The following
-procedure describes how to do this primarily, via the CDAP Console, though this can all be done via
+procedure describes how to do this primarily, via the CDAP UI, though this can all be done via
 command line.
 
 We provide in our SDK pre-built ``.JAR`` files for convenience.
@@ -127,46 +127,82 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
    ``CDAP_HOME/examples/Purchase-``\ |literal-release|\ ``.jar``. The ``Purchase`` example is documented 
    in the CDAP :ref:`examples manual <examples-purchase>`.
 
-#. Open a web browser to the CDAP Console. It is located on port ``9999`` of the box where
+#. Open a web browser to the CDAP UI. It is located on port ``9999`` of the box where
    you installed CDAP.
 
-#. From the CDAP Console Overview page, click "Load App” and navigate to the jar.
-   (You can also drag-and-drop to the browser window)
+#. From the CDAP UI Development tab, under "Apps" click "Add App” and navigate to the jar.
 
-#. Once it is deployed, click on the *Process* button in the left sidebar of the CDAP Console,
-   then click *PurchaseFlow* in the Process page to get to the *Flow* detail page, then
-   click the *Start* button. (This will launch additional YARN containers.)
+#. Once it is deployed, click on it in the list of Applications (*PurchaseHistory*), then click on
+   *PurchaseFlow* in the list of Programs to get to the *Flow* detail page, then click the *Start*
+   button.  (this will launch additional YARN containers.)
 
 #. Once the Flow is *RUNNING*, inject data by clicking on the *purchaseStream* icon in
    the Flow diagram.  In the dialog that pops up, type ``Tom bought 5 apples for $3`` and click
    *Inject*.  You should see activity in the graphs and the Flowlet counters increment.
 
-#. Run a MapReduce program against this data by click on the *Process* button in the left
-   sidebar of the CDAP Console, select *PurchaseHistoryWorkflow_PurchaseHistoryBuilder*,
-   and click the *Start* button.  This will launch an additional container and a MapReduce
-   job in YARN.  After it starts you should see the Map and Reduce progress bars complete.
-   Failures at this stage are often due to YARN MapReduce misconfiguration or a lack of
-   YARN capacity.
+#. Run a MapReduce program against this data by navigating back to the *PurchaseHistory* list of 
+   programs, select *PurchaseHistoryBuilder*, and click the *Start* button.  This will launch an
+   additional container and a MapReduce job in YARN.  After it starts you should see the Map and
+   Reduce progress bars complete.  Failures at this stage are often due to YARN MapReduce misconfiguration
+   or a lack of YARN capacity.
 
 #. After the MapReduce job is complete, we can startup a query service which will read
    from the processed dataset.  Navigate to Application -> PurchaseHistory ->
-   PurchaseHistoryService (under the “Service” section).  Click the Start button to start
-   the Service.  (This will launch another YARN container)
+   PurchaseHistoryService.  Click the Start button to start the Service.  (This will launch another YARN container)
 
-#. Send an HTTP RESTful API request to the Gateway/Router service to read back the data you injected. 
-   The API listens on the host where the Gateway/Router role instance is running, port
-   11015 by default (though you may have changed it in the Wizard).  Make a ``curl`` request::
-
-     $ curl -w'\n' -v \
-       'http://[router-host]:[router-port]/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Tom'
+#. From the *PurchaseHistoryService* page, click *Make Request* for the */history/{customer}* endpoint listed.
+   In the dialog that pops up, enter ``Tom`` in the *Path Params* field and click *Make Request*.
 
 #. You should get back a response similar to::
 
      {"customer":"Tom","purchases":[{"customer":"Tom","product":"apple","quantity":5,"price":3,
-      "purchaseTime":1421470224780,"catalogId":""}]}
+      "purchaseTime":1421470224780}]}
 
 #. You have now completed verification of the installation.
 
+Upgrading an Existing Version
+=======================================
+
+.. rubric:: Upgrading Patch Release versions
+
+When a new compatible CDAP parcel is released, it will be available via the Parcels page in the Cloudera Manager UI.
+
+#. Stop all Flows, Services, and other Programs in all your applications.
+
+#. Stop CDAP services.
+
+#. Use the Cloudera Manager UI to download, distribute, and activate the parcel on all cluster hosts.
+
+#. Start CDAP services.
+
+.. rubric:: Upgrading Major/Minor Release versions
+
+These steps will upgrade from CDAP 2.8.0 to CDAP 3.0.0. (**Note:** Apps need to be both recompiled and re-deployed.)
+
+#. Stop all Flows, Services, and other Programs in all your applications.
+
+#. Stop CDAP services.
+
+#. Ensure your installed version of the CSD matches the target version of CDAP. For example, CSD version 3.0.* is compatible
+   with CDAP version 3.0.*.  Download the latest version of the CSD `here <http://cask.co/resources/#cdap-integrations>`__.
+
+#. Use the Cloudera Manager UI to download, distribute, and activate the parcel on all cluster hosts.
+
+#. Before starting services, run the Upgrade Tool to update any necessary CDAP table definitions.  From the CDAP Service page,
+   select "Run CDAP Upgrade Tool" from the Actions menu.
+
+#. Start the CDAP services.  At this point it may be necessary to correct for any changes in the CSD.  For example, if new CDAP services
+   were added or removed, you must add or remove role instances as necessary.  When upgrading from 2.8.0 to 3.0.0, the CDAP Web-App role has
+   been replaced by the CDAP-UI role:
+
+   - From the CDAP Instances page, select Add Role Instances, and choose a host for the CDAP-UI role.
+
+   - From the CDAP Instances page, check the CDAP-Web-App role, and select Delete from the Actions menu.
+
+#. After CDAP services have started, run the Post-Upgrade tool to perform any necessary upgrade steps against the running services.  From the
+   CDAP Service page, select "Run CDAP Post-Upgrade Tasks."
+
+#. You must recompile and then redeploy your applications.
 
 Troubleshooting
 =======================================
@@ -202,3 +238,11 @@ If you are hosting your own internal parcel repository, you may also want the
   |http:|//repository.cask.co/parcels/cdap/latest/manifest.json
 
 The ``manifest.json`` can always be referred to for the list of latest available parcels.
+
+Previously released parcels can also be accessed from their version-specific URLs.  For example:
+
+.. parsed-literal::
+  |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-el6.parcel
+  |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-precise.parcel
+  |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-trusty.parcel
+  |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-wheezy.parcel

@@ -16,9 +16,6 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -127,7 +124,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     final ProgramController controller = runtimeInfo.getController();
     final String runId = controller.getRunId().getId();
     final String twillRunId = runtimeInfo.getTwillRunId() == null ? null : runtimeInfo.getTwillRunId().getId();
-    if (programType != ProgramType.MAPREDUCE) {
+    if (programType != ProgramType.MAPREDUCE && programType != ProgramType.SPARK) {
       // MapReduce state recording is done by the MapReduceProgramRunner
       // TODO [JIRA: CDAP-2013] Same needs to be done for other programs as well
       controller.addListener(new AbstractListener() {
@@ -198,6 +195,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.lookup(programId, runId);
     if (runtimeInfo != null) {
       runtimeInfo.getController().stop().get();
+    } else {
+      LOG.warn("RunTimeInfo not found for Program {} RunId {} to be stopped", programId, runId);
     }
   }
 
@@ -324,7 +323,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
               }
               break;
             default:
-              throw new RuntimeException("Unknown program type: " + programType.name());
+              LOG.debug("Unknown program type: " + programType.name());
+              break;
           }
           if (targetProgramId != null) {
             break;

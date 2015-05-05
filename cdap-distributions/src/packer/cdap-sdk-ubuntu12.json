@@ -1,4 +1,7 @@
 {
+  "variables": {
+    "sdk_version": "3.0.0"
+  },
   "builders": [
     {
       "type": "virtualbox-iso",
@@ -28,7 +31,7 @@
       "vboxmanage_post": [
         ["modifyvm", "{{ .Name }}", "--memory", "4096"]
       ],
-      "vm_name": "cdap-sdk-vm",
+      "vm_name": "CDAP SDK VM {{user `sdk_version`}}",
       "name": "cdap-sdk-vm"
     }
   ],
@@ -55,15 +58,28 @@
     },
     {
       "type": "shell",
-      "script": "scripts/cookbook-setup.sh"
+      "scripts": "scripts/cookbook-setup.sh"
+    },
+    {
+      "type": "shell",
+      "scripts": [
+        "scripts/eclipse-cookbook.sh",
+        "scripts/motd.sh"
+      ],
+      "only": ["cdap-sdk-vm"]
     },
     {
       "type": "chef-solo",
       "remote_cookbook_paths": "/var/chef/cookbooks",
-      "run_list": "recipe[maven],recipe[idea]",
+      "run_list": "recipe[maven],recipe[idea],recipe[eclipse]",
       "prevent_sudo": true,
       "skip_install": true,
       "json": {
+        "eclipse": {
+          "version": "Luna",
+          "release_code": "SR2",
+          "url": "http://mirrors.ibiblio.org/pub/mirrors/eclipse/technology/epp/downloads/release/luna/SR2/eclipse-jee-luna-SR2-linux-gtk-x86_64.tar.gz"
+        },
         "idea": {
           "setup_dir": "/opt"
         },

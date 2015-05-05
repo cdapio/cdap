@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 ============================================
 Logging
@@ -27,9 +27,9 @@ The log messages emitted by your Application code can be viewed in two different
 - Using the :ref:`restful-api`.
   The :ref:`Logging HTTP interface <http-restful-api-logging>` details all the available contexts that
   can be called to retrieve different messages.
-- All log messages of an Application can be viewed in the CDAP Console
+- All log messages of an Application can be viewed in the CDAP UI
   by clicking the *Logs* button in the Flow screen.
   This launches the *Log Explorer*.
 
-See the *Flow Log Explorer* of the :ref:`CDAP Console <cdap-console>` for details of using
+See the *Flow Log Explorer* of the :ref:`CDAP UI <cdap-ui>` for details of using
 it to examine logs in the CDAP.

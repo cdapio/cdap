@@ -1,6 +1,6 @@
 <div class="row">
   <div class="col-xs-6">
-    <h2>{{ ::$state.params.datasetId }}: Metadata</h2>
+    <h2><a ui-sref="datasets.detail.overview({namespace: $state.params.nsadmin, datasetId: $state.params.datasetId })">{{ ::$state.params.datasetId }}</a>: Metadata</h2>
   </div>
   <div class="col-xs-6">
 
@@ -31,7 +31,7 @@
 </div>
 
 <!-- CONTENT -->
-<table class="table table-curved">
+<table class="table table-curved" ng-if="metadata">
   <tr>
     <td>Table</td>
     <td>{{ metadata.table_name }}</td>
@@ -64,3 +64,7 @@
     <td>{{ metadata.from_dataset }}</td>
   </tr>
 </table>
+
+<div class="well text-center" ng-if="!metadata">
+  <h4>No metadata for this dataset</h4>
+</div>

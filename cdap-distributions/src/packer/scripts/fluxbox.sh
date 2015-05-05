@@ -29,10 +29,22 @@ cd ~cdap/.fluxbox
 ln -sf /opt/idea* /opt/idea
 
 # Populate startup file
-echo 'xterm &' > startup
-echo '/opt/idea/bin/idea.sh &' >> startup
-echo 'firefox http://localhost:9999 http://docs.cask.co/cdap &' >> startup
+echo 'xterm -e "cat /etc/motd; bash -l" &' > startup
+# echo '/opt/idea/bin/idea.sh &' >> startup
+# echo 'eclipse &' >> startup
+# echo 'firefox http://localhost:9999 http://docs.cask.co/cdap &' >> startup
 echo 'exec fluxbox' >> startup
+
+# Create our fluxbox menu
+echo '[begin] (fluxbox)' > menu
+echo '[exec] (CDAP UI) {firefox http://localhost:9999}' >> menu
+echo '[exec] (CDAP Docs) {firefox http://docs.cask.co/cdap}' >> menu
+echo '[exec] (Firefox) {firefox}' >> menu
+echo '[exec] (Eclipse IDE) {eclipse}' >> menu
+echo '[exec] (IntelliJ IDE) {/opt/idea/bin/idea.sh}' >> menu
+echo '[exec] (Terminal) {xterm}' >> menu
+echo '[include] (/etc/X11/fluxbox/fluxbox-menu)' >> menu
+echo '[end]' >> menu
 
 # Fix permissions
 chown -R cdap:cdap ~cdap

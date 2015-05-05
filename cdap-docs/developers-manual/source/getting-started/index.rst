@@ -29,7 +29,7 @@ or a workstation. It has:
   the CDAP APIs without requiring a Hadoop cluster, using alternative, fully-functional
   implementations of CDAP features. For example, application containers are implemented as
   Java threads instead of YARN containers.
-- The :ref:`CDAP Console, <cdap-console>` a web-based graphical user interface to interact with CDAP instances
+- The :ref:`CDAP UI, <cdap-ui>` a web-based graphical user interface to interact with CDAP instances
   and the applications they run.
 - Tools for :ref:`ingesting data <ingesting-data>` and :ref:`authenticating
   clients <authentication-clients>`, :ref:`datasets, <datasets-index>` and :ref:`example

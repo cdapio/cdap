@@ -25,6 +25,7 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.InstantiatorFactory;
@@ -41,10 +42,14 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
+import org.apache.twill.common.ServiceListenerAdapter;
+import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Runs {@link Spark} programs
@@ -61,12 +66,13 @@ public class SparkProgramRunner implements ProgramRunner {
   private final LocationFactory locationFactory;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final StreamAdmin streamAdmin;
+  private final Store store;
 
   @Inject
   public SparkProgramRunner(DatasetFramework datasetFramework, CConfiguration cConf,
                             MetricsCollectionService metricsCollectionService, Configuration hConf,
                             TransactionSystemClient txSystemClient, LocationFactory locationFactory,
-                            DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin) {
+                            DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin, Store store) {
     this.hConf = hConf;
     this.datasetFramework = datasetFramework;
     this.cConf = cConf;
@@ -75,6 +81,7 @@ public class SparkProgramRunner implements ProgramRunner {
     this.txSystemClient = txSystemClient;
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamAdmin = streamAdmin;
+    this.store = store;
   }
 
   @Override
@@ -118,10 +125,63 @@ public class SparkProgramRunner implements ProgramRunner {
     Service sparkRuntimeService = new SparkRuntimeService(cConf, hConf, spark, spec, context,
                                                           program.getJarLocation(), locationFactory,
                                                           txSystemClient);
+
+    sparkRuntimeService.addListener(createRuntimeServiceListener(program, runId, arguments),
+                                    Threads.SAME_THREAD_EXECUTOR);
     ProgramController controller = new SparkProgramController(sparkRuntimeService, context);
 
     LOG.info("Starting Spark Job: {}", context.toString());
     sparkRuntimeService.start();
     return controller;
+  }
+
+  /**
+   * Creates a service listener to reactor on state changes on {@link SparkRuntimeService}.
+   */
+  private Service.Listener createRuntimeServiceListener(final Program program, final RunId runId, Arguments arguments) {
+
+    final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
+    final String workflowName = arguments.getOption(ProgramOptionConstants.WORKFLOW_NAME);
+    final String workflowNodeId = arguments.getOption(ProgramOptionConstants.WORKFLOW_NODE_ID);
+    final String workflowRunId = arguments.getOption(ProgramOptionConstants.WORKFLOW_RUN_ID);
+
+    return new ServiceListenerAdapter() {
+      @Override
+      public void starting() {
+        //Get start time from RunId
+        long startTimeInSeconds = RunIds.getTime(runId, TimeUnit.SECONDS);
+        if (startTimeInSeconds == -1) {
+          // If RunId is not time-based, use current time as start time
+          startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+        }
+
+        if (workflowName == null) {
+          store.setStart(program.getId(), runId.getId(), startTimeInSeconds, null, twillRunId);
+        } else {
+          // Program started by Workflow
+          store.setWorkflowProgramStart(program.getId(), runId.getId(), workflowName, workflowRunId, workflowNodeId,
+                                        startTimeInSeconds, null, twillRunId);
+        }
+      }
+
+      @Override
+      public void terminated(Service.State from) {
+        if (from == Service.State.STOPPING) {
+          // Service was killed
+          store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                        ProgramController.State.KILLED.getRunStatus());
+        } else {
+          // Service completed by itself.
+          store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                        ProgramController.State.COMPLETED.getRunStatus());
+        }
+      }
+
+      @Override
+      public void failed(Service.State from, Throwable failure) {
+        store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                      ProgramController.State.ERROR.getRunStatus());
+      }
+    };
   }
 }

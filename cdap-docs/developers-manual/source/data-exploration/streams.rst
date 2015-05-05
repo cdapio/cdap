@@ -45,6 +45,9 @@ all events added to the stream are readable by the format you have set on a stre
 If any stream event cannot be read by the format you have set, your entire query will fail and you
 will not get any results.
 
+Accepted formats are ``avro``, ``csv`` (comma-separated), ``tsv`` (tab-separated), ``text``, ``clf``, 
+``grok``, and ``syslog``.
+
 Schema
 ------
 CDAP schemas are adopted from the `Avro Schema Declaration <http://avro.apache.org/docs/1.7.3/spec.html#schemas>`__
@@ -208,7 +211,7 @@ When creating your queries, keep these limitations in mind:
 - CDAP uses a custom storage handler to read Streams through Hive. This means that queries must be run through
   CDAP and not directly through Hive unless you place CDAP jars in your Hive classpath. This also means that
   Streams cannot be queried directly by Impala. If you wish to use Impala to explore data in a Stream, you can
-  create an Adapter that converts Stream data into a ``TimePartitionedFileSet``, as described in :ref:`advanced-adapters`. 
+  create an :ref:`Adapter <apptemplates-index>` that converts Stream data into a ``TimePartitionedFileSet``. 
 - Some versions of Hive may try to create a temporary staging directory at the table location when executing queries.
   If you are seeing permission errors, try setting ``hive.exec.stagingdir`` in your Hive configuration to ``/tmp/hive-staging``.
 
