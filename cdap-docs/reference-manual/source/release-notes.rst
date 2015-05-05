@@ -27,17 +27,6 @@ Cask Data Application Platform Release Notes
 `Release 3.0.0 <http://docs.cask.co/cdap/3.0.0/index.html>`__
 =============================================================
 
-General
--------
-
-- The `File DropZone <http://docs.cask.co/cdap/2.8.0/en/developers-manual/ingesting-tools/cdap-file-drop-zone.html>`__ 
-  and `File Tailer <http://docs.cask.co/cdap/2.8.0/en/developers-manual/ingesting-tools/cdap-file-tailer.html>`__
-  are no longer supported as of Release 3.0.
-- Support for *Procedures* has been removed. After upgrading, an Application that
-  contained a Procedure must be redeployed. 
-- Support for *Service Workers* have been removed. After upgrading, an Application that
-  contained a Service Worker must be redeployed.  
-
 New Features
 ------------
 
@@ -209,6 +198,19 @@ API Changes
   - ``OutputFormatProvider.getOutputFormatClass()`` is removed and
   
     - replaced with ``OutputFormatProvider.getOutputFormatClassName()``.
+
+
+Deprecated and Removed Features
+-------------------------------
+
+- The `File DropZone <http://docs.cask.co/cdap/2.8.0/en/developers-manual/ingesting-tools/cdap-file-drop-zone.html>`__ 
+  and `File Tailer <http://docs.cask.co/cdap/2.8.0/en/developers-manual/ingesting-tools/cdap-file-tailer.html>`__
+  are no longer supported as of Release 3.0.
+- Support for *Procedures* has been removed. After upgrading, an Application that
+  contained a Procedure must be redeployed. 
+- Support for *Service Workers* have been removed. After upgrading, an Application that
+  contained a Service Worker must be redeployed.  
+- The Old CDAP Console has been deprecated.
 
 
 .. _known-issues-300:
