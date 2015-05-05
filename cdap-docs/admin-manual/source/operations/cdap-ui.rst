@@ -19,6 +19,16 @@ Application Platform in all modes of CDAP except an
 
 Here is a screen-capture of the CDAP UI running on a Distributed CDAP.
 
+.. figure:: ../_images/console/console_01_overview.png
+   :figwidth: 100%
+   :height: 714px
+   :width: 800px
+   :align: center
+   :class: bordered-image
+
+   **CDAP UI:** Showing started-up with applications deployed.
+
+
 Across the top, are three buttons: *Development*, *Operations, and *Management.* 
 These buttons gives you access to CDAP UI facilities for
 managing each of categories.
