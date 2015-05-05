@@ -288,7 +288,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getResponseCode());
 
     // once the namespace exists, the same stream create works.
-    namespaceAdmin.createNamespace(new NamespaceMeta.Builder().setName(originallyNonExistentNamespace).build());
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(originallyNonExistentNamespace).build());
     createStream(streamId);
   }
 

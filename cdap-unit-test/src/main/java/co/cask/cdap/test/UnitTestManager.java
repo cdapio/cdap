@@ -32,11 +32,11 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.StickyEndpointStrategy;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.internal.AppFabricClient;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.test.AppJarHelper;
@@ -431,12 +431,12 @@ public class UnitTestManager implements TestManager {
 
   @Override
   public void createNamespace(NamespaceMeta namespaceMeta) throws Exception {
-    namespaceAdmin.createNamespace(namespaceMeta);
+    namespaceAdmin.create(namespaceMeta);
   }
 
   @Override
   public void deleteNamespace(Id.Namespace namespace) throws Exception {
-    namespaceAdmin.deleteNamespace(namespace);
+    namespaceAdmin.delete(namespace);
   }
 
   @Override

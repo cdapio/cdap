@@ -23,6 +23,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
@@ -32,7 +33,6 @@ import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.test.AppJarHelper;
@@ -128,8 +128,8 @@ public class AppFabricTestHelper {
 
   private static void ensureNamespaceExists(Id.Namespace namespace) throws Exception {
     NamespaceAdmin namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
-    if (!namespaceAdmin.hasNamespace(namespace)) {
-      namespaceAdmin.createNamespace(new NamespaceMeta.Builder().setName(namespace).build());
+    if (!namespaceAdmin.exists(namespace)) {
+      namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
     }
   }
 

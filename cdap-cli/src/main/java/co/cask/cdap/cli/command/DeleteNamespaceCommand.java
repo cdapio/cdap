@@ -57,7 +57,7 @@ public class DeleteNamespaceCommand extends AbstractCommand {
                                     namespaceId.getId());
       String userConfirm = consoleReader.readLine(prompt);
       if ("y".equalsIgnoreCase(userConfirm)) {
-        namespaceClient.delete(namespaceId.getId());
+        namespaceClient.delete(namespaceId);
         out.printf("Contents of namespace '%s' were deleted successfully", namespaceId.getId());
         out.println();
       }
@@ -67,7 +67,7 @@ public class DeleteNamespaceCommand extends AbstractCommand {
                                     namespaceId.getId());
       String userConfirm = consoleReader.readLine(prompt);
       if ("y".equalsIgnoreCase(userConfirm)) {
-        namespaceClient.delete(namespaceId.getId());
+        namespaceClient.delete(namespaceId);
         out.println(String.format(SUCCESS_MSG, namespaceId));
         if (cliConfig.getCurrentNamespace().equals(namespaceId)) {
           cliConfig.setNamespace(Id.Namespace.DEFAULT);

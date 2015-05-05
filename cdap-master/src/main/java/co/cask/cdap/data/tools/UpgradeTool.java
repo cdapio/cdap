@@ -179,6 +179,7 @@ public class UpgradeTool {
         @Provides
         @Singleton
         @Named("mdsDatasetsRegistry")
+        @SuppressWarnings("unused")
         public MDSDatasetsRegistry getMDSDatasetsRegistry(TransactionSystemClient txClient,
                                                           @Named("datasetMDS") DatasetFramework framework) {
           return new MDSDatasetsRegistry(txClient, framework);
@@ -187,6 +188,7 @@ public class UpgradeTool {
         @Provides
         @Singleton
         @Named("datasetInstanceManager")
+        @SuppressWarnings("unused")
         public DatasetInstanceManager getDatasetInstanceManager(@Named("mdsDatasetsRegistry")
                                                                 MDSDatasetsRegistry mdsDatasetsRegistry) {
           return new DatasetInstanceManager(mdsDatasetsRegistry);
@@ -197,6 +199,7 @@ public class UpgradeTool {
         @Provides
         @Singleton
         @Named("datasetMDS")
+        @SuppressWarnings("unused")
         public DatasetFramework getInDsFramework(DatasetFramework dsFramework) {
           return dsFramework;
         }

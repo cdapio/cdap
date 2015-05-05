@@ -21,8 +21,8 @@ import co.cask.cdap.common.NamespaceCannotBeDeletedException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -62,7 +62,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/namespaces")
   public void getAllNamespaces(HttpRequest request, HttpResponder responder) {
     try {
-      responder.sendJson(HttpResponseStatus.OK, namespaceAdmin.listNamespaces());
+      responder.sendJson(HttpResponseStatus.OK, namespaceAdmin.list());
     } catch (Exception e) {
       LOG.error("Internal error while listing all namespaces", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
@@ -74,7 +74,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   public void getNamespace(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) {
     try {
-      NamespaceMeta ns = namespaceAdmin.getNamespace(Id.Namespace.from(namespaceId));
+      NamespaceMeta ns = namespaceAdmin.get(Id.Namespace.from(namespaceId));
       responder.sendJson(HttpResponseStatus.OK, ns);
     } catch (NotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found", namespaceId));
@@ -147,7 +147,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     try {
-      namespaceAdmin.createNamespace(builder.build());
+      namespaceAdmin.create(builder.build());
       responder.sendString(HttpResponseStatus.OK,
                            String.format("Namespace '%s' created successfully.", namespaceId));
     } catch (AlreadyExistsException e) {
@@ -170,7 +170,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     }
     Id.Namespace namespaceId = Id.Namespace.from(namespace);
     try {
-      namespaceAdmin.deleteNamespace(namespaceId);
+      namespaceAdmin.delete(namespaceId);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (NotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found.", namespace));

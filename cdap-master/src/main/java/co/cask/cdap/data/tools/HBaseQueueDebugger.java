@@ -35,6 +35,7 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.ImmutablePair;
@@ -63,7 +64,6 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.data2.util.hbase.ScanBuilder;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.store.DefaultStore;
@@ -154,7 +154,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
   public void scanAllQueues() throws Exception {
     QueueStatistics totalStats = new QueueStatistics();
 
-    List<NamespaceMeta> namespaceMetas = namespaceAdmin.listNamespaces();
+    List<NamespaceMeta> namespaceMetas = namespaceAdmin.list();
     for (NamespaceMeta namespaceMeta : namespaceMetas) {
       Id.Namespace namespaceId = Id.Namespace.from(namespaceMeta.getName());
 
@@ -485,6 +485,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
         @Provides
         @Singleton
         @Named("defaultStore")
+        @SuppressWarnings("unused")
         public Store getStore(DatasetFramework dsFramework,
                               CConfiguration cConf, LocationFactory locationFactory,
                               NamespacedLocationFactory namespacedLocationFactory,
@@ -497,6 +498,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
         @Provides
         @Singleton
         @Named("datasetMDS")
+        @SuppressWarnings("unused")
         public DatasetFramework getInDsFramework(DatasetFramework dsFramework) {
           return dsFramework;
         }

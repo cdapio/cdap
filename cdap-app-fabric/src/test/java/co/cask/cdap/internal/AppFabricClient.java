@@ -21,13 +21,13 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.gateway.handlers.AdapterHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
@@ -118,7 +118,7 @@ public class AppFabricClient {
     HttpRequest request;
 
     // delete all namespaces
-    for (NamespaceMeta namespaceMeta : namespaceAdmin.listNamespaces()) {
+    for (NamespaceMeta namespaceMeta : namespaceAdmin.list()) {
       Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getName());
 
       responder = new MockResponder();

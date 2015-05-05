@@ -17,11 +17,10 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.AdapterNotFoundException;
-import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterAlreadyExistsException;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.adapter.ApplicationTemplateInfo;
@@ -83,7 +82,7 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
   public void deployTemplate(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("template-id") String templateId) throws Exception {
-    if (!namespaceAdmin.hasNamespace(Id.Namespace.from(namespaceId))) {
+    if (!namespaceAdmin.exists(Id.Namespace.from(namespaceId))) {
       responder.sendString(HttpResponseStatus.NOT_FOUND,
                            String.format("Namespace '%s' does not exist.", namespaceId));
       return;
@@ -105,8 +104,8 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/adapters")
   public void listAdapters(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId,
-                           @QueryParam("template") String template) {
-    if (!namespaceAdmin.hasNamespace(Id.Namespace.from(namespaceId))) {
+                           @QueryParam("template") String template) throws Exception {
+    if (!namespaceAdmin.exists(Id.Namespace.from(namespaceId))) {
       responder.sendString(HttpResponseStatus.NOT_FOUND,
                            String.format("Namespace '%s' does not exist.", namespaceId));
       return;
@@ -247,8 +246,7 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/adapters/{adapter-id}")
   public void createAdapter(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
-                            @PathParam("adapter-id") String adapterName)
-    throws AdapterAlreadyExistsException, BadRequestException {
+                            @PathParam("adapter-id") String adapterName) throws Exception {
 
     AdapterConfig config;
     try {
@@ -267,7 +265,7 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
-    if (!namespaceAdmin.hasNamespace(namespace)) {
+    if (!namespaceAdmin.exists(namespace)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND,
                            String.format("Create adapter failed - namespace '%s' does not exist.", namespaceId));
       return;

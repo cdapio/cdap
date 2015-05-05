@@ -17,8 +17,7 @@
 package co.cask.cdap.internal.app.namespace;
 
 import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.common.NamespaceCannotBeCreatedException;
-import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -49,7 +48,7 @@ public final class DefaultNamespaceEnsurer extends AbstractService {
           @Override
           protected void doStart() {
             try {
-              namespaceAdmin.createNamespace(NamespaceMeta.DEFAULT);
+              namespaceAdmin.create(NamespaceMeta.DEFAULT);
               // if there is no exception, assume successfully created and break
               LOG.info("Created default namespace successfully.");
               notifyStarted();
@@ -57,7 +56,7 @@ public final class DefaultNamespaceEnsurer extends AbstractService {
               // default namespace already exists
               LOG.info("Default namespace already exists.");
               notifyStarted();
-            } catch (NamespaceCannotBeCreatedException e) {
+            } catch (Exception e) {
               notifyFailed(e);
             }
           }

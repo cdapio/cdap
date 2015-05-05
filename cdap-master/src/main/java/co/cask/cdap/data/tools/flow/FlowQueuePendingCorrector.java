@@ -42,6 +42,7 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
@@ -57,7 +58,6 @@ import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueClientFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.store.DefaultStore;
@@ -142,7 +142,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
    */
   public void run() throws Exception {
     System.out.println("Running queue.pending correction");
-    List<NamespaceMeta> namespaceMetas = namespaceAdmin.listNamespaces();
+    List<NamespaceMeta> namespaceMetas = namespaceAdmin.list();
     for (NamespaceMeta namespaceMeta : namespaceMetas) {
       run(Id.Namespace.from(namespaceMeta.getName()));
     }
@@ -352,6 +352,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
         @Provides
         @Singleton
         @Named("defaultStore")
+        @SuppressWarnings("unused")
         public Store getStore(DatasetFramework dsFramework,
                               CConfiguration cConf, LocationFactory locationFactory,
                               NamespacedLocationFactory namespacedLocationFactory,
@@ -364,6 +365,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
         @Provides
         @Singleton
         @Named("datasetMDS")
+        @SuppressWarnings("unused")
         public DatasetFramework getInDsFramework(DatasetFramework dsFramework) {
           return dsFramework;
         }

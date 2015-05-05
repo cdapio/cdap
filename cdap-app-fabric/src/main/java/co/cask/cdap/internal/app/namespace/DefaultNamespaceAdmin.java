@@ -27,6 +27,7 @@ import co.cask.cdap.common.NamespaceCannotBeDeletedException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.config.DashboardStore;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -101,7 +102,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    *
    * @return a list of {@link NamespaceMeta} for all namespaces
    */
-  public List<NamespaceMeta> listNamespaces() {
+  public List<NamespaceMeta> list() {
     return store.listNamespaces();
   }
 
@@ -112,7 +113,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @return the {@link NamespaceMeta} of the requested namespace
    * @throws NamespaceNotFoundException if the requested namespace is not found
    */
-  public NamespaceMeta getNamespace(Id.Namespace namespaceId) throws NamespaceNotFoundException {
+  public NamespaceMeta get(Id.Namespace namespaceId) throws NamespaceNotFoundException {
     NamespaceMeta ns = store.getNamespace(namespaceId);
     if (ns == null) {
       throw new NamespaceNotFoundException(namespaceId);
@@ -126,9 +127,9 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @param namespaceId the {@link Id.Namespace} to check for existence
    * @return true, if the specifed namespace exists, false otherwise
    */
-  public boolean hasNamespace(Id.Namespace namespaceId) {
+  public boolean exists(Id.Namespace namespaceId) {
     try {
-      getNamespace(namespaceId);
+      get(namespaceId);
     } catch (NotFoundException e) {
       return false;
     }
@@ -141,12 +142,12 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @param metadata the {@link NamespaceMeta} for the new namespace to be created
    * @throws NamespaceAlreadyExistsException if the specified namespace already exists
    */
-  public synchronized void createNamespace(NamespaceMeta metadata)
+  public synchronized void create(NamespaceMeta metadata)
     throws NamespaceCannotBeCreatedException, NamespaceAlreadyExistsException {
     // TODO: CDAP-1427 - This should be transactional, but we don't support transactions on files yet
     Preconditions.checkArgument(metadata != null, "Namespace metadata should not be null.");
     Id.Namespace namespace = Id.Namespace.from(metadata.getName());
-    if (hasNamespace(Id.Namespace.from(metadata.getName()))) {
+    if (exists(Id.Namespace.from(metadata.getName()))) {
       throw new NamespaceAlreadyExistsException(namespace);
     }
 
@@ -166,10 +167,10 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @throws NamespaceCannotBeDeletedException if the specified namespace cannot be deleted
    * @throws NamespaceNotFoundException if the specified namespace does not exist
    */
-  public synchronized void deleteNamespace(final Id.Namespace namespaceId)
+  public synchronized void delete(final Id.Namespace namespaceId)
     throws NamespaceCannotBeDeletedException, NamespaceNotFoundException {
     // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
-    if (!hasNamespace(namespaceId)) {
+    if (!exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
 
@@ -258,7 +259,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   public synchronized void deleteDatasets(Id.Namespace namespaceId)
     throws NamespaceNotFoundException, NamespaceCannotBeDeletedException {
     // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
-    if (!hasNamespace(namespaceId)) {
+    if (!exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
 

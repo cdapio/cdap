@@ -19,11 +19,11 @@ package co.cask.cdap.internal.app.deploy;
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.ToyApp;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -60,7 +60,7 @@ public class LocalApplicationManagerTest {
     lf = new LocalLocationFactory(TMP_FOLDER.newFolder());
 
     NamespaceAdmin namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
-    namespaceAdmin.createNamespace(NamespaceMeta.DEFAULT);
+    namespaceAdmin.create(NamespaceMeta.DEFAULT);
   }
 
   /**

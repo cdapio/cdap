@@ -93,6 +93,7 @@ public class QueryClientTestRun extends ClientTestBase {
         queryClient.execute(dataset.getNamespace(), "select * from " + FakeApp.DS_NAME).get();
         Assert.fail("Explore Query should have thrown an ExecutionException since explore is disabled");
       } catch (ExecutionException e) {
+        // ignored
       }
 
       exploreClient.enableExploreDataset(dataset).get();

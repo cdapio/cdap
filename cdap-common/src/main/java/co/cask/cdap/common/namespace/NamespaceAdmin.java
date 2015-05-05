@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.namespace;
+package co.cask.cdap.common.namespace;
 
 import co.cask.cdap.common.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.NamespaceCannotBeCreatedException;
@@ -32,57 +32,55 @@ import java.util.List;
 public interface NamespaceAdmin {
 
   /**
-   * Lists all namespaces
+   * Lists all namespaces.
    *
    * @return a list of {@link NamespaceMeta} for all namespaces
    */
-  List<NamespaceMeta> listNamespaces();
+  List<NamespaceMeta> list() throws Exception;
 
   /**
-   * Gets details of a namespace
+   * Gets details of a namespace.
    *
    * @param namespaceId the {@link Id.Namespace} of the requested namespace
    * @return the {@link NamespaceMeta} of the requested namespace
    * @throws NamespaceNotFoundException if the requested namespace is not found
    */
-  NamespaceMeta getNamespace(Id.Namespace namespaceId) throws NamespaceNotFoundException;
+  NamespaceMeta get(Id.Namespace namespaceId) throws Exception;
 
   /**
-   * Checks if the specified namespace exists
+   * Checks if the specified namespace exists.
    *
    * @param namespaceId the {@link Id.Namespace} to check for existence
    * @return true, if the specifed namespace exists, false otherwise
    */
-  boolean hasNamespace(Id.Namespace namespaceId);
+  boolean exists(Id.Namespace namespaceId) throws Exception;
 
   /**
-   * Creates a new namespace
+   * Creates a new namespace.
    *
    * @param metadata the {@link NamespaceMeta} for the new namespace to be created
    * @throws NamespaceAlreadyExistsException if the specified namespace already exists
    * @throws NamespaceCannotBeCreatedException if the creation operation was unsuccessful
    */
-  void createNamespace(NamespaceMeta metadata)
-    throws NamespaceAlreadyExistsException, NamespaceCannotBeCreatedException;
+  void create(NamespaceMeta metadata) throws Exception;
 
   /**
-   * Deletes the specified namespace
+   * Deletes the specified namespace.
    *
    * @param namespaceId the {@link Id.Namespace} of the specified namespace
    * @throws NamespaceNotFoundException if the specified namespace does not exist
    * @throws NamespaceCannotBeDeletedException if the deletion operation was unsuccessful
    */
-  void deleteNamespace(Id.Namespace namespaceId)
-    throws NamespaceNotFoundException, NamespaceCannotBeDeletedException;
+  void delete(Id.Namespace namespaceId) throws Exception;
 
   /**
-   * Deletes all datasets in the specified namespace
+   * Deletes all datasets in the specified namespace.
    *
    * @param namespaceId the {@link Id.Namespace} of the specified namespace
    * @throws NotFoundException if the specified namespace does not exist
    * @throws NamespaceCannotBeDeletedException if the deletion operation was unsuccessful
    */
-  void deleteDatasets(Id.Namespace namespaceId) throws NotFoundException, NamespaceCannotBeDeletedException;
+  void deleteDatasets(Id.Namespace namespaceId) throws Exception;
 
   /**
    * Update namespace properties for a given namespace.
@@ -91,5 +89,5 @@ public interface NamespaceAdmin {
    * @param namespaceMeta namespacemeta to update
    * @throws NotFoundException if the specified namespace is not found
    */
-  void updateProperties(Id.Namespace namespaceId, NamespaceMeta namespaceMeta) throws NotFoundException;
+  void updateProperties(Id.Namespace namespaceId, NamespaceMeta namespaceMeta) throws Exception;
 }
