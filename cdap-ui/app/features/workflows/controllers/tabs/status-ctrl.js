@@ -14,6 +14,25 @@ angular.module(PKG.name + '.feature.workflows')
           var edges = [],
               nodes = [];
 
+          res.nodes.unshift({
+            name: 'start',
+            type: 'START',
+            nodeType: 'ACTION',
+            nodeId: 'start',
+            program: {
+              programName: ''
+            }
+          });
+
+          res.nodes.push({
+            name: 'end',
+            type: 'END',
+            nodeType: 'ACTION',
+            nodeId: 'end',
+            program: {
+              programName: ''
+            }
+          });
           convert(angular.copy(res.nodes), edges);
           expandForks(res.nodes, nodes);
 
@@ -24,7 +43,7 @@ angular.module(PKG.name + '.feature.workflows')
             }, item);
           });
 
-          addStartAndEndNodes(nodes, edges);
+          // addStartAndEndNodes(nodes, edges);
 
           $scope.data = {
             nodes: nodes,
@@ -129,10 +148,14 @@ angular.module(PKG.name + '.feature.workflows')
   */
   function convert(nodes, connections) {
 
-    for (var i=0; i+1 < nodes.length; i++) {
+    for (var i=0; i < nodes.length -1; i++) {
 
-      if ( i === 0 && nodes[i].nodeType === 'FORK') {
-        flatten(null, nodes[i], nodes[i+1], connections);
+      if ( i === 1 && nodes[i].nodeType === 'FORK') {
+        flatten(nodes[i-1], nodes[i], nodes[i+1], connections);
+      }
+
+      if ( (i+1 === nodes.length-1) && nodes[i].nodeType === 'FORK') {
+        flatten(nodes[i-1], nodes[i], nodes[i+1], connections);
       }
 
       if (nodes[i].nodeType === 'ACTION' && nodes[i+1].nodeType === 'ACTION') {
@@ -145,9 +168,6 @@ angular.module(PKG.name + '.feature.workflows')
         flatten(nodes[i-1], nodes[i], nodes[i+1], connections);
       }
 
-      if ( (i+1 === nodes.length-1) && nodes[i+1].nodeType === 'FORK') {
-        flatten(nodes[i], nodes[i+1], null, connections);
-      }
     }
   }
 
