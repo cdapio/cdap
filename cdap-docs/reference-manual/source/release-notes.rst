@@ -42,6 +42,7 @@ New Features
 ------------
 
 - New :ref:`CDAP UI <cdap-ui>`, supports creating ETL applications directly in the web UI.
+  See section below (:ref:`New User Interface <new-user-interface-300>`) for details.
 
 - Workflow logs can now be retrieved using the :ref:`CDP HTTP Logging RESTful API 
   <http-restful-api-logging>` (`CDAP-1089 <https://issues.cask.co/browse/CDAP-1089>`__).
@@ -94,6 +95,49 @@ New Features
 - Metrics and status information for MapReduce on a task level is now exposed (`CDAP-1520 <https://issues.cask.co/browse/CDAP-1958>`__).
 
 
+.. _new-user-interface-300:
+
+New User Interface
+------------------
+- Introduced a new UI, organization based on namespaces and users.
+- Users can switch between namespaces. 
+- Uses web sockets to retrieve updates from the backend.
+- **Development Section**
+
+  - Introduces a UI for programs based on run-ids.
+  - Users can view logs and, in certain cases |---| Flows |---| Flowlets, of a program based on run ids.
+  - Shows a list of Datasets and Streams used by a program, and shows programs using a specific Dataset and Stream.
+  - Shows the history of a program (list of runs).
+  - Datasets or Streams are explorable on a Dataset/Stream level or on a global level.
+  - Shows program level metrics on under each program.
+  
+- **Operations section**
+
+  - Introduces an operations section to explore metrics.
+  - Allows users to create custom dashboard with custom metrics.
+  - Users can add different types of charts (line, bar, area, pie, donut, scatter, spline,
+    area-spline, area-spline-stacked, area-stacked, step, table).
+  - Users can add multiple metrics on a single dashboard, or on a single widget on a single dashboard.
+  - Users can organize the widgets in either a two, three, or four-column layout.
+  - Users can toggle the frequency at which data is polled for a metric.
+  - Users can toggle the resolution of data displayed in a graph.
+  
+- **Admin Section**
+
+  - Users can manage different objects of CDAP (Applications, Programs, Datasets, and Streams).
+  - Users can create namespaces.
+  - Through the Admin view, users can configure their preferences at the CDAP level, namespace level, or Application level.
+  - Users can manage the System Services, Applications, and Streams through the Admin view.
+  
+- **Adapters**
+
+  - Users can create ETLBatch and ETLRealtime Adapters from within the UI.
+  - Users can choose from a list of Plugins that comes by default with CDAP when creating an Adapter.
+  - Users can save an Adapter as a draft, to be created at a later point-in-time.
+  - Users can configure plugin properties with appropriate editors from within the UI when creating an Adapter.
+  
+- The Old CDAP Console has been deprecated.
+
 Improvement
 -----------
 
@@ -112,6 +156,14 @@ Bug Fixes
 - History of the programs running under Workflow (Spark and MapReduce) is now updated correctly
   (`CDAP-1293 <https://issues.cask.co/browse/CDAP-1293>`__).
 
+- Programs running under a Workflow now receive a unique ``run-id``
+  (`CDAP-2025 <https://issues.cask.co/browse/CDAP-2025>`__).
+
+- RunRecords are now updated with the RuntimeService to account for node failures
+  (`CDAP-2202 <https://issues.cask.co/browse/CDAP-2202>`__).
+
+- MapReduce metrics are now available on a secure cluster
+  (`CDAP-64 <https://issues.cask.co/browse/CDAP-64>`__).
 
 API Changes
 -----------
@@ -140,6 +192,25 @@ API Changes
 - The :ref:`CDAP CLI <cli>` startup options have been changed to accommodate a new option
   of executing a file containing a series of CLI commands, line-by-line.
 
+- The metrics system APIs have been improved (`CDAP-1596 <https://issues.cask.co/browse/CDAP-1596>`__).
+
+- The rules for :ref:`resolving resolution <http-restful-api-metrics-time-range>`
+  when using ``resolution=auto`` in metrics query have been changed
+  (`CDAP-1922 <https://issues.cask.co/browse/CDAP-1922>`__).
+
+- Backward incompatible changes in ``InputFormatProvider`` and ``OutputFormatProvider``. 
+  It won't affect user code that uses ``FileSet`` or ``PartitionedFileSet``. 
+  It only affects classes who implement the ``InputFormatProvider`` or ``OutputFormatProvider``:
+
+  - ``InputFormatProvider.getInputFormatClass()`` is removed and
+  
+    - replaced with ``InputFormatProvider.getInputFormatClassName()``;
+    
+  - ``OutputFormatProvider.getOutputFormatClass()`` is removed and
+  
+    - replaced with ``OutputFormatProvider.getOutputFormatClassName()``.
+
+
 .. _known-issues-300:
 
 Known Issues
@@ -149,6 +220,10 @@ Known Issues
   Apache Bigtop 0.8.0. It has not been tested on more recent versions of CDH. 
   See :ref:`our Hadoop/HBase Environment configurations <install-hadoop-hbase>`.
   
+- After upgrading CDAP from a pre-3.0 version, any unprocessed metrics data in Kafka will
+  be lost and *WARN* log messages will be logged that tell about the inability to process
+  old data in the old format.
+
 - See the above section (*API Changes*) for alterations that can affect existing installations.
 
 - See also the *Known Issues* of `version 2.8.0 <#known-issues-280>`_\ .
