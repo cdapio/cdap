@@ -183,7 +183,7 @@ Glossary
       Also referred to as an ETL Template. A type of :term:`Application Template`,
       designed to create an :term:`ETL Adapter`. Two ETL Templates are shipped with CDAP:
       ``ETLBatch`` and ``ETLRealtime``, for the creation of either batch or realtime
-      :term:`ETL Pipelines <ETL Pipeline>`.
+      :term:`ETL` pipelines.
   
    ETL Template
       See :term:`ETL Application Template`.

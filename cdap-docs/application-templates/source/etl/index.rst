@@ -44,73 +44,52 @@ write to any realtime sinks. Transformations work with either sinks or sources.
 This lists the available sources, sinks and transformations (transforms):
 
 .. list-table::
-   :widths: 30 30 40
+   :widths: 30 40 30
    :header-rows: 1
 
-   * - Template
-     - Type
-     - Name
-   * - **Batch**
-     - **Source**
-     - Database
-   * - 
-     - **Source**
-     - KVTable
-   * - 
-     - **Source**
-     - Stream
-   * - 
-     - **Source**
-     - Table
-   * - 
-     - **Sink**
-     - Cube
-   * - 
-     - **Sink**
-     - Database
-   * - 
-     - **Sink**
-     - KVTable
-   * - 
-     - **Sink**
-     - TPFSAvro
-   * - 
-     - **Sink**
-     - Table
+   * - Sources
+     - Transformations
+     - Sinks
+   * - - **Batch Sources:**
 
-   * - **Realtime**
-     - **Source**
-     - JMS
-   * - 
-     - **Source**
-     - Kafka
-   * - 
-     - **Source**
-     - Twitter
-   * - 
-     - **Source**
-     - Test
-   * - 
-     - **Sink**
-     - Cube
-   * - 
-     - **Sink**
-     - Stream
-   * - 
-     - **Sink**
-     - Table
-   * - **Transform**
-     - *either*
-     - Projection
-   * - 
-     - *either*
-     - ScriptFilter
-   * - 
-     - *either*
-     - Script
-   * - 
-     - *either*
-     - StructuredRecordToGenericRecord
+         - Database
+         - KVTable
+         - Stream
+         - Table
+
+     -   
+         - Projection
+         - ScriptFilter
+         - Script
+         - StructuredRecordToGenericRecord
+
+     - - **Batch Sinks:**
+
+         - Cube
+         - Database
+         - KVTable
+         - TPFSAvro
+         - Table
+
+   * - - **Realtime Sources:**
+
+         - JMS
+         - Kafka
+         - Twitter
+         - Test
+
+     -   
+         - Projection
+         - ScriptFilter
+         - Script
+         - StructuredRecordToGenericRecord
+
+     - - **Realtime Sinks:**
+
+         - Cube
+         - Stream
+         - Table
+
 
 
 ETL Adapters
