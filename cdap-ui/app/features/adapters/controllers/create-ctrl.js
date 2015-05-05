@@ -238,10 +238,11 @@ angular.module(PKG.name + '.feature.adapters')
             delete trans[i].properties[key];
           }
         });
+
         if (!trans[i].placeHolderTransform) {
           delete trans[i]._backendProperties;
           delete trans[i].$$hashkey;
-          transforms.push(transforms[i]);
+          transforms.push(trans[i]);
         }
       }
 
