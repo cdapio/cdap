@@ -735,7 +735,7 @@ For example, using the previous ``streamAdapter``, you would be interested in th
 Workflow *ETLWorkflow* of the Application *ETLBatch* of the namespace *default*. From this,
 you can formulate your request.
 
-The :ref:`CDAP CLI <cli>` has a command (``get adapter logs <adaptor-id>``) that does this directly.
+The :ref:`CDAP CLI <cli>` has a command (``get adapter logs <adapter-id>``) that does this directly.
 
 .. _http-restful-api-apptemplates-adapter-metrics:
 

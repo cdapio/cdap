@@ -65,7 +65,7 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Security:** Perimeter security, configuration and client authentication
   - **Testing and Debugging:** Test framework plus tools and practices for debugging your applications
   - **Ingesting Data:** Different techniques for ingesting data into CDAP
-  - **Advanced Topics:** Data exploration of datasets, best practices for CDAP development, adding a custom logback
+  - **Advanced Topics:** Best practices for CDAP development, adding a custom logback
 
 
 .. |application-templates| replace:: **Application Templates (Beta):**
@@ -74,10 +74,12 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 - |application-templates|_
 
   - **Big Data without Big Development:** How to use CDAP "out-of-the-box" to solve problems and use cases (Beta)
-  - **Introduction to Application Templates:** A blueprint that can be configured for creating Adapters (Beta)
+  - **Introduction to Application Templates:** Applications that are reusable through configuration and
+    extensible through plugins (Beta)
   - **ETL:** Making performing ETL possible without writing code (Beta)
-
-
+  - **Custom Application Templates:**: For developers of custom Application Templates, Plugins and Adapters (Beta)
+  
+  
 .. |admin-manual| replace:: **Administration Manual:**
 .. _admin-manual: admin-manual/index.html
 

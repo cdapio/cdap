@@ -4,9 +4,9 @@
 
 .. _apptemplates-etl-operations:
 
-===============================
-Operating An ETL Adapter (Beta)
-===============================
+===================================
+Adapter Lifecycle Management (Beta)
+===================================
 
 Introduction
 ------------

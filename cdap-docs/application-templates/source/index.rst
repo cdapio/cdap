@@ -9,6 +9,7 @@
 CDAP Application Templates (Beta)
 ==================================================
 
+
 .. _apptemplates-intro-application-templates:
 
 Introduction to Application Templates
@@ -44,6 +45,7 @@ In the future, a variety of application templates will be delivered. The framewo
 extensible: users can write their own application templates if they so chose, and can
 manage the lifecycle of their custom application templates using CDAP.
 
+
 ETL (Beta)
 ==========
 ETL is **Extract**, **Transform** and **Load** of data, a common first-step in any data
@@ -70,9 +72,17 @@ These sections describe:
 - |etl-creating|_ Covers using the ETL Application Templates and Plugins included with CDAP to create an ETL Adapter.
 
 
-.. |etl-operations| replace:: **Operating An ETL Adapter:**
+.. |etl-operations| replace:: **Adapter Lifecycle Management:**
 .. _etl-operations: etl/operations.html
 
 - |etl-operations|_ Covers using an ETL Adapter to perform ETL.
 
+
+Creating Custom Application Templates (Beta)
+============================================
+
+.. |custom| replace:: **Creating Custom Application Templates:**
+.. _custom: custom.html
+
+- |custom|_ Intended for developers writing custom Application Templates, Plugins and Adapters.
 

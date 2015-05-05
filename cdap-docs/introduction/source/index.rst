@@ -835,7 +835,7 @@ Transforming Your Data
      :widths: 80 20
      :stub-columns: 1
      
-     * - List the adaptors available in the CDAP instance
+     * - List the adapters available in the CDAP instance
        - 
        
   .. list-table::

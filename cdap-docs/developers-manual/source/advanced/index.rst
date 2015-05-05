@@ -12,7 +12,6 @@ Advanced Topics
    :maxdepth: 1
    
     Best Practices <best-practices>
-    Application Templates, Plugins, and Adaptors <custom-app-template>
     Application Logback <application-logback>
 
 
@@ -23,12 +22,6 @@ will be of interest to developers who want a deeper dive into CDAP:
 .. _best-practices: best-practices.html
 
 - |best-practices|_ Suggestions when developing a CDAP application.
-
-
-.. |custom-app-template| replace:: **Creating Custom Application Templates, Plugins and Adapters:**
-.. _custom-app-template: custom-app-template.html
-
-- |custom-app-template|_ Covers everything from Maven archetypes through packaging and testing (Beta).
 
 
 .. |application-logback| replace:: **Application Logback:**
