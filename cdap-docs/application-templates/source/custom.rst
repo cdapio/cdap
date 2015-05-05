@@ -86,7 +86,6 @@ project for the Plugin from the archetype:
   .. parsed-literal::
   
     |$| mvn archetype:generate \\
-          -DarchetypeRepository=https://oss.sonatype.org/content/repositories/snapshots/
           -DarchetypeGroupId=co.cask.cdap \\
           -DarchetypeArtifactId=cdap-etl-batch-source-archetype \\
           -DarchetypeVersion=\ |release|
@@ -136,7 +135,6 @@ A Batch Sink Plugin can be created from this Maven archetype:
   .. parsed-literal::
   
     |$| mvn archetype:generate \\
-          -DarchetypeRepository=https://oss.sonatype.org/content/repositories/snapshots/
           -DarchetypeGroupId=co.cask.cdap \\
           -DarchetypeArtifactId=cdap-etl-batch-sink-archetype \\
           -DarchetypeVersion=\ |release|
@@ -187,7 +185,6 @@ A Realtime Source Plugin can be created from this Maven archetype:
   .. parsed-literal::
   
     |$| mvn archetype:generate \\
-          -DarchetypeRepository=https://oss.sonatype.org/content/repositories/snapshots/
           -DarchetypeGroupId=co.cask.cdap \\
           -DarchetypeArtifactId=cdap-etl-realtime-source-archetype \\
           -DarchetypeVersion=\ |release|
@@ -277,7 +274,6 @@ A Realtime Sink Plugin can be created from this Maven archetype:
   .. parsed-literal::
   
     |$| mvn archetype:generate \\
-          -DarchetypeRepository=https://oss.sonatype.org/content/repositories/snapshots/
           -DarchetypeGroupId=co.cask.cdap \\
           -DarchetypeArtifactId=cdap-etl-realtime-sink-archetype \\
           -DarchetypeVersion=\ |release|
@@ -326,7 +322,6 @@ using this Maven archetype:
   .. parsed-literal::
   
     |$| mvn archetype:generate \\
-          -DarchetypeRepository=https://oss.sonatype.org/content/repositories/snapshots/
           -DarchetypeGroupId=co.cask.cdap \\
           -DarchetypeArtifactId=cdap-etl-transform-archetype \\
           -DarchetypeVersion=\ |release|
