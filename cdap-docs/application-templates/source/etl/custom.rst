@@ -363,8 +363,8 @@ copies in each transform is emitted. The user metrics can be queried by using th
       private String fieldName; 
     } 
   
-      @Override
-    public void transform(StructuredRecord input,      Emitter<StructuredRecord> emitter) {
+    @Override
+    public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) {
       Integer copies = input.get(config.fieldName);
       for (int i = 0; i < copies; i++) {
         emitter.emit(input);
