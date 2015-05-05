@@ -52,4 +52,5 @@ elif [ -d "$conf" ]; then
 fi
 
 CDAP_HOME="$bin"/..
+export CDAP_HOME
 java $JAVA_OPTS -cp ${CLASSPATH} -Dscript=$script co.cask.cdap.cli.CLIMain "$@"
