@@ -297,7 +297,7 @@ angular.module(PKG.name + '.feature.adapters')
     $scope.saveAsDraft = function() {
       if (!$scope.metadata.name.length) {
         $alert({
-          type: info,
+          type: 'info',
           content: 'Please provide a name for the Adapter to be saved as draft'
         });
         return;
