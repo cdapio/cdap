@@ -1,8 +1,9 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _cdap-console:
+.. _cdap-ui:
 
 ==================================================================
 CDAP Console
