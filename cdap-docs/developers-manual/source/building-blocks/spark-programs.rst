@@ -200,7 +200,7 @@ Here is an example of service discovery in a Spark program::
 Spark Metrics
 ------------------
 Spark programs in CDAP emit metrics, similar to a MapReduce program.
-CDAP collect system metrics emitted by Spark and display them in the **CDAP Console**.
+CDAP collect system metrics emitted by Spark and display them in the **CDAP UI**.
 This helps in monitoring the progress and resources used by a Spark program.
 You can also emit custom user metrics from the worker nodes of your Spark Program::
 

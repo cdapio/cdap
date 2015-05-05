@@ -127,12 +127,13 @@ Once you have installed the JDK, you'll need to set the JAVA_HOME environment va
 
 Node.js Runtime
 +++++++++++++++
-You can download the appropriate version of Node.js (from v0.8.16 through v0.10.37) from `nodejs.org <http://nodejs.org>`__:
+You can download the appropriate version of Node.js (from |node-js-version|) from `nodejs.org <http://nodejs.org>`__:
 
-#. The version of Node.js must be from v0.8.16 through v0.10.37.
+#. The version of Node.js must be from |node-js-version|.
 #. Download the appropriate Linux or Solaris binary ``.tar.gz`` from
    `nodejs.org/download/ <http://nodejs.org/dist/>`__.
- #. Extract somewhere such as ``/opt/node-[version]/``
+
+#. Extract somewhere such as ``/opt/node-[version]/``
 #. Build node.js; instructions that may assist are available at
    `github <https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager>`__
 #. Ensure that ``nodejs`` is in the ``$PATH``. One method is to use a symlink from the installation:
@@ -399,7 +400,7 @@ Depending on your installation, you may want to set these properties:
   #. Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
 
 - Set the ``router.server.address`` property in ``conf/cdap-site.xml`` to the **hostname of the CDAP Router**.
-  The CDAP Console uses this property to connect to the Router::
+  The CDAP UI uses this property to connect to the Router::
 
       <property>
         <name>router.server.address</name>
@@ -530,7 +531,7 @@ command::
 
   $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i restart ; done
 
-When all the services have completed starting, the CDAP Console should then be
+When all the services have completed starting, the CDAP UI should then be
 accessible through a browser at port ``9999``. 
 
 The URL will be ``http://<host>:9999`` where ``<host>`` is the IP address of
@@ -577,9 +578,9 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 #. Open a command prompt and navigate to ``CDAP_HOME/examples``.
 #. Each example folder has a ``.jar`` file in its ``target`` directory.
    For verification, we will use the ``WordCount`` example.
-#. Open a web browser to the CDAP Console.
+#. Open a web browser to the CDAP UI.
    It is located on port ``9999`` of the box where you installed CDAP.
-#. On the Console, click the button *Load an App*.
+#. On the UI, click the button *Add App*.
 #. Find the pre-built ``WordCount-``\ |literal-release|\ ``.jar`` using the dialog box to navigate to
    ``CDAP_HOME/examples/WordCount/target/``. 
 #. Once the application is deployed, instructions on running the example can be found at the

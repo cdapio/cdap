@@ -100,7 +100,7 @@ Glossary
       of computers, each of which may be prone to failures."*
 
    DAG
-      A directed acyclic graph. Flows are wired together and displayed as a DAG in the CDAP Console.
+      A directed acyclic graph. Flows are wired together and displayed as a DAG in the CDAP UI.
       
    CDAP UI
       The CDAP UI is a web-based application used to deploy CDAP Applications, create 

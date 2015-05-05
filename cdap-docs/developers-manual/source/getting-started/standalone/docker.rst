@@ -25,7 +25,7 @@ To use the **Docker image**:
     $ boot2docker ip
     
   to determine the Docker VM's IP address. You will need to use that address as the host
-  name when either connecting to the Console or making an HTTP request.
+  name when either connecting to the CDAP UI or making an HTTP request.
   
   When you run ``boot2docker start``, it will print a message on the screen such as::
 
@@ -49,10 +49,10 @@ To use the **Docker image**:
 - CDAP will start automatically once the CDAP Virtual Machine starts. CDAP’s Software
   Directory is under ``/Software/cdap-sdk-``\ |literal-release|\ .
   
-- Once CDAP starts, it will instruct you to connect to the CDAP Console with a web browser
+- Once CDAP starts, it will instruct you to connect to the CDAP UI with a web browser
   at ``http://<virtual-hostname>:9999``, such as ``http://6f0162922c37:9999``. Replace
   ``<virtual-hostname>`` with the Docker VM's IP address you obtained earlier. Start a browser 
-  and enter the address to access the CDAP Console.
+  and enter the address to access the CDAP UI.
 
 - In order to begin building CDAP applications, have our :ref:`recommended software and tools
   <system-requirements>` installed in your environment.

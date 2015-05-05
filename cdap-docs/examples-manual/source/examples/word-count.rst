@@ -89,7 +89,7 @@ Starting the Flow
 
 Once the application is deployed:
 
-- Click on the *Process* button in the left sidebar of the CDAP Console,
+- Click on the *Process* button in the left sidebar of the CDAP UI,
   then click ``WordCounter`` in the *Process* page to get to the
   Flow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
@@ -108,7 +108,7 @@ Starting the Service
 
 Once the application is deployed:
 
-- Click on ``WordCount`` in the Overview page of the CDAP Console to get to the
+- Click on ``WordCount`` in the Overview page of the CDAP UI to get to the
   Application detail page, click ``RetrieveCounts`` in the *Service* pane to get to the
   Service detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
@@ -138,7 +138,7 @@ Querying the Results
 .. highlight:: console
 
 If the Service has not already been started, you start it either through the
-CDAP Console or via an HTTP request using the ``curl`` command::
+CDAP UI or via an HTTP request using the ``curl`` command::
 
   curl -w'\n' -X POST 'http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/start'
 
@@ -173,7 +173,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 **Stopping the Flow**
 
-- Click on the *Process* button in the left sidebar of the CDAP Console,
+- Click on the *Process* button in the left sidebar of the CDAP UI,
   then click ``WordCounter`` in the *Process* page to get to the
   Flow detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
@@ -189,7 +189,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 **Stopping the Service**
 
-- Click on ``WordCount`` in the Overview page of the CDAP Console to get to the
+- Click on ``WordCount`` in the Overview page of the CDAP UI to get to the
   Application detail page, click ``RetrieveCounts`` in the *Service* pane to get to the
   Service detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:

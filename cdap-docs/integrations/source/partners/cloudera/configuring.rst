@@ -41,7 +41,7 @@ the 'cdap' user installed by the parcel.
 Prerequisites
 =======================================
 
-#. Node.js (version 0.8.16 through 0.10.37) must be installed on the node(s) where the UI
+#. Node.js (from |node-js-version|) must be installed on the node(s) where the UI
    role instance will run. You can download the appropriate version of Node.js from `nodejs.org
    <http://nodejs.org/dist/>`__.
 
@@ -101,7 +101,7 @@ When completing the Wizard, these notes may help:
      secure Hadoop cluster.
 
    - *Add Service* Wizard, Page 5: **Router Server Port:** This should match the "Router Bind
-     Port"; it’s used by the CDAP Console to connect to the Router service.
+     Port"; it’s used by the CDAP UI to connect to the Router service.
 
 Complete instructions, step-by-step, for using the Admin Console *Add Service* Wizard to install CDAP
 :ref:`are available <step-by-step-cloudera-add-service>`.
@@ -113,7 +113,7 @@ Verification
 
 After CDAP has started up, the best way to verify the installation is to deploy an application,
 ingest some data, run a MapReduce program on it, and then query the results out.  The following
-procedure describes how to do this primarily, via the CDAP Console, though this can all be done via
+procedure describes how to do this primarily, via the CDAP UI, though this can all be done via
 command line.
 
 We provide in our SDK pre-built ``.JAR`` files for convenience.
@@ -127,7 +127,7 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
    ``CDAP_HOME/examples/Purchase-``\ |literal-release|\ ``.jar``. The ``Purchase`` example is documented 
    in the CDAP :ref:`examples manual <examples-purchase>`.
 
-#. Open a web browser to the CDAP Console. It is located on port ``9999`` of the box where
+#. Open a web browser to the CDAP UI. It is located on port ``9999`` of the box where
    you installed CDAP.
 
 #. From the CDAP UI Development tab, under "Apps" click "Add App” and navigate to the jar.

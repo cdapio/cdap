@@ -78,7 +78,7 @@ Starting the Flow
 
 Once the application is deployed:
 
-- Click on the *Process* button in the left sidebar of the CDAP Console,
+- Click on the *Process* button in the left sidebar of the CDAP UI,
   then click *PointsFlow* in the *Process* page to get to the
   Flow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
@@ -97,7 +97,7 @@ Starting the Service
 
 Once the application is deployed:
 
-- Click on *SparkKMeans* in the Overview page of the CDAP Console to get to the
+- Click on *SparkKMeans* in the Overview page of the CDAP UI to get to the
   Application detail page, click *CentersService* in the *Service* pane to get to the
   Service detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
@@ -130,7 +130,7 @@ Running the Spark program
 ------------------------------
 There are three ways to start the Spark program:
 
-1. Click on the *Process* button in the left sidebar of the CDAP Console,
+1. Click on the *Process* button in the left sidebar of the CDAP UI,
    then click *SparkKMeansProgram* in the *Process* page to get to the
    Spark detail page, then click the *Start* button; or
 
@@ -183,7 +183,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 **Stopping the Flow and Spark Program**
 
-- Click on the *Process* button in the left sidebar of the CDAP Console,
+- Click on the *Process* button in the left sidebar of the CDAP UI,
   then click *PointsFlow* in the *Process* page to get to the
   Flow detail page, then click the *Stop* button; similarly for the *SparkKMeansProgram*: or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
@@ -203,7 +203,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 **Stopping the Service**
 
-- Click on *SparkKMeans* in the Overview page of the CDAP Console to get to the
+- Click on *SparkKMeans* in the Overview page of the CDAP UI to get to the
   Application detail page, click *CentersService* in the *Service* pane to get to the
   Service detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:

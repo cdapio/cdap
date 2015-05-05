@@ -29,7 +29,7 @@ Note that starting CDAP is not necessary if you use either the Virtual Machine o
 Docker image, as they both start the Standalone CDAP automatically on startup.
 
 Once CDAP is started successfully, in a web browser you will be able to see the CDAP
-Console running at ``http://localhost:9999``, where you can deploy example applications and
+UI running at ``http://localhost:9999``, where you can deploy example applications and
 interact with CDAP. 
 
 Note that in the case of the Docker image, you will need to substitute 

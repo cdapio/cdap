@@ -123,11 +123,11 @@ port ``9999`` of the host where the UI role instance is running.
    **Cloudera Manager:** CDAP completed startup: all lights green!
    
 
-CDAP Console
-============
-The CDAP Console may initially show errors while all of the CDAP YARN containers are
+CDAP UI
+=======
+The CDAP UI may initially show errors while all of the CDAP YARN containers are
 starting up. Allow for up to a few minutes for this. The *Services* link in the CDAP
-Console in the upper right will show the status of the CDAP services. 
+UI in the upper right will show the status of the CDAP services. 
 
 .. figure:: ../../../../admin-manual/source/_images/console/console_01_overview.png
    :figwidth: 100%
@@ -136,7 +136,7 @@ Console in the upper right will show the status of the CDAP services.
    :align: center
    :class: bordered-image
 
-   **CDAP Console:** Showing started-up with two applications deployed.
+   **CDAP UI:** Showing started-up with two applications deployed.
 
 Further instructions, including verifying your installation, are contained in :ref:`Configuring
 and Installing: Verification <cloudera-verification>`.

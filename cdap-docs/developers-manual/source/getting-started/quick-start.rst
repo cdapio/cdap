@@ -98,7 +98,7 @@ or using ``curl`` to directly make an HTTP request:
 (If you cloned the source code and built the app, you'll need to adjust the above paths to
 include the ``cdap-apps/Wise`` directory.)
 
-**Learn More:** *You can also deploy apps by dragging and dropping their jars on* :ref:`the CDAP Console <cdap-console>`.
+**Learn More:** *You can also deploy apps by dragging and dropping their jars on* :ref:`the CDAP UI <cdap-ui>`.
 
 
 Starting Realtime Processing
@@ -210,8 +210,8 @@ format; there are a `variety of tools available
 Command Line.
 
 
-Monitoring with the CDAP Console
-================================
+Monitoring with the CDAP UI
+===========================
 You may recall that before we started injecting data into the Stream, we started the
 *WiseFlow* to process these events in real-time. You can observe the Flow while it is
 processing events by retrieving metrics about how many events it has processed. For that,
@@ -227,7 +227,7 @@ events you have sent)::
   '&metric=system.process.events.processed&aggregate=true'
   {"startTime":0,"endTime":0,"series":[{"metricName":"system.process.events.processed","grouping":{},"data":[{"time":0,"value":3007}]}]}
 
-A much easier way to observe the Flow is in the `CDAP Console: <http://localhost:9999>`__
+A much easier way to observe the Flow is in the `CDAP UI: <http://localhost:9999>`__
 it shows a `visualization of the Flow, <http://localhost:9999/#/flows/Wise:WiseFlow>`__
 annotated with its realtime metrics:
 
@@ -251,7 +251,7 @@ events being processed by each Flowlet, in this case about 63 events per second:
    :width: 600px
 
 .. *Learn More:* A complete description of the Flow status page can be found in the
-.. :ref:`CDAP Console documentation. <admin-guide:cdap-console>`
+.. :ref:`CDAP UI documentation. <admin-guide:cdap-ui>`
 
 
 Retrieving the Results of Processing 
