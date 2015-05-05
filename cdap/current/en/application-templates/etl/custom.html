@@ -396,8 +396,8 @@ copies in each transform is emitted. The user metrics can be queried by using th
     <span class="kd">private</span> <span class="n">String</span> <span class="n">fieldName</span><span class="o">;</span>
   <span class="o">}</span>
 
-    <span class="nd">@Override</span>
-  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">transform</span><span class="o">(</span><span class="n">StructuredRecord</span> <span class="n">input</span><span class="o">,</span>      <span class="n">Emitter</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="n">emitter</span><span class="o">)</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">transform</span><span class="o">(</span><span class="n">StructuredRecord</span> <span class="n">input</span><span class="o">,</span> <span class="n">Emitter</span><span class="o">&lt;</span><span class="n">StructuredRecord</span><span class="o">&gt;</span> <span class="n">emitter</span><span class="o">)</span> <span class="o">{</span>
     <span class="n">Integer</span> <span class="n">copies</span> <span class="o">=</span> <span class="n">input</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">fieldName</span><span class="o">);</span>
     <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">copies</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
       <span class="n">emitter</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">input</span><span class="o">);</span>
