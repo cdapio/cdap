@@ -211,6 +211,9 @@ Deprecated and Removed Features
 - Support for *Service Workers* have been removed. After upgrading, an Application that
   contained a Service Worker must be redeployed.  
 - The Old CDAP Console has been deprecated.
+- Support for JDK/JRE 1.6 (Java 6) has ended; JDK/JRE 1.7 (Java 7) is 
+  :ref:`now required for CDAP <install-java-runtime>` or the 
+  :ref:`CDAP SDK <standalone-index>`.
 
 
 .. _known-issues-300:
