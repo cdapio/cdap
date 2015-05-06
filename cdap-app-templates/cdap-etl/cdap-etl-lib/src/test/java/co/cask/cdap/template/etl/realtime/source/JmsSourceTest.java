@@ -202,7 +202,7 @@ public class JmsSourceTest {
   private void initializeJmsSource(String destination, int messageReceive, String initialContextFactory,
                                    String providerUrl) {
     jmsSource = new JmsSource(new JmsPluginConfig(destination, messageReceive, initialContextFactory, providerUrl,
-                                                  "ConnectionFactory"));
+                                                  JmsSource.CONNECTION_FACTORY));
   }
 
   /**
