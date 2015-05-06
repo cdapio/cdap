@@ -13,7 +13,6 @@ angular.module(PKG.name + '.feature.worker')
     $scope.activeTab = $scope.tabs[0];
 
     $scope.$on('$destroy', function(event) {
-      debugger;
       event.targetScope.runs.selected = null;
     });
 
