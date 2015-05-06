@@ -48,11 +48,10 @@ angular.module(PKG.name + '.commons')
         }
       },
       'json-editor': {
-        element: '<textarea></textarea>',
+        element: '<my-json-textbox></my-json-textbox>',
         attributes: {
           'ng-model': 'model',
-          'class': 'form-control',
-          placeholder: '{{myconfig.properties.default || ""}}'
+          placeholder: 'myconfig.properties.default'
         }
       },
       'javascript-editor': {
