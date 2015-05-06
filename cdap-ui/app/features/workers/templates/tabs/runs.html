@@ -19,9 +19,14 @@
   </div>
 </div>
 <br/>
-<div>
+<div ng-if="runs.length">
   <div ng-include="'/assets/features/workers/templates/tabs/runs/run-detail.html'"
         ng-if="!$stateParams.runid">
   </div>
   <div ui-view  ng-if="$stateParams.runid"> </div>
+</div>
+<div ng-if="!runs.length">
+  <div class="well well-lg text-center h3">
+    <div>No runs yet! Start one.</div>
+  </div>
 </div>
