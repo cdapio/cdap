@@ -198,10 +198,6 @@ public abstract class HBaseTableUtil {
   // For simplicity we allow max 255 splits per bucket for now
   private static final int MAX_SPLIT_COUNT_PER_BUCKET = 0xff;
 
-  public static byte[][] getSplitKeys(int splits) {
-    return getSplitKeys(splits, HBaseQueueAdmin.ROW_KEY_DISTRIBUTION_BUCKETS, HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR);
-  }
-
   public static byte[][] getSplitKeys(int splits, int buckets, AbstractRowKeyDistributor keyDistributor) {
     // "1" can be used for queue tables that we know are not "hot", so we do not pre-split in this case
     if (splits == 1) {

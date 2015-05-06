@@ -98,6 +98,7 @@ import java.net.InetAddress;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /**
  * A {@link TwillRunnable} for running a program through a {@link ProgramRunner}.
@@ -259,6 +260,21 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     controller = injector.getInstance(getProgramClass()).run(program, programOpts);
     final SettableFuture<ProgramController.State> state = SettableFuture.create();
     controller.addListener(new AbstractListener() {
+
+      @Override
+      public void alive() {
+        runlatch.countDown();
+      }
+
+      @Override
+      public void init(ProgramController.State currentState, @Nullable Throwable cause) {
+        if (currentState == ProgramController.State.ALIVE) {
+          alive();
+        } else {
+          super.init(currentState, cause);
+        }
+      }
+
       @Override
       public void completed() {
         state.set(ProgramController.State.COMPLETED);
@@ -276,7 +292,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       }
     }, MoreExecutors.sameThreadExecutor());
 
-    runlatch.countDown();
     try {
       state.get();
       LOG.info("Program stopped.");
@@ -287,6 +302,10 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       if (propagateServiceError()) {
         throw Throwables.propagate(Throwables.getRootCause(e));
       }
+    } finally {
+      // Always unblock the handleCommand method if it is not unblocked before (e.g if program failed to start).
+      // The controller state will make sure the corresponding command will be handled correctly in the correct state.
+      runlatch.countDown();
     }
   }
 

@@ -18,6 +18,8 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -36,6 +38,7 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.proto.Id;
+import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Objects;
@@ -76,11 +79,6 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
    * HBase table property for the number of bytes as the prefix of the queue entry row key.
    */
   public static final String PROPERTY_PREFIX_BYTES = "cdap.prefix.bytes";
-
-  public static final int ROW_KEY_DISTRIBUTION_BUCKETS = 16;
-  public static final AbstractRowKeyDistributor ROW_KEY_DISTRIBUTOR =
-    new RowKeyDistributorByHashPrefix(
-      new RowKeyDistributorByHashPrefix.OneByteSimpleHash(ROW_KEY_DISTRIBUTION_BUCKETS));
 
   protected final HBaseTableUtil tableUtil;
   private final CConfiguration cConf;
@@ -200,7 +198,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     // all queues for a flow are in one table
     truncate(getDataTableId(namespaceId, app, flow));
     // we also have to delete the config for these queues
-    deleteConsumerConfigurations(namespaceId, app, flow);
+    deleteFlowConfigs(namespaceId, app, flow);
   }
 
   @Override
@@ -216,7 +214,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     // all queues for a flow are in one table
     drop(getDataTableId(namespaceId, app, flow));
     // we also have to delete the config for these queues
-    deleteConsumerConfigurations(namespaceId, app, flow);
+    deleteFlowConfigs(namespaceId, app, flow);
   }
 
   @Override
@@ -274,7 +272,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     }
   }
 
-  HBaseConsumerStateStore getConsumerStateStore(QueueName queueName) throws Exception {
+  public HBaseConsumerStateStore getConsumerStateStore(QueueName queueName) throws Exception {
     Id.DatasetInstance stateStoreId = getStateStoreId(queueName.getFirstComponent());
     Map<String, String> args = ImmutableMap.of(HBaseQueueDatasetModule.PROPERTY_QUEUE_NAME, queueName.toString());
     HBaseConsumerStateStore stateStore = datasetFramework.getDataset(stateStoreId, args, null);
@@ -331,11 +329,38 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     });
   }
 
-  private void deleteConsumerConfigurations(String namespaceId, String app, String flow) throws Exception {
+  private void deleteFlowConfigs(String namespaceId, String app, String flow) throws Exception {
     // It's a bit hacky here since we know how the HBaseConsumerStateStore works.
     // Maybe we need another Dataset set that works across all queues.
-    QueueName prefixName = QueueName.from(URI.create(QueueName.prefixForFlow(namespaceId, app, flow)));
-    deleteConsumerStates(prefixName);
+    final QueueName prefixName = QueueName.from(URI.create(QueueName.prefixForFlow(namespaceId, app, flow)));
+
+    Id.DatasetInstance stateStoreId = getStateStoreId(namespaceId);
+    Map<String, String> args = ImmutableMap.of(HBaseQueueDatasetModule.PROPERTY_QUEUE_NAME, prefixName.toString());
+    HBaseConsumerStateStore stateStore = datasetFramework.getDataset(stateStoreId, args, null);
+    if (stateStore == null) {
+      // If the state store doesn't exists, meaning there is no queue, hence nothing to do.
+      return;
+    }
+
+    final Table table = stateStore.getInternalTable();
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) table)
+      .execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          // Prefix name is "/" terminated ("queue:///namespace/app/flow/"), hence the scan is unique for the flow
+          byte[] startRow = Bytes.toBytes(prefixName.toString());
+          Scanner scanner = table.scan(startRow, Bytes.stopKeyForPrefix(startRow));
+          try {
+            Row row = scanner.next();
+            while (row != null) {
+              table.delete(row.getRow());
+              row = scanner.next();
+            }
+          } finally {
+            scanner.close();
+          }
+        }
+      });
   }
 
   /**
@@ -381,7 +406,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     return getDataTableId(queueName, type);
   }
 
-  TableId getDataTableId(QueueName queueName, QueueConstants.QueueType queueType) {
+  public TableId getDataTableId(QueueName queueName, QueueConstants.QueueType queueType) {
     if (!queueName.isQueue()) {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
     }
@@ -391,7 +416,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
                           queueType);
   }
 
-  TableId getDataTableId(String namespaceId, String app, String flow, QueueConstants.QueueType queueType) {
+  public TableId getDataTableId(String namespaceId, String app, String flow, QueueConstants.QueueType queueType) {
     String tableName = String.format("%s.%s.%s.%s", Constants.SYSTEM_NAMESPACE, queueType, app, flow);
     return TableId.from(namespaceId, tableName);
   }
@@ -492,10 +517,13 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
         addCoprocessor(htd, coprocessor, coprocessorJar.getJarLocation(), coprocessorJar.getPriority(coprocessor));
       }
 
-      // Create queue table with splits.
-      int splits = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS,
-                                QueueConstants.DEFAULT_QUEUE_TABLE_PRESPLITS);
-      byte[][] splitKeys = HBaseTableUtil.getSplitKeys(splits);
+      // Create queue table with splits. The distributor bucket size is the same as splits.
+      int splits = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS);
+      AbstractRowKeyDistributor distributor = new RowKeyDistributorByHashPrefix(
+        new RowKeyDistributorByHashPrefix.OneByteSimpleHash(splits));
+
+      byte[][] splitKeys = HBaseTableUtil.getSplitKeys(splits, splits, distributor);
+      htd.setValue(QueueConstants.DISTRIBUTOR_BUCKETS, Integer.toString(splits));
       createQueueTable(tableId, htd, splitKeys);
     }
 

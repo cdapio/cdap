@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDS;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDS;
@@ -25,8 +26,10 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Utility for working with dataset metadata table.
@@ -44,10 +47,6 @@ public class DatasetMetaTableUtil {
 
   public DatasetMetaTableUtil(DatasetFramework framework) {
     this.framework = framework;
-  }
-
-  public void init() throws DatasetManagementException {
-    addTypes(framework);
   }
 
   public DatasetTypeMDS getTypeMetaTable() throws DatasetManagementException, IOException {
@@ -68,7 +67,12 @@ public class DatasetMetaTableUtil {
    * @param datasetFramework framework to add types and datasets to
    */
   public static void setupDatasets(DatasetFramework datasetFramework) throws IOException, DatasetManagementException {
-    addTypes(datasetFramework);
+    for (Map.Entry<String, ? extends DatasetModule> entry : getModules().entrySet()) {
+      // meta tables should be in the system namespace
+      Id.DatasetModule moduleId = Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, entry.getKey());
+      datasetFramework.addModule(moduleId, entry.getValue());
+    }
+
     datasetFramework.addInstance(DatasetTypeMDS.class.getName(), Id.DatasetInstance.from(
                                    Constants.DEFAULT_NAMESPACE_ID, Joiner.on(".").join(Constants.SYSTEM_NAMESPACE,
                                                                                        META_TABLE_NAME)),
@@ -79,11 +83,11 @@ public class DatasetMetaTableUtil {
                                  DatasetProperties.EMPTY);
   }
 
-  private static void addTypes(DatasetFramework framework) throws DatasetManagementException {
-    // meta tables should be in the system namespace
-    Id.DatasetModule typeMDSModuleId = Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "typeMDSModule");
-    Id.DatasetModule instanceMDSModuleId = Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "instanceMDSModule");
-    framework.addModule(typeMDSModuleId, new SingleTypeModule(DatasetTypeMDS.class));
-    framework.addModule(instanceMDSModuleId, new SingleTypeModule(DatasetInstanceMDS.class));
+  /**
+   * @return dataset modules used by dataset mds
+   */
+  public static Map<String, ? extends DatasetModule> getModules() {
+    return ImmutableMap.of("typeMDSModule", new SingleTypeModule(DatasetTypeMDS.class),
+                           "instanceMDSModule", new SingleTypeModule(DatasetInstanceMDS.class));
   }
 }

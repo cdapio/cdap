@@ -45,6 +45,7 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,8 +104,11 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
         }
       });
       Preconditions.checkState(!groupConfigs.isEmpty(), "Missing consumer group information for queue %s", queueName);
-      return createProducer(admin, queueName, queueAdmin.getType(),
-                            queueMetrics, new ShardedHBaseQueueStrategy(), groupConfigs);
+
+      HTable hTable = createHTable(admin.getDataTableId(queueName, queueAdmin.getType()));
+      int distributorBuckets = getDistributorBuckets(hTable.getTableDescriptor());
+      return createProducer(hTable, queueName, queueMetrics,
+                            new ShardedHBaseQueueStrategy(distributorBuckets), groupConfigs);
     } catch (Exception e) {
       Throwables.propagateIfPossible(e);
       throw new IOException(e);
@@ -173,9 +177,12 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
           List<HBaseQueueConsumer> consumers = Lists.newArrayList();
           for (HBaseConsumerState state : states) {
             QueueType queueType = (state.getPreviousBarrier() == null) ? QueueType.QUEUE : QueueType.SHARDED_QUEUE;
-            HBaseQueueStrategy strategy = (state.getPreviousBarrier() == null) ? new SaltedHBaseQueueStrategy()
-                                                                                 : new ShardedHBaseQueueStrategy();
             HTable hTable = createHTable(admin.getDataTableId(queueName, queueType));
+            int distributorBuckets = getDistributorBuckets(hTable.getTableDescriptor());
+
+            HBaseQueueStrategy strategy = (state.getPreviousBarrier() == null)
+                                          ? new SaltedHBaseQueueStrategy(distributorBuckets)
+                                          : new ShardedHBaseQueueStrategy(distributorBuckets);
             consumers.add(queueUtil.getQueueConsumer(cConf, hTable, queueName, state,
                                                      admin.getConsumerStateStore(queueName),
                                                      strategy));
@@ -199,8 +206,14 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
   HBaseQueueProducer createProducer(HBaseQueueAdmin admin, QueueName queueName, QueueConstants.QueueType queueType,
                                     QueueMetrics queueMetrics, HBaseQueueStrategy queueStrategy,
                                     Iterable<? extends ConsumerGroupConfig> groupConfigs) throws IOException {
-    return new HBaseQueueProducer(createHTable(admin.getDataTableId(queueName, queueType)),
-                                  queueName, queueMetrics, queueStrategy, groupConfigs);
+    return createProducer(createHTable(admin.getDataTableId(queueName, queueType)),
+                          queueName, queueMetrics, queueStrategy, groupConfigs);
+  }
+
+  private HBaseQueueProducer createProducer(HTable hTable, QueueName queueName, QueueMetrics queueMetrics,
+                                            HBaseQueueStrategy queueStrategy,
+                                            Iterable<? extends ConsumerGroupConfig> groupConfigs) throws IOException {
+    return new HBaseQueueProducer(hTable, queueName, queueMetrics, queueStrategy, groupConfigs);
   }
 
   /**
@@ -210,7 +223,7 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
    * @throws IOException
    */
   private HBaseQueueAdmin ensureTableExists(QueueName queueName) throws IOException {
-    HBaseQueueAdmin admin = queueName.isStream() ? streamAdmin : queueAdmin;
+    HBaseQueueAdmin admin = get(queueName);
     try {
       if (!admin.exists(queueName)) {
         admin.create(queueName);
@@ -221,12 +234,30 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
     return admin;
   }
 
-  private HTable createHTable(TableId tableId) throws IOException {
+  /**
+   * Helper method to select the queue or stream admin.
+   * @param queueName name of the queue to be opened.
+   * @return the queue admin for that queue.
+   */
+  public HBaseQueueAdmin get(QueueName queueName) {
+    return queueName.isStream() ? streamAdmin : queueAdmin;
+  }
+
+  public HTable createHTable(TableId tableId) throws IOException {
     HTable consumerTable = hBaseTableUtil.createHTable(hConf, tableId);
     // TODO: make configurable
     consumerTable.setWriteBufferSize(DEFAULT_WRITE_BUFFER_SIZE);
     consumerTable.setAutoFlush(false);
     return consumerTable;
+  }
+
+  public int getDistributorBuckets(HTableDescriptor htd) {
+    String value = htd.getValue(QueueConstants.DISTRIBUTOR_BUCKETS);
+    // If the setting is not in the table meta, this is a old table, hence use the value in the cConf
+    if (value == null) {
+      return QueueConstants.DEFAULT_ROW_KEY_BUCKETS;
+    }
+    return Integer.parseInt(value);
   }
 
   /**
