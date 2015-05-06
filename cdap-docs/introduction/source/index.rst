@@ -815,7 +815,7 @@ Transforming Your Data
          - Keep track of last processed times
          
      * - Using CDAP
-       - Write a configuration file, saving it to example/resources/adapter-config.json::
+       - Write a configuration file, saving it to ``example/resources/adapter-config.json``::
 
           {
               "description": "Periodically reads Stream data and writes it to a TimePartitionedFileSet",
@@ -1154,12 +1154,21 @@ Building Real World Applications
          - Write an application to serve the data
          
      * - Using CDAP
-       - ``> deploy app apps/cdap-wise-``\ |literal-cdap-apps-version|\ ``.jar``
+       - Download the Wise app and unzip into the ``examples`` directory of your CDAP SDK:
+       
+         | ``$ cd $CDAP_SDK_HOME/examples``
+         | ``$ curl -O http://repository.cask.co/downloads/co/cask/cdap/apps/``\ |literal-cdap-apps-version|\ ``/cdap-wise-``\ |literal-cdap-apps-version|\ ``.zip`` 
+         | ``$ unzip cdap-wise-``\ |literal-cdap-apps-version|\ ``.zip`` 
+
+         From within the CDAP CLI:
+
+         | ``> deploy app examples/cdap-wise-``\ |literal-cdap-apps-version|\ ``/target/cdap-wise-``\ |literal-cdap-apps-version|\ ``.jar``
           
      * -  
        - ::
 
           Successfully deployed application
+
 
 .. container:: table-block
 
