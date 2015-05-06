@@ -278,7 +278,7 @@ module.directive('myWorkflowGraph', function ($filter) {
       var defaultRadius = 50;
       scope.getShapes = function() {
         var shapes = {};
-        shapes.job = function(parent, node) {
+        shapes.job = function(parent, bbox, node) {
           var points = [
             //clockwise points from top
             { x: -defaultRadius * 2/3, y: -defaultRadius * 2/3}, //a
@@ -341,7 +341,7 @@ module.directive('myWorkflowGraph', function ($filter) {
           return shapeSvg;
         };
 
-        shapes.conditional = function(parent, node) {
+        shapes.conditional = function(parent, bbox, node) {
           var points = [
             // draw a diamond
             { x:  0, y: -defaultRadius },
