@@ -76,6 +76,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -110,24 +111,18 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
   // Executor for serving async enqueue requests
   private ExecutorService asyncExecutor;
-
-  // TODO: Need to make the decision of whether this should be inside StreamAdmin or not.
-  // Currently is here to align with the existing CDAP organization that dataset admin is not aware of MDS
-  private final StreamMetaStore streamMetaStore;
-
   private final StreamWriterSizeCollector sizeCollector;
 
   @Inject
   public StreamHandler(CConfiguration cConf, Authenticator authenticator,
                        StreamCoordinatorClient streamCoordinatorClient, StreamAdmin streamAdmin,
-                       StreamMetaStore streamMetaStore, StreamFileWriterFactory writerFactory,
+                       StreamFileWriterFactory writerFactory,
                        final MetricsCollectionService metricsCollectionService,
                        StreamWriterSizeCollector sizeCollector,
                        AbstractNamespaceClient namespaceClient) {
     super(authenticator);
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
-    this.streamMetaStore = streamMetaStore;
     this.sizeCollector = sizeCollector;
     this.batchBufferThreshold = cConf.getLong(Constants.Stream.BATCH_BUFFER_THRESHOLD);
     this.streamBodyConsumerFactory = new StreamBodyConsumerFactory();
@@ -140,7 +135,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
         }
       });
     StreamMetricsCollectorFactory metricsCollectorFactory = createStreamMetricsCollectorFactory();
-    this.streamWriter = new ConcurrentStreamWriter(streamCoordinatorClient, streamAdmin, streamMetaStore, writerFactory,
+    this.streamWriter = new ConcurrentStreamWriter(streamCoordinatorClient, streamAdmin, writerFactory,
                                                    cConf.getInt(Constants.Stream.WORKER_THREADS),
                                                    metricsCollectorFactory);
     this.namespaceClient = namespaceClient;
@@ -178,15 +173,12 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                       @PathParam("namespace-id") String namespaceId,
                       @PathParam("stream") String stream) throws Exception {
     Id.Stream streamId = Id.Stream.from(namespaceId, stream);
+    checkStreamExists(streamId);
 
-    if (streamMetaStore.streamExists(streamId)) {
-      StreamConfig streamConfig = streamAdmin.getConfig(streamId);
-      StreamProperties streamProperties = new StreamProperties(streamConfig.getTTL(), streamConfig.getFormat(),
-                                                               streamConfig.getNotificationThresholdMB());
-      responder.sendJson(HttpResponseStatus.OK, streamProperties, StreamProperties.class, GSON);
-    } else {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    }
+    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
+    StreamProperties streamProperties = new StreamProperties(streamConfig.getTTL(), streamConfig.getFormat(),
+                                                             streamConfig.getNotificationThresholdMB());
+    responder.sendJson(HttpResponseStatus.OK, streamProperties, StreamProperties.class, GSON);
   }
 
   @PUT
@@ -255,11 +247,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("stream") String stream) throws Exception {
     Id.Stream streamId = Id.Stream.from(namespaceId, stream);
-
-    if (!streamMetaStore.streamExists(streamId)) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
-      return null;
-    }
+    checkStreamExists(streamId);
 
     try {
       return streamBodyConsumerFactory.create(request, createContentWriterFactory(streamId, request));
@@ -275,18 +263,22 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                        @PathParam("namespace-id") String namespaceId,
                        @PathParam("stream") String stream) throws Exception {
     Id.Stream streamId = Id.Stream.from(namespaceId, stream);
+    checkStreamExists(streamId);
 
-    if (!streamMetaStore.streamExists(streamId)) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
-      return;
-    }
+    streamAdmin.truncate(streamId);
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
 
-    try {
-      streamAdmin.truncate(streamId);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (IOException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
-    }
+  @DELETE
+  @Path("/{stream}")
+  public void delete(HttpRequest request, HttpResponder responder,
+                     @PathParam("namespace-id") String namespaceId,
+                     @PathParam("stream") String stream) throws Exception {
+    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
+    checkStreamExists(streamId);
+
+    streamAdmin.drop(streamId);
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @PUT
@@ -295,11 +287,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
                         @PathParam("namespace-id") String namespaceId,
                         @PathParam("stream") String stream) throws Exception {
     Id.Stream streamId = Id.Stream.from(namespaceId, stream);
-
-    if (!streamMetaStore.streamExists(streamId)) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exist.");
-      return;
-    }
+    checkStreamExists(streamId);
 
     StreamProperties properties = getAndValidateConfig(request, responder);
     // null is returned if the requested config is invalid. An appropriate response will have already been written
@@ -310,6 +298,12 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
 
     streamAdmin.updateConfig(streamId, properties);
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  private void checkStreamExists(Id.Stream streamId) throws Exception {
+    if (!streamAdmin.exists(streamId)) {
+      throw new NotFoundException(streamId);
+    }
   }
 
   private StreamMetricsCollectorFactory createStreamMetricsCollectorFactory() {

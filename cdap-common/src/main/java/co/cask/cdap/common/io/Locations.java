@@ -257,6 +257,19 @@ public final class Locations {
   }
 
   /**
+   * Deletes the content of the given location, but keeping the location itself.
+   */
+  public static void deleteContent(Location location) {
+    try {
+      for (Location child : location.list()) {
+        deleteQuietly(child, true);
+      }
+    } catch (IOException e) {
+      LOG.error("IOException while deleting content of {}", location, e);
+    }
+  }
+
+  /**
    * Converts the given file into a local {@link Location}.
    */
   public static Location toLocation(File file) {
