@@ -51,7 +51,7 @@ body.theme-cdap.state-adapters-create {
       .default { display: none;}
       .template,.default {
         padding: 20px;
-        border: 2px dashed white;
+        border: 1px dashed white;
         color: white;
         height: 100%;
 
@@ -67,7 +67,13 @@ body.theme-cdap.state-adapters-create {
         }
       }
       .template {
+        &.plugin-added {
+          background-color: #2c498b;
+        }
         &.transforms {
+          &.plugin-added {
+            background-color: #2c498b;
+          }
           .fa-times {
             position: relative;
             top: -5px;
@@ -79,7 +85,7 @@ body.theme-cdap.state-adapters-create {
             > div { transform: none; }
           }
           > div {
-            border: 2px dashed white;
+            border: 1px dashed white;
             padding: 8px 0;
             margin: 0;
             margin-bottom: 40px;
@@ -116,7 +122,7 @@ body.theme-cdap.state-adapters-create {
   .as-sortable-drag {
     &.template {
       &.transforms {
-        border: 2px dashed black;
+        border: 1px dashed black;
         color: black;
         background-color: white;
         text-align: center;
@@ -179,7 +185,14 @@ body.theme-cdap.state-adapters-create {
           font-weight: 500;
           margin: 0 0 10px 0;
         }
-        .control-label { font-weight: 400; }
+        .row-padding {
+          padding: 0 30px;
+          .popover {
+            max-width: 550px;
+            width: 500px;
+          }
+        }
+        // .control-label { font-weight: 400; }
       }
     }
   }
