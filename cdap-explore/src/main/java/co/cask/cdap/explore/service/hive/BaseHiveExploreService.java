@@ -861,14 +861,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       try {
         // Create preview results for query
         previewFile = new File(previewsDir, handle.getHandle());
-        FileWriter fileWriter = new FileWriter(previewFile);
-        try {
+        try (FileWriter fileWriter = new FileWriter(previewFile)) {
           List<QueryResult> results = fetchNextResults(handle, PREVIEW_COUNT);
           GSON.toJson(results, fileWriter);
           operationInfo.setPreviewFile(previewFile);
           return results;
-        } finally {
-          Closeables.closeQuietly(fileWriter);
         }
       } catch (IOException e) {
         LOG.error("Could not write preview results into file", e);

@@ -223,12 +223,9 @@ public class LevelDBTableCore {
 
     byte[] startKey = createStartKey(row, columns == null ? startCol : columns[0]);
     byte[] endKey = createEndKey(row, columns == null ? stopCol : upperBound(columns[columns.length - 1]));
-    DBIterator iterator = getDB().iterator();
-    try {
+    try (DBIterator iterator = getDB().iterator()) {
       iterator.seek(startKey);
       return getRow(iterator, endKey, tx, false, columns, limit).getSecond();
-    } finally {
-      iterator.close();
     }
   }
 
@@ -333,8 +330,7 @@ public class LevelDBTableCore {
     Preconditions.checkNotNull(prefix, "prefix must not be null");
     DB db = getDB();
     WriteBatch batch = db.createWriteBatch();
-    DBIterator iterator = db.iterator();
-    try {
+    try (DBIterator iterator = db.iterator()) {
       iterator.seek(createStartKey(prefix));
       while (iterator.hasNext()) {
         Map.Entry<byte[], byte[]> entry = iterator.next();
@@ -345,8 +341,6 @@ public class LevelDBTableCore {
         batch.delete(entry.getKey());
       }
       db.write(batch);
-    } finally {
-      iterator.close();
     }
   }
 
@@ -363,9 +357,8 @@ public class LevelDBTableCore {
     byte[] currentRow = rows.next();
     byte[] startKey = createStartKey(currentRow);
     DB db = getDB();
-    DBIterator iterator = db.iterator();
     WriteBatch batch = db.createWriteBatch();
-    try {
+    try (DBIterator iterator = db.iterator()) {
       iterator.seek(startKey);
       if (!iterator.hasNext()) {
         return; // nothing in the db to delete
@@ -389,8 +382,6 @@ public class LevelDBTableCore {
           entry = iterator.hasNext() ? iterator.next() : null;
         }
       }
-    } finally {
-      iterator.close();
     }
     // delete all the entries that were found
     db.write(batch, getWriteOptions());
@@ -450,12 +441,9 @@ public class LevelDBTableCore {
   public void deleteColumn(byte[] row, byte[] column) throws IOException {
     DB db = getDB();
     WriteBatch batch = db.createWriteBatch();
-    DBIterator iterator = db.iterator();
-    try {
+    try (DBIterator iterator = db.iterator()) {
       addToDeleteBatch(batch, iterator, row, column);
       db.write(batch);
-    } finally {
-      iterator.close();
     }
   }
 

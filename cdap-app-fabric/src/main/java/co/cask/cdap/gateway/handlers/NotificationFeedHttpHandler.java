@@ -188,14 +188,11 @@ public class NotificationFeedHttpHandler extends AuthenticatedHttpHandler {
     if (!content.readable()) {
       return null;
     }
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
-    try {
+    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
       return GSON.fromJson(reader, type);
     } catch (JsonSyntaxException e) {
       LOG.debug("Failed to parse body on {} as {}", request.getUri(), type, e);
       throw e;
-    } finally {
-      reader.close();
     }
   }
 }

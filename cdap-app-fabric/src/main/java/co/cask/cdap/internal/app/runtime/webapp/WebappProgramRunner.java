@@ -153,8 +153,7 @@ public class WebappProgramRunner implements ProgramRunner {
   private static final String DEFAULT_DIR_NAME_COLON = ServePathGenerator.DEFAULT_DIR_NAME + ":";
 
   public static Set<String> getServingHostNames(InputSupplier<? extends InputStream> inputSupplier) throws Exception {
-    JarInputStream jarInput = new JarInputStream(inputSupplier.getInput());
-    try {
+    try (JarInputStream jarInput = new JarInputStream(inputSupplier.getInput())) {
       Set<String> hostNames = Sets.newHashSet();
       JarEntry jarEntry;
       String webappDir = Constants.Webapp.WEBAPP_DIR + "/";
@@ -183,8 +182,6 @@ public class WebappProgramRunner implements ProgramRunner {
       }
 
       return registerNames;
-    } finally {
-      Closeables.closeQuietly(jarInput);
     }
   }
 }

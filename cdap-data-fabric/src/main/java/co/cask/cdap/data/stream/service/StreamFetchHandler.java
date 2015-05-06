@@ -122,8 +122,7 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
     endTime = Math.min(endTime, now);
 
     // Create the stream event reader
-    FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader = createReader(streamConfig, startTime);
-    try {
+    try (FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader = createReader(streamConfig, startTime)) {
       TimeRangeReadFilter readFilter = new TimeRangeReadFilter(startTime, endTime);
       List<StreamEvent> events = Lists.newArrayListWithCapacity(100);
 
@@ -177,8 +176,6 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
         chunkResponder.sendChunk(buffer);
       }
       Closeables.closeQuietly(chunkResponder);
-    } finally {
-      reader.close();
     }
   }
 

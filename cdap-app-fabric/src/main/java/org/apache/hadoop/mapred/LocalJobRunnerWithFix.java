@@ -167,11 +167,8 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
       // Write out configuration file.  Instead of copying it from
       // systemJobFile, we re-write it, since setup(), above, may have
       // updated it.
-      OutputStream out = localFs.create(localJobFile);
-      try {
+      try (OutputStream out = localFs.create(localJobFile)) {
         conf.writeXml(out);
-      } finally {
-        out.close();
       }
       this.job = new JobConf(localJobFile);
 

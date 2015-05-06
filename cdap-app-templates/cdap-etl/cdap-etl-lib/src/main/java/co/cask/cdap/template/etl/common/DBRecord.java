@@ -247,14 +247,11 @@ public class DBRecord implements Writable, DBWritable {
           StringBuffer sbf = new StringBuffer();
           Clob clob = (Clob) original;
           try {
-            BufferedReader br = new BufferedReader(clob.getCharacterStream(1, (int) clob.length()));
-            try {
+            try (BufferedReader br = new BufferedReader(clob.getCharacterStream(1, (int) clob.length()))) {
               while ((s = br.readLine()) != null) {
                 sbf.append(s);
                 sbf.append(System.getProperty("line.separator"));
               }
-            } finally {
-              br.close();
             }
           } catch (IOException e) {
             throw new SQLException(e);

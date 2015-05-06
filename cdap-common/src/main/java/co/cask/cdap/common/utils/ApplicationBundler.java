@@ -131,8 +131,7 @@ public final class ApplicationBundler {
     File tmpJar = File.createTempFile(target.getName(), ".tmp");
     try {
       Set<String> entries = Sets.newHashSet();
-      JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(tmpJar));
-      try {
+      try (JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(tmpJar))) {
         // Find class dependencies
         findDependencies(classes, entries, jarOut);
 
@@ -140,21 +139,13 @@ public final class ApplicationBundler {
         for (URI resource : resources) {
           copyResource(resource, entries, jarOut);
         }
-      } finally {
-        jarOut.close();
       }
       LOG.debug("copying temporary bundle to destination {} ({} bytes)", target.toURI(), tmpJar.length());
       // Copy the tmp jar into destination.
-      OutputStream os = null;
-      try {
-        os = new BufferedOutputStream(target.getOutputStream());
+      try (OutputStream os = new BufferedOutputStream(target.getOutputStream())) {
         Files.copy(tmpJar, os);
       } catch (IOException e) {
         throw new IOException("failed to copy bundle from " + tmpJar.toURI() + " to " + target.toURI(), e);
-      } finally {
-        if (os != null) {
-          os.close();
-        }
       }
       LOG.debug("finished creating bundle at {}", target.toURI());
     } finally {
@@ -271,9 +262,8 @@ public final class ApplicationBundler {
     LOG.trace("adding bundle entry " + entry);
     try {
       JarEntry jarEntry = new JarEntry(entry);
-      InputStream is = url.openStream();
 
-      try {
+      try (InputStream is = url.openStream()) {
         if (compress) {
           jarOut.putNextEntry(jarEntry);
           ByteStreams.copy(is, jarOut);
@@ -291,8 +281,6 @@ public final class ApplicationBundler {
           jarOut.putNextEntry(jarEntry);
           os.transfer(jarOut);
         }
-      } finally {
-        is.close();
       }
       jarOut.closeEntry();
     } catch (Exception e) {
@@ -352,11 +340,8 @@ public final class ApplicationBundler {
 
     saveDirEntry(prefix, entries, jarOut);
     jarOut.putNextEntry(new JarEntry(path));
-    InputStream is = url.openStream();
-    try {
+    try (InputStream is = url.openStream()) {
       ByteStreams.copy(is, jarOut);
-    } finally {
-      is.close();
     }
   }
 

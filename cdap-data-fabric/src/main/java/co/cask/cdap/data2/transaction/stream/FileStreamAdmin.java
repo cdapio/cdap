@@ -131,8 +131,7 @@ public class FileStreamAdmin implements StreamAdmin {
     LOG.info("Configure instances: {} {}", groupId, instances);
 
     StreamConfig config = StreamUtils.ensureExists(this, streamId);
-    StreamConsumerStateStore stateStore = stateStoreFactory.create(config);
-    try {
+    try (StreamConsumerStateStore stateStore = stateStoreFactory.create(config)) {
       Set<StreamConsumerState> states = Sets.newHashSet();
       stateStore.getByGroup(groupId, states);
 
@@ -149,9 +148,6 @@ public class FileStreamAdmin implements StreamAdmin {
         stateStore.remove(removeStates);
         LOG.info("Configure instances remove states: {} {} {}", groupId, instances, removeStates);
       }
-
-    } finally {
-      stateStore.close();
     }
   }
 
@@ -162,8 +158,7 @@ public class FileStreamAdmin implements StreamAdmin {
     LOG.info("Configure groups for {}: {}", streamId, groupInfo);
 
     StreamConfig config = StreamUtils.ensureExists(this, streamId);
-    StreamConsumerStateStore stateStore = stateStoreFactory.create(config);
-    try {
+    try (StreamConsumerStateStore stateStore = stateStoreFactory.create(config)) {
       Set<StreamConsumerState> states = Sets.newHashSet();
       stateStore.getAll(states);
 
@@ -198,9 +193,6 @@ public class FileStreamAdmin implements StreamAdmin {
         stateStore.remove(removeStates);
         LOG.info("Configure groups remove states: {} {}", groupInfo, removeStates);
       }
-
-    } finally {
-      stateStore.close();
     }
   }
 

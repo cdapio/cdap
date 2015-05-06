@@ -54,11 +54,8 @@ public final class Networks {
    */
   public static int getRandomPort() {
     try {
-      ServerSocket socket = new ServerSocket(0);
-      try {
+      try (ServerSocket socket = new ServerSocket(0)) {
         return socket.getLocalPort();
-      } finally {
-        socket.close();
       }
     } catch (IOException e) {
       return -1;

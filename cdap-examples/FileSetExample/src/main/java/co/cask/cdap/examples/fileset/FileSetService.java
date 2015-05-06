@@ -101,11 +101,8 @@ public class FileSetService extends AbstractService {
       Location location = fileSet.getLocation(filePath);
 
       try {
-        WritableByteChannel channel = Channels.newChannel(location.getOutputStream());
-        try {
+        try (WritableByteChannel channel = Channels.newChannel(location.getOutputStream())) {
           channel.write(request.getContent());
-        } finally {
-          channel.close();
         }
       } catch (IOException e) {
         responder.sendError(400, String.format("Unable to write path '%s' in file set '%s'", filePath, set));

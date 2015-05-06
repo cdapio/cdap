@@ -29,7 +29,6 @@ import co.cask.cdap.api.spark.SparkContext;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
-import com.google.common.io.Closeables;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -138,9 +137,8 @@ public class SparkPageRankProgram implements JavaSparkProgram {
         try {
           URLConnection connection = new URL(serviceURL, String.format("transform/%s",
                                                                        tuple._2().toString())).openConnection();
-          BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(),
-                                                                           Charsets.UTF_8));
-          try {
+          try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(),
+                                                                                Charsets.UTF_8))) {
             String pr = reader.readLine();
             if ((Integer.parseInt(pr)) == POPULAR_PAGE_THRESHOLD) {
               sparkMetrics.count(POPULAR_PAGES, 1);
@@ -149,9 +147,7 @@ public class SparkPageRankProgram implements JavaSparkProgram {
             } else {
               sparkMetrics.count(REGULAR_PAGES, 1);
             }
-            return new Tuple2<byte[], Integer>(tuple._1().getBytes(Charsets.UTF_8), Integer.parseInt(pr));
-          } finally {
-            Closeables.closeQuietly(reader);
+            return new Tuple2(tuple._1().getBytes(Charsets.UTF_8), Integer.parseInt(pr));
           }
         } catch (Exception e) {
           LOG.warn("Failed to read the Stream for service {}", SparkPageRankApp.GOOGLE_TYPE_PR_SERVICE_NAME, e);

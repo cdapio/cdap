@@ -133,18 +133,13 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
       connection = DriverManager.getConnection(dbSinkConfig.connectionString, dbSinkConfig.user, dbSinkConfig.password);
     }
     try {
-      Statement statement = connection.createStatement();
-      try {
-        // Using LIMIT in the following query even though its not SQL standard since DBInputFormat already depends on it
+      // Using LIMIT in the following query even though its not SQL standard since DBInputFormat already depends on it
+      try (
+        Statement statement = connection.createStatement();
         ResultSet rs = statement.executeQuery(String.format("SELECT %s from %s LIMIT 1",
-                                                            dbSinkConfig.columns, dbSinkConfig.tableName));
-        try {
-          resultSetMetadata = rs.getMetaData();
-        } finally {
-          rs.close();
-        }
-      } finally {
-        statement.close();
+                                                            dbSinkConfig.columns, dbSinkConfig.tableName))
+      ) {
+        resultSetMetadata = rs.getMetaData();
       }
     } finally {
       connection.close();

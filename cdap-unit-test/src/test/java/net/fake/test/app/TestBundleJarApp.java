@@ -26,7 +26,6 @@ import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Test;
@@ -84,11 +83,10 @@ public class TestBundleJarApp extends TestBase {
 
   private String callServiceGet(URL serviceURL, String path) throws IOException {
     URLConnection connection = new URL(serviceURL.toString() + path).openConnection();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8));
-    try {
+    try (
+      BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8))
+    ) {
       return reader.readLine();
-    } finally {
-      Closeables.closeQuietly(reader);
     }
   }
 }

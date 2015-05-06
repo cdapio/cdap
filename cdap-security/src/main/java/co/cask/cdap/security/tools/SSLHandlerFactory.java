@@ -49,11 +49,8 @@ public class SSLHandlerFactory {
 
     try {
       KeyStore ks = KeyStore.getInstance(keyStoreType);
-      InputStream inputStream = new FileInputStream(keyStore);
-      try {
+      try (InputStream inputStream = new FileInputStream(keyStore)) {
         ks.load(inputStream, keyStorePassword.toCharArray());
-      } finally {
-        inputStream.close();
       }
       // Set up key manager factory to use our key store
       KeyManagerFactory kmf = KeyManagerFactory.getInstance(algorithm);

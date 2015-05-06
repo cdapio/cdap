@@ -49,7 +49,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.junit.Assert;
@@ -849,12 +848,11 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   private String callServiceGet(URL serviceURL, String path) throws IOException {
     HttpURLConnection connection = (HttpURLConnection) new URL(serviceURL.toString() + path).openConnection();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8));
-    try {
+    try (
+      BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8))
+    ) {
       Assert.assertEquals(200, connection.getResponseCode());
       return reader.readLine();
-    } finally {
-      Closeables.closeQuietly(reader);
     }
   }
 
@@ -865,12 +863,11 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream());
     out.write(body);
     out.close();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8));
-    try {
+    try (
+      BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8))
+    ) {
       Assert.assertEquals(200, connection.getResponseCode());
       return reader.readLine();
-    } finally {
-      Closeables.closeQuietly(reader);
     }
   }
 }

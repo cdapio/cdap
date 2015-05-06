@@ -147,8 +147,9 @@ final class HttpHandlerGenerator {
     Class<?> rawType = inspectType.getRawType();
 
     // Visit the delegate class, copy and rewrite handler method, with method body just do delegation
-    InputStream sourceBytes = rawType.getClassLoader().getResourceAsStream(Type.getInternalName(rawType) + ".class");
-    try {
+    try (
+      InputStream sourceBytes = rawType.getClassLoader().getResourceAsStream(Type.getInternalName(rawType) + ".class")
+    ) {
       ClassReader classReader = new ClassReader(sourceBytes);
       classReader.accept(new ClassVisitor(Opcodes.ASM4) {
 
@@ -207,8 +208,6 @@ final class HttpHandlerGenerator {
                                           exceptions, classType, classWriter, preservedClasses);
         }
       }, ClassReader.SKIP_DEBUG);
-    } finally {
-      sourceBytes.close();
     }
   }
 
