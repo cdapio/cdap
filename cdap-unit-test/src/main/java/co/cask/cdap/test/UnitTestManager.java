@@ -201,11 +201,8 @@ public class UnitTestManager implements TestManager {
       json.add("properties", GSON.toJsonTree(properties));
     }
     File configFile = new File(templateDir, fileName);
-    Writer writer = Files.newWriter(configFile, Charsets.UTF_8);
-    try {
+    try (Writer writer = Files.newWriter(configFile, Charsets.UTF_8)) {
       GSON.toJson(Lists.newArrayList(json), writer);
-    } finally {
-      writer.close();
     }
   }
 

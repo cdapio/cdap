@@ -635,10 +635,9 @@ public abstract class StreamDataFileTestBase {
 
     List<StreamEvent> events = Lists.newArrayList();
     // Create a reader
-    StreamDataFileReader reader = StreamDataFileReader.createByStartTime(Locations.newInputSupplier(eventFile),
-                                                                         Locations.newInputSupplier(indexFile),
-                                                                         0L);
-    try {
+    try (StreamDataFileReader reader = StreamDataFileReader.createByStartTime(Locations.newInputSupplier(eventFile),
+                                                                              Locations.newInputSupplier(indexFile),
+                                                                              0L)) {
       // Read with a TTL filter. The TTL makes the first valid event as TS >= 25, hence TS == 26.
       reader.read(events, 1, 0, TimeUnit.SECONDS, new TTLReadFilter(0) {
         @Override
@@ -671,8 +670,6 @@ public abstract class StreamDataFileTestBase {
       Assert.assertEquals(1, events.size());
       Assert.assertEquals(71L, events.get(0).getTimestamp());
 
-    } finally {
-      reader.close();
     }
   }
 
@@ -769,8 +766,7 @@ public abstract class StreamDataFileTestBase {
     }
 
     // Now creates a new writer to write 10 more events across two partitions with a skip one partition.
-    FileWriter<StreamEvent> writer = createWriter(config, filePrefix);
-    try {
+    try (FileWriter<StreamEvent> writer = createWriter(config, filePrefix)) {
       for (int i = 0; i < 5; i++) {
         long ts = System.currentTimeMillis();
         writer.append(StreamFileTestUtils.createEvent(ts, "Testing " + ts));
@@ -780,8 +776,6 @@ public abstract class StreamDataFileTestBase {
         long ts = System.currentTimeMillis();
         writer.append(StreamFileTestUtils.createEvent(ts, "Testing " + ts));
       }
-    } finally {
-      writer.close();
     }
 
     // Create a new reader with the previous offset
@@ -812,10 +806,9 @@ public abstract class StreamDataFileTestBase {
     Location indexFile = dir.getTempFile(".idx");
 
     // Creates a stream file
-    final StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
-                                                           Locations.newOutputSupplier(indexFile),
-                                                           10000L);
-    try {
+    try (StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
+                                                                Locations.newOutputSupplier(indexFile),
+                                                                10000L)) {
       final CountDownLatch writeCompleted = new CountDownLatch(1);
       final CountDownLatch readAttempted = new CountDownLatch(1);
 
@@ -851,8 +844,7 @@ public abstract class StreamDataFileTestBase {
       t.start();
 
       // Create a reader
-      StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
-      try {
+      try (StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile))) {
         List<PositionStreamEvent> events = Lists.newArrayList();
 
         // Wait for the writer completion
@@ -881,11 +873,7 @@ public abstract class StreamDataFileTestBase {
           }
           lastStart = event.getStart();
         }
-      } finally {
-        reader.close();
       }
-    } finally {
-      writer.close();
     }
   }
 
@@ -899,11 +887,10 @@ public abstract class StreamDataFileTestBase {
     Location indexFile = dir.getTempFile(".idx");
 
     // Creates a stream file
-    StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
-                                                           Locations.newOutputSupplier(indexFile),
-                                                           10000L);
 
-    try {
+    try (StreamDataFileWriter writer = new StreamDataFileWriter(Locations.newOutputSupplier(eventFile),
+                                                                Locations.newOutputSupplier(indexFile),
+                                                                10000L)) {
       // Writes with appendAll with events having 2 different timestamps
       Map<String, String> headers = ImmutableMap.of();
       writer.appendAll(ImmutableList.of(
@@ -912,13 +899,10 @@ public abstract class StreamDataFileTestBase {
         new StreamEvent(headers, Charsets.UTF_8.encode("1"), 1001),
         new StreamEvent(headers, Charsets.UTF_8.encode("1"), 1001)
       ).iterator());
-    } finally {
-      writer.close();
     }
 
     // Reads all events and assert the event position to see if they are in two different blocks
-    StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile));
-    try {
+    try (StreamDataFileReader reader = StreamDataFileReader.create(Locations.newInputSupplier(eventFile))) {
       List<PositionStreamEvent> events = Lists.newArrayList();
       Assert.assertEquals(4, reader.read(events, 4, 0, TimeUnit.SECONDS));
 
@@ -935,8 +919,6 @@ public abstract class StreamDataFileTestBase {
 
       // The position differences between the third and forth events should be 3 again since they are in the same block
       Assert.assertEquals(3L, events.get(3).getStart() - events.get(2).getStart());
-    } finally {
-      reader.close();
     }
   }
 

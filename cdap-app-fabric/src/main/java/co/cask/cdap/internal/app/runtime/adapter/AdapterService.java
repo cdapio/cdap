@@ -64,7 +64,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
-import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -706,11 +705,8 @@ public class AdapterService extends AbstractIdleService {
       throw new IllegalArgumentException("Failed to get template info");
     }
     ApplicationSpecification spec;
-    Reader configReader = configSupplier.getInput();
-    try {
+    try (Reader configReader = configSupplier.getInput()) {
       spec = GSON.fromJson(configReader, ApplicationSpecification.class);
-    } finally {
-      Closeables.closeQuietly(configReader);
     }
 
     // verify that the name is ok

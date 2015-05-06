@@ -154,12 +154,9 @@ public class SandboxJVM {
       // Convert the specification to JSON.
       // We write the Application specification to output file in JSON format.
       try {
-        Writer writer = Files.newWriter(outputFile, Charsets.UTF_8);
-        try {
+        try (Writer writer = Files.newWriter(outputFile, Charsets.UTF_8)) {
           // TODO: The SchemaGenerator should be injected.
           ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(specification, writer);
-        } finally {
-          writer.close();
         }
       } catch (IOException e) {
         LOG.error("Error writing to file {}. {}", outputFile, e.getMessage());

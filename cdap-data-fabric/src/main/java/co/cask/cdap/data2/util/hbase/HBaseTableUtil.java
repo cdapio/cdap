@@ -276,32 +276,23 @@ public abstract class HBaseTableUtil {
       LOG.debug("Adding " + dependentClasses.size() + " classes to jar");
       File jarFile = File.createTempFile(filePrefix, ".jar");
       try {
-        JarOutputStream jarOutput = null;
-        try {
-          jarOutput = new JarOutputStream(new FileOutputStream(jarFile));
+        try (JarOutputStream jarOutput = new JarOutputStream(new FileOutputStream(jarFile))) {
           for (Map.Entry<String, URL> entry : dependentClasses.entrySet()) {
             try {
               jarOutput.putNextEntry(new JarEntry(entry.getKey().replace('.', File.separatorChar) + ".class"));
-              InputStream inputStream = entry.getValue().openStream();
 
-              try {
+              try (InputStream inputStream = entry.getValue().openStream()) {
                 int len = inputStream.read(buffer);
                 while (len >= 0) {
                   hasher.putBytes(buffer, 0, len);
                   jarOutput.write(buffer, 0, len);
                   len = inputStream.read(buffer);
                 }
-              } finally {
-                inputStream.close();
               }
             } catch (IOException e) {
               LOG.info("Error writing to jar", e);
               throw Throwables.propagate(e);
             }
-          }
-        } finally {
-          if (jarOutput != null) {
-            jarOutput.close();
           }
         }
 

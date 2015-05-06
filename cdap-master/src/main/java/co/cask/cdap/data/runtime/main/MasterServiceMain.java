@@ -618,21 +618,15 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   private static File saveHConf(Configuration conf, File file) throws IOException {
-    Writer writer = Files.newWriter(file, Charsets.UTF_8);
-    try {
+    try (Writer writer = Files.newWriter(file, Charsets.UTF_8)) {
       conf.writeXml(writer);
-    } finally {
-      writer.close();
     }
     return file;
   }
 
   private File saveCConf(CConfiguration conf, File file) throws IOException {
-    Writer writer = Files.newWriter(file, Charsets.UTF_8);
-    try {
+    try (Writer writer = Files.newWriter(file, Charsets.UTF_8)) {
       conf.writeXml(writer);
-    } finally {
-      writer.close();
     }
     return file;
   }

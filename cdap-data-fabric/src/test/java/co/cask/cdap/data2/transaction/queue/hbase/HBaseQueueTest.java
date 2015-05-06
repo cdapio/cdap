@@ -72,7 +72,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-import com.google.common.io.Closeables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -740,8 +739,7 @@ public abstract class HBaseQueueTest extends QueueTest {
                                  final Iterable<? extends ConsumerGroupConfig> groupConfigs) throws Exception {
     Preconditions.checkArgument(queueName.isQueue(), "Only support queue configuration in queue test.");
 
-    final QueueConfigurer queueConfigurer = queueAdmin.getQueueConfigurer(queueName);
-    try {
+    try (QueueConfigurer queueConfigurer = queueAdmin.getQueueConfigurer(queueName)) {
       Transactions.createTransactionExecutor(executorFactory, queueConfigurer)
         .execute(new TransactionExecutor.Subroutine() {
           @Override
@@ -749,15 +747,12 @@ public abstract class HBaseQueueTest extends QueueTest {
             queueConfigurer.configureGroups(groupConfigs);
           }
         });
-    } finally {
-      Closeables.closeQuietly(queueConfigurer);
     }
   }
 
   private void changeInstances(QueueName queueName, final long groupId, final int instances) throws Exception {
     Preconditions.checkArgument(queueName.isQueue(), "Only support queue configuration in queue test.");
-    final QueueConfigurer queueConfigurer = queueAdmin.getQueueConfigurer(queueName);
-    try {
+    try (QueueConfigurer queueConfigurer = queueAdmin.getQueueConfigurer(queueName)) {
       Transactions.createTransactionExecutor(executorFactory, queueConfigurer)
         .execute(new TransactionExecutor.Subroutine() {
           @Override
@@ -765,16 +760,12 @@ public abstract class HBaseQueueTest extends QueueTest {
             queueConfigurer.configureInstances(groupId, instances);
           }
         });
-    } finally {
-      Closeables.closeQuietly(queueConfigurer);
     }
-
   }
 
   @Override
   protected void resetConsumerState(final QueueName queueName, final ConsumerConfig consumerConfig) throws Exception {
-    final HBaseConsumerStateStore stateStore = ((HBaseQueueAdmin) queueAdmin).getConsumerStateStore(queueName);
-    try {
+    try (HBaseConsumerStateStore stateStore = ((HBaseQueueAdmin) queueAdmin).getConsumerStateStore(queueName)) {
       // Reset consumer to the beginning of the first barrir
       Transactions.createTransactionExecutor(executorFactory, stateStore).execute(new TransactionExecutor.Subroutine() {
         @Override
@@ -783,8 +774,6 @@ public abstract class HBaseQueueTest extends QueueTest {
           stateStore.updateState(consumerConfig.getGroupId(), consumerConfig.getInstanceId(), startRow);
         }
       });
-    } finally {
-      Closeables.closeQuietly(stateStore);
     }
   }
 }

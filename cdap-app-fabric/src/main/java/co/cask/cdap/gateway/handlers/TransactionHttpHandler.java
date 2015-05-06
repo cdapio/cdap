@@ -68,9 +68,8 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   public void getTxManagerSnapshot(HttpRequest request, HttpResponder responder) {
     try {
       LOG.trace("Taking transaction manager snapshot at time {}", System.currentTimeMillis());
-      InputStream in = txClient.getSnapshotInputStream();
       LOG.trace("Took and retrieved transaction manager snapshot successfully.");
-      try {
+      try (InputStream in = txClient.getSnapshotInputStream()) {
         ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK,
                                                                  ImmutableMultimap.<String, String>of());
         while (true) {
@@ -85,8 +84,6 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
           chunkResponder.sendChunk(ChannelBuffers.wrappedBuffer(readBytes, 0, res));
         }
         Closeables.closeQuietly(chunkResponder);
-      } finally {
-        in.close();
       }
     } catch (Exception e) {
       LOG.error("Could not take transaction manager snapshot", e);

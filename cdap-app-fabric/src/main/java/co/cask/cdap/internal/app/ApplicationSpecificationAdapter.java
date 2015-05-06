@@ -130,11 +130,8 @@ public final class ApplicationSpecificationAdapter {
 
   public void toJson(ApplicationSpecification appSpec,
                      OutputSupplier<? extends Writer> outputSupplier) throws IOException {
-    Writer writer = outputSupplier.getOutput();
-    try {
+    try (Writer writer = outputSupplier.getOutput()) {
       toJson(appSpec, writer);
-    } finally {
-      Closeables.closeQuietly(writer);
     }
   }
 
@@ -151,11 +148,8 @@ public final class ApplicationSpecificationAdapter {
   }
 
   public ApplicationSpecification fromJson(InputSupplier<? extends Reader> inputSupplier) throws IOException {
-    Reader reader = inputSupplier.getInput();
-    try {
+    try (Reader reader = inputSupplier.getInput()) {
       return fromJson(reader);
-    } finally {
-      Closeables.closeQuietly(reader);
     }
   }
 

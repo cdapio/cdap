@@ -388,13 +388,10 @@ public class TransactionManagerDebuggerMain {
     try {
       System.out.println("Retrieving snapshot from file " + existingFilename);
       File snapshotFile = new File(existingFilename);
-      FileInputStream fis = new FileInputStream(snapshotFile);
-      try {
+      try (FileInputStream fis = new FileInputStream(snapshotFile)) {
         TransactionSnapshot snapshot = codecProvider.decode(fis);
         System.out.println("Snapshot retrieved, timestamp is " + snapshot.getTimestamp() + " ms.");
         return snapshot;
-      } finally {
-        fis.close();
       }
     } catch (IOException e) {
       System.out.println("File " + existingFilename + " could not be read.");
@@ -422,12 +419,9 @@ public class TransactionManagerDebuggerMain {
       int responseCode = connection.getResponseCode();
       if (responseCode == 200) {
         // Retrieve and deserialize the snapshot
-        InputStream input = connection.getInputStream();
         TransactionSnapshot snapshot;
-        try {
+        try (InputStream input = connection.getInputStream()) {
           snapshot = codecProvider.decode(input);
-        } finally {
-          input.close();
         }
         System.out.println("Snapshot taken and retrieved properly, snapshot timestamp is " +
                            snapshot.getTimestamp() + " ms");
@@ -435,12 +429,9 @@ public class TransactionManagerDebuggerMain {
         if (persistingFilename != null) {
           // Persist the snapshot on disk for future queries and debugging
           File outputFile = new File(persistingFilename);
-          OutputStream out = new FileOutputStream(outputFile);
-          try {
+          try (OutputStream out = new FileOutputStream(outputFile)) {
             // todo use pipes here to avoid having everyhting in memory twice
             codecProvider.encode(out, snapshot);
-          } finally {
-            out.close();
           }
           System.out.println("Snapshot persisted on your disk as " + outputFile.getAbsolutePath() +
                              " for future queries.");

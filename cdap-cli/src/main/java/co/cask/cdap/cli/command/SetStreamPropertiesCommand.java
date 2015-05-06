@@ -25,14 +25,12 @@ import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Charsets;
+import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.Reader;
 
@@ -61,14 +59,11 @@ public class SetStreamPropertiesCommand extends AbstractAuthCommand {
       throw new IllegalArgumentException("Not a file: " + file);
     }
 
-    Reader reader = new InputStreamReader(new FileInputStream(file), Charsets.UTF_8);
     StreamProperties streamProperties;
-    try {
-      streamProperties = GSON.fromJson(new FileReader(file), StreamProperties.class);
+    try (Reader reader = Files.newReader(file, Charsets.UTF_8)) {
+      streamProperties = GSON.fromJson(reader, StreamProperties.class);
     } catch (Exception e) {
       throw new IllegalArgumentException("Stream properties are malformed.", e);
-    } finally {
-      reader.close();
     }
 
     streamClient.setStreamProperties(streamId, streamProperties);

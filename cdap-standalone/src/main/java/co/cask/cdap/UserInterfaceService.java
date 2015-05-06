@@ -105,11 +105,8 @@ final class UserInterfaceService extends AbstractExecutionThreadService {
   }
 
   private void generateConfigFile(File path, Configuration config) throws Exception {
-    Writer configWriter = Files.newWriter(path, Charsets.UTF_8);
-    try {
+    try (Writer configWriter = Files.newWriter(path, Charsets.UTF_8)) {
       ConfigurationJsonTool.exportToJson(config, configWriter);
-    } finally {
-      configWriter.close();
     }
   }
 

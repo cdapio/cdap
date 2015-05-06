@@ -92,15 +92,12 @@ public class AbstractQueryExecutorHttpHandler extends AbstractHttpHandler {
     if (!content.readable()) {
       return ImmutableMap.of();
     }
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
-    try {
+    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
       Map<String, String> args = GSON.fromJson(reader, STRING_MAP_TYPE);
       return args == null ? ImmutableMap.<String, String>of() : args;
     } catch (JsonSyntaxException e) {
       LOG.info("Failed to parse runtime arguments on {}", request.getUri(), e);
       throw e;
-    } finally {
-      reader.close();
     }
   }
 

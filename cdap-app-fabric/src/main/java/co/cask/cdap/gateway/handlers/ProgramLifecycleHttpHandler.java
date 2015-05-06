@@ -1439,8 +1439,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Cannot read request");
       return null;
     }
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
-    try {
+    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
       List<BatchEndpointArgs> input = GSON.fromJson(reader, new TypeToken<List<BatchEndpointArgs>>() { }.getType());
       for (BatchEndpointArgs requestedObj : input) {
         // make sure the following args exist
@@ -1468,8 +1467,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (JsonSyntaxException e) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Invalid Json object provided");
       return null;
-    } finally {
-      reader.close();
     }
   }
 

@@ -65,48 +65,42 @@ public final class AppJarHelper {
 
     // Create the program jar for deployment. It removes the "classes/" prefix as that's the convention taken
     // by the ApplicationBundler inside Twill.
-    JarOutputStream jarOutput = new JarOutputStream(deployJar.getOutputStream(), jarManifest);
-    try {
-      JarInputStream jarInput = new JarInputStream(jarLocation.getInputStream());
-      try {
-        JarEntry jarEntry = jarInput.getNextJarEntry();
-        while (jarEntry != null) {
-          boolean isDir = jarEntry.isDirectory();
-          String entryName = jarEntry.getName();
-          if (!entryName.equals("classes/")) {
-            if (entryName.startsWith("classes/")) {
-              jarEntry = new JarEntry(entryName.substring("classes/".length()));
-            } else {
-              jarEntry = new JarEntry(entryName);
-            }
-
-            // TODO: this is due to manifest possibly already existing in the jar, but we also
-            // create a manifest programatically so it's possible to have a duplicate entry here
-            if ("META-INF/MANIFEST.MF".equalsIgnoreCase(jarEntry.getName())) {
-              jarEntry = jarInput.getNextJarEntry();
-              continue;
-            }
-
-            jarOutput.putNextEntry(jarEntry);
-            if (!isDir) {
-              ByteStreams.copy(jarInput, jarOutput);
-            }
+    try (
+      JarOutputStream jarOutput = new JarOutputStream(deployJar.getOutputStream(), jarManifest);
+      JarInputStream jarInput = new JarInputStream(jarLocation.getInputStream())
+    ) {
+      JarEntry jarEntry = jarInput.getNextJarEntry();
+      while (jarEntry != null) {
+        boolean isDir = jarEntry.isDirectory();
+        String entryName = jarEntry.getName();
+        if (!entryName.equals("classes/")) {
+          if (entryName.startsWith("classes/")) {
+            jarEntry = new JarEntry(entryName.substring("classes/".length()));
+          } else {
+            jarEntry = new JarEntry(entryName);
           }
 
-          jarEntry = jarInput.getNextJarEntry();
+          // TODO: this is due to manifest possibly already existing in the jar, but we also
+          // create a manifest programatically so it's possible to have a duplicate entry here
+          if ("META-INF/MANIFEST.MF".equalsIgnoreCase(jarEntry.getName())) {
+            jarEntry = jarInput.getNextJarEntry();
+            continue;
+          }
+
+          jarOutput.putNextEntry(jarEntry);
+          if (!isDir) {
+            ByteStreams.copy(jarInput, jarOutput);
+          }
         }
-      } finally {
-        jarInput.close();
+
+        jarEntry = jarInput.getNextJarEntry();
       }
 
       for (File embeddedJar : bundleEmbeddedJars) {
-        JarEntry jarEntry = new JarEntry("lib/" + embeddedJar.getName());
+        jarEntry = new JarEntry("lib/" + embeddedJar.getName());
         jarOutput.putNextEntry(jarEntry);
         Files.copy(embeddedJar, jarOutput);
       }
-
-    } finally {
-      jarOutput.close();
     }
 
     return deployJar;

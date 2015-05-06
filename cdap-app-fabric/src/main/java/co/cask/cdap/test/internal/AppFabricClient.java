@@ -297,8 +297,7 @@ public class AppFabricClient {
     BodyConsumer bodyConsumer = appLifecycleHttpHandler.deploy(request, mockResponder, namespace.getId(), archiveName);
     Preconditions.checkNotNull(bodyConsumer, "BodyConsumer from deploy call should not be null");
 
-    BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024);
-    try {
+    try (BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024)) {
       byte[] chunk = is.read();
       while (chunk.length > 0) {
         mockResponder = new MockResponder();
@@ -311,8 +310,6 @@ public class AppFabricClient {
       verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app");
     } catch (Exception e) {
       throw Throwables.propagate(e);
-    } finally {
-      is.close();
     }
     return deployedJar;
   }

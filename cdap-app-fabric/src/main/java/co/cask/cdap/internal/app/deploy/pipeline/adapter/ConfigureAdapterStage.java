@@ -93,11 +93,8 @@ public class ConfigureAdapterStage extends AbstractStage<AdapterDeploymentInfo> 
     if (configResponse.getExitCode() != 0 || configSupplier == null) {
       throw new IllegalArgumentException("Failed to configure adapter: " + deploymentInfo);
     }
-    Reader reader = configSupplier.getInput();
-    try {
+    try (Reader reader = configSupplier.getInput()) {
       emit(GSON.fromJson(reader, AdapterDefinition.class));
-    } finally {
-      Closeables.closeQuietly(reader);
     }
   }
 }

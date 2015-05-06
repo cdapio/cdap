@@ -55,17 +55,13 @@ public class BundleJarUtil {
 
     // Small optimization if the location is local
     if ("file".equals(uri.getScheme())) {
-      JarFile jarFile = new JarFile(new File(uri));
-      try {
+      try (JarFile jarFile = new JarFile(new File(uri))) {
         return jarFile.getManifest();
-      } finally {
-        jarFile.close();
       }
     }
 
     // Otherwise, need to search it with JarInputStream
-    JarInputStream is = new JarInputStream(new BufferedInputStream(jarLocation.getInputStream()));
-    try {
+    try (JarInputStream is = new JarInputStream(new BufferedInputStream(jarLocation.getInputStream()))) {
       // This only looks at the first entry, which if is created with jar util, then it'll be there.
       Manifest manifest = is.getManifest();
       if (manifest != null) {
@@ -81,8 +77,6 @@ public class BundleJarUtil {
         jarEntry = is.getNextJarEntry();
       }
 
-    } finally {
-      is.close();
     }
 
     return null;
@@ -175,12 +169,9 @@ public class BundleJarUtil {
 
     destinationFolder.mkdirs();
     Preconditions.checkState(destinationFolder.exists());
-    ZipInputStream input = new ZipInputStream(inputSupplier.getInput());
-    try {
+    try (ZipInputStream input = new ZipInputStream(inputSupplier.getInput())) {
       unJar(input, destinationFolder);
       return destinationFolder;
-    } finally {
-      Closeables.closeQuietly(input);
     }
   }
 
