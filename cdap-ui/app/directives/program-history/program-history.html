@@ -15,6 +15,8 @@
           <a ui-sref="flows.detail.runs.run({runid: run.runid})" ng-if="type === 'FLOWS'">{{run.runid}}</a>
           <a ui-sref="mapreduce.detail.runs.run({runid: run.runid})" ng-if="type === 'MAPREDUCE'">{{run.runid}}</a>
           <a ui-sref="workflows.detail.runs.run({runid: run.runid})" ng-if="type === 'WORKFLOWS'">{{run.runid}}</a>
+          <a ui-sref="spark.detail.runs.run({runid: run.runid})" ng-if="type === 'SPARK'">{{run.runid}}</a>
+          <a ui-sref="worker.detail.runs.run({runid: run.runid})" ng-if="type === 'WORKER'">{{run.runid}}</a>
           <span ng-if="type === 'SERVICES' || type === 'ADAPTERS'">{{run.runid}}</span>
         </td>
         <td> {{ (run.start * 1000) | date: 'medium'}}</td>

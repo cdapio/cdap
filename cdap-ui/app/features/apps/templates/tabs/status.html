@@ -35,13 +35,11 @@
                   <strong> {{program.name}} </strong>
                 </a>
                 <a ng-if="program.type === 'Spark'" ui-sref="spark.detail.runs({programId: program.name})">
-
                   <strong> {{program.name}} </strong>
                 </a>
-                <!--No sref because there is no workers page-->
-                <span ng-if="program.type === 'Worker'">
+                <a ng-if="program.type === 'Worker'" ui-sref="worker.detail.runs({programId: program.name})">
                   <strong> {{program.name}} </strong>
-                </span>
+                </a>
               </td>
               <td ng-bind="program.status"></td>
               <td ng-bind="program.description"></td>
