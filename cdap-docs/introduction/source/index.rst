@@ -212,7 +212,7 @@ Data Exploration
           | headers                          | map<string,string>               | from deserializer                 |
           | body                             | string                           | from deserializer                 |
           +=========================================================================================================+
-
+          Fetched 3 rows
 
 .. container:: table-block
 
@@ -374,7 +374,8 @@ Data Exploration: Attaching A Schema
           |         |         | 5       |         |         | :45:38  |  HTTP/1 |         |         |         | SIE 7.0; Wind |
           |         |         |         |         |         | -0400   | .0      |         |         |         | ows NT 5.1)   |
           +===================================================================================================================+
-
+          Fetched 2 rows
+          
 .. container:: table-block
 
   .. list-table::
@@ -814,7 +815,7 @@ Transforming Your Data
          - Keep track of last processed times
          
      * - Using CDAP
-       - Write a configuration file::
+       - Write a configuration file, saving it to example/resources/adapter-config.json::
 
           {
               "description": "Periodically reads Stream data and writes it to a TimePartitionedFileSet",
@@ -866,7 +867,7 @@ Transforming Your Data
      * - 
        - Create an adapter using that configuration through the CLI::
 
-           > create adapter logEventStreamConverter /example/adapter_config.json 
+           > create adapter logEventStreamConverter example/resources/adapter-config.json 
            Successfully created adapter 'logEventStreamConverter'
            > start adapter logEventStreamConverter
            Successfully started adapter 'logEventStreamConverter'
@@ -894,65 +895,77 @@ Transforming Your Data
      * -  
        - ::
 
-          Successfully sent stream event to stream 'logEventStream'
-          +=============================================================================================================+
-          | name              | description       | template | config            | properties                           |
-          +=============================================================================================================+
-          | logEventStreamCon | Periodically read | ETLBatch | {"schedule":"* *  | schedule={"schedule":{"name":"logEve |
-          | verter            | s Stream data and |          | * * *","source":{ | ntStreamConverter.etl.batch.adapter. |
-          |                   |  writes it to a T |          | "name":"Stream"," | logEventStreamConverter.schedule","d |
-          |                   | imePartitionedFil |          | properties":{"nam | escription":"Schedule for logEventSt |
-          |                   | eSet              |          | e":"logEventStrea | reamConverter Adapter"},"program":{" |
-          |                   |                   |          | m","duration":"1m | programName":"ETLWorkflow","programT |
-          |                   |                   |          | ","format":"clf"} | ype":"WORKFLOW"},"properties":{"tran |
-          |                   |                   |          | },"transforms":[{ | sformIds":"[\"Projection:0\"]","name |
-          |                   |                   |          | "name":"Projectio | ":"logEventStreamConverter","sinkId" |
-          |                   |                   |          | n","properties":{ | :"sink:TPFSAvro","config":"{\"schedu |
-          |                   |                   |          | "drop":"headers"} | le\":\"* * * * *\",\"source\":{\"nam |
-          |                   |                   |          | }],"sink":{"name" | e\":\"Stream\",\"properties\":{\"dur |
-          |                   |                   |          | :"TPFSAvro","prop | ation\":\"1m\",\"name\":\"logEventSt |
-          |                   |                   |          | erties":{"name":" | ream\",\"format\":\"clf\"}},\"sink\" |
-          |                   |                   |          | logEventStream.co | :{\"name\":\"TPFSAvro\",\"properties |
-          |                   |                   |          | nverted","schema" | \":{\"basePath\":\"logEventStream.co |
-          |                   |                   |          | :"{\"type\":\"rec | nverted\",\"schema\":\"{\\\"type\\\" |
-          |                   |                   |          | ord\",\"name\":\" | :\\\"record\\\",\\\"name\\\":\\\"log |
-          |                   |                   |          | logEvent\",\"fiel | Event\\\",\\\"fields\\\":[{\\\"name\ |
-          |                   |                   |          | ds\":[{\"name\":\ | \\":\\\"ts\\\",\\\"type\\\":\\\"long |
-          |                   |                   |          | "ts\",\"type\":\" | \\\"},{\\\"name\\\":\\\"remotehost\\ |
-          |                   |                   |          | long\"},{\"name\" | \",\\\"type\\\":[\\\"string\\\",\\\" |
-          |                   |                   |          | :\"remotehost\",\ | null\\\"]},{\\\"name\\\":\\\"remotel |
-          |                   |                   |          | "type\":[\"string | ogname\\\",\\\"type\\\":[\\\"string\ |
-          |                   |                   |          | \",\"null\"]},{\" | \\",\\\"null\\\"]},{\\\"name\\\":\\\ |
-          |                   |                   |          | name\":\"remotelo | "authuser\\\",\\\"type\\\":[\\\"stri |
-          |                   |                   |          | gname\",\"type\": | ng\\\",\\\"null\\\"]},{\\\"name\\\": |
-          |                   |                   |          | [\"string\",\"nul | \\\"date\\\",\\\"type\\\":[\\\"strin |
-          |                   |                   |          | l\"]},{\"name\":\ | g\\\",\\\"null\\\"]},{\\\"name\\\":\ |
-          |                   |                   |          | "authuser\",\"typ | \\"request\\\",\\\"type\\\":[\\\"str |
-          |                   |                   |          | e\":[\"string\",\ | ing\\\",\\\"null\\\"]},{\\\"name\\\" |
-          |                   |                   |          | "null\"]},{\"name | :\\\"status\\\",\\\"type\\\":[\\\"in |
-          |                   |                   |          | \":\"date\",\"typ | t\\\",\\\"null\\\"]},{\\\"name\\\":\ |
-          |                   |                   |          | e\":[\"string\",\ | \\"contentlength\\\",\\\"type\\\":[\ |
-          |                   |                   |          | "null\"]},{\"name | \\"int\\\",\\\"null\\\"]},{\\\"name\ |
-          |                   |                   |          | \":\"request\",\" | \\":\\\"referrer\\\",\\\"type\\\":[\ |
-          |                   |                   |          | type\":[\"string\ | \\"string\\\",\\\"null\\\"]},{\\\"na |
-          |                   |                   |          | ",\"null\"]},{\"n | me\\\":\\\"useragent\\\",\\\"type\\\ |
-          |                   |                   |          | ame\":\"status\", | ":[\\\"string\\\",\\\"null\\\"]}]}\" |
-          |                   |                   |          | \"type\":[\"int\" | ,\"name\":\"logEventStream.converted |
-          |                   |                   |          | ,\"null\"]},{\"na | \"}},\"transforms\":[{\"name\":\"Pro |
-          |                   |                   |          | me\":\"contentlen | jection\",\"properties\":{\"drop\":\ |
-          |                   |                   |          | gth\",\"type\":[\ | "headers\"}}]}","sourceId":"source:S |
-          |                   |                   |          | "int\",\"null\"]} | tream"}}                             |
-          |                   |                   |          | ,{\"name\":\"refe | instances=1                          |
-          |                   |                   |          | rrer\",\"type\":[ |                                      |
-          |                   |                   |          | \"string\",\"null |                                      |
-          |                   |                   |          | \"]},{\"name\":\" |                                      |
-          |                   |                   |          | useragent\",\"typ |                                      |
-          |                   |                   |          | e\":[\"string\",\ |                                      |
-          |                   |                   |          | "null\"]}]}","bas |                                      |
-          |                   |                   |          | ePath":"logEventS |                                      |
-          |                   |                   |          | tream.converted"} |                                      |
-          |                   |                   |          | }}                |                                      |
-          +=============================================================================================================+
+          +======================================================================================================================+
+          | name                | description         | template | config              | properties                              |
+          +======================================================================================================================+
+          | logEventStreamConve | Periodically reads  | ETLBatch | {"schedule":"*/5 *  | schedule={"schedule":{"name":"logEventS |
+          | rter                | Stream data and wri |          | * * *","source":{"n | treamConverter.etl.batch.adapter.logEve |
+          |                     | tes it to a TimePar |          | ame":"Stream","prop | ntStreamConverter.schedule","descriptio |
+          |                     | titionedFileSet     |          | erties":{"name":"lo | n":"Schedule for logEventStreamConverte |
+          |                     |                     |          | gEventStream","dura | r Adapter"},"program":{"programName":"E |
+          |                     |                     |          | tion":"5m","format" | TLWorkflow","programType":"WORKFLOW"}," |
+          |                     |                     |          | :"clf"}},"transform | properties":{"transformIds":"[\"Project |
+          |                     |                     |          | s":[{"name":"Projec | ion:0\"]","name":"logEventStreamConvert |
+          |                     |                     |          | tion","properties": | er","sinkId":"sink:TPFSAvro","config":" |
+          |                     |                     |          | {"drop":"headers"}} | {\"schedule\":\"*/5 * * * *\",\"source\ |
+          |                     |                     |          | ],"sink":{"name":"T | ":{\"name\":\"Stream\",\"properties\":{ |
+          |                     |                     |          | PFSAvro","propertie | \"duration\":\"5m\",\"name\":\"logEvent |
+          |                     |                     |          | s":{"name":"logEven | Stream\",\"format\":\"clf\"}},\"sink\": |
+          |                     |                     |          | tStream.converted", | {\"name\":\"TPFSAvro\",\"properties\":{ |
+          |                     |                     |          | "schema":"{\n       | \"basePath\":\"logEventStream.converted |
+          |                     |                     |          |               \"typ | \",\"schema\":\"{\\n                    |
+          |                     |                     |          | e\":\"record\",\n   |  \\\"type\\\":\\\"record\\\",\\n        |
+          |                     |                     |          |                   \ |              \\\"name\\\":\\\"logEvent\ |
+          |                     |                     |          | "name\":\"logEvent\ | \\",\\n                    \\\"fields\\ |
+          |                     |                     |          | ",\n                | \":[\\n                        {\\\"nam |
+          |                     |                     |          |      \"fields\":[\n | e\\\":\\\"ts\\\",\\\"type\\\":\\\"long\ |
+          |                     |                     |          |                     | \\"},\\n                        {\\\"na |
+          |                     |                     |          |      {\"name\":\"ts | me\\\":\\\"remotehost\\\",\\\"type\\\": |
+          |                     |                     |          | \",\"type\":\"long\ | [\\\"string\\\",\\\"null\\\"]},\\n      |
+          |                     |                     |          | "},\n               |                    {\\\"name\\\":\\\"re |
+          |                     |                     |          |           {\"name\" | motelogname\\\",\\\"type\\\":[\\\"strin |
+          |                     |                     |          | :\"remotehost\",\"t | g\\\",\\\"null\\\"]},\\n                |
+          |                     |                     |          | ype\":[\"string\",\ |          {\\\"name\\\":\\\"authuser\\\" |
+          |                     |                     |          | "null\"]},\n        | ,\\\"type\\\":[\\\"string\\\",\\\"null\ |
+          |                     |                     |          |                  {\ | \\"]},\\n                        {\\\"n |
+          |                     |                     |          | "name\":\"remotelog | ame\\\":\\\"date\\\",\\\"type\\\":[\\\" |
+          |                     |                     |          | name\",\"type\":[\" | string\\\",\\\"null\\\"]},\\n           |
+          |                     |                     |          | string\",\"null\"]} |               {\\\"name\\\":\\\"request |
+          |                     |                     |          | ,\n                 | \\\",\\\"type\\\":[\\\"string\\\",\\\"n |
+          |                     |                     |          |         {\"name\":\ | ull\\\"]},\\n                        {\ |
+          |                     |                     |          | "authuser\",\"type\ | \\"name\\\":\\\"status\\\",\\\"type\\\" |
+          |                     |                     |          | ":[\"string\",\"nul | :[\\\"int\\\",\\\"null\\\"]},\\n        |
+          |                     |                     |          | l\"]},\n            |                  {\\\"name\\\":\\\"cont |
+          |                     |                     |          |              {\"nam | entlength\\\",\\\"type\\\":[\\\"int\\\" |
+          |                     |                     |          | e\":\"date\",\"type | ,\\\"null\\\"]},\\n                     |
+          |                     |                     |          | \":[\"string\",\"nu |     {\\\"name\\\":\\\"referrer\\\",\\\" |
+          |                     |                     |          | ll\"]},\n           | type\\\":[\\\"string\\\",\\\"null\\\"]} |
+          |                     |                     |          |               {\"na | ,\\n                        {\\\"name\\ |
+          |                     |                     |          | me\":\"request\",\" | \":\\\"useragent\\\",\\\"type\\\":[\\\" |
+          |                     |                     |          | type\":[\"string\", | string\\\",\\\"null\\\"]}\\n            |
+          |                     |                     |          | \"null\"]},\n       |          ]\\n                }\",\"name |
+          |                     |                     |          |                   { | \":\"logEventStream.converted\"}},\"tra |
+          |                     |                     |          | \"name\":\"status\" | nsforms\":[{\"name\":\"Projection\",\"p |
+          |                     |                     |          | ,\"type\":[\"int\", | roperties\":{\"drop\":\"headers\"}}]}", |
+          |                     |                     |          | \"null\"]},\n       | "sourceId":"source:Stream"}}            |
+          |                     |                     |          |                   { | instances=1                             |
+          |                     |                     |          | \"name\":\"contentl |                                         |
+          |                     |                     |          | ength\",\"type\":[\ |                                         |
+          |                     |                     |          | "int\",\"null\"]},\ |                                         |
+          |                     |                     |          | n                   |                                         |
+          |                     |                     |          |       {\"name\":\"r |                                         |
+          |                     |                     |          | eferrer\",\"type\": |                                         |
+          |                     |                     |          | [\"string\",\"null\ |                                         |
+          |                     |                     |          | "]},\n              |                                         |
+          |                     |                     |          |            {\"name\ |                                         |
+          |                     |                     |          | ":\"useragent\",\"t |                                         |
+          |                     |                     |          | ype\":[\"string\",\ |                                         |
+          |                     |                     |          | "null\"]}\n         |                                         |
+          |                     |                     |          |             ]\n     |                                         |
+          |                     |                     |          |             }","bas |                                         |
+          |                     |                     |          | ePath":"logEventStr |                                         |
+          |                     |                     |          | eam.converted"}}}   |                                         |
+          +======================================================================================================================+
 
 .. container:: table-block
 
@@ -1007,11 +1020,11 @@ Transforming Your Data
        - ``> list dataset instances``
          ::
 
-          +======================================================================================================+
-          | name                                  | type                                                         |
-          +======================================================================================================+
-          | logEventStream.converted              | co.cask.cdap.api.dataset.lib.TimePartitionedFileSet          |
-          +======================================================================================================+
+          +=================================================================================+
+          | name                      | type                                                |
+          +=================================================================================+
+          | logEventStream.converted  | co.cask.cdap.api.dataset.lib.TimePartitionedFileSet |
+          +=================================================================================+
 
 .. container:: table-block
 
@@ -1037,35 +1050,35 @@ Transforming Your Data
      * -  
        - ::
 
-          +==========================================================================================+
-          | col_name: STRING                             | data_type: STRING   | comment: STRING     |
-          +==========================================================================================+
-          | remotehost                                   | string              | from deserializer   |
-          | remotelogname                                | string              | from deserializer   |
-          | authuser                                     | string              | from deserializer   |
-          | date                                         | string              | from deserializer   |
-          | request                                      | string              | from deserializer   |
-          | status                                       | int                 | from deserializer   |
-          | contentlength                                | int                 | from deserializer   |
-          | referrer                                     | string              | from deserializer   |
-          | useragent                                    | string              | from deserializer   |
-          | ts                                           | bigint              | from deserializer   |
-          | year                                         | int                 |                     |
-          | month                                        | int                 |                     |
-          | day                                          | int                 |                     |
-          | hour                                         | int                 |                     |
-          | minute                                       | int                 |                     |
-          |                                              |                     |                     |
-          | # Partition Information                      |                     |                     |
-          | # col_name                                   | data_type           | comment             |
-          |                                              |                     |                     |
-          | year                                         | int                 |                     |
-          | month                                        | int                 |                     |
-          | day                                          | int                 |                     |
-          | hour                                         | int                 |                     |
-          | minute                                       | int                 |                     |
-          +==========================================================================================+
-
+          +=======================================================================+
+          | col_name: STRING        | data_type: STRING    | comment: STRING      |
+          +=======================================================================+
+          | ts                      | bigint               | from deserializer    |
+          | remotehost              | string               | from deserializer    |
+          | remotelogname           | string               | from deserializer    |
+          | authuser                | string               | from deserializer    |
+          | date                    | string               | from deserializer    |
+          | request                 | string               | from deserializer    |
+          | status                  | int                  | from deserializer    |
+          | contentlength           | int                  | from deserializer    |
+          | referrer                | string               | from deserializer    |
+          | useragent               | string               | from deserializer    |
+          | year                    | int                  |                      |
+          | month                   | int                  |                      |
+          | day                     | int                  |                      |
+          | hour                    | int                  |                      |
+          | minute                  | int                  |                      |
+          |                         |                      |                      |
+          | # Partition Information |                      |                      |
+          | # col_name              | data_type            | comment              |
+          |                         |                      |                      |
+          | year                    | int                  |                      |
+          | month                   | int                  |                      |
+          | day                     | int                  |                      |
+          | hour                    | int                  |                      |
+          | minute                  | int                  |                      |
+          +=======================================================================+
+          Fetched 24 rows
 
 .. container:: table-block
 
@@ -1102,7 +1115,7 @@ Transforming Your Data
           | 1430769459594 | GET /rest/api/latest/server?_=1423341 | 200         |
           |               | 312520 HTTP/1.1                       |             |
           +=====================================================================+
-
+          Fetched 2 rows
 
 Building Real World Applications
 ================================
@@ -1517,18 +1530,19 @@ Building Real World Applications
          - ``hbase shell> list "cdap.user.*"``
          
      * - Using CDAP
-       - ``> list dataset instances``
+       - - The listing will depend on if you have run all of the previous examples
+         - ``> list dataset instances``
           
      * -  
        - ::
 
-          +=================================================================+
-          | name             | type                                         |
-          +=================================================================+
-          | pageViewStore    | co.cask.cdap.apps.wise.PageViewStore         |
-          | bounceCountStore | co.cask.cdap.apps.wise.BounceCountStore      |
-          +=================================================================+
-
+          +================================================================================+
+          | name                     | type                                                |
+          +================================================================================+
+          | pageViewStore            | co.cask.cdap.apps.wise.PageViewStore                |
+          | bounceCountStore         | co.cask.cdap.apps.wise.BounceCountStore             |
+          | logEventStream.converted | co.cask.cdap.api.dataset.lib.TimePartitionedFileSet |
+          +================================================================================+
 
 .. rubric:: View bounce count results 
 
