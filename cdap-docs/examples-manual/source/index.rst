@@ -26,9 +26,9 @@ CDAP Examples, How-To Guides, and Tutorials
 
 
 .. |tutorials| replace:: **Tutorials:**
-.. _tutorials: tutorials.html
+.. _tutorials: tutorials/index.html
 
-- |tutorials|_ Designed to be completed in 2-3 hours, these tutorials provide deeper, in-context explorations of 
+- |tutorials|_ Designed to be completed in an hour or more, these tutorials provide deeper, in-context explorations of 
   big data application development topics, leaving you ready to implement real-world solutions.
 
 

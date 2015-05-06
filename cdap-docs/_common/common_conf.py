@@ -26,6 +26,8 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+wise_version = "0.3.0"
+
 import sys
 import os
 import os.path
@@ -34,15 +36,24 @@ from datetime import datetime
 
 def get_sdk_version():
     # Sets the Build Version
-    grep_version_cmd = "grep '<version>' ../../../pom.xml | awk 'NR==1;START{print $1}'"
     version = None
     short_version = None
     full_version = None
     try:
-        full_version = subprocess.check_output(grep_version_cmd, shell=True).strip().replace("<version>", "").replace("</version>", "")
+# Python 2.7 commands
+#         grep_version_cmd = "grep '<version>' ../../../pom.xml | awk 'NR==1;START{print $1}'"
+#         print "grep_version_cmd: %s" % grep_version_cmd
+#         full_version_temp = subprocess.check_output(grep_version_cmd, shell=True)
+# Python 2.6 commands
+        p1 = subprocess.Popen(["grep" , "<version>", "../../../pom.xml" ], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(["awk", "NR==1;START{print $1}"], stdin=p1.stdout, stdout=subprocess.PIPE)
+        full_version_temp = p2.communicate()[0]
+# 
+        full_version = full_version_temp.strip().replace("<version>", "").replace("</version>", "")
         version = full_version.replace("-SNAPSHOT", "")
         short_version = '%s.%s' % tuple(version.split('.')[0:2])
     except:
+        print "Unexpected error:", sys.exc_info()[0]
         pass
     return version, short_version, full_version
 
@@ -119,20 +130,11 @@ locale_dirs = ['_locale/', '../../_common/_locale']
 # is read. This is the right place to add substitutions that should be available in every
 # file. 
 rst_epilog = """
-.. |bold-version| replace:: **%(version)s**
-
-.. |italic-version| replace:: *%(version)s*
-
-.. |short-version| replace:: %(short_version)s
-
-.. |literal-version| replace:: ``%(version)s``
-
-.. |literal-release| replace:: ``%(release)s``
-
 .. role:: gp
 .. |$| replace:: :gp:`$`
 
 .. |http:| replace:: http:
+.. |https:| replace:: https:
 
 .. |(TM)| unicode:: U+2122 .. trademark sign
    :ltrim:
@@ -140,17 +142,39 @@ rst_epilog = """
 .. |(R)| unicode:: U+00AE .. registered trademark sign
    :ltrim:
 
-.. |copyright| replace:: %(copyright)s
-
 .. |--| unicode:: U+2013   .. en dash
 .. |---| unicode:: U+2014  .. em dash, trimming surrounding whitespace
    :trim:
+"""
 
-""" % {'version': version, 
-       'short_version': short_version, 
-       'release': release,
-       'copyright': copyright,
-       }
+if version:
+    rst_epilog = rst_epilog + """
+.. |bold-version| replace:: **%(version)s**
+
+.. |italic-version| replace:: *%(version)s*
+
+.. |literal-version| replace:: ``%(version)s``
+""" % {'version': version}
+
+if short_version:
+    rst_epilog = rst_epilog + """
+.. |short-version| replace:: %(short_version)s
+""" % {'short_version': short_version}
+
+if release:
+    rst_epilog = rst_epilog + """
+.. |literal-release| replace:: ``%(release)s``
+""" % {'release': release}
+
+if copyright:
+    rst_epilog = rst_epilog + """
+.. |copyright| replace:: %(copyright)s
+""" % {'copyright': copyright}
+
+if wise_version:
+    rst_epilog = rst_epilog + """
+.. |wise-version| replace:: %(wise-version)s
+""" % {'wise-version': wise_version}
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
