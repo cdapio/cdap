@@ -66,7 +66,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
   public static final String JMS_PROVIDER_URL = "jms.provider.url";
   public static final String JMS_CONNECTION_FACTORY_NAME = "jms.jndi.connectionfactory.name";
 
-  public static final String CONNECTION_FACTORY = "ConnectionFactory";
+  public static final String DEFAULT_CONNECTION_FACTORY = "ConnectionFactory";
 
   private static final long JMS_CONSUMER_TIMEOUT_MS = 2000;
 
@@ -330,7 +330,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
 
     public JmsPluginConfig() {
       messagesToReceive = 50;
-      connectionFactoryName = CONNECTION_FACTORY;
+      connectionFactoryName = DEFAULT_CONNECTION_FACTORY;
     }
 
     public JmsPluginConfig(String destinationName, @Nullable Integer messagesToReceive, String initialContextFactory,
@@ -346,7 +346,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
       if (connectionFactoryName != null) {
         this.connectionFactoryName = connectionFactoryName;
       } else {
-        this.connectionFactoryName = CONNECTION_FACTORY;
+        this.connectionFactoryName = DEFAULT_CONNECTION_FACTORY;
       }
     }
   }
