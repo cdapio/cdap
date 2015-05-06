@@ -103,6 +103,7 @@ function download_includes() {
 # version
   guide_rewrite_sed $1 cdap-bi-guide 
   guide_rewrite_sed $1 cdap-cube-guide 
+  guide_rewrite_sed $1 cdap-etl-adapter-guide 
   guide_rewrite_sed $1 cdap-flow-guide
   guide_rewrite_sed $1 cdap-flume-guide
   guide_rewrite_sed $1 cdap-kafka-ingest-guide
