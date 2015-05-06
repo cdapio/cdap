@@ -106,6 +106,61 @@ angular.module(PKG.name + '.feature.workflows')
 
   });
 
+/**
+  * Purpose: Converts a list of nodes to a list of connections
+  * @param  [Array] of nodes
+  * @return [Array] of connections
+  * Usage: Can handle all cases, including:
+      1. Fork in the middle
+      2. Only a fork
+      3. Fork at the beginning
+      4. Fork at the end
+      5. Only an Action node
+
+      var z = [
+        {
+          nodeType: 'ACTION',
+          program: {
+            programName: "asd"
+          }
+        }, {
+          nodeType: 'FORK',
+          branches: [
+            [
+              [
+                {
+                  nodeType: 'ACTION',
+                  program: {
+                    programName: "1"
+                  }
+                }
+              ],
+              [
+                {
+                  nodeType: 'ACTION',
+                  program: {
+                    programName: "2"
+                  }
+                }
+              ]
+            ],
+            [
+              {
+                nodeType: 'ACTION',
+                program: {
+                  programName: "3"
+                }
+              }
+            ]
+          ]
+        }, {
+          nodeType: 'ACTION',
+          program: {
+            programName: "4"
+          }
+        }
+      ];
+*/
 function convert(nodes, connections) {
 
   for (var i=0; i < nodes.length -1; i++) {
