@@ -16,11 +16,13 @@
 
 package co.cask.cdap.internal.app.runtime.adapter;
 
+import co.cask.cdap.common.exception.ConflictException;
+
 /**
  * Thrown when an invalid adapter action occurs. For instance, if an adapter 'stop' is requested, but the adapter is
  * already stopped.
  */
-public class InvalidAdapterOperationException extends Exception {
+public class InvalidAdapterOperationException extends ConflictException {
   public InvalidAdapterOperationException(String message) {
     super(message);
   }
