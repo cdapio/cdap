@@ -87,8 +87,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <surefire.redirectTestOutputToFile>true</surefire.redirectTestOutputToFile>
 
-    <etl.batch.plugin.name>etlBatch</etl.batch.plugin.name>
-    <etl.realtime.plugin.name>etlRealtime</etl.realtime.plugin.name>
+    <etl.batch.plugin.name>ETLBatch</etl.batch.plugin.name>
+    <etl.realtime.plugin.name>ETLRealtime</etl.realtime.plugin.name>
 
     <asm.version>4.0</asm.version>
     <async.http.version>1.7.18</async.http.version>
