@@ -116,7 +116,7 @@ function sync_build_artifacts_to_server () {
     decho "version stub = ${_version_stub}"
     _version=`echo ${_version_stub} | awk -F - '{ print $1 }' | awk -F . '{ print $1"."$2"."$3 }'`
     decho "version = ${_version}"
-    _snapshot_time=`echo ${_version_stub} | awk -F - '{ print $1 }' | sed 's/\([0-9]\)\.\([0-9]\)\.\([0-9]\)[\.]*\([0-9]*\)/\4/'`
+    _snapshot_time=`echo ${_version_stub} | awk -F - '{ print $1 }' | sed 's/[0-9]\.[0-9]\.[0-9][\.]*\([0-9]*\)/\1/'`
     decho "snapshot time = ${_snapshot_time}"
 
     # identify and create remote incoming directory
