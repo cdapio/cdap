@@ -1,9 +1,8 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowletDetailInputController', function($state, $scope, MyDataSource, myHelpers) {
+  .controller('FlowletDetailInputController', function($state, $scope, MyDataSource) {
 
     var dataSrc = new MyDataSource($scope);
     var flowletid = $scope.$parent.activeFlowlet.name;
-    var runid = $scope.runs.selected.runid;
 
     $scope.inputs = [];
 

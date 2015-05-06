@@ -12,7 +12,7 @@ angular.module(PKG.name + '.commons')
 
         var dataSrc = new MyDataSource($scope);
 
-        $scope.$watch('name', function(newVal) {
+        $scope.$watch('name', function() {
           $scope.query = 'SELECT * FROM ' + $scope.type + '_' + $scope.name + ' LIMIT 5';
         });
 

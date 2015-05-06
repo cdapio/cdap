@@ -13,7 +13,7 @@ angular.module(PKG.name + '.feature.services')
       _cdapNsPath: path
     })
       .then(function(res) {
-        angular.forEach(res.handlers, function(value, key) {
+        angular.forEach(res.handlers, function(value) {
           $scope.endPoints = $scope.endPoints.concat(value.endpoints);
         });
         $scope.instances = res.instances;

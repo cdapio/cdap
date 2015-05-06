@@ -22,7 +22,7 @@ angular.module(PKG.name+'.commons')
 })
 
 .directive('myError',
-function myErrorDirective (myAlert) {
+function myErrorDirective () {
   return {
     restrict: 'E',
     templateUrl: 'error/error-template.html',

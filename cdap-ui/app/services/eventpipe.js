@@ -18,7 +18,6 @@ angular.module(PKG.name + '.services')
     };
 
     this.cancelEvent = function(event) {
-      var args = Array.prototype.slice.call(arguments, 1);
       if (events[event]) {
         delete events[event];
       }

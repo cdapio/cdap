@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .directive('mySchedule', function($compile, $window, WidgetFactory) {
+  .directive('mySchedule', function() {
     return {
       restrict: 'E',
       scope: {
@@ -35,7 +35,7 @@ angular.module(PKG.name + '.commons')
 
         $scope.$watch('schedule', function() {
           var schedule = '';
-          angular.forEach($scope.schedule, function(v, k) {
+          angular.forEach($scope.schedule, function(v) {
             schedule += v + ' ';
           });
           schedule = schedule.trim();

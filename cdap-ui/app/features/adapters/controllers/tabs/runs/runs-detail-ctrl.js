@@ -39,7 +39,7 @@ angular.module(PKG.name + '.feature.adapters')
       event.currentScope.runs.selected = null;
     });
 
-    $scope.selectTab = function(tab, node) {
+    $scope.selectTab = function(tab) {
       $scope.activeTab = tab;
     };
   });

@@ -16,7 +16,7 @@ angular.module(PKG.name + '.feature.flows')
      };
    }
 
-   $scope.$watch('runs.selected.runid', function(newVal) {
+   $scope.$watch('runs.selected.runid', function() {
      if ($state.params.runid) {
        return;
      } else {

@@ -1,8 +1,5 @@
 angular.module(PKG.name + '.feature.mapreduce')
-  .controller('MapreduceRunsController', function($scope, MyDataSource, $state, $rootScope, rRuns) {
-
-    var dataSrc = new MyDataSource($scope);
-
+  .controller('MapreduceRunsController', function($scope, $state, $rootScope, rRuns) {
     $scope.runs = rRuns;
 
     if (!$state.params.runid) {

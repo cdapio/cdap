@@ -6,7 +6,7 @@ angular.module(PKG.name+'.feature.dashboard')
 /* ------------------------------------------------------ */
 
   .controller('OpsCdapCtrl',
-  function ($scope, opshelper, Widget) {
+  function ($scope, opshelper) {
     var panels = [
    // Format:
    // [ Widget Title, context, [metricNames], line-type (options are in addwdgt-ctrl.js ]

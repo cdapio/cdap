@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .directive('myNumberWidget', function($window) {
+  .directive('myNumberWidget', function() {
     return {
       restrict: 'E',
       scope: {

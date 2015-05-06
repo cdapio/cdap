@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .controller('navbarCtrl', function (myAlert, MYAUTH_EVENT, myNamespace, $scope, $state) {
+  .controller('navbarCtrl', function (myAlert, MYAUTH_EVENT, myNamespace, $scope) {
 
     $scope.namespaces = [];
 
@@ -13,7 +13,7 @@ angular.module(PKG.name + '.commons')
     $scope.$on (MYAUTH_EVENT.loginSuccess, updateNamespaceList);
     $scope.getDisplayName = myNamespace.getDisplayName.bind(myNamespace);
 
-    $scope.$on (MYAUTH_EVENT.logoutSuccess, function (event) {
+    $scope.$on (MYAUTH_EVENT.logoutSuccess, function () {
       $scope.namespaces = [];
     });
 

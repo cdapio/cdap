@@ -16,7 +16,7 @@ function ($scope, $state, MyDataSource) {
     } else {
       $scope.tabs.activeTab = ($state.is('admin.system.services.detail.metadata')? 0: 1);
     }
-    $scope.$watch('tabs.activeTab', function(newValue, oldValue) {
+    $scope.$watch('tabs.activeTab', function(newValue) {
       var toState = ($state.includes('admin.system.services.detail.*') ? '^': '');
       if(newValue === 0) {
         $state.go(toState + '.metadata');

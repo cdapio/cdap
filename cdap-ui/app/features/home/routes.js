@@ -1,5 +1,5 @@
 angular.module(PKG.name+'.feature.home')
-  .config(function ($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
+  .config(function ($stateProvider, $urlRouterProvider) {
 
     /**
      * Redirects and Otherwise
@@ -35,7 +35,7 @@ angular.module(PKG.name+'.feature.home')
         abstract: true,
         template: '<ui-view/>',
         resolve: {
-          rNsList: function (myNamespace, myLoadingService) {
+          rNsList: function (myNamespace) {
             return myNamespace.getList();
           }
         },

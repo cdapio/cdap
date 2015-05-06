@@ -16,7 +16,7 @@ angular.module(PKG.name + '.feature.spark')
      };
    }
 
-   $scope.$watch('runs.selected.runid', function(newVal) {
+   $scope.$watch('runs.selected.runid', function() {
      if ($state.params.runid) {
        return;
      } else {
@@ -36,7 +36,7 @@ angular.module(PKG.name + '.feature.spark')
 
    $scope.activeTab = $scope.tabs[0];
 
-  $scope.selectTab = function(tab, node) {
+  $scope.selectTab = function(tab) {
     $scope.activeTab = tab;
   };
  });

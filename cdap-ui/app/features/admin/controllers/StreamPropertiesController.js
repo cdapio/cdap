@@ -110,7 +110,7 @@ angular.module(PKG.name + '.feature.admin')
           method: 'PUT',
           body: params
         })
-        .then(function(res) {
+        .then(function() {
           $scope.reload();
 
           $alert({

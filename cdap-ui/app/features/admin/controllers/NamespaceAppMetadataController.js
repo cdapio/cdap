@@ -15,7 +15,7 @@ function ($scope, $state, $alert, $timeout, MyDataSource) {
     data.request({
       _cdapPath: path,
       method: 'DELETE'
-    }, function(res) {
+    }, function() {
       $alert({
         type: 'success',
         title: app,

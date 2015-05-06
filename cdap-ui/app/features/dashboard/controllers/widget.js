@@ -273,7 +273,7 @@ angular.module(PKG.name+'.feature.dashboard')
           // Replace all invalid characters with '_'. This is ok for now, since we do not display the chart labels
           // to the user. Source: http://stackoverflow.com/questions/13979323/how-to-test-if-selector-is-valid-in-jquery
           var replacedMetricName = metricName.replace(/([;&,\.\+\*\~':"\!\^#$%@\[\]\(\)=><\|])/g, '_');
-          hist.push({label: metricName, values: vs[i]});
+          hist.push({label: replacedMetricName, values: vs[i]});
         }
         $scope.chartHistory = hist;
       }
@@ -285,7 +285,7 @@ angular.module(PKG.name+'.feature.dashboard')
     $scope.chartData = null;
     $scope.wdgt.reconfigure($scope);
     $scope.$watch('wdgt.data', function (newVal) {
-      var metricMap, arr, columns, hist, streams;
+      var metricMap, columns, streams;
       if(angular.isObject(newVal) && newVal.length) {
 
         var metricNames = $scope.wdgt.metric.names.map(function(metricName) {
@@ -352,7 +352,7 @@ angular.module(PKG.name+'.feature.dashboard')
     });
   })
 
-  .controller('WidgetPieCtrl', function ($scope, $alert, MyDataSource) {
+  .controller('WidgetPieCtrl', function ($scope, $alert) {
 
     $alert({
       content: 'pie chart using fake data',

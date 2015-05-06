@@ -4,8 +4,7 @@ angular.module(PKG.name + '.commons')
       var el = element[0];
       var dropZone = attrs.dropZone,
           // The actual data being transferred.
-          data = attrs.model,
-          dragType = attrs.dragType;
+          data = attrs.model;
        el.draggable = true;
 
        el.addEventListener(
@@ -25,7 +24,7 @@ angular.module(PKG.name + '.commons')
 
        el.addEventListener(
            'dragend',
-           function(e) {
+           function() {
             this.classList.remove('drag');
             return false;
            },
@@ -57,7 +56,7 @@ angular.module(PKG.name + '.commons')
 
           el.addEventListener(
             'dragenter',
-            function(e) {
+            function() {
               counter += 1;
               this.classList.add('over');
               return false;
@@ -67,7 +66,7 @@ angular.module(PKG.name + '.commons')
 
           el.addEventListener(
             'dragleave',
-            function(e) {
+            function() {
               counter -=1;
               if (counter === 0) {
                 this.classList.remove('over');

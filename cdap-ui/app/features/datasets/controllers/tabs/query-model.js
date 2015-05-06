@@ -2,7 +2,6 @@ angular.module(PKG.name+'.feature.datasets')
   .factory('QueryModel', function ($q, mySettings) {
 
       function QueryModel(dataSrc, key, data) {
-        var self = this;
         this.dataSrc = dataSrc;
         this.key = key;
         this.queryHandles = {};
