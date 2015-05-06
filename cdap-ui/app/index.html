@@ -62,5 +62,12 @@
     <script type="text/javascript" src="/assets/bundle/app.js"></script>
     <script type="text/javascript" src="/assets/bundle/tpl.js"></script>
 
+    <script type="text/javascript">
+      if(location.host==='localhost:9999') {
+        document.write('<script src="http://localhost'
+          + ':35729/livereload.js"></' + 'script>');
+      }
+    </script>
+
 </body>
 </html>
