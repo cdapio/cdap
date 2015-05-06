@@ -44,15 +44,11 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
     link: function (scope, elem, attr) {
       scope.render = genericRender.bind(null, scope, $filter);
       scope.parentSelector = attr.parent;
-      /**
-       * Circle radius for instance count.
-       * @type {Number}
-       */
-      var instanceCircleRadius = 10;
+
       /**
        * Circle radius for flowlets.
        */
-      var flowletCircleRadius = 50;
+      var flowletCircleRadius = 45;
 
       // Since names are padded inside of shapes, this needs the same padding to be vertically center aligned.
       /**
@@ -67,10 +63,6 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
        * Height of stream diagram.
        */
       var streamDiagramHeight = 30;
-      /**
-       * Number of pixes instance should display above base.
-       */
-      var instanceBufferHeight = 30;
 
       /**
        * Leaf node variables.
@@ -90,30 +82,27 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
       /**
        * Overflow of leaf into the flowlet/stream shape.
        */
-      var leafBuffer = flowletCircleRadius * 0.4;
+      var leafBuffer = flowletCircleRadius * 0.2;
 
       var numberFilter = $filter('myNumber');
       scope.getShapes = function() {
         var shapes = {};
         shapes.flowlet = function(parent, bbox, node) {
           var instances = scope.getInstances(node.elem.__data__); // No other way to get name from node.
-          var instanceCircleScaled = scope.getInstancesScaledRadius(instances, instanceCircleRadius);
+
+          // Pushing labels down
+          parent.select('.label')
+            .attr('transform', 'translate(0,'+ bbox.height / 3 + ')');
+
           var shapeSvg = parent.insert('circle', ':first-child')
             .attr('x', -bbox.width / 2)
             .attr('y', -bbox.height / 2)
             .attr('r', flowletCircleRadius)
             .attr('class', 'flow-shapes foundation-shape flowlet-svg');
 
-          parent.insert('circle')
-            .attr('cx', flowletCircleRadius - instanceCircleScaled)
-            .attr('cy', -instanceBufferHeight)
-            .attr('r', instanceCircleScaled)
-            .attr('class', 'flow-shapes flowlet-instances');
-
           parent.insert('text')
-            .attr('x', flowletCircleRadius - instanceCircleScaled)
-            .attr('y', -instanceBufferHeight + metricCountPadding)
-            .text(instances)
+            .attr('y', -bbox.height/4)
+            .text('x' + instances)
             .attr('class', 'flow-shapes flowlet-instance-count');
 
           var leafOptions = {
