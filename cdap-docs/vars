@@ -9,3 +9,4 @@ COMMON_PLACEHOLDER="$COMMON/_source/placeholder_index._rst"
 HTACCESS="htaccess"
 
 MANUALS="introduction developers-manual application-templates admin-manual integrations examples-manual reference-manual"
+
