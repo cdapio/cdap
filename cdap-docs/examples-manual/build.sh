@@ -26,24 +26,38 @@ CHECK_INCLUDES=${TRUE}
 TUTORIAL_WISE="tutorial-wise"
 
 function guide_rewrite_sed() {
-  echo "Re-writing using sed ${1} ${2}"
   # Re-writes the links in the RST file to point to a local copy of any image links.
+  # Looks for and downloads any image links
+  echo "Re-writing using sed ${1} ${2}"
   local includes_dir=${1}
   local guide=${2}
   local project_version=${PROJECT_SHORT_VERSION}
   
   local source1="https://raw.githubusercontent.com/cdap-guides"
   if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
-    local source2="develop/README.rst"
+    local source2="develop"
   else
-    local source2="release/cdap-${project_version}-compatible/README.rst"
+    local source2="release/cdap-${project_version}-compatible"
   fi
+  local readme="README.rst"
+  local readme_source="README_SOURCE.rst"
 
-  local redirect="\.\./\.\./\.\./\.\./\.\." # Target, 5 redirects, escaped
+  local redirect="\.\./\.\./build/_includes" # Target, 2 redirects, escaped
   
   mkdir ${includes_dir}/${guide}
-  curl --silent ${source1}/${guide}/${source2} --output ${includes_dir}/${guide}/README_SOURCE.rst  
-  sed -e "s|image:: docs/images|image:: ${redirect}/${guide}/docs/images|g" -e "s|.. code:: |.. code-block:: |g" ${includes_dir}/${guide}/README_SOURCE.rst > ${includes_dir}/${guide}/README.rst
+  curl --silent ${source1}/${guide}/${source2}/${readme} --output ${includes_dir}/${guide}/${readme_source}
+
+  # Find and download any images
+  local images=`grep -o ".. image:: .*" ${includes_dir}/${guide}/README_SOURCE.rst | cut -d ' ' -f 3`
+  if [ "x${images}" != "x" ]; then
+    for image in ${images}; do
+      local image_file=`basename ${image}`
+      curl --silent ${source1}/${guide}/${source2}/${image} --output ${includes_dir}/${guide}/${image_file}
+    done
+  fi
+  
+  # Rewrite image and code 
+  sed -e "s|image:: docs/images/|image:: ${redirect}/${guide}/|g" -e "s|.. code:: |.. code-block:: |g" ${includes_dir}/${guide}/${readme_source} > ${includes_dir}/${guide}/${readme}
 }
 
 function download_file() {
@@ -65,9 +79,10 @@ function download_file() {
   test_an_include ${md5_hash} ${target}
 }
 
-function download_includes() {
+function download_includes() { 
   echo_red_bold "Downloading source files includes from GitHub..."
   version
+  
   local includes=${1}/${TUTORIAL_WISE}
   local project_version=${PROJECT_SHORT_VERSION}
 
@@ -82,7 +97,7 @@ function download_includes() {
   local project_main=$project_source/src/main/java/co/cask/cdap/apps/wise
   local project_test=$project_source/src/test/java/co/cask/cdap/apps/wise
   local project_img=$project_source/docs/img
-  
+
   # 1:Includes directory 2:GitHub directory 3:Java filename   4:MD5 hash of file
   download_file $includes $project_main BounceCountsMapReduce.java f2f8d36e4049ba69b40282057accf38a
   download_file $includes $project_main BounceCountStore.java      d476c15655c6a6c6cd7fe682dea4a8b7
@@ -99,8 +114,7 @@ function download_includes() {
   download_file $includes $project_img wise_flow.png                 4a79853f2b5a0ac45929d0966f7cd7f5
   download_file $includes $project_img wise_store_page.png           15bcd8dac10ab5d1c643fff7bdecc52d
 
-  echo_red_bold "Re-writes all the image links..."
-# version
+  echo_red_bold "Download file and any images and re-writes all the image links..."
   guide_rewrite_sed $1 cdap-bi-guide 
   guide_rewrite_sed $1 cdap-cube-guide 
   guide_rewrite_sed $1 cdap-etl-adapter-guide 
