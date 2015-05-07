@@ -5,7 +5,7 @@ angular.module(PKG.name + '.feature.admin')
       description: ''
     };
     var myDataSrc = new MyDataSource($scope);
-    $scope.submitHandler = function() {
+    $scope.submitHandler = _.once(function() {
       myDataSrc.request({
         method: 'PUT',
         _cdapPath: '/namespaces/' + $scope.model.name,
@@ -25,7 +25,7 @@ angular.module(PKG.name + '.feature.admin')
           // This is required as we need to update the list with the newly created namespace.
           myNamespace.getList(true);
         });
-    };
+    });
     $scope.closeModal = function() {
       $modalInstance.close();
 
