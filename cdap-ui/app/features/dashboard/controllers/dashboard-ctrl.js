@@ -75,12 +75,12 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
     $state.go('dashboard.user.addwdgt', {tab: $state.params.tab}, {reload: false});
   };
 
-  $scope.addDashboard = function (title) {
+  $scope.addDashboard = _.throttle(function (title) {
     rDashboardsModel.add({title: title}).then(function() {
       var tabDest = rDashboardsModel.data.length - 1;
       $state.go('dashboard.user', {tab: tabDest}, {reload: true});
     });
-  };
+  }, 2000, {'trailing': false});
 
   $scope.removeDashboard = function () {
     rDashboardsModel.remove($scope.dashboards.activeIndex)
