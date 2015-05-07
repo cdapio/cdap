@@ -422,7 +422,6 @@ function genericRender(scope) {
 
   // First set nodes and edges.
   angular.forEach(nodes, function (node) {
-    // var nodeLabel = node.name.length > 8 ? node.name.substr(0, 5) + '...' : node.name;
     var nodeLabel = node.label.length > 8? node.label.substr(0,5) + '...': node.label;
     scope.instanceMap[node.name] = node;
     scope.labelMap[nodeLabel] = node;
