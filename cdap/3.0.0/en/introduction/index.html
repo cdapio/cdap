@@ -326,6 +326,7 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 <span class="go">| headers                          | map&lt;string,string&gt;               | from deserializer                 |</span>
 <span class="go">| body                             | string                           | from deserializer                 |</span>
 <span class="go">+=========================================================================================================+</span>
+<span class="go">Fetched 3 rows</span>
 </pre></div>
 </div>
 </td>
@@ -529,6 +530,7 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 <span class="go">|         |         | 5       |         |         | :45:38  |  HTTP/1 |         |         |         | SIE 7.0; Wind |</span>
 <span class="go">|         |         |         |         |         | -0400   | .0      |         |         |         | ows NT 5.1)   |</span>
 <span class="go">+===================================================================================================================+</span>
+<span class="go">Fetched 2 rows</span>
 </pre></div>
 </div>
 </td>
@@ -1060,7 +1062,7 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><p class="first">Write a configuration file:</p>
+<td><p class="first">Write a configuration file, saving it to <code class="docutils literal"><span class="pre">example/resources/adapter-config.json</span></code>:</p>
 <div class="last highlight-console"><div class="highlight"><pre><span class="go">{</span>
 <span class="go">    &quot;description&quot;: &quot;Periodically reads Stream data and writes it to a TimePartitionedFileSet&quot;,</span>
 <span class="go">    &quot;template&quot;: &quot;ETLBatch&quot;,</span>
@@ -1113,7 +1115,7 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 </tr>
 <tr class="row-odd"><th class="stub">&nbsp;</th>
 <td><p class="first">Create an adapter using that configuration through the CLI:</p>
-<div class="last highlight-console"><div class="highlight"><pre><span class="gp">&gt;</span> create adapter logEventStreamConverter /example/adapter_config.json
+<div class="last highlight-console"><div class="highlight"><pre><span class="gp">&gt;</span> create adapter logEventStreamConverter example/resources/adapter-config.json
 <span class="go">Successfully created adapter &#39;logEventStreamConverter&#39;</span>
 <span class="gp">&gt;</span> start adapter logEventStreamConverter
 <span class="go">Successfully started adapter &#39;logEventStreamConverter&#39;</span>
@@ -1152,65 +1154,77 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 <td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">list</span> <span class="pre">adapters</span></code></td>
 </tr>
 <tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">Successfully sent stream event to stream &#39;logEventStream&#39;</span>
-<span class="go">+=============================================================================================================+</span>
-<span class="go">| name              | description       | template | config            | properties                           |</span>
-<span class="go">+=============================================================================================================+</span>
-<span class="go">| logEventStreamCon | Periodically read | ETLBatch | {&quot;schedule&quot;:&quot;* *  | schedule={&quot;schedule&quot;:{&quot;name&quot;:&quot;logEve |</span>
-<span class="go">| verter            | s Stream data and |          | * * *&quot;,&quot;source&quot;:{ | ntStreamConverter.etl.batch.adapter. |</span>
-<span class="go">|                   |  writes it to a T |          | &quot;name&quot;:&quot;Stream&quot;,&quot; | logEventStreamConverter.schedule&quot;,&quot;d |</span>
-<span class="go">|                   | imePartitionedFil |          | properties&quot;:{&quot;nam | escription&quot;:&quot;Schedule for logEventSt |</span>
-<span class="go">|                   | eSet              |          | e&quot;:&quot;logEventStrea | reamConverter Adapter&quot;},&quot;program&quot;:{&quot; |</span>
-<span class="go">|                   |                   |          | m&quot;,&quot;duration&quot;:&quot;1m | programName&quot;:&quot;ETLWorkflow&quot;,&quot;programT |</span>
-<span class="go">|                   |                   |          | &quot;,&quot;format&quot;:&quot;clf&quot;} | ype&quot;:&quot;WORKFLOW&quot;},&quot;properties&quot;:{&quot;tran |</span>
-<span class="go">|                   |                   |          | },&quot;transforms&quot;:[{ | sformIds&quot;:&quot;[\&quot;Projection:0\&quot;]&quot;,&quot;name |</span>
-<span class="go">|                   |                   |          | &quot;name&quot;:&quot;Projectio | &quot;:&quot;logEventStreamConverter&quot;,&quot;sinkId&quot; |</span>
-<span class="go">|                   |                   |          | n&quot;,&quot;properties&quot;:{ | :&quot;sink:TPFSAvro&quot;,&quot;config&quot;:&quot;{\&quot;schedu |</span>
-<span class="go">|                   |                   |          | &quot;drop&quot;:&quot;headers&quot;} | le\&quot;:\&quot;* * * * *\&quot;,\&quot;source\&quot;:{\&quot;nam |</span>
-<span class="go">|                   |                   |          | }],&quot;sink&quot;:{&quot;name&quot; | e\&quot;:\&quot;Stream\&quot;,\&quot;properties\&quot;:{\&quot;dur |</span>
-<span class="go">|                   |                   |          | :&quot;TPFSAvro&quot;,&quot;prop | ation\&quot;:\&quot;1m\&quot;,\&quot;name\&quot;:\&quot;logEventSt |</span>
-<span class="go">|                   |                   |          | erties&quot;:{&quot;name&quot;:&quot; | ream\&quot;,\&quot;format\&quot;:\&quot;clf\&quot;}},\&quot;sink\&quot; |</span>
-<span class="go">|                   |                   |          | logEventStream.co | :{\&quot;name\&quot;:\&quot;TPFSAvro\&quot;,\&quot;properties |</span>
-<span class="go">|                   |                   |          | nverted&quot;,&quot;schema&quot; | \&quot;:{\&quot;basePath\&quot;:\&quot;logEventStream.co |</span>
-<span class="go">|                   |                   |          | :&quot;{\&quot;type\&quot;:\&quot;rec | nverted\&quot;,\&quot;schema\&quot;:\&quot;{\\\&quot;type\\\&quot; |</span>
-<span class="go">|                   |                   |          | ord\&quot;,\&quot;name\&quot;:\&quot; | :\\\&quot;record\\\&quot;,\\\&quot;name\\\&quot;:\\\&quot;log |</span>
-<span class="go">|                   |                   |          | logEvent\&quot;,\&quot;fiel | Event\\\&quot;,\\\&quot;fields\\\&quot;:[{\\\&quot;name\ |</span>
-<span class="go">|                   |                   |          | ds\&quot;:[{\&quot;name\&quot;:\ | \\&quot;:\\\&quot;ts\\\&quot;,\\\&quot;type\\\&quot;:\\\&quot;long |</span>
-<span class="go">|                   |                   |          | &quot;ts\&quot;,\&quot;type\&quot;:\&quot; | \\\&quot;},{\\\&quot;name\\\&quot;:\\\&quot;remotehost\\ |</span>
-<span class="go">|                   |                   |          | long\&quot;},{\&quot;name\&quot; | \&quot;,\\\&quot;type\\\&quot;:[\\\&quot;string\\\&quot;,\\\&quot; |</span>
-<span class="go">|                   |                   |          | :\&quot;remotehost\&quot;,\ | null\\\&quot;]},{\\\&quot;name\\\&quot;:\\\&quot;remotel |</span>
-<span class="go">|                   |                   |          | &quot;type\&quot;:[\&quot;string | ogname\\\&quot;,\\\&quot;type\\\&quot;:[\\\&quot;string\ |</span>
-<span class="go">|                   |                   |          | \&quot;,\&quot;null\&quot;]},{\&quot; | \\&quot;,\\\&quot;null\\\&quot;]},{\\\&quot;name\\\&quot;:\\\ |</span>
-<span class="go">|                   |                   |          | name\&quot;:\&quot;remotelo | &quot;authuser\\\&quot;,\\\&quot;type\\\&quot;:[\\\&quot;stri |</span>
-<span class="go">|                   |                   |          | gname\&quot;,\&quot;type\&quot;: | ng\\\&quot;,\\\&quot;null\\\&quot;]},{\\\&quot;name\\\&quot;: |</span>
-<span class="go">|                   |                   |          | [\&quot;string\&quot;,\&quot;nul | \\\&quot;date\\\&quot;,\\\&quot;type\\\&quot;:[\\\&quot;strin |</span>
-<span class="go">|                   |                   |          | l\&quot;]},{\&quot;name\&quot;:\ | g\\\&quot;,\\\&quot;null\\\&quot;]},{\\\&quot;name\\\&quot;:\ |</span>
-<span class="go">|                   |                   |          | &quot;authuser\&quot;,\&quot;typ | \\&quot;request\\\&quot;,\\\&quot;type\\\&quot;:[\\\&quot;str |</span>
-<span class="go">|                   |                   |          | e\&quot;:[\&quot;string\&quot;,\ | ing\\\&quot;,\\\&quot;null\\\&quot;]},{\\\&quot;name\\\&quot; |</span>
-<span class="go">|                   |                   |          | &quot;null\&quot;]},{\&quot;name | :\\\&quot;status\\\&quot;,\\\&quot;type\\\&quot;:[\\\&quot;in |</span>
-<span class="go">|                   |                   |          | \&quot;:\&quot;date\&quot;,\&quot;typ | t\\\&quot;,\\\&quot;null\\\&quot;]},{\\\&quot;name\\\&quot;:\ |</span>
-<span class="go">|                   |                   |          | e\&quot;:[\&quot;string\&quot;,\ | \\&quot;contentlength\\\&quot;,\\\&quot;type\\\&quot;:[\ |</span>
-<span class="go">|                   |                   |          | &quot;null\&quot;]},{\&quot;name | \\&quot;int\\\&quot;,\\\&quot;null\\\&quot;]},{\\\&quot;name\ |</span>
-<span class="go">|                   |                   |          | \&quot;:\&quot;request\&quot;,\&quot; | \\&quot;:\\\&quot;referrer\\\&quot;,\\\&quot;type\\\&quot;:[\ |</span>
-<span class="go">|                   |                   |          | type\&quot;:[\&quot;string\ | \\&quot;string\\\&quot;,\\\&quot;null\\\&quot;]},{\\\&quot;na |</span>
-<span class="go">|                   |                   |          | &quot;,\&quot;null\&quot;]},{\&quot;n | me\\\&quot;:\\\&quot;useragent\\\&quot;,\\\&quot;type\\\ |</span>
-<span class="go">|                   |                   |          | ame\&quot;:\&quot;status\&quot;, | &quot;:[\\\&quot;string\\\&quot;,\\\&quot;null\\\&quot;]}]}\&quot; |</span>
-<span class="go">|                   |                   |          | \&quot;type\&quot;:[\&quot;int\&quot; | ,\&quot;name\&quot;:\&quot;logEventStream.converted |</span>
-<span class="go">|                   |                   |          | ,\&quot;null\&quot;]},{\&quot;na | \&quot;}},\&quot;transforms\&quot;:[{\&quot;name\&quot;:\&quot;Pro |</span>
-<span class="go">|                   |                   |          | me\&quot;:\&quot;contentlen | jection\&quot;,\&quot;properties\&quot;:{\&quot;drop\&quot;:\ |</span>
-<span class="go">|                   |                   |          | gth\&quot;,\&quot;type\&quot;:[\ | &quot;headers\&quot;}}]}&quot;,&quot;sourceId&quot;:&quot;source:S |</span>
-<span class="go">|                   |                   |          | &quot;int\&quot;,\&quot;null\&quot;]} | tream&quot;}}                             |</span>
-<span class="go">|                   |                   |          | ,{\&quot;name\&quot;:\&quot;refe | instances=1                          |</span>
-<span class="go">|                   |                   |          | rrer\&quot;,\&quot;type\&quot;:[ |                                      |</span>
-<span class="go">|                   |                   |          | \&quot;string\&quot;,\&quot;null |                                      |</span>
-<span class="go">|                   |                   |          | \&quot;]},{\&quot;name\&quot;:\&quot; |                                      |</span>
-<span class="go">|                   |                   |          | useragent\&quot;,\&quot;typ |                                      |</span>
-<span class="go">|                   |                   |          | e\&quot;:[\&quot;string\&quot;,\ |                                      |</span>
-<span class="go">|                   |                   |          | &quot;null\&quot;]}]}&quot;,&quot;bas |                                      |</span>
-<span class="go">|                   |                   |          | ePath&quot;:&quot;logEventS |                                      |</span>
-<span class="go">|                   |                   |          | tream.converted&quot;} |                                      |</span>
-<span class="go">|                   |                   |          | }}                |                                      |</span>
-<span class="go">+=============================================================================================================+</span>
+<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">+======================================================================================================================+</span>
+<span class="go">| name                | description         | template | config              | properties                              |</span>
+<span class="go">+======================================================================================================================+</span>
+<span class="go">| logEventStreamConve | Periodically reads  | ETLBatch | {&quot;schedule&quot;:&quot;*/5 *  | schedule={&quot;schedule&quot;:{&quot;name&quot;:&quot;logEventS |</span>
+<span class="go">| rter                | Stream data and wri |          | * * *&quot;,&quot;source&quot;:{&quot;n | treamConverter.etl.batch.adapter.logEve |</span>
+<span class="go">|                     | tes it to a TimePar |          | ame&quot;:&quot;Stream&quot;,&quot;prop | ntStreamConverter.schedule&quot;,&quot;descriptio |</span>
+<span class="go">|                     | titionedFileSet     |          | erties&quot;:{&quot;name&quot;:&quot;lo | n&quot;:&quot;Schedule for logEventStreamConverte |</span>
+<span class="go">|                     |                     |          | gEventStream&quot;,&quot;dura | r Adapter&quot;},&quot;program&quot;:{&quot;programName&quot;:&quot;E |</span>
+<span class="go">|                     |                     |          | tion&quot;:&quot;5m&quot;,&quot;format&quot; | TLWorkflow&quot;,&quot;programType&quot;:&quot;WORKFLOW&quot;},&quot; |</span>
+<span class="go">|                     |                     |          | :&quot;clf&quot;}},&quot;transform | properties&quot;:{&quot;transformIds&quot;:&quot;[\&quot;Project |</span>
+<span class="go">|                     |                     |          | s&quot;:[{&quot;name&quot;:&quot;Projec | ion:0\&quot;]&quot;,&quot;name&quot;:&quot;logEventStreamConvert |</span>
+<span class="go">|                     |                     |          | tion&quot;,&quot;properties&quot;: | er&quot;,&quot;sinkId&quot;:&quot;sink:TPFSAvro&quot;,&quot;config&quot;:&quot; |</span>
+<span class="go">|                     |                     |          | {&quot;drop&quot;:&quot;headers&quot;}} | {\&quot;schedule\&quot;:\&quot;*/5 * * * *\&quot;,\&quot;source\ |</span>
+<span class="go">|                     |                     |          | ],&quot;sink&quot;:{&quot;name&quot;:&quot;T | &quot;:{\&quot;name\&quot;:\&quot;Stream\&quot;,\&quot;properties\&quot;:{ |</span>
+<span class="go">|                     |                     |          | PFSAvro&quot;,&quot;propertie | \&quot;duration\&quot;:\&quot;5m\&quot;,\&quot;name\&quot;:\&quot;logEvent |</span>
+<span class="go">|                     |                     |          | s&quot;:{&quot;name&quot;:&quot;logEven | Stream\&quot;,\&quot;format\&quot;:\&quot;clf\&quot;}},\&quot;sink\&quot;: |</span>
+<span class="go">|                     |                     |          | tStream.converted&quot;, | {\&quot;name\&quot;:\&quot;TPFSAvro\&quot;,\&quot;properties\&quot;:{ |</span>
+<span class="go">|                     |                     |          | &quot;schema&quot;:&quot;{\n       | \&quot;basePath\&quot;:\&quot;logEventStream.converted |</span>
+<span class="go">|                     |                     |          |               \&quot;typ | \&quot;,\&quot;schema\&quot;:\&quot;{\\n                    |</span>
+<span class="go">|                     |                     |          | e\&quot;:\&quot;record\&quot;,\n   |  \\\&quot;type\\\&quot;:\\\&quot;record\\\&quot;,\\n        |</span>
+<span class="go">|                     |                     |          |                   \ |              \\\&quot;name\\\&quot;:\\\&quot;logEvent\ |</span>
+<span class="go">|                     |                     |          | &quot;name\&quot;:\&quot;logEvent\ | \\&quot;,\\n                    \\\&quot;fields\\ |</span>
+<span class="go">|                     |                     |          | &quot;,\n                | \&quot;:[\\n                        {\\\&quot;nam |</span>
+<span class="go">|                     |                     |          |      \&quot;fields\&quot;:[\n | e\\\&quot;:\\\&quot;ts\\\&quot;,\\\&quot;type\\\&quot;:\\\&quot;long\ |</span>
+<span class="go">|                     |                     |          |                     | \\&quot;},\\n                        {\\\&quot;na |</span>
+<span class="go">|                     |                     |          |      {\&quot;name\&quot;:\&quot;ts | me\\\&quot;:\\\&quot;remotehost\\\&quot;,\\\&quot;type\\\&quot;: |</span>
+<span class="go">|                     |                     |          | \&quot;,\&quot;type\&quot;:\&quot;long\ | [\\\&quot;string\\\&quot;,\\\&quot;null\\\&quot;]},\\n      |</span>
+<span class="go">|                     |                     |          | &quot;},\n               |                    {\\\&quot;name\\\&quot;:\\\&quot;re |</span>
+<span class="go">|                     |                     |          |           {\&quot;name\&quot; | motelogname\\\&quot;,\\\&quot;type\\\&quot;:[\\\&quot;strin |</span>
+<span class="go">|                     |                     |          | :\&quot;remotehost\&quot;,\&quot;t | g\\\&quot;,\\\&quot;null\\\&quot;]},\\n                |</span>
+<span class="go">|                     |                     |          | ype\&quot;:[\&quot;string\&quot;,\ |          {\\\&quot;name\\\&quot;:\\\&quot;authuser\\\&quot; |</span>
+<span class="go">|                     |                     |          | &quot;null\&quot;]},\n        | ,\\\&quot;type\\\&quot;:[\\\&quot;string\\\&quot;,\\\&quot;null\ |</span>
+<span class="go">|                     |                     |          |                  {\ | \\&quot;]},\\n                        {\\\&quot;n |</span>
+<span class="go">|                     |                     |          | &quot;name\&quot;:\&quot;remotelog | ame\\\&quot;:\\\&quot;date\\\&quot;,\\\&quot;type\\\&quot;:[\\\&quot; |</span>
+<span class="go">|                     |                     |          | name\&quot;,\&quot;type\&quot;:[\&quot; | string\\\&quot;,\\\&quot;null\\\&quot;]},\\n           |</span>
+<span class="go">|                     |                     |          | string\&quot;,\&quot;null\&quot;]} |               {\\\&quot;name\\\&quot;:\\\&quot;request |</span>
+<span class="go">|                     |                     |          | ,\n                 | \\\&quot;,\\\&quot;type\\\&quot;:[\\\&quot;string\\\&quot;,\\\&quot;n |</span>
+<span class="go">|                     |                     |          |         {\&quot;name\&quot;:\ | ull\\\&quot;]},\\n                        {\ |</span>
+<span class="go">|                     |                     |          | &quot;authuser\&quot;,\&quot;type\ | \\&quot;name\\\&quot;:\\\&quot;status\\\&quot;,\\\&quot;type\\\&quot; |</span>
+<span class="go">|                     |                     |          | &quot;:[\&quot;string\&quot;,\&quot;nul | :[\\\&quot;int\\\&quot;,\\\&quot;null\\\&quot;]},\\n        |</span>
+<span class="go">|                     |                     |          | l\&quot;]},\n            |                  {\\\&quot;name\\\&quot;:\\\&quot;cont |</span>
+<span class="go">|                     |                     |          |              {\&quot;nam | entlength\\\&quot;,\\\&quot;type\\\&quot;:[\\\&quot;int\\\&quot; |</span>
+<span class="go">|                     |                     |          | e\&quot;:\&quot;date\&quot;,\&quot;type | ,\\\&quot;null\\\&quot;]},\\n                     |</span>
+<span class="go">|                     |                     |          | \&quot;:[\&quot;string\&quot;,\&quot;nu |     {\\\&quot;name\\\&quot;:\\\&quot;referrer\\\&quot;,\\\&quot; |</span>
+<span class="go">|                     |                     |          | ll\&quot;]},\n           | type\\\&quot;:[\\\&quot;string\\\&quot;,\\\&quot;null\\\&quot;]} |</span>
+<span class="go">|                     |                     |          |               {\&quot;na | ,\\n                        {\\\&quot;name\\ |</span>
+<span class="go">|                     |                     |          | me\&quot;:\&quot;request\&quot;,\&quot; | \&quot;:\\\&quot;useragent\\\&quot;,\\\&quot;type\\\&quot;:[\\\&quot; |</span>
+<span class="go">|                     |                     |          | type\&quot;:[\&quot;string\&quot;, | string\\\&quot;,\\\&quot;null\\\&quot;]}\\n            |</span>
+<span class="go">|                     |                     |          | \&quot;null\&quot;]},\n       |          ]\\n                }\&quot;,\&quot;name |</span>
+<span class="go">|                     |                     |          |                   { | \&quot;:\&quot;logEventStream.converted\&quot;}},\&quot;tra |</span>
+<span class="go">|                     |                     |          | \&quot;name\&quot;:\&quot;status\&quot; | nsforms\&quot;:[{\&quot;name\&quot;:\&quot;Projection\&quot;,\&quot;p |</span>
+<span class="go">|                     |                     |          | ,\&quot;type\&quot;:[\&quot;int\&quot;, | roperties\&quot;:{\&quot;drop\&quot;:\&quot;headers\&quot;}}]}&quot;, |</span>
+<span class="go">|                     |                     |          | \&quot;null\&quot;]},\n       | &quot;sourceId&quot;:&quot;source:Stream&quot;}}            |</span>
+<span class="go">|                     |                     |          |                   { | instances=1                             |</span>
+<span class="go">|                     |                     |          | \&quot;name\&quot;:\&quot;contentl |                                         |</span>
+<span class="go">|                     |                     |          | ength\&quot;,\&quot;type\&quot;:[\ |                                         |</span>
+<span class="go">|                     |                     |          | &quot;int\&quot;,\&quot;null\&quot;]},\ |                                         |</span>
+<span class="go">|                     |                     |          | n                   |                                         |</span>
+<span class="go">|                     |                     |          |       {\&quot;name\&quot;:\&quot;r |                                         |</span>
+<span class="go">|                     |                     |          | eferrer\&quot;,\&quot;type\&quot;: |                                         |</span>
+<span class="go">|                     |                     |          | [\&quot;string\&quot;,\&quot;null\ |                                         |</span>
+<span class="go">|                     |                     |          | &quot;]},\n              |                                         |</span>
+<span class="go">|                     |                     |          |            {\&quot;name\ |                                         |</span>
+<span class="go">|                     |                     |          | &quot;:\&quot;useragent\&quot;,\&quot;t |                                         |</span>
+<span class="go">|                     |                     |          | ype\&quot;:[\&quot;string\&quot;,\ |                                         |</span>
+<span class="go">|                     |                     |          | &quot;null\&quot;]}\n         |                                         |</span>
+<span class="go">|                     |                     |          |             ]\n     |                                         |</span>
+<span class="go">|                     |                     |          |             }&quot;,&quot;bas |                                         |</span>
+<span class="go">|                     |                     |          | ePath&quot;:&quot;logEventStr |                                         |</span>
+<span class="go">|                     |                     |          | eam.converted&quot;}}}   |                                         |</span>
+<span class="go">+======================================================================================================================+</span>
 </pre></div>
 </div>
 </td>
@@ -1286,11 +1300,11 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 </tr>
 <tr class="row-odd"><th class="stub">&nbsp;</th>
 <td><p class="first"><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">list</span> <span class="pre">dataset</span> <span class="pre">instances</span></code></p>
-<div class="last highlight-console"><div class="highlight"><pre><span class="go">+======================================================================================================+</span>
-<span class="go">| name                                  | type                                                         |</span>
-<span class="go">+======================================================================================================+</span>
-<span class="go">| logEventStream.converted              | co.cask.cdap.api.dataset.lib.TimePartitionedFileSet          |</span>
-<span class="go">+======================================================================================================+</span>
+<div class="last highlight-console"><div class="highlight"><pre><span class="go">+=================================================================================+</span>
+<span class="go">| name                      | type                                                |</span>
+<span class="go">+=================================================================================+</span>
+<span class="go">| logEventStream.converted  | co.cask.cdap.api.dataset.lib.TimePartitionedFileSet |</span>
+<span class="go">+=================================================================================+</span>
 </pre></div>
 </div>
 </td>
@@ -1327,34 +1341,35 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 <td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">execute</span> <span class="pre">'describe</span> <span class="pre">dataset_logEventStream_converted'</span></code></td>
 </tr>
 <tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">+==========================================================================================+</span>
-<span class="go">| col_name: STRING                             | data_type: STRING   | comment: STRING     |</span>
-<span class="go">+==========================================================================================+</span>
-<span class="go">| remotehost                                   | string              | from deserializer   |</span>
-<span class="go">| remotelogname                                | string              | from deserializer   |</span>
-<span class="go">| authuser                                     | string              | from deserializer   |</span>
-<span class="go">| date                                         | string              | from deserializer   |</span>
-<span class="go">| request                                      | string              | from deserializer   |</span>
-<span class="go">| status                                       | int                 | from deserializer   |</span>
-<span class="go">| contentlength                                | int                 | from deserializer   |</span>
-<span class="go">| referrer                                     | string              | from deserializer   |</span>
-<span class="go">| useragent                                    | string              | from deserializer   |</span>
-<span class="go">| ts                                           | bigint              | from deserializer   |</span>
-<span class="go">| year                                         | int                 |                     |</span>
-<span class="go">| month                                        | int                 |                     |</span>
-<span class="go">| day                                          | int                 |                     |</span>
-<span class="go">| hour                                         | int                 |                     |</span>
-<span class="go">| minute                                       | int                 |                     |</span>
-<span class="go">|                                              |                     |                     |</span>
-<span class="go">| # Partition Information                      |                     |                     |</span>
-<span class="go">| # col_name                                   | data_type           | comment             |</span>
-<span class="go">|                                              |                     |                     |</span>
-<span class="go">| year                                         | int                 |                     |</span>
-<span class="go">| month                                        | int                 |                     |</span>
-<span class="go">| day                                          | int                 |                     |</span>
-<span class="go">| hour                                         | int                 |                     |</span>
-<span class="go">| minute                                       | int                 |                     |</span>
-<span class="go">+==========================================================================================+</span>
+<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">+=======================================================================+</span>
+<span class="go">| col_name: STRING        | data_type: STRING    | comment: STRING      |</span>
+<span class="go">+=======================================================================+</span>
+<span class="go">| ts                      | bigint               | from deserializer    |</span>
+<span class="go">| remotehost              | string               | from deserializer    |</span>
+<span class="go">| remotelogname           | string               | from deserializer    |</span>
+<span class="go">| authuser                | string               | from deserializer    |</span>
+<span class="go">| date                    | string               | from deserializer    |</span>
+<span class="go">| request                 | string               | from deserializer    |</span>
+<span class="go">| status                  | int                  | from deserializer    |</span>
+<span class="go">| contentlength           | int                  | from deserializer    |</span>
+<span class="go">| referrer                | string               | from deserializer    |</span>
+<span class="go">| useragent               | string               | from deserializer    |</span>
+<span class="go">| year                    | int                  |                      |</span>
+<span class="go">| month                   | int                  |                      |</span>
+<span class="go">| day                     | int                  |                      |</span>
+<span class="go">| hour                    | int                  |                      |</span>
+<span class="go">| minute                  | int                  |                      |</span>
+<span class="go">|                         |                      |                      |</span>
+<span class="go">| # Partition Information |                      |                      |</span>
+<span class="go">| # col_name              | data_type            | comment              |</span>
+<span class="go">|                         |                      |                      |</span>
+<span class="go">| year                    | int                  |                      |</span>
+<span class="go">| month                   | int                  |                      |</span>
+<span class="go">| day                     | int                  |                      |</span>
+<span class="go">| hour                    | int                  |                      |</span>
+<span class="go">| minute                  | int                  |                      |</span>
+<span class="go">+=======================================================================+</span>
+<span class="go">Fetched 24 rows</span>
 </pre></div>
 </div>
 </td>
@@ -1402,6 +1417,7 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 <span class="go">| 1430769459594 | GET /rest/api/latest/server?_=1423341 | 200         |</span>
 <span class="go">|               | 312520 HTTP/1.1                       |             |</span>
 <span class="go">+=====================================================================+</span>
+<span class="go">Fetched 2 rows</span>
 </pre></div>
 </div>
 </td>
@@ -1455,7 +1471,17 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">apps/cdap-wise-</span></code><code class="docutils literal"><span class="pre">0.4.0</span></code><code class="docutils literal"><span class="pre">.jar</span></code></td>
+<td><p class="first">Download the Wise app and unzip into the <code class="docutils literal"><span class="pre">examples</span></code> directory of your CDAP SDK:</p>
+<div class="line-block">
+<div class="line"><code class="docutils literal"><span class="pre">$</span> <span class="pre">cd</span> <span class="pre">$CDAP_SDK_HOME/examples</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">$</span> <span class="pre">curl</span> <span class="pre">-O</span> <span class="pre">http://repository.cask.co/downloads/co/cask/cdap/apps/</span></code><code class="docutils literal"><span class="pre">0.4.0</span></code><code class="docutils literal"><span class="pre">/cdap-wise-</span></code><code class="docutils literal"><span class="pre">0.4.0</span></code><code class="docutils literal"><span class="pre">.zip</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">$</span> <span class="pre">unzip</span> <span class="pre">cdap-wise-</span></code><code class="docutils literal"><span class="pre">0.4.0</span></code><code class="docutils literal"><span class="pre">.zip</span></code></div>
+</div>
+<p>From within the CDAP CLI:</p>
+<div class="last line-block">
+<div class="line"><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">examples/cdap-wise-</span></code><code class="docutils literal"><span class="pre">0.4.0</span></code><code class="docutils literal"><span class="pre">/target/cdap-wise-</span></code><code class="docutils literal"><span class="pre">0.4.0</span></code><code class="docutils literal"><span class="pre">.jar</span></code></div>
+</div>
+</td>
 </tr>
 <tr class="row-odd"><th class="stub">&nbsp;</th>
 <td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">Successfully deployed application</span>
@@ -1956,15 +1982,20 @@ and port in the YARN logs or by writing a discovery client that is co-ordinated 
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">list</span> <span class="pre">dataset</span> <span class="pre">instances</span></code></td>
+<td><ul class="first last simple">
+<li>The listing will depend on if you have run all of the previous examples</li>
+<li><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">list</span> <span class="pre">dataset</span> <span class="pre">instances</span></code></li>
+</ul>
+</td>
 </tr>
 <tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">+=================================================================+</span>
-<span class="go">| name             | type                                         |</span>
-<span class="go">+=================================================================+</span>
-<span class="go">| pageViewStore    | co.cask.cdap.apps.wise.PageViewStore         |</span>
-<span class="go">| bounceCountStore | co.cask.cdap.apps.wise.BounceCountStore      |</span>
-<span class="go">+=================================================================+</span>
+<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">+================================================================================+</span>
+<span class="go">| name                     | type                                                |</span>
+<span class="go">+================================================================================+</span>
+<span class="go">| pageViewStore            | co.cask.cdap.apps.wise.PageViewStore                |</span>
+<span class="go">| bounceCountStore         | co.cask.cdap.apps.wise.BounceCountStore             |</span>
+<span class="go">| logEventStream.converted | co.cask.cdap.api.dataset.lib.TimePartitionedFileSet |</span>
+<span class="go">+================================================================================+</span>
 </pre></div>
 </div>
 </td>

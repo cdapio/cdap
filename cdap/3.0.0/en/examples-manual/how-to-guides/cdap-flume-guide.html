@@ -102,7 +102,7 @@ to serve the analysis results via HTTP.</li>
 <div class="section" id="what-you-will-need">
 <h2>What You Will Need<a class="headerlink" href="#what-you-will-need" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><a class="reference external" href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">JDK 6 or JDK 7</a></li>
+<li><a class="reference external" href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">JDK 7</a></li>
 <li><a class="reference external" href="http://maven.apache.org/">Apache Maven 3.0+</a></li>
 <li><a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/getting-started/standalone/index.html">CDAP SDK</a></li>
 <li><a class="reference external" href="http://flume.apache.org/download.html">Apache Flume</a></li>
@@ -249,9 +249,9 @@ available on your PATH. If this is not the case, please add it:</p>
 </div>
 <p>We can then deploy the application to a standalone CDAP installation and
 start the flow and service:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh deploy app target/cdap-flume-guide-&lt;version&gt;.jar
-<span class="gp">$</span> cdap-cli.sh start flow WebLogAnalyticsApp.WebLogAnalyticsFlow
-<span class="gp">$</span> cdap-cli.sh start service WebLogAnalyticsApp.WebLogAnalyticsService
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh -u localhost:10000/default deploy app target/cdap-flume-guide-&lt;version&gt;.jar
+<span class="gp">$</span> cdap-cli.sh -u localhost:10000/default start flow WebLogAnalyticsApp.WebLogAnalyticsFlow
+<span class="gp">$</span> cdap-cli.sh -u localhost:10000/default start service WebLogAnalyticsApp.WebLogAnalyticsService
 </pre></div>
 </div>
 <p>Once the flow has started, it is ready to receive the web logs from the
@@ -313,6 +313,7 @@ library with <code class="docutils literal"><span class="pre">guava-17.0.jar</sp
 <span class="go">a1.sinks.k1.type = co.cask.cdap.flume.StreamSink</span>
 <span class="go">a1.sinks.k1.channel = c1</span>
 <span class="go">a1.sinks.k1.host  = 127.0.0.1</span>
+<span class="go">a1.sinks.k1.namespace = default</span>
 <span class="go">a1.sinks.k1.port = 10000</span>
 <span class="go">a1.sinks.k1.streamName = webLogs</span>
 <span class="go">a1.channels.c1.type = memory</span>
@@ -348,7 +349,7 @@ data is received. Then you can query the computed page views statistics.</p>
 <h3>Query Results<a class="headerlink" href="#query-results" title="Permalink to this headline">¶</a></h3>
 <p><code class="docutils literal"><span class="pre">WebLogAnalyticsService</span></code> exposes an HTTP endpoint for you to query the
 results of processing:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> -X GET http://localhost:10000/v3/namespaces/default/apps/WebLogAnalyticsApp/services/WebLogAnalyticsService/methods/views
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh -u localhost:10000/default call service WebLogAnalyticsApp.WebLogAnalyticsService GET /views
 </pre></div>
 </div>
 <p>Example output:</p>
