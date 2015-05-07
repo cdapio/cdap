@@ -17,20 +17,99 @@
 package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data.stream.service.StreamHandler;
+import co.cask.cdap.data2.datafabric.dataset.service.DatasetInstanceHandler;
+import co.cask.cdap.data2.datafabric.dataset.service.DatasetTypeHandler;
+import co.cask.cdap.explore.executor.ExploreExecutorHttpHandler;
+import co.cask.cdap.explore.executor.ExploreMetadataHttpHandler;
+import co.cask.cdap.explore.executor.ExploreStatusHandler;
+import co.cask.cdap.explore.executor.NamespacedExploreMetadataHttpHandler;
+import co.cask.cdap.explore.executor.NamespacedQueryExecutorHttpHandler;
+import co.cask.cdap.explore.executor.QueryExecutorHttpHandler;
 import co.cask.cdap.gateway.auth.Authenticator;
+import co.cask.cdap.gateway.handlers.AdapterHttpHandler;
+import co.cask.cdap.gateway.handlers.AppFabricDataHttpHandler;
+import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
+import co.cask.cdap.gateway.handlers.ApplicationTemplateHandler;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
+import co.cask.cdap.gateway.handlers.ConfigHandler;
+import co.cask.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
+import co.cask.cdap.gateway.handlers.DashboardHttpHandler;
+import co.cask.cdap.gateway.handlers.MonitorHandler;
+import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
+import co.cask.cdap.gateway.handlers.NotificationFeedHttpHandler;
+import co.cask.cdap.gateway.handlers.PreferencesHttpHandler;
+import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
+import co.cask.cdap.gateway.handlers.TransactionHttpHandler;
+import co.cask.cdap.gateway.handlers.UsageHandler;
+import co.cask.cdap.gateway.handlers.VersionHandler;
+import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
+import co.cask.cdap.metrics.query.MetricsHandler;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.commons.lang.StringUtils;
+import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Map;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
 
 /**
  * Class to match the request path to corresponding service like app-fabric, or metrics service.
  */
 public final class RouterPathLookup extends AuthenticatedHttpHandler {
 
+  private static final Logger LOG = LoggerFactory.getLogger(RouterPathLookup.class);
+
+  private static final Map<String, ? extends List<Class<?>>> HANDLERS = ImmutableMap.of(
+    Constants.Service.STREAMS, ImmutableList.<Class<?>>of(
+      StreamHandler.class),
+    Constants.Service.METRICS, ImmutableList.<Class<?>>of(
+      MetricsHandler.class),
+    Constants.Service.APP_FABRIC_HTTP, ImmutableList.<Class<?>>of(
+      AppFabricDataHttpHandler.class,
+      AppLifecycleHttpHandler.class,
+      ProgramLifecycleHttpHandler.class,
+      ConfigHandler.class,
+      VersionHandler.class,
+      MonitorHandler.class,
+      UsageHandler.class,
+      NamespaceHttpHandler.class,
+      NotificationFeedHttpHandler.class,
+      DashboardHttpHandler.class,
+      PreferencesHttpHandler.class,
+      ConsoleSettingsHttpHandler.class,
+      TransactionHttpHandler.class,
+      AdapterHttpHandler.class,
+      ApplicationTemplateHandler.class,
+      WorkflowHttpHandler.class),
+    Constants.Service.DATASET_MANAGER, ImmutableList.<Class<?>>of(
+      DatasetInstanceHandler.class,
+      DatasetTypeHandler.class),
+    Constants.Service.EXPLORE_HTTP_USER_SERVICE, ImmutableList.<Class<?>>of(
+      ExploreExecutorHttpHandler.class,
+      ExploreMetadataHttpHandler.class,
+      ExploreStatusHandler.class,
+      NamespacedExploreMetadataHttpHandler.class,
+      NamespacedQueryExecutorHttpHandler.class,
+      QueryExecutorHttpHandler.class)
+  );
+
+  private MatchTree matcher;
+
   @Inject
-  public RouterPathLookup(Authenticator authenticator) {
+  public RouterPathLookup(Authenticator authenticator) throws ConflictingRouteException {
     super(authenticator);
+    matcher = createMatchTree(HANDLERS);
   }
 
   @SuppressWarnings("unused")
@@ -56,12 +135,12 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       //If service contains "$HOST" and if first split element is NOT the gateway version, then send it to WebApp
       //WebApp serves only static files (HTML, CSS, JS) and so /<appname> calls should go to WebApp
       //But stream calls issued by the UI should be routed to the appropriate CDAP service
-      if (fallbackService.contains("$HOST") && (uriParts.length >= 1)
-        && !("/" + uriParts[0]).equals(Constants.Gateway.API_VERSION_3)) {
+      boolean isV3request = requestPath.startsWith(Constants.Gateway.API_VERSION_3);
+      if (!isV3request && fallbackService.contains("$HOST")) {
         return fallbackService;
-      }
-      if (uriParts[0].equals(Constants.Gateway.API_VERSION_3_TOKEN)) {
-        return getV3RoutingService(uriParts, requestMethod);
+      } else if (isV3request) {
+        return matcher.match(httpRequest.getMethod(), requestPath);
+        // return getV3RoutingService(uriParts, requestMethod);
       }
     } catch (Exception e) {
       // Ignore exception. Default routing to app-fabric.
@@ -161,4 +240,69 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     }
     return true;
   }
+
+  private static MatchTree createMatchTree(Map<String, ? extends List<Class<?>>> serviceMap)
+    throws ConflictingRouteException {
+
+    // start with an empty decision tree
+    MatchTree matchTree = new MatchTree();
+
+    // add NO_ROUTE for feeds
+    matchTree.addRoute(null, "/v3/feeds", MatchTree.NO_ROUTE);
+
+    // add all methods of all handlers
+    for (String service : serviceMap.keySet()) {
+      for (Class<?> handlerClass : serviceMap.get(service)) {
+        Path handlerPathAnnotation = handlerClass.getAnnotation(Path.class);
+        String handlerPath = handlerPathAnnotation == null ? "" : handlerPathAnnotation.value();
+        for (Method method : handlerClass.getMethods()) {
+          Path methodPathAnnotation = method.getAnnotation(Path.class);
+          if (methodPathAnnotation != null) {
+            String methodPath = methodPathAnnotation.value();
+            String completePath = handlerPath.endsWith("/") || methodPath.startsWith("/")
+              ? handlerPath + methodPath : handlerPath + "/" + methodPath;
+            HttpMethod httpMethod;
+            if (method.isAnnotationPresent(GET.class)) {
+              httpMethod = HttpMethod.GET;
+            } else if (method.isAnnotationPresent(PUT.class)) {
+              httpMethod = HttpMethod.PUT;
+            } else if (method.isAnnotationPresent(POST.class)) {
+              httpMethod = HttpMethod.POST;
+            } else if (method.isAnnotationPresent(DELETE.class)) {
+              httpMethod = HttpMethod.DELETE;
+            } else {
+              LOG.warn("Ignoring method {} with @Path '{}' in handler {} that has no HTTP method annotation",
+                       method.getName(), methodPath, handlerClass.getName());
+              continue;
+            }
+            LOG.debug("Adding {} '{}' for handler {}", httpMethod, completePath, handlerClass.getName());
+            try {
+              matchTree.addRoute(httpMethod, completePath, service);
+            } catch (ConflictingRouteException e) {
+              LOG.error("Error adding {} '{}' for handler {}: {}",
+                        httpMethod, completePath, handlerClass.getName(), e.getMessage());
+              throw e;
+            }
+          }
+        }
+      }
+    }
+    String userServiceMethodPath = "/v3/namespaces/{...}/apps/{...}/services/{...}/methods/{...}";
+    LOG.debug("Adding route '{}' for user service handler", userServiceMethodPath);
+    try {
+      matchTree.addRoute(null, userServiceMethodPath, MatchTree.USER_SERVICE_FORMAT);
+    } catch (ConflictingRouteException e) {
+      LOG.error("Error adding route '{}' for user service handler: {}", userServiceMethodPath, e.getMessage());
+      throw e;
+    }
+    matchTree.optimize();
+    return matchTree;
+  }
+
+
+  public static void main(String[] args) throws ConflictingRouteException {
+    MatchTree root = createMatchTree(HANDLERS);
+    System.out.println(root);
+  }
+
 }

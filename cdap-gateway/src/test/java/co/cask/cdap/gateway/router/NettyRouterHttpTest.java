@@ -73,7 +73,7 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
     }
 
     @Override
-    protected void startUp() {
+    protected void startUp() throws ConflictingRouteException {
       CConfiguration cConf = CConfiguration.create();
       SConfiguration sConfiguration = SConfiguration.create();
       Injector injector = Guice.createInjector(new ConfigModule(cConf), new IOModule(),

@@ -121,7 +121,7 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
     }
 
     @Override
-    protected void startUp() {
+    protected void startUp() throws ConflictingRouteException {
       CConfiguration cConf = CConfiguration.create();
       SConfiguration sConf = SConfiguration.create();
       cConf.setBoolean(Constants.Security.SSL_ENABLED, true);
