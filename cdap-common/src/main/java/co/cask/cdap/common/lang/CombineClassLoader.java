@@ -77,7 +77,8 @@ public class CombineClassLoader extends ClassLoader {
 
   @Override
   protected Enumeration<URL> findResources(String name) throws IOException {
-    Set<URL> urls = Sets.newHashSet();
+    // Using LinkedHashSet to preserve the ordering
+    Set<URL> urls = Sets.newLinkedHashSet();
     for (ClassLoader classLoader : delegates) {
       Iterators.addAll(urls, Iterators.forEnumeration(classLoader.getResources(name)));
     }
