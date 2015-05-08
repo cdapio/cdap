@@ -151,7 +151,7 @@ final class HttpHandlerGenerator {
       InputStream sourceBytes = rawType.getClassLoader().getResourceAsStream(Type.getInternalName(rawType) + ".class")
     ) {
       ClassReader classReader = new ClassReader(sourceBytes);
-      classReader.accept(new ClassVisitor(Opcodes.ASM4) {
+      classReader.accept(new ClassVisitor(Opcodes.ASM5) {
 
         // Only need to visit @Path at the class level if we are inspecting the user handler class
         private final boolean inspectDelegate = delegateType.equals(inspectType);
@@ -170,7 +170,7 @@ final class HttpHandlerGenerator {
           if (inspectDelegate && type.equals(Type.getType(Path.class))) {
             visitedPath = true;
             AnnotationVisitor annotationVisitor = classWriter.visitAnnotation(desc, visible);
-            return new AnnotationVisitor(Opcodes.ASM4, annotationVisitor) {
+            return new AnnotationVisitor(Opcodes.ASM5, annotationVisitor) {
               @Override
               public void visit(String name, Object value) {
                 // "value" is the key for the Path annotation string.
@@ -319,7 +319,7 @@ final class HttpHandlerGenerator {
     HandlerMethodVisitor(TypeToken<?> delegateType, MethodVisitor mv, String desc,
                          String signature, int access, String name, String[] exceptions,
                          Type classType, ClassWriter classWriter, List<Class<?>> preservedClasses) {
-      super(Opcodes.ASM4, mv);
+      super(Opcodes.ASM5, mv);
       this.delegateType = delegateType;
       this.desc = desc;
       this.signature = signature;
@@ -337,7 +337,7 @@ final class HttpHandlerGenerator {
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
       // Memorize all visible annotations
       if (visible) {
-        AnnotationNode annotationNode = new AnnotationNode(Opcodes.ASM4, desc);
+        AnnotationNode annotationNode = new AnnotationNode(Opcodes.ASM5, desc);
         annotations.add(annotationNode);
         return annotationNode;
       }
@@ -349,7 +349,7 @@ final class HttpHandlerGenerator {
       // Memorize all visible annotations for each parameter.
       // It needs to store in a Multimap because there can be multiple annotations per parameter.
       if (visible) {
-        AnnotationNode annotationNode = new AnnotationNode(Opcodes.ASM4, desc);
+        AnnotationNode annotationNode = new AnnotationNode(Opcodes.ASM5, desc);
         paramAnnotations.put(parameter, annotationNode);
         return annotationNode;
       }
