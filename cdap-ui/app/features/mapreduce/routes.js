@@ -24,6 +24,22 @@ angular.module(PKG.name + '.feature.mapreduce')
           parent: 'apps.detail.overview',
           label: 'Mapreduce',
           skip: true
+        },
+        resolve: {
+          rRuns: function(MyDataSource, $stateParams, $q) {
+            var defer = $q.defer();
+
+            var dataSrc = new MyDataSource();
+
+            dataSrc.request({
+              _cdapPath: '/namespaces/' + $stateParams.namespace + '/apps/' + $stateParams.appId + '/mapreduce/' + $stateParams.programId + '/runs'
+            })
+            .then(function (res) {
+              defer.resolve(res);
+            });
+
+            return defer.promise;
+          }
         }
       })
         .state('mapreduce.detail.runs', {
@@ -32,22 +48,6 @@ angular.module(PKG.name + '.feature.mapreduce')
           controller: 'MapreduceRunsController',
           ncyBreadcrumb: {
             label: '{{$state.params.programId}}'
-          },
-          resolve: {
-            rRuns: function(MyDataSource, $stateParams, $q) {
-              var defer = $q.defer();
-
-              var dataSrc = new MyDataSource();
-
-              dataSrc.request({
-                _cdapPath: '/namespaces/' + $stateParams.namespace + '/apps/' + $stateParams.appId + '/mapreduce/' + $stateParams.programId + '/runs'
-              })
-              .then(function (res) {
-                defer.resolve(res);
-              });
-
-              return defer.promise;
-            }
           }
         })
           .state('mapreduce.detail.runs.run', {
@@ -69,6 +69,7 @@ angular.module(PKG.name + '.feature.mapreduce')
         .state('mapreduce.detail.history', {
           url: '/history',
           templateUrl: '/assets/features/mapreduce/templates/tabs/history.html',
+          controller: 'MapreduceRunsController',
           ncyBreadcrumb: {
             parent: 'apps.detail.overview',
             label: 'History'
