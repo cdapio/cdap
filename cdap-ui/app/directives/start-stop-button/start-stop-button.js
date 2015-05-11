@@ -11,7 +11,8 @@ angular.module(PKG.name + '.commons')
       },
       templateUrl: 'start-stop-button/start-stop-button.html',
       controller: function($scope, $state, MyDataSource, myRuntimeService, myProgramPreferencesService) {
-        $scope.isStoppable = !!$scope.isStoppable || false;
+        $scope.isStoppable = ($scope.isStoppable == 'true');
+        
         if ( typeof $scope.isPreferences === 'undefined') {
           $scope.isPreferences = true;
         } else {

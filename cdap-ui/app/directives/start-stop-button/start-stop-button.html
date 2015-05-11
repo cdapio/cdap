@@ -1,24 +1,22 @@
 <div class="btn-group" dropdown>
 
-  <div ng-if="status == 'STOPPED' && isStoppable"
+  <div ng-if="status == 'STOPPED'"
        class="btn btn-success btn-md"
        ng-click="do('start')">
     <span class="fa fa-play"> </span>
     <span>Start</span>
   </div>
-  <div ng-if="status == 'RUNNING' && isStoppable"
+  <div ng-if="status == 'RUNNING' && isStoppable == 'false'"
+       class="btn btn-success btn-md"
+       ng-disabled="status == 'RUNNING' && isStoppable == 'false'">
+       <span class="fa fa-play"></span>
+       <span>Start</span>
+  </div>
+  <div ng-if="status == 'RUNNING' && isStoppable == 'true'"
        class="btn btn-danger btn-md"
        ng-click="do('stop')">
     <span class="fa fa-stop"> </span>
     <span>Stop</span>
-  </div>
-
-
-  <div ng-if="status != 'STOPPED' && !isStoppable"
-       class="btn btn-success btn-md"
-       ng-click="do('start')">
-    <span class="fa fa-play"> </span>
-    <span>Start</span>
   </div>
 
   <div ng-if="status == 'STARTING' || status == 'STOPPING'"
