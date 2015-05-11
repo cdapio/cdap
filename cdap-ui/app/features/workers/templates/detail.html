@@ -10,25 +10,11 @@
     </div>
   </div>
   <div class="col-sm-6 text-right">
-    <div ng-show="status == 'RUNNING'"
-         class="btn btn-danger btn-md"
-         ng-click="stop()">
-      <span class="fa fa-stop"> </span>
-      <span>Stop</span>
-    </div>
-
-    <div ng-show="status == 'STOPPED'"
-         class="btn btn-success btn-md"
-         ng-click="start()">
-      <span class="fa fa-play"> </span>
-      <span>Start</span>
-    </div>
-    <div ng-show="status == 'STARTING' || status == 'STOPPING'"
-         class="btn btn-md"
-         ng-class="{'btn-success': status === 'STARTING', 'btn-danger': status === 'STOPPING'}">
-      <span class="fa fa-refresh fa-spin"></span>
-      <span>{{status | caskCapitalizeFilter}}</span>
-    </div>
+    <my-start-stop-button
+      type="workers"
+      is-preferences="false"
+      is-stoppable="true">
+    </my-start-stop-button>
   </div>
 </div>
 
