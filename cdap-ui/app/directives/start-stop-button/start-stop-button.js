@@ -5,12 +5,18 @@ angular.module(PKG.name + '.commons')
       scope: {
         type: '@',
         isStoppable: '@',
+        isPreferences: '@',
         preferencesHandler: '&',
         runtimeHandler: '&'
       },
       templateUrl: 'start-stop-button/start-stop-button.html',
       controller: function($scope, $state, MyDataSource, myRuntimeService, myProgramPreferencesService) {
         $scope.isStoppable = !!$scope.isStoppable || false;
+        if ( typeof $scope.isPreferences === 'undefined') {
+          $scope.isPreferences = true;
+        } else {
+          $scope.isPreferences = !!$scope.isPreferences;
+        }
         $scope.runtimeArgs = [];
         var path = '/apps/' + $state.params.appId +
                    '/' + $scope.type + '/' + $state.params.programId;
