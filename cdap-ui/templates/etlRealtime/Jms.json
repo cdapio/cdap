@@ -32,9 +32,9 @@
 
     "group2": {
        "display" : "JMS Connection Factory",
-       "position" : [ "ConnectionFactory", "jms.factory.initial", "jms.provider.url" ],
+       "position" : [ "jms.jndi.connectionfactory.name", "jms.factory.initial", "jms.provider.url" ],
        "fields" : {
-          "ConnectionFactory" : {
+          "jms.jndi.connectionfactory.name" : {
              "widget": "textbox",
              "label": "Connection Factory Name"
           },
