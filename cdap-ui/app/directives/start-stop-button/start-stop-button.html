@@ -8,7 +8,7 @@
   </div>
   <div ng-if="status === 'RUNNING' && isStoppable === 'false'"
        class="btn btn-success btn-md"
-       ng-disabled="status == 'RUNNING' && isStoppable === 'false'">
+       ng-disabled="status === 'RUNNING' && isStoppable === 'false'">
        <span class="fa fa-play"></span>
        <span>Start</span>
   </div>
@@ -19,7 +19,7 @@
     <span>Stop</span>
   </div>
 
-  <div ng-if="status === 'STARTING' || status == 'STOPPING'"
+  <div ng-if="status === 'STARTING' || status === 'STOPPING'"
        class="btn btn-md"
        ng-class="{'btn-success': status === 'STARTING', 'btn-danger': status === 'STOPPING'}"
        >
