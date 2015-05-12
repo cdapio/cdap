@@ -5,8 +5,8 @@
           dropdown is-open="dropdown.isopen">
       <button type="button"
               class="btn btn-default dropdown-toggle"
-              dropdown-toggle ng-disabled="current === 'No Run'">
-        {{ runs.selected.runid }}
+              dropdown-toggle ng-disabled="runs.length == 0">
+        <span>{{ runs.selected.runid }}</span>
         <span class="caret"></span>
       </button>
       <ul class="dropdown-menu" role="menu">
