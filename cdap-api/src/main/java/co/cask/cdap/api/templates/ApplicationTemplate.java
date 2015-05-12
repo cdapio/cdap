@@ -33,9 +33,8 @@ import javax.annotation.Nullable;
 public abstract class ApplicationTemplate<T> implements Application {
 
   /**
-   * Configure an Adapter with the given configuration.
-   * This method is called when an adapter is created in order to define what Datasets, Streams, and
-   * Plugins, and runtime arguments should be available to the adapter.
+   * Called when an adapter is created in order to define what Datasets, Streams, Plugins, and runtime arguments
+   * should be available to the adapter, as determined by the given configuration.
    *
    * @param name name of the adapter
    * @param configuration adapter configuration. It will be {@code null} if there is no configuration provided.
