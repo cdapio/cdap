@@ -194,6 +194,14 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
         }
       };
 
+      scope.handleTooltip = function(tip, nodeId) {
+        tip
+          .html(function() {
+            return '<strong>' + nodeId + '</strong>';
+          })
+          .show();
+      };
+
       /**
        * Radius for instances circle in flowlets. This is a determined as a factor of the size of the
        * instances text.
@@ -389,6 +397,16 @@ module.directive('myWorkflowGraph', function ($filter) {
         });
       };
 
+      scope.handleTooltip = function(tip, nodeId) {
+        if (['Start', 'End'].indexOf(nodeId) === -1) {
+          tip
+            .html(function() {
+              return '<strong>'+ scope.instanceMap[nodeId].nodeId + ' : ' + scope.instanceMap[nodeId].program.programName +'</strong>';
+            })
+            .show();
+        }
+
+      };
     }
   }, baseDirective);
 });
@@ -456,22 +474,7 @@ function genericRender(scope) {
   /**
    * Handles showing tooltip on mouseover of node name.
    */
-  scope.handleShowTip = function(nodeId) {
-    if (scope.instanceMap[nodeId].type !== 'ACTION') {
-      tip
-        .html(function() {
-          return '<strong>' + nodeId + '</strong>';
-        })
-        .show();
-    } else {
-      tip
-        .html(function() {
-          return '<strong>'+ scope.instanceMap[nodeId].nodeId + ' : ' + scope.instanceMap[nodeId].program.programName +'</strong>';
-        })
-        .show();
-    }
-
-  };
+  scope.handleShowTip = scope.handleTooltip.bind(null, tip);
 
   /**
    * Handles hiding tooltip on mouseout of node name.
