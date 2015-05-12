@@ -27,6 +27,7 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.StreamClient;
 import co.cask.common.cli.Arguments;
+import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
@@ -94,10 +95,11 @@ public class LoadStreamCommand extends AbstractAuthCommand implements Categorize
     return String.format("Loads a file to %s. The contents of the file will " +
                          "become multiple events in the %s, " +
                          "based on the content type. If <%s> is not provided, " +
-                         "it will be detected by the file extension.",
+                         "it will be detected by the file extension. Supported <%s>s: %s",
                          Fragment.of(Article.A, ElementType.STREAM.getTitleName()),
                          ElementType.STREAM.getTitleName(),
-                         ArgumentName.CONTENT_TYPE);
+                         ArgumentName.CONTENT_TYPE, ArgumentName.CONTENT_TYPE,
+                         Joiner.on(", ").join(CONTENT_TYPE_MAP.keySet()));
   }
 
   private String getContentType(String extension) {
