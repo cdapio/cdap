@@ -143,13 +143,13 @@ angular.module(PKG.name + '.feature.flows')
 
             });
 
-            var arrivalPath = '/metrics/query?metric=system.process.events.in'+
+            var arrivalPath = '/metrics/query?metric=system.process.events.processed'+
               '&tag=namespace:' + $state.params.namespace +
               '&tag=app:' + $state.params.appId +
               '&tag=flow' + $state.params.programId +
               '&tag=flowlet:' + flowletid +
               '&tag=run:' + $scope.runs.selected.runid +
-              '&start=now-60s&end=now&aggregate=true';
+              '&start=now-1s&end=now';
             // POLLING ARRIVAL RATE
             dataSrc
               .poll({
