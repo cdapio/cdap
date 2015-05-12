@@ -2134,7 +2134,7 @@
     <profile>
       <id>unit-tests</id>
       <activation>
-        <activeByDefault>true</activeByDefault>
+        <jdk>[1.7,)</jdk>
       </activation>
 
       <modules>
