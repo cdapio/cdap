@@ -26,7 +26,7 @@ angular.module(PKG.name + '.feature.mapreduce')
       $scope.activeTab = tab;
     };
 
-    if ($scope.current !== 'No Run') {
+    if ($scope.runs.length > 0) {
       var runid = $scope.current;
 
       dataSrc.poll({

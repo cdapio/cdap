@@ -18,7 +18,6 @@ angular.module(PKG.name + '.commons')
         $scope.$watch('internalModel', function(newVal, oldVal) {
           if (newVal !== oldVal) {
             $scope.model = angular.toJson($scope.internalModel);
-            console.info("model: ", JSON.stringify($scope.model));
           }
         });
       }
