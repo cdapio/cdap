@@ -349,6 +349,7 @@ body.theme-cdap {
     }
     .input-group-addon + .form-control {
       border-left: 1px solid lightgray;
+      .border-radius(0);
      }
     textarea.form-control { min-height: 100px; }
     select.form-control {
@@ -376,6 +377,9 @@ body.theme-cdap {
       }
     }
     .modal-dialog {
+      -ms-transform: translateX(0%) translateY(60px);
+      -webkit-transform: translateX(0%) translateY(60px);
+      transform: translateX(0%) translateY(60px);
       .modal-header {
         .btn {
           .cask-btn(@color: @cdap-header, @background: white, @border: 0, @border-radius: 16px, @padding: 5px 7px);
@@ -396,17 +400,11 @@ body.theme-cdap {
       }
       // Small modal styling
       &.modal-sm {
-        -ms-transform: translateX(0%) translateY(50%);
-        -webkit-transform: translateX(0%) translateY(50%);
-        transform: translateX(0%) translateY(50%);
         text-align: center;
         .modal-footer { text-align: center; }
       }
       // Large modal styling
       &.modal-lg {
-        -ms-transform: translateX(0%) translateY(40%);
-        -webkit-transform: translateX(0%) translateY(40%);
-        transform: translateX(0%) translateY(40%);
         .modal-content {
           .fa-plus { padding-top: 2px }
           a.fa-times { .cask-btn(@color: @brand-danger, @background: @brand-danger, @border: 0, @padding: 15px 15px); }
