@@ -28,6 +28,7 @@ import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.StreamClient;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
@@ -98,7 +99,7 @@ public class LoadStreamCommand extends AbstractAuthCommand implements Categorize
                          "it will be detected by the file extension. Supported file extensions: %s.",
                          Fragment.of(Article.A, ElementType.STREAM.getTitleName()),
                          ElementType.STREAM.getTitleName(),
-                         Joiner.on(", ").join(CONTENT_TYPE_MAP.values()),
+                         Joiner.on(", ").join(ImmutableSet.copyOf(CONTENT_TYPE_MAP.values())),
                          ArgumentName.CONTENT_TYPE,
                          Joiner.on(", ").join(CONTENT_TYPE_MAP.keySet()));
   }
