@@ -11,8 +11,8 @@ angular.module(PKG.name + '.commons')
       },
       templateUrl: 'start-stop-button/start-stop-button.html',
       controller: function($scope, $state, MyDataSource, myRuntimeService, myProgramPreferencesService) {
-        $scope.isStoppable = ($scope.isStoppable == 'true');
-        
+        $scope.isStoppable = ($scope.isStoppable === 'true');
+
         if ( typeof $scope.isPreferences === 'undefined') {
           $scope.isPreferences = true;
         } else {
@@ -28,7 +28,6 @@ angular.module(PKG.name + '.commons')
           _cdapNsPath: path + '/status'
         }, function(res) {
           $scope.status = res.status;
-          console.info($scope.isStoppable, $scope.status);
         });
 
         // Do 'action'. (start/stop)
@@ -40,7 +39,7 @@ angular.module(PKG.name + '.commons')
           };
           if (action === 'start') {
             $scope.status = 'STARTING';
-            if ($scope.runtimeArgs && Object.keys($scope.runtimeArgs).length > 0) {
+            if (Object.keys($scope.runtimeArgs).length > 0) {
               requestObj.body = $scope.runtimeArgs;
             }
           } else {
