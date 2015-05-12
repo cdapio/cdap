@@ -457,11 +457,20 @@ function genericRender(scope) {
    * Handles showing tooltip on mouseover of node name.
    */
   scope.handleShowTip = function(nodeId) {
-    tip
-      .html(function() {
-        return '<strong>'+ scope.instanceMap[nodeId].nodeId + ' : ' + scope.instanceMap[nodeId].program.programName +'</strong>';
-      })
-      .show();
+    if (scope.instanceMap[nodeId].type !== 'ACTION') {
+      tip
+        .html(function() {
+          return '<strong>' + nodeId + '</strong>';
+        })
+        .show();
+    } else {
+      tip
+        .html(function() {
+          return '<strong>'+ scope.instanceMap[nodeId].nodeId + ' : ' + scope.instanceMap[nodeId].program.programName +'</strong>';
+        })
+        .show();
+    }
+
   };
 
   /**
