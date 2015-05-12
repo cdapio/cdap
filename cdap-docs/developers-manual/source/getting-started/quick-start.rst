@@ -140,16 +140,16 @@ Or, you can use an HTTP request::
 
 Because it is tedious to send events manually (not to mention difficult to correctly quote
 a multi-line command), a file with sample web log events is included in the Wise
-application source, along with a script that reads it line-by-line and submits the events
-to the Stream using the RESTful API. Use this script, located in the ``/bin`` directory of
-the application to send events to the stream:
+application source. The CDAp CLI can read it line-by-line and submit them as events
+to the Stream. Use the CLI to send the events to the stream:
 
 .. container:: highlight
 
   .. parsed-literal::
-    |$| cdap-wise-|cdap-apps-version|/bin/inject-data.sh
-
+    |$| cdap-cli.sh load stream logEventStream cdap-wise-|cdap-apps-version|/resources/apache.accesslog
+    
 This will run for a number of seconds until all events are inserted.
+
 
 Inspecting the Injected Data 
 ============================
@@ -219,22 +219,22 @@ we need to know the name of the Flowlet inside the *WiseFlow* that performs the 
 processing. 
 
 In this case, it is a Flowlet named *parser*. Here is a ``curl`` command to retreive the
-number of events it has processed (the number return will vary, depending on how many
-events you have sent)::
+number of events it has processed (the endTime and the value returned will vary, depending 
+on when and how many events you have sent)::
 
   $ curl -w'\n' -X POST 'localhost:10000/v3/metrics/query?'\
   'context=namespace.default.app.Wise.flow.WiseFlow.flowlet.parser'\
   '&metric=system.process.events.processed&aggregate=true'
-  {"startTime":0,"endTime":0,"series":[{"metricName":"system.process.events.processed","grouping":{},"data":[{"time":0,"value":3007}]}]}
+  {"startTime":0,"endTime":1431467057,"series":[{"metricName":"system.process.events.processed","grouping":{},"data":[{"time":0,"value":3007}]}]}
 
 A much easier way to observe the Flow is in the `CDAP UI: <http://localhost:9999>`__
-it shows a `visualization of the Flow, <http://localhost:9999/#/flows/Wise:WiseFlow>`__
+it shows a `visualization of the Flow, <http://localhost:9999/ns/default/apps/Wise/programs/flows/WiseFlow/runs>`__
 annotated with its realtime metrics:
 
 .. image:: ../_images/quickstart/wise-flow1.png
    :width: 600px
 
-In this screenshot, we see that the Stream has about three thousand events and all of them
+In this screenshot, we see that the Stream has about thirty thousand events and all of them
 have been processed by both Flowlets. You can watch these metrics update in realtime by
 repeating the injection of events into the Stream:
 
@@ -243,15 +243,11 @@ repeating the injection of events into the Stream:
   .. parsed-literal::
     |$| cdap-wise-|cdap-apps-version|/bin/inject-data.sh
   
-You can change the type of metrics being displayed using the dropdown menu on the left. If
-you change it from *Flowlet Processed* to *Flowlet Rate*, you see the current number of
-events being processed by each Flowlet, in this case about 63 events per second:
+If you click on the right-most flowlet (*pageViewCount*) you see the current number of
+events being processed by each Flowlet, in this case up to about 60 events per second:
 
 .. image:: ../_images/quickstart/wise-flow2.png
    :width: 600px
-
-.. *Learn More:* A complete description of the Flow status page can be found in the
-.. :ref:`CDAP UI documentation. <admin-guide:cdap-ui>`
 
 
 Retrieving the Results of Processing 
