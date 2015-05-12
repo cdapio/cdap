@@ -239,7 +239,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     });
 
     if (!invalidRunRecords.isEmpty()) {
-      LOG.debug("Found {} RunRecords with RUNNING status but the program not actually running for type {}",
+      LOG.warn("Found {} RunRecords with RUNNING status but the program not actually running for type {}",
                 invalidRunRecords.size(), programType.getPrettyName());
     }
 
