@@ -284,7 +284,7 @@ These are the available commands:
    **Explore**
    ``execute <query> [<timeout>]``,"Executes a Query with optional <timeout> in minutes (default is no timeout)."
    **Ingest**
-   ``load stream <stream-id> <local-file-path> [<content-type>]``,"Loads a file to a Stream. The contents of the file will become multiple events in the Stream, based on the content type. If <content-type> is not provided, it will be detected by the file extension. Supported <content-type>s: avro, csv, log, tsv, txt"
+   ``load stream <stream-id> <local-file-path> [<content-type>]``,"Loads a file to a Stream. The contents of the file will become multiple events in the Stream, based on the content type (avro/binary, text/csv, text/plain, text/tsv, text/plain). If <content-type> is not provided, it will be detected by the file extension. Supported file extensions: avro, csv, log, tsv, txt."
    ``send stream <stream-id> <stream-event>``,"Sends an event to a Stream."
    **Egress**
    ``call service <app-id.service-id> <http-method> <endpoint> [headers <headers>] [body <body>] [body:file <local-file-path>]``,"Calls a Service endpoint. The <headers> are formatted as ""{'key':'value', ...}"". The request body may be provided either as a string or a file. To provide the body as a string, use ""body <body>"". To provide the body as a file, use ""body:file <local-file-path>""."
