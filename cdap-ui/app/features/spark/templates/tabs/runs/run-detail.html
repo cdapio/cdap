@@ -8,27 +8,12 @@
   </button>
 </div>
 
-<div class="spark-components" ng-controller="SparkRunsDetailStatusController">
-  <div class="row run-status">
-    <div class="col-xs-6">
-      <table class="table table-curved table-status">
-        <thead>
-          <tr>
-            <th>Status</th>
-            <th>Started</th>
-            <th>Duration</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td ng-bind="status"></td>
-            <td ng-bind="startTime | amDateFormat: 'MM/DD/YY h:mm:ss a'"></td>
-            <td ng-bind="duration*1000 | amDurationFormat"></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+<div ng-controller="SparkRunsDetailStatusController">
+  <my-program-status
+    data-status="status"
+    data-start="startTime"
+    data-duration="duration*1000"
+  ></my-program-status>
 </div>
 
 <br/>
