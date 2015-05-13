@@ -33,8 +33,8 @@ angular.module(PKG.name+'.services')
 
    */
 
-  .factory('MyDataSource', function ($state, $log, $rootScope, caskWindowManager, mySocket,
-    MYSOCKET_EVENT, $q, $filter) {
+  .factory('MyDataSource', function ($log, $rootScope, caskWindowManager, mySocket,
+    MYSOCKET_EVENT, $q, $filter, myCdapUrl, MyPromise) {
 
     var instances = {}; // keyed by scopeid
 
@@ -51,9 +51,27 @@ angular.module(PKG.name+'.services')
      * the node backend.
      */
     function _pollStart (resource) {
+      var re = {};
+      if (!resource.url) {
+        re = resource;
+      }else {
+        re = {
+          url: resource.url,
+          id: resource.id,
+          json: true,
+          method: resource.method
+        };
+        if (resource.interval) {
+          re.interval = resource.interval;
+        }
+        if (resource.body) {
+          re.body = resource.body;
+        }
+      }
+
       mySocket.send({
         action: 'poll-start',
-        resource: resource
+        resource: re
       });
     }
 
@@ -62,9 +80,21 @@ angular.module(PKG.name+'.services')
      * the node backend.
      */
     function _pollStop (resource) {
+      var re = {};
+      if (!resource.url) {
+        re = resource;
+      }else {
+        re = {
+          url: resource.url,
+          id: resource.id,
+          json: true,
+          method: resource.method
+        };
+      }
+
       mySocket.send({
         action: 'poll-stop',
-        resource: resource
+        resource: re
       });
     }
 
@@ -92,21 +122,33 @@ angular.module(PKG.name+'.services')
       this.bindings = [];
 
       scope.$on(MYSOCKET_EVENT.message, function (event, data) {
+
         if(data.statusCode>299 || data.warning) {
           angular.forEach(self.bindings, function (b) {
-            if(b.resource.id === data.resource.id) {
-              if(b.errorCallback) {
-                scope.$apply(b.errorCallback.bind(null, data));
+            if (b.resource.id === data.resource.id) {
+              if (b.errorCallback) {
+                $rootScope.$applyAsync(b.errorCallback.bind(null, data.response));
+              } else if (b.reject) {
+                $rootScope.$applyAsync(b.reject.bind(null, {data: data.response}));
               }
             }
           });
           return; // errors are handled at $rootScope level
         }
-        angular.forEach(self.bindings, function (b) {
-          if(b.resource.id === data.resource.id) {
-            scope.$apply(b.callback.bind(null, data.response));
+        // Not using angular.forEach for performance reasons.
+        for (var i=0; i<self.bindings.length; i++) {
+          var b = self.bindings[i];
+          if (b.resource.id === data.resource.id) {
+            if (angular.isFunction(b.callback)) {
+              scope.$apply(b.callback.bind(null, data.response));
+            } else if (b && b.resolve) {
+              // https://github.com/angular/angular.js/wiki/When-to-use-$scope.$apply%28%29
+              scope.$apply(b.resolve.bind(null, {data: data.response}));
+              return;
+            }
           }
-        });
+        }
+
       });
 
       scope.$on('$destroy', function () {
@@ -136,29 +178,51 @@ angular.module(PKG.name+'.services')
      * Start polling of a resource when in scope.
      */
     DataSource.prototype.poll = function (resource, cb, errorCb) {
+      var self = this;
       var id = generateUUID();
-      resource.id = id;
-      this.bindings.push({
-        poll: true,
-        resource: resource,
-        id: id,
-        callback: cb,
-        errorCallback: errorCb
+      var generatedResource = {};
+      var promise = new MyPromise(function(resolve, reject) {
+
+        generatedResource = {
+          json: true,
+          id: id,
+          interval: resource.interval,
+          body: resource.body,
+          method: resource.method || 'GET'
+        };
+
+        if (!resource.url) {
+          generatedResource.url = buildUrl(myCdapUrl.constructUrl(resource), resource.params || {});
+        } else {
+          generatedResource.url = buildUrl(resource.url, resource.params || {});
+        }
+
+        self.bindings.push({
+          poll: true,
+          resource: generatedResource,
+          callback: cb,
+          errorCallback: errorCb,
+          resolve: resolve,
+          reject: reject
+        });
+
+        self.scope.$on('$destroy', function () {
+          _pollStop(generatedResource);
+        });
+
+        _pollStart(generatedResource);
       });
 
-      this.scope.$on('$destroy', function () {
-        _pollStop(resource);
-      });
-
-      _pollStart(resource);
-      return id;
+      return promise;
     };
 
     /**
-     * Stop polling of a resource when requested or when out of scope.
+     * Stop polling of a resource when requested.
+     * (when scope is destroyed Line 196 takes care of deleting the polling resource)
      */
-    DataSource.prototype.stopPoll = function(id) {
+    DataSource.prototype.stopPoll = function(resource) {
       var filterFilter = $filter('filter');
+      var id = resource.params.id;
       var match = filterFilter(this.bindings, {id: id});
 
       if (match.length) {
@@ -199,30 +263,89 @@ angular.module(PKG.name+'.services')
      * the node backend.
      */
     DataSource.prototype.request = function (resource, cb) {
-      var deferred = $q.defer();
+      var self = this;
 
-      var id = generateUUID();
-      resource.id = id;
-      this.bindings.push({
-        resource: resource,
-        id: id,
-        callback: function (result) {
-          /*jshint -W030 */
-          cb && cb.apply(this, arguments);
-          deferred.resolve(result);
-        },
-        errorCallback: function (err) {
-          deferred.reject(err);
+      var promise = new MyPromise(function(resolve, reject) {
+        var id = generateUUID();
+
+        var generatedResource = {
+          id: id,
+          json: true,
+          method: resource.method
+        };
+        if (!resource.url) {
+          generatedResource.url = buildUrl(myCdapUrl.constructUrl(resource), resource.params || {});
+        } else {
+          generatedResource.url = buildUrl(resource.url, resource.params || {});
         }
-      });
 
-      mySocket.send({
-        action: 'request',
-        resource: resource
-      });
+        self.bindings.push({
+          resource: generatedResource,
+          callback: cb,
+          resolve: resolve,
+          reject: reject
+        });
 
-      return deferred.promise;
+        mySocket.send({
+          action: 'request',
+          resource: generatedResource
+        });
+      }, false);
+
+      if (!resource.$isResource) {
+        promise = promise.then(function(res) {
+          res = res.data;
+          return res;
+        });
+      }
+
+      return promise;
     };
 
     return DataSource;
   });
+
+// Lifted from $http as a helper method to parse '@params' in the url for $resource.
+function buildUrl(url, params) {
+  if (!params) return url;
+  var parts = [];
+
+  function forEachSorted(obj, iterator, context) {
+    var keys = Object.keys(params).sort();
+    for (var i = 0; i < keys.length; i++) {
+      iterator.call(context, obj[keys[i]], keys[i]);
+    }
+  return keys;
+  }
+
+  function encodeUriQuery(val, pctEncodeSpaces) {
+    return encodeURIComponent(val).
+           replace(/%40/gi, '@').
+           replace(/%3A/gi, ':').
+           replace(/%24/g, '$').
+           replace(/%2C/gi, ',').
+           replace(/%3B/gi, ';').
+           replace(/%20/g, (pctEncodeSpaces ? '%20' : '+'));
+  }
+
+  forEachSorted(params, function(value, key) {
+    if (value === null || angular.isUndefined(value)) return;
+    if (!angular.isArray(value)) value = [value];
+
+    angular.forEach(value, function(v) {
+      if (angular.isObject(v)) {
+        if (angular.isDate(v)) {
+          v = v.toISOString();
+        } else {
+          v = toJson(v);
+        }
+      }
+      parts.push(encodeUriQuery(key) + '=' +
+                 encodeUriQuery(v));
+    });
+  });
+  if (parts.length > 0) {
+    url += ((url.indexOf('?') == -1) ? '?' : '&') + parts.join('&');
+  }
+  return url;
+}
