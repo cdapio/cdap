@@ -21,6 +21,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.exception.StreamNotFoundException;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.StreamManager;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -38,9 +39,11 @@ public class RemoteStreamManager implements StreamManager {
   private final StreamClient streamClient;
   private final String streamName;
 
-  public RemoteStreamManager(ClientConfig clientConfig, String streamName) {
-    this.streamClient = new StreamClient(clientConfig);
-    this.streamName = streamName;
+  public RemoteStreamManager(ClientConfig clientConfig, Id.Stream streamId) {
+    ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig).build();
+    namespacedClientConfig.setNamespace(streamId.getNamespace());
+    this.streamClient = new StreamClient(namespacedClientConfig);
+    this.streamName = streamId.getId();
   }
 
   @Override

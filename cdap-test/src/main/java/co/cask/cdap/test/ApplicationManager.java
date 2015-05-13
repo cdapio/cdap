@@ -73,7 +73,7 @@ public interface ApplicationManager {
    * @param streamName Name of the stream to write to.
    * @return A {@link StreamWriter}.
    *
-   * @deprecated use TestBase#getStreamMaanger(String streamName)
+   * @deprecated use TestBase#getStreamManager(String streamName)
    */
   @Deprecated
   StreamWriter getStreamWriter(String streamName);
