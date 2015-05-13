@@ -96,16 +96,10 @@ Once the application is deployed:
 - Click on the *Process* button in the left sidebar of the CDAP UI,
   then click ``WhoFlow`` in the *Process* page to get to the
   Flow detail page, then click the *Start* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
-
-    * - On Linux:
-      - ``$ ./bin/cdap-cli.sh start flow HelloWorld.WhoFlow``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat start flow HelloWorld.WhoFlow``    
+    $ ./bin/cdap-cli.sh start flow HelloWorld.WhoFlow
+  
 
 Starting the Service
 ------------------------------
@@ -115,17 +109,11 @@ Once the application is deployed:
 - Click on ``HelloWorld`` in the Overview page of the CDAP UI to get to the
   Application detail page, click ``Greeting`` in the *Service* pane to get to the
   Service detail page, then click the *Start* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
-
-    * - On Linux:
-      - ``$ ./bin/cdap-cli.sh start service HelloWorld.Greeting``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat start service HelloWorld.Greeting``    
-
+    $ ./bin/cdap-cli.sh start service HelloWorld.Greeting
+    
+    
 Injecting a Name
 ------------------------------
 
@@ -148,7 +136,7 @@ service. (If you haven't already started the Service, click on the *Start* butto
 right-side, below the green arrow.) The Service's label will read *Running* when it is
 ready to receive events.
 
-Now you can make a request to the service using curl::
+Now you can make a request to the service using ``curl``::
 
   $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/HelloWorld/services/Greeting/methods/greet
 
@@ -198,29 +186,16 @@ Once done, you can stop the application as described above in `Stopping an Appli
 - Click on the *Process* button in the left sidebar of the CDAP UI,
   then click ``WhoFlow`` in the *Process* page to get to the
   Flow detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
-
-    * - On Linux:
-      - ``$ ./bin/cdap-cli.sh stop flow HelloWorld.WhoFlow``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat stop flow HelloWorld.WhoFlow``    
+    $ ./bin/cdap-cli.sh stop flow HelloWorld.WhoFlow
+      
 
 **Stopping the Service**
 
 - Click on ``HelloWorld`` in the Overview page of the CDAP UI to get to the
   Application detail page, click ``Greeting`` in the *Service* pane to get to the
   Service detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
-
-    * - On Linux:
-      - ``$ ./bin/cdap-cli.sh stop service HelloWorld.Greeting``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat stop service HelloWorld.Greeting``    
+    $ ./bin/cdap-cli.sh stop service HelloWorld.Greeting   
