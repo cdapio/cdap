@@ -45,6 +45,7 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.kv.HBaseKVTableDefinition;
+import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.handlers.DatasetServiceStore;
@@ -337,6 +338,9 @@ public class UpgradeTool {
     LOG.info("Upgrading System and User Datasets ...");
     DatasetUpgrader dsUpgrade = injector.getInstance(DatasetUpgrader.class);
     dsUpgrade.upgrade();
+
+    QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
+    queueAdmin.upgrade();
 
     upgradeAdapters();
   }
