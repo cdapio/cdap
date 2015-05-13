@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.router;
 
+import co.cask.cdap.common.utils.ImmutablePair;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -39,7 +40,7 @@ class MatchTree {
   public static final String NO_ROUTE = "";
 
   private Map<String, MatchTree> byPath = Maps.newHashMap();
-  private Map<HttpMethod, String> byMethod = Maps.newHashMap();
+  private Map<HttpMethod, ImmutablePair<String, Integer>> byMethod = Maps.newHashMap();
   private MatchTree pathWildcard = null;
   private String methodWildcard = null;
 
@@ -50,9 +51,6 @@ class MatchTree {
     // This performs better than checking whether the service string contains a %, and then applying the format().
     if (USER_SERVICE_FORMAT.equals(service)) {
       service = String.format(USER_SERVICE_FORMAT, pathParts[2], pathParts[4], pathParts[6]);
-    }
-    if (NO_ROUTE.equals(service)) {
-      service = null;
     }
     return service;
   }
@@ -67,44 +65,46 @@ class MatchTree {
         return next.match(method, pathParts, pos + 1);
       }
     }
-    String service = byMethod.get(method);
-    if (service == null) {
-      service = methodWildcard;
+    ImmutablePair<String, Integer> serviceEntry = byMethod.get(method);
+    if (serviceEntry == null) {
+       return methodWildcard;
     }
-    return service;
+    return serviceEntry.getFirst();
   }
 
   public void addRoute(HttpMethod httpMethod, String path, String service) throws ConflictingRouteException {
-    addRoute(httpMethod, StringUtils.split(path, '/'), 0, service);
+    addRoute(httpMethod, StringUtils.split(path, '/'), 0, service, null);
   }
 
-  private void addRoute(HttpMethod httpMethod, String[] pathParts, int pos, String service)
+  private void addRoute(HttpMethod httpMethod, String[] pathParts, int pos, String service, Integer firstWildcard)
     throws ConflictingRouteException {
 
     if (pathParts.length <= pos) {
       // traversed whole path, now deal with method
-      enterMethod(httpMethod, service);
+      enterMethod(httpMethod, service, firstWildcard);
       return;
     }
     String part = pathParts[pos];
     if (part.startsWith("{") && part.endsWith("}")) { // path variable
       part = null;
     }
-    for (MatchTree next : enterPath(part)) {
-      next.addRoute(httpMethod, pathParts, pos + 1, service);
+
+    for (ImmutablePair<MatchTree, Boolean> next : enterPath(part)) {
+      next.getFirst().addRoute(httpMethod, pathParts, pos + 1, service,
+                               next.getSecond() || part != null ? firstWildcard : ((Integer) pos));
     }
   }
 
-  private Collection<MatchTree> enterPath(String pathPart) {
-    List<MatchTree> nodes = Lists.newLinkedList();
+  private Collection<ImmutablePair<MatchTree, Boolean>> enterPath(String pathPart) {
+    List<ImmutablePair<MatchTree, Boolean>> nodes = Lists.newLinkedList();
     if (pathPart == null) {
-      if (!byPath.isEmpty()) {
-        nodes.addAll(byPath.values());
+      for (MatchTree node : byPath.values()) {
+        nodes.add(ImmutablePair.of(node, false));
       }
       if (pathWildcard == null) {
         pathWildcard = new MatchTree();
       }
-      nodes.add(pathWildcard);
+      nodes.add(ImmutablePair.of(pathWildcard, true));
       return nodes;
     }
     // not wildcard
@@ -117,35 +117,35 @@ class MatchTree {
       }
       byPath.put(pathPart, node);
     }
-    return Collections.singletonList(node);
+    return Collections.singletonList(ImmutablePair.of(node, false));
   }
 
-  private void enterMethod(HttpMethod method, String service) throws ConflictingRouteException {
+  private void enterMethod(HttpMethod method, String service, Integer firstWildcard) throws ConflictingRouteException {
     if (method == null) {
       if (methodWildcard != null) {
         throw new ConflictingRouteException(String.format(
           "Attempt to add service '%s' for all methods which is already bound to service '%s' for all methods",
           service, methodWildcard));
       }
-      if (!byMethod.isEmpty()) {
-        Map.Entry<HttpMethod, String> entry = byMethod.entrySet().iterator().next();
-        throw new ConflictingRouteException(String.format(
-          "Attempt to add service '%s' for all methods which is already bound to service '%s' for methods %s",
-          service, entry.getValue(), entry.getKey()));
-      }
       methodWildcard = service;
       return;
     }
-    String existing = byMethod.get(method);
-    if (existing == null) {
-      existing = methodWildcard;
+    ImmutablePair<String, Integer> existing = byMethod.get(method);
+    if (existing != null) {
+      if (existing.getFirst().equals(service)) {
+        return;
+      }
+      if ((existing.getSecond() == null && firstWildcard != null)
+        || (existing.getSecond() != null && firstWildcard != null && firstWildcard < existing.getSecond())) {
+        return;
+      }
+      if (Objects.equals(existing.getSecond(), firstWildcard)) {
+        throw new ConflictingRouteException(String.format(
+          "Attempt to add service '%s' for method %s which is already bound to service '%s'",
+          service, method, existing));
+      }
     }
-    if (existing != null && !existing.equals(service)) {
-      throw new ConflictingRouteException(String.format(
-        "Attempt to add service '%s' for method %s which is already bound to service '%s'",
-        service, method, existing));
-    }
-    byMethod.put(method, service);
+    byMethod.put(method, ImmutablePair.of(service, firstWildcard));
   }
 
   public void optimize() {
@@ -157,7 +157,9 @@ class MatchTree {
     }
     // if all methods return the same service, replace with wildcard
     Set<String> services = Sets.newHashSet();
-    services.addAll(byMethod.values());
+    for (ImmutablePair<String, Integer> entry : byMethod.values()) {
+      services.add(entry.getFirst());
+    }
     if (methodWildcard != null) {
       services.add(methodWildcard);
     }
@@ -197,7 +199,9 @@ class MatchTree {
     if (pathWildcard != null) {
       set.addAll(pathWildcard.services());
     }
-    set.addAll(byMethod.values());
+    for (ImmutablePair<String, Integer> entry : byMethod.values()) {
+      set.add(entry.getFirst());
+    }
     if (methodWildcard != null) {
       set.add(methodWildcard);
     }
@@ -213,7 +217,7 @@ class MatchTree {
     for (Map.Entry<String, MatchTree> entry : byPath.entrySet()) {
       copy.byPath.put(entry.getKey(), entry.getValue().deepCopy());
     }
-    for (Map.Entry<HttpMethod, String> entry : byMethod.entrySet()) {
+    for (Map.Entry<HttpMethod, ImmutablePair<String, Integer>> entry : byMethod.entrySet()) {
       copy.byMethod.put(entry.getKey(), entry.getValue());
     }
     return copy;
@@ -254,8 +258,8 @@ class MatchTree {
     if (pathWildcard != null) {
       first = addEntry(builder, first, indent, "{...}", pathWildcard);
     }
-    for (Map.Entry<HttpMethod, String> entry : byMethod.entrySet()) {
-      first = addMethod(builder, first, indent, entry.getKey().toString(), entry.getValue());
+    for (Map.Entry<HttpMethod, ImmutablePair<String, Integer>> entry : byMethod.entrySet()) {
+      first = addMethod(builder, first, indent, entry.getKey().toString(), entry.getValue().getFirst());
     }
     if (methodWildcard != null) {
       addMethod(builder, first, indent, "ALL", methodWildcard);

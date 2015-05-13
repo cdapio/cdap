@@ -45,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
@@ -68,6 +69,18 @@ public class LogHandler extends AuthenticatedHttpHandler {
     this.logReader = logReader;
     this.programStore = programStore;
     this.logPattern = cConfig.get(LoggingConfiguration.LOG_PATTERN, LoggingConfiguration.DEFAULT_LOG_PATTERN);
+  }
+
+  // this method is needed because we have a conflicting handler method for
+  // POST "/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/{action}" in
+  // ProgramLifecycleHttpHandler. But if the action is logs, it should be routed here so that it
+  // receives a METHOD_NOT_ALLOWED (there it would receive a NOT_FOUND)
+  @POST
+  @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/logs")
+  public void getLogs(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
+                      @PathParam("app-id") String appId, @PathParam("program-type") String programType,
+                      @PathParam("program-id") String programId) {
+    responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
   }
 
   @GET

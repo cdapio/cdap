@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data.stream.service.StreamFetchHandler;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetInstanceHandler;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetTypeHandler;
@@ -44,6 +45,7 @@ import co.cask.cdap.gateway.handlers.TransactionHttpHandler;
 import co.cask.cdap.gateway.handlers.UsageHandler;
 import co.cask.cdap.gateway.handlers.VersionHandler;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
+import co.cask.cdap.logging.gateway.handlers.LogHandler;
 import co.cask.cdap.metrics.query.MetricsHandler;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -72,9 +74,11 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
 
   private static final Map<String, ? extends List<Class<?>>> HANDLERS = ImmutableMap.of(
     Constants.Service.STREAMS, ImmutableList.<Class<?>>of(
-      StreamHandler.class),
+      StreamHandler.class,
+      StreamFetchHandler.class),
     Constants.Service.METRICS, ImmutableList.<Class<?>>of(
-      MetricsHandler.class),
+      MetricsHandler.class,
+      LogHandler.class),
     Constants.Service.APP_FABRIC_HTTP, ImmutableList.<Class<?>>of(
       AppFabricDataHttpHandler.class,
       AppLifecycleHttpHandler.class,
@@ -110,6 +114,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
   public RouterPathLookup(Authenticator authenticator) throws ConflictingRouteException {
     super(authenticator);
     matcher = createMatchTree(HANDLERS);
+    LOG.debug("Router matcher is: {}", matcher);
   }
 
   @SuppressWarnings("unused")
@@ -135,11 +140,21 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       //If service contains "$HOST" and if first split element is NOT the gateway version, then send it to WebApp
       //WebApp serves only static files (HTML, CSS, JS) and so /<appname> calls should go to WebApp
       //But stream calls issued by the UI should be routed to the appropriate CDAP service
-      boolean isV3request = requestPath.startsWith(Constants.Gateway.API_VERSION_3);
+      int pos = 0;
+      while (pos < requestPath.length() && requestPath.charAt(pos) == '/') {
+        pos++;
+      }
+      boolean isV3request = requestPath.startsWith(Constants.Gateway.API_VERSION_3_TOKEN, pos);
       if (!isV3request && fallbackService.contains("$HOST")) {
         return fallbackService;
       } else if (isV3request) {
-        return matcher.match(httpRequest.getMethod(), requestPath);
+        String service = matcher.match(httpRequest.getMethod(), requestPath);
+        if (service != null) {
+          if (MatchTree.NO_ROUTE.equals(service)) {
+            service = null;
+          }
+          return service;
+        }
         // return getV3RoutingService(uriParts, requestMethod);
       }
     } catch (Exception e) {
