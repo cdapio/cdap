@@ -273,6 +273,9 @@ angular.module(PKG.name+'.services')
           json: true,
           method: resource.method
         };
+        if (resource.body) {
+          generatedResource.body = resource.body;
+        }
         if (!resource.url) {
           generatedResource.url = buildUrl(myCdapUrl.constructUrl(resource), resource.params || {});
         } else {
@@ -295,7 +298,7 @@ angular.module(PKG.name+'.services')
       if (!resource.$isResource) {
         promise = promise.then(function(res) {
           res = res.data;
-          return res;
+          return $q.when(res);
         });
       }
 
