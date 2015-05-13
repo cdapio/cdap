@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,7 +29,7 @@
  *     When scheduled by the PurchaseHistoryWorkflow, the PurchaseHistoryBuilder MapReduce program
  *     reads the purchases DataSet, creates a purchase history,
  *     and stores the purchase history in the history DataSet every morning at 4:00 A.M.
- *     Or you can manually (in the Process screen in the CDAP Console) or programmatically execute 
+ *     Or, you can manually (in the Process screen in the CDAP UI) or programmatically execute 
  *     the PurchaseHistoryBuilder MapReduce to store customers' purchase history in the history DataSet.
  *   </li><li>
  *     Request the PurchaseHistoryService retrieve from the history Dataset the purchase history of a user.
