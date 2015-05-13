@@ -171,11 +171,13 @@ function (Widget, MyDataSource, mySettings, $q) {
           method: 'POST',
           _cdapNsPath: API_PATH,
           body: body
-        },
-        (function (result) {
-          this.id = result.id;
-        }).bind(this)
-      );
+        })
+        .then(
+          (function (result) {
+            this.id = result.id;
+            return $q.when(result);
+          }).bind(this)
+        );
     }
   };
 
