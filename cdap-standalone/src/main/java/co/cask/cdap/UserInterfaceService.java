@@ -24,7 +24,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +33,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Writer;
 import java.util.concurrent.Executor;
+import javax.annotation.Nullable;
 
 /**
  * UserInterfaceService is a basic Server wrapper that launches node.js and our
@@ -49,36 +49,20 @@ final class UserInterfaceService extends AbstractExecutionThreadService {
   private static final Logger LOG = LoggerFactory.getLogger(UserInterfaceService.class);
   private static final String NODE_JS_EXECUTABLE = "node";
 
-  static final String UI;
-  static {
-    // Determine what's the path to the server.js, based on what's on the directory
-    // When run from IDE, the base is "cdap-ui" and from standalone it's ui.
-    File base = new File("ui");
-    if (!base.isDirectory()) {
-      base = new File("cdap-ui");
-    }
-    UI = new File(base, "server.js").getAbsolutePath();
-  }
-
-  private final File uiBase;
-  private final File uiPath;
   private final CConfiguration cConf;
   private final SConfiguration sConf;
 
   private Process process;
   private BufferedReader bufferedReader;
 
+  @Nullable
+  private File cConfJsonFile;
+
+  @Nullable
+  private File sConfJsonFile;
+
   @Inject
-  public UserInterfaceService(@Named("ui-path") String uiPath, CConfiguration cConf, SConfiguration sConf) {
-    this.uiPath = new File(uiPath);
-    if (!uiPath.isEmpty()) {
-      this.uiBase = this.uiPath.getParentFile().getParentFile().getParentFile();
-    } else {
-      this.uiBase = null;
-      LOG.warn("UI Path is empty");
-    }
-    // This is ok since this class is only used in standalone, the path is always [base]/server/local/main.js
-    // However, this could change if the layer of ui changed, which require adjustment to this class anyway
+  public UserInterfaceService(CConfiguration cConf, SConfiguration sConf) {
     this.cConf = cConf;
     this.sConf = sConf;
   }
@@ -88,16 +72,28 @@ final class UserInterfaceService extends AbstractExecutionThreadService {
    */
   @Override
   protected void startUp() throws Exception {
-    File confDir = new File(new File(uiBase, "conf"), "generated");
+    File confDir = new File("data", "conf");
     if (!confDir.exists()) {
       Preconditions.checkState(confDir.mkdirs(), "Couldn't create directory for generated conf files for the UI");
     }
-    generateConfigFile(new File(confDir, JSON_PATH), cConf);
-    generateConfigFile(new File(confDir, JSON_SECURITY_PATH), sConf);
 
-    ProcessBuilder builder = new ProcessBuilder(NODE_JS_EXECUTABLE, uiPath.getAbsolutePath());
+    this.cConfJsonFile = new File(confDir, JSON_PATH);
+    this.sConfJsonFile = new File(confDir, JSON_SECURITY_PATH);
+
+    generateConfigFile(cConfJsonFile, cConf);
+    generateConfigFile(sConfJsonFile, sConf);
+
+    File uiPath = new File("cdap-ui", "server.js");
+    if (!uiPath.exists()) {
+      uiPath = new File("ui", "server.js");
+    }
+    Preconditions.checkState(uiPath.exists(), "Missing server.js at " + uiPath.getAbsolutePath());
+    ProcessBuilder builder = new ProcessBuilder(NODE_JS_EXECUTABLE,
+                                                uiPath.getAbsolutePath(),
+                                                "cConf=\"" + cConfJsonFile.getAbsolutePath() + "\"",
+                                                "sConf=\"" + sConfJsonFile.getAbsolutePath() + "\"");
     builder.redirectErrorStream(true);
-    LOG.info("Starting UI ... (" + uiPath + ")");
+    LOG.info("Starting UI...");
     process = builder.start();
     final InputStream is = process.getInputStream();
     final InputStreamReader isr = new InputStreamReader(is);
@@ -158,8 +154,13 @@ final class UserInterfaceService extends AbstractExecutionThreadService {
   protected void shutDown() throws Exception {
     LOG.info("Shutting down UI ...");
     process.waitFor();
+
     // Cleanup generated files
-    new File(uiBase, JSON_PATH).delete();
-    new File(uiBase, JSON_SECURITY_PATH).delete();
+    if (cConfJsonFile != null) {
+      cConfJsonFile.delete();
+    }
+    if (sConfJsonFile != null) {
+      sConfJsonFile.delete();
+    }
   }
 }

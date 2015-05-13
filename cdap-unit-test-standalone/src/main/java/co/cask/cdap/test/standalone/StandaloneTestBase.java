@@ -66,7 +66,7 @@ public class StandaloneTestBase {
         configuration.set(Constants.Dangerous.UNRECOVERABLE_RESET, "true");
 
         // Start without UI
-        standaloneMain = StandaloneMain.create(null, configuration, new Configuration());
+        standaloneMain = StandaloneMain.create(configuration, new Configuration());
         standaloneMain.startUp();
 
       } catch (Exception e) {

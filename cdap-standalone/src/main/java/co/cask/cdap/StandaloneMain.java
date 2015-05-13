@@ -57,11 +57,9 @@ import co.cask.tephra.inmemory.InMemoryTransactionService;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
 import org.slf4j.Logger;
@@ -98,7 +96,7 @@ public class StandaloneMain {
   private ExploreExecutorService exploreExecutorService;
   private final ExploreClient exploreClient;
 
-  private StandaloneMain(List<Module> modules, CConfiguration configuration, String uiPath) {
+  private StandaloneMain(List<Module> modules, CConfiguration configuration) {
     this.configuration = configuration;
 
     Injector injector = Guice.createInjector(modules);
@@ -261,8 +259,6 @@ public class StandaloneMain {
   }
 
   public static void main(String[] args) {
-    String uiPath = UserInterfaceService.UI;
-
     if (args.length > 0) {
       if ("--help".equals(args[0]) || "-h".equals(args[0])) {
         usage(false);
@@ -275,7 +271,7 @@ public class StandaloneMain {
     StandaloneMain main = null;
 
     try {
-      main = create(uiPath);
+      main = create();
       main.startUp();
     } catch (Throwable e) {
       System.err.println("Failed to start Standalone CDAP. " + e.getMessage());
@@ -287,22 +283,14 @@ public class StandaloneMain {
     }
   }
 
-  public static StandaloneMain create() {
-    return create(UserInterfaceService.UI);
-  }
-
   /**
    * The root of all goodness!
    */
-  public static StandaloneMain create(String uiPath) {
-    return create(uiPath, CConfiguration.create(), new Configuration());
+  public static StandaloneMain create() {
+    return create(CConfiguration.create(), new Configuration());
   }
 
   public static StandaloneMain create(CConfiguration cConf, Configuration hConf) {
-    return create(UserInterfaceService.UI, cConf, hConf);
-  }
-
-  public static StandaloneMain create(String uiPath, CConfiguration cConf, Configuration hConf) {
     // This is needed to use LocalJobRunner with fixes (we have it in app-fabric).
     // For the modified local job runner
     hConf.addResource("mapred-site-local.xml");
@@ -332,13 +320,12 @@ public class StandaloneMain {
     }
 
     //Run dataset service on random port
-    List<Module> modules = createPersistentModules(cConf, hConf, uiPath);
+    List<Module> modules = createPersistentModules(cConf, hConf);
 
-    return new StandaloneMain(modules, cConf, uiPath);
+    return new StandaloneMain(modules, cConf);
   }
 
-  private static List<Module> createPersistentModules(CConfiguration configuration, Configuration hConf,
-                                                      final String uiPath) {
+  private static List<Module> createPersistentModules(CConfiguration configuration, Configuration hConf) {
     configuration.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, Constants.DEFAULT_DATA_LEVELDB_DIR);
 
     String environment =
@@ -350,16 +337,6 @@ public class StandaloneMain {
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
 
     return ImmutableList.of(
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          if (uiPath != null) {
-            bindConstant().annotatedWith(Names.named("ui-path")).to(uiPath);
-          } else {
-            bindConstant().annotatedWith(Names.named("ui-path")).to("");
-          }
-        }
-      },
       new ConfigModule(configuration, hConf),
       new IOModule(),
       new MetricsHandlerModule(),

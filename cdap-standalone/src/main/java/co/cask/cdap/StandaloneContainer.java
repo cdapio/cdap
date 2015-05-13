@@ -66,7 +66,7 @@ public class StandaloneContainer {
         cConf.set(Constants.Dangerous.UNRECOVERABLE_RESET, "true");
 
         // Start without UI
-        standaloneMain = StandaloneMain.create(null, cConf, new Configuration());
+        standaloneMain = StandaloneMain.create(cConf, new Configuration());
         standaloneMain.startUp();
 
         waitForStandalone(30000);
