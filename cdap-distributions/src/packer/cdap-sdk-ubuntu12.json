@@ -115,6 +115,7 @@
       "type": "shell",
       "scripts": [
         "scripts/remove-chef.sh",
+        "scripts/sdk-cleanup.sh",
         "scripts/apt-cleanup.sh"
       ]
     },
