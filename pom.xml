@@ -90,7 +90,7 @@
     <etl.batch.plugin.name>ETLBatch</etl.batch.plugin.name>
     <etl.realtime.plugin.name>ETLRealtime</etl.realtime.plugin.name>
 
-    <asm.version>4.0</asm.version>
+    <asm.version>5.0.3</asm.version>
     <async.http.version>1.7.18</async.http.version>
     <avro.version>1.6.2</avro.version>
     <commons.codec.version>1.6</commons.codec.version>
@@ -2134,7 +2134,7 @@
     <profile>
       <id>unit-tests</id>
       <activation>
-        <activeByDefault>true</activeByDefault>
+        <jdk>[1.7,)</jdk>
       </activation>
 
       <modules>

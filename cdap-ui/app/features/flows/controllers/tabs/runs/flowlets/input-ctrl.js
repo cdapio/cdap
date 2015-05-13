@@ -143,14 +143,22 @@ angular.module(PKG.name + '.feature.flows')
 
             });
 
+            var arrivalPath = '/metrics/query?metric=system.process.events.processed'+
+              '&tag=namespace:' + $state.params.namespace +
+              '&tag=app:' + $state.params.appId +
+              '&tag=flow' + $state.params.programId +
+              '&tag=flowlet:' + flowletid +
+              '&tag=run:' + $scope.runs.selected.runid +
+              '&start=now-1s&end=now';
             // POLLING ARRIVAL RATE
             dataSrc
               .poll({
-                _cdapPath: path + '&count=1',
+                _cdapPath: arrivalPath,
                 method: 'POST'
               }, function (res) {
+                console.log('RES', res);
                 if (res.series[0]) {
-                  input.total = res.series[0].data[0].value / 60;
+                  input.total = res.series[0].data[0].value;
                 }
               });
 

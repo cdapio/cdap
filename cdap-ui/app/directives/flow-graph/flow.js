@@ -194,6 +194,14 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
         }
       };
 
+      scope.handleTooltip = function(tip, nodeId) {
+        tip
+          .html(function() {
+            return '<strong>' + nodeId + '</strong>';
+          })
+          .show();
+      };
+
       /**
        * Radius for instances circle in flowlets. This is a determined as a factor of the size of the
        * instances text.
@@ -358,6 +366,12 @@ module.directive('myWorkflowGraph', function ($filter) {
           case 'ACTION':
             shapeName = 'job';
             break;
+          case 'FORKNODE':
+            shapeName = 'circle';
+            break;
+          case 'JOINNODE':
+            shapeName = 'circle';
+            break;
           case 'START':
             shapeName = 'start';
             break;
@@ -383,6 +397,16 @@ module.directive('myWorkflowGraph', function ($filter) {
         });
       };
 
+      scope.handleTooltip = function(tip, nodeId) {
+        if (['Start', 'End'].indexOf(nodeId) === -1) {
+          tip
+            .html(function() {
+              return '<strong>'+ scope.instanceMap[nodeId].nodeId + ' : ' + scope.instanceMap[nodeId].program.programName +'</strong>';
+            })
+            .show();
+        }
+
+      };
     }
   }, baseDirective);
 });
@@ -405,7 +429,12 @@ function genericRender(scope) {
 
   // First set nodes and edges.
   angular.forEach(nodes, function (node) {
-    var nodeLabel = node.name.length > 8 ? node.name.substr(0, 5) + '...' : node.name;
+    var nodeLabel = "";
+    if (node.label && node.label.length) {
+      nodeLabel = node.label.length > 8? node.label.substr(0,5) + '...': node.label;
+    } else {
+      nodeLabel = node.name.length > 8? node.name.substr(0,5) + '...': node.name;
+    }
     scope.instanceMap[node.name] = node;
     scope.labelMap[nodeLabel] = node;
     g.setNode(node.name, { shape: scope.getShape(node.type), label: nodeLabel});
@@ -437,7 +466,7 @@ function genericRender(scope) {
     svgGroup.attr('transform', 'translate(' + d3.event.translate + ')' +
                                 'scale(' + d3.event.scale + ')');
   });
-  // svg.call(zoom);
+  svg.call(zoom);
 
   // Run the renderer. This is what draws the final graph.
   renderer(d3.select(selector + ' g'), g);
@@ -445,13 +474,7 @@ function genericRender(scope) {
   /**
    * Handles showing tooltip on mouseover of node name.
    */
-  scope.handleShowTip = function(nodeId) {
-    tip
-      .html(function() {
-        return '<strong>' + scope.instanceMap[nodeId].type +':</strong> <span class="tip-node-name">'+ nodeId +'</span>';
-      })
-      .show();
-  };
+  scope.handleShowTip = scope.handleTooltip.bind(null, tip);
 
   /**
    * Handles hiding tooltip on mouseout of node name.
@@ -471,13 +494,20 @@ function genericRender(scope) {
     .on('mouseout', scope.handleHideTip);
 
   scope.$on('$destroy', scope.handleHideTip);
-
   // Center svg.
   var initialScale = 1.1;
   var svgWidth = svg.node().getBoundingClientRect().width;
-  zoom
-    .translate([(svgWidth - g.graph().width * initialScale) / 2, 20])
-    .scale(initialScale)
-    .event(svg);
-  svg.attr('height', g.graph().height * initialScale + 40);
+  if (svgWidth - g.graph().width <= 0) {
+    zoom.translate([0,0])
+        .scale(1.0 - (g.nodeCount() + g.edgeCount())/100)
+        .event(svg);
+    svg.attr('height', g.graph().height * initialScale + 40);
+  } else {
+    zoom
+      .translate([(svgWidth - g.graph().width * initialScale) / 2, 20])
+      .scale(initialScale)
+      .event(svg);
+    svg.attr('height', g.graph().height * initialScale + 40);
+
+  }
 }

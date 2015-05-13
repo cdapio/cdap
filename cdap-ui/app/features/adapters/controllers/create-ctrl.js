@@ -66,9 +66,6 @@ angular.module(PKG.name + '.feature.adapters')
     }];
 
     // Source, Sink and Transform Models
-    $scope.source = defaultSource;
-    $scope.sink = defaultSink;
-    $scope.transforms = defaultTransforms;
     $scope.activePanel = 0;
 
     $scope.$watch('metadata.type',function(adapterType) {
@@ -76,6 +73,17 @@ angular.module(PKG.name + '.feature.adapters')
       if (!adapterType.length) {
         return;
       }
+      $scope.transforms = angular.copy(defaultTransforms);
+      $scope.source = angular.copy(defaultSource);
+      $scope.sink = angular.copy(defaultSink);
+      $scope.tabs = [
+        {
+          title: 'Default',
+          icon: 'cogs',
+          isCloseable: false,
+          partial: '/assets/features/adapters/templates/create/tabs/default.html'
+        }
+      ];
       $scope.onAdapterTypeSelected = true;
       apiFactory.fetchSources(adapterType);
       apiFactory.fetchSinks(adapterType);

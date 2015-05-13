@@ -71,7 +71,7 @@ body.theme-cdap.state-adapters-create {
           background-color: @selected-plugin-bg;
         }
         &.transforms {
-          &.plugin-added {
+          .plugin-added {
             background-color: @selected-plugin-bg;
           }
           .fa-times {
@@ -185,11 +185,15 @@ body.theme-cdap.state-adapters-create {
           font-weight: 500;
           margin: 0 0 10px 0;
         }
+
         .row-padding {
           padding: 0 30px;
           .popover {
             max-width: 550px;
             width: 500px;
+          }
+          textarea.form-control {
+            min-height: 200px;
           }
         }
       }
