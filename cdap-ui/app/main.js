@@ -23,7 +23,7 @@ angular
         PKG.name+'.config',
         'ngAnimate',
         'ngSanitize',
-        // 'ngResource',
+        'ngResource',
         'ngStorage',
         'ui.router',
         'cask-angular-window-manager',
