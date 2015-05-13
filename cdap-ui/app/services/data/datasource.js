@@ -140,10 +140,11 @@ angular.module(PKG.name+'.services')
           var b = self.bindings[i];
           if (b.resource.id === data.resource.id) {
             if (angular.isFunction(b.callback)) {
+              data.response.__pollId__ = b.resource.id;
               scope.$apply(b.callback.bind(null, data.response));
             } else if (b && b.resolve) {
               // https://github.com/angular/angular.js/wiki/When-to-use-$scope.$apply%28%29
-              scope.$apply(b.resolve.bind(null, {data: data.response}));
+              scope.$apply(b.resolve.bind(null, {data: data.response, id: b.resource.id}));
               return;
             }
           }
@@ -211,8 +212,16 @@ angular.module(PKG.name+'.services')
         });
 
         _pollStart(generatedResource);
-      });
+      }, true);
 
+      if (!resource.$isResource) {
+        promise = promise.then(function(res) {
+          var id = res.id;
+          res = res.data;
+          res.__pollId__ = id;
+          return $q.when(res);
+        });
+      }
       return promise;
     };
 
@@ -220,10 +229,10 @@ angular.module(PKG.name+'.services')
      * Stop polling of a resource when requested.
      * (when scope is destroyed Line 196 takes care of deleting the polling resource)
      */
-    DataSource.prototype.stopPoll = function(resource) {
+    DataSource.prototype.stopPoll = function(resourceId) {
       var filterFilter = $filter('filter');
-      var id = resource.params.id;
-      var match = filterFilter(this.bindings, {id: id});
+      var id = resourceId;
+      var match = filterFilter(this.bindings, { 'resource': {id: id} });
 
       if (match.length) {
         _pollStop(match[0].resource);

@@ -68,15 +68,15 @@ angular.module(PKG.name+'.feature.dashboard')
         // already polling
         return;
       }
-      this.pollId = this.dataSrc.poll(
+      this.dataSrc.poll(
         {
           _cdapPath: '/metrics/query',
           method: 'POST',
           body: constructQuery(queryId, myHelpers.contextToTags(this.metric.context), this.metric),
           interval: this.interval
-        },
-        this.processData.bind(this)
-      );
+        }, this.processData.bind(this));
+        // Should work just the same with promises too.
+        // .then(this.processData.bind(this));
     };
 
     Widget.prototype.stopPolling = function() {
@@ -131,6 +131,7 @@ angular.module(PKG.name+'.feature.dashboard')
     };
 
     Widget.prototype.processData = function (queryResults) {
+      this.pollId = queryResults.__pollId__;
       var metrics, metric, data, dataPt, result;
       var i, j;
       var tempMap = {};
