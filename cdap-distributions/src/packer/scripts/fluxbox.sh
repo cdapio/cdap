@@ -29,7 +29,7 @@ cd ~cdap/.fluxbox
 ln -sf /opt/idea* /opt/idea
 
 # Populate startup file
-echo 'xterm -e "cat /etc/motd; bash -l" &' > startup
+echo 'xterm -e "cat /etc/welcome.txt; bash -l" &' > startup
 # echo '/opt/idea/bin/idea.sh &' >> startup
 # echo 'eclipse &' >> startup
 # echo 'firefox http://localhost:9999 http://docs.cask.co/cdap &' >> startup

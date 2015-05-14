@@ -23,7 +23,6 @@ import co.cask.cdap.client.MetricsClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.ScheduleClient;
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
@@ -61,27 +60,23 @@ public class RemoteApplicationManager implements ApplicationManager {
 
   public RemoteApplicationManager(Id.Application application, ClientConfig clientConfig) {
     this.application = application;
-    this.clientConfig = clientConfig;
-    this.metricsClient = new MetricsClient(clientConfig);
-  }
+    ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig).build();
+    namespacedClientConfig.setNamespace(application.getNamespace());
 
-  private ClientConfig getClientConfig() {
-    ConnectionConfig connectionConfig = ConnectionConfig.builder(clientConfig.getConnectionConfig())
-      .setNamespace(application.getNamespace())
-      .build();
-    return new ClientConfig.Builder(clientConfig).setConnectionConfig(connectionConfig).build();
+    this.clientConfig = namespacedClientConfig;
+    this.metricsClient = new MetricsClient(namespacedClientConfig);
   }
 
   private ApplicationClient getApplicationClient() {
-    return new ApplicationClient(getClientConfig());
+    return new ApplicationClient(clientConfig);
   }
 
   private ProgramClient getProgramClient() {
-    return new ProgramClient(getClientConfig());
+    return new ProgramClient(clientConfig);
   }
 
   private ScheduleClient getScheduleClient() {
-    return new ScheduleClient(getClientConfig());
+    return new ScheduleClient(clientConfig);
   }
 
   @Override
@@ -328,7 +323,8 @@ public class RemoteApplicationManager implements ApplicationManager {
   @Override
   @Deprecated
   public StreamWriter getStreamWriter(String streamName) {
-    return new RemoteStreamWriter(new RemoteStreamManager(clientConfig, streamName));
+    return new RemoteStreamWriter(new RemoteStreamManager(clientConfig,
+                                                          Id.Stream.from(application.getNamespaceId(), streamName)));
   }
 
   @Override

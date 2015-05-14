@@ -251,7 +251,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
       }
 
       String runId = rr.getPid();
-      Id.Program targetProgramId = retrieveProgramIdForRunRecord (programType, runId);
+      Id.Program targetProgramId = retrieveProgramIdForRunRecord(programType, runId);
 
       // Check if such program exist for the RunRecord
       if (targetProgramId != null) {
@@ -298,7 +298,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @return the program id of the run record or {@code null} if does not exist.
    */
   @Nullable
-  private Id.Program retrieveProgramIdForRunRecord (ProgramType programType, String runId) {
+  private Id.Program retrieveProgramIdForRunRecord(ProgramType programType, String runId) {
 
     // Get list of namespaces (borrow logic from AbstractAppFabricHttpHandler#listPrograms)
     List<NamespaceMeta> namespaceMetas = store.listNamespaces();

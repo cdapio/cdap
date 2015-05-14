@@ -18,6 +18,8 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -36,6 +38,7 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.proto.Id;
+import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Objects;
@@ -183,7 +186,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     // all queues for a flow are in one table
     truncate(getDataTableId(namespaceId, app, flow));
     // we also have to delete the config for these queues
-    deleteConsumerConfigurations(namespaceId, app, flow);
+    deleteFlowConfigs(namespaceId, app, flow);
   }
 
   @Override
@@ -199,7 +202,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     // all queues for a flow are in one table
     drop(getDataTableId(namespaceId, app, flow));
     // we also have to delete the config for these queues
-    deleteConsumerConfigurations(namespaceId, app, flow);
+    deleteFlowConfigs(namespaceId, app, flow);
   }
 
   @Override
@@ -301,11 +304,38 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     });
   }
 
-  private void deleteConsumerConfigurations(String namespaceId, String app, String flow) throws Exception {
+  private void deleteFlowConfigs(String namespaceId, String app, String flow) throws Exception {
     // It's a bit hacky here since we know how the HBaseConsumerStateStore works.
     // Maybe we need another Dataset set that works across all queues.
-    QueueName prefixName = QueueName.from(URI.create(QueueName.prefixForFlow(namespaceId, app, flow)));
-    deleteConsumerStates(prefixName);
+    final QueueName prefixName = QueueName.from(URI.create(QueueName.prefixForFlow(namespaceId, app, flow)));
+
+    Id.DatasetInstance stateStoreId = getStateStoreId(namespaceId);
+    Map<String, String> args = ImmutableMap.of(HBaseQueueDatasetModule.PROPERTY_QUEUE_NAME, prefixName.toString());
+    HBaseConsumerStateStore stateStore = datasetFramework.getDataset(stateStoreId, args, null);
+    if (stateStore == null) {
+      // If the state store doesn't exists, meaning there is no queue, hence nothing to do.
+      return;
+    }
+
+    final Table table = stateStore.getInternalTable();
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) table)
+      .execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          // Prefix name is "/" terminated ("queue:///namespace/app/flow/"), hence the scan is unique for the flow
+          byte[] startRow = Bytes.toBytes(prefixName.toString());
+          Scanner scanner = table.scan(startRow, Bytes.stopKeyForPrefix(startRow));
+          try {
+            Row row = scanner.next();
+            while (row != null) {
+              table.delete(row.getRow());
+              row = scanner.next();
+            }
+          } finally {
+            scanner.close();
+          }
+        }
+      });
   }
 
   /**
