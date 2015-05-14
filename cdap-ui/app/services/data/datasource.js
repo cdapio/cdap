@@ -117,6 +117,10 @@ angular.module(PKG.name+'.services')
         // Reuse the same instance if already created.
         return instances[id];
       }
+
+      if (!(this instanceof DataSource)) {
+        return new DataSource(scope);
+      }
       instances[id] = self;
 
       this.bindings = [];
