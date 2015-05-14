@@ -28,7 +28,10 @@ import java.util.NavigableMap;
 /**
  * Handles serialization/deserialization of a {@link co.cask.tephra.persist.TransactionSnapshot}
  * and its elements to {@code byte[]}.
+ *
+ * @deprecated Replaced by use of {@code co.cask.tephra.snapshot.SnapshotCodecV3}.
  */
+@Deprecated
 public class SnapshotCodecV2 extends AbstractSnapshotCodec {
   public static final int VERSION = 2;
 

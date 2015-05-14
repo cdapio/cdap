@@ -409,7 +409,8 @@
         <name>data.tx.snapshot.codecs</name>
         <value>
           co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV1,
-          co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV2
+          co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV2,
+          co.cask.tephra.snapshot.SnapshotCodecV3
         </value>
         <description>Specifies the class names of all supported transaction state codecs</description>
     </property>
