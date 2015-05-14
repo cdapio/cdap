@@ -343,15 +343,12 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
     public String jmsPluginType;
 
     public JmsPluginConfig() {
-      messagesToReceive = 50;
-      connectionFactoryName = DEFAULT_CONNECTION_FACTORY;
-      jmsPluginName = Context.INITIAL_CONTEXT_FACTORY;
-      jmsPluginType = JMS_PROVIDER;
+      this(null, null, null, 50, DEFAULT_CONNECTION_FACTORY, Context.INITIAL_CONTEXT_FACTORY, JMS_PROVIDER);
     }
 
-    public JmsPluginConfig(String destinationName, @Nullable Integer messagesToReceive, String initialContextFactory,
-                           String providerUrl, @Nullable String connectionFactoryName, @Nullable String jmsPluginName,
-                           @Nullable String jmsPluginType) {
+    public JmsPluginConfig(String destinationName, String initialContextFactory, String providerUrl,
+                           @Nullable Integer messagesToReceive, @Nullable String connectionFactoryName,
+                           @Nullable String jmsPluginName, @Nullable String jmsPluginType) {
       this.destinationName = destinationName;
       if (messagesToReceive != null) {
         this.messagesToReceive = messagesToReceive;
@@ -366,7 +363,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
         this.connectionFactoryName = DEFAULT_CONNECTION_FACTORY;
       }
       this.jmsPluginName = jmsPluginName;
-      if (jmsPluginName == null) {
+      if (this.jmsPluginName == null) {
         this.jmsPluginName = Context.INITIAL_CONTEXT_FACTORY;
       }
       this.jmsPluginType = jmsPluginType;
