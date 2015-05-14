@@ -238,10 +238,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     List<RunRecord> activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecord>() {
       @Override
       public boolean apply(RunRecord record) {
-        if (record.getTwillRunId() == null) {
-          return false;
-        }
-        return twillRunIds.contains(record.getTwillRunId());
+        return record.getTwillRunId() != null
+          && twillRunIds.contains(org.apache.twill.internal.RunIds.fromString(record.getTwillRunId()));
       }
     });
 
