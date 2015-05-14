@@ -131,9 +131,9 @@ angular.module(PKG.name+'.services')
           angular.forEach(self.bindings, function (b) {
             if (b.resource.id === data.resource.id) {
               if (b.errorCallback) {
-                $rootScope.$applyAsync(b.errorCallback.bind(null, data.response));
+                $rootScope.$apply(b.errorCallback.bind(null, data.response));
               } else if (b.reject) {
-                $rootScope.$applyAsync(b.reject.bind(null, {data: data.response}));
+                $rootScope.$apply(b.reject.bind(null, {data: data.response}));
               }
             }
           });
