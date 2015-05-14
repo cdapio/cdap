@@ -47,7 +47,17 @@
           "jms.provider.url" : {
              "widget" : "textbox",
              "label" : "Provider URL"
-          }
+          },
+
+         "jms.plugin.name" : {
+           "widget": "textbox",
+           "label": "JMS Provider Plugin Name"
+         },
+
+         "jms.plugin.type": {
+           "widget": "textbox",
+           "label": "JMS Provider Plugin Type"
+         }
        }
     }
 

@@ -65,8 +65,11 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
   public static final String JMS_NAMING_FACTORY_INITIAL = "jms.factory.initial";
   public static final String JMS_PROVIDER_URL = "jms.provider.url";
   public static final String JMS_CONNECTION_FACTORY_NAME = "jms.jndi.connectionfactory.name";
+  public static final String JMS_PLUGIN_NAME = "jms.plugin.name";
+  public static final String JMS_PLUGIN_TYPE = "jms.plugin.type";
 
   public static final String DEFAULT_CONNECTION_FACTORY = "ConnectionFactory";
+  public static final String JMS_PROVIDER = "JMSProvider";
 
   private static final long JMS_CONSUMER_TIMEOUT_MS = 2000;
 
@@ -180,9 +183,8 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    Class<Object> driver  = pipelineConfigurer.usePluginClass("JMSProvider",
-                                                              Context.INITIAL_CONTEXT_FACTORY,
-                                                              "jmsource.JMSProvider.Context",
+    String pluginId = String.format("%s.%s.%s", "jmsource", config.jmsPluginType, config.jmsPluginName);
+    Class<Object> driver  = pipelineConfigurer.usePluginClass(config.jmsPluginType, config.jmsPluginName, pluginId,
                                                               PluginProperties.builder().build());
     Preconditions.checkArgument(driver != null, "JMS Initial Connection Factory Context class must be found.");
   }
@@ -328,13 +330,28 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
     @Nullable
     private String connectionFactoryName;
 
+    @Name(JMS_PLUGIN_NAME)
+    @Description("Name of the JMS plugin to use. This is the value of the 'name' key defined in the json file " +
+        "for the JMS plugin. Defaults to " + Context.INITIAL_CONTEXT_FACTORY)
+    @Nullable
+    public String jmsPluginName;
+
+    @Name(JMS_PLUGIN_TYPE)
+    @Description("Type of the JMS plugin to use. This is the value of the 'type' key defined in the json file " +
+        "for the JMS plugin. Defaults to 'JMSProvider'.")
+    @Nullable
+    public String jmsPluginType;
+
     public JmsPluginConfig() {
       messagesToReceive = 50;
       connectionFactoryName = DEFAULT_CONNECTION_FACTORY;
+      jmsPluginName = Context.INITIAL_CONTEXT_FACTORY;
+      jmsPluginType = JMS_PROVIDER;
     }
 
     public JmsPluginConfig(String destinationName, @Nullable Integer messagesToReceive, String initialContextFactory,
-                           String providerUrl, @Nullable String connectionFactoryName) {
+                           String providerUrl, @Nullable String connectionFactoryName, @Nullable String jmsPluginName,
+                           @Nullable String jmsPluginType) {
       this.destinationName = destinationName;
       if (messagesToReceive != null) {
         this.messagesToReceive = messagesToReceive;
@@ -347,6 +364,14 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
         this.connectionFactoryName = connectionFactoryName;
       } else {
         this.connectionFactoryName = DEFAULT_CONNECTION_FACTORY;
+      }
+      this.jmsPluginName = jmsPluginName;
+      if (jmsPluginName == null) {
+        this.jmsPluginName = Context.INITIAL_CONTEXT_FACTORY;
+      }
+      this.jmsPluginType = jmsPluginType;
+      if (this.jmsPluginType == null) {
+        this.jmsPluginType = JMS_PROVIDER;
       }
     }
   }
