@@ -2,7 +2,8 @@ angular.module(PKG.name + '.feature.workflows')
   .controller('WorkflowsSchedulesController', function($scope, myWorkFlowApi, $state) {
     var params = {
       appId: $state.params.appId,
-      workflowId: $state.params.programId
+      workflowId: $state.params.programId,
+      scope: $scope
     };
 
     myWorkFlowApi.schedules(params)
@@ -35,7 +36,8 @@ angular.module(PKG.name + '.feature.workflows')
           v.isOpen = false;
           myWorkFlowApi.pollScheduleStatus({
             appId: $state.params.appId,
-            scheduleId: v.schedule.name
+            scheduleId: v.schedule.name,
+            scope: $scope
           })
             .$promise
             .then(function(response) {
@@ -51,14 +53,16 @@ angular.module(PKG.name + '.feature.workflows')
     $scope.suspendSchedule = function (obj) {
       myWorkFlowApi.scheduleSuspend({
         appId: $state.params.appId,
-        scheduleId: obj.schedule.name
+        scheduleId: obj.schedule.name,
+        scope: $scope
       });
     };
 
     $scope.resumeSchedule = function (obj) {
       myWorkFlowApi.scheduleResume({
         appId: $state.params.appId,
-        scheduleId: obj.schedule.name
+        scheduleId: obj.schedule.name,
+        scope: $scope
       });
     };
 

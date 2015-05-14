@@ -331,7 +331,7 @@ function buildUrl(url, params) {
     for (var i = 0; i < keys.length; i++) {
       iterator.call(context, obj[keys[i]], keys[i]);
     }
-  return keys;
+    return keys;
   }
 
   function encodeUriQuery(val, pctEncodeSpaces) {
