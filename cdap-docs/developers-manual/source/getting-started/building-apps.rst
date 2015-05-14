@@ -63,7 +63,7 @@ or under Windows::
 
   > 
 
-  
+
 
 Deploying an Application
 ----------------------------------
@@ -75,7 +75,8 @@ Once CDAP is started, you can deploy an example JAR by any of these methods:
   .. parsed-literal::
     example/target/|example|-|release|.jar
  
-  onto the CDAP UI running at `http://localhost:9999/ <http://localhost:9999/>`__; or
+..  onto the CDAP UI running at `http://localhost:9999/ <http://localhost:9999/>`__; or
+
 - Use the *Add App* button found on the *Development* page of the CDAP UI to browse and upload the Jar; or
 - From the Standalone CDAP SDK directory, use the :ref:`Command Line Interface (CLI) <cli>`::
 
