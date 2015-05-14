@@ -11,9 +11,8 @@
 
 <div ng-controller="FlowsRunDetailController">
   <my-program-status
-    data-status="status"
-    data-start="startTime"
-    data-duration="duration"
+    data-type="flows"
+    data-runid="{{ runs.selected.runid }}"
   ></my-program-status>
 </div>
 

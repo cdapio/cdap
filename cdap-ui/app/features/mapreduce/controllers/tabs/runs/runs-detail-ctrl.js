@@ -37,7 +37,6 @@ angular.module(PKG.name + '.feature.mapreduce')
 
         $scope.info = res;
 
-        $scope.duration = res.stopTime ? (res.stopTime - res.startTime) : 0;
         $scope.mapProgress = Math.floor(res.mapProgress * 100);
         $scope.reduceProgress = Math.floor(res.reduceProgress * 100);
 

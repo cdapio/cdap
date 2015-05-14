@@ -10,9 +10,8 @@
 
 <div ng-controller="SparkRunsDetailStatusController">
   <my-program-status
-    data-status="status"
-    data-start="startTime"
-    data-duration="duration*1000"
+    data-type="spark"
+    data-runid="{{ runs.selected.runid }}"
   ></my-program-status>
 </div>
 

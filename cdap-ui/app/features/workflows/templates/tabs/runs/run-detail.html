@@ -10,9 +10,8 @@
 
 <div ng-controller="WorkflowsRunsDetailController">
   <my-program-status
-    data-status="status"
-    data-start="startTime"
-    data-duration="duration"
+    data-type="workflows"
+    data-runid="{{ runs.selected.runid }}"
   ></my-program-status>
 </div>
 
