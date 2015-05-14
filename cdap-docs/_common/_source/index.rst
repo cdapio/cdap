@@ -77,7 +77,7 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Introduction to Application Templates:** Applications that are reusable through configuration and
     extensible through plugins 
   - **ETL:** Making performing ETL possible without writing code 
-  - **Creating Custom ETL Plugins:**: For developers of custom ETL Plugins and Adapters 
+  - **Creating Custom ETL Plugins:**: For developers of custom ETL Plugins 
   
   
 .. |admin-manual| replace:: **Administration Manual:**

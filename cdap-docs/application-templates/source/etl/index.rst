@@ -135,4 +135,8 @@ Template and Plugin Details
 
 - |operations|_ Lifecycle controls for operating an ETL Adapter.
 
+.. |etl-custom| replace:: **Creating Custom ETL Plugins:**
+.. _etl-custom: custom.html
+
+- |etl-custom|_ Intended for developers writing custom ETL Plugins.
 
