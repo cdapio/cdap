@@ -14,11 +14,11 @@ The simplest Cask Data Application Platform (CDAP) Example.
 Overview
 ===========
 
-This application uses one Stream, one Dataset, one Flow and one Service to implement the classic "Hello World".
+This application uses one Stream, one Dataset, one Flow and one Service to implement the classic "Hello World":
 
 - A stream to send names to;
 - A flow with a single flowlet that reads the stream and stores in a dataset each name in a KeyValueTable; and
-- A Service, that reads the name from the KeyValueTable and responds with "Hello [Name]!"
+- A service that reads the name from the KeyValueTable and responds with "Hello [Name]!"
 
 
 The ``HelloWorld`` Application
@@ -55,14 +55,14 @@ by the length of the name. We will see below how to retrieve these metrics using
 The ``Greeting`` Service
 ------------------------------
 
-This Service has a single endpoint called ``greet`` that does not accept arguments. When invoked, it
+This service has a single endpoint called ``greet`` that does not accept arguments. When invoked, it
 reads the name stored by the ``NameSaver`` from the key-value table. It return a simple greeting with that name:
 
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
    :language: java
    :lines: 105-137
 
-Note that the Service, like the Flowlet, also emits metrics: every time the name *Jane Doe* is received,
+Note that the service, like the flowlet, also emits metrics: every time the name *Jane Doe* is received,
 the counter ``greetings.count.jane_doe`` is incremented by one.
 We will see below how to retrieve this metric using the
 :ref:`http-restful-api-metrics`.
@@ -74,7 +74,7 @@ Building and Starting
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
 - Start CDAP, deploy and start the application and its components as described below in 
   `Running CDAP Applications`_\ .
-  Make sure you start the Flow and Service as described below.
+  Make sure you start the flow and service as described below.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications
