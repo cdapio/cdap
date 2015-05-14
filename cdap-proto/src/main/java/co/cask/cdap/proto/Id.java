@@ -690,6 +690,10 @@ public abstract class Id {
         return id;
       }
 
+      public Flow getFlow() {
+        return flow;
+      }
+
       /**
        * Uniquely identifies a Flowlet Queue.
        */

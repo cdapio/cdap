@@ -24,7 +24,7 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsContexts;
+import co.cask.cdap.common.metrics.MetricsTags;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Joiner;
@@ -60,7 +60,7 @@ public final class RuntimeStats {
   public static RuntimeMetrics getFlowletMetrics(String namespace, String applicationId,
                                                  String flowId, String flowletId) {
     Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.FLOW, flowId);
-    return getMetrics(MetricsContexts.forFlowlet(id, flowletId),
+    return getMetrics(MetricsTags.flowlet(id, flowletId),
                       Constants.Metrics.Name.Flow.FLOWLET_INPUT,
                       Constants.Metrics.Name.Flow.FLOWLET_PROCESSED,
                       Constants.Metrics.Name.Flow.FLOWLET_EXCEPTIONS);
@@ -72,7 +72,7 @@ public final class RuntimeStats {
 
   public static RuntimeMetrics getServiceMetrics(String namespace, String applicationId, String serviceId) {
     Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.SERVICE, serviceId);
-    return getMetrics(MetricsContexts.forService(id),
+    return getMetrics(MetricsTags.service(id),
                       Constants.Metrics.Name.Service.SERVICE_INPUT,
                       Constants.Metrics.Name.Service.SERVICE_PROCESSED,
                       Constants.Metrics.Name.Service.SERVICE_EXCEPTIONS);
@@ -81,7 +81,7 @@ public final class RuntimeStats {
   public static RuntimeMetrics getServiceHandlerMetrics(String namespace, String applicationId, String serviceId,
                                                         String handlerId) {
     Id.Program id = Id.Program.from(namespace, applicationId, ProgramType.SERVICE, serviceId);
-    return getMetrics(MetricsContexts.forServiceHandler(id, handlerId),
+    return getMetrics(MetricsTags.serviceHandler(id, handlerId),
                       Constants.Metrics.Name.Service.SERVICE_INPUT,
                       Constants.Metrics.Name.Service.SERVICE_PROCESSED,
                       Constants.Metrics.Name.Service.SERVICE_EXCEPTIONS);

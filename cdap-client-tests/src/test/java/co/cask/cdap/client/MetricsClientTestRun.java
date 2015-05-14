@@ -20,16 +20,20 @@ import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricsContexts;
+import co.cask.cdap.common.metrics.MetricsTags;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MetricQueryResult;
+import co.cask.cdap.proto.MetricTagValue;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -67,11 +71,18 @@ public class MetricsClientTestRun extends ClientTestBase {
       Id.Program programId = Id.Program.from(appId, ProgramType.FLOW, FakeFlow.NAME);
       String flowlet = FakeFlow.FLOWLET_NAME;
 
-      MetricQueryResult result = metricsClient.query(Constants.Metrics.Name.Flow.FLOWLET_INPUT,
-                                                     MetricsContexts.forFlowlet(programId, flowlet));
+      MetricQueryResult result = metricsClient.query(
+        ImmutableList.of(Constants.Metrics.Name.Flow.FLOWLET_INPUT),
+        ImmutableList.<String>of(),
+        MetricsTags.flowlet(programId, flowlet));
       Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
 
-      // TODO: more tests
+      List<MetricTagValue> tags = metricsClient.searchTags(MetricsTags.flowlet(programId, flowlet));
+      Assert.assertEquals(1, tags.size());
+      Assert.assertEquals("run", tags.get(0).getName());
+
+      List<String> metrics = metricsClient.searchMetrics(MetricsTags.flowlet(programId, flowlet));
+      Assert.assertTrue(metrics.contains(Constants.Metrics.Name.Flow.FLOWLET_INPUT));
     } finally {
       programClient.stop(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
       appClient.delete(FakeApp.NAME);
