@@ -117,7 +117,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
   public RouterPathLookup(Authenticator authenticator) throws ConflictingRouteException {
     super(authenticator);
     matcher = createMatcher(HANDLERS);
-    LOG.debug("Router matcher is: {}", matcher);
+    LOG.trace("Router matcher is: {}", matcher);
   }
 
   /**
