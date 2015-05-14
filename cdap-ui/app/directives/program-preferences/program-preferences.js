@@ -82,7 +82,7 @@ angular.module(PKG.name+'.commons')
         })
         .then(function() {
           $scope.loadProperties();
-          $scope.$close();
+          $scope.$close(obj);
         });
     };
 
@@ -98,10 +98,17 @@ angular.module(PKG.name+'.commons')
   .service('myProgramPreferencesService', function($bootstrapModal, $rootScope){
     var modalInstance;
 
-    this.show = function(type) {
+    this.show = function(type, preferences) {
 
       var scope = $rootScope.$new();
       scope.type = type;
+      scope.preferences = [];
+      angular.forEach(preferences, function(value, key) {
+        scope.preferences.push({
+          key: key,
+          value: value
+        });
+      });
 
       modalInstance = $bootstrapModal.open({
         template: '<my-program-preferences></my-program-preferences>',

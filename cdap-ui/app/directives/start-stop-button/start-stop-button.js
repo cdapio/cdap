@@ -5,7 +5,6 @@ angular.module(PKG.name + '.commons')
       scope: {
         type: '@',
         isStoppable: '@',
-        isPreferences: '@',
         preferencesHandler: '&',
         runtimeHandler: '&'
       },
@@ -13,12 +12,8 @@ angular.module(PKG.name + '.commons')
       controller: function($scope, $state, MyDataSource, myRuntimeService, myProgramPreferencesService) {
         $scope.isStoppable = ($scope.isStoppable === 'true');
 
-        if ( typeof $scope.isPreferences === 'undefined') {
-          $scope.isPreferences = true;
-        } else {
-          $scope.isPreferences = !!$scope.isPreferences;
-        }
         $scope.runtimeArgs = [];
+        $scope.preferences = [];
         var path = '/apps/' + $state.params.appId +
                    '/' + $scope.type + '/' + $state.params.programId;
         var dataSrc = new MyDataSource($scope);
@@ -58,7 +53,7 @@ angular.module(PKG.name + '.commons')
           if ('undefined' !== typeof fn) {
             fn();
           } else {
-            myRuntimeService.show().result.then(function(res) {
+            myRuntimeService.show($scope.runtimeArgs).result.then(function(res) {
               $scope.runtimeArgs = res;
             });
           }
@@ -69,7 +64,11 @@ angular.module(PKG.name + '.commons')
           if ('undefined' !== typeof fn) {
             fn();
           } else {
-            myProgramPreferencesService.show($scope.type);
+            myProgramPreferencesService.show($scope.type, $scope.preferences)
+              .result
+              .then(function(res) {
+                $scope.preferences = res;
+              });
           }
         };
       }
