@@ -217,7 +217,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     return prefixTree;
   }
 
-
+  // this main method is here to help debugging. It prints the entire prefix tree with all information.
   public static void main(String[] args) throws ConflictingRouteException {
     PrefixTree root = createMatcher(HANDLERS);
     System.out.println(root.toString(true));

@@ -28,7 +28,30 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A decision tree structure to match routes by URI path.
+ * A decision tree structure to match routes by URI path. Each node in the tree is itself a prefix tree.
+ * A prefix tree is traversed according to the path parts of request URL. At each node, the current
+ * path part is used to determine whether a transition needs to be made to one of the child nodes, to
+ * continue matching there. If no child node is found, then a match for the current prefix was found,
+ * and it is returned.
+ * A (node of a) prefix tree has:
+ * <ul><li>
+ *   byPath: A map from path part to child node. If this map has an entry for the current part, matching is
+ *   continued with the remaining path parts at the child node given by that Entry.
+ * </li><li>
+ *   defaultPath: A child node where matching continues if the current part has no entry in the byPath map.
+ *   This serves as a wildcard match on the path part and corresponds to a path variable in a request path.
+ *   Note that matching byPath first means that when matching, the more specific match precedes over the
+ *   wildcard match.
+ * </li><li>
+ *   match: The match to return if current part does not match any entry in the byPath map, and there is no
+ *   defaultPath. Ths corresponds to a prefix match, where no longer prefix can be matched. This is also
+ *   returned when the parts of the path are exhausted, that is, the request path has been matched completely.
+ * </li></ul>
+ * The prefix tree is first constructed completely from all the routes that can be matched. The resulting tree
+ * can have redundancy: For example, all matches within a subtree may yield the exact same service. In that case,
+ * the tree can be optimized by removing all child nodes, because a prefix match up to that node is sufficient
+ * to determine the match. For that, the tree has an optimize() method, which needs to be called after all
+ * routes have been added.
  */
 class PrefixTree {
 
@@ -36,6 +59,11 @@ class PrefixTree {
   private PrefixTree defaultPath = null;
   private Match match;
 
+  /**
+   * Match a request path to find a route. The path is used to traverse the tree to find a longest
+   * prefix match. When there amultiple possible matches, the more specific match is chosen.
+   * @return The match found for the longest prefix; or null if no prefix could be matched.
+   */
   public String match(String path) {
     String[] pathParts = StringUtils.split(path, '/');
     Match match = match(pathParts, 0);
@@ -51,7 +79,10 @@ class PrefixTree {
     return service;
   }
 
-  public Match match(String[] parts, int pos) {
+  /**
+   * This method performs the actual matching after the input path is split into its parts.
+   */
+  private Match match(String[] parts, int pos) {
     if (pos >= parts.length) {
       // no more parts in the input -> return current match
       return match;
@@ -66,10 +97,27 @@ class PrefixTree {
     return next.match(parts, pos + 1);
   }
 
+  /**
+   * Add a route to an existing tree. If an existing route conflicts with the new route, the more specific
+   * one of the two routes will be retained in the tree. If both routes are equally specific, an exception
+   * is thrown.
+   * @param path The path from the @Path annotation
+   * @param service The service to route to
+   * @param route The complete description of the route
+   * @throws ConflictingRouteException if the new route conflicts with an existing route in tree, and
+   *         neither of the two is more specific than the other.
+   */
   public void addRoute(String path, String service, Route route) throws ConflictingRouteException {
     addRoute(StringUtils.split(path, '/'), 0, service, route, "");
   }
 
+  /**
+   * @param wildcards A string describing the wildcards consumed in the path so far. With every recursive call
+   *                  one letter is appended to this string, depending on the current part: A blank represents
+   *                  a literal string, whereas a '*' represents a wildcard (path variable). This is used
+   *                  to select the more specific of two conflicting routes.
+   * @throws ConflictingRouteException
+   */
   private void addRoute(String[] pathParts, int pos, String service, Route route, String wildcards)
     throws ConflictingRouteException {
 
@@ -79,18 +127,24 @@ class PrefixTree {
       match = match == null ? newMatch : match.select(newMatch);
       return;
     }
+    // examine the next part
     String part = pathParts[pos];
     boolean wildcard = part.startsWith("{") && part.endsWith("}"); // path variable
     if (wildcard) {
-      // wildcard must be added to all routes, be it by path or default
+      // wildcard must be added to all subtrees, be it by path or default
       for (PrefixTree next : byPath.values()) {
         next.addRoute(pathParts, pos + 1, service, route, wildcards + '*');
       }
+      // if there is no default path yet, create one as an empty tree
       defaultPath = defaultPath != null ? defaultPath : new PrefixTree();
+      // now add this route to the default
       defaultPath.addRoute(pathParts, pos + 1, service, route, wildcards + '*');
     } else {
+      // not a wildcard: we only need to add it to the specific subtree for this part
       PrefixTree next = byPath.get(part);
       if (next == null) {
+        // if there is no subtree for this part yet, create one. If there is a default
+        // subtree, then we must create the new subtree as a copy of that.
         next = defaultPath != null ? defaultPath.deepCopy() : new PrefixTree();
         byPath.put(part, next);
       }
@@ -98,6 +152,10 @@ class PrefixTree {
     }
   }
 
+  /**
+   * Make a copy of this prefix tree. All nodes and transitions are copied,
+   * except for the routes contained in matches, because they are immutable.
+   */
   private PrefixTree deepCopy() {
     PrefixTree copy = new PrefixTree();
     if (match != null) {
@@ -112,6 +170,11 @@ class PrefixTree {
     return copy;
   }
 
+  /**
+   * Optimize the tree to remove redundancy and shorten the prefixes that will be matched. This
+   * will shrink the size of the tree and most likely also the depth of the tree. That will help
+   * the number of comparisons that need to be performed to find a match.
+   */
   public void optimize() {
     // first optimize all subtrees
     for (PrefixTree next : byPath.values()) {
@@ -162,8 +225,8 @@ class PrefixTree {
 
   /**
    * Determine whether all branches under this node match the same service.
-   * @return The shortest prefix match for that service within this tree.
-   *         The returned match will contain the routes of all other matches found.
+   * @return The shortest prefix match for that service within this tree, or null if the tree can match
+   *         more than one service. The returned match will contain the routes of all other matches found.
    */
   private Match isSingleService() {
     Match result = null;
@@ -223,6 +286,8 @@ class PrefixTree {
     }
     return true;
   }
+
+  // Everything below here are helpers for printing.
 
   @Override
   public String toString() {
@@ -318,7 +383,7 @@ class PrefixTree {
 
     /**
      * Select the more specific one from two matches if they do not conflict. A conflict exists if
-     * both matches are equally specificbut return differenty serives.
+     * both matches are equally specific but return different services.
      *
      * @return the more specific one out of this and the other match
      * @throws ConflictingRouteException if the other match is in conflict
@@ -342,7 +407,7 @@ class PrefixTree {
     /**
      * Determine which of two wildcard strings is more specific. A wildcard string is the more specific the
      * later the first wildcard character occurs in it. For route matches, a more specific match prevails.
-     * Wildcard strings are sequences of blanks and '*'. A blank in position i indicates that the ith path
+     * Wildcard strings are sequences of blanks and '*'. A '*' in position i indicates that the ith path
      * component is a wildcard (that is, a path variable). Hence, "  *" is more specific than "   ", and
      * " *  " is more specific than " * *". Right now, we only support comparing strings of the same length,
      * and will throw an exception otherwise.
