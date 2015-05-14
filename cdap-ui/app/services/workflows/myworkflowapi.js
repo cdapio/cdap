@@ -5,6 +5,18 @@ angular.module(PKG.name + '.services')
         schedulepath = '/apps/:appId/schedules/:scheduleId',
         basepath = '/apps/:appId/workflows/:workflowId';
 
+    function getConfig (method, type, path, isArray) {
+      var config = {
+        url: url({ _cdapNsPath: path }),
+        method: method,
+        options: { type: type}
+      };
+      if (isArray) {
+        config.isArray = true;
+      }
+      return config;
+    }
+
     return $resource(
       url({ _cdapNsPath: basepath }),
     {
@@ -14,95 +26,20 @@ angular.module(PKG.name + '.services')
       runId: '@runId'
     },
     {
-      get: {
-        url: url({ _cdapNsPath: basepath }),
-        method: 'GET',
-        options: { type: 'REQUEST' }
-      },
-
-      // Status, Start & Stop of a workflow.
-      status: {
-        url: url({ _cdapNsPath: basepath + '/status' }),
-        method: 'GET',
-        options: { type: 'REQUEST' }
-      },
-      start: {
-        url: url({ _cdapNsPath: basepath + '/start' }),
-        method: 'POST',
-        options: { type: 'REQUEST' }
-      },
-      stop: {
-        url: url({ _cdapNsPath: basepath + '/stop' }),
-        method: 'POST',
-        options: { type: 'REQUEST' }
-      },
-
-      pollStatus: {
-        url: url({ _cdapNsPath: basepath + '/status' }),
-        method: 'GET',
-        options: { type: 'POLL' }
-      },
-
-      // Runs and runDetail of a workflow
-      runs: {
-        url: url({ _cdapNsPath: basepath + '/runs'}),
-        method: 'GET',
-        isArray: true,
-        options: { type: 'REQUEST'}
-      },
-      runDetail: {
-        url: url({ _cdapNsPath: basepath + '/runs/:runId'}),
-        method: 'GET',
-        options: { type: 'REQUEST'}
-      },
-      pollRuns: {
-        url: url({ _cdapNsPath: basepath + '/runs'}),
-        method: 'GET',
-        isArray: true,
-        options: { type: 'POLL'}
-      },
-      pollRunDetail: {
-        url: url({ _cdapNsPath: basepath + '/runs/:runId'}),
-        method: 'GET',
-        options: { type: 'POLL'}
-      },
-
-      logs: {
-        url: url({_cdapNsPath: basepath + '/runs/:runId/logs/next'}),
-        method: 'GET',
-        isArray: true,
-        options: {type: 'REQUEST'}
-      },
-
-      schedules: {
-        url: url({_cdapNsPath: basepath + '/schedules'}),
-        method: 'GET',
-        isArray: true,
-        options: {type: 'REQUEST'}
-      },
-
-      schedulesPreviousRunTime: {
-        url: url({_cdapNsPath: basepath + '/previousruntime'}),
-        method: 'GET',
-        isArray: true,
-        options: {type: 'REQUEST'}
-      },
-
-      pollScheduleStatus: {
-        url: url({_cdapNsPath: schedulepath + '/status'}),
-        method: 'GET',
-        options: {type: 'POLL'}
-      },
-      scheduleSuspend: {
-        url: url({_cdapNsPath: schedulepath + '/suspend'}),
-        method: 'POST',
-        options: {type: 'REQUEST'}
-      },
-      scheduleResume: {
-        url: url({_cdapNsPath: schedulepath + '/resume'}),
-        method: 'POST',
-        options: {type: 'REQUEST'}
-      }
-
+      get: getConfig('GET', 'REQUEST', basepath),
+      status: getConfig('GET', 'REQUEST', basepath + '/status'),
+      start: getConfig('POST', 'REQUEST', basepath + '/start'),
+      stop: getConfig('POST', 'REQUEST', basepath + '/stop'),
+      pollStatus: getConfig('GET', 'POLL', basepath + '/status'),
+      runs: getConfig('GET', 'REQUEST', basepath + '/runs', true),
+      runDetail: getConfig('GET', 'REQUEST', basepath + '/runs/:runId'),
+      pollRuns: getConfig('GET', 'POLL', basepath + '/runs', true),
+      pollRunDetail: getConfig('GET', 'POLL', basepath + '/runs/:runId'),
+      logs: getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/next', true),
+      schedules: getConfig('GET', 'REQUEST', basepath + '/schedules', true),
+      schedulesPreviousRunTime: getConfig('GET', 'REQUEST', basepath + '/previousruntime', true),
+      pollScheduleStatus: getConfig('GET', 'POLL', schedulepath + '/status'),
+      scheduleSuspend: getConfig('POST', 'REQUEST', schedulepath + '/suspend'),
+      scheduleResume: getConfig('POST', 'REQUEST', schedulepath + '/resume')
     });
   });
