@@ -276,16 +276,18 @@ module.directive('myWorkflowGraph', function ($filter) {
       scope.getShapes = function() {
         var shapes = {};
         shapes.job = function(parent, bbox, node) {
+
+          // Creating Hexagon
+          var xPoint = defaultRadius * 7/8;
+          var yPoint = defaultRadius * 1/2;
           var points = [
-            //clockwise points from top
-            { x: -defaultRadius * 2/3, y: -defaultRadius * 2/3}, //a
-            { x: 0, y: -defaultRadius}, // b
-            { x: defaultRadius * 2/3, y: -defaultRadius * 2/3}, // c
-            { x: defaultRadius, y: 0}, // d
-            { x: defaultRadius * 2/3, y: defaultRadius * 2/3}, // e
-            { x: 0, y: defaultRadius}, // f
-            { x: -defaultRadius * 2/3, y: defaultRadius * 2/3}, // g
-            { x: -defaultRadius, y: -0}, //h
+            // points are listed from top and going clockwise
+            { x: 0, y: defaultRadius},
+            { x: xPoint, y: yPoint},
+            { x: xPoint, y: -yPoint },
+            { x: 0, y: -defaultRadius},
+            { x: -xPoint, y: -yPoint},
+            { x: -xPoint, y: yPoint}
           ];
           var shapeSvg = parent.insert('polygon', ':first-child')
             .attr('points', points.map(function(p) { return p.x + ',' + p.y; }).join(' '))
@@ -462,8 +464,24 @@ function genericRender(scope) {
   svg.call(tip);
 
   // Set up zoom support
-  var zoom = d3.behavior.zoom().on('zoom', function() {
-    svgGroup.attr('transform', 'translate(' + d3.event.translate + ')' +
+  var zoom = d3.behavior.zoom().scaleExtent([0.1, 2]);
+  zoom.on('zoom', function() {
+    var t = zoom.translate(),
+        tx = t[0],
+        ty = t[1];
+    var scale = d3.event.scale;
+    scale = Math.min(2, scale);
+
+    tx = Math.max(tx, (-g.graph().width+100)*scale );
+    tx = Math.min(tx, svg.width() - 100);
+
+    ty = Math.max(ty, -g.graph().height*scale);
+    ty = Math.min(ty, (g.graph().height));
+
+    var arr = [tx, ty];
+
+    zoom.translate(arr);
+    svgGroup.attr('transform', 'translate(' + arr + ') ' +
                                 'scale(' + d3.event.scale + ')');
   });
   svg.call(zoom);
@@ -499,7 +517,7 @@ function genericRender(scope) {
   var svgWidth = svg.node().getBoundingClientRect().width;
   if (svgWidth - g.graph().width <= 0) {
     zoom.translate([0,0])
-        .scale(1.0 - (g.nodeCount() + g.edgeCount())/100)
+        .scale(svg.width()/g.graph().width)
         .event(svg);
     svg.attr('height', g.graph().height * initialScale + 40);
   } else {
