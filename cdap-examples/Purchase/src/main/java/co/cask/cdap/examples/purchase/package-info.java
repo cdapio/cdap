@@ -26,11 +26,10 @@
  *     The PurchaseFlow reads the purchaseStream and converts every input String into a Purchase object and stores
  *     the object in the purchases DataSet.
  *   </li><li>
- *     When scheduled by the PurchaseHistoryWorkflow, the PurchaseHistoryBuilder MapReduce program
- *     reads the purchases DataSet, creates a purchase history,
- *     and stores the purchase history in the history DataSet every morning at 4:00 A.M.
- *     Or, you can manually (in the Process screen in the CDAP UI) or programmatically execute 
- *     the PurchaseHistoryBuilder MapReduce to store customers' purchase history in the history DataSet.
+ *     As scheduled by the PurchaseHistoryWorkflow, the PurchaseHistoryBuilder MapReduce program
+ *     reads the purchases DataSet, creates a purchase history, and stores the purchase history in the
+ *     history DataSet every morning at 4:00 A.M. To avoid waiting, you can manually start the  
+ *     PurchaseHistoryBuilder MapReduce either from within the CDAP UI or programmatically by using the CDAP CLI.
  *   </li><li>
  *     Request the PurchaseHistoryService retrieve from the history Dataset the purchase history of a user.
  *     <p>
