@@ -50,7 +50,6 @@ import co.cask.cdap.metrics.query.MetricsHandler;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
-import org.apache.commons.lang.StringUtils;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.slf4j.Logger;
@@ -70,7 +69,11 @@ import javax.ws.rs.Path;
  */
 public final class RouterPathLookup extends AuthenticatedHttpHandler {
 
+  public static final String USER_SERVICE_FORMAT = "service.%s.%s.%s";
+
   private static final Logger LOG = LoggerFactory.getLogger(RouterPathLookup.class);
+  private static final String USER_SERVICE_METHOD_PATH = "/v3/namespaces/{...}/apps/{...}/services/{...}/methods/{...}";
+  private static final String NO_ROUTE = "";
 
   private static final Map<String, ? extends List<Class<?>>> HANDLERS = ImmutableMap.of(
     Constants.Service.STREAMS, ImmutableList.<Class<?>>of(
@@ -108,18 +111,13 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       QueryExecutorHttpHandler.class)
   );
 
-  private MatchTree matcher;
+  private PrefixTree matcher;
 
   @Inject
   public RouterPathLookup(Authenticator authenticator) throws ConflictingRouteException {
     super(authenticator);
-    matcher = createMatchTree(HANDLERS);
+    matcher = createMatcher(HANDLERS);
     LOG.debug("Router matcher is: {}", matcher);
-  }
-
-  @SuppressWarnings("unused")
-  private enum AllowedMethod {
-    GET, PUT, POST, DELETE
   }
 
   /**
@@ -133,8 +131,6 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
   public String getRoutingService(String fallbackService, String requestPath, HttpRequest httpRequest) {
     try {
       String method = httpRequest.getMethod().getName();
-      AllowedMethod requestMethod = AllowedMethod.valueOf(method);
-      String[] uriParts = StringUtils.split(requestPath, '/');
 
       //Check if the call should go to webapp
       //If service contains "$HOST" and if first split element is NOT the gateway version, then send it to WebApp
@@ -148,14 +144,13 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       if (!isV3request && fallbackService.contains("$HOST")) {
         return fallbackService;
       } else if (isV3request) {
-        String service = matcher.match(httpRequest.getMethod(), requestPath);
+        String service = matcher.match(requestPath);
         if (service != null) {
-          if (MatchTree.NO_ROUTE.equals(service)) {
+          if (NO_ROUTE.equals(service)) {
             service = null;
           }
           return service;
         }
-        // return getV3RoutingService(uriParts, requestMethod);
       }
     } catch (Exception e) {
       // Ignore exception. Default routing to app-fabric.
@@ -163,107 +158,14 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
     return Constants.Service.APP_FABRIC_HTTP;
   }
 
-  private String getV3RoutingService(String [] uriParts, AllowedMethod requestMethod) {
-    if ((uriParts.length >= 2) && uriParts[1].equals("feeds")) {
-      // TODO find a better way to handle that - this looks hackish
-      return null;
-    } else if ((uriParts.length >= 9) && "services".equals(uriParts[5]) && "methods".equals(uriParts[7])) {
-      //User defined services handle methods on them:
-      //Path: "/v3/namespaces/{namespace-id}/apps/{app-id}/services/{service-id}/methods/<user-defined-method-path>"
-      //Discoverable Service Name -> "service.%s.%s.%s", namespaceId, appId, serviceId
-      return String.format("service.%s.%s.%s", uriParts[2], uriParts[4], uriParts[6]);
-    } else if (matches(uriParts, "v3", "system", "services", null, "logs")) {
-      //Log Handler Path /v3/system/services/<service-id>/logs
-      return Constants.Service.METRICS;
-    } else if ((matches(uriParts, "v3", "namespaces", null, "streams", null, "adapters")
-      || matches(uriParts, "v3", "namespaces", null, "streams", null, "programs")
-      || matches(uriParts, "v3", "namespaces", null, "data", "datasets", null, "adapters")
-      || matches(uriParts, "v3", "namespaces", null, "data", "datasets", null, "programs")) &&
-      requestMethod.equals(AllowedMethod.GET)) {
-      return Constants.Service.APP_FABRIC_HTTP;
-    } else if ((uriParts.length >= 4) && uriParts[1].equals("namespaces") && uriParts[3].equals("streams")) {
-      // /v3/namespaces/<namespace>/streams goes to AppFabricHttp
-      // All else go to Stream Handler
-      if (uriParts.length == 4) {
-        return Constants.Service.APP_FABRIC_HTTP;
-      } else {
-        return Constants.Service.STREAMS;
-      }
-    } else if ((uriParts.length >= 8 && uriParts[7].equals("logs")) ||
-      (uriParts.length >= 10 && uriParts[9].equals("logs")) ||
-      (uriParts.length >= 6 && uriParts[5].equals("logs"))) {
-      //Log Handler Paths:
-      // /v3/namespaces/<namespaceid>/apps/<appid>/<programid-type>/<programid>/logs
-      // /v3/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/logs
-      // /v3/namespaces/<namespaceid>/adapters/<adapterid>/logs
-      // /v3/namespaces/{namespace-id}/adapters/{adapter-id}/runs/{run-id}/logs (same as case 1)
-      return Constants.Service.METRICS;
-    } else if (uriParts.length >= 2 && uriParts[1].equals("metrics")) {
-      //Metrics Search Handler Path /v3/metrics
-      return Constants.Service.METRICS;
-    } else if (uriParts.length >= 5 && uriParts[1].equals("data") && uriParts[2].equals("explore") &&
-      (uriParts[3].equals("queries") || uriParts[3].equals("jdbc") || uriParts[3].equals("namespaces"))) {
-      // non-namespaced explore operations. For example, /v3/data/explore/queries/{id}
-      return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
-    } else if (uriParts.length >= 6 && uriParts[3].equals("data") && uriParts[4].equals("explore") &&
-      (uriParts[5].equals("queries") || uriParts[5].equals("streams") || uriParts[5].equals("datasets")
-        || uriParts[5].equals("tables") || uriParts[5].equals("jdbc"))) {
-      // namespaced explore operations. For example, /v3/namespaces/{namespace-id}/data/explore/streams/{stream}/enable
-      return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
-    } else if ((uriParts.length == 3) && uriParts[1].equals("explore") && uriParts[2].equals("status")) {
-      return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
-    } else if (uriParts.length == 7 && uriParts[3].equals("data") && uriParts[4].equals("datasets") &&
-      (uriParts[6].equals("flows") || uriParts[6].equals("workers") || uriParts[6].equals("mapreduce"))) {
-      // namespaced app fabric data operations:
-      // /v3/namespaces/{namespace-id}/data/datasets/{name}/flows
-      // /v3/namespaces/{namespace-id}/data/datasets/{name}/workers
-      // /v3/namespaces/{namespace-id}/data/datasets/{name}/mapreduce
-      return Constants.Service.APP_FABRIC_HTTP;
-    } else if ((uriParts.length >= 4) && uriParts[3].equals("data")) {
-      // other data operations. For example:
-      // /v3/namespaces/{namespace-id}/data/datasets
-      // /v3/namespaces/{namespace-id}/data/datasets/{name}
-      // /v3/namespaces/{namespace-id}/data/datasets/{name}/properties
-      // /v3/namespaces/{namespace-id}/data/datasets/{name}/admin/{method}
-      return Constants.Service.DATASET_MANAGER;
-    }
-    return Constants.Service.APP_FABRIC_HTTP;
-  }
-
-  /**
-   * Determines if actual matches expected.
-   *
-   * - actual may be longer than expected, but we'll return true as long as expected was found
-   * - null in expected means "accept any string"
-   *
-   * @param actual actual string array to check
-   * @param expected expected string array format
-   * @return true if actual matches expected
-   */
-  private boolean matches(String[] actual, String... expected) {
-    if (actual.length < expected.length) {
-      return false;
-    }
-
-    for (int i = 0; i < expected.length; i++) {
-      if (expected[i] == null) {
-        continue;
-      }
-      if (!expected[i].equals(actual[i])) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private static MatchTree createMatchTree(Map<String, ? extends List<Class<?>>> serviceMap)
+  private static PrefixTree createMatcher(Map<String, ? extends List<Class<?>>> serviceMap)
     throws ConflictingRouteException {
 
     // start with an empty decision tree
-    MatchTree matchTree = new MatchTree();
+    PrefixTree prefixTree = new PrefixTree();
 
     // add NO_ROUTE for feeds
-    matchTree.addRoute(null, "/v3/feeds", MatchTree.NO_ROUTE);
+    prefixTree.addRoute("/v3/feeds", NO_ROUTE, new PrefixTree.Route("no-handler", "no-method", "ALL", "/v3/feeds"));
 
     // add all methods of all handlers
     for (String service : serviceMap.keySet()) {
@@ -292,7 +194,8 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
             }
             LOG.debug("Adding {} '{}' for handler {}", httpMethod, completePath, handlerClass.getName());
             try {
-              matchTree.addRoute(httpMethod, completePath, service);
+              prefixTree.addRoute(completePath, service, new PrefixTree.Route(
+                handlerClass.getSimpleName(), method.getName(), httpMethod, completePath));
             } catch (ConflictingRouteException e) {
               LOG.error("Error adding {} '{}' for handler {}: {}",
                         httpMethod, completePath, handlerClass.getName(), e.getMessage());
@@ -302,22 +205,22 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
         }
       }
     }
-    String userServiceMethodPath = "/v3/namespaces/{...}/apps/{...}/services/{...}/methods/{...}";
-    LOG.debug("Adding route '{}' for user service handler", userServiceMethodPath);
+    LOG.debug("Adding route '{}' for user service handler", USER_SERVICE_METHOD_PATH);
     try {
-      matchTree.addRoute(null, userServiceMethodPath, MatchTree.USER_SERVICE_FORMAT);
+      prefixTree.addRoute(USER_SERVICE_METHOD_PATH, USER_SERVICE_FORMAT,
+                          new PrefixTree.Route("user-service", "user-method", "ALL", USER_SERVICE_METHOD_PATH));
     } catch (ConflictingRouteException e) {
-      LOG.error("Error adding route '{}' for user service handler: {}", userServiceMethodPath, e.getMessage());
+      LOG.error("Error adding route '{}' for user service handler: {}", USER_SERVICE_METHOD_PATH, e.getMessage());
       throw e;
     }
-    matchTree.optimize();
-    return matchTree;
+    prefixTree.optimize();
+    return prefixTree;
   }
 
 
   public static void main(String[] args) throws ConflictingRouteException {
-    MatchTree root = createMatchTree(HANDLERS);
-    System.out.println(root);
+    PrefixTree root = createMatcher(HANDLERS);
+    System.out.println(root.toString(true));
   }
 
 }
