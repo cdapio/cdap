@@ -18,6 +18,13 @@ package co.cask.cdap.internal.app.namespace;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AlreadyExistsException;
+import co.cask.cdap.common.exception.NamespaceCannotBeCreatedException;
+import co.cask.cdap.common.service.RetryOnStartFailureService;
+import co.cask.cdap.common.service.RetryStrategies;
+import com.google.common.base.Supplier;
+import com.google.common.util.concurrent.AbstractService;
+import com.google.common.util.concurrent.Service;
+import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,43 +33,52 @@ import java.util.concurrent.TimeUnit;
 /**
  * Thread that ensures that the default namespace exists
  */
-public final class DefaultNamespaceEnsurer implements Runnable {
+public final class DefaultNamespaceEnsurer extends AbstractService {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultNamespaceEnsurer.class);
 
-  private final NamespaceAdmin namespaceAdmin;
-  private final int waitBetweenRetries;
-  private final TimeUnit waitUnit;
+  private final Service serviceDelegate;
 
-  public DefaultNamespaceEnsurer(NamespaceAdmin namespaceAdmin, int waitBetweenRetries, TimeUnit waitUnit) {
-    this.namespaceAdmin = namespaceAdmin;
-    this.waitBetweenRetries = waitBetweenRetries;
-    this.waitUnit = waitUnit;
+  @Inject
+  public DefaultNamespaceEnsurer(final NamespaceAdmin namespaceAdmin) {
+    this.serviceDelegate = new RetryOnStartFailureService(new Supplier<Service>() {
+      @Override
+      public Service get() {
+        return new AbstractService() {
+          @Override
+          protected void doStart() {
+            try {
+              namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
+              // if there is no exception, assume successfully created and break
+              LOG.info("Created default namespace successfully.");
+              notifyStarted();
+            } catch (AlreadyExistsException e) {
+              // default namespace already exists
+              LOG.info("Default namespace already exists.");
+              notifyStarted();
+            } catch (NamespaceCannotBeCreatedException e) {
+              notifyFailed(e);
+            }
+          }
+
+          @Override
+          protected void doStop() {
+            notifyStopped();
+          }
+        };
+      }
+    }, RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS));
   }
 
   @Override
-  public void run() {
-    Thread.currentThread().setName("default-namespace-ensurer");
-    int retries = 0;
-    while (true) {
-      try {
-        namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
-        // if there is no exception, assume successfully created and break
-        LOG.info("Created default namespace successfully.");
-        break;
-      } catch (AlreadyExistsException e) {
-        // default namespace already exists, break the retry loop
-        LOG.info("Default namespace already exists.");
-        break;
-      } catch (Exception e) {
-        retries++;
-        LOG.warn("Error during retry# {} - {}", retries, e.getMessage());
-        try {
-          waitUnit.sleep(waitBetweenRetries);
-        } catch (InterruptedException e1) {
-          LOG.warn("Interrupted during retry# {} - {}", retries, e1.getMessage());
-        }
-      }
-    }
+  protected void doStart() {
+    serviceDelegate.start();
+    notifyStarted();
+  }
+
+  @Override
+  protected void doStop() {
+    serviceDelegate.stop();
+    notifyStopped();
   }
 }

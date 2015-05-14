@@ -226,7 +226,7 @@ public class ConfigurableTestBase {
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
-      new ServiceStoreModules().getInMemoryModule(),
+      new ServiceStoreModules().getInMemoryModules(),
       new InMemoryProgramRunnerModule(LocalStreamWriter.class),
       new AbstractModule() {
         @Override

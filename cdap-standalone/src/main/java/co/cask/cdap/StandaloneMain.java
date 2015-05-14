@@ -27,6 +27,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -68,6 +69,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
 
@@ -148,6 +150,8 @@ public class StandaloneMain {
    * Start the service.
    */
   public void startUp() throws Exception {
+    cleanupTempDir();
+
     // Start all the services.
     txService.startAndWait();
     metricsCollectionService.startAndWait();
@@ -224,6 +228,19 @@ public class StandaloneMain {
       // we can't do much but exit. Because there was an exception, some non-daemon threads may still be running.
       // therefore System.exit() won't do it, we need to farce a halt.
       Runtime.getRuntime().halt(1);
+    } finally {
+      cleanupTempDir();
+    }
+  }
+
+  private void cleanupTempDir() {
+    File tmpDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR),
+                           configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    try {
+      DirUtils.deleteDirectoryContents(tmpDir, true);
+    } catch (IOException e) {
+      // It's ok not able to cleanup temp directory.
+      LOG.debug("Failed to cleanup temp directory {}", tmpDir, e);
     }
   }
 
@@ -377,7 +394,7 @@ public class StandaloneMain {
       new SecurityModules().getStandaloneModules(),
       new StreamServiceRuntimeModule().getStandaloneModules(),
       new ExploreRuntimeModule().getStandaloneModules(),
-      new ServiceStoreModules().getStandaloneModule(),
+      new ServiceStoreModules().getStandaloneModules(),
       new ExploreClientModule(),
       new NotificationFeedServiceRuntimeModule().getStandaloneModules(),
       new NotificationServiceRuntimeModule().getStandaloneModules(),

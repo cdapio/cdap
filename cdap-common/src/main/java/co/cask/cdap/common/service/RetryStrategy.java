@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,18 +17,17 @@
 package co.cask.cdap.common.service;
 
 /**
- * Utility method for working with Stoppable objects.
+ * Provides strategy to use for operation retries.
  */
-public final class Stoppables {
+public interface RetryStrategy {
 
   /**
-   * Quietly stops a service without throwing any exception.
+   * Returns the number of milliseconds to wait before retrying the operation.
    *
-   * Current, {@code #stop} itself does not throw exception, but in future it can.
-   * @param stopable The stopable to stop
-   * @param reason   A message about why it was stopped.
+   * @param failures Number of times that the operation has been failed.
+   * @param startTime Timestamp in milliseconds that the request starts.
+   * @return Number of milliseconds to wait before retrying the operation. Returning {@code 0} means
+   *         retry it immediately, while negative means abort the operation.
    */
-  public static void stopQuietly(Stoppable stopable, final String reason) {
-    stopable.stop(reason);
-  }
+  long nextRetry(int failures, long startTime);
 }
