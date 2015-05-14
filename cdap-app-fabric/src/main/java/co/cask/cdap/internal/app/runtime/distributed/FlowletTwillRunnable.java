@@ -16,11 +16,19 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.internal.app.runtime.flow.FlowletProgramRunner;
+import com.google.common.base.Throwables;
+import org.apache.twill.api.Command;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.ExecutionException;
 
 /**
  *
  */
 final class FlowletTwillRunnable extends AbstractProgramTwillRunnable<FlowletProgramRunner> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(FlowletTwillRunnable.class);
 
   FlowletTwillRunnable(String name, String hConfName, String cConfName) {
     super(name, hConfName, cConfName);
@@ -29,5 +37,19 @@ final class FlowletTwillRunnable extends AbstractProgramTwillRunnable<FlowletPro
   @Override
   protected Class<FlowletProgramRunner> getProgramClass() {
     return FlowletProgramRunner.class;
+  }
+
+  @Override
+  public void handleCommand(Command command) throws Exception {
+    try {
+      super.handleCommand(command);
+    } catch (ExecutionException e) {
+      Throwable rootCause = Throwables.getRootCause(e);
+      if (!"Suspension not allowed".equals(rootCause.getMessage())
+        && !"Resumption not allowed".equals(rootCause.getMessage())) {
+        throw e;
+      }
+      LOG.debug("Command failure ignored", e);
+    }
   }
 }
