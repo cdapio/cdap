@@ -16,7 +16,11 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.proto.Id;
+
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Instance of this class is for managing deployed application.
@@ -97,11 +101,24 @@ public interface ApplicationManager {
   void stopAll();
 
   /**
-   * Starts a workflow.
-   * @param workflowName
-   * @param arguments
-   * @return {@link WorkflowManager} for controlling the started workflow.
+   * Stops a particular program.
+   * @param programId the program to stop
    */
+  void stopProgram(Id.Program programId);
+
+  /**
+   * Checks whether a particular program is running or not.
+   * @param programId the program to check
+   * @return true if the program is running; false otherwise.
+   */
+  boolean isRunning(Id.Program programId);
+
+  /**
+     * Starts a workflow.
+     * @param workflowName
+     * @param arguments
+     * @return {@link WorkflowManager} for controlling the started workflow.
+     */
   WorkflowManager startWorkflow(String workflowName, Map<String, String> arguments);
 
   /**

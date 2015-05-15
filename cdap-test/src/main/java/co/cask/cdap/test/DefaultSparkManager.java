@@ -16,20 +16,13 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.proto.Id;
+
 /**
- * Managing the worker in an application.
+ * A default implementation of {@link SparkManager}.
  */
-public interface WorkerManager extends ProgramManager {
-
-  /**
-   * Changes the number of instances.
-   * @param instances number of instances to change to
-   */
-  void setInstances(int instances);
-
-  /**
-   * Returns the number of instances.
-   *
-   */
-  int getInstances();
+public class DefaultSparkManager extends AbstractProgramManager implements SparkManager {
+  public DefaultSparkManager(Id.Program programId, ApplicationManager applicationManager) {
+    super(programId, applicationManager);
+  }
 }

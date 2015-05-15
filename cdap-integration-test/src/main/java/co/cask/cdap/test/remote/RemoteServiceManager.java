@@ -21,49 +21,36 @@ import co.cask.cdap.client.MetricsClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.test.AbstractServiceManager;
+import co.cask.cdap.test.AbstractProgramManager;
+import co.cask.cdap.test.ServiceManager;
 import com.google.common.base.Throwables;
 
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Remote implementation of {@link ServiceManager}.
  */
-public class RemoteServiceManager extends AbstractServiceManager {
-
-  private final Id.Service serviceId;
+public class RemoteServiceManager extends AbstractProgramManager implements ServiceManager {
   private final MetricsClient metricsClient;
-  private final ClientConfig clientConfig;
+  private final ProgramClient programClient;
+  private final ServiceClient serviceClient;
 
-  public RemoteServiceManager(Id.Service serviceId, ClientConfig clientConfig) {
-    this.serviceId = serviceId;
-    this.clientConfig = clientConfig;
-    this.metricsClient = new MetricsClient(clientConfig);
-  }
-
-  private ClientConfig getClientConfig() {
-    ConnectionConfig connectionConfig = ConnectionConfig.builder(clientConfig.getConnectionConfig())
-      .setNamespace(serviceId.getNamespace())
-      .build();
-    return new ClientConfig.Builder(clientConfig).setConnectionConfig(connectionConfig).build();
-  }
-
-  private ProgramClient getProgramClient() {
-    return new ProgramClient(getClientConfig());
-  }
-
-  private ServiceClient getServiceClient() {
-    return new ServiceClient(getClientConfig());
+  public RemoteServiceManager(Id.Program programId, ClientConfig clientConfig,
+                              RemoteApplicationManager remoteApplicationManager) {
+    super(programId, remoteApplicationManager);
+    ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig).build();
+    namespacedClientConfig.setNamespace(programId.getNamespace());
+    this.metricsClient = new MetricsClient(namespacedClientConfig);
+    this.programClient = new ProgramClient(namespacedClientConfig);
+    this.serviceClient = new ServiceClient(namespacedClientConfig);
   }
 
   @Override
   public void setInstances(int instances) {
     try {
-      getProgramClient().setServiceInstances(serviceId.getApplicationId(), serviceId.getId(), instances);
+      programClient.setServiceInstances(programId.getApplicationId(), programId.getId(), instances);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -77,26 +64,7 @@ public class RemoteServiceManager extends AbstractServiceManager {
   @Override
   public int getProvisionedInstances() {
     try {
-      return getProgramClient().getServiceInstances(serviceId.getApplicationId(), serviceId.getId());
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  @Override
-  public void stop() {
-    try {
-      getProgramClient().stop(serviceId.getApplicationId(), ProgramType.SERVICE, serviceId.getId());
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  @Override
-  public boolean isRunning() {
-    try {
-      return "RUNNING".equals(getProgramClient().getStatus(serviceId.getApplicationId(),
-                                                           ProgramType.SERVICE, serviceId.getId()));
+      return programClient.getServiceInstances(programId.getApplicationId(), programId.getId());
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -105,7 +73,7 @@ public class RemoteServiceManager extends AbstractServiceManager {
   @Override
   public URL getServiceURL() {
     try {
-      return getServiceClient().getServiceURL(serviceId.getApplicationId(), serviceId.getId());
+      return serviceClient.getServiceURL(programId.getApplicationId(), programId.getId());
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -113,16 +81,12 @@ public class RemoteServiceManager extends AbstractServiceManager {
 
   @Override
   public URL getServiceURL(long timeout, TimeUnit timeoutUnit) {
-    try {
-      // TODO: handle timeout
-      return getServiceClient().getServiceURL(serviceId.getApplicationId(), serviceId.getId());
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    // TODO: handle timeout
+    return getServiceURL();
   }
 
   @Override
   public RuntimeMetrics getMetrics() {
-    return metricsClient.getServiceMetrics(serviceId);
+    return metricsClient.getServiceMetrics(programId);
   }
 }

@@ -1,12 +1,12 @@
 /*
  * Copyright © 2015 Cask Data, Inc.
- *  
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *  
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,12 +16,38 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.proto.Id;
+
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
- * Abstract implementation of {@link ServiceManager} that includes common functionality for all implementations.
+ * Abstract implementation of {@link ProgramManager} that includes common functionality for all implementations.
  */
-public abstract class AbstractServiceManager implements ServiceManager {
+public abstract class AbstractProgramManager implements ProgramManager {
+  protected final Id.Program programId;
+  private final ApplicationManager applicationManager;
+
+  public AbstractProgramManager(Id.Program programId, ApplicationManager applicationManager) {
+    this.applicationManager = applicationManager;
+    this.programId = programId;
+  }
+  @Override
+  public void stop() {
+    applicationManager.stopProgram(programId);
+  }
+
+  @Override
+  public boolean isRunning() {
+    return applicationManager.isRunning(programId);
+  }
+
+  @Override
+  public void waitForFinish(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
+    // Min sleep time is 10ms, max sleep time is 1 seconds
+    long sleepMillis = Math.max(10, Math.min(timeoutUnit.toMillis(timeout) / 10, TimeUnit.SECONDS.toMillis(1)));
+    waitForStatus(false, sleepMillis, timeoutUnit.toMillis(timeout), TimeUnit.MILLISECONDS);
+  }
 
   @Override
   public void waitForStatus(boolean status) throws InterruptedException {
@@ -45,8 +71,8 @@ public abstract class AbstractServiceManager implements ServiceManager {
    * @param timeout timeout for the polling if the status doesn't match
    * @param timeoutUnit unit for both sleepTime and timeout
    */
-  private void waitForStatus(boolean status, long sleepTime,
-                             long timeout, TimeUnit timeoutUnit) throws InterruptedException {
+  protected void waitForStatus(boolean status, long sleepTime,
+                               long timeout, TimeUnit timeoutUnit) throws InterruptedException {
     long timeoutMillis = timeoutUnit.toMillis(timeout);
     boolean statusMatched = status == isRunning();
     long startTime = System.currentTimeMillis();
@@ -56,8 +82,7 @@ public abstract class AbstractServiceManager implements ServiceManager {
     }
 
     if (!statusMatched) {
-      throw new IllegalStateException("Service state not executed. Expected " + status);
+      throw new IllegalStateException("Program state not as expected. Expected " + status);
     }
-
   }
 }

@@ -16,20 +16,14 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.proto.Id;
+
 /**
- * Managing the worker in an application.
+ * A default implementation of {@link MapReduceManager}.
  */
-public interface WorkerManager extends ProgramManager {
+public class DefaultMapReduceManager extends AbstractProgramManager implements MapReduceManager {
 
-  /**
-   * Changes the number of instances.
-   * @param instances number of instances to change to
-   */
-  void setInstances(int instances);
-
-  /**
-   * Returns the number of instances.
-   *
-   */
-  int getInstances();
+  public DefaultMapReduceManager(Id.Program programId, ApplicationManager applicationManager) {
+    super(programId, applicationManager);
+  }
 }

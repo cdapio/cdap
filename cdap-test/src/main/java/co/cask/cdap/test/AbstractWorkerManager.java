@@ -16,27 +16,9 @@
 
 package co.cask.cdap.test;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * Abstract implementation of {@link WorkerManager} that includes common functionality for all implementations.
  */
 public abstract class AbstractWorkerManager implements WorkerManager {
 
-  @Override
-  public void waitForStatus(boolean status) throws InterruptedException {
-    waitForStatus(status, 5, 1);
-  }
-
-  @Override
-  public void waitForStatus(boolean status, int retries, int timeout) throws InterruptedException {
-    int trial = 0;
-    while (trial++ < retries) {
-      if (isRunning() == status) {
-        return;
-      }
-      TimeUnit.SECONDS.sleep(timeout);
-    }
-    throw new IllegalStateException("Service state not executed. Expected " + status);
-  }
 }

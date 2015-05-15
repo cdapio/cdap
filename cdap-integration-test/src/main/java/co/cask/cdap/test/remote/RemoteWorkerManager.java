@@ -14,34 +14,35 @@
  * the License.
  */
 
-package co.cask.cdap.test.internal;
+package co.cask.cdap.test.remote;
 
+import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.WorkerManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 
-import java.util.concurrent.TimeUnit;
-
 /**
- * A default implementation of {@link WorkerManager}
+ * Remote implementation of {@link WorkerManager}
  */
-public class DefaultWorkerManager extends AbstractProgramManager implements WorkerManager {
-  private final AppFabricClient appFabricClient;
+public class RemoteWorkerManager extends AbstractProgramManager implements WorkerManager {
+  private final ProgramClient programClient;
 
-  public DefaultWorkerManager(Id.Program programId,
-                              AppFabricClient appFabricClient, DefaultApplicationManager applicationManager) {
+  public RemoteWorkerManager(Id.Program programId, ClientConfig clientConfig,
+                             RemoteApplicationManager applicationManager) {
     super(programId, applicationManager);
-    this.appFabricClient = appFabricClient;
+    ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig).build();
+    namespacedClientConfig.setNamespace(programId.getNamespace());
+    this.programClient = new ProgramClient(namespacedClientConfig);
   }
 
   @Override
   public void setInstances(int instances) {
     Preconditions.checkArgument(instances > 0, "Instance count should be > 0.");
     try {
-      appFabricClient.setWorkerInstances(programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
-                                         instances);
+      programClient.setServiceInstances(programId.getApplicationId(), programId.getId(), instances);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -49,7 +50,10 @@ public class DefaultWorkerManager extends AbstractProgramManager implements Work
 
   @Override
   public int getInstances() {
-    return appFabricClient.getWorkerInstances(programId.getNamespaceId(), programId.getApplicationId(),
-                                              programId.getId()).getInstances();
+    try {
+      return programClient.getServiceInstances(programId.getApplicationId(), programId.getId());
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 }
