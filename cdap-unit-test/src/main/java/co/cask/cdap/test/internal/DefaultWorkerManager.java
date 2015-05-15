@@ -16,21 +16,17 @@
 
 package co.cask.cdap.test.internal;
 
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.AbstractWorkerManager;
 import co.cask.cdap.test.WorkerManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A default implementation of {@link WorkerManager}
  */
 public class DefaultWorkerManager extends AbstractWorkerManager {
-
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultWorkerManager.class);
-
-  private final DefaultApplicationManager.ProgramId programId;
+  private final Id.Program programId;
   private final String appId;
   private final String workerId;
 
@@ -38,12 +34,12 @@ public class DefaultWorkerManager extends AbstractWorkerManager {
   private final DefaultApplicationManager applicationManager;
   private final String namespace;
 
-  public DefaultWorkerManager(String namespace, DefaultApplicationManager.ProgramId programId,
+  public DefaultWorkerManager(String namespace, Id.Program programId,
                               AppFabricClient appFabricClient, DefaultApplicationManager applicationManager) {
     this.namespace = namespace;
     this.programId = programId;
     this.appId = programId.getApplicationId();
-    this.workerId = programId.getProgramId();
+    this.workerId = programId.getId();
     this.appFabricClient = appFabricClient;
     this.applicationManager = applicationManager;
   }

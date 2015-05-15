@@ -24,6 +24,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.test.AbstractApplicationManager;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
@@ -38,7 +39,6 @@ import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -61,9 +61,9 @@ import java.util.concurrent.TimeoutException;
 /**
  * A default implementation of {@link ApplicationManager}.
  */
-public class DefaultApplicationManager implements ApplicationManager {
+public class DefaultApplicationManager extends AbstractApplicationManager {
 
-  private final ConcurrentMap<String, ProgramId> runningProcesses = Maps.newConcurrentMap();
+  private final ConcurrentMap<String, Id.Program> runningProcesses = Maps.newConcurrentMap();
   private final Id.Application applicationId;
   private final TransactionSystemClient txSystemClient;
   private final DatasetInstantiator datasetInstantiator;
@@ -115,30 +115,6 @@ public class DefaultApplicationManager implements ApplicationManager {
     }
   }
 
-  static class ProgramId {
-    private final String appId;
-    private final String programId;
-    private final ProgramType programType;
-
-    ProgramId(String applicationId, String programId, ProgramType programType) {
-      this.appId = applicationId;
-      this.programId = programId;
-      this.programType = programType;
-    }
-
-    public String getApplicationId() {
-      return this.appId;
-    }
-
-    public String getProgramId() {
-      return this.programId;
-    }
-
-    public ProgramType getProgramType() {
-      return this.programType;
-    }
-  }
-
   @Override
   public FlowManager startFlow(final String flowName) {
     return startFlow(flowName, ImmutableMap.<String, String>of());
@@ -146,7 +122,7 @@ public class DefaultApplicationManager implements ApplicationManager {
 
   @Override
   public FlowManager startFlow(final String flowName, Map<String, String> arguments) {
-    final ProgramId flowId = startProgram(flowName, arguments, ProgramType.FLOW);
+    final Id.Program flowId = startProgram(flowName, arguments, ProgramType.FLOW);
     return new DefaultFlowManager(applicationId.getNamespaceId(), flowName, flowId, applicationId.getId(),
                                   appFabricClient, this);
   }
@@ -164,7 +140,7 @@ public class DefaultApplicationManager implements ApplicationManager {
   private MapReduceManager getMapReduceManager(final String jobName, Map<String, String> arguments,
                                                final ProgramType programType) {
     try {
-      final ProgramId jobId = startProgram(jobName, arguments, programType);
+      final Id.Program jobId = startProgram(jobName, arguments, programType);
       return new MapReduceManager() {
         @Override
         public void stop() {
@@ -195,7 +171,7 @@ public class DefaultApplicationManager implements ApplicationManager {
   private SparkManager getSparkManager(final String jobName, Map<String, String> arguments,
                                        final ProgramType programType) {
     try {
-      final ProgramId jobId = startProgram(jobName, arguments, programType);
+      final Id.Program jobId = startProgram(jobName, arguments, programType);
       return new SparkManager() {
         @Override
         public void stop() {
@@ -212,8 +188,8 @@ public class DefaultApplicationManager implements ApplicationManager {
     }
   }
 
-  private ProgramId startProgram(String jobName, Map<String, String> arguments, ProgramType programType) {
-    final ProgramId jobId = new ProgramId(applicationId.getId(), jobName, programType);
+  private Id.Program startProgram(String jobName, Map<String, String> arguments, ProgramType programType) {
+    final Id.Program jobId = Id.Program.from(applicationId, programType, jobName);
     // program can stop by itself, so refreshing info about its state
     if (!isRunning(jobId)) {
       runningProcesses.remove(jobName);
@@ -231,23 +207,9 @@ public class DefaultApplicationManager implements ApplicationManager {
     return jobId;
   }
 
-  private void programWaitForFinish(long timeout, TimeUnit timeoutUnit,
-                                    ProgramId jobId) throws InterruptedException, TimeoutException {
-    // Min sleep time is 10ms, max sleep time is 1 seconds
-    long sleepMillis = Math.max(10, Math.min(timeoutUnit.toMillis(timeout) / 10, TimeUnit.SECONDS.toMillis(1)));
-    Stopwatch stopwatch = new Stopwatch().start();
-    while (isRunning(jobId) && stopwatch.elapsedTime(timeoutUnit) < timeout) {
-      TimeUnit.MILLISECONDS.sleep(sleepMillis);
-    }
-
-    if (isRunning(jobId)) {
-      throw new TimeoutException("Time limit reached.");
-    }
-  }
-
   @Override
   public WorkflowManager startWorkflow(final String workflowName, Map<String, String> arguments) {
-    final ProgramId workflowId = new ProgramId(applicationId.getId(), workflowName, ProgramType.WORKFLOW);
+    final Id.Program workflowId = Id.Program.from(applicationId, ProgramType.WORKFLOW, workflowName);
     // currently we are using it for schedule, so not starting the workflow
 
     return new WorkflowManager() {
@@ -292,7 +254,7 @@ public class DefaultApplicationManager implements ApplicationManager {
 
   @Override
   public ServiceManager startService(final String serviceName, Map<String, String> arguments) {
-    final ProgramId serviceId = startProgram(serviceName, arguments, ProgramType.SERVICE);
+    final Id.Program serviceId = startProgram(serviceName, arguments, ProgramType.SERVICE);
     return new DefaultServiceManager(applicationId.getNamespaceId(), serviceId, appFabricClient,
                                      discoveryServiceClient, this);
   }
@@ -304,7 +266,7 @@ public class DefaultApplicationManager implements ApplicationManager {
 
   @Override
   public WorkerManager startWorker(String workerName, Map<String, String> arguments) {
-    final ProgramId workerId = startProgram(workerName, arguments, ProgramType.WORKER);
+    final Id.Program workerId = startProgram(workerName, arguments, ProgramType.WORKER);
     return new DefaultWorkerManager(applicationId.getNamespaceId(), workerId, appFabricClient, this);
   }
 
@@ -348,13 +310,13 @@ public class DefaultApplicationManager implements ApplicationManager {
   @Override
   public void stopAll() {
     try {
-      for (Map.Entry<String, ProgramId> entry : Iterables.consumingIterable(runningProcesses.entrySet())) {
+      for (Map.Entry<String, Id.Program> entry : Iterables.consumingIterable(runningProcesses.entrySet())) {
         // have to do a check, since mapreduce jobs could stop by themselves earlier, and appFabricServer.stop will
         // throw error when you stop something that is not running.
         if (isRunning(entry.getValue())) {
-          ProgramId id = entry.getValue();
+          Id.Program id = entry.getValue();
           appFabricClient.stopProgram(applicationId.getNamespaceId(), id.getApplicationId(),
-                                      id.getProgramId(), id.getProgramType());
+                                      id.getId(), id.getType());
         }
       }
     } catch (Exception e) {
@@ -362,23 +324,23 @@ public class DefaultApplicationManager implements ApplicationManager {
     }
   }
 
-  void stopProgram(ProgramId programId) {
-    String programName = programId.getProgramId();
+  void stopProgram(Id.Program programId) {
+    String programName = programId.getId();
     try {
       if (runningProcesses.remove(programName, programId)) {
         appFabricClient.stopProgram(applicationId.getNamespaceId(), applicationId.getId(),
-                                    programName, programId.getProgramType());
+                                    programName, programId.getType());
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
 
-  boolean isRunning(ProgramId programId) {
+  @Override
+  protected boolean isRunning(Id.Program programId) {
     try {
-
       String status = appFabricClient.getStatus(applicationId.getNamespaceId(), programId.getApplicationId(),
-                                                programId.getProgramId(), programId.getProgramType());
+                                                programId.getId(), programId.getType());
       // comparing to hardcoded string is ugly, but this is how appFabricServer works now to support legacy UI
       return "STARTING".equals(status) || "RUNNING".equals(status);
     } catch (Exception e) {

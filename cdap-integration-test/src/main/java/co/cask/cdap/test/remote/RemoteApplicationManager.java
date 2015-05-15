@@ -27,8 +27,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.test.AbstractApplicationManager;
 import co.cask.cdap.test.AbstractWorkerManager;
-import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
@@ -39,7 +39,6 @@ import co.cask.cdap.test.StreamWriter;
 import co.cask.cdap.test.WorkerManager;
 import co.cask.cdap.test.WorkflowManager;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 
@@ -51,7 +50,7 @@ import java.util.concurrent.TimeoutException;
 /**
  *
  */
-public class RemoteApplicationManager implements ApplicationManager {
+public class RemoteApplicationManager extends AbstractApplicationManager {
 
   protected final Id.Application application;
 
@@ -86,7 +85,7 @@ public class RemoteApplicationManager implements ApplicationManager {
 
   @Override
   public FlowManager startFlow(final String flowName, Map<String, String> arguments) {
-    final ProgramId flowId = startProgram(flowName, arguments, ProgramType.FLOW);
+    final Id.Program flowId = startProgram(flowName, arguments, ProgramType.FLOW);
     return new FlowManager() {
       @Override
       public void setFlowletInstances(String flowletName, int instances) {
@@ -101,7 +100,7 @@ public class RemoteApplicationManager implements ApplicationManager {
       @Override
       public RuntimeMetrics getFlowletMetrics(String flowletId) {
         return metricsClient.getFlowletMetrics(
-          Id.Program.from(application, ProgramType.FLOW, flowId.getProgramId()), flowletId);
+          Id.Program.from(application, ProgramType.FLOW, flowId.getId()), flowletId);
       }
 
       @Override
@@ -128,13 +127,12 @@ public class RemoteApplicationManager implements ApplicationManager {
 
   @Override
   public MapReduceManager startMapReduce(final String jobName, Map<String, String> arguments) {
-    return getMapReduceManager(jobName, arguments, ProgramType.MAPREDUCE);
+    final Id.Program jobId = startProgram(jobName, arguments, ProgramType.MAPREDUCE);
+    return getMapReduceManager(jobId);
   }
 
-  private MapReduceManager getMapReduceManager(final String jobName, Map<String, String> arguments,
-                                               final ProgramType programType) {
+  private MapReduceManager getMapReduceManager(final Id.Program jobId) {
     try {
-      final ProgramId jobId = startProgram(jobName, arguments, programType);
       return new MapReduceManager() {
         @Override
         public void stop() {
@@ -164,7 +162,7 @@ public class RemoteApplicationManager implements ApplicationManager {
   private SparkManager getSparkManager(final String jobName, Map<String, String> arguments,
                                        final ProgramType programType) {
     try {
-      final ProgramId jobId = startProgram(jobName, arguments, programType);
+      final Id.Program jobId = startProgram(jobName, arguments, programType);
       return new SparkManager() {
         @Override
         public void stop() {
@@ -181,7 +179,7 @@ public class RemoteApplicationManager implements ApplicationManager {
     }
   }
 
-  private ProgramId startProgram(String programName, Map<String, String> arguments, ProgramType programType) {
+  private Id.Program startProgram(String programName, Map<String, String> arguments, ProgramType programType) {
     ProgramClient programClient = getProgramClient();
     try {
       String status = programClient.getStatus(application.getId(), programType, programName);
@@ -190,21 +188,7 @@ public class RemoteApplicationManager implements ApplicationManager {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
-    return new ProgramId(programName, programType);
-  }
-
-  private void programWaitForFinish(long timeout, TimeUnit timeoutUnit,
-                                    ProgramId jobId) throws InterruptedException, TimeoutException {
-    // Min sleep time is 10ms, max sleep time is 1 seconds
-    long sleepMillis = Math.max(10, Math.min(timeoutUnit.toMillis(timeout) / 10, TimeUnit.SECONDS.toMillis(1)));
-    Stopwatch stopwatch = new Stopwatch().start();
-    while (isRunning(jobId) && stopwatch.elapsedTime(timeoutUnit) < timeout) {
-      TimeUnit.MILLISECONDS.sleep(sleepMillis);
-    }
-
-    if (isRunning(jobId)) {
-      throw new TimeoutException("Time limit reached.");
-    }
+    return Id.Program.from(application, programType, programName);
   }
 
   @Override
@@ -277,7 +261,7 @@ public class RemoteApplicationManager implements ApplicationManager {
 
   @Override
   public WorkerManager startWorker(final String workerName, Map<String, String> arguments) {
-    final ProgramId workerId = new ProgramId(workerName, ProgramType.WORKER);
+    final Id.Program workerId = Id.Program.from(application, ProgramType.WORKER, workerName);
     return new AbstractWorkerManager() {
       @Override
       public void setInstances(int instances) {
@@ -338,9 +322,9 @@ public class RemoteApplicationManager implements ApplicationManager {
       for (ProgramRecord programRecord : getApplicationClient().listPrograms(application.getId())) {
         // have to do a check, since mapreduce jobs could stop by themselves earlier, and appFabricServer.stop will
         // throw error when you stop something that is not running.
-        ProgramId id = new ProgramId(programRecord.getId(), programRecord.getType());
+        Id.Program id = Id.Program.from(application, programRecord.getType(), programRecord.getName());
         if (isRunning(id)) {
-          getProgramClient().stop(application.getId(), id.getProgramType(), id.getProgramId());
+          getProgramClient().stop(application.getId(), id.getType(), id.getId());
         }
       }
     } catch (Exception e) {
@@ -348,39 +332,23 @@ public class RemoteApplicationManager implements ApplicationManager {
     }
   }
 
-  void stopProgram(ProgramId programId) {
-    String programName = programId.getProgramId();
+  void stopProgram(Id.Program programId) {
     try {
-      getProgramClient().stop(application.getId(), programId.getProgramType(), programName);
+      getProgramClient().stop(application.getId(), programId.getType(), programId.getId());
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
 
-  boolean isRunning(ProgramId programId) {
+  @Override
+  protected boolean isRunning(Id.Program programId) {
     try {
-      String status = getProgramClient().getStatus(application.getId(), programId.getProgramType(),
-                                                   programId.getProgramId());
+      String status = getProgramClient().getStatus(application.getId(), programId.getType(),
+                                                   programId.getId());
       // comparing to hardcoded string is ugly, but this is how appFabricServer works now to support legacy UI
       return "STARTING".equals(status) || "RUNNING".equals(status);
     } catch (Exception e) {
       throw Throwables.propagate(e);
-    }
-  }
-
-  static class ProgramId {
-    private final String programId;
-    private final ProgramType programType;
-
-    ProgramId(String programId, ProgramType programType) {
-      this.programId = programId;
-      this.programType = programType;
-    }
-    public String getProgramId() {
-      return this.programId;
-    }
-    public ProgramType getProgramType() {
-      return this.programType;
     }
   }
 }
