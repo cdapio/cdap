@@ -1,0 +1,170 @@
+@import '../../../../variables.less';
+@import "../../../../../../bower_components/bootstrap/less/mixins.less";
+@import '../../mixins.less';
+
+body.theme-dubai {
+  &.state-dashboard {
+    .widget {
+      background-color: transparent;
+      border: 0;
+      .panel-heading {
+        padding: 10px;
+        position: relative;
+        text-align: center;
+        .border-radius(8px 8px 0 0);
+        .dropdown {
+          color: white;
+          font-size: 16px;
+          position: absolute;
+          top: 10px;
+          left: 15px;
+
+          &.open {
+            .btn.dropdown-toggle {
+              background-color: @cdap-header;
+              color: white;
+              .border-radius(8px 8px 0 0);
+              + .dropdown-menu {
+                top: 24px !important;
+                left: 1px !important;
+                .border-radius(0);
+                > li:first-child a { .border-radius(0 4px 0 0); }
+                > li:last-child a { .border-radius(0 0 4px 4px); }
+              }
+            }
+          }
+          .dropdown-toggle {
+            padding: 0 5px 5px;
+            span { vertical-align: bottom; }
+            .dropdown-defaults();
+            .dropdown-blue();
+          }
+        }
+        > span {
+          font-size: 16px;
+          font-weight: 400;
+          max-width: 60%;
+          display: inline-block;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          vertical-align: middle;
+        }
+      }
+      .panel-body {
+        background-color: white;
+        overflow-x: scroll;
+        .border-radius(0 0 8px 8px);
+      }
+      .panel-footer dl {
+        margin: 0;
+        white-space: nowrap;
+        dt {
+          float: left;
+          clear: left;
+          min-width: 70px;
+          &:after { content: ':\00a0'; }
+        }
+        dd {
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
+
+    // No longer using bs-tabs. We should remove this code.
+    [bs-tabs] {
+      > ul.nav-tabs {
+        border-bottom: 0;
+        > li {
+          > a {
+            color: @cdap-gray;
+            cursor: pointer;
+            height: 43px;
+            background-color: white;
+            position: relative;
+            border: 1px solid @subnav-border;
+            text-align: center;
+            .border-radius(0 10px 0 0);
+            .transition(background-color 0.05s ease-in);
+            &:hover, &:focus {
+              background-color: @subnav-background;
+              color: @cdap-gray;
+              &:before, &:after { background-color: @subnav-background; }
+            }
+            &:before, &:after {
+              background-color: white;
+              content:" ";
+              display: block;
+              position: absolute;
+              top: -1px;
+              .transition(background-color 0.05s ease-in);
+            }
+            &:before {
+              height: 42px;
+              width: 10px;
+              right: -2px;
+              border-top: 1px solid @subnav-border;
+            }
+            &:after {
+              width: 100px;
+              height: 43px;
+              right: -10px;
+              border: 1px solid @subnav-border;
+              border-left: 0;
+              z-index: 1;
+              .skew(15deg, 0);
+            }
+            > span {
+              position: relative;
+              left: 7px;
+              z-index: 2;
+              .caret { position: relative; bottom: 7px; }
+              em {
+                margin-right: 0;
+                max-width: 100px;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                display: inline-block;
+              }
+            }
+          }
+          &:not(:last-child) > a { min-width: 100px; }
+          &:last-child > a {
+            width: 60px;
+            &:after { width: 60px; }
+            span { color: @cod-blue; right: -10px; }
+          }
+          &.active > a {
+            background-color: @subnav-background;
+            height: 43px;
+            min-width: 100px;
+            position: relative;
+            border: 1px solid @subnav-border;
+            .border-radius(0 10px 0 0);
+            &:before, &:after {
+              background-color: @subnav-background;
+              content:" ";
+              display: block;
+              height: 43px;
+              position: absolute;
+              top: -1px;
+            }
+            &:before {
+              width: 10px;
+              right: -2px;
+              border-top: 1px solid @subnav-border;
+            }
+            &:after {
+              width: 100px;
+              right: -10px;
+              border: 1px solid @subnav-border;
+              border-left: 0;
+              z-index: 1;
+              .skew(15deg, 0);
+            }
+          }
+        }
+      }
+    }
+  }
+}

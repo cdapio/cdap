@@ -1,0 +1,47 @@
+
+body.theme-dubai {
+  [my-navbar] {
+
+    ul.navbar-right .dropdown-menu.bottom-right {
+      left: auto !important;
+    }
+
+    .navbar-collapse.in {
+      @media (max-width: 767px) {
+        span.fa {
+          min-width: 2em;
+          text-align: center;
+        }
+      }
+    }
+
+    #navbar-search,
+    #navbar-namespace {
+      visibility: hidden;
+    }
+
+  }
+  &.state-overview, &.state-apps {
+    #navbar-search {
+      visibility: visible;
+    }
+  }
+  &.state-overview,
+  &.state-operations-apps,
+  &.state-dashboard,
+  &.state-apps,
+  &.state-programs,
+  &.state-data,
+  &.state-datasets,
+  &.state-explore,
+  &.state-workflows,
+  &.state-flows,
+  &.state-mapreduce,
+  &.state-services,
+  &.state-adapters,
+  &.state-streams {
+    #navbar-namespace {
+      visibility: visible;
+    }
+  }
+}

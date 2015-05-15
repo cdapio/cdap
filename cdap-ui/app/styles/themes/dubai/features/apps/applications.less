@@ -1,0 +1,26 @@
+@import '../../../../variables.less';
+@import '../../mixins.less';
+
+body.theme-dubai {
+  &.state-apps-detail {
+
+    .table {
+      tbody {
+        a:hover, a:focus {
+          text-decoration: none;
+        }
+      }
+    }
+
+    td > span {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      margin-right: 5px;
+      .border-radius(25px);
+      &.status-green { background-color: @brand-success; }
+      &.status-grey { background-color: @cdap-gray; }
+    }
+
+  }
+}
