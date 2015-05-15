@@ -128,28 +128,28 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   }
 
   @Override
-  public MapReduceManager startMapReduce(final String jobName) {
-    return startMapReduce(jobName, ImmutableMap.<String, String>of());
+  public MapReduceManager startMapReduce(final String programName) {
+    return startMapReduce(programName, ImmutableMap.<String, String>of());
   }
 
   @Override
-  public MapReduceManager startMapReduce(final String jobName, Map<String, String> arguments) {
-    return getMapReduceManager(jobName, arguments, ProgramType.MAPREDUCE);
+  public MapReduceManager startMapReduce(final String programName, Map<String, String> arguments) {
+    return getMapReduceManager(programName, arguments, ProgramType.MAPREDUCE);
   }
 
-  private MapReduceManager getMapReduceManager(final String jobName, Map<String, String> arguments,
+  private MapReduceManager getMapReduceManager(final String programName, Map<String, String> arguments,
                                                final ProgramType programType) {
     try {
-      final Id.Program jobId = startProgram(jobName, arguments, programType);
+      final Id.Program programId = startProgram(programName, arguments, programType);
       return new MapReduceManager() {
         @Override
         public void stop() {
-          stopProgram(jobId);
+          stopProgram(programId);
         }
 
         @Override
         public void waitForFinish(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
-          programWaitForFinish(timeout, timeoutUnit, jobId);
+          programWaitForFinish(timeout, timeoutUnit, programId);
         }
       };
     } catch (Exception e) {
@@ -159,28 +159,28 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
 
 
   @Override
-  public SparkManager startSpark(String jobName) {
-    return startSpark(jobName, ImmutableMap.<String, String>of());
+  public SparkManager startSpark(String programName) {
+    return startSpark(programName, ImmutableMap.<String, String>of());
   }
 
   @Override
-  public SparkManager startSpark(String jobName, Map<String, String> arguments) {
-    return getSparkManager(jobName, arguments, ProgramType.SPARK);
+  public SparkManager startSpark(String programName, Map<String, String> arguments) {
+    return getSparkManager(programName, arguments, ProgramType.SPARK);
   }
 
-  private SparkManager getSparkManager(final String jobName, Map<String, String> arguments,
+  private SparkManager getSparkManager(final String programName, Map<String, String> arguments,
                                        final ProgramType programType) {
     try {
-      final Id.Program jobId = startProgram(jobName, arguments, programType);
+      final Id.Program programId = startProgram(programName, arguments, programType);
       return new SparkManager() {
         @Override
         public void stop() {
-          stopProgram(jobId);
+          stopProgram(programId);
         }
 
         @Override
         public void waitForFinish(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
-          programWaitForFinish(timeout, timeoutUnit, jobId);
+          programWaitForFinish(timeout, timeoutUnit, programId);
         }
       };
     } catch (Exception e) {
@@ -188,23 +188,23 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
     }
   }
 
-  private Id.Program startProgram(String jobName, Map<String, String> arguments, ProgramType programType) {
-    final Id.Program jobId = Id.Program.from(applicationId, programType, jobName);
+  private Id.Program startProgram(String programName, Map<String, String> arguments, ProgramType programType) {
+    final Id.Program programId = Id.Program.from(applicationId, programType, programName);
     // program can stop by itself, so refreshing info about its state
-    if (!isRunning(jobId)) {
-      runningProcesses.remove(jobName);
+    if (!isRunning(programId)) {
+      runningProcesses.remove(programName);
     }
 
-    Preconditions.checkState(runningProcesses.putIfAbsent(jobName, jobId) == null,
-                             programType + " program %s is already running", jobName);
+    Preconditions.checkState(runningProcesses.putIfAbsent(programName, programId) == null,
+                             programType + " program %s is already running", programName);
     try {
       appFabricClient.startProgram(applicationId.getNamespaceId(), applicationId.getId(),
-                                   jobName, programType, arguments);
+                                   programName, programType, arguments);
     } catch (Exception e) {
-      runningProcesses.remove(jobName);
+      runningProcesses.remove(programName);
       throw Throwables.propagate(e);
     }
-    return jobId;
+    return programId;
   }
 
   @Override

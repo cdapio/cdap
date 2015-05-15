@@ -29,7 +29,7 @@ import com.google.common.base.Throwables;
 public class DefaultFlowManager implements FlowManager {
 
   private final AppFabricClient appFabricClient;
-  private final Id.Program flowID;
+  private final Id.Program flowId;
   private final DefaultApplicationManager applicationManager;
   private final String flowName;
   private final String applicationId;
@@ -42,7 +42,7 @@ public class DefaultFlowManager implements FlowManager {
     this.applicationManager = applicationManager;
     this.applicationId = applicationId;
     this.appFabricClient = appFabricClient;
-    this.flowID = flowId;
+    this.flowId = flowId;
     this.flowName = flowName;
   }
 
@@ -63,11 +63,11 @@ public class DefaultFlowManager implements FlowManager {
 
   @Override
   public void stop() {
-    applicationManager.stopProgram(flowID);
+    applicationManager.stopProgram(flowId);
   }
 
   @Override
   public boolean isRunning() {
-    return applicationManager.isRunning(flowID);
+    return applicationManager.isRunning(flowId);
   }
 }
