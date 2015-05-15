@@ -28,10 +28,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
-import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -89,19 +87,16 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   //       this in-mem implementation for now) and passed client (program) class loader
   // NOTE: We maintain one DatasetDefinitionRegistry per namespace
   private final Map<Id.Namespace, DatasetDefinitionRegistry> registries;
-  private final UsageRegistry usageRegistry;
 
-  public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory, CConfiguration configuration,
-                                  TransactionExecutorFactory txExecutorFactory) {
-    this(registryFactory, new HashMap<String, DatasetModule>(), configuration, txExecutorFactory);
+  public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory, CConfiguration configuration) {
+    this(registryFactory, new HashMap<String, DatasetModule>(), configuration);
   }
 
   @Inject
   public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory,
                                   @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules,
-                                  CConfiguration configuration, TransactionExecutorFactory txExecutorFactory) {
+                                  CConfiguration configuration) {
     this.registryFactory = registryFactory;
-    this.usageRegistry = new UsageRegistry(txExecutorFactory, this);
     this.allowDatasetUncheckedUpgrade = configuration.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
 
     this.namespaces = Sets.newHashSet();
@@ -370,12 +365,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       }
       LinkedHashSet<String> availableModuleClasses = getAvailableModuleClasses(datasetInstanceId.getNamespace());
       DatasetDefinition def = createRegistry(availableModuleClasses, classLoader).get(spec.getType());
-      T result = (T) (def.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()),
-                                     spec, arguments, classLoader));
-      if (owners != null) {
-        usageRegistry.registerAll(owners, datasetInstanceId);
-      }
-      return result;
+      return (T) (def.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()),
+                                 spec, arguments, classLoader));
     } finally {
       readLock.unlock();
     }
