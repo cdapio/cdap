@@ -212,7 +212,7 @@ if [[ "${DEPLOY_TO_DOCS}" == 'yes' ]]; then
   if [ "${BRANCH}" == '' ]; then
     decho "Deploying artifacts to Docs servers"
     for i in ${DOCS_SERVERS}; do
-      deploy ${USER} ${i} ${REMOTE_DOCS_DIR} ${ZIP_FILE} ${FILE_PATH} ${VERSION} ${BRANCH}
+      deploy ${USER} ${i} ${REMOTE_DOCS_DIR} ${ZIP_FILE} ${FILE_PATH} ${VERSION}
     done
   else
     decho "Do not deploy artifacts from feature branches to Docs servers"
