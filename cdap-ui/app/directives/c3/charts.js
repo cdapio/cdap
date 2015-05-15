@@ -57,24 +57,20 @@ ngC3.controller('c3Controller', function ($scope, c3, myHelpers, $filter) {
       render();
     }, true);
 
-    if(attr.chartData) {
-      $scope.$watch('chartData', function (chartData) {
-        if(chartData) {
-          myData = { x: 'x', columns: chartData.columns, keys: {x: 'x'} };
 
-          if ($scope.options.stack) {
-            myData.groups = [chartData.metricNames];
-          }
+    $scope.$watch('chartData', function (chartData) {
+      if(angular.isObject(chartData)) {
+        myData = { x: 'x', columns: chartData.columns, keys: {x: 'x'} };
 
-          // Save the data for when it gets resized.
-          $scope.options.data = myData;
-
-          render();
-          // WARN: using load() API has funny animation (when inserting new data points to the right)
-//            $scope.chart.load(myData);  // Alternative to render()
+        if ($scope.options.stack) {
+          myData.groups = [chartData.metricNames];
         }
-      });
-    }
+
+        // Save the data for when it gets resized.
+        $scope.options.data = myData;
+        render();
+      }
+    });
     render();
   };
 
