@@ -31,7 +31,7 @@ function myNavbarDirective ($dropdown, myAuth, caskTheme, MY_CONFIG) {
       scope.logout = myAuth.logout;
       // If we plan later we could add multiple
       // themes but not in the near future.
-      // scope.theme = caskTheme;
+      scope.theme = caskTheme;
       scope.securityEnabled = MY_CONFIG.securityEnabled;
     }
   };

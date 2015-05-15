@@ -108,7 +108,8 @@ angular
 
   .config(function (caskThemeProvider) {
     caskThemeProvider.setThemes([
-      'cdap'  // customized theme
+      'cdap',  // customized theme
+      'dubai'
     ]);
   })
 
