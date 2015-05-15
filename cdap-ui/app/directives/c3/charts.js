@@ -5,7 +5,8 @@ var baseDirective = {
   replace: true,
   template: '<div class="c3"></div>',
   scope: {
-    chartData: '='
+    chartData: '=',
+    chartSize: '='
   },
   controller: 'c3Controller'
 };
@@ -51,6 +52,10 @@ ngC3.controller('c3Controller', function ($scope, c3, myHelpers, $filter) {
     $scope.type = type;
     $scope.options = options;
 
+    $scope.$watch('chartSize', function(newVal) {
+      $scope.options.size = newVal;
+      render();
+    }, true);
 
     if(attr.chartData) {
       $scope.$watch('chartData', function (chartData) {

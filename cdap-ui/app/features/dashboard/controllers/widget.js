@@ -12,6 +12,7 @@ angular.module(PKG.name+'.feature.dashboard')
       this.metric = opts.metric || false;
       // TODO: reconsider this field once Epoch is removed.
       this.color = opts.color;
+      this.height = 200;
       this.dataSrc = null;
       this.isLive = opts.isLive || false;
       this.interval = opts.interval;
@@ -260,9 +261,24 @@ angular.module(PKG.name+'.feature.dashboard')
 
   })
 
- .controller('C3WidgetTimeseriesCtrl', function ($scope) {
+ .controller('C3WidgetTimeseriesCtrl', function ($scope, myHelpers) {
     $scope.chartData = null;
+    $scope.chartSize = { height: 200 };
+    var widget = myHelpers.objectQuery($scope, 'gridsterItem', '$element', 0),
+        widgetHeight;
+    if (widget) {
+      widgetHeight = parseInt(widget.style.height, 10);
+      if (widgetHeight > 300) {
+        $scope.wdgt.height = widgetHeight - 70;
+      }
+    }
+
     $scope.wdgt.reconfigure($scope);
+    $scope.$watch('wdgt.height', function(newVal) {
+      $scope.chartSize = {
+        height: newVal
+      };
+    })
     $scope.$watch('wdgt.data', function (newVal) {
       var metricMap, columns, streams;
       if(angular.isObject(newVal) && newVal.length) {
