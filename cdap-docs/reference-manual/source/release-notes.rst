@@ -36,17 +36,6 @@ CDAP Bug Fixes
 Upgrade Instructions
 --------------------
 
-- **Update Memory Setting for Transaction Service before Upgrading**
-
-  As part of the upgrade, we recommend that the memory configuration for transaction
-  service be increased from its default value of 512MB. We suggest adjusting it in
-  ``cdap-site.xml`` to 4096mb::
-
-    <property>
-    <name>data.tx.memory.mb</name>
-    <value>4096</value>
-    </property>
-
 - **Upgrading from 2.6.2 to 2.6.3**
 
   Here are the steps that are needed to upgrade from 2.6.2 to 2.6.3:
