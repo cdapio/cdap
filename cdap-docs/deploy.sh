@@ -209,10 +209,14 @@ fi
 
 ### RELEASE => Docs Servers
 if [[ "${DEPLOY_TO_DOCS}" == 'yes' ]]; then
-  decho "Deploying to Docs servers"
-  for i in ${DOCS_SERVERS}; do
-    deploy ${USER} ${i} ${REMOTE_DOCS_DIR} ${ZIP_FILE} ${FILE_PATH} ${VERSION} ${BRANCH}
-  done
+  if [ "${BRANCH}" == '' ]; then
+    decho "Deploying to Docs servers"
+    for i in ${DOCS_SERVERS}; do
+      deploy ${USER} ${i} ${REMOTE_DOCS_DIR} ${ZIP_FILE} ${FILE_PATH} ${VERSION} ${BRANCH}
+    done
+  else
+    decho "Do not deploy feature branches to Docs servers"
+  fi
 fi
-decho "####################### DEPLOYING DONE #######################"
+decho "####################### DONE DEPLOYING #######################"
 
