@@ -23,6 +23,17 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 2.6.3 <http://docs.cask.co/cdap/2.6.3/index.html>`__
+=============================================================
+
+CDAP Bug Fixes
+--------------
+
+- Replace use of CDAP transaction snapshot codecs with the Tephra versions instead
+  (`CDAP-2496 <https://issues.cask.co/browse/CDAP-2496>`__)
+  
+
+
 `Release 2.6.2 <http://docs.cask.co/cdap/2.6.2/index.html>`__
 =============================================================
 
