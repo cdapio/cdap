@@ -19,6 +19,7 @@ package co.cask.cdap.test.internal;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.test.AbstractServiceManager;
 import co.cask.cdap.test.RuntimeStats;
@@ -43,7 +44,7 @@ import javax.annotation.Nullable;
 public class DefaultServiceManager extends AbstractServiceManager {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceManager.class);
 
-  private final DefaultApplicationManager.ProgramId serviceId;
+  private final Id.Program serviceId;
   private final String namespace;
   private final String applicationId;
   private final String serviceName;
@@ -52,13 +53,13 @@ public class DefaultServiceManager extends AbstractServiceManager {
   private final AppFabricClient appFabricClient;
   private final DefaultApplicationManager applicationManager;
 
-  public DefaultServiceManager(String namespace, DefaultApplicationManager.ProgramId serviceId,
+  public DefaultServiceManager(String namespace, Id.Program serviceId,
                                AppFabricClient appFabricClient, DiscoveryServiceClient discoveryServiceClient,
                                DefaultApplicationManager applicationManager) {
     this.serviceId = serviceId;
     this.namespace = namespace;
     this.applicationId = serviceId.getApplicationId();
-    this.serviceName = serviceId.getProgramId();
+    this.serviceName = serviceId.getId();
 
     this.discoveryServiceClient = discoveryServiceClient;
     this.appFabricClient = appFabricClient;

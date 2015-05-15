@@ -17,6 +17,7 @@
 package co.cask.cdap.test.internal;
 
 import co.cask.cdap.api.metrics.RuntimeMetrics;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.RuntimeStats;
 import com.google.common.base.Preconditions;
@@ -28,20 +29,20 @@ import com.google.common.base.Throwables;
 public class DefaultFlowManager implements FlowManager {
 
   private final AppFabricClient appFabricClient;
-  private final DefaultApplicationManager.ProgramId flowID;
+  private final Id.Program flowId;
   private final DefaultApplicationManager applicationManager;
   private final String flowName;
   private final String applicationId;
   private final String namespace;
 
-  public DefaultFlowManager(String namespace, String flowName, DefaultApplicationManager.ProgramId flowID,
+  public DefaultFlowManager(String namespace, String flowName, Id.Program flowId,
                             String applicationId, AppFabricClient appFabricClient,
                             DefaultApplicationManager applicationManager) {
     this.namespace = namespace;
     this.applicationManager = applicationManager;
     this.applicationId = applicationId;
     this.appFabricClient = appFabricClient;
-    this.flowID = flowID;
+    this.flowId = flowId;
     this.flowName = flowName;
   }
 
@@ -62,11 +63,11 @@ public class DefaultFlowManager implements FlowManager {
 
   @Override
   public void stop() {
-    applicationManager.stopProgram(flowID);
+    applicationManager.stopProgram(flowId);
   }
 
   @Override
   public boolean isRunning() {
-    return applicationManager.isRunning(flowID);
+    return applicationManager.isRunning(flowId);
   }
 }
