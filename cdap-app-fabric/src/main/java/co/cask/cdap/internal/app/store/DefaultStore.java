@@ -171,7 +171,8 @@ public class DefaultStore implements Store {
         if (target.getStatus() == expectedStatus) {
           switch (updateStatus) {
             case RUNNING:
-              mds.apps.recordProgramResumed(id, pid);
+              mds.apps.recordProgramStart(id, pid, target.getStartTs(), target.getAdapterName(),
+                                          target.getTwillRunId());
               break;
             case SUSPENDED:
               mds.apps.recordProgramSuspend(id, pid);
