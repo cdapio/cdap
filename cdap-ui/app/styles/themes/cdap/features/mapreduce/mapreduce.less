@@ -1,0 +1,32 @@
+@import '../../../../variables.less';
+
+body.theme-cdap {
+  &.state-mapreduce {
+    .run-status { margin-bottom: 25px; }
+    .table.table-status { margin-top: 0; }
+    .col-sm-6 > div.btn-group { margin-top: 14px; }
+    .entry { font-weight: 700; }
+
+    .panel-group {
+      .panel.panel-default {
+        > .panel-heading {
+          > a {
+            color: white;
+            &:hover { text-decoration: none; }
+          }
+        }
+      }
+    }
+
+    .col-xs-12 > strong {
+      color: @cdap-header;
+      font-size: 14px;
+      padding-right: 5px;
+    }
+
+    .component-box {
+      margin-top: 20px;
+      .task-item:nth-child(-n+7) { border-right: 1px solid black; }
+    }
+  }
+}

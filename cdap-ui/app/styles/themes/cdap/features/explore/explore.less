@@ -1,0 +1,74 @@
+@import '../../../../variables.less';
+
+body.theme-cdap {
+  &.state-explore {
+    [explore-table] {
+      [class*="col-"] {
+        padding-right: 0;
+        margin-bottom: 15px;
+
+        [class*="icon-"] {
+          vertical-align: middle;
+        }
+
+        .slanted-tabs {
+          .active > a {
+            color: @cdap-darkness;
+          }
+        }
+
+        .tab-content {
+          max-height: 248px;
+          overflow-y: auto;
+
+          .table-curved {
+            border-radius: 0;
+
+
+            tr > td:first-child {
+              font-weight: 700;
+            }
+          }
+        }
+
+        .list-group {
+          .list-group-heading {
+            font-weight: 700;
+            font-size: 15px;
+          }
+
+          .list-group-content {
+            max-height: 247px;
+            overflow-y: auto;
+            font-size: 15px;
+            cursor: pointer;
+
+            a {
+              padding-top: 15px;
+              padding-bottom: 15px;
+              background-color: @cdap-darkness;
+              color: white;
+
+              &.selected {
+                color: @cdap-orange;
+              }
+            }
+          }
+        }
+
+      }
+
+      [class*="col-xs-9"] {
+        padding-right: 15px;
+      }
+
+      ul.nav.nav-tabs {
+        border-bottom: none;
+      }
+
+      .table {
+        margin: 0;
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+@import '../../../../variables.less';
+
+body.theme-cdap {
+  &.state-datasets-detail {
+    section.explore {
+      padding: @grid-gutter-width 0;
+
+      h4.panel-title {
+        cursor: pointer;
+        > span.fa { margin-right: 10px; }
+      }
+
+      .panel-body {
+        padding: 5px 15px;
+      }
+    }
+
+    div.container {
+      .table {
+        tr > td:first-child {
+          font-weight: 700;
+        }
+      }
+    }
+  }
+}
