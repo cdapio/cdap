@@ -22,6 +22,7 @@ import co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV1;
 import co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV2;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.tephra.coprocessor.TransactionStateCache;
+import co.cask.tephra.snapshot.SnapshotCodecV3;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 
@@ -38,6 +39,7 @@ public class DefaultTransactionStateCache extends TransactionStateCache {
   // DO NOT REMOVE
   private static final SnapshotCodecV1 codecV1 = null;
   private static final SnapshotCodecV2 codecV2 = null;
+  private static final SnapshotCodecV3 codecV3 = null;
 
   private String tableNamespace;
   private ConfigurationTable configTable;
