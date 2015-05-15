@@ -87,15 +87,13 @@ angular.module(PKG.name+'.feature.dashboard')
         start: function(event, uiWidget, $element) {}, // optional callback fired when resize is started,
         resize: function(event, uiWidget, $element) {}, // optional callback fired when item is resized,
         stop: function(event, uiWidget, $element) {
-          var resizedHeight = parseInt(uiWidget[0].style.height, 10);
-          if (resizedHeight < 300) {
-            $element.height = 200;
-          } else {
-            $element.height =  resizedHeight - 70;
-          }
-          console.info("Resized");
+          var resizedHeight = parseInt(uiWidget[0].style.height, 10),
+              resizedWidth = parseInt(uiWidget[0].style.width, 10);
+
+          $element.height = (resizedHeight < 300 ? 200: resizedHeight - 70);
+          $element.width = (resizedWidth < 450? 370: resizedWidth - 32);
         } // optional callback fired when item is finished resizing
-     },
+     }
     };
 
   })
@@ -171,7 +169,6 @@ angular.module(PKG.name+'.feature.dashboard')
         angular.extend(widget, panel[4]);
         widgets.push(widget);
       });
-      console.info(angular.copy(widgets));
       // Note: title is not currently used in the view
       return {title : "System metrics", columns : widgets};
     }
