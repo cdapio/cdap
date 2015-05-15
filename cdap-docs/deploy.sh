@@ -210,7 +210,7 @@ fi
 ### RELEASE => Docs Servers
 if [[ "${DEPLOY_TO_DOCS}" == 'yes' ]]; then
   if [ "${BRANCH}" == '' ]; then
-    decho "Deploying to Docs servers"
+    decho "Deploying artifacts to Docs servers"
     for i in ${DOCS_SERVERS}; do
       deploy ${USER} ${i} ${REMOTE_DOCS_DIR} ${ZIP_FILE} ${FILE_PATH} ${VERSION} ${BRANCH}
     done
