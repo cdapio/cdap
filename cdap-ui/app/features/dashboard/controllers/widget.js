@@ -12,6 +12,7 @@ angular.module(PKG.name+'.feature.dashboard')
       this.metric = opts.metric || false;
       // TODO: reconsider this field once Epoch is removed.
       this.color = opts.color;
+      this.width = '';
       this.height = 200;
       this.dataSrc = null;
       this.isLive = opts.isLive || false;
@@ -261,24 +262,38 @@ angular.module(PKG.name+'.feature.dashboard')
 
   })
 
- .controller('C3WidgetTimeseriesCtrl', function ($scope, myHelpers) {
+ .controller('C3WidgetTimeseriesCtrl', function ($scope, myHelpers, $timeout) {
     $scope.chartData = null;
     $scope.chartSize = { height: 200 };
     var widget = myHelpers.objectQuery($scope, 'gridsterItem', '$element', 0),
         widgetHeight;
     if (widget) {
       widgetHeight = parseInt(widget.style.height, 10);
+      widgetWidth = parseInt(widget.style.width, 10);
       if (widgetHeight > 300) {
         $scope.wdgt.height = widgetHeight - 70;
       }
+      $scope.wdgt.width = widgetWidth - 32;
     }
 
     $scope.wdgt.reconfigure($scope);
+
+    $scope.$on('gridster-resized', function(event, sizes) {
+      $timeout(function() {
+        $scope.chartSize.height = parseInt($scope.gridsterItem.$element[0].style.height, 10) - 70;
+        $scope.chartSize.width = parseInt($scope.gridsterItem.$element[0].style.width, 10) - 32;
+      });
+    });
+
     $scope.$watch('wdgt.height', function(newVal) {
-      $scope.chartSize = {
-        height: newVal
-      };
-    })
+      $scope.chartSize.height = newVal;
+    });
+    $scope.$watch('wdgt.width', function(newVal) {
+      if (!newVal) {
+        return;
+      }
+      $scope.chartSize.width = newVal;
+    });
     $scope.$watch('wdgt.data', function (newVal) {
       var metricMap, columns, streams;
       if(angular.isObject(newVal) && newVal.length) {

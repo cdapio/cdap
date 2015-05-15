@@ -28,6 +28,26 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
 
 
   $scope.currentBoard = rDashboardsModel.current();
+
+  $scope.gridsterOpts = {
+    rowHeight: '280',
+    columns: 6,
+    mobileBreakPoint: 600,
+    resizable: {
+      enabled: true,
+      start: function(event, uiWidget, $element) {}, // optional callback fired when resize is started,
+      resize: function(event, uiWidget, $element) {}, // optional callback fired when item is resized,
+      stop: function(event, uiWidget, $element) {
+        var resizedHeight = parseInt(uiWidget[0].style.height, 10),
+            resizedWidth = parseInt(uiWidget[0].style.width, 10);
+
+        $element.height = (resizedHeight < 300 ? 200: resizedHeight - 70);
+        // Probably need to revisit this if the user wants to view a chart in column
+        $element.width = (resizedWidth < 450? 370: resizedWidth - 32);
+      } // optional callback fired when item is finished resizing
+    }
+  };
+
   if (!$scope.currentBoard) {
     $scope.unknownBoard = true;
   }
