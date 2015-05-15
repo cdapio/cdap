@@ -36,40 +36,8 @@ CDAP Bug Fixes
 Upgrade Instructions
 --------------------
 
-- **Upgrading from 2.6.2 to 2.6.3**
-
-  Here are the steps that are needed to upgrade from 2.6.2 to 2.6.3:
-
-  - Stop all CDAP services::
-  
-      for service in /etc/init.d/cdap* ; do sudo $service stop ; done
-
-  - Upgrade packages (for rpm)::
-
-      sudo yum makecache
-
-    or (for debian)::
-    
-      sudo apt-get update
-
-  - Install update  (for rpm)::
-  
-      sudo yum install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app 
-      cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98
-
-    or (for debian)::
-
-      sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app 
-      cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98
-
-  - Run the upgrade tool to update the snapshot codec in the HBase co-processors::
-  
-      /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.Main upgrade
-
-  - Start all CDAP services::
-  
-      for service in /etc/init.d/cdap* ; do sudo $service start ; done
-
+To upgrade to 2.6.3 from an existing 2.6.x installation, see the instructions on
+the :ref:`Upgrading an Existing Version <install-upgrade>`.
 
 
 `Release 2.6.2 <http://docs.cask.co/cdap/2.6.2/index.html>`__
