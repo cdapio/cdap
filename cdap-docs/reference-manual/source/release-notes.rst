@@ -32,12 +32,6 @@ CDAP Bug Fixes
 - Replace use of CDAP transaction snapshot codecs with the Tephra versions instead
   (`CDAP-2496 <https://issues.cask.co/browse/CDAP-2496>`__)
   
-  
-Upgrade Instructions
---------------------
-
-To upgrade to 2.6.3 from an existing 2.6.x installation, see the instructions on
-the :ref:`Upgrading an Existing Version <install-upgrade>`.
 
 
 `Release 2.6.2 <http://docs.cask.co/cdap/2.6.2/index.html>`__
