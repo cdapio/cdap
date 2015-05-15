@@ -23,6 +23,66 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 2.6.3 <http://docs.cask.co/cdap/2.6.3/index.html>`__
+=============================================================
+
+CDAP Bug Fixes
+--------------
+
+- Replace use of CDAP transaction snapshot codecs with the Tephra versions instead
+  (`CDAP-2496 <https://issues.cask.co/browse/CDAP-2496>`__)
+  
+  
+Upgrade Instructions
+--------------------
+
+- **Update Memory Setting for Transaction Service before Upgrading**
+
+  As part of the upgrade, we recommend that the memory configuration for transaction
+  service be increased from its default value of 512MB. We suggest adjusting it in
+  ``cdap-site.xml`` to 4096mb::
+
+    <property>
+    <name>data.tx.memory.mb</name>
+    <value>4096</value>
+    </property>
+
+- **Upgrading from 2.6.2 to 2.6.3**
+
+  Here are the steps that are needed to upgrade from 2.6.2 to 2.6.3:
+
+  - Stop all CDAP services::
+  
+      for service in /etc/init.d/cdap* ; do sudo $service stop ; done
+
+  - Upgrade packages (for rpm)::
+
+      sudo yum makecache
+
+    or (for debian)::
+    
+      sudo apt-get update
+
+  - Install update  (for rpm)::
+  
+      sudo yum install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app 
+      cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98
+
+    or (for debian)::
+
+      sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app 
+      cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98
+
+  - Run the upgrade tool to update the snapshot codec in the HBase co-processors::
+  
+      /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.Main upgrade
+
+  - Start all CDAP services::
+  
+      for service in /etc/init.d/cdap* ; do sudo $service start ; done
+
+
+
 `Release 2.6.2 <http://docs.cask.co/cdap/2.6.2/index.html>`__
 =============================================================
 
