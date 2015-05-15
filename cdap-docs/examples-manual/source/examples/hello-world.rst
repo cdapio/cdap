@@ -201,7 +201,6 @@ Once done, you can stop the application as described above in `Stopping an Appli
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh stop flow HelloWorld.WhoFlow
-      
 
 **Stopping the Service**
 

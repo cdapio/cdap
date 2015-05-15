@@ -10,6 +10,19 @@ Building and Running CDAP Applications
 
 .. |example| replace:: <example>
 
+.. |develop| replace:: *Development*
+.. _develop: http://localhost:9999/ns/default
+
+.. |all_apps| replace:: *All Applications*
+.. _all_apps: http://localhost:9999/ns/default/apps
+
+.. |management| replace:: *Management*
+.. _management: http://localhost:9999/admin/namespace/detail/default/apps
+
+.. |datasets| replace:: *Datasets*
+.. _datasets: http://localhost:9999/admin/namespace/detail/default/data
+
+
 .. highlight:: console
 
 In the examples, we refer to the Standalone CDAP as "CDAP", and the example code that is
@@ -64,20 +77,6 @@ or under Windows::
   
 Note that under Windows, you'll need to create a new command line window in order to see
 this change to the path variable.
-
-
-.. |develop| replace:: *Development*
-.. _develop: http://localhost:9999/ns/default
-
-.. |management| replace:: *Management*
-.. _management: http://localhost:9999/admin/namespace/detail/default/apps
-
-.. |all_apps| replace:: *All Applications*
-.. _all_apps: http://localhost:9999/ns/default/apps
-
-.. |datasets| replace:: *Datasets*
-.. _datasets: http://localhost:9999/admin/namespace/detail/default/data
-
 
 
 Deploying an Application
