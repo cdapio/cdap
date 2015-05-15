@@ -169,10 +169,11 @@ public class DefaultStore implements Store {
       public Void apply(AppMds mds) throws Exception {
         RunRecord target = mds.apps.getRun(id, pid);
         if (target.getStatus() == expectedStatus) {
+          long now = System.currentTimeMillis();
+          long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
           switch (updateStatus) {
             case RUNNING:
-              mds.apps.recordProgramStart(id, pid, target.getStartTs(), target.getAdapterName(),
-                                          target.getTwillRunId());
+              mds.apps.recordProgramStart(id, pid, nowSecs, target.getAdapterName(), target.getTwillRunId());
               break;
             case SUSPENDED:
               mds.apps.recordProgramSuspend(id, pid);
@@ -180,8 +181,6 @@ public class DefaultStore implements Store {
             case COMPLETED:
             case KILLED:
             case FAILED:
-              long now = System.currentTimeMillis();
-              long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
               mds.apps.recordProgramStop(id, pid, nowSecs, updateStatus);
               break;
             default:
