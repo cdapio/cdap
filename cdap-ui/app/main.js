@@ -64,7 +64,8 @@ angular
       'ncy-angular-breadcrumb',
       'angularMoment',
       'ui.select',
-      'ui.ace'
+      'ui.ace',
+      'gridster'
 
     ]).name,
 
