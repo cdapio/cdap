@@ -27,9 +27,12 @@ function (Widget, MyDataSource, mySettings, $q) {
 
     if(angular.isArray(p.columns)) {
       angular.forEach(p.columns, function (c) {
-        this.push(c.map(function (o) {
-          return new Widget(o);
-        }));
+        var widget = new Widget(c);
+        widget.sizeX = 2;
+        widget.sizeY = 1;
+        widget.row = null;
+        widget.col = null;
+        this.push(widget);
       }, this.columns);
     }
     else {
@@ -58,23 +61,16 @@ function (Widget, MyDataSource, mySettings, $q) {
    */
   Dashboard.prototype.removeWidget = function (widget) {
     var that = this;
-    angular.forEach(that.columns, function (c, i) {
-      that.columns[i] = c.filter(function (p) {
-        return widget !== p;
-      });
+    this.columns = this.columns.filter(function(p) {
+      return widget !== p;
     });
     this.checkForEmptyDashboard();
     this.persist();
   };
 
   Dashboard.prototype.checkForEmptyDashboard = function() {
-    var isEmpty = true;
-    angular.forEach(this.columns, function(column) {
-      if (column.length > 0) {
-        isEmpty = false;
-      }
-    });
-    this.isEmpty = isEmpty;
+    this.isEmpty = this.columns.length === 0;
+    return this.columns.length === 0;
   };
 
 
@@ -82,31 +78,10 @@ function (Widget, MyDataSource, mySettings, $q) {
    * add a widget to the active dashboard tab
    */
   Dashboard.prototype.addWidget = function (w) {
-
-    function findSmallestColumn(c) {
-      var index = 0,
-          smallest;
-      // find the column with the least widgets
-      for (var i = 0; i < c.length; i++) {
-        var len = c[i].length;
-        if(smallest===undefined || (len < smallest)) {
-          smallest = len;
-          index = i;
-        }
-      }
-      return index;
-    }
-
     if (angular.isArray(w)) {
-      angular.forEach(w, function(widget) {
-        this.columns[findSmallestColumn(this.columns)].unshift(widget);
-      }.bind(this));
+      this.columns = this.columns.concat(w);
     } else {
-      w = w || new Widget({
-        title: 'just added'
-      });
-
-      this.columns[findSmallestColumn(this.columns)].unshift(w);
+      this.columns.unshift(w);
     }
     this.persist();
   };
@@ -115,20 +90,8 @@ function (Widget, MyDataSource, mySettings, $q) {
    * Returns true or false, depending on whether there is room for more widgets in this dashboard
    */
   Dashboard.prototype.canAddWidget = function () {
-    return this.numWidgets() < this.WIDGET_LIMIT;
+    return this.columns.length < this.WIDGET_LIMIT;
   };
-
-  /**
-   * Returns the number of widgets in this dashboard
-   */
-  Dashboard.prototype.numWidgets = function () {
-    var sum = 0;
-    this.columns.forEach(function(column) {
-      sum += column.length;
-    });
-    return sum;
-  };
-
 
   /**
    * rename dashboard tab
@@ -180,34 +143,6 @@ function (Widget, MyDataSource, mySettings, $q) {
         );
     }
   };
-
-  Dashboard.prototype.changeColumn = function(n) {
-    // Flattening the array
-    var array = [];
-    array = array.concat.apply(array, this.columns);
-
-    // Create Columns
-    var columns = [];
-    for (var i = 0; i < n; i++) {
-      columns.push([]);
-    }
-
-    // Fill the columns
-    for (var i = 0; i < array.length; i++) {
-      columns[i % n].push(array[i]);
-    }
-    this.numColumn = n;
-    this.columns = columns;
-
-    this.persist();
-  };
-
-  Dashboard.prototype.toggleDragDrop = function() {
-    this.draggable = !this.draggable;
-
-    this.persist();
-  };
-
 
 /* ------------------------------------------------------------------------- */
 
