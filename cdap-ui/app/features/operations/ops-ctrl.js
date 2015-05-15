@@ -4,25 +4,100 @@
 
 angular.module(PKG.name+'.feature.dashboard')
 /* ------------------------------------------------------ */
-
   .controller('OpsCdapCtrl',
-  function ($scope, opshelper) {
+  function ($scope, opshelper, $rootScope) {
     var panels = [
    // Format:
    // [ Widget Title, context, [metricNames], line-type (options are in addwdgt-ctrl.js ]
-      ['Router requests', '', ['system.request.received','system.response.client-error', 'system.response.successful'], 'c3-scatter'],
-      ['Dataset Service', 'component.dataset~service', ['system.request.received','system.response.client-error','system.response.successful'],  'c3-scatter'],
-      ['Transaction Commit', '', ['system.canCommit', 'system.commit', 'system.start.long', 'system.start.short'], 'c3-area-spline'],
-      ['Transaction Latency', '', ['system.commit.latency', 'system.start.short.latency'], 'c3-area-spline'],
-      ['System Error and Warnings', '', ['system.services.log.error', 'system.services.log.warn'], 'c3-area-step'],
-      ['Explore Service', 'component.explore~service', ['system.request.received','system.response.successful'], 'c3-area-spline'],
-      ['Events Processed', 'namespace.*', ['system.process.events.processed'], 'c3-line'],
-      ['Bytes Store',   'namespace.*', ['system.dataset.store.bytes'],      'c3-line'],
-      ['Dataset Read/Writes',     'namespace.*', ['system.dataset.store.writes' ,'system.dataset.store.reads'], 'c3-area-spline'],
-      ['Containers Used', 'namespace.*', ['system.resources.used.containers', 'system.process.instance'], 'c3-area-step']
+      [
+        'Router requests',
+        '',
+        ['system.request.received','system.response.client-error', 'system.response.successful'], 'c3-scatter',
+        { sizeX: 4, sizeY: 2, row: 0, col: 0 }
+      ],
+      [
+        'Dataset Service',
+        'component.dataset~service', ['system.request.received','system.response.client-error','system.response.successful'],  'c3-scatter',
+        { sizeX: 2, sizeY: 2, row: 0, col: 4 }
+      ],
+      [
+        'Transaction Commit',
+        '',
+        ['system.canCommit', 'system.commit', 'system.start.long', 'system.start.short'], 'c3-area-spline',
+        { sizeX: 2, sizeY: 1, row: 2, col: 0 }
+      ],
+      [
+        'Transaction Latency',
+        '',
+        ['system.commit.latency', 'system.start.short.latency'],
+        'c3-area-spline',
+        { sizeX: 2, sizeY: 1, row: 2, col: 2 }
+      ],
+      [
+        'System Error and Warnings',
+        '',
+        ['system.services.log.error', 'system.services.log.warn'],
+        'c3-area-step',
+        { sizeX: 2, sizeY: 1, row: 2, col: 4 }
+      ],
+      [
+        'Explore Service',
+        'component.explore~service',
+        ['system.request.received','system.response.successful'],
+        'c3-area-spline',
+        { sizeX: 2, sizeY: 1, row: 3, col: 0 }
+      ],
+      [
+        'Events Processed',
+        'namespace.*',
+        ['system.process.events.processed'],
+        'c3-line',
+        { sizeX: 4, sizeY: 1, row: 3, col: 2 }
+      ],
+      [
+        'Bytes Store',
+        'namespace.*',
+        ['system.dataset.store.bytes'],
+        'c3-line',
+        { sizeX: 2, sizeY: 1, row: 4, col: 0 }
+      ],
+      [
+        'Dataset Read/Writes',
+        'namespace.*',
+        ['system.dataset.store.writes' ,'system.dataset.store.reads'],
+        'c3-area-spline',
+        { sizeX: 2, sizeY: 1, row: 4, col: 2 }
+      ],
+      [
+        'Containers Used',
+        'namespace.*',
+        ['system.resources.used.containers', 'system.process.instance'],
+        'c3-area-step',
+        { sizeX: 2, sizeY: 1, row: 4, col: 4 }
+      ]
     ];
 
     $scope.currentBoard = opshelper.createBoardFromPanels(panels);
+    $scope.gridsterOpts = {
+      rowHeight: '280',
+      columns: 6,
+      mobileBreakPoint: 600,
+      resizable: {
+        enabled: true,
+        start: function(event, uiWidget, $element) {}, // optional callback fired when resize is started,
+        resize: function(event, uiWidget, $element) {}, // optional callback fired when item is resized,
+        stop: function(event, uiWidget, $element) {
+          var resizedHeight = parseInt(uiWidget[0].style.height, 10);
+          if (resizedHeight < 300) {
+            $element.height = 200;
+          } else {
+            $element.height =  resizedHeight - 70;
+          }
+          console.info("Resized");
+        } // optional callback fired when item is finished resizing
+     },
+    };
+
   })
 
   .controller('OpsAppsCtrl',
@@ -75,7 +150,7 @@ angular.module(PKG.name+'.feature.dashboard')
 
 /* ------------------------------------------------------ */
 
-  .factory('opshelper', function (Widget) {
+  .factory('opshelper', function (Widget, $timeout) {
     function createWidget(title, context, metricNames, type) {
       return new Widget({title: title, type: type, isLive: true,
         metric: {
@@ -92,19 +167,13 @@ angular.module(PKG.name+'.feature.dashboard')
     function createBoardFromPanels(panels) {
       var widgets = [];
       panels.forEach(function(panel) {
-        widgets.push(createWidget(panel[0], panel[1], panel[2], panel[3]));
+        var widget = createWidget(panel[0], panel[1], panel[2], panel[3]);
+        angular.extend(widget, panel[4]);
+        widgets.push(widget);
       });
-      // Note: It doesn't seem like this matters (as long as its high enough)
-      var widgetsPerRow = 3;
-      var columns = [];
-      for (var i = 0; i < widgetsPerRow; i++) {
-        columns.push([]);
-      }
-      for (var i = 0; i < widgets.length; i++) {
-        columns[i % widgetsPerRow].push(widgets[i]);
-      }
+      console.info(angular.copy(widgets));
       // Note: title is not currently used in the view
-      return {title : "System metrics", columns : columns};
+      return {title : "System metrics", columns : widgets};
     }
 
     return {
