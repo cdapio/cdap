@@ -1,0 +1,282 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Frequently Asked Questions about the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>FAQ &mdash; Cask Data Application Platform 2.6.3 Documentation</title>
+    
+    <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+
+
+
+        <link rel="stylesheet" href="_static/hide-nav.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.6.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.3 Documentation" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.3');</script>
+       
+        <li><a href="table-of-contents.html">CDAP Reference Manual</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="faq">
+<h1>FAQ<a class="headerlink" href="#faq" title="Permalink to this headline">¶</a></h1>
+<div class="contents faq local topic" id="contents">
+<ul class="simple">
+<li><a class="reference internal" href="#cask-data-application-platform" id="id1">Cask Data Application Platform</a></li>
+<li><a class="reference internal" href="#platforms-and-language" id="id2">Platforms and Language</a></li>
+<li><a class="reference internal" href="#hadoop" id="id3">Hadoop</a></li>
+<li><a class="reference internal" href="#issues-user-groups-mailing-lists-and-irc-channel" id="id4">Issues, User Groups, Mailing Lists, and IRC Channel</a></li>
+</ul>
+</div>
+<div class="section" id="cask-data-application-platform">
+<h2>Cask Data Application Platform<a class="headerlink" href="#cask-data-application-platform" title="Permalink to this headline">¶</a></h2>
+<p class="rubric">What is the Cask Data Application Platform?</p>
+<p>Cask Data Application Platform (CDAP) is the industry’s first Big Data Application Server for Hadoop. It
+abstracts all the complexities and integrates the components of the Hadoop ecosystem (YARN, MapReduce,
+Zookeeper, HBase, etc.) enabling developers to build, test, deploy, and manage Big Data applications
+without having to worry about infrastructure, interoperability, or the complexities of distributed
+systems.</p>
+<p class="rubric">What is available in the CDAP SDK?</p>
+<p>The CDAP SDK comes with:</p>
+<ul class="simple">
+<li>Java and RESTful APIs to build CDAP applications;</li>
+<li>Standalone CDAP to run the entire CDAP stack in a single Java virtual machine; and</li>
+<li>Example CDAP applications.</li>
+</ul>
+<p class="rubric">Why should I use Cask Data Application Platform for developing Big Data Applications?</p>
+<p>CDAP helps developers to quickly develop, test, debug and deploy Big Data applications. Developers can
+build and test Big Data applications on their laptop without need for any distributed environment to
+develop and test Big Data applications. Deploy it on the distributed cluster with a push of a button. The
+advantages of using CDAP include:</p>
+<ol class="arabic simple">
+<li><strong>Integrated Framework:</strong>
+CDAP provides an integrated platform that makes it easy to create all the functions of Big Data
+applications: collecting, processing, storing, and querying data. Data can be collected and stored in
+both structured and unstructured forms, processed in real-time and in batch, and results can be made
+available for retrieval, visualization, and further analysis.</li>
+<li><strong>Simple APIs:</strong>
+CDAP aims to reduce the time it takes to create and implement applications by hiding the
+complexity of these distributed technologies with a set of powerful yet simple APIs. You don’t need to
+be an expert on scalable, highly-available system architectures, nor do you need to worry about the low
+level Hadoop and HBase APIs.</li>
+<li><strong>Full Development Lifecycle Support:</strong>
+CDAP supports developers through the entire application development lifecycle: development, debugging,
+testing, continuous integration and production. Using familiar development tools like Eclipse and
+IntelliJ, you can build, test and debug your application right on your laptop with a Standalone CDAP. Utilize
+the application unit test framework for continuous integration.</li>
+<li><strong>Easy Application Operations:</strong>
+Once your Big Data application is in production, CDAP is designed specifically to monitor your
+applications and scale with your data processing needs: increase capacity with a click of a button
+without taking your application offline. Use the CDAP Console or RESTful APIs to monitor and manage the
+lifecycle and scale of your application.</li>
+</ol>
+</div>
+<div class="section" id="platforms-and-language">
+<h2>Platforms and Language<a class="headerlink" href="#platforms-and-language" title="Permalink to this headline">¶</a></h2>
+<p class="rubric">What Platforms are Supported by the Cask Data Application Platform SDK?</p>
+<p>The CDAP SDK can be run on Mac OS X, Linux or Windows platforms.</p>
+<p class="rubric">What programming languages are supported by CDAP?</p>
+<p>CDAP currently supports Java for developing applications.</p>
+<p class="rubric">What Version of Java SDK is Required by CDAP?</p>
+<p>The latest version of the JDK or JRE version 6 or 7 must be installed in your environment.</p>
+<p class="rubric">What Version of Node.JS is Required by CDAP?</p>
+<p>The version of Node.js must be from v0.8.16 through v0.10.36.</p>
+</div>
+<div class="section" id="hadoop">
+<h2>Hadoop<a class="headerlink" href="#hadoop" title="Permalink to this headline">¶</a></h2>
+<p class="rubric">I have a Hadoop cluster in my data center, can I run CDAP that uses my Hadoop cluster?</p>
+<p>Yes. You can install CDAP on your Hadoop cluster. See <a class="reference external" href="source/../../admin-manual/installation/installation.html#install" title="(in Cask Data Application Platform v2.6.3)"><span>Installation and Configuration</span></a>.</p>
+<p class="rubric">What Hadoop distributions can CDAP run on?</p>
+<p>CDAP has been tested on and supports CDH 4.2.x or later, HDP 2.0 or later, and Apache Hadoop/HBase 2.0.2-0.4 and 2.1.0.</p>
+</div>
+<div class="section" id="issues-user-groups-mailing-lists-and-irc-channel">
+<span id="faq-cdap-user-groups"></span><h2>Issues, User Groups, Mailing Lists, and IRC Channel<a class="headerlink" href="#issues-user-groups-mailing-lists-and-irc-channel" title="Permalink to this headline">¶</a></h2>
+<p class="rubric">I&#8217;ve found a bug in CDAP. How do I file an issue?</p>
+<p>We have a <a class="reference external" href="https://issues.cask.co/browse/CDAP">JIRA for filing issues.</a></p>
+<p class="rubric">What User Groups and Mailing Lists are available about CDAP?</p>
+<ul class="simple">
+<li><a class="reference external" href="https://groups.google.com/d/forum/cdap-user">cdap-user&#64;googlegroups.com</a></li>
+</ul>
+<p>The <em>cdap-user</em> mailing list is primarily for users using the product to develop
+applications. You can expect questions from users, release announcements, and any other
+discussions that we think will be helpful to the users.</p>
+<ul class="simple">
+<li><a class="reference external" href="https://groups.google.com/d/forum/cdap-dev">cdap-dev&#64;googlegroups.com</a></li>
+</ul>
+<p>The <em>cdap-dev</em> mailing list is essentially for developers actively working
+on the product, and should be used for all our design, architecture and technical
+discussions moving forward. This mailing list will also receive all JIRA and GitHub
+notifications.</p>
+<p class="rubric">Is CDAP on IRC?</p>
+<p><strong>CDAP IRC Channel:</strong> #cdap on <a class="reference external" href="http://irc.freenode.net/">irc.freenode.net.</a></p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.3</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+                        
+      <li><div class=""></div><a href="table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><b><a href="table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></b></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="table-of-contents.html">Reference Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="http-restful-api/index.html"> HTTP RESTful API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="javadocs/index.html"> Javadocs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="java-client-api.html"> Java Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli-api.html"> Command Line Interface API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="licenses/index.html"> License and Dependencies</a></li>
+</ul>
+
+</nav>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.3/cdap-docs-2.6.3-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

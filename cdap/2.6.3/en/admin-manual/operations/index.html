@@ -1,0 +1,290 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Operations &mdash; Cask Data Application Platform 2.6.3 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+        <link rel="stylesheet" href="../_static/hide-toc.css" type="text/css" />
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.6.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.3 Documentation" href="../index.html" />
+    <link rel="next" title="Logging" href="logging.html" />
+    <link rel="prev" title="Appendix: cdap-security.xml" href="../installation/cdap-security.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="logging.html" title="Logging"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="../installation/cdap-security.html" title="Appendix: cdap-security.xml"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.3');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Administration Manual</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="operations">
+<span id="operations-index"></span><h1>Operations<a class="headerlink" href="#operations" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="logging.html"> Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html"> Metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="runtime-arguments.html"> Runtime Arguments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scaling-instances.html"> Scaling Instances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="resource-guarantees.html"> Resource Guarantees in YARN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cdap-console.html"> CDAP Console</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tx-maintenance.html"> Transaction Service Maintenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="logback.html"> Master Services Logback</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html"> Troubleshooting</a></li>
+</ul>
+</div>
+<ul class="simple">
+<li><a class="reference external" href="logging.html"><strong>Logging:</strong></a> Covers <strong>CDAP support for logging</strong> through standard SLF4J (Simple Logging Facade for Java) APIs.</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="metrics.html"><strong>Metrics:</strong></a> CDAP collects <strong>metrics about the application’s behavior and performance</strong>.</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="runtime-arguments.html"><strong>Runtime Arguments:</strong></a> Flows, Procedures, MapReduce Jobs, and Workflows can receive <strong>runtime arguments:</strong></li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="scaling-instances.html"><strong>Scaling Instances:</strong></a> Covers <strong>querying and setting the number of instances of Flowlets and Procedures.</strong></li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="resource-guarantees.html"><strong>Resource Guarantees:</strong></a> Providing resource guarantees <strong>for CDAP Programs in YARN.</strong></li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="cdap-console.html"><strong>CDAP Console:</strong></a> The CDAP Console is available for <strong>deploying, querying and managing CDAP.</strong></li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="tx-maintenance.html"><strong>Transaction Service Maintenance:</strong></a> Periodic maintenance of <strong>Transaction Service.</strong></li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="logback.html"><strong>Master Services Logging Configuration:</strong></a> This section describes the logging configuration used by CDAP Master Services.</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="troubleshooting.html"><strong>Troubleshooting:</strong></a> Selected examples of potential <strong>problems and possible resolutions.</strong></li>
+</ul>
+<p class="rubric">Command Line Interface</p>
+<p>Most of the administrative operations are also available more conveniently through the
+Command Line Interface. See <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.6.3)"><span>Command Line Interface API</span></a> in the
+<a class="reference external" href="../source/../../reference-manual/index.html#reference-index" title="(in Cask Data Application Platform v2.6.3)"><span class="xref std std-ref">CDAP Reference Manual</span></a> for details.</p>
+<p class="rubric">Getting a Health Check</p>
+<p>Administrators can check the health of various services in the system.
+(In these examples, substitute for <code class="docutils literal"><span class="pre">&lt;host&gt;</span></code> the host name or IP address of the CDAP server.)</p>
+<ul>
+<li><p class="first">To retrieve the <strong>health check of the CDAP Console</strong>, make a GET request to the URI:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">http://&lt;host&gt;:9999/status</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">To retrieve the <strong>health check of the CDAP Router</strong>, make a GET request to the URI:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">http://&lt;host&gt;:10000/status</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">To retrieve the <strong>health check of the CDAP Authentication Server</strong>, make a GET request to
+the URI:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">http://&lt;host&gt;:10009/status</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>On success, the calls return a valid HTTP response with a 200 code.</p>
+<ul>
+<li><p class="first">To retrieve the <strong>health check of all the services running in YARN</strong>, make a GET request
+to the URI:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">http://&lt;host&gt;:10000/v2/system/services</span>
+</pre></div>
+</div>
+<p>On success, the call returns a JSON string with component names and their corresponding statuses.</p>
+</li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.3</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><b><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></b></li>
+                        
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Administration Manual:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation/index.html"> Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> Operations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="logging.html"> Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html"> Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="runtime-arguments.html"> Runtime Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scaling-instances.html"> Scaling Instances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="resource-guarantees.html"> Resource Guarantees in YARN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-console.html"> CDAP Console</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tx-maintenance.html"> Transaction Service Maintenance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logback.html"> Master Services Logback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html"> Troubleshooting</a></li>
+</ul>
+</li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="../installation/cdap-security.html"
+                        title="Previous Chapter">Appendix: <code class="docutils literal"><span class="pre">cdap-security.xml</span></code></a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="logging.html"
+                        title="Next Chapter">Logging</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.3/cdap-docs-2.6.3-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Appendix: cdap-security.xml" href="../installation/cdap-security.html" />Appendix: <code class="docutils literal"><span class="pre">cdap-security.xml</span></code></a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Logging" href="logging.html" />Logging</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
