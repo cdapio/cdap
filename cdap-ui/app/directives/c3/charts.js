@@ -16,7 +16,7 @@ ngC3.factory('c3', function ($window) {
   return $window.c3;
 });
 
-ngC3.controller('c3Controller', function ($scope, c3, myHelpers, $filter) {
+ngC3.controller('c3Controller', function ($scope, c3, myHelpers, $filter, $timeout) {
   // We need to bind because the init function is called directly from the directives below
   // and so the function arguments would not otherwise be available to the initC3 and render functions.
   var c3 = c3;
@@ -54,7 +54,9 @@ ngC3.controller('c3Controller', function ($scope, c3, myHelpers, $filter) {
 
     $scope.$watch('chartSize', function(newVal) {
       $scope.options.size = newVal;
-      render();
+      $timeout(function() {
+        render();
+      });
     }, true);
 
 
@@ -68,7 +70,10 @@ ngC3.controller('c3Controller', function ($scope, c3, myHelpers, $filter) {
 
         // Save the data for when it gets resized.
         $scope.options.data = myData;
-        render();
+        $scope.clearChart();
+        $timeout(function() {
+          render();
+        });
       }
     });
     render();
@@ -114,6 +119,11 @@ ngC3.directive('c3Line', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initC3(elem, 'line', attr, {xtickcount: 5});
+      scope.clearChart = function() {
+        while(elem.firstChild) {
+          elem.removeChild(elem.firstChild);
+        }
+      }
     }
   }, baseDirective);
 });
@@ -123,6 +133,11 @@ ngC3.directive('c3Bar', function () {
     link: function (scope, elem, attr) {
       // xtickcount option does not work for bar charts, so have to use culling
       scope.initC3(elem, 'bar', attr, {stack: true, xTickCulling: {max: 5}});
+      scope.clearChart = function() {
+        while(elem.firstChild) {
+          elem.removeChild(elem.firstChild);
+        }
+      }
     }
   }, baseDirective);
 });
@@ -131,6 +146,11 @@ ngC3.directive('c3Pie', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initC3(elem, 'pie', attr, {formatAsTimestamp: false});
+      scope.clearChart = function() {
+        while(elem.firstChild) {
+          elem.removeChild(elem.firstChild);
+        }
+      }
     }
   }, baseDirective);
 });
@@ -139,6 +159,11 @@ ngC3.directive('c3Donut', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initC3(elem, 'donut', attr, {formatAsTimestamp: false});
+      scope.clearChart = function() {
+        while(elem.firstChild) {
+          elem.removeChild(elem.firstChild);
+        }
+      }
     }
   }, baseDirective);
 });
@@ -147,6 +172,11 @@ ngC3.directive('c3Scatter', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initC3(elem, 'scatter', attr, {xtickcount: 5});
+      scope.clearChart = function() {
+        while(elem.firstChild) {
+          elem.removeChild(elem.firstChild);
+        }
+      }
     }
   }, baseDirective);
 });
@@ -155,6 +185,11 @@ ngC3.directive('c3Spline', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initC3(elem, 'spline', attr, { xtickcount: 5});
+      scope.clearChart = function() {
+        while(elem.firstChild) {
+          elem.removeChild(elem.firstChild);
+        }
+      }
     }
   }, baseDirective);
 });
@@ -163,6 +198,11 @@ ngC3.directive('c3Step', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initC3(elem, 'step', attr, {xtickcount: 5});
+      scope.clearChart = function() {
+        while(elem.firstChild) {
+          elem.removeChild(elem.firstChild);
+        }
+      }
     }
   }, baseDirective);
 });
@@ -171,6 +211,11 @@ ngC3.directive('c3Area', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initC3(elem, 'area', attr, {xtickcount: 5});
+      scope.clearChart = function() {
+        while(elem.firstChild) {
+          elem.removeChild(elem.firstChild);
+        }
+      }
     }
   }, baseDirective);
 });
@@ -179,6 +224,11 @@ ngC3.directive('c3AreaStep', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initC3(elem, 'area-step', attr, {xtickcount: 5});
+      scope.clearChart = function() {
+        while(elem.firstChild) {
+          elem.removeChild(elem.firstChild);
+        }
+      }
     }
   }, baseDirective);
 });
@@ -187,6 +237,11 @@ ngC3.directive('c3AreaSpline', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initC3(elem, 'area-spline', attr, {xtickcount: 5} );
+      scope.clearChart = function() {
+        while(elem.firstChild) {
+          elem.removeChild(elem.firstChild);
+        }
+      }
     }
   }, baseDirective);
 });
@@ -195,6 +250,11 @@ ngC3.directive('c3AreaSplineStacked', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initC3(elem, 'area-spline', attr, {stack: true, xtickcount: 5});
+      scope.clearChart = function() {
+        while(elem.firstChild) {
+          elem.removeChild(elem.firstChild);
+        }
+      }
     }
   }, baseDirective);
 });
