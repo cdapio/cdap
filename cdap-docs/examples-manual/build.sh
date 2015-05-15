@@ -74,7 +74,8 @@ function download_file() {
     echo "Creating Includes Directory: ${includes_dir}"
   fi
 
-  echo "Downloading using curl ${file_name} from ${source_dir}"
+  echo "Downloading using curl ${file_name}"
+  echo "from ${source_dir}"
   curl ${source_dir}/${file_name} --output ${target} --silent
   test_an_include ${md5_hash} ${target}
 }

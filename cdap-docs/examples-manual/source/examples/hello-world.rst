@@ -75,7 +75,7 @@ Building and Starting
 - Start CDAP, deploy and start the application and its components as described below in 
   `Running CDAP Applications`_\ .
   Make sure you start the flow and service as described below.
-- Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
+- Once the application has been deployed and started, you can `run the example <#running-the-example>`__.
 
 Running CDAP Applications
 ============================================
@@ -93,12 +93,12 @@ Starting the Flow
 
 Once the application is deployed:
 
-- Click on the *Process* button in the left sidebar of the CDAP UI,
-  then click ``WhoFlow`` in the *Process* page to get to the
-  Flow detail page, then click the *Start* button; or
+- Go to the *HelloWorld* `application overview page 
+  <http://localhost:9999/ns/default/apps/HelloWorld/overview/status>`__,
+  click ``WhoFlow`` to get to the flow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-    $ ./bin/cdap-cli.sh start flow HelloWorld.WhoFlow
+    $ cdap-cli.sh start flow HelloWorld.WhoFlow
   
 
 Starting the Service
@@ -106,44 +106,56 @@ Starting the Service
 
 Once the application is deployed:
 
-- Click on ``HelloWorld`` in the Overview page of the CDAP UI to get to the
-  Application detail page, click ``Greeting`` in the *Service* pane to get to the
-  Service detail page, then click the *Start* button; or
+- Go to the *HelloWorld* `application overview page 
+  <http://localhost:9999/ns/default/apps/HelloWorld/overview/status>`__,
+  click ``Greeting`` to get to the service detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-    $ ./bin/cdap-cli.sh start service HelloWorld.Greeting
+    $ cdap-cli.sh start service HelloWorld.Greeting
     
     
 Injecting a Name
 ------------------------------
 
-In the Application's detail page, under *Process*, click on *WhoFlow*. This takes you to
-the flow details page. (If you haven't already started the Flow, click on the *Start*
-button in the right-side, below the green arrow.) The Flow's label will read *Running*
+.. |who-flow| replace:: *WhoFlow*
+.. _who-flow: http://localhost:9999/ns/default/apps/HelloWorld/programs/flows/WhoFlow/runs
+
+In the Application's detail page, click on |who-flow|_. This takes you to
+the flow details page. (If you haven't already started the flow, click on the *Start*
+button in the right-side, below the green arrow.) The flow's *status* will read *Running*
 when it is ready to receive events.
 
 Now click on the *who* Stream on the left side of the flow visualization, which brings up
 a pop-up window. Enter a name and click the *Inject* button. After you close the pop-up
-window, you will see that the counters for both the Stream and the *saver* Flowlet
+window, you will see that the counters for both the stream and the *saver* flowlet
 increase to 1. You can repeat this step to enter more names, but remember that only the
 last name is stored in the key-value table.
+
+Metrics are collected based on the ``bytes`` metric (the total number of bytes of names),
+the ``longnames`` metric (the number of names, each greater than 10 characters), and the
+``greetings.count.jane_doe`` metric (the number of times the name *Jane Doe* has been
+"greeted").
+
+To try out these metrics, first send a few long names (each greater than 10 characters)
+and send *Jane Doe* a number of times.
+
 
 Using the Service
 ------------------------------
 
-Go back to the Application's detail page, and under Service, click on the *Greeting*
-service. (If you haven't already started the Service, click on the *Start* button in the
-right-side, below the green arrow.) The Service's label will read *Running* when it is
-ready to receive events.
+Go back to the Application's detail page, and click on the *Greeting* service. (If you
+haven't already started the service, click on the *Start* button on the right-side.) The
+service's label will read *Running* when it is ready to receive events.
 
 Now you can make a request to the service using ``curl``::
 
   $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/HelloWorld/services/Greeting/methods/greet
 
-If the last name you entered was *Tom*, the Service will respond with ``Hello Tom!``
+If the last name you entered was *Tom*, the service will respond with ``Hello Tom!``
 
-**Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
-SDK in ``libexec\bin\curl.exe``
+There is a *Make Request* button in the CDAP UI that will make the same request, with a
+similar response.
+
   
 Retrieving Metrics
 ------------------------------
@@ -183,19 +195,19 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 **Stopping the Flow**
 
-- Click on the *Process* button in the left sidebar of the CDAP UI,
-  then click ``WhoFlow`` in the *Process* page to get to the
-  Flow detail page, then click the *Stop* button; or
+- Go to the *HelloWorld* `application overview page 
+  <http://localhost:9999/ns/default/apps/HelloWorld/overview/status>`__,
+  click ``WhoFlow`` to get to the flow detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-    $ ./bin/cdap-cli.sh stop flow HelloWorld.WhoFlow
+    $ cdap-cli.sh stop flow HelloWorld.WhoFlow
       
 
 **Stopping the Service**
 
-- Click on ``HelloWorld`` in the Overview page of the CDAP UI to get to the
-  Application detail page, click ``Greeting`` in the *Service* pane to get to the
-  Service detail page, then click the *Stop* button; or
+- Go to the *HelloWorld* `application overview page 
+  <http://localhost:9999/ns/default/apps/HelloWorld/overview/status>`__,
+  click ``Greeting`` to get to the service detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-    $ ./bin/cdap-cli.sh stop service HelloWorld.Greeting   
+    $ cdap-cli.sh stop service HelloWorld.Greeting

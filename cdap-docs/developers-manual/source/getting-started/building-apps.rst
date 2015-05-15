@@ -51,7 +51,7 @@ Command Line Interface. Substitute the actual path of ``./<CDAP-SDK-HOME>/bin/cd
 or ``<CDAP-SDK-HOME>\bin\cdap-cli.bat`` on Windows, as appropriate. 
 
 A Windows-version of the application ``curl`` is included in the CDAP SDK as
-``libexec\bin\curl.exe``; substitute it for the examples shown below.
+``libexec\bin\curl.exe``; use it as a substitute for ``curl`` in the examples shown below.
 
 If you add the SDK bin directory to your path, you can simplify the commands. From within
 the CDAP-SDK-home directory, enter::
@@ -66,6 +66,20 @@ Note that under Windows, you'll need to create a new command line window in orde
 this change to the path variable.
 
 
+.. |develop| replace:: *Development*
+.. _develop: http://localhost:9999/ns/default
+
+.. |management| replace:: *Management*
+.. _management: http://localhost:9999/admin/namespace/detail/default/apps
+
+.. |all_apps| replace:: *All Applications*
+.. _all_apps: http://localhost:9999/ns/default/apps
+
+.. |datasets| replace:: *Datasets*
+.. _datasets: http://localhost:9999/admin/namespace/detail/default/data
+
+
+
 Deploying an Application
 ----------------------------------
 
@@ -78,43 +92,39 @@ Once CDAP is started, you can deploy an example JAR by any of these methods:
  
 ..  onto the CDAP UI running at `http://localhost:9999/ <http://localhost:9999/>`__; or
 
-- Use the *Add App* button found on the *Development* page of the CDAP UI to browse and upload the Jar:
+- Use the *Add App* button found on the |management|_ page of the CDAP UI to browse and upload the Jar:
 
   .. parsed-literal::
-    example/target/|example|-|release|.jar
+    examples/|example|/target/|example|-|release|.jar
  
 - From the Standalone CDAP SDK directory, use the :ref:`Command Line Interface (CLI) <cli>`:
 
-  .. parsed-literal::
-    |$| cdap-cli.sh deploy app examples/|example|/target/|example|-|release|.jar
+  .. container:: highlight
+
+    .. parsed-literal::
+      |$| cdap-cli.sh deploy app examples/|example|/target/|example|-|release|.jar
     
-    Successfully connected CDAP instance at http://localhost:10000
-    Successfully deployed application
+      Successfully connected CDAP instance at |http:|//localhost:10000
+      Successfully deployed application
 
   The CLI can be accessed under Windows using the ``bin\cdap-cli.bat`` script.
   
 - Use an application such as ``curl`` (a Windows-version is included in the CDAP SDK in
   ``libexec\bin\curl.exe``):
 
-  .. parsed-literal::
-    |$| curl -w'\\n' -H "X-Archive-Name: |example|-|release|.jar" localhost:10000/v3/namespaces/default/apps \
-      --data-binary @examples/|example|/target/|example|-|release|.jar
+  .. container:: highlight
+  
+    .. parsed-literal::
+      |$| curl -w'\\n' -H "X-Archive-Name: |example|-|release|.jar" localhost:10000/v3/namespaces/default/apps \
+        --data-binary @examples/|example|/target/|example|-|release|.jar
 
-    Deploy Complete
+      Deploy Complete
 
 
 Starting an Application
 ----------------------------------
 
 Once an application is deployed:
-
-
-.. |develop| replace:: *Development*
-.. _develop: http://localhost:9999/ns/default
-
-.. |all_apps| replace:: *All Applications*
-.. _all_apps: http://localhost:9999/ns/default/apps
-
 
 - You can go to the application's detail page in the CDAP UI by clicking on the
   application's name in either the |develop|_ page or on the |all_apps|_ page. Now you can 
@@ -125,7 +135,6 @@ Once an application is deployed:
 
     $ cdap-cli.sh start <program-type> <app-id.program-id>
     
-
   .. list-table::
     :widths: 20 80
     :header-rows: 1
@@ -145,9 +154,9 @@ Stopping an Application
 
 Once an application is deployed:
 
-- On the application's detail page in the CDAP UI, you can click on a program to go 
+- On an application's detail page in the CDAP UI, you can click on a program to go 
   to its detail page and then click the *Stop* button there; or
-- From the Standalone CDAP SDK directory, use the :ref:`Command Line Interface: <cli>`::
+- From the Standalone CDAP SDK directory, use the :ref:`Command Line Interface <cli>`::
 
     $ cdap-cli.sh stop <program-type> <app-id.program-id>
     
@@ -155,20 +164,16 @@ Once an application is deployed:
 Removing an Application
 ----------------------------------
 
-.. |management| replace:: *Management*
-.. _management: http://localhost:9999/admin
-
-Once an application is stopped |---| all programs (flows, MapReduce programs, workflows,
-etc.), queries, and services are stopped |---| you can go to the |management| page of the
-CDAP UI, click on the *Namespaces > "default" > Applications* to bring up all applications
-in the *defaults* namespace, click on the particular application, and then from the application's
-detail page, select the *Actions > Delete* menu in the upper right to delete the
-application. 
+Once an application is stopped |---| all of its programs (flows, MapReduce programs, workflows,
+etc.), queries, and services are stopped |---| you can go to the |all_apps|_ page of the
+CDAP UI, click on the particular application to go to its detail page, and then select the
+*Actions > Delete* menu in the upper right to delete the application.
 
 After confirmation, the application will be deleted.
 
-Note that any storage (daatasets) created or used by the application will remain, as they
-are independent of the application. Datasets can be deleted with the 
-:ref:`HTTP Restful API <restful-api>`, the 
-:ref:`Java Client API <java-client-api>`, or the 
-:ref:`Command Line Interface API <cli>`.
+Note that any storage (datasets) created or used by the application will remain, as they
+are independent of the application. Datasets can be deleted from the |datasets|_ page of
+the CDAP UI, the :ref:`HTTP Restful API <restful-api>`, the 
+:ref:`Java Client API <java-client-api>`, or the :ref:`Command Line Interface API <cli>`.
+
+Streams can be truncated rather than deleted.
