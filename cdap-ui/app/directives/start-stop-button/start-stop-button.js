@@ -13,7 +13,6 @@ angular.module(PKG.name + '.commons')
         $scope.isStoppable = ($scope.isStoppable === 'true');
 
         $scope.runtimeArgs = [];
-        $scope.preferences = [];
         var path = '/apps/' + $state.params.appId +
                    '/' + $scope.type + '/' + $state.params.programId;
         var dataSrc = new MyDataSource($scope);
@@ -64,11 +63,7 @@ angular.module(PKG.name + '.commons')
           if ('undefined' !== typeof fn) {
             fn();
           } else {
-            myProgramPreferencesService.show($scope.type, $scope.preferences)
-              .result
-              .then(function(res) {
-                $scope.preferences = res;
-              });
+            myProgramPreferencesService.show($scope.type);
           }
         };
       }
