@@ -41,7 +41,6 @@ import co.cask.cdap.data2.metrics.HBaseDatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.LevelDBDatasetMetricsReporter;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.http.HttpHandler;
-import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Module;
@@ -175,17 +174,14 @@ public class DataSetServiceModules extends RuntimeModule {
     private final DatasetDefinitionRegistryFactory registryFactory;
     private final Map<String, DatasetModule> defaultModules;
     private final CConfiguration configuration;
-    private final TransactionExecutorFactory txExecutorFactory;
 
     @Inject
     public DatasetMdsProvider(DatasetDefinitionRegistryFactory registryFactory,
                               @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules,
-                              CConfiguration configuration,
-                              TransactionExecutorFactory txExecutorFactory) {
+                              CConfiguration configuration) {
       this.registryFactory = registryFactory;
       this.defaultModules = defaultModules;
       this.configuration = configuration;
-      this.txExecutorFactory = txExecutorFactory;
     }
 
     @Override
@@ -196,7 +192,7 @@ public class DataSetServiceModules extends RuntimeModule {
         .build();
       // NOTE: it is fine to use in-memory dataset manager for direct access to dataset MDS even in distributed mode
       //       as long as the data is durably persisted
-      return new StaticDatasetFramework(registryFactory, modulesMap, configuration, txExecutorFactory);
+      return new StaticDatasetFramework(registryFactory, modulesMap, configuration);
     }
   }
 }
