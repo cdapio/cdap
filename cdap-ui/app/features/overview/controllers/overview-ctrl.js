@@ -86,24 +86,27 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrd
                     names: ['system.services.log.error', 'system.services.log.warn'],
                     startTime: 'now-3600s',
                     endTime: 'now',
-                    resolution: '1m'
+                    resolution: '1m',
+                    interval: 60*1000,
+                    aggregate: 5
                   },
                   metricAlias: {'system.services.log.error': 'System Errors',
-                                'system.services.log.warn' : 'System Warnings'},
-                  interval: 60*1000,
-                  aggregate: 5
+                                'system.services.log.warn' : 'System Warnings'}
   }));
-  $scope.wdgts.push(new Widget({title: 'Applications', type: 'c3-line', isLive: true,
+  $scope.wdgts.push(new Widget({
+                  title: 'Applications',
+                  type: 'c3-line',
+                  isLive: true,
                   metric: {
                     context: 'namespace.' + $state.params.namespace,
                     names: ['system.app.log.error', 'system.app.log.warn'],
                     startTime: 'now-3600s',
                     endTime: 'now',
-                    resolution: '1m'
+                    resolution: '1m',
+                    interval: 60*1000,
+                    aggregate: 5
                   },
                   metricAlias: {'system.app.log.error': 'Application Errors',
-                                'system.app.log.warn' : 'Application Warnings'},
-                  interval: 60*1000,
-                  aggregate: 5
+                                'system.app.log.warn' : 'Application Warnings'}
   }));
 });

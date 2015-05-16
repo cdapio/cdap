@@ -150,15 +150,18 @@ angular.module(PKG.name+'.feature.dashboard')
 
   .factory('opshelper', function (Widget, $timeout) {
     function createWidget(title, context, metricNames, type) {
-      return new Widget({title: title, type: type, isLive: true,
+      return new Widget({
+        title: title,
+        type: type,
         metric: {
+          isLive: true,
           context: context,
           names: metricNames,
           startTime: 'now-3600s',
           endTime: 'now',
-          resolution: '1m'
-        },
-        interval: 15000
+          resolution: '1m',
+          interval: 15000
+        }
       });
     }
 
@@ -169,6 +172,7 @@ angular.module(PKG.name+'.feature.dashboard')
         angular.extend(widget, panel[4]);
         widgets.push(widget);
       });
+      console.log(widgets);
       // Note: title is not currently used in the view
       return {title : "System metrics", columns : widgets};
     }
