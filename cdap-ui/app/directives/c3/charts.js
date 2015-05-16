@@ -5,7 +5,8 @@ var baseDirective = {
   replace: true,
   template: '<div class="c3"></div>',
   scope: {
-    chartData: '=',
+    chartMetric: '=',
+    chartMetricAlias: '@',
     chartSize: '='
   },
   controller: 'c3Controller'
@@ -16,36 +17,40 @@ ngC3.factory('c3', function ($window) {
   return $window.c3;
 });
 
-ngC3.controller('c3Controller', function ($scope, c3, myHelpers, $filter, $timeout) {
+ngC3.controller('c3Controller', function ($scope, c3, myHelpers, $filter, $timeout, MyChartHelpers, MyDataSource) {
   // We need to bind because the init function is called directly from the directives below
   // and so the function arguments would not otherwise be available to the initC3 and render functions.
-  var c3 = c3;
-  var myHelpers = myHelpers;
-  var $filter = $filter;
+  var c3 = c3,
+      myHelpers = myHelpers,
+      $filter = $filter,
+      queryId = 'qid',
+      dataSrc = new MyDataSource($scope);
+
+  $scope.metrics = $scope.chartMetric;
+  $scope.alias = $scope.chartMetricAlias;
 
   $scope.$on('$destroy', function() {
-      if ($scope.chart) {
-        $scope.chart = $scope.chart.destroy();
-      }
+    if ($scope.chart) {
+      $scope.chart = $scope.chart.destroy();
+    }
   });
 
   $scope.initC3 = function (elem, type, attr, forcedOpts) {
-    if($scope.chart) {
-      return;
-    }
 
     // Default options:
+    // The queryId value does not matter, as long as we are using the same value in the request
+    // as in parsing the response.
     var options = {stack: false, formatAsTimestamp: true};
     angular.extend(options, forcedOpts || {}, {
       el: elem[0]
     });
 
     angular.forEach(attr, function (v, k) {
-      if ( v && k.indexOf('chart')===0 ) {
-        var key = k.substring(5);
-        this[key.charAt(0).toLowerCase() + key.slice(1)] = $scope.$eval(v);
-      }
-    }, options);
+     if ( v && k.indexOf('chart')===0 ) {
+       var key = k.substring(5);
+       this[key.charAt(0).toLowerCase() + key.slice(1)] = $scope.$eval(v);
+     }
+   }, options);
 
     options.data = { x: 'x', columns: [] };
 
@@ -59,41 +64,95 @@ ngC3.controller('c3Controller', function ($scope, c3, myHelpers, $filter, $timeo
       });
     }, true);
 
+    if ($scope.metrics) {
+      $scope.fetchData()
+        .then(function(res) {
+          var myData;
+          var processedData = MyChartHelpers.processData(
+            res,
+            queryId,
+            $scope.metrics.names,
+            $scope.metrics.resolution,
+            $scope.metrics.aggregate
+          );
+          processedData = MyChartHelpers.c3ifyData(processedData, $scope.metrics, $scope.alias);
+          myData = { x: 'x', columns: processedData.columns, keys: {x: 'x'} };
 
-    $scope.$watch('chartData', function (chartData) {
-      if(angular.isObject(chartData)) {
-        myData = { x: 'x', columns: chartData.columns, keys: {x: 'x'} };
+          if ($scope.options.stack) {
+            myData.groups = [processedData.metricNames];
+          }
 
-        if ($scope.options.stack) {
-          myData.groups = [chartData.metricNames];
-        }
-
-        // Save the data for when it gets resized.
-        $scope.options.data = myData;
-        $scope.clearChart();
-        $timeout(function() {
-          render();
+          // Save the data for when it gets resized.
+          $scope.options.data = myData;
+          $scope.clearChart();
+          $timeout(function() {
+            render();
+          });
         });
-      }
-    });
-    render();
+    }
   };
 
+  $scope.fetchData = function () {
+    return dataSrc.request({
+      _cdapPath: '/metrics/query',
+      method: 'POST',
+      body: constructQuery(queryId, contextToTags($scope.metrics.context), $scope.metrics)
+    });
+  };
+
+  // 'ns.default.app.foo' -> {'ns': 'default', 'app': 'foo'}
+  function contextToTags(context) {
+    var parts, tags, i, tagValue;
+    if (context.length) {
+      parts = context.split('.');
+    } else {
+      // For an empty context, we want no tags. Splitting it by '.' yields [""]
+      parts = [];
+    }
+    if (parts.length % 2 !== 0) {
+      throw "Metrics context has uneven number of parts: " + context;
+    }
+    tags = {};
+    for (i = 0; i < parts.length; i+=2) {
+      // In context, '~' is used to represent '.'
+      tagValue = parts[i + 1].replace(/~/g, '.');
+      tags[parts[i]] = tagValue;
+    }
+    return tags;
+  }
+
+  function constructQuery(queryId, tags, metric) {
+    var timeRange, retObj;
+    timeRange = {'start': metric.startTime || 'now-60s',
+                'end': metric.endTime || 'now'};
+    if (metric.resolution) {
+      timeRange.resolution = metric.resolution;
+    }
+    retObj = {};
+    retObj[queryId] = {tags: tags, metrics: metric.names, groupBy: [], timeRange: timeRange};
+    return retObj;
+  }
+
+
   function render() {
-    var data = $scope.options.data;
+    var data = $scope.options.data,
+        myTooltip,
+        chartConfig,
+        timestampFormat,
+        xTick = {};
+
     data.type = $scope.type;
 
     // Mainly needed for pie chart values to be shown upon tooltip, but also useful for other types.
-    var myTooltip = { format: { value: d3.format(',') } };
+    myTooltip = { format: { value: d3.format(',') } };
 
-    var chartConfig = {bindto: $scope.options.el, data: data, tooltip: myTooltip};
+    chartConfig = {bindto: $scope.options.el, data: data, tooltip: myTooltip};
     chartConfig.size = $scope.options.size;
 
-    var xTick = {};
     xTick.count = $scope.options.xtickcount;
     xTick.culling = $scope.options.xTickCulling;
     if ($scope.options.formatAsTimestamp) {
-      var timestampFormat = function(timestampSeconds) {
+      timestampFormat = function(timestampSeconds) {
         return $filter('amDateFormat')(timestampSeconds * 1000, 'h:mm:ss a');
       };
       xTick.format = timestampFormat;
