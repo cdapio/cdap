@@ -35,10 +35,6 @@ function (Widget, MyDataSource, mySettings, $q) {
         this.push(widget);
       }, this.columns);
     }
-    else {
-      // default is a single empty column
-      this.columns.push([]);
-    }
 
     this.checkForEmptyDashboard();
   }
@@ -261,11 +257,6 @@ function (Widget, MyDataSource, mySettings, $q) {
    */
   Model.prototype.add = function (properties, colCount) {
     var d = new Dashboard(properties);
-
-    // add columns as needed
-    for (var i = 1; i < (colCount||3); i++) {
-      d.columns.push([]);
-    }
 
     this.data.push(d);
 
