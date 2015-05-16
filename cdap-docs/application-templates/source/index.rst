@@ -80,5 +80,5 @@ These sections describe:
 .. |etl-custom| replace:: **Creating Custom ETL Plugins:**
 .. _etl-custom: etl/custom.html
 
-- |etl-custom|_ Intended for developers writing custom ETL Plugins and Adapters.
+- |etl-custom|_ Intended for developers writing custom ETL Plugins.
 

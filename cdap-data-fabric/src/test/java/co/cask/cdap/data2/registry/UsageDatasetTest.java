@@ -16,6 +16,8 @@
 
 package co.cask.cdap.data2.registry;
 
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -229,6 +231,7 @@ public class UsageDatasetTest {
 
   private static UsageDataset getUsageDataset(String instanceId) throws Exception {
     Id.DatasetInstance id = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, instanceId);
-    return UsageDatasets.get(dsFrameworkUtil.getFramework(), id);
+    return DatasetsUtil.getOrCreateDataset(dsFrameworkUtil.getFramework(), id,
+                                           UsageDataset.class.getSimpleName(), DatasetProperties.EMPTY, null, null);
   }
 }
