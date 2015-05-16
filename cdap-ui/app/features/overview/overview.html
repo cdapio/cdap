@@ -77,7 +77,8 @@
         <div ng-controller="C3WidgetTimeseriesCtrl" ng-repeat="wdgt in wdgts" class="health-widget">
           <br ng-hide="$first">
           <c3-spline
-            data-chart-data="chartData"
+            chart-metric="wdgt.metric"
+            chart-metric-alias="wdgt.metricAlias"
             chart-size="{ height: 100, width: 280 }"
             chart-showx="false"
             chart-showy="false"
