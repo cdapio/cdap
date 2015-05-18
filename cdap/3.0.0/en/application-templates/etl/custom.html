@@ -19,7 +19,7 @@
         var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
       })();
     </script>
-    <title>Creating Custom ETL Plugins and Adapters &mdash; Cask Data Application Platform 3.0.0 Documentation</title>
+    <title>Creating Custom ETL Plugins &mdash; Cask Data Application Platform 3.0.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -68,15 +68,15 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="creating-custom-etl-plugins-and-adapters">
-<span id="advanced-custom-app-template"></span><h1>Creating Custom ETL Plugins and Adapters<a class="headerlink" href="#creating-custom-etl-plugins-and-adapters" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="creating-custom-etl-plugins">
+<span id="advanced-custom-app-template"></span><h1>Creating Custom ETL Plugins<a class="headerlink" href="#creating-custom-etl-plugins" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
-<p>This section is intended for developers writing custom ETL Plugins and
-Adapters. Users of these should refer to the <a class="reference internal" href="../index.html#apptemplates-index"><span>Application Templates</span></a>.</p>
+<p>This section is intended for developers writing custom ETL Plugins.
+Users of these should refer to the <a class="reference internal" href="../index.html#apptemplates-index"><span>Application Templates</span></a>.</p>
 </div>
-<div class="section" id="creating-custom-etl-plugins">
-<h2>Creating Custom ETL Plugins<a class="headerlink" href="#creating-custom-etl-plugins" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id1">
+<h2>Creating Custom ETL Plugins<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
 <p>CDAP provides for the creation of custom ETL Plugins for batch/realtime sources/sinks and
 transformations to extend the existing <code class="docutils literal"><span class="pre">ETLBatch</span></code> and <code class="docutils literal"><span class="pre">ETLRealtime</span></code> Application Templates.</p>
 <p>To make a custom plugin available to one of the Application Templates (and thus available
@@ -191,8 +191,8 @@ accept from the previous stage (which could be either a <code class="docutils li
 <p>After defining the types, only one method is required to be implemented:</p>
 <blockquote>
 <div><code class="docutils literal"><span class="pre">prepareJob()</span></code></div></blockquote>
-<div class="section" id="id1">
-<h4>Methods<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id2">
+<h4>Methods<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
 <li><code class="docutils literal"><span class="pre">prepareJob()</span></code>: Used to configure the Hadoop Job configuration (for ex, set <code class="docutils literal"><span class="pre">OutputFormatClass</span></code>).</li>
 <li><code class="docutils literal"><span class="pre">configurePipeline()</span></code>: Used to create any datasets that are required by this Batch Sink.</li>
@@ -234,8 +234,8 @@ incoming object is set as the Key and the Value is set to null.</li>
 <p>The only method that needs to be implemented is:</p>
 <blockquote>
 <div><code class="docutils literal"><span class="pre">poll()</span></code></div></blockquote>
-<div class="section" id="id2">
-<h4>Methods<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id3">
+<h4>Methods<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
 <li><code class="docutils literal"><span class="pre">initialize()</span></code>: Initialize the Realtime Source runtime. Guaranteed to be executed
 before any call to the poll method. Usually used to setup the connection to external
@@ -366,8 +366,8 @@ using this Maven archetype:</p>
 <p>The only method that needs to be implemented is:</p>
 <blockquote>
 <div><code class="docutils literal"><span class="pre">transform()</span></code></div></blockquote>
-<div class="section" id="id3">
-<h4>Methods<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id4">
+<h4>Methods<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
 <li><code class="docutils literal"><span class="pre">initialize()</span></code>: Used to perform any initialization step that might be required during
 the runtime of the <code class="docutils literal"><span class="pre">TransformStage</span></code>. It is guaranteed that this method will be invoked
@@ -685,7 +685,7 @@ Template by using the <a class="reference internal" href="templates.html#http-re
 <li class="toctree-l1"><a class="reference internal" href="operations.html"> Adapter Lifecycle Management</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href=""> Creating Custom ETL Plugins</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#creating-custom-etl-plugins">Creating Custom ETL Plugins</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">Creating Custom ETL Plugins</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#installation-directory">Installation Directory</a></li>
 </ul>
 </li>
