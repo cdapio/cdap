@@ -178,11 +178,6 @@ ngC3.directive('c3Line', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initC3(elem, 'line', attr, {xtickcount: 5});
-      scope.clearChart = function() {
-        while(elem.firstChild) {
-          elem.removeChild(elem.firstChild);
-        }
-      }
     }
   }, baseDirective);
 });
@@ -192,11 +187,6 @@ ngC3.directive('c3Bar', function () {
     link: function (scope, elem, attr) {
       // xtickcount option does not work for bar charts, so have to use culling
       scope.initC3(elem, 'bar', attr, {stack: true, xTickCulling: {max: 5}});
-      scope.clearChart = function() {
-        while(elem.firstChild) {
-          elem.removeChild(elem.firstChild);
-        }
-      }
     }
   }, baseDirective);
 });
@@ -205,11 +195,6 @@ ngC3.directive('c3Pie', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initC3(elem, 'pie', attr, {formatAsTimestamp: false});
-      scope.clearChart = function() {
-        while(elem.firstChild) {
-          elem.removeChild(elem.firstChild);
-        }
-      }
     }
   }, baseDirective);
 });
@@ -218,11 +203,6 @@ ngC3.directive('c3Donut', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initC3(elem, 'donut', attr, {formatAsTimestamp: false});
-      scope.clearChart = function() {
-        while(elem.firstChild) {
-          elem.removeChild(elem.firstChild);
-        }
-      }
     }
   }, baseDirective);
 });
@@ -231,11 +211,6 @@ ngC3.directive('c3Scatter', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initC3(elem, 'scatter', attr, {xtickcount: 5});
-      scope.clearChart = function() {
-        while(elem.firstChild) {
-          elem.removeChild(elem.firstChild);
-        }
-      }
     }
   }, baseDirective);
 });
@@ -244,11 +219,6 @@ ngC3.directive('c3Spline', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initC3(elem, 'spline', attr, { xtickcount: 5});
-      scope.clearChart = function() {
-        while(elem.firstChild) {
-          elem.removeChild(elem.firstChild);
-        }
-      }
     }
   }, baseDirective);
 });
@@ -257,11 +227,6 @@ ngC3.directive('c3Step', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initC3(elem, 'step', attr, {xtickcount: 5});
-      scope.clearChart = function() {
-        while(elem.firstChild) {
-          elem.removeChild(elem.firstChild);
-        }
-      }
     }
   }, baseDirective);
 });
@@ -270,11 +235,6 @@ ngC3.directive('c3Area', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initC3(elem, 'area', attr, {xtickcount: 5});
-      scope.clearChart = function() {
-        while(elem.firstChild) {
-          elem.removeChild(elem.firstChild);
-        }
-      }
     }
   }, baseDirective);
 });
@@ -283,11 +243,6 @@ ngC3.directive('c3AreaStep', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initC3(elem, 'area-step', attr, {xtickcount: 5});
-      scope.clearChart = function() {
-        while(elem.firstChild) {
-          elem.removeChild(elem.firstChild);
-        }
-      }
     }
   }, baseDirective);
 });
@@ -296,11 +251,6 @@ ngC3.directive('c3AreaSpline', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initC3(elem, 'area-spline', attr, {xtickcount: 5} );
-      scope.clearChart = function() {
-        while(elem.firstChild) {
-          elem.removeChild(elem.firstChild);
-        }
-      }
     }
   }, baseDirective);
 });
@@ -309,11 +259,6 @@ ngC3.directive('c3AreaSplineStacked', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.initC3(elem, 'area-spline', attr, {stack: true, xtickcount: 5});
-      scope.clearChart = function() {
-        while(elem.firstChild) {
-          elem.removeChild(elem.firstChild);
-        }
-      }
     }
   }, baseDirective);
 });

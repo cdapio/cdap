@@ -66,7 +66,7 @@ function (Widget, MyDataSource, mySettings, $q) {
 
   Dashboard.prototype.checkForEmptyDashboard = function() {
     this.isEmpty = this.columns.length === 0;
-    return this.columns.length === 0;
+    return this.isEmpty;
   };
 
 
