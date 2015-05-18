@@ -216,6 +216,17 @@ public class AppFabricClient {
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set flowlet instances failed");
   }
 
+  public Instances getFlowletInstances(String namespaceId, String applicationId, String flowName, String flowletName) {
+    MockResponder responder = new MockResponder();
+    String uri = String.format("%s/apps/%s/flows/%s/flowlets/%s/instances",
+                               getNamespacePath(namespaceId), applicationId, flowName, flowletName);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
+    programLifecycleHttpHandler.getFlowletInstances(request, responder, namespaceId, applicationId, flowName,
+                                                    flowletName);
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get flowlet instances failed");
+    return responder.decodeResponseContent(Instances.class);
+  }
+
   public List<ScheduleSpecification> getSchedules(String namespaceId, String appId, String wflowId) {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/workflows/%s/schedules",

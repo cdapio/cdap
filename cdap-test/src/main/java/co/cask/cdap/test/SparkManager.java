@@ -18,25 +18,9 @@ package co.cask.cdap.test;
 
 import co.cask.cdap.api.spark.Spark;
 
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 /**
  * Instance for this class is for managing a running {@link Spark}.
  */
-public interface SparkManager {
-  /**
-   * Stops the running spark job.
-   */
-  void stop();
+public interface SparkManager extends ProgramManager {
 
-  /**
-   * Blocks until spark job is finished or given timeout is reached
-   *
-   * @param timeout     amount of time units to wait
-   * @param timeoutUnit time unit type
-   * @throws java.util.concurrent.TimeoutException if timeout reached
-   * @throws InterruptedException                  if execution is interrupted
-   */
-  void waitForFinish(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException;
 }

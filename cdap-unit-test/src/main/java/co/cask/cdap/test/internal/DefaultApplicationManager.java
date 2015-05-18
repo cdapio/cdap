@@ -16,20 +16,18 @@
 
 package co.cask.cdap.test.internal;
 
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.test.AbstractApplicationManager;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
+import co.cask.cdap.test.DefaultMapReduceManager;
+import co.cask.cdap.test.DefaultSparkManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
-import co.cask.cdap.test.ScheduleManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamWriter;
@@ -52,16 +50,13 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * A default implementation of {@link ApplicationManager}.
  */
-public class DefaultApplicationManager extends AbstractApplicationManager {
+public class DefaultApplicationManager implements ApplicationManager {
 
   private final ConcurrentMap<String, Id.Program> runningProcesses = Maps.newConcurrentMap();
   private final Id.Application applicationId;
@@ -123,8 +118,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   @Override
   public FlowManager startFlow(final String flowName, Map<String, String> arguments) {
     final Id.Program flowId = startProgram(flowName, arguments, ProgramType.FLOW);
-    return new DefaultFlowManager(applicationId.getNamespaceId(), flowName, flowId, applicationId.getId(),
-                                  appFabricClient, this);
+    return new DefaultFlowManager(flowId, appFabricClient, this);
   }
 
   @Override
@@ -141,22 +135,11 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
                                                final ProgramType programType) {
     try {
       final Id.Program programId = startProgram(programName, arguments, programType);
-      return new MapReduceManager() {
-        @Override
-        public void stop() {
-          stopProgram(programId);
-        }
-
-        @Override
-        public void waitForFinish(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
-          programWaitForFinish(timeout, timeoutUnit, programId);
-        }
-      };
+      return new DefaultMapReduceManager(programId, this);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
-
 
   @Override
   public SparkManager startSpark(String programName) {
@@ -171,18 +154,8 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   private SparkManager getSparkManager(final String programName, Map<String, String> arguments,
                                        final ProgramType programType) {
     try {
-      final Id.Program programId = startProgram(programName, arguments, programType);
-      return new SparkManager() {
-        @Override
-        public void stop() {
-          stopProgram(programId);
-        }
-
-        @Override
-        public void waitForFinish(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
-          programWaitForFinish(timeout, timeoutUnit, programId);
-        }
-      };
+      final Id.Program jobId = startProgram(programName, arguments, programType);
+      return new DefaultSparkManager(jobId, this);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -211,40 +184,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   public WorkflowManager startWorkflow(final String workflowName, Map<String, String> arguments) {
     final Id.Program workflowId = Id.Program.from(applicationId, ProgramType.WORKFLOW, workflowName);
     // currently we are using it for schedule, so not starting the workflow
-
-    return new WorkflowManager() {
-      @Override
-      public List<ScheduleSpecification> getSchedules() {
-        return appFabricClient.getSchedules(applicationId.getNamespaceId(), applicationId.getId(), workflowName);
-      }
-
-      @Override
-      public List<RunRecord> getHistory() {
-        return appFabricClient.getHistory(applicationId.getNamespaceId(), applicationId.getId(), workflowName);
-      }
-
-      public ScheduleManager getSchedule(final String schedName) {
-
-        return new ScheduleManager() {
-          @Override
-          public void suspend() {
-            appFabricClient.suspend(applicationId.getNamespaceId(), applicationId.getId(), schedName);
-          }
-
-          @Override
-          public void resume() {
-            appFabricClient.resume(applicationId.getNamespaceId(), applicationId.getId(), schedName);
-          }
-
-          @Override
-          public String status(int expectedCode) {
-            return appFabricClient.scheduleStatus(applicationId.getNamespaceId(), applicationId.getId(),
-                                                  schedName, expectedCode);
-          }
-        };
-      }
-
-    };
+    return new DefaultWorkflowManager(workflowId, appFabricClient, this);
   }
 
   @Override
@@ -255,8 +195,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   @Override
   public ServiceManager startService(final String serviceName, Map<String, String> arguments) {
     final Id.Program serviceId = startProgram(serviceName, arguments, ProgramType.SERVICE);
-    return new DefaultServiceManager(applicationId.getNamespaceId(), serviceId, appFabricClient,
-                                     discoveryServiceClient, this);
+    return new DefaultServiceManager(serviceId, appFabricClient, discoveryServiceClient, this);
   }
 
   @Override
@@ -267,7 +206,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   @Override
   public WorkerManager startWorker(String workerName, Map<String, String> arguments) {
     final Id.Program workerId = startProgram(workerName, arguments, ProgramType.WORKER);
-    return new DefaultWorkerManager(applicationId.getNamespaceId(), workerId, appFabricClient, this);
+    return new DefaultWorkerManager(workerId, appFabricClient, this);
   }
 
   @Override
@@ -324,7 +263,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
     }
   }
 
-  void stopProgram(Id.Program programId) {
+  public void stopProgram(Id.Program programId) {
     String programName = programId.getId();
     try {
       if (runningProcesses.remove(programName, programId)) {
@@ -337,7 +276,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   }
 
   @Override
-  protected boolean isRunning(Id.Program programId) {
+  public boolean isRunning(Id.Program programId) {
     try {
       String status = appFabricClient.getStatus(applicationId.getNamespaceId(), programId.getApplicationId(),
                                                 programId.getId(), programId.getType());

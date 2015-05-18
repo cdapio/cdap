@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,34 +14,39 @@
  * the License.
  */
 
-package co.cask.cdap.test.internal;
+package co.cask.cdap.test.remote;
 
 import co.cask.cdap.api.metrics.RuntimeMetrics;
+import co.cask.cdap.client.MetricsClient;
+import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.FlowManager;
-import co.cask.cdap.test.RuntimeStats;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 
 /**
- * A default implementation of {@link co.cask.cdap.test.FlowManager}.
+ * Remote implementation of {@link FlowManager}.
  */
-public class DefaultFlowManager extends AbstractProgramManager implements FlowManager {
-  private final AppFabricClient appFabricClient;
+public class RemoteFlowManager extends AbstractProgramManager implements FlowManager {
+  private final ProgramClient programClient;
+  private final MetricsClient metricsClient;
 
-  public DefaultFlowManager(Id.Program programId, AppFabricClient appFabricClient,
-                            DefaultApplicationManager applicationManager) {
+  public RemoteFlowManager(Id.Program programId, ClientConfig clientConfig,
+                           RemoteApplicationManager applicationManager) {
     super(programId, applicationManager);
-    this.appFabricClient = appFabricClient;
+    ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig).build();
+    namespacedClientConfig.setNamespace(programId.getNamespace());
+    this.programClient = new ProgramClient(namespacedClientConfig);
+    this.metricsClient = new MetricsClient(namespacedClientConfig);
   }
 
   @Override
   public void setFlowletInstances(String flowletName, int instances) {
     Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
     try {
-      appFabricClient.setFlowletInstances(programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
-                                          flowletName, instances);
+      programClient.setFlowletInstances(programId.getApplicationId(), programId.getId(), flowletName, instances);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -50,8 +55,7 @@ public class DefaultFlowManager extends AbstractProgramManager implements FlowMa
   @Override
   public int getFlowletInstances(String flowletName) {
     try {
-      return appFabricClient.getFlowletInstances(programId.getNamespaceId(), programId.getApplicationId(),
-                                                 programId.getId(), flowletName).getInstances();
+      return programClient.getFlowletInstances(programId.getApplicationId(), programId.getId(), flowletName);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -59,7 +63,6 @@ public class DefaultFlowManager extends AbstractProgramManager implements FlowMa
 
   @Override
   public RuntimeMetrics getFlowletMetrics(String flowletId) {
-    return RuntimeStats.getFlowletMetrics(programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
-                                          flowletId);
+    return metricsClient.getFlowletMetrics(programId, flowletId);
   }
 }

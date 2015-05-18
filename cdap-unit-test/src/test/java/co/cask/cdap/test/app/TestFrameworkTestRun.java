@@ -688,21 +688,26 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     flowletMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
 
+    String generator = "Generator";
+    Assert.assertEquals(1, flowManager.getFlowletInstances(generator));
     // Now change generator to 3 instances
-    flowManager.setFlowletInstances("Generator", 3);
+    flowManager.setFlowletInstances(generator, 3);
+    Assert.assertEquals(3, flowManager.getFlowletInstances(generator));
 
     // Now should have 3 processed from the consumer flowlet
     flowletMetrics.waitForProcessed(3, 10, TimeUnit.SECONDS);
 
     // Now reset to 1 instances
-    flowManager.setFlowletInstances("Generator", 1);
+    flowManager.setFlowletInstances(generator, 1);
+    Assert.assertEquals(1, flowManager.getFlowletInstances(generator));
 
     // Shouldn't have new item
     TimeUnit.SECONDS.sleep(3);
     Assert.assertEquals(3, flowletMetrics.getProcessed());
 
     // Now set to 2 instances again. Since there is a new instance, expect one new item emitted
-    flowManager.setFlowletInstances("Generator", 2);
+    flowManager.setFlowletInstances(generator, 2);
+    Assert.assertEquals(2, flowManager.getFlowletInstances(generator));
     flowletMetrics.waitForProcessed(4, 10, TimeUnit.SECONDS);
 
     flowManager.stop();

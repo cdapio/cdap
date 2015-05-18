@@ -21,7 +21,7 @@ import co.cask.cdap.api.metrics.RuntimeMetrics;
 /**
  * Instance for this class is for managing a running {@link co.cask.cdap.api.flow.Flow Flow}.
  */
-public interface FlowManager {
+public interface FlowManager extends ProgramManager {
 
   /**
    * Changes the number of flowlet instances.
@@ -32,18 +32,15 @@ public interface FlowManager {
   void setFlowletInstances(String flowletName, int instances);
 
   /**
+   * Gets the number of flowlet instances.
+   *
+   * @param flowletName Name of the flowlet.
+   */
+  int getFlowletInstances(String flowletName);
+
+  /**
    * @param flowletId Id of the flowlet.
    * @return the flowlet metrics.
    */
   RuntimeMetrics getFlowletMetrics(String flowletId);
-
-  /**
-   * Stops the running flow.
-   */
-  void stop();
-
-  /**
-   * Checks if Flow is Running
-   */
-  boolean isRunning();
 }
