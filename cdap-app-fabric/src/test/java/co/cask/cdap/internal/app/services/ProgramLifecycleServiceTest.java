@@ -42,8 +42,6 @@ import java.util.concurrent.TimeUnit;
  * Unit test for {@link ProgramLifecycleService}
  */
 public class ProgramLifecycleServiceTest extends AppFabricTestBase {
-  private static final String WORDCOUNT_APP_NAME = "WordCountApp";
-  private static final String WORDCOUNT_FLOW_NAME = "WordCountFlow";
 
   private static ProgramLifecycleService programLifecycleService;
   private static Store store;
@@ -63,7 +61,7 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     Id.Program wordcountFlow1 =
-      Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
+      Id.Program.from(TEST_NAMESPACE1, "WordCountApp", ProgramType.FLOW, "WordCountFlow");
 
     // flow is stopped initially
     Assert.assertEquals("STOPPED", getProgramStatus(wordcountFlow1));
