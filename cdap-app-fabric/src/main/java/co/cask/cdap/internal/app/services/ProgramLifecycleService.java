@@ -223,7 +223,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    *
    * @param programType The type of programs the run records nee to validate and update.
    */
-  private void validateAndCorrectRunningRunRecords(ProgramType programType) {
+  void validateAndCorrectRunningRunRecords(ProgramType programType) {
     final Map<RunId, RuntimeInfo> runIdToRuntimeInfo = runtimeService.list(programType);
 
     List<RunRecord> invalidRunRecords = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecord>() {
@@ -239,8 +239,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
     });
 
     if (!invalidRunRecords.isEmpty()) {
-      LOG.warn("Found {} RunRecords with RUNNING status but the program not actually running for type {}",
-                invalidRunRecords.size(), programType.getPrettyName());
+      LOG.warn("Found {} RunRecords with RUNNING status but the program not actually running",
+               invalidRunRecords.size());
     }
 
     // Now lets correct the invalid RunRecords
@@ -255,6 +255,9 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
       // Check if such program exist for the RunRecord
       if (targetProgramId != null) {
+        LOG.warn("Fixing RunRecord {} in program {} of type {} with RUNNING status but the program is not running",
+                 runId, targetProgramId, programType.getPrettyName());
+
         store.compareAndSetStatus(targetProgramId, runId, ProgramController.State.ALIVE.getRunStatus(),
                                   ProgramController.State.ERROR.getRunStatus());
       }
