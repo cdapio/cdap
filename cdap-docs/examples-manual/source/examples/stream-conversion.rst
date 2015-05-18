@@ -9,7 +9,7 @@
 Stream Conversion
 =================
 
-A Cask Data Application Platform (CDAP) Example demonstrating Time-Partitioned File Sets.
+A Cask Data Application Platform (CDAP) example demonstrating Time-Partitioned FileSets.
 
 Overview
 ========

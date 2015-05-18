@@ -9,7 +9,7 @@
 Spark K-Means
 =============
 
-A Cask Data Application Platform (CDAP) Example Demonstrating Spark.
+A Cask Data Application Platform (CDAP) example demonstrating Spark.
 
 Overview
 =============

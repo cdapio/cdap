@@ -9,10 +9,10 @@
 Hello World
 ===========
 
-The simplest Cask Data Application Platform (CDAP) Example.
+The simplest Cask Data Application Platform (CDAP) example.
 
 Overview
-===========
+========
 
 This application uses one stream, one dataset, one flow and one service to implement the classic "Hello World":
 
@@ -53,7 +53,7 @@ by the length of the name. We will see below how to retrieve these metrics using
 :ref:`http-restful-api-metrics`.
 
 The ``Greeting`` Service
-------------------------------
+------------------------
 
 This service has a single endpoint called ``greet`` that does not accept arguments. When invoked, it
 reads the name stored by the ``NameSaver`` from the key-value table. It return a simple greeting with that name:
@@ -68,7 +68,7 @@ We will see below how to retrieve this metric using the
 :ref:`http-restful-api-metrics`.
 
 Building and Starting
-=================================
+=====================
 
 - You can either build the example (as described `below
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
@@ -78,7 +78,7 @@ Building and Starting
 - Once the application has been deployed and started, you can `run the example <#running-the-example>`__.
 
 Running CDAP Applications
-============================================
+=========================
 
 .. |example| replace:: HelloWorld
 
@@ -89,7 +89,7 @@ Running the Example
 ===================
 
 Starting the Flow
-------------------------------
+-----------------
 
 Once the application is deployed:
 
@@ -121,7 +121,7 @@ Once the application is deployed:
 
     
 Injecting a Name
-------------------------------
+----------------
 
 .. |who-flow| replace:: *WhoFlow*
 .. _who-flow: http://localhost:9999/ns/default/apps/HelloWorld/programs/flows/WhoFlow/runs
@@ -147,7 +147,7 @@ and send *Jane Doe* a number of times.
 
 
 Using the Service
-------------------------------
+-----------------
 
 Go back to the Application's detail page, and click on the *Greeting* service. (If you
 haven't already started the service, click on the *Start* button on the right-side.) The
@@ -164,7 +164,7 @@ similar response.
 
   
 Retrieving Metrics
-------------------------------
+------------------
 
 .. highlight:: console
 

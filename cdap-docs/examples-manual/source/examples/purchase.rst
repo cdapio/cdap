@@ -9,7 +9,7 @@
 Purchase
 ========
 
-A Cask Data Application Platform (CDAP) Example demonstrating many of the CDAP components.
+A Cask Data Application Platform (CDAP) example demonstrating many of the CDAP components.
 
 Overview
 ========
@@ -146,13 +146,15 @@ Starting the Flow
 
 Once the application is deployed:
 
-- Click on the *Process* button in the left sidebar of the CDAP UI,
-  then click *PurchaseFlow* in the *Process* page to get to the
-  flow detail page, then click the *Start* button; or
+- Go to the *PurchaseHistory* `application overview page 
+  <http://localhost:9999/ns/default/apps/PurchaseHistory/overview/status>`__,
+  click ``PurchaseFlow`` to get to the flow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh start flow PurchaseHistory.PurchaseFlow
-
+  
+    Successfully connected CDAP instance at http://localhost:10000
+    Successfully started Flow 'PurchaseFlow' of application 'PurchaseHistory' with stored runtime arguments '{}'
 
 Starting the Services
 ---------------------
@@ -194,7 +196,8 @@ Inject a file of sentences by running this command from the Standalone
 CDAP SDK directory, using the Command Line Interface::
   
   $ cdap-cli.sh load stream purchaseStream examples/Purchase/resources/purchases.txt 
-
+  Successfully sent stream event to stream 'purchaseStream'
+  
 
 Starting the Workflow
 ---------------------

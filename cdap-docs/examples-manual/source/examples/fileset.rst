@@ -9,7 +9,7 @@
 File Sets
 =========
 
-A Cask Data Application Platform (CDAP) Example demonstrating the FileSet dataset and its
+A Cask Data Application Platform (CDAP) example demonstrating the FileSet dataset and its
 use in services and MapReduce.
 
 Overview
@@ -71,7 +71,7 @@ MapReduce over Files
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/WordCount.java
     :language: java
-    :lines: 38-54
+    :lines: 39-55
 
 It is worth mentioning that nothing in ``WordCount`` is specifically programmed to use a FileSet. Instead of
 ``lines`` and ``counts``, it could use any other dataset as long as the key and value types match.
@@ -87,7 +87,7 @@ Building and Starting
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications
-============================================
+=========================
 
 .. |example| replace:: FileSetExample
 
@@ -98,7 +98,7 @@ Running the Example
 ===================
 
 Starting the Service
-------------------------------
+--------------------
 
 Once the application is deployed:
 
@@ -136,7 +136,7 @@ In this case, as we have fixed the number of reducers to one, there is only a si
 
 
 Stopping the Application
--------------------------------
+------------------------
 Once done, you can stop the application as described above in `Stopping an Application. 
 <#stopping-an-application>`__ Here is an example-specific description of the step:
 
@@ -145,6 +145,11 @@ Once done, you can stop the application as described above in `Stopping an Appli
 - Go to the *FileSetExample* `application overview page 
   <http://localhost:9999/ns/default/apps/FileSetExample/overview/status>`__,
   click ``FileSetService`` to get to the service detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh stop service FileSetExample.FileSetService   
+    Successfully stopped Service 'FileSetService' of application 'FileSetExample'
+
+**Removing the Application**
+
+You can now remove the application as `described above <#removing-an-application>`__.

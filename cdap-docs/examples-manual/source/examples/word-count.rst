@@ -9,7 +9,7 @@
 Word Count
 ==========
 
-A Cask Data Application Platform (CDAP) Example demonstrating flows, datasets and services.
+A Cask Data Application Platform (CDAP) example demonstrating flows, datasets and services.
 
 Overview
 ========

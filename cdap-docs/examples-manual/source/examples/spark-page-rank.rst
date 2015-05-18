@@ -9,7 +9,7 @@
 Spark Page Rank Example
 =======================
 
-A Cask Data Application Platform (CDAP) Example Demonstrating Spark and page ranking.
+A Cask Data Application Platform (CDAP) example demonstrating Spark and page ranking.
 
 Overview
 ===========

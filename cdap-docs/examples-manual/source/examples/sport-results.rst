@@ -9,7 +9,7 @@
 Sport Results
 =============
 
-A Cask Data Application Platform (CDAP) Example demonstrating partitioned file sets through sport results analytics.
+A Cask Data Application Platform (CDAP) example demonstrating partitioned file sets through sport results analytics.
 
 Overview
 ========

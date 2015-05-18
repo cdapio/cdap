@@ -9,7 +9,7 @@
 Web Analytics Application
 =========================
 
-A Cask Data Application Platform (CDAP) Tutorial demonstrating how to perform analytics
+A Cask Data Application Platform (CDAP) tutorial demonstrating how to perform analytics
 using access logs.
 
 Overview
