@@ -32,6 +32,7 @@ public abstract class AbstractProgramManager implements ProgramManager {
     this.applicationManager = applicationManager;
     this.programId = programId;
   }
+
   @Override
   public void stop() {
     applicationManager.stopProgram(programId);

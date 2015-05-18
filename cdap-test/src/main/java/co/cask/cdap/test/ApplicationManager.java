@@ -19,8 +19,6 @@ package co.cask.cdap.test;
 import co.cask.cdap.proto.Id;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Instance of this class is for managing deployed application.
@@ -139,16 +137,16 @@ public interface ApplicationManager {
   /**
    * Starts a worker.
    * @param workerName name of the worker to be started
-   * @param arguments arguments to be passed to the worker
    * @return {@link WorkerManager} to control the running worker
    */
-  WorkerManager startWorker(String workerName, Map<String, String> arguments);
+  WorkerManager startWorker(String workerName);
 
   /**
    * Starts a worker.
    * @param workerName name of the worker to be started
+   * @param arguments arguments to be passed to the worker
    * @return {@link WorkerManager} to control the running worker
    */
-  WorkerManager startWorker(String workerName);
+  WorkerManager startWorker(String workerName, Map<String, String> arguments);
 
 }

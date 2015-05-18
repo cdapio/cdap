@@ -77,7 +77,8 @@ public class RemoteApplicationManager implements ApplicationManager {
 
   @Override
   public MapReduceManager startMapReduce(final String programName, Map<String, String> arguments) {
-    return new DefaultMapReduceManager(startProgram(programName, arguments, ProgramType.MAPREDUCE), this);
+    Id.Program programId = startProgram(programName, arguments, ProgramType.MAPREDUCE);
+    return new DefaultMapReduceManager(programId, this);
   }
 
   @Override
@@ -105,8 +106,8 @@ public class RemoteApplicationManager implements ApplicationManager {
   @Override
   public WorkflowManager startWorkflow(final String workflowName, Map<String, String> arguments) {
     // currently we are using it for schedule, so not starting the workflow
-    Id.Program workflowId = Id.Program.from(application, ProgramType.WORKFLOW, workflowName);
-    return new RemoteWorkflowManager(workflowId, clientConfig, this);
+    Id.Program programId = Id.Program.from(application, ProgramType.WORKFLOW, workflowName);
+    return new RemoteWorkflowManager(programId, clientConfig, this);
   }
 
   @Override
@@ -121,14 +122,14 @@ public class RemoteApplicationManager implements ApplicationManager {
   }
 
   @Override
-  public WorkerManager startWorker(final String workerName, Map<String, String> arguments) {
-    final Id.Program workerId = Id.Program.from(application, ProgramType.WORKER, workerName);
-    return new RemoteWorkerManager(workerId, clientConfig, this);
+  public WorkerManager startWorker(String workerName) {
+    return startWorker(workerName, ImmutableMap.<String, String>of());
   }
 
   @Override
-  public WorkerManager startWorker(String workerName) {
-    return startWorker(workerName, ImmutableMap.<String, String>of());
+  public WorkerManager startWorker(final String workerName, Map<String, String> arguments) {
+    final Id.Program programId = startProgram(workerName, arguments, ProgramType.WORKER);
+    return new RemoteWorkerManager(programId, clientConfig, this);
   }
 
   @Override
