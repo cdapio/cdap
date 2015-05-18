@@ -5,11 +5,13 @@ angular.module(PKG.name + '.commons')
       restrict: 'E',
       scope: {
         type: '@',
-        runid: '@'
+        runid: '@',
+        runs: '='
       },
       templateUrl: 'program-status/program-status.html',
       controller: function($scope, MyDataSource, $state) {
-        if ($scope.runid !== 'No Runs!') {
+        // $scope.runs comes from parent controller
+        if ($scope.runs.length !== 0) {
           var dataSrc = new MyDataSource($scope),
               path = '';
 
