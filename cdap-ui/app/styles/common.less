@@ -98,10 +98,14 @@ hr { border-color: lighten(@text-color, 50%); }
 
 footer {
   font-size: 14px;
+  font-weight: 600;
   position: absolute;
   bottom: 0;
   width: 100%;
   > .container { padding-right: 15px; padding-left: 15px; }
+  .logo {
+    @media (max-width: @screen-sm-max) { margin: 0 auto; }
+  }
   div.text-muted {
     margin: 10px 0;
 
@@ -113,10 +117,12 @@ footer {
       @media (max-width: @screen-md-max) { text-align: center; }
     }
   }
-  img { height: 32px; width: 32px; }
   @media (min-width: @screen-md-max) {
-    p, ul { height: 32px; margin: 0; }
-    span, li { line-height: 32px; vertical-align: middle; }
+    ul { height: 32px; margin: 0; }
+    .copyright, li { line-height: 32px; vertical-align: middle; }
+  }
+  .copyright {
+    @media (max-width: @screen-sm-max) { margin: 10px auto; }
   }
 }
 
