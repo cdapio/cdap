@@ -29,6 +29,7 @@ import co.cask.cdap.template.etl.api.Transform;
 import co.cask.cdap.template.etl.api.TransformContext;
 import co.cask.cdap.template.etl.common.KeyValueListParser;
 import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Lists;
@@ -99,17 +100,16 @@ public class ProjectionTransform extends Transform<StructuredRecord, StructuredR
   // cache input schema hash to output schema so we don't have to build it each time
   private Map<Schema, Schema> schemaCache = Maps.newHashMap();
 
-
   @Override
   public void initialize(TransformContext context) {
-    if (projectionTransformConfig.drop != null) {
+    if (!Strings.isNullOrEmpty(projectionTransformConfig.drop)) {
       for (String dropField : Splitter.on(fieldDelimiter).split(projectionTransformConfig.drop)) {
         fieldsToDrop.add(dropField);
       }
     }
 
     KeyValueListParser kvParser = new KeyValueListParser("\\s*,\\s*", ":");
-    if (projectionTransformConfig.rename != null) {
+    if (!Strings.isNullOrEmpty(projectionTransformConfig.rename)) {
       for (KeyValue<String, String> keyVal : kvParser.parse(projectionTransformConfig.rename)) {
         String key = keyVal.getKey();
         String val = keyVal.getValue();
@@ -125,7 +125,7 @@ public class ProjectionTransform extends Transform<StructuredRecord, StructuredR
       }
     }
 
-    if (projectionTransformConfig.convert != null) {
+    if (!Strings.isNullOrEmpty(projectionTransformConfig.convert)) {
       for (KeyValue<String, String> keyVal : kvParser.parse(projectionTransformConfig.convert)) {
         String name = keyVal.getKey();
         String typeStr = keyVal.getValue();
