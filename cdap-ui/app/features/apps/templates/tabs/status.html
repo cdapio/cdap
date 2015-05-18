@@ -21,7 +21,8 @@
           <tbody>
             <tr ng-repeat="program in programs | orderBy:sortable.predicate:sortable.reverse">
               <td>
-                <span ng-class="{'status-green': program.status === 'RUNNING' || program.status === 'PAUSED', 'status-grey': program.status === 'STOPPED' || program.status === 'STARTING'}"> </span>
+                <!-- RUNNING is green, SUSPENDED is yellow. All else is grey. -->
+                <span ng-class="{'status-green': program.status === 'RUNNING', 'status-yellow': program.status === 'SUSPENDED', 'status-grey': program.status !== 'RUNNING' && program.status !== 'SUSPENDED'}"> </span>
                 <a ng-if="program.type === 'Flow'" ui-sref="flows.detail.runs({programId: program.name})">
                   <strong> {{program.name}} </strong>
                 </a>
