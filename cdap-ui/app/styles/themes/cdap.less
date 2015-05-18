@@ -81,6 +81,12 @@ body.theme-cdap {
 
   footer {
     background-color: white;
-    font-weight: 600;
+    .logo {
+      background: url('@{img-path}/cask.png') no-repeat center center;
+      background-size: 32px 32px;
+      width: 32px;
+      height: 32px;
+    }
+    .copyright:before { content: "Copyright \00A9  2015 Cask Data, Inc. All Rights Reserved."; }
   }
 }

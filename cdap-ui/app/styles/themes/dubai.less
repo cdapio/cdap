@@ -82,9 +82,13 @@ body.theme-dubai {
 
   footer {
     background-color: @body-bg;
-    font-weight: 600;
-    a {
-      color: @cod-blue;
+    .logo {
+      background: url('@{img-path}/cisco_logo.png') no-repeat center center;
+      background-size: 57px 32px;
+      width: 57px;
+      height: 32px;
     }
+    .copyright:before { content: "Copyright \00A9  1992-2015 Cisco, All Rights Reserved."; }
+    a { color: @cod-blue; }
   }
 }
