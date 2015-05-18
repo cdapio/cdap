@@ -35,7 +35,6 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.upgrade.DataMigrationException;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.TransactionExecutorFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -209,8 +208,7 @@ public class DataMigration {
     throws DatasetManagementException, IOException {
     DatasetDefinitionRegistryFactory registryFactory = injector.getInstance(DatasetDefinitionRegistryFactory.class);
     DatasetFramework datasetFramework =
-      new InMemoryDatasetFramework(registryFactory, injector.getInstance(CConfiguration.class),
-                                   injector.getInstance(TransactionExecutorFactory.class));
+      new InMemoryDatasetFramework(registryFactory, injector.getInstance(CConfiguration.class));
     // TODO: this doesn't sound right. find out why its needed.
     datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "table"),
                                new HBaseTableModule());

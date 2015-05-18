@@ -18,12 +18,12 @@ package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
@@ -32,12 +32,10 @@ import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTableTest;
-import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.TransactionExecutorFactory;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.PrivateModule;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.junit.BeforeClass;
 
@@ -45,9 +43,6 @@ import org.junit.BeforeClass;
  * test in-memory metrics tables.
  */
 public class InMemoryMetricsTableTest extends MetricsTableTest {
-
-  private static final Id.DatasetModule metricsInMemoryModule =
-    Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "metrics-inmemory");
 
   private static DatasetFramework dsFramework;
 
@@ -59,20 +54,20 @@ public class InMemoryMetricsTableTest extends MetricsTableTest {
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new TransactionMetricsModule(),
-      new AbstractModule() {
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new PrivateModule() {
         @Override
         protected void configure() {
           install(new FactoryModuleBuilder()
                     .implement(DatasetDefinitionRegistry.class,
                                DefaultDatasetDefinitionRegistry.class)
                     .build(DatasetDefinitionRegistryFactory.class));
+          bind(DatasetFramework.class).to(InMemoryDatasetFramework.class);
+          expose(DatasetFramework.class);
         }
       });
 
-    dsFramework = new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class),
-                                               injector.getInstance(CConfiguration.class),
-                                               injector.getInstance(TransactionExecutorFactory.class));
-    dsFramework.addModule(metricsInMemoryModule, new InMemoryMetricsTableModule());
+    dsFramework = injector.getInstance(DatasetFramework.class);
   }
 
   @Override

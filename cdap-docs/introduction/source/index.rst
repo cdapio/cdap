@@ -13,7 +13,7 @@ Introduction to CDAP
 Simple Access to Powerful Technology
 ====================================
 
-The idea of CDAP is captured in our phrase, *Simple Access to Powerful Technology*. Our
+The idea of CDAP is captured in the phrase, *Simple Access to Powerful Technology*. Our
 goal is to provide access to the powerful technology of Apache Hadoop |(R)| through a
 unified big data platform for both the cloud and on-premises.
 
