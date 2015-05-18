@@ -10,12 +10,12 @@ User Profiles
 =============
 
 A Cask Data Application Platform (CDAP) example demonstrating column-level conflict
-detection in Datasets using the example of managing user profiles in a Table.
+detection in datasets using the example of managing user profiles in a Table.
 
 Overview
 ========
 
-This application demonstrates the use of the column-level conflict detection in a Dataset,
+This application demonstrates the use of the column-level conflict detection in a dataset,
 through the example of an application that manages user profiles in a Table.
 The fields of a user profile are updated in different ways:
 
@@ -23,7 +23,7 @@ The fields of a user profile are updated in different ways:
     user updates their profile.
   - The time of the last login is updated by a sign-on service every
     time the user logs in, also through a RESTful call.
-  - The time of the last activity is updated by a Flow that processes
+  - The time of the last activity is updated by a flow that processes
     events whenever it encounters an event from that user.
 
 This application illustrates both row-level and column-level conflict detection for a Table.
@@ -44,7 +44,7 @@ This application uses a Table with conflict detection either at the row level or
 at the column level.
 
 A conflict occurs if two transactions that overlap in time modify the same data in a table.
-For example, a Flowlet's process method might overlap with a Service handler.
+For example, a flowlet's process method might overlap with a Service handler.
 Such a conflict is detected at the time that the transactions are committed,
 and the transaction that attempts to commit last is rolled back.
 
@@ -66,16 +66,16 @@ UserProfiles Application
 
 This application uses:
 
-- a Stream ``events`` to receive events of user activity;
-- a Dataset ``profiles`` to store user profiles with conflict detection at either the row or column level;
-- a Dataset ``counters`` to count events by URL (this is not essential for the purpose of the example);
-- a Service ``UserProfileService`` to create, delete, and update profiles; and
-- a Flow ``ActivityFlow`` to count events and record the time of last activity for the users.
+- a stream ``events`` to receive events of user activity;
+- a dataset ``profiles`` to store user profiles with conflict detection at either the row or column level;
+- a dataset ``counters`` to count events by URL (this is not essential for the purpose of the example);
+- a service ``UserProfileService`` to create, delete, and update profiles; and
+- a flow ``ActivityFlow`` to count events and record the time of last activity for the users.
 
-The ``UserProfileService`` is a Service for creating and modifying user profiles. It has
+The ``UserProfileService`` is a service for creating and modifying user profiles. It has
 handlers to create, update, and retrieve user profiles.
 
-A script (``add-users.sh``) is used to populate the ``profiles`` Dataset. Two additional 
+A script (``add-users.sh``) is used to populate the ``profiles`` dataset. Two additional 
 scripts (``update-login.sh`` and ``send-events.sh``) are used to create a conflict by attempting
 to write to two different columns of the same row at the same time.
 
@@ -103,15 +103,15 @@ Before building the application, set the ``ConflictDetection`` appropriately in 
 - Build the example (as described `below <#building-an-example-application>`__).
 - Start CDAP, deploy and start the application and its component as described below in 
   `Running CDAP Applications`_\ .
-  Make sure you start the Flow and Service as described below.
+  Make sure you start the flow and service as described below.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 - You should observe errors as described.
 
 Re-build the Application with Column-level Conflict Detection
 -------------------------------------------------------------
 
-- Stop the Application's Flow and Service (as described `below <#stopping-the-application>`__).
-- Delete the ``profiles`` Dataset, either through the CDAP Command Line Interface or
+- Stop the Application's flow and service (as described `below <#stopping-the-application>`__).
+- Delete the ``profiles`` dataset, either through the CDAP Command Line Interface or
   by making a ``curl`` call::
 
     curl -w'\n' -v localhost:10000/v3/namespaces/default/data/datasets/profiles -XDELETE
@@ -137,8 +137,8 @@ Running the Example
 Deleting an Existing Dataset
 ----------------------------
 
-If a ``profiles`` Dataset has been created from an earlier run of the example, delete the ``profiles``
-Dataset, either by using the CDAP Command Line Interface or by making a ``curl`` call::
+If a ``profiles`` dataset has been created from an earlier run of the example, delete the ``profiles``
+dataset, either by using the CDAP Command Line Interface or by making a ``curl`` call::
 
   curl -w'\n' -X DELETE 'http://localhost:10000/v3/namespaces/default/data/datasets/profiles' 
 
@@ -151,8 +151,8 @@ Once the application is deployed:
   - Click on ``UserProfiles`` in the Overview page of the CDAP UI to get to the
     Application detail page, click:
   
-    - ``UserProfileService`` in the *Service* pane to get to the Service detail page, then click the *Start* button; and
-    - ``ActivityFlow`` in the *Flow* pane to get to the Flow detail page, then click the *Start* button; 
+    - ``UserProfileService`` in the *service* pane to get to the service detail page, then click the *Start* button; and
+    - ``ActivityFlow`` in the *flow* pane to get to the flow detail page, then click the *Start* button; 
   
 or:
   
@@ -178,7 +178,7 @@ Now, from two different terminals, run the following commands concurrently:
 - ``bin/send-events.sh`` to generate random user activity events and send them to the stream.
 
 If both scripts are running at the same time, then some user profiles will be updated at
-the same time by the Service and by the Flow. With row-level conflict detection, you would
+the same time by the Service and by the flow. With row-level conflict detection, you would
 see transaction conflicts in the logs. But when the ``profiles`` table uses
 column-level conflict detection, these conflicts are avoided.
 
@@ -209,8 +209,8 @@ Once done, you can stop the application as described above in `Stopping an Appli
 **Stopping the Service**
 
 - Click on ``UserProfiles`` in the Overview page of the CDAP UI to get to the
-  Application detail page, click ``ActivityFlow`` in the *Flow* section of the *Process* pane
-  to get to the Flow's detail page, and then click the *Stop* button; repeat these steps for
+  Application detail page, click ``ActivityFlow`` in the *flow* section of the *Process* pane
+  to get to the flow's detail page, and then click the *Stop* button; repeat these steps for
   the ``FileSetService`` in the *Service* pane; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 

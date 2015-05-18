@@ -70,7 +70,7 @@ dataset as a file. It declares its use of the dataset using a ``@UseDataSet`` an
 Let's take a closer look at the upload method:
 
 - It first creates a partition key from the league and season received as path parameters in the request URL.
-- Then it obtains a ``PartitionOutput`` for that partition key from the ``results`` Dataset.
+- Then it obtains a ``PartitionOutput`` for that partition key from the ``results`` dataset.
 - It then uses the ``getLocation()`` of the PartitionOutput to obtain the location
   for writing the file, and opens an output stream for that location to write the file contents.
   ``Location`` is a file system abstraction from `Apache™ Twill® <http://twill.incubator.apache.org>`__;
@@ -111,7 +111,7 @@ Building and Starting
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
 - Start CDAP, deploy and start the application and its component as described below in 
   `Running CDAP Applications`_\ .
-  Make sure you start the Service as described below.
+  Make sure you start the service as described below.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications
@@ -136,8 +136,8 @@ Starting the Service
 Once the application is deployed:
 
 - Click on ``SportResults`` in the Overview page of the CDAP UI to get to the
-  Application detail page, click ``UploadService`` in the *Service* pane to get to the
-  Service detail page, then click the *Start* button;
+  Application detail page, click ``UploadService`` in the *service* pane to get to the
+  service detail page, then click the *Start* button;
 - Or use the Command Line Interface::
 
     $ cdap-cli.sh start service SportResults.UploadService
@@ -208,8 +208,8 @@ Once done, you can stop the application as described above in `Stopping an Appli
 **Stopping the Service**
 
 - Click on ``SportResults`` in the Overview page of the CDAP UI to get to the
-  Application detail page, click ``UploadService`` in the *Service* pane to get to the
-  Service detail page, then click the *Stop* button; or
+  Application detail page, click ``UploadService`` in the *service* pane to get to the
+  service detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh stop service SportResults.UploadService

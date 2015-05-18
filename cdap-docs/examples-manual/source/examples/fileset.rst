@@ -83,7 +83,7 @@ Building and Starting
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
 - Start CDAP, deploy and start the application and its component as described below in 
   `Running CDAP Applications`_\ .
-  Make sure you start the Service as described below.
+  Make sure you start the service as described below.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications

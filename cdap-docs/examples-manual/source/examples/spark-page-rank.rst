@@ -21,9 +21,9 @@ Data from a sample file is sent to CDAP by the external script *inject-data*
 to the *backlinkURLStream*, which stores the URL pair event in its entirety.
 
 After these events are streamed, they are taken up by the *SparkPageRankProgram*, which
-goes through the entries, calculates page rank and tabulates results in an ObjectStore Dataset, *ranks*.
+goes through the entries, calculates page rank and tabulates results in an ObjectStore dataset, *ranks*.
 
-Once the application completes, you can query the *ranks* Dataset by using the ``rank`` endpoint of the *RanksService*.
+Once the application completes, you can query the *ranks* dataset by using the ``rank`` endpoint of the *RanksService*.
 It will send back a string result with page rank based on the ``url`` query parameter.
 
 Let's look at some of these components, and then run the Application and see the results.
@@ -41,9 +41,9 @@ of the Application are tied together by the class ``SparkPageRankApp``:
 ``ranks``: ObjectStore Data Storage
 ------------------------------------
 
-The calculated page rank data is stored in an ObjectStore Dataset, *ranks*.
+The calculated page rank data is stored in an ObjectStore dataset, *ranks*.
 
-``RanksService``: Service
+``RanksService``: service
 --------------------------
 
 This service has a ``rank`` endpoint to obtain the page rank of a given URL.
@@ -56,7 +56,7 @@ Building and Starting
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
 - Start CDAP, deploy and start the application and its components as described below in 
   `Running CDAP Applications`_\ .
-  Make sure you start the Services as described below.
+  Make sure you start the services as described below.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications
@@ -77,7 +77,7 @@ Once the application is deployed:
 
 - Click on ``SparkPageRank`` in the Overview page of the CDAP UI to get to the
   Application detail page, then click the triangular *Start* button in the right-hand of 
-  the Service pane; or
+  the service pane; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::
@@ -97,7 +97,7 @@ Injecting URL Pairs
 ------------------------------
 
 Run this script to inject URL pairs
-to the Stream named *backlinkURLStream* in the ``SparkPageRank`` application:
+to the stream named *backlinkURLStream* in the ``SparkPageRank`` application:
 
 .. list-table::
   :widths: 20 80
@@ -184,7 +184,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 - Click on *SparkPageRank* in the Overview page of the CDAP UI to get to the
   Application detail page, then click the square *Stop* button in the right-hand of 
-  the Service pane; or
+  the service pane; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::

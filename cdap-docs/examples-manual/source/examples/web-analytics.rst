@@ -35,8 +35,8 @@ in its design to accomodate new application requirements.
 In this tutorial, we'll show how easy it is to build a web analytics application with CDAP.
 In particular, we'll use these CDAP components:
 
-- A **Stream** for web server log collection and persistence to the file system;
-- A **Flow** for realtime data analysis over collected logs; and
+- A **stream** for web server log collection and persistence to the file system;
+- A **flow** for realtime data analysis over collected logs; and
 - **SQL Queries** to explore and develop insights from the data.
 
 How It Works
@@ -46,33 +46,33 @@ In this section, we’ll go through the details about how to develop a Web Analy
 Data Collection with a Stream
 ---------------------------------------
 The sole data source that the Web Analytics Application uses is web server logs. Log events are ingested to
-a **Stream** called *log* using the RESTful API provided by CDAP.
+a **stream** called *log* using the RESTful API provided by CDAP.
 
-Once an event is ingested into a Stream, it is persisted and available for processing.
+Once an event is ingested into a stream, it is persisted and available for processing.
 
 Data Analysis using a Flow
 ---------------------------------------
-The Web Analytics Application uses a **Flow**, the realtime data processor in CDAP,
-to produce realtime analytics from the web server logs. A **Flow** contains one or more
-**Flowlets** that are wired together into a directed acyclic graph or DAG.
+The Web Analytics Application uses a **flow**, the realtime data processor in CDAP,
+to produce realtime analytics from the web server logs. A **flow** contains one or more
+**flowlets** that are wired together into a directed acyclic graph or DAG.
 
 To keep the example simple, we only compute the total visit count for each IP visiting the site.
-We use a Flowlet of type ``UniqueVisitor`` to keep track of the unique visit counts from each client.
+We use a flowlet of type ``UniqueVisitor`` to keep track of the unique visit counts from each client.
 It is done in three steps:
 
-1. Read a log event from the *log* Stream;
+1. Read a log event from the *log* stream;
 #. Parse the client IP from the log event; and
 #. Increment the visit count of that client IP by 1 and persist the change.
 
-The result of the increment is persisted to a custom **Dataset** ``UniqueVisitCount``.
+The result of the increment is persisted to a custom **dataset** ``UniqueVisitCount``.
 
-Here is what the ``UniqueVisitor`` Flowlet looks like:
+Here is what the ``UniqueVisitor`` flowlet looks like:
 
 .. literalinclude:: /../../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/UniqueVisitor.java
    :language: java
    :lines: 35-
 
-The ``UniqueVisitCount`` Dataset provides an abstraction of the data logic for incrementing the visit count for a
+The ``UniqueVisitCount`` dataset provides an abstraction of the data logic for incrementing the visit count for a
 given IP. It exposes an ``increment`` method, implemented as:
 
 .. literalinclude:: /../../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/UniqueVisitCount.java
@@ -82,14 +82,14 @@ given IP. It exposes an ``increment`` method, implemented as:
 The complete source code of the ``UniqueVisitCount`` class can be found in the example in
 ``src/main/java/co/cask/cdap/examples/webanalytics/UniqueVisitCount.java``
 
-To connect the ``UniqueVisitor`` Flowlet to read from the *log* Stream, we define a ``WebAnalyticsFlow`` class
-that specifies the Flow:
+To connect the ``UniqueVisitor`` flowlet to read from the *log* stream, we define a ``WebAnalyticsFlow`` class
+that specifies the flow:
 
 .. literalinclude:: /../../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/WebAnalyticsFlow.java
    :language: java
    :lines: 26-
 
-Lastly, we bundle up the Dataset and the Flow we've defined together to form an ``Application`` that can be deployed
+Lastly, we bundle up the dataset and the flow we've defined together to form an ``Application`` that can be deployed
 and executed in CDAP:
 
 .. literalinclude:: /../../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/WebAnalytics.java
@@ -104,7 +104,7 @@ Building and Starting
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
 - Start CDAP, deploy and start the application as described below in 
   `Running CDAP Applications`_\ .
-  Make sure you start the Flow as described below.
+  Make sure you start the flow as described below.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications
@@ -125,7 +125,7 @@ Once the application is deployed:
 
 - Click on the *Process* button in the left sidebar of the CDAP UI,
   then click ``WebAnalyticsFlow`` in the *Process* page to get to the
-  Flow detail page, then click the *Start* button; or
+  flow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::
@@ -166,15 +166,15 @@ a provided script:
 Query the Unique Visitor Page Views
 ---------------------------------------
 Once the log data has been processed by the ``WebAnalyticsFlow``, we can explore the
-Dataset ``UniqueVisitCount`` with a SQL query. You can easily execute SQL queries against
-Datasets using the CDAP UI by simply selecting **Store** on the left sidebar, then
+dataset ``UniqueVisitCount`` with a SQL query. You can easily execute SQL queries against
+datasets using the CDAP UI by simply selecting **Store** on the left sidebar, then
 clicking the **Explore** button on the right, and then selecting the **UniqueVisitCount**
-Dataset:
+dataset:
 
 .. image:: ../_images/wa_explore_store.png
    :width: 8in
 
-You can then run SQL queries against the Dataset. Let's try to find the top five IP
+You can then run SQL queries against the dataset. Let's try to find the top five IP
 addresses that visited the site by running a SQL query::
 
   SELECT * FROM dataset_uniquevisitcount ORDER BY value DESC LIMIT 5

@@ -14,7 +14,7 @@ The simplest Cask Data Application Platform (CDAP) Example.
 Overview
 ===========
 
-This application uses one Stream, one Dataset, one Flow and one Service to implement the classic "Hello World":
+This application uses one stream, one dataset, one flow and one service to implement the classic "Hello World":
 
 - A stream to send names to;
 - A flow with a single flowlet that reads the stream and stores in a dataset each name in a KeyValueTable; and
@@ -100,6 +100,9 @@ Once the application is deployed:
 
     $ cdap-cli.sh start flow HelloWorld.WhoFlow
   
+    Successfully connected CDAP instance at http://localhost:10000
+    Successfully started Flow 'WhoFlow' of application 'HelloWorld' with stored runtime arguments '{}'
+
 
 Starting the Service
 ------------------------------
@@ -113,6 +116,9 @@ Once the application is deployed:
 
     $ cdap-cli.sh start service HelloWorld.Greeting
     
+    Successfully connected CDAP instance at http://localhost:10000
+    Successfully started Service 'Greeting' of application 'HelloWorld' with stored runtime arguments '{}'
+
     
 Injecting a Name
 ------------------------------
@@ -125,7 +131,7 @@ the flow details page. (If you haven't already started the flow, click on the *S
 button in the right-side, below the green arrow.) The flow's *status* will read *Running*
 when it is ready to receive events.
 
-Now click on the *who* Stream on the left side of the flow visualization, which brings up
+Now click on the *who* stream on the left side of the flow visualization, which brings up
 a pop-up window. Enter a name and click the *Inject* button. After you close the pop-up
 window, you will see that the counters for both the stream and the *saver* flowlet
 increase to 1. You can repeat this step to enter more names, but remember that only the
@@ -162,7 +168,7 @@ Retrieving Metrics
 
 .. highlight:: console
 
-You can now query the metrics that are emitted by the Flow and Service. If a particular
+You can now query the metrics that are emitted by the flow and service. If a particular
 metric has no value, it will return an empty array in the ``"series"`` of the results, such
 as::
 
@@ -186,10 +192,10 @@ you can use::
   $ curl -w'\n' -X POST 'http://localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=service:Greeting&metric=user.greetings.count.jane_doe&aggregate=true'
   {"startTime":0,"endTime":1429464632,"series":[{"metricName":"user.greetings.count.jane_doe","grouping":{},"data":[{"time":0,"value":0}]}]}
 
-The results you receive will vary depending on the entries you have made to the Flow.
+The results you receive will vary depending on the entries you have made to the flow.
 
-Stopping the Application
--------------------------------
+Stopping and Removing the Application
+-------------------------------------
 Once done, you can stop the application as described above in `Stopping an Application. 
 <#stopping-an-application>`__ Here is an example-specific description of the steps:
 
@@ -201,6 +207,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh stop flow HelloWorld.WhoFlow
+    Successfully stopped Flow 'WhoFlow' of application 'HelloWorld'
 
 **Stopping the Service**
 
@@ -210,3 +217,8 @@ Once done, you can stop the application as described above in `Stopping an Appli
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh stop service HelloWorld.Greeting
+    Successfully stopped Service 'Greeting' of application 'HelloWorld'
+
+**Removing the Application**
+
+You can now remove the application as `described above <#removing-an-application>`__.

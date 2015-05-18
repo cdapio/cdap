@@ -114,7 +114,7 @@ Once CDAP is started, you can deploy an example JAR by any of these methods:
   .. container:: highlight
   
     .. parsed-literal::
-      |$| curl -w'\\n' -H "X-Archive-Name: |example|-|release|.jar" localhost:10000/v3/namespaces/default/apps \
+      |$| curl -w'\\n' -H "X-Archive-Name: |example|-|release|.jar" localhost:10000/v3/namespaces/default/apps \\
         --data-binary @examples/|example|/target/|example|-|release|.jar
 
       Deploy Complete

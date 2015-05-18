@@ -17,8 +17,8 @@ Overview
 This example demonstrates use of many of the CDAP components |---| streams, flows, flowlets,
 datasets, queries, MapReduce programs, workflows, and services |---| all in a single application.
 
-The application uses a scheduled MapReduce and workflow to read from an ObjectMappedTable Dataset
-and write to an ObjectStore Dataset.
+The application uses a scheduled MapReduce and workflow to read from an ObjectMappedTable dataset
+and write to an ObjectStore dataset.
 
   - Send sentences of the form "Tom bought 5 apples for $10" to the ``purchaseStream``.
     You can send sentences either by using a ``curl`` call, using the ``inject-data`` script
@@ -32,7 +32,7 @@ and write to an ObjectStore Dataset.
     using the Service discovery framework.
   - The ``UserProfileService`` is responsible for storing and retrieving the user information
     for a given user ID from the ``userProfiles`` dataset. The host and port of the ``UserProfileService`` is
-    discovered using the Service discovery framework.
+    discovered using the service discovery framework.
   - When scheduled by the ``PurchaseHistoryWorkFlow``, the ``PurchaseHistoryBuilder`` MapReduce
     reads the ``purchases`` dataset. It fetches the user profile information, if it is available, from
     the ``UserProfileService`` and creates a purchase history. It stores the purchase history in the
@@ -65,7 +65,7 @@ of the Application are tied together by the class ``PurchaseApp``:
 ``PurchaseHistory`` and ``Purchase``: ObjectStore Data Storage
 --------------------------------------------------------------
 
-The raw purchase data is stored in an ObjectMappedTable Dataset, *purchases*,
+The raw purchase data is stored in an ObjectMappedTable dataset, *purchases*,
 with this method defined in ``PurchaseStore.java``:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
@@ -148,7 +148,7 @@ Once the application is deployed:
 
 - Click on the *Process* button in the left sidebar of the CDAP UI,
   then click *PurchaseFlow* in the *Process* page to get to the
-  Flow detail page, then click the *Start* button; or
+  flow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh start flow PurchaseHistory.PurchaseFlow
@@ -229,7 +229,7 @@ To query the *history* ObjectStore through the ``PurchaseHistoryService``, you c
 Exploring the Results Using SQL
 -------------------------------
 
-You can use SQL to formulate ad-hoc queries over the *history* and *purchases* Datasets.
+You can use SQL to formulate ad-hoc queries over the *history* and *purchases* datasets.
 This is done by a series of ``curl`` calls, as described in the :ref:`RESTful API
 <http-restful-api-query>` section of the :ref:`CDAP Reference Manual <reference-index>`.
 For your convenience, the SDK's Command Line Interface can execute the series of calls.

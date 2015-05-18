@@ -9,13 +9,13 @@
 Word Count
 ==========
 
-A Cask Data Application Platform (CDAP) Example demonstrating Flows, Datasets and Services.
+A Cask Data Application Platform (CDAP) Example demonstrating flows, datasets and services.
 
 Overview
 ========
 
-This application receives words and sentences from a Stream and uses Flowlets in a Flow to
-process the sentences and store the results and statistics in Datasets.
+This application receives words and sentences from a stream and uses flowlets in a flow to
+process the sentences and store the results and statistics in datasets.
 
   - The ``wordStream`` receives sentences, one event at a time.
   - The ``splitter`` flowlet reads sentences from stream and splits them into words, writes global statistics of the
@@ -54,7 +54,7 @@ Data Storage
 RetrieveCounts Service
 ----------------------
 
-The Service serves read requests for calculated statistics, word counts and associations.
+The service serves read requests for calculated statistics, word counts and associations.
 It exposes these endpoints:
 
 - ``/stats`` returns the total number of words, the number of unique words, and the average word length;
@@ -70,7 +70,7 @@ Building and Starting
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
 - Start CDAP, deploy and start the application and its components as described below in 
   `Running CDAP Applications`_\ .
-  Make sure you start the Flow and Service as described below.
+  Make sure you start the flow and service as described below.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications
@@ -91,7 +91,7 @@ Once the application is deployed:
 
 - Click on the *Process* button in the left sidebar of the CDAP UI,
   then click ``WordCounter`` in the *Process* page to get to the
-  Flow detail page, then click the *Start* button; or
+  flow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::
@@ -109,8 +109,8 @@ Starting the Service
 Once the application is deployed:
 
 - Click on ``WordCount`` in the Overview page of the CDAP UI to get to the
-  Application detail page, click ``RetrieveCounts`` in the *Service* pane to get to the
-  Service detail page, then click the *Start* button; or
+  Application detail page, click ``RetrieveCounts`` in the *service* pane to get to the
+  service detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::
@@ -137,7 +137,7 @@ Querying the Results
 
 .. highlight:: console
 
-If the Service has not already been started, you start it either through the
+If the service has not already been started, you start it either through the
 CDAP UI or via an HTTP request using the ``curl`` command::
 
   curl -w'\n' -X POST 'http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/start'
@@ -163,7 +163,7 @@ format (example reformatted to fit)::
     "word": "CDAP"
   }
 
-You can also make requests to the other endpoints available in this Service, as 
+You can also make requests to the other endpoints available in this service, as 
 :ref:`described above <word-count-service-requests>`.
 
 Stopping the Application
@@ -175,7 +175,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 - Click on the *Process* button in the left sidebar of the CDAP UI,
   then click ``WordCounter`` in the *Process* page to get to the
-  Flow detail page, then click the *Stop* button; or
+  flow detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::
@@ -190,8 +190,8 @@ Once done, you can stop the application as described above in `Stopping an Appli
 **Stopping the Service**
 
 - Click on ``WordCount`` in the Overview page of the CDAP UI to get to the
-  Application detail page, click ``RetrieveCounts`` in the *Service* pane to get to the
-  Service detail page, then click the *Stop* button; or
+  Application detail page, click ``RetrieveCounts`` in the *service* pane to get to the
+  service detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::

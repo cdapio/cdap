@@ -18,12 +18,12 @@ This example demonstrates a Spark application performing streaming analysis, com
 input stream using the K-Means Clustering method.
 
 Data from a sample file is sent to CDAP by the external script *inject-data* to the *pointsStream*. This data is
-processed by the ``PointsFlow``, which stores the points coordinates event in its entirety in *points*, an ObjectStore Dataset.
+processed by the ``PointsFlow``, which stores the points coordinates event in its entirety in *points*, an ObjectStore dataset.
 
 As these entries are created, they are taken up by the *SparkKMeansProgram*, which
-goes through the entries, calculates centers and tabulates results in another ObjectStore Dataset, *centers*.
+goes through the entries, calculates centers and tabulates results in another ObjectStore dataset, *centers*.
 
-Once the application completes, you can query the *centers* Dataset by using the ``centers/{index}`` endpoint
+Once the application completes, you can query the *centers* dataset by using the ``centers/{index}`` endpoint
 of the *CentersService*. It will respond with the center's coordinates based on the ``index`` parameter (e.g. "9.1,9.1,9.1").
 
 Let's look at some of these components, and then run the Application and see the results.
@@ -41,10 +41,10 @@ of the Application are tied together by the class ``SparkKMeansApp``:
 ``points`` and ``centers``: ObjectStore Data Storage
 ------------------------------------------------------------
 
-The raw points data is stored in an ObjectStore Dataset, *points*.
-The calculated centers data is stored in a second ObjectStore Dataset, *centers*.
+The raw points data is stored in an ObjectStore dataset, *points*.
+The calculated centers data is stored in a second ObjectStore dataset, *centers*.
 
-``CentersService``: Service
+``CentersService``: service
 ------------------------------------------------------------
 
 This service has a ``centers/{index}`` endpoint to obtain the center's coordinates of a given index.
@@ -57,7 +57,7 @@ Building and Starting
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
 - Start CDAP, deploy and start the application and its components as described below in 
   `Running CDAP Applications`_\ .
-  Make sure you start the Flow and Service as described below.
+  Make sure you start the flow and service as described below.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications
@@ -80,7 +80,7 @@ Once the application is deployed:
 
 - Click on the *Process* button in the left sidebar of the CDAP UI,
   then click *PointsFlow* in the *Process* page to get to the
-  Flow detail page, then click the *Start* button; or
+  flow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::
@@ -98,8 +98,8 @@ Starting the Service
 Once the application is deployed:
 
 - Click on *SparkKMeans* in the Overview page of the CDAP UI to get to the
-  Application detail page, click *CentersService* in the *Service* pane to get to the
-  Service detail page, then click the *Start* button; or
+  Application detail page, click *CentersService* in the *service* pane to get to the
+  service detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::
@@ -114,7 +114,7 @@ Once the application is deployed:
 Injecting Points Data
 ------------------------------
 
-Run this script to inject points data to the Stream named *pointsStream* in the
+Run this script to inject points data to the stream named *pointsStream* in the
 ``SparkKMeans`` application:
 
 .. list-table::
@@ -185,7 +185,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 - Click on the *Process* button in the left sidebar of the CDAP UI,
   then click *PointsFlow* in the *Process* page to get to the
-  Flow detail page, then click the *Stop* button; similarly for the *SparkKMeansProgram*: or
+  flow detail page, then click the *Stop* button; similarly for the *SparkKMeansProgram*: or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::
@@ -204,8 +204,8 @@ Once done, you can stop the application as described above in `Stopping an Appli
 **Stopping the Service**
 
 - Click on *SparkKMeans* in the Overview page of the CDAP UI to get to the
-  Application detail page, click *CentersService* in the *Service* pane to get to the
-  Service detail page, then click the *Stop* button; or
+  Application detail page, click *CentersService* in the *service* pane to get to the
+  service detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::
