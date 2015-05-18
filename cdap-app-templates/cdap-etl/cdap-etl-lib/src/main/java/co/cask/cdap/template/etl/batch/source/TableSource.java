@@ -31,6 +31,7 @@ import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.template.etl.common.RowRecordTransformer;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 
 import java.util.Map;
@@ -95,8 +96,7 @@ public class TableSource extends BatchReadableSource<byte[], Row, StructuredReco
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
-    Preconditions.checkArgument(tableConfig.schemaStr != null && !tableConfig.schemaStr.isEmpty(),
-                                "Schema must be specified.");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableConfig.schemaStr), "Schema must be specified.");
   }
 
   @Override

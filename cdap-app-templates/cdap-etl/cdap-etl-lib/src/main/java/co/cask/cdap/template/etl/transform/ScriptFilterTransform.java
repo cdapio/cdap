@@ -27,6 +27,7 @@ import co.cask.cdap.template.etl.api.Transform;
 import co.cask.cdap.template.etl.api.TransformContext;
 import co.cask.cdap.template.etl.common.StructuredRecordSerializer;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -68,7 +69,7 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
     ScriptEngineManager manager = new ScriptEngineManager();
     engine = manager.getEngineByName("JavaScript");
     String scriptStr = scriptFilterConfig.script;
-    Preconditions.checkArgument(!scriptStr.isEmpty(), "Filter script must be specified.");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(scriptStr), "Filter script must be specified.");
 
     // this is pretty ugly, but doing this so that we can pass the 'input' json into the shouldFilter function.
     // that is, we want people to implement

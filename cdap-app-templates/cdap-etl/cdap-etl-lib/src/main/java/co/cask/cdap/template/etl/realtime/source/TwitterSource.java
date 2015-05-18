@@ -61,7 +61,7 @@ public class TwitterSource extends RealtimeSource<StructuredRecord> {
   private static final String LANG = "lang";
   private static final String TIME = "time";
   private static final String FAVC = "favCount";
-  private static final String RTC = "rtCont";
+  private static final String RTC = "rtCount";
   private static final String SRC = "source";
   private static final String GLAT = "geolat";
   private static final String GLNG = "geoLong";
