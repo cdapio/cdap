@@ -76,7 +76,7 @@ import java.util.List;
 public class StandaloneMain {
 
   // A special key in the CConfiguration to disable UI. It's mainly used for unit-tests that start Standalone.
-  static final String DISABLE_UI = "standalone.disable.ui";
+  public static final String DISABLE_UI = "standalone.disable.ui";
 
   private static final Logger LOG = LoggerFactory.getLogger(StandaloneMain.class);
 
