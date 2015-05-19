@@ -163,6 +163,7 @@ of events you want to see. For example, using the Command Line Interface, this s
 in a time range of 3 minutes duration, starting 5 minutes ago::
 
   $ cdap-cli.sh get stream logEventStream -5m +3m 5
+  
   +========================================================================================================+
   | timestamp     | headers | body size | body                                                             |
   +========================================================================================================+
@@ -288,6 +289,7 @@ Or, we can find out how many times the URL ``/home.html`` was accessed from the 
   6
   
   $ cdap-cli.sh call service Wise.WiseService POST ip/255.255.255.249/count body "/home.html"
+  
   +==================================================================+
   | status  | headers                    | body size   | body        |
   +==================================================================+
@@ -307,6 +309,7 @@ We can also use SQL to bypass the service and query the raw contents of the unde
 table (reformatted to fit)::
 
   $ cdap-cli.sh execute "\"SELECT * FROM dataset_pageviewstore WHERE key = '255.255.255.249'\""
+  
   +============================================================================================+
   | dataset_pageviewstore.key: STRING | dataset_pageviewstore.value: map<string,bigint>        |
   +============================================================================================+
@@ -356,7 +359,7 @@ When the job has finished, the returned status will be *STOPPED*. Now we can que
 bounce counts with SQL. Let's take a look at the schema first::
 
   $ cdap-cli.sh execute "\"DESCRIBE dataset_bouncecountstore\""
-  Successfully connected CDAP instance at 127.0.0.1:10000
+
   +==========================================================+
   | col_name: STRING | data_type: STRING | comment: STRING   |
   +==========================================================+
@@ -369,6 +372,7 @@ For example, to get the five URLs with the highest bounce-to-visit ratio (or bou
 
   $ cdap-cli.sh execute "\"SELECT uri, bounces/totalvisits AS ratio \
     FROM dataset_bouncecountstore ORDER BY ratio DESC LIMIT 5\""
+    
   +===================================+
   | uri: STRING | ratio: DOUBLE       |
   +===================================+
@@ -388,6 +392,7 @@ fixed columns::
 
   $ cdap-cli.sh execute "\"SELECT key AS ip, uri, count FROM dataset_pageviewstore \
     LATERAL VIEW explode(value) t AS uri,count ORDER BY count DESC LIMIT 10\""
+    
   +====================================================+
   | ip: STRING      | uri: STRING      | count: BIGINT |
   +====================================================+
@@ -417,6 +422,7 @@ pages?
        (SELECT key AS ip, uri, count \
           FROM dataset_pageviewstore LATERAL VIEW explode(value) t AS uri,count) views \
     WHERE views.uri = bounce.uri AND views.count >= 3\""
+    
   +=========================================================================+
   | views.uri: STRING | ratio: DOUBLE     | ip: STRING      | count: BIGINT |
   +=========================================================================+

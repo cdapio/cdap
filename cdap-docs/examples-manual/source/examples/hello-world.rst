@@ -67,15 +67,12 @@ the counter ``greetings.count.jane_doe`` is incremented by one.
 We will see below how to retrieve this metric using the
 :ref:`http-restful-api-metrics`.
 
+
 Building and Starting
 =====================
 
-- You can either build the example (as described `below
-  <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
-- Start CDAP, deploy and start the application and its components as described below in 
-  `Running CDAP Applications`_\ .
-  Make sure you start the flow and service as described below.
-- Once the application has been deployed and started, you can `run the example <#running-the-example>`__.
+.. include:: building-and-starting.txt
+
 
 Running CDAP Applications
 =========================
@@ -84,6 +81,7 @@ Running CDAP Applications
 
 .. include:: /../../developers-manual/source/getting-started/building-apps.rst
    :start-line: 11
+
 
 Running the Example
 ===================
@@ -100,9 +98,7 @@ Once the application is deployed:
 
     $ cdap-cli.sh start flow HelloWorld.WhoFlow
   
-    Successfully connected CDAP instance at http://localhost:10000
     Successfully started Flow 'WhoFlow' of application 'HelloWorld' with stored runtime arguments '{}'
-
 
 Starting the Service
 ------------------------------
@@ -116,10 +112,8 @@ Once the application is deployed:
 
     $ cdap-cli.sh start service HelloWorld.Greeting
     
-    Successfully connected CDAP instance at http://localhost:10000
     Successfully started Service 'Greeting' of application 'HelloWorld' with stored runtime arguments '{}'
 
-    
 Injecting a Name
 ----------------
 
@@ -145,7 +139,6 @@ the ``longnames`` metric (the number of names, each greater than 10 characters),
 To try out these metrics, first send a few long names (each greater than 10 characters)
 and send *Jane Doe* a number of times.
 
-
 Using the Service
 -----------------
 
@@ -162,7 +155,6 @@ If the last name you entered was *Tom*, the service will respond with ``Hello To
 There is a *Make Request* button in the CDAP UI that will make the same request, with a
 similar response.
 
-  
 Retrieving Metrics
 ------------------
 
@@ -194,8 +186,9 @@ you can use::
 
 The results you receive will vary depending on the entries you have made to the flow.
 
+
 Stopping and Removing the Application
--------------------------------------
+=====================================
 Once done, you can stop the application as described above in `Stopping an Application. 
 <#stopping-an-application>`__ Here is an example-specific description of the steps:
 
@@ -230,4 +223,3 @@ You can now remove the application as described above, `Removing an Application 
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh delete app HelloWorld
-

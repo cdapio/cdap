@@ -91,13 +91,12 @@ and it configures the ``events`` stream as its input and the ``converted`` datas
      :lines: 86-98
      :dedent: 2
 
+
 Building and Starting
 =====================
 
-- You can either build the example (as described `below
-  <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
-- Start CDAP and deploy the application as described below in `Running CDAP Applications`_\ .
-- Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
+.. include:: building-and-starting.txt
+
 
 Running CDAP Applications
 =========================
@@ -106,6 +105,7 @@ Running CDAP Applications
 
 .. include:: /../../developers-manual/source/getting-started/building-apps.rst
    :start-line: 11
+
 
 Running the Example
 ===================
@@ -149,8 +149,9 @@ of the query. For example, to run the same query for only the month of January, 
 
   select count(*) as count, body from dataset_converted where month=5 group by body order by count desc limit 5
 
+
 Stopping and Removing the Application
--------------------------------------
+=====================================
 Once done, you can stop the application as described above in `Stopping an Application. 
 <#stopping-an-application>`__ Here is an example-specific description of the steps:
 

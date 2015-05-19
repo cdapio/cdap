@@ -51,14 +51,10 @@ This service has a ``centers/{index}`` endpoint to obtain the center's coordinat
 
 
 Building and Starting
-=================================
+=====================
 
-- You can either build the example (as described `below
-  <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
-- Start CDAP, deploy and start the application and its components as described below in 
-  `Running CDAP Applications`_\ .
-  Make sure you start the flow and service as described below.
-- Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
+.. include:: building-and-starting.txt
+
 
 Running CDAP Applications
 ============================================
@@ -67,6 +63,7 @@ Running CDAP Applications
 
 .. include:: /../../developers-manual/source/getting-started/building-apps.rst
    :start-line: 11
+
 
 Running the Example
 ===================
@@ -85,9 +82,7 @@ Once the application is deployed:
 
     $ cdap-cli.sh start flow SparkKMeans.PointsFlow
   
-    Successfully connected CDAP instance at http://localhost:10000
     Successfully started Flow 'PointsFlow' of application 'SparkKMeans' with stored runtime arguments '{}'
-
 
 Starting the Service
 ------------------------------
@@ -101,9 +96,7 @@ Once the application is deployed:
 
     $ cdap-cli.sh start service SparkKMeans.CentersService
   
-    Successfully connected CDAP instance at http://localhost:10000
     Successfully started service 'CentersService' of application 'SparkKMeans' with stored runtime arguments '{}'
-
 
 Injecting Points Data
 ------------------------------
@@ -113,7 +106,6 @@ Standalone CDAP SDK directory, using the Command Line Interface::
   
   $ cdap-cli.sh load stream pointsStream examples/SparkKMeans/resources/points.txt 
   Successfully sent stream event to stream 'pointsStream' 
-
 
 Running the Spark program
 ------------------------------
@@ -130,8 +122,7 @@ There are three ways to start the Spark program:
 
 #. Use the Command Line Interface::
 
-    $ cdap-cli.sh start spark SparkKMeans.SparkKMeansProgram
-
+    $ cdap-cli.sh start spark SparkKMeans.SparkKMeansProgram "args='3'"
 
 Querying the Results
 ------------------------------
@@ -142,11 +133,10 @@ To query the *centers* ObjectStore using the ``CentersService``, you can:
 
     curl -w'\n' -v http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/services/CentersService/methods/centers/1
 
-- You can also use the Command Line Interface::
+- You can use the Command Line Interface::
 
     $ cdap-cli.sh call service SparkKMeans.CentersService GET centers/1
 
-    Successfully connected CDAP instance at http://localhost:10000
     +======================================================================================================+
     | status | headers                 | body size | body                                                  |
     +======================================================================================================+
@@ -158,7 +148,7 @@ To query the *centers* ObjectStore using the ``CentersService``, you can:
 
 
 Stopping and Removing the Application
--------------------------------------
+=====================================
 Once done, you can stop the application as described above in `Stopping an Application. 
 <#stopping-an-application>`__ Here is an example-specific description of the steps:
 

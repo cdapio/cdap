@@ -84,6 +84,7 @@ Let's take a closer look at the upload method:
     :lines: 88-118
     :dedent: 4
 
+
 MapReduce over File Partitions
 ==============================
 
@@ -104,15 +105,12 @@ the ``totals`` PartitionedFileSet. The ``beforeSubmit()`` method prepares the Ma
 It is worth mentioning that nothing else in ``ScoreCounter`` is specifically programmed to use file partitions.
 Instead of ``results`` and ``totals``, it could use any other dataset as long as the key and value types match.
 
+
 Building and Starting
 =====================
 
-- You can either build the example (as described `below
-  <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
-- Start CDAP, deploy and start the application and its component as described below in 
-  `Running CDAP Applications`_\ .
-  Make sure you start the service as described below.
-- Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
+.. include:: building-and-starting.txt
+
 
 Running CDAP Applications
 =========================
@@ -122,25 +120,23 @@ Running CDAP Applications
 .. include:: /../../developers-manual/source/getting-started/building-apps.rst
    :start-line: 11
 
+
 Running the Example
 ===================
-
-In the examples that follow, for brevity we will simply use ``cdap-cli.sh`` for the Command Line Interface.
-Substitute the actual path for ``bin/cdap-cli.sh``, or ``bin\cdap-cli.bat`` on Windows, as appropriate. We
-assume that you will run all commands from the example's base directory (``examples/SportResults`` under the
-Standalone CDAP SDK directory).
 
 Starting the Service
 --------------------
 
 Once the application is deployed:
 
-- Click on ``SportResults`` in the Overview page of the CDAP UI to get to the
-  Application detail page, click ``UploadService`` in the *service* pane to get to the
-  service detail page, then click the *Start* button;
-- Or use the Command Line Interface::
+- Go to the *SportResults* `application overview page 
+  <http://localhost:9999/ns/default/apps/SportResults/overview/status>`__,
+  click ``UploadService`` to get to the service detail page, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh start service SportResults.UploadService
+    
+    Successfully started Service 'UploadService' of application 'SportResults' with stored runtime arguments '{}'
 
 Uploading Game Results
 ----------------------
@@ -148,12 +144,12 @@ Uploading Game Results
 Begin by uploading some CSV files into the ``results`` dataset. For example, to upload the results
 for the 2012 season of the NFL (National Football League)::
 
-  $ cdap-cli.sh call service SportResults.UploadService PUT leagues/nfl/seasons/2012 body:file resources/nfl-2012.csv
+  $ cdap-cli.sh call service SportResults.UploadService PUT leagues/nfl/seasons/2012 body:file examples/SportResults/resources/nfl-2012.csv
 
 Feel free to add more seasons and sport leagues::
 
-  $ cdap-cli.sh call service SportResults.UploadService PUT leagues/nfl/seasons/2013 body:file resources/nfl-2013.csv
-  $ cdap-cli.sh call service SportResults.UploadService PUT leagues/nba/seasons/2012 body:file resources/nba-2012.csv
+  $ cdap-cli.sh call service SportResults.UploadService PUT leagues/nfl/seasons/2013 body:file examples/SportResults/resources/nfl-2013.csv
+  $ cdap-cli.sh call service SportResults.UploadService PUT leagues/nba/seasons/2012 body:file examples/SportResults/resources/nba-2012.csv
 
 Starting the MapReduce
 ----------------------
@@ -202,7 +198,7 @@ The last command would produce results (reformatted to fit) such as::
 
 
 Stopping and Removing the Application
--------------------------------------
+=====================================
 Once done, you can stop the application as described above in `Stopping an Application. 
 <#stopping-an-application>`__ Here is an example-specific description of the steps:
 

@@ -104,14 +104,10 @@ A ``user/{id}`` endpoint to obtain profile information for a specified user::
   
 
 Building and Starting
-=================================
+=====================
 
-- You can either build the example (as described `below
-  <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
-- Start CDAP, deploy and start the application and its components as described below in 
-  `Running CDAP Applications`_\ .
-  Make sure you start the flow, services, and workflow as described below.
-- Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
+.. include:: building-and-starting.txt
+
 
 Running CDAP Applications
 ============================================
@@ -121,6 +117,7 @@ Running CDAP Applications
 
 .. include:: /../../developers-manual/source/getting-started/building-apps.rst
    :start-line: 11
+
 
 Running the Example
 ===================
@@ -139,7 +136,6 @@ Once the application is deployed:
 
     $ cdap-cli.sh start flow PurchaseHistory.PurchaseFlow
   
-    Successfully connected CDAP instance at http://localhost:10000
     Successfully started Flow 'PurchaseFlow' of application 'PurchaseHistory' with stored runtime arguments '{}'
 
 Starting the Services
@@ -174,7 +170,6 @@ CDAP SDK directory, using the Command Line Interface::
   $ cdap-cli.sh call service PurchaseHistory.UserProfileService POST user body \
     "{'id':'Alice','firstName':'Alice','lastName':'Bernard','categories':['fruits']}"
     
-
 Injecting Sentences
 -------------------
 
@@ -184,7 +179,6 @@ CDAP SDK directory, using the Command Line Interface::
   $ cdap-cli.sh load stream purchaseStream examples/Purchase/resources/purchases.txt 
   Successfully sent stream event to stream 'purchaseStream'
   
-
 Starting the Workflow
 ---------------------
 
@@ -295,8 +289,9 @@ retrieved all of the results and you can now close the query::
 
   $ curl -v -X DELETE http://localhost:10000/v3/data/explore/queries/07fd9b6a-95b3-4831-992c-7164f11c3754
 
+
 Stopping and Removing the Application
--------------------------------------
+=====================================
 Once done, you can stop the application as described above in `Stopping an Application. 
 <#stopping-an-application>`__ Here is an example-specific description of the steps:
 
@@ -332,4 +327,3 @@ You can now remove the application as described above, `Removing an Application 
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh delete app PurchaseHistory
-

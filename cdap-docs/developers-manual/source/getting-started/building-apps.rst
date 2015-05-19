@@ -101,7 +101,6 @@ Once CDAP is started, you can deploy an example JAR by any of these methods:
     .. parsed-literal::
       |$| cdap-cli.sh deploy app examples/|example|/target/|example|-|release|.jar
     
-      Successfully connected CDAP instance at |http:|//localhost:10000
       Successfully deployed application
 
   The CLI can be accessed under Windows using the ``bin\cdap-cli.bat`` script.

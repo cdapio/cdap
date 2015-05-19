@@ -63,6 +63,7 @@ and then opens an input stream for that location. ``Location`` is a file system 
 `Apache™ Twill® <http://twill.incubator.apache.org>`__; you can read more about its interface in the
 `Apache Twill Javadocs <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__.
 
+
 MapReduce over Files
 ====================
 
@@ -76,15 +77,12 @@ MapReduce over Files
 It is worth mentioning that nothing in ``WordCount`` is specifically programmed to use a FileSet. Instead of
 ``lines`` and ``counts``, it could use any other dataset as long as the key and value types match.
 
+
 Building and Starting
 =====================
 
-- You can either build the example (as described `below
-  <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
-- Start CDAP, deploy and start the application and its component as described below in 
-  `Running CDAP Applications`_\ .
-  Make sure you start the service as described below.
-- Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
+.. include:: building-and-starting.txt
+
 
 Running CDAP Applications
 =========================
@@ -93,6 +91,7 @@ Running CDAP Applications
 
 .. include:: /../../developers-manual/source/getting-started/building-apps.rst
    :start-line: 11
+
 
 Running the Example
 ===================
@@ -136,7 +135,7 @@ In this case, as we have fixed the number of reducers to one, there is only a si
 
 
 Stopping and Removing the Application
--------------------------------------
+=====================================
 Once done, you can stop the application as described above in `Stopping an Application. 
 <#stopping-an-application>`__ Here is an example-specific description of the step:
 

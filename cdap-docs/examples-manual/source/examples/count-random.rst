@@ -64,15 +64,12 @@ transaction conflicts if the flowlet is scaled to multiple instances:
    :language: java
    :lines: 27-
 
+
 Building and Starting
 =====================
 
-- You can either build the example (as described `below
-  <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
-- Start CDAP, deploy and start the application and its components as described below in 
-  `Running CDAP Applications`_\ .
-  Make sure you start the flow as described below.
-- Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
+.. include:: building-and-starting.txt
+
 
 Running CDAP Applications
 =========================
@@ -81,6 +78,7 @@ Running CDAP Applications
 
 .. include:: /../../developers-manual/source/getting-started/building-apps.rst
    :start-line: 11
+
 
 Running the Example
 ===================
@@ -102,8 +100,9 @@ Once you start the flow, the *source* flowlet will continuously generate data. Y
 this by observing the counters for each flowlet in the flow visualization. Even though you
 are not injecting any data into the flow, the counters increase steadily.
 
+
 Stopping and Removing the Application
--------------------------------------
+=====================================
 Once done, you can stop the application as described above in `Stopping an Application. 
 <#stopping-an-application>`__ Here is an example-specific description of the step:
 
@@ -128,4 +127,3 @@ You can now remove the application as described above, `Removing an Application 
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh delete app CountRandom
-

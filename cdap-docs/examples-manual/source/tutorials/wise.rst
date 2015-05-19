@@ -99,7 +99,7 @@ To deploy and start the application, make sure CDAP is running and then execute:
 
 You should get responses similar to::
 
-  Successfully connected CDAP instance at http://MacBook-Pro.local:10000
+  Successfully connected CDAP instance at http://localhost:10000
   Successfully started Flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}'
   ...
   Successfully started Service 'WiseService' of application 'Wise' with stored runtime arguments '{}'
@@ -499,7 +499,7 @@ Using the ``curl`` command and the CLI, example use of the Service would be::
   21
   
   $ ./bin/cdap-cli.sh call service Wise.WiseService GET ip/255.255.255.185/count  
-  Successfully connected CDAP instance at http://MacBook-Pro.local:10000
+
   +=======================================================================================================================+
   | status                      | headers                     | body size                   | body                        |
   +=======================================================================================================================+
