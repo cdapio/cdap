@@ -64,6 +64,7 @@ public class StandaloneTestBase {
         configuration.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
         configuration.set(Constants.Router.ADDRESS, StandaloneContainer.HOSTNAME);
         configuration.set(Constants.Dangerous.UNRECOVERABLE_RESET, "true");
+        configuration.setBoolean(StandaloneMain.DISABLE_UI, true);
 
         // Start without UI
         standaloneMain = StandaloneMain.create(configuration, new Configuration());
