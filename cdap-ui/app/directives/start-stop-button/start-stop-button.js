@@ -5,7 +5,6 @@ angular.module(PKG.name + '.commons')
       scope: {
         type: '@',
         isStoppable: '@',
-        isPreferences: '@',
         preferencesHandler: '&',
         runtimeHandler: '&'
       },
@@ -13,11 +12,6 @@ angular.module(PKG.name + '.commons')
       controller: function($scope, $state, MyDataSource, myRuntimeService, myProgramPreferencesService) {
         $scope.isStoppable = ($scope.isStoppable === 'true');
 
-        if ( typeof $scope.isPreferences === 'undefined') {
-          $scope.isPreferences = true;
-        } else {
-          $scope.isPreferences = !!$scope.isPreferences;
-        }
         $scope.runtimeArgs = [];
         var path = '/apps/' + $state.params.appId +
                    '/' + $scope.type + '/' + $state.params.programId;
@@ -61,7 +55,7 @@ angular.module(PKG.name + '.commons')
           if ('undefined' !== typeof fn) {
             fn();
           } else {
-            myRuntimeService.show().result.then(function(res) {
+            myRuntimeService.show($scope.runtimeArgs).result.then(function(res) {
               $scope.runtimeArgs = res;
             });
           }

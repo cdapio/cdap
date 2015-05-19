@@ -10,9 +10,16 @@ angular.module(PKG.name+'.commons')
   .service('myRuntimeService', function($bootstrapModal, $rootScope){
     var modalInstance;
 
-    this.show = function() {
+    this.show = function(runtimeargs) {
 
       var scope = $rootScope.$new();
+      scope.preferences = [];
+      angular.forEach(runtimeargs, function(value, key) {
+        scope.preferences.push({
+          key: key,
+          value: value
+        });
+      });
 
       modalInstance = $bootstrapModal.open({
         template: '<my-runtime-args></my-runtime-args>',
@@ -25,7 +32,7 @@ angular.module(PKG.name+'.commons')
   })
   .controller('RuntimeArgumentsController', function($scope) {
 
-    $scope.preferences = [];
+    $scope.preferences = $scope.preferences || [];
 
     $scope.addPreference = function() {
       $scope.preferences.push({
