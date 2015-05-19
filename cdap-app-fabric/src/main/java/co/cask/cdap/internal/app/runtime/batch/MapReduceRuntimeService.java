@@ -97,6 +97,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -119,8 +120,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   @SuppressWarnings("unused")
   private org.apache.hadoop.mapreduce.v2.app.MRClientSecurityInfo mrClientSecurityInfo;
 
-  // Name of configuration source if it is set programmatically. This constant is not defined in Hadoop
-  private static final String PROGRAMMATIC_SOURCE = "programmatically";
+  // Regex pattern for configuration source if it is set programmatically. This constant is not defined in Hadoop
+  // Hadoop 2.3.0 and before has a typo as 'programatically', while it is fixed later as 'programmatically'.
+  private static final Pattern PROGRAMATIC_SOURCE_PATTERN = Pattern.compile("program{1,2}atically");
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -859,7 +861,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   private boolean isProgrammaticConfig(Configuration conf, String name) {
     String[] sources = conf.getPropertySources(name);
-    return sources != null && sources.length > 0 && PROGRAMMATIC_SOURCE.equals(sources[sources.length - 1]);
+    return sources != null && sources.length > 0 &&
+      PROGRAMATIC_SOURCE_PATTERN.matcher(sources[sources.length - 1]).matches();
   }
 
   /**
