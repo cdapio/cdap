@@ -945,7 +945,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("app-id") String appId,
                                @PathParam("flow-id") String flowId) {
-    Id.Flow programId = Id.Flow.from(namespaceId, appId, flowId);
+    Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.FLOW, flowId);
     try {
       ProgramStatus status = getProgramStatus(programId, ProgramType.FLOW);
       if (status.getStatus().equals(HttpResponseStatus.NOT_FOUND.toString())) {
@@ -953,7 +953,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       } else if (status.getStatus().equals("RUNNING")) {
         responder.sendString(HttpResponseStatus.FORBIDDEN, "Flow is running, please stop it first.");
       } else {
-        queueAdmin.dropAllForFlow(programId);
+        queueAdmin.dropAllForFlow(Id.Flow.from(programId.getApplication(), programId.getId()));
         FlowUtils.deleteFlowPendingMetrics(metricStore, namespaceId, appId, flowId);
         responder.sendStatus(HttpResponseStatus.OK);
       }

@@ -62,8 +62,7 @@ public class QueueNameTest {
 
     // verify prefix methods
     Assert.assertEquals("queue:///namespace/", QueueName.prefixForNamespacedQueue("namespace"));
-    Assert.assertEquals("queue:///namespace/app/flow/",
-                        QueueName.prefixForFlow(flowId));
+    Assert.assertEquals("queue:///namespace/app/flow/", QueueName.prefixForFlow(flowId));
   }
 
   @Test

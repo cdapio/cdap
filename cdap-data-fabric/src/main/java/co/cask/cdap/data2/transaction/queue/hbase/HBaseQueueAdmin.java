@@ -393,7 +393,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   public TableId getDataTableId(Id.Flow flowId, QueueConstants.QueueType queueType) {
-    String tableName = String.format("%s.%s.%s.%s", Constants.SYSTEM_NAMESPACE, queueType, flowId.getApplication(),
+    String tableName = String.format("%s.%s.%s.%s", Constants.SYSTEM_NAMESPACE, queueType, flowId.getApplicationId(),
                                      flowId.getId());
     return TableId.from(flowId.getNamespaceId(), tableName);
   }
