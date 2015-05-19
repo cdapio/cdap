@@ -15,17 +15,30 @@ angular.module(PKG.name+'.feature.dashboard')
       this.metricAlias =  opts.metricAlias || {};
 
       // Dimensions and Attributes of a widget
-      this.color = opts.color;
-      this.width = '';
-      this.height = 200;
+      this.settings = {};
+      opts.settings = opts.settings || {}; // Not a required paramter.
+      this.color = opts.settings.color;
+
+      if (opts.settings.size) {
+        this.width = opts.settings.size.width;
+        this.height = opts.settings.size.height;
+      } else {
+        this.width = '';
+        this.height = 200;
+      }
+
+      this.settings.chartMetadata = {};
+      if (opts.settings.chartMetadata) {
+        this.settings.chartMetadata = opts.settings.chartMetadata;
+      }
 
       // Should the widget be live or not.
-      this.metric.isLive = opts.isLive || false;
+      this.settings.isLive = opts.settings.isLive || false;
       // Based on Live or not what is the interval at which to poll
       // and how should the value be aggregated
       // (if we get 60 values but want to aggregate it to show only 5)
-      this.metric.interval = opts.interval;
-      this.metric.aggregate = opts.aggregate;
+      this.settings.interval = opts.settings.interval;
+      this.settings.aggregate = opts.settings.aggregate;
     }
     Widget.prototype.getPartial = function () {
       return '/assets/features/dashboard/templates/widgets/' + this.type + '.html';
@@ -60,6 +73,8 @@ angular.module(PKG.name+'.feature.dashboard')
     };
   })
 
+  // Probably should be renamed or refactored. This is not doing anything apart
+  // from handling size changes to the widget.
   .controller('C3WidgetTimeseriesCtrl', function ($scope, myHelpers, $timeout) {
     $scope.chartSize = { height: 200 };
     var widget = myHelpers.objectQuery($scope, 'gridsterItem', '$element', 0),

@@ -129,9 +129,7 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
     var currentColumns = rDashboardsModel.current().columns,
         i, j;
     for (i=0; i<currentColumns.length; i++) {
-      for (j=0; j<currentColumns[i].length; j++) {
-        func(currentColumns[i][j]);
-      }
+      func(currentColumns[i]);
     }
   }
 
@@ -171,8 +169,7 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
       widget.metric.startTime = Math.floor($scope.timeOptions.startMs / 1000);
       widget.metric.endTime = Math.floor($scope.timeOptions.endMs / 1000);
       widget.metric.resolution = 'auto';
-      widget.isLive = false;
-      widget.reconfigure();
+      widget.settings.isLive = false;
     });
   };
 
@@ -182,17 +179,15 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
       widget.metric.startTime = $scope.timeOptions.durationMs;
       widget.metric.endTime = 'now';
       widget.metric.resolution = 'auto';
-      widget.isLive = true;
-      widget.interval = $scope.timeOptions.refreshInterval.value * 1000;
-      widget.reconfigure();
+      widget.settings.isLive = true;
+      widget.settings.interval = $scope.timeOptions.refreshInterval.value * 1000;
     });
   };
 
   $scope.stopPolling = function() {
     $scope.liveDashboard = false;
     applyOnWidgets(rDashboardsModel, function (widget) {
-      widget.isLive = false;
-      widget.stopPolling();
+      widget.settings.isLive = false;
     });
   };
 });

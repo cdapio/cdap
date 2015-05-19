@@ -153,14 +153,16 @@ angular.module(PKG.name+'.feature.dashboard')
       return new Widget({
         title: title,
         type: type,
-        metric: {
+        settings: {
           isLive: true,
+          interval: 15000
+        },
+        metric: {
           context: context,
           names: metricNames,
           startTime: 'now-3600s',
           endTime: 'now',
-          resolution: '1m',
-          interval: 15000
+          resolution: '1m'
         }
       });
     }
