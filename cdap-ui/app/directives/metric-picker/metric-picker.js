@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .directive('myMetricPicker', function (MyDataSource, $stateParams, $log) {
+  .directive('myMetricPicker', function (MyDataSource, $stateParams, $log, myHelpers) {
 
     var dSrc = new MyDataSource();
 
@@ -102,14 +102,26 @@ angular.module(PKG.name + '.commons')
             context += '.' + scope.metric.context;
           }
 
+          // TODO: rethink
+          var parts = context.split('.');
+          if (parts.length % 2 !== 0) {
+            console.log('not even.');
+            return;
+          }
+
           scope.available.contexts = [];
+          var tagQueryParams = myHelpers.tagsToParams(myHelpers.contextToTags(context));
+
           dSrc.request(
             {
               method: 'POST',
-              _cdapPath: '/metrics/search?target=childContext' +
-                '&context=' + encodeURIComponent(context)
+              _cdapPath: '/metrics/search?target=tag' +
+                '&' + tagQueryParams
             },
             function (res) {
+              res = res.map(function(v) {
+                return context + '.' + myHelpers.tagToContext(v);
+              });
               scope.available.contexts = res.map(function(d){
                 return {
                   value: d.substring(bLen),
@@ -126,7 +138,7 @@ angular.module(PKG.name + '.commons')
             {
               method: 'POST',
               _cdapPath: '/metrics/search?target=metric' +
-                '&context=' + encodeURIComponent(context)
+                '&' + tagQueryParams
             },
             function (res) {
               // 'Add All' option to add all metrics in current context.

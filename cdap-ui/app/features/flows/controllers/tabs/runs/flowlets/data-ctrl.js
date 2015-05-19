@@ -22,12 +22,15 @@ angular.module(PKG.name + '.feature.flows')
         $scope.datasets = obj;
 
         angular.forEach($scope.datasets, function (dataset) {
+          var datasetTags = {
+            namespace: $state.params.namespace,
+            dataset: dataset.name,
+            app: $state.params.appId,
+            flow: $state.params.programId
+          };
           dataSrc
             .poll({
-              _cdapPath: '/metrics/query?context=namespace.' + $state.params.namespace
-                        + '.dataset.' + dataset.name
-                        + '.app.' + $state.params.appId
-                        + '.flow.' + $state.params.programId
+              _cdapPath: '/metrics/query?' + myHelpers.tagsToParams(datasetTags)
                         + '&metric=system.dataset.store.reads',
               method: 'POST'
             }, function(res) {
@@ -38,10 +41,7 @@ angular.module(PKG.name + '.feature.flows')
 
           dataSrc
             .poll({
-              _cdapPath: '/metrics/query?context=namespace.' + $state.params.namespace
-                        + '.dataset.' + dataset.name
-                        + '.app.' + $state.params.appId
-                        + '.flow.' + $state.params.programId
+              _cdapPath: '/metrics/query?' + myHelpers.tagsToParams(datasetTags)
                         + '&metric=system.dataset.store.writes',
               method: 'POST'
             }, function(res) {
