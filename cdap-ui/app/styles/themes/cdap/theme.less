@@ -128,8 +128,9 @@ body.theme-cdap {
         &:only-child { .border-radius(@table-radius @table-radius 0 0); }
       }
       tr:last-child {
-        td:first-child { .border-radius(0 0 0 @table-radius); }
-        td:last-child { .border-radius(0 0 @table-radius 0); }
+        & > td:first-child { .border-radius(0 0 0 @table-radius); }
+        & > td:last-child { .border-radius(0 0 @table-radius 0); }
+        & > td:only-child { .border-radius(0 0 @table-radius @table-radius); }
       }
   }
 
