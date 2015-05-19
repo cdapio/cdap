@@ -27,6 +27,7 @@ angular.module(PKG.name + '.feature.flows')
 
     function pollMetrics() {
       var nodes = $scope.data.nodes;
+      $scope.data.instances = {};
       // Requesting Metrics data
       angular.forEach(nodes, function (node) {
         if (node.type !== 'STREAM' && !$scope.runs.length) {
@@ -38,6 +39,16 @@ angular.module(PKG.name + '.feature.flows')
         }, function (data) {
             $scope.data.metrics[node.name] = myHelpers.objectQuery(data, 'series' , 0, 'data', 0, 'value') || 0;
           });
+
+        if (node.type !== 'STREAM') {
+          dataSrc.poll({
+            _cdapNsPath: '/apps/' + $state.params.appId +  '/flows/' + $state.params.programId + '/flowlets/' + node.name + '/instances'
+          }, function (res) {
+            $scope.data.instances[node.name] = res.instances;
+          });
+        }
+
+
       });
     }
 
