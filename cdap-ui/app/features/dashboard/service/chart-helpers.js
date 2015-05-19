@@ -136,4 +136,56 @@ angular.module(PKG.name + '.feature.dashboard')
     }
 
 
+  })
+
+  .factory('MyMetricsQueryHelper', function() {
+    // 'ns.default.app.foo' -> {'ns': 'default', 'app': 'foo'}
+    function contextToTags(context) {
+      var parts, tags, i, tagValue;
+      if (context.length) {
+        parts = context.split('.');
+      } else {
+        // For an empty context, we want no tags. Splitting it by '.' yields [""]
+        parts = [];
+      }
+      if (parts.length % 2 !== 0) {
+        throw "Metrics context has uneven number of parts: " + context;
+      }
+      tags = {};
+      for (i = 0; i < parts.length; i+=2) {
+        // In context, '~' is used to represent '.'
+        tagValue = parts[i + 1].replace(/~/g, '.');
+        tags[parts[i]] = tagValue;
+      }
+      return tags;
+    }
+
+    // TODO: Need to figure out a way to pass url for a chart
+    // that is part of the widget, which is not a metric.
+    // Right now a chart and a metric is tied together and
+    // it needs to be changed.
+    function constructQuery(queryId, tags, metric) {
+      var timeRange, retObj;
+      timeRange = {
+        'start': metric.startTime || 'now-60s',
+        'end': metric.endTime || 'now'
+      };
+      if (metric.resolution) {
+        timeRange.resolution = metric.resolution;
+      }
+      retObj = {};
+      retObj[queryId] = {
+        tags: tags,
+        metrics: metric.names,
+        groupBy: [],
+        timeRange: timeRange
+      };
+      return retObj;
+    }
+
+
+    return {
+      contextToTags: contextToTags,
+      constructQuery: constructQuery
+    };
   });
