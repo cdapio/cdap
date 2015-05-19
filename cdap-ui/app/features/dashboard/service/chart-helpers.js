@@ -127,12 +127,33 @@ angular.module(PKG.name + '.feature.dashboard')
       }
     }
 
+    function convertDashboardToNewWidgets(dashboards) {
+      if (angular.isArray(dashboards)) {
+        dashboards.forEach(function(dashboard) {
+          var widgets = [];
+          dashboard.config.columns.forEach(function(column) {
+            widgets = widgets.concat(column);
+          });
+          dashboard.config.columns = widgets;
+          widgets.forEach(function(widget) {
+            widget.settings = {};
+            widget.settings.color = widget.color;
+            widget.settings.isLive = widget.isLive;
+            widget.settings.interval = widget.interval;
+            widget.settings.aggregate = widget.aggregate;
+          });
+        });
+      }
+      return dashboards;
+    }
+
     return  {
       processData: processData,
       resolutionFromAuto: resolutionFromAuto,
       skipAmtFromResolution: skipAmtFromResolution,
       zeroFill: zeroFill,
-      c3ifyData: c3ifyData
+      c3ifyData: c3ifyData,
+      convertDashboardToNewWidgets: convertDashboardToNewWidgets
     }
 
 

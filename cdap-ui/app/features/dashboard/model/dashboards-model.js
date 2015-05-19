@@ -4,7 +4,7 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').factory('MyDashboardsModel',
-function (Widget, MyDataSource, mySettings, $q) {
+function (Widget, MyDataSource, mySettings, $q, MyChartHelpers) {
 
   var dSrc = new MyDataSource(),
       API_PATH = '/configuration/dashboards';
@@ -177,10 +177,11 @@ function (Widget, MyDataSource, mySettings, $q) {
         }));
       })
       .then(function (result) {
-
+        var dashboards = [];
         if(result.length) {
+          dashboards = MyChartHelpers.convertDashboardToNewWidgets(angular.copy(result));
           // recreate saved dashboards
-          angular.forEach(result, function (v) {
+          angular.forEach(dashboards, function (v) {
             var p = v.config;
             p.id = v.id;
             data.push(new Dashboard(p));
