@@ -191,24 +191,29 @@ table line to expand the display and see the query results:
 
 .. image:: ../_images/wa_explore_result.png
    :width: 8in
-
-Stopping the Application
--------------------------------
+      
+Stopping and Removing the Application
+-------------------------------------
 Once done, you can stop the application as described above in `Stopping an Application. 
 <#stopping-an-application>`__ Here is an example-specific description of the steps:
 
 **Stopping the Flow**
 
-- Click on the *Process* button in the left sidebar of the CDAP UI,
-  then click *WebAnalyticsFlow* in the *Process* page to get to the
-  Flow detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- Go to the *WebAnalytics* `application overview page 
+  <http://localhost:9999/ns/default/apps/UserProfiles/overview/status>`__,
+  click ``WebAnalyticsFlow`` to get to the flow detail page, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
+    $ cdap-cli.sh stop flow WebAnalytics.WebAnalyticsFlow 
 
-    * - On Linux:
-      - ``$ ./bin/cdap-cli.sh stop flow WebAnalytics.WebAnalyticsFlow``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat stop flow WebAnalytics.WebAnalyticsFlow``    
+**Removing the Application**
+
+You can now remove the application as described above, `Removing an Application <#removing-an-application>`__, or:
+
+- Go to the *WebAnalytics* `application overview page 
+  <http://localhost:9999/ns/default/apps/WebAnalytics/overview/status>`__,
+  click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
+  then click the *Actions* menu on the right side and select *Delete* to delete the application; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
+
+    $ cdap-cli.sh delete app WebAnalytics

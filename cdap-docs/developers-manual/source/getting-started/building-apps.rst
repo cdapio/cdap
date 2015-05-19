@@ -4,9 +4,9 @@
 
 .. _cdap-building-running:
 
-============================================
+======================================
 Building and Running CDAP Applications
-============================================
+======================================
 
 .. |example| replace:: <example>
 
@@ -37,8 +37,30 @@ to use the namespace *my_namespace*, you would replace ``default`` with ``my_nam
 	http://localhost:10000/v3/namespaces/my_namespace/apps...
 
 
+Accessing CLI, curl and the SDK bin
+----------------------------------- 
+
+- For brevity in the commands given below, we will simply use ``cdap-cli.sh`` for the CDAP
+  Command Line Interface. Substitute the actual path of ``./<CDAP-SDK-HOME>/bin/cdap-cli.sh``,
+  or ``<CDAP-SDK-HOME>\bin\cdap-cli.bat`` on Windows, as appropriate. 
+
+- A Windows-version of the application ``curl`` is included in the CDAP SDK as
+  ``libexec\bin\curl.exe``; use it as a substitute for ``curl`` in the examples shown below.
+
+- If you add the SDK bin directory to your path, you can simplify the commands. From within
+  the CDAP-SDK-home directory, enter::
+
+    $ export PATH=${PATH}:`pwd`/bin
+
+  or under Windows::
+
+    > setx path "%PATH%;%CD%\bin"
+  
+  Note that under Windows, you'll need to create a new command line window in order to see
+  this change to the path variable.
+
 Building an Example Application
-----------------------------------
+-------------------------------
 
 From the example's project root, build an example with the
 `Apache Maven <http://maven.apache.org>`__ command::
@@ -47,7 +69,7 @@ From the example's project root, build an example with the
 
 
 Starting CDAP
-----------------------------------
+-------------
 
 Before running an example application, check that an instance of CDAP is running and available; if not,
 follow the instructions for :ref:`Starting and Stopping Standalone CDAP. <start-stop-cdap>`
@@ -55,32 +77,8 @@ follow the instructions for :ref:`Starting and Stopping Standalone CDAP. <start-
 If you can reach the CDAP UI through a browser at `http://localhost:9999/ <http://localhost:9999/>`__, 
 CDAP is running.
 
-
-Accessing CLI, curl and the SDK bin
------------------------------------ 
-
-In the examples that follow, for brevity we will simply use ``cdap-cli.sh`` for the CDAP
-Command Line Interface. Substitute the actual path of ``./<CDAP-SDK-HOME>/bin/cdap-cli.sh``,
-or ``<CDAP-SDK-HOME>\bin\cdap-cli.bat`` on Windows, as appropriate. 
-
-A Windows-version of the application ``curl`` is included in the CDAP SDK as
-``libexec\bin\curl.exe``; use it as a substitute for ``curl`` in the examples shown below.
-
-If you add the SDK bin directory to your path, you can simplify the commands. From within
-the CDAP-SDK-home directory, enter::
-
-  $ export PATH=${PATH}:`pwd`/bin
-
-or under Windows::
-
-  > setx path "%PATH%;%CD%\bin"
-  
-Note that under Windows, you'll need to create a new command line window in order to see
-this change to the path variable.
-
-
 Deploying an Application
-----------------------------------
+------------------------
 
 Once CDAP is started, you can deploy an example JAR by any of these methods:
 
@@ -121,7 +119,7 @@ Once CDAP is started, you can deploy an example JAR by any of these methods:
 
 
 Starting an Application
-----------------------------------
+-----------------------
 
 Once an application is deployed:
 
@@ -149,7 +147,7 @@ Once an application is deployed:
       
 
 Stopping an Application
-----------------------------------
+-----------------------
 
 Once an application is deployed:
 
@@ -161,18 +159,24 @@ Once an application is deployed:
     
     
 Removing an Application
-----------------------------------
+-----------------------
 
-Once an application is stopped |---| all of its programs (flows, MapReduce programs, workflows,
-etc.), queries, and services are stopped |---| you can go to the |all_apps|_ page of the
-CDAP UI, click on the particular application to go to its detail page, and then select the
-*Actions > Delete* menu in the upper right to delete the application.
+Once an application is stopped |---| all of its programs (flows, MapReduce programs,
+workflows, etc.), queries, and services are stopped |---| you can go to the |all_apps|_
+page of the CDAP UI, click on the particular application to go to its detail page, click
+the *Actions* menu on the right side and select *Manage* to go to the Management pane for
+the application, then click the *Actions* menu on the right side and select *Delete*.
 
 After confirmation, the application will be deleted.
 
+From the Standalone CDAP SDK directory, you can also use the Command Line Interface::
+
+    $ cdap-cli.sh delete app <app-id>
+
 Note that any storage (datasets) created or used by the application will remain, as they
 are independent of the application. Datasets can be deleted from the |datasets|_ page of
-the CDAP UI, the :ref:`HTTP Restful API <restful-api>`, the 
+the CDAP UI, or by using the :ref:`HTTP Restful API <restful-api>`, the 
 :ref:`Java Client API <java-client-api>`, or the :ref:`Command Line Interface API <cli>`.
 
-Streams can be truncated rather than deleted.
+Streams cannot be deleted; instead, they can be truncated.
+

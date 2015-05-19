@@ -135,8 +135,8 @@ This is because in MapReduce, every reducer writes a separate part file into the
 In this case, as we have fixed the number of reducers to one, there is only a single part file to download.
 
 
-Stopping the Application
-------------------------
+Stopping and Removing the Application
+-------------------------------------
 Once done, you can stop the application as described above in `Stopping an Application. 
 <#stopping-an-application>`__ Here is an example-specific description of the step:
 
@@ -152,4 +152,13 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 **Removing the Application**
 
-You can now remove the application as `described above <#removing-an-application>`__.
+You can now remove the application as described above, `Removing an Application <#removing-an-application>`__, or:
+
+- Go to the *FileSetExample* `application overview page 
+  <http://localhost:9999/ns/default/apps/FileSetExample/overview/status>`__,
+  click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
+  then click the *Actions* menu on the right side and select *Delete* to delete the application; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
+
+    $ cdap-cli.sh delete app FileSetExample
+

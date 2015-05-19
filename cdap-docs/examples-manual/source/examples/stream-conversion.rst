@@ -114,7 +114,7 @@ The ``StreamConversionWorkflow`` will run automatically every five minutes based
 To give it some data, you can use a provided script to send events to the stream, for example,
 to send 10000 events at a rate of roughly two per second::
 
-  $ bin/send-events.sh --events 10000 --delay 0.5
+  $ examples/StreamConversion/bin/send-events.sh --events 10000 --delay 0.5
 
 You can now wait for the Workflow to run, after which you can query the partitions in the
 ``converted`` dataset::
@@ -147,13 +147,35 @@ You can also query the data in the dataset. For example, to find the five most f
 Because this dataset is time-partitioned, you can use the partitioning keys to restrict the scope
 of the query. For example, to run the same query for only the month of January, use the query::
 
-  select count(*) as count, body from dataset_converted where month=1 group by body order by count desc limit 5
+  select count(*) as count, body from dataset_converted where month=5 group by body order by count desc limit 5
 
-Stopping the Application
-------------------------
+Stopping and Removing the Application
+-------------------------------------
+Once done, you can stop the application as described above in `Stopping an Application. 
+<#stopping-an-application>`__ Here is an example-specific description of the steps:
 
-The only thing you need to do to stop the application is suspend the schedule. This is not possible
-with the CLI; instead you can use ``curl`` to make a RESTful request::
+**Suspending the Schedule**
 
-  $ curl -X POST http://localhost:10000/v3/namespaces/default/apps/StreamConversionApp/schedules/every5min/suspend
+The only thing you need to do to stop the application is suspend the schedule.
 
+- Go to the *StreamConversionApp* `application overview page 
+  <http://localhost:9999/ns/default/apps/StreamConversionApp/overview/status>`__,
+  click ``StreamConversionWorkflow`` to get to the workflow detail page, 
+  click on the *Schedules* tab to show the schedule, click the disclosure symbol (**>**)
+  to show the details of the schedule, and then click the *Pause* button (**| |**) so that
+  the status shows as *suspended*; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
+
+    $ cdap-cli.sh suspend schedule StreamConversionApp.every5min
+
+**Removing the Application**
+
+You can now remove the application as described above, `Removing an Application <#removing-an-application>`__, or:
+
+- Go to the *StreamConversionApp* `application overview page 
+  <http://localhost:9999/ns/default/apps/StreamConversionApp/overview/status>`__,
+  click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
+  then click the *Actions* menu on the right side and select *Delete* to delete the application; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
+
+    $ cdap-cli.sh delete app StreamConversionApp

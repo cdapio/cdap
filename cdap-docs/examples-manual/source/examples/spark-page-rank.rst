@@ -159,43 +159,40 @@ You can also use the Command Line Interface:
   * - On Windows:
     - ``> bin\cdap-cli.bat call service SparkPageRank.RanksService GET 'rank?url=http://example.com/page1'``
 
-Stopping the Application
--------------------------------
+
+Stopping and Removing the Application
+-------------------------------------
 Once done, you can stop the application as described above in `Stopping an Application. 
 <#stopping-an-application>`__ Here is an example-specific description of the steps:
 
 **Stopping the Spark Program**
 
-- Click on the *Process* button in the left sidebar of the CDAP UI,
-  then click *SparkKMeansProgram* in the *Process* page to get to the
-  Spark detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- Go to the *SparkPageRank* `application overview page 
+  <http://localhost:9999/ns/default/apps/SparkPageRank/overview/status>`__,
+  click ``SparkPageRank`` to get to the spark detail page, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
+    $ cdap-cli.sh stop spark SparkPageRank.SparkPageRankProgram   
 
-    * - On Linux:
-      - ``$ ./bin/cdap-cli.sh stop spark SparkPageRank.SparkPageRankProgram``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat stop spark SparkPageRank.SparkPageRankProgram``    
+**Stopping the Service**
 
-**Stopping the Services**
+- Go to the *SparkPageRank* `application overview page 
+  <http://localhost:9999/ns/default/apps/SparkPageRank/overview/status>`__,
+  click ``RanksService`` to get to the service detail page, then click the *Stop* button,
+  doing the same for the ``GoogleTypePR`` service; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-- Click on *SparkPageRank* in the Overview page of the CDAP UI to get to the
-  Application detail page, then click the square *Stop* button in the right-hand of 
-  the service pane; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+    $ cdap-cli.sh stop service SparkPageRank.RanksService
+    $ cdap-cli.sh stop service SparkPageRank.GoogleTypePR
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
+**Removing the Application**
 
-    * - On Linux:
-      - ``$ ./bin/cdap-cli.sh stop service SparkPageRank.RanksService``
-    * - 
-      - ``$ ./bin/cdap-cli.sh stop service SparkPageRank.GoogleTypePR``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat stop service SparkPageRank.RanksService``    
-    * - 
-      - ``> bin\cdap-cli.bat stop service SparkPageRank.GoogleTypePR``    
+You can now remove the application as described above, `Removing an Application <#removing-an-application>`__, or:
+
+- Go to the *SparkPageRank* `application overview page 
+  <http://localhost:9999/ns/default/apps/SparkPageRank/overview/status>`__,
+  click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
+  then click the *Actions* menu on the right side and select *Delete* to delete the application; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
+
+    $ cdap-cli.sh delete app SparkPageRank

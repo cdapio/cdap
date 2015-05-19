@@ -125,20 +125,6 @@ Running CDAP Applications
 Running the Example
 ===================
 
-In the commands that follow, we'll assume that you will run all commands
-from the example's base directory (``/examples/``\ |literal-example|\ , in the
-Standalone CDAP SDK directory).
-
-For brevity, we will simply use ``cdap-cli.sh`` for the Command Line Interface. Substitute
-the actual path of ``../../bin/cdap-cli.sh``, or ``..\..\bin\cdap-cli.bat`` on Windows, as
-appropriate. You can also add the CDAP ``bin`` directory to your shell's ``PATH``
-to simplify the commands.
-
-Other scripts that are supplied in the examples also have Windows ``.bat``
-equivalents. Note that a version of ``curl`` that works with Windows is included in the
-CDAP Standalone SDK in ``libexec\bin\curl.exe``.
-
-
 .. highlight:: console
 
 Starting the Flow
@@ -309,8 +295,8 @@ retrieved all of the results and you can now close the query::
 
   $ curl -v -X DELETE http://localhost:10000/v3/data/explore/queries/07fd9b6a-95b3-4831-992c-7164f11c3754
 
-Stopping the Application
--------------------------------
+Stopping and Removing the Application
+-------------------------------------
 Once done, you can stop the application as described above in `Stopping an Application. 
 <#stopping-an-application>`__ Here is an example-specific description of the steps:
 
@@ -334,3 +320,16 @@ Once done, you can stop the application as described above in `Stopping an Appli
     $ cdap-cli.sh stop service PurchaseHistory.PurchaseHistoryService
     $ cdap-cli.sh stop service PurchaseHistory.CatalogLookup
     $ cdap-cli.sh stop service PurchaseHistory.UserProfileService
+    
+**Removing the Application**
+
+You can now remove the application as described above, `Removing an Application <#removing-an-application>`__, or:
+
+- Go to the *PurchaseHistory* `application overview page 
+  <http://localhost:9999/ns/default/apps/PurchaseHistory/overview/status>`__,
+  click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
+  then click the *Actions* menu on the right side and select *Delete* to delete the application; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
+
+    $ cdap-cli.sh delete app PurchaseHistory
+

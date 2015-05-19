@@ -38,7 +38,7 @@ of the Application are tied together by a class ``UserProfiles``:
 
 .. literalinclude:: /../../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java
     :language: java
-    :lines: 31-
+    :lines: 34-
 
 This application uses a Table with conflict detection either at the row level or
 at the column level.
@@ -201,33 +201,38 @@ its recreation with the new properties.
 Running the example with ``ConflictDetection.COLUMN`` will result in the two scripts running
 concurrently without transaction conflicts.
 
-Stopping the Application
--------------------------------
+
+Stopping and Removing the Application
+-------------------------------------
 Once done, you can stop the application as described above in `Stopping an Application. 
-<#stopping-an-application>`__ Here is an example-specific description of the step:
+<#stopping-an-application>`__ Here is an example-specific description of the steps:
+
+**Stopping the Flow**
+
+- Go to the *UserProfiles* `application overview page 
+  <http://localhost:9999/ns/default/apps/UserProfiles/overview/status>`__,
+  click ``ActivityFlow`` to get to the flow detail page, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
+
+    $ cdap-cli.sh stop flow UserProfiles.ActivityFlow   
 
 **Stopping the Service**
 
-- Click on ``UserProfiles`` in the Overview page of the CDAP UI to get to the
-  Application detail page, click ``ActivityFlow`` in the *flow* section of the *Process* pane
-  to get to the flow's detail page, and then click the *Stop* button; repeat these steps for
-  the ``FileSetService`` in the *Service* pane; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- Go to the *UserProfiles* `application overview page 
+  <http://localhost:9999/ns/default/apps/UserProfiles/overview/status>`__,
+  click ``UserProfileService`` to get to the service detail page, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-      - ``$ ./bin/cdap-cli.sh stop flow UserProfiles.ActivityFlow``
-      - ``$ ./bin/cdap-cli.sh stop service UserProfiles.UserProfileService``
+    $ cdap-cli.sh stop service UserProfiles.UserProfileService   
 
-..  .. list-table::
-..    :widths: 20 80
-..    :stub-columns: 1
+**Removing the Application**
 
-..    * - On Linux:
-..      - ``$ ./bin/cdap-cli.sh stop flow UserProfiles.ActivityFlow``
-..    * - 
-..      - ``$ ./bin/cdap-cli.sh stop service UserProfiles.UserProfileService``
+You can now remove the application as described above, `Removing an Application <#removing-an-application>`__, or:
 
-..    * - On Windows:
-..      - ``> bin\cdap-cli.bat stop flow UserProfiles.ActivityFlow``    
-..    * - 
-..      - ``> bin\cdap-cli.bat stop service UserProfiles.UserProfileService``    
+- Go to the *UserProfiles* `application overview page 
+  <http://localhost:9999/ns/default/apps/UserProfiles/overview/status>`__,
+  click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
+  then click the *Actions* menu on the right side and select *Delete* to delete the application; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
+    $ cdap-cli.sh delete app UserProfiles

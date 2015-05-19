@@ -200,17 +200,29 @@ The last command would produce results (reformatted to fit) such as::
   +==================================================================================================================================+
   Fetched 3 rows
 
-Stopping the Application
-------------------------
-Once done, you can stop the application as described above in `Stopping an Application
-<#stopping-an-application>`__. Here is an example-specific description of the step:
+
+Stopping and Removing the Application
+-------------------------------------
+Once done, you can stop the application as described above in `Stopping an Application. 
+<#stopping-an-application>`__ Here is an example-specific description of the steps:
 
 **Stopping the Service**
 
-- Click on ``SportResults`` in the Overview page of the CDAP UI to get to the
-  Application detail page, click ``UploadService`` in the *service* pane to get to the
-  service detail page, then click the *Stop* button; or
+- Go to the *SportResults* `application overview page 
+  <http://localhost:9999/ns/default/apps/SportResults/overview/status>`__,
+  click ``UploadService`` to get to the service detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-    $ cdap-cli.sh stop service SportResults.UploadService
+    $ cdap-cli.sh stop service SportResults.UploadService   
 
+**Removing the Application**
+
+You can now remove the application as described above, `Removing an Application <#removing-an-application>`__, or:
+
+- Go to the *SportResults* `application overview page 
+  <http://localhost:9999/ns/default/apps/SportResults/overview/status>`__,
+  click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
+  then click the *Actions* menu on the right side and select *Delete* to delete the application; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
+
+    $ cdap-cli.sh delete app SportResults

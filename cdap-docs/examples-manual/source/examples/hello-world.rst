@@ -221,4 +221,13 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 **Removing the Application**
 
-You can now remove the application as `described above <#removing-an-application>`__.
+You can now remove the application as described above, `Removing an Application <#removing-an-application>`__, or:
+
+- Go to the *HelloWorld* `application overview page 
+  <http://localhost:9999/ns/default/apps/HelloWorld/overview/status>`__,
+  click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
+  then click the *Actions* menu on the right side and select *Delete* to delete the application; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
+
+    $ cdap-cli.sh delete app HelloWorld
+
