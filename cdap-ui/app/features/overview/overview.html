@@ -79,11 +79,8 @@
           <c3-spline
             chart-metric="wdgt.metric"
             chart-metric-alias="wdgt.metricAlias"
-            chart-size="{ height: 100, width: 280 }"
-            chart-showx="false"
-            chart-showy="false"
-            chart-color="{ pattern: ['red', '#FFBF00'] }"
-            chart-legend="{ show: false, position: 'inset' }"
+            chart-settings="wdgt.settings"
+            chart-size="chartSize"
             ></c3-spline>
           <div class="health-metrics">
             <span class="warn"> {{chartData.streams[1]}} </span>
