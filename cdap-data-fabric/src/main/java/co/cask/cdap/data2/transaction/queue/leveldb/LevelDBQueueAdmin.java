@@ -24,6 +24,7 @@ import co.cask.cdap.data2.transaction.queue.NoopQueueConfigurer;
 import co.cask.cdap.data2.transaction.queue.QueueConfigurer;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
@@ -106,8 +107,8 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public void clearAllForFlow(String namespaceId, String app, String flow) throws Exception {
-    String tableName = getTableNameForFlow(namespaceId, app, flow);
+  public void clearAllForFlow(Id.Flow flowId) throws Exception {
+    String tableName = getTableNameForFlow(flowId);
     service.dropTable(tableName);
     service.ensureTableExists(tableName);
   }
@@ -118,14 +119,14 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public void dropAllForFlow(String namespaceId, String app, String flow) throws Exception {
-    String tableName = getTableNameForFlow(namespaceId, app, flow);
+  public void dropAllForFlow(Id.Flow flowId) throws Exception {
+    String tableName = getTableNameForFlow(flowId);
     service.dropTable(tableName);
   }
 
   @Override
-  public void dropAllInNamespace(String namespaceId) throws Exception {
-    dropAllTablesWithPrefix(String.format("%s.%s.", namespaceId, unqualifiedTableNamePrefix));
+  public void dropAllInNamespace(Id.Namespace namespaceId) throws Exception {
+    dropAllTablesWithPrefix(String.format("%s.%s.", namespaceId.getId(), unqualifiedTableNamePrefix));
   }
 
   @Override
@@ -142,13 +143,13 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
   }
 
   public String getActualTableName(QueueName queueName) {
-    return getTableNameForFlow(queueName.getFirstComponent(),
-                               queueName.getSecondComponent(),
-                               queueName.getThirdComponent());
+    return getTableNameForFlow(Id.Flow.from(queueName.getFirstComponent(),
+                                            queueName.getSecondComponent(),
+                                            queueName.getThirdComponent()));
   }
 
-  protected String getTableNameForFlow(String namespaceId, String app, String flow) {
-    TableId tableId = getDataTableId(namespaceId, app, flow);
+  protected String getTableNameForFlow(Id.Flow flowId) {
+    TableId tableId = getDataTableId(flowId);
     return String.format("%s.%s", tableId.getNamespace().getId(), tableId.getTableName());
   }
 }
