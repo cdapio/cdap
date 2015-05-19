@@ -80,33 +80,60 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrd
 
   $scope.wdgts = [];
   // type field is overridden by what is rendered in view because we do not use widget.getPartial()
-  $scope.wdgts.push(new Widget({title: 'System', type: 'c3-line', isLive: true,
-                  metric: {
-                    context: 'namespace.*',
-                    names: ['system.services.log.error', 'system.services.log.warn'],
-                    startTime: 'now-3600s',
-                    endTime: 'now',
-                    resolution: '1m',
-                    interval: 60*1000,
-                    aggregate: 5
-                  },
-                  metricAlias: {'system.services.log.error': 'System Errors',
-                                'system.services.log.warn' : 'System Warnings'}
-  }));
-  $scope.wdgts.push(new Widget({
-                  title: 'Applications',
-                  type: 'c3-line',
-                  isLive: true,
-                  metric: {
-                    context: 'namespace.' + $state.params.namespace,
-                    names: ['system.app.log.error', 'system.app.log.warn'],
-                    startTime: 'now-3600s',
-                    endTime: 'now',
-                    resolution: '1m',
-                    interval: 60*1000,
-                    aggregate: 5
-                  },
-                  metricAlias: {'system.app.log.error': 'Application Errors',
-                                'system.app.log.warn' : 'Application Warnings'}
-  }));
+  var widgetSettings = {
+    size: {
+      height: 100,
+      width: 280
+    },
+    chartMetadata: {
+      showx: false,
+      showy: false,
+      legend: {
+        show: false,
+        position: 'inset'
+      }
+    },
+    color: {
+      pattern: ['red', '#FFBBF00']
+    },
+    isLive: true,
+    interval: 60*1000,
+    aggregate: 5
+  };
+
+  $scope.wdgts.push(
+    new Widget({
+      title: 'System',
+      type: 'c3-line',
+      settings: widgetSettings,
+      metric: {
+        context: 'namespace.*',
+        names: ['system.services.log.error', 'system.services.log.warn'],
+        startTime: 'now-3600s',
+        endTime: 'now',
+        resolution: '1m'
+      },
+      metricAlias: {
+        'system.services.log.error': 'System Errors',
+        'system.services.log.warn' : 'System Warnings'
+      }
+    })
+  ,
+    new Widget({
+      title: 'Applications',
+      type: 'c3-line',
+      settings: widgetSettings,
+      metric: {
+        context: 'namespace.' + $state.params.namespace,
+        names: ['system.app.log.error', 'system.app.log.warn'],
+        startTime: 'now-3600s',
+        endTime: 'now',
+        resolution: '1m'
+      },
+      metricAlias: {
+        'system.app.log.error': 'Application Errors',
+        'system.app.log.warn' : 'Application Warnings'
+      }
+    })
+  );
 });

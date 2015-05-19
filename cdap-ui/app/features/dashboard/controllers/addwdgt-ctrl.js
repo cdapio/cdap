@@ -65,7 +65,9 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
           new Widget({
             type: $scope.model.type,
             title: $scope.model.metric.title,
-            color: classes[(generateHash(value) * 13) % classes.length],
+            settings: {
+              color: classes[(generateHash(value) * 13) % classes.length]
+            },
             metric: {
               context: $scope.model.metric.context,
               names: [value],
@@ -76,7 +78,8 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
       });
       $scope.currentBoard.addWidget(widgets);
     } else {
-      $scope.model.color = classes[(generateHash($scope.model.metric.name) * 13) % classes.length];
+      $scope.model.settings = {};
+      $scope.model.settings.color = classes[(generateHash($scope.model.metric.name) * 13) % classes.length];
       $scope.currentBoard.addWidget($scope.model);
     }
     $scope.$close();
