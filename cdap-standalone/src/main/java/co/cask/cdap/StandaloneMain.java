@@ -74,6 +74,10 @@ import java.util.List;
  * NOTE: Use AbstractIdleService
  */
 public class StandaloneMain {
+
+  // A special key in the CConfiguration to disable UI. It's mainly used for unit-tests that start Standalone.
+  static final String DISABLE_UI = "standalone.disable.ui";
+
   private static final Logger LOG = LoggerFactory.getLogger(StandaloneMain.class);
 
   private final UserInterfaceService userInterfaceService;
@@ -111,7 +115,11 @@ public class StandaloneMain {
     serviceStore = injector.getInstance(ServiceStore.class);
     streamService = injector.getInstance(StreamService.class);
 
-    userInterfaceService = injector.getInstance(UserInterfaceService.class);
+    if (configuration.getBoolean(DISABLE_UI, false)) {
+      userInterfaceService = null;
+    } else {
+      userInterfaceService = injector.getInstance(UserInterfaceService.class);
+    }
 
     sslEnabled = configuration.getBoolean(Constants.Security.SSL_ENABLED);
     securityEnabled = configuration.getBoolean(Constants.Security.ENABLED);
