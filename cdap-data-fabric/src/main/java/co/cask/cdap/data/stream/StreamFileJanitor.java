@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package co.cask.cdap.data.stream;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -29,8 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -60,14 +59,20 @@ public final class StreamFileJanitor {
     if (namespaceLocations.size() == 0) {
       return;
     }
-    Collection<Location> namespaceDirs = namespaceLocations.values();
-    for (Location namespaceDir : namespaceDirs) {
+
+    for (Location namespaceDir : namespaceLocations.values()) {
       Location streamBaseLocation = namespaceDir.append(streamBaseDirPath);
       if (!streamBaseLocation.exists()) {
         continue;
       }
 
-      for (Location streamLocation : streamBaseLocation.list()) {
+      // Remove everything under the deleted directory
+      Location deletedLocation = StreamUtils.getDeletedLocation(streamBaseLocation);
+      if (deletedLocation.exists()) {
+        Locations.deleteContent(deletedLocation);
+      }
+
+      for (Location streamLocation : StreamUtils.listAllStreams(streamBaseLocation)) {
         Id.Stream streamId = StreamUtils.getStreamIdFromLocation(streamLocation);
         long ttl = 0L;
         if (isStreamExists(streamId)) {

@@ -84,6 +84,13 @@ public final class HBaseConsumerStateStore extends AbstractDataset implements Qu
   }
 
   /**
+   * Returns the internal dataset table. Only for QueueAdmin to use.
+   */
+  Table getInternalTable() {
+    return table;
+  }
+
+  /**
    * Returns the consumer state as stored in the state store for the given consumer.
    */
   HBaseConsumerState getState(long groupId, int instanceId) {
@@ -179,7 +186,7 @@ public final class HBaseConsumerStateStore extends AbstractDataset implements Qu
     }
 
     // If the instance has been removed in the next barrier,
-    // find the next start barrier that this instance need to consumer
+    // find the next start barrier that this instance needs to consume from
     Scanner scanner = table.scan(Bytes.add(queueName.toBytes(), nextBarrier.getStartRow()), barrierScanEndRow);
     try {
       Row row;
@@ -205,14 +212,16 @@ public final class HBaseConsumerStateStore extends AbstractDataset implements Qu
    * Remove all states related to the queue that this state store is representing.
    */
   void clear() {
-    // Scan and delete all rows prefix with queueName
-    Scanner scanner = table.scan(queueName.toBytes(), Bytes.stopKeyForPrefix(queueName.toBytes()));
+    // Scan and delete all barrier rows
+    Scanner scanner = table.scan(barrierScanStartRow, barrierScanEndRow);
     try {
       Row row = scanner.next();
       while (row != null) {
         table.delete(row.getRow());
         row = scanner.next();
       }
+      // Also delete the consumer state rows
+      table.delete(queueName.toBytes());
     } finally {
       scanner.close();
     }
@@ -292,22 +301,57 @@ public final class HBaseConsumerStateStore extends AbstractDataset implements Qu
       }
     }
 
-    // Remove all states and barrier information for groups that are removed.
-    // It doesn't matter what the consumer start row is.
-    Scanner scanner = table.scan(queueName.toBytes(), Bytes.stopKeyForPrefix(queueName.toBytes()));
+    // Remove all states for groups that are removed.
+    deleteRemovedGroups(table.get(queueName.toBytes()), groupsIds);
+
+    // Remove all barriers for groups that are removed.
+    // Also remove barriers that have all consumers consumed pass that barrier
+    Scanner scanner = table.scan(barrierScanStartRow, barrierScanEndRow);
+    // Multimap from groupId to barrier start rows. Ordering need to be maintained as the scan order.
+    Multimap<Long, byte[]> deletes = LinkedHashMultimap.create();
     try {
       Row row = scanner.next();
       while (row != null) {
-        for (byte[] column : row.getColumns().keySet()) {
-          long groupId = getGroupIdFromColumn(column);
-          if (!groupsIds.contains(groupId)) {
-            table.delete(row.getRow(), column);
+        deleteRemovedGroups(row, groupsIds);
+
+        // Check all instances in all groups
+        for (Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
+          QueueBarrier barrier = decodeBarrierInfo(row.getRow(), entry.getValue());
+          if (barrier == null) {
+            continue;
+          }
+          long groupId = barrier.getGroupConfig().getGroupId();
+          boolean delete = true;
+          // Check if all instances in a group has consumed passed the current barrier
+          for (int instanceId = 0; instanceId < barrier.getGroupConfig().getGroupSize(); instanceId++) {
+            byte[] consumerStartRow = startRows.get(groupId, instanceId);
+            if (consumerStartRow == null || Bytes.compareTo(consumerStartRow, barrier.getStartRow()) < 0) {
+              delete = false;
+              break;
+            }
+          }
+          if (delete) {
+            deletes.put(groupId, row.getRow());
           }
         }
         row = scanner.next();
       }
     } finally {
       scanner.close();
+    }
+
+    // Remove barries that have all consumers consumed passed it
+    for (Map.Entry<Long, Collection<byte[]>> entry : deletes.asMap().entrySet()) {
+      // Retains the last barrier info
+      if (entry.getValue().size() <= 1) {
+        continue;
+      }
+      Deque<byte[]> rows = Lists.newLinkedList(entry.getValue());
+      rows.removeLast();
+      byte[] groupColumn = Bytes.toBytes(entry.getKey());
+      for (byte[] rowKey : rows) {
+        table.delete(rowKey, groupColumn);
+      }
     }
 
     table.put(put);

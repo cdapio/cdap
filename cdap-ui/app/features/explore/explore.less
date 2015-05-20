@@ -21,13 +21,11 @@ body.state-explore {
         max-height: 248px;
         overflow-y: auto;
 
-        .table-curved {
-          border-radius: 0;
+        & > .table-curved {
+          border-radius: 0 0 8px 8px;
 
-
-          tr > td:first-child {
-            font-weight: 700;
-          }
+          thead > tr > th { border-radius: 0; }
+          tr > td:first-child { font-weight: 700; }
         }
       }
 

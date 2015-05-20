@@ -26,25 +26,17 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
-import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetModule;
-import co.cask.cdap.data2.dataset2.lib.partitioned.TimePartitionedFileSetModule;
-import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
-import co.cask.cdap.data2.dataset2.lib.table.CubeModule;
-import co.cask.cdap.data2.dataset2.lib.table.ObjectMappedTableModule;
-import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
-import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
-import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.inmemory.MinimalTxSystemClient;
-import co.cask.tephra.runtime.TransactionInMemoryModule;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.PrivateModule;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 
@@ -54,15 +46,6 @@ import java.util.Map;
 
 public final class DatasetFrameworkTestUtil extends ExternalResource {
   public static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
-
-  private static final Id.DatasetModule inMemory = Id.DatasetModule.from(NAMESPACE_ID, "inMemory");
-  private static final Id.DatasetModule core = Id.DatasetModule.from(NAMESPACE_ID, "core");
-  private static final Id.DatasetModule fileSet = Id.DatasetModule.from(NAMESPACE_ID, "fileSet");
-  private static final Id.DatasetModule tpfs = Id.DatasetModule.from(NAMESPACE_ID, "tpfs");
-  private static final Id.DatasetModule pfs = Id.DatasetModule.from(NAMESPACE_ID, "pfs");
-  private static final Id.DatasetModule omt = Id.DatasetModule.from(NAMESPACE_ID, "objectMappedTable");
-  private static final Id.DatasetModule metrics = Id.DatasetModule.from(NAMESPACE_ID, "metrics");
-  private static final Id.DatasetModule cube = Id.DatasetModule.from(NAMESPACE_ID, "cube");
 
   private TemporaryFolder tmpFolder;
   private DatasetFramework framework;
@@ -78,48 +61,26 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
     final Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
-      new TransactionInMemoryModule());
-
-    framework = new InMemoryDatasetFramework(new DatasetDefinitionRegistryFactory() {
-      @Override
-      public DatasetDefinitionRegistry create() {
-        DefaultDatasetDefinitionRegistry registry = new DefaultDatasetDefinitionRegistry();
-        injector.injectMembers(registry);
-        return registry;
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new PrivateModule() {
+        @Override
+        protected void configure() {
+          install(new FactoryModuleBuilder()
+                    .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
+                    .build(DatasetDefinitionRegistryFactory.class));
+          bind(DatasetFramework.class).to(InMemoryDatasetFramework.class);
+          expose(DatasetFramework.class);
+        }
       }
-    }, cConf, injector.getInstance(TransactionExecutorFactory.class));
-    framework.addModule(inMemory, new InMemoryTableModule());
-    framework.addModule(core, new CoreDatasetsModule());
-    framework.addModule(fileSet, new FileSetModule());
-    framework.addModule(tpfs, new TimePartitionedFileSetModule());
-    framework.addModule(pfs, new PartitionedFileSetModule());
-    framework.addModule(omt, new ObjectMappedTableModule());
-    framework.addModule(metrics, new InMemoryMetricsTableModule());
-    framework.addModule(cube, new CubeModule());
+    );
+
+    framework = injector.getInstance(DatasetFramework.class);
   }
 
   @Override
   protected void after() {
-    Exception error = null;
-    try {
-      if (framework != null) {
-        framework.deleteModule(cube);
-        framework.deleteModule(metrics);
-        framework.deleteModule(omt);
-        framework.deleteModule(pfs);
-        framework.deleteModule(tpfs);
-        framework.deleteModule(fileSet);
-        framework.deleteModule(core);
-        framework.deleteModule(inMemory);
-      }
-    } catch (Exception e) {
-      error = e;
-    }
     if (tmpFolder != null) {
       tmpFolder.delete();
-    }
-    if (error != null) {
-      throw Throwables.propagate(error);
     }
   }
 

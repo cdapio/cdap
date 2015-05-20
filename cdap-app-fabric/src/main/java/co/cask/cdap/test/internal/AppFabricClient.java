@@ -216,6 +216,17 @@ public class AppFabricClient {
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set flowlet instances failed");
   }
 
+  public Instances getFlowletInstances(String namespaceId, String applicationId, String flowName, String flowletName) {
+    MockResponder responder = new MockResponder();
+    String uri = String.format("%s/apps/%s/flows/%s/flowlets/%s/instances",
+                               getNamespacePath(namespaceId), applicationId, flowName, flowletName);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
+    programLifecycleHttpHandler.getFlowletInstances(request, responder, namespaceId, applicationId, flowName,
+                                                    flowletName);
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get flowlet instances failed");
+    return responder.decodeResponseContent(Instances.class);
+  }
+
   public List<ScheduleSpecification> getSchedules(String namespaceId, String appId, String wflowId) {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/workflows/%s/schedules",
@@ -318,8 +329,13 @@ public class AppFabricClient {
     DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT,
       String.format("%s/templates/%s", getNamespacePath(namespace.getId()), templateId.getId()));
     MockResponder responder = new MockResponder();
-    adapterHttpHandler.deployTemplate(request, responder, namespace.getId(), templateId.getId());
-    verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to deploy template.");
+
+    try {
+      adapterHttpHandler.deployTemplate(request, responder, namespace.getId(), templateId.getId());
+      verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to deploy template.");
+    } catch (Exception e) {
+      LOG.error("Error deploying template", e);
+    }
   }
 
   public void createAdapter(Id.Adapter id, AdapterConfig config) {
@@ -327,41 +343,68 @@ public class AppFabricClient {
       String.format("%s/adapters/%s", getNamespacePath(id.getNamespaceId()), id.getId()));
     request.setContent(ChannelBuffers.wrappedBuffer(GSON.toJson(config).getBytes(Charsets.UTF_8)));
     MockResponder responder = new MockResponder();
-    adapterHttpHandler.createAdapter(request, responder, id.getNamespaceId(), id.getId());
-    verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to create adapter.");
+
+    try {
+      adapterHttpHandler.createAdapter(request, responder, id.getNamespaceId(), id.getId());
+      verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to create adapter.");
+    } catch (Exception e) {
+      LOG.error("Error creating adapter", e);
+    }
   }
 
   public void startAdapter(Id.Adapter id) {
     DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
       String.format("%s/adapters/%s/start", getNamespacePath(id.getNamespaceId()), id.getId()));
     MockResponder responder = new MockResponder();
-    adapterHttpHandler.startStopAdapter(request, responder, id.getNamespaceId(), id.getId(), "start");
-    verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to start adapter.");
+
+    try {
+      adapterHttpHandler.startStopAdapter(request, responder, id.getNamespaceId(), id.getId(), "start");
+      verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to start adapter.");
+    } catch (Exception e) {
+      LOG.error("Error starting adapter", e);
+    }
   }
 
   public void stopAdapter(Id.Adapter id) {
     DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
       String.format("%s/adapters/%s/stop", getNamespacePath(id.getNamespaceId()), id.getId()));
     MockResponder responder = new MockResponder();
-    adapterHttpHandler.startStopAdapter(request, responder, id.getNamespaceId(), id.getId(), "stop");
-    verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to stop adapter.");
+
+    try {
+      adapterHttpHandler.startStopAdapter(request, responder, id.getNamespaceId(), id.getId(), "stop");
+      verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to stop adapter.");
+    } catch (Exception e) {
+      LOG.error("Error stopping adapter", e);
+    }
   }
 
   public List<RunRecord> getAdapterRuns(Id.Adapter id) {
     DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
       String.format("%s/adapters/%s/runs", getNamespacePath(id.getNamespaceId()), id.getId()));
     MockResponder responder = new MockResponder();
-    adapterHttpHandler.getAdapterRuns(request, responder, id.getNamespaceId(), id.getId(), null, null, null, 100);
-    verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to get runs for adapter.");
-    return responder.decodeResponseContent(RUN_RECORDS_TYPE);
+
+    try {
+      adapterHttpHandler.getAdapterRuns(request, responder, id.getNamespaceId(), id.getId(), null, null, null, 100);
+      verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to get runs for adapter.");
+      return responder.decodeResponseContent(RUN_RECORDS_TYPE);
+    } catch (Exception e) {
+      LOG.error("Error getting adapter runs", e);
+      throw Throwables.propagate(e);
+    }
   }
 
   public RunRecord getAdapterRun(Id.Adapter adapterId, String runId) {
     DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
       String.format("%s/adapters/%s/runs/%s", getNamespacePath(adapterId.getNamespaceId()), adapterId.getId(), runId));
     MockResponder responder = new MockResponder();
-    adapterHttpHandler.getAdapterRun(request, responder, adapterId.getNamespaceId(), adapterId.getId(), runId);
-    verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to get run for adapter.");
-    return responder.decodeResponseContent(RunRecord.class);
+
+    try {
+      adapterHttpHandler.getAdapterRun(request, responder, adapterId.getNamespaceId(), adapterId.getId(), runId);
+      verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to get run for adapter.");
+      return responder.decodeResponseContent(RunRecord.class);
+    } catch (Exception e) {
+      LOG.error("Error getting adapter run", e);
+      throw Throwables.propagate(e);
+    }
   }
 }

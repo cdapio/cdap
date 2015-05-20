@@ -72,6 +72,7 @@
               <a ui-sref="mapreduce.detail.runs({namespace: $state.params.nsadmin, appId: apps.name, programId: program.name})" ng-if="program.type === 'Mapreduce'">{{ ::program.name }}</a>
               <a ui-sref="services.detail.status({namespace: $state.params.nsadmin, appId: apps.name, programId: program.name})" ng-if="program.type === 'Service'">{{ ::program.name }}</a>
               <a ui-sref="workflows.detail.runs({namespace: $state.params.nsadmin, appId: apps.name, programId: program.name})" ng-if="program.type === 'Workflow'">{{ ::program.name }}</a>
+              <a ui-sref="worker.detail.runs({namespace: $state.params.nsadmin, appId: apps.name, programId: program.name})" ng-if="program.type === 'Worker'">{{ ::program.name }}</a>
             </td>
             <td>{{ ::program.type }}</td>
             <td>{{ ::program.description }}</td>

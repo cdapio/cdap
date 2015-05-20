@@ -1,0 +1,49 @@
+<div class="btn-group" dropdown>
+
+  <div ng-if="status === 'STOPPED'"
+       class="btn btn-success btn-md"
+       ng-click="do('start')">
+    <span class="fa fa-play"> </span>
+    <span>Start</span>
+  </div>
+  <div ng-if="(status === 'RUNNING' || status === 'STARTED') && isStoppable === 'false'"
+       class="btn btn-success btn-md"
+       ng-disabled="status === 'RUNNING' && isStoppable === 'false'">
+       <span class="fa fa-play"></span>
+       <span>Start</span>
+  </div>
+  <div ng-if="(status === 'RUNNING' || status === 'STARTED') && isStoppable === 'true'"
+       class="btn btn-danger btn-md"
+       ng-click="do('stop')">
+    <span class="fa fa-stop"> </span>
+    <span>Stop</span>
+  </div>
+
+  <div ng-if="status === 'STARTING' || status === 'STOPPING'"
+       class="btn btn-md"
+       ng-class="{'btn-success': status === 'STARTING', 'btn-danger': status === 'STOPPING'}"
+       >
+    <span class="fa fa-refresh fa-spin"></span>
+    <span>{{status | caskCapitalizeFilter}}</span>
+  </div>
+
+  <button class="btn btn-md btn-success dropdown-toggle" dropdown-toggle ng-if="status === 'STOPPED'">
+    <span class="caret"></span>
+  </button>
+
+  <ul class="dropdown-menu dropdown-menu-right" role="menu" ng-if="status === 'STOPPED'">
+    <li>
+      <a href="#" ng-click="openRuntime()">
+        <span class="fa fa-wrench pull-right"></span>
+        <span> Runtime Arguments </span>
+      </a>
+    </li>
+    <li>
+      <a href="#" ng-click="openPreferences()">
+        <span class="fa fa-cog pull-right"></span>
+        <span> Preferences </span>
+      </a>
+    </li>
+  </ul>
+
+</div>

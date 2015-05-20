@@ -103,6 +103,7 @@ ngC3.controller('c3Controller', function ($scope, c3, myHelpers, $filter) {
     }
     chartConfig.zoom = { enabled: false };
     chartConfig.transition = { duration: 1000 };
+    chartConfig.donut = { width: 45 };
     $scope.chart = c3.generate(chartConfig);
   }
 

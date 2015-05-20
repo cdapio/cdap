@@ -41,7 +41,7 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
     }
   });
 
-  $scope.doAddWidget = function () {
+  $scope.doAddWidget = _.once(function () {
 
     var classes = [
       'chart-1',
@@ -80,7 +80,7 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
       $scope.currentBoard.addWidget($scope.model);
     }
     $scope.$close();
-  };
+  });
 
   $scope.closeModal = function() {
     $modalInstance.close();

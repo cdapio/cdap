@@ -18,6 +18,8 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -36,6 +38,7 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.proto.Id;
+import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Objects;
@@ -179,11 +182,11 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public void clearAllForFlow(String namespaceId, String app, String flow) throws Exception {
+  public void clearAllForFlow(Id.Flow flowId) throws Exception {
     // all queues for a flow are in one table
-    truncate(getDataTableId(namespaceId, app, flow));
+    truncate(getDataTableId(flowId));
     // we also have to delete the config for these queues
-    deleteConsumerConfigurations(namespaceId, app, flow);
+    deleteFlowConfigs(flowId);
   }
 
   @Override
@@ -195,11 +198,11 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public void dropAllForFlow(String namespaceId, String app, String flow) throws Exception {
+  public void dropAllForFlow(Id.Flow flowId) throws Exception {
     // all queues for a flow are in one table
-    drop(getDataTableId(namespaceId, app, flow));
+    drop(getDataTableId(flowId));
     // we also have to delete the config for these queues
-    deleteConsumerConfigurations(namespaceId, app, flow);
+    deleteFlowConfigs(flowId);
   }
 
   @Override
@@ -301,11 +304,39 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     });
   }
 
-  private void deleteConsumerConfigurations(String namespaceId, String app, String flow) throws Exception {
+  private void deleteFlowConfigs(Id.Flow flowId) throws Exception {
     // It's a bit hacky here since we know how the HBaseConsumerStateStore works.
     // Maybe we need another Dataset set that works across all queues.
-    QueueName prefixName = QueueName.from(URI.create(QueueName.prefixForFlow(namespaceId, app, flow)));
-    deleteConsumerStates(prefixName);
+    final QueueName prefixName = QueueName.from(URI.create(
+      QueueName.prefixForFlow(flowId)));
+
+    Id.DatasetInstance stateStoreId = getStateStoreId(flowId.getNamespaceId());
+    Map<String, String> args = ImmutableMap.of(HBaseQueueDatasetModule.PROPERTY_QUEUE_NAME, prefixName.toString());
+    HBaseConsumerStateStore stateStore = datasetFramework.getDataset(stateStoreId, args, null);
+    if (stateStore == null) {
+      // If the state store doesn't exists, meaning there is no queue, hence nothing to do.
+      return;
+    }
+
+    final Table table = stateStore.getInternalTable();
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) table)
+      .execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          // Prefix name is "/" terminated ("queue:///namespace/app/flow/"), hence the scan is unique for the flow
+          byte[] startRow = Bytes.toBytes(prefixName.toString());
+          Scanner scanner = table.scan(startRow, Bytes.stopKeyForPrefix(startRow));
+          try {
+            Row row = scanner.next();
+            while (row != null) {
+              table.delete(row.getRow());
+              row = scanner.next();
+            }
+          } finally {
+            scanner.close();
+          }
+        }
+      });
   }
 
   /**
@@ -317,15 +348,15 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public void dropAllInNamespace(String namespaceId) throws Exception {
+  public void dropAllInNamespace(Id.Namespace namespaceId) throws Exception {
     Set<QueueConstants.QueueType> queueTypes = EnumSet.of(QueueConstants.QueueType.QUEUE,
                                                           QueueConstants.QueueType.SHARDED_QUEUE);
     for (QueueConstants.QueueType queueType : queueTypes) {
       // Note: The trailing "." is crucial, since otherwise nsId could match nsId1, nsIdx etc
       // It's important to keep config table enabled while disabling and dropping  queue tables.
       final String queueTableNamePrefix = String.format("%s.%s.", Constants.SYSTEM_NAMESPACE, queueType);
-      final TableId configTableId = getConfigTableId(namespaceId);
-      tableUtil.deleteAllInNamespace(getHBaseAdmin(), Id.Namespace.from(namespaceId), new Predicate<TableId>() {
+      final TableId configTableId = getConfigTableId(namespaceId.getId());
+      tableUtil.deleteAllInNamespace(getHBaseAdmin(), namespaceId, new Predicate<TableId>() {
         @Override
         public boolean apply(TableId tableId) {
           // It's a bit hacky here since we know how the Dataset system names table
@@ -335,15 +366,15 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     }
 
     // Delete the state store in the namespace
-    Id.DatasetInstance id = getStateStoreId(namespaceId);
+    Id.DatasetInstance id = getStateStoreId(namespaceId.getId());
     if (datasetFramework.hasInstance(id)) {
       datasetFramework.deleteInstance(id);
     }
   }
 
   @Override
-  public TableId getDataTableId(String namespaceId, String app, String flow) {
-    return getDataTableId(namespaceId, app, flow, type);
+  public TableId getDataTableId(Id.Flow flowId) {
+    return getDataTableId(flowId, type);
   }
 
   @Override
@@ -355,15 +386,16 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     if (!queueName.isQueue()) {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
     }
-    return getDataTableId(queueName.getFirstComponent(),
-                          queueName.getSecondComponent(),
-                          queueName.getThirdComponent(),
+    return getDataTableId(Id.Flow.from(queueName.getFirstComponent(),
+                                       queueName.getSecondComponent(),
+                                       queueName.getThirdComponent()),
                           queueType);
   }
 
-  public TableId getDataTableId(String namespaceId, String app, String flow, QueueConstants.QueueType queueType) {
-    String tableName = String.format("%s.%s.%s.%s", Constants.SYSTEM_NAMESPACE, queueType, app, flow);
-    return TableId.from(namespaceId, tableName);
+  public TableId getDataTableId(Id.Flow flowId, QueueConstants.QueueType queueType) {
+    String tableName = String.format("%s.%s.%s.%s", Constants.SYSTEM_NAMESPACE, queueType, flowId.getApplicationId(),
+                                     flowId.getId());
+    return TableId.from(flowId.getNamespaceId(), tableName);
   }
 
   private void upgrade(TableId tableId, Properties properties) throws Exception {

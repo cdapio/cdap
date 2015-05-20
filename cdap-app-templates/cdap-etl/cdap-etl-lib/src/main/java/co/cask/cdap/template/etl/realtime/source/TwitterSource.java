@@ -61,7 +61,7 @@ public class TwitterSource extends RealtimeSource<StructuredRecord> {
   private static final String LANG = "lang";
   private static final String TIME = "time";
   private static final String FAVC = "favCount";
-  private static final String RTC = "rtCont";
+  private static final String RTC = "rtCount";
   private static final String SRC = "source";
   private static final String GLAT = "geolat";
   private static final String GLNG = "geoLong";
@@ -70,8 +70,7 @@ public class TwitterSource extends RealtimeSource<StructuredRecord> {
   private TwitterStream twitterStream;
   private StatusListener statusListener;
   private Queue<Status> tweetQ = Queues.newConcurrentLinkedQueue();
-  private StructuredRecord.Builder recordBuilder;
-
+  private Schema schema;
 
   private final TwitterConfig twitterConfig;
 
@@ -109,6 +108,7 @@ public class TwitterSource extends RealtimeSource<StructuredRecord> {
   }
 
   private StructuredRecord convertTweet(Status tweet) {
+    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(this.schema);
     recordBuilder.set(ID, tweet.getId());
     recordBuilder.set(MSG, tweet.getText());
     recordBuilder.set(LANG, tweet.getLang());
@@ -160,9 +160,8 @@ public class TwitterSource extends RealtimeSource<StructuredRecord> {
     Schema.Field geoLatField = Schema.Field.of(GLAT, Schema.of(Schema.Type.DOUBLE));
     Schema.Field geoLongField = Schema.Field.of(GLNG, Schema.of(Schema.Type.DOUBLE));
     Schema.Field reTweetField = Schema.Field.of(ISRT, Schema.of(Schema.Type.BOOLEAN));
-    recordBuilder = StructuredRecord.builder(Schema.recordOf(
-      "tweet", idField, msgField, langField, timeField, favCount, rtCount, sourceField, geoLatField, geoLongField,
-      reTweetField));
+    schema = Schema.recordOf("tweet", idField, msgField, langField, timeField, favCount, rtCount, sourceField,
+                             geoLatField, geoLongField, reTweetField);
 
     statusListener = new StatusListener() {
       @Override

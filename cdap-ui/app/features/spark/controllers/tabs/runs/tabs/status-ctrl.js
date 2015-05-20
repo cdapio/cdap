@@ -40,19 +40,7 @@ angular.module(PKG.name + '.feature.spark')
       }
     });
 
-    $scope.status = null;
-    $scope.duration = null;
-    $scope.startTime = null;
-
     // This controller is NOT shared between the accordions.
-    dataSrc.poll({
-      _cdapNsPath: basePath + '/runs/' + $scope.runs.selected.runid
-    }, function(res) {
-      var startMs = res.start * 1000;
-        $scope.startTime = new Date(startMs);
-        $scope.status = res.status;
-        $scope.duration = (res.end ? (res.end * 1000) - startMs : 0);
-      });
 
     $scope.getStagePercentage = function (type) {
       var total = ($scope.data.schedulerRunningStages

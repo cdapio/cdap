@@ -3,43 +3,36 @@
     <div class="col-xs-6">
       <h2> Datasets </h2>
     </div>
-    <div class="col-xs-6" ng-if="datasets.length > 0 || streams.length > 0">
+    <div class="col-xs-6" ng-if="dataList.length > 0">
       <button class="btn btn-default pull-right" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})"><span class="fa fa-plus"></span> Add Stream</button>
     </div>
   </div>
-  <div ng-if="datasets.length > 0 || streams.length > 0" datasets-list>
+  <div ng-if="dataList.length > 0" datasets-list>
     <div class="table-responsive">
       <table class="table table-curved" cask-sortable>
         <thead>
-          <tr ng-class="{'sort-enabled': datasets.length>0}">
+          <tr ng-class="{'sort-enabled': dataList.length>0}">
             <th class="col-xs-5" data-predicate="name">Name</th>
             <th class="col-xs-7" data-predicate="type">Type</th>
 
           </tr>
         </thead>
         <tbody>
-          <tr ng-repeat="dataset in datasets | orderBy:sortable.predicate:sortable.reverse">
-            <td class="col-xs-5">
-              <strong class="icon-datasets"></strong>
-              <a ui-sref="admin.namespace.detail.data.datasetmetadata({datasetId: dataset.name})">
-
-                <strong ng-bind="dataset.name"></strong>
-              </a>
-            </td>
-            <td class="col-xs-7">
-              <span> {{dataset.type}} </span>
-            </td>
-          </tr>
-          <tr ng-repeat="stream in streams | orderBy:sortable.predicate:sortable.reverse">
-            <td class="col-xs-5">
+          <tr ng-repeat="data in dataList | orderBy:sortable.predicate:sortable.reverse">
+            <td class="col-xs-5"  ng-if="data.type === 'Stream'">
               <strong class="icon-streams"></strong>
-              <a ui-sref="admin.namespace.detail.data.streammetadata({streamId: stream.name})">
-
-                <strong ng-bind="stream.name"></strong>
+              <a ui-sref="admin.namespace.detail.data.streammetadata({streamId: data.name})">
+                <strong ng-bind="data.name"></strong>
+              </a>
+            </td>
+            <td class="col-xs-5"  ng-if="data.type !== 'Stream'">
+              <strong class="icon-datasets"></strong>
+              <a ui-sref="admin.namespace.detail.data.datasetmetadata({datasetId: data.name})">
+                <strong ng-bind="data.name"></strong>
               </a>
             </td>
             <td class="col-xs-7">
-              <span> {{stream.type}} </span>
+              <span> {{data.type}} </span>
             </td>
           </tr>
         </tbody>
@@ -47,7 +40,7 @@
     </div>
   </div>
 
-  <div class="well text-center" ng-if="datasets.length === 0 && streams.length === 0">
+  <div class="well text-center" ng-if="dataList.length === 0">
     <p> Start by creating a Stream to ingest data. </p>
     <a class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})"><span class="fa fa-plus"></span> Add Stream</a>
   </div>

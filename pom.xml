@@ -90,7 +90,7 @@
     <etl.batch.plugin.name>ETLBatch</etl.batch.plugin.name>
     <etl.realtime.plugin.name>ETLRealtime</etl.realtime.plugin.name>
 
-    <asm.version>4.0</asm.version>
+    <asm.version>5.0.3</asm.version>
     <async.http.version>1.7.18</async.http.version>
     <avro.version>1.6.2</avro.version>
     <commons.codec.version>1.6</commons.codec.version>
@@ -142,42 +142,6 @@
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
     <release.iteration>1</release.iteration>
   </properties>
-
-  <modules>
-    <module>cdap-common-unit-test</module>
-    <module>cdap-api</module>
-    <module>cdap-common</module>
-    <module>cdap-watchdog-api</module>
-    <module>cdap-kafka</module>
-    <module>cdap-data-fabric</module>
-    <module>cdap-data-fabric-tests</module>
-    <module>cdap-hbase-compat-0.94</module>
-    <module>cdap-hbase-compat-0.96</module>
-    <module>cdap-hbase-compat-0.98</module>
-    <module>cdap-watchdog</module>
-    <module>cdap-app-fabric</module>
-    <module>cdap-security</module>
-    <module>cdap-gateway</module>
-    <module>cdap-explore-client</module>
-    <module>cdap-explore-jdbc</module>
-    <module>cdap-explore</module>
-    <module>cdap-unit-test</module>
-    <module>cdap-unit-test-standalone</module>
-    <module>cdap-master</module>
-    <module>cdap-proto</module>
-    <module>cdap-notifications</module>
-    <module>cdap-notifications-api</module>
-    <module>cdap-client</module>
-    <module>cdap-client-tests</module>
-    <module>cdap-cli</module>
-    <module>cdap-cli-tests</module>
-    <module>cdap-standalone</module>
-    <module>cdap-distributions</module>
-    <module>cdap-archetypes</module>
-    <module>cdap-test</module>
-    <module>cdap-integration-test</module>
-    <module>cdap-ui</module>
-  </modules>
 
   <dependencyManagement>
     <dependencies>
@@ -2162,6 +2126,67 @@
           </plugin>
         </plugins>
       </build>
+    </profile>
+
+    <!--
+      This profile contains modules that only has tests.
+    -->
+    <profile>
+      <id>unit-tests</id>
+      <activation>
+        <jdk>[1.7,)</jdk>
+      </activation>
+
+      <modules>
+        <module>cdap-data-fabric-tests</module>
+        <module>cdap-cli-tests</module>
+        <module>cdap-client-tests</module>
+      </modules>
+    </profile>
+
+    <!--
+       This profile defines all default modules and must come as the last profile.
+       It is needed so that when examples and templates profile are turned on, they are
+       built before cdap-standalone and cdap-master, which need examples and templates artifacts
+    -->
+    <profile>
+      <id>default</id>
+      <activation>
+        <jdk>[1.7,)</jdk>
+      </activation>
+
+      <modules>
+        <module>cdap-common-unit-test</module>
+        <module>cdap-api</module>
+        <module>cdap-common</module>
+        <module>cdap-watchdog-api</module>
+        <module>cdap-kafka</module>
+        <module>cdap-data-fabric</module>
+        <module>cdap-hbase-compat-0.94</module>
+        <module>cdap-hbase-compat-0.96</module>
+        <module>cdap-hbase-compat-0.98</module>
+        <module>cdap-watchdog</module>
+        <module>cdap-app-fabric</module>
+        <module>cdap-security</module>
+        <module>cdap-gateway</module>
+        <module>cdap-explore-client</module>
+        <module>cdap-explore-jdbc</module>
+        <module>cdap-explore</module>
+        <module>cdap-unit-test</module>
+        <module>cdap-master</module>
+        <module>cdap-proto</module>
+        <module>cdap-notifications</module>
+        <module>cdap-notifications-api</module>
+        <module>cdap-client</module>
+        <module>cdap-cli</module>
+        <module>cdap-standalone</module>
+        <module>cdap-unit-test-standalone</module>
+        <module>cdap-distributions</module>
+        <module>cdap-archetypes</module>
+        <module>cdap-test</module>
+        <module>cdap-integration-test</module>
+        <module>cdap-ui</module>
+      </modules>
     </profile>
   </profiles>
 

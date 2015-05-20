@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Managing the running Service in an application.
  */
-public interface ServiceManager {
+public interface ServiceManager extends ProgramManager {
   /**
    * Changes the number of instances.
    *
@@ -43,21 +43,10 @@ public interface ServiceManager {
   int getProvisionedInstances();
 
   /**
-   * Stops the running service.
-   */
-  void stop();
-
-  /**
-   * Checks if Service is Running
-   */
-  boolean isRunning();
-
-  /**
    * Used to discover the Service managed by this ServiceManager.
    * @return URL of the Service or {@code null} if the service is not available
    */
   URL getServiceURL();
-
 
   /**
    * Used to discover the Service managed by this ServiceManager which allows a custom timeout
@@ -68,22 +57,6 @@ public interface ServiceManager {
    * @return URL of the service or {@code null} if the service is not available
    */
   URL getServiceURL(long timeout, TimeUnit timeoutUnit);
-
-  /**
-   * Wait for the status of the Service with 5 seconds timeout.
-   * @param status true if waiting for started, false if waiting for stopped.
-   * @throws InterruptedException if the method is interrupted while waiting for the status.
-   */
-  void waitForStatus(boolean status) throws InterruptedException;
-
-  /**
-   * Wait for the status of the Service, retrying a given number of times with a timeout between attempts.
-   * @param status true if waiting for started, false if waiting for stopped.
-   * @param retries number of attempts to check for status.
-   * @param timeout timeout in seconds between attempts.
-   * @throws InterruptedException if the method is interrupted while waiting for the status.
-   */
-  void waitForStatus(boolean status, int retries, int timeout) throws InterruptedException;
 
   /**
    * @return the Service metrics.

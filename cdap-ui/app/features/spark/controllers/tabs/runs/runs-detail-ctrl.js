@@ -13,7 +13,7 @@ angular.module(PKG.name + '.feature.spark')
     $scope.activeTab = $scope.tabs[0];
 
     $scope.$on('$destroy', function(event) {
-      event.targetScope.runs.selected = null;
+      event.currentScope.runs.selected = null;
     });
 
     $scope.selectTab = function(tab) {

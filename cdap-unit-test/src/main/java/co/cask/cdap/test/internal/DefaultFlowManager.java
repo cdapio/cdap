@@ -17,6 +17,8 @@
 package co.cask.cdap.test.internal;
 
 import co.cask.cdap.api.metrics.RuntimeMetrics;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.RuntimeStats;
 import com.google.common.base.Preconditions;
@@ -25,31 +27,31 @@ import com.google.common.base.Throwables;
 /**
  * A default implementation of {@link co.cask.cdap.test.FlowManager}.
  */
-public class DefaultFlowManager implements FlowManager {
-
+public class DefaultFlowManager extends AbstractProgramManager implements FlowManager {
   private final AppFabricClient appFabricClient;
-  private final DefaultApplicationManager.ProgramId flowID;
-  private final DefaultApplicationManager applicationManager;
-  private final String flowName;
-  private final String applicationId;
-  private final String namespace;
 
-  public DefaultFlowManager(String namespace, String flowName, DefaultApplicationManager.ProgramId flowID,
-                            String applicationId, AppFabricClient appFabricClient,
+  public DefaultFlowManager(Id.Program programId, AppFabricClient appFabricClient,
                             DefaultApplicationManager applicationManager) {
-    this.namespace = namespace;
-    this.applicationManager = applicationManager;
-    this.applicationId = applicationId;
+    super(programId, applicationManager);
     this.appFabricClient = appFabricClient;
-    this.flowID = flowID;
-    this.flowName = flowName;
   }
 
   @Override
   public void setFlowletInstances(String flowletName, int instances) {
     Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
     try {
-      appFabricClient.setFlowletInstances(namespace, applicationId, flowName, flowletName, instances);
+      appFabricClient.setFlowletInstances(programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
+                                          flowletName, instances);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public int getFlowletInstances(String flowletName) {
+    try {
+      return appFabricClient.getFlowletInstances(programId.getNamespaceId(), programId.getApplicationId(),
+                                                 programId.getId(), flowletName).getInstances();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -57,16 +59,7 @@ public class DefaultFlowManager implements FlowManager {
 
   @Override
   public RuntimeMetrics getFlowletMetrics(String flowletId) {
-    return RuntimeStats.getFlowletMetrics(namespace, applicationId, flowName, flowletId);
-  }
-
-  @Override
-  public void stop() {
-    applicationManager.stopProgram(flowID);
-  }
-
-  @Override
-  public boolean isRunning() {
-    return applicationManager.isRunning(flowID);
+    return RuntimeStats.getFlowletMetrics(programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
+                                          flowletId);
   }
 }

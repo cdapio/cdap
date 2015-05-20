@@ -2,7 +2,11 @@
   "appenders": [
     {
       "category" : "default",
-      "type" : "console"
+      "filename": "./logs/ui-node-proxy.log",
+      "type" : "file"
+    },
+    {
+      "type": "console"
     }
   ],
   "levels": {

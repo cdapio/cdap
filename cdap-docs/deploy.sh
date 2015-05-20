@@ -203,16 +203,20 @@ decho "DEPLOY_TO_DOCS=${DEPLOY_TO_DOCS}"
 
 ### DEVELOP => Staging
 if [[ "${DEPLOY_TO_STG}" == 'yes' ]]; then
-  decho "Deploying to Staging server"
+  decho "Deploying artifacts to Staging server"
   deploy ${USER} ${STG_SERVER} ${REMOTE_STG_DIR} ${ZIP_FILE} ${FILE_PATH} ${VERSION} ${BRANCH}
 fi
 
 ### RELEASE => Docs Servers
 if [[ "${DEPLOY_TO_DOCS}" == 'yes' ]]; then
-  decho "Deploying to Docs servers"
-  for i in ${DOCS_SERVERS}; do
-    deploy ${USER} ${i} ${REMOTE_DOCS_DIR} ${ZIP_FILE} ${FILE_PATH} ${VERSION} ${BRANCH}
-  done
+  if [ "${BRANCH}" == '' ]; then
+    decho "Deploying artifacts to Docs servers"
+    for i in ${DOCS_SERVERS}; do
+      deploy ${USER} ${i} ${REMOTE_DOCS_DIR} ${ZIP_FILE} ${FILE_PATH} ${VERSION}
+    done
+  else
+    decho "Do not deploy artifacts from feature branches to Docs servers"
+  fi
 fi
-decho "####################### DEPLOYING DONE #######################"
+decho "####################### DONE DEPLOYING #######################"
 

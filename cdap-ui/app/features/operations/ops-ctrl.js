@@ -46,7 +46,7 @@ angular.module(PKG.name+'.feature.dashboard')
           dataSrc
             .poll({
               _cdapPath: '/metrics/query' +
-                '?context=namespace.system' +
+                '?tag=namespace:system' +
                 '&metric=system.resources.used.' +
                 m[i] + '&groupBy=app',
               method: 'POST'

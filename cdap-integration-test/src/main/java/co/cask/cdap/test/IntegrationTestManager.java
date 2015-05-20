@@ -36,6 +36,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.remote.RemoteAdapterManager;
 import co.cask.cdap.test.remote.RemoteApplicationManager;
+import co.cask.cdap.test.remote.RemoteStreamManager;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import org.apache.twill.filesystem.Location;
@@ -170,6 +171,6 @@ public class IntegrationTestManager implements TestManager {
 
   @Override
   public StreamManager getStreamManager(Id.Stream streamId) {
-    throw new UnsupportedOperationException();
+    return new RemoteStreamManager(clientConfig, streamId);
   }
 }

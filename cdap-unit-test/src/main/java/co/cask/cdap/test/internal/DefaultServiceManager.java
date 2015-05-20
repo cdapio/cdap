@@ -19,8 +19,9 @@ package co.cask.cdap.test.internal;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ServiceInstances;
-import co.cask.cdap.test.AbstractServiceManager;
+import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import com.google.common.base.Preconditions;
@@ -40,30 +41,26 @@ import javax.annotation.Nullable;
 /**
  * A default implementation of {@link ServiceManager}.
  */
-public class DefaultServiceManager extends AbstractServiceManager {
+public class DefaultServiceManager extends AbstractProgramManager implements ServiceManager {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceManager.class);
 
-  private final DefaultApplicationManager.ProgramId serviceId;
   private final String namespace;
   private final String applicationId;
   private final String serviceName;
 
   private final DiscoveryServiceClient discoveryServiceClient;
   private final AppFabricClient appFabricClient;
-  private final DefaultApplicationManager applicationManager;
 
-  public DefaultServiceManager(String namespace, DefaultApplicationManager.ProgramId serviceId,
+  public DefaultServiceManager(Id.Program programId,
                                AppFabricClient appFabricClient, DiscoveryServiceClient discoveryServiceClient,
                                DefaultApplicationManager applicationManager) {
-    this.serviceId = serviceId;
-    this.namespace = namespace;
-    this.applicationId = serviceId.getApplicationId();
-    this.serviceName = serviceId.getProgramId();
+    super(programId, applicationManager);
+    this.namespace = programId.getNamespaceId();
+    this.applicationId = programId.getApplicationId();
+    this.serviceName = programId.getId();
 
     this.discoveryServiceClient = discoveryServiceClient;
     this.appFabricClient = appFabricClient;
-    this.applicationManager = applicationManager;
-
   }
 
   @Override
@@ -94,15 +91,6 @@ public class DefaultServiceManager extends AbstractServiceManager {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
-  }
-
-  @Override
-  public void stop() {
-    applicationManager.stopProgram(serviceId);
-  }
-
-  public boolean isRunning() {
-    return applicationManager.isRunning(serviceId);
   }
 
   @Override

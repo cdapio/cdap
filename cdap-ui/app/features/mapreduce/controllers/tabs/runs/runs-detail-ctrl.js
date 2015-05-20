@@ -26,7 +26,7 @@ angular.module(PKG.name + '.feature.mapreduce')
       $scope.activeTab = tab;
     };
 
-    if ($scope.current !== 'No Run') {
+    if ($scope.runs.length > 0) {
       var runid = $scope.current;
 
       dataSrc.poll({
@@ -36,6 +36,7 @@ angular.module(PKG.name + '.feature.mapreduce')
       }, function (res) {
 
         $scope.info = res;
+
         $scope.mapProgress = Math.floor(res.mapProgress * 100);
         $scope.reduceProgress = Math.floor(res.reduceProgress * 100);
 

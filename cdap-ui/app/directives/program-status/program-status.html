@@ -1,0 +1,23 @@
+<div class="row run-status">
+  <div class="col-xs-6">
+    <table class="table table-curved table-status">
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Started</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td ng-if="status" ng-bind="status" ng-class="{'txt-failed': status === 'FAILED', 'txt-running': status === 'RUNNING'}"></td>
+          <td ng-if="!status"> Not Started</td>
+          <td ng-if="start" ng-bind="start | amDateFormat: 'MM/DD/YY h:mm:ss a'"> </td>
+          <td ng-if="!start"> &mdash; </td>
+          <td ng-if="duration" ng-bind="duration | amDurationFormat | caskCapitalizeFilter"> </td>
+          <td ng-if="!duration"> &mdash; </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

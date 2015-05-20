@@ -20,15 +20,16 @@ angular.module(PKG.name + '.feature.datasets')
         }
       ].forEach(pollMetric);
 
+      var datasetTags = {
+        namespace: $state.params.namespace,
+        dataset: currentDataset
+      };
+
       function pollMetric(metric) {
         // A temporary way to get the rate of a metric for a dataset.
         // Ideally this would be batched for datasets/streams
-        var path = '/metrics/query?metric=' +
-                    metric.name +
-                    '&context=namespace.' +
-                    $state.params.namespace +
-                    '.dataset.' +
-                    currentDataset +
+        var path = '/metrics/query?metric=' + metric.name +
+                    '&' + myHelpers.tagsToParams(datasetTags) +
                     '&start=now-1s&end=now-1s&resolution=1s';
 
         dataSrc.poll({
@@ -41,8 +42,9 @@ angular.module(PKG.name + '.feature.datasets')
       }
 
       dataSrc.poll({
-        _cdapPath : '/metrics/query?metric=system.dataset.store.bytes&context=namespace.' +
-                    $state.params.namespace + '.dataset.' + currentDataset + '&aggregate=true',
+        _cdapPath : '/metrics/query?metric=system.dataset.store.bytes' +
+                    '&' + myHelpers.tagsToParams(datasetTags) +
+                    '&aggregate=true',
         method: 'POST'
       }, function(metricData) {
         var data = query(metricData, 'series', 0, 'data', 0, 'value');

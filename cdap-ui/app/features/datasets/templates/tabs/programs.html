@@ -29,9 +29,12 @@
               <a ng-if="program.type === 'Service'" ui-sref="services.detail.status({ appId: program.application.applicationId, programId: program.id })">
                 {{ ::program.id }}
               </a>
-              <div ng-if="program.type === 'Worker'">
+              <a ng-if="program.type === 'Spark'" ui-sref="spark.detail.status({ appId: program.application.applicationId, programId: program.id })">
                 {{ ::program.id }}
-              </div>
+              </a>
+              <a ng-if="program.type === 'Worker'" ui-sref="worker.detail.status({ appId: program.application.applicationId, programId: program.id })">
+                {{ ::program.id }}
+              </a>
 
             </td>
             <td>

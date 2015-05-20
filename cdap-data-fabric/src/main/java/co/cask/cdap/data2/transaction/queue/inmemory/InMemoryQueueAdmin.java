@@ -20,6 +20,7 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.NoopQueueConfigurer;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConfigurer;
+import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -59,8 +60,8 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   }
 
   @Override
-  public void clearAllForFlow(String namespaceId, String app, String flow) throws Exception {
-    queueService.truncateAllWithPrefix(QueueName.prefixForFlow(namespaceId, app, flow));
+  public void clearAllForFlow(Id.Flow flowId) throws Exception {
+    queueService.truncateAllWithPrefix(QueueName.prefixForFlow(flowId));
   }
 
   @Override
@@ -74,13 +75,13 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   }
 
   @Override
-  public void dropAllInNamespace(String namespaceId) throws Exception {
-    queueService.resetQueuesWithPrefix(QueueName.prefixForNamespacedQueue(namespaceId));
+  public void dropAllInNamespace(Id.Namespace namespaceId) throws Exception {
+    queueService.resetQueuesWithPrefix(QueueName.prefixForNamespacedQueue(namespaceId.getId()));
   }
 
   @Override
-  public void dropAllForFlow(String namespaceId, String app, String flow) throws Exception {
-    queueService.resetQueuesWithPrefix(QueueName.prefixForFlow(namespaceId, app, flow));
+  public void dropAllForFlow(Id.Flow flowId) throws Exception {
+    queueService.resetQueuesWithPrefix(QueueName.prefixForFlow(flowId));
   }
 
   @Override
