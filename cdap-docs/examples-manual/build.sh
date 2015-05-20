@@ -126,6 +126,7 @@ function download_includes() {
   guide_rewrite_sed $1 cdap-spark-guide
   guide_rewrite_sed $1 cdap-timeseries-guide
   guide_rewrite_sed $1 cdap-twitter-ingest-guide
+  guide_rewrite_sed $1 cdap-workflow-guide
   
   echo_red_bold "Check included example files for changes"
   test_an_include 55738256b6c668914e0dde5c0ec44bd5 ../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/CountRandom.java
