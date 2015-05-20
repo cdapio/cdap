@@ -122,7 +122,7 @@ Injecting a Name
 
 In the Application's detail page, click on |who-flow|_. This takes you to
 the flow details page. (If you haven't already started the flow, click on the *Start*
-button in the right-side, below the green arrow.) The flow's *status* will read *Running*
+button in the right-side, below the green arrow.) The flow's *status* will read *RUNNING*
 when it is ready to receive events.
 
 Now click on the *who* stream on the left side of the flow visualization, which brings up

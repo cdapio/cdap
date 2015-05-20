@@ -120,12 +120,12 @@ Once CDAP is started, you can deploy an example JAR by any of these methods:
 Starting an Application
 -----------------------
 
-Once an application is deployed:
+Once an application is deployed, there are multiple methods for starting an application:
 
 - You can go to the application's detail page in the CDAP UI by clicking on the
   application's name in either the |develop|_ page or on the |all_apps|_ page. Now you can 
   see the status of any of the programs associated with the application and, by clicking
-  on them, go to their detail page where you can start or stop them; or
+  on them, go to their detail page where you can start or stop them.
 - From the Standalone CDAP SDK directory, use the :ref:`Command Line Interface<cli>`.
   In each CDAP example, the CLI commands for that particular example are provided::
 
@@ -161,7 +161,7 @@ Removing an Application
 -----------------------
 
 Once an application is stopped |---| all of its programs (flows, MapReduce programs,
-workflows, etc.), queries, and services are stopped |---| you can go to the |all_apps|_
+workflows, services, etc.) are stopped |---| you can go to the |all_apps|_
 page of the CDAP UI, click on the particular application to go to its detail page, click
 the *Actions* menu on the right side and select *Manage* to go to the Management pane for
 the application, then click the *Actions* menu on the right side and select *Delete*.
