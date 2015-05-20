@@ -1,10 +1,18 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowletDetailOutputController', function($state, $scope, MyDataSource) {
+  .controller('FlowletDetailOutputController', function($state, $scope, MyDataSource, myHelpers) {
 
     var dataSrc = new MyDataSource($scope);
     var flowletid = $scope.$parent.activeFlowlet.name;
     var runid = $scope.runs.selected.runid;
     $scope.outputs = [];
+
+    var flowletTags = {
+      namespace: $state.params.namespace,
+      app: $state.params.appId,
+      flow: $state.params.programId,
+      run: runid,
+      flowlet: flowletid
+    };
 
     // Initialize
     dataSrc
@@ -24,15 +32,12 @@ angular.module(PKG.name + '.feature.flows')
           // OUTPUT METRICS
           dataSrc
             .poll({
-              _cdapPath: '/metrics/query?context=namespace.' + $state.params.namespace
-                            + '.app.' + $state.params.appId
-                            + '.flow.' + $state.params.programId
-                            + '.run.' + runid
-                            + '.flowlet.' + flowletid
+              _cdapPath: '/metrics/query?' + myHelpers.tagsToParams(flowletTags)
                             + '&metric=system.process.events.out&start=now-60s&count=60',
               method: 'POST'
             }, function(res) {
               if (res.series[0]) {
+                debugger;
                 updateOutput(res.series[0].data);
               } else {
                   var val = [];
@@ -83,11 +88,7 @@ angular.module(PKG.name + '.feature.flows')
             // Total
             dataSrc
               .poll({
-                _cdapPath: '/metrics/query?context=namespace.' + $state.params.namespace
-                              + '.app.' + $state.params.appId
-                              + '.flow.' + $state.params.programId
-                              + '.run.' + runid
-                              + '.flowlet.' + flowletid
+                _cdapPath: '/metrics/query?' + myHelpers.tagsToParams(flowletTags)
                               + '&metric=system.process.events.out',
                 method: 'POST'
               }, function(res) {

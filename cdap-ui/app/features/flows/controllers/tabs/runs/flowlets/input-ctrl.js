@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowletDetailInputController', function($state, $scope, MyDataSource) {
+  .controller('FlowletDetailInputController', function($state, $scope, MyDataSource, myHelpers) {
 
     var dataSrc = new MyDataSource($scope);
     var flowletid = $scope.$parent.activeFlowlet.name;
@@ -27,15 +27,21 @@ angular.module(PKG.name + '.feature.flows')
         if ($scope.inputs.length > 0) {
 
           angular.forEach($scope.inputs, function (input) {
-            var flowletPath = '/metrics/query?context=namespace.' + $state.params.namespace
-                              + '.app.' + $state.params.appId
-                              + '.flow.' + $state.params.programId
-                              + '.consumer.' + flowletid
-                              + '.producer.' + input.name
+            var flowletTags = {
+              namespace: $state.params.namespace,
+              app: $state.params.appId,
+              flow: $state.params.programId,
+              consumer: flowletid,
+              producer: input.name
+            };
+            var streamTags = {
+              namespace: $state.params.namespace,
+              stream: input.name
+            };
+            var flowletPath = '/metrics/query?' + myHelpers.tagsToParams(flowletTags)
                               + '&metric=system.queue.pending',
-                streamPath = '/metrics/query?context=namespace.' + $state.params.namespace
-                              + '.stream.' + input.name
-                              + '&metric=system.collect.events&start=now-60s';
+                streamPath = '/metrics/query?' + myHelpers.tagsToParams(streamTags);
+                              + '&metric=system.collect.events';
 
             var path = '';
             if (input.sourceType === 'STREAM') {
@@ -150,13 +156,13 @@ angular.module(PKG.name + '.feature.flows')
               '&tag=flowlet:' + flowletid +
               '&tag=run:' + $scope.runs.selected.runid +
               '&start=now-1s&end=now';
+            // TODO: should this value be averaged over more than just the past 1 second?
             // POLLING ARRIVAL RATE
             dataSrc
               .poll({
                 _cdapPath: arrivalPath,
                 method: 'POST'
               }, function (res) {
-                console.log('RES', res);
                 if (res.series[0]) {
                   input.total = res.series[0].data[0].value;
                 }
