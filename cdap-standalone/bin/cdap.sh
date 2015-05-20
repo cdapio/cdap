@@ -72,7 +72,7 @@ SAVED="`pwd`"
 cd "`dirname \"$PRG\"`/.." >&-
 APP_HOME="`pwd -P`"
 
-CLASSPATH=$APP_HOME/lib/*:$APP_HOME/conf/
+CLASSPATH="$APP_HOME/lib/*":"$APP_HOME/conf/"
 
 # Determine the Java command to use to start the JVM.
 if [ -n "$JAVA_HOME" ] ; then
@@ -213,31 +213,31 @@ start() {
 
     eval splitJvmOpts $DEFAULT_JVM_OPTS $JAVA_OPTS $CDAP_OPTS
     check_before_start
-    mkdir -p $APP_HOME/logs
-    rotate_log $APP_HOME/logs/cdap.log
-    rotate_log $APP_HOME/logs/cdap-debug.log
+    mkdir -p "$APP_HOME/logs"
+    rotate_log "$APP_HOME/logs/cdap.log"
+    rotate_log "$APP_HOME/logs/cdap-debug.log"
 
     if test -e /proc/1/cgroup && grep docker /proc/1/cgroup 2>&1 >/dev/null; then
         ROUTER_OPTS="-Drouter.address=`hostname -i`"
     fi
 
     nohup nice -1 "$JAVACMD" "${JVM_OPTS[@]}" ${ROUTER_OPTS} -classpath "$CLASSPATH" co.cask.cdap.StandaloneMain >> \
-        $APP_HOME/logs/cdap.log 2>&1 < /dev/null &
+        "$APP_HOME/logs/cdap.log" 2>&1 < /dev/null &
     echo $! > $pid
 
     echo -n "Starting Standalone CDAP ..."
 
     background_process=$!
     while kill -0 $background_process >/dev/null 2>/dev/null ; do
-      if grep '..* started successfully' $APP_HOME/logs/cdap.log > /dev/null 2>&1; then
+      if grep '..* started successfully' "$APP_HOME/logs/cdap.log" > /dev/null 2>&1; then
         if $debug ; then
           echo; echo "Remote debugger agent started on port $port."
         else
           echo
         fi
-        grep -A 1 '..* started successfully' $APP_HOME/logs/cdap.log
+        grep -A 1 '..* started successfully' "$APP_HOME/logs/cdap.log"
         break
-      elif grep 'Failed to start server' $APP_HOME/logs/cdap.log > /dev/null 2>&1; then
+      elif grep 'Failed to start server' "$APP_HOME/logs/cdap.log" > /dev/null 2>&1; then
         echo; echo "Failed to start server"
         stop
         break

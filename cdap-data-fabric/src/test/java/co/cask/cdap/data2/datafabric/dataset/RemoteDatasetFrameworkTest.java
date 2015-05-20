@@ -120,8 +120,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
       .putAll(DatasetMetaTableUtil.getModules())
       .build();
 
-    InMemoryDatasetFramework mdsFramework = new InMemoryDatasetFramework(
-      registryFactory, modules, cConf, txExecutorFactory);
+    InMemoryDatasetFramework mdsFramework = new InMemoryDatasetFramework(registryFactory, modules, cConf);
     MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework);
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);

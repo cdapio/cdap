@@ -29,9 +29,12 @@
         "initrd=/install/initrd.gz -- <enter>"
       ],
       "vboxmanage_post": [
-        ["modifyvm", "{{ .Name }}", "--memory", "4096"]
+        ["modifyvm", "{{ .Name }}", "--memory", "4096"],
+        ["modifyvm", "{{ .Name }}", "--clipboard", "bidirectional"],
+        ["modifyvm", "{{ .Name }}", "--accelerate2dvideo", "on"],
+        ["modifyvm", "{{ .Name }}", "--accelerate3d", "on"]
       ],
-      "vm_name": "CDAP SDK VM {{user `sdk_version`}}",
+      "vm_name": "cdap-standalone-vm-{{user `sdk_version`}}",
       "name": "cdap-sdk-vm"
     }
   ],
@@ -62,10 +65,7 @@
     },
     {
       "type": "shell",
-      "scripts": [
-        "scripts/eclipse-cookbook.sh",
-        "scripts/motd.sh"
-      ],
+      "scripts": "scripts/eclipse-cookbook.sh",
       "only": ["cdap-sdk-vm"]
     },
     {
@@ -115,12 +115,14 @@
       "type": "shell",
       "scripts": [
         "scripts/remove-chef.sh",
+        "scripts/sdk-cleanup.sh",
         "scripts/apt-cleanup.sh"
       ]
     },
     {
       "type": "shell",
       "scripts": [
+        "scripts/motd.sh",
         "scripts/random-root-password.sh",
         "scripts/zero-disk.sh"
       ],

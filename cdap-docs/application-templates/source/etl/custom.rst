@@ -4,14 +4,14 @@
 
 .. _advanced-custom-app-template:
 
-=========================================
-Creating Custom ETL Plugins and Adapters 
-=========================================
+===========================
+Creating Custom ETL Plugins
+===========================
 
 Overview
 ========
-This section is intended for developers writing custom ETL Plugins and
-Adapters. Users of these should refer to the :ref:`Application Templates
+This section is intended for developers writing custom ETL Plugins.
+Users of these should refer to the :ref:`Application Templates
 <apptemplates-index>`.
 
 

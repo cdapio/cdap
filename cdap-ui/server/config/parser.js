@@ -39,8 +39,13 @@ function extractConfig(param) {
     tool.stdout.on('end', onConfigReadEnd.bind(this, deferred, param));
   } else {
     try {
-      cache[param] = require('../../../conf/generated/cdap-config.json');
+      path = getConfigPath(param);
+      if (path.length) {
+        path = path.replace(/\"/g, '');
+        cache[param] = require(path);
+      }
     } catch(e) {
+      log.info(e);
       // Indicates the backend is not running in local environment and that we want only the
       // UI to be running. This is here for convenience.
       log.info('Using development configuration for "' + param + '"');
@@ -50,6 +55,23 @@ function extractConfig(param) {
     deferred.resolve(cache[param]);
   }
   return deferred.promise;
+}
+
+function getConfigPath(param) {
+  var configName = (param ==='security'? 'sConf': 'cConf');
+  var args = process.argv.slice(2),
+      value = '',
+      i;
+  for (i=0; i<args.length; i++) {
+    if (args[i].indexOf(configName) !== -1) {
+      value = args[i].split('=');
+      if (value.length > 1) {
+        value = value[1];
+      }
+      break;
+    }
+  }
+  return value;
 }
 
 function onConfigReadEnd (deferred, param) {

@@ -19,42 +19,13 @@ package co.cask.cdap.test;
 /**
  * Managing the worker in an application.
  */
-public interface WorkerManager {
+public interface WorkerManager extends ProgramManager {
 
   /**
    * Changes the number of instances.
    * @param instances number of instances to change to
    */
   void setInstances(int instances);
-
-  /**
-   * Stops the running worker.
-   */
-  void stop();
-
-  /**
-   * Checks if the worker is running.
-   * @return true if worker is running
-   */
-  boolean isRunning();
-
-  /**
-   * Waits for the worker to be running or stopped.
-   *
-   * @param status true to wait for running, false to wait for stopped
-   * @throws InterruptedException
-   */
-  void waitForStatus(boolean status) throws InterruptedException;
-
-  /**
-   * Waits for the worker to be running or stopped.
-   *
-   * @param status true to wait for running, false to wait for stopped
-   * @param retries times to retry
-   * @param timeout how long to try before timing out
-   * @throws InterruptedException
-   */
-  void waitForStatus(boolean status, int retries, int timeout) throws InterruptedException;
 
   /**
    * Returns the number of instances.

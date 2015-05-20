@@ -21,7 +21,7 @@ import co.cask.cdap.proto.Id;
 /**
  * Thrown when an element cannot be deleted.
  */
-public class CannotBeDeletedException extends Exception {
+public class CannotBeDeletedException extends ConflictException {
 
   private final Id objectId;
 

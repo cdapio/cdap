@@ -129,8 +129,9 @@ body.theme-cdap {
         &:only-child { .border-radius(@table-radius @table-radius 0 0); }
       }
       tr:last-child {
-        td:first-child { .border-radius(0 0 0 @table-radius); }
-        td:last-child { .border-radius(0 0 @table-radius 0); }
+        & > td:first-child { .border-radius(0 0 0 @table-radius); }
+        & > td:last-child { .border-radius(0 0 @table-radius 0); }
+        & > td:only-child { .border-radius(0 0 @table-radius @table-radius); }
       }
   }
 
@@ -378,9 +379,7 @@ body.theme-cdap {
       }
     }
     .modal-dialog {
-      -ms-transform: translateX(0%) translateY(60px);
-      -webkit-transform: translateX(0%) translateY(60px);
-      transform: translateX(0%) translateY(60px);
+      margin-top: 100px;
       .modal-header {
         .btn {
           .cask-btn(@color: @cdap-header, @background: white, @border: 0, @border-radius: 16px, @padding: 5px 7px);

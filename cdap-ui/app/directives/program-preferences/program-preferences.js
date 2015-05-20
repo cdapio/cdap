@@ -82,7 +82,7 @@ angular.module(PKG.name+'.commons')
         })
         .then(function() {
           $scope.loadProperties();
-          $scope.$close();
+          $scope.$close(obj);
         });
     };
 

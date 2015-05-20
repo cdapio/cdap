@@ -16,6 +16,9 @@
 
 package co.cask.cdap.data2.registry;
 
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.proto.Id;
@@ -40,6 +43,10 @@ import java.util.Set;
 public class UsageRegistry {
 
   private static final Logger LOG = LoggerFactory.getLogger(UsageRegistry.class);
+
+  private static final Id.DatasetInstance USAGE_INSTANCE_ID =
+    Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE_ID, "usage.registry");
+
   private final Transactional<UsageDatasetIterable, UsageDataset> txnl;
 
   @Inject
@@ -48,7 +55,11 @@ public class UsageRegistry {
       @Override
       public UsageDatasetIterable get() {
         try {
-          return new UsageDatasetIterable(UsageDatasets.get(datasetFramework));
+          UsageDataset usageDataset = DatasetsUtil.getOrCreateDataset(datasetFramework,
+                                                                      USAGE_INSTANCE_ID,
+                                                                      UsageDataset.class.getSimpleName(),
+                                                                      DatasetProperties.EMPTY, null, null);
+          return new UsageDatasetIterable(usageDataset);
         } catch (Exception e) {
           LOG.error("Failed to access usage table", e);
           throw Throwables.propagate(e);

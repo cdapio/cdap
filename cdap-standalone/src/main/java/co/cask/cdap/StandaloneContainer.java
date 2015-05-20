@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- *
+ * A helper class to start standalone. It should only be used in constructing test bases for testing purpose.
  */
 public class StandaloneContainer {
 
@@ -63,10 +63,11 @@ public class StandaloneContainer {
         tempDirectory = Files.createTempDir();
         cConf.set(Constants.CFG_LOCAL_DATA_DIR, tempDirectory.getAbsolutePath());
         cConf.set(Constants.Router.ADDRESS, HOSTNAME);
-        cConf.set(Constants.Dangerous.UNRECOVERABLE_RESET, "true");
+        cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
+        cConf.setBoolean(StandaloneMain.DISABLE_UI, true);
 
         // Start without UI
-        standaloneMain = StandaloneMain.create(null, cConf, new Configuration());
+        standaloneMain = StandaloneMain.create(cConf, new Configuration());
         standaloneMain.startUp();
 
         waitForStandalone(30000);

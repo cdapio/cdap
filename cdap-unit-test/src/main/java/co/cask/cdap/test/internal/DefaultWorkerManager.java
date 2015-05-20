@@ -16,60 +16,40 @@
 
 package co.cask.cdap.test.internal;
 
-import co.cask.cdap.test.AbstractWorkerManager;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.WorkerManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * A default implementation of {@link WorkerManager}
  */
-public class DefaultWorkerManager extends AbstractWorkerManager {
-
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultWorkerManager.class);
-
-  private final DefaultApplicationManager.ProgramId programId;
-  private final String appId;
-  private final String workerId;
-
+public class DefaultWorkerManager extends AbstractProgramManager implements WorkerManager {
   private final AppFabricClient appFabricClient;
-  private final DefaultApplicationManager applicationManager;
-  private final String namespace;
 
-  public DefaultWorkerManager(String namespace, DefaultApplicationManager.ProgramId programId,
+  public DefaultWorkerManager(Id.Program programId,
                               AppFabricClient appFabricClient, DefaultApplicationManager applicationManager) {
-    this.namespace = namespace;
-    this.programId = programId;
-    this.appId = programId.getApplicationId();
-    this.workerId = programId.getProgramId();
+    super(programId, applicationManager);
     this.appFabricClient = appFabricClient;
-    this.applicationManager = applicationManager;
   }
 
   @Override
   public void setInstances(int instances) {
     Preconditions.checkArgument(instances > 0, "Instance count should be > 0.");
     try {
-      appFabricClient.setWorkerInstances(namespace, appId, workerId, instances);
+      appFabricClient.setWorkerInstances(programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
+                                         instances);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
 
   @Override
-  public void stop() {
-    applicationManager.stopProgram(programId);
-  }
-
-  @Override
-  public boolean isRunning() {
-    return applicationManager.isRunning(programId);
-  }
-
-  @Override
   public int getInstances() {
-    return appFabricClient.getWorkerInstances(namespace, appId, workerId).getInstances();
+    return appFabricClient.getWorkerInstances(programId.getNamespaceId(), programId.getApplicationId(),
+                                              programId.getId()).getInstances();
   }
 }

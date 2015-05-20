@@ -14,7 +14,10 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-echo "			Welcome to the CDAP SDK VM
+for i in motd welcome.txt issue issue.net ; do
+
+cat > /etc/$i << EOF
+			Welcome to the CDAP SDK VM
 
 This virtual machine uses a simple graphical interface. The menu can be accessed
 by right-clicking on the background. If you have a Mac, this is a two-finger tap
@@ -35,4 +38,5 @@ Logs for the SDK are found at /opt/cdap/sdk/logs, data is stored at
 /opt/cdap/sdk/data, and example applications are at
 /opt/cdap/sdk/examples.
 
-" > /etc/motd
+EOF
+done

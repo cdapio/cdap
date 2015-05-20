@@ -94,6 +94,6 @@ public class KVTableSink extends BatchWritableSink<StructuredRecord, byte[], byt
     byte[] keyBytes = key instanceof ByteBuffer ? Bytes.toBytes((ByteBuffer) key) : (byte[]) key;
     Object val = input.get(kvTableConfig.valueField);
     byte[] valBytes = val instanceof ByteBuffer ? Bytes.toBytes((ByteBuffer) val) : (byte[]) val;
-    emitter.emit(new KeyValue<byte[], byte[]>(keyBytes, valBytes));
+    emitter.emit(new KeyValue<>(keyBytes, valBytes));
   }
 }

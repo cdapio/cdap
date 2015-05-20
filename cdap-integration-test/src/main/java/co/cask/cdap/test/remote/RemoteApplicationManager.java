@@ -16,67 +16,47 @@
 
 package co.cask.cdap.test.remote;
 
-import co.cask.cdap.api.metrics.RuntimeMetrics;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.client.ApplicationClient;
-import co.cask.cdap.client.MetricsClient;
 import co.cask.cdap.client.ProgramClient;
-import co.cask.cdap.client.ScheduleClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.test.AbstractWorkerManager;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
+import co.cask.cdap.test.DefaultMapReduceManager;
+import co.cask.cdap.test.DefaultSparkManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
-import co.cask.cdap.test.ScheduleManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamWriter;
 import co.cask.cdap.test.WorkerManager;
 import co.cask.cdap.test.WorkflowManager;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  *
  */
 public class RemoteApplicationManager implements ApplicationManager {
-
   protected final Id.Application application;
 
   private final ClientConfig clientConfig;
-  private final MetricsClient metricsClient;
+  private final ProgramClient programClient;
+  private final ApplicationClient applicationClient;
 
   public RemoteApplicationManager(Id.Application application, ClientConfig clientConfig) {
     this.application = application;
+
     ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig).build();
     namespacedClientConfig.setNamespace(application.getNamespace());
-
     this.clientConfig = namespacedClientConfig;
-    this.metricsClient = new MetricsClient(namespacedClientConfig);
-  }
-
-  private ApplicationClient getApplicationClient() {
-    return new ApplicationClient(clientConfig);
-  }
-
-  private ProgramClient getProgramClient() {
-    return new ProgramClient(clientConfig);
-  }
-
-  private ScheduleClient getScheduleClient() {
-    return new ScheduleClient(clientConfig);
+    this.programClient = new ProgramClient(clientConfig);
+    this.applicationClient = new ApplicationClient(clientConfig);
   }
 
   @Override
@@ -86,103 +66,33 @@ public class RemoteApplicationManager implements ApplicationManager {
 
   @Override
   public FlowManager startFlow(final String flowName, Map<String, String> arguments) {
-    final ProgramId flowId = startProgram(flowName, arguments, ProgramType.FLOW);
-    return new FlowManager() {
-      @Override
-      public void setFlowletInstances(String flowletName, int instances) {
-        Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
-        try {
-          getProgramClient().setFlowletInstances(application.getId(), flowName, flowletName, instances);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
-      }
-
-      @Override
-      public RuntimeMetrics getFlowletMetrics(String flowletId) {
-        return metricsClient.getFlowletMetrics(
-          Id.Program.from(application, ProgramType.FLOW, flowId.getProgramId()), flowletId);
-      }
-
-      @Override
-      public void stop() {
-        stopProgram(flowId);
-      }
-
-      @Override
-      public boolean isRunning() {
-        try {
-          String status = getProgramClient().getStatus(application.getId(), ProgramType.FLOW, flowName);
-          return "RUNNING".equals(status);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
-      }
-    };
+    final Id.Program flowId = startProgram(flowName, arguments, ProgramType.FLOW);
+    return new RemoteFlowManager(flowId, clientConfig, this);
   }
 
   @Override
-  public MapReduceManager startMapReduce(final String jobName) {
-    return startMapReduce(jobName, ImmutableMap.<String, String>of());
+  public MapReduceManager startMapReduce(final String programName) {
+    return startMapReduce(programName, ImmutableMap.<String, String>of());
   }
 
   @Override
-  public MapReduceManager startMapReduce(final String jobName, Map<String, String> arguments) {
-    return getMapReduceManager(jobName, arguments, ProgramType.MAPREDUCE);
-  }
-
-  private MapReduceManager getMapReduceManager(final String jobName, Map<String, String> arguments,
-                                               final ProgramType programType) {
-    try {
-      final ProgramId jobId = startProgram(jobName, arguments, programType);
-      return new MapReduceManager() {
-        @Override
-        public void stop() {
-          stopProgram(jobId);
-        }
-
-        @Override
-        public void waitForFinish(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
-          programWaitForFinish(timeout, timeoutUnit, jobId);
-        }
-      };
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+  public MapReduceManager startMapReduce(final String programName, Map<String, String> arguments) {
+    Id.Program programId = startProgram(programName, arguments, ProgramType.MAPREDUCE);
+    return new DefaultMapReduceManager(programId, this);
   }
 
   @Override
-  public SparkManager startSpark(String jobName) {
-    return startSpark(jobName, ImmutableMap.<String, String>of());
+  public SparkManager startSpark(String programName) {
+    return startSpark(programName, ImmutableMap.<String, String>of());
   }
 
   @Override
-  public SparkManager startSpark(String jobName, Map<String, String> arguments) {
-    return getSparkManager(jobName, arguments, ProgramType.SPARK);
+  public SparkManager startSpark(String programName, Map<String, String> arguments) {
+    final Id.Program programId = startProgram(programName, arguments, ProgramType.SPARK);
+    return new DefaultSparkManager(programId, this);
   }
 
-  private SparkManager getSparkManager(final String jobName, Map<String, String> arguments,
-                                       final ProgramType programType) {
-    try {
-      final ProgramId jobId = startProgram(jobName, arguments, programType);
-      return new SparkManager() {
-        @Override
-        public void stop() {
-          stopProgram(jobId);
-        }
-
-        @Override
-        public void waitForFinish(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
-          programWaitForFinish(timeout, timeoutUnit, jobId);
-        }
-      };
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  private ProgramId startProgram(String programName, Map<String, String> arguments, ProgramType programType) {
-    ProgramClient programClient = getProgramClient();
+  private Id.Program startProgram(String programName, Map<String, String> arguments, ProgramType programType) {
     try {
       String status = programClient.getStatus(application.getId(), programType, programName);
       Preconditions.checkState("STOPPED".equals(status), programType + " program %s is already running", programName);
@@ -190,78 +100,14 @@ public class RemoteApplicationManager implements ApplicationManager {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
-    return new ProgramId(programName, programType);
-  }
-
-  private void programWaitForFinish(long timeout, TimeUnit timeoutUnit,
-                                    ProgramId jobId) throws InterruptedException, TimeoutException {
-    // Min sleep time is 10ms, max sleep time is 1 seconds
-    long sleepMillis = Math.max(10, Math.min(timeoutUnit.toMillis(timeout) / 10, TimeUnit.SECONDS.toMillis(1)));
-    Stopwatch stopwatch = new Stopwatch().start();
-    while (isRunning(jobId) && stopwatch.elapsedTime(timeoutUnit) < timeout) {
-      TimeUnit.MILLISECONDS.sleep(sleepMillis);
-    }
-
-    if (isRunning(jobId)) {
-      throw new TimeoutException("Time limit reached.");
-    }
+    return Id.Program.from(application, programType, programName);
   }
 
   @Override
   public WorkflowManager startWorkflow(final String workflowName, Map<String, String> arguments) {
     // currently we are using it for schedule, so not starting the workflow
-    return new WorkflowManager() {
-      @Override
-      public List<ScheduleSpecification> getSchedules() {
-        try {
-          return getScheduleClient().list(application.getId(), workflowName);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
-      }
-
-      @Override
-      public List<RunRecord> getHistory() {
-        try {
-          return getProgramClient().getProgramRuns(application.getId(), ProgramType.WORKFLOW,
-                                                   workflowName, "ALL", 0, Long.MAX_VALUE, Integer.MAX_VALUE);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
-      }
-
-      public ScheduleManager getSchedule(final String schedName) {
-        return new ScheduleManager() {
-          @Override
-          public void suspend() {
-            try {
-              getScheduleClient().suspend(application.getId(), schedName);
-            } catch (Exception e) {
-              throw Throwables.propagate(e);
-            }
-          }
-
-          @Override
-          public void resume() {
-            try {
-              getScheduleClient().resume(application.getId(), schedName);
-            } catch (Exception e) {
-              throw Throwables.propagate(e);
-            }
-          }
-
-          @Override
-          public String status(int expectedCode) {
-            try {
-              return getScheduleClient().getStatus(application.getId(), schedName);
-            } catch (Exception e) {
-              throw Throwables.propagate(e);
-            }
-          }
-        };
-      }
-
-    };
+    Id.Program programId = Id.Program.from(application, ProgramType.WORKFLOW, workflowName);
+    return new RemoteWorkflowManager(programId, clientConfig, this);
   }
 
   @Override
@@ -271,53 +117,19 @@ public class RemoteApplicationManager implements ApplicationManager {
 
   @Override
   public ServiceManager startService(final String serviceName, Map<String, String> arguments) {
-    startProgram(serviceName, arguments, ProgramType.SERVICE);
-    return new RemoteServiceManager(Id.Service.from(application, serviceName), clientConfig);
-  }
-
-  @Override
-  public WorkerManager startWorker(final String workerName, Map<String, String> arguments) {
-    final ProgramId workerId = new ProgramId(workerName, ProgramType.WORKER);
-    return new AbstractWorkerManager() {
-      @Override
-      public void setInstances(int instances) {
-        Preconditions.checkArgument(instances > 0, "Instance count should be > 0.");
-        try {
-          getProgramClient().setWorkerInstances(application.getId(), workerName, instances);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
-      }
-
-      @Override
-      public void stop() {
-        stopProgram(workerId);
-      }
-
-      @Override
-      public boolean isRunning() {
-        try {
-          String status = getProgramClient().getStatus(application.getId(), ProgramType.WORKER, workerName);
-          return "RUNNING".equals(status);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
-      }
-
-      @Override
-      public int getInstances() {
-        try {
-          return getProgramClient().getWorkerInstances(application.getId(), workerName);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
-      }
-    };
+    Id.Program programId = startProgram(serviceName, arguments, ProgramType.SERVICE);
+    return new RemoteServiceManager(programId, clientConfig, this);
   }
 
   @Override
   public WorkerManager startWorker(String workerName) {
     return startWorker(workerName, ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  public WorkerManager startWorker(final String workerName, Map<String, String> arguments) {
+    final Id.Program programId = startProgram(workerName, arguments, ProgramType.WORKER);
+    return new RemoteWorkerManager(programId, clientConfig, this);
   }
 
   @Override
@@ -335,12 +147,11 @@ public class RemoteApplicationManager implements ApplicationManager {
   @Override
   public void stopAll() {
     try {
-      for (ProgramRecord programRecord : getApplicationClient().listPrograms(application.getId())) {
-        // have to do a check, since mapreduce jobs could stop by themselves earlier, and appFabricServer.stop will
-        // throw error when you stop something that is not running.
-        ProgramId id = new ProgramId(programRecord.getId(), programRecord.getType());
+      for (ProgramRecord programRecord : applicationClient.listPrograms(application.getId())) {
+        // have to do a check, since appFabricServer.stop will throw error when you stop something that is not running.
+        Id.Program id = Id.Program.from(application, programRecord.getType(), programRecord.getName());
         if (isRunning(id)) {
-          getProgramClient().stop(application.getId(), id.getProgramType(), id.getProgramId());
+          programClient.stop(application.getId(), id.getType(), id.getId());
         }
       }
     } catch (Exception e) {
@@ -348,39 +159,24 @@ public class RemoteApplicationManager implements ApplicationManager {
     }
   }
 
-  void stopProgram(ProgramId programId) {
-    String programName = programId.getProgramId();
+  @Override
+  public void stopProgram(Id.Program programId) {
     try {
-      getProgramClient().stop(application.getId(), programId.getProgramType(), programName);
+      programClient.stop(application.getId(), programId.getType(), programId.getId());
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
 
-  boolean isRunning(ProgramId programId) {
+  @Override
+  public boolean isRunning(Id.Program programId) {
     try {
-      String status = getProgramClient().getStatus(application.getId(), programId.getProgramType(),
-                                                   programId.getProgramId());
+      String status = programClient.getStatus(application.getId(), programId.getType(),
+                                              programId.getId());
       // comparing to hardcoded string is ugly, but this is how appFabricServer works now to support legacy UI
       return "STARTING".equals(status) || "RUNNING".equals(status);
     } catch (Exception e) {
       throw Throwables.propagate(e);
-    }
-  }
-
-  static class ProgramId {
-    private final String programId;
-    private final ProgramType programType;
-
-    ProgramId(String programId, ProgramType programType) {
-      this.programId = programId;
-      this.programType = programType;
-    }
-    public String getProgramId() {
-      return this.programId;
-    }
-    public ProgramType getProgramType() {
-      return this.programType;
     }
   }
 }
