@@ -140,7 +140,7 @@ Or, you can use an HTTP request::
 
 Because it is tedious to send events manually (not to mention difficult to correctly quote
 a multi-line command), a file with sample web log events is included in the Wise
-application source. The CDAp CLI can read it line-by-line and submit them as events
+application source. The CDAP CLI can read it line-by-line and submit them as events
 to the Stream. Use the CLI to send the events to the stream:
 
 .. container:: highlight
