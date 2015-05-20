@@ -30,6 +30,7 @@ import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.app.FakeSpark;
 import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.app.PrefixedEchoHandler;
+import co.cask.cdap.client.config.AuthenticatedConnectionConfig;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.conf.Constants;
@@ -144,6 +145,23 @@ public class CLIMainTest {
     testCommandOutputContains(cli, "list dataset instances", FakeApp.DS_NAME);
     testCommandOutputContains(cli, "list streams", FakeApp.STREAM_NAME);
     testCommandOutputContains(cli, "list flows", FakeApp.FLOWS.get(0));
+  }
+
+  @Test
+  public void testPrompt() throws Exception {
+    String prompt = cliMain.getPrompt(cliConfig.getClientConfig());
+    Assert.assertFalse(prompt.contains("@"));
+    Assert.assertTrue(prompt.contains(STANDALONE.getBaseURI().getHost()));
+    Assert.assertTrue(prompt.contains(cliConfig.getCurrentNamespace().getId()));
+
+    ConnectionConfig oldConnectionConfig = clientConfig.getConnectionConfig();
+    ConnectionConfig authConnectionConfig = new AuthenticatedConnectionConfig(oldConnectionConfig, "test-username");
+    cliConfig.setConnectionConfig(authConnectionConfig);
+    prompt = cliMain.getPrompt(cliConfig.getClientConfig());
+    Assert.assertTrue(prompt.contains("test-username@"));
+    Assert.assertTrue(prompt.contains(STANDALONE.getBaseURI().getHost()));
+    Assert.assertTrue(prompt.contains(cliConfig.getCurrentNamespace().getId()));
+    cliConfig.setConnectionConfig(oldConnectionConfig);
   }
 
   @Test
