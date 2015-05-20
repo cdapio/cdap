@@ -18,14 +18,10 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.app.DummyWorkerTemplate;
 import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterDetail;
 import co.cask.cdap.proto.AdapterStatus;
@@ -33,18 +29,12 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.template.ApplicationTemplateMeta;
 import co.cask.cdap.test.XSlowTests;
-import co.cask.cdap.test.standalone.StandaloneTestBase;
-import com.google.common.io.Files;
 import com.google.gson.Gson;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -56,24 +46,12 @@ import java.util.concurrent.TimeUnit;
  * CDAP startup.
  */
 @Category(XSlowTests.class)
-public class AdapterClientTest extends ClientTestBase {
+public class AdapterClientTestRun extends ClientTestBase {
 
   private static final Gson GSON = new Gson();
 
   private AdapterClient adapterClient;
   private ApplicationTemplateClient appTemplateClient;
-
-  @BeforeClass
-  public static void setUpClass() throws Exception {
-    if (START_LOCAL_STANDALONE) {
-      File adapterDir = TMP_FOLDER.newFolder("adapter");
-      configuration = CConfiguration.create();
-      configuration.set(Constants.AppFabric.APP_TEMPLATE_DIR, adapterDir.getAbsolutePath());
-      setupAdapters(adapterDir);
-
-      StandaloneTestBase.setUpClass();
-    }
-  }
 
   @Before
   public void setUp() throws Throwable {
@@ -140,20 +118,5 @@ public class AdapterClientTest extends ClientTestBase {
 
     appTemplateClient.get(templateId);
     appTemplateClient.getPlugins(templateId, "foo");
-  }
-
-  private static void setupAdapters(File adapterDir) throws IOException {
-    setupAdapter(adapterDir, DummyWorkerTemplate.class);
-  }
-
-  private static void setupAdapter(File adapterDir, Class<?> clz) throws IOException {
-    File tempDir = TMP_FOLDER.newFolder();
-    try {
-      Location adapterJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(tempDir), clz);
-      File destination =  new File(String.format("%s/%s", adapterDir.getAbsolutePath(), adapterJar.getName()));
-      Files.copy(Locations.newInputSupplier(adapterJar), destination);
-    } finally {
-      DirUtils.deleteDirectoryContents(tempDir);
-    }
   }
 }

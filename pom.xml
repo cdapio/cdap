@@ -2180,7 +2180,6 @@
         <module>cdap-client</module>
         <module>cdap-cli</module>
         <module>cdap-standalone</module>
-        <module>cdap-unit-test-standalone</module>
         <module>cdap-distributions</module>
         <module>cdap-archetypes</module>
         <module>cdap-test</module>

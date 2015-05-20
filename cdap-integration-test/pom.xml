@@ -45,11 +45,6 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-common-unit-test</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-gateway</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -57,6 +52,12 @@
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-standalone</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-standalone</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
@@ -74,11 +75,18 @@
       <version>${project.version}</version>
     </dependency>
 
+    <!-- In compile scope because this module should only be used in test scope -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-common-unit-test</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
   </dependencies>
 
 </project>
