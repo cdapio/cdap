@@ -54,8 +54,9 @@ body.theme-dubai {
     [my-navbar] {
       .navbar-brand {
         background: url('@{img-path}/cod_logo.png') no-repeat center center;
-        background-size: 53px 50px;
+        background-size: 75px 74px;
         width: 100px;
+        height: 74px;
         &.first {
           background: none;
           width: auto;
@@ -99,7 +100,7 @@ body.theme-dubai {
     [my-navbar] {
       nav {
         position: absolute;
-        top: 18px;
+        top: 26px;
         left: 50%;
         margin-left: -180px;
 
@@ -161,6 +162,8 @@ body.theme-dubai {
       .navbar-collapse > ul.nav:first-child {
         margin-left: 10px;
         width: 160px;
+        position: relative;
+        top: 12px;
       }
       .nav:first-child {
         ul.dropdown-menu {
@@ -203,13 +206,17 @@ body.theme-dubai {
         }
 
       }
-      .navbar-right li.dropdown {
-        ul.dropdown-menu {
-          .border-radius(4px 0 4px 4px);
-          li {
-            &.nav-subsection {
-              border: 0;
-              color: white;
+      .navbar-right {
+        position: relative;
+        top: 12px;
+        li.dropdown {
+          ul.dropdown-menu {
+            .border-radius(4px 0 4px 4px);
+            li {
+              &.nav-subsection {
+                border: 0;
+                color: white;
+              }
             }
           }
         }
