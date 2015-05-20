@@ -396,7 +396,7 @@ public abstract class HBaseQueueTest extends QueueTest {
       });
     } finally {
       stateStore.close();
-      queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE);
+      queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE_ID);
     }
   }
 

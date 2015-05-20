@@ -61,12 +61,13 @@ public final class Programs {
    * @param namespacedLocationFactory the namespaced location on the file system
    * @param appFabricDir app fabric output directory path
    * @param id program id
-   * @param type type of the program    @return Location corresponding to the program id
+   * @param type type of the program
+   * @return Location corresponding to the program id
    * @throws IOException incase of errors
    */
   public static Location programLocation(NamespacedLocationFactory namespacedLocationFactory, String appFabricDir,
                                          Id.Program id, ProgramType type) throws IOException {
-    Location namespaceHome = namespacedLocationFactory.get(id.getApplication().getNamespace());
+    Location namespaceHome = namespacedLocationFactory.get(id.getNamespace());
     if (!namespaceHome.exists()) {
       throw new FileNotFoundException("Unable to locate the Program, namespace location doesn't exist: " +
                                         namespaceHome.toURI().getPath());
