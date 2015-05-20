@@ -94,24 +94,25 @@ angular.module(PKG.name + '.commons')
         }
 
         function fetchAhead () {
-          var b = getBaseContext(),
-              bLen = b.length+1,
-              context = b;
+          var context = getBaseContext(),
+              bLen = context.length + 1;
 
-          if(scope.metric.context) {
-            context += '.' + scope.metric.context;
+          context += '.' + scope.metric.context;
+
+          // The idea is to only search for further tags, once the current tag is completely written.
+          // Otherwise, the search will be made with an incomplete tags, and the return list will be empty.
+          var lastChar = context.slice(-1);
+          if (lastChar != '.') {
+            return;
           }
-
-          // TODO: rethink
-          var parts = context.split('.');
+          var contextWithoutTrailingDot = context.substr(0, context.length - 1);
+          var parts = contextWithoutTrailingDot.split('.');
           if (parts.length % 2 !== 0) {
-            console.log('not even.');
             return;
           }
 
+          var tagQueryParams = myHelpers.tagsToParams(myHelpers.contextToTags(contextWithoutTrailingDot));
           scope.available.contexts = [];
-          var tagQueryParams = myHelpers.tagsToParams(myHelpers.contextToTags(context));
-
           dSrc.request(
             {
               method: 'POST',
@@ -120,7 +121,7 @@ angular.module(PKG.name + '.commons')
             },
             function (res) {
               res = res.map(function(v) {
-                return context + '.' + myHelpers.tagToContext(v);
+                return context + myHelpers.tagToContext(v);
               });
               scope.available.contexts = res.map(function(d){
                 return {
@@ -137,8 +138,7 @@ angular.module(PKG.name + '.commons')
           dSrc.request(
             {
               method: 'POST',
-              _cdapPath: '/metrics/search?target=metric' +
-                '&' + tagQueryParams
+              _cdapPath: '/metrics/search?target=metric&' + tagQueryParams
             },
             function (res) {
               // 'Add All' option to add all metrics in current context.
