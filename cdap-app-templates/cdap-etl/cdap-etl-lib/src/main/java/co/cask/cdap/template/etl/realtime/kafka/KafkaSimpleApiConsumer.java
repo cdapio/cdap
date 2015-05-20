@@ -71,10 +71,12 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
   private Function<ByteBuffer, KEY> keyDecoder;
   private Function<ByteBuffer, PAYLOAD> payloadDecoder;
   private KafkaConfig kafkaConfig;
-  private Map<TopicPartition, KafkaConsumerInfo<OFFSET>> consumerInfos;
   private Map<String, byte[]> offsetStore;
 
   private RealtimeContext sourceContext;
+  private DefaultKafkaConfigurer kafkaConfigurer;
+
+  private volatile Map<TopicPartition, KafkaConsumerInfo<OFFSET>> consumerInfos;
 
   protected KafkaSimpleApiConsumer(KafkaSource kafkaSource) {
     this.kafkaSource = kafkaSource;
@@ -104,7 +106,7 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
     }
 
     // Configure kafka
-    DefaultKafkaConfigurer kafkaConfigurer = new DefaultKafkaConfigurer();
+    kafkaConfigurer = new DefaultKafkaConfigurer();
     configureKafka(kafkaConfigurer);
 
     if (kafkaConfigurer.getZookeeper() == null && kafkaConfigurer.getBrokers() == null) {
@@ -112,7 +114,6 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
     }
 
     kafkaConfig = new KafkaConfig(kafkaConfigurer.getZookeeper(), kafkaConfigurer.getBrokers());
-    consumerInfos = createConsumerInfos(kafkaConfigurer.getTopicPartitions());
   }
 
   /**
@@ -153,6 +154,11 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
    * @param emitter instance of {@link Emitter} to emit the messages.
    */
   public void pollMessages(Emitter<StructuredRecord> emitter) {
+    // Configure consumers late to read from Adapter SourceState
+    if (consumerInfos == null) {
+        consumerInfos = createConsumerInfos(kafkaConfigurer.getTopicPartitions());
+    }
+
     boolean infosUpdated = false;
     // Poll for messages from Kafka
     for (KafkaConsumerInfo<OFFSET> info : consumerInfos.values()) {
