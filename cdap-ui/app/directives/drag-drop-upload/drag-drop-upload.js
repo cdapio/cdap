@@ -6,12 +6,12 @@ angular.module(PKG.name + '.commons')
 
         function drag (event) {
           event.preventDefault();
-          element.addClass('drag');
+          element.addClass('drag-target');
         }
 
         function  dragLeave (event) {
           event.preventDefault();
-          element.removeClass('drag');
+          element.removeClass('drag-target');
         }
 
         element.bind('dragover', drag);
@@ -20,7 +20,7 @@ angular.module(PKG.name + '.commons')
         element.bind('drop', function(event) {
           event.stopPropagation();
           event.preventDefault();
-          element.removeClass('drag');
+          element.removeClass('drag-target');
 
           var namespace = $state.params.namespace || $state.params.nsadmin;
           myAppUploader.upload(event.dataTransfer.files, namespace);
