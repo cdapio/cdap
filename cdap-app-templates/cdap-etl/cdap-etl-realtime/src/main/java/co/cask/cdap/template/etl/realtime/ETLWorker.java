@@ -118,7 +118,8 @@ public class ETLWorker extends AbstractWorker {
     });
 
     initializeSource(context, config.getSource());
-    List<Transformation> transforms = initializeTransforms(context, config.getTransforms());
+    List<Transformation> transforms = initializeTransforms(context,
+                                                           config.getTransforms().or(Lists.<ETLStage>newArrayList()));
     initializeSink(context, config.getSink());
 
     transformExecutor = new TransformExecutor(transforms, transformMetrics);

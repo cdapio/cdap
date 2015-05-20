@@ -72,7 +72,7 @@ public abstract class ETLTemplate<T extends ETLConfig> extends ApplicationTempla
   public void configureAdapter(String adapterName, T etlConfig, AdapterConfigurer configurer) throws Exception {
     ETLStage sourceConfig = etlConfig.getSource();
     ETLStage sinkConfig = etlConfig.getSink();
-    List<ETLStage> transformConfigs = etlConfig.getTransforms();
+    List<ETLStage> transformConfigs = etlConfig.getTransforms().or(Lists.<ETLStage>newArrayList());
     String sourcePluginId = String.format("%s%s%s", Constants.Source.PLUGINTYPE, Constants.ID_SEPARATOR,
                                           sourceConfig.getName());
     String sinkPluginId = String.format("%s%s%s", Constants.Sink.PLUGINTYPE, Constants.ID_SEPARATOR,
