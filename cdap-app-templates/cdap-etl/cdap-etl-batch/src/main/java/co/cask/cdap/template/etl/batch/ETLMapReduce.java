@@ -156,7 +156,7 @@ public class ETLMapReduce extends AbstractMapReduce {
       List<String> transformIds = GSON.fromJson(runtimeArgs.get(Constants.Transform.PLUGINIDS), STRING_LIST_TYPE);
 
 
-      List<ETLStage> stageList = etlConfig.getTransforms().or(Lists.<ETLStage>newArrayList());
+      List<ETLStage> stageList = etlConfig.getTransforms();
       LOG.info("Transform Stages : {}", stageList);
 
       List<Transformation> pipeline = Lists.newArrayListWithCapacity(stageList.size() + 2);
