@@ -78,7 +78,6 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       }
       LOG.info("Started time scheduler");
     } catch (Throwable t) {
-      LOG.error("Error starting time scheduler", t);
       Throwables.propagateIfInstanceOf(t, SchedulerException.class);
       throw new SchedulerException(t);
     }
@@ -90,13 +89,12 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       }
       LOG.info("Started stream size scheduler");
     } catch (Throwable t) {
-      LOG.error("Error starting stream size scheduler", t);
       Throwables.propagateIfInstanceOf(t, SchedulerException.class);
       throw new SchedulerException(t);
     }
   }
 
-  private final void lazyStart(Scheduler scheduler) throws SchedulerException {
+  private void lazyStart(Scheduler scheduler) throws SchedulerException {
     if (scheduler instanceof TimeScheduler) {
       try {
         timeScheduler.lazyStart();

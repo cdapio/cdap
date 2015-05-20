@@ -18,18 +18,12 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.app.store.ServiceStore;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.kv.NoTxKeyValueTable;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.TransactionExecutorFactory;
-import co.cask.tephra.TransactionFailureException;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -42,14 +36,12 @@ public final class DatasetServiceStore extends AbstractIdleService implements Se
   private NoTxKeyValueTable table;
 
   @Inject
-  public DatasetServiceStore(CConfiguration cConf, DatasetDefinitionRegistryFactory dsRegistryFactory,
-                             @Named("serviceModule") DatasetModule datasetModule) throws Exception {
-    this.dsFramework = new InMemoryDatasetFramework(dsRegistryFactory, cConf);
-    this.dsFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "basicKVTable"), datasetModule);
+  public DatasetServiceStore(@Named("local.ds.framework") DatasetFramework dsFramework) throws Exception {
+    this.dsFramework = dsFramework;
   }
 
   @Override
-  public synchronized Integer getServiceInstance(final String serviceName) throws TransactionFailureException {
+  public synchronized Integer getServiceInstance(final String serviceName) {
     String count = Bytes.toString(table.get(Bytes.toBytes(serviceName)));
     return (count != null) ? Integer.valueOf(count) : null;
   }

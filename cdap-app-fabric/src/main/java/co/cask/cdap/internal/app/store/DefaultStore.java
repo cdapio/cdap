@@ -117,7 +117,6 @@ public class DefaultStore implements Store {
                                                            DatasetDefinition.NO_ARGUMENTS, null);
           return new AppMds(mdsTable);
         } catch (Exception e) {
-          LOG.error("Failed to access app.meta table", e);
           throw Throwables.propagate(e);
         }
       }

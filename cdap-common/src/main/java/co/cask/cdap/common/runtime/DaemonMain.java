@@ -33,6 +33,8 @@ public abstract class DaemonMain {
    * as if the program is started by jsvc.
    */
   protected void doMain(final String[] args) throws Exception {
+    init(args);
+
     final CountDownLatch shutdownLatch = new CountDownLatch(1);
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -52,9 +54,8 @@ public abstract class DaemonMain {
         }
       }
     });
-    init(args);
-    start();
 
+    start();
     shutdownLatch.await();
   }
 
