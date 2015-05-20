@@ -1,0 +1,466 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Consuming Twitter Data in Realtime &mdash; Cask Data Application Platform 2.6.3 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.6.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.3 Documentation" href="../index.html" />
+    <link rel="up" title="How-To Guides" href="index.html" />
+    <link rel="next" title="Iterative Data Processing with Apache Spark" href="cdap-spark-guide.html" />
+    <link rel="prev" title="Storing Timeseries Data" href="cdap-timeseries-guide.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="cdap-spark-guide.html" title="Iterative Data Processing with Apache Spark"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="cdap-timeseries-guide.html" title="Storing Timeseries Data"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.3');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Examples, Guides, and Tutorials</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">How-To Guides</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="consuming-twitter-data-in-realtime">
+<span id="cdap-twitter-ingest-guide"></span><h1>Consuming Twitter Data in Realtime<a class="headerlink" href="#consuming-twitter-data-in-realtime" title="Permalink to this headline">¶</a></h1>
+<blockquote class="pull-quote">
+<div><strong>Source Code Repository:</strong> Source code (and other resources) for this guide are available at the
+<a class="reference external" href="https://github.com/cdap-guides/cdap-twitter-ingest-guide">CDAP Guides GitHub repository</a>.</div></blockquote>
+<p>Consuming a live tweets stream in realtime is one of the common tasks of
+big data applications that power the social analytics. In this guide,
+you will learn how to accomplish it with the Cask Data Application
+Platform (<a class="reference external" href="http://cdap.io">CDAP</a>).</p>
+<div class="section" id="what-you-will-build">
+<h2>What You Will Build<a class="headerlink" href="#what-you-will-build" title="Permalink to this headline">¶</a></h2>
+<p>You will build a CDAP application that consumes data from the public
+Twitter feed and computes the average tweet size. You will:</p>
+<ul class="simple">
+<li>Build a a realtime
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/flows-flowlets/flows.html">Flow</a>
+to process tweets in realtime;</li>
+<li>Use a Flowlet from the
+<a class="reference external" href="https://github.com/caskdata/cdap-packs">cdap-pack-twitter</a>
+library that uses the <a class="reference external" href="http://twitter4j.org/">Twitter4j</a> library
+to connect the Flow and Twitter stream;</li>
+<li>Use a
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/datasets/index.html">Dataset</a>
+to persist the results of the analysis; and</li>
+<li>Build a
+<a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/building-blocks/services.html">Service</a>
+to serve the analysis results via a RESTful endpoint.</li>
+</ul>
+</div>
+<div class="section" id="what-you-will-need">
+<h2>What You Will Need<a class="headerlink" href="#what-you-will-need" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference external" href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">JDK 6 or JDK
+7</a></li>
+<li><a class="reference external" href="http://maven.apache.org/">Apache Maven 3.0+</a></li>
+<li><a class="reference external" href="http://docs.cdap.io/cdap/current/en/developers-manual/getting-started/standalone/index.html">CDAP
+SDK</a></li>
+</ul>
+</div>
+<div class="section" id="lets-build-it">
+<h2>Let’s Build It!<a class="headerlink" href="#lets-build-it" title="Permalink to this headline">¶</a></h2>
+<p>Following sections will guide you through building an application from
+scratch. If you are interested in deploying and running the application
+right away, you can clone its source code from this GitHub repository.
+In that case, feel free to skip the next two sections and jump right to
+the <a class="reference external" href="#configuring-tweetcollectorflowlet">Configuring
+TweetCollectorFlowlet</a> section.</p>
+<div class="section" id="application-design">
+<h3>Application Design<a class="headerlink" href="#application-design" title="Permalink to this headline">¶</a></h3>
+<p>Realtime processing capability within CDAP is supported by a Flow. The
+application we are building in this guide uses a Flow for processing the
+tweets consumed from Twitter feed. The processing results are persisted
+in a Dataset and are made available via RESTful endpoint using a
+Service.</p>
+<div class="figure">
+<img alt="" src="../_images/app-design7.png" />
+</div>
+<p>The Flow consists of two processing nodes called Flowlets:</p>
+<ul class="simple">
+<li>A collector Flowlet that consumes data from Twitter feed and output a
+synthesized Tweet object; and</li>
+<li>An analyzer Flowlet that consumes the tweet emitted by the collector
+to update the basic statistics of Tweets: total tweets size and
+count.</li>
+</ul>
+</div>
+<div class="section" id="application-implementation">
+<h3>Application Implementation<a class="headerlink" href="#application-implementation" title="Permalink to this headline">¶</a></h3>
+<p>The recommended way to build a CDAP application from scratch is to use a
+Maven project. Use the following directory structure (you’ll find
+contents of these files described below):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">./pom.xml</span>
+<span class="go">./src/main/java/co/cask/cdap/guides/twitter/TwitterAnalysisApp.java</span>
+<span class="go">./src/main/java/co/cask/cdap/guides/twitter/TweetAnalysisFlow.java</span>
+<span class="go">./src/main/java/co/cask/cdap/guides/twitter/StatsRecorderFlowlet.java</span>
+<span class="go">./src/main/java/co/cask/cdap/guides/twitter/TweetStatsHandler.java</span>
+<span class="go">./src/main/resources/twitter4j.properties</span>
+</pre></div>
+</div>
+<p>The application will use the <code class="docutils literal"><span class="pre">cdap-packs-twitter</span></code> library which
+includes an implementation of <code class="docutils literal"><span class="pre">TweetCollectorFlowlet</span></code>. You&#8217;ll need to
+add this library as a dependency to your project&#8217;s pom.xml:</p>
+<div class="highlight-xml"><div class="highlight"><pre>...
+<span class="nt">&lt;dependencies&gt;</span>
+  ...
+  <span class="nt">&lt;dependency&gt;</span>
+    <span class="nt">&lt;groupId&gt;</span>co.cask.cdap.packs<span class="nt">&lt;/groupId&gt;</span>
+    <span class="nt">&lt;artifactId&gt;</span>cdap-twitter-pack<span class="nt">&lt;/artifactId&gt;</span>
+    <span class="nt">&lt;version&gt;</span>0.1.0<span class="nt">&lt;/version&gt;</span>
+  <span class="nt">&lt;/dependency&gt;</span>
+<span class="nt">&lt;/dependencies&gt;</span>
+</pre></div>
+</div>
+<p>Create the <code class="docutils literal"><span class="pre">TwitterAnalysisApp</span></code> class which declares that the
+application has a Flow, a Service, and creates a Dataset:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TwitterAnalysisApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">NAME</span> <span class="o">=</span> <span class="s">&quot;TwitterAnalysis&quot;</span><span class="o">;</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">TABLE_NAME</span> <span class="o">=</span> <span class="s">&quot;tweetStats&quot;</span><span class="o">;</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">SERVICE_NAME</span> <span class="o">=</span> <span class="s">&quot;TweetStatsService&quot;</span><span class="o">;</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="n">NAME</span><span class="o">);</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="n">TABLE_NAME</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">addFlow</span><span class="o">(</span><span class="k">new</span> <span class="n">TweetAnalysisFlow</span><span class="o">());</span>
+    <span class="n">addService</span><span class="o">(</span><span class="n">SERVICE_NAME</span><span class="o">,</span> <span class="k">new</span> <span class="n">TweetStatsHandler</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">TweetAnalysisFlow</span></code> makes use of the <code class="docutils literal"><span class="pre">TweetCollectorFlowlet</span></code>
+that is available in the <code class="docutils literal"><span class="pre">cdap-packs-twitter</span></code> library:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TweetAnalysisFlow</span> <span class="kd">implements</span> <span class="n">Flow</span> <span class="o">{</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">NAME</span> <span class="o">=</span> <span class="s">&quot;TweetAnalysisFlow&quot;</span><span class="o">;</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="n">FlowSpecification</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">FlowSpecification</span><span class="o">.</span><span class="na">Builder</span><span class="o">.</span><span class="na">with</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">setName</span><span class="o">(</span><span class="n">NAME</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setDescription</span><span class="o">(</span><span class="s">&quot;Collects simple tweet stats&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">withFlowlets</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;collect&quot;</span><span class="o">,</span> <span class="k">new</span> <span class="n">TweetCollectorFlowlet</span><span class="o">())</span>
+        <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;recordStats&quot;</span><span class="o">,</span> <span class="k">new</span> <span class="n">StatsRecorderFlowlet</span><span class="o">())</span>
+      <span class="o">.</span><span class="na">connect</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">from</span><span class="o">(</span><span class="s">&quot;collect&quot;</span><span class="o">).</span><span class="na">to</span><span class="o">(</span><span class="s">&quot;recordStats&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Tweets pulled by the <code class="docutils literal"><span class="pre">TweetCollectorFlowlet</span></code> are consumed by the
+<code class="docutils literal"><span class="pre">StatsRecorderFlowlet</span></code> that updates the total number of tweets and
+their total body size in a Dataset:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">StatsRecorderFlowlet</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
+  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="n">TwitterAnalysisApp</span><span class="o">.</span><span class="na">TABLE_NAME</span><span class="o">)</span>
+  <span class="kd">private</span> <span class="n">KeyValueTable</span> <span class="n">statsTable</span><span class="o">;</span>
+
+  <span class="nd">@ProcessInput</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">Tweet</span> <span class="n">tweet</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">statsTable</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="s">&quot;totalCount&quot;</span><span class="o">),</span> <span class="mi">1</span><span class="o">);</span>
+    <span class="n">statsTable</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="s">&quot;totalSize&quot;</span><span class="o">),</span> <span class="n">tweet</span><span class="o">.</span><span class="na">getText</span><span class="o">().</span><span class="na">length</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>In a real-world scenario, the Flowlet could perform more sophisticated
+processing on tweets.</p>
+<p>Finally, the <code class="docutils literal"><span class="pre">TweetStatsHandler</span></code> uses the <code class="docutils literal"><span class="pre">tweetStats</span></code> Dataset to
+compute the average tweet size and serve it over HTTP:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Path</span><span class="o">(</span><span class="s">&quot;/v1&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">TweetStatsHandler</span> <span class="kd">extends</span> <span class="n">AbstractHttpServiceHandler</span> <span class="o">{</span>
+
+  <span class="nd">@UseDataSet</span><span class="o">(</span><span class="n">TwitterAnalysisApp</span><span class="o">.</span><span class="na">TABLE_NAME</span><span class="o">)</span>
+  <span class="kd">private</span> <span class="n">KeyValueTable</span> <span class="n">statsTable</span><span class="o">;</span>
+
+  <span class="nd">@Path</span><span class="o">(</span><span class="s">&quot;avgSize&quot;</span><span class="o">)</span>
+  <span class="nd">@GET</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">sentimentAggregates</span><span class="o">(</span><span class="n">HttpServiceRequest</span> <span class="n">request</span><span class="o">,</span> <span class="n">HttpServiceResponder</span> <span class="n">responder</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="kt">long</span> <span class="n">totalCount</span> <span class="o">=</span> <span class="n">statsTable</span><span class="o">.</span><span class="na">incrementAndGet</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="s">&quot;totalCount&quot;</span><span class="o">),</span> <span class="mi">0</span><span class="o">);</span>
+    <span class="kt">long</span> <span class="n">totalSize</span> <span class="o">=</span> <span class="n">statsTable</span><span class="o">.</span><span class="na">incrementAndGet</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="s">&quot;totalSize&quot;</span><span class="o">),</span> <span class="mi">0</span><span class="o">);</span>
+    <span class="n">responder</span><span class="o">.</span><span class="na">sendJson</span><span class="o">(</span><span class="n">totalCount</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">?</span> <span class="n">totalSize</span> <span class="o">/</span> <span class="n">totalCount</span> <span class="o">:</span> <span class="mi">0</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="configuring-tweetcollectorflowlet">
+<h3>Configuring <code class="docutils literal"><span class="pre">TweetCollectorFlowlet</span></code><a class="headerlink" href="#configuring-tweetcollectorflowlet" title="Permalink to this headline">¶</a></h3>
+<p>In order to utilize the <code class="docutils literal"><span class="pre">TweetCollectorFlowlet</span></code>, a Twitter API key and
+Access token must be obtained and configured. Follow the steps provided
+by Twitter to obtain <a class="reference external" href="https://dev.twitter.com/oauth/overview/application-owner-access-tokens">OAuth access
+tokens.</a>
+You can provide these to the <code class="docutils literal"><span class="pre">TweetCollectorFlowlet</span></code> as runtime
+arguments of the Flow or put them in <code class="docutils literal"><span class="pre">twitter4j.properties</span></code> in the
+<code class="docutils literal"><span class="pre">src/main/resources/</span></code> directory and package it with the application.
+The format of the <code class="docutils literal"><span class="pre">twitter4j.properties</span></code> file:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">oauth.consumerKey=***************************</span>
+<span class="go">oauth.consumerSecret=***************************</span>
+<span class="go">oauth.accessToken=***************************</span>
+<span class="go">oauth.accessTokenSecret=***************************</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="build-run">
+<h2>Build &amp; Run<a class="headerlink" href="#build-run" title="Permalink to this headline">¶</a></h2>
+<p>The TwitterAnalysisApp application can be built and packaged using the
+Apache Maven command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">mvn clean package</span>
+</pre></div>
+</div>
+<p>Note that the remaining commands assume that the <code class="docutils literal"><span class="pre">cdap-cli.sh</span></code> script
+is available on your PATH. If this is not the case, please add it:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">export PATH=$PATH:&lt;CDAP home&gt;/bin</span>
+</pre></div>
+</div>
+<p>If you haven&#8217;t already started a standalone CDAP installation, start it
+with the command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">cdap.sh start</span>
+</pre></div>
+</div>
+<p>We can then deploy the application to a standalone CDAP installation and
+start its components:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">cdap-cli.sh deploy app target/cdap-twitter-ingest-guide-1.0.0.jar</span>
+<span class="go">cdap-cli.sh start flow TwitterAnalysis.TweetAnalysisFlow</span>
+<span class="go">cdap-cli.sh start service TwitterAnalysis.TweetStatsService</span>
+</pre></div>
+</div>
+<p>Once Flow is started, tweets are pulled and processed. You can query for
+the average tweet size:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">curl http://localhost:10000/v2/apps/TwitterAnalysis/services/TweetStatsService/methods/v1/avgSize</span>
+</pre></div>
+</div>
+<p>Example output:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">132</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="related-topics">
+<h2>Related Topics<a class="headerlink" href="#related-topics" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>TwitterSentiment
+<a class="reference external" href="https://github.com/caskdata/cdap-apps">tutorial</a>.</li>
+</ul>
+</div>
+<div class="section" id="share-and-discuss">
+<h2>Share and Discuss!<a class="headerlink" href="#share-and-discuss" title="Permalink to this headline">¶</a></h2>
+<p>Have a question? Discuss at the <a class="reference external" href="https://groups.google.com/forum/#!forum/cdap-user">CDAP User Mailing
+List.</a></p>
+</div>
+<div class="section" id="license">
+<h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
+<p>Copyright © 2014 Cask Data, Inc.</p>
+<p>Licensed under the Apache License, Version 2.0 (the &#8220;License&#8221;); you may
+not use this file except in compliance with the License. You may obtain
+a copy of the License at</p>
+<p><a class="reference external" href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></p>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &#8220;AS IS&#8221; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.3</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+                        
+      <li><div class=""></div><b><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Examples, Guides, and Tutorials:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">How-To Guides</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="cdap-flow-guide.html">Realtime Data Processing with a Flow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-flume-guide.html">Ingesting Data into CDAP using Apache Flume</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-kafka-ingest-guide.html">Consuming data from Kafka</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-mapreduce-guide.html">Batch Data Processing With CDAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-bi-guide.html">Analyzing CDAP Data from BI Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-timeseries-guide.html">Storing Timeseries Data</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Consuming Twitter Data in Realtime</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#what-you-will-build">What You Will Build</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-you-will-need">What You Will Need</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lets-build-it">Let’s Build It!</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#build-run">Build &amp; Run</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#related-topics">Related Topics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#share-and-discuss">Share and Discuss!</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#license">License</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-spark-guide.html">Iterative Data Processing with Apache Spark</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps-packs.html">Apps and Packs</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="cdap-timeseries-guide.html"
+                        title="Previous Chapter">Storing Timeseries Data</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="cdap-spark-guide.html"
+                        title="Next Chapter">Iterative Data Processing with Apache Spark</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.3/cdap-docs-2.6.3-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Storing Timeseries Data" href="cdap-timeseries-guide.html" />Storing Timeseries Data</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Iterative Data Processing with Apache Spark" href="cdap-spark-guide.html" />Iterative Data Processing with Apache Spark</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

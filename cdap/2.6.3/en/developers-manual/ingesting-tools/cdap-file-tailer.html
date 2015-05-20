@@ -1,0 +1,400 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>CDAP File Tailer &mdash; Cask Data Application Platform 2.6.3 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.6.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.3 Documentation" href="../index.html" />
+    <link rel="up" title="Ingesting Data into CDAP" href="index.html" />
+    <link rel="next" title="CDAP Flume" href="cdap-flume.html" />
+    <link rel="prev" title="CDAP File DropZone" href="cdap-file-drop-zone.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="cdap-flume.html" title="CDAP Flume"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="cdap-file-drop-zone.html" title="CDAP File DropZone"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.3');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Ingesting Data into CDAP</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cdap-file-tailer">
+<h1>CDAP File Tailer<a class="headerlink" href="#cdap-file-tailer" title="Permalink to this headline">¶</a></h1>
+<p>File Tailer is a daemon process that performs tailing of sets of local
+files. As soon as a new record has been appended to the end of a file
+that the daemon is monitoring, it sends it to a Stream via the CDAP REST
+API.</p>
+<div class="section" id="features">
+<h2>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>distributed as debian and rpm packages;</li>
+<li>loads properties from a configuration file;</li>
+<li>supports rotation of log files;</li>
+<li>persists state and is able to resume from first unsent record; and</li>
+<li>dumps statistics info.</li>
+</ul>
+</div>
+<div class="section" id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<p>To install File Tailer, execute one of these commands:</p>
+<ul>
+<li><p class="first">on Debian/Ubuntu systems:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">sudo apt-get install cdap-file-tailer-1.0.2.deb</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">on RHEL/CentOS systems:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">sudo rpm -ivh --force cdap-file-tailer-1.0.2.rpm</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>Repository information can be found in the <a class="reference external" href="http://docs.cask.co/cdap/current/en/admin-manual/installation/installation.html#packaging">Distributed CDAP
+Installation
+instructions</a>.</p>
+<p>Once installed, configure the daemon by editing the file:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">/etc/file-tailer/conf/file-tailer.properties</span>
+</pre></div>
+</div>
+<p>These parameters must be specified:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">pipes=&lt;pipe1-name, pipe2-name, ... &gt;</span>
+<span class="go">pipes.&lt;pipe1-name&gt;.source.work_dir=&lt;source-work-directory&gt;</span>
+<span class="go">pipes.&lt;pipe1-name&gt;.source.file_name=&lt;source-file-name&gt;</span>
+<span class="go">pipes.&lt;pipe1-name&gt;.sink.stream_name=&lt;stream-name&gt;</span>
+<span class="go">pipes.&lt;pipe1-name&gt;.sink.host=&lt;host-name&gt;</span>
+<span class="go">pipes.&lt;pipe1-name&gt;.sink.port=&lt;port-number&gt;</span>
+<span class="go">...</span>
+</pre></div>
+</div>
+<p>Please note that the target file must be accessible to the File Tailer
+user. To check, you can use the <code class="docutils literal"><span class="pre">more</span></code> command with the File Tailer
+user:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">sudo -u file-tailer more path_to_target_file</span>
+</pre></div>
+</div>
+<p>To start the daemon, execute the command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">sudo service file-tailer start</span>
+</pre></div>
+</div>
+<p>To stop the daemon, execute the command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">sudo service file-tailer stop</span>
+</pre></div>
+</div>
+<p>File Tailer stores log files in the <code class="docutils literal"><span class="pre">/var/log/file-tailer</span></code> directory.
+PID, states and statistics are stored in the <code class="docutils literal"><span class="pre">/var/run/file-tailer</span></code>
+directory.</p>
+</div>
+<div class="section" id="example-configuration">
+<h2>Example Configuration<a class="headerlink" href="#example-configuration" title="Permalink to this headline">¶</a></h2>
+<p>This configuration file will have the File Tailer application monitor
+two different directories for target log files. Logs from each directory
+will be sent to two separate streams.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">#</span> General pipe properties
+<span class="gp">#</span> Comma-separated list of pipes to be configured
+<span class="go">pipes=app1pipe,app2pipe</span>
+
+<span class="gp">#</span> Pipe <span class="m">1</span> <span class="nb">source </span>properties
+<span class="gp">#</span> Working directory <span class="o">(</span>where to monitor files<span class="o">)</span>
+<span class="go">pipes.app1pipe.source.work_dir=/var/log/app1</span>
+<span class="gp">#</span> Name of log file
+<span class="go">pipes.app1pipe.source.file_name=app1.log</span>
+
+<span class="gp">#</span> Pipe <span class="m">1</span> sink properties
+<span class="gp">#</span> Name of the stream
+<span class="go">pipes.app1pipe.sink.stream_name=app1Stream</span>
+<span class="gp">#</span> Host name that is used by stream client
+<span class="go">pipes.app1pipe.sink.host=cdap_host.example.com</span>
+<span class="gp">#</span> Host port that is used by stream client
+<span class="go">pipes.app1pipe.sink.port=10000</span>
+
+<span class="gp">#</span> Pipe <span class="m">2</span> <span class="nb">source </span>properties
+<span class="gp">#</span> Working directory <span class="o">(</span>where to monitor files<span class="o">)</span>
+<span class="go">pipes.app2pipe.source.work_dir=/var/log/app2</span>
+<span class="gp">#</span> Name of log file
+<span class="go">pipes.app2pipe.source.file_name=app2.log</span>
+
+<span class="gp">#</span> Pipe <span class="m">2</span> sink properties
+<span class="gp">#</span> Name of the stream
+<span class="go">pipes.app2pipe.sink.stream_name=app1Stream</span>
+<span class="gp">#</span> Host name that is used by stream client
+<span class="go">pipes.app2pipe.sink.host=cdap_host.example.com</span>
+<span class="gp">#</span> Host port that is used by stream client
+<span class="go">pipes.app2pipe.sink.port=10000</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="authentication-client">
+<h2>Authentication Client<a class="headerlink" href="#authentication-client" title="Permalink to this headline">¶</a></h2>
+<p>Once File Tailer is installed, configure the Authentication Client by
+editing the properties file:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">/etc/file-tailer/conf/auth-client.properties</span>
+</pre></div>
+</div>
+<p>Authentication Client configuration parameters:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.auth_client</span></code> - classpath of authentication
+client class</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.auth_client_properties</span></code> - path to
+authentication client properties file</li>
+</ul>
+<div class="section" id="authentication-client-example-configuration">
+<h3>Authentication Client Example Configuration<a class="headerlink" href="#authentication-client-example-configuration" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">#</span> User name
+<span class="go">security.auth.client.username=admin</span>
+<span class="gp">#</span> User password
+<span class="go">security.auth.client.password=realtime</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="additional-notes">
+<h2>Additional Notes<a class="headerlink" href="#additional-notes" title="Permalink to this headline">¶</a></h2>
+<p>Description of configuration parameters:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">daemon_dir</span></code> : the path to directory for storage of File Tailer
+state and metrics</li>
+<li><code class="docutils literal"><span class="pre">pipes</span></code> : list of all pipes, comma-separated</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.name</span></code> : name of the pipe</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.state_file</span></code> : name of file, used to save state</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.statistics_file</span></code> : name of file, used to save
+statistics</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.queue_size</span></code> : size of queue (default 1000), of
+stored log records, before sending them to Stream</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.work_dir</span></code> : path to directory being
+monitored for target log files</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.file_name</span></code> : name of target log file</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.rotated_file_name_pattern</span></code> : log file
+rollover pattern (default &#8220;(.*)&#8221; )</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.charset_name</span></code> : name of charset used by
+Stream Client for sending logs (default &#8220;UTF-8&#8221;)</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.record_separator</span></code> : symbol that separates
+each log record (default &#8220;&#8221;)</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.sleep_interval</span></code> : interval to sleep after
+reading all log data (default 3000 ms)</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.failure_retry_limit</span></code> : number of attempts
+to retry reading a log, if an error occurred while reading file data
+(default value is 0 for unlimited attempts)</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.source.failure_sleep_interval</span></code> : interval to
+sleep if an error occurred while reading the file data (default 60000
+ms)</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.stream_name</span></code> : name of target stream</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.host</span></code> : server host</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.port</span></code> : server port</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.ssl</span></code> : Secure Socket Layer mode
+[true|false] (default false)</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.apiKey</span></code> : SSL security key</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.writerPoolSize</span></code> : number of threads with
+which Stream Client sends events (default 10)</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.version</span></code> : CDAP server version (default
+&#8220;v2&#8221;)</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.packSize</span></code> : number of logs sent at a time
+(default 1)</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.failure_retry_limit</span></code> : number of attempts
+to retry sending logs, if an error occurred while reading file data
+(default value is 0 for unlimited attempts)</li>
+<li><code class="docutils literal"><span class="pre">pipes.&lt;pipe-name&gt;.sink.failure_sleep_interval</span></code> : interval to sleep
+if an error occurred while sending the logs (default 60000 ms)</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.3</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><b><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+                        
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../building-blocks/index.html"> Building Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Ingesting Data</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="cdap-stream-clients-java.html">CDAP Stream Client for Java</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-stream-clients-python.html">CDAP Stream Client for Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-file-drop-zone.html">CDAP File DropZone</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">CDAP File Tailer</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#features">Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#example-configuration">Example Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#authentication-client">Authentication Client</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#additional-notes">Additional Notes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-flume.html">CDAP Flume</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="cdap-file-drop-zone.html"
+                        title="Previous Chapter">CDAP File DropZone</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="cdap-flume.html"
+                        title="Next Chapter">CDAP Flume</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.3/cdap-docs-2.6.3-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="CDAP File DropZone" href="cdap-file-drop-zone.html" />CDAP File DropZone</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="CDAP Flume" href="cdap-flume.html" />CDAP Flume</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

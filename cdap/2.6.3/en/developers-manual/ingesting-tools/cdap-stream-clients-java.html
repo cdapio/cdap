@@ -1,0 +1,341 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>CDAP Stream Client for Java &mdash; Cask Data Application Platform 2.6.3 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.6.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.3 Documentation" href="../index.html" />
+    <link rel="up" title="Ingesting Data into CDAP" href="index.html" />
+    <link rel="next" title="CDAP Stream Client for Python" href="cdap-stream-clients-python.html" />
+    <link rel="prev" title="Ingesting Data into CDAP" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="cdap-stream-clients-python.html" title="CDAP Stream Client for Python"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Ingesting Data into CDAP"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.3');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Ingesting Data into CDAP</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cdap-stream-client-for-java">
+<h1>CDAP Stream Client for Java<a class="headerlink" href="#cdap-stream-client-for-java" title="Permalink to this headline">¶</a></h1>
+<p>The Stream Client Java API is for managing Streams from Java
+applications.</p>
+<div class="section" id="supported-actions">
+<h2>Supported Actions<a class="headerlink" href="#supported-actions" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Create a Stream</li>
+<li>Update TTL (time-to-live) for an existing Stream</li>
+<li>Retrieve the current Stream TTL</li>
+<li>Truncate an existing Stream (the deletion of all events that were
+written to the Stream)</li>
+<li>Write an event to an existing Stream</li>
+</ul>
+</div>
+<div class="section" id="build">
+<h2>Build<a class="headerlink" href="#build" title="Permalink to this headline">¶</a></h2>
+<p>To build the Stream Client Java API jar, use:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">mvn clean package</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<p>To use the Stream Client Java API, include this Maven dependency in your
+project&#8217;s <code class="docutils literal"><span class="pre">pom.xml</span></code> file:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">&lt;dependency&gt;</span>
+<span class="go">  &lt;groupId&gt;co.cask.cdap&lt;/groupId&gt;</span>
+<span class="go">  &lt;artifactId&gt;cdap-stream-client&lt;/artifactId&gt;</span>
+<span class="go">  &lt;version&gt;1.0.2&lt;/version&gt;</span>
+<span class="go">&lt;/dependency&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="example">
+<h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="create-streamclient">
+<h3>Create StreamClient<a class="headerlink" href="#create-streamclient" title="Permalink to this headline">¶</a></h3>
+<p>Create a StreamClient instance, specifying the fields &#8216;host&#8217; and &#8216;port&#8217;
+of the CDAP instance.</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">StreamClient streamClient = new RestStreamClient.Builder(&quot;localhost&quot;, 10000).build();</span>
+</pre></div>
+</div>
+<p>Optional configurations that can be set (and their default values):</p>
+<ul class="simple">
+<li>ssl: false (set true to use HTTPS protocol)</li>
+<li>verifySSLCert: true (set false to suspend certificate checks; this
+allows self-signed certificates when SSL is true)</li>
+<li>authClient: null (<a class="reference external" href="https://github.com/caskdata/cdap-clients/tree/develop/cdap-authentication-clients/java">CDAP Authentication
+Client</a>
+to interact with a secure CDAP instance)</li>
+</ul>
+<p>Example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">StreamClient streamClient = new RestStreamClient.Builder(&quot;localhost&quot;, 10000)</span>
+<span class="go">                                                .ssl(true)</span>
+<span class="go">                                                .authClient(authenticationClient)</span>
+<span class="go">                                                .build();</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="create-stream">
+<h3>Create Stream<a class="headerlink" href="#create-stream" title="Permalink to this headline">¶</a></h3>
+<p>Create a new Stream with the <em>stream id</em> &#8220;streamName&#8221;:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">streamClient.create(&quot;streamName&quot;);</span>
+</pre></div>
+</div>
+<p><strong>Notes:</strong></p>
+<ul class="simple">
+<li>The <em>stream-id</em> should only contain ASCII letters, digits and
+hyphens.</li>
+<li>If the Stream already exists, no error is returned, and the existing
+Stream remains in place.</li>
+</ul>
+</div>
+<div class="section" id="create-streamwriter">
+<h3>Create StreamWriter<a class="headerlink" href="#create-streamwriter" title="Permalink to this headline">¶</a></h3>
+<p>Create a <code class="docutils literal"><span class="pre">StreamWriter</span></code> instance for writing events to the Stream
+<em>streamName</em>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">StreamWriter streamWriter = streamClient.createWriter(&quot;streamName&quot;);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="write-stream-events">
+<h3>Write Stream Events<a class="headerlink" href="#write-stream-events" title="Permalink to this headline">¶</a></h3>
+<p>To write new events to the Stream, use the <code class="docutils literal"><span class="pre">StreamWriter</span></code> interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">ListenableFuture&lt;Void&gt; future = streamWriter.write(&quot;New log event&quot;, Charsets.UTF_8);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="truncate-stream">
+<h3>Truncate Stream<a class="headerlink" href="#truncate-stream" title="Permalink to this headline">¶</a></h3>
+<p>To delete all events that were written to the Stream <em>streamName</em>, use:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">streamClient.truncate(&quot;streamName&quot;);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="update-stream-time-to-live-ttl">
+<h3>Update Stream Time-to-Live (TTL)<a class="headerlink" href="#update-stream-time-to-live-ttl" title="Permalink to this headline">¶</a></h3>
+<p>Update TTL for the Stream <em>streamName</em>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">streamClient.setTTL(&quot;streamName&quot;, newTTL);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="get-stream-time-to-live-ttl">
+<h3>Get Stream Time-to-Live (TTL)<a class="headerlink" href="#get-stream-time-to-live-ttl" title="Permalink to this headline">¶</a></h3>
+<p>Get the current TTL value for the Stream <em>streamName</em>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">long ttl = streamClient.getTTL(&quot;streamName&quot;);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="close-clients">
+<h3>Close Clients<a class="headerlink" href="#close-clients" title="Permalink to this headline">¶</a></h3>
+<p>When you are finished, release all resources by calling these two
+methods:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">streamWriter.close();</span>
+<span class="go">streamClient.close();</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.3</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><b><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+                        
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../building-blocks/index.html"> Building Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Ingesting Data</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="">CDAP Stream Client for Java</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#supported-actions">Supported Actions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#build">Build</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#example">Example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-stream-clients-python.html">CDAP Stream Client for Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-file-drop-zone.html">CDAP File DropZone</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-file-tailer.html">CDAP File Tailer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cdap-flume.html">CDAP Flume</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="Previous Chapter">Ingesting Data into CDAP</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="cdap-stream-clients-python.html"
+                        title="Next Chapter">CDAP Stream Client for Python</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.3/cdap-docs-2.6.3-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Ingesting Data into CDAP" href="index.html" />Ingesting Data into CDAP</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="CDAP Stream Client for Python" href="cdap-stream-clients-python.html" />CDAP Stream Client for Python</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

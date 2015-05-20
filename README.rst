@@ -12,6 +12,7 @@ Earlier versions:
 
 - `Version 2.8.0 <http://docs.cdap.io/cdap/2.8.0>`__
 - `Version 2.7.1 <http://docs.cdap.io/cdap/2.7.1>`__
+- `Version 2.6.3 <http://docs.cdap.io/cdap/2.6.3>`__
 - `Version 2.6.2 <http://docs.cdap.io/cdap/2.6.2>`__
 - `Version 2.6.1 <http://docs.cdap.io/cdap/2.6.1>`__
 - `Version 2.6.0 <http://docs.cdap.io/cdap/2.6.0>`__

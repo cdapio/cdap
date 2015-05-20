@@ -1,0 +1,620 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Cask Data Application Platform SparkKMeans Application" name="description" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Spark K-Means &mdash; Cask Data Application Platform 2.6.3 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.6.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.6.3 Documentation" href="../index.html" />
+    <link rel="up" title="Examples" href="index.html" />
+    <link rel="next" title="Spark Page Rank Example" href="spark-page-rank.html" />
+    <link rel="prev" title="Purchase" href="purchase.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="spark-page-rank.html" title="Spark Page Rank Example"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="purchase.html" title="Purchase"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('2.6.3');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Examples, Guides, and Tutorials</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="spark-k-means">
+<span id="examples-spark-k-means"></span><h1>Spark K-Means<a class="headerlink" href="#spark-k-means" title="Permalink to this headline">¶</a></h1>
+<p>A Cask Data Application Platform (CDAP) Example Demonstrating Spark.</p>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>This example demonstrates a Spark application performing streaming analysis, computing the centers of points from an
+input stream using the K-Means Clustering method.</p>
+<p>Data from a sample file is sent to CDAP by the external script <em>inject-data</em> to the <em>pointsStream</em>. This data is
+processed by the <code class="docutils literal"><span class="pre">PointsFlow</span></code>, which stores the points coordinates event in its entirety in <em>points</em>, an ObjectStore Dataset.</p>
+<p>As these entries are created, they are taken up by the <em>SparkKMeansProgram</em>, which
+goes through the entries, calculates centers and tabulates results in another ObjectStore Dataset, <em>centers</em>.</p>
+<p>Once the application completes, you can query the <em>centers</em> Dataset by using the <code class="docutils literal"><span class="pre">centers/{index}</span></code> endpoint
+of the <em>CentersService</em>. It will respond with the center&#8217;s coordinates based on the <code class="docutils literal"><span class="pre">index</span></code> parameter (e.g. &#8220;9.1,9.1,9.1&#8221;).</p>
+<p>Let&#8217;s look at some of these components, and then run the Application and see the results.</p>
+<div class="section" id="the-sparkkmeans-application">
+<h3>The SparkKMeans Application<a class="headerlink" href="#the-sparkkmeans-application" title="Permalink to this headline">¶</a></h3>
+<p>As in the other <a class="reference external" href="index.html">examples</a>, the components
+of the Application are tied together by the class <code class="docutils literal"><span class="pre">SparkKMeansApp</span></code>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * Application that demonstrate KMeans Clustering example.</span>
+<span class="cm"> */</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">SparkKMeansApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;SparkKMeans&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Spark KMeans app&quot;</span><span class="o">);</span>
+
+    <span class="c1">// Ingest data into the Application via a Stream</span>
+    <span class="n">addStream</span><span class="o">(</span><span class="k">new</span> <span class="n">Stream</span><span class="o">(</span><span class="s">&quot;pointsStream&quot;</span><span class="o">));</span>
+
+    <span class="c1">// Process points data in real-time using a Flow</span>
+    <span class="n">addFlow</span><span class="o">(</span><span class="k">new</span> <span class="n">PointsFlow</span><span class="o">());</span>
+
+    <span class="c1">// Run a Spark program on the acquired data</span>
+    <span class="n">addSpark</span><span class="o">(</span><span class="k">new</span> <span class="n">SparkKMeansSpecification</span><span class="o">());</span>
+
+    <span class="c1">// Retrieve the processed data using a Service</span>
+    <span class="n">addService</span><span class="o">(</span><span class="k">new</span> <span class="n">CentersService</span><span class="o">());</span>
+
+    <span class="c1">// Store input and processed data in ObjectStore Datasets</span>
+    <span class="k">try</span> <span class="o">{</span>
+      <span class="n">ObjectStores</span><span class="o">.</span><span class="na">createObjectStore</span><span class="o">(</span><span class="n">getConfigurer</span><span class="o">(),</span> <span class="s">&quot;points&quot;</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+      <span class="n">ObjectStores</span><span class="o">.</span><span class="na">createObjectStore</span><span class="o">(</span><span class="n">getConfigurer</span><span class="o">(),</span> <span class="s">&quot;centers&quot;</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">UnsupportedTypeException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+      <span class="c1">// This exception is thrown by ObjectStore if its parameter type cannot be</span>
+      <span class="c1">// (de)serialized (for example, if it is an interface and not a class, then there is</span>
+      <span class="c1">// no auto-magic way deserialize an object.) In this case that will not happen</span>
+      <span class="c1">// because String is an actual class.</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="n">RuntimeException</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="points-and-centers-objectstore-data-storage">
+<h3><code class="docutils literal"><span class="pre">points</span></code> and <code class="docutils literal"><span class="pre">centers</span></code>: ObjectStore Data Storage<a class="headerlink" href="#points-and-centers-objectstore-data-storage" title="Permalink to this headline">¶</a></h3>
+<p>The raw points data is stored in an ObjectStore Dataset, <em>points</em>.
+The calculated centers data is stored in a second ObjectStore Dataset, <em>centers</em>.</p>
+</div>
+<div class="section" id="centersservice-service">
+<h3><code class="docutils literal"><span class="pre">CentersService</span></code>: Service<a class="headerlink" href="#centersservice-service" title="Permalink to this headline">¶</a></h3>
+<p>This service has a <code class="docutils literal"><span class="pre">centers/{index}</span></code> endpoint to obtain the center&#8217;s coordinates of a given index.</p>
+</div>
+</div>
+<div class="section" id="building-and-starting">
+<h2>Building and Starting<a class="headerlink" href="#building-and-starting" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>You can either build the example (as described <a class="reference external" href="#building-an-example-application">below</a>) or use the pre-built JAR file included in the CDAP SDK.</li>
+<li>Start CDAP, deploy and start the application and its components as described below in
+<a class="reference internal" href="#running-cdap-applications">Running CDAP Applications</a>.
+Make sure you start the Flow and Service as described below.</li>
+<li>Once the application has been deployed and started, you can <a class="reference external" href="#running-the-example">run the example.</a></li>
+</ul>
+</div>
+<div class="section" id="running-cdap-applications">
+<h2>Running CDAP Applications<a class="headerlink" href="#running-cdap-applications" title="Permalink to this headline">¶</a></h2>
+<p>In the examples, we refer to the Standalone CDAP as &#8220;CDAP&#8221;, and the
+example code that is running on it as an &#8220;Application&#8221;.</p>
+<div class="section" id="building-an-example-application">
+<h3>Building an Example Application<a class="headerlink" href="#building-an-example-application" title="Permalink to this headline">¶</a></h3>
+<p>From the example&#8217;s project root, build an example with the
+<a class="reference external" href="http://maven.apache.org">Apache Maven</a> command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> mvn clean package
+</pre></div>
+</div>
+</div>
+<div class="section" id="starting-cdap">
+<h3>Starting CDAP<a class="headerlink" href="#starting-cdap" title="Permalink to this headline">¶</a></h3>
+<p>Before running an Example Applications, check that an instance of CDAP is running and available; if not
+follow the instructions for <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v2.6.3)"><span class="xref std std-ref">Starting and Stopping Standalone CDAP.</span></a></p>
+<p>If you can reach the CDAP Console through a browser at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>, CDAP is running.</p>
+</div>
+<div class="section" id="deploying-an-application">
+<h3>Deploying an Application<a class="headerlink" href="#deploying-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once CDAP is started, you can deploy an example JAR by any of these methods:</p>
+<ul>
+<li><p class="first">Dragging and dropping the application JAR file (<code class="docutils literal"><span class="pre">example/target/&lt;example&gt;-&lt;version&gt;.jar</span></code>) onto the CDAP Console
+running at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>; or</p>
+</li>
+<li><p class="first">Use the <em>Load App</em> button found on the <em>Overview</em> of the CDAP Console to browse and upload the Jar; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.6.3)"><span class="xref std std-ref">Command Line Interface (CLI):</span></a></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></code></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="starting-an-application">
+<h3>Starting an Application<a class="headerlink" href="#starting-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is deployed:</p>
+<ul>
+<li><p class="first">You can go to the Application&#8217;s detail page in the CDAP Console by clicking on the
+Application&#8217;s name in the <em>Overview</em> page. (It can be reached by clicking on the
+<em>Application</em> button in the left sidebar of the window.) Now you can <em>Start</em> or <em>Stop</em> any
+of the Processes or Queries associated with the application; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.6.3)"><span class="xref std std-ref">Command Line Interface</span></a>.
+In each CDAP example, the CLI commands for that particular example are provided.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-type&gt;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">flow</span></code>, <code class="docutils literal"><span class="pre">procedure</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">workflow</span></code> or <code class="docutils literal"><span class="pre">service</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;app-id&gt;</span></code></td>
+<td>Name of the Application being called</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-id&gt;</span></code></td>
+<td>Name of the <em>Flow</em>, <em>Procedure</em>, <em>MapReduce</em>, <em>Workflow</em>, or <em>Custom Service</em>
+being called</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="stopping-an-application">
+<h3>Stopping an Application<a class="headerlink" href="#stopping-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is deployed:</p>
+<ul>
+<li><p class="first">On the Application&#8217;s detail page in the CDAP Console, you can click the <em>Stop</em> button on
+the Process and Query lists, if the application has either of them; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.6.3)"><span class="xref std std-ref">Command Line Interface:</span></a></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="removing-an-application">
+<h3>Removing an Application<a class="headerlink" href="#removing-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is stopped—all Processes (Flows, MapReduce Jobs, Workflows,
+etc.), Queries, and Services are stopped—you can click the <em>Delete</em> button on the
+Application&#8217;s detail page in the CDAP Console to delete the Application. After
+confirmation, the application will be deleted.</p>
+<p>Note that any Storage (Datasets) created or used by the Application will remain, as they
+are independent of the Application. Datasets can be deleted with the
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v2.6.3)"><span class="xref std std-ref">HTTP Restful API</span></a>, the
+<a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v2.6.3)"><span class="xref std std-ref">Java Client API</span></a>, or the
+<a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v2.6.3)"><span class="xref std std-ref">Command Line Interface API</span></a>.</p>
+</div>
+</div>
+<div class="section" id="running-the-example">
+<h2>Running the Example<a class="headerlink" href="#running-the-example" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="starting-the-flow">
+<h3>Starting the Flow<a class="headerlink" href="#starting-the-flow" title="Permalink to this headline">¶</a></h3>
+<p>Once the application is deployed:</p>
+<ul>
+<li><p class="first">Click on the <em>Process</em> button in the left sidebar of the CDAP Console,
+then click <em>PointsFlow</em> in the <em>Process</em> page to get to the
+Flow detail page, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">flow</span> <span class="pre">SparkKMeans.PointsFlow</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">flow</span> <span class="pre">SparkKMeans.PointsFlow</span></code></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="starting-the-service">
+<h3>Starting the Service<a class="headerlink" href="#starting-the-service" title="Permalink to this headline">¶</a></h3>
+<p>Once the application is deployed:</p>
+<ul>
+<li><p class="first">Click on <em>SparkKMeans</em> in the Overview page of the CDAP Console to get to the
+Application detail page, click <em>CentersService</em> in the <em>Service</em> pane to get to the
+Service detail page, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">service</span> <span class="pre">SparkKMeans.CentersService</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">service</span> <span class="pre">SparkKMeans.CentersService</span></code></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="injecting-points-data">
+<h3>Injecting Points Data<a class="headerlink" href="#injecting-points-data" title="Permalink to this headline">¶</a></h3>
+<p>Run this script to inject points data to the Stream named <em>pointsStream</em> in the
+<code class="docutils literal"><span class="pre">SparkKMeans</span></code> application:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/inject-data.sh</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\inject-data.bat</span></code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="running-the-spark-program">
+<h3>Running the Spark program<a class="headerlink" href="#running-the-spark-program" title="Permalink to this headline">¶</a></h3>
+<p>There are three ways to start the Spark program:</p>
+<ol class="arabic">
+<li><p class="first">Click on the <em>Process</em> button in the left sidebar of the CDAP Console,
+then click <em>SparkKMeansProgram</em> in the <em>Process</em> page to get to the
+Spark detail page, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">Send a query via an HTTP request using the <code class="docutils literal"><span class="pre">curl</span></code> command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">curl -w &#39;\n&#39; -v -d &#39;{args=&quot;3&quot;}&#39; \</span>
+<span class="go">  &#39;http://localhost:10000/v2/apps/SparkKMeans/spark/SparkKMeansProgram/start&#39;</span>
+</pre></div>
+</div>
+<p><strong>Note:</strong> A version of <code class="docutils literal"><span class="pre">curl</span></code> that works with Windows is included in the CDAP Standalone
+SDK in <code class="docutils literal"><span class="pre">libexec\bin\curl.exe</span></code></p>
+</li>
+<li><p class="first">Use the Command Line Interface:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">spark</span> <span class="pre">SparkKMeans.SparkKMeansProgram</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">spark</span> <span class="pre">SparkKMeans.SparkKMeansProgram</span></code></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ol>
+</div>
+<div class="section" id="querying-the-results">
+<h3>Querying the Results<a class="headerlink" href="#querying-the-results" title="Permalink to this headline">¶</a></h3>
+<p>To query the <em>centers</em> ObjectStore using the <code class="docutils literal"><span class="pre">CentersService</span></code>,
+send a query via an HTTP request using the <code class="docutils literal"><span class="pre">curl</span></code> command. For example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">curl -w &#39;\n&#39; -v &#39;http://localhost:10000/v2/apps/SparkKMeans/services/CentersService/methods/centers/1&#39;</span>
+</pre></div>
+</div>
+<p><strong>Note:</strong> A version of <code class="docutils literal"><span class="pre">curl</span></code> that works with Windows is included in the CDAP Standalone
+SDK in <code class="docutils literal"><span class="pre">libexec\bin\curl.exe</span></code></p>
+<p>You can also use the Command Line Interface:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">call</span> <span class="pre">service</span> <span class="pre">SparkKMeans.CentersService</span> <span class="pre">GET</span> <span class="pre">centers/1</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">call</span> <span class="pre">service</span> <span class="pre">SparkKMeans.CentersService</span> <span class="pre">GET</span> <span class="pre">centers/1</span></code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="stopping-the-application">
+<h3>Stopping the Application<a class="headerlink" href="#stopping-the-application" title="Permalink to this headline">¶</a></h3>
+<p>Once done, you can stop the application as described above in <a class="reference external" href="#stopping-an-application">Stopping an Application.</a> Here is an example-specific description of the steps:</p>
+<p><strong>Stopping the Flow and Spark Program</strong></p>
+<ul>
+<li><p class="first">Click on the <em>Process</em> button in the left sidebar of the CDAP Console,
+then click <em>PointsFlow</em> in the <em>Process</em> page to get to the
+Flow detail page, then click the <em>Stop</em> button; similarly for the <em>SparkKMeansProgram</em>: or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">flow</span> <span class="pre">SparkKMeans.PointsFlow</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">&nbsp;</th>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">flow</span> <span class="pre">SparkKMeans.SparkKMeansProgram</span></code></td>
+</tr>
+<tr class="row-odd"><th class="stub">On Windows:</th>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">flow</span> <span class="pre">SparkKMeans.PointsFlow</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">&nbsp;</th>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">flow</span> <span class="pre">SparkKMeans.SparkKMeansProgram</span></code></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+<p><strong>Stopping the Service</strong></p>
+<ul>
+<li><p class="first">Click on <em>SparkKMeans</em> in the Overview page of the CDAP Console to get to the
+Application detail page, click <em>CentersService</em> in the <em>Service</em> pane to get to the
+Service detail page, then click the <em>Stop</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><th class="stub">On Linux:</th>
+<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">flow</span> <span class="pre">SparkKMeans.CentersService</span></code></td>
+</tr>
+<tr class="row-even"><th class="stub">On Windows:</th>
+<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">flow</span> <span class="pre">SparkKMeans.CentersService</span></code></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v2.6.3</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Introduction</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+                        
+      <li><div class=""></div><b><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Examples, Guides, and Tutorials:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hello-world.html">Hello World</a></li>
+<li class="toctree-l2"><a class="reference internal" href="word-count.html">Word Count</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fileset.html">File Sets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="count-random.html">Count Random</a></li>
+<li class="toctree-l2"><a class="reference internal" href="purchase.html">Purchase</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Spark K-Means</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-and-starting">Building and Starting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-cdap-applications">Running CDAP Applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-example">Running the Example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="spark-page-rank.html">Spark Page Rank</a></li>
+<li class="toctree-l2"><a class="reference internal" href="web-analytics.html">Web Analytics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to-guides/index.html">How-To Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps-packs.html">Apps and Packs</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="purchase.html"
+                        title="Previous Chapter">Purchase</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="spark-page-rank.html"
+                        title="Next Chapter">Spark Page Rank Example</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/2.6.3/cdap-docs-2.6.3-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Purchase" href="purchase.html" />Purchase</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Spark Page Rank Example" href="spark-page-rank.html" />Spark Page Rank Example</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
