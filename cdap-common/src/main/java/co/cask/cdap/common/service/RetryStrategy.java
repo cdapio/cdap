@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,25 +17,17 @@
 package co.cask.cdap.common.service;
 
 /**
- * Interface implemented by classes that provide ability to
- * stop resources or subsystems that are started.
+ * Provides strategy to use for operation retries.
  */
-public interface Stoppable {
+public interface RetryStrategy {
 
   /**
-   * Closes any resources held by the class implementing Stoppable.
-   * If the resources and subsystems are already stopped then
-   * invoking this has no effect.
+   * Returns the number of milliseconds to wait before retrying the operation.
    *
-   * @param reason for stopping.
+   * @param failures Number of times that the operation has been failed.
+   * @param startTime Timestamp in milliseconds that the request starts.
+   * @return Number of milliseconds to wait before retrying the operation. Returning {@code 0} means
+   *         retry it immediately, while negative means abort the operation.
    */
-  void stop(final String reason);
-
-  /**
-   * Returns status about whether the thread was stopped.
-   *
-   * @return true if stopped; false otherwise.
-   */
-  boolean isStopped();
-
+  long nextRetry(int failures, long startTime);
 }
