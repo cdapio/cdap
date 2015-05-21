@@ -1,6 +1,6 @@
 angular.module(PKG.name + '.feature.datasets')
   .controller('CdapDatasetDetailStatusController',
-    function($scope, MyDataSource, $state, myHelpers) {
+    function($scope, MyDataSource, $state, myHelpers, MyMetricsQueryHelper) {
       $scope.writes = 0;
       $scope.reads = 0;
       $scope.storage = 0;
@@ -29,7 +29,7 @@ angular.module(PKG.name + '.feature.datasets')
         // A temporary way to get the rate of a metric for a dataset.
         // Ideally this would be batched for datasets/streams
         var path = '/metrics/query?metric=' + metric.name +
-                    '&' + myHelpers.tagsToParams(datasetTags) +
+                    '&' + MyMetricsQueryHelper.tagsToParams(datasetTags) +
                     '&start=now-1s&end=now-1s&resolution=1s';
 
         dataSrc.poll({
@@ -43,7 +43,7 @@ angular.module(PKG.name + '.feature.datasets')
 
       dataSrc.poll({
         _cdapPath : '/metrics/query?metric=system.dataset.store.bytes' +
-                    '&' + myHelpers.tagsToParams(datasetTags) +
+                    '&' + MyMetricsQueryHelper.tagsToParams(datasetTags) +
                     '&aggregate=true',
         method: 'POST'
       }, function(metricData) {

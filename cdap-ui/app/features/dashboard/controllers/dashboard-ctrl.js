@@ -32,7 +32,8 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
   $scope.gridsterOpts = {
     rowHeight: '280',
     columns: 6,
-    mobileBreakPoint: 600,
+    mobileBreakPoint: 800,
+    swapping: true,
     resizable: {
       enabled: true,
       start: function(event, uiWidget, $element) {}, // optional callback fired when resize is started,

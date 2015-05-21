@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .directive('myMetricPicker', function (MyDataSource, $stateParams, $log, myHelpers) {
+  .directive('myMetricPicker', function (MyDataSource, $stateParams, $log, MyMetricsQueryHelper) {
 
     var dSrc = new MyDataSource();
 
@@ -111,7 +111,7 @@ angular.module(PKG.name + '.commons')
             return;
           }
 
-          var tagQueryParams = myHelpers.tagsToParams(myHelpers.contextToTags(contextWithoutTrailingDot));
+          var tagQueryParams = MyMetricsQueryHelper.tagsToParams(MyMetricsQueryHelper.contextToTags(contextWithoutTrailingDot));
           scope.available.contexts = [];
           dSrc.request(
             {
@@ -121,7 +121,7 @@ angular.module(PKG.name + '.commons')
             },
             function (res) {
               res = res.map(function(v) {
-                return context + myHelpers.tagToContext(v);
+                return context + MyMetricsQueryHelper.tagToContext(v);
               });
               scope.available.contexts = res.map(function(d){
                 return {

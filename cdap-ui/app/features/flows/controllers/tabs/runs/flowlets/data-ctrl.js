@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowletDetailDataController', function($state, $scope, MyDataSource, myHelpers) {
+  .controller('FlowletDetailDataController', function($state, $scope, MyDataSource, myHelpers, FlowletDetailInputController) {
     var dataSrc = new MyDataSource($scope);
     var flowletid = $scope.$parent.activeFlowlet.name;
     $scope.datasets = [];
@@ -30,7 +30,7 @@ angular.module(PKG.name + '.feature.flows')
           };
           dataSrc
             .poll({
-              _cdapPath: '/metrics/query?' + myHelpers.tagsToParams(datasetTags)
+              _cdapPath: '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(datasetTags)
                         + '&metric=system.dataset.store.reads',
               method: 'POST'
             }, function(res) {
@@ -41,7 +41,7 @@ angular.module(PKG.name + '.feature.flows')
 
           dataSrc
             .poll({
-              _cdapPath: '/metrics/query?' + myHelpers.tagsToParams(datasetTags)
+              _cdapPath: '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(datasetTags)
                         + '&metric=system.dataset.store.writes',
               method: 'POST'
             }, function(res) {

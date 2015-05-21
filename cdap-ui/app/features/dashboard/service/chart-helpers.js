@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.dashboard')
-  .factory('MyChartHelpers', function(myHelpers) {
+  .factory('MyChartHelpers', function(myHelpers, MyMetricsQueryHelper) {
 
     function processData (queryResults, queryId, metricNames, metricResolution, isAggregate) {
       var metrics, metric, data, dataPt, result;
@@ -24,7 +24,7 @@ angular.module(PKG.name + '.feature.dashboard')
       for (i = 0; i < metrics.length; i++) {
         var thisMetricData = tempMap[metrics[i]];
         if (isAggregate) {
-          thisMetricData = myHelpers.aggregate(thisMetricData, isAggregate);
+          thisMetricData = MyMetricsQueryHelper.aggregate(thisMetricData, isAggregate);
         }
         tmpData.push(thisMetricData);
       }
@@ -63,8 +63,8 @@ angular.module(PKG.name + '.feature.dashboard')
         }
         var skipAmt = skipAmtFromResolution(resolution);
 
-        var startTime = myHelpers.roundUpToNearest(result.startTime, skipAmt);
-        var endTime = myHelpers.roundDownToNearest(result.endTime, skipAmt);
+        var startTime = MyMetricsQueryHelper.roundUpToNearest(result.startTime, skipAmt);
+        var endTime = MyMetricsQueryHelper.roundDownToNearest(result.endTime, skipAmt);
         var tempMap = {};
         for (var j = startTime; j <= endTime; j += skipAmt) {
           tempMap[j] = 0;
@@ -204,9 +204,64 @@ angular.module(PKG.name + '.feature.dashboard')
       return retObj;
     }
 
+    function roundUpToNearest(val, nearest) {
+      return Math.ceil(val / nearest) * nearest;
+    };
+    function roundDownToNearest(val, nearest) {
+      return Math.floor(val / nearest) * nearest;
+    };
+
+    function aggregate(inputMetrics, by) {
+      // Given an object in the format: { ts1: value, ts2: value, ts3: value, ts4: value },
+      // This will return an object in the same format, where each sequence of {by} timestamps will be summed up.
+      // Not currently considering resolution of the metric values (It groups simply starting from the first timestamp),
+      // as opposed to grouping into 5-minute interval.
+      var aggregated = {};
+      var timeValues = Object.keys(inputMetrics);
+      var roundedDown = roundDownToNearest(timeValues.length, by);
+      for (var i = 0; i < roundedDown; i += by) {
+        var sum = 0;
+        for (var j = 0; j < by; j++) {
+          sum += inputMetrics[timeValues[i + j]];
+        }
+        aggregated[timeValues[i]] = sum;
+      }
+      // Add up remainder elements (in case number of elements in obj is not evenly divisible by {by}
+      if (roundedDown < timeValues.length) {
+        var finalKey = timeValues[roundedDown];
+        aggregated[finalKey] = 0;
+        for (var i = roundedDown; i < timeValues.length; i++) {
+          aggregated[finalKey] += inputMetrics[timeValues[i]];
+        }
+      }
+      return aggregated;
+    }
+
+    // {name: k1, value: v1} -> 'k1.v2'
+    function tagToContext(tag) {
+      var key = tag.name.replace(/\./g, '~');
+      var value = tag.value.replace(/\./g, '~');
+      return key + '.' + value;
+    }
+
+    // { namespace: default, app: foo, flow: bar } -> 'tag=namespace:default&tag=app:foo&tag=flow:bar'
+    function tagsToParams(tags) {
+      var keys = Object.keys(tags);
+      var queryParams = [];
+      keys.forEach(function(key) {
+        var value = tags[key];
+        queryParams.push('tag=' + key + ':' + value);
+      });
+      return queryParams.join('&');
+    }
 
     return {
       contextToTags: contextToTags,
-      constructQuery: constructQuery
+      constructQuery: constructQuery,
+      roundUpToNearest: roundUpToNearest,
+      roundDownToNearest: roundDownToNearest,
+      aggregate: aggregate,
+      tagToContext: tagToContext,
+      tagsToParams: tagsToParams
     };
   });
