@@ -60,9 +60,9 @@ function download_includes() {
 
   version
 
-# For clients, current release branch is 1.2.0
   local clients_branch="release/${CDAP_CLIENTS_RELEASE_VERSION}"
   local ingest_branch="release/${CDAP_INGEST_RELEASE_VERSION}"
+
   if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
     clients_branch="develop"
     ingest_branch="develop"
