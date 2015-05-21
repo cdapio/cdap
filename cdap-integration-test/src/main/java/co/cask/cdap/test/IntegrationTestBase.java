@@ -71,18 +71,6 @@ public class IntegrationTestBase {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
-  /**
-   * If empty, start our own CDAP standalone instance for testing.
-   * If not empty, use the provided remote CDAP instance for testing.
-   */
-  private static final String INSTANCE_URI = System.getProperty("instanceUri", "");
-
-  /**
-   * CDAP access token for making requests to secure CDAP instances.
-   * Can be obtained via the CDAP authentication server.
-   */
-  private static final String ACCESS_TOKEN = System.getProperty("accessToken", "");
-
   @Before
   public void setUp() throws Exception {
     assertNoApps();
@@ -112,7 +100,7 @@ public class IntegrationTestBase {
     // TODO: check metrics, streams, etc.
   }
 
-  protected static TestManager getTestManager() {
+  protected TestManager getTestManager() {
     try {
       return new IntegrationTestManager(getClientConfig(), new LocalLocationFactory(TEMP_FOLDER.newFolder()));
     } catch (IOException e) {
@@ -120,19 +108,35 @@ public class IntegrationTestBase {
     }
   }
 
-  protected static ClientConfig getClientConfig() {
+  /**
+   * If empty, start our own CDAP standalone instance for testing.
+   * If not empty, use the provided remote CDAP instance for testing.
+   */
+  protected String getInstanceURI() {
+    return System.getProperty("instanceUri", "");
+  }
+
+  /**
+   * CDAP access token for making requests to secure CDAP instances.
+   * Can be obtained via the CDAP authentication server.
+   */
+  protected String getAccessToken() {
+    return System.getProperty("accessToken", "");
+  }
+
+  protected ClientConfig getClientConfig() {
     StandaloneTester standalone = STANDALONE.get();
     ClientConfig.Builder builder = new ClientConfig.Builder();
-    if (INSTANCE_URI.isEmpty()) {
+    if (getInstanceURI().isEmpty()) {
       builder.setConnectionConfig(InstanceURIParser.DEFAULT.parse(
         standalone.getBaseURI().toString()));
     } else {
       builder.setConnectionConfig(InstanceURIParser.DEFAULT.parse(
-        URI.create(INSTANCE_URI).toString()));
+        URI.create(getInstanceURI()).toString()));
     }
 
-    if (!ACCESS_TOKEN.isEmpty()) {
-      builder.setAccessToken(new AccessToken(ACCESS_TOKEN, 0L, null));
+    if (!getAccessToken().isEmpty()) {
+      builder.setAccessToken(new AccessToken(getAccessToken(), 0L, null));
     }
 
     builder.setDefaultConnectTimeout(120000);
