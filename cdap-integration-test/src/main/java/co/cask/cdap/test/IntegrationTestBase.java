@@ -16,7 +16,6 @@
 
 package co.cask.cdap.test;
 
-import co.cask.cdap.StandaloneTester;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.ApplicationClient;
@@ -64,9 +63,6 @@ import javax.annotation.Nullable;
  *
  */
 public class IntegrationTestBase {
-
-  @ClassRule
-  public static final SingletonExternalResource STANDALONE = new SingletonExternalResource(new StandaloneTester());
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -125,15 +121,9 @@ public class IntegrationTestBase {
   }
 
   protected ClientConfig getClientConfig() {
-    StandaloneTester standalone = STANDALONE.get();
     ClientConfig.Builder builder = new ClientConfig.Builder();
-    if (getInstanceURI().isEmpty()) {
-      builder.setConnectionConfig(InstanceURIParser.DEFAULT.parse(
-        standalone.getBaseURI().toString()));
-    } else {
-      builder.setConnectionConfig(InstanceURIParser.DEFAULT.parse(
-        URI.create(getInstanceURI()).toString()));
-    }
+    builder.setConnectionConfig(InstanceURIParser.DEFAULT.parse(
+      URI.create(getInstanceURI()).toString()));
 
     if (!getAccessToken().isEmpty()) {
       builder.setAccessToken(new AccessToken(getAccessToken(), 0L, null));
