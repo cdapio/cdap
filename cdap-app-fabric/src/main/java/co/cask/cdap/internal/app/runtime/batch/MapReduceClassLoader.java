@@ -279,7 +279,8 @@ public class MapReduceClassLoader extends CombineClassLoader {
     private static ClassLoader createClassFilteredClassLoader(Iterable<String> allowedClasses,
                                                               ClassLoader parentClassLoader) {
       Set<String> allowedResources = ImmutableSet.copyOf(Iterables.transform(allowedClasses, CLASS_TO_RESOURCE_NAME));
-      return new FilterClassLoader(Predicates.in(allowedResources), Predicates.<String>alwaysTrue(), parentClassLoader);
+      return FilterClassLoader.create(Predicates.in(allowedResources),
+        Predicates.<String>alwaysTrue(), parentClassLoader);
     }
   }
 }

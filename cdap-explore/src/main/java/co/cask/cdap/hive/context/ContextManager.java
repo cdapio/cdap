@@ -24,6 +24,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
@@ -36,6 +37,7 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Objects;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -146,8 +148,24 @@ public class ContextManager {
       return datasetFramework.getDatasetSpec(datasetId);
     }
 
-    public SystemDatasetInstantiator createDatasetInstantiator(ClassLoader parentClassLoader) {
-      return datasetInstantiatorFactory.create(parentClassLoader);
+    /**
+     * Get a {@link SystemDatasetInstantiator} that can instantiate datasets using the given classloader as the
+     * parent classloader for datasets. Must be closed after it is no longer needed, as dataset jars may be unpacked
+     * in order to create classloaders for custom datasets.
+     *
+     * The given parent classloader will be wrapped in a {@link FilterClassLoader}
+     * to prevent CDAP dependencies from leaking through. For example, if a custom dataset has an avro dependency,
+     * the classloader should use the avro from the custom dataset and not from cdap.
+     *
+     * @param parentClassLoader the parent classloader to use when instantiating datasets. If null, the system
+     *                          classloader will be used
+     * @return a dataset instantiator that can be used to instantiate datasets
+     */
+    public SystemDatasetInstantiator createDatasetInstantiator(@Nullable ClassLoader parentClassLoader) {
+      parentClassLoader = parentClassLoader == null ?
+        Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader()) :
+        parentClassLoader;
+      return datasetInstantiatorFactory.create(FilterClassLoader.create(parentClassLoader));
     }
 
     @Override
