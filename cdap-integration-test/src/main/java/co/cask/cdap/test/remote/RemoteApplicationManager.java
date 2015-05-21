@@ -133,7 +133,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
     try {
       String status = programClient.getStatus(application.getId(), programId.getType(), programId.getId());
       Preconditions.checkState("STOPPED".equals(status), "Program %s is already running", programId);
-      programClient.start(application.getId(), programId.getType(), programId.getId(), arguments);
+      programClient.start(application.getId(), programId.getType(), programId.getId(), false, arguments);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

@@ -32,16 +32,16 @@ import java.io.PrintStream;
 import java.util.Map;
 
 /**
- * Starts a program.
+ * Starts a program in debug mode.
  */
-public class StartProgramCommand extends AbstractAuthCommand {
+public class StartDebugProgramCommand extends AbstractAuthCommand {
 
   private static final Gson GSON = new Gson();
 
   private final ProgramClient programClient;
   private final ElementType elementType;
 
-  public StartProgramCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+  public StartDebugProgramCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
@@ -60,14 +60,14 @@ public class StartProgramCommand extends AbstractAuthCommand {
     String runtimeArgsString = arguments.get(ArgumentName.RUNTIME_ARGS.toString(), "");
     if (runtimeArgsString == null || runtimeArgsString.isEmpty()) {
       // run with stored runtime args
-      programClient.start(appId, elementType.getProgramType(), programId, false);
+      programClient.start(appId, elementType.getProgramType(), programId, true);
       runtimeArgsString = GSON.toJson(programClient.getRuntimeArgs(appId, elementType.getProgramType(), programId));
       output.printf("Successfully started %s '%s' of application '%s' with stored runtime arguments '%s'\n",
                     elementType.getTitleName(), programId, appId, runtimeArgsString);
     } else {
       // run with user-provided runtime args
       Map<String, String> runtimeArgs = ArgumentParser.parseMap(runtimeArgsString);
-      programClient.start(appId, elementType.getProgramType(), programId, false, runtimeArgs);
+      programClient.start(appId, elementType.getProgramType(), programId, true, runtimeArgs);
       output.printf("Successfully started %s '%s' of application '%s' with provided runtime arguments '%s'\n",
                     elementType.getTitleName(), programId, appId, runtimeArgsString);
     }
@@ -76,13 +76,13 @@ public class StartProgramCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return String.format("start %s <%s> [<%s>]", elementType.getName(), elementType.getArgumentName(),
+    return String.format("start-debug %s <%s> [<%s>]", elementType.getName(), elementType.getArgumentName(),
                          ArgumentName.RUNTIME_ARGS);
   }
 
   @Override
   public String getDescription() {
-    return "Starts " + Fragment.of(Article.A, elementType.getTitleName()) + "." +
+    return "Starts " + Fragment.of(Article.A, elementType.getTitleName()) + " in debug mode." +
       " <" + ArgumentName.RUNTIME_ARGS + "> is specified in the format \"key1=a key2=b\".";
   }
 }

@@ -54,6 +54,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 /**
@@ -95,18 +96,42 @@ public class ProgramClient {
    * @throws ProgramNotFoundException if the program with the specified name could not be found
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public void start(String appId, ProgramType programType, String programName, Map<String, String> runtimeArgs)
+  public void start(String appId, ProgramType programType, String programName,
+                    boolean debug, @Nullable Map<String, String> runtimeArgs)
     throws IOException, ProgramNotFoundException, UnauthorizedException {
 
     Id.Application app = Id.Application.from(config.getNamespace(), appId);
     Id.Program program = Id.Program.from(app, programType, programName);
-    String path = String.format("apps/%s/%s/%s/start", appId, programType.getCategoryName(), programName);
+    String action = debug ? "debug" : "start";
+    String path = String.format("apps/%s/%s/%s/%s", appId, programType.getCategoryName(), programName, action);
     URL url = config.resolveNamespacedURLV3(path);
-    HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(runtimeArgs)).build();
-    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+    HttpRequest.Builder request = HttpRequest.post(url);
+    if (runtimeArgs != null) {
+      request.withBody(GSON.toJson(runtimeArgs));
+    }
+
+    HttpResponse response = restClient.execute(request.build(), config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(program);
     }
+  }
+
+  /**
+   * Starts a program using the stored runtime arguments.
+   *
+   * @param appId ID of the application that the program belongs to
+   * @param programType type of the program
+   * @param programName name of the program
+   * @param debug true to start in debug mode
+   * @throws IOException if a network error occurred
+   * @throws ProgramNotFoundException if the program with the specified name could not be found
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public void start(String appId, ProgramType programType, String programName, boolean debug)
+    throws IOException, ProgramNotFoundException, UnauthorizedException {
+
+    start(appId, programType, programName, debug, null);
   }
 
   /**
@@ -122,15 +147,7 @@ public class ProgramClient {
   public void start(String appId, ProgramType programType, String programName)
     throws IOException, ProgramNotFoundException, UnauthorizedException {
 
-    Id.Application app = Id.Application.from(config.getNamespace(), appId);
-    Id.Program program = Id.Program.from(app, programType, programName);
-    String path = String.format("apps/%s/%s/%s/start", appId, programType.getCategoryName(), programName);
-    URL url = config.resolveNamespacedURLV3(path);
-    HttpRequest request = HttpRequest.post(url).build();
-    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ProgramNotFoundException(program);
-    }
+    start(appId, programType, programName, false, null);
   }
 
   /**
