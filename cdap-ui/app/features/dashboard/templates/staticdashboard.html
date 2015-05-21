@@ -3,7 +3,7 @@
     <li gridster-item="wdgt"
         ng-repeat="wdgt in currentBoard.columns">
       <div class="panel panel-default" style="margin:0;">
-        <div class="panel-heading"> {{::wdgt.row}},{{::wdgt.col}} : {{wdgt.sizeX}},{{wdgt.sizeY}}
+        <div class="panel-heading">
           <div class="btn-group btn-group-xs" role="toolbar"></div>
           <span ng-bind="wdgt.title | myEllipsis: 25" tooltip="{{wdgt.title}}"></span>
         </div>

@@ -19,7 +19,7 @@ angular.module(PKG.name+'.feature.dashboard')
       opts.settings = opts.settings || {}; // Not a required paramter.
       this.color = opts.settings.color;
 
-      if (opts.settings.size) {
+      if (myHelpers.objectQuery(opts, 'settings', 'size')) {
         this.width = opts.settings.size.width;
         this.height = opts.settings.size.height;
       } else {
@@ -108,7 +108,7 @@ angular.module(PKG.name+'.feature.dashboard')
   })
 
   .controller('WidgetTableCtrl', function ($scope, MyDataSource, MyChartHelpers, MyMetricsQueryHelper) {
-    
+
     $scope.metrics = $scope.wdgt.metric;
     var dataSrc = new MyDataSource($scope);
 

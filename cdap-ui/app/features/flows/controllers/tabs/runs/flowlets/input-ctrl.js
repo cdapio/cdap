@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowletDetailInputController', function($state, $scope, MyDataSource, myHelpers) {
+  .controller('FlowletDetailInputController', function($state, $scope, MyDataSource, MyMetricsQueryHelper) {
 
     var dataSrc = new MyDataSource($scope);
     var flowletid = $scope.$parent.activeFlowlet.name;
@@ -38,9 +38,9 @@ angular.module(PKG.name + '.feature.flows')
               namespace: $state.params.namespace,
               stream: input.name
             };
-            var flowletPath = '/metrics/query?' + myHelpers.tagsToParams(flowletTags)
+            var flowletPath = '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(flowletTags)
                               + '&metric=system.queue.pending',
-                streamPath = '/metrics/query?' + myHelpers.tagsToParams(streamTags);
+                streamPath = '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(streamTags);
                               + '&metric=system.collect.events';
 
             var path = '';
