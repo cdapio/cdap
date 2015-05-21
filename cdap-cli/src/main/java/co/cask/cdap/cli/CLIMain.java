@@ -178,6 +178,8 @@ public class CLIMain {
       } catch (Exception e) {
         if (options.isDebug()) {
           e.printStackTrace(cliConfig.getOutput());
+        } else {
+          cliConfig.getOutput().print(e.getMessage());
         }
       }
     }
