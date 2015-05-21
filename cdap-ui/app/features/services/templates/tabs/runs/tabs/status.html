@@ -1,29 +1,7 @@
-<div ng-controller="ServicesDetailStatusController">
+<div ng-controller="ServicesRunsDetailStatusController">
 
   <div class="row">
-    <div class="col-xs-9">
-
-        <table class="table table-curved table-status">
-          <thead>
-            <th>Status</th>
-            <th>Instances</th>
-          </thead>
-          <tbody>
-            <td ng-bind="status" ng-class="{'txt-failed': status === 'FAILED', 'txt-running': status === 'RUNNING'}"> </td>
-            <td>
-              <div class="row">
-                <div class="col-xs-6">
-                  <em  ng-bind="instances.provisioned + ' provisioned'"></em>
-                </div>
-                <div class="col-xs-6">
-                  <em ng-bind="instances.requested + ' requested'"> </em>
-                </div>
-              </div>
-            </td>
-          </tbody>
-        </table>
-
-    </div>
+    <my-instance-control data-base-path="basePath"></my-instance-control>
   </div>
 
   <div class="row">
@@ -45,10 +23,15 @@
                     {{ep.path}}
                   </div>
                   <div class="col-xs-6">
-                    <a class="btn btn-default"
+                    <!-- <a class="btn btn-default"
                         ng-disabled="status !== 'RUNNING'"
                         ui-sref=".makerequest({ requestUrl: ep.path, requestMethod: ep.method})">
+                      Make Request </a> -->
+                      <a class="btn btn-default"
+                        ng-disabled="status !== 'RUNNING'"
+                        ui-sref="services.detail.runs.makerequest({ requestUrl: ep.path, requestMethod: ep.method})">
                       Make Request </a>
+
                   </div>
                 </div>
               </td>

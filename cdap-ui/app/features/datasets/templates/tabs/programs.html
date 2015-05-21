@@ -26,13 +26,13 @@
               <a ng-if="program.type === 'Workflow'" ui-sref="workflows.detail.runs({ appId: program.application.applicationId, programId: program.id })">
                 {{ ::program.id }}
               </a>
-              <a ng-if="program.type === 'Service'" ui-sref="services.detail.status({ appId: program.application.applicationId, programId: program.id })">
+              <a ng-if="program.type === 'Service'" ui-sref="services.detail.runs({ appId: program.application.applicationId, programId: program.id })">
                 {{ ::program.id }}
               </a>
-              <a ng-if="program.type === 'Spark'" ui-sref="spark.detail.status({ appId: program.application.applicationId, programId: program.id })">
+              <a ng-if="program.type === 'Spark'" ui-sref="spark.detail.runs({ appId: program.application.applicationId, programId: program.id })">
                 {{ ::program.id }}
               </a>
-              <a ng-if="program.type === 'Worker'" ui-sref="worker.detail.status({ appId: program.application.applicationId, programId: program.id })">
+              <a ng-if="program.type === 'Worker'" ui-sref="worker.detail.runs({ appId: program.application.applicationId, programId: program.id })">
                 {{ ::program.id }}
               </a>
 
