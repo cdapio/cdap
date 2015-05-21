@@ -27,6 +27,7 @@ source ../_common/common-build.sh
 
 CHECK_INCLUDES=$TRUE
 CDAP_CLIENTS_RELEASE_VERSION="1.2.0"
+CDAP_INGEST_RELEASE_VERSION="1.3.0"
 
 function download_readme_file_and_test() {
   # Downloads a README.rst file to a target directory, and checks that it hasn't changed.
@@ -59,9 +60,9 @@ function download_includes() {
 
   version
 
-# For clients, current release branch is 1.2.0
   local clients_branch="release/${CDAP_CLIENTS_RELEASE_VERSION}"
-  local ingest_branch="release/cdap-${PROJECT_SHORT_VERSION}-compatible"
+  local ingest_branch="release/${CDAP_INGEST_RELEASE_VERSION}"
+  
   if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
     clients_branch="develop"
     ingest_branch="develop"
