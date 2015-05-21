@@ -7,7 +7,12 @@ angular.module(PKG.name + '.feature.datasets')
       $scope.transactions = 0;
       var query = myHelpers.objectQuery;
       var dataSrc = new MyDataSource($scope),
-          currentDataset = $state.params.datasetId;
+          currentDataset = $state.params.datasetId,
+          datasetTags = {
+            namespace: $state.params.namespace,
+            dataset: currentDataset
+          };
+
 
       [
         {
@@ -20,10 +25,6 @@ angular.module(PKG.name + '.feature.datasets')
         }
       ].forEach(pollMetric);
 
-      var datasetTags = {
-        namespace: $state.params.namespace,
-        dataset: currentDataset
-      };
 
       function pollMetric(metric) {
         // A temporary way to get the rate of a metric for a dataset.
