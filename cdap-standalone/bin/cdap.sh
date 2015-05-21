@@ -253,12 +253,17 @@ start() {
 }
 
 stop() {
+    if [[ "x${1}" == "xtrue" ]]; then
+      killSignal="-9"
+    else
+      killSignal=""
+    fi
     echo -n "Stopping Standalone CDAP ..."
     if [ -f $pid ]; then
       pidToKill=`cat $pid`
       # kill -0 == see if the PID exists
       if kill -0 $pidToKill > /dev/null 2>&1; then
-        kill $pidToKill > /dev/null 2>&1
+        kill $killSignal $pidToKill > /dev/null 2>&1
         while kill -0 $pidToKill > /dev/null 2>&1;
         do
           echo -n "."
@@ -276,7 +281,7 @@ stop() {
 }
 
 restart() {
-    stop
+    stop $3
     start $1 $2
 }
 
@@ -301,10 +306,12 @@ case "$1" in
   start|restart)
     command=$1; shift
     debug=false
+    force=false
     while [ $# -gt 0 ]
     do
       case "$1" in
         --enable-debug) shift; debug=true; port=$1; shift;;
+        --force) force=true; shift;;
         *) shift; break;;
       esac
     done
@@ -319,11 +326,20 @@ case "$1" in
       fi
       CDAP_OPTS="${CDAP_OPTS} -agentlib:jdwp=transport=dt_socket,address=localhost:$port,server=y,suspend=n"
     fi
-    $command $debug $port
+    $command $debug $port $force
   ;;
 
   stop)
-    $1
+    command=$1; shift
+    force=false
+    while [ $# -gt 0 ]
+    do
+      case "$1" in
+        --force) force=true; shift;;
+        *) shift; break;;
+      esac
+    done
+    $command $force
   ;;
 
   status)
@@ -338,6 +354,8 @@ case "$1" in
     echo "Usage: $0 {start|stop|restart|status}"
     echo "Additional options with start, restart:"
     echo "--enable-debug [ <port> ] to connect to a debug port for Standalone CDAP (default port is 5005)"
+    echo "Additional option with stop, restart:"
+    echo "--force to forcibly end the existing Standalone CDAP"
     exit 1
   ;;
 
