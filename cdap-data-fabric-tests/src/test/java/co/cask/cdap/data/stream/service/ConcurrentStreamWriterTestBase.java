@@ -93,12 +93,12 @@ public abstract class ConcurrentStreamWriterTestBase {
     String namespace = "namespace";
     Id.Stream streamId = Id.Stream.from(namespace, streamName);
     StreamAdmin streamAdmin = new TestStreamAdmin(getNamespacedLocationFactory(), Long.MAX_VALUE, 1000);
-    int threads = 20;
+    int threads = Runtime.getRuntime().availableProcessors() * 4;
 
     StreamFileWriterFactory fileWriterFactory = createStreamFileWriterFactory();
     final ConcurrentStreamWriter streamWriter = createStreamWriter(streamId, streamAdmin, threads, fileWriterFactory);
 
-    // Starts 20 threads to write events through stream writer, each thread write 1000 events
+    // Starts n threads to write events through stream writer, each thread write 1000 events
     final int msgPerThread = 1000;
     final CountDownLatch startLatch = new CountDownLatch(1);
     final CountDownLatch completion = new CountDownLatch(threads);
@@ -113,7 +113,7 @@ public abstract class ConcurrentStreamWriterTestBase {
                                         i, msgPerThread, 10, startLatch, completion));
     }
     startLatch.countDown();
-    Assert.assertTrue(completion.await(60, TimeUnit.SECONDS));
+    Assert.assertTrue(completion.await(120, TimeUnit.SECONDS));
 
     // Verify all events are written.
     // There should be only one partition and one file inside
@@ -139,7 +139,7 @@ public abstract class ConcurrentStreamWriterTestBase {
     String namespace = "namespace";
     Id.Stream streamId = Id.Stream.from(namespace, streamName);
     StreamAdmin streamAdmin = new TestStreamAdmin(getNamespacedLocationFactory(), Long.MAX_VALUE, 1000);
-    int threads = 20;
+    int threads = Runtime.getRuntime().availableProcessors() * 4;
 
     StreamFileWriterFactory fileWriterFactory = createStreamFileWriterFactory();
     final ConcurrentStreamWriter streamWriter = createStreamWriter(streamId, streamAdmin, threads, fileWriterFactory);
@@ -167,7 +167,7 @@ public abstract class ConcurrentStreamWriterTestBase {
     }
 
     startLatch.countDown();
-    Assert.assertTrue(completion.await(60, TimeUnit.SECONDS));
+    Assert.assertTrue(completion.await(120, TimeUnit.SECONDS));
 
     // Verify all events are written.
     // There should be only one partition
