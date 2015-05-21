@@ -126,6 +126,31 @@ public class DefaultStoreTest {
   }
 
   @Test
+  public void testDeleteSuspendedWorkflow() {
+    Id.Namespace namespaceId = new Id.Namespace("namespace1");
+
+    // Test delete application
+    Id.Application appId1 = new Id.Application(namespaceId, "app1");
+    Id.Program programId1 = Id.Program.from(appId1, ProgramType.WORKFLOW, "pgm1");
+    RunId run1 = RunIds.generate();
+    store.setStart(programId1, run1.getId(), runIdToSecs(run1));
+    store.setSuspend(programId1, run1.getId());
+    store.removeApplication(appId1);
+    Assert.assertTrue(store.getRuns(programId1, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).isEmpty());
+
+    // Test delete namespace
+    Id.Application appId2 = new Id.Application(namespaceId, "app2");
+    Id.Program programId2 = Id.Program.from(appId2, ProgramType.WORKFLOW, "pgm2");
+    RunId run2 = RunIds.generate();
+    store.setStart(programId2, run2.getId(), runIdToSecs(run2));
+    store.setSuspend(programId2, run2.getId());
+    store.removeAll(namespaceId);
+    store.deleteNamespace(namespaceId);
+    Assert.assertTrue(store.getRuns(programId2, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).isEmpty());
+  }
+
+
+  @Test
   public void testConcurrentStopStart() throws Exception {
     // Two programs that start/stop at same time
     // Should have two run history.
