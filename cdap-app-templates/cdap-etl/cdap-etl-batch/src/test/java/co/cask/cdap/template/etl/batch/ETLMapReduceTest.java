@@ -80,8 +80,7 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
   public void testKVToKVMeta() throws Exception {
     ETLStage source = new ETLStage("MetaKVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "mtable1"));
     ETLStage sink = new ETLStage("MetaKVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "mtable2"));
-    List<ETLStage> transformList = Lists.newArrayList();
-    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transformList);
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink);
     AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
 
     Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "testMetaKVAdapter");

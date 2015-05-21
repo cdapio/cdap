@@ -44,6 +44,11 @@ public final class ETLRealtimeConfig extends ETLConfig {
     this(1, source, sink, transforms);
   }
 
+  @VisibleForTesting
+  public ETLRealtimeConfig(ETLStage source, ETLStage sink) {
+    this(source, sink, null);
+  }
+
   public Integer getInstances() {
     return instances;
   }
