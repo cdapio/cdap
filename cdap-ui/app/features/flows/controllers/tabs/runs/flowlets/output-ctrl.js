@@ -37,7 +37,6 @@ angular.module(PKG.name + '.feature.flows')
               method: 'POST'
             }, function(res) {
               if (res.series[0]) {
-                debugger;
                 updateOutput(res.series[0].data);
               } else {
                   var val = [];
