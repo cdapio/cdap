@@ -66,13 +66,16 @@ import javax.annotation.Nullable;
 public class IntegrationTestBase {
 
   @ClassRule
-  public static final SingletonExternalResource STANDALONE = new SingletonExternalResource(new StandaloneTester());
-
-  @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
+  public static final SingletonExternalResource STANDALONE = new SingletonExternalResource(new StandaloneTester());
+
   @Before
-  public void setUp() throws Exception {
+  public void setUp() throws Throwable {
+    if (startStandalone()) {
+      STANDALONE.before();
+    }
+
     assertNoApps();
     assertNoUserDatasets();
     // TODO: check metrics, streams, etc.
@@ -94,10 +97,16 @@ public class IntegrationTestBase {
 
   @After
   public void tearDown() throws Exception {
-    getTestManager().clear();
-    assertNoApps();
-    assertNoUserDatasets();
-    // TODO: check metrics, streams, etc.
+    try {
+      getTestManager().clear();
+      assertNoApps();
+      assertNoUserDatasets();
+      // TODO: check metrics, streams, etc.
+    } finally {
+      if (startStandalone()) {
+        STANDALONE.after();
+      }
+    }
   }
 
   protected TestManager getTestManager() {
@@ -106,6 +115,10 @@ public class IntegrationTestBase {
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  protected boolean startStandalone() {
+    return getInstanceURI().isEmpty();
   }
 
   /**
