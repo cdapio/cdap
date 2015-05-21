@@ -23,15 +23,10 @@
                     {{ep.path}}
                   </div>
                   <div class="col-xs-6">
-                    <!-- <a class="btn btn-default"
-                        ng-disabled="status !== 'RUNNING'"
-                        ui-sref=".makerequest({ requestUrl: ep.path, requestMethod: ep.method})">
-                      Make Request </a> -->
                       <a class="btn btn-default"
                         ng-disabled="status !== 'RUNNING'"
                         ui-sref="services.detail.runs.makerequest({ requestUrl: ep.path, requestMethod: ep.method})">
                       Make Request </a>
-
                   </div>
                 </div>
               </td>
