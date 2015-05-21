@@ -108,10 +108,21 @@ public interface StreamManager {
   /**
    * Get events from the specified stream in the specified interval
    *
+   * @param startTime the start time in seconds or "now-xs" format
+   * @param endTime the end time in seconds or "now-xs" format
+   * @param limit the maximum number of events to return
+   * @return a list of stream events in the given time range
+   */
+  List<StreamEvent> getEvents(String startTime, String endTime, int limit) throws IOException;
+
+  /**
+   * Get events from the specified stream in the specified interval
+   *
    * @param startTime the start time
    * @param endTime the end time
    * @param limit the maximum number of events to return
    * @return a list of stream events in the given time range
    */
+  @Deprecated
   List<StreamEvent> getEvents(long startTime, long endTime, int limit) throws IOException;
 }

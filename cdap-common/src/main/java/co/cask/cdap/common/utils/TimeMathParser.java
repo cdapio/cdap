@@ -21,6 +21,7 @@ import com.google.common.base.Preconditions;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.ws.rs.DefaultValue;
 
 /**
  * Utility class for parsing time strings into timestamps, with support for some basic time math.
@@ -66,6 +67,9 @@ public class TimeMathParser {
     return convertToSeconds("+", num, unitStr);
   }
 
+  /**
+   * @return the current time in seconds
+   */
   public static long nowInSeconds() {
     return TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
   }
@@ -79,20 +83,53 @@ public class TimeMathParser {
     return output;
   }
 
+  /** parses a time in String format into a long value, assuming the input is in seconds if numeric
+   *
+   * @param timeStr the string to parse
+   * @return the parsed time in seconds
+   */
   public static long parseTime(String timeStr) {
-    return parseTime(nowInSeconds(), timeStr);
+    return parseTime(timeStr, TimeUnit.SECONDS);
   }
 
+  /** parses a time in String format into a long value
+   *
+   * @param timeStr the string to parse
+   * @param timeUnit the unit of time to return, if timeStr is numeric then it is assumed to be in the unit timeUnit
+   * @return the parsed time
+   */
+  public static long parseTime(String timeStr, TimeUnit timeUnit) {
+    return parseTime(nowInSeconds(), timeStr, timeUnit);
+  }
+
+  /** parses a time in String format into a long value, assuming the input is in seconds if numeric
+   *
+   * @param now the present time in seconds
+   * @param timeStr the string to parse
+   * @return the parsed time in seconds
+   */
   public static long parseTime(long now, String timeStr) {
+    return parseTime(now, timeStr, TimeUnit.SECONDS);
+  }
+
+  /** parses a time in String format into a long value
+   *
+   * @param now the present time in seconds
+   * @param timeStr the string to parse
+   * @param timeUnit the unit of time to return, if timeStr is numeric then it is assumed to be in the unit timeUnit
+   * @return the parsed time
+   * @throws IllegalArgumentException if the format of timeStr is bad
+   */
+  public static long parseTime(long now, String timeStr, TimeUnit timeUnit) {
     Preconditions.checkNotNull(timeStr);
 
     if (NOW.equals(timeStr.toUpperCase())) {
       return now;
     }
-    // if its a timestamp in seconds
+    // if its a numeric timestamp, assume units are correct
     Matcher matcher = TIMESTAMP_PATTERN.matcher(timeStr);
     if (matcher.matches()) {
-      return Integer.parseInt(timeStr);
+      return Long.parseLong(timeStr);
     }
 
     // if its some time math pattern like now-1d-6h
@@ -117,6 +154,6 @@ public class TimeMathParser {
     } else {
       throw new IllegalArgumentException("invalid time format " + timeStr);
     }
-    return output;
+    return timeUnit.convert(output, TimeUnit.SECONDS);
   }
 }

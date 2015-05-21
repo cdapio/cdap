@@ -20,6 +20,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
+import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.stream.MultiLiveStreamFileReader;
@@ -107,9 +108,11 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
   public void fetch(HttpRequest request, HttpResponder responder,
                     @PathParam("namespace-id") String namespaceId,
                     @PathParam("stream") String stream,
-                    @QueryParam("start") long startTime,
-                    @QueryParam("end") @DefaultValue("9223372036854775807") long endTime,
+                    @QueryParam("start") String start,
+                    @QueryParam("end") @DefaultValue("9223372036854775807") String end,
                     @QueryParam("limit") @DefaultValue("2147483647") int limit) throws Exception {
+    long startTime = TimeMathParser.parseTime(start, TimeUnit.MILLISECONDS);
+    long endTime = TimeMathParser.parseTime(end, TimeUnit.MILLISECONDS);
 
     Id.Stream streamId = Id.Stream.from(namespaceId, stream);
     if (!verifyGetEventsRequest(streamId, startTime, endTime, limit, responder)) {
