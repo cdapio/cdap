@@ -12,8 +12,8 @@ CDAP Application Templates
 
 .. _apptemplates-intro-application-templates:
 
-Introduction to Application Templates
-=====================================
+.. rubric:: Introduction to Application Templates
+
 CDAP allows developers to create distributed applications using the foundational
 application building blocks (Datasets, Streams, Flows, MapReduce, Services, Workflows and
 Workers). However, there are use cases that require that a similar type of action be
@@ -45,8 +45,8 @@ extensible: users can write their own application templates if they so chose, an
 manage the lifecycle of their custom application templates using CDAP.
 
 
-ETL 
-==========
+.. rubric:: ETL 
+
 ETL is **Extract**, **Transform** and **Load** of data, a common first-step in any data
 application. CDAP endeavors to make performing ETL possible out-of-box without writing
 code; instead, you just configure CDAP appropriately and operate it.
@@ -65,7 +65,7 @@ These sections describe:
 - |etl-templates|_ Details on exploring Application Templates using RESTful APIs.
 
 
-.. |etl-creating| replace:: **Creating An ETL Adapter:**
+.. |etl-creating| replace:: **Creating an ETL Adapter:**
 .. _etl-creating: etl/creating.html
 
 - |etl-creating|_ Covers using the ETL Application Templates and Plugins included with CDAP to create an ETL Adapter.
@@ -82,3 +82,8 @@ These sections describe:
 
 - |etl-custom|_ Intended for developers writing custom ETL Plugins.
 
+
+.. |etl-third-party| replace:: **Using Third-party Jars:**
+.. _etl-third-party: etl/third-party.html
+
+- |etl-third-party|_ Explains how to use a third-party JAR (such as JDBC driver) as a plugin.
