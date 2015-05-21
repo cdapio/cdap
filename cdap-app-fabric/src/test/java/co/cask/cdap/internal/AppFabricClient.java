@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.test.internal;
+package co.cask.cdap.internal;
 
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.common.conf.Constants;
