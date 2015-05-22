@@ -19,7 +19,7 @@
         var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
       })();
     </script>
-    <title>Creating An ETL Adapter &mdash; Cask Data Application Platform 3.0.0 Documentation</title>
+    <title>Creating an ETL Adapter &mdash; Cask Data Application Platform 3.0.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -73,7 +73,7 @@
           <div class="body" role="main">
             
   <div class="section" id="creating-an-etl-adapter">
-<span id="apptemplates-etl-creating"></span><h1>Creating An ETL Adapter<a class="headerlink" href="#creating-an-etl-adapter" title="Permalink to this headline">¶</a></h1>
+<span id="apptemplates-etl-creating"></span><h1>Creating an ETL Adapter<a class="headerlink" href="#creating-an-etl-adapter" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
 <p>Adapters can be created using the <a class="reference external" href="../source/../../reference-manual/http-restful-api/apptemplates.html#http-restful-api-apptemplates-adapters-creating" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">RESTful API</span></a>,
@@ -180,6 +180,104 @@ property replaces the <code class="docutils literal"><span class="pre">schedule<
 columns in the incoming data. A <em>StreamSink</em> in the final step needs a data field property
 that it will use as the content for the data to be written.</p>
 </div>
+<div class="section" id="sample-adaptor-configurations">
+<h3>Sample Adaptor Configurations<a class="headerlink" href="#sample-adaptor-configurations" title="Permalink to this headline">¶</a></h3>
+<p><strong>Database:</strong> Sample config for using a Database Source and a Database Sink:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;config&quot;: {</span>
+<span class="go">    &quot;schedule&quot;: &quot;* * * * *&quot;,</span>
+<span class="go">    &quot;source&quot;: {</span>
+<span class="go">      &quot;name&quot;: &quot;DatabaseSource&quot;,</span>
+<span class="go">      &quot;properties&quot;: {</span>
+<span class="go">        &quot;importQuery&quot;: &quot;select id,name,age from my_table&quot;,</span>
+<span class="go">        &quot;countQuery&quot;: &quot;select count(id) from my_table&quot;,</span>
+<span class="go">        &quot;connectionString&quot;: &quot;jdbc:mysql://localhost:3306/test&quot;,</span>
+<span class="go">        &quot;driverClass&quot;: &quot;com.mysql.jdbc.Driver&quot;,</span>
+<span class="go">        &quot;tableName&quot;: &quot;my_table&quot;,</span>
+<span class="go">        &quot;user&quot;: &quot;my_user&quot;,</span>
+<span class="go">        &quot;password&quot;: &quot;my_password&quot;,</span>
+<span class="go">        &quot;jdbcPluginName&quot;: &quot;jdbc_plugin_name_defined_in_jdbc_plugin_json_config&quot;,</span>
+<span class="go">        &quot;jdbcPluginType&quot;: &quot;jdbc_plugin_type_defined_in_jdbc_plugin_json_config&quot;</span>
+<span class="go">        }</span>
+<span class="go">      },</span>
+<span class="go">    &quot;sink&quot;: {</span>
+<span class="go">      &quot;name&quot;: &quot;Database&quot;,</span>
+<span class="go">      &quot;properties&quot;: {</span>
+<span class="go">        &quot;columns&quot;: &quot;id,name,age&quot;,</span>
+<span class="go">        &quot;connectionString&quot;: &quot;jdbc:mysql://localhost:3306/test&quot;,</span>
+<span class="go">        &quot;driverClass&quot;: &quot;com.mysql.jdbc.Driver&quot;,</span>
+<span class="go">        &quot;tableName&quot;: &quot;dest_table&quot;,</span>
+<span class="go">        &quot;user&quot;: &quot;my_user&quot;,</span>
+<span class="go">        &quot;password&quot;: &quot;my_password&quot;,</span>
+<span class="go">        &quot;jdbcPluginName&quot;: &quot;jdbc_plugin_name_defined_in_jdbc_plugin_json_config&quot;,</span>
+<span class="go">        &quot;jdbcPluginType&quot;: &quot;jdbc_plugin_type_defined_in_jdbc_plugin_json_config&quot;</span>
+<span class="go">        }</span>
+<span class="go">      },</span>
+<span class="go">    &quot;transforms&quot;: [</span>
+<span class="go">      ]</span>
+<span class="go">    },</span>
+<span class="go">  &quot;description&quot;: &quot;ETL using a Table as source and RDBMS table as sink&quot;,</span>
+<span class="go">  &quot;template&quot;: &quot;ETLBatch&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p><strong>JMS:</strong> A JMS server needs to be setup similar to using <a class="reference external" href="http://activemq.apache.org">ActiveMQ</a>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;template&quot;: &quot;ETLRealtime&quot;,</span>
+<span class="go">  &quot;config&quot;: {</span>
+<span class="go">    &quot;instances&quot;: &quot;1&quot;,</span>
+<span class="go">    &quot;source&quot;: {</span>
+<span class="go">      &quot;name&quot;: &quot;JMS&quot;,</span>
+<span class="go">      &quot;properties&quot;: {</span>
+<span class="go">        &quot;jms.messages.receive&quot;: 50,</span>
+<span class="go">        &quot;jms.destination.name&quot;: &quot;dynamicQueues/CDAP.QUEUE&quot;,</span>
+<span class="go">        &quot;jms.factory.initial&quot;: &quot;org.apache.activemq.jndi.ActiveMQInitialContextFactory&quot;,</span>
+<span class="go">        &quot;jms.provider.url&quot;: &quot;vm://localhost?broker.persistent=false&quot;</span>
+<span class="go">      }</span>
+<span class="go">    },</span>
+<span class="go">    &quot;sink&quot;: {</span>
+<span class="go">      &quot;name&quot;: &quot;Stream&quot;,</span>
+<span class="go">      &quot;properties&quot;: {</span>
+<span class="go">        &quot;name&quot;: &quot;jmsStream&quot;,</span>
+<span class="go">        &quot;body.field&quot;: &quot;message&quot;</span>
+<span class="go">      }</span>
+<span class="go">    },</span>
+<span class="go">    &quot;transforms&quot;: [</span>
+<span class="go">    ]</span>
+<span class="go">  }</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p><strong>Kafka:</strong> A Kafka cluster needs to be setup, and certain minimum properties specified when
+creating the source:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;template&quot;: &quot;ETLRealtime&quot;,</span>
+<span class="go">  &quot;config&quot;: {</span>
+<span class="go">    &quot;instances&quot;: &quot;1&quot;,</span>
+<span class="go">    &quot;source&quot;: {</span>
+<span class="go">      &quot;name&quot;: &quot;Kafka&quot;,</span>
+<span class="go">      &quot;properties&quot;: {</span>
+<span class="go">        &quot;kafka.partitions&quot;: 1,</span>
+<span class="go">        &quot;kafka.topic&quot;: &quot;test&quot;,</span>
+<span class="go">        &quot;kafka.brokers&quot;: &quot;localhost:9092&quot;</span>
+<span class="go">      }</span>
+<span class="go">    },</span>
+<span class="go">    &quot;sink&quot;: {</span>
+<span class="go">      &quot;name&quot;: &quot;Stream&quot;,</span>
+<span class="go">      &quot;properties&quot;: {</span>
+<span class="go">        &quot;name&quot;: &quot;myStream&quot;,</span>
+<span class="go">        &quot;body.field&quot;: &quot;message&quot;</span>
+<span class="go">      }</span>
+<span class="go">    },</span>
+<span class="go">    &quot;transforms&quot;: [</span>
+<span class="go">    ]</span>
+<span class="go">  }</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p><strong>Prebuilt JARs:</strong> In a case where you&#8217;d like to use prebuilt third-party JARs (such as a
+JDBC Driver) as a plugin, please refer to the section on <a class="reference internal" href="third-party.html#apptemplates-third-party"><span>Using Third-party Jars</span></a>.</p>
+</div>
 </div>
 </div>
 
@@ -253,17 +351,19 @@ that it will use as the content for the data to be written.</p>
 <li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="index.html"> ETL Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="templates.html"> ETL Templates</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href=""> Creating An ETL Adapter</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> Creating an ETL Adapter</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#configuration-file-format">Configuration File Format</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#using-the-etl-batch-template">Using the ETL Batch Template</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#using-the-etl-realtime-template">Using the ETL Realtime Template</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sample-adaptor-configurations">Sample Adaptor Configurations</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="operations.html"> Adapter Lifecycle Management</a></li>
 <li class="toctree-l1"><a class="reference internal" href="custom.html"> Creating Custom ETL Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="third-party.html"> Using Third-party Jars</a></li>
 </ul>
 
 </nav>
