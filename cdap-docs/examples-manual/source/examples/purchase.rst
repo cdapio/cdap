@@ -9,47 +9,47 @@
 Purchase
 ========
 
-A Cask Data Application Platform (CDAP) Example demonstrating many of the CDAP components.
+A Cask Data Application Platform (CDAP) example demonstrating many of the CDAP components.
 
 Overview
 ========
 
-This example demonstrates use of many of the CDAP components—Streams, Flows, Flowlets,
-Datasets, Queries, MapReduce programs, Workflows, and Services—all in a single Application.
+This example demonstrates use of many of the CDAP components |---| streams, flows, flowlets,
+datasets, queries, MapReduce programs, workflows, and services |---| all in a single application.
 
-The application uses a scheduled MapReduce and Workflow to read from an ObjectMappedTable Dataset
-and write to an ObjectStore Dataset.
+The application uses a scheduled MapReduce and workflow to read from an ObjectMappedTable dataset
+and write to an ObjectStore dataset.
 
   - Send sentences of the form "Tom bought 5 apples for $10" to the ``purchaseStream``.
     You can send sentences either by using a ``curl`` call, using the ``inject-data`` script
     included in the example's ``/bin`` directory, or by using the CDAP UI.
   - The ``PurchaseFlow`` reads the ``purchaseStream`` and converts every input String into a
-    Purchase object and stores the object in the *purchases* Dataset.
+    Purchase object and stores the object in the *purchases* dataset.
   - User profile information for the user can be added by using ``curl`` calls (or another method) which are
-    then stored in the ``userProfiles`` Dataset.
-  - The ``CatalogLookup`` Service fetches the catalog id for a given product. The ``CatalogLookup`` Service
-    is called from the PurchaseStore Flowlet. The host and port of the ``CatalogLookup`` Service is discovered
+    then stored in the ``userProfiles`` dataset.
+  - The ``CatalogLookup`` service fetches the catalog id for a given product. The ``CatalogLookup`` service
+    is called from the PurchaseStore flowlet. The host and port of the ``CatalogLookup`` service is discovered
     using the Service discovery framework.
   - The ``UserProfileService`` is responsible for storing and retrieving the user information
-    for a given user id from the ``userProfiles`` Dataset. The host and port of the ``UserProfileService`` is
-    discovered using the Service discovery framework.
+    for a given user ID from the ``userProfiles`` dataset. The host and port of the ``UserProfileService`` is
+    discovered using the service discovery framework.
   - When scheduled by the ``PurchaseHistoryWorkFlow``, the ``PurchaseHistoryBuilder`` MapReduce
-    reads the ``purchases`` Dataset. It fetches the user profile information, if it is available, from
+    reads the ``purchases`` dataset. It fetches the user profile information, if it is available, from
     the ``UserProfileService`` and creates a purchase history. It stores the purchase history in the
-    ``history`` Dataset every morning at 4:00 A.M. using a Time Schedule, and also every time 1MB of data
+    ``history`` dataset every morning at 4:00 A.M. using a Time Schedule, and also every time 1MB of data
     is ingested by the ``purchaseStream`` using a Data Schedule.
   - You can either manually (in the Process screen of the CDAP UI) or 
     programmatically execute the ``PurchaseHistoryBuilder`` MapReduce to store 
-    customers' purchase history in the ``history`` Dataset.
-  - Use the ``PurchaseHistoryService`` to retrieve from the ``history`` Dataset the purchase history of a user.
-  - Execute a SQL query over the ``history`` Dataset. You can do this using a series of ``curl``
+    customers' purchase history in the ``history`` dataset.
+  - Use the ``PurchaseHistoryService`` to retrieve from the ``history`` dataset the purchase history of a user.
+  - Execute a SQL query over the ``history`` dataset. You can do this using a series of ``curl``
     calls, or more conveniently using the :ref:`Command Line Interface <cli>`.
 
 **Note:** Because the ``PurchaseHistoryWorkFlow`` is only scheduled to run at 4:00 A.M.,
 you should not start it manually until after entering the first customers' purchases, or the
 ``PurchaseHistoryService`` will respond with a ``204 No Response`` status code.
 
-Let's look at some of these components, and then run the Application and see the results.
+Let's look at some of these components, and then run the application and see the results.
 
 The Purchase Application
 ------------------------
@@ -63,9 +63,9 @@ of the Application are tied together by the class ``PurchaseApp``:
    :start-after: public class PurchaseApp extends AbstractApplication {
 
 ``PurchaseHistory`` and ``Purchase``: ObjectStore Data Storage
-------------------------------------------------------------------------
+--------------------------------------------------------------
 
-The raw purchase data is stored in an ObjectMappedTable Dataset, *purchases*,
+The raw purchase data is stored in an ObjectMappedTable dataset, *purchases*,
 with this method defined in ``PurchaseStore.java``:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
@@ -73,23 +73,23 @@ with this method defined in ``PurchaseStore.java``:
    :start-after: @ProcessInput
    :end-before: /**
 
-This method is what actually puts data into the *purchases* Dataset, by writing to the
-Dataset with each purchase's timestamp and the ``Purchase`` Object.
+This method is what actually puts data into the *purchases* dataset, by writing to the
+dataset with each purchase's timestamp and the ``Purchase`` Object.
 
 The purchase history for each customer is compiled by the ``PurchaseHistoryWorkflow``, which uses a
-MapReduce—``PurchaseHistoryBuilder``—to aggregate all purchases into a per-customer purchase
-history. It writes to the *history* Dataset, a custom Dataset that embeds an ``ObjectStore`` and 
-implements the ``RecordScannable`` interface to allow SQL queries over the Dataset.
+MapReduce |---| ``PurchaseHistoryBuilder`` |---| to aggregate all purchases into a per-customer purchase
+history. It writes to the *history* dataset, a custom dataset that embeds an ``ObjectStore`` and 
+implements the ``RecordScannable`` interface to allow SQL queries over the dataset.
 
 
-``PurchaseHistoryService``: Service
-------------------------------------------------
+``PurchaseHistoryService`` Service
+----------------------------------
 
 This service has a ``history/{customer}`` endpoint to obtain the purchase history of a given customer.
 
 
-``UserProfileService``: Service
-------------------------------------------------
+``UserProfileService`` Service
+------------------------------
 
 This service has two endpoints:
 
@@ -101,16 +101,13 @@ A ``user`` endpoint to add a user's profile information to the system::
 A ``user/{id}`` endpoint to obtain profile information for a specified user::
 
   $ cdap-cli.sh call service PurchaseHistory.UserProfileService GET user/Alice
+  
 
 Building and Starting
-=================================
+=====================
 
-- You can either build the example (as described `below
-  <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
-- Start CDAP, deploy and start the application and its components as described below in 
-  `Running CDAP Applications`_\ .
-  Make sure you start the Flow, Services, and Workflow as described below.
-- Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
+.. include:: building-and-starting.txt
+
 
 Running CDAP Applications
 ============================================
@@ -121,46 +118,36 @@ Running CDAP Applications
 .. include:: /../../developers-manual/source/getting-started/building-apps.rst
    :start-line: 11
 
+
 Running the Example
 ===================
-
-In the commands that follow, we'll assume that you will run all commands
-from the example's base directory (``/examples/``\ |literal-example|\ , in the
-Standalone CDAP SDK directory).
-
-For brevity, we will simply use ``cdap-cli.sh`` for the Command Line Interface. Substitute
-the actual path of ``../../bin/cdap-cli.sh``, or ``..\..\bin\cdap-cli.bat`` on Windows, as
-appropriate. You can also add the CDAP ``bin`` directory to your shell's ``PATH``
-to simplify the commands.
-
-Other scripts that are supplied in the examples also have Windows ``.bat``
-equivalents. Note that a version of ``curl`` that works with Windows is included in the
-CDAP Standalone SDK in ``libexec\bin\curl.exe``.
-
 
 .. highlight:: console
 
 Starting the Flow
-------------------------------
+-----------------
 
 Once the application is deployed:
 
-- Click on the *Process* button in the left sidebar of the CDAP UI,
-  then click *PurchaseFlow* in the *Process* page to get to the
-  Flow detail page, then click the *Start* button; or
+- Go to the *PurchaseHistory* `application overview page 
+  <http://localhost:9999/ns/default/apps/PurchaseHistory/overview/status>`__,
+  click ``PurchaseFlow`` to get to the flow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh start flow PurchaseHistory.PurchaseFlow
+  
+    Successfully started Flow 'PurchaseFlow' of application 'PurchaseHistory' with stored runtime arguments '{}'
 
 Starting the Services
-------------------------------
+---------------------
 
 Once the application is deployed:
 
-- Click on *PurchaseHistory* in the Overview page of the CDAP UI to get to the
-  Application detail page, click *PurchaseHistoryService* in the *Service* pane to get to the
-  Service detail page, then click the *Start* button; do the same for the *CatalogLookupService*
-  and *UserProfileService*; or
+- Go to the *PurchaseHistory* `application overview page 
+  <http://localhost:9999/ns/default/apps/PurchaseHistory/overview/status>`__,
+  click ``PurchaseHistoryService`` to get to the service detail page, then click the *Start* button
+  (and do the same for the ``CatalogLookup`` and ``UserProfileService``); or
+
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh start service PurchaseHistory.PurchaseHistoryService
@@ -173,9 +160,6 @@ Once the application is deployed:
     $ curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/start'
     $ curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/UserProfileService/start'
 
-  **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
-  SDK in ``libexec\bin\curl.exe``.
-
 
 Add A Profile
 -------------
@@ -186,24 +170,23 @@ CDAP SDK directory, using the Command Line Interface::
   $ cdap-cli.sh call service PurchaseHistory.UserProfileService POST user body \
     "{'id':'Alice','firstName':'Alice','lastName':'Bernard','categories':['fruits']}"
     
-
 Injecting Sentences
-------------------------------
+-------------------
 
-Run this script (from within ``/examples/Purchase``) to inject sentences 
-to the Stream named *purchaseStream* in the ``PurchaseHistory`` application::
-
-  $ ./bin/inject-data.sh
-
-
+Inject a file of sentences by running this command from the Standalone
+CDAP SDK directory, using the Command Line Interface::
+  
+  $ cdap-cli.sh load stream purchaseStream examples/Purchase/resources/purchases.txt 
+  Successfully sent stream event to stream 'purchaseStream'
+  
 Starting the Workflow
-------------------------------
+---------------------
 
 Once the sentences have been injected:
 
-- Click on *PurchaseHistory* in the Overview page of the CDAP UI to get to the
-  Application detail page, click *PurchaseHistoryWorkflow* in the *Workflow* pane to get to the
-  Workflow detail page, then click the *Start* button; or
+- Go to the *PurchaseHistory* `application overview page 
+  <http://localhost:9999/ns/default/apps/PurchaseHistory/overview/status>`__,
+  click ``PurchaseHistoryWorkflow`` to get to the workflow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh start workflow PurchaseHistory.PurchaseHistoryWorkflow
@@ -229,9 +212,9 @@ To query the *history* ObjectStore through the ``PurchaseHistoryService``, you c
 Exploring the Results Using SQL
 -------------------------------
 
-You can use SQL to formulate ad-hoc queries over the *history* and *purchases* Datasets. This is done by a series of
-``curl`` calls, as described in the :ref:`RESTful API <http-restful-api-query>` section of the 
-:ref:`CDAP Reference Manual. <reference-index>`
+You can use SQL to formulate ad-hoc queries over the *history* and *purchases* datasets.
+This is done by a series of ``curl`` calls, as described in the :ref:`RESTful API
+<http-restful-api-query>` section of the :ref:`CDAP Reference Manual <reference-index>`.
 For your convenience, the SDK's Command Line Interface can execute the series of calls.
 
 From within the SDK root directory::
@@ -306,27 +289,41 @@ retrieved all of the results and you can now close the query::
 
   $ curl -v -X DELETE http://localhost:10000/v3/data/explore/queries/07fd9b6a-95b3-4831-992c-7164f11c3754
 
-Stopping the Application
--------------------------------
+
+Stopping and Removing the Application
+=====================================
 Once done, you can stop the application as described above in `Stopping an Application. 
 <#stopping-an-application>`__ Here is an example-specific description of the steps:
 
 **Stopping the Flow**
 
-- Click on the *Process* button in the left sidebar of the CDAP UI,
-  then click *PurchaseFlow* in the *Process* page to get to the
-  Flow detail page, then click the *Stop* button; or
+- Go to the *PurchaseHistory* `application overview page 
+  <http://localhost:9999/ns/default/apps/PurchaseHistory/overview/status>`__,
+  click ``PurchaseFlow`` to get to the flow detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh stop flow PurchaseHistory.PurchaseFlow   
 
 **Stopping the Services**
 
-- Click on *PurchaseHistory* in the Overview page of the CDAP UI to get to the
-  Application detail page, then click the *Stop* button (with a red square) in the
-  *Service* pane; or
+- Go to the *PurchaseHistory* `application overview page 
+  <http://localhost:9999/ns/default/apps/PurchaseHistory/overview/status>`__,
+  click ``PurchaseHistoryService`` to get to the service detail page, then click the *Stop* button
+  (doing the same for ``CatalogLookup`` and ``UserProfileService``); or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh stop service PurchaseHistory.PurchaseHistoryService
     $ cdap-cli.sh stop service PurchaseHistory.CatalogLookup
     $ cdap-cli.sh stop service PurchaseHistory.UserProfileService
+    
+**Removing the Application**
+
+You can now remove the application as described above, `Removing an Application <#removing-an-application>`__, or:
+
+- Go to the *PurchaseHistory* `application overview page 
+  <http://localhost:9999/ns/default/apps/PurchaseHistory/overview/status>`__,
+  click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
+  then click the *Actions* menu on the right side and select *Delete* to delete the application; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
+
+    $ cdap-cli.sh delete app PurchaseHistory
