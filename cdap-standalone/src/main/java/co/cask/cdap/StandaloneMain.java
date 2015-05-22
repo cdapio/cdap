@@ -144,7 +144,7 @@ public class StandaloneMain {
           shutDown();
         } catch (Throwable e) {
           LOG.error("Failed to shutdown", e);
-          // because shutdown hooks execute concurrently, the logger may be closed already: thus also print it.
+          // Because shutdown hooks execute concurrently, the logger may be closed already: thus also print it.
           System.err.println("Failed to shutdown: " + e.getMessage());
           e.printStackTrace(System.err);
         }
@@ -231,8 +231,8 @@ public class StandaloneMain {
 
     } catch (Throwable e) {
       LOG.error("Exception during shutdown", e);
-      // we can't do much but exit. Because there was an exception, some non-daemon threads may still be running.
-      // therefore System.exit() won't do it, we need to farce a halt.
+      // We can't do much but exit. Because there was an exception, some non-daemon threads may still be running.
+      // Therefore System.exit() won't do it, we need to force a halt.
       Runtime.getRuntime().halt(1);
     } finally {
       cleanupTempDir();
@@ -289,7 +289,12 @@ public class StandaloneMain {
         usage(false);
         return;
       } else {
-        usage(true);
+         PrintStream out = System.err;
+         out.println("Args:");
+         for (int i = 0; i <= args.length - 1; i++) {
+           out.println("Parameter #" + i + ": " + args[i]);
+         }
+         usage(true);
       }
     }
 
