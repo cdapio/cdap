@@ -225,17 +225,11 @@ application or include in a message.</p>
 <tr class="row-odd"><td><code class="docutils literal"><span class="pre">use</span> <span class="pre">namespace</span> <span class="pre">&lt;namespace-name&gt;</span></code></td>
 <td>Changes the current Namespace to &lt;namespace-name&gt;.</td>
 </tr>
-<tr class="row-even"><td><strong>Lifecycle</strong></td>
+<tr class="row-even"><td><strong>Application Lifecycle</strong></td>
 <td>&nbsp;</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">create</span> <span class="pre">adapter</span> <span class="pre">&lt;adapter-name&gt;</span> <span class="pre">&lt;adapter-spec-file&gt;</span></code></td>
-<td>Creates an Adapter.</td>
-</tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">create</span> <span class="pre">stream</span> <span class="pre">&lt;new-stream-id&gt;</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">create</span> <span class="pre">stream</span> <span class="pre">&lt;new-stream-id&gt;</span></code></td>
 <td>Creates a Stream.</td>
-</tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">adapter</span> <span class="pre">&lt;adapter-name&gt;</span></code></td>
-<td>Deletes an Adapter.</td>
 </tr>
 <tr class="row-even"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">app</span> <span class="pre">&lt;app-id&gt;</span></code></td>
 <td>Deletes an Application.</td>
@@ -270,26 +264,14 @@ application or include in a message.</p>
 <tr class="row-even"><td><code class="docutils literal"><span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;app-jar-file&gt;</span></code></td>
 <td>Deploys an Application.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">describe</span> <span class="pre">adapter</span> <span class="pre">&lt;adapter-name&gt;</span></code></td>
-<td>Lists all Adapters.</td>
-</tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">describe</span> <span class="pre">app</span> <span class="pre">&lt;app-id&gt;</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">describe</span> <span class="pre">app</span> <span class="pre">&lt;app-id&gt;</span></code></td>
 <td>Shows information about an Application.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">describe</span> <span class="pre">app-template</span> <span class="pre">&lt;app-template-id&gt;</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">describe</span> <span class="pre">app-template</span> <span class="pre">&lt;app-template-id&gt;</span></code></td>
 <td>Lists all Application Templates.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">describe</span> <span class="pre">stream</span> <span class="pre">&lt;stream-id&gt;</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">describe</span> <span class="pre">stream</span> <span class="pre">&lt;stream-id&gt;</span></code></td>
 <td>Shows detailed information about a Stream.</td>
-</tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">adapter</span> <span class="pre">logs</span> <span class="pre">&lt;adapter-name&gt;</span></code></td>
-<td>Gets the logs of an Adapter.</td>
-</tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">adapter</span> <span class="pre">runs</span> <span class="pre">&lt;adapter-name&gt;</span> <span class="pre">[status</span> <span class="pre">&lt;status&gt;]</span></code></td>
-<td>Gets the runs of an Adapter.</td>
-</tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">adapter</span> <span class="pre">status</span> <span class="pre">&lt;adapter-name&gt;</span></code></td>
-<td>Gets the status of an Adapter.</td>
 </tr>
 <tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">app-template</span> <span class="pre">plugins</span> <span class="pre">&lt;app-template-id&gt;</span> <span class="pre">&lt;plugin-type&gt;</span></code></td>
 <td>Lists plugins for an Application Template.</td>
@@ -447,137 +429,131 @@ application or include in a message.</p>
 <tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">workflow</span> <span class="pre">status</span> <span class="pre">&lt;app-id.workflow-id&gt;</span></code></td>
 <td>Gets the status of a Workflow.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">adapters</span></code></td>
-<td>Lists all Adapters.</td>
-</tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">app-templates</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">app-templates</span></code></td>
 <td>Lists all Application Templates.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">apps</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">apps</span></code></td>
 <td>Lists all Applications.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">flows</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">flows</span></code></td>
 <td>Lists all Flows.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">mapreduce</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">mapreduce</span></code></td>
 <td>Lists all MapReduce Programs.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">programs</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">programs</span></code></td>
 <td>Lists all Programs.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">services</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">services</span></code></td>
 <td>Lists all Services.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">spark</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">spark</span></code></td>
 <td>Lists all Spark Programs.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">streams</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">streams</span></code></td>
 <td>Lists all Streams.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">workers</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">workers</span></code></td>
 <td>Lists all Workers.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">workflows</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">workflows</span></code></td>
 <td>Lists all Workflows.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">app</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">[&lt;app-id&gt;]</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">app</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">[&lt;app-id&gt;]</span></code></td>
 <td>Set Preferences of an Application from a local Config File (supported formats = JSON).</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">flow</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">[&lt;app-id.flow-id&gt;]</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">flow</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">[&lt;app-id.flow-id&gt;]</span></code></td>
 <td>Set Preferences of a Flow from a local Config File (supported formats = JSON).</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">instance</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">[&lt;instance-id&gt;]</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">instance</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">[&lt;instance-id&gt;]</span></code></td>
 <td>Set Preferences of an Instance from a local Config File (supported formats = JSON).</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">mapreduce</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">[&lt;app-id.mapreduce-id&gt;]</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">mapreduce</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">[&lt;app-id.mapreduce-id&gt;]</span></code></td>
 <td>Set Preferences of a MapReduce Program from a local Config File (supported formats = JSON).</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">namespace</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">[&lt;namespace-name&gt;]</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">namespace</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">[&lt;namespace-name&gt;]</span></code></td>
 <td>Set Preferences of a Namespace from a local Config File (supported formats = JSON).</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">service</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">[&lt;app-id.service-id&gt;]</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">service</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">[&lt;app-id.service-id&gt;]</span></code></td>
 <td>Set Preferences of a Service from a local Config File (supported formats = JSON).</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">spark</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">[&lt;app-id.spark-id&gt;]</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">spark</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">[&lt;app-id.spark-id&gt;]</span></code></td>
 <td>Set Preferences of a Spark Program from a local Config File (supported formats = JSON).</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">worker</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">[&lt;app-id.worker-id&gt;]</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">worker</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">[&lt;app-id.worker-id&gt;]</span></code></td>
 <td>Set Preferences of a Worker from a local Config File (supported formats = JSON).</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">workflow</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">[&lt;app-id.workflow-id&gt;]</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">preferences</span> <span class="pre">workflow</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">&lt;content-type&gt;</span> <span class="pre">[&lt;app-id.workflow-id&gt;]</span></code></td>
 <td>Set Preferences of a Workflow from a local Config File (supported formats = JSON).</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">resume</span> <span class="pre">schedule</span> <span class="pre">&lt;app-id.schedule-id&gt;</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">resume</span> <span class="pre">schedule</span> <span class="pre">&lt;app-id.schedule-id&gt;</span></code></td>
 <td>Resumes a schedule</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">flow</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.flow-id&gt;</span> <span class="pre">&lt;runtime-args&gt;</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">flow</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.flow-id&gt;</span> <span class="pre">&lt;runtime-args&gt;</span></code></td>
 <td>Sets the runtime arguments of a Flow. &lt;runtime-args&gt; is specified in the format &#8220;key1=a key2=b&#8221;.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">flowlet</span> <span class="pre">instances</span> <span class="pre">&lt;app-id.flow-id.flowlet-id&gt;</span> <span class="pre">&lt;num-instances&gt;</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">flowlet</span> <span class="pre">instances</span> <span class="pre">&lt;app-id.flow-id.flowlet-id&gt;</span> <span class="pre">&lt;num-instances&gt;</span></code></td>
 <td>Sets the instances of a Flowlet.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">mapreduce</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.mapreduce-id&gt;</span> <span class="pre">&lt;runtime-args&gt;</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">mapreduce</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.mapreduce-id&gt;</span> <span class="pre">&lt;runtime-args&gt;</span></code></td>
 <td>Sets the runtime arguments of a MapReduce Program. &lt;runtime-args&gt; is specified in the format &#8220;key1=a key2=b&#8221;.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">app</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">[&lt;app-id&gt;]</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">app</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">[&lt;app-id&gt;]</span></code></td>
 <td>Sets the preferences of an Application. &lt;runtime-args&gt; is specified in the format &#8220;key1=v1 key2=v2&#8221;.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">flow</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">[&lt;app-id.flow-id&gt;]</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">flow</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">[&lt;app-id.flow-id&gt;]</span></code></td>
 <td>Sets the preferences of a Flow. &lt;runtime-args&gt; is specified in the format &#8220;key1=v1 key2=v2&#8221;.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">instance</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">[&lt;instance-id&gt;]</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">instance</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">[&lt;instance-id&gt;]</span></code></td>
 <td>Sets the preferences of an Instance. &lt;runtime-args&gt; is specified in the format &#8220;key1=v1 key2=v2&#8221;.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">mapreduce</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">[&lt;app-id.mapreduce-id&gt;]</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">mapreduce</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">[&lt;app-id.mapreduce-id&gt;]</span></code></td>
 <td>Sets the preferences of a MapReduce Program. &lt;runtime-args&gt; is specified in the format &#8220;key1=v1 key2=v2&#8221;.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">namespace</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">[&lt;namespace-name&gt;]</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">namespace</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">[&lt;namespace-name&gt;]</span></code></td>
 <td>Sets the preferences of a Namespace. &lt;runtime-args&gt; is specified in the format &#8220;key1=v1 key2=v2&#8221;.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">service</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">[&lt;app-id.service-id&gt;]</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">service</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">[&lt;app-id.service-id&gt;]</span></code></td>
 <td>Sets the preferences of a Service. &lt;runtime-args&gt; is specified in the format &#8220;key1=v1 key2=v2&#8221;.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">spark</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">[&lt;app-id.spark-id&gt;]</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">spark</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">[&lt;app-id.spark-id&gt;]</span></code></td>
 <td>Sets the preferences of a Spark Program. &lt;runtime-args&gt; is specified in the format &#8220;key1=v1 key2=v2&#8221;.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">worker</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">[&lt;app-id.worker-id&gt;]</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">worker</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">[&lt;app-id.worker-id&gt;]</span></code></td>
 <td>Sets the preferences of a Worker. &lt;runtime-args&gt; is specified in the format &#8220;key1=v1 key2=v2&#8221;.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">workflow</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">[&lt;app-id.workflow-id&gt;]</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">preferences</span> <span class="pre">workflow</span> <span class="pre">&lt;runtime-args&gt;</span> <span class="pre">[&lt;app-id.workflow-id&gt;]</span></code></td>
 <td>Sets the preferences of a Workflow. &lt;runtime-args&gt; is specified in the format &#8220;key1=v1 key2=v2&#8221;.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">service</span> <span class="pre">instances</span> <span class="pre">&lt;app-id.service-id&gt;</span> <span class="pre">&lt;num-instances&gt;</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">service</span> <span class="pre">instances</span> <span class="pre">&lt;app-id.service-id&gt;</span> <span class="pre">&lt;num-instances&gt;</span></code></td>
 <td>Sets the instances of a Service.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">service</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.service-id&gt;</span> <span class="pre">&lt;runtime-args&gt;</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">service</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.service-id&gt;</span> <span class="pre">&lt;runtime-args&gt;</span></code></td>
 <td>Sets the runtime arguments of a Service. &lt;runtime-args&gt; is specified in the format &#8220;key1=a key2=b&#8221;.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">spark</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.spark-id&gt;</span> <span class="pre">&lt;runtime-args&gt;</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">spark</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.spark-id&gt;</span> <span class="pre">&lt;runtime-args&gt;</span></code></td>
 <td>Sets the runtime arguments of a Spark Program. &lt;runtime-args&gt; is specified in the format &#8220;key1=a key2=b&#8221;.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">stream</span> <span class="pre">format</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">&lt;format&gt;</span> <span class="pre">[&lt;schema&gt;]</span> <span class="pre">[&lt;settings&gt;]</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">stream</span> <span class="pre">format</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">&lt;format&gt;</span> <span class="pre">[&lt;schema&gt;]</span> <span class="pre">[&lt;settings&gt;]</span></code></td>
 <td>Sets the format of a Stream. &lt;schema&gt; is a sql-like schema &#8220;column_name data_type, ...&#8221; or avro-like json schema and &lt;settings&gt; is specified in the format &#8220;key1=v1 key2=v2&#8221;.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">stream</span> <span class="pre">notification-threshold</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">&lt;notification-threshold-mb&gt;</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">stream</span> <span class="pre">notification-threshold</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">&lt;notification-threshold-mb&gt;</span></code></td>
 <td>Sets the Notification Threshold of a Stream.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">stream</span> <span class="pre">properties</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">&lt;local-file-path&gt;</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">stream</span> <span class="pre">properties</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">&lt;local-file-path&gt;</span></code></td>
 <td>Sets the properties of a Stream, such as TTL, format, and notification threshold.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">stream</span> <span class="pre">ttl</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">&lt;ttl-in-seconds&gt;</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">stream</span> <span class="pre">ttl</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">&lt;ttl-in-seconds&gt;</span></code></td>
 <td>Sets the Time-to-Live (TTL) of a Stream.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">worker</span> <span class="pre">instances</span> <span class="pre">&lt;app-id.worker-id&gt;</span> <span class="pre">&lt;num-instances&gt;</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">worker</span> <span class="pre">instances</span> <span class="pre">&lt;app-id.worker-id&gt;</span> <span class="pre">&lt;num-instances&gt;</span></code></td>
 <td>Sets the instances of a Worker.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">worker</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.worker-id&gt;</span> <span class="pre">&lt;runtime-args&gt;</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">worker</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.worker-id&gt;</span> <span class="pre">&lt;runtime-args&gt;</span></code></td>
 <td>Sets the runtime arguments of a Worker. &lt;runtime-args&gt; is specified in the format &#8220;key1=a key2=b&#8221;.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">workflow</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.workflow-id&gt;</span> <span class="pre">&lt;runtime-args&gt;</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">set</span> <span class="pre">workflow</span> <span class="pre">runtimeargs</span> <span class="pre">&lt;app-id.workflow-id&gt;</span> <span class="pre">&lt;runtime-args&gt;</span></code></td>
 <td>Sets the runtime arguments of a Workflow. &lt;runtime-args&gt; is specified in the format &#8220;key1=a key2=b&#8221;.</td>
-</tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">start</span> <span class="pre">adapter</span> <span class="pre">&lt;adapter-name&gt;</span></code></td>
-<td>Starts an Adapter.</td>
 </tr>
 <tr class="row-even"><td><code class="docutils literal"><span class="pre">start</span> <span class="pre">flow</span> <span class="pre">&lt;app-id.flow-id&gt;</span> <span class="pre">[&lt;runtime-args&gt;]</span></code></td>
 <td>Starts a Flow. &lt;runtime-args&gt; is specified in the format &#8220;key1=a key2=b&#8221;.</td>
@@ -597,82 +573,109 @@ application or include in a message.</p>
 <tr class="row-odd"><td><code class="docutils literal"><span class="pre">start</span> <span class="pre">workflow</span> <span class="pre">&lt;app-id.workflow-id&gt;</span> <span class="pre">[&lt;runtime-args&gt;]</span></code></td>
 <td>Starts a Workflow. &lt;runtime-args&gt; is specified in the format &#8220;key1=a key2=b&#8221;.</td>
 </tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stop</span> <span class="pre">flow</span> <span class="pre">&lt;app-id.flow-id&gt;</span></code></td>
+<td>Stops a Flow.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">stop</span> <span class="pre">mapreduce</span> <span class="pre">&lt;app-id.mapreduce-id&gt;</span></code></td>
+<td>Stops a MapReduce Program.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stop</span> <span class="pre">service</span> <span class="pre">&lt;app-id.service-id&gt;</span></code></td>
+<td>Stops a Service.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">stop</span> <span class="pre">spark</span> <span class="pre">&lt;app-id.spark-id&gt;</span></code></td>
+<td>Stops a Spark Program.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">stop</span> <span class="pre">worker</span> <span class="pre">&lt;app-id.worker-id&gt;</span></code></td>
+<td>Stops a Worker.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">suspend</span> <span class="pre">schedule</span> <span class="pre">&lt;app-id.schedule-id&gt;</span></code></td>
+<td>Suspends a schedule</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">truncate</span> <span class="pre">stream</span> <span class="pre">&lt;stream-id&gt;</span></code></td>
+<td>Truncates a Stream.</td>
+</tr>
+<tr class="row-odd"><td><strong>Adapter Lifecycle</strong></td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">create</span> <span class="pre">adapter</span> <span class="pre">&lt;adapter-name&gt;</span> <span class="pre">&lt;adapter-spec-file&gt;</span></code></td>
+<td>Creates an Adapter.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">adapter</span> <span class="pre">&lt;adapter-name&gt;</span></code></td>
+<td>Deletes an Adapter.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">describe</span> <span class="pre">adapter</span> <span class="pre">&lt;adapter-name&gt;</span></code></td>
+<td>Lists all Adapters.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">adapter</span> <span class="pre">logs</span> <span class="pre">&lt;adapter-name&gt;</span></code></td>
+<td>Gets the logs of an Adapter.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">adapter</span> <span class="pre">runs</span> <span class="pre">&lt;adapter-name&gt;</span> <span class="pre">[status</span> <span class="pre">&lt;status&gt;]</span></code></td>
+<td>Gets the runs of an Adapter.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">get</span> <span class="pre">adapter</span> <span class="pre">status</span> <span class="pre">&lt;adapter-name&gt;</span></code></td>
+<td>Gets the status of an Adapter.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">adapters</span></code></td>
+<td>Lists all Adapters.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">start</span> <span class="pre">adapter</span> <span class="pre">&lt;adapter-name&gt;</span></code></td>
+<td>Starts an Adapter.</td>
+</tr>
 <tr class="row-even"><td><code class="docutils literal"><span class="pre">stop</span> <span class="pre">adapter</span> <span class="pre">&lt;adapter-name&gt;</span></code></td>
 <td>Stops an Adapter.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">stop</span> <span class="pre">flow</span> <span class="pre">&lt;app-id.flow-id&gt;</span></code></td>
-<td>Stops a Flow.</td>
-</tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">stop</span> <span class="pre">mapreduce</span> <span class="pre">&lt;app-id.mapreduce-id&gt;</span></code></td>
-<td>Stops a MapReduce Program.</td>
-</tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">stop</span> <span class="pre">service</span> <span class="pre">&lt;app-id.service-id&gt;</span></code></td>
-<td>Stops a Service.</td>
-</tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">stop</span> <span class="pre">spark</span> <span class="pre">&lt;app-id.spark-id&gt;</span></code></td>
-<td>Stops a Spark Program.</td>
-</tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">stop</span> <span class="pre">worker</span> <span class="pre">&lt;app-id.worker-id&gt;</span></code></td>
-<td>Stops a Worker.</td>
-</tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">suspend</span> <span class="pre">schedule</span> <span class="pre">&lt;app-id.schedule-id&gt;</span></code></td>
-<td>Suspends a schedule</td>
-</tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">truncate</span> <span class="pre">stream</span> <span class="pre">&lt;stream-id&gt;</span></code></td>
-<td>Truncates a Stream.</td>
-</tr>
-<tr class="row-even"><td><strong>Dataset</strong></td>
+<tr class="row-odd"><td><strong>Dataset</strong></td>
 <td>&nbsp;</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">create</span> <span class="pre">dataset</span> <span class="pre">instance</span> <span class="pre">&lt;dataset-type&gt;</span> <span class="pre">&lt;new-dataset-name&gt;</span> <span class="pre">[&lt;dataset-properties&gt;]</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">create</span> <span class="pre">dataset</span> <span class="pre">instance</span> <span class="pre">&lt;dataset-type&gt;</span> <span class="pre">&lt;new-dataset-name&gt;</span> <span class="pre">[&lt;dataset-properties&gt;]</span></code></td>
 <td>Creates a Dataset.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">dataset</span> <span class="pre">instance</span> <span class="pre">&lt;dataset-name&gt;</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">dataset</span> <span class="pre">instance</span> <span class="pre">&lt;dataset-name&gt;</span></code></td>
 <td>Deletes a Dataset.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">dataset</span> <span class="pre">module</span> <span class="pre">&lt;dataset-module&gt;</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">delete</span> <span class="pre">dataset</span> <span class="pre">module</span> <span class="pre">&lt;dataset-module&gt;</span></code></td>
 <td>Deletes a Dataset module.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">deploy</span> <span class="pre">dataset</span> <span class="pre">module</span> <span class="pre">&lt;new-dataset-module&gt;</span> <span class="pre">&lt;module-jar-file&gt;</span> <span class="pre">&lt;module-jar-classname&gt;</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">deploy</span> <span class="pre">dataset</span> <span class="pre">module</span> <span class="pre">&lt;new-dataset-module&gt;</span> <span class="pre">&lt;module-jar-file&gt;</span> <span class="pre">&lt;module-jar-classname&gt;</span></code></td>
 <td>Deploys a Dataset module.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">describe</span> <span class="pre">dataset</span> <span class="pre">module</span> <span class="pre">&lt;dataset-module&gt;</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">describe</span> <span class="pre">dataset</span> <span class="pre">module</span> <span class="pre">&lt;dataset-module&gt;</span></code></td>
 <td>Shows information about a Dataset module.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">describe</span> <span class="pre">dataset</span> <span class="pre">type</span> <span class="pre">&lt;dataset-type&gt;</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">describe</span> <span class="pre">dataset</span> <span class="pre">type</span> <span class="pre">&lt;dataset-type&gt;</span></code></td>
 <td>Shows information about a Dataset type.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">dataset</span> <span class="pre">instances</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">dataset</span> <span class="pre">instances</span></code></td>
 <td>Lists all Datasets.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">dataset</span> <span class="pre">modules</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">dataset</span> <span class="pre">modules</span></code></td>
 <td>Lists all Dataset modules.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">dataset</span> <span class="pre">types</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">list</span> <span class="pre">dataset</span> <span class="pre">types</span></code></td>
 <td>Lists all Dataset types.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">truncate</span> <span class="pre">dataset</span> <span class="pre">instance</span> <span class="pre">&lt;dataset-name&gt;</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">truncate</span> <span class="pre">dataset</span> <span class="pre">instance</span> <span class="pre">&lt;dataset-name&gt;</span></code></td>
 <td>Truncates a Dataset.</td>
 </tr>
-<tr class="row-odd"><td><strong>Explore</strong></td>
+<tr class="row-even"><td><strong>Explore</strong></td>
 <td>&nbsp;</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">execute</span> <span class="pre">&lt;query&gt;</span> <span class="pre">[&lt;timeout&gt;]</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">execute</span> <span class="pre">&lt;query&gt;</span> <span class="pre">[&lt;timeout&gt;]</span></code></td>
 <td>Executes a Query with optional &lt;timeout&gt; in minutes (default is no timeout).</td>
 </tr>
-<tr class="row-odd"><td><strong>Ingest</strong></td>
+<tr class="row-even"><td><strong>Ingest</strong></td>
 <td>&nbsp;</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">stream</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">[&lt;content-type&gt;]</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">load</span> <span class="pre">stream</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">&lt;local-file-path&gt;</span> <span class="pre">[&lt;content-type&gt;]</span></code></td>
 <td>Loads a file to a Stream. The contents of the file will become multiple events in the Stream, based on the content type. If &lt;content-type&gt; is not provided, it will be detected by the file extension.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">send</span> <span class="pre">stream</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">&lt;stream-event&gt;</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">send</span> <span class="pre">stream</span> <span class="pre">&lt;stream-id&gt;</span> <span class="pre">&lt;stream-event&gt;</span></code></td>
 <td>Sends an event to a Stream.</td>
 </tr>
-<tr class="row-even"><td><strong>Egress</strong></td>
+<tr class="row-odd"><td><strong>Egress</strong></td>
 <td>&nbsp;</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">call</span> <span class="pre">service</span> <span class="pre">&lt;app-id.service-id&gt;</span> <span class="pre">&lt;http-method&gt;</span> <span class="pre">&lt;endpoint&gt;</span> <span class="pre">[headers</span> <span class="pre">&lt;headers&gt;]</span> <span class="pre">[body</span> <span class="pre">&lt;body&gt;]</span> <span class="pre">[body:file</span> <span class="pre">&lt;local-file-path&gt;]</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">call</span> <span class="pre">service</span> <span class="pre">&lt;app-id.service-id&gt;</span> <span class="pre">&lt;http-method&gt;</span> <span class="pre">&lt;endpoint&gt;</span> <span class="pre">[headers</span> <span class="pre">&lt;headers&gt;]</span> <span class="pre">[body</span> <span class="pre">&lt;body&gt;]</span> <span class="pre">[body:file</span> <span class="pre">&lt;local-file-path&gt;]</span></code></td>
 <td>Calls a Service endpoint. The &lt;headers&gt; are formatted as &#8220;{&#8216;key&#8217;:&#8217;value&#8217;, ...}&#8221;. The request body may be provided either as a string or a file. To provide the body as a string, use &#8220;body &lt;body&gt;&#8221;. To provide the body as a file, use &#8220;body:file &lt;local-file-path&gt;&#8221;.</td>
 </tr>
 </tbody>

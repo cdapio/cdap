@@ -78,10 +78,10 @@
   <div class="section" id="user-profiles">
 <span id="examples-user-profiles"></span><h1>User Profiles<a class="headerlink" href="#user-profiles" title="Permalink to this headline">¶</a></h1>
 <p>A Cask Data Application Platform (CDAP) example demonstrating column-level conflict
-detection in Datasets using the example of managing user profiles in a Table.</p>
+detection in datasets using the example of managing user profiles in a Table.</p>
 <div class="section" id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
-<p>This application demonstrates the use of the column-level conflict detection in a Dataset,
+<p>This application demonstrates the use of the column-level conflict detection in a dataset,
 through the example of an application that manages user profiles in a Table.
 The fields of a user profile are updated in different ways:</p>
 <blockquote>
@@ -90,7 +90,7 @@ The fields of a user profile are updated in different ways:</p>
 user updates their profile.</li>
 <li>The time of the last login is updated by a sign-on service every
 time the user logs in, also through a RESTful call.</li>
-<li>The time of the last activity is updated by a Flow that processes
+<li>The time of the last activity is updated by a flow that processes
 events whenever it encounters an event from that user.</li>
 </ul>
 </div></blockquote>
@@ -101,10 +101,7 @@ events whenever it encounters an event from that user.</li>
 <h2>Introducing a Feature: Column-Level Conflict Detection<a class="headerlink" href="#introducing-a-feature-column-level-conflict-detection" title="Permalink to this headline">¶</a></h2>
 <p>As in the other <a class="reference internal" href="index.html#examples-index"><span>examples</span></a>, the components
 of the Application are tied together by a class <code class="docutils literal"><span class="pre">UserProfiles</span></code>:</p>
-<div class="highlight-java"><div class="highlight"><pre> <span class="o">*</span> <span class="n">with</span> <span class="n">updates</span> <span class="n">to</span> <span class="n">other</span> <span class="n">attributes</span> <span class="n">such</span> <span class="n">as</span> <span class="n">the</span> <span class="n">last</span> <span class="n">active</span> <span class="n">time</span> <span class="n">of</span> <span class="n">the</span> <span class="n">user</span><span class="o">.</span> <span class="n">This</span> <span class="n">is</span> <span class="n">achieved</span>
- <span class="o">*</span> <span class="n">by</span> <span class="n">setting</span> <span class="n">the</span> <span class="n">conflict</span> <span class="n">resolution</span> <span class="n">level</span> <span class="n">of</span> <span class="n">the</span> <span class="s">&quot;profiles&quot;</span> <span class="n">table</span> <span class="n">to</span> <span class="n">COLUMN</span><span class="o">.</span>
- <span class="o">*/</span>
-<span class="kd">public</span> <span class="kd">class</span> <span class="nc">UserProfiles</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">UserProfiles</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
 
   <span class="nd">@Override</span>
   <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
@@ -140,7 +137,7 @@ of the Application are tied together by a class <code class="docutils literal"><
 <p>This application uses a Table with conflict detection either at the row level or
 at the column level.</p>
 <p>A conflict occurs if two transactions that overlap in time modify the same data in a table.
-For example, a Flowlet&#8217;s process method might overlap with a Service handler.
+For example, a flowlet&#8217;s process method might overlap with a Service handler.
 Such a conflict is detected at the time that the transactions are committed,
 and the transaction that attempts to commit last is rolled back.</p>
 <p>By default, the granularity of the conflict detection is at the row-level.
@@ -157,21 +154,33 @@ transactions frequently modify different columns of the same row concurrently.</
 <h3>UserProfiles Application<a class="headerlink" href="#userprofiles-application" title="Permalink to this headline">¶</a></h3>
 <p>This application uses:</p>
 <ul class="simple">
-<li>a Stream <code class="docutils literal"><span class="pre">events</span></code> to receive events of user activity;</li>
-<li>a Dataset <code class="docutils literal"><span class="pre">profiles</span></code> to store user profiles with conflict detection at either the row or column level;</li>
-<li>a Dataset <code class="docutils literal"><span class="pre">counters</span></code> to count events by URL (this is not essential for the purpose of the example);</li>
-<li>a Service <code class="docutils literal"><span class="pre">UserProfileService</span></code> to create, delete, and update profiles; and</li>
-<li>a Flow <code class="docutils literal"><span class="pre">ActivityFlow</span></code> to count events and record the time of last activity for the users.</li>
+<li>a stream <code class="docutils literal"><span class="pre">events</span></code> to receive events of user activity;</li>
+<li>a dataset <code class="docutils literal"><span class="pre">profiles</span></code> to store user profiles with conflict detection at either the row or column level;</li>
+<li>a dataset <code class="docutils literal"><span class="pre">counters</span></code> to count events by URL (this is not essential for the purpose of the example);</li>
+<li>a service <code class="docutils literal"><span class="pre">UserProfileService</span></code> to create, delete, and update profiles; and</li>
+<li>a flow <code class="docutils literal"><span class="pre">ActivityFlow</span></code> to count events and record the time of last activity for the users.</li>
 </ul>
-<p>The <code class="docutils literal"><span class="pre">UserProfileService</span></code> is a Service for creating and modifying user profiles. It has
+<p>The <code class="docutils literal"><span class="pre">UserProfileService</span></code> is a service for creating and modifying user profiles. It has
 handlers to create, update, and retrieve user profiles.</p>
-<p>A script (<code class="docutils literal"><span class="pre">add-users.sh</span></code>) is used to populate the <code class="docutils literal"><span class="pre">profiles</span></code> Dataset. Two additional
+<p>A script (<code class="docutils literal"><span class="pre">add-users.sh</span></code>) is used to populate the <code class="docutils literal"><span class="pre">profiles</span></code> dataset. Two additional
 scripts (<code class="docutils literal"><span class="pre">update-login.sh</span></code> and <code class="docutils literal"><span class="pre">send-events.sh</span></code>) are used to create a conflict by attempting
 to write to two different columns of the same row at the same time.</p>
 </div>
 </div>
 <div class="section" id="building-and-starting">
 <h2>Building and Starting<a class="headerlink" href="#building-and-starting" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>You can either build the example (as described <a class="reference external" href="#building-an-example-application">below</a>)
+or use the pre-built JAR file included in the CDAP SDK (as described under
+<a class="reference external" href="deploying-an-application">Deploying an Application</a>).</li>
+<li>Start CDAP.</li>
+<li>Deploy the application, as described below in <a class="reference internal" href="#running-cdap-applications">Running CDAP Applications</a>.</li>
+<li>Once the application has been deployed, you can start its components, as described in
+general in <a class="reference external" href="#starting-an-application">starting an application</a>, and detailed at the
+start of <a class="reference external" href="#running-the-example">running the example</a>.</li>
+<li>Once all components are started, <a class="reference external" href="#running-the-example">run the example</a>.</li>
+<li>When finished, you can <a class="reference external" href="#stopping-and-removing-the-application">stop and remove the application</a>.</li>
+</ul>
 <p>To observe conflict detection at both the row-level and column-level, you will need to modify
 and build this example twice:</p>
 <ul class="simple">
@@ -181,34 +190,37 @@ and build this example twice:</p>
 <div class="section" id="build-the-application-with-row-level-conflict-detection">
 <h3>Build the Application with Row-level Conflict Detection<a class="headerlink" href="#build-the-application-with-row-level-conflict-detection" title="Permalink to this headline">¶</a></h3>
 <p>Before building the application, set the <code class="docutils literal"><span class="pre">ConflictDetection</span></code> appropriately in the class <code class="docutils literal"><span class="pre">UserProfiles</span></code>:</p>
-<div class="highlight-java"><div class="highlight"><pre>    <span class="n">addFlow</span><span class="o">(</span><span class="k">new</span> <span class="n">ActivityFlow</span><span class="o">());</span>
-    <span class="n">addService</span><span class="o">(</span><span class="k">new</span> <span class="n">UserProfileService</span><span class="o">());</span>
+<div class="highlight-java"><div class="highlight"><pre>    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;profiles&quot;</span><span class="o">,</span> <span class="n">Table</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getName</span><span class="o">(),</span> <span class="n">DatasetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+      <span class="c1">// create the profiles table with column-level conflict detection</span>
+      <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">Table</span><span class="o">.</span><span class="na">PROPERTY_CONFLICT_LEVEL</span><span class="o">,</span> <span class="n">ConflictDetection</span><span class="o">.</span><span class="na">COLUMN</span><span class="o">.</span><span class="na">name</span><span class="o">())</span>
 </pre></div>
 </div>
 <ul class="simple">
-<li>The first time you build the application, set the <code class="docutils literal"><span class="pre">tableProperties</span></code> to <code class="docutils literal"><span class="pre">ConflictDetection.ROW</span></code>.</li>
+<li>The first time you build the application, set the <code class="docutils literal"><span class="pre">Table.PROPERTY_CONFLICT_LEVEL</span></code> to
+<code class="docutils literal"><span class="pre">ConflictDetection.ROW.name()</span></code>.</li>
 <li>Build the example (as described <a class="reference external" href="#building-an-example-application">below</a>).</li>
 <li>Start CDAP, deploy and start the application and its component as described below in
 <a class="reference internal" href="#running-cdap-applications">Running CDAP Applications</a>.
-Make sure you start the Flow and Service as described below.</li>
+Make sure you start the flow and service as described below.</li>
 <li>Once the application has been deployed and started, you can <a class="reference external" href="#running-the-example">run the example.</a></li>
-<li>You should observe errors as described.</li>
+<li>You should observe errors as described below, in the <code class="docutils literal"><span class="pre">&lt;CDAP-SDK-home&gt;/logs/cdap-debug.log</span></code>.</li>
 </ul>
 </div>
 <div class="section" id="re-build-the-application-with-column-level-conflict-detection">
 <h3>Re-build the Application with Column-level Conflict Detection<a class="headerlink" href="#re-build-the-application-with-column-level-conflict-detection" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p class="first">Stop the Application&#8217;s Flow and Service (as described <a class="reference external" href="#stopping-the-application">below</a>).</p>
+<li><p class="first">Stop the Application&#8217;s flow and service (as described <a class="reference external" href="#stopping-the-application">below</a>).</p>
 </li>
-<li><p class="first">Delete the <code class="docutils literal"><span class="pre">profiles</span></code> Dataset, either through the CDAP Command Line Interface or
+<li><p class="first">Delete the <code class="docutils literal"><span class="pre">profiles</span></code> dataset, either through the CDAP Command Line Interface or
 by making a <code class="docutils literal"><span class="pre">curl</span></code> call:</p>
-<div class="highlight-java"><div class="highlight"><pre><span class="n">curl</span> <span class="o">-</span><span class="n">w</span><span class="sc">&#39;\n&#39;</span> <span class="o">-</span><span class="n">v</span> <span class="n">localhost</span><span class="o">:</span><span class="mi">10000</span><span class="o">/</span><span class="n">v3</span><span class="o">/</span><span class="n">namespaces</span><span class="o">/</span><span class="k">default</span><span class="o">/</span><span class="n">data</span><span class="o">/</span><span class="n">datasets</span><span class="o">/</span><span class="n">profiles</span> <span class="o">-</span><span class="n">XDELETE</span>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">curl</span> <span class="o">-</span><span class="n">w</span><span class="sc">&#39;\n&#39;</span> <span class="o">-</span><span class="n">v</span> <span class="n">localhost</span><span class="o">:</span><span class="mi">10000</span><span class="o">/</span><span class="n">v3</span><span class="o">/</span><span class="n">namespaces</span><span class="o">/</span><span class="k">default</span><span class="o">/</span><span class="n">data</span><span class="o">/</span><span class="n">datasets</span><span class="o">/</span><span class="n">profiles</span> <span class="o">-</span><span class="n">X</span> <span class="n">DELETE</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">Now, rebuild the application, setting the <code class="docutils literal"><span class="pre">tableProperties</span></code> back to its original value, <code class="docutils literal"><span class="pre">ConflictDetection.COLUMN</span></code>.</p>
+<li><p class="first">Now, rebuild the application, setting the <code class="docutils literal"><span class="pre">Table.PROPERTY_CONFLICT_LEVEL</span></code> back to its
+original value, <code class="docutils literal"><span class="pre">ConflictDetection.COLUMN.name()</span></code>.</p>
 </li>
-<li><p class="first">Re-deploy and re-run the application. You should not see any errors now in the log.</p>
+<li><p class="first">Re-deploy and re-run the application. You should not see any errors in the log.</p>
 </li>
 </ul>
 </div>
@@ -226,6 +238,30 @@ accordingly. For example, in a URL such as:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">http://localhost:10000/v3/namespaces/my_namespace/apps...</span>
 </pre></div>
 </div>
+<div class="section" id="accessing-cli-curl-and-the-sdk-bin">
+<h3>Accessing CLI, curl and the SDK bin<a class="headerlink" href="#accessing-cli-curl-and-the-sdk-bin" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">For brevity in the commands given below, we will simply use <code class="docutils literal"><span class="pre">cdap-cli.sh</span></code> for the CDAP
+Command Line Interface. Substitute the actual path of <code class="docutils literal"><span class="pre">./&lt;CDAP-SDK-HOME&gt;/bin/cdap-cli.sh</span></code>,
+or <code class="docutils literal"><span class="pre">&lt;CDAP-SDK-HOME&gt;\bin\cdap-cli.bat</span></code> on Windows, as appropriate.</p>
+</li>
+<li><p class="first">A Windows-version of the application <code class="docutils literal"><span class="pre">curl</span></code> is included in the CDAP SDK as
+<code class="docutils literal"><span class="pre">libexec\bin\curl.exe</span></code>; use it as a substitute for <code class="docutils literal"><span class="pre">curl</span></code> in the examples shown below.</p>
+</li>
+<li><p class="first">If you add the SDK bin directory to your path, you can simplify the commands. From within
+the CDAP-SDK-home directory, enter:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> <span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span><span class="si">${</span><span class="nv">PATH</span><span class="si">}</span>:<span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>/bin
+</pre></div>
+</div>
+<p>or under Windows:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">&gt;</span> setx path <span class="s2">&quot;%PATH%;%CD%\bin&quot;</span>
+</pre></div>
+</div>
+<p>Note that under Windows, you&#8217;ll need to create a new command line window in order to see
+this change to the path variable.</p>
+</li>
+</ul>
+</div>
 <div class="section" id="building-an-example-application">
 <h3>Building an Example Application<a class="headerlink" href="#building-an-example-application" title="Permalink to this headline">¶</a></h3>
 <p>From the example&#8217;s project root, build an example with the
@@ -236,65 +272,57 @@ accordingly. For example, in a URL such as:</p>
 </div>
 <div class="section" id="starting-cdap">
 <h3>Starting CDAP<a class="headerlink" href="#starting-cdap" title="Permalink to this headline">¶</a></h3>
-<p>Before running an Example Applications, check that an instance of CDAP is running and available; if not
+<p>Before running an example application, check that an instance of CDAP is running and available; if not,
 follow the instructions for <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">Starting and Stopping Standalone CDAP.</span></a></p>
-<p>If you can reach the CDAP UI through a browser at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>, CDAP is running.</p>
+<p>If you can reach the CDAP UI through a browser at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>,
+CDAP is running.</p>
 </div>
 <div class="section" id="deploying-an-application">
 <h3>Deploying an Application<a class="headerlink" href="#deploying-an-application" title="Permalink to this headline">¶</a></h3>
 <p>Once CDAP is started, you can deploy an example JAR by any of these methods:</p>
 <ul>
-<li><p class="first">Dragging and dropping the application JAR file:</p>
+<li><p class="first">Use the <em>Add App</em> button found on the <a class="reference external" href="http://localhost:9999/admin/namespace/detail/default/apps"><em>Management</em></a> page of the CDAP UI to browse and upload the Jar:</p>
 <pre class="literal-block">
-example/target/UserProfiles-3.0.0.jar
+examples/UserProfiles/target/UserProfiles-3.0.0.jar
 </pre>
-<p>onto the CDAP UI running at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>; or</p>
-</li>
-<li><p class="first">Use the <em>Add App</em> button found on the <em>Development</em> page of the CDAP UI to browse and upload the Jar; or</p>
 </li>
 <li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">Command Line Interface (CLI)</span></a>:</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="20%" />
-<col width="80%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><th class="stub">On Linux:</th>
-<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></code></td>
-</tr>
-<tr class="row-even"><th class="stub">On Windows:</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></code></td>
-</tr>
-</tbody>
-</table>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> cdap-cli.sh deploy app examples/UserProfiles/target/UserProfiles-3.0.0.jar
+
+Successfully deployed application
+</pre>
+</div>
+<p>The CLI can be accessed under Windows using the <code class="docutils literal"><span class="pre">bin\cdap-cli.bat</span></code> script.</p>
+</li>
+<li><p class="first">Use an application such as <code class="docutils literal"><span class="pre">curl</span></code> (a Windows-version is included in the CDAP SDK in
+<code class="docutils literal"><span class="pre">libexec\bin\curl.exe</span></code>):</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> curl -w'\n' -H &quot;X-Archive-Name: UserProfiles-3.0.0.jar&quot; localhost:10000/v3/namespaces/default/apps \
+  --data-binary &#64;examples/UserProfiles/target/UserProfiles-3.0.0.jar
+
+Deploy Complete
+</pre>
+</div>
 </li>
 </ul>
 </div>
 <div class="section" id="starting-an-application">
 <h3>Starting an Application<a class="headerlink" href="#starting-an-application" title="Permalink to this headline">¶</a></h3>
-<p>Once an application is deployed:</p>
+<p>Once an application is deployed, there are multiple methods for starting an application:</p>
 <ul>
-<li><p class="first">You can go to the Application&#8217;s detail page in the CDAP UI by clicking on the
-Application&#8217;s name in the <em>Development</em> page. (It can be reached by clicking on the
-<em>Application</em> button in the left sidebar of the window.) Now you can <em>Start</em> or <em>Stop</em> any
-of the Processes or Queries associated with the application; or</p>
+<li><p class="first">You can go to the application&#8217;s detail page in the CDAP UI by clicking on the
+application&#8217;s name in either the <a class="reference external" href="http://localhost:9999/ns/default"><em>Development</em></a> page or on the <a class="reference external" href="http://localhost:9999/ns/default/apps"><em>All Applications</em></a> page. Now you can
+see the status of any of the programs associated with the application and, by clicking
+on them, go to their detail page where you can start or stop them.</p>
 </li>
 <li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">Command Line Interface</span></a>.
-In each CDAP example, the CLI commands for that particular example are provided.</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="20%" />
-<col width="80%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><th class="stub">On Linux:</th>
-<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
-</tr>
-<tr class="row-even"><th class="stub">On Windows:</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
-</tr>
-</tbody>
-</table>
+In each CDAP example, the CLI commands for that particular example are provided:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh start &lt;program-type&gt; &lt;app-id.program-id&gt;
+</pre></div>
+</div>
 <table border="1" class="docutils">
 <colgroup>
 <col width="20%" />
@@ -307,14 +335,13 @@ In each CDAP example, the CLI commands for that particular example are provided.
 </thead>
 <tbody valign="top">
 <tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-type&gt;</span></code></td>
-<td>One of <code class="docutils literal"><span class="pre">flow</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">workflow</span></code> or <code class="docutils literal"><span class="pre">service</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">adapter</span></code>, <code class="docutils literal"><span class="pre">flow</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">service</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">worker</span></code>, or <code class="docutils literal"><span class="pre">workflow</span></code></td>
 </tr>
 <tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;app-id&gt;</span></code></td>
-<td>Name of the Application being called</td>
+<td>Name of the application being called</td>
 </tr>
 <tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-id&gt;</span></code></td>
-<td>Name of the <em>Flow</em>, <em>MapReduce</em>, <em>Workflow</em>, or <em>Custom Service</em>
-being called</td>
+<td>Name of the <em>adapter</em>, <em>flow</em>, <em>MapReduce</em>, <em>service</em>, <em>spark</em>, <em>worker</em> or <em>workflow</em> being called</td>
 </tr>
 </tbody>
 </table>
@@ -325,134 +352,171 @@ being called</td>
 <h3>Stopping an Application<a class="headerlink" href="#stopping-an-application" title="Permalink to this headline">¶</a></h3>
 <p>Once an application is deployed:</p>
 <ul>
-<li><p class="first">On the Application&#8217;s detail page in the CDAP UI, you can click on a program to go
+<li><p class="first">On an application&#8217;s detail page in the CDAP UI, you can click on a program to go
 to its detail page and then click the <em>Stop</em> button there; or</p>
 </li>
-<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">Command Line Interface:</span></a></p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="20%" />
-<col width="80%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><th class="stub">On Linux:</th>
-<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
-</tr>
-<tr class="row-even"><th class="stub">On Windows:</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
-</tr>
-</tbody>
-</table>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">Command Line Interface</span></a>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh stop &lt;program-type&gt; &lt;app-id.program-id&gt;
+</pre></div>
+</div>
 </li>
 </ul>
 </div>
 <div class="section" id="removing-an-application">
 <h3>Removing an Application<a class="headerlink" href="#removing-an-application" title="Permalink to this headline">¶</a></h3>
-<p>Once an application is stopped—all Processes (Flows, MapReduce programs, Workflows,
-etc.), Queries, and Services are stopped—you can go to the <em>Management</em> page of the
-CDAP UI, click on the Namespaces &gt; default &gt; Applications to bring up all Applications,
-and then click on a particular Application, and then from the Application&#8217;s detail page,
-select the <em>Actions &gt; Delete</em> menu in the upper right to delete the Application.</p>
+<p>Once an application is stopped—all of its programs (flows, MapReduce programs,
+workflows, services, etc.) are stopped—you can go to the <a class="reference external" href="http://localhost:9999/ns/default/apps"><em>All Applications</em></a>
+page of the CDAP UI, click on the particular application to go to its detail page, click
+the <em>Actions</em> menu on the right side and select <em>Manage</em> to go to the Management pane for
+the application, then click the <em>Actions</em> menu on the right side and select <em>Delete</em>.</p>
 <p>After confirmation, the application will be deleted.</p>
-<p>Note that any Storage (Datasets) created or used by the Application will remain, as they
-are independent of the Application. Datasets can be deleted with the
-<a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">HTTP Restful API</span></a>, the
-<a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">Java Client API</span></a>, or the
-<a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">Command Line Interface API</span></a>.</p>
+<p>From the Standalone CDAP SDK directory, you can also use the Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh delete app &lt;app-id&gt;
+</pre></div>
+</div>
+<p>Note that any storage (datasets) created or used by the application will remain, as they
+are independent of the application. Datasets can be deleted from the <a class="reference external" href="http://localhost:9999/admin/namespace/detail/default/data"><em>Datasets</em></a> page of
+the CDAP UI, or by using the <a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">HTTP Restful API</span></a>, the
+<a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">Java Client API</span></a>, or the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">Command Line Interface API</span></a>.</p>
+<p>Streams cannot be deleted; instead, they can be truncated.</p>
 </div>
 </div>
 <div class="section" id="running-the-example">
 <h2>Running the Example<a class="headerlink" href="#running-the-example" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="deleting-an-existing-dataset">
-<h3>Deleting an Existing Dataset<a class="headerlink" href="#deleting-an-existing-dataset" title="Permalink to this headline">¶</a></h3>
-<p>If a <code class="docutils literal"><span class="pre">profiles</span></code> Dataset has been created from an earlier run of the example, delete the <code class="docutils literal"><span class="pre">profiles</span></code>
-Dataset, either by using the CDAP Command Line Interface or by making a <code class="docutils literal"><span class="pre">curl</span></code> call:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="go">curl -w&#39;\n&#39; -X DELETE &#39;http://localhost:10000/v3/namespaces/default/data/datasets/profiles&#39;</span>
+<div class="section" id="deleting-any-existing-profiles-dataset">
+<h3>Deleting any Existing <em>profiles</em> Dataset<a class="headerlink" href="#deleting-any-existing-profiles-dataset" title="Permalink to this headline">¶</a></h3>
+<p>If a <code class="docutils literal"><span class="pre">profiles</span></code> dataset has been created from an earlier deployment of the application and
+running of the example, it needs to be removed before the next deployment, so that it is created
+with the correct properties.</p>
+<p>To delete the <code class="docutils literal"><span class="pre">profiles</span></code> dataset, either use the CDAP Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh delete dataset instance profiles
 </pre></div>
 </div>
+<p>or by making a <code class="docutils literal"><span class="pre">curl</span></code> call:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> -X DELETE <span class="s1">&#39;http://localhost:10000/v3/namespaces/default/data/datasets/profiles&#39;</span>
+</pre></div>
 </div>
-<div class="section" id="starting-the-service-and-the-flow">
-<h3>Starting the Service and the Flow<a class="headerlink" href="#starting-the-service-and-the-flow" title="Permalink to this headline">¶</a></h3>
+<p>Then re-deploy the application.</p>
+</div>
+<div class="section" id="starting-the-flow">
+<h3>Starting the Flow<a class="headerlink" href="#starting-the-flow" title="Permalink to this headline">¶</a></h3>
 <p>Once the application is deployed:</p>
-<blockquote>
-<div><ul class="simple">
-<li>Click on <code class="docutils literal"><span class="pre">UserProfiles</span></code> in the Overview page of the CDAP UI to get to the
-Application detail page, click:<ul>
-<li><code class="docutils literal"><span class="pre">UserProfileService</span></code> in the <em>Service</em> pane to get to the Service detail page, then click the <em>Start</em> button; and</li>
-<li><code class="docutils literal"><span class="pre">ActivityFlow</span></code> in the <em>Flow</em> pane to get to the Flow detail page, then click the <em>Start</em> button;</li>
-</ul>
+<ul>
+<li><p class="first">Go to the <em>UserProfiles</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/UserProfiles/overview/status">application overview page</a>,
+click <code class="docutils literal"><span class="pre">ActivityFlow</span></code> to get to the flow detail page, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh start flow UserProfiles.ActivityFlow
+
+<span class="go">Successfully started Flow &#39;ActivityFlow&#39; of application &#39;UserProfiles&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+</div>
 </li>
 </ul>
-</div></blockquote>
-<p>or:</p>
-<blockquote>
-<div><ul class="simple">
-<li>From the Standalone CDAP SDK directory, use the Command Line Interface:<ul>
-<li><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">service</span> <span class="pre">UserProfiles.UserProfileService</span></code></li>
-<li><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">flow</span> <span class="pre">UserProfiles.ActivityFlow</span></code></li>
-</ul>
+</div>
+<div class="section" id="starting-the-service">
+<h3>Starting the Service<a class="headerlink" href="#starting-the-service" title="Permalink to this headline">¶</a></h3>
+<p>Once the application is deployed:</p>
+<ul>
+<li><p class="first">Go to the <em>UserProfiles</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/UserProfiles/overview/status">application overview page</a>,
+click <code class="docutils literal"><span class="pre">UserProfileService</span></code> to get to the service detail page, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh start service UserProfiles.UserProfileService
+
+<span class="go">Successfully started Service &#39;UserProfileService&#39; of application &#39;UserProfiles&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+</div>
 </li>
 </ul>
-</div></blockquote>
 </div>
 <div class="section" id="populate-the-profiles-table">
 <h3>Populate the <code class="docutils literal"><span class="pre">profiles</span></code> Table<a class="headerlink" href="#populate-the-profiles-table" title="Permalink to this headline">¶</a></h3>
-<p>Populate the <code class="docutils literal"><span class="pre">profiles</span></code> table with users using a script. From the example&#8217;s directory, use:</p>
-<blockquote>
-<div><ul class="simple">
-<li><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/add-users.sh</span></code></li>
-</ul>
-</div></blockquote>
+<p>Populate the <code class="docutils literal"><span class="pre">profiles</span></code> table with users using a script. From the Standalone CDAP SDK directory, use:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> ./examples/UserProfiles/bin/add-users.sh
+</pre></div>
+</div>
 </div>
 <div class="section" id="create-a-conflict">
 <h3>Create a Conflict<a class="headerlink" href="#create-a-conflict" title="Permalink to this headline">¶</a></h3>
-<p>Now, from two different terminals, run the following commands concurrently:</p>
-<ul class="simple">
-<li><code class="docutils literal"><span class="pre">bin/update-login.sh</span></code> to randomly update the time of last login for users; and</li>
-<li><code class="docutils literal"><span class="pre">bin/send-events.sh</span></code> to generate random user activity events and send them to the stream.</li>
-</ul>
-<p>If both scripts are running at the same time, then some user profiles will be updated at
-the same time by the Service and by the Flow. With row-level conflict detection, you would
-see transaction conflicts in the logs. But when the <code class="docutils literal"><span class="pre">profiles</span></code> table uses
-column-level conflict detection, these conflicts are avoided.</p>
-<p>To see the behavior with row-level conflict detection, set
-the dataset creation statement at the bottom of <code class="docutils literal"><span class="pre">UserProfiles.java</span></code> to use <code class="docutils literal"><span class="pre">ConflictDetection.ROW</span></code>
-and run the steps as above. You should see transaction conflicts in the logs. For example, such
-a conflict would show as (reformatted to fit):</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="go">2015-01-26 21:00:20,084 - ERROR</span>
-<span class="go">[FlowletProcessDriver-updater-0-executor:c.c.c.i.a.r.f.FlowletProcessDriver@279]</span>
-<span class="go"> - Transaction operation failed: Conflict detected for transaction 1422334820080000000.</span>
-<span class="go">co.cask.tephra.TransactionConflictException: Conflict detected for transaction 1422334820080000000.</span>
-<span class="go">  at co.cask.tephra.TransactionContext.checkForConflicts(TransactionContext.java:166) ~[tephra-core-0.3.4.jar:na]</span>
-<span class="go">  at co.cask.tephra.TransactionContext.finish(TransactionContext.java:78) ~[tephra-core-0.3.4.jar:na]</span>
+<p>Now, from two different terminals, run the following commands concurrently
+(they are set to run for a maximum of 100 seconds):</p>
+<ul>
+<li><p class="first">To randomly update the time of last login for users:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> ./examples/UserProfiles/bin/update-login.sh
 </pre></div>
 </div>
+</li>
+<li><p class="first">To generate random user activity events and send them to the stream:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> ./examples/UserProfiles/bin/send-events.sh
+</pre></div>
+</div>
+</li>
+</ul>
+<p>If both scripts are running at the same time, then some user profiles will be updated at
+the same time by the service and by the flow. With row-level conflict detection, you would
+see transaction conflicts in the logs. But when the <code class="docutils literal"><span class="pre">profiles</span></code> table uses
+column-level conflict detection, these conflicts are avoided.</p>
+<p>To see the behavior with row-level conflict detection, set the dataset creation statement
+at the bottom of <code class="docutils literal"><span class="pre">UserProfiles.java</span></code> to use <code class="docutils literal"><span class="pre">ConflictDetection.ROW.name()</span></code> and run the
+steps as above. You should see transaction conflicts in the logs. (One of the scripts will
+stop when a conflict occurs. You can stop the other one at that time.)</p>
+<p>For example, such a conflict would show as (reformatted to fit):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">2015-XX-XX 13:22:30,520 - ERROR [executor-</span>
+<span class="go">7:c.c.c.e.p.UserProfileService$UserProfileServiceHandlera910e557f239fd6b95a3ded5c922df3a@-1] - Transaction Failure:</span>
+<span class="go">co.cask.tephra.TransactionConflictException: Conflict detected for transaction 1432066950514000002. at</span>
+<span class="go">co.cask.tephra.TransactionContext.checkForConflicts(TransactionContext.java:174) ~[co.cask.tephra.tephra-core-0.4.1.jar:na] at</span>
+<span class="go">co.cask.tephra.TransactionContext.finish(TransactionContext.java:79) ~[co.cask.tephra.tephra-core-0.4.1.jar:na] at</span>
+<span class="go">. . .</span>
+</pre></div>
+</div>
+<p>(The log file is located at <code class="docutils literal"><span class="pre">&lt;CDAP-SDK-HOME&gt;/logs/cdap-debug.log</span></code>. You should also see
+error in the CDAP UI, in the <a class="reference external" href="http://localhost:9999/ns/default/apps/UserProfiles/programs/services/UserProfileService/logs?filter=error">UserProfileService error log</a>.)</p>
 <p>Note that in order to see this happen (and to change from row- to column- and vice-versa),
 you need to delete the <code class="docutils literal"><span class="pre">profiles</span></code> dataset before redeploying the application, to force
 its recreation with the new properties.</p>
-<p>Running the example with <code class="docutils literal"><span class="pre">ConflictDetection.COLUMN</span></code> will result in the two scripts running
+<p>Running the example with <code class="docutils literal"><span class="pre">ConflictDetection.COLUMN.name()</span></code> will result in the two scripts running
 concurrently without transaction conflicts.</p>
 </div>
-<div class="section" id="stopping-the-application">
-<h3>Stopping the Application<a class="headerlink" href="#stopping-the-application" title="Permalink to this headline">¶</a></h3>
-<p>Once done, you can stop the application as described above in <a class="reference external" href="#stopping-an-application">Stopping an Application.</a> Here is an example-specific description of the step:</p>
-<p><strong>Stopping the Service</strong></p>
+</div>
+<div class="section" id="stopping-and-removing-the-application">
+<h2>Stopping and Removing the Application<a class="headerlink" href="#stopping-and-removing-the-application" title="Permalink to this headline">¶</a></h2>
+<p>Once done, you can stop the application as described above in <a class="reference external" href="#stopping-an-application">Stopping an Application.</a> Here is an example-specific description of the steps:</p>
+<p><strong>Stopping the Flow</strong></p>
 <ul>
-<li><p class="first">Click on <code class="docutils literal"><span class="pre">UserProfiles</span></code> in the Overview page of the CDAP UI to get to the
-Application detail page, click <code class="docutils literal"><span class="pre">ActivityFlow</span></code> in the <em>Flow</em> section of the <em>Process</em> pane
-to get to the Flow&#8217;s detail page, and then click the <em>Stop</em> button; repeat these steps for
-the <code class="docutils literal"><span class="pre">FileSetService</span></code> in the <em>Service</em> pane; or</p>
+<li><p class="first">Go to the <em>UserProfiles</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/UserProfiles/overview/status">application overview page</a>,
+click <code class="docutils literal"><span class="pre">ActivityFlow</span></code> to get to the flow detail page, then click the <em>Stop</em> button; or</p>
 </li>
 <li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
-<blockquote>
-<div><ul class="simple">
-<li><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">flow</span> <span class="pre">UserProfiles.ActivityFlow</span></code></li>
-<li><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">service</span> <span class="pre">UserProfiles.UserProfileService</span></code></li>
-</ul>
-</div></blockquote>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh stop flow UserProfiles.ActivityFlow
+</pre></div>
+</div>
 </li>
 </ul>
+<p><strong>Stopping the Service</strong></p>
+<ul>
+<li><p class="first">Go to the <em>UserProfiles</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/UserProfiles/overview/status">application overview page</a>,
+click <code class="docutils literal"><span class="pre">UserProfileService</span></code> to get to the service detail page, then click the <em>Stop</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh stop service UserProfiles.UserProfileService
+</pre></div>
 </div>
+</li>
+</ul>
+<p><strong>Removing the Application</strong></p>
+<p>You can now remove the application as described above, <a class="reference external" href="#removing-an-application">Removing an Application</a>, or:</p>
+<ul>
+<li><p class="first">Go to the <em>UserProfiles</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/UserProfiles/overview/status">application overview page</a>,
+click the <em>Actions</em> menu on the right side and select <em>Manage</em> to go to the Management pane for the application,
+then click the <em>Actions</em> menu on the right side and select <em>Delete</em> to delete the application; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh delete app UserProfiles
+</pre></div>
+</div>
+</li>
+</ul>
 </div>
 </div>
 
@@ -539,6 +603,7 @@ the <code class="docutils literal"><span class="pre">FileSetService</span></code
 <li class="toctree-l3"><a class="reference internal" href="#building-and-starting">Building and Starting</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#running-cdap-applications">Running CDAP Applications</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#running-the-example">Running the Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stopping-and-removing-the-application">Stopping and Removing the Application</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="web-analytics.html">Web Analytics</a></li>

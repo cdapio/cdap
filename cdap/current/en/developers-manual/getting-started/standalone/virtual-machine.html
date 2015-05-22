@@ -181,6 +181,30 @@ accordingly. For example, in a URL such as:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">http://localhost:10000/v3/namespaces/my_namespace/apps...</span>
 </pre></div>
 </div>
+<div class="section" id="accessing-cli-curl-and-the-sdk-bin">
+<h3>Accessing CLI, curl and the SDK bin<a class="headerlink" href="#accessing-cli-curl-and-the-sdk-bin" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">For brevity in the commands given below, we will simply use <code class="docutils literal"><span class="pre">cdap-cli.sh</span></code> for the CDAP
+Command Line Interface. Substitute the actual path of <code class="docutils literal"><span class="pre">./&lt;CDAP-SDK-HOME&gt;/bin/cdap-cli.sh</span></code>,
+or <code class="docutils literal"><span class="pre">&lt;CDAP-SDK-HOME&gt;\bin\cdap-cli.bat</span></code> on Windows, as appropriate.</p>
+</li>
+<li><p class="first">A Windows-version of the application <code class="docutils literal"><span class="pre">curl</span></code> is included in the CDAP SDK as
+<code class="docutils literal"><span class="pre">libexec\bin\curl.exe</span></code>; use it as a substitute for <code class="docutils literal"><span class="pre">curl</span></code> in the examples shown below.</p>
+</li>
+<li><p class="first">If you add the SDK bin directory to your path, you can simplify the commands. From within
+the CDAP-SDK-home directory, enter:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> <span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span><span class="si">${</span><span class="nv">PATH</span><span class="si">}</span>:<span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>/bin
+</pre></div>
+</div>
+<p>or under Windows:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">&gt;</span> setx path <span class="s2">&quot;%PATH%;%CD%\bin&quot;</span>
+</pre></div>
+</div>
+<p>Note that under Windows, you&#8217;ll need to create a new command line window in order to see
+this change to the path variable.</p>
+</li>
+</ul>
+</div>
 <div class="section" id="building-an-example-application">
 <h3>Building an Example Application<a class="headerlink" href="#building-an-example-application" title="Permalink to this headline">¶</a></h3>
 <p>From the example&#8217;s project root, build an example with the
@@ -191,65 +215,57 @@ accordingly. For example, in a URL such as:</p>
 </div>
 <div class="section" id="starting-cdap">
 <h3>Starting CDAP<a class="headerlink" href="#starting-cdap" title="Permalink to this headline">¶</a></h3>
-<p>Before running an Example Applications, check that an instance of CDAP is running and available; if not
+<p>Before running an example application, check that an instance of CDAP is running and available; if not,
 follow the instructions for <a class="reference internal" href="../start-stop-cdap.html#start-stop-cdap"><span>Starting and Stopping Standalone CDAP.</span></a></p>
-<p>If you can reach the CDAP UI through a browser at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>, CDAP is running.</p>
+<p>If you can reach the CDAP UI through a browser at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>,
+CDAP is running.</p>
 </div>
 <div class="section" id="deploying-an-application">
 <h3>Deploying an Application<a class="headerlink" href="#deploying-an-application" title="Permalink to this headline">¶</a></h3>
 <p>Once CDAP is started, you can deploy an example JAR by any of these methods:</p>
 <ul>
-<li><p class="first">Dragging and dropping the application JAR file:</p>
+<li><p class="first">Use the <em>Add App</em> button found on the <a class="reference external" href="http://localhost:9999/admin/namespace/detail/default/apps"><em>Management</em></a> page of the CDAP UI to browse and upload the Jar:</p>
 <pre class="literal-block">
-example/target/&lt;example&gt;-3.0.0.jar
+examples/&lt;example&gt;/target/&lt;example&gt;-3.0.0.jar
 </pre>
-<p>onto the CDAP UI running at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>; or</p>
-</li>
-<li><p class="first">Use the <em>Add App</em> button found on the <em>Development</em> page of the CDAP UI to browse and upload the Jar; or</p>
 </li>
 <li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">Command Line Interface (CLI)</span></a>:</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="20%" />
-<col width="80%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><th class="stub">On Linux:</th>
-<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></code></td>
-</tr>
-<tr class="row-even"><th class="stub">On Windows:</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">&lt;path-to-jar-file&gt;</span></code></td>
-</tr>
-</tbody>
-</table>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> cdap-cli.sh deploy app examples/&lt;example&gt;/target/&lt;example&gt;-3.0.0.jar
+
+Successfully deployed application
+</pre>
+</div>
+<p>The CLI can be accessed under Windows using the <code class="docutils literal"><span class="pre">bin\cdap-cli.bat</span></code> script.</p>
+</li>
+<li><p class="first">Use an application such as <code class="docutils literal"><span class="pre">curl</span></code> (a Windows-version is included in the CDAP SDK in
+<code class="docutils literal"><span class="pre">libexec\bin\curl.exe</span></code>):</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> curl -w'\n' -H &quot;X-Archive-Name: &lt;example&gt;-3.0.0.jar&quot; localhost:10000/v3/namespaces/default/apps \
+  --data-binary &#64;examples/&lt;example&gt;/target/&lt;example&gt;-3.0.0.jar
+
+Deploy Complete
+</pre>
+</div>
 </li>
 </ul>
 </div>
 <div class="section" id="starting-an-application">
 <h3>Starting an Application<a class="headerlink" href="#starting-an-application" title="Permalink to this headline">¶</a></h3>
-<p>Once an application is deployed:</p>
+<p>Once an application is deployed, there are multiple methods for starting an application:</p>
 <ul>
-<li><p class="first">You can go to the Application&#8217;s detail page in the CDAP UI by clicking on the
-Application&#8217;s name in the <em>Development</em> page. (It can be reached by clicking on the
-<em>Application</em> button in the left sidebar of the window.) Now you can <em>Start</em> or <em>Stop</em> any
-of the Processes or Queries associated with the application; or</p>
+<li><p class="first">You can go to the application&#8217;s detail page in the CDAP UI by clicking on the
+application&#8217;s name in either the <a class="reference external" href="http://localhost:9999/ns/default"><em>Development</em></a> page or on the <a class="reference external" href="http://localhost:9999/ns/default/apps"><em>All Applications</em></a> page. Now you can
+see the status of any of the programs associated with the application and, by clicking
+on them, go to their detail page where you can start or stop them.</p>
 </li>
 <li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">Command Line Interface</span></a>.
-In each CDAP example, the CLI commands for that particular example are provided.</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="20%" />
-<col width="80%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><th class="stub">On Linux:</th>
-<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
-</tr>
-<tr class="row-even"><th class="stub">On Windows:</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">start</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
-</tr>
-</tbody>
-</table>
+In each CDAP example, the CLI commands for that particular example are provided:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh start &lt;program-type&gt; &lt;app-id.program-id&gt;
+</pre></div>
+</div>
 <table border="1" class="docutils">
 <colgroup>
 <col width="20%" />
@@ -262,14 +278,13 @@ In each CDAP example, the CLI commands for that particular example are provided.
 </thead>
 <tbody valign="top">
 <tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-type&gt;</span></code></td>
-<td>One of <code class="docutils literal"><span class="pre">flow</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">workflow</span></code> or <code class="docutils literal"><span class="pre">service</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">adapter</span></code>, <code class="docutils literal"><span class="pre">flow</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">service</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">worker</span></code>, or <code class="docutils literal"><span class="pre">workflow</span></code></td>
 </tr>
 <tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;app-id&gt;</span></code></td>
-<td>Name of the Application being called</td>
+<td>Name of the application being called</td>
 </tr>
 <tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-id&gt;</span></code></td>
-<td>Name of the <em>Flow</em>, <em>MapReduce</em>, <em>Workflow</em>, or <em>Custom Service</em>
-being called</td>
+<td>Name of the <em>adapter</em>, <em>flow</em>, <em>MapReduce</em>, <em>service</em>, <em>spark</em>, <em>worker</em> or <em>workflow</em> being called</td>
 </tr>
 </tbody>
 </table>
@@ -280,40 +295,33 @@ being called</td>
 <h3>Stopping an Application<a class="headerlink" href="#stopping-an-application" title="Permalink to this headline">¶</a></h3>
 <p>Once an application is deployed:</p>
 <ul>
-<li><p class="first">On the Application&#8217;s detail page in the CDAP UI, you can click on a program to go
+<li><p class="first">On an application&#8217;s detail page in the CDAP UI, you can click on a program to go
 to its detail page and then click the <em>Stop</em> button there; or</p>
 </li>
-<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">Command Line Interface:</span></a></p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="20%" />
-<col width="80%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><th class="stub">On Linux:</th>
-<td><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
-</tr>
-<tr class="row-even"><th class="stub">On Windows:</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">bin\cdap-cli.bat</span> <span class="pre">stop</span> <span class="pre">&lt;program-type&gt;</span> <span class="pre">&lt;app-id.program-id&gt;</span></code></td>
-</tr>
-</tbody>
-</table>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">Command Line Interface</span></a>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh stop &lt;program-type&gt; &lt;app-id.program-id&gt;
+</pre></div>
+</div>
 </li>
 </ul>
 </div>
 <div class="section" id="removing-an-application">
 <h3>Removing an Application<a class="headerlink" href="#removing-an-application" title="Permalink to this headline">¶</a></h3>
-<p>Once an application is stopped—all Processes (Flows, MapReduce programs, Workflows,
-etc.), Queries, and Services are stopped—you can go to the <em>Management</em> page of the
-CDAP UI, click on the Namespaces &gt; default &gt; Applications to bring up all Applications,
-and then click on a particular Application, and then from the Application&#8217;s detail page,
-select the <em>Actions &gt; Delete</em> menu in the upper right to delete the Application.</p>
+<p>Once an application is stopped—all of its programs (flows, MapReduce programs,
+workflows, services, etc.) are stopped—you can go to the <a class="reference external" href="http://localhost:9999/ns/default/apps"><em>All Applications</em></a>
+page of the CDAP UI, click on the particular application to go to its detail page, click
+the <em>Actions</em> menu on the right side and select <em>Manage</em> to go to the Management pane for
+the application, then click the <em>Actions</em> menu on the right side and select <em>Delete</em>.</p>
 <p>After confirmation, the application will be deleted.</p>
-<p>Note that any Storage (Datasets) created or used by the Application will remain, as they
-are independent of the Application. Datasets can be deleted with the
-<a class="reference external" href="../../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">HTTP Restful API</span></a>, the
-<a class="reference external" href="../../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">Java Client API</span></a>, or the
-<a class="reference external" href="../../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">Command Line Interface API</span></a>.</p>
+<p>From the Standalone CDAP SDK directory, you can also use the Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh delete app &lt;app-id&gt;
+</pre></div>
+</div>
+<p>Note that any storage (datasets) created or used by the application will remain, as they
+are independent of the application. Datasets can be deleted from the <a class="reference external" href="http://localhost:9999/admin/namespace/detail/default/data"><em>Datasets</em></a> page of
+the CDAP UI, or by using the <a class="reference external" href="../../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">HTTP Restful API</span></a>, the
+<a class="reference external" href="../../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">Java Client API</span></a>, or the <a class="reference external" href="../../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">Command Line Interface API</span></a>.</p>
+<p>Streams cannot be deleted; instead, they can be truncated.</p>
 </div>
 </div>
 </div>
