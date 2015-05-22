@@ -51,7 +51,7 @@ configuration for a Batch Adapter that runs every minute, reading data from a St
             "name":"Table",
             "properties":{
                 "name":"myTable",
-                "schema.row.field":"ts",
+                "schema.row.field":"ts"
             }
         }
      }

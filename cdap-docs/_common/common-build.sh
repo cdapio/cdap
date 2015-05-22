@@ -92,6 +92,9 @@ function echo_red_bold() {
   echo -e "${RED}${BOLD}${1}${NC}${2}"
 }
 
+# Hash of file with "Not Found"; returned by GitHub
+NOT_FOUND_HASH="9d1ead73e678fa2f51a70a933b0bf017"
+
 ZIP_FILE_NAME=$HTML
 ZIP="${ZIP_FILE_NAME}.zip"
 
@@ -288,7 +291,10 @@ function test_an_include() {
     new_md5_hash=`md5sum ${target} | awk '{print $1}'`
   fi
   
-  if [ "x${md5_hash}" != "x${new_md5_hash}" ]; then
+  if [[ "x${new_md5_hash}" == "x${NOT_FOUND_HASH}" ]]; then
+    echo -e "${WARNING} ${RED}${BOLD}${file_name} not found!${NC}"  
+    echo -e "file: ${target}"  
+  elif [ "x${new_md5_hash}" != "x${md5_hash}" ]; then
     echo -e "${WARNING} MD5 Hash for ${file_name} has changed! Compare files and update hash!"  
     echo -e "file: ${target}"  
     echo -e "Old MD5 Hash: ${md5_hash} New MD5 Hash: ${RED}${BOLD}${new_md5_hash}${NC}" 

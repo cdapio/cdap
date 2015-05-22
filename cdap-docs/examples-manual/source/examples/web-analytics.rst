@@ -9,11 +9,11 @@
 Web Analytics Application
 =========================
 
-A Cask Data Application Platform (CDAP) Tutorial demonstrating how to perform analytics
+A Cask Data Application Platform (CDAP) tutorial demonstrating how to perform analytics
 using access logs.
 
 Overview
-===========
+========
 
 This tutorial provides the basic steps for the development of a data application using the
 Cask Data Application Platform (CDAP). We will use a Web Analytics Application to
@@ -35,44 +35,44 @@ in its design to accomodate new application requirements.
 In this tutorial, we'll show how easy it is to build a web analytics application with CDAP.
 In particular, we'll use these CDAP components:
 
-- A **Stream** for web server log collection and persistence to the file system;
-- A **Flow** for realtime data analysis over collected logs; and
+- A **stream** for web server log collection and persistence to the file system;
+- A **flow** for realtime data analysis over collected logs; and
 - **SQL Queries** to explore and develop insights from the data.
 
 How It Works
-=============
+============
 In this section, we’ll go through the details about how to develop a Web Analytics Application using CDAP.
 
 Data Collection with a Stream
----------------------------------------
+-----------------------------
 The sole data source that the Web Analytics Application uses is web server logs. Log events are ingested to
-a **Stream** called *log* using the RESTful API provided by CDAP.
+a **stream** called *log* using the RESTful API provided by CDAP.
 
-Once an event is ingested into a Stream, it is persisted and available for processing.
+Once an event is ingested into a stream, it is persisted and available for processing.
 
 Data Analysis using a Flow
----------------------------------------
-The Web Analytics Application uses a **Flow**, the realtime data processor in CDAP,
-to produce realtime analytics from the web server logs. A **Flow** contains one or more
-**Flowlets** that are wired together into a directed acyclic graph or DAG.
+--------------------------
+The Web Analytics Application uses a **flow**, the realtime data processor in CDAP,
+to produce realtime analytics from the web server logs. A **flow** contains one or more
+**flowlets** that are wired together into a directed acyclic graph or DAG.
 
 To keep the example simple, we only compute the total visit count for each IP visiting the site.
-We use a Flowlet of type ``UniqueVisitor`` to keep track of the unique visit counts from each client.
+We use a flowlet of type ``UniqueVisitor`` to keep track of the unique visit counts from each client.
 It is done in three steps:
 
-1. Read a log event from the *log* Stream;
+1. Read a log event from the *log* stream;
 #. Parse the client IP from the log event; and
 #. Increment the visit count of that client IP by 1 and persist the change.
 
-The result of the increment is persisted to a custom **Dataset** ``UniqueVisitCount``.
+The result of the increment is persisted to a custom **dataset** ``UniqueVisitCount``.
 
-Here is what the ``UniqueVisitor`` Flowlet looks like:
+Here is what the ``UniqueVisitor`` flowlet looks like:
 
 .. literalinclude:: /../../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/UniqueVisitor.java
    :language: java
    :lines: 35-
 
-The ``UniqueVisitCount`` Dataset provides an abstraction of the data logic for incrementing the visit count for a
+The ``UniqueVisitCount`` dataset provides an abstraction of the data logic for incrementing the visit count for a
 given IP. It exposes an ``increment`` method, implemented as:
 
 .. literalinclude:: /../../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/UniqueVisitCount.java
@@ -82,14 +82,14 @@ given IP. It exposes an ``increment`` method, implemented as:
 The complete source code of the ``UniqueVisitCount`` class can be found in the example in
 ``src/main/java/co/cask/cdap/examples/webanalytics/UniqueVisitCount.java``
 
-To connect the ``UniqueVisitor`` Flowlet to read from the *log* Stream, we define a ``WebAnalyticsFlow`` class
-that specifies the Flow:
+To connect the ``UniqueVisitor`` flowlet to read from the *log* stream, we define a ``WebAnalyticsFlow`` class
+that specifies the flow:
 
 .. literalinclude:: /../../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/WebAnalyticsFlow.java
    :language: java
    :lines: 26-
 
-Lastly, we bundle up the Dataset and the Flow we've defined together to form an ``Application`` that can be deployed
+Lastly, we bundle up the dataset and the flow we've defined together to form an ``Application`` that can be deployed
 and executed in CDAP:
 
 .. literalinclude:: /../../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/WebAnalytics.java
@@ -98,117 +98,115 @@ and executed in CDAP:
 
 
 Building and Starting
-=================================
+=====================
 
-- You can either build the example (as described `below
-  <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
-- Start CDAP, deploy and start the application as described below in 
-  `Running CDAP Applications`_\ .
-  Make sure you start the Flow as described below.
-- Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
+.. include:: building-and-starting.txt
+
 
 Running CDAP Applications
-============================================
+=========================
 
 .. |example| replace:: WebAnalytics
 
 .. include:: /../../developers-manual/source/getting-started/building-apps.rst
    :start-line: 11
 
+
 Running the Example
 ===================
 
 Starting the Flow
-------------------------------
+-----------------
 
 Once the application is deployed:
 
-- Click on the *Process* button in the left sidebar of the CDAP UI,
-  then click ``WebAnalyticsFlow`` in the *Process* page to get to the
-  Flow detail page, then click the *Start* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- Go to the *WebAnalytics* `application overview page 
+  <http://localhost:9999/ns/default/apps/WebAnalytics/overview/status>`__,
+  click ``WebAnalyticsFlow`` to get to the flow detail page, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
-
-    * - On Linux:
-      - ``$ ./bin/cdap-cli.sh start flow WebAnalytics.WebAnalyticsFlow``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat start flow WebAnalytics.WebAnalyticsFlow``    
+    $ cdap-cli.sh start flow WebAnalytics.WebAnalyticsFlow
+  
+    Successfully started Flow 'WebAnalyticsFlow' of application 'WebAnalytics' with stored runtime arguments '{}'
 
 Injecting Log Events
----------------------------------------
+---------------------
 
-To inject a log event, you can use the ``curl`` command::
+To inject a single log event, you can use the ``curl`` command:
 
-  $ curl -d '192.168.252.135 - - [14/Jan/2014:00:12:51 -0400] "GET /products HTTP/1.1" 500 182 \
-       "http://www.example.org" "Mozilla/5.0"' http://localhost:10000/v3/namespaces/default/streams/log
+.. container:: highlight
 
-**Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
-SDK in ``libexec\bin\curl.exe``
+  .. parsed-literal::
+    |$| curl -d '192.168.252.135 - - [14/Jan/2014:00:12:51 -0400] "GET /products HTTP/1.1" 500 182 \\
+      "|http:|//www.example.org" "Mozilla/5.0"' |http:|//localhost:10000/v3/namespaces/default/streams/log
 
 This sends the log event (formatted in the Common Log Format or CLF) to the CDAP instance located at
 ``localhost`` and listening on port ``10000``.
 
-The Application includes sample logs, located in ``test/resources/access.log`` that you can inject by running
-a provided script:
+The Application includes sample logs, located in ``examples/resources/accesslog.txt`` that you can inject 
+using the CDAP Commmand Line Interface::
 
-.. list-table::
-  :widths: 20 80
-  :stub-columns: 1
-
-  * - On Linux:
-    - ``$ ./bin/inject-data.sh``
-  * - On Windows:
-    - ``> bin\inject-data.bat``    
+  $ cdap-cli.sh load stream log examples/resources/accesslog.txt
+  
+  Successfully sent stream event to stream 'log'
 
 Query the Unique Visitor Page Views
 ---------------------------------------
 Once the log data has been processed by the ``WebAnalyticsFlow``, we can explore the
-Dataset ``UniqueVisitCount`` with a SQL query. You can easily execute SQL queries against
-Datasets using the CDAP UI by simply selecting **Store** on the left sidebar, then
-clicking the **Explore** button on the right, and then selecting the **UniqueVisitCount**
-Dataset:
+dataset ``UniqueVisitCount`` with a SQL query. You can easily execute SQL queries against
+datasets using the CDAP UI by going to the *Data* page showing `all datasets 
+<http://localhost:9999/ns/default/data>`__, selecting the **UniqueVisitCount**
+dataset:
 
 .. image:: ../_images/wa_explore_store.png
    :width: 8in
 
-You can then run SQL queries against the Dataset. Let's try to find the top five IP
+Then, select the *Explore* tab:
+
+.. image:: ../_images/wa_explore_dataset.png
+   :width: 8in
+
+You can then run SQL queries against the dataset. Let's try to find the top five IP
 addresses that visited the site by running a SQL query::
 
   SELECT * FROM dataset_uniquevisitcount ORDER BY value DESC LIMIT 5
 
-You can copy and paste the above SQL into the **Query** box as shown below (replacing the
+You can copy and paste the above SQL into the **Write & Execute SQL** box as shown below (replacing the
 default query that is there) and click the **Execute** button to run it. It may take a
-while for the query to finish.
+moment for the query to finish.
 
 .. image:: ../_images/wa_explore_query.png
    :width: 8in
 
-Once it's finished, click on the disclosure triangle on the left side of the **Results**
-table line to expand the display and see the query results:
+Once it's finished, click on the disclosure symbol on the left side of the **View Queries**
+section to expand the display and see the query results:
 
 .. image:: ../_images/wa_explore_result.png
    :width: 8in
 
-Stopping the Application
--------------------------------
+
+Stopping and Removing the Application
+=====================================
 Once done, you can stop the application as described above in `Stopping an Application. 
 <#stopping-an-application>`__ Here is an example-specific description of the steps:
 
 **Stopping the Flow**
 
-- Click on the *Process* button in the left sidebar of the CDAP UI,
-  then click *WebAnalyticsFlow* in the *Process* page to get to the
-  Flow detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- Go to the *WebAnalytics* `application overview page 
+  <http://localhost:9999/ns/default/apps/UserProfiles/overview/status>`__,
+  click ``WebAnalyticsFlow`` to get to the flow detail page, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
+    $ cdap-cli.sh stop flow WebAnalytics.WebAnalyticsFlow 
 
-    * - On Linux:
-      - ``$ ./bin/cdap-cli.sh stop flow WebAnalytics.WebAnalyticsFlow``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat stop flow WebAnalytics.WebAnalyticsFlow``    
+**Removing the Application**
+
+You can now remove the application as described above, `Removing an Application <#removing-an-application>`__, or:
+
+- Go to the *WebAnalytics* `application overview page 
+  <http://localhost:9999/ns/default/apps/WebAnalytics/overview/status>`__,
+  click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
+  then click the *Actions* menu on the right side and select *Delete* to delete the application; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
+
+    $ cdap-cli.sh delete app WebAnalytics
