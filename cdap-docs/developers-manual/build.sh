@@ -25,9 +25,9 @@
 
 source ../_common/common-build.sh
 
-CHECK_INCLUDES=$TRUE
 CDAP_CLIENTS_RELEASE_VERSION="1.2.0"
 CDAP_INGEST_RELEASE_VERSION="1.3.0"
+CHECK_INCLUDES=$TRUE
 
 function download_readme_file_and_test() {
   # Downloads a README.rst file to a target directory, and checks that it hasn't changed.
