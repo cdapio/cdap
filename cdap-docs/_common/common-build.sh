@@ -314,6 +314,7 @@ function build_dependencies() {
 }
 
 function version() {
+  OIFS="${IFS}"
   local current_directory=`pwd`
   cd ${PROJECT_PATH}
   PROJECT_VERSION=`grep "<version>" pom.xml`
@@ -321,10 +322,12 @@ function version() {
   PROJECT_VERSION=${PROJECT_VERSION%%</version>*}
   PROJECT_LONG_VERSION=`expr "${PROJECT_VERSION}" : '\([0-9]*\.[0-9]*\.[0-9]*\)'`
   PROJECT_SHORT_VERSION=`expr "${PROJECT_VERSION}" : '\([0-9]*\.[0-9]*\)'`
-  IFS=/ read -a branch <<< "`git rev-parse --abbrev-ref HEAD`"
-  # Determine branch and branch type: one of develop, master, release, develop-feature, release-feature
+  local full_branch=`git rev-parse --abbrev-ref HEAD`
+  IFS=/ read -a branch <<< "${full_branch}"
   GIT_BRANCH="${branch[1]}"
-  if [ "x${GIT_BRANCH}" == "xdevelop" -o  "x${GIT_BRANCH}" == "xmaster" ]; then
+  # Determine branch and branch type: one of develop, master, release, develop-feature, release-feature
+  if [ "x${full_branch}" == "xdevelop" -o  "x${full_branch}" == "xmaster" ]; then
+    GIT_BRANCH="${full_branch}"
     GIT_BRANCH_TYPE=${GIT_BRANCH}
   elif [ "x${GIT_BRANCH:0:7}" == "xrelease" ]; then
     GIT_BRANCH_TYPE="release"
@@ -337,6 +340,7 @@ function version() {
     fi
   fi
   cd $current_directory
+  IFS="${OIFS}"
 }
 
 function display_version() {
