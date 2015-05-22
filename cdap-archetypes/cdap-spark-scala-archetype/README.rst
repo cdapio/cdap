@@ -1,30 +1,37 @@
-# Cask Data Application Platform (CDAP) Spark Scala Archetype
+===========================================================
+Cask Data Application Platform (CDAP) Spark Scala Archetype
+===========================================================
 
-This directory contains a Scala Archetype for the Cask Data Application Platform (CDAP).
+This directory contains a CDAP Spark Scala Archetype for the Cask Data Application Platform (CDAP).
 
-# Installing
+
+Installing
+==========
 
 To install the archetype, enter in the CDAP root directory:
 
-> mvn clean install -f cdap-archetypes/cdap-spark-scala-archetype/pom.xml
+  $ mvn clean install -f cdap-archetypes/cdap-spark-scala-archetype/pom.xml
 
-# Creating
 
-To create a project from the archetype, use this script as an example:
+Creating
+========
 
-```
- mvn archetype:generate 					
-  -DarchetypeGroupId=co.cask.cdap 			
-  -DarchetypeArtifactId=cdap-spark-scala-archetype 	
-  -DarchetypeVersion=2.6.0
-  -DgroupId=com.example 					
-  -DartifactId=SparkKMeansExample
-  -Dversion=1.0						
+To create a project from the archetype, use this script as an example
+(substituting for ${project.version} as appropriate)::
 
-```  
+  mvn archetype:generate 					
+    -DarchetypeGroupId=co.cask.cdap 			
+    -DarchetypeArtifactId=cdap-spark-scala-archetype 	
+    -DarchetypeVersion=${project.version}
+    -DgroupId=com.example 					
+    -DartifactId=SparkKMeansExample
+    -Dversion=1.0						
+
 To confirm project creation, type Y and press ENTER.
 
-## License and Trademarks
+
+License and Trademarks
+======================
 
 Copyright © 2014 Cask Data, Inc.
 
