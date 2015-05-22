@@ -16,12 +16,22 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.StandaloneTester;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 /**
  * Test for {@link IntegrationTestBase}.
  */
 public class IntegrationTestBaseTest extends IntegrationTestBase {
+
+  @ClassRule
+  public static final StandaloneTester STANDALONE = new StandaloneTester();
+
+  @Override
+  protected String getInstanceURI() {
+    return STANDALONE.getBaseURI().toString();
+  }
 
   @Test
   public void testFlowManager() throws Exception {
