@@ -278,9 +278,11 @@ Update your Yum cache::
 
   $ sudo yum makecache
 
+.. end_install-rpm-using-yum
+
 Debian using APT
 ................
-Download the Cask Apt repo definition file:
+Download the Cask APT repo definition file:
 
 .. container:: highlight
 
@@ -302,6 +304,8 @@ Add the Cask Public GPG Key to your repository:
 Update your APT-cache::
 
   $ sudo apt-get update
+
+.. end_install-debian-using-apt
 
 Installation
 ------------
@@ -611,6 +615,20 @@ recompiled and re-deployed.)
 
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
 
+#. Update the CDAP file definition lists by running either of these methods:
+ 
+   - Using Yum:
+
+     .. include:: installation.rst 
+        :start-after: Download the Cask Yum repo definition file:
+        :end-before:  .. end_install-rpm-using-yum
+
+   - Using APT:
+
+     .. include:: installation.rst 
+        :start-after: Download the Cask APT repo definition file:
+        :end-before:  .. end_install-debian-using-apt
+
 #. Update the CDAP packages by running either of these methods:
 
    - Using Yum (on one line)::
@@ -631,7 +649,7 @@ recompiled and re-deployed.)
    Please see :ref:`Configuration <install-configuration>`.
 
 #. If you are upgrading a secure Hadoop cluster, you should authenticate with ``kinit``
-   before the next step (upgrade tool)::
+   before the next step (running the upgrade tool)::
 
      $ kinit -kt <keytab> <principle>
 
