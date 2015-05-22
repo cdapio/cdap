@@ -20,7 +20,7 @@
         var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
       })();
     </script>
-    <title>CDAP Tutorial: Wise (Web Insights Engine Application) &mdash; Cask Data Application Platform 3.0.0 Documentation</title>
+    <title>CDAP Tutorial: WISE (Web Insights Engine Application) &mdash; Cask Data Application Platform 3.0.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -76,7 +76,7 @@
           <div class="body" role="main">
             
   <div class="section" id="cdap-tutorial-wise-web-insights-engine-application">
-<span id="cdap-tutorial-wise"></span><h1>CDAP Tutorial: Wise (Web Insights Engine Application)<a class="headerlink" href="#cdap-tutorial-wise-web-insights-engine-application" title="Permalink to this headline">¶</a></h1>
+<span id="cdap-tutorial-wise"></span><h1>CDAP Tutorial: WISE (Web Insights Engine Application)<a class="headerlink" href="#cdap-tutorial-wise-web-insights-engine-application" title="Permalink to this headline">¶</a></h1>
 <p><strong>A Case Study of Web Analytics using the Cask Data Application Platform (CDAP)</strong></p>
 <div class="section" id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
@@ -87,12 +87,12 @@ stored somewhere in the system, and the system should expose ways to retrieve it
 this case where the system performs very simple analytics, such as counting the number of
 visits made to a website in a day, the components needed to make it possible demand a lot
 of work.</p>
-<p>Using the <strong>Web Insights Engine Application</strong> or <em>Wise</em>, we’ll show you how to build
-such a system on CDAP that is easy, concise, and powerful. Wise extracts value from Web
+<p>Using the <strong>Web Insights Engine Application</strong> or <em>WISE</em>, we’ll show you how to build
+such a system on CDAP that is easy, concise, and powerful. WISE extracts value from Web
 server access logs, counts visits made by different IP addresses seen in the logs in
 realtime, and computes the bounce ratio of each web page encountered using batch
 processing.</p>
-<p>The Wise v0.4.0 application uses these Cask Data Application Platform (CDAP) constructs to
+<p>The WISE v0.4.0 application uses these Cask Data Application Platform (CDAP) constructs to
 analyze web server logs:</p>
 <ul class="simple">
 <li><strong>Stream:</strong> Ingests log data in realtime</li>
@@ -105,27 +105,43 @@ analyze web server logs:</p>
 <div class="section" id="conventions">
 <h3>Conventions<a class="headerlink" href="#conventions" title="Permalink to this headline">¶</a></h3>
 <p>In the examples and commands that follow, for brevity we will use these conventions:</p>
-<ul class="simple">
-<li><code class="docutils literal"><span class="pre">$CDAP_SDK_HOME</span></code> is the directory that you have installed the CDAP Standalone SDK, either
-on a UNIX-type system or Windows.</li>
-<li>The <a class="reference external" href="http://docs.cask.co/cdap/current/en/reference-manual/cli-api.html">CDAP Command Line Interface (CLI)</a>
+<ul>
+<li><p class="first"><code class="docutils literal"><span class="pre">$CDAP_SDK_HOME</span></code> is the directory that you have installed the CDAP Standalone SDK, either
+on a UNIX-type system or Windows.</p>
+</li>
+<li><p class="first">The <a class="reference external" href="http://docs.cask.co/cdap/current/en/reference-manual/cli-api.html">CDAP Command Line Interface (CLI)</a>
 is included in the SDK in the <code class="docutils literal"><span class="pre">bin</span></code> directory, either at <code class="docutils literal"><span class="pre">bin/cdap-cli.sh</span></code> or—on Windows—<code class="docutils literal"><span class="pre">bin\cdap-cli.bat</span></code>. In the examples given, substitute the actual path
 as appropriate. The CLI allows you to quickly access CDAP facilities from a command line
-environment.</li>
-<li>The <code class="docutils literal"><span class="pre">curl</span></code> command, common on UNIX-type systems, is included in a Windows-version in
-the CDAP SDK in the <code class="docutils literal"><span class="pre">libexec\bin</span></code> directory as <code class="docutils literal"><span class="pre">curl.exe</span></code>.</li>
-<li>Other scripts referenced below are included either in the SDK or downloaded zips as <code class="docutils literal"><span class="pre">.bat</span></code>
-versions for Windows. Substitute these versions as appropriate in the examples below.</li>
+environment.</p>
+</li>
+<li><p class="first">If you add the SDK bin directory to your path, you can simplify the commands. From within
+the CDAP-SDK-home directory, enter:</p>
+<div class="highlight-java"><div class="highlight"><pre>$ export PATH=${PATH}:`pwd`/bin
+</pre></div>
+</div>
+<p>or under Windows:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">&gt;</span> <span class="n">setx</span> <span class="n">path</span> <span class="s">&quot;%PATH%;%CD%\bin&quot;</span>
+</pre></div>
+</div>
+<p>Note that under Windows, you&#8217;ll need to create a new command line window in order to see
+this change to the path variable.</p>
+</li>
+<li><p class="first">The <code class="docutils literal"><span class="pre">curl</span></code> command, common on UNIX-type systems, is included in a Windows-version in
+the CDAP SDK in the <code class="docutils literal"><span class="pre">libexec\bin</span></code> directory as <code class="docutils literal"><span class="pre">curl.exe</span></code>.</p>
+</li>
+<li><p class="first">Other scripts referenced below are included either in the SDK or downloaded zips as <code class="docutils literal"><span class="pre">.bat</span></code>
+versions for Windows. Substitute these versions as appropriate in the examples below.</p>
+</li>
 </ul>
 </div>
 </div>
 <div class="section" id="running-wise">
-<h2>Running Wise<a class="headerlink" href="#running-wise" title="Permalink to this headline">¶</a></h2>
-<p>Building and running Wise v0.4.0 is straightforward. We’ll assume that you have
+<h2>Running WISE<a class="headerlink" href="#running-wise" title="Permalink to this headline">¶</a></h2>
+<p>Building and running WISE v0.4.0 is straightforward. We’ll assume that you have
 already downloaded, installed, and have started an instance of CDAP, as described in the
 <a class="reference external" href="../source/../../developers-manual/getting-started/standalone/index.html#standalone-index" title="(in Cask Data Application Platform v3.0.0)"><span class="xref std std-ref">CDAP Software Development Kit (SDK)</span></a>.</p>
 <p>Change to the directory where you have installed the CDAP SDK Standalone, and download the
-Wise source code:</p>
+WISE source code:</p>
 <div class="highlight container">
 <pre class="literal-block">
 <span class="gp">$</span> cd $CDAP_SDK_HOME/examples
@@ -140,7 +156,7 @@ Wise source code:</p>
 <span class="gp">$</span> mvn clean package -DskipTests
 </pre>
 </div>
-<p>To build and run the Wise Example Tests, you can use:</p>
+<p>To build and run the WISE Example Tests, you can use:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> mvn clean package
 </pre></div>
 </div>
@@ -148,13 +164,13 @@ Wise source code:</p>
 <div class="highlight container">
 <pre class="literal-block">
 <span class="gp">$</span> cd $CDAP_SDK_HOME
-<span class="gp">$</span> ./bin/cdap-cli.sh deploy app examples/cdap-apps-release-cdap-3.0-compatible/Wise/target/cdap-wise-0.4.0.jar
-<span class="gp">$</span> ./bin/cdap-cli.sh start flow Wise.WiseFlow
-<span class="gp">$</span> ./bin/cdap-cli.sh start service Wise.WiseService
+<span class="gp">$</span> cdap-cli.sh deploy app examples/cdap-apps-release-cdap-3.0-compatible/Wise/target/cdap-wise-0.4.0.jar
+<span class="gp">$</span> cdap-cli.sh start flow Wise.WiseFlow
+<span class="gp">$</span> cdap-cli.sh start service Wise.WiseService
 </pre>
 </div>
 <p>You should get responses similar to:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="go">Successfully connected CDAP instance at http://MacBook-Pro.local:10000</span>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">Successfully connected CDAP instance at http://localhost:10000</span>
 <span class="go">Successfully started Flow &#39;WiseFlow&#39; of application &#39;Wise&#39; with stored runtime arguments &#39;{}&#39;</span>
 <span class="go">...</span>
 <span class="go">Successfully started Service &#39;WiseService&#39; of application &#39;Wise&#39; with stored runtime arguments &#39;{}&#39;</span>
@@ -162,49 +178,49 @@ Wise source code:</p>
 </div>
 </div>
 <div class="section" id="overview-of-wise">
-<h2>Overview of Wise<a class="headerlink" href="#overview-of-wise" title="Permalink to this headline">¶</a></h2>
+<h2>Overview of WISE<a class="headerlink" href="#overview-of-wise" title="Permalink to this headline">¶</a></h2>
 <p>Throughout this case study, we will present and explain the different constructs that the
-Wise application uses. Let’s first have a look at a diagram showing an overview of the
-Wise application’s architecture:</p>
+WISE application uses. Let’s first have a look at a diagram showing an overview of the
+WISE application’s architecture:</p>
 <a class="reference internal image-reference" href="../_images/wise_architecture_diagram.png"><img alt="../_images/wise_architecture_diagram.png" class="align-center" src="../_images/wise_architecture_diagram.png" style="width: 8in;" /></a>
 <ul class="simple">
-<li>The Wise application has one Stream, <code class="docutils literal"><span class="pre">logEventStream</span></code>, which receives Web server
+<li>The WISE application has one stream, <code class="docutils literal"><span class="pre">logEventStream</span></code>, which receives Web server
 access logs. It sends the events it receives to two CDAP components: the
-Flow <code class="docutils literal"><span class="pre">WiseFlow</span></code> and the Workflow <code class="docutils literal"><span class="pre">WiseWorkflow</span></code>.</li>
-<li><code class="docutils literal"><span class="pre">WiseFlow</span></code> has two Flowlets. The first, <code class="docutils literal"><span class="pre">parser</span></code>, extracts information from the logs
-received from the Stream. It then sends the information to the second Flowlet,
-<code class="docutils literal"><span class="pre">pageViewCount</span></code>, whose role is to store the information in a custom-defined Dataset,
+flow <code class="docutils literal"><span class="pre">WiseFlow</span></code> and the Workflow <code class="docutils literal"><span class="pre">WiseWorkflow</span></code>.</li>
+<li><code class="docutils literal"><span class="pre">WiseFlow</span></code> has two flowlets. The first, <code class="docutils literal"><span class="pre">parser</span></code>, extracts information from the logs
+received from the stream. It then sends the information to the second flowlet,
+<code class="docutils literal"><span class="pre">pageViewCount</span></code>, whose role is to store the information in a custom-defined dataset,
 <code class="docutils literal"><span class="pre">pageViewStore</span></code>.</li>
 <li><code class="docutils literal"><span class="pre">WiseWorkflow</span></code> executes a MapReduce every ten minutes. The input of this job are events
-from the Stream which have not yet been processed by the Workflow. For each web page
+from the stream which have not yet been processed by the Workflow. For each web page
 recorded in the access logs, the MapReduce counts the number of times people have
 “bounced” from it. A “bounce” is counted whenever a user’s activity stops for a specified
 amount of time. The last page they visited is counted as a bounce. This information is
-stored in the Dataset <code class="docutils literal"><span class="pre">bounceCountStore</span></code>.</li>
-<li>The Wise application contains the <code class="docutils literal"><span class="pre">WiseService</span></code>, a Service which exposes RESTful endpoints
-to query the <code class="docutils literal"><span class="pre">pageViewStore</span></code> Dataset.</li>
+stored in the dataset <code class="docutils literal"><span class="pre">bounceCountStore</span></code>.</li>
+<li>The WISE application contains the <code class="docutils literal"><span class="pre">WiseService</span></code>, a service which exposes RESTful endpoints
+to query the <code class="docutils literal"><span class="pre">pageViewStore</span></code> dataset.</li>
 <li>Finally, both the <code class="docutils literal"><span class="pre">pageViewStore</span></code> and <code class="docutils literal"><span class="pre">bounceCountStore</span></code> Datasets expose a SQL interface. They
 can be queried using SQL queries through our Explore module in the CDAP UI.</li>
 </ul>
 <p>Now let’s talk about each of these components in more detail.</p>
 </div>
 <div class="section" id="wise-data-patterns">
-<h2>Wise Data Patterns<a class="headerlink" href="#wise-data-patterns" title="Permalink to this headline">¶</a></h2>
+<h2>WISE Data Patterns<a class="headerlink" href="#wise-data-patterns" title="Permalink to this headline">¶</a></h2>
 <p>Here’s a sample access log (reformatted to fit):</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] &quot;GET /cdap.html HTTP/1.0&quot; 401 2969 &quot; &quot;</span>
 <span class="go">  &quot;Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)&quot;</span>
 </pre></div>
 </div>
-<p>Wise is only interested in three parts of a log:</p>
+<p>WISE is only interested in three parts of a log:</p>
 <ul class="simple">
 <li>The IP address: <strong>255.255.255.185</strong></li>
 <li>The time the log was saved: <strong>23/Sep/2014:11:45:38 -0400</strong></li>
 <li>The web page visited: <strong>/cdap.html</strong></li>
 </ul>
-<p>Wise has two Datasets, <em>pageViewStore</em> and <em>bounceCountStore</em>, which both store
+<p>WISE has two Datasets, <em>pageViewStore</em> and <em>bounceCountStore</em>, which both store
 information about the access logs, but according to different patterns.</p>
 <p class="rubric">The <em>pageViewStore</em> Dataset</p>
-<p>The <em>pageViewStore</em> custom Dataset stores, for each IP address,
+<p>The <em>pageViewStore</em> custom dataset stores, for each IP address,
 the number of times that address has visited a web page. For example, <em>pageViewStore</em> could
 contain this entry:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">255.255.255.185  -&gt; {</span>
@@ -227,7 +243,7 @@ Using the <code class="docutils literal"><span class="pre">Java</span> <span cla
 <li>Each web page visited by the IP address is a column;</li>
 <li>The value of each column is the count of visits the IP address has made to the web page URI.</li>
 </ul>
-<p><em>pageViewStore</em> is a custom Dataset. It is defined in the <code class="docutils literal"><span class="pre">PageViewStore</span></code> class such
+<p><em>pageViewStore</em> is a custom dataset. It is defined in the <code class="docutils literal"><span class="pre">PageViewStore</span></code> class such
 that it includes the use of a <code class="docutils literal"><span class="pre">Table</span></code> to store the data:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PageViewStore</span> <span class="kd">extends</span> <span class="n">AbstractDataset</span>
   <span class="kd">implements</span> <span class="n">RecordScannable</span><span class="o">&lt;</span><span class="n">KeyValue</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Long</span><span class="o">&gt;&gt;&gt;</span> <span class="o">{</span>
@@ -241,8 +257,8 @@ that it includes the use of a <code class="docutils literal"><span class="pre">T
   <span class="o">}</span>
 </pre></div>
 </div>
-<p>This is the common way of defining a custom Dataset. The next step is to define the API
-that this Dataset exposes to store and access data. The API for storing data will be a
+<p>This is the common way of defining a custom dataset. The next step is to define the API
+that this dataset exposes to store and access data. The API for storing data will be a
 single method:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kt">void</span> <span class="nf">incrementCount</span><span class="o">(</span><span class="n">LogInfo</span> <span class="n">logInfo</span><span class="o">)</span> <span class="o">{</span>
   <span class="n">table</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="k">new</span> <span class="n">Increment</span><span class="o">(</span><span class="n">logInfo</span><span class="o">.</span><span class="na">getIp</span><span class="o">(),</span> <span class="n">logInfo</span><span class="o">.</span><span class="na">getUri</span><span class="o">(),</span> <span class="mi">1L</span><span class="o">));</span>
@@ -253,7 +269,7 @@ single method:</p>
 are interested in—IP address, timestamp, and web page—and increments the number of
 visits of the web page for that IP address. We use the underlying <code class="docutils literal"><span class="pre">Table</span></code>‘s <code class="docutils literal"><span class="pre">increment()</span></code>
 method to store this information.</p>
-<p>Let’s look at how to make the data available through our <em>pageViewStore</em> Dataset:</p>
+<p>Let’s look at how to make the data available through our <em>pageViewStore</em> dataset:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kt">long</span> <span class="nf">getCounts</span><span class="o">(</span><span class="n">String</span> <span class="n">ipAddress</span><span class="o">)</span> <span class="o">{</span>
   <span class="n">Row</span> <span class="n">row</span> <span class="o">=</span> <span class="k">this</span><span class="o">.</span><span class="na">table</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="k">new</span> <span class="n">Get</span><span class="o">(</span><span class="n">ipAddress</span><span class="o">));</span>
   <span class="k">if</span> <span class="o">(</span><span class="n">row</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="n">row</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">())</span> <span class="o">{</span>
@@ -271,7 +287,7 @@ method to store this information.</p>
 the <code class="docutils literal"><span class="pre">Table.get()</span></code> method, which returns a Row object containing all the columns associated
 to the row key passed as argument of <code class="docutils literal"><span class="pre">Table.get()</span></code>.</p>
 <p class="rubric">The <em>bounceCountStore</em> Dataset</p>
-<p>The <em>bounceCountStore</em> Dataset stores the total number of visits for each web page, along
+<p>The <em>bounceCountStore</em> dataset stores the total number of visits for each web page, along
 with the number of times users bounced off of them.</p>
 <p>Data is stored in a <code class="docutils literal"><span class="pre">Table</span></code> object with the pattern:</p>
 <ul class="simple">
@@ -280,7 +296,7 @@ with the number of times users bounced off of them.</p>
 <li>The COL_VISITS column stores the total number of visits for the web page considered; and</li>
 <li>The COL_BOUNCES column stores the number of times users bounced off the web page.</li>
 </ul>
-<p>Let’s detail the API exposed by the <em>bounceCountStore</em> Dataset to store this information:</p>
+<p>Let’s detail the API exposed by the <em>bounceCountStore</em> dataset to store this information:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">BounceCountStore</span> <span class="kd">extends</span> <span class="n">AbstractDataset</span>
   <span class="kd">implements</span> <span class="n">BatchWritable</span><span class="o">&lt;</span><span class="n">Void</span><span class="o">,</span> <span class="n">PageBounce</span><span class="o">&gt;,</span>
              <span class="n">RecordScannable</span><span class="o">&lt;</span><span class="n">PageBounce</span><span class="o">&gt;</span> <span class="o">{</span>
@@ -329,24 +345,24 @@ contained in the <code class="docutils literal"><span class="pre">Row</span></co
 a <code class="docutils literal"><span class="pre">uri</span></code>, a <code class="docutils literal"><span class="pre">visits</span></code> count and a <code class="docutils literal"><span class="pre">bounces</span></code> count.</p>
 </div>
 <div class="section" id="ingesting-access-logs-in-wise">
-<h2>Ingesting Access Logs in Wise<a class="headerlink" href="#ingesting-access-logs-in-wise" title="Permalink to this headline">¶</a></h2>
-<p>CDAP has an easy way to ingest data in real time into an application, using Streams. A
-Stream exposes a simple RESTful API to ingest data events.</p>
-<p>In Wise, each Web server access log is injected as a Stream event to the <em>logEventStream</em> in
+<h2>Ingesting Access Logs in WISE<a class="headerlink" href="#ingesting-access-logs-in-wise" title="Permalink to this headline">¶</a></h2>
+<p>CDAP has an easy way to ingest data in real time into an application, using streams. A
+stream exposes a simple RESTful API to ingest data events.</p>
+<p>In WISE, each Web server access log is injected as a stream event to the <em>logEventStream</em> in
 this format (broken on two lines to fit):</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">47.41.156.173 - - [18/Sep/2014:12:52:52 -0400] &quot;POST /index.html HTTP/1.1&quot; 404 1490 &quot; &quot;</span>
 <span class="go">  &quot;Mozilla/2.0 (compatible; Ask Jeeves)&quot;</span>
 </pre></div>
 </div>
 <p>We have already prepared a sample of Web server access logs for you to inject into the
-<em>logEventStream</em>. Run this command at the root of the Wise application:</p>
+<em>logEventStream</em>. Run this command from the CDAP Standalone home directory:</p>
 <div class="highlight container">
 <pre class="literal-block">
-<span class="gp">$</span> cd $CDAP_SDK_HOME/examples/cdap-apps-release-cdap-3.0-compatible/Wise/
-<span class="gp">$</span> ./bin/inject-data.sh
+<span class="gp">$</span> cd $CDAP_SDK_HOME
+<span class="gp">$</span> cdap-cli.sh load stream logEventStream examples/cdap-apps-release-cdap-3.0-compatible/Wise/resources/apache.accesslog text/plain
 </pre>
 </div>
-<p>This requires that a Standalone CDAP instance be running with the Wise application already
+<p>This requires that a Standalone CDAP instance be running with the WISE application already
 deployed.</p>
 </div>
 <div class="section" id="realtime-log-analytics-with-wiseflow">
@@ -354,10 +370,10 @@ deployed.</p>
 <p>The goal of <code class="docutils literal"><span class="pre">WiseFlow</span></code> is to perform realtime analytics on the Web server access logs
 received by <em>logEventStream</em>. For each IP address in the logs, <code class="docutils literal"><span class="pre">WiseFlow</span></code> counts the
 number of visits they made to different web pages.</p>
-<p>This work is realized by two Flowlets, <em>parser</em> and <em>pageViewCount</em>.</p>
+<p>This work is realized by two flowlets, <em>parser</em> and <em>pageViewCount</em>.</p>
 <p class="rubric">The <em>parser</em> Flowlet</p>
-<p>The <em>parser</em> Flowlet (of type <code class="docutils literal"><span class="pre">LogEventParserFlowlet</span></code>) receives the raw log data from
-the Stream and extracts useful information from it. Here is its implementation:</p>
+<p>The <em>parser</em> flowlet (of type <code class="docutils literal"><span class="pre">LogEventParserFlowlet</span></code>) receives the raw log data from
+the stream and extracts useful information from it. Here is its implementation:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">LogEventParserFlowlet</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
   <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Logger</span> <span class="n">LOG</span> <span class="o">=</span> <span class="n">LoggerFactory</span><span class="o">.</span><span class="na">getLogger</span><span class="o">(</span><span class="n">LogEventParserFlowlet</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
 
@@ -389,17 +405,17 @@ the Stream and extracts useful information from it. Here is its implementation:<
 method to process the data it receives from <em>logEventStream</em>. This method can have any name;
 here, we call it <em>processFromStream</em>. It has to bear the <code class="docutils literal"><span class="pre">&#64;ProcessInput</span></code> annotation indicating
 that the method will be used to process incoming data.</p>
-<p>Because the <em>parser</em> Flowlet receives data from a Stream, the <em>processFromStream</em> method has
+<p>Because the <em>parser</em> flowlet receives data from a stream, the <em>processFromStream</em> method has
 to take one and only one argument of type <code class="docutils literal"><span class="pre">StreamEvent</span></code>. A <code class="docutils literal"><span class="pre">StreamEvent</span></code> object contains the
-header and the body of a Stream event. In the Wise application, the body of a <code class="docutils literal"><span class="pre">StreamEvent</span></code>
+header and the body of a stream event. In the WISE application, the body of a <code class="docutils literal"><span class="pre">StreamEvent</span></code>
 will be a Web server access log.</p>
-<p>The <em>parser</em> Flowlet parses every log it receives into one <code class="docutils literal"><span class="pre">LogInfo</span></code> object. Using an
-<code class="docutils literal"><span class="pre">OutputEmitter&lt;LogInfo&gt;</span></code> object, <em>parser</em> outputs those logs to the next Flowlet input—the
-<em>pageViewCount</em> Flowlet. When a <code class="docutils literal"><span class="pre">LogInfo</span></code> object is emitted, it is hashed by IP address. We’ll
+<p>The <em>parser</em> flowlet parses every log it receives into one <code class="docutils literal"><span class="pre">LogInfo</span></code> object. Using an
+<code class="docutils literal"><span class="pre">OutputEmitter&lt;LogInfo&gt;</span></code> object, <em>parser</em> outputs those logs to the next flowlet input—the
+<em>pageViewCount</em> flowlet. When a <code class="docutils literal"><span class="pre">LogInfo</span></code> object is emitted, it is hashed by IP address. We’ll
 see below why this is useful.</p>
 <p class="rubric">The <em>pageViewCount</em> Flowlet</p>
-<p>The <em>pageViewCount</em> Flowlet (of type <code class="docutils literal"><span class="pre">PageViewCounterFlowlet</span></code>) receives <code class="docutils literal"><span class="pre">LogInfo</span></code>
-objects and updates the <em>pageViewStore</em> Dataset with the information they contain.</p>
+<p>The <em>pageViewCount</em> flowlet (of type <code class="docutils literal"><span class="pre">PageViewCounterFlowlet</span></code>) receives <code class="docutils literal"><span class="pre">LogInfo</span></code>
+objects and updates the <em>pageViewStore</em> dataset with the information they contain.</p>
 <p>Its implementation is very brief:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">PageViewCounterFlowlet</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
 
@@ -420,27 +436,27 @@ objects and updates the <em>pageViewStore</em> Dataset with the information they
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>Here’s what to note about the <code class="docutils literal"><span class="pre">PageViewCounterFlowlet</span></code> Flowlet class:</p>
+<p>Here’s what to note about the <code class="docutils literal"><span class="pre">PageViewCounterFlowlet</span></code> flowlet class:</p>
 <ul class="simple">
 <li>The <code class="docutils literal"><span class="pre">&#64;ProcessInput</span></code> annotation on the <code class="docutils literal"><span class="pre">count()</span></code> method indicates that <code class="docutils literal"><span class="pre">count()</span></code> will process
 incoming data.</li>
-<li>The <code class="docutils literal"><span class="pre">&#64;UseDataSet</span></code> annotation gives a reference to the <em>pageViewStore</em> Dataset
-above the <em>pageViewStore</em> attribute. The Dataset APIs can then be used inside the <code class="docutils literal"><span class="pre">count()</span></code>
+<li>The <code class="docutils literal"><span class="pre">&#64;UseDataSet</span></code> annotation gives a reference to the <em>pageViewStore</em> dataset
+above the <em>pageViewStore</em> attribute. The dataset APIs can then be used inside the <code class="docutils literal"><span class="pre">count()</span></code>
 method to store logs analytics.</li>
 <li>The <code class="docutils literal"><span class="pre">&#64;Batch</span></code> annotation indicates that data is processed in batches of ten <code class="docutils literal"><span class="pre">LogInfo</span></code>
-objects, which increases the throughput of the Flowlet.</li>
-<li>The <code class="docutils literal"><span class="pre">&#64;HashPartition</span></code> annotation ensures, in the case that several instances of this Flowlet are
+objects, which increases the throughput of the flowlet.</li>
+<li>The <code class="docutils literal"><span class="pre">&#64;HashPartition</span></code> annotation ensures, in the case that several instances of this flowlet are
 running, all <code class="docutils literal"><span class="pre">LogInfo</span></code> objects with the same IP address information will be sent to
-the same Flowlet instance. This prevents two Flowlet instances from writing to the same
-row key of the <em>pageViewStore</em> Dataset at the same time, which would cause a transaction
+the same flowlet instance. This prevents two flowlet instances from writing to the same
+row key of the <em>pageViewStore</em> dataset at the same time, which would cause a transaction
 conflict. (See the <a class="reference external" href="http://docs.cask.co/cdap/current/en/developers-manual/building-blocks/transaction-system.html">CDAP Developers’ Manual: Transaction System</a>
 for more information about transactions and conflicts.)</li>
 </ul>
 <div class="section" id="building-the-wiseflow">
 <h3>Building the WiseFlow<a class="headerlink" href="#building-the-wiseflow" title="Permalink to this headline">¶</a></h3>
-<p>Now that we have had a look at the core of the <em>parser</em> and <em>pageViewCount</em> Flowlets,
+<p>Now that we have had a look at the core of the <em>parser</em> and <em>pageViewCount</em> flowlets,
 let’s see how they are connected together and to the <em>logEventStream</em>.</p>
-<p>The Flowlets are defined in the <code class="docutils literal"><span class="pre">WiseFlow</span></code> Flow, which is defined by this small class:</p>
+<p>The flowlets are defined in the <code class="docutils literal"><span class="pre">WiseFlow</span></code> flow, which is defined by this small class:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WiseFlow</span> <span class="kd">implements</span> <span class="n">Flow</span> <span class="o">{</span>
   <span class="nd">@Override</span>
   <span class="kd">public</span> <span class="n">FlowSpecification</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
@@ -457,15 +473,15 @@ let’s see how they are connected together and to the <em>logEventStream</em>.<
   <span class="o">}</span>
 </pre></div>
 </div>
-<p>In the <code class="docutils literal"><span class="pre">configure()</span></code> method of the <code class="docutils literal"><span class="pre">WiseFlow</span></code> Flow, we define the Flowlets, giving them names:</p>
+<p>In the <code class="docutils literal"><span class="pre">configure()</span></code> method of the <code class="docutils literal"><span class="pre">WiseFlow</span></code> flow, we define the flowlets, giving them names:</p>
 <ul class="simple">
 <li><em>parser</em>, of type <code class="docutils literal"><span class="pre">LogEventParserFlowlet</span></code>; and</li>
 <li><em>pageViewCount</em>, of type <code class="docutils literal"><span class="pre">PageViewCounterFlowlet</span></code>.</li>
 </ul>
 <p>We also define the graph of their connections:</p>
 <ul class="simple">
-<li><em>logEventStream</em> Stream is connected to the <em>parser</em> Flowlet; and</li>
-<li><em>parser</em> Flowlet is connected to the <em>pageViewCount</em> Flowlet.</li>
+<li><em>logEventStream</em> stream is connected to the <em>parser</em> flowlet; and</li>
+<li><em>parser</em> flowlet is connected to the <em>pageViewCount</em> flowlet.</li>
 </ul>
 <p>Here is how <code class="docutils literal"><span class="pre">WiseFlow</span></code> looks in the CDAP UI:</p>
 <a class="reference internal image-reference" href="../_images/wise_flow.png"><img alt="../_images/wise_flow.png" class="align-center" src="../_images/wise_flow.png" style="width: 8in;" /></a>
@@ -473,7 +489,7 @@ let’s see how they are connected together and to the <em>logEventStream</em>.<
 </div>
 <div class="section" id="batch-processing-with-wiseworkflow">
 <h2>Batch Processing with WiseWorkflow<a class="headerlink" href="#batch-processing-with-wiseworkflow" title="Permalink to this headline">¶</a></h2>
-<p>Wise executes every ten minutes a MapReduce program that computes the bounce counts of the
+<p>WISE executes every ten minutes a MapReduce program that computes the bounce counts of the
 web pages seen in the Web server access logs.</p>
 <p>The <code class="docutils literal"><span class="pre">BounceCountsMapReduce</span></code> class defines the MapReduce to run. It extends
 <code class="docutils literal"><span class="pre">AbstractMapReduce</span></code> and overrides the two methods <code class="docutils literal"><span class="pre">configure()</span></code> and <code class="docutils literal"><span class="pre">beforeSubmit()</span></code>.
@@ -529,16 +545,16 @@ done in the <code class="docutils literal"><span class="pre">beforeSubmit()</spa
 <p>As mentioned earlier, the input of the MapReduce is the <em>logEventStream</em>. This
 connection is made above using the <code class="docutils literal"><span class="pre">StreamBatchReadable.useStreamInput()</span></code> method.</p>
 <p>This MapReduce program runs as part of a Workflow that is scheduled every ten minutes.
-Every time it runs, it reads ten minutes&#8217; worth of events from the Stream, ending at the
+Every time it runs, it reads ten minutes&#8217; worth of events from the stream, ending at the
 logical start time of the job (the same as the scheduled time of the containing Workflow).</p>
 </div>
 <div class="section" id="writing-to-the-bouncecountstore-dataset-from-the-mapreduce">
-<h3>Writing to the <em>bounceCountStore</em> Dataset from the MapReduce<a class="headerlink" href="#writing-to-the-bouncecountstore-dataset-from-the-mapreduce" title="Permalink to this headline">¶</a></h3>
+<h3>Writing to the <em>bounceCountStore</em> dataset from the MapReduce<a class="headerlink" href="#writing-to-the-bouncecountstore-dataset-from-the-mapreduce" title="Permalink to this headline">¶</a></h3>
 <p>In the <code class="docutils literal"><span class="pre">BounceCountsMapReduce.configure()</span></code> method seen earlier, the <code class="docutils literal"><span class="pre">setOutputDataset</span></code>
-method sets the <code class="docutils literal"><span class="pre">bounceCountsStore</span></code> Dataset as the output of the job.
+method sets the <code class="docutils literal"><span class="pre">bounceCountsStore</span></code> dataset as the output of the job.
 It means that the key/value pairs output by the reducer of the MapReduce will be directly
-written to that Dataset.</p>
-<p>To allow that, the <code class="docutils literal"><span class="pre">bounceCountsStore</span></code> Dataset has to implement the <code class="docutils literal"><span class="pre">BatchWritable</span></code>
+written to that dataset.</p>
+<p>To allow that, the <code class="docutils literal"><span class="pre">bounceCountsStore</span></code> dataset has to implement the <code class="docutils literal"><span class="pre">BatchWritable</span></code>
 interface:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">BounceCountStore</span> <span class="kd">extends</span> <span class="n">AbstractDataset</span>
   <span class="kd">implements</span> <span class="n">BatchWritable</span><span class="o">&lt;</span><span class="n">Void</span><span class="o">,</span> <span class="n">PageBounce</span><span class="o">&gt;,</span>
@@ -556,7 +572,7 @@ interface:</p>
 <p>This <code class="docutils literal"><span class="pre">BatchWritable</span></code> interface, defining a <code class="docutils literal"><span class="pre">write()</span></code> method, is intended to allow Datasets to
 be the output of MapReduce programs. The two generic types that it takes as parameters must
 match the types of the key and value that the Reduce part of the MapReduce outputs. In this
-case, the <em>bounceCountStore</em> Dataset can be used as output of a MapReduce where the
+case, the <em>bounceCountStore</em> dataset can be used as output of a MapReduce where the
 output key is of type <code class="docutils literal"><span class="pre">Void</span></code>, and the output value is of type <code class="docutils literal"><span class="pre">PageBounce</span></code>.</p>
 </div>
 <div class="section" id="mapreduce-structure">
@@ -565,7 +581,7 @@ output key is of type <code class="docutils literal"><span class="pre">Void</spa
 <code class="docutils literal"><span class="pre">LogInfo</span></code> objects and sends them to the Reducer. The Reducer receives the <code class="docutils literal"><span class="pre">LogInfo</span></code>
 objects grouped by IP addresses, with two logs with the same IP address sorted by
 timestamp in ascending order.</p>
-<p>Because the input of our MapReduce is a Stream, it forces the key and value types of our
+<p>Because the input of our MapReduce is a stream, it forces the key and value types of our
 Mapper to be <code class="docutils literal"><span class="pre">LongWritable</span></code> and <code class="docutils literal"><span class="pre">Text</span></code>, respectively.</p>
 <p>Our Mapper and Reducer are standard Hadoop classes with these signatures:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="o">.</span> <span class="o">.</span> <span class="o">.</span>
@@ -580,8 +596,8 @@ Mapper to be <code class="docutils literal"><span class="pre">LongWritable</span
 </div>
 <p>Each generic parameter of the Mapper and the Reducer contains:</p>
 <ul class="simple">
-<li>Mapper input key <code class="docutils literal"><span class="pre">LongWritable</span></code>: the timestamp of when a Stream event has been received;</li>
-<li>Mapper input value <code class="docutils literal"><span class="pre">Text</span></code>: body of a Stream event, in this case the log data;</li>
+<li>Mapper input key <code class="docutils literal"><span class="pre">LongWritable</span></code>: the timestamp of when a stream event has been received;</li>
+<li>Mapper input value <code class="docutils literal"><span class="pre">Text</span></code>: body of a stream event, in this case the log data;</li>
 <li>Mapper output key and Reducer input key <code class="docutils literal"><span class="pre">LogInfo</span></code>: a POJO object containing information
 about one log line;</li>
 <li>Mapper output value and Reducer input value <code class="docutils literal"><span class="pre">IntWritable</span></code>: a simple placeholder as we
@@ -616,17 +632,17 @@ don’t use its content;</li>
 </div>
 <div class="section" id="accessing-data-through-wiseservice">
 <h2>Accessing Data through WiseService<a class="headerlink" href="#accessing-data-through-wiseservice" title="Permalink to this headline">¶</a></h2>
-<p><code class="docutils literal"><span class="pre">WiseService</span></code> is a Wise component that exposes specific HTTP endpoints to retrieve the
-content of the <em>pageViewStore</em> Dataset. For example, <code class="docutils literal"><span class="pre">WiseService</span></code> defines this endpoint:</p>
+<p><code class="docutils literal"><span class="pre">WiseService</span></code> is a WISE component that exposes specific HTTP endpoints to retrieve the
+content of the <em>pageViewStore</em> dataset. For example, <code class="docutils literal"><span class="pre">WiseService</span></code> defines this endpoint:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/&lt;ip-address&gt;/count</span>
 </pre></div>
 </div>
-<p>Using the <code class="docutils literal"><span class="pre">curl</span></code> command and the CLI, example use of the Service would be:</p>
+<p>Using the <code class="docutils literal"><span class="pre">curl</span></code> command and the CLI, example use of the service would be:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> -X GET http://localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.185/count
 <span class="go">21</span>
 
 <span class="gp">$</span> ./bin/cdap-cli.sh call service Wise.WiseService GET ip/255.255.255.185/count
-<span class="go">Successfully connected CDAP instance at http://MacBook-Pro.local:10000</span>
+
 <span class="go">+=======================================================================================================================+</span>
 <span class="go">| status                      | headers                     | body size                   | body                        |</span>
 <span class="go">+=======================================================================================================================+</span>
@@ -663,11 +679,11 @@ content of the <em>pageViewStore</em> Dataset. For example, <code class="docutil
   <span class="o">}</span>
 </pre></div>
 </div>
-<p>The <code class="docutils literal"><span class="pre">PageViewCountHandler</span></code> class accesses the <em>pageViewStore</em> Dataset using the same
+<p>The <code class="docutils literal"><span class="pre">PageViewCountHandler</span></code> class accesses the <em>pageViewStore</em> dataset using the same
 <code class="docutils literal"><span class="pre">&#64;UseDataSet</span></code> annotation used in the <code class="docutils literal"><span class="pre">PageViewCounterFlowlet</span></code> class.</p>
 <p>The endpoint defined above in the <code class="docutils literal"><span class="pre">getIPCount()</span></code> method will retrieve the number of times a
 given IP address has been seen in the access logs by using the APIs of the <em>pageViewStore</em>
-Dataset.</p>
+dataset.</p>
 <p>The <code class="docutils literal"><span class="pre">&#64;GET</span></code> annotation specifies the HTTP method used to reach the endpoint. The <code class="docutils literal"><span class="pre">&#64;Path</span></code>
 annotation defines the URL path used to reach this endpoint. This path has a single user
 parameter: <code class="docutils literal"><span class="pre">{ip}</span></code>. It is decoded as a <code class="docutils literal"><span class="pre">String</span></code> in the parameters of the <code class="docutils literal"><span class="pre">getIPCount()</span></code>
@@ -683,10 +699,10 @@ method with the help of the <code class="docutils literal"><span class="pre">&#6
 <ul class="simple">
 <li>The class sets the ID of the service, and this ID will be used in the URL to reach the
 endpoints defined by the service.</li>
-<li>The <code class="docutils literal"><span class="pre">PageViewCountHandler</span></code> that responds to the HTTP endpoint exposed by the Service
+<li>The <code class="docutils literal"><span class="pre">PageViewCountHandler</span></code> that responds to the HTTP endpoint exposed by the service
 is specified by the <code class="docutils literal"><span class="pre">addHandler()</span></code> method.</li>
 </ul>
-<p>You can use a <code class="docutils literal"><span class="pre">curl</span></code> command to make calls to the Service URL. For example, to query total pageview count
+<p>You can use a <code class="docutils literal"><span class="pre">curl</span></code> command to make calls to the service URL. For example, to query total pageview count
 from IP <code class="docutils literal"><span class="pre">255.255.255.207</span></code>:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> -X GET http://localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.207/count
 <span class="go">22</span>
@@ -701,20 +717,23 @@ a specific IP address. For example, to query the pageview count of page <code cl
 </div>
 <div class="section" id="exploring-datasets-through-sql">
 <h2>Exploring Datasets through SQL<a class="headerlink" href="#exploring-datasets-through-sql" title="Permalink to this headline">¶</a></h2>
-<p>With Wise, you can explore the Datasets using SQL queries. The SQL interface on CDAP,
+<p>With WISE, you can explore the Datasets using SQL queries. The SQL interface on CDAP,
 called <em>Explore</em>, can be accessed through the CDAP UI:</p>
-<ol class="arabic simple">
-<li>After deploying Wise in your Standalone CDAP instance, go to the <strong>Store</strong> page, which is one
-of the five pages you can access from the left pane of the CDAP UI:</li>
+<ol class="arabic">
+<li><p class="first">After deploying WISE in your Standalone CDAP instance, go to the <em>WISE</em>
+<a class="reference external" href="http://localhost:9999/ns/default/apps/Wise/overview/status">overview page</a>:</p>
+<a class="reference internal image-reference" href="../_images/wise_overview.png"><img alt="../_images/wise_overview.png" class="align-center" src="../_images/wise_overview.png" style="width: 8in;" /></a>
+</li>
+<li><p class="first">Click on the <em>Datasets</em> tab to display the list of datasets used by WISE:</p>
+<a class="reference internal image-reference" href="../_images/wise_datasets.png"><img alt="../_images/wise_datasets.png" class="align-center" src="../_images/wise_datasets.png" style="width: 8in;" /></a>
+</li>
+<li><p class="first">Click on <em>bouncecountstore</em>, and then the <em>Explore</em> tab:</p>
+<a class="reference internal image-reference" href="../_images/wise_bouncecountstore.png"><img alt="../_images/wise_bouncecountstore.png" class="align-center" src="../_images/wise_bouncecountstore.png" style="width: 8in;" /></a>
+</li>
 </ol>
-<a class="reference internal image-reference" href="../_images/wise_store_page.png"><img alt="../_images/wise_store_page.png" class="align-center" src="../_images/wise_store_page.png" style="width: 8in;" /></a>
-<ol class="arabic simple" start="2">
-<li>Click on the <strong>Explore</strong> button in the top-right corner of the page. You will land on this page:</li>
-</ol>
-<a class="reference internal image-reference" href="../_images/wise_explore_page.png"><img alt="../_images/wise_explore_page.png" class="align-center" src="../_images/wise_explore_page.png" style="width: 8in;" /></a>
-<p>This is the <strong>Explore</strong> page, where you can run ad-hoc SQL queries and see information about
+<p>This is the <strong>Explore</strong> tab, where you can run ad-hoc SQL queries and see information about
 the Datasets that expose a SQL interface.</p>
-<p>You will notice that the Datasets have unusual names, such as <em>dataset_bouncecountstore</em>.
+<p>You will notice that the Datasets have names such as <em>dataset_bouncecountstore</em>.
 Those are the SQL table names of the Datasets which have a SQL interface.</p>
 <p>Here are some of the SQL queries that you can run:</p>
 <ul>
@@ -731,26 +750,26 @@ Those are the SQL table names of the Datasets which have a SQL interface.</p>
 </ul>
 <p>As the SQL engine that CDAP runs internally is Hive, the SQL language used to submit
 queries is HiveQL. A description of it is in the <a class="reference external" href="https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DML#LanguageManualDML-InsertingdataintoHiveTablesfromqueries">Hive language manual</a>.</p>
-<p>Let’s take a look at the schemas of the <em>bounceCountStore</em> Dataset. The <em>Explore</em> interface
+<p>Let’s take a look at the schemas of the <em>bounceCountStore</em> dataset. The <em>Explore</em> interface
 shows that it has three columns: <code class="docutils literal"><span class="pre">uri</span></code>, <code class="docutils literal"><span class="pre">totalvisits</span></code>, and <code class="docutils literal"><span class="pre">bounces</span></code>.</p>
-<p>To understand how we managed to attach this schema to the <em>bounceCountStore</em> Dataset, let’s
-have another look at the Dataset’s class definition:</p>
+<p>To understand how we managed to attach this schema to the <em>bounceCountStore</em> dataset, let’s
+have another look at the dataset’s class definition:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">BounceCountStore</span> <span class="kd">extends</span> <span class="n">AbstractDataset</span>
   <span class="kd">implements</span> <span class="n">BatchWritable</span><span class="o">&lt;</span><span class="n">Void</span><span class="o">,</span> <span class="n">PageBounce</span><span class="o">&gt;,</span>
              <span class="n">RecordScannable</span><span class="o">&lt;</span><span class="n">PageBounce</span><span class="o">&gt;</span> <span class="o">{</span>
 <span class="o">.</span> <span class="o">.</span> <span class="o">.</span>
 </pre></div>
 </div>
-<p>The <code class="docutils literal"><span class="pre">RecordScannable</span></code> interface allows a Dataset to be queried using SQL. It exposes a
-Dataset as a table of <code class="docutils literal"><span class="pre">Record</span></code> objects, and the schema of the <code class="docutils literal"><span class="pre">Record</span></code> defines the schema of
-the Dataset as seen as a SQL table.</p>
-<p>The <em>bounceCountStore</em> Dataset’s <code class="docutils literal"><span class="pre">Record</span></code> type is <code class="docutils literal"><span class="pre">PageBounce</span></code>, which is a POJO object
+<p>The <code class="docutils literal"><span class="pre">RecordScannable</span></code> interface allows a dataset to be queried using SQL. It exposes a
+dataset as a table of <code class="docutils literal"><span class="pre">Record</span></code> objects, and the schema of the <code class="docutils literal"><span class="pre">Record</span></code> defines the schema of
+the dataset as seen as a SQL table.</p>
+<p>The <em>bounceCountStore</em> dataset’s <code class="docutils literal"><span class="pre">Record</span></code> type is <code class="docutils literal"><span class="pre">PageBounce</span></code>, which is a POJO object
 containing three attributes: <code class="docutils literal"><span class="pre">uri</span></code>, <code class="docutils literal"><span class="pre">totalVisits</span></code>, and <code class="docutils literal"><span class="pre">bounces</span></code>. It explains where the schema
 of the <em>bounceCountStore</em> is derived.</p>
 </div>
 <div class="section" id="bringing-the-components-together">
 <h2>Bringing the Components Together<a class="headerlink" href="#bringing-the-components-together" title="Permalink to this headline">¶</a></h2>
-<p>To create the Wise application with all these components mentioned above, define a class
+<p>To create the WISE application with all these components mentioned above, define a class
 that extends <code class="docutils literal"><span class="pre">AbstractApplication</span></code>:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WiseApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
   <span class="nd">@Override</span>
@@ -777,11 +796,11 @@ that extends <code class="docutils literal"><span class="pre">AbstractApplicatio
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>When the Wise application is deployed in CDAP, this class is read by the CDAP system. All
+<p>When the WISE application is deployed in CDAP, this class is read by the CDAP system. All
 the components it defines are then installed, and can reference one another.</p>
 </div>
 <div class="section" id="unit-testing-wise">
-<h2>Unit Testing Wise<a class="headerlink" href="#unit-testing-wise" title="Permalink to this headline">¶</a></h2>
+<h2>Unit Testing WISE<a class="headerlink" href="#unit-testing-wise" title="Permalink to this headline">¶</a></h2>
 <p>Unit tests are a major part of the development of an application. As
 developers ourselves, we have created a full unit testing framework for CDAP applications.
 In a CDAP application unit tests, all CDAP components run in-memory.</p>
@@ -802,7 +821,7 @@ components of the <em>WiseApp</em>. The first step is to obtain an <code class="
 </pre></div>
 </div>
 </li>
-<li><p class="first">Test the call to a Service endpoint:</p>
+<li><p class="first">Test the call to a service endpoint:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="o">.</span> <span class="o">.</span> <span class="o">.</span>
 <span class="n">ServiceManager</span> <span class="n">serviceManager</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">startService</span><span class="o">(</span><span class="s">&quot;WiseService&quot;</span><span class="o">);</span>
 <span class="n">serviceManager</span><span class="o">.</span><span class="na">waitForStatus</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
@@ -943,16 +962,16 @@ components of the <em>WiseApp</em>. The first step is to obtain an <code class="
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorials</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="">WISE: Web Analytics</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#introduction">Introduction</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#running-wise">Running Wise</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#overview-of-wise">Overview of Wise</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#wise-data-patterns">Wise Data Patterns</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#ingesting-access-logs-in-wise">Ingesting Access Logs in Wise</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-wise">Running WISE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#overview-of-wise">Overview of WISE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#wise-data-patterns">WISE Data Patterns</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ingesting-access-logs-in-wise">Ingesting Access Logs in WISE</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#realtime-log-analytics-with-wiseflow">Realtime Log Analytics with WiseFlow</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#batch-processing-with-wiseworkflow">Batch Processing with WiseWorkflow</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#accessing-data-through-wiseservice">Accessing Data through WiseService</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#exploring-datasets-through-sql">Exploring Datasets through SQL</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#bringing-the-components-together">Bringing the Components Together</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#unit-testing-wise">Unit Testing Wise</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#unit-testing-wise">Unit Testing WISE</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#next-up">Next Up</a></li>
 </ul>
 </li>
