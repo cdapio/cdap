@@ -8,7 +8,7 @@
 .. _cdap-tutorial-wise:
 
 =========================================================
-CDAP Tutorial: Wise (Web Insights Engine Application)
+CDAP Tutorial: WISE (Web Insights Engine Application)
 =========================================================
 
 **A Case Study of Web Analytics using the Cask Data Application Platform (CDAP)**
@@ -23,13 +23,13 @@ this case where the system performs very simple analytics, such as counting the 
 visits made to a website in a day, the components needed to make it possible demand a lot
 of work.
 
-Using the **Web Insights Engine Application** or *Wise*, we’ll show you how to build
-such a system on CDAP that is easy, concise, and powerful. Wise extracts value from Web
+Using the **Web Insights Engine Application** or *WISE*, we’ll show you how to build
+such a system on CDAP that is easy, concise, and powerful. WISE extracts value from Web
 server access logs, counts visits made by different IP addresses seen in the logs in
 realtime, and computes the bounce ratio of each web page encountered using batch
 processing.
 
-The Wise v\ |cdap-apps-version| application uses these Cask Data Application Platform (CDAP) constructs to
+The WISE v\ |cdap-apps-version| application uses these Cask Data Application Platform (CDAP) constructs to
 analyze web server logs:
 
 - **Stream:** Ingests log data in realtime 
@@ -51,22 +51,33 @@ In the examples and commands that follow, for brevity we will use these conventi
   on Windows |---| ``bin\cdap-cli.bat``. In the examples given, substitute the actual path
   as appropriate. The CLI allows you to quickly access CDAP facilities from a command line
   environment.
+- If you add the SDK bin directory to your path, you can simplify the commands. From within
+  the CDAP-SDK-home directory, enter::
+
+    $ export PATH=${PATH}:`pwd`/bin
+
+  or under Windows::
+
+    > setx path "%PATH%;%CD%\bin"
+  
+  Note that under Windows, you'll need to create a new command line window in order to see
+  this change to the path variable.
 - The ``curl`` command, common on UNIX-type systems, is included in a Windows-version in 
   the CDAP SDK in the ``libexec\bin`` directory as ``curl.exe``.
 - Other scripts referenced below are included either in the SDK or downloaded zips as ``.bat``
   versions for Windows. Substitute these versions as appropriate in the examples below.
 
 
-Running Wise 
+Running WISE 
 ============
 .. highlight:: console
 
-Building and running Wise v\ |cdap-apps-version| is straightforward. We’ll assume that you have
+Building and running WISE v\ |cdap-apps-version| is straightforward. We’ll assume that you have
 already downloaded, installed, and have started an instance of CDAP, as described in the
 :ref:`CDAP Software Development Kit (SDK) <standalone-index>`.
 
 Change to the directory where you have installed the CDAP SDK Standalone, and download the
-Wise source code:
+WISE source code:
 
 .. container:: highlight
 
@@ -83,7 +94,7 @@ Unzip the directory and build the application (without running the self-test) by
     |$| cd cdap-apps-release-cdap-|short-version|-compatible/Wise
     |$| mvn clean package -DskipTests
 
-To build and run the Wise Example Tests, you can use::
+To build and run the WISE Example Tests, you can use::
 
     $ mvn clean package
     
@@ -93,46 +104,46 @@ To deploy and start the application, make sure CDAP is running and then execute:
 
   .. parsed-literal::
     |$| cd $CDAP_SDK_HOME
-    |$| ./bin/cdap-cli.sh deploy app examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/target/cdap-wise-|cdap-apps-version|.jar
-    |$| ./bin/cdap-cli.sh start flow Wise.WiseFlow 
-    |$| ./bin/cdap-cli.sh start service Wise.WiseService
+    |$| cdap-cli.sh deploy app examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/target/cdap-wise-|cdap-apps-version|.jar
+    |$| cdap-cli.sh start flow Wise.WiseFlow 
+    |$| cdap-cli.sh start service Wise.WiseService
 
 You should get responses similar to::
 
-  Successfully connected CDAP instance at http://MacBook-Pro.local:10000
+  Successfully connected CDAP instance at http://localhost:10000
   Successfully started Flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}'
   ...
   Successfully started Service 'WiseService' of application 'Wise' with stored runtime arguments '{}'
   
   
-Overview of Wise
+Overview of WISE
 ================
 Throughout this case study, we will present and explain the different constructs that the
-Wise application uses. Let’s first have a look at a diagram showing an overview of the
-Wise application’s architecture:
+WISE application uses. Let’s first have a look at a diagram showing an overview of the
+WISE application’s architecture:
 
 .. image:: /../build/_includes/tutorial-wise/wise_architecture_diagram.png
    :width: 8in
    :align: center
    
-- The Wise application has one Stream, ``logEventStream``, which receives Web server
+- The WISE application has one stream, ``logEventStream``, which receives Web server
   access logs. It sends the events it receives to two CDAP components: the
-  Flow ``WiseFlow`` and the Workflow ``WiseWorkflow``.
+  flow ``WiseFlow`` and the Workflow ``WiseWorkflow``.
   
-- ``WiseFlow`` has two Flowlets. The first, ``parser``, extracts information from the logs
-  received from the Stream. It then sends the information to the second Flowlet,
-  ``pageViewCount``, whose role is to store the information in a custom-defined Dataset,
+- ``WiseFlow`` has two flowlets. The first, ``parser``, extracts information from the logs
+  received from the stream. It then sends the information to the second flowlet,
+  ``pageViewCount``, whose role is to store the information in a custom-defined dataset,
   ``pageViewStore``.
   
 - ``WiseWorkflow`` executes a MapReduce every ten minutes. The input of this job are events
-  from the Stream which have not yet been processed by the Workflow. For each web page
+  from the stream which have not yet been processed by the Workflow. For each web page
   recorded in the access logs, the MapReduce counts the number of times people have
   “bounced” from it. A “bounce” is counted whenever a user’s activity stops for a specified
   amount of time. The last page they visited is counted as a bounce. This information is
-  stored in the Dataset ``bounceCountStore``.
+  stored in the dataset ``bounceCountStore``.
   
-- The Wise application contains the ``WiseService``, a Service which exposes RESTful endpoints
-  to query the ``pageViewStore`` Dataset.
+- The WISE application contains the ``WiseService``, a service which exposes RESTful endpoints
+  to query the ``pageViewStore`` dataset.
   
 - Finally, both the ``pageViewStore`` and ``bounceCountStore`` Datasets expose a SQL interface. They
   can be queried using SQL queries through our Explore module in the CDAP UI. 
@@ -140,26 +151,26 @@ Wise application’s architecture:
 Now let’s talk about each of these components in more detail.
 
 
-Wise Data Patterns
+WISE Data Patterns
 ==================
 Here’s a sample access log (reformatted to fit)::
 
   255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] "GET /cdap.html HTTP/1.0" 401 2969 " " 
     "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)"
 
-Wise is only interested in three parts of a log:
+WISE is only interested in three parts of a log:
 
 - The IP address: **255.255.255.185** 
 - The time the log was saved: **23/Sep/2014:11:45:38 -0400**
 - The web page visited: **/cdap.html**
 
-Wise has two Datasets, *pageViewStore* and *bounceCountStore*, which both store
+WISE has two Datasets, *pageViewStore* and *bounceCountStore*, which both store
 information about the access logs, but according to different patterns.
 
 
 .. rubric:: The *pageViewStore* Dataset 
 
-The *pageViewStore* custom Dataset stores, for each IP address,
+The *pageViewStore* custom dataset stores, for each IP address,
 the number of times that address has visited a web page. For example, *pageViewStore* could
 contain this entry::
 
@@ -185,15 +196,15 @@ byte[]>>``.
 
 .. highlight:: java
 
-*pageViewStore* is a custom Dataset. It is defined in the ``PageViewStore`` class such
+*pageViewStore* is a custom dataset. It is defined in the ``PageViewStore`` class such
 that it includes the use of a ``Table`` to store the data:
 
 .. literalinclude:: /../build/_includes/tutorial-wise/PageViewStore.java
    :language: java
    :lines: 41-51   
 
-This is the common way of defining a custom Dataset. The next step is to define the API
-that this Dataset exposes to store and access data. The API for storing data will be a
+This is the common way of defining a custom dataset. The next step is to define the API
+that this dataset exposes to store and access data. The API for storing data will be a
 single method:
 
 .. literalinclude:: /../build/_includes/tutorial-wise/PageViewStore.java
@@ -206,7 +217,7 @@ are interested in |---| IP address, timestamp, and web page |---| and increments
 visits of the web page for that IP address. We use the underlying ``Table``‘s ``increment()``
 method to store this information.
 
-Let’s look at how to make the data available through our *pageViewStore* Dataset:
+Let’s look at how to make the data available through our *pageViewStore* dataset:
   
 .. literalinclude:: /../build/_includes/tutorial-wise/PageViewStore.java
    :language: java
@@ -220,7 +231,7 @@ to the row key passed as argument of ``Table.get()``.
 
 .. rubric:: The *bounceCountStore* Dataset 
 
-The *bounceCountStore* Dataset stores the total number of visits for each web page, along
+The *bounceCountStore* dataset stores the total number of visits for each web page, along
 with the number of times users bounced off of them.
 
 Data is stored in a ``Table`` object with the pattern:
@@ -230,7 +241,7 @@ Data is stored in a ``Table`` object with the pattern:
 - The COL_VISITS column stores the total number of visits for the web page considered; and 
 - The COL_BOUNCES column stores the number of times users bounced off the web page. 
 
-Let’s detail the API exposed by the *bounceCountStore* Dataset to store this information:
+Let’s detail the API exposed by the *bounceCountStore* dataset to store this information:
 
 .. literalinclude:: /../build/_includes/tutorial-wise/BounceCountStore.java
    :language: java
@@ -253,29 +264,29 @@ contained in the ``Row`` object, we build a ``PageBounce`` object, a simple POJO
 a ``uri``, a ``visits`` count and a ``bounces`` count.
 
 
-Ingesting Access Logs in Wise 
+Ingesting Access Logs in WISE 
 =============================
-CDAP has an easy way to ingest data in real time into an application, using Streams. A
-Stream exposes a simple RESTful API to ingest data events.
+CDAP has an easy way to ingest data in real time into an application, using streams. A
+stream exposes a simple RESTful API to ingest data events.
 
 .. highlight:: console
 
-In Wise, each Web server access log is injected as a Stream event to the *logEventStream* in
+In WISE, each Web server access log is injected as a stream event to the *logEventStream* in
 this format (broken on two lines to fit)::
 
   47.41.156.173 - - [18/Sep/2014:12:52:52 -0400] "POST /index.html HTTP/1.1" 404 1490 " "
     "Mozilla/2.0 (compatible; Ask Jeeves)" 
   
 We have already prepared a sample of Web server access logs for you to inject into the
-*logEventStream*. Run this command at the root of the Wise application:
+*logEventStream*. Run this command from the CDAP Standalone home directory:
 
 .. container:: highlight
 
   .. parsed-literal::
-    |$| cd $CDAP_SDK_HOME/examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/
-    |$| ./bin/inject-data.sh 
+    |$| cd $CDAP_SDK_HOME
+    |$| cdap-cli.sh load stream logEventStream examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/resources/apache.accesslog text/plain
 
-This requires that a Standalone CDAP instance be running with the Wise application already
+This requires that a Standalone CDAP instance be running with the WISE application already
 deployed.
 
 
@@ -285,13 +296,13 @@ The goal of ``WiseFlow`` is to perform realtime analytics on the Web server acce
 received by *logEventStream*. For each IP address in the logs, ``WiseFlow`` counts the
 number of visits they made to different web pages.
 
-This work is realized by two Flowlets, *parser* and *pageViewCount*.
+This work is realized by two flowlets, *parser* and *pageViewCount*.
 
 
 .. rubric:: The *parser* Flowlet
 
-The *parser* Flowlet (of type ``LogEventParserFlowlet``) receives the raw log data from
-the Stream and extracts useful information from it. Here is its implementation:
+The *parser* flowlet (of type ``LogEventParserFlowlet``) receives the raw log data from
+the stream and extracts useful information from it. Here is its implementation:
 
 .. literalinclude:: /../build/_includes/tutorial-wise/WiseFlow.java
    :language: java
@@ -303,21 +314,21 @@ method to process the data it receives from *logEventStream*. This method can ha
 here, we call it *processFromStream*. It has to bear the ``@ProcessInput`` annotation indicating
 that the method will be used to process incoming data.
 
-Because the *parser* Flowlet receives data from a Stream, the *processFromStream* method has
+Because the *parser* flowlet receives data from a stream, the *processFromStream* method has
 to take one and only one argument of type ``StreamEvent``. A ``StreamEvent`` object contains the
-header and the body of a Stream event. In the Wise application, the body of a ``StreamEvent``
+header and the body of a stream event. In the WISE application, the body of a ``StreamEvent``
 will be a Web server access log.
 
-The *parser* Flowlet parses every log it receives into one ``LogInfo`` object. Using an
-``OutputEmitter<LogInfo>`` object, *parser* outputs those logs to the next Flowlet input |---| the
-*pageViewCount* Flowlet. When a ``LogInfo`` object is emitted, it is hashed by IP address. We’ll
+The *parser* flowlet parses every log it receives into one ``LogInfo`` object. Using an
+``OutputEmitter<LogInfo>`` object, *parser* outputs those logs to the next flowlet input |---| the
+*pageViewCount* flowlet. When a ``LogInfo`` object is emitted, it is hashed by IP address. We’ll
 see below why this is useful.
 
 
 .. rubric:: The *pageViewCount* Flowlet 
 
-The *pageViewCount* Flowlet (of type ``PageViewCounterFlowlet``) receives ``LogInfo``
-objects and updates the *pageViewStore* Dataset with the information they contain.
+The *pageViewCount* flowlet (of type ``PageViewCounterFlowlet``) receives ``LogInfo``
+objects and updates the *pageViewStore* dataset with the information they contain.
 
 Its implementation is very brief:
 
@@ -326,43 +337,43 @@ Its implementation is very brief:
    :lines: 86-102   
    :dedent: 2
 
-Here’s what to note about the ``PageViewCounterFlowlet`` Flowlet class:
+Here’s what to note about the ``PageViewCounterFlowlet`` flowlet class:
 
 - The ``@ProcessInput`` annotation on the ``count()`` method indicates that ``count()`` will process
   incoming data. 
-- The ``@UseDataSet`` annotation gives a reference to the *pageViewStore* Dataset
-  above the *pageViewStore* attribute. The Dataset APIs can then be used inside the ``count()``
+- The ``@UseDataSet`` annotation gives a reference to the *pageViewStore* dataset
+  above the *pageViewStore* attribute. The dataset APIs can then be used inside the ``count()``
   method to store logs analytics. 
 - The ``@Batch`` annotation indicates that data is processed in batches of ten ``LogInfo`` 
-  objects, which increases the throughput of the Flowlet.
-- The ``@HashPartition`` annotation ensures, in the case that several instances of this Flowlet are
+  objects, which increases the throughput of the flowlet.
+- The ``@HashPartition`` annotation ensures, in the case that several instances of this flowlet are
   running, all ``LogInfo`` objects with the same IP address information will be sent to
-  the same Flowlet instance. This prevents two Flowlet instances from writing to the same
-  row key of the *pageViewStore* Dataset at the same time, which would cause a transaction
+  the same flowlet instance. This prevents two flowlet instances from writing to the same
+  row key of the *pageViewStore* dataset at the same time, which would cause a transaction
   conflict. (See the `CDAP Developers’ Manual: Transaction System 
   <http://docs.cask.co/cdap/current/en/developers-manual/building-blocks/transaction-system.html>`__
   for more information about transactions and conflicts.)
 
 Building the WiseFlow 
 ---------------------
-Now that we have had a look at the core of the *parser* and *pageViewCount* Flowlets,
+Now that we have had a look at the core of the *parser* and *pageViewCount* flowlets,
 let’s see how they are connected together and to the *logEventStream*.
 
-The Flowlets are defined in the ``WiseFlow`` Flow, which is defined by this small class:
+The flowlets are defined in the ``WiseFlow`` flow, which is defined by this small class:
 
 .. literalinclude:: /../build/_includes/tutorial-wise/WiseFlow.java
    :language: java
    :lines: 38-51   
 
-In the ``configure()`` method of the ``WiseFlow`` Flow, we define the Flowlets, giving them names:
+In the ``configure()`` method of the ``WiseFlow`` flow, we define the flowlets, giving them names:
 
 - *parser*, of type ``LogEventParserFlowlet``; and 
 - *pageViewCount*, of type ``PageViewCounterFlowlet``.
 
 We also define the graph of their connections:
 
-- *logEventStream* Stream is connected to the *parser* Flowlet; and 
-- *parser* Flowlet is connected to the *pageViewCount* Flowlet. 
+- *logEventStream* stream is connected to the *parser* flowlet; and 
+- *parser* flowlet is connected to the *pageViewCount* flowlet. 
 
 Here is how ``WiseFlow`` looks in the CDAP UI:
 
@@ -373,7 +384,7 @@ Here is how ``WiseFlow`` looks in the CDAP UI:
 
 Batch Processing with WiseWorkflow
 ==========================================
-Wise executes every ten minutes a MapReduce program that computes the bounce counts of the
+WISE executes every ten minutes a MapReduce program that computes the bounce counts of the
 web pages seen in the Web server access logs.
 
 The ``BounceCountsMapReduce`` class defines the MapReduce to run. It extends
@@ -401,17 +412,17 @@ As mentioned earlier, the input of the MapReduce is the *logEventStream*. This
 connection is made above using the ``StreamBatchReadable.useStreamInput()`` method.
 
 This MapReduce program runs as part of a Workflow that is scheduled every ten minutes.
-Every time it runs, it reads ten minutes' worth of events from the Stream, ending at the
+Every time it runs, it reads ten minutes' worth of events from the stream, ending at the
 logical start time of the job (the same as the scheduled time of the containing Workflow).
 
-Writing to the *bounceCountStore* Dataset from the MapReduce 
+Writing to the *bounceCountStore* dataset from the MapReduce 
 ------------------------------------------------------------
 In the ``BounceCountsMapReduce.configure()`` method seen earlier, the ``setOutputDataset``
-method sets the ``bounceCountsStore`` Dataset as the output of the job.
+method sets the ``bounceCountsStore`` dataset as the output of the job.
 It means that the key/value pairs output by the reducer of the MapReduce will be directly
-written to that Dataset.
+written to that dataset.
 
-To allow that, the ``bounceCountsStore`` Dataset has to implement the ``BatchWritable``
+To allow that, the ``bounceCountsStore`` dataset has to implement the ``BatchWritable``
 interface:
 
 .. literalinclude:: /../build/_includes/tutorial-wise/BounceCountStore.java
@@ -427,7 +438,7 @@ interface:
 This ``BatchWritable`` interface, defining a ``write()`` method, is intended to allow Datasets to
 be the output of MapReduce programs. The two generic types that it takes as parameters must
 match the types of the key and value that the Reduce part of the MapReduce outputs. In this
-case, the *bounceCountStore* Dataset can be used as output of a MapReduce where the
+case, the *bounceCountStore* dataset can be used as output of a MapReduce where the
 output key is of type ``Void``, and the output value is of type ``PageBounce``.
 
 MapReduce Structure 
@@ -437,7 +448,7 @@ The Mapper of the MapReduce program receives log events as input, parses them in
 objects grouped by IP addresses, with two logs with the same IP address sorted by
 timestamp in ascending order.
 
-Because the input of our MapReduce is a Stream, it forces the key and value types of our
+Because the input of our MapReduce is a stream, it forces the key and value types of our
 Mapper to be ``LongWritable`` and ``Text``, respectively.
 
 Our Mapper and Reducer are standard Hadoop classes with these signatures:
@@ -458,8 +469,8 @@ Our Mapper and Reducer are standard Hadoop classes with these signatures:
 
 Each generic parameter of the Mapper and the Reducer contains:
 
-- Mapper input key ``LongWritable``: the timestamp of when a Stream event has been received;
-- Mapper input value ``Text``: body of a Stream event, in this case the log data; 
+- Mapper input key ``LongWritable``: the timestamp of when a stream event has been received;
+- Mapper input value ``Text``: body of a stream event, in this case the log data; 
 - Mapper output key and Reducer input key ``LogInfo``: a POJO object containing information 
   about one log line; 
 - Mapper output value and Reducer input value ``IntWritable``: a simple placeholder as we
@@ -488,18 +499,18 @@ The ``WiseWorkflow`` can then be scheduled in the ``WiseApp``:
 
 Accessing Data through WiseService
 ==================================
-``WiseService`` is a Wise component that exposes specific HTTP endpoints to retrieve the
-content of the *pageViewStore* Dataset. For example, ``WiseService`` defines this endpoint::
+``WiseService`` is a WISE component that exposes specific HTTP endpoints to retrieve the
+content of the *pageViewStore* dataset. For example, ``WiseService`` defines this endpoint::
 
   GET <base-url>/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/<ip-address>/count
   
-Using the ``curl`` command and the CLI, example use of the Service would be::
+Using the ``curl`` command and the CLI, example use of the service would be::
 
   $ curl -w'\n' -X GET http://localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.185/count
   21
   
   $ ./bin/cdap-cli.sh call service Wise.WiseService GET ip/255.255.255.185/count  
-  Successfully connected CDAP instance at http://MacBook-Pro.local:10000
+
   +=======================================================================================================================+
   | status                      | headers                     | body size                   | body                        |
   +=======================================================================================================================+
@@ -516,12 +527,12 @@ This endpoint is defined in a class extending ``AbstractHttpServiceHandler``:
    :lines: 46-68   
    :dedent: 2
 
-The ``PageViewCountHandler`` class accesses the *pageViewStore* Dataset using the same
+The ``PageViewCountHandler`` class accesses the *pageViewStore* dataset using the same
 ``@UseDataSet`` annotation used in the ``PageViewCounterFlowlet`` class.
 
 The endpoint defined above in the ``getIPCount()`` method will retrieve the number of times a
 given IP address has been seen in the access logs by using the APIs of the *pageViewStore*
-Dataset.
+dataset.
 
 The ``@GET`` annotation specifies the HTTP method used to reach the endpoint. The ``@Path``
 annotation defines the URL path used to reach this endpoint. This path has a single user
@@ -534,10 +545,10 @@ method with the help of the ``@PathParam`` annotation.
 
 - The class sets the ID of the service, and this ID will be used in the URL to reach the
   endpoints defined by the service. 
-- The ``PageViewCountHandler`` that responds to the HTTP endpoint exposed by the Service 
+- The ``PageViewCountHandler`` that responds to the HTTP endpoint exposed by the service 
   is specified by the ``addHandler()`` method. 
 
-You can use a ``curl`` command to make calls to the Service URL. For example, to query total pageview count
+You can use a ``curl`` command to make calls to the service URL. For example, to query total pageview count
 from IP ``255.255.255.207``::
 
   $ curl -w'\n' -X GET http://localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.207/count
@@ -552,26 +563,32 @@ a specific IP address. For example, to query the pageview count of page ``/index
   
 Exploring Datasets through SQL
 ==============================
-With Wise, you can explore the Datasets using SQL queries. The SQL interface on CDAP,
+With WISE, you can explore the Datasets using SQL queries. The SQL interface on CDAP,
 called *Explore*, can be accessed through the CDAP UI:
 
-1. After deploying Wise in your Standalone CDAP instance, go to the **Store** page, which is one
-   of the five pages you can access from the left pane of the CDAP UI:
+1. After deploying WISE in your Standalone CDAP instance, go to the *WISE* 
+   `overview page <http://localhost:9999/ns/default/apps/Wise/overview/status>`__:
 
-.. image:: /../build/_includes/tutorial-wise/wise_store_page.png 
-    :width: 8in
-    :align: center
+   .. image:: ../_images/wise_overview.png 
+     :width: 8in
+     :align: center
 
-2. Click on the **Explore** button in the top-right corner of the page. You will land on this page:
+#. Click on the *Datasets* tab to display the list of datasets used by WISE:
 
-.. image:: /../build/_includes/tutorial-wise/wise_explore_page.png
-    :width: 8in
-    :align: center
+   .. image:: ../_images/wise_datasets.png 
+     :width: 8in
+     :align: center
 
-This is the **Explore** page, where you can run ad-hoc SQL queries and see information about
+#. Click on *bouncecountstore*, and then the *Explore* tab:
+
+   .. image:: ../_images/wise_bouncecountstore.png 
+     :width: 8in
+     :align: center
+
+This is the **Explore** tab, where you can run ad-hoc SQL queries and see information about
 the Datasets that expose a SQL interface.
 
-You will notice that the Datasets have unusual names, such as *dataset_bouncecountstore*.
+You will notice that the Datasets have names such as *dataset_bouncecountstore*.
 Those are the SQL table names of the Datasets which have a SQL interface.
 
 Here are some of the SQL queries that you can run:
@@ -588,38 +605,38 @@ As the SQL engine that CDAP runs internally is Hive, the SQL language used to su
 queries is HiveQL. A description of it is in the `Hive language manual
 <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DML#LanguageManualDML-InsertingdataintoHiveTablesfromqueries>`__.
 
-Let’s take a look at the schemas of the *bounceCountStore* Dataset. The *Explore* interface
+Let’s take a look at the schemas of the *bounceCountStore* dataset. The *Explore* interface
 shows that it has three columns: ``uri``, ``totalvisits``, and ``bounces``.
 
-To understand how we managed to attach this schema to the *bounceCountStore* Dataset, let’s
-have another look at the Dataset’s class definition:
+To understand how we managed to attach this schema to the *bounceCountStore* dataset, let’s
+have another look at the dataset’s class definition:
 
 .. literalinclude:: /../build/_includes/tutorial-wise/BounceCountStore.java
    :language: java
    :lines: 39-41   
    :append:     . . .  
 
-The ``RecordScannable`` interface allows a Dataset to be queried using SQL. It exposes a
-Dataset as a table of ``Record`` objects, and the schema of the ``Record`` defines the schema of
-the Dataset as seen as a SQL table.
+The ``RecordScannable`` interface allows a dataset to be queried using SQL. It exposes a
+dataset as a table of ``Record`` objects, and the schema of the ``Record`` defines the schema of
+the dataset as seen as a SQL table.
 
-The *bounceCountStore* Dataset’s ``Record`` type is ``PageBounce``, which is a POJO object
+The *bounceCountStore* dataset’s ``Record`` type is ``PageBounce``, which is a POJO object
 containing three attributes: ``uri``, ``totalVisits``, and ``bounces``. It explains where the schema
 of the *bounceCountStore* is derived.
 
 Bringing the Components Together 
 ================================
-To create the Wise application with all these components mentioned above, define a class
+To create the WISE application with all these components mentioned above, define a class
 that extends ``AbstractApplication``:
 
 .. literalinclude:: /../build/_includes/tutorial-wise/WiseApp.java
    :language: java
    :lines: 25-  
 
-When the Wise application is deployed in CDAP, this class is read by the CDAP system. All
+When the WISE application is deployed in CDAP, this class is read by the CDAP system. All
 the components it defines are then installed, and can reference one another.
 
-Unit Testing Wise
+Unit Testing WISE
 =================
 Unit tests are a major part of the development of an application. As
 developers ourselves, we have created a full unit testing framework for CDAP applications.
@@ -645,7 +662,7 @@ With this object, we can:
      :append:     . . . 
      :dedent: 4
 
-- Test the call to a Service endpoint:
+- Test the call to a service endpoint:
 
   .. literalinclude:: /../build/_includes/tutorial-wise/WiseAppTest.java
      :language: java

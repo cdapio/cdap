@@ -4,43 +4,43 @@
 
 .. _examples-count-random:
 
-====================
+============
 Count Random
-====================
+============
 
-A Cask Data Application Platform (CDAP) Example demonstrating the ``@Tick`` feature of Flows.
+A Cask Data Application Platform (CDAP) example demonstrating the ``@Tick`` feature of flows.
 
 Overview
-====================
+========
 
-This application does not have a Stream, instead it uses a Tick annotation in the ``source`` Flowlet to generate data:
+This application does not have a stream; instead, it uses a tick annotation in the ``source`` flowlet to generate data:
 
-- The ``generate`` method of the  ``source`` Flowlet has a ``@Tick`` annotation which specifies how frequently the method will be called.
-- The ``source`` Flowlet generates a random integer in the range {1..10000} and emits it to the next Flowlet ``splitter``.
-- The ``splitter`` Flowlet splits the number into digits, and emits these digits to the next stage.
+- The ``generate`` method of the  ``source`` flowlet has a ``@Tick`` annotation which specifies how frequently the method will be called.
+- The ``source`` flowlet generates a random integer in the range {1..10000} and emits it to the next flowlet ``splitter``.
+- The ``splitter`` flowlet splits the number into digits, and emits these digits to the next stage.
 - The ``counter`` increments the count of the received number in the KeyValueTable.
 
-Let's look at some of these components, and then run the Application and see the results.
+Let's look at some of these components, and then run the application and see the results.
 
 The Count Random Application
-------------------------------
+----------------------------
 
 .. highlight:: java
 
 As in the other `examples <index.html>`__, the components
-of the Application are tied together by the class ``CountRandom``:
+of the application are tied together by the class ``CountRandom``:
 
 .. literalinclude:: /../../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/CountRandom.java
    :language: java
    :lines: 24-
 
-The Flow contains three Flowlets:
+The flow contains three flowlets:
 
 .. literalinclude:: /../../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/CountRandomFlow.java
    :language: java
    :lines: 25-
 
-The *source* Flowlet generates random numbers every 1 millisecond. It can also be configured through runtime
+The *source* flowlet generates random numbers every 1 millisecond. It can also be configured through runtime
 arguments:
 
 - whether to emit events or not; and
@@ -50,81 +50,80 @@ arguments:
    :language: java
    :lines: 29-
 
-The *splitter* Flowlet emits four numbers for every number that it receives.
+The *splitter* flowlet emits four numbers for every number that it receives.
 
 .. literalinclude:: /../../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/NumberSplitter.java
    :language: java
    :lines: 25-
 
-Note that this Flowlet associates a hash value named *n* with every number that it emits. That allows the *counter*
-Flowlet to use a hash partitioning strategy when consuming the numbers it receives. This ensures that there are no
-transaction conflicts if the Flowlet is scaled to multiple instances:
+Note that this flowlet associates a hash value named *n* with every number that it emits. That allows the *counter*
+flowlet to use a hash partitioning strategy when consuming the numbers it receives. This ensures that there are no
+transaction conflicts if the flowlet is scaled to multiple instances:
 
 .. literalinclude:: /../../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/NumberCounter.java
    :language: java
    :lines: 27-
 
-Building and Starting
-=================================
 
-- You can either build the example (as described `below
-  <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
-- Start CDAP, deploy and start the application and its components as described below in 
-  `Running CDAP Applications`_\ .
-  Make sure you start the Flow as described below.
-- Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
+Building and Starting
+=====================
+
+.. include:: building-and-starting.txt
+
 
 Running CDAP Applications
-============================================
+=========================
 
 .. |example| replace:: CountRandom
 
 .. include:: /../../developers-manual/source/getting-started/building-apps.rst
    :start-line: 11
 
+
 Running the Example
 ===================
 
 Starting the Flow
-------------------------------
+-----------------
 
 Once the application is deployed:
 
-- Click on the *Process* button in the left sidebar of the CDAP UI,
-  then click ``CountRandom`` in the *Process* page to get to the
-  Flow detail page, then click the *Start* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- Go to the *CountRandom* `application overview page 
+  <http://localhost:9999/ns/default/apps/CountRandom/overview/status>`__,
+  click ``CountRandom`` to get to the flow detail page, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
+    $ cdap-cli.sh start flow CountRandom.CountRandom 
+    Successfully started Flow 'CountRandom' of application 'CountRandom' with stored runtime arguments '{}'
 
-    * - On Linux:
-      - ``$ ./bin/cdap-cli.sh start flow CountRandom.CountRandom``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat start flow CountRandom.CountRandom``    
+Once you start the flow, the *source* flowlet will continuously generate data. You can see
+this by observing the counters for each flowlet in the flow visualization. Even though you
+are not injecting any data into the flow, the counters increase steadily.
 
-Once you start the flow, the *source* Flowlet will continuously generate data. You can see this by observing the counters
-for each Flowlet in the flow visualization. Even though you are not injecting any data into the flow, the counters increase steadily.
 
-Stopping the Application
--------------------------------
+Stopping and Removing the Application
+=====================================
 Once done, you can stop the application as described above in `Stopping an Application. 
 <#stopping-an-application>`__ Here is an example-specific description of the step:
 
 **Stopping the Flow**
 
-- Click on the *Process* button in the left sidebar of the CDAP UI,
-  then click ``CountRandom`` in the *Process* page to get to the
-  Flow detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- Go to the *CountRandom* `application overview page 
+  <http://localhost:9999/ns/default/apps/CountRandom/overview/status>`__,
+  click ``CountRandom`` to get to the flow detail page, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
+    $ cdap-cli.sh stop flow CountRandom.CountRandom
+    Successfully stopped Flow 'CountRandom' of application 'CountRandom'
 
-    * - On Linux:
-      - ``$ ./bin/cdap-cli.sh stop flow CountRandom.CountRandom``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat stop flow CountRandom.CountRandom``    
+**Removing the Application**
 
+You can now remove the application as described above, `Removing an Application <#removing-an-application>`__, or:
+
+- Go to the *CountRandom* `application overview page 
+  <http://localhost:9999/ns/default/apps/CountRandom/overview/status>`__,
+  click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
+  then click the *Actions* menu on the right side and select *Delete* to delete the application; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
+
+    $ cdap-cli.sh delete app CountRandom
