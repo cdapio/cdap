@@ -42,6 +42,7 @@
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <link rel="shortcut icon" href="../_static/favicon.ico"/>
     <link rel="top" title="Cask Data Application Platform 3.0.0 Documentation" href="../index.html" />
+    <link rel="next" title="Using Third-party Jars" href="third-party.html" />
     <link rel="prev" title="Adapter Lifecycle Management" href="operations.html" /> 
   </head>
   <body role="document">
@@ -51,6 +52,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="../genindex.html" title="General Index"
              accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="third-party.html" title="Using Third-party Jars"
+             accesskey="N">Next</a> |</li>
         <li class="right" >
           <a href="operations.html" title="Adapter Lifecycle Management"
              accesskey="P">Previous</a> |</li>
@@ -491,123 +495,6 @@ JAR that you have added to the Hadoop Job configuration directly (for example, y
 &#8220;Export-Package&#8221; as well. This is to ensure those classes are visible to the Hadoop
 MapReduce framework during the Adapter execution. Otherwise, the execution will typically
 fail with a <code class="docutils literal"><span class="pre">ClassNotFoundException</span></code>.</p>
-<div class="section" id="plugin-configuration-for-prebuilt-jars">
-<h3>Plugin Configuration for Prebuilt Jars<a class="headerlink" href="#plugin-configuration-for-prebuilt-jars" title="Permalink to this headline">¶</a></h3>
-<p><strong>Database:</strong> Sample config for using a Database Source and a Database Sink:</p>
-<div class="highlight-java"><div class="highlight"><pre><span class="o">{</span>
-  <span class="s">&quot;config&quot;</span><span class="o">:</span> <span class="o">{</span>
-    <span class="s">&quot;schedule&quot;</span><span class="o">:</span> <span class="s">&quot;* * * * *&quot;</span><span class="o">,</span>
-    <span class="s">&quot;source&quot;</span><span class="o">:</span> <span class="o">{</span>
-      <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;DatabaseSource&quot;</span><span class="o">,</span>
-      <span class="s">&quot;properties&quot;</span><span class="o">:</span> <span class="o">{</span>
-        <span class="s">&quot;importQuery&quot;</span><span class="o">:</span> <span class="s">&quot;select id,name,age from my_table&quot;</span><span class="o">,</span>
-        <span class="s">&quot;countQuery&quot;</span><span class="o">:</span> <span class="s">&quot;select count(id) from my_table&quot;</span><span class="o">,</span>
-        <span class="s">&quot;connectionString&quot;</span><span class="o">:</span> <span class="s">&quot;jdbc:mysql://localhost:3306/test&quot;</span><span class="o">,</span>
-        <span class="s">&quot;driverClass&quot;</span><span class="o">:</span> <span class="s">&quot;com.mysql.jdbc.Driver&quot;</span><span class="o">,</span>
-        <span class="s">&quot;tableName&quot;</span><span class="o">:</span> <span class="s">&quot;my_table&quot;</span><span class="o">,</span>
-        <span class="s">&quot;user&quot;</span><span class="o">:</span> <span class="s">&quot;my_user&quot;</span><span class="o">,</span>
-        <span class="s">&quot;password&quot;</span><span class="o">:</span> <span class="s">&quot;my_password&quot;</span><span class="o">,</span>
-        <span class="s">&quot;jdbcPluginName&quot;</span><span class="o">:</span> <span class="s">&quot;jdbc_plugin_name_defined_in_jdbc_plugin_json_config&quot;</span><span class="o">,</span>
-        <span class="s">&quot;jdbcPluginType&quot;</span><span class="o">:</span> <span class="s">&quot;jdbc_plugin_type_defined_in_jdbc_plugin_json_config&quot;</span>
-        <span class="o">}</span>
-      <span class="o">},</span>
-    <span class="s">&quot;sink&quot;</span><span class="o">:</span> <span class="o">{</span>
-      <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;Database&quot;</span><span class="o">,</span>
-      <span class="s">&quot;properties&quot;</span><span class="o">:</span> <span class="o">{</span>
-        <span class="s">&quot;columns&quot;</span><span class="o">:</span> <span class="s">&quot;id,name,age&quot;</span><span class="o">,</span>
-        <span class="s">&quot;connectionString&quot;</span><span class="o">:</span> <span class="s">&quot;jdbc:mysql://localhost:3306/test&quot;</span><span class="o">,</span>
-        <span class="s">&quot;driverClass&quot;</span><span class="o">:</span> <span class="s">&quot;com.mysql.jdbc.Driver&quot;</span><span class="o">,</span>
-        <span class="s">&quot;tableName&quot;</span><span class="o">:</span> <span class="s">&quot;dest_table&quot;</span><span class="o">,</span>
-        <span class="s">&quot;user&quot;</span><span class="o">:</span> <span class="s">&quot;my_user&quot;</span><span class="o">,</span>
-        <span class="s">&quot;password&quot;</span><span class="o">:</span> <span class="s">&quot;my_password&quot;</span><span class="o">,</span>
-        <span class="s">&quot;jdbcPluginName&quot;</span><span class="o">:</span> <span class="s">&quot;jdbc_plugin_name_defined_in_jdbc_plugin_json_config&quot;</span><span class="o">,</span>
-        <span class="s">&quot;jdbcPluginType&quot;</span><span class="o">:</span> <span class="s">&quot;jdbc_plugin_type_defined_in_jdbc_plugin_json_config&quot;</span>
-        <span class="o">}</span>
-      <span class="o">},</span>
-    <span class="s">&quot;transforms&quot;</span><span class="o">:</span> <span class="o">[</span>
-      <span class="o">]</span>
-    <span class="o">},</span>
-  <span class="s">&quot;description&quot;</span><span class="o">:</span> <span class="s">&quot;ETL using a Table as source and RDBMS table as sink&quot;</span><span class="o">,</span>
-  <span class="s">&quot;template&quot;</span><span class="o">:</span> <span class="s">&quot;ETLBatch&quot;</span>
-<span class="o">}</span>
-</pre></div>
-</div>
-<p><strong>JMS:</strong> A JMS server needs to be setup similar to using <a class="reference external" href="http://activemq.apache.org">ActiveMQ</a>:</p>
-<div class="highlight-java"><div class="highlight"><pre><span class="o">{</span>
-  <span class="s">&quot;template&quot;</span><span class="o">:</span> <span class="s">&quot;ETLRealtime&quot;</span><span class="o">,</span>
-  <span class="s">&quot;config&quot;</span><span class="o">:</span> <span class="o">{</span>
-    <span class="s">&quot;instances&quot;</span><span class="o">:</span> <span class="s">&quot;1&quot;</span><span class="o">,</span>
-    <span class="s">&quot;source&quot;</span><span class="o">:</span> <span class="o">{</span>
-      <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;JMS&quot;</span><span class="o">,</span>
-      <span class="s">&quot;properties&quot;</span><span class="o">:</span> <span class="o">{</span>
-        <span class="s">&quot;jms.messages.receive&quot;</span><span class="o">:</span> <span class="mi">50</span><span class="o">,</span>
-        <span class="s">&quot;jms.destination.name&quot;</span><span class="o">:</span> <span class="s">&quot;dynamicQueues/CDAP.QUEUE&quot;</span><span class="o">,</span>
-        <span class="s">&quot;jms.factory.initial&quot;</span><span class="o">:</span> <span class="s">&quot;org.apache.activemq.jndi.ActiveMQInitialContextFactory&quot;</span><span class="o">,</span>
-        <span class="s">&quot;jms.provider.url&quot;</span><span class="o">:</span> <span class="s">&quot;vm://localhost?broker.persistent=false&quot;</span>
-      <span class="o">}</span>
-    <span class="o">},</span>
-    <span class="s">&quot;sink&quot;</span><span class="o">:</span> <span class="o">{</span>
-      <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;Stream&quot;</span><span class="o">,</span>
-      <span class="s">&quot;properties&quot;</span><span class="o">:</span> <span class="o">{</span>
-        <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;jmsStream&quot;</span><span class="o">,</span>
-        <span class="s">&quot;body.field&quot;</span><span class="o">:</span> <span class="s">&quot;message&quot;</span>
-      <span class="o">}</span>
-    <span class="o">},</span>
-    <span class="s">&quot;transforms&quot;</span><span class="o">:</span> <span class="o">[</span>
-    <span class="o">]</span>
-  <span class="o">}</span>
-<span class="o">}</span>
-</pre></div>
-</div>
-<p><strong>Kafka:</strong> A Kafka cluster needs to be setup, and certain minimum properties specified when
-creating the source:</p>
-<div class="highlight-java"><div class="highlight"><pre><span class="o">{</span>
-  <span class="s">&quot;template&quot;</span><span class="o">:</span> <span class="s">&quot;ETLRealtime&quot;</span><span class="o">,</span>
-  <span class="s">&quot;config&quot;</span><span class="o">:</span> <span class="o">{</span>
-    <span class="s">&quot;instances&quot;</span><span class="o">:</span> <span class="s">&quot;1&quot;</span><span class="o">,</span>
-    <span class="s">&quot;source&quot;</span><span class="o">:</span> <span class="o">{</span>
-      <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;Kafka&quot;</span><span class="o">,</span>
-      <span class="s">&quot;properties&quot;</span><span class="o">:</span> <span class="o">{</span>
-        <span class="s">&quot;kafka.partitions&quot;</span><span class="o">:</span> <span class="mi">1</span><span class="o">,</span>
-        <span class="s">&quot;kafka.topic&quot;</span><span class="o">:</span> <span class="s">&quot;test&quot;</span><span class="o">,</span>
-        <span class="s">&quot;kafka.brokers&quot;</span><span class="o">:</span> <span class="s">&quot;localhost:9092&quot;</span>
-      <span class="o">}</span>
-    <span class="o">},</span>
-    <span class="s">&quot;sink&quot;</span><span class="o">:</span> <span class="o">{</span>
-      <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;Stream&quot;</span><span class="o">,</span>
-      <span class="s">&quot;properties&quot;</span><span class="o">:</span> <span class="o">{</span>
-        <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;myStream&quot;</span><span class="o">,</span>
-        <span class="s">&quot;body.field&quot;</span><span class="o">:</span> <span class="s">&quot;message&quot;</span>
-      <span class="o">}</span>
-    <span class="o">},</span>
-    <span class="s">&quot;transforms&quot;</span><span class="o">:</span> <span class="o">[</span>
-    <span class="o">]</span>
-  <span class="o">}</span>
-<span class="o">}</span>
-</pre></div>
-</div>
-<p><strong>Prebuilt JARs:</strong> In a case where you&#8217;d like to use prebuilt third party JARs (such as a
-JDBC Driver) as a plugin, please refer to the <a class="reference internal" href="creating.html#apptemplates-etl-configuration-file-format"><span>Creating Plugins using Config file</span></a>. Copy the JAR and the JSON file to the <a class="reference internal" href="#advanced-custom-app-template-installation-directory"><span>Plugin
-directory</span></a> and then update the
-Template by using the <a class="reference internal" href="templates.html#http-restful-api-apptemplates-update"><span>HTTP RESTful API Application Template Update</span></a> endpoint.</p>
-<p>Sample JDBC Driver Plugin configuration:</p>
-<div class="highlight-java"><div class="highlight"><pre><span class="o">[</span>
-  <span class="o">{</span>
-    <span class="s">&quot;type&quot;</span> <span class="o">:</span> <span class="s">&quot;JDBC&quot;</span><span class="o">,</span>
-    <span class="s">&quot;name&quot;</span> <span class="o">:</span> <span class="s">&quot;MySQL JDBC&quot;</span><span class="o">,</span>
-    <span class="s">&quot;description&quot;</span> <span class="o">:</span> <span class="s">&quot;Plugin for MySQL JDBC driver&quot;</span><span class="o">,</span>
-    <span class="s">&quot;className&quot;</span> <span class="o">:</span> <span class="s">&quot;com.mysql.jdbc.Driver&quot;</span><span class="o">,</span>
-  <span class="o">},</span>
-<span class="o">{</span>
-    <span class="s">&quot;type&quot;</span> <span class="o">:</span> <span class="s">&quot;JDBC&quot;</span><span class="o">,</span>
-    <span class="s">&quot;name&quot;</span> <span class="o">:</span> <span class="s">&quot;PostgreSQL JDBC&quot;</span><span class="o">,</span>
-    <span class="s">&quot;description&quot;</span> <span class="o">:</span> <span class="s">&quot;Plugin for PostgreSQL JDBC driver&quot;</span><span class="o">,</span>
-    <span class="s">&quot;className&quot;</span> <span class="o">:</span> <span class="s">&quot;org.postgresql.Driver&quot;</span><span class="o">,</span>
-  <span class="o">}</span>
-<span class="o">]</span>
-</pre></div>
-</div>
-</div>
 </div>
 </div>
 
@@ -681,7 +568,7 @@ Template by using the <a class="reference internal" href="templates.html#http-re
 <li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="index.html"> ETL Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="templates.html"> ETL Templates</a></li>
-<li class="toctree-l1"><a class="reference internal" href="creating.html"> Creating An ETL Adapter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="creating.html"> Creating an ETL Adapter</a></li>
 <li class="toctree-l1"><a class="reference internal" href="operations.html"> Adapter Lifecycle Management</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href=""> Creating Custom ETL Plugins</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
@@ -700,18 +587,19 @@ Template by using the <a class="reference internal" href="templates.html#http-re
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#test-framework-for-adapters">Test Framework for Adapters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#source-state-in-realtime-source">Source State in Realtime Source</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#plugin-packaging">Plugin Packaging</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#plugin-configuration-for-prebuilt-jars">Plugin Configuration for Prebuilt Jars</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#plugin-packaging">Plugin Packaging</a></li>
 </ul>
 </li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="third-party.html"> Using Third-party Jars</a></li>
 </ul>
 
 </nav>
   <h4>Previous Topic</h4>
   <p class="topless"><a href="operations.html"
                         title="Previous Chapter">Adapter Lifecycle Management</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="third-party.html"
+                        title="Next Chapter">Using Third-party Jars</a></p>
   <div role="note" aria-label="downloads links">
     <h3>Downloads</h3>
     <ul class="this-page-menu">
@@ -766,7 +654,8 @@ Template by using the <a class="reference internal" href="templates.html#http-re
         Copyright &copy; 2014-2015 Cask Data, Inc.
     
     </th>
-    <th class="tg-0ord">
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Using Third-party Jars" href="third-party.html" />Using Third-party Jars</a>
     
     </th>
   </tr>
