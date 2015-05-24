@@ -48,10 +48,15 @@ public class ObjectMappedTableDatasetTest {
                                    ObjectMappedTableProperties.builder().setType(Record.class).build());
     try {
       ObjectMappedTableDataset<Record> records = dsFrameworkUtil.getInstance(RECORDS_ID);
-      Record record = new Record(Integer.MAX_VALUE, Long.MAX_VALUE, Float.MAX_VALUE, Double.MAX_VALUE, "foobar",
+      Record record = new Record(Integer.MAX_VALUE, Long.MAX_VALUE, Float.MAX_VALUE, null, "foobar",
                                  Bytes.toBytes("foobar"), ByteBuffer.wrap(Bytes.toBytes("foobar")), UUID.randomUUID());
       records.write("123", record);
       Record actual = records.read("123");
+      Assert.assertEquals(record, actual);
+      record = new Record(Integer.MAX_VALUE, Long.MAX_VALUE, null, Double.MAX_VALUE, "foobar",
+                          Bytes.toBytes("foobar"), ByteBuffer.wrap(Bytes.toBytes("foobar")), UUID.randomUUID());
+      records.write("123", record);
+      actual = records.read("123");
       Assert.assertEquals(record, actual);
       records.delete("123");
       Assert.assertNull(records.read("123"));
