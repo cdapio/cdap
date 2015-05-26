@@ -22,7 +22,7 @@ CDAP Examples, How-To Guides, and Tutorials
 .. _guides: how-to-guides/index.html
 
 - |guides|_ Designed to be completed in 15-30 minutes, these guides provide quick, hands-on
-  instructions for building the “Hello World” of any development task with CDAP.
+  instructions for solving basic development tasks with CDAP.
 
 
 .. |tutorials| replace:: **Tutorials:**

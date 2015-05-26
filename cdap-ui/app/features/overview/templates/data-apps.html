@@ -51,7 +51,7 @@
         <p> You haven't deployed any datasets. Add one! </p>
       </div>
       <hr />
-      <div class="text-left" ng-controller="AppsSectionCtrl">
+      <div class="text-left">
         <a class="btn btn-default" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $state.params.namespace})">
           <span class="fa fa-plus"></span>
           <span>Add Stream</span>
@@ -59,7 +59,7 @@
       </div>
     </div>
   </div>
-  <div class="col-xs-12 col-md-6">
+  <div class="col-xs-12 col-md-6" my-drag-drop-upload>
     <div ng-if="apps.length > 0">
       <h3 class="text-uppercase"> Apps </h3>
       <div class="row">

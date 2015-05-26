@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -44,25 +43,43 @@ public final class DirUtils {
   private DirUtils(){}
 
   /**
-   * Wipes out all the a directory starting from a given directory.
-   * @param directory to be cleaned
-   * @throws IOException
+   * Same as calling {@link #deleteDirectoryContents(File, boolean) deleteDirectoryContents(directory, false)}.
    */
   public static void deleteDirectoryContents(File directory) throws IOException {
+    deleteDirectoryContents(directory, false);
+  }
+
+  /**
+   * Wipes out content of a directory starting from a given directory.
+   *
+   * @param directory to be cleaned
+   * @param retain if true, the given directory will be retained.
+   * @throws IOException
+   */
+  public static void deleteDirectoryContents(File directory, boolean retain) throws IOException {
     if (!directory.isDirectory()) {
       throw new IOException("Not a directory: " + directory);
     }
+
     Deque<File> stack = Queues.newArrayDeque();
-    stack.add(directory);
+    stack.addAll(listFiles(directory));
 
     while (!stack.isEmpty()) {
       File file = stack.peekLast();
-      File[] files = file.listFiles();
-      if (files == null || files.length == 0) {
-        file.delete();
+      List<File> files = listFiles(file);
+      if (files.isEmpty()) {
+        if (!file.delete()) {
+          throw new IOException("Failed to delete file " + file);
+        }
         stack.pollLast();
       } else {
-        Collections.addAll(stack, files);
+        stack.addAll(files);
+      }
+    }
+
+    if (!retain) {
+      if (!directory.delete()) {
+        throw new IOException("Failed to delete directory " + directory);
       }
     }
   }

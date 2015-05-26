@@ -90,6 +90,12 @@
       <groupId>org.apache.twill</groupId>
       <artifactId>twill-api</artifactId>
     </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-common-unit-test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
 </project>

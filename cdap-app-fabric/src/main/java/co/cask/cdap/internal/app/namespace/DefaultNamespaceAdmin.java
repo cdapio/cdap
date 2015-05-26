@@ -192,7 +192,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       dsFramework.deleteAllInstances(namespaceId);
       dsFramework.deleteAllModules(namespaceId);
       // Delete queues and streams data
-      queueAdmin.dropAllInNamespace(namespaceId.getId());
+      queueAdmin.dropAllInNamespace(namespaceId);
       streamAdmin.dropAllInNamespace(namespaceId);
       // Delete all the schedules
       scheduler.deleteAllSchedules(namespaceId);

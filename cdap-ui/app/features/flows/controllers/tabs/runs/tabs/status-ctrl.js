@@ -3,10 +3,6 @@ angular.module(PKG.name + '.feature.flows')
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
 
-    var metricStreamPath = '/metrics/query?metric=system.collect.events' +
-                           '&context=namespace.' +
-                           $state.params.namespace +
-                           '.stream.';
     $scope.data = {};
 
     FlowDiagramData.fetchData($state.params.appId, $state.params.programId)
@@ -15,29 +11,49 @@ angular.module(PKG.name + '.feature.flows')
         pollMetrics();
       });
 
-    if ($scope.runs.length) {
-      var metricFlowletPath = '/metrics/query?metric=system.process.events.processed' +
-                            '&context=ns.' +
-                            $state.params.namespace +
-                            '.app.' + $state.params.appId +
-                            '.flow.' + $state.params.programId +
-                            '.run.' + $scope.runs.selected.runid +
-                            '.flowlet.';
+    function generateStreamMetricsPath(streamName) {
+      var streamTags = {
+        namespace: $state.params.namespace,
+        stream: streamName
+      };
+      return '/metrics/query?metric=system.collect.events&aggregate=true&' + myHelpers.tagsToParams(streamTags);
+    }
+
+    function generateFlowletMetricsPath(flowletName) {
+      var flowletTags = {
+        namespace: $state.params.namespace,
+        app: $state.params.appId,
+        flow: $state.params.programId,
+        run: $scope.runs.selected.runid,
+        flowlet: flowletName
+      };
+      return '/metrics/query?metric=system.process.events.processed&aggregate=true&' + myHelpers.tagsToParams(flowletTags);
     }
 
     function pollMetrics() {
       var nodes = $scope.data.nodes;
+      $scope.data.instances = {};
       // Requesting Metrics data
       angular.forEach(nodes, function (node) {
         if (node.type !== 'STREAM' && !$scope.runs.length) {
           return;
         }
         dataSrc.poll({
-          _cdapPath: (node.type === 'STREAM' ? metricStreamPath: metricFlowletPath) + node.name + '&aggregate=true',
+          _cdapPath: (node.type === 'STREAM' ? generateStreamMetricsPath(node.name): generateFlowletMetricsPath(node.name)),
           method: 'POST'
         }, function (data) {
             $scope.data.metrics[node.name] = myHelpers.objectQuery(data, 'series' , 0, 'data', 0, 'value') || 0;
           });
+
+        if (node.type !== 'STREAM') {
+          dataSrc.poll({
+            _cdapNsPath: '/apps/' + $state.params.appId +  '/flows/' + $state.params.programId + '/flowlets/' + node.name + '/instances'
+          }, function (res) {
+            $scope.data.instances[node.name] = res.instances;
+          });
+        }
+
+
       });
     }
 

@@ -91,6 +91,7 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
     ETLStage source = new ETLStage("Stream", ImmutableMap.<String, String>builder()
       .put(Properties.Stream.NAME, "myStream")
       .put(Properties.Stream.DURATION, "10m")
+      .put(Properties.Stream.DELAY, "0d")
       .put(Properties.Stream.FORMAT, Formats.CSV)
       .put(Properties.Stream.SCHEMA, BODY_SCHEMA.toString())
       .put("format.setting.delimiter", "|")

@@ -33,7 +33,6 @@ import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueProducer;
-import co.cask.cdap.data2.transaction.queue.leveldb.LevelDBQueueProducer;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -103,10 +102,8 @@ public class LocalQueueTest extends QueueTest {
           }
         }));
     QueueClientFactory factory = injector.getInstance(QueueClientFactory.class);
-    QueueProducer producer = factory.createProducer(QueueName.fromStream(Constants.DEFAULT_NAMESPACE, "bigriver"));
-    Assert.assertTrue(producer instanceof LevelDBQueueProducer);
-    producer = factory.createProducer(QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "my", "flowlet",
-                                                            "output"));
+    QueueProducer producer = factory.createProducer(QueueName.fromFlowlet(
+      Constants.DEFAULT_NAMESPACE, "app", "my", "flowlet", "output"));
     Assert.assertTrue(producer instanceof InMemoryQueueProducer);
   }
 

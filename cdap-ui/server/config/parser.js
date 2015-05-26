@@ -40,15 +40,17 @@ function extractConfig(param) {
   } else {
     try {
       path = getConfigPath(param);
-      if (path.length) {
+      if (path && path.length) {
         path = path.replace(/\"/g, '');
         cache[param] = require(path);
+      } else {
+        throw 'No configuration JSON provided.(No "cConf" and "sConf" commandline arguments passed)';
       }
     } catch(e) {
-      log.info(e);
+      log.warn(e);
       // Indicates the backend is not running in local environment and that we want only the
       // UI to be running. This is here for convenience.
-      log.info('Using development configuration for "' + param + '"');
+      log.warn('Using development configuration for "' + param + '"');
       cache[param] = require('./development/'+param+'.json');
     }
 
@@ -59,6 +61,11 @@ function extractConfig(param) {
 
 function getConfigPath(param) {
   var configName = (param ==='security'? 'sConf': 'cConf');
+  // If cConf and sConf are not provided (Starting node server
+  // from console) default to development config.
+  if (process.argv.length < 3) {
+    return null;
+  }
   var args = process.argv.slice(2),
       value = '',
       i;

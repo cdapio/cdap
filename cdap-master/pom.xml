@@ -164,7 +164,7 @@
             <executions>
               <execution>
                 <id>copy-templates</id>
-                <phase>prepare-package</phase>
+                <phase>process-resources</phase>
                 <goals>
                   <goal>copy-resources</goal>
                 </goals>
@@ -192,7 +192,7 @@
               </execution>
               <execution>
                 <id>copy-realtime-plugins</id>
-                <phase>prepare-package</phase>
+                <phase>process-resources</phase>
                 <goals>
                   <goal>copy-resources</goal>
                 </goals>
@@ -213,7 +213,7 @@
               </execution>
               <execution>
                 <id>copy-batch-plugins</id>
-                <phase>prepare-package</phase>
+                <phase>process-resources</phase>
                 <goals>
                   <goal>copy-resources</goal>
                 </goals>

@@ -24,7 +24,7 @@ How-To Guides
    cdap-spark-guide
    cdap-timeseries-guide
    cdap-twitter-ingest-guide
-
+   cdap-workflow-guide
 
 Designed to be completed in 15-30 minutes, these guides provide quick, hands-on
 instructions for building the “Hello World” of any development task with CDAP.
@@ -91,3 +91,11 @@ instructions for building the “Hello World” of any development task with CDA
 
 - |twitter-ingest-guide|_ Learn how to **consume a live tweets stream in realtime,** one of
   the common tasks of big data applications that power the social analytics.
+
+
+.. |workflow-guide| replace:: **Batch Data Processing with CDAP using Workflow:**
+.. _workflow-guide: cdap-workflow-guide.html
+
+- |workflow-guide|_  Learn how **workflows** can be used to execute
+  `MapReduce <http://research.google.com/archive/mapreduce.html>`__
+  programs in parallel based on the evaluation of conditions.

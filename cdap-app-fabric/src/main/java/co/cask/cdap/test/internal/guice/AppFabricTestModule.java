@@ -85,7 +85,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new AuthModule());
     install(new DiscoveryRuntimeModule().getInMemoryModules());
     install(new AppFabricServiceRuntimeModule().getInMemoryModules());
-    install(new ServiceStoreModules().getInMemoryModule());
+    install(new ServiceStoreModules().getInMemoryModules());
     install(new PrivateModule() {
       @Override
       protected void configure() {

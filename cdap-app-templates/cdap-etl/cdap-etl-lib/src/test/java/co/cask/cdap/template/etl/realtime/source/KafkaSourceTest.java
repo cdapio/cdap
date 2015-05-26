@@ -124,7 +124,42 @@ public class KafkaSourceTest {
 
     TimeUnit.SECONDS.sleep(2);
 
-    verifyEmittedMessages(kafkaSource, msgCount);
+    verifyEmittedMessages(kafkaSource, msgCount, new SourceState());
+  }
+
+  @Test
+  public void testSavedSourceState() throws Exception {
+    final String topic = "testKafkaSavedSourceState";
+
+    SourceState sourceState = new SourceState();
+
+    initializeKafkaSource(topic, PARTITIONS, false);
+
+    // Publish 5 messages to Kafka, the source should consume them
+    int msgCount = 5;
+    Map<String, String> messages = Maps.newHashMap();
+    for (int i = 0; i < msgCount; i++) {
+      messages.put(Integer.toString(i), "Message " + i);
+    }
+    sendMessage(topic, messages);
+
+    TimeUnit.SECONDS.sleep(2);
+
+    verifyEmittedMessages(kafkaSource, msgCount, sourceState);
+
+    // Do it again but this time the messages will still be 5 instead of 10 from beginning.
+
+    // Reset KafkaSource
+    kafkaSource.destroy();
+    kafkaSource = null;
+
+    initializeKafkaSource(topic, PARTITIONS, false);
+
+    sendMessage(topic, messages);
+
+    TimeUnit.SECONDS.sleep(2);
+
+    verifyEmittedMessages(kafkaSource, msgCount, sourceState);
   }
 
   private void initializeKafkaSource(String topic, int partitions, boolean preferZK)  throws Exception {
@@ -144,14 +179,14 @@ public class KafkaSourceTest {
   }
 
   // Helper method to verify
-  private void verifyEmittedMessages(KafkaSource source, int msgCount)  {
+  private void verifyEmittedMessages(KafkaSource source, int msgCount, SourceState sourceState)  {
     MockEmitter emitter = new MockEmitter();
-    SourceState sourceState = source.poll(emitter, new SourceState());
+    SourceState updatedSourceState = source.poll(emitter, sourceState);
 
     System.out.println("Message sent out: " + msgCount);
     System.out.println("Message being emitted by Kafka realtime source: " + emitter.getInternalSize());
 
-    Assert.assertTrue(sourceState.getState() != null && !sourceState.getState().isEmpty());
+    Assert.assertTrue(updatedSourceState.getState() != null && !updatedSourceState.getState().isEmpty());
     Assert.assertTrue(emitter.getInternalSize() == msgCount);
   }
 

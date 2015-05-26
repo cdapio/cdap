@@ -41,6 +41,7 @@ import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.test.XSlowTests;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -55,9 +56,9 @@ import org.junit.experimental.categories.Category;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -75,11 +76,6 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
   protected static final Type LIST_WORKFLOWACTIONNODE_TYPE = new TypeToken<List<WorkflowActionNode>>()
   { }.getType();
-
-  private String getRunsUrl(String namespace, String appName, String workflow, String status) {
-    String runsUrl = String.format("apps/%s/workflows/%s/runs?status=%s", appName, workflow, status);
-    return getVersionedAPIPath(runsUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
-  }
 
   private void verifyRunningProgramCount(final Id.Program program, final String runId, final int expected)
     throws Exception {
@@ -124,7 +120,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String responseEntity = EntityUtils.toString(response.getEntity());
-    Map<String, String> argsRead = GSON.fromJson(responseEntity, new TypeToken<Map<String, String>>() { }.getType());
+    Map<String, String> argsRead = GSON.fromJson(responseEntity, new TypeToken<Map<String, String>>() {
+    }.getType());
 
     Assert.assertEquals(args.size(), argsRead.size());
   }
@@ -152,31 +149,28 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     File inputDir = tmpFolder.newFolder(folderName);
 
     File inputFile = new File(inputDir.getPath() + "/words.txt");
-    BufferedWriter writer = new BufferedWriter(new FileWriter(inputFile));
-    try {
+    try (BufferedWriter writer = Files.newBufferedWriter(inputFile.toPath(), Charsets.UTF_8)) {
       writer.write("this text has");
       writer.newLine();
       writer.write("two words text inside");
-    } finally {
-      writer.close();
     }
     return inputDir.getAbsolutePath();
   }
 
-  private List<ScheduledRuntime> getScheduledRunTime(Id.Program program, String schedule,
-                                                     String prevOrNext) throws Exception {
-    String nextRunTimeUrl = String.format("apps/%s/workflows/%s/%s", program.getApplicationId(), program.getId(),
-                                          prevOrNext);
+  /**
+   * Returns a list of {@link ScheduledRuntime}.
+   *
+   * @param program the program id
+   * @param next if true, fetch the list of future run times. If false, fetch the list of past run times.
+   */
+  private List<ScheduledRuntime> getScheduledRunTime(Id.Program program, boolean next) throws Exception {
+    String nextRunTimeUrl = String.format("apps/%s/workflows/%s/%sruntime", program.getApplicationId(), program.getId(),
+                                          next ? "next" : "previous");
     String versionedUrl = getVersionedAPIPath(nextRunTimeUrl, Constants.Gateway.API_VERSION_3_TOKEN,
                                               program.getNamespaceId());
     HttpResponse response = doGet(versionedUrl);
     return readResponse(response, new TypeToken<List<ScheduledRuntime>>() {
     }.getType());
-  }
-
-  private String getStatusURL(String namespace, String appName, String schedule) throws Exception {
-    String statusURL = String.format("apps/%s/schedules/%s/status", appName, schedule);
-    return getVersionedAPIPath(statusURL, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
   }
 
   @Test
@@ -383,9 +377,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     simpleActionDoneFile.createNewFile();
 
     // delete the application
-    String deleteURL = getVersionedAPIPath("apps/" + appWithConcurrentWorkflow,
-                                           Constants.Gateway.API_VERSION_3_TOKEN, defaultNamespace);
-    deleteApplication(60, deleteURL, 200);
+    deleteApp(programId.getApplication(), 200, 60, TimeUnit.SECONDS);
   }
 
   private void verifyFileExists(final List<File> fileList)
@@ -678,7 +670,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     long current = System.currentTimeMillis();
 
-    List<ScheduledRuntime> runtimes = getScheduledRunTime(programId, scheduleName, "nextruntime");
+    List<ScheduledRuntime> runtimes = getScheduledRunTime(programId, true);
     String id = runtimes.get(0).getId();
     Assert.assertTrue(id.contains(scheduleName));
     Long nextRunTime = runtimes.get(0).getTime();
@@ -686,16 +678,15 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     verifyProgramRuns(programId, "completed");
 
-    List<ScheduledRuntime> previousRuntimes = getScheduledRunTime(programId, scheduleName, "previousruntime");
+    List<ScheduledRuntime> previousRuntimes = getScheduledRunTime(programId, false);
     Assert.assertEquals(1, previousRuntimes.size());
 
     //Check schedule status
-    String statusURL = getStatusURL(TEST_NAMESPACE2, appName, scheduleName);
-    scheduleStatusCheck(5, statusURL, "SCHEDULED");
+    assertSchedule(programId, scheduleName, true, 30, TimeUnit.SECONDS);
 
     Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName, scheduleName));
     //check paused state
-    scheduleStatusCheck(5, statusURL, "SUSPENDED");
+    assertSchedule(programId, scheduleName, false, 30, TimeUnit.SECONDS);
 
     TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
 
@@ -712,20 +703,29 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     verifyProgramRuns(programId, "completed", workflowRunsAfterSuspend);
 
     //check scheduled state
-    scheduleStatusCheck(5, statusURL, "SCHEDULED");
+    assertSchedule(programId, scheduleName, true, 30, TimeUnit.SECONDS);
 
     //Check status of a non existing schedule
-    String invalid = getStatusURL(TEST_NAMESPACE2, appName, "invalid");
-    scheduleStatusCheck(5, invalid, "NOT_FOUND");
+    try {
+      assertSchedule(programId, "invalid", true, 2, TimeUnit.SECONDS);
+      Assert.fail();
+    } catch (Exception e) {
+      // expected
+    }
 
     Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName, scheduleName));
 
     //check paused state
-    scheduleStatusCheck(5, statusURL, "SUSPENDED");
+    assertSchedule(programId, scheduleName, false, 30, TimeUnit.SECONDS);
 
     //Schedule operations using invalid namespace
-    String inValidNamespaceURL = getStatusURL(TEST_NAMESPACE1, appName, scheduleName);
-    scheduleStatusCheck(5, inValidNamespaceURL, "NOT_FOUND");
+    try {
+      assertSchedule(Id.Program.from(TEST_NAMESPACE1, appName, ProgramType.WORKFLOW, workflowName),
+                     scheduleName, true, 2, TimeUnit.SECONDS);
+      Assert.fail();
+    } catch (Exception e) {
+      // expected
+    }
     Assert.assertEquals(404, suspendSchedule(TEST_NAMESPACE1, appName, scheduleName));
     Assert.assertEquals(404, resumeSchedule(TEST_NAMESPACE1, appName, scheduleName));
 
@@ -750,6 +750,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     String sampleSchedule2 = "SampleSchedule2";
     String workflowName = "SampleWorkflow";
     String streamName = "stream";
+
+    Id.Program programId = Id.Program.from(TEST_NAMESPACE2, appName, ProgramType.WORKFLOW, workflowName);
 
     StringBuilder longStringBuilder = new StringBuilder();
     for (int i = 0; i < 10000; i++) {
@@ -789,25 +791,22 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     }
 
-    TimeUnit.SECONDS.sleep(10);
-    String runsURL = getRunsUrl(TEST_NAMESPACE2, appName, workflowName, "completed");
-    scheduleHistoryRuns(5, runsURL, 0);
+    // Only schedule 1 should get executed
+    verifyProgramRuns(programId, "completed");
 
     //Check schedule status
-    String statusURL1 = getStatusURL(TEST_NAMESPACE2, appName, scheduleName1);
-    String statusURL2 = getStatusURL(TEST_NAMESPACE2, appName, scheduleName2);
-    scheduleStatusCheck(5, statusURL1, "SCHEDULED");
-    scheduleStatusCheck(5, statusURL2, "SCHEDULED");
+    assertSchedule(programId, scheduleName1, true, 30, TimeUnit.SECONDS);
+    assertSchedule(programId, scheduleName2, true, 30, TimeUnit.SECONDS);
 
     Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName, scheduleName1));
     Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName, scheduleName2));
     //check paused state
-    scheduleStatusCheck(5, statusURL1, "SUSPENDED");
-    scheduleStatusCheck(5, statusURL2, "SUSPENDED");
+    assertSchedule(programId, scheduleName1, false, 30, TimeUnit.SECONDS);
+    assertSchedule(programId, scheduleName2, false, 30, TimeUnit.SECONDS);
 
-    TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
-
-    int workflowRuns = getRuns(runsURL);
+    int workflowRuns = getProgramRuns(programId, "completed").size();
+    // Should still be one
+    Assert.assertEquals(1, workflowRuns);
 
     // Sleep for some time and verify there are no more scheduled jobs after the suspend.
     for (int i = 0; i < 12; ++i) {
@@ -816,28 +815,37 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     }
     TimeUnit.SECONDS.sleep(5);
 
-    int workflowRunsAfterSuspend = getRuns(runsURL);
+    int workflowRunsAfterSuspend = getProgramRuns(programId, "completed").size();
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
 
     Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, scheduleName1));
 
-    scheduleHistoryRuns(5, runsURL, workflowRunsAfterSuspend);
+    assertRunHistory(programId, "completed", workflowRunsAfterSuspend, 60, TimeUnit.SECONDS);
 
     //check scheduled state
-    scheduleStatusCheck(5, statusURL1, "SCHEDULED");
+    assertSchedule(programId, scheduleName1, true, 30, TimeUnit.SECONDS);
 
     //Check status of a non existing schedule
-    String invalid = getStatusURL(TEST_NAMESPACE2, appName, "invalid");
-    scheduleStatusCheck(5, invalid, "NOT_FOUND");
+    try {
+      assertSchedule(programId, "invalid", true, 2, TimeUnit.SECONDS);
+      Assert.fail();
+    } catch (Exception e) {
+      // expected
+    }
 
     Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName, scheduleName1));
 
     //check paused state
-    scheduleStatusCheck(5, statusURL1, "SUSPENDED");
+    assertSchedule(programId, scheduleName1, false, 30, TimeUnit.SECONDS);
 
     //Schedule operations using invalid namespace
-    String inValidNamespaceURL = getStatusURL(TEST_NAMESPACE1, appName, scheduleName1);
-    scheduleStatusCheck(5, inValidNamespaceURL, "NOT_FOUND");
+    try {
+      assertSchedule(Id.Program.from(TEST_NAMESPACE1, appName, ProgramType.WORKFLOW, workflowName),
+                     scheduleName1, true, 2, TimeUnit.SECONDS);
+      Assert.fail();
+    } catch (Exception e) {
+      // expected
+    }
     Assert.assertEquals(404, suspendSchedule(TEST_NAMESPACE1, appName, scheduleName1));
     Assert.assertEquals(404, resumeSchedule(TEST_NAMESPACE1, appName, scheduleName1));
 
@@ -873,9 +881,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     File inputDir = tmpFolder.newFolder(folderName);
 
     File inputFile = new File(inputDir.getPath() + "/data.txt");
-    BufferedWriter writer = new BufferedWriter(new FileWriter(inputFile));
 
-    try {
+    try (BufferedWriter writer = Files.newBufferedWriter(inputFile.toPath(), Charsets.UTF_8)) {
       // dummy good records containing ":" separated fields
       for (int i = 0; i < numGoodRecords; i++) {
         writer.write("Afname:ALname:A:B");
@@ -886,8 +893,6 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
         writer.write("Afname ALname A B");
         writer.newLine();
       }
-    } finally {
-      writer.close();
     }
     return inputDir.getAbsolutePath();
   }

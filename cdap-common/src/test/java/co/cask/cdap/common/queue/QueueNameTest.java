@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.queue;
 
+import co.cask.cdap.proto.Id;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -27,7 +28,8 @@ public class QueueNameTest {
   @Test
   public void testQueueNameForFlowlet() {
     // create a queue name
-    QueueName queueName = QueueName.fromFlowlet("namespace", "app", "flow", "flowlet", "out");
+    Id.Flow flowId = Id.Flow.from("namespace", "app", "flow");
+    QueueName queueName = QueueName.fromFlowlet(flowId, "flowlet", "out");
 
     // verify all parts are correct
     Assert.assertTrue(queueName.isQueue());
@@ -60,7 +62,7 @@ public class QueueNameTest {
 
     // verify prefix methods
     Assert.assertEquals("queue:///namespace/", QueueName.prefixForNamespacedQueue("namespace"));
-    Assert.assertEquals("queue:///namespace/app/flow/", QueueName.prefixForFlow("namespace", "app", "flow"));
+    Assert.assertEquals("queue:///namespace/app/flow/", QueueName.prefixForFlow(flowId));
   }
 
   @Test

@@ -20,12 +20,9 @@ angular.module(PKG.name + '.feature.streams')
     ].forEach(fetchMetric);
 
     function fetchMetric(metric) {
-      var path = '/metrics/query?metric=' +
-                  metric.name +
-                  '&context=ns.' +
-                  $state.params.namespace +
-                  '.stream.' +
-                  $state.params.streamId;
+      var path = '/metrics/query?metric=' + metric.name +
+                  '&tag=ns:' + $state.params.namespace +
+                  '&tag=stream:' + $state.params.streamId;
 
       dataSrc.poll({
         _cdapPath : path ,

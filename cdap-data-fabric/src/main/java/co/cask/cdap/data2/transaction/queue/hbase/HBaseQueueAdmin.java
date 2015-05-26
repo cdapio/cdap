@@ -182,11 +182,11 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public void clearAllForFlow(String namespaceId, String app, String flow) throws Exception {
+  public void clearAllForFlow(Id.Flow flowId) throws Exception {
     // all queues for a flow are in one table
-    truncate(getDataTableId(namespaceId, app, flow));
+    truncate(getDataTableId(flowId));
     // we also have to delete the config for these queues
-    deleteFlowConfigs(namespaceId, app, flow);
+    deleteFlowConfigs(flowId);
   }
 
   @Override
@@ -198,11 +198,11 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public void dropAllForFlow(String namespaceId, String app, String flow) throws Exception {
+  public void dropAllForFlow(Id.Flow flowId) throws Exception {
     // all queues for a flow are in one table
-    drop(getDataTableId(namespaceId, app, flow));
+    drop(getDataTableId(flowId));
     // we also have to delete the config for these queues
-    deleteFlowConfigs(namespaceId, app, flow);
+    deleteFlowConfigs(flowId);
   }
 
   @Override
@@ -304,12 +304,13 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     });
   }
 
-  private void deleteFlowConfigs(String namespaceId, String app, String flow) throws Exception {
+  private void deleteFlowConfigs(Id.Flow flowId) throws Exception {
     // It's a bit hacky here since we know how the HBaseConsumerStateStore works.
     // Maybe we need another Dataset set that works across all queues.
-    final QueueName prefixName = QueueName.from(URI.create(QueueName.prefixForFlow(namespaceId, app, flow)));
+    final QueueName prefixName = QueueName.from(URI.create(
+      QueueName.prefixForFlow(flowId)));
 
-    Id.DatasetInstance stateStoreId = getStateStoreId(namespaceId);
+    Id.DatasetInstance stateStoreId = getStateStoreId(flowId.getNamespaceId());
     Map<String, String> args = ImmutableMap.of(HBaseQueueDatasetModule.PROPERTY_QUEUE_NAME, prefixName.toString());
     HBaseConsumerStateStore stateStore = datasetFramework.getDataset(stateStoreId, args, null);
     if (stateStore == null) {
@@ -347,15 +348,15 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public void dropAllInNamespace(String namespaceId) throws Exception {
+  public void dropAllInNamespace(Id.Namespace namespaceId) throws Exception {
     Set<QueueConstants.QueueType> queueTypes = EnumSet.of(QueueConstants.QueueType.QUEUE,
                                                           QueueConstants.QueueType.SHARDED_QUEUE);
     for (QueueConstants.QueueType queueType : queueTypes) {
       // Note: The trailing "." is crucial, since otherwise nsId could match nsId1, nsIdx etc
       // It's important to keep config table enabled while disabling and dropping  queue tables.
       final String queueTableNamePrefix = String.format("%s.%s.", Constants.SYSTEM_NAMESPACE, queueType);
-      final TableId configTableId = getConfigTableId(namespaceId);
-      tableUtil.deleteAllInNamespace(getHBaseAdmin(), Id.Namespace.from(namespaceId), new Predicate<TableId>() {
+      final TableId configTableId = getConfigTableId(namespaceId.getId());
+      tableUtil.deleteAllInNamespace(getHBaseAdmin(), namespaceId, new Predicate<TableId>() {
         @Override
         public boolean apply(TableId tableId) {
           // It's a bit hacky here since we know how the Dataset system names table
@@ -365,15 +366,15 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     }
 
     // Delete the state store in the namespace
-    Id.DatasetInstance id = getStateStoreId(namespaceId);
+    Id.DatasetInstance id = getStateStoreId(namespaceId.getId());
     if (datasetFramework.hasInstance(id)) {
       datasetFramework.deleteInstance(id);
     }
   }
 
   @Override
-  public TableId getDataTableId(String namespaceId, String app, String flow) {
-    return getDataTableId(namespaceId, app, flow, type);
+  public TableId getDataTableId(Id.Flow flowId) {
+    return getDataTableId(flowId, type);
   }
 
   @Override
@@ -385,15 +386,16 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     if (!queueName.isQueue()) {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
     }
-    return getDataTableId(queueName.getFirstComponent(),
-                          queueName.getSecondComponent(),
-                          queueName.getThirdComponent(),
+    return getDataTableId(Id.Flow.from(queueName.getFirstComponent(),
+                                       queueName.getSecondComponent(),
+                                       queueName.getThirdComponent()),
                           queueType);
   }
 
-  public TableId getDataTableId(String namespaceId, String app, String flow, QueueConstants.QueueType queueType) {
-    String tableName = String.format("%s.%s.%s.%s", Constants.SYSTEM_NAMESPACE, queueType, app, flow);
-    return TableId.from(namespaceId, tableName);
+  public TableId getDataTableId(Id.Flow flowId, QueueConstants.QueueType queueType) {
+    String tableName = String.format("%s.%s.%s.%s", Constants.SYSTEM_NAMESPACE, queueType, flowId.getApplicationId(),
+                                     flowId.getId());
+    return TableId.from(flowId.getNamespaceId(), tableName);
   }
 
   private void upgrade(TableId tableId, Properties properties) throws Exception {

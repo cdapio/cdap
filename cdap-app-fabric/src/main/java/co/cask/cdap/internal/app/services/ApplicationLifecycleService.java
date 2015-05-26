@@ -202,7 +202,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                       namespace, entry.getValue());
       }
 
-      queueAdmin.dropAllForFlow(appId.getNamespaceId(), appId.getId(), flowSpecification.getName());
+      queueAdmin.dropAllForFlow(Id.Flow.from(appId, flowSpecification.getName()));
     }
     deleteProgramLocations(appId);
 

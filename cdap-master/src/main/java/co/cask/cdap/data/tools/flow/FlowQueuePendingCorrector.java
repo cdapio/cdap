@@ -335,7 +335,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
       new AuthModule(),
       new ExploreClientModule(),
       new DataFabricDistributedModule(),
-      new ServiceStoreModules().getDistributedModule(),
+      new ServiceStoreModules().getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),

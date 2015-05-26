@@ -16,9 +16,10 @@
 
 package co.cask.cdap.client.common;
 
-import co.cask.cdap.StandaloneContainer;
+import co.cask.cdap.StandaloneTester;
 import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.client.app.DummyWorkerTemplate;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.exception.NotFoundException;
@@ -28,7 +29,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.test.standalone.StandaloneTestBase;
+import co.cask.cdap.test.SingletonExternalResource;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
@@ -37,6 +38,8 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,19 +51,24 @@ import java.util.concurrent.TimeoutException;
 /**
  *
  */
-public abstract class ClientTestBase extends StandaloneTestBase {
-  protected static final boolean START_LOCAL_STANDALONE = true;
+public abstract class ClientTestBase {
+
+  @ClassRule
+  public static final SingletonExternalResource STANDALONE =
+    new SingletonExternalResource(new StandaloneTester(DummyWorkerTemplate.class));
+
+  @ClassRule
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   protected ClientConfig clientConfig;
 
   @Before
   public void setUp() throws Throwable {
-    ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(
-      StandaloneContainer.DEFAULT_CONNECTION_URI.toString());
+    StandaloneTester standalone = STANDALONE.get();
+    ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(standalone.getBaseURI().toString());
     clientConfig = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
   }
 
-  @Override
   protected ClientConfig getClientConfig() {
     return clientConfig;
   }

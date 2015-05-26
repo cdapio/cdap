@@ -140,16 +140,16 @@ Or, you can use an HTTP request::
 
 Because it is tedious to send events manually (not to mention difficult to correctly quote
 a multi-line command), a file with sample web log events is included in the Wise
-application source, along with a script that reads it line-by-line and submits the events
-to the Stream using the RESTful API. Use this script, located in the ``/bin`` directory of
-the application to send events to the stream:
+application source. The CDAP CLI can read it line-by-line and submit them as events
+to the Stream. Use the CLI to send the events to the stream:
 
 .. container:: highlight
 
   .. parsed-literal::
-    |$| cdap-wise-|cdap-apps-version|/bin/inject-data.sh
-
+    |$| cdap-cli.sh load stream logEventStream cdap-wise-|cdap-apps-version|/resources/apache.accesslog
+    
 This will run for a number of seconds until all events are inserted.
+
 
 Inspecting the Injected Data 
 ============================
@@ -163,6 +163,7 @@ of events you want to see. For example, using the Command Line Interface, this s
 in a time range of 3 minutes duration, starting 5 minutes ago::
 
   $ cdap-cli.sh get stream logEventStream -5m +3m 5
+  
   +========================================================================================================+
   | timestamp     | headers | body size | body                                                             |
   +========================================================================================================+
@@ -219,22 +220,22 @@ we need to know the name of the Flowlet inside the *WiseFlow* that performs the 
 processing. 
 
 In this case, it is a Flowlet named *parser*. Here is a ``curl`` command to retreive the
-number of events it has processed (the number return will vary, depending on how many
-events you have sent)::
+number of events it has processed (the endTime and the value returned will vary, depending 
+on when and how many events you have sent)::
 
   $ curl -w'\n' -X POST 'localhost:10000/v3/metrics/query?'\
   'context=namespace.default.app.Wise.flow.WiseFlow.flowlet.parser'\
   '&metric=system.process.events.processed&aggregate=true'
-  {"startTime":0,"endTime":0,"series":[{"metricName":"system.process.events.processed","grouping":{},"data":[{"time":0,"value":3007}]}]}
+  {"startTime":0,"endTime":1431467057,"series":[{"metricName":"system.process.events.processed","grouping":{},"data":[{"time":0,"value":3007}]}]}
 
 A much easier way to observe the Flow is in the `CDAP UI: <http://localhost:9999>`__
-it shows a `visualization of the Flow, <http://localhost:9999/#/flows/Wise:WiseFlow>`__
+it shows a `visualization of the Flow, <http://localhost:9999/ns/default/apps/Wise/programs/flows/WiseFlow/runs>`__
 annotated with its realtime metrics:
 
 .. image:: ../_images/quickstart/wise-flow1.png
    :width: 600px
 
-In this screenshot, we see that the Stream has about three thousand events and all of them
+In this screenshot, we see that the Stream has about thirty thousand events and all of them
 have been processed by both Flowlets. You can watch these metrics update in realtime by
 repeating the injection of events into the Stream:
 
@@ -243,15 +244,11 @@ repeating the injection of events into the Stream:
   .. parsed-literal::
     |$| cdap-wise-|cdap-apps-version|/bin/inject-data.sh
   
-You can change the type of metrics being displayed using the dropdown menu on the left. If
-you change it from *Flowlet Processed* to *Flowlet Rate*, you see the current number of
-events being processed by each Flowlet, in this case about 63 events per second:
+If you click on the right-most flowlet (*pageViewCount*) you see the current number of
+events being processed by each Flowlet, in this case up to about 60 events per second:
 
 .. image:: ../_images/quickstart/wise-flow2.png
    :width: 600px
-
-.. *Learn More:* A complete description of the Flow status page can be found in the
-.. :ref:`CDAP UI documentation. <admin-guide:cdap-ui>`
 
 
 Retrieving the Results of Processing 
@@ -292,6 +289,7 @@ Or, we can find out how many times the URL ``/home.html`` was accessed from the 
   6
   
   $ cdap-cli.sh call service Wise.WiseService POST ip/255.255.255.249/count body "/home.html"
+  
   +==================================================================+
   | status  | headers                    | body size   | body        |
   +==================================================================+
@@ -311,6 +309,7 @@ We can also use SQL to bypass the service and query the raw contents of the unde
 table (reformatted to fit)::
 
   $ cdap-cli.sh execute "\"SELECT * FROM dataset_pageviewstore WHERE key = '255.255.255.249'\""
+  
   +============================================================================================+
   | dataset_pageviewstore.key: STRING | dataset_pageviewstore.value: map<string,bigint>        |
   +============================================================================================+
@@ -360,7 +359,7 @@ When the job has finished, the returned status will be *STOPPED*. Now we can que
 bounce counts with SQL. Let's take a look at the schema first::
 
   $ cdap-cli.sh execute "\"DESCRIBE dataset_bouncecountstore\""
-  Successfully connected CDAP instance at 127.0.0.1:10000
+
   +==========================================================+
   | col_name: STRING | data_type: STRING | comment: STRING   |
   +==========================================================+
@@ -373,6 +372,7 @@ For example, to get the five URLs with the highest bounce-to-visit ratio (or bou
 
   $ cdap-cli.sh execute "\"SELECT uri, bounces/totalvisits AS ratio \
     FROM dataset_bouncecountstore ORDER BY ratio DESC LIMIT 5\""
+    
   +===================================+
   | uri: STRING | ratio: DOUBLE       |
   +===================================+
@@ -392,6 +392,7 @@ fixed columns::
 
   $ cdap-cli.sh execute "\"SELECT key AS ip, uri, count FROM dataset_pageviewstore \
     LATERAL VIEW explode(value) t AS uri,count ORDER BY count DESC LIMIT 10\""
+    
   +====================================================+
   | ip: STRING      | uri: STRING      | count: BIGINT |
   +====================================================+
@@ -421,6 +422,7 @@ pages?
        (SELECT key AS ip, uri, count \
           FROM dataset_pageviewstore LATERAL VIEW explode(value) t AS uri,count) views \
     WHERE views.uri = bounce.uri AND views.count >= 3\""
+    
   +=========================================================================+
   | views.uri: STRING | ratio: DOUBLE     | ip: STRING      | count: BIGINT |
   +=========================================================================+

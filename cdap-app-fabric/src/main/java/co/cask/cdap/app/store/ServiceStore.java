@@ -16,8 +16,9 @@
 
 package co.cask.cdap.app.store;
 
-import co.cask.tephra.TransactionFailureException;
 import com.google.common.util.concurrent.Service;
+
+import javax.annotation.Nullable;
 
 /**
  * Stores/Retrieves Information about System Services.
@@ -29,12 +30,13 @@ public interface ServiceStore extends Service {
    * @param serviceName Service Name.
    * @return Instance Count (can be null if no value was present for the given ServiceName).
    */
-  Integer getServiceInstance(String serviceName) throws TransactionFailureException;
+  @Nullable
+  Integer getServiceInstance(String serviceName);
 
   /**
    * Set the service instance count.
    * @param serviceName Service Name.
    * @param instances Instance Count.
    */
-  void setServiceInstance(String serviceName, int instances) throws TransactionFailureException;
+  void setServiceInstance(String serviceName, int instances);
 }

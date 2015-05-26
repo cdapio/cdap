@@ -953,7 +953,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       } else if (status.getStatus().equals("RUNNING")) {
         responder.sendString(HttpResponseStatus.FORBIDDEN, "Flow is running, please stop it first.");
       } else {
-        queueAdmin.dropAllForFlow(namespaceId, appId, flowId);
+        queueAdmin.dropAllForFlow(Id.Flow.from(programId.getApplication(), programId.getId()));
         FlowUtils.deleteFlowPendingMetrics(metricStore, namespaceId, appId, flowId);
         responder.sendStatus(HttpResponseStatus.OK);
       }
@@ -1065,12 +1065,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     // runtimeService. This should work because the method that is used to start a flow - startStopProgram - is also
     // synchronized on this.
     // This synchronization works in HA mode because even in HA mode there is only one leader at a time.
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
     try {
-      List<ProgramRecord> flows = listPrograms(Id.Namespace.from(namespaceId), ProgramType.FLOW, store);
+      List<ProgramRecord> flows = listPrograms(namespace, ProgramType.FLOW, store);
       for (ProgramRecord flow : flows) {
         String appId = flow.getApp();
         String flowId = flow.getName();
-        Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.FLOW, flowId);
+        Id.Program programId = Id.Program.from(namespace, appId, ProgramType.FLOW, flowId);
         ProgramStatus status = getProgramStatus(programId, ProgramType.FLOW);
         if (!"STOPPED".equals(status.getStatus())) {
           responder.sendString(HttpResponseStatus.FORBIDDEN,
@@ -1079,12 +1080,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           return;
         }
       }
-      queueAdmin.dropAllInNamespace(namespaceId);
+      queueAdmin.dropAllInNamespace(namespace);
       // delete process metrics that are used to calculate the queue size (system.queue.pending metric)
       FlowUtils.deleteFlowPendingMetrics(metricStore, namespaceId, null, null);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (Exception e) {
-      LOG.error("Error while deleting queues in namespace " + namespaceId, e);
+      LOG.error("Error while deleting queues in namespace " + namespace, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }

@@ -28,15 +28,9 @@ module.controller('myFlowController', function($scope) {
   $scope.instanceMap = {};
   $scope.labelMap = {};
 
-  /**
-   * Gets number of instances from node map.
-   */
-  $scope.getInstances = function(nodeId) {
-    return $scope.instanceMap[nodeId].instances ? $scope.instanceMap[nodeId].instances : 0;
-  };
-
   $scope.$watch('model', update);
   $scope.$watchCollection('model.metrics', update);
+  $scope.$watchCollection('model.instances', update);
 });
 
 module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamService) {
@@ -88,7 +82,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
       scope.getShapes = function() {
         var shapes = {};
         shapes.flowlet = function(parent, bbox, node) {
-          var instances = scope.getInstances(node.elem.__data__); // No other way to get name from node.
+          var instances = scope.model.instances[node.elem.__data__] || 0;
 
           // Pushing labels down
           parent.select('.label')
@@ -200,16 +194,6 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
             return '<strong>' + nodeId + '</strong>';
           })
           .show();
-      };
-
-      /**
-       * Radius for instances circle in flowlets. This is a determined as a factor of the size of the
-       * instances text.
-       */
-      scope.getInstancesScaledRadius = function(instances, radius) {
-        var base = radius;
-        var extra = (instances.toString().length - 1) * base / 2;
-        return base + extra;
       };
 
       /**

@@ -20,27 +20,6 @@ angular.module(PKG.name+'.feature.dashboard')
       this.pollId = undefined;
     }
 
-    // 'ns.default.app.foo' -> {'ns': 'default', 'app': 'foo'}
-    function contextToTags(context) {
-      var parts, tags, i;
-      if (context.length) {
-        parts = context.split('.');
-      } else {
-        // For an empty context, we want no tags. Splitting it by '.' yields [""]
-        parts = [];
-      }
-      if (parts.length % 2 !== 0) {
-        throw "Metrics context has uneven number of parts: " + context;
-      }
-      tags = {};
-      for (i = 0; i < parts.length; i+=2) {
-        // In context, '~' is used to represent '.'
-        var tagValue = parts[i + 1].replace(/~/g, '.');
-        tags[parts[i]] = tagValue;
-      }
-      return tags;
-    }
-
     function constructQuery(queryId, tags, metric) {
       var timeRange, retObj;
       timeRange = {'start': metric.startTime || 'now-60s',
@@ -63,7 +42,7 @@ angular.module(PKG.name+'.feature.dashboard')
       this.dataSrc.request({
         _cdapPath: '/metrics/query',
         method: 'POST',
-        body: constructQuery(queryId, contextToTags(this.metric.context), this.metric)
+        body: constructQuery(queryId, myHelpers.contextToTags(this.metric.context), this.metric)
       })
       .then(this.processData.bind(this));
     };
@@ -93,7 +72,7 @@ angular.module(PKG.name+'.feature.dashboard')
         {
           _cdapPath: '/metrics/query',
           method: 'POST',
-          body: constructQuery(queryId, contextToTags(this.metric.context), this.metric),
+          body: constructQuery(queryId, myHelpers.contextToTags(this.metric.context), this.metric),
           interval: this.interval
         },
         this.processData.bind(this)
