@@ -254,12 +254,10 @@ public class StandaloneMain {
     StandaloneMain main = null;
     try {
       if (args.length > 0) {
-          PrintStream err = System.err;
-          err.printf("%s takes no arguments", getClass().getSimpleName());
-          err.println("These arguments are being ignored:");
-          for (int i = 0; i <= args.length - 1; i++) {
-            err.println("Parameter #" + i + ": " + args[i]);
-          }
+        System.err.printf("%s takes no arguments", getClass().getSimpleName());
+        System.err.println("These arguments are being ignored:");
+        for (int i = 0; i <= args.length - 1; i++) {
+          System.err.printf("Parameter #%d: %s", i, args[i]);
         }
       }
       main = create();
