@@ -146,3 +146,11 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 .. _search: search.html
 
 - |search|_ Search this documentation using *Quick Search*
+
+
+.. rubric:: Documentation Version
+
+| **Version:** |release|
+| **Commit:** |git_hash|
+| **Date:** |git_timestamp|
+ 
