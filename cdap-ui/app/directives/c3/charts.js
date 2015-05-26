@@ -118,7 +118,7 @@ ngC3.controller('c3Controller', function ($scope, c3, $filter, $timeout, MyChart
   };
 
   $scope.startPolling = function() {
-    $scope.pollId = dataSrc.poll({
+    var promise = dataSrc.poll({
       _cdapPath: '/metrics/query',
       method: 'POST',
       body: MyMetricsQueryHelper.constructQuery(
@@ -128,6 +128,7 @@ ngC3.controller('c3Controller', function ($scope, c3, $filter, $timeout, MyChart
       ),
       interval: $scope.chartSettings.interval
     }, $scope.drawChart);
+    $scope.pollId = promise.__pollId__;
   };
 
   $scope.fetchData = function () {

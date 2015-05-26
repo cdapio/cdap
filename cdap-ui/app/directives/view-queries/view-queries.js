@@ -24,7 +24,7 @@ angular.module(PKG.name + '.commons')
               // Polling for status
               angular.forEach($scope.queries, function(q) {
                 if (q.status !== 'FINISHED') {
-                  q.pollid = dataSrc.poll({
+                  var promise = dataSrc.poll({
                     _cdapPath: '/data/explore/queries/' +
                                 q.query_handle + '/status',
                     interval: 1000
@@ -35,6 +35,7 @@ angular.module(PKG.name + '.commons')
                       dataSrc.stopPoll(q.pollid);
                     }
                   });
+                  q.pollid = promise.__pollId__;
                 }
               });
 

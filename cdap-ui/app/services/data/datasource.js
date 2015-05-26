@@ -226,6 +226,7 @@ angular.module(PKG.name+'.services')
           return $q.when(res);
         });
       }
+      promise.__pollId__ = id;
       return promise;
     };
 
