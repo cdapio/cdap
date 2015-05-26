@@ -364,9 +364,9 @@ Known Issues
   incorrect error message (`CDAP-1864 <https://issues.cask.co/browse/CDAP-1864>`__).
 - Retrieving multiple metrics |---| by issuing an HTTP POST request with a JSON list as
   the request body that enumerates the name and attributes for each metric |---| is currently not
-  supported in the `Metrics HTTP RESTful API v3 <http-restful-api-v3-metrics-multiple>`_.
-  Instead, use the v2 API. It will be
-  supported in a future release.
+  supported in the 
+  `Metrics HTTP RESTful API v3 <http://docs.cask.co/cdap/2.8.0/en/reference-manual/http-restful-api/http-restful-api-v3/metrics.html#query-tips>`__.
+  Instead, use the v2 API. It will be supported in a future release.
 - Typically, Datasets are bundled as part of Applications. When an Application is upgraded and redeployed,
   any changes in Datasets will not be redeployed. This is because Datasets can be shared across applications,
   and an incompatible schema change can break other applications that are using the Dataset.
