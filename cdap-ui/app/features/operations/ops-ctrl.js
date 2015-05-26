@@ -175,7 +175,6 @@ angular.module(PKG.name+'.feature.dashboard')
         angular.extend(widget, panel[4]);
         widgets.push(widget);
       });
-      console.log(widgets);
       // Note: title is not currently used in the view
       return {title : "System metrics", columns : widgets};
     }
