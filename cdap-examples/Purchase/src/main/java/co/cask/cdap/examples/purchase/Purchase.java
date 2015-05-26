@@ -36,6 +36,10 @@ public class Purchase implements Writable {
   public Purchase() {
   }
 
+  public Purchase(Purchase other) {
+    this(other.getCustomer(), other.getProduct(), other.getQuantity(), other.getPrice(), other.getPurchaseTime());
+  }
+
   public Purchase(String customer, String product, int quantity, int price, long purchaseTime) {
     this.customer = customer;
     this.product = product;

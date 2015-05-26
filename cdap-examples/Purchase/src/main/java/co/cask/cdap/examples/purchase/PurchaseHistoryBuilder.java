@@ -135,8 +135,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
       PurchaseHistory purchases = new PurchaseHistory(customer.toString(), userProfile);
       int numPurchases = 0;
       for (Purchase val : values) {
-        purchases.add(new Purchase(val.getCustomer(), val.getProduct(), val.getQuantity(), val.getPrice(),
-                                   val.getPurchaseTime()));
+        purchases.add(new Purchase(val));
         numPurchases++;
       }
       if (numPurchases == RARE_PURCHASE_COUNT) {
