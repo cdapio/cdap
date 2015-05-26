@@ -12,7 +12,7 @@ Dataset HTTP RESTful API
 .. highlight:: console
 
 The Dataset API allows you to interact with Datasets through HTTP. You can list, create,
-delete, and truncate Datasets. For details, see the 
+delete, and truncate Datasets. For details, see the
 :ref:`CDAP Components, Datasets section <datasets-index>`
 
 
@@ -117,8 +117,8 @@ You can update an existing dataset's table and properties by issuing an HTTP PUT
 with JSON-formatted name of the dataset type and properties in the body::
 
   {
-     "typeName":"<type-name>",
-     "properties":{<properties>}
+     "key1":"value1",
+     "key2":"value2"
   }
 
 **Note:** The Dataset must exist, and the instance and type passed must match with the existing Dataset.
@@ -149,8 +149,6 @@ with JSON-formatted name of the dataset type and properties in the body::
      - Requested Dataset was successfully updated
    * - ``404 Not Found``
      - Requested Dataset instance was not found
-   * - ``409 Conflict``
-     - Dataset Type provided for update is different from the existing Dataset Type
 
 .. rubric:: Example
 .. list-table::
@@ -160,7 +158,7 @@ with JSON-formatted name of the dataset type and properties in the body::
    * - HTTP Request
      - ``PUT <base-url>/namespaces/default/data/datasets/mydataset/properties``
    * - Body
-     - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"dataset.table.ttl":"7200"}}``
+     - ``{"dataset.table.ttl":"7200"}``
    * - Description
      - For the *mydataset* of type ``Table`` of the namespace *default*, update the Dataset
        and its time-to-live property to 2 hours
@@ -183,7 +181,7 @@ You can delete a Dataset by issuing an HTTP DELETE request to the URL::
      - Namespace ID
    * - ``<dataset-name>``
      - Dataset name
-     
+
 .. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
@@ -275,7 +273,7 @@ Datasets used by an Application
 
 You can retrieve a list of Datasets used by an Application by issuing a HTTP GET request to the URL::
 
-  GET <base-url>/namespaces/<namespace>/apps/<app-id>/datasets 
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/datasets
 
 .. list-table::
    :widths: 20 80
@@ -286,7 +284,7 @@ You can retrieve a list of Datasets used by an Application by issuing a HTTP GET
    * - ``<namespace>``
      - Namespace ID
    * - ``<app-id>``
-     - Application ID 
+     - Application ID
 
 .. rubric:: HTTP Responses
 .. list-table::

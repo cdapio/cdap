@@ -22,11 +22,13 @@ import co.cask.cdap.cli.command.CreateDatasetInstanceCommand;
 import co.cask.cdap.cli.command.DeleteDatasetInstanceCommand;
 import co.cask.cdap.cli.command.DeleteDatasetModuleCommand;
 import co.cask.cdap.cli.command.DeployDatasetModuleCommand;
+import co.cask.cdap.cli.command.DescribeDatasetInstanceCommand;
 import co.cask.cdap.cli.command.DescribeDatasetModuleCommand;
 import co.cask.cdap.cli.command.DescribeDatasetTypeCommand;
 import co.cask.cdap.cli.command.ListDatasetInstancesCommand;
 import co.cask.cdap.cli.command.ListDatasetModulesCommand;
 import co.cask.cdap.cli.command.ListDatasetTypesCommand;
+import co.cask.cdap.cli.command.SetDatasetInstancePropertiesCommand;
 import co.cask.cdap.cli.command.TruncateDatasetInstanceCommand;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
@@ -46,6 +48,8 @@ public class DatasetCommands extends CommandSet<Command> implements Categorized 
         .add(injector.getInstance(ListDatasetInstancesCommand.class))
         .add(injector.getInstance(ListDatasetModulesCommand.class))
         .add(injector.getInstance(ListDatasetTypesCommand.class))
+        .add(injector.getInstance(DescribeDatasetInstanceCommand.class))
+        .add(injector.getInstance(SetDatasetInstancePropertiesCommand.class))
         .add(injector.getInstance(CreateDatasetInstanceCommand.class))
         .add(injector.getInstance(DeleteDatasetInstanceCommand.class))
         .add(injector.getInstance(TruncateDatasetInstanceCommand.class))
@@ -53,7 +57,7 @@ public class DatasetCommands extends CommandSet<Command> implements Categorized 
         .add(injector.getInstance(DeployDatasetModuleCommand.class))
         .add(injector.getInstance(DeleteDatasetModuleCommand.class))
         .add(injector.getInstance(DescribeDatasetTypeCommand.class))
-      .build());
+        .build());
   }
 
   @Override
