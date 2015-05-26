@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.test.internal.guice;
+package co.cask.cdap.internal.guice;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;

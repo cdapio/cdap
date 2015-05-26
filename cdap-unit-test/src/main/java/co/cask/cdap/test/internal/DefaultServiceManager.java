@@ -19,6 +19,7 @@ package co.cask.cdap.test.internal;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.test.AbstractProgramManager;

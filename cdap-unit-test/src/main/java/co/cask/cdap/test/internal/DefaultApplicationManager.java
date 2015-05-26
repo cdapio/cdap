@@ -20,6 +20,7 @@ import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.ApplicationManager;
