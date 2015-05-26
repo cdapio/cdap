@@ -29,7 +29,7 @@
                 <a ng-if="program.type === 'Workflow'" ui-sref="workflows.detail.runs({programId: program.name})">
                   <strong> {{program.name}} </strong>
                 </a>
-                <a ng-if="program.type === 'Service'" ui-sref="services.detail.status({programId: program.name})">
+                <a ng-if="program.type === 'Service'" ui-sref="services.detail.runs({programId: program.name})">
                   <strong> {{program.name}} </strong>
                 </a>
                 <a ng-if="program.type === 'Mapreduce'" ui-sref="mapreduce.detail.runs({programId: program.name})">
