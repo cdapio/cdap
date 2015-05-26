@@ -81,6 +81,7 @@ angular.module(PKG.name+'.feature.dashboard')
     $scope.gridsterOpts = {
       rowHeight: '280',
       columns: 6,
+      minSizeX: 2,
       mobileBreakPoint: 800,
       swapping: true,
       resizable: {
