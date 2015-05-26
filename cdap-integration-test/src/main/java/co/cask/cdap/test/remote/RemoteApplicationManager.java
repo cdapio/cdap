@@ -71,6 +71,12 @@ public class RemoteApplicationManager implements ApplicationManager {
   }
 
   @Override
+  public FlowManager getFlowManager(String flowName) {
+    Id.Program flowId = Id.Program.from(application, ProgramType.FLOW, flowName);
+    return new RemoteFlowManager(flowId, clientConfig, this);
+  }
+
+  @Override
   public MapReduceManager startMapReduce(final String programName) {
     return startMapReduce(programName, ImmutableMap.<String, String>of());
   }
@@ -82,6 +88,12 @@ public class RemoteApplicationManager implements ApplicationManager {
   }
 
   @Override
+  public MapReduceManager getMapReduceManager(String programName) {
+    Id.Program programId = Id.Program.from(application, ProgramType.MAPREDUCE, programName);
+    return new DefaultMapReduceManager(programId, this);
+  }
+
+  @Override
   public SparkManager startSpark(String programName) {
     return startSpark(programName, ImmutableMap.<String, String>of());
   }
@@ -89,6 +101,12 @@ public class RemoteApplicationManager implements ApplicationManager {
   @Override
   public SparkManager startSpark(String programName, Map<String, String> arguments) {
     final Id.Program programId = startProgram(programName, arguments, ProgramType.SPARK);
+    return new DefaultSparkManager(programId, this);
+  }
+
+  @Override
+  public SparkManager getSparkManager(String jobName) {
+    Id.Program programId = Id.Program.from(application, ProgramType.SPARK, jobName);
     return new DefaultSparkManager(programId, this);
   }
 
@@ -104,8 +122,18 @@ public class RemoteApplicationManager implements ApplicationManager {
   }
 
   @Override
+  public WorkflowManager startWorkflow(String workflowName) {
+    return startWorkflow(workflowName, ImmutableMap.<String, String>of());
+  }
+
+  @Override
   public WorkflowManager startWorkflow(final String workflowName, Map<String, String> arguments) {
-    // currently we are using it for schedule, so not starting the workflow
+    Id.Program programId = startProgram(workflowName, arguments, ProgramType.WORKFLOW);
+    return new RemoteWorkflowManager(programId, clientConfig, this);
+  }
+
+  @Override
+  public WorkflowManager getWorkflowManager(String workflowName) {
     Id.Program programId = Id.Program.from(application, ProgramType.WORKFLOW, workflowName);
     return new RemoteWorkflowManager(programId, clientConfig, this);
   }
@@ -122,6 +150,12 @@ public class RemoteApplicationManager implements ApplicationManager {
   }
 
   @Override
+  public ServiceManager getServiceManager(String serviceName) {
+    Id.Program programId = Id.Program.from(application, ProgramType.SERVICE, serviceName);
+    return new RemoteServiceManager(programId, clientConfig, this);
+  }
+
+  @Override
   public WorkerManager startWorker(String workerName) {
     return startWorker(workerName, ImmutableMap.<String, String>of());
   }
@@ -129,6 +163,12 @@ public class RemoteApplicationManager implements ApplicationManager {
   @Override
   public WorkerManager startWorker(final String workerName, Map<String, String> arguments) {
     final Id.Program programId = startProgram(workerName, arguments, ProgramType.WORKER);
+    return new RemoteWorkerManager(programId, clientConfig, this);
+  }
+
+  @Override
+  public WorkerManager getWorkerManager(String workerName) {
+    Id.Program programId = Id.Program.from(application, ProgramType.WORKER, workerName);
     return new RemoteWorkerManager(programId, clientConfig, this);
   }
 

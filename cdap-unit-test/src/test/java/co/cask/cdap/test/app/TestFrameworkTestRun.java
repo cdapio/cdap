@@ -135,7 +135,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Test
   public void testDeployWorkflowApp() throws InterruptedException {
     ApplicationManager applicationManager = deployApplication(testSpace, AppWithSchedule.class);
-    WorkflowManager wfmanager = applicationManager.startWorkflow("SampleWorkflow", null);
+    WorkflowManager wfmanager = applicationManager.getWorkflowManager("SampleWorkflow");
     List<ScheduleSpecification> schedules = wfmanager.getSchedules();
     Assert.assertEquals(1, schedules.size());
     String scheduleName = schedules.get(0).getSchedule().getName();

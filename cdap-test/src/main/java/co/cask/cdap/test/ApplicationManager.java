@@ -41,6 +41,13 @@ public interface ApplicationManager {
   FlowManager startFlow(String flowName, Map<String, String> arguments);
 
   /**
+   * Returns a ProgramManager, without starting the program
+   * @param flowName Name of the flow
+   * @return A {@link FlowManager} for controlling the flow
+   */
+  FlowManager getFlowManager(String flowName);
+
+  /**
    * Starts a mapreduce job.
    * @param jobName Name of the mapreduce job to start.
    * @return A {@link MapReduceManager} for controlling the started mapreduce job.
@@ -56,6 +63,13 @@ public interface ApplicationManager {
   MapReduceManager startMapReduce(String jobName, Map<String, String> arguments);
 
   /**
+   * Returns a ProgramManager, without starting the program
+   * @param programName Name of the program
+   * @return A {@link MapReduceManager} for controlling the mapreduce job
+   */
+  MapReduceManager getMapReduceManager(String programName);
+
+  /**
    * Starts a Spark job.
    * @param jobName Name of the spark job to start.
    * @return A {@link SparkManager} for controlling the started spark job.
@@ -69,6 +83,13 @@ public interface ApplicationManager {
    * @return A {@link SparkManager} for controlling the started spark job.
    */
   SparkManager startSpark(String jobName, Map<String, String> arguments);
+
+  /**
+   * Returns a ProgramManager, without starting the program
+   * @param jobName Name of the job
+   * @return A {@link SparkManager} for controlling the spark job
+   */
+  SparkManager getSparkManager(String jobName);
 
   /**
    * Gets a {@link StreamWriter} for writing data to the given stream.
@@ -112,12 +133,26 @@ public interface ApplicationManager {
   boolean isRunning(Id.Program programId);
 
   /**
-     * Starts a workflow.
-     * @param workflowName
-     * @param arguments
-     * @return {@link WorkflowManager} for controlling the started workflow.
-     */
+   * Starts a workflow
+   * @param workflowName name of the workflow to start
+   * @return {@link WorkflowManager} for controlling the started workflow
+   */
+  WorkflowManager startWorkflow(String workflowName);
+
+  /**
+   * Starts a workflow.
+   * @param workflowName Name of the workflow to start
+   * @param arguments arguments to be passed to the workflow
+   * @return {@link WorkflowManager} for controlling the started workflow.
+   */
   WorkflowManager startWorkflow(String workflowName, Map<String, String> arguments);
+
+  /**
+   * Returns a ProgramManager, without starting the program
+   * @param workflowName Name of the workflow
+   * @return A {@link WorkflowManager} for controlling the workflow
+   */
+  WorkflowManager getWorkflowManager(String workflowName);
 
   /**
    * Starts a service.
@@ -135,6 +170,13 @@ public interface ApplicationManager {
   ServiceManager startService(String serviceName, Map<String, String> arguments);
 
   /**
+   * Returns a ProgramManager, without starting the program
+   * @param serviceName Name of the service
+   * @return A {@link ServiceManager} for controlling the service
+   */
+  ServiceManager getServiceManager(String serviceName);
+
+  /**
    * Starts a worker.
    * @param workerName name of the worker to be started
    * @return {@link WorkerManager} to control the running worker
@@ -149,4 +191,10 @@ public interface ApplicationManager {
    */
   WorkerManager startWorker(String workerName, Map<String, String> arguments);
 
+  /**
+   * Returns a ProgramManager, without starting the program
+   * @param workerName Name of the worker
+   * @return A {@link WorkerManager} for controlling the worker
+   */
+  WorkerManager getWorkerManager(String workerName);
 }
