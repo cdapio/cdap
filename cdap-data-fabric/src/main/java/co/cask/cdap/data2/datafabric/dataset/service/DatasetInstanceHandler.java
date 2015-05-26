@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.HandlerException;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -35,6 +36,7 @@ import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -55,7 +57,9 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -100,52 +104,50 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @GET
   @Path("/data/datasets/")
   public void list(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
-    List<DatasetSpecificationSummary> datasetSummaries = Lists.newArrayList();
-    for (DatasetSpecification spec : instanceManager.getAll(Id.Namespace.from(namespaceId))) {
-      datasetSummaries.add(new DatasetSpecificationSummary(spec.getName(), spec.getType(), spec.getProperties()));
-    }
-    responder.sendJson(HttpResponseStatus.OK, datasetSummaries);
+    Collection<DatasetSpecification> specs = instanceManager.getAll(Id.Namespace.from(namespaceId));
+    responder.sendJson(HttpResponseStatus.OK, spec2Summary(specs));
   }
 
   @GET
   @Path("/data/datasets/{name}")
-  public void getInfo(HttpRequest request, HttpResponder responder,
-                      @PathParam("namespace-id") String namespaceId,
-                      @PathParam("name") String name,
-                      @QueryParam("owner") List<String> owners) {
+  public void get(HttpRequest request, HttpResponder responder,
+                  @PathParam("namespace-id") String namespaceId,
+                  @PathParam("name") String name,
+                  @QueryParam("owner") List<String> owners) throws NotFoundException {
 
     Id.DatasetInstance datasetId = Id.DatasetInstance.from(namespaceId, name);
     DatasetSpecification spec = instanceManager.get(datasetId);
     if (spec == null) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } else {
-      // try finding type info in the dataset's namespace first, then the system namespace
-      DatasetTypeMeta typeMeta = getTypeInfo(Id.Namespace.from(namespaceId), spec.getType());
-      if (typeMeta == null) {
-        // Dataset type not found in the instance's namespace or the system namespace. Bail out.
-        responder.sendString(HttpResponseStatus.NOT_FOUND,
-                             String.format("Dataset type %s used by dataset %s not found", spec.getType(), name));
-        return;
-      }
-      // typeMeta is guaranteed to be non-null now.
-      DatasetMeta info = new DatasetMeta(spec, typeMeta, null);
-      for (String owner : owners) {
-        String[] parts = owner.split("::", 2);
-        Preconditions.checkArgument(parts.length == 2);
-        String ownerType = parts[0];
-        String ownerId = parts[1];
-        try {
-          if (ownerType.equals(Id.getType(Id.Program.class))) {
-            usageRegistry.register(Id.Program.fromStrings(ownerId.split("/")), datasetId);
-          } else if (ownerType.equals(Id.getType(Id.Adapter.class))) {
-            usageRegistry.register(Id.Adapter.fromStrings(ownerId.split("/")), datasetId);
-          }
-        } catch (Exception e) {
-          LOG.warn("Failed to register usage of {} -> {}", ownerId, datasetId);
-        }
-      }
-      responder.sendJson(HttpResponseStatus.OK, info, DatasetMeta.class, GSON);
+      throw new NotFoundException(datasetId);
     }
+
+    Id.DatasetType datasetTypeId = Id.DatasetType.from(namespaceId, spec.getType());
+    DatasetTypeMeta typeMeta = getTypeInfo(Id.Namespace.from(namespaceId), spec.getType());
+    if (typeMeta == null) {
+      // TODO: This shouldn't happen unless CDAP is in an invalid state - maybe give different error
+      throw new NotFoundException(datasetTypeId);
+    }
+
+    // register ownership
+    for (String owner : owners) {
+      String[] parts = owner.split("::", 2);
+      Preconditions.checkArgument(parts.length == 2);
+      String ownerType = parts[0];
+      String ownerId = parts[1];
+      try {
+        if (ownerType.equals(Id.getType(Id.Program.class))) {
+          usageRegistry.register(Id.Program.fromStrings(ownerId.split("/")), datasetId);
+        } else if (ownerType.equals(Id.getType(Id.Adapter.class))) {
+          usageRegistry.register(Id.Adapter.fromStrings(ownerId.split("/")), datasetId);
+        }
+      } catch (Exception e) {
+        LOG.warn("Failed to register usage of {} -> {}", ownerId, datasetId);
+      }
+    }
+
+    // typeMeta is guaranteed to be non-null now.
+    DatasetMeta info = new DatasetMeta(spec, typeMeta, null);
+    responder.sendJson(HttpResponseStatus.OK, info, DatasetMeta.class, GSON);
   }
 
   /**
@@ -192,10 +194,9 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @Path("/data/datasets/{name}/properties")
   public void update(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                      @PathParam("name") String name) {
-    DatasetInstanceConfiguration creationProperties = getInstanceConfiguration(request);
+    Map<String, String> properties = getProperties(request);
 
-    LOG.info("Update dataset {}, type name: {}, typeAndProps: {}",
-             name, creationProperties.getTypeName(), creationProperties.getProperties());
+    LOG.info("Update dataset {}, type name: {}, props: {}", name, GSON.toJson(properties));
     DatasetSpecification existing = instanceManager.get(Id.DatasetInstance.from(namespaceId, name));
 
     if (existing == null) {
@@ -205,17 +206,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return;
     }
 
-    if (!existing.getType().equals(creationProperties.getTypeName())) {
-      String  message = String.format("Cannot update dataset %s.%s instance with a different type, existing type is %s",
-                                      namespaceId, name, existing.getType());
-      LOG.warn(message);
-      responder.sendString(HttpResponseStatus.CONFLICT, message);
-      return;
-    }
-
     Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespaceId, name);
     disableExplore(datasetInstance);
 
+    DatasetInstanceConfiguration creationProperties = new DatasetInstanceConfiguration(existing.getType(), properties);
     if (!createDatasetInstance(creationProperties, namespaceId, name, responder, "update")) {
       return;
     }
@@ -226,15 +220,33 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     executeAdmin(request, responder, namespaceId, name, "upgrade");
   }
 
-  private DatasetInstanceConfiguration  getInstanceConfiguration(HttpRequest request) {
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
-    DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
-    if (creationProperties.getProperties().containsKey(Table.PROPERTY_TTL)) {
-      long ttl = TimeUnit.SECONDS.toMillis(Long.parseLong
-        (creationProperties.getProperties().get(Table.PROPERTY_TTL)));
-      creationProperties.getProperties().put(Table.PROPERTY_TTL, String.valueOf(ttl));
+  private Collection<DatasetSpecificationSummary> spec2Summary(Collection<DatasetSpecification> specs) {
+    List<DatasetSpecificationSummary> datasetSummaries = Lists.newArrayList();
+    for (DatasetSpecification spec : specs) {
+      datasetSummaries.add(new DatasetSpecificationSummary(spec.getName(), spec.getType(), spec.getProperties()));
     }
-    return  creationProperties;
+    return datasetSummaries;
+  }
+
+  private DatasetInstanceConfiguration  getInstanceConfiguration(HttpRequest request) {
+    Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
+    DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
+    fixProperties(creationProperties.getProperties());
+    return creationProperties;
+  }
+
+  private Map<String, String> getProperties(HttpRequest request) {
+    Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
+    Map<String, String> properties = GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
+    fixProperties(properties);
+    return properties;
+  }
+
+  private void fixProperties(Map<String, String> properties) {
+    if (properties.containsKey(Table.PROPERTY_TTL)) {
+      long ttl = TimeUnit.SECONDS.toMillis(Long.parseLong(properties.get(Table.PROPERTY_TTL)));
+      properties.put(Table.PROPERTY_TTL, String.valueOf(ttl));
+    }
   }
 
   private boolean createDatasetInstance(DatasetInstanceConfiguration creationProperties, String namespaceId,
