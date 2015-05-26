@@ -1,0 +1,31 @@
+@import '../../../../variables.less';
+
+body.theme-cdap {
+  my-log-viewer {
+    .row {
+      border: 1px solid lightgray;
+      padding: 10px 0;
+    }
+    .terminal {
+      background: @cdap-header;
+      color: white;
+      padding: 10px;
+      overflow: auto;
+      border: 1px inset #eee;
+      border-radius: 4px;
+      min-height: 240px;
+      max-height: 600px;
+
+      // li {
+      //   margin-top: 10px;
+      // }
+
+      code {
+        background: transparent;
+        white-space: normal;
+        color: inherit;
+        border: 0;
+      }
+    }
+  }
+}

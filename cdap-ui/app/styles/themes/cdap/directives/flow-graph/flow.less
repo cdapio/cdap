@@ -1,0 +1,174 @@
+@import '../../../../variables.less';
+
+body.theme-cdap {
+  my-flow-graph {
+
+    text {
+      font-weight: 300;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      fill: @cdap-header;
+    }
+
+    .node rect {
+      stroke: #999;
+      fill: white;
+      stroke-width: 1.5px;
+    }
+
+    .edgePath path {
+      stroke-dasharray: 8px, 8px;
+      stroke: @cdap-darkness;
+      stroke-width: 2px;
+    }
+
+    .flowlet-svg {
+      fill: white;
+      cursor: pointer;
+      stroke: @cdap-darkness;
+      stroke-width: 5px;
+    }
+
+    .stream-svg {
+      fill: white;
+      cursor: pointer;
+      stroke: @cdap-darkness;
+      stroke-width: 5px;
+    }
+
+    .flowlet-events {
+      fill: @cdap-orange;
+      stroke: @cdap-darkness;
+      stroke-width: 5px;
+      cursor: pointer;
+    }
+
+    .flowlet-event-count {
+      fill: white;
+      font-size: 11px;
+      text-anchor: middle;
+    }
+
+    .stream-events {
+      fill: @brand-success;
+      stroke: @cdap-darkness;
+      stroke-width: 5px;
+      cursor: pointer;
+    }
+
+    .stream-event-count {
+      fill: white;
+      font-size: 11px;
+      text-anchor: middle;
+    }
+
+    .flowlet-instances {
+      fill: #01ABED;
+      stroke: @cdap-darkness;
+      stroke-width: 2px;
+    }
+
+    .flowlet-instance-count {
+      fill: @brand-primary;
+      font-size: 18px;
+      cursor: default;
+      text-anchor: middle;
+    }
+  }
+
+  my-workflow-graph {
+
+    text {
+      font-weight: 300;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      fill: @cdap-header;
+    }
+
+    .node rect {
+      stroke: #999;
+      fill: white;
+      stroke-width: 1.5px;
+    }
+
+    .edgePath path {
+      stroke-dasharray: 8px, 8px;
+      stroke: @cdap-darkness;
+      stroke-width: 2px;
+    }
+
+    .job-svg {
+      fill: white;
+      stroke: @cdap-darkness;
+      stroke-width: 5px;
+      cursor: pointer;
+    }
+
+    .end-svg, .start-svg {
+      stroke: @cdap-darkness;
+      stroke-width: 5px;
+      + .label text {
+        fill: white;
+        font-size: 12px;
+      }
+    }
+    .start-svg { fill: @brand-success; }
+    .end-svg { fill: @brand-danger; }
+
+    .conditional-svg {
+      fill: @cdap-darkness;
+      cursor: pointer;
+    }
+
+    .job-events {
+      fill: @cdap-orange;
+      stroke: #ebecf1;
+      stroke-width: 2px;
+      cursor: pointer;
+    }
+
+    .conditional-events {
+      fill: @brand-success;
+      stroke: white;
+      stroke-width: 2px;
+      cursor: pointer;
+    }
+  }
+
+  .d3-tip {
+    line-height: 1;
+    font-weight: bold;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    border-radius: 2px;
+    pointer-events: none;
+  }
+
+  /* Creates a small triangle extender for the tooltip */
+  .d3-tip:after {
+    box-sizing: border-box;
+    display: inline;
+    font-size: 10px;
+    width: 100%;
+    line-height: 1;
+    color: rgba(0, 0, 0, 0.8);
+    position: absolute;
+    pointer-events: none;
+  }
+
+  /* Style northward tooltips differently */
+  .d3-tip.n:after {
+    content: "\25BC";
+    margin: -1px 0 0 0;
+    top: 100%;
+    left: 0;
+    text-align: center;
+  }
+
+  span.tip-node-name { color: @brand-danger; }
+}

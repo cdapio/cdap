@@ -1,0 +1,73 @@
+@import '../../../../variables.less';
+
+body.theme-dubai {
+  &.state-spark {
+    .sparks-metrics {
+
+      .metric-row{
+        margin: 0 25px 18px;
+      }
+      .title-storage{
+        text-align: center;
+        font-size: 18px;
+        margin: 21px 0 36px 0;
+      }
+      .title-stage{
+        text-align: center;
+        font-size: 18px;
+        margin: 21px 0 65px 0;
+      }
+
+     .spark-metrics-storage, .sparks-metrics .spark-metrics-stages {
+        border: 4px solid #3C4355;
+        background-color: #3C4355;
+        background-size: 100%;
+        color: #fff;
+        border-radius: 5px;
+      }
+      .spark-metrics-storage {
+        width: 260px;
+        float: left;
+        margin-right: 75px;
+      }
+
+      .spark-metrics-stages {
+        width: 530px;
+        float: left;
+        border: 4px solid #3C4355;
+        background-color: #3C4355;
+        background-size: 100%;
+        color: #fff;
+        border-radius: 5px;
+        height: 210px;
+
+        .stage-status-line {
+          height: 40px;
+          margin: 0 40px;
+          font-size: 14px;
+          text-align: center;
+        }
+
+        .running, .failed, .waiting {
+          float: left;
+          height: 100%;
+          padding-top: 13px;
+          font-size: 18px;
+        }
+
+        .running {
+          background:  #16AB16;
+          width: 33.3%;
+        }
+        .failed {
+          background:  #D14830;
+          width: 33.3%;
+        }
+        .waiting {
+          background:  #3CA9D8;
+          width: 33.3%;
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,421 @@
+@import '../../variables.less';
+@import "../../../../bower_components/bootstrap/less/mixins.less";
+@import 'mixins.less';
+
+body.theme-dubai {
+
+  //
+  // Full width for Dashboard
+  // --------------------------------------------------
+  &.state-dashboard {
+    main.container {
+      width: 100%;
+    }
+  }
+
+  //
+  // Alerts
+  // --------------------------------------------------
+
+  // Common styles
+  .alert {
+    text-shadow: 0 1px 0 rgba(255,255,255,.2);
+    @shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 1px 2px rgba(0,0,0,.05);
+    .box-shadow(@shadow);
+  }
+
+  // Mixin for generating new styles
+  .alert-styles(@color) {
+    #gradient > .vertical(@start-color: @color; @end-color: darken(@color, 7.5%));
+    border-color: darken(@color, 15%);
+  }
+
+  // Apply the mixin to the alerts
+  .alert-success    { .alert-styles(@alert-success-bg); }
+  .alert-info       { .alert-styles(@alert-info-bg); }
+  .alert-warning    { .alert-styles(@alert-warning-bg); }
+  .alert-danger     { .alert-styles(@alert-danger-bg); }
+
+
+  //
+  // Progress bars
+  // --------------------------------------------------
+
+  // Give the progress background some depth
+  .progress {
+    #gradient > .vertical(@start-color: darken(@progress-bg, 4%); @end-color: @progress-bg)
+  }
+
+  // Mixin for generating new styles
+  .progress-bar-styles(@color) {
+    #gradient > .vertical(@start-color: @color; @end-color: darken(@color, 10%));
+  }
+
+  // Apply the mixin to the progress bars
+  .progress-bar            { .progress-bar-styles(@progress-bar-bg); }
+  .progress-bar-success    { .progress-bar-styles(@progress-bar-success-bg); }
+  .progress-bar-info       { .progress-bar-styles(@progress-bar-info-bg); }
+  .progress-bar-warning    { .progress-bar-styles(@progress-bar-warning-bg); }
+  .progress-bar-danger     { .progress-bar-styles(@progress-bar-danger-bg); }
+
+  // Reset the striped class because our mixins don't do multiple gradients and
+  // the above custom styles override the new `.progress-bar-striped` in v3.2.0.
+  .progress-bar-striped {
+    #gradient > .striped();
+  }
+
+  //
+  // Tables
+  // --------------------------------------------------
+
+  .table {
+    background-color: @table-bg;
+    margin-top: 10px;
+    &[cask-sortable] {
+      thead {
+
+
+        .empty { cursor: default; }
+      }
+    }
+    tbody {
+      color: @cdap-bluegray;
+      a {
+        color: @cdap-bluegray;
+        &:hover, &:focus { text-decoration: underline; }
+        &.btn-danger { .cask-btn(@background: transparent, @border: 0, @border-radius: 0, @color: @brand-danger, @padding: 0); }
+      }
+    }
+    th, td {
+      padding: 10px;
+      &:hover, &:focus { outline: none; }
+    }
+    th {
+      font-size: 16px;
+      &:hover, &:focus {
+        background-color: transparent;
+        cursor: pointer;
+      }
+    }
+    td { font-size: 14px; }
+
+    &[cask-sortable] {
+      tr.sort-enabled th:hover { background-color: transparent; }
+    }
+  }
+
+  // Add table-curved class for curved table edges
+  .table-curved {
+    border-collapse: separate;
+    border: solid @table-border-color 1px;
+    .border-radius(8px);
+    border-left: 0;
+    thead {
+      tr {
+        th {
+          font-weight: 400;
+        }
+      }
+    }
+      td, th {
+        border-left: 1px solid @table-border-color;
+        border-top: 1px solid @table-border-color;
+      }
+      th {
+        border-top: 0;
+        border-bottom: 0;
+        &:first-child { .border-radius(@table-radius 0 0 0); }
+        &:last-child { .border-radius(0 @table-radius 0 0); }
+        &:only-child { .border-radius(@table-radius @table-radius 0 0); }
+      }
+      tr:last-child {
+        td:first-child { .border-radius(0 0 0 @table-radius); }
+        td:last-child { .border-radius(0 0 @table-radius 0); }
+      }
+  }
+
+  // ui-view[role="tabpanel"] .table:not([cask-sortable])
+  .table.table-status {
+    th, td {
+      border-left: 0;
+      &:first-child { border-right: 1px solid @table-border-color; }
+    }
+    th {
+      color: @cdap-header;
+      cursor: default;
+    }
+    td {
+      border-top: 0;
+      strong {
+        color: @cdap-header;
+        display: block;
+        font-size: 18px;
+        line-height: 1;
+      }
+      @media (min-width: @screen-md-min) {
+        .row .col-xs-6:first-child > div {
+          border-right: 1px solid @table-border-color;
+          width: 75%;
+        }
+      }
+    }
+  }
+
+  .instances .table {
+    tbody { background-color: white; }
+    td { border: 0; }
+  }
+  //
+  // List groups
+  // --------------------------------------------------
+
+  .list-group {
+    .border-radius(@border-radius-base);
+    .box-shadow(0 0px 0px rgba(0,0,0,.075));
+  }
+  .list-group-item.active,
+  .list-group-item.active:hover,
+  .list-group-item.active:focus {
+    text-shadow: 0 -1px 0 darken(@list-group-active-bg, 10%);
+    #gradient > .vertical(@start-color: @list-group-active-bg; @end-color: darken(@list-group-active-bg, 7.5%));
+    border-color: darken(@list-group-active-border, 7.5%);
+    .badge { text-shadow: none; }
+  }
+
+  //
+  // Panels
+  // --------------------------------------------------
+
+// Message panel (appears on Dev + Management start screens)
+  .panel-message {
+    background: white;
+    border: 1px solid lightgray;
+    margin-bottom: 20px;
+    padding: 10px;
+    .border-radius(4px);
+    .box-shadow(0 8px 6px -6px @cdap-darkness);
+    p { margin-bottom: 0; }
+    .btn-close {
+      .cask-btn(@background: @cdap-lightgray, @border: 0, @border-radius: 28px, @padding: 0);
+      cursor: pointer;
+      line-height: 0;
+      .fa-close {
+        color: white;
+        padding: 8px 10px;
+        vertical-align: text-top;
+      }
+    }
+  }
+
+  .panel-explore {
+    background-color: transparent;
+    color: @cdap-header;
+    .box-shadow(none);
+    > .panel-heading {
+      background: white;
+      border: 1px solid lightgray;
+      padding: 20px;
+      .border-radius(8px);
+    }
+    .panel-title {
+      font-size: 17px;
+      span.fa {
+        margin-right: 10px;
+        line-height: 1.2;
+        .border-radius(25px);
+      }
+    }
+    > .panel-collapse {
+      > .panel-body {
+        border-top: 0;
+        padding-right: 0;
+        padding-left: 0;
+        pre {
+          background-color: #dcdce4;
+          color: @cdap-header;
+          .border-radius(4px);
+        }
+      }
+    }
+  }
+  // Mixin for generating new styles
+  .panel-heading-styles(@color) {
+    #gradient > .vertical(@start-color: @color; @end-color: darken(@color, 5%));
+  }
+
+  // Apply the mixin to the panel headings only
+  .panel-default > .panel-heading   { background: @cdap-lightgray; border: 0; }
+  .panel-primary > .panel-heading   { .panel-heading-styles(@panel-primary-heading-bg); }
+  .panel-success > .panel-heading   { .panel-heading-styles(@panel-success-heading-bg); }
+  .panel-info > .panel-heading      { .panel-heading-styles(@panel-info-heading-bg); }
+  .panel-warning > .panel-heading   { .panel-heading-styles(@panel-warning-heading-bg); }
+  .panel-danger > .panel-heading    { .panel-heading-styles(@panel-danger-heading-bg); }
+
+
+  //
+  // Wells
+  // --------------------------------------------------
+
+  .well {
+    //#gradient > .vertical(@start-color: darken(@well-bg, 5%); @end-color: @well-bg);
+    background-color: #DCDCE4;
+    border-color: darken(@well-bg, 10%);
+    color: @cdap-header;
+    @shadow: inset 0 1px 3px rgba(0,0,0,.05), 0 1px 0 rgba(255,255,255,.1);
+    .box-shadow(@shadow);
+
+    &.dark {
+      margin-top: 0;
+      background: @cdap-darkness;
+    }
+  }
+
+  //
+  // Breadcrumbs
+  // --------------------------------------------------
+
+  .breadcrumb {
+    background-color: transparent;
+    padding-left: 0px;
+    font-weight: 500;
+    > li {
+      color: @cdap-gray;
+      a { color: @cdap-header; }
+      + li:before {
+        content: ">";
+        padding: 0 3px;
+        color: @cdap-gray;
+      }
+    }
+  }
+
+  //
+  // Modals
+  // --------------------------------------------------
+  .modal {
+    // Styling for all modals
+    h3, h4 { color: white; }
+    h3 small {
+      color: white;
+      display: block;
+      padding-top: 5px;
+    }
+    .modal-header {
+      border-bottom: 0;
+      .btn, button {
+        .cask-btn(@color: @cdap-header, @background: white, @border: 0, @border-radius: 16px, @font-size: 18px, @padding: 5px 7px);
+        line-height: 1;
+        opacity: 1;
+      }
+      .modal-title { font-weight: bold; }
+    }
+    .modal-dialog { .border-radius(4px); }
+    .modal-content {
+      color: white;
+      background-color: fade(#343841, 85%);
+      button.form-control {
+        &:focus { outline: none; }
+      }
+      table > thead {
+        color: @text-color;
+      }
+    }
+    .modal-footer {
+      border-top: 0;
+      .btn-default { .cask-btn(@color: white, @background: @cdap-gray, @border: 0, @padding: 10px 20px); }
+      .btn-primary, .btn-success {
+        .cask-btn(@color: white, @background: @brand-success, @border: 0, @padding: 10px 20px);
+        margin-left: 30px;
+      }
+    }
+    .form-control {
+      border: 0;
+      .border-radius(4px);
+      .box-shadow(none);
+      text-align: left;
+      &:focus {
+        border-color: transparent;
+        .box-shadow(none);
+      }
+
+      // Metric picker specific styles.
+      &.mp-dropdown-toggle {
+        border-radius: 4px 0px 0px 4px;
+        border-right: 1px solid #ccc;
+      }
+
+      &.mp-input-group-input {
+        border-radius: 0px 4px 4px 0px;
+      }
+    }
+    .input-group-addon + .form-control {
+      border-left: 1px solid lightgray;
+      .border-radius(0);
+     }
+    textarea.form-control { min-height: 100px; }
+    select.form-control {
+      background-color: @cdap-darkness;
+      color: white;
+    }
+
+    .h4-margin {
+      margin-top: 9px;
+      margin-bottom: 9px;
+    }
+
+    // caskConfirm modal styling (no modal-lg or modal-sm class present)
+    &.center {
+      h4 { font-weight: bold; }
+      .close { display: none; }
+      .modal-content, .modal-footer { text-align: center; }
+      .modal-content {
+        color: white;
+        border: 0;
+        .box-shadow(none);
+      }
+      .modal-footer {
+        .btn-primary { .cask-btn(@color: white, @background: @brand-danger, @border: 0, @padding: 10px 20px); }
+      }
+    }
+    .modal-dialog {
+      -ms-transform: translateX(0%) translateY(60px);
+      -webkit-transform: translateX(0%) translateY(60px);
+      transform: translateX(0%) translateY(60px);
+      .modal-header {
+        .btn {
+          .cask-btn(@color: @cdap-header, @background: white, @border: 0, @border-radius: 16px, @padding: 5px 7px);
+          font-size: 18px;
+          line-height: 1;
+        }
+      }
+      // Small and large modal styling
+      &.modal-sm, &.modal-lg {
+        color: white;
+
+        .modal-footer {
+          .btn-primary, .btn-success {
+            .cask-btn(@color: white, @background: @brand-success, @border: 0, @padding: 10px 20px);
+            margin-left: 30px;
+          }
+        }
+      }
+      // Small modal styling
+      &.modal-sm {
+        text-align: center;
+        .modal-footer { text-align: center; }
+      }
+      // Large modal styling
+      &.modal-lg {
+        .modal-content {
+          .fa-plus { padding-top: 2px }
+          a.fa-times { .cask-btn(@color: @brand-danger, @background: @brand-danger, @border: 0, @padding: 15px 15px); }
+          .btn-danger {}
+        }
+        .modal-footer { text-align: right; }
+        .panel { background-color: transparent; }
+      }
+    }
+
+  }
+
+}

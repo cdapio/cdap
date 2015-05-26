@@ -49,8 +49,12 @@ gulp.task('css:app', function() {
   return gulp.src([
       './app/styles/common.less',
       './app/styles/themes/*.less',
-      './app/directives/**/*.{less,css}',
-      './app/features/**/*.{less,css}'
+      './app/styles/themes/cdap/*.less',
+      './app/styles/themes/dubai/*.less',
+      './app/styles/themes/cdap/features/**/*.{less,css}',
+      './app/styles/themes/cdap/directives/**/*.{less,css}',
+      './app/styles/themes/dubai/features/**/*.{less,css}',
+      './app/styles/themes/dubai/directives/**/*.{less,css}'
     ])
     .pipe(plug.if('*.less', plug.less()))
     .pipe(plug.concat('app.css'))
