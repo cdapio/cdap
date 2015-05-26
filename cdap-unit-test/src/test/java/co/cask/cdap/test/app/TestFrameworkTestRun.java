@@ -109,6 +109,16 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       callServiceGet(serviceManager.getServiceURL(), "result"), String.class));
   }
 
+  @Test
+  public void testServiceManager() throws Exception {
+    ApplicationManager applicationManager = deployApplication(FilterApp.class);
+    ServiceManager countService = applicationManager.getServiceManager("CountService");
+    countService.setInstances(2);
+    Assert.assertEquals(0, countService.getProvisionedInstances());
+    Assert.assertEquals(2, countService.getRequestedInstances());
+    Assert.assertFalse(countService.isRunning());
+  }
+
   @Category(SlowTests.class)
   @Test
   public void testMapperDatasetAccess() throws Exception {
