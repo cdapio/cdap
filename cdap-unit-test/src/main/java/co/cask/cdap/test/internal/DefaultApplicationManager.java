@@ -22,6 +22,7 @@ import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.test.AbstractApplicationManager;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.DefaultMapReduceManager;
@@ -38,7 +39,6 @@ import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -56,7 +56,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * A default implementation of {@link ApplicationManager}.
  */
-public class DefaultApplicationManager implements ApplicationManager {
+public class DefaultApplicationManager extends AbstractApplicationManager {
 
   private final ConcurrentMap<String, Id.Program> runningProcesses = Maps.newConcurrentMap();
   private final Id.Application applicationId;
@@ -111,30 +111,9 @@ public class DefaultApplicationManager implements ApplicationManager {
   }
 
   @Override
-  public FlowManager startFlow(final String flowName) {
-    return startFlow(flowName, ImmutableMap.<String, String>of());
-  }
-
-  @Override
-  public FlowManager startFlow(final String flowName, Map<String, String> arguments) {
-    final Id.Program flowId = startProgram(flowName, arguments, ProgramType.FLOW);
-    return new DefaultFlowManager(flowId, appFabricClient, this);
-  }
-
-  @Override
   public FlowManager getFlowManager(String flowName) {
     Id.Program programId = Id.Program.from(applicationId, ProgramType.FLOW, flowName);
     return new DefaultFlowManager(programId, appFabricClient, this);
-  }
-
-  @Override
-  public MapReduceManager startMapReduce(final String programName) {
-    return startMapReduce(programName, ImmutableMap.<String, String>of());
-  }
-
-  @Override
-  public MapReduceManager startMapReduce(final String programName, Map<String, String> arguments) {
-    return getMapReduceManager(programName, arguments, ProgramType.MAPREDUCE);
   }
 
   @Override
@@ -143,34 +122,32 @@ public class DefaultApplicationManager implements ApplicationManager {
     return new DefaultMapReduceManager(programId, this);
   }
 
-  private MapReduceManager getMapReduceManager(final String programName, Map<String, String> arguments,
-                                               final ProgramType programType) {
-    try {
-      final Id.Program programId = startProgram(programName, arguments, programType);
-      return new DefaultMapReduceManager(programId, this);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  @Override
-  public SparkManager startSpark(String programName) {
-    return startSpark(programName, ImmutableMap.<String, String>of());
-  }
-
-  @Override
-  public SparkManager startSpark(String programName, Map<String, String> arguments) {
-    final Id.Program programId = startProgram(programName, arguments, ProgramType.SPARK);
-    return new DefaultSparkManager(programId, this);
-  }
-
   @Override
   public SparkManager getSparkManager(String jobName) {
     Id.Program programId = Id.Program.from(applicationId, ProgramType.SPARK, jobName);
     return new DefaultSparkManager(programId, this);
   }
 
-  private Id.Program startProgram(String programName, Map<String, String> arguments, ProgramType programType) {
+  @Override
+  public WorkflowManager getWorkflowManager(String workflowName) {
+    Id.Program programId = Id.Program.from(applicationId, ProgramType.WORKFLOW, workflowName);
+    return new DefaultWorkflowManager(programId, appFabricClient, this);
+  }
+
+  @Override
+  public ServiceManager getServiceManager(String serviceName) {
+    Id.Program programId = Id.Program.from(applicationId, ProgramType.SERVICE, serviceName);
+    return new DefaultServiceManager(programId, appFabricClient, discoveryServiceClient, this);
+  }
+
+  @Override
+  public WorkerManager getWorkerManager(String workerName) {
+    Id.Program programId = Id.Program.from(applicationId, ProgramType.WORKER, workerName);
+    return new DefaultWorkerManager(programId, appFabricClient, this);
+  }
+
+  @Override
+  protected Id.Program startProgram(String programName, Map<String, String> arguments, ProgramType programType) {
     final Id.Program programId = Id.Program.from(applicationId, programType, programName);
     // program can stop by itself, so refreshing info about its state
     if (!isRunning(programId)) {
@@ -187,57 +164,6 @@ public class DefaultApplicationManager implements ApplicationManager {
       throw Throwables.propagate(e);
     }
     return programId;
-  }
-
-  @Override
-  public WorkflowManager startWorkflow(final String workflowName) {
-    return startWorkflow(workflowName, ImmutableMap.<String, String>of());
-  }
-
-  @Override
-  public WorkflowManager startWorkflow(final String workflowName, Map<String, String> arguments) {
-    final Id.Program workflowId = startProgram(workflowName, arguments, ProgramType.WORKFLOW);
-    return new DefaultWorkflowManager(workflowId, appFabricClient, this);
-  }
-
-  @Override
-  public WorkflowManager getWorkflowManager(String workflowName) {
-    Id.Program programId = Id.Program.from(applicationId, ProgramType.WORKFLOW, workflowName);
-    return new DefaultWorkflowManager(programId, appFabricClient, this);
-  }
-
-  @Override
-  public ServiceManager startService(String serviceName) {
-    return startService(serviceName, ImmutableMap.<String, String>of());
-  }
-
-  @Override
-  public ServiceManager startService(final String serviceName, Map<String, String> arguments) {
-    final Id.Program serviceId = startProgram(serviceName, arguments, ProgramType.SERVICE);
-    return new DefaultServiceManager(serviceId, appFabricClient, discoveryServiceClient, this);
-  }
-
-  @Override
-  public ServiceManager getServiceManager(String serviceName) {
-    Id.Program programId = Id.Program.from(applicationId, ProgramType.SERVICE, serviceName);
-    return new DefaultServiceManager(programId, appFabricClient, discoveryServiceClient, this);
-  }
-
-  @Override
-  public WorkerManager startWorker(String workerName) {
-    return startWorker(workerName, ImmutableMap.<String, String>of());
-  }
-
-  @Override
-  public WorkerManager startWorker(String workerName, Map<String, String> arguments) {
-    final Id.Program workerId = startProgram(workerName, arguments, ProgramType.WORKER);
-    return new DefaultWorkerManager(workerId, appFabricClient, this);
-  }
-
-  @Override
-  public WorkerManager getWorkerManager(String workerName) {
-    Id.Program programId = Id.Program.from(applicationId, ProgramType.WORKER, workerName);
-    return new DefaultWorkerManager(programId, appFabricClient, this);
   }
 
   @Override

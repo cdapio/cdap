@@ -91,48 +91,7 @@ public interface ApplicationManager {
    */
   SparkManager getSparkManager(String jobName);
 
-  /**
-   * Gets a {@link StreamWriter} for writing data to the given stream.
-   * @param streamName Name of the stream to write to.
-   * @return A {@link StreamWriter}.
-   *
-   * @deprecated use TestBase#getStreamManager(String streamName)
-   */
-  @Deprecated
-  StreamWriter getStreamWriter(String streamName);
-
-  /**
-   * Gets an instance of {@link co.cask.cdap.api.dataset.Dataset} of the given dataset name.
-   * Operations on the returned {@link co.cask.cdap.api.dataset.Dataset} always performed synchronously,
-   * i.e. no support for multi-operations transaction.
-   * @param dataSetName Name of the dataset to retrieve.
-   * @param <T> Type of the dataset.
-   * @return A {@link DataSetManager} instance.
-   * @deprecated As of version 2.8.0, replaced by
-   *             TestBase#getDataset(co.cask.cdap.proto.Id.Namespace, String)
-   */
-  @Deprecated
-  <T> DataSetManager<T> getDataSet(String dataSetName) throws Exception;
-
-  /**
-   * Stops all processors managed by this manager and clear all associated runtime metrics.
-   */
-  void stopAll();
-
-  /**
-   * Stops a particular program.
-   * @param programId the program to stop
-   */
-  void stopProgram(Id.Program programId);
-
-  /**
-   * Checks whether a particular program is running or not.
-   * @param programId the program to check
-   * @return true if the program is running; false otherwise.
-   */
-  boolean isRunning(Id.Program programId);
-
-  /**
+    /**
    * Starts a workflow
    * @param workflowName name of the workflow to start
    * @return {@link WorkflowManager} for controlling the started workflow
@@ -197,4 +156,45 @@ public interface ApplicationManager {
    * @return A {@link WorkerManager} for controlling the worker
    */
   WorkerManager getWorkerManager(String workerName);
+
+  /**
+   * Gets a {@link StreamWriter} for writing data to the given stream.
+   * @param streamName Name of the stream to write to.
+   * @return A {@link StreamWriter}.
+   *
+   * @deprecated use TestBase#getStreamManager(String streamName)
+   */
+  @Deprecated
+  StreamWriter getStreamWriter(String streamName);
+
+  /**
+   * Gets an instance of {@link co.cask.cdap.api.dataset.Dataset} of the given dataset name.
+   * Operations on the returned {@link co.cask.cdap.api.dataset.Dataset} always performed synchronously,
+   * i.e. no support for multi-operations transaction.
+   * @param dataSetName Name of the dataset to retrieve.
+   * @param <T> Type of the dataset.
+   * @return A {@link DataSetManager} instance.
+   * @deprecated As of version 2.8.0, replaced by
+   *             TestBase#getDataset(co.cask.cdap.proto.Id.Namespace, String)
+   */
+  @Deprecated
+  <T> DataSetManager<T> getDataSet(String dataSetName) throws Exception;
+
+  /**
+   * Stops all processors managed by this manager and clear all associated runtime metrics.
+   */
+  void stopAll();
+
+  /**
+   * Stops a particular program.
+   * @param programId the program to stop
+   */
+  void stopProgram(Id.Program programId);
+
+  /**
+   * Checks whether a particular program is running or not.
+   * @param programId the program to check
+   * @return true if the program is running; false otherwise.
+   */
+  boolean isRunning(Id.Program programId);
 }
