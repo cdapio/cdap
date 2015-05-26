@@ -2,6 +2,7 @@ var ngC3 = angular.module(PKG.name+'.commons');
 
 var baseDirective = {
   restrict: 'E',
+  replace: true,
   template: '<div class="c3"></div>',
   scope: {
     chartMetric: '=',
