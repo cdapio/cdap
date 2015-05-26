@@ -115,17 +115,6 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
     $state.go($state.current, {tab: newIndex}, {reload: true});
   };
 
-  $scope.dragdrop = {
-    dragStart: function (drag) {
-      console.log('dragStart', drag.source, drag.dest);
-    },
-    dragEnd: function (drag) {
-      console.log('dragEnd', drag.source, drag.dest);
-      rDashboardsModel.current().persist();
-    }
-  };
-
-
   function applyOnWidgets(rDashboardsModel, func) {
     var currentColumns = rDashboardsModel.current().columns,
         i, j;
@@ -136,10 +125,6 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
 
   $scope.changeColumn = function (n) {
     rDashboardsModel.current().changeColumn(n);
-  };
-
-  $scope.toggleDragDrop = function() {
-    rDashboardsModel.current().toggleDragDrop();
   };
 
   $scope.currentColumn = function() {

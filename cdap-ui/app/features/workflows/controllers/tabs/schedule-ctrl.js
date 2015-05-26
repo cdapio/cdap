@@ -12,7 +12,6 @@ angular.module(PKG.name + '.feature.workflows')
 
       angular.forEach($scope.schedules, function(v) {
         if (v.scheduleType === 'TIME') {
-          console.log('test');
           var parse = v.schedule.cronExpression.split(' ');
           v.time = {};
           v.time.min = parse[0];

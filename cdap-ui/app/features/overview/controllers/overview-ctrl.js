@@ -160,7 +160,6 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrd
       );
       processedData = MyChartHelpers.c3ifyData(processedData, widget.metric, widget.metricAlias);
       widget.chartData = angular.copy(processedData);
-      console.info(widget.chartData);
     });
   });
 
