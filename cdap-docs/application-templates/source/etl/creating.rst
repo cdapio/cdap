@@ -4,9 +4,9 @@
 
 .. _apptemplates-etl-creating:
 
-==============================
-Creating An ETL Adapter 
-==============================
+=======================
+Creating an ETL Adapter
+=======================
 
 .. highlight:: console
 
@@ -51,7 +51,7 @@ configuration for a Batch Adapter that runs every minute, reading data from a St
             "name":"Table",
             "properties":{
                 "name":"myTable",
-                "schema.row.field":"ts",
+                "schema.row.field":"ts"
             }
         }
      }
@@ -126,3 +126,105 @@ property replaces the ``schedule`` property of the ETL Batch Template.
 In this case, we will use a *ProjectionTransform* (a type of Transform) to drop certain
 columns in the incoming data. A *StreamSink* in the final step needs a data field property
 that it will use as the content for the data to be written. 
+
+Sample Adaptor Configurations
+-----------------------------
+
+**Database:** Sample config for using a Database Source and a Database Sink::
+
+  {
+    "config": {
+      "schedule": "* * * * *",
+      "source": {
+        "name": "DatabaseSource",
+        "properties": {
+          "importQuery": "select id,name,age from my_table",
+          "countQuery": "select count(id) from my_table",
+          "connectionString": "jdbc:mysql://localhost:3306/test",
+          "driverClass": "com.mysql.jdbc.Driver",
+          "tableName": "my_table",
+          "user": "my_user",
+          "password": "my_password",
+          "jdbcPluginName": "jdbc_plugin_name_defined_in_jdbc_plugin_json_config",
+          "jdbcPluginType": "jdbc_plugin_type_defined_in_jdbc_plugin_json_config"
+          }
+        },
+      "sink": {
+        "name": "Database",
+        "properties": {
+          "columns": "id,name,age",
+          "connectionString": "jdbc:mysql://localhost:3306/test",
+          "driverClass": "com.mysql.jdbc.Driver",
+          "tableName": "dest_table",
+          "user": "my_user",
+          "password": "my_password",
+          "jdbcPluginName": "jdbc_plugin_name_defined_in_jdbc_plugin_json_config",
+          "jdbcPluginType": "jdbc_plugin_type_defined_in_jdbc_plugin_json_config"
+          }
+        },
+      "transforms": [
+        ]
+      },
+    "description": "ETL using a Table as source and RDBMS table as sink",
+    "template": "ETLBatch"
+  }
+  
+**JMS:** A JMS server needs to be setup similar to using `ActiveMQ <http://activemq.apache.org>`__::
+
+  {
+    "template": "ETLRealtime",
+    "config": {
+      "instances": "1",
+      "source": {
+        "name": "JMS",
+        "properties": {
+          "jms.messages.receive": 50,
+          "jms.destination.name": "dynamicQueues/CDAP.QUEUE",
+          "jms.factory.initial": "org.apache.activemq.jndi.ActiveMQInitialContextFactory",
+          "jms.provider.url": "vm://localhost?broker.persistent=false"
+        }
+      },
+      "sink": {
+        "name": "Stream",
+        "properties": {
+          "name": "jmsStream",
+          "body.field": "message"
+        }
+      },
+      "transforms": [
+      ]
+    }
+  }
+
+
+**Kafka:** A Kafka cluster needs to be setup, and certain minimum properties specified when
+creating the source::
+
+  {
+    "template": "ETLRealtime",
+    "config": {
+      "instances": "1",
+      "source": {
+        "name": "Kafka",
+        "properties": {
+          "kafka.partitions": 1,
+          "kafka.topic": "test",
+          "kafka.brokers": "localhost:9092"
+        }
+      },
+      "sink": {
+        "name": "Stream",
+        "properties": {
+          "name": "myStream",
+          "body.field": "message"
+        }
+      },
+      "transforms": [
+      ]
+    }
+  }
+
+
+**Prebuilt JARs:** In a case where you'd like to use prebuilt third-party JARs (such as a
+JDBC Driver) as a plugin, please refer to the section on :ref:`Using Third-party Jars
+<apptemplates-third-party>`. 
