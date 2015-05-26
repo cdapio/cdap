@@ -251,7 +251,7 @@ public class StandaloneMain {
   }
 
   public static void main(String[] args) {
-    StandaloneMain main = null;
+    StandaloneMain main;
     try {
       if (args.length > 0) {
         System.out.printf("%s takes no arguments\n", StandaloneMain.class.getSimpleName());
