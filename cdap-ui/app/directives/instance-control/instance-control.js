@@ -8,34 +8,25 @@ angular.module(PKG.name + '.commons')
         basePath: '='
       },
       templateUrl: 'instance-control/instance-control.html',
-      link: function (scope) {
-
-        scope.processing = false;
-
-        scope.handleSet = function () {
-          scope.processing = true;
-
-          scope.myDataSrc.request({
-            method: 'PUT',
-            _cdapPath: scope.basePath + '/instances',
-            body: {'instances': scope.instance.requested}
-          }).then(function success (res) {
-            scope.instance.provisioned = scope.instance.requested;
-          }).finally(function () {
-            scope.processing = false;
-          });
-
-        };
-      }
     };
   })
   .controller('instanceControlController', function ($scope, MyDataSource) {
-    $scope.myDataSrc = new MyDataSource($scope);
+    var myDataSrc = new MyDataSource($scope);
 
-    $scope.myDataSrc.request({
+    myDataSrc.request({
       _cdapPath: $scope.basePath + '/instances'
-    })
-    .then(function (res) {
+    }).then(function (res) {
       $scope.instance = res;
     });
+
+    $scope.handleSet = function () {
+      myDataSrc.request({
+        method: 'PUT',
+        _cdapPath: $scope.basePath + '/instances',
+        body: {'instances': $scope.instance.requested}
+      }).then(function success () {
+        $scope.instance.provisioned = $scope.instance.requested;
+      });
+    };
+
   });
