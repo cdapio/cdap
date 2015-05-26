@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.overview').controller('OverviewCtrl',
-function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrderings) {
+function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrderings, MyMetricsQueryHelper, myHelpers, MyChartHelpers) {
   $scope.MyOrderings = MyOrderings;
 
   if(!$state.params.namespace) {
@@ -94,7 +94,7 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrd
       }
     },
     color: {
-      pattern: ['red', '#FFBBF00']
+      pattern: ['red', '#f4b400']
     },
     isLive: true,
     interval: 60*1000,
@@ -136,4 +136,32 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrd
       }
     })
   );
+
+  // TODO: There should be a better way. Right now the 'sort-of' legend for
+  // #of warnings and errors are outside the charts. Thats the reason
+  // polling happens in two different places.
+  angular.forEach($scope.wdgts, function(widget) {
+    dataSrc.poll({
+      _cdapPath: '/metrics/query',
+      method: 'POST',
+      body: MyMetricsQueryHelper.constructQuery(
+        'qid',
+        MyMetricsQueryHelper.contextToTags(widget.metric.context),
+        widget.metric
+      )
+    }, function(res) {
+
+      var processedData = MyChartHelpers.processData(
+        res,
+        'qid',
+        widget.metric.names,
+        widget.metric.resolution,
+        widget.settings.aggregate
+      );
+      processedData = MyChartHelpers.c3ifyData(processedData, widget.metric, widget.metricAlias);
+      widget.chartData = angular.copy(processedData);
+      console.info(widget.chartData);
+    });
+  });
+
 });
