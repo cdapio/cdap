@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.explore')
-  .controller('GlobalExploreController', function ($scope, MyDataSource, $state, myHelpers, EventPipe) {
+  .controller('GlobalExploreController', function ($scope, MyDataSource, $state, EventPipe) {
 
     var dataSrc = new MyDataSource($scope);
 

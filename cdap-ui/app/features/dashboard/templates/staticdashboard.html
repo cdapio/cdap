@@ -1,22 +1,14 @@
-<div class="row" ng-controller="WidgetColCtrl">
-  <div class="col-xs-12 col-md-4"
-       ng-repeat="column in currentBoard.columns"
-       ng-model="column">
-
-    <div class="panel"
-      ng-class="wdgt.getClassName()"
-      ng-repeat="wdgt in column">
-
-      <div class="panel-heading">
-        <div class="btn-group btn-group-xs" role="toolbar"></div>
-
-        <span ng-bind="wdgt.title | myEllipsis: 25 " tooltip="{{wdgt.title}}"></span>
+<div gridster="gridsterOpts">
+  <ul>
+    <li gridster-item="wdgt"
+        ng-repeat="wdgt in currentBoard.columns">
+      <div class="panel panel-default" style="margin:0;">
+        <div class="panel-heading">
+          <div class="btn-group btn-group-xs" role="toolbar"></div>
+          <span ng-bind="wdgt.title | myEllipsis: 25" tooltip="{{wdgt.title}}"></span>
+        </div>
+        <div class="panel-body" ng-include="wdgt.getPartial()"></div>
       </div>
-
-      <div class="panel-body"
-        ng-include="wdgt.getPartial()"></div>
-
-    </div>
-  </div>
-
+    </li>
+  </ul>
 </div>
