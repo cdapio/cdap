@@ -2,7 +2,6 @@ var ngC3 = angular.module(PKG.name+'.commons');
 
 var baseDirective = {
   restrict: 'E',
-  replace: true,
   template: '<div class="c3"></div>',
   scope: {
     chartMetric: '=',
@@ -53,6 +52,7 @@ ngC3.controller('c3Controller', function ($scope, c3, $filter, $timeout, MyChart
     $scope.options.showx = $scope.chartSettings.chartMetadata.showx;
     $scope.options.showy = $scope.chartSettings.chartMetadata.showy;
     $scope.options.legend = $scope.chartSettings.chartMetadata.legend;
+    $scope.options.color = $scope.chartSettings.color;
 
     $scope.$watch('chartSize', function(newVal) {
       $scope.options.size = newVal;
