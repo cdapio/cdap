@@ -62,8 +62,7 @@ ngC3.controller('c3Controller', function ($scope, c3, $filter, $timeout, MyChart
     }, true);
 
     if ($scope.metrics) {
-      $scope.fetchData()
-            .then($scope.drawChart);
+      $scope.togglePolling();
     }
 
     $scope.$watch('chartSettings', $scope.reconfigure, true);
@@ -93,7 +92,14 @@ ngC3.controller('c3Controller', function ($scope, c3, $filter, $timeout, MyChart
     });
   };
 
-  $scope.reconfigure = function () {
+  $scope.reconfigure = function (newVal, oldVal) {
+    if (newVal === oldVal) {
+      return;
+    }
+    $scope.togglePolling();
+  };
+
+  $scope.togglePolling = function() {
     $scope.stopPolling();
     if ($scope.chartSettings.isLive) {
       $scope.startPolling();
