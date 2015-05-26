@@ -44,7 +44,7 @@ angular.module(PKG.name + '.commons')
           }
           dataSrc.request(requestObj)
             .then(function() {
-              if ($state.params.runid && action === 'start') {
+              if ($state.includes('**.run')) {
                 // go to the most current run, /runs
                 $state.go('^', $state.params, {reload: true});
               } else {
