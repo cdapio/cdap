@@ -443,6 +443,8 @@ where
 
 This will return a JSON String map that lists all the current Adapters and all of their details.
 
+.. highlight:: console
+
 For example, if an adapter *streamAdapter* has been created as in the previous command, the
 command will return a list of adapters (pretty-printed and reformatted to fit)::
 
@@ -808,4 +810,3 @@ where
 The command will return the aggregate value for the metric *metric-id* emitted by *adapter-id* in
 *namespace-id* across all runs of the Adapter. If you would like the metrics for a
 particular run, specify an additional tag of ``tag=run:<run-id>`` in the above query.
-
