@@ -250,57 +250,18 @@ public class StandaloneMain {
     }
   }
 
-  /**
-   * Print the usage statement and return null.
-   *
-   * @param error indicates whether this was invoked as the result of an error
-   * @throws IllegalArgumentException in case of error
-   */
-  static void usage(boolean error) {
-
-    // Which output stream should we use?
-    PrintStream out = (error ? System.err : System.out);
-
-    // And our requirements and usage
-    out.println("Requirements: ");
-    out.println("  Java:    JDK 1.7 must be installed and JAVA_HOME environment variable set to the java executable");
-    out.println("  Node.js: Node.js must be installed (obtain from http://nodejs.org/#download).  ");
-    out.println("           The \"node\" executable must be in the system $PATH environment variable");
-    out.println("");
-    out.println("Usage: ");
-    if (OSDetector.isWindows()) {
-      out.println("  cdap.bat [options]");
-    } else {
-      out.println("  cdap.sh [options]");
-    }
-    out.println("");
-    out.println("Additional options:");
-    out.println("  --help     To print this message");
-    out.println("");
-
-    if (error) {
-      throw new IllegalArgumentException();
-    }
-  }
-
   public static void main(String[] args) {
-    if (args.length > 0) {
-      if ("--help".equals(args[0]) || "-h".equals(args[0])) {
-        usage(false);
-        return;
-      } else {
-        PrintStream err = System.err;
-        err.println("Args:");
-        for (int i = 0; i <= args.length - 1; i++) {
-          err.println("Parameter #" + i + ": " + args[i]);
-        }
-        usage(true);
-      }
-    }
-
     StandaloneMain main = null;
-
     try {
+      if (args.length > 0) {
+          PrintStream err = System.err;
+          err.printf("%s takes no arguments", getClass().getSimpleName());
+          err.println("These arguments are being ignored:");
+          for (int i = 0; i <= args.length - 1; i++) {
+            err.println("Parameter #" + i + ": " + args[i]);
+          }
+        }
+      }
       main = create();
       main.startUp();
     } catch (Throwable e) {
