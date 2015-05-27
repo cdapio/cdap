@@ -54,8 +54,8 @@ public abstract class BufferingTableTest<T extends BufferingTable>
       myTable1.put(R1, a(C1), a(V1));
       myTable1.put(R2, a(C2), a(V2));
       // verify can see changes inside tx
-      TableAssert.verify(a(C1, V1), myTable1.get(R1, a(C1)));
-      TableAssert.verify(a(C2, V2), myTable1.get(R2, a(C2)));
+      TableAssert.assertRow(a(C1, V1), myTable1.get(R1, a(C1)));
+      TableAssert.assertRow(a(C2, V2), myTable1.get(R2, a(C2)));
 
       // persisting changes
       try {
@@ -79,8 +79,8 @@ public abstract class BufferingTableTest<T extends BufferingTable>
       ((TransactionAware) myTable2).startTx(tx2);
 
       // verify don't see rolled back changes
-      TableAssert.verify(a(), myTable2.get(R1, a(C1)));
-      TableAssert.verify(a(), myTable2.get(R2, a(C2)));
+      TableAssert.assertRow(a(), myTable2.get(R1, a(C1)));
+      TableAssert.assertRow(a(), myTable2.get(R2, a(C2)));
 
     } finally {
       admin.drop();
@@ -106,16 +106,17 @@ public abstract class BufferingTableTest<T extends BufferingTable>
       table1.put(Bytes.toBytes("1_03"), a(C1), a(V1));
 
       // written values should not yet be persisted
-      TableAssert.verify(new byte[0][],
-                         new byte[0][][],
-                         ((BufferingTable) table1).scanPersisted(new Scan(Bytes.toBytes("1_"), Bytes.toBytes("2_"))));
+      TableAssert.assertScan(new byte[0][],
+                             new byte[0][][],
+                             ((BufferingTable) table1).scanPersisted(
+                               new Scan(Bytes.toBytes("1_"), Bytes.toBytes("2_"))));
 
       // buffered values should be visible in a scan
-      TableAssert.verify(a(Bytes.toBytes("1_01"), Bytes.toBytes("1_02"), Bytes.toBytes("1_03")),
-                         aa(a(C1, V1),
-                            a(C1, V1),
-                            a(C1, V1)),
-                         table1.scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
+      TableAssert.assertScan(a(Bytes.toBytes("1_01"), Bytes.toBytes("1_02"), Bytes.toBytes("1_03")),
+                             aa(a(C1, V1),
+                                a(C1, V1),
+                                a(C1, V1)),
+                             table1.scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
 
       Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) table1).getTxChanges()));
       Assert.assertTrue(((TransactionAware) table1).commitTx());
@@ -125,11 +126,11 @@ public abstract class BufferingTableTest<T extends BufferingTable>
       ((TransactionAware) table1).startTx(tx2);
 
       // written values should be visible after commit
-      TableAssert.verify(a(Bytes.toBytes("1_01"), Bytes.toBytes("1_02"), Bytes.toBytes("1_03")),
-                         aa(a(C1, V1),
-                            a(C1, V1),
-                            a(C1, V1)),
-                         table1.scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
+      TableAssert.assertScan(a(Bytes.toBytes("1_01"), Bytes.toBytes("1_02"), Bytes.toBytes("1_03")),
+                             aa(a(C1, V1),
+                                a(C1, V1),
+                                a(C1, V1)),
+                             table1.scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
 
       txClient.commit(tx2);
 
@@ -144,22 +145,24 @@ public abstract class BufferingTableTest<T extends BufferingTable>
       table1.put(Bytes.toBytes("1_04"), a(C2), a(V2));
 
       // persisted values should be the same
-      TableAssert.verify(a(Bytes.toBytes("1_01"), Bytes.toBytes("1_02"), Bytes.toBytes("1_03")),
-                         aa(a(C1, V1),
-                            a(C1, V1),
-                            a(C1, V1)),
-                         ((BufferingTable) table1).scanPersisted(new Scan(Bytes.toBytes("1_"), Bytes.toBytes("2_"))));
+      TableAssert.assertScan(a(Bytes.toBytes("1_01"), Bytes.toBytes("1_02"), Bytes.toBytes("1_03")),
+                             aa(a(C1, V1),
+                                a(C1, V1),
+                                a(C1, V1)),
+                             ((BufferingTable) table1).scanPersisted(
+                               new Scan(Bytes.toBytes("1_"), Bytes.toBytes("2_"))));
 
       // all values should be visible in buffered scan
-      TableAssert.verify(a(Bytes.toBytes("1_01"), Bytes.toBytes("1_02"), Bytes.toBytes("1_02a"), Bytes.toBytes("1_02b"),
-                           Bytes.toBytes("1_03"), Bytes.toBytes("1_04")),
-                         aa(a(C1, V1, C2, V2), // 1_01
-                            a(C1, V2),         // 1_02
-                            a(C1, V1),         // 1_02a
-                            a(C1, V1),         // 1_02b
-                            a(C1, V1),         // 1_03
-                            a(C2, V2)),        // 1_04
-                         table1.scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
+      TableAssert.assertScan(a(Bytes.toBytes("1_01"), Bytes.toBytes("1_02"),
+                               Bytes.toBytes("1_02a"), Bytes.toBytes("1_02b"),
+                               Bytes.toBytes("1_03"), Bytes.toBytes("1_04")),
+                             aa(a(C1, V1, C2, V2), // 1_01
+                                a(C1, V2),         // 1_02
+                                a(C1, V1),         // 1_02a
+                                a(C1, V1),         // 1_02b
+                                a(C1, V1),         // 1_03
+                                a(C2, V2)),        // 1_04
+                             table1.scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
 
       Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) table1).getTxChanges()));
       Assert.assertTrue(((TransactionAware) table1).commitTx());
@@ -169,15 +172,16 @@ public abstract class BufferingTableTest<T extends BufferingTable>
       ((TransactionAware) table1).startTx(tx4);
 
       // all values should be visible after commit
-      TableAssert.verify(a(Bytes.toBytes("1_01"), Bytes.toBytes("1_02"), Bytes.toBytes("1_02a"), Bytes.toBytes("1_02b"),
-                           Bytes.toBytes("1_03"), Bytes.toBytes("1_04")),
-                         aa(a(C1, V1, C2, V2), // 1_01
-                            a(C1, V2),         // 1_02
-                            a(C1, V1),         // 1_02a
-                            a(C1, V1),         // 1_02b
-                            a(C1, V1),         // 1_03
-                            a(C2, V2)),        // 1_04
-                         table1.scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
+      TableAssert.assertScan(a(Bytes.toBytes("1_01"), Bytes.toBytes("1_02"),
+                               Bytes.toBytes("1_02a"), Bytes.toBytes("1_02b"),
+                               Bytes.toBytes("1_03"), Bytes.toBytes("1_04")),
+                             aa(a(C1, V1, C2, V2), // 1_01
+                                a(C1, V2),         // 1_02
+                                a(C1, V1),         // 1_02a
+                                a(C1, V1),         // 1_02b
+                                a(C1, V1),         // 1_03
+                                a(C2, V2)),        // 1_04
+                             table1.scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
 
       txClient.commit(tx4);
     } finally {

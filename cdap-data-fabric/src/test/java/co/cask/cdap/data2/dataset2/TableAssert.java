@@ -29,49 +29,42 @@ import java.util.Map;
  */
 public class TableAssert {
 
-  public static void verifyRow(Row result, byte[] expectedRow, byte[][] columns, byte[][] expected) {
+  public static void assertRow(Row result, byte[] expectedRow, byte[][] columns, byte[][] expected) {
     Assert.assertNotNull(result);
     Assert.assertArrayEquals(expectedRow, result.getRow());
-    verifyColumns(result, columns, expected);
+    assertColumns(result, columns, expected);
   }
 
-  public static void verifyColumns(Row result, byte[][] columns, byte[][] expected) {
+  public static void assertColumns(Row result, byte[][] columns, byte[][] expected) {
     Assert.assertEquals(columns.length, expected.length);
     Assert.assertNotNull(result);
     Assert.assertFalse(result.isEmpty());
     Map<byte[], byte[]> colsMap = result.getColumns();
     Assert.assertNotNull(colsMap);
 
-    verify(columns, expected, colsMap);
+    assertColumns(columns, expected, colsMap);
   }
 
-  private static void verify(byte[][] expectedCols, byte[][] expectedVals, Map<byte[], byte[]> toVerify) {
+  private static void assertColumns(byte[][] expectedCols, byte[][] expectedVals, Map<byte[], byte[]> toVerify) {
     Assert.assertEquals(expectedCols.length, toVerify.size());
     for (int i = 0; i < expectedCols.length; i++) {
       Assert.assertArrayEquals(expectedVals[i], toVerify.get(expectedCols[i]));
     }
   }
 
-  public static void verify(byte[][] expectedCols, byte[][] expectedVals, Row row) {
-    verify(expectedCols, expectedVals, row.getColumns());
+  public static void assertColumns(byte[][] expectedCols, byte[][] expectedVals, Row row) {
+    assertColumns(expectedCols, expectedVals, row.getColumns());
   }
 
-  public static void verifyColumn(Row result, byte[] column, byte[] expected) {
-    verifyColumns(result, new byte[][]{column}, new byte[][]{expected});
+  public static void assertColumn(Row result, byte[] column, byte[] expected) {
+    assertColumns(result, new byte[][]{column}, new byte[][]{expected});
   }
 
-  public static void verify(Map<byte[], byte[]> expected, Map<byte[], byte[]> actual) {
-    Assert.assertEquals(actual.size(), expected.size());
-    for (Map.Entry<byte[], byte[]> expectedEntry : expected.entrySet()) {
-      Assert.assertArrayEquals(expectedEntry.getValue(), actual.get(expectedEntry.getKey()));
-    }
+  public static void assertRow(byte[][] expected, Row row) {
+    assertRow(expected, row.getColumns());
   }
 
-  public static void verify(byte[][] expected, Row row) {
-    verify(expected, row.getColumns());
-  }
-
-  public static void verify(byte[][] expected, Map<byte[], byte[]> rowMap) {
+  public static void assertRow(byte[][] expected, Map<byte[], byte[]> rowMap) {
     Assert.assertEquals(expected.length / 2, rowMap.size());
     for (int i = 0; i < expected.length; i += 2) {
       byte[] key = expected[i];
@@ -80,24 +73,20 @@ public class TableAssert {
     }
   }
 
-  public static void verify(byte[] expected, byte[] actual) {
-    Assert.assertArrayEquals(expected, actual);
-  }
-
-  public static void verify(byte[][] expectedRows, byte[][][] expectedRowMaps, Table table, Scan scan) {
-    verify(expectedRows, expectedRowMaps, table.scan(scan));
+  public static void assertScan(byte[][] expectedRows, byte[][][] expectedRowMaps, Table table, Scan scan) {
+    assertScan(expectedRows, expectedRowMaps, table.scan(scan));
     if (scan.getFilter() == null) {
       // if only start and stop row are specified, we also want to check the scan(startRow, stopRow) APIs
-      verify(expectedRows, expectedRowMaps, table.scan(scan.getStartRow(), scan.getStopRow()));
+      assertScan(expectedRows, expectedRowMaps, table.scan(scan.getStartRow(), scan.getStopRow()));
     }
   }
 
-  public static void verify(byte[][] expectedRows, byte[][][] expectedRowMaps, Scanner scanner) {
+  public static void assertScan(byte[][] expectedRows, byte[][][] expectedRowMaps, Scanner scanner) {
     for (int i = 0; i < expectedRows.length; i++) {
       Row next = scanner.next();
       Assert.assertNotNull(next);
       Assert.assertArrayEquals(expectedRows[i], next.getRow());
-      verify(expectedRowMaps[i], next.getColumns());
+      assertRow(expectedRowMaps[i], next.getColumns());
     }
 
     // nothing is left in scan

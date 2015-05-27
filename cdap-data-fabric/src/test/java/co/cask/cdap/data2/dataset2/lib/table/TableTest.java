@@ -176,11 +176,11 @@ public abstract class TableTest<T extends Table> {
       // write r1->c1,v1 but not commit
       myTable1.put(R1, a(C1), a(V1));
       // TableAssert.verify can see changes inside tx
-      TableAssert.verify(a(C1, V1), myTable1.get(R1, a(C1, C2)).getColumns());
-      TableAssert.verify(V1, myTable1.get(R1, C1));
-      TableAssert.verify(null, myTable1.get(R1, C2));
-      TableAssert.verify(null, myTable1.get(R2, C1));
-      TableAssert.verify(a(C1, V1), myTable1.get(R1).getColumns());
+      TableAssert.assertRow(a(C1, V1), myTable1.get(R1, a(C1, C2)).getColumns());
+      Assert.assertArrayEquals(V1, myTable1.get(R1, C1));
+      Assert.assertArrayEquals(null, myTable1.get(R1, C2));
+      Assert.assertArrayEquals(null, myTable1.get(R2, C1));
+      TableAssert.assertRow(a(C1, V1), myTable1.get(R1).getColumns());
 
       // start new tx (doesn't see changes of the tx1)
       Transaction tx2 = txClient.startShort();
@@ -188,23 +188,23 @@ public abstract class TableTest<T extends Table> {
       ((TransactionAware) myTable2).startTx(tx2);
 
       // TableAssert.verify doesn't see changes of tx1
-      TableAssert.verify(a(), myTable2.get(R1, a(C1, C2)));
-      TableAssert.verify(null, myTable2.get(R1, C1));
-      TableAssert.verify(null, myTable2.get(R1, C2));
-      TableAssert.verify(a(), myTable2.get(R1));
+      TableAssert.assertRow(a(), myTable2.get(R1, a(C1, C2)));
+      Assert.assertArrayEquals(null, myTable2.get(R1, C1));
+      Assert.assertArrayEquals(null, myTable2.get(R1, C2));
+      TableAssert.assertRow(a(), myTable2.get(R1));
       // write r2->c2,v2 in tx2
       myTable2.put(R2, a(C2), a(V2));
       // TableAssert.verify can see own changes
-      TableAssert.verify(a(C2, V2), myTable2.get(R2, a(C1, C2)));
-      TableAssert.verify(null, myTable2.get(R2, C1));
-      TableAssert.verify(V2, myTable2.get(R2, C2));
-      TableAssert.verify(a(C2, V2), myTable2.get(R2));
+      TableAssert.assertRow(a(C2, V2), myTable2.get(R2, a(C1, C2)));
+      Assert.assertArrayEquals(null, myTable2.get(R2, C1));
+      Assert.assertArrayEquals(V2, myTable2.get(R2, C2));
+      TableAssert.assertRow(a(C2, V2), myTable2.get(R2));
 
       // TableAssert.verify tx1 cannot see changes of tx2
-      TableAssert.verify(a(), myTable1.get(R2, a(C1, C2)));
-      TableAssert.verify(null, myTable1.get(R2, C1));
-      TableAssert.verify(null, myTable1.get(R2, C2));
-      TableAssert.verify(a(), myTable1.get(R2));
+      TableAssert.assertRow(a(), myTable1.get(R2, a(C1, C2)));
+      Assert.assertArrayEquals(null, myTable1.get(R2, C1));
+      Assert.assertArrayEquals(null, myTable1.get(R2, C2));
+      TableAssert.assertRow(a(), myTable1.get(R2));
 
       // committing tx1 in stages to check races are handled well
       // * first, flush operations of table
@@ -215,10 +215,10 @@ public abstract class TableTest<T extends Table> {
       Transaction tx3 = txClient.startShort();
       Table myTable3 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable3).startTx(tx3);
-      TableAssert.verify(a(), myTable3.get(R1, a(C1, C2)));
-      TableAssert.verify(null, myTable3.get(R1, C1));
-      TableAssert.verify(null, myTable3.get(R1, C2));
-      TableAssert.verify(a(), myTable3.get(R1));
+      TableAssert.assertRow(a(), myTable3.get(R1, a(C1, C2)));
+      Assert.assertArrayEquals(null, myTable3.get(R1, C1));
+      Assert.assertArrayEquals(null, myTable3.get(R1, C2));
+      TableAssert.assertRow(a(), myTable3.get(R1));
       Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) myTable3).getTxChanges()));
       Assert.assertTrue(((TransactionAware) myTable3).commitTx());
       Assert.assertTrue(txClient.commit(tx3));
@@ -229,21 +229,21 @@ public abstract class TableTest<T extends Table> {
       // NOTE: table instance can be re-used in series of transactions
       Transaction tx4 = txClient.startShort();
       ((TransactionAware) myTable3).startTx(tx4);
-      TableAssert.verify(a(C1, V1), myTable3.get(R1, a(C1, C2)));
-      TableAssert.verify(V1, myTable3.get(R1, C1));
-      TableAssert.verify(null, myTable3.get(R1, C2));
-      TableAssert.verify(a(C1, V1), myTable3.get(R1));
+      TableAssert.assertRow(a(C1, V1), myTable3.get(R1, a(C1, C2)));
+      Assert.assertArrayEquals(V1, myTable3.get(R1, C1));
+      Assert.assertArrayEquals(null, myTable3.get(R1, C2));
+      TableAssert.assertRow(a(C1, V1), myTable3.get(R1));
 
       // but tx2 still doesn't see committed changes of tx2
-      TableAssert.verify(a(), myTable2.get(R1, a(C1, C2)));
-      TableAssert.verify(null, myTable2.get(R1, C1));
-      TableAssert.verify(null, myTable2.get(R1, C2));
-      TableAssert.verify(a(), myTable2.get(R1));
+      TableAssert.assertRow(a(), myTable2.get(R1, a(C1, C2)));
+      Assert.assertArrayEquals(null, myTable2.get(R1, C1));
+      Assert.assertArrayEquals(null, myTable2.get(R1, C2));
+      TableAssert.assertRow(a(), myTable2.get(R1));
       // and tx4 doesn't see changes of tx2
-      TableAssert.verify(a(), myTable3.get(R2, a(C1, C2)));
-      TableAssert.verify(null, myTable3.get(R2, C1));
-      TableAssert.verify(null, myTable3.get(R2, C2));
-      TableAssert.verify(a(), myTable3.get(R2));
+      TableAssert.assertRow(a(), myTable3.get(R2, a(C1, C2)));
+      Assert.assertArrayEquals(null, myTable3.get(R2, C1));
+      Assert.assertArrayEquals(null, myTable3.get(R2, C2));
+      TableAssert.assertRow(a(), myTable3.get(R2));
 
       // committing tx4
       Assert.assertTrue(txClient.canCommit(tx4, ((TransactionAware) myTable3).getTxChanges()));
@@ -253,10 +253,10 @@ public abstract class TableTest<T extends Table> {
       // do change in tx2 that is conflicting with tx1
       myTable2.put(R1, a(C1), a(V2));
       // change is OK and visible inside tx2
-      TableAssert.verify(a(C1, V2), myTable2.get(R1, a(C1, C2)));
-      TableAssert.verify(V2, myTable2.get(R1, C1));
-      TableAssert.verify(null, myTable2.get(R1, C2));
-      TableAssert.verify(a(C1, V2), myTable2.get(R1));
+      TableAssert.assertRow(a(C1, V2), myTable2.get(R1, a(C1, C2)));
+      Assert.assertArrayEquals(V2, myTable2.get(R1, C1));
+      Assert.assertArrayEquals(null, myTable2.get(R1, C2));
+      TableAssert.assertRow(a(C1, V2), myTable2.get(R1));
 
       // cannot commit: conflict should be detected
       Assert.assertFalse(txClient.canCommit(tx2, ((TransactionAware) myTable2).getTxChanges()));
@@ -269,14 +269,14 @@ public abstract class TableTest<T extends Table> {
       // NOTE: table instance can be re-used in series of transactions
       Transaction tx5 = txClient.startShort();
       ((TransactionAware) myTable3).startTx(tx5);
-      TableAssert.verify(a(C1, V1), myTable3.get(R1, a(C1, C2)));
-      TableAssert.verify(V1, myTable3.get(R1, C1));
-      TableAssert.verify(null, myTable3.get(R1, C2));
-      TableAssert.verify(a(C1, V1), myTable3.get(R1));
-      TableAssert.verify(a(), myTable3.get(R2, a(C1, C2)));
-      TableAssert.verify(null, myTable3.get(R2, C1));
-      TableAssert.verify(null, myTable3.get(R2, C2));
-      TableAssert.verify(a(), myTable3.get(R2));
+      TableAssert.assertRow(a(C1, V1), myTable3.get(R1, a(C1, C2)));
+      Assert.assertArrayEquals(V1, myTable3.get(R1, C1));
+      Assert.assertArrayEquals(null, myTable3.get(R1, C2));
+      TableAssert.assertRow(a(C1, V1), myTable3.get(R1));
+      TableAssert.assertRow(a(), myTable3.get(R2, a(C1, C2)));
+      Assert.assertArrayEquals(null, myTable3.get(R2, C1));
+      Assert.assertArrayEquals(null, myTable3.get(R2, C2));
+      TableAssert.assertRow(a(), myTable3.get(R2));
       Assert.assertTrue(txClient.canCommit(tx5, ((TransactionAware) myTable3).getTxChanges()));
       Assert.assertTrue(((TransactionAware) myTable3).commitTx());
       Assert.assertTrue(txClient.commit(tx5));
@@ -299,11 +299,11 @@ public abstract class TableTest<T extends Table> {
       // write r1->c2,v2 but not commit
       Assert.assertTrue(myTable1.compareAndSwap(R1, C2, null, V5));
       // TableAssert.verify compare and swap result visible inside tx before commit
-      TableAssert.verify(a(C1, V1, C2, V5), myTable1.get(R1, a(C1, C2)));
-      TableAssert.verify(V1, myTable1.get(R1, C1));
-      TableAssert.verify(V5, myTable1.get(R1, C2));
-      TableAssert.verify(null, myTable1.get(R1, C3));
-      TableAssert.verify(a(C1, V1, C2, V5), myTable1.get(R1));
+      TableAssert.assertRow(a(C1, V1, C2, V5), myTable1.get(R1, a(C1, C2)));
+      Assert.assertArrayEquals(V1, myTable1.get(R1, C1));
+      Assert.assertArrayEquals(V5, myTable1.get(R1, C2));
+      Assert.assertArrayEquals(null, myTable1.get(R1, C3));
+      TableAssert.assertRow(a(C1, V1, C2, V5), myTable1.get(R1));
       // these should fail
       Assert.assertFalse(myTable1.compareAndSwap(R1, C1, null, V1));
       Assert.assertFalse(myTable1.compareAndSwap(R1, C1, V2, V1));
@@ -345,12 +345,12 @@ public abstract class TableTest<T extends Table> {
       Transaction tx4 = txClient.startShort();
       Table myTable4 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable4).startTx(tx4);
-      TableAssert.verify(a(C1, V1, C2, V2), myTable4.get(R1, a(C1, C2)));
-      TableAssert.verify(V1, myTable4.get(R1, C1));
-      TableAssert.verify(V2, myTable4.get(R1, C2));
-      TableAssert.verify(null, myTable4.get(R1, C3));
-      TableAssert.verify(a(C2, V2), myTable4.get(R1, a(C2)));
-      TableAssert.verify(a(C1, V1, C2, V2), myTable4.get(R1));
+      TableAssert.assertRow(a(C1, V1, C2, V2), myTable4.get(R1, a(C1, C2)));
+      Assert.assertArrayEquals(V1, myTable4.get(R1, C1));
+      Assert.assertArrayEquals(V2, myTable4.get(R1, C2));
+      Assert.assertArrayEquals(null, myTable4.get(R1, C3));
+      TableAssert.assertRow(a(C2, V2), myTable4.get(R1, a(C2)));
+      TableAssert.assertRow(a(C1, V1, C2, V2), myTable4.get(R1));
 
       // tx3 still cannot see tx1 changes
       Assert.assertTrue(myTable3.compareAndSwap(R1, C2, null, V5));
@@ -375,10 +375,10 @@ public abstract class TableTest<T extends Table> {
       Transaction tx5 = txClient.startShort();
       // NOTE: table instance can be re-used in series of transactions
       ((TransactionAware) myTable4).startTx(tx5);
-      TableAssert.verify(a(C2, V4), myTable4.get(R1, a(C1, C2)));
-      TableAssert.verify(null, myTable4.get(R1, C1));
-      TableAssert.verify(V4, myTable4.get(R1, C2));
-      TableAssert.verify(a(C2, V4), myTable4.get(R1));
+      TableAssert.assertRow(a(C2, V4), myTable4.get(R1, a(C1, C2)));
+      Assert.assertArrayEquals(null, myTable4.get(R1, C1));
+      Assert.assertArrayEquals(V4, myTable4.get(R1, C2));
+      TableAssert.assertRow(a(C2, V4), myTable4.get(R1));
       Assert.assertTrue(txClient.canCommit(tx5, ((TransactionAware) myTable3).getTxChanges()));
       Assert.assertTrue(((TransactionAware) myTable3).commitTx());
       Assert.assertTrue(txClient.commit(tx5));
@@ -398,15 +398,15 @@ public abstract class TableTest<T extends Table> {
       myTable1 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable1).startTx(tx1);
       myTable1.put(R1, a(C1), a(L4));
-      TableAssert.verify(a(C1), lb(1L), myTable1.incrementAndGet(R1, a(C1), la(-3L)));
-      TableAssert.verify(a(C2), lb(2L), myTable1.incrementAndGet(R1, a(C2), la(2L)));
+      TableAssert.assertColumns(a(C1), lb(1L), myTable1.incrementAndGet(R1, a(C1), la(-3L)));
+      TableAssert.assertColumns(a(C2), lb(2L), myTable1.incrementAndGet(R1, a(C2), la(2L)));
       // TableAssert.verify increment result visible inside tx before commit
-      TableAssert.verify(a(C1, L1, C2, L2), myTable1.get(R1, a(C1, C2)));
-      TableAssert.verify(L1, myTable1.get(R1, C1));
-      TableAssert.verify(L2, myTable1.get(R1, C2));
-      TableAssert.verify(null, myTable1.get(R1, C3));
-      TableAssert.verify(a(C1, L1), myTable1.get(R1, a(C1)));
-      TableAssert.verify(a(C1, L1, C2, L2), myTable1.get(R1));
+      TableAssert.assertRow(a(C1, L1, C2, L2), myTable1.get(R1, a(C1, C2)));
+      Assert.assertArrayEquals(L1, myTable1.get(R1, C1));
+      Assert.assertArrayEquals(L2, myTable1.get(R1, C2));
+      Assert.assertArrayEquals(null, myTable1.get(R1, C3));
+      TableAssert.assertRow(a(C1, L1), myTable1.get(R1, a(C1)));
+      TableAssert.assertRow(a(C1, L1, C2, L2), myTable1.get(R1));
       // incrementing non-long value should fail
       myTable1.put(R1, a(C5), a(V5));
       try {
@@ -416,8 +416,8 @@ public abstract class TableTest<T extends Table> {
         // Expected
       }
       // previous increment should not do any change
-      TableAssert.verify(a(C5, V5), myTable1.get(R1, a(C5)));
-      TableAssert.verify(V5, myTable1.get(R1, C5));
+      TableAssert.assertRow(a(C5, V5), myTable1.get(R1, a(C5)));
+      Assert.assertArrayEquals(V5, myTable1.get(R1, C5));
 
       // start new tx (doesn't see changes of the tx1)
       Transaction tx2 = txClient.startShort();
@@ -432,23 +432,23 @@ public abstract class TableTest<T extends Table> {
       myTable2 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable2).startTx(tx2);
 
-      TableAssert.verify(a(), myTable2.get(R1, a(C1, C2, C5)));
-      TableAssert.verify(null, myTable2.get(R1, C1));
-      TableAssert.verify(null, myTable2.get(R1, C2));
-      TableAssert.verify(null, myTable2.get(R1, C5));
-      TableAssert.verify(a(), myTable2.get(R1));
-      TableAssert.verify(a(C1), lb(55L), myTable2.incrementAndGet(R1, a(C1), la(55L)));
+      TableAssert.assertRow(a(), myTable2.get(R1, a(C1, C2, C5)));
+      Assert.assertArrayEquals(null, myTable2.get(R1, C1));
+      Assert.assertArrayEquals(null, myTable2.get(R1, C2));
+      Assert.assertArrayEquals(null, myTable2.get(R1, C5));
+      TableAssert.assertRow(a(), myTable2.get(R1));
+      TableAssert.assertColumns(a(C1), lb(55L), myTable2.incrementAndGet(R1, a(C1), la(55L)));
 
       // start tx3 and TableAssert.verify same thing again
       Transaction tx3 = txClient.startShort();
       myTable3 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable3).startTx(tx3);
-      TableAssert.verify(a(), myTable3.get(R1, a(C1, C2, C5)));
-      TableAssert.verify(null, myTable3.get(R1, C1));
-      TableAssert.verify(null, myTable3.get(R1, C2));
-      TableAssert.verify(null, myTable3.get(R1, C5));
-      TableAssert.verify(a(), myTable3.get(R1));
-      TableAssert.verify(a(C1), lb(4L), myTable3.incrementAndGet(R1, a(C1), la(4L)));
+      TableAssert.assertRow(a(), myTable3.get(R1, a(C1, C2, C5)));
+      Assert.assertArrayEquals(null, myTable3.get(R1, C1));
+      Assert.assertArrayEquals(null, myTable3.get(R1, C2));
+      Assert.assertArrayEquals(null, myTable3.get(R1, C5));
+      TableAssert.assertRow(a(), myTable3.get(R1));
+      TableAssert.assertColumns(a(C1), lb(4L), myTable3.incrementAndGet(R1, a(C1), la(4L)));
 
       // * second, make tx visible
       Assert.assertTrue(txClient.commit(tx1));
@@ -462,30 +462,31 @@ public abstract class TableTest<T extends Table> {
       Transaction tx4 = txClient.startShort();
       myTable4 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable4).startTx(tx4);
-      TableAssert.verify(a(C1, L1, C2, L2, C5, V5), myTable4.get(R1, a(C1, C2, C3, C4, C5)));
-      TableAssert.verify(a(C2, L2), myTable4.get(R1, a(C2)));
-      TableAssert.verify(L1, myTable4.get(R1, C1));
-      TableAssert.verify(L2, myTable4.get(R1, C2));
-      TableAssert.verify(null, myTable4.get(R1, C3));
-      TableAssert.verify(V5, myTable4.get(R1, C5));
-      TableAssert.verify(a(C1, L1, C5, V5), myTable4.get(R1, a(C1, C5)));
-      TableAssert.verify(a(C1, L1, C2, L2, C5, V5), myTable4.get(R1));
+      TableAssert.assertRow(a(C1, L1, C2, L2, C5, V5), myTable4.get(R1, a(C1, C2, C3, C4, C5)));
+      TableAssert.assertRow(a(C2, L2), myTable4.get(R1, a(C2)));
+      Assert.assertArrayEquals(L1, myTable4.get(R1, C1));
+      Assert.assertArrayEquals(L2, myTable4.get(R1, C2));
+      Assert.assertArrayEquals(null, myTable4.get(R1, C3));
+      Assert.assertArrayEquals(V5, myTable4.get(R1, C5));
+      TableAssert.assertRow(a(C1, L1, C5, V5), myTable4.get(R1, a(C1, C5)));
+      TableAssert.assertRow(a(C1, L1, C2, L2, C5, V5), myTable4.get(R1));
 
       // tx3 still cannot see tx1 changes, only its own
-      TableAssert.verify(a(C1, L4), myTable3.get(R1, a(C1, C2, C5)));
-      TableAssert.verify(L4, myTable3.get(R1, C1));
-      TableAssert.verify(null, myTable3.get(R1, C2));
-      TableAssert.verify(null, myTable3.get(R1, C5));
-      TableAssert.verify(a(C1, L4), myTable3.get(R1));
+      TableAssert.assertRow(a(C1, L4), myTable3.get(R1, a(C1, C2, C5)));
+      Assert.assertArrayEquals(L4, myTable3.get(R1, C1));
+      Assert.assertArrayEquals(null, myTable3.get(R1, C2));
+      Assert.assertArrayEquals(null, myTable3.get(R1, C5));
+      TableAssert.assertRow(a(C1, L4), myTable3.get(R1));
       // and it cannot commit because its changes cause conflicts
       Assert.assertFalse(txClient.canCommit(tx3, ((TransactionAware) myTable3).getTxChanges()));
       ((TransactionAware) myTable3).rollbackTx();
       txClient.abort(tx3);
 
       // TableAssert.verify we can do some ops with tx4 based on data written with tx1
-      TableAssert.verify(a(C1, C2, C3), lb(3L, 3L, 5L), myTable4.incrementAndGet(R1, a(C1, C2, C3), la(2L, 1L, 5L)));
+      TableAssert.assertColumns(a(C1, C2, C3), lb(3L, 3L, 5L),
+                                myTable4.incrementAndGet(R1, a(C1, C2, C3), la(2L, 1L, 5L)));
       myTable4.delete(R1, a(C2));
-      TableAssert.verify(a(C4), lb(3L), myTable4.incrementAndGet(R1, a(C4), la(3L)));
+      TableAssert.assertColumns(a(C4), lb(3L), myTable4.incrementAndGet(R1, a(C4), la(3L)));
       myTable4.delete(R1, a(C1));
 
       // committing tx4
@@ -497,13 +498,13 @@ public abstract class TableTest<T extends Table> {
       Transaction tx5 = txClient.startShort();
       // NOTE: table instance can be re-used in series of transactions
       ((TransactionAware) myTable4).startTx(tx5);
-      TableAssert.verify(a(C3, L5, C4, L3, C5, V5), myTable4.get(R1, a(C1, C2, C3, C4, C5)));
-      TableAssert.verify(null, myTable4.get(R1, C1));
-      TableAssert.verify(null, myTable4.get(R1, C2));
-      TableAssert.verify(L5, myTable4.get(R1, C3));
-      TableAssert.verify(L3, myTable4.get(R1, C4));
-      TableAssert.verify(V5, myTable4.get(R1, C5));
-      TableAssert.verify(a(C3, L5, C4, L3, C5, V5), myTable4.get(R1));
+      TableAssert.assertRow(a(C3, L5, C4, L3, C5, V5), myTable4.get(R1, a(C1, C2, C3, C4, C5)));
+      Assert.assertArrayEquals(null, myTable4.get(R1, C1));
+      Assert.assertArrayEquals(null, myTable4.get(R1, C2));
+      Assert.assertArrayEquals(L5, myTable4.get(R1, C3));
+      Assert.assertArrayEquals(L3, myTable4.get(R1, C4));
+      Assert.assertArrayEquals(V5, myTable4.get(R1, C5));
+      TableAssert.assertRow(a(C3, L5, C4, L3, C5, V5), myTable4.get(R1));
       Assert.assertTrue(txClient.canCommit(tx5, ((TransactionAware) myTable3).getTxChanges()));
       Assert.assertTrue(((TransactionAware) myTable3).commitTx());
       Assert.assertTrue(txClient.commit(tx5));
@@ -536,13 +537,13 @@ public abstract class TableTest<T extends Table> {
     tx = txClient.startShort();
     ((TransactionAware) myTable).startTx(tx);
 
-    TableAssert.verify(Bytes.toBytes(-3L), myTable.get(R1, C1));
+    Assert.assertArrayEquals(Bytes.toBytes(-3L), myTable.get(R1, C1));
     myTable.increment(R1, a(C1), la(-3L));
-    TableAssert.verify(Bytes.toBytes(-6L), myTable.get(R1, C1));
+    Assert.assertArrayEquals(Bytes.toBytes(-6L), myTable.get(R1, C1));
 
-    TableAssert.verify(Bytes.toBytes(5L), myTable.get(R2, C2));
+    Assert.assertArrayEquals(Bytes.toBytes(5L), myTable.get(R2, C2));
     myTable.delete(R2, C2);
-    TableAssert.verify(null, myTable.get(R2, C2));
+    Assert.assertArrayEquals(null, myTable.get(R2, C2));
 
     commitAndAssertSuccess(tx, (TransactionAware) myTable);
 
@@ -550,11 +551,11 @@ public abstract class TableTest<T extends Table> {
     tx = txClient.startShort();
     ((TransactionAware) myTable).startTx(tx);
 
-    TableAssert.verify(Bytes.toBytes(-6L), myTable.get(R1, C1));
+    Assert.assertArrayEquals(Bytes.toBytes(-6L), myTable.get(R1, C1));
 
-    TableAssert.verify(null, myTable.get(R2, C2));
+    Assert.assertArrayEquals(null, myTable.get(R2, C2));
     myTable.increment(R2, a(C2), la(7L));
-    TableAssert.verify(Bytes.toBytes(7L), myTable.get(R2, C2));
+    Assert.assertArrayEquals(Bytes.toBytes(7L), myTable.get(R2, C2));
 
     commitAndAssertSuccess(tx, (TransactionAware) myTable);
 
@@ -562,7 +563,7 @@ public abstract class TableTest<T extends Table> {
     tx = txClient.startShort();
     ((TransactionAware) myTable).startTx(tx);
 
-    TableAssert.verify(Bytes.toBytes(7L), myTable.get(R2, C2));
+    Assert.assertArrayEquals(Bytes.toBytes(7L), myTable.get(R2, C2));
 
     commitAndAssertSuccess(tx, (TransactionAware) myTable);
 
@@ -590,12 +591,12 @@ public abstract class TableTest<T extends Table> {
       myTable1.increment(R1, a(C1), la(-3L));
       myTable1.increment(R1, a(C2), la(2L));
       // TableAssert.verify increment result visible inside tx before commit
-      TableAssert.verify(a(C1, L1, C2, L2), myTable1.get(R1, a(C1, C2)));
-      TableAssert.verify(L1, myTable1.get(R1, C1));
-      TableAssert.verify(L2, myTable1.get(R1, C2));
-      TableAssert.verify(null, myTable1.get(R1, C3));
-      TableAssert.verify(a(C1, L1), myTable1.get(R1, a(C1)));
-      TableAssert.verify(a(C1, L1, C2, L2), myTable1.get(R1));
+      TableAssert.assertRow(a(C1, L1, C2, L2), myTable1.get(R1, a(C1, C2)));
+      Assert.assertArrayEquals(L1, myTable1.get(R1, C1));
+      Assert.assertArrayEquals(L2, myTable1.get(R1, C2));
+      Assert.assertArrayEquals(null, myTable1.get(R1, C3));
+      TableAssert.assertRow(a(C1, L1), myTable1.get(R1, a(C1)));
+      TableAssert.assertRow(a(C1, L1, C2, L2), myTable1.get(R1));
       // incrementing non-long value should fail
       myTable1.put(R1, a(C5), a(V5));
       try {
@@ -605,8 +606,8 @@ public abstract class TableTest<T extends Table> {
         // Expected
       }
       // previous increment should not do any change
-      TableAssert.verify(a(C5, V5), myTable1.get(R1, a(C5)));
-      TableAssert.verify(V5, myTable1.get(R1, C5));
+      TableAssert.assertRow(a(C5, V5), myTable1.get(R1, a(C5)));
+      Assert.assertArrayEquals(V5, myTable1.get(R1, C5));
 
       // start new tx (doesn't see changes of the tx1)
       Transaction tx2 = txClient.startShort();
@@ -621,22 +622,22 @@ public abstract class TableTest<T extends Table> {
       myTable2 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable2).startTx(tx2);
 
-      TableAssert.verify(a(), myTable2.get(R1, a(C1, C2, C5)));
-      TableAssert.verify(null, myTable2.get(R1, C1));
-      TableAssert.verify(null, myTable2.get(R1, C2));
-      TableAssert.verify(null, myTable2.get(R1, C5));
-      TableAssert.verify(a(), myTable2.get(R1));
+      TableAssert.assertRow(a(), myTable2.get(R1, a(C1, C2, C5)));
+      Assert.assertArrayEquals(null, myTable2.get(R1, C1));
+      Assert.assertArrayEquals(null, myTable2.get(R1, C2));
+      Assert.assertArrayEquals(null, myTable2.get(R1, C5));
+      TableAssert.assertRow(a(), myTable2.get(R1));
       myTable2.increment(R1, a(C1), la(55L));
 
       // start tx3 and TableAssert.verify same thing again
       Transaction tx3 = txClient.startShort();
       myTable3 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable3).startTx(tx3);
-      TableAssert.verify(a(), myTable3.get(R1, a(C1, C2, C5)));
-      TableAssert.verify(null, myTable3.get(R1, C1));
-      TableAssert.verify(null, myTable3.get(R1, C2));
-      TableAssert.verify(null, myTable3.get(R1, C5));
-      TableAssert.verify(a(), myTable3.get(R1));
+      TableAssert.assertRow(a(), myTable3.get(R1, a(C1, C2, C5)));
+      Assert.assertArrayEquals(null, myTable3.get(R1, C1));
+      Assert.assertArrayEquals(null, myTable3.get(R1, C2));
+      Assert.assertArrayEquals(null, myTable3.get(R1, C5));
+      TableAssert.assertRow(a(), myTable3.get(R1));
       myTable3.increment(R1, a(C1), la(4L));
 
       // * second, make tx visible
@@ -651,21 +652,21 @@ public abstract class TableTest<T extends Table> {
       Transaction tx4 = txClient.startShort();
       myTable4 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable4).startTx(tx4);
-      TableAssert.verify(a(C1, L1, C2, L2, C5, V5), myTable4.get(R1, a(C1, C2, C3, C4, C5)));
-      TableAssert.verify(a(C2, L2), myTable4.get(R1, a(C2)));
-      TableAssert.verify(L1, myTable4.get(R1, C1));
-      TableAssert.verify(L2, myTable4.get(R1, C2));
-      TableAssert.verify(null, myTable4.get(R1, C3));
-      TableAssert.verify(V5, myTable4.get(R1, C5));
-      TableAssert.verify(a(C1, L1, C5, V5), myTable4.get(R1, a(C1, C5)));
-      TableAssert.verify(a(C1, L1, C2, L2, C5, V5), myTable4.get(R1));
+      TableAssert.assertRow(a(C1, L1, C2, L2, C5, V5), myTable4.get(R1, a(C1, C2, C3, C4, C5)));
+      TableAssert.assertRow(a(C2, L2), myTable4.get(R1, a(C2)));
+      Assert.assertArrayEquals(L1, myTable4.get(R1, C1));
+      Assert.assertArrayEquals(L2, myTable4.get(R1, C2));
+      Assert.assertArrayEquals(null, myTable4.get(R1, C3));
+      Assert.assertArrayEquals(V5, myTable4.get(R1, C5));
+      TableAssert.assertRow(a(C1, L1, C5, V5), myTable4.get(R1, a(C1, C5)));
+      TableAssert.assertRow(a(C1, L1, C2, L2, C5, V5), myTable4.get(R1));
 
       // tx3 still cannot see tx1 changes, only its own
-      TableAssert.verify(a(C1, L4), myTable3.get(R1, a(C1, C2, C5)));
-      TableAssert.verify(L4, myTable3.get(R1, C1));
-      TableAssert.verify(null, myTable3.get(R1, C2));
-      TableAssert.verify(null, myTable3.get(R1, C5));
-      TableAssert.verify(a(C1, L4), myTable3.get(R1));
+      TableAssert.assertRow(a(C1, L4), myTable3.get(R1, a(C1, C2, C5)));
+      Assert.assertArrayEquals(L4, myTable3.get(R1, C1));
+      Assert.assertArrayEquals(null, myTable3.get(R1, C2));
+      Assert.assertArrayEquals(null, myTable3.get(R1, C5));
+      TableAssert.assertRow(a(C1, L4), myTable3.get(R1));
       // and it cannot commit because its changes cause conflicts
       Assert.assertFalse(txClient.canCommit(tx3, ((TransactionAware) myTable3).getTxChanges()));
       ((TransactionAware) myTable3).rollbackTx();
@@ -686,13 +687,13 @@ public abstract class TableTest<T extends Table> {
       Transaction tx5 = txClient.startShort();
       // NOTE: table instance can be re-used in series of transactions
       ((TransactionAware) myTable4).startTx(tx5);
-      TableAssert.verify(a(C3, L5, C4, L3, C5, V5), myTable4.get(R1, a(C1, C2, C3, C4, C5)));
-      TableAssert.verify(null, myTable4.get(R1, C1));
-      TableAssert.verify(null, myTable4.get(R1, C2));
-      TableAssert.verify(L5, myTable4.get(R1, C3));
-      TableAssert.verify(L3, myTable4.get(R1, C4));
-      TableAssert.verify(V5, myTable4.get(R1, C5));
-      TableAssert.verify(a(C3, L5, C4, L3, C5, V5), myTable4.get(R1));
+      TableAssert.assertRow(a(C3, L5, C4, L3, C5, V5), myTable4.get(R1, a(C1, C2, C3, C4, C5)));
+      Assert.assertArrayEquals(null, myTable4.get(R1, C1));
+      Assert.assertArrayEquals(null, myTable4.get(R1, C2));
+      Assert.assertArrayEquals(L5, myTable4.get(R1, C3));
+      Assert.assertArrayEquals(L3, myTable4.get(R1, C4));
+      Assert.assertArrayEquals(V5, myTable4.get(R1, C5));
+      TableAssert.assertRow(a(C3, L5, C4, L3, C5, V5), myTable4.get(R1));
       Assert.assertTrue(txClient.canCommit(tx5, ((TransactionAware) myTable3).getTxChanges()));
       Assert.assertTrue(((TransactionAware) myTable3).commitTx());
       Assert.assertTrue(txClient.commit(tx5));
@@ -731,57 +732,57 @@ public abstract class TableTest<T extends Table> {
       ((TransactionAware) myTable2).startTx(tx2);
 
       // TableAssert.verify tx2 sees changes of tx1
-      TableAssert.verify(a(C1, V1, C2, V2), myTable2.get(R1, a(C1, C2)));
+      TableAssert.assertRow(a(C1, V1, C2, V2), myTable2.get(R1, a(C1, C2)));
       // TableAssert.verify tx2 sees changes of tx1
-      TableAssert.verify(a(C1, V2, C2, V3), myTable2.get(R2));
+      TableAssert.assertRow(a(C1, V2, C2, V3), myTable2.get(R2));
       // delete c1, r2
       myTable2.delete(R1, a(C1));
       myTable2.delete(R2);
       // same as delete a column
       myTable2.put(R3, C1, null);
       // TableAssert.verify can see deletes in own changes before commit
-      TableAssert.verify(a(C2, V2), myTable2.get(R1, a(C1, C2)));
-      TableAssert.verify(null, myTable2.get(R1, C1));
-      TableAssert.verify(V2, myTable2.get(R1, C2));
-      TableAssert.verify(a(), myTable2.get(R2));
-      TableAssert.verify(a(C2, V4), myTable2.get(R3));
+      TableAssert.assertRow(a(C2, V2), myTable2.get(R1, a(C1, C2)));
+      Assert.assertArrayEquals(null, myTable2.get(R1, C1));
+      Assert.assertArrayEquals(V2, myTable2.get(R1, C2));
+      TableAssert.assertRow(a(), myTable2.get(R2));
+      TableAssert.assertRow(a(C2, V4), myTable2.get(R3));
       // overwrite c2 and write new value to c1
       myTable2.put(R1, a(C1, C2), a(V3, V4));
       myTable2.put(R2, a(C1, C2), a(V4, V5));
       myTable2.put(R3, a(C1, C2), a(V1, V2));
       myTable2.put(R4, a(C1, C2), a(V2, V3));
       // TableAssert.verify can see changes in own changes before commit
-      TableAssert.verify(a(C1, V3, C2, V4), myTable2.get(R1, a(C1, C2, C3)));
-      TableAssert.verify(V3, myTable2.get(R1, C1));
-      TableAssert.verify(V4, myTable2.get(R1, C2));
-      TableAssert.verify(null, myTable2.get(R1, C3));
-      TableAssert.verify(a(C1, V4, C2, V5), myTable2.get(R2));
-      TableAssert.verify(a(C1, V1, C2, V2), myTable2.get(R3));
-      TableAssert.verify(a(C1, V2, C2, V3), myTable2.get(R4));
+      TableAssert.assertRow(a(C1, V3, C2, V4), myTable2.get(R1, a(C1, C2, C3)));
+      Assert.assertArrayEquals(V3, myTable2.get(R1, C1));
+      Assert.assertArrayEquals(V4, myTable2.get(R1, C2));
+      Assert.assertArrayEquals(null, myTable2.get(R1, C3));
+      TableAssert.assertRow(a(C1, V4, C2, V5), myTable2.get(R2));
+      TableAssert.assertRow(a(C1, V1, C2, V2), myTable2.get(R3));
+      TableAssert.assertRow(a(C1, V2, C2, V3), myTable2.get(R4));
       // delete c2 and r2
       myTable2.delete(R1, a(C2));
       myTable2.delete(R2);
       myTable2.put(R1, C2, null);
       // TableAssert.verify that delete is there (i.e. not reverted to whatever was persisted before)
-      TableAssert.verify(a(C1, V3), myTable2.get(R1, a(C1, C2)));
-      TableAssert.verify(V3, myTable2.get(R1, C1));
-      TableAssert.verify(null, myTable2.get(R1, C2));
-      TableAssert.verify(a(), myTable2.get(R2));
-      TableAssert.verify(V1, myTable2.get(R3, C1));
-      TableAssert.verify(V2, myTable2.get(R4, C1));
+      TableAssert.assertRow(a(C1, V3), myTable2.get(R1, a(C1, C2)));
+      Assert.assertArrayEquals(V3, myTable2.get(R1, C1));
+      Assert.assertArrayEquals(null, myTable2.get(R1, C2));
+      TableAssert.assertRow(a(), myTable2.get(R2));
+      Assert.assertArrayEquals(V1, myTable2.get(R3, C1));
+      Assert.assertArrayEquals(V2, myTable2.get(R4, C1));
 
       // start tx3 and TableAssert.verify that changes of tx2 are not visible yet
       Transaction tx3 = txClient.startShort();
       // NOTE: table instance can be re-used between tx
       ((TransactionAware) myTable1).startTx(tx3);
-      TableAssert.verify(a(C1, V1, C2, V2), myTable1.get(R1, a(C1, C2)));
-      TableAssert.verify(V1, myTable1.get(R1, C1));
-      TableAssert.verify(V2, myTable1.get(R1, C2));
-      TableAssert.verify(null, myTable1.get(R1, C3));
-      TableAssert.verify(a(C1, V1, C2, V2), myTable1.get(R1));
-      TableAssert.verify(a(C1, V2, C2, V3), myTable1.get(R2));
-      TableAssert.verify(a(C1, V3, C2, V4), myTable1.get(R3));
-      TableAssert.verify(a(C1, V4, C2, V5), myTable1.get(R4));
+      TableAssert.assertRow(a(C1, V1, C2, V2), myTable1.get(R1, a(C1, C2)));
+      Assert.assertArrayEquals(V1, myTable1.get(R1, C1));
+      Assert.assertArrayEquals(V2, myTable1.get(R1, C2));
+      Assert.assertArrayEquals(null, myTable1.get(R1, C3));
+      TableAssert.assertRow(a(C1, V1, C2, V2), myTable1.get(R1));
+      TableAssert.assertRow(a(C1, V2, C2, V3), myTable1.get(R2));
+      TableAssert.assertRow(a(C1, V3, C2, V4), myTable1.get(R3));
+      TableAssert.assertRow(a(C1, V4, C2, V5), myTable1.get(R4));
       Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) myTable1).getTxChanges()));
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
       Assert.assertTrue(txClient.commit(tx3));
@@ -799,14 +800,14 @@ public abstract class TableTest<T extends Table> {
       Transaction tx6 = txClient.startShort();
       // NOTE: table instance can be re-used between tx
       ((TransactionAware) myTable1).startTx(tx6);
-      TableAssert.verify(a(C1, V1, C2, V2), myTable1.get(R1, a(C1, C2)));
-      TableAssert.verify(V1, myTable1.get(R1, C1));
-      TableAssert.verify(V2, myTable1.get(R1, C2));
-      TableAssert.verify(null, myTable1.get(R1, C3));
-      TableAssert.verify(a(C1, V1, C2, V2), myTable1.get(R1));
-      TableAssert.verify(a(C1, V2, C2, V3), myTable1.get(R2));
-      TableAssert.verify(a(C1, V3, C2, V4), myTable1.get(R3));
-      TableAssert.verify(a(C1, V4, C2, V5), myTable1.get(R4));
+      TableAssert.assertRow(a(C1, V1, C2, V2), myTable1.get(R1, a(C1, C2)));
+      Assert.assertArrayEquals(V1, myTable1.get(R1, C1));
+      Assert.assertArrayEquals(V2, myTable1.get(R1, C2));
+      Assert.assertArrayEquals(null, myTable1.get(R1, C3));
+      TableAssert.assertRow(a(C1, V1, C2, V2), myTable1.get(R1));
+      TableAssert.assertRow(a(C1, V2, C2, V3), myTable1.get(R2));
+      TableAssert.assertRow(a(C1, V3, C2, V4), myTable1.get(R3));
+      TableAssert.assertRow(a(C1, V4, C2, V5), myTable1.get(R4));
 
       Assert.assertTrue(txClient.canCommit(tx6, ((TransactionAware) myTable1).getTxChanges()));
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
@@ -819,14 +820,14 @@ public abstract class TableTest<T extends Table> {
       Transaction tx7 = txClient.startShort();
       // NOTE: table instance can be re-used between tx
       ((TransactionAware) myTable1).startTx(tx7);
-      TableAssert.verify(a(C1, V3), myTable1.get(R1, a(C1, C2)));
-      TableAssert.verify(a(C1, V3), myTable1.get(R1));
-      TableAssert.verify(V3, myTable1.get(R1, C1));
-      TableAssert.verify(null, myTable1.get(R1, C2));
-      TableAssert.verify(a(C1, V3), myTable1.get(R1, a(C1, C2)));
-      TableAssert.verify(a(), myTable1.get(R2));
-      TableAssert.verify(V1, myTable1.get(R3, C1));
-      TableAssert.verify(V2, myTable1.get(R4, C1));
+      TableAssert.assertRow(a(C1, V3), myTable1.get(R1, a(C1, C2)));
+      TableAssert.assertRow(a(C1, V3), myTable1.get(R1));
+      Assert.assertArrayEquals(V3, myTable1.get(R1, C1));
+      Assert.assertArrayEquals(null, myTable1.get(R1, C2));
+      TableAssert.assertRow(a(C1, V3), myTable1.get(R1, a(C1, C2)));
+      TableAssert.assertRow(a(), myTable1.get(R2));
+      Assert.assertArrayEquals(V1, myTable1.get(R3, C1));
+      Assert.assertArrayEquals(V2, myTable1.get(R4, C1));
 
       Assert.assertTrue(txClient.canCommit(tx6, ((TransactionAware) myTable1).getTxChanges()));
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
@@ -835,14 +836,14 @@ public abstract class TableTest<T extends Table> {
       // but not visible to tx4 that we started earlier than tx2 became visible
       // NOTE: table instance can be re-used between tx
       ((TransactionAware) myTable1).startTx(tx4);
-      TableAssert.verify(a(C1, V1, C2, V2), myTable1.get(R1, a(C1, C2)));
-      TableAssert.verify(V1, myTable1.get(R1, C1));
-      TableAssert.verify(V2, myTable1.get(R1, C2));
-      TableAssert.verify(null, myTable1.get(R1, C3));
-      TableAssert.verify(a(C1, V1, C2, V2), myTable1.get(R1));
-      TableAssert.verify(a(C1, V2, C2, V3), myTable1.get(R2));
-      TableAssert.verify(a(C1, V3, C2, V4), myTable1.get(R3));
-      TableAssert.verify(a(C1, V4, C2, V5), myTable1.get(R4));
+      TableAssert.assertRow(a(C1, V1, C2, V2), myTable1.get(R1, a(C1, C2)));
+      Assert.assertArrayEquals(V1, myTable1.get(R1, C1));
+      Assert.assertArrayEquals(V2, myTable1.get(R1, C2));
+      Assert.assertArrayEquals(null, myTable1.get(R1, C3));
+      TableAssert.assertRow(a(C1, V1, C2, V2), myTable1.get(R1));
+      TableAssert.assertRow(a(C1, V2, C2, V3), myTable1.get(R2));
+      TableAssert.assertRow(a(C1, V3, C2, V4), myTable1.get(R3));
+      TableAssert.assertRow(a(C1, V4, C2, V5), myTable1.get(R4));
 
       // writing to deleted column, to check conflicts are detected (delete-write conflict)
       myTable1.put(R1, a(C2), a(V5));
@@ -853,14 +854,14 @@ public abstract class TableTest<T extends Table> {
       // deleting changed column, to check conflicts are detected (write-delete conflict)
       // NOTE: table instance can be re-used between tx
       ((TransactionAware) myTable1).startTx(tx5);
-      TableAssert.verify(a(C1, V1, C2, V2), myTable1.get(R1, a(C1, C2)));
-      TableAssert.verify(V1, myTable1.get(R1, C1));
-      TableAssert.verify(V2, myTable1.get(R1, C2));
-      TableAssert.verify(null, myTable1.get(R1, C3));
-      TableAssert.verify(a(C1, V1, C2, V2), myTable1.get(R1));
-      TableAssert.verify(a(C1, V2, C2, V3), myTable1.get(R2));
-      TableAssert.verify(a(C1, V3, C2, V4), myTable1.get(R3));
-      TableAssert.verify(a(C1, V4, C2, V5), myTable1.get(R4));
+      TableAssert.assertRow(a(C1, V1, C2, V2), myTable1.get(R1, a(C1, C2)));
+      Assert.assertArrayEquals(V1, myTable1.get(R1, C1));
+      Assert.assertArrayEquals(V2, myTable1.get(R1, C2));
+      Assert.assertArrayEquals(null, myTable1.get(R1, C3));
+      TableAssert.assertRow(a(C1, V1, C2, V2), myTable1.get(R1));
+      TableAssert.assertRow(a(C1, V2, C2, V3), myTable1.get(R2));
+      TableAssert.assertRow(a(C1, V3, C2, V4), myTable1.get(R3));
+      TableAssert.assertRow(a(C1, V4, C2, V5), myTable1.get(R4));
       // NOTE: we are TableAssert.verifying conflict in one operation only. We may want to test each...
       myTable1.delete(R1, a(C1));
       Assert.assertFalse(txClient.canCommit(tx5, ((TransactionAware) myTable1).getTxChanges()));
@@ -898,31 +899,31 @@ public abstract class TableTest<T extends Table> {
       ((TransactionAware) myTable2).startTx(tx2);
 
       // bounded scan
-      TableAssert.verify(a(R2, R3, R4),
-                         aa(a(C2, V2),
-                            a(C3, V3, C4, V4),
-                            a(C4, V4)),
-                         myTable2, new Scan(R2, R5));
+      TableAssert.assertScan(a(R2, R3, R4),
+                             aa(a(C2, V2),
+                                a(C3, V3, C4, V4),
+                                a(C4, V4)),
+                             myTable2, new Scan(R2, R5));
       // open start scan
-      TableAssert.verify(a(R1, R2, R3),
-                         aa(a(C1, V1),
-                            a(C2, V2),
-                            a(C3, V3, C4, V4)),
-                         myTable2, new Scan(null, R4));
+      TableAssert.assertScan(a(R1, R2, R3),
+                             aa(a(C1, V1),
+                                a(C2, V2),
+                                a(C3, V3, C4, V4)),
+                             myTable2, new Scan(null, R4));
       // open end scan
-      TableAssert.verify(a(R3, R4, R5),
-                         aa(a(C3, V3, C4, V4),
-                            a(C4, V4),
-                            a(C5, V5)),
-                         myTable2, new Scan(R3, null));
+      TableAssert.assertScan(a(R3, R4, R5),
+                             aa(a(C3, V3, C4, V4),
+                                a(C4, V4),
+                                a(C5, V5)),
+                             myTable2, new Scan(R3, null));
       // open ends scan
-      TableAssert.verify(a(R1, R2, R3, R4, R5),
-                         aa(a(C1, V1),
-                            a(C2, V2),
-                            a(C3, V3, C4, V4),
-                            a(C4, V4),
-                            a(C5, V5)),
-                         myTable2, new Scan(null, null));
+      TableAssert.assertScan(a(R1, R2, R3, R4, R5),
+                             aa(a(C1, V1),
+                                a(C2, V2),
+                                a(C3, V3, C4, V4),
+                                a(C4, V4),
+                                a(C5, V5)),
+                             myTable2, new Scan(null, null));
 
       // adding/changing/removing some columns
       myTable2.put(R2, a(C1, C2, C3), a(V4, V3, V2));
@@ -937,11 +938,11 @@ public abstract class TableTest<T extends Table> {
       // NOTE: table can be re-used betweet tx
       ((TransactionAware) myTable1).startTx(tx3);
 
-      TableAssert.verify(a(R2, R3, R4),
-                         aa(a(C1, V4, C2, V3, C3, V2),
-                            a(C3, V3),
-                            a(C4, V4)),
-                         myTable1, new Scan(R2, R5));
+      TableAssert.assertScan(a(R2, R3, R4),
+                             aa(a(C1, V4, C2, V3, C3, V2),
+                                a(C3, V3),
+                                a(C4, V4)),
+                             myTable1, new Scan(R2, R5));
 
       Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) myTable1).getTxChanges()));
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
@@ -1071,10 +1072,10 @@ public abstract class TableTest<T extends Table> {
       Transaction tx3 = txClient.startShort();
       ((TransactionAware) myTable1).startTx(tx3);
 
-      TableAssert.verify(a(Bytes.toBytes("1_08a"), Bytes.toBytes("1_09b")),
-                         aa(a(C1, V1),
-                            a(C1, V1)),
-                         myTable1, new Scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
+      TableAssert.assertScan(a(Bytes.toBytes("1_08a"), Bytes.toBytes("1_09b")),
+                             aa(a(C1, V1),
+                                a(C1, V1)),
+                             myTable1, new Scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
 
       myTable1.delete(Bytes.toBytes("1_08a"));
       myTable1.put(Bytes.toBytes("1_07a"), a(C1), a(V1));
@@ -1091,11 +1092,11 @@ public abstract class TableTest<T extends Table> {
       Transaction tx4 = txClient.startShort();
       ((TransactionAware) myTable1).startTx(tx4);
 
-      TableAssert.verify(a(Bytes.toBytes("1_07a"), Bytes.toBytes("1_08b"), Bytes.toBytes("1_09c")),
-                         aa(a(C1, V1),
-                            a(C1, V1),
-                            a(C1, V1)),
-                         myTable1, new Scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
+      TableAssert.assertScan(a(Bytes.toBytes("1_07a"), Bytes.toBytes("1_08b"), Bytes.toBytes("1_09c")),
+                             aa(a(C1, V1),
+                                a(C1, V1),
+                                a(C1, V1)),
+                             myTable1, new Scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
 
     } finally {
       admin.drop();
@@ -1195,31 +1196,31 @@ public abstract class TableTest<T extends Table> {
       ((TransactionAware) myTable2).startTx(tx2);
 
       // bounded range
-      TableAssert.verify(a(C2, V2, C3, V3, C4, V4),
-                         myTable2.get(R1, C2, C5, Integer.MAX_VALUE));
+      TableAssert.assertRow(a(C2, V2, C3, V3, C4, V4),
+                            myTable2.get(R1, C2, C5, Integer.MAX_VALUE));
       // open start range
-      TableAssert.verify(a(C1, V1, C2, V2, C3, V3),
-                         myTable2.get(R1, null, C4, Integer.MAX_VALUE));
+      TableAssert.assertRow(a(C1, V1, C2, V2, C3, V3),
+                            myTable2.get(R1, null, C4, Integer.MAX_VALUE));
       // open end range
-      TableAssert.verify(a(C3, V3, C4, V4, C5, V5),
-                         myTable2.get(R1, C3, null, Integer.MAX_VALUE));
+      TableAssert.assertRow(a(C3, V3, C4, V4, C5, V5),
+                            myTable2.get(R1, C3, null, Integer.MAX_VALUE));
       // open ends range
-      TableAssert.verify(a(C1, V1, C2, V2, C3, V3, C4, V4, C5, V5),
-                         myTable2.get(R1, null, null, Integer.MAX_VALUE));
+      TableAssert.assertRow(a(C1, V1, C2, V2, C3, V3, C4, V4, C5, V5),
+                            myTable2.get(R1, null, null, Integer.MAX_VALUE));
 
       // same with limit
       // bounded range with limit
-      TableAssert.verify(a(C2, V2),
-                         myTable2.get(R1, C2, C5, 1));
+      TableAssert.assertRow(a(C2, V2),
+                            myTable2.get(R1, C2, C5, 1));
       // open start range with limit
-      TableAssert.verify(a(C1, V1, C2, V2),
-                         myTable2.get(R1, null, C4, 2));
+      TableAssert.assertRow(a(C1, V1, C2, V2),
+                            myTable2.get(R1, null, C4, 2));
       // open end range with limit
-      TableAssert.verify(a(C3, V3, C4, V4),
-                         myTable2.get(R1, C3, null, 2));
+      TableAssert.assertRow(a(C3, V3, C4, V4),
+                            myTable2.get(R1, C3, null, 2));
       // open ends range with limit
-      TableAssert.verify(a(C1, V1, C2, V2, C3, V3, C4, V4),
-                         myTable2.get(R1, null, null, 4));
+      TableAssert.assertRow(a(C1, V1, C2, V2, C3, V3, C4, V4),
+                            myTable2.get(R1, null, null, 4));
 
       // adding/changing/removing some columns
       myTable2.put(R1, a(C1, C2, C3), a(V4, V3, V2));
@@ -1234,8 +1235,8 @@ public abstract class TableTest<T extends Table> {
       // NOTE: table can be re-used betweet tx
       ((TransactionAware) myTable1).startTx(tx3);
 
-      TableAssert.verify(a(C2, V3, C3, V2),
-                         myTable1.get(R1, C2, C5, Integer.MAX_VALUE));
+      TableAssert.assertRow(a(C2, V3, C3, V2),
+                            myTable1.get(R1, C2, C5, Integer.MAX_VALUE));
 
       Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) myTable1).getTxChanges()));
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
@@ -1277,8 +1278,8 @@ public abstract class TableTest<T extends Table> {
       // write r1->c1,v2 but not commit
       table21.put(R1, a(C1), a(V2));
       // TableAssert.verify writes inside same tx
-      TableAssert.verify(a(C1, V1), table11.get(R1, a(C1)));
-      TableAssert.verify(a(C1, V2), table21.get(R1, a(C1)));
+      TableAssert.assertRow(a(C1, V1), table11.get(R1, a(C1)));
+      TableAssert.assertRow(a(C1, V2), table21.get(R1, a(C1)));
       // commit tx1
       Assert.assertTrue(txClient.canCommit(tx1, ImmutableList.copyOf(
         Iterables.concat(((TransactionAware) table11).getTxChanges(),
@@ -1297,8 +1298,8 @@ public abstract class TableTest<T extends Table> {
       // write r1->c1,v2 but not commit
       table32.put(R1, a(C1), a(V3));
       // TableAssert.verify writes inside same tx
-      TableAssert.verify(a(C1, V2), table22.get(R1, a(C1)));
-      TableAssert.verify(a(C1, V3), table32.get(R1, a(C1)));
+      TableAssert.assertRow(a(C1, V2), table22.get(R1, a(C1)));
+      TableAssert.assertRow(a(C1, V3), table32.get(R1, a(C1)));
       // try commit tx2
       Assert.assertFalse(txClient.canCommit(tx2, ImmutableList.copyOf(
         Iterables.concat(((TransactionAware) table22).getTxChanges(),
@@ -1317,8 +1318,8 @@ public abstract class TableTest<T extends Table> {
       // write r1->c1,v2 but not commit
       table43.put(R1, a(C1), a(V4));
       // TableAssert.verify writes inside same tx
-      TableAssert.verify(a(C1, V3), table33.get(R1, a(C1)));
-      TableAssert.verify(a(C1, V4), table43.get(R1, a(C1)));
+      TableAssert.assertRow(a(C1, V3), table33.get(R1, a(C1)));
+      TableAssert.assertRow(a(C1, V4), table43.get(R1, a(C1)));
       // commit tx3
       Assert.assertTrue(txClient.canCommit(tx3, ImmutableList.copyOf(
         Iterables.concat(((TransactionAware) table33).getTxChanges(),
@@ -1515,7 +1516,7 @@ public abstract class TableTest<T extends Table> {
       // also overwrite the value from tx0
       myTable1.put(R2, a(C2), a(V3));
       // TableAssert.verify can see changes inside tx
-      TableAssert.verify(a(C1, V1), myTable1.get(R1, a(C1)));
+      TableAssert.assertRow(a(C1, V1), myTable1.get(R1, a(C1)));
 
       // persisting changes
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
@@ -1533,9 +1534,9 @@ public abstract class TableTest<T extends Table> {
       ((TransactionAware) myTable2).startTx(tx2);
 
       // TableAssert.verify don't see rolled back changes
-      TableAssert.verify(a(), myTable2.get(R1, a(C1)));
+      TableAssert.assertRow(a(), myTable2.get(R1, a(C1)));
       // TableAssert.verify we still see the previous value
-      TableAssert.verify(a(C2, V2), myTable2.get(R2, a(C2)));
+      TableAssert.assertRow(a(C2, V2), myTable2.get(R2, a(C2)));
 
     } finally {
       admin.drop();
@@ -1562,14 +1563,14 @@ public abstract class TableTest<T extends Table> {
     // TableAssert.verify
     Transaction tx1 = txClient.startShort();
     ((TransactionAware) table).startTx(tx1);
-    TableAssert.verify(a(C1, V1), table.get(R1));
+    TableAssert.assertRow(a(C1, V1), table.get(R1));
 
     // drop table and recreate
     admin.drop();
     admin.create();
 
     // TableAssert.verify can read but nothing there
-    TableAssert.verify(a(), table.get(R1));
+    TableAssert.assertRow(a(), table.get(R1));
     txClient.abort(tx1); // only did read, safe to abort
 
     // create a new client and write another value
@@ -1585,13 +1586,13 @@ public abstract class TableTest<T extends Table> {
     // TableAssert.verify it is visible
     Transaction tx3 = txClient.startShort();
     ((TransactionAware) table).startTx(tx3);
-    TableAssert.verify(a(C2, V2), table.get(R1));
+    TableAssert.assertRow(a(C2, V2), table.get(R1));
 
     // truncate table
     admin.truncate();
 
     // TableAssert.verify can read but nothing there
-    TableAssert.verify(a(), table.get(R1));
+    TableAssert.assertRow(a(), table.get(R1));
     txClient.abort(tx3); // only did read, safe to abort
 
     // write again with other client
@@ -1606,7 +1607,7 @@ public abstract class TableTest<T extends Table> {
     // TableAssert.verify it is visible
     Transaction tx5 = txClient.startShort();
     ((TransactionAware) table).startTx(tx5);
-    TableAssert.verify(a(C3, V3), table.get(R1));
+    TableAssert.assertRow(a(C3, V3), table.get(R1));
     txClient.abort(tx5); // only did read, safe to abort
 
     // drop table
