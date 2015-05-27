@@ -18,7 +18,7 @@
         </div>
         <div class="panel-body" ng-if="metadataTabOpen">
           <div class="row">
-            <div class="col-lg-4 col-md-4 col-xs-12">
+            <div class="col-md-4 col-xs-12">
               <label for="adapaterType" class="control-label">Choose an Application Template</label>
               <select
                 id="adapaterType"
@@ -27,7 +27,7 @@
                 ng-model="metadata.type"
                 ng-options="adapter.name as adapter.name for adapter in adapterTypes" required></select>
             </div>
-            <div class="col-lg-3 col-md-3 col-xs-12">
+            <div class="col-md-3 col-xs-12">
               <label class="control-label">Name</label>
               <ui-select ng-model="selectedAdapterDraft"
                  on-select="onDraftChange($item, $model)"
@@ -43,7 +43,7 @@
                 </ui-select-choices>
               </ui-select>
             </div>
-            <div class="col-lg-5 col-md-5 col-xs-12">
+            <div class="col-md-5 col-xs-12">
               <label class="control-label">Description</label>
               <input class="form-control" ng-model="metadata.description"/>
             </div>
