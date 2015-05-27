@@ -29,7 +29,7 @@ import com.google.common.base.Throwables;
 /**
  * Remote implementation of {@link FlowManager}.
  */
-public class RemoteFlowManager extends AbstractProgramManager implements FlowManager {
+public class RemoteFlowManager extends AbstractProgramManager<FlowManager> implements FlowManager {
   private final ProgramClient programClient;
   private final MetricsClient metricsClient;
 

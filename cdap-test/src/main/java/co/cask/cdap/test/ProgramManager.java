@@ -25,18 +25,18 @@ import java.util.concurrent.TimeoutException;
 /**
  * Instance for this class is for managing a {@link Id.Program}.
  */
-public interface ProgramManager {
+public interface ProgramManager<T> {
 
   /**
    * Starts the program
    */
-  void start();
+  T start();
 
   /**
    * Starts the program with arguments
    * @param arguments the arguments to start the program with
    */
-  void start(Map<String, String> arguments);
+  T start(Map<String, String> arguments);
 
   /**
    * Stops the program.

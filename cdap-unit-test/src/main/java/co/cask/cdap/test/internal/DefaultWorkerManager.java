@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * A default implementation of {@link WorkerManager}
  */
-public class DefaultWorkerManager extends AbstractProgramManager implements WorkerManager {
+public class DefaultWorkerManager extends AbstractProgramManager<WorkerManager> implements WorkerManager {
   private final AppFabricClient appFabricClient;
 
   public DefaultWorkerManager(Id.Program programId,

@@ -19,7 +19,7 @@ package co.cask.cdap.test;
 /**
  * Managing the worker in an application.
  */
-public interface WorkerManager extends ProgramManager {
+public interface WorkerManager extends ProgramManager<WorkerManager> {
 
   /**
    * Changes the number of instances.

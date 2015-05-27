@@ -26,7 +26,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Abstract implementation of {@link ProgramManager} that includes common functionality for all implementations.
  */
-public abstract class AbstractProgramManager implements ProgramManager {
+public abstract class AbstractProgramManager<T> implements ProgramManager<T> {
   protected final Id.Program programId;
   private final ApplicationManager applicationManager;
 
@@ -36,13 +36,16 @@ public abstract class AbstractProgramManager implements ProgramManager {
   }
 
   @Override
-  public void start() {
-    start(ImmutableMap.<String, String>of());
+  public T start() {
+    return start(ImmutableMap.<String, String>of());
   }
 
   @Override
-  public void start(Map<String, String> arguments) {
+  public T start(Map<String, String> arguments) {
     applicationManager.startProgram(programId, arguments);
+    // this cast is fine as long as the derived classes extend AbstractProgramManager with the
+    // template (<T>) declared as its own class
+    return (T) this;
   }
 
   @Override

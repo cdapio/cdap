@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Remote implementation of {@link ServiceManager}.
  */
-public class RemoteServiceManager extends AbstractProgramManager implements ServiceManager {
+public class RemoteServiceManager extends AbstractProgramManager<ServiceManager> implements ServiceManager {
   private final MetricsClient metricsClient;
   private final ProgramClient programClient;
   private final ServiceClient serviceClient;
