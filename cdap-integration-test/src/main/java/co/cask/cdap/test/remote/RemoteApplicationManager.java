@@ -42,14 +42,12 @@ import java.util.Map;
  *
  */
 public class RemoteApplicationManager extends AbstractApplicationManager {
-  protected final Id.Application application;
-
   private final ClientConfig clientConfig;
   private final ProgramClient programClient;
   private final ApplicationClient applicationClient;
 
   public RemoteApplicationManager(Id.Application application, ClientConfig clientConfig) {
-    this.application = application;
+    super(application);
 
     ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig).build();
     namespacedClientConfig.setNamespace(application.getNamespace());
@@ -95,18 +93,6 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   }
 
   @Override
-  protected Id.Program startProgram(String programName, Map<String, String> arguments, ProgramType programType) {
-    try {
-      String status = programClient.getStatus(application.getId(), programType, programName);
-      Preconditions.checkState("STOPPED".equals(status), programType + " program %s is already running", programName);
-      programClient.start(application.getId(), programType, programName, arguments);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-    return Id.Program.from(application, programType, programName);
-  }
-
-  @Override
   @Deprecated
   public StreamWriter getStreamWriter(String streamName) {
     return new RemoteStreamWriter(new RemoteStreamManager(clientConfig,
@@ -137,6 +123,17 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   public void stopProgram(Id.Program programId) {
     try {
       programClient.stop(application.getId(), programId.getType(), programId.getId());
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public void startProgram(Id.Program programId, Map<String, String> arguments) {
+    try {
+      String status = programClient.getStatus(application.getId(), programId.getType(), programId.getId());
+      Preconditions.checkState("STOPPED".equals(status), "Program %s is already running", programId);
+      programClient.start(application.getId(), programId.getType(), programId.getId(), arguments);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

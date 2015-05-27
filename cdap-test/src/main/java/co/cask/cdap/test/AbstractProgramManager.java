@@ -17,7 +17,9 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.proto.Id;
+import com.google.common.collect.ImmutableMap;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -31,6 +33,16 @@ public abstract class AbstractProgramManager implements ProgramManager {
   public AbstractProgramManager(Id.Program programId, ApplicationManager applicationManager) {
     this.applicationManager = applicationManager;
     this.programId = programId;
+  }
+
+  @Override
+  public void start() {
+    start(ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  public void start(Map<String, String> arguments) {
+    applicationManager.startProgram(programId, arguments);
   }
 
   @Override

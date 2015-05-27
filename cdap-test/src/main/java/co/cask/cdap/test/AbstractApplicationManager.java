@@ -26,6 +26,11 @@ import java.util.Map;
  * A base implementation of {@link ApplicationManager}.
  */
 public abstract class AbstractApplicationManager implements ApplicationManager {
+  protected final Id.Application application;
+
+  public AbstractApplicationManager(Id.Application application) {
+    this.application = application;
+  }
 
   @Override
   public FlowManager startFlow(final String flowName) {
@@ -93,6 +98,12 @@ public abstract class AbstractApplicationManager implements ApplicationManager {
     return getWorkerManager(workerName);
   }
 
-  protected abstract Id.Program startProgram(String programName, Map<String, String> arguments,
-                                             ProgramType programType);
+  @Override
+  public void startProgram(Id.Program programId) {
+    startProgram(programId, ImmutableMap.<String, String>of());
+  }
+
+  private void startProgram(String programName, Map<String, String> arguments, ProgramType programType) {
+    startProgram(Id.Program.from(application, programType, programName), arguments);
+  }
 }

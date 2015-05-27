@@ -192,6 +192,18 @@ public interface ApplicationManager {
   void stopProgram(Id.Program programId);
 
   /**
+   * Starts a particular program.
+   * @param programId the program to start
+   */
+  void startProgram(Id.Program programId);
+
+  /**
+   * Starts a particular program with arguments.
+   * @param programId the program to start
+   */
+  void startProgram(Id.Program programId, Map<String, String> arguments);
+
+  /**
    * Checks whether a particular program is running or not.
    * @param programId the program to check
    * @return true if the program is running; false otherwise.

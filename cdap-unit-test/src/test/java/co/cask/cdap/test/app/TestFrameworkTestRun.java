@@ -117,6 +117,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(0, countService.getProvisionedInstances());
     Assert.assertEquals(2, countService.getRequestedInstances());
     Assert.assertFalse(countService.isRunning());
+    countService.start();
+    Assert.assertTrue(countService.isRunning());
+    Assert.assertEquals(2, countService.getProvisionedInstances());
   }
 
   @Category(SlowTests.class)
