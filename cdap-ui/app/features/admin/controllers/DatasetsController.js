@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('AdminDatasetsController', function ($scope, MyDataSource, $stateParams) {
+  .controller('AdminDatasetsController', function ($scope, MyDataSource, $stateParams, myStreamApi) {
 
     var dataSrc = new MyDataSource($scope);
     $scope.dataList = [];
@@ -11,12 +11,17 @@ angular.module(PKG.name + '.feature.admin')
         $scope.dataList = $scope.dataList.concat(res);
       });
 
-    dataSrc.request({
-      _cdapPath: '/namespaces/' + $stateParams.nsadmin + '/streams'
-    }, function(res) {
-      angular.forEach(res, function(r) {
-        r.type = 'Stream';
+    var streamParams = {
+      namespace: $stateParams.nsadmin,
+      scope: $scope
+    };
+    myStreamApi.list(streamParams)
+      .$promise
+      .then(function (res) {
+        angular.forEach(res, function(r) {
+          r.type = 'Stream';
+        });
+        $scope.dataList = $scope.dataList.concat(res);
       });
-      $scope.dataList = $scope.dataList.concat(res);
-    });
+
   });

@@ -2,7 +2,7 @@
  * various utility functions
  */
 angular.module(PKG.name+'.services')
-  .factory('myHelpers', function(){
+  .factory('myHelpers', function(myCdapUrl){
 
    /**
     * set a property deep in an object
@@ -85,15 +85,45 @@ angular.module(PKG.name+'.services')
 
   function objectQuery(obj) {
     if (!angular.isObject(obj)) {
-        return null;
+      return null;
     }
     for (var i = 1; i < arguments.length; i++) {
-        obj = obj[arguments[i]];
-        if (!angular.isObject(obj)) {
-          return obj;
-        }
+      obj = obj[arguments[i]];
+      if (!angular.isObject(obj)) {
+        return obj;
+      }
     }
     return obj;
+  }
+
+  /* ----------------------------------------------------------------------- */
+
+  /*
+    Purpose: construct a resource config object for endpoints API services
+  */
+
+  function getConfigNs (method, type, path, isArray) {
+    var config = {
+      url: myCdapUrl.constructUrl({ _cdapNsPath: path }),
+      method: method,
+      options: { type: type}
+    };
+    if (isArray) {
+      config.isArray = true;
+    }
+    return config;
+  }
+
+  function getConfig (method, type, path, isArray) {
+    var config = {
+      url: myCdapUrl.constructUrl({ _cdapPath: path }),
+      method: method,
+      options: { type: type}
+    };
+    if (isArray) {
+      config.isArray = true;
+    }
+    return config;
   }
 
   /* ----------------------------------------------------------------------- */
@@ -101,6 +131,8 @@ angular.module(PKG.name+'.services')
   return {
     deepSet: deepSet,
     deepGet: deepGet,
-    objectQuery: objectQuery
+    objectQuery: objectQuery,
+    getConfig: getConfig,
+    getConfigNs: getConfigNs
   };
 });
