@@ -98,14 +98,6 @@ angular.module(PKG.name+'.services')
       });
     }
 
-    $rootScope.$on(MYSOCKET_EVENT.reconnected, function () {
-      $log.log('[DataSource] reconnected, reloading...');
-
-      // https://github.com/angular-ui/ui-router/issues/582
-      $state.transitionTo($state.current, $state.$current.params,
-        { reload: true, inherit: true, notify: true }
-      );
-    });
 
     function DataSource (scope) {
       scope = scope || $rootScope.$new();
