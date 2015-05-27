@@ -63,8 +63,7 @@ public class WordCountTest extends TestBase {
     metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
     // Start RetrieveCounts service
-    ServiceManager serviceManager = appManager.getServiceManager(RetrieveCounts.SERVICE_NAME);
-    serviceManager.start();
+    ServiceManager serviceManager = appManager.getServiceManager(RetrieveCounts.SERVICE_NAME).start();
 
     // Wait service startup
     serviceManager.waitForStatus(true);

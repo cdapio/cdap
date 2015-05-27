@@ -102,8 +102,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     input.send("1");
     input.send("11");
 
-    ServiceManager serviceManager = applicationManager.getServiceManager("CountService");
-    serviceManager.start();
+    ServiceManager serviceManager = applicationManager.getServiceManager("CountService").start();
     serviceManager.waitForStatus(true, 2, 1);
 
     Assert.assertEquals("1", new Gson().fromJson(
@@ -136,8 +135,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     ApplicationManager appManager = deployApplication(DatasetWithMRApp.class);
     Map<String, String> argsForMR = ImmutableMap.of(DatasetWithMRApp.INPUT_KEY, "table1",
                                                     DatasetWithMRApp.OUTPUT_KEY, "table2");
-    MapReduceManager mrManager = appManager.getMapReduceManager(DatasetWithMRApp.MAPREDUCE_PROGRAM);
-    mrManager.start(argsForMR);
+    MapReduceManager mrManager = appManager.getMapReduceManager(DatasetWithMRApp.MAPREDUCE_PROGRAM).start(argsForMR);
     mrManager.waitForFinish(5, TimeUnit.MINUTES);
     appManager.stopAll();
 
@@ -248,8 +246,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     terminalMetrics.waitForProcessed(3, 60, TimeUnit.SECONDS);
     TimeUnit.SECONDS.sleep(1);
 
-    ServiceManager queryManager = applicationManager.getServiceManager("QueryService");
-    queryManager.start();
+    ServiceManager queryManager = applicationManager.getServiceManager("QueryService").start();
     queryManager.waitForStatus(true, 2, 1);
     URL serviceURL = queryManager.getServiceURL();
     Gson gson = new Gson();
@@ -269,17 +266,15 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Test
   public void testGetServiceURL() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppUsingGetServiceURL.class);
-    ServiceManager centralServiceManager = applicationManager.getServiceManager(AppUsingGetServiceURL.CENTRAL_SERVICE);
-    centralServiceManager.start();
+    ServiceManager centralServiceManager =
+      applicationManager.getServiceManager(AppUsingGetServiceURL.CENTRAL_SERVICE).start();
     centralServiceManager.waitForStatus(true);
 
-    WorkerManager pingingWorker = applicationManager.getWorkerManager(AppUsingGetServiceURL.PINGING_WORKER);
-    pingingWorker.start();
+    WorkerManager pingingWorker = applicationManager.getWorkerManager(AppUsingGetServiceURL.PINGING_WORKER).start();
     pingingWorker.waitForStatus(true);
 
     // Test service's getServiceURL
-    ServiceManager serviceManager = applicationManager.getServiceManager(AppUsingGetServiceURL.FORWARDING);
-    serviceManager.start();
+    ServiceManager serviceManager = applicationManager.getServiceManager(AppUsingGetServiceURL.FORWARDING).start();
     String result = callServiceGet(serviceManager.getServiceURL(), "ping");
     String decodedResult = new Gson().fromJson(result, String.class);
     // Verify that the service was able to hit the CentralService and retrieve the answer.
@@ -321,8 +316,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Test
   public void testWorkerInstances() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppUsingGetServiceURL.class);
-    WorkerManager workerManager = applicationManager.getWorkerManager(AppUsingGetServiceURL.PINGING_WORKER);
-    workerManager.start();
+    WorkerManager workerManager = applicationManager.getWorkerManager(AppUsingGetServiceURL.PINGING_WORKER).start();
     workerManager.waitForStatus(true);
 
     int retries = 5;
@@ -342,8 +336,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     workerManager.setInstances(2);
     workerInstancesCheck(workerManager, 2, retries);
 
-    WorkerManager lifecycleWorkerManager = applicationManager.getWorkerManager(AppUsingGetServiceURL.LIFECYCLE_WORKER);
-    lifecycleWorkerManager.start();
+    WorkerManager lifecycleWorkerManager =
+      applicationManager.getWorkerManager(AppUsingGetServiceURL.LIFECYCLE_WORKER).start();
     lifecycleWorkerManager.waitForStatus(true);
 
     // Set 5 instances for the LifecycleWorker
@@ -402,8 +396,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   public void testAppWithWorker() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppWithWorker.class);
     LOG.info("Deployed.");
-    WorkerManager manager = applicationManager.getWorkerManager(AppWithWorker.WORKER);
-    manager.start();
+    WorkerManager manager = applicationManager.getWorkerManager(AppWithWorker.WORKER).start();
     TimeUnit.MILLISECONDS.sleep(200);
     manager.stop();
     applicationManager.stopAll();
@@ -419,8 +412,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   public void testAppWithServices() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
-    ServiceManager serviceManager = applicationManager.getServiceManager(AppWithServices.SERVICE_NAME);
-    serviceManager.start();
+    ServiceManager serviceManager = applicationManager.getServiceManager(AppWithServices.SERVICE_NAME).start();
     serviceManager.waitForStatus(true);
 
     LOG.info("Service Started");
@@ -471,14 +463,12 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       = ImmutableMap.of(AppWithServices.WRITE_VALUE_RUN_KEY, AppWithServices.DATASET_TEST_VALUE,
                         AppWithServices.WRITE_VALUE_STOP_KEY, AppWithServices.DATASET_TEST_VALUE_STOP);
     ServiceManager datasetWorkerServiceManager = applicationManager
-      .getServiceManager(AppWithServices.DATASET_WORKER_SERVICE_NAME);
-    datasetWorkerServiceManager.start(args);
-    WorkerManager datasetWorker = applicationManager.getWorkerManager(AppWithServices.DATASET_UPDATE_WORKER);
-    datasetWorker.start(args);
+      .getServiceManager(AppWithServices.DATASET_WORKER_SERVICE_NAME).start(args);
+    WorkerManager datasetWorker =
+      applicationManager.getWorkerManager(AppWithServices.DATASET_UPDATE_WORKER).start(args);
     datasetWorkerServiceManager.waitForStatus(true);
 
-    ServiceManager noopManager = applicationManager.getServiceManager("NoOpService");
-    noopManager.start();
+    ServiceManager noopManager = applicationManager.getServiceManager("NoOpService").start();
     serviceManager.waitForStatus(true, 2, 1);
 
     String result = callServiceGet(noopManager.getServiceURL(), "ping/" + AppWithServices.DATASET_TEST_KEY);
@@ -522,8 +512,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   public void testTransactionHandlerService() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppWithServices.class);
     LOG.info("Deployed.");
-    ServiceManager serviceManager = applicationManager.getServiceManager(AppWithServices.TRANSACTIONS_SERVICE_NAME);
-    serviceManager.start();
+    ServiceManager serviceManager =
+      applicationManager.getServiceManager(AppWithServices.TRANSACTIONS_SERVICE_NAME).start();
     serviceManager.waitForStatus(true);
 
     LOG.info("Service Started");
@@ -600,8 +590,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(0L, flowletMetrics.getException());
 
     // Query the result
-    ServiceManager serviceManager = applicationManager.getServiceManager("WordFrequency");
-    serviceManager.start();
+    ServiceManager serviceManager = applicationManager.getServiceManager("WordFrequency").start();
     serviceManager.waitForStatus(true, 2, 1);
 
     // Verify the query result
@@ -616,8 +605,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(0L, serviceMetrics.getException());
 
     // Run mapreduce job
-    MapReduceManager mrManager = applicationManager.getMapReduceManager("countTotal");
-    mrManager.start();
+    MapReduceManager mrManager = applicationManager.getMapReduceManager("countTotal").start();
     mrManager.waitForFinish(1800L, TimeUnit.SECONDS);
 
     long totalCount = Long.valueOf(callServiceGet(serviceManager.getServiceURL(), "total"));
@@ -625,8 +613,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(5 * 100L, totalCount);
 
     // Run mapreduce from stream
-    mrManager = applicationManager.getMapReduceManager("countFromStream");
-    mrManager.start();
+    mrManager = applicationManager.getMapReduceManager("countFromStream").start();
     mrManager.waitForFinish(120L, TimeUnit.SECONDS);
 
     totalCount = Long.valueOf(callServiceGet(serviceManager.getServiceURL(), "stream_total"));
@@ -698,8 +685,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Test(timeout = 60000L)
   public void testFlowletMetricsReset() throws Exception {
     ApplicationManager appManager = deployApplication(DataSetInitApp.class);
-    FlowManager flowManager = appManager.getFlowManager("DataSetFlow");
-    flowManager.start();
+    FlowManager flowManager = appManager.getFlowManager("DataSetFlow").start();
     RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("DataSetInitApp", "DataSetFlow", "Consumer");
     flowletMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
     flowManager.stop();
@@ -712,8 +698,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Test(timeout = 60000L)
   public void testFlowletInitAndSetInstances() throws Exception {
     ApplicationManager appManager = deployApplication(testSpace, DataSetInitApp.class);
-    FlowManager flowManager = appManager.getFlowManager("DataSetFlow");
-    flowManager.start();
+    FlowManager flowManager = appManager.getFlowManager("DataSetFlow").start();
 
     RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics(testSpace.getId(), "DataSetInitApp",
                                                                    "DataSetFlow", "Consumer");
@@ -811,8 +796,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   private void testAppWithDataset(Class<? extends Application> app, String serviceName) throws Exception {
     ApplicationManager applicationManager = deployApplication(app);
     // Query the result
-    ServiceManager serviceManager = applicationManager.getServiceManager(serviceName);
-    serviceManager.start();
+    ServiceManager serviceManager = applicationManager.getServiceManager(serviceName).start();
     serviceManager.waitForStatus(true, 2, 1);
     callServicePut(serviceManager.getServiceURL(), "key1", "value1");
     String response = callServiceGet(serviceManager.getServiceURL(), "key1");
@@ -857,8 +841,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // This test verify bytecode generated classes ClassLoading
 
     ApplicationManager appManager = deployApplication(testSpace, ClassLoaderTestApp.class);
-    FlowManager flowManager = appManager.getFlowManager("BasicFlow");
-    flowManager.start();
+    FlowManager flowManager = appManager.getFlowManager("BasicFlow").start();
 
     // Wait for at least 10 records being generated
     RuntimeMetrics flowMetrics = RuntimeStats.getFlowletMetrics(testSpace.getId(), "ClassLoaderTestApp",
@@ -866,8 +849,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     flowMetrics.waitForProcessed(10, 5000, TimeUnit.MILLISECONDS);
     flowManager.stop();
 
-    ServiceManager serviceManager = appManager.getServiceManager("RecordQuery");
-    serviceManager.start();
+    ServiceManager serviceManager = appManager.getServiceManager("RecordQuery").start();
     URL serviceURL = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
     Assert.assertNotNull(serviceURL);
 

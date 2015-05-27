@@ -49,8 +49,8 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
   @Test
   public void testSparkMetrics() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestSparkMetricsIntegrationApp.class);
-    SparkManager sparkManager = applicationManager.getSparkManager(TestSparkMetricsIntegrationApp.APP_SPARK_NAME);
-    sparkManager.start();
+    SparkManager sparkManager =
+      applicationManager.getSparkManager(TestSparkMetricsIntegrationApp.APP_SPARK_NAME).start();
     sparkManager.waitForFinish(120, TimeUnit.SECONDS);
 
     Assert.assertTrue(getSparkMetric(TestSparkMetricsIntegrationApp.APP_NAME,

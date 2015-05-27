@@ -71,8 +71,7 @@ public class BatchStreamIntegrationTestRun extends TestFrameworkTestBase {
       streamManager.send(String.valueOf(i));
     }
 
-    MapReduceManager mapReduceManager = applicationManager.getMapReduceManager(mapReduceName);
-    mapReduceManager.start();
+    MapReduceManager mapReduceManager = applicationManager.getMapReduceManager(mapReduceName).start();
     mapReduceManager.waitForFinish(timeout, TimeUnit.SECONDS);
 
     // The MR job simply turns every stream event body into key/value pairs, with key==value.

@@ -55,8 +55,7 @@ public class MapReduceStreamInputTestRun extends TestFrameworkTestBase {
     streamManager.send(createEvent(schema, "AAPL", 1000, 284.13f));
     float aaplTotal = 5 * 300.0f + 3 * 298.34f + 50 * 305.23f + 1000 * 284.13f;
 
-    MapReduceManager mrManager = applicationManager.getMapReduceManager("BodyTracker");
-    mrManager.start();
+    MapReduceManager mrManager = applicationManager.getMapReduceManager("BodyTracker").start();
     mrManager.waitForFinish(180, TimeUnit.SECONDS);
 
     KeyValueTable pricesDS = (KeyValueTable) getDataset("prices").get();

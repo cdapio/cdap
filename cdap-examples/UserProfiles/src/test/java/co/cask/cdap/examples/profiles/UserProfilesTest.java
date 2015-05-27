@@ -49,11 +49,9 @@ public class UserProfilesTest extends TestBase {
     ApplicationManager applicationManager = deployApplication(UserProfiles.class);
 
     // run the service and the flow
-    FlowManager flowManager = applicationManager.getFlowManager("ActivityFlow");
-    flowManager.start();
+    FlowManager flowManager = applicationManager.getFlowManager("ActivityFlow").start();
 
-    ServiceManager serviceManager = applicationManager.getServiceManager("UserProfileService");
-    serviceManager.start();
+    ServiceManager serviceManager = applicationManager.getServiceManager("UserProfileService").start();
     serviceManager.waitForStatus(true);
     URL serviceURL = serviceManager.getServiceURL();
 

@@ -72,7 +72,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
                                    DiscoveryServiceClient discoveryServiceClient,
                                    TemporaryFolder tempFolder,
                                    AppFabricClient appFabricClient,
-                                   @Assisted("application") Id.Application application,
+                                   @Assisted("applicationId") Id.Application application,
                                    @Assisted Location deployedJar) {
     super(application);
     this.streamWriterFactory = streamWriterFactory;

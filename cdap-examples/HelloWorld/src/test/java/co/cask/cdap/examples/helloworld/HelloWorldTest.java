@@ -42,8 +42,7 @@ public class HelloWorldTest extends TestBase {
     ApplicationManager appManager = deployApplication(HelloWorld.class);
 
     // Start WhoFlow
-    FlowManager flowManager = appManager.getFlowManager("WhoFlow");
-    flowManager.start();
+    FlowManager flowManager = appManager.getFlowManager("WhoFlow").start();
     Assert.assertTrue(flowManager.isRunning());
 
     // Send stream events to the "who" Stream
@@ -64,8 +63,7 @@ public class HelloWorldTest extends TestBase {
     }
 
     // Start Greeting service and use it
-    ServiceManager serviceManager = appManager.getServiceManager(HelloWorld.Greeting.SERVICE_NAME);
-    serviceManager.start();
+    ServiceManager serviceManager = appManager.getServiceManager(HelloWorld.Greeting.SERVICE_NAME).start();
 
     // Wait service startup
     serviceManager.waitForStatus(true);

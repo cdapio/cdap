@@ -36,8 +36,7 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
   @Test
   public void testFlowManager() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestApplication.class);
-    FlowManager flowManager = applicationManager.getFlowManager(TestFlow.NAME);
-    flowManager.start();
+    FlowManager flowManager = applicationManager.getFlowManager(TestFlow.NAME).start();
     flowManager.stop();
   }
 

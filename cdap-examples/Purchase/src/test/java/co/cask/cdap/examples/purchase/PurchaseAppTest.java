@@ -47,8 +47,7 @@ public class PurchaseAppTest extends TestBase {
     ApplicationManager appManager = deployApplication(PurchaseApp.class);
 
     // Start PurchaseFlow
-    FlowManager flowManager = appManager.getFlowManager("PurchaseFlow");
-    flowManager.start();
+    FlowManager flowManager = appManager.getFlowManager("PurchaseFlow").start();
 
     // Send stream events to the "purchaseStream" Stream
     StreamManager streamManager = getStreamManager("purchaseStream");
@@ -100,13 +99,12 @@ public class PurchaseAppTest extends TestBase {
     Assert.assertEquals(profileFromService.getLastName(), "bernard");
 
     // Run PurchaseHistoryWorkflow which will process the data
-    MapReduceManager mapReduceManager = appManager.getMapReduceManager("PurchaseHistoryBuilder");
-    mapReduceManager.start();
+    MapReduceManager mapReduceManager = appManager.getMapReduceManager("PurchaseHistoryBuilder").start();
     mapReduceManager.waitForFinish(3, TimeUnit.MINUTES);
 
     // Start PurchaseHistoryService
-    ServiceManager purchaseHistoryServiceManager = appManager.getServiceManager(PurchaseHistoryService.SERVICE_NAME);
-    purchaseHistoryServiceManager.start();
+    ServiceManager purchaseHistoryServiceManager =
+      appManager.getServiceManager(PurchaseHistoryService.SERVICE_NAME).start();
 
     // Wait for service startup
     purchaseHistoryServiceManager.waitForStatus(true);
@@ -132,8 +130,8 @@ public class PurchaseAppTest extends TestBase {
 
   private ServiceManager getUserProfileServiceManager(ApplicationManager appManager) throws InterruptedException {
     // Start UserProfileService
-    ServiceManager userProfileServiceManager = appManager.getServiceManager(UserProfileServiceHandler.SERVICE_NAME);
-    userProfileServiceManager.start();
+    ServiceManager userProfileServiceManager =
+      appManager.getServiceManager(UserProfileServiceHandler.SERVICE_NAME).start();
 
     // Wait for service startup
     userProfileServiceManager.waitForStatus(true);

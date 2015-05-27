@@ -44,8 +44,7 @@ public class SparkStreamIntegrationTestRun extends TestFrameworkTestBase {
       streamManager.send(String.valueOf(i));
     }
 
-    SparkManager sparkManager = applicationManager.getSparkManager("SparkStreamProgram");
-    sparkManager.start();
+    SparkManager sparkManager = applicationManager.getSparkManager("SparkStreamProgram").start();
     sparkManager.waitForFinish(120, TimeUnit.SECONDS);
 
     // The Spark job simply turns every stream event body into key/value pairs, with key==value.
