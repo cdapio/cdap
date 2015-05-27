@@ -17,14 +17,17 @@
 package co.cask.cdap.data2.dataset2;
 
 import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scan;
+import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.api.dataset.table.Table;
 import org.junit.Assert;
 
 import java.util.Map;
 
 /**
- * Data set table test.
+ * Data set table test helpers.
  */
-public class TableTest {
+public class TableAssert {
 
   public static void verifyRow(Row result, byte[] expectedRow, byte[][] columns, byte[][] expected) {
     Assert.assertNotNull(result);
@@ -49,15 +52,55 @@ public class TableTest {
     }
   }
 
+  public static void verify(byte[][] expectedCols, byte[][] expectedVals, Row row) {
+    verify(expectedCols, expectedVals, row.getColumns());
+  }
+
   public static void verifyColumn(Row result, byte[] column, byte[] expected) {
     verifyColumns(result, new byte[][]{column}, new byte[][]{expected});
   }
 
-  private static void verify(Map<byte[], byte[]> expected,
-                             Map<byte[], byte[]> actual) {
+  public static void verify(Map<byte[], byte[]> expected, Map<byte[], byte[]> actual) {
     Assert.assertEquals(actual.size(), expected.size());
     for (Map.Entry<byte[], byte[]> expectedEntry : expected.entrySet()) {
       Assert.assertArrayEquals(expectedEntry.getValue(), actual.get(expectedEntry.getKey()));
     }
+  }
+
+  public static void verify(byte[][] expected, Row row) {
+    verify(expected, row.getColumns());
+  }
+
+  public static void verify(byte[][] expected, Map<byte[], byte[]> rowMap) {
+    Assert.assertEquals(expected.length / 2, rowMap.size());
+    for (int i = 0; i < expected.length; i += 2) {
+      byte[] key = expected[i];
+      byte[] val = expected[i + 1];
+      Assert.assertArrayEquals(val, rowMap.get(key));
+    }
+  }
+
+  public static void verify(byte[] expected, byte[] actual) {
+    Assert.assertArrayEquals(expected, actual);
+  }
+
+  public static void verify(byte[][] expectedRows, byte[][][] expectedRowMaps, Table table, Scan scan) {
+    verify(expectedRows, expectedRowMaps, table.scan(scan));
+    if (scan.getFilter() == null) {
+      // if only start and stop row are specified, we also want to check the scan(startRow, stopRow) APIs
+      verify(expectedRows, expectedRowMaps, table.scan(scan.getStartRow(), scan.getStopRow()));
+    }
+  }
+
+  public static void verify(byte[][] expectedRows, byte[][][] expectedRowMaps, Scanner scanner) {
+    for (int i = 0; i < expectedRows.length; i++) {
+      Row next = scanner.next();
+      Assert.assertNotNull(next);
+      Assert.assertArrayEquals(expectedRows[i], next.getRow());
+      verify(expectedRowMaps[i], next.getColumns());
+    }
+
+    // nothing is left in scan
+    Assert.assertNull(scanner.next());
   }
 }
