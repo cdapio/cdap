@@ -16,6 +16,9 @@ angular.module(PKG.name + '.services')
       get: myHelpers.getConfig('GET', 'REQUEST', basepath),
       create: myHelpers.getConfig('PUT', 'REQUEST', basepath),
       setProperties: myHelpers.getConfig('PUT', 'REQUEST', basepath + '/properties'),
-      truncate: myHelpers.getConfig('POST', 'REQUEST', basepath + '/truncate')
+      truncate: myHelpers.getConfig('POST', 'REQUEST', basepath + '/truncate'),
+      programsList: myHelpers.getConfig('GET', 'REQUEST', basepath + '/programs', true),
+      eventSearch: myHelpers.getConfig('GET', 'REQUEST', basepath + '/events', true),
+      sendEvent: myHelpers.getConfig('POST', 'REQUEST', basepath)
     });
   });

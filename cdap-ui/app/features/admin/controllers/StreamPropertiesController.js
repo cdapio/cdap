@@ -1,10 +1,8 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('StreamPropertiesController', function($scope, MyDataSource, $stateParams, myHelpers, $alert, myStreamApi) {
+  .controller('StreamPropertiesController', function($scope, $stateParams, myHelpers, $alert, myStreamApi) {
 
-    var dataSrc = new MyDataSource($scope);
     $scope.avro = {};
 
-    var basePath = '/namespaces/' + $stateParams.nsadmin + '/streams/' + $stateParams.streamId;
     $scope.formatOptions = ['avro', 'clf', 'csv', 'grok', 'syslog', 'text', 'tsv', 'stream'];
 
     var requestParams = {
@@ -14,14 +12,6 @@ angular.module(PKG.name + '.feature.admin')
     };
 
     $scope.reload = function () {
-      // dataSrc
-      //   .request({
-      //     _cdapPath: basePath
-      //   })
-      //   .then(function(res) {
-
-
-      //   });
 
       myStreamApi.get(requestParams)
         .$promise
@@ -116,12 +106,9 @@ angular.module(PKG.name + '.feature.admin')
         "notification.threshold.mb": $scope.threshold
       };
 
-      dataSrc
-        .request({
-          _cdapPath: basePath + '/properties',
-          method: 'PUT',
-          body: params
-        })
+      // setProperties does not work yet. Need to pass in body to the request on $resource
+      myStreamApi.setProperties(requestParams, params)
+        .$promise
         .then(function() {
           $scope.reload();
 
@@ -131,20 +118,9 @@ angular.module(PKG.name + '.feature.admin')
             content: 'Stream properties have been successfully saved!'
           });
 
-        }, function(err) {
+        }, function (err) {
           $scope.error = err;
         });
-
-      // setProperties does not work yet. Need to pass in body to the request on $resource
-      // myStreamApi.setProperties(requestParams, params)
-      //   .$promise
-      //   .then(function() {
-      //     $scope.reload();
-
-      //     console.log('success');
-      //   }, function (err) {
-      //     $scope.error = err;
-      //   });
     };
 
     $scope.$watch('format', function() {

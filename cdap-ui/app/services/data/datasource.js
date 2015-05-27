@@ -282,6 +282,11 @@ angular.module(PKG.name+'.services')
         if (resource.body) {
           generatedResource.body = resource.body;
         }
+
+        if (resource.data) {
+          generatedResource.body = resource.data;
+        }
+
         if (!resource.url) {
           generatedResource.url = buildUrl(myCdapUrl.constructUrl(resource), resource.params || {});
         } else {
