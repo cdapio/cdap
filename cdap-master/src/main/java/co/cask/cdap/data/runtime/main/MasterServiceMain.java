@@ -60,6 +60,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -128,6 +129,7 @@ public class MasterServiceMain extends DaemonMain {
   private final ServiceStore serviceStore;
   private final LeaderElection leaderElection;
   private final TokenSecureStoreUpdater secureStoreUpdater;
+  private final Service masterServices;
 
   private volatile boolean stopped;
 
@@ -150,6 +152,43 @@ public class MasterServiceMain extends DaemonMain {
     this.serviceStore = injector.getInstance(ServiceStore.class);
     this.secureStoreUpdater = baseInjector.getInstance(TokenSecureStoreUpdater.class);
     this.leaderElection = createLeaderElection();
+
+    this.masterServices = new RetryOnStartFailureService(new Supplier<Service>() {
+      @Override
+      public Service get() {
+        return new AbstractIdleService() {
+          @Override
+          protected void startUp() throws Exception {
+            createSystemHBaseNamespace();
+            updateConfigurationTable();
+
+            LogAppenderInitializer logAppenderInitializer = baseInjector.getInstance(LogAppenderInitializer.class);
+            logAppenderInitializer.initialize();
+
+            zkClient.startAndWait();
+            twillRunner.startAndWait();
+            kafkaClient.startAndWait();
+            metricsCollectionService.startAndWait();
+            serviceStore.startAndWait();
+            leaderElection.startAndWait();
+          }
+
+          @Override
+          protected void shutDown() throws Exception {
+            stopQuietly(leaderElection);
+            stopQuietly(serviceStore);
+            stopQuietly(metricsCollectionService);
+            stopQuietly(kafkaClient);
+            stopQuietly(twillRunner);
+            stopQuietly(zkClient);
+
+            if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
+              Closeables.closeQuietly(baseInjector.getInstance(ExploreClient.class));
+            }
+          }
+        };
+      }
+    }, RetryStrategies.exponentialDelay(1, 20, TimeUnit.SECONDS));
   }
 
   @Override
@@ -162,35 +201,14 @@ public class MasterServiceMain extends DaemonMain {
 
   @Override
   public void start() {
-    createSystemHBaseNamespace();
-    updateConfigurationTable();
-
-    LogAppenderInitializer logAppenderInitializer = baseInjector.getInstance(LogAppenderInitializer.class);
-    logAppenderInitializer.initialize();
-
-    zkClient.startAndWait();
-    twillRunner.startAndWait();
-    kafkaClient.startAndWait();
-    metricsCollectionService.startAndWait();
-    serviceStore.startAndWait();
-    leaderElection.startAndWait();
+    masterServices.startAndWait();
   }
 
   @Override
   public void stop() {
     LOG.info("Stopping {}", Constants.Service.MASTER_SERVICES);
     stopped = true;
-
-    stopQuietly(leaderElection);
-    stopQuietly(serviceStore);
-    stopQuietly(metricsCollectionService);
-    stopQuietly(kafkaClient);
-    stopQuietly(twillRunner);
-    stopQuietly(zkClient);
-
-    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
-      Closeables.closeQuietly(baseInjector.getInstance(ExploreClient.class));
-    }
+    masterServices.stopAndWait();
   }
 
   @Override
