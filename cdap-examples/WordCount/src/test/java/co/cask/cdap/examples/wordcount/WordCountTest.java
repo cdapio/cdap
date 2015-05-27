@@ -50,7 +50,7 @@ public class WordCountTest extends TestBase {
     ApplicationManager appManager = deployApplication(WordCount.class);
 
     // Start the Flow
-    appManager.startFlow("WordCounter");
+    appManager.getFlowManager("WordCounter").start();
 
     // Send a few events to the stream
     StreamManager streamManager = getStreamManager("wordStream");
@@ -63,7 +63,8 @@ public class WordCountTest extends TestBase {
     metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
     // Start RetrieveCounts service
-    ServiceManager serviceManager = appManager.startService(RetrieveCounts.SERVICE_NAME);
+    ServiceManager serviceManager = appManager.getServiceManager(RetrieveCounts.SERVICE_NAME);
+    serviceManager.start();
 
     // Wait service startup
     serviceManager.waitForStatus(true);

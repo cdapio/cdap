@@ -59,8 +59,9 @@ public class TestAppWithCube extends TestBase {
     // Deploy the application
     ApplicationManager appManager = deployApplication(AppWithCube.class);
 
-    ServiceManager serviceManager = appManager.startService(AppWithCube.SERVICE_NAME);
+    ServiceManager serviceManager = appManager.getServiceManager(AppWithCube.SERVICE_NAME);
     try {
+      serviceManager.start();
       serviceManager.waitForStatus(true);
       URL url = serviceManager.getServiceURL();
 

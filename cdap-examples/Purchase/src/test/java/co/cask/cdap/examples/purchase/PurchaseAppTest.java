@@ -25,7 +25,6 @@ import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import org.junit.Assert;
@@ -48,7 +47,8 @@ public class PurchaseAppTest extends TestBase {
     ApplicationManager appManager = deployApplication(PurchaseApp.class);
 
     // Start PurchaseFlow
-    FlowManager flowManager = appManager.startFlow("PurchaseFlow");
+    FlowManager flowManager = appManager.getFlowManager("PurchaseFlow");
+    flowManager.start();
 
     // Send stream events to the "purchaseStream" Stream
     StreamManager streamManager = getStreamManager("purchaseStream");
@@ -100,12 +100,13 @@ public class PurchaseAppTest extends TestBase {
     Assert.assertEquals(profileFromService.getLastName(), "bernard");
 
     // Run PurchaseHistoryWorkflow which will process the data
-    MapReduceManager mapReduceManager = appManager.startMapReduce("PurchaseHistoryBuilder",
-                                                                  ImmutableMap.<String, String>of());
+    MapReduceManager mapReduceManager = appManager.getMapReduceManager("PurchaseHistoryBuilder");
+    mapReduceManager.start();
     mapReduceManager.waitForFinish(3, TimeUnit.MINUTES);
 
     // Start PurchaseHistoryService
-    ServiceManager purchaseHistoryServiceManager = appManager.startService(PurchaseHistoryService.SERVICE_NAME);
+    ServiceManager purchaseHistoryServiceManager = appManager.getServiceManager(PurchaseHistoryService.SERVICE_NAME);
+    purchaseHistoryServiceManager.start();
 
     // Wait for service startup
     purchaseHistoryServiceManager.waitForStatus(true);
@@ -131,7 +132,8 @@ public class PurchaseAppTest extends TestBase {
 
   private ServiceManager getUserProfileServiceManager(ApplicationManager appManager) throws InterruptedException {
     // Start UserProfileService
-    ServiceManager userProfileServiceManager = appManager.startService(UserProfileServiceHandler.SERVICE_NAME);
+    ServiceManager userProfileServiceManager = appManager.getServiceManager(UserProfileServiceHandler.SERVICE_NAME);
+    userProfileServiceManager.start();
 
     // Wait for service startup
     userProfileServiceManager.waitForStatus(true);

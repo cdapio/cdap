@@ -47,8 +47,9 @@ public class SparkServiceIntegrationTestRun extends TestFrameworkTestBase {
     ApplicationManager applicationManager = deployApplication(TestSparkServiceIntegrationApp.class);
     startService(applicationManager);
 
-    SparkManager sparkManager = applicationManager.startSpark(
+    SparkManager sparkManager = applicationManager.getSparkManager(
       TestSparkServiceIntegrationApp.SparkServiceProgram.class.getSimpleName());
+    sparkManager.start();
     sparkManager.waitForFinish(120, TimeUnit.SECONDS);
 
     DataSetManager<KeyValueTable> datasetManager = applicationManager.getDataSet("result");
@@ -63,8 +64,9 @@ public class SparkServiceIntegrationTestRun extends TestFrameworkTestBase {
    * Starts a Service
    */
   private void startService(ApplicationManager applicationManager) {
-    ServiceManager serviceManager = applicationManager.startService(TestSparkServiceIntegrationApp.SERVICE_NAME);
+    ServiceManager serviceManager = applicationManager.getServiceManager(TestSparkServiceIntegrationApp.SERVICE_NAME);
     try {
+      serviceManager.start();
       serviceManager.waitForStatus(true);
     } catch (InterruptedException e) {
       LOG.error("Failed to start {} service", TestSparkServiceIntegrationApp.SERVICE_NAME, e);

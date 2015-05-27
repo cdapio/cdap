@@ -56,7 +56,8 @@ public class FileSetWordCountTest extends TestBase {
     final String line2 = "b a b";
 
     // discover the file set service
-    ServiceManager serviceManager = applicationManager.startService("FileSetService");
+    ServiceManager serviceManager = applicationManager.getServiceManager("FileSetService");
+    serviceManager.start();
     serviceManager.waitForStatus(true);
     URL serviceURL = serviceManager.getServiceURL();
 
@@ -80,7 +81,8 @@ public class FileSetWordCountTest extends TestBase {
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, "lines", inputArgs));
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, "counts", outputArgs));
 
-    MapReduceManager mapReduceManager = applicationManager.startMapReduce("WordCount", runtimeArguments);
+    MapReduceManager mapReduceManager = applicationManager.getMapReduceManager("WordCount");
+    mapReduceManager.start(runtimeArguments);
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
     // retrieve the counts through the service and verify
@@ -114,7 +116,8 @@ public class FileSetWordCountTest extends TestBase {
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, "lines", inputArgs));
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, "counts", outputArgs));
 
-    mapReduceManager = applicationManager.startMapReduce("WordCount", runtimeArguments);
+    mapReduceManager = applicationManager.getMapReduceManager("WordCount");
+    mapReduceManager.start(runtimeArguments);
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
     // retrieve the counts through the dataset API and verify

@@ -50,7 +50,8 @@ public class TestBundleJarApp extends TestBase {
   public void testBundleJar() throws Exception {
     File helloWorldJar = new File(TestBundleJarApp.class.getClassLoader().getResource("helloworld.jar").toURI());
     ApplicationManager applicationManager = deployApplication(BundleJarApp.class, helloWorldJar);
-    FlowManager flowManager = applicationManager.startFlow("SimpleFlow");
+    FlowManager flowManager = applicationManager.getFlowManager("SimpleFlow");
+    flowManager.start();
     StreamManager streamManager = getStreamManager("simpleInputStream");
     for (int i = 0; i < 5; i++) {
       streamManager.send("test" + i + ":" + i);
@@ -63,7 +64,8 @@ public class TestBundleJarApp extends TestBase {
     flowManager.stop();
 
     // Query the result
-    ServiceManager serviceManager = applicationManager.startService("SimpleGetInput");
+    ServiceManager serviceManager = applicationManager.getServiceManager("SimpleGetInput");
+    serviceManager.start();
 
     // Verify the query result
     String queryResult = callServiceGet(serviceManager.getServiceURL(), "/get/test1");
@@ -72,7 +74,8 @@ public class TestBundleJarApp extends TestBase {
     Assert.assertEquals(expectedQueryResult, queryResult);
     serviceManager.stop();
 
-    serviceManager = applicationManager.startService("PrintService");
+    serviceManager = applicationManager.getServiceManager("PrintService");
+    serviceManager.start();
 
     String helloWorldClassName = "hello.HelloWorld";
     String result = callServiceGet(serviceManager.getServiceURL(), "/load/" + helloWorldClassName);
