@@ -26,7 +26,7 @@ import java.util.concurrent.TimeoutException;
  * Instance for this class is for managing a {@link Id.Program}.
  * @param <T> The type of ProgramManager
  */
-public interface ProgramManager<T> {
+public interface ProgramManager<T extends ProgramManager> {
 
   /**
    * Starts the program

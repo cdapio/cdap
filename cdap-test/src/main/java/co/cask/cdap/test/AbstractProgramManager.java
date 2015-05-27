@@ -27,7 +27,7 @@ import java.util.concurrent.TimeoutException;
  * Abstract implementation of {@link ProgramManager} that includes common functionality for all implementations.
  * @param <T> The type of ProgramManager
  */
-public abstract class AbstractProgramManager<T> implements ProgramManager<T> {
+public abstract class AbstractProgramManager<T extends ProgramManager> implements ProgramManager<T> {
   protected final Id.Program programId;
   private final ApplicationManager applicationManager;
 
