@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('StreamPropertiesController', function($scope, MyDataSource, $stateParams, myHelpers, $alert) {
+  .controller('StreamPropertiesController', function($scope, MyDataSource, $stateParams, myHelpers, $alert, myStreamApi) {
 
     var dataSrc = new MyDataSource($scope);
     $scope.avro = {};
@@ -7,12 +7,25 @@ angular.module(PKG.name + '.feature.admin')
     var basePath = '/namespaces/' + $stateParams.nsadmin + '/streams/' + $stateParams.streamId;
     $scope.formatOptions = ['avro', 'clf', 'csv', 'grok', 'syslog', 'text', 'tsv', 'stream'];
 
+    var requestParams = {
+      namespace: $stateParams.nsadmin,
+      streamId: $stateParams.streamId,
+      scope: $scope
+    };
+
     $scope.reload = function () {
-      dataSrc
-        .request({
-          _cdapPath: basePath
-        })
-        .then(function(res) {
+      // dataSrc
+      //   .request({
+      //     _cdapPath: basePath
+      //   })
+      //   .then(function(res) {
+
+
+      //   });
+
+      myStreamApi.get(requestParams)
+        .$promise
+        .then(function (res) {
           $scope.ttl = myHelpers.objectQuery(res, 'ttl');
           $scope.format = myHelpers.objectQuery(res, 'format', 'name');
           $scope.threshold = myHelpers.objectQuery(res, 'notification.threshold.mb');
@@ -51,7 +64,6 @@ angular.module(PKG.name + '.feature.admin')
               value: v
             });
           });
-
         });
     };
 
@@ -122,6 +134,17 @@ angular.module(PKG.name + '.feature.admin')
         }, function(err) {
           $scope.error = err;
         });
+
+      // setProperties does not work yet. Need to pass in body to the request on $resource
+      // myStreamApi.setProperties(requestParams, params)
+      //   .$promise
+      //   .then(function() {
+      //     $scope.reload();
+
+      //     console.log('success');
+      //   }, function (err) {
+      //     $scope.error = err;
+      //   });
     };
 
     $scope.$watch('format', function() {

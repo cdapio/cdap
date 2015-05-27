@@ -14,6 +14,8 @@ angular.module(PKG.name + '.services')
     {
       list: myHelpers.getConfig('GET', 'REQUEST', listPath, true),
       get: myHelpers.getConfig('GET', 'REQUEST', basepath),
-      create: myHelpers.getConfig('PUT', 'REQUEST', basepath)
+      create: myHelpers.getConfig('PUT', 'REQUEST', basepath),
+      setProperties: myHelpers.getConfig('PUT', 'REQUEST', basepath + '/properties'),
+      truncate: myHelpers.getConfig('POST', 'REQUEST', basepath + '/truncate')
     });
   });
