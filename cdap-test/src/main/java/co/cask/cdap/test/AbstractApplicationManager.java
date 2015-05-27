@@ -33,66 +33,72 @@ public abstract class AbstractApplicationManager implements ApplicationManager {
   }
 
   @Override
+  @Deprecated
   public FlowManager startFlow(final String flowName) {
     return startFlow(flowName, ImmutableMap.<String, String>of());
   }
 
   @Override
+  @Deprecated
   public FlowManager startFlow(final String flowName, Map<String, String> arguments) {
     startProgram(flowName, arguments, ProgramType.FLOW);
     return getFlowManager(flowName);
   }
 
   @Override
+  @Deprecated
   public MapReduceManager startMapReduce(final String programName) {
     return startMapReduce(programName, ImmutableMap.<String, String>of());
   }
 
   @Override
+  @Deprecated
   public MapReduceManager startMapReduce(final String programName, Map<String, String> arguments) {
     startProgram(programName, arguments, ProgramType.MAPREDUCE);
     return getMapReduceManager(programName);
   }
 
   @Override
+  @Deprecated
   public SparkManager startSpark(String programName) {
     return startSpark(programName, ImmutableMap.<String, String>of());
   }
 
   @Override
+  @Deprecated
   public SparkManager startSpark(String programName, Map<String, String> arguments) {
     startProgram(programName, arguments, ProgramType.SPARK);
     return getSparkManager(programName);
   }
 
   @Override
-  public WorkflowManager startWorkflow(String workflowName) {
-    return startWorkflow(workflowName, ImmutableMap.<String, String>of());
-  }
-
-  @Override
+  @Deprecated
   public WorkflowManager startWorkflow(final String workflowName, Map<String, String> arguments) {
     startProgram(workflowName, arguments, ProgramType.WORKFLOW);
     return getWorkflowManager(workflowName);
   }
 
   @Override
+  @Deprecated
   public ServiceManager startService(String serviceName) {
     return startService(serviceName, ImmutableMap.<String, String>of());
   }
 
   @Override
+  @Deprecated
   public ServiceManager startService(final String serviceName, Map<String, String> arguments) {
     startProgram(serviceName, arguments, ProgramType.SERVICE);
     return getServiceManager(serviceName);
   }
 
   @Override
+  @Deprecated
   public WorkerManager startWorker(String workerName) {
     return startWorker(workerName, ImmutableMap.<String, String>of());
   }
 
   @Override
+  @Deprecated
   public WorkerManager startWorker(final String workerName, Map<String, String> arguments) {
     startProgram(workerName, arguments, ProgramType.WORKER);
     return getWorkerManager(workerName);

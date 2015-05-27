@@ -29,7 +29,10 @@ public interface ApplicationManager {
    * Starts a flow.
    * @param flowName Name of the flow to start.
    * @return A {@link FlowManager} for controlling the started flow.
+   *
+   * @deprecated Use {@link FlowManager#start()}
    */
+  @Deprecated
   FlowManager startFlow(String flowName);
 
   /**
@@ -37,7 +40,10 @@ public interface ApplicationManager {
    * @param flowName Name of the flow to start.
    * @param arguments Arguments to be passed while starting a flow.
    * @return A {@link FlowManager} for controlling the started flow.
+   *
+   * @deprecated Use {@link FlowManager#start(Map<String, String>)}
    */
+  @Deprecated
   FlowManager startFlow(String flowName, Map<String, String> arguments);
 
   /**
@@ -51,7 +57,10 @@ public interface ApplicationManager {
    * Starts a mapreduce job.
    * @param jobName Name of the mapreduce job to start.
    * @return A {@link MapReduceManager} for controlling the started mapreduce job.
+   *
+   * @deprecated Use {@link MapReduceManager#start()}
    */
+  @Deprecated
   MapReduceManager startMapReduce(String jobName);
 
   /**
@@ -59,7 +68,10 @@ public interface ApplicationManager {
    * @param jobName Name of the mapreduce job to start.
    * @param arguments Arguments to be passed while starting a mapreduce.
    * @return A {@link MapReduceManager} for controlling the started mapreduce job.
+   *
+   * @deprecated Use {@link MapReduceManager#start(Map<String, String>)}
    */
+  @Deprecated
   MapReduceManager startMapReduce(String jobName, Map<String, String> arguments);
 
   /**
@@ -73,7 +85,10 @@ public interface ApplicationManager {
    * Starts a Spark job.
    * @param jobName Name of the spark job to start.
    * @return A {@link SparkManager} for controlling the started spark job.
+   *
+   * @deprecated Use {@link SparkManager#start()}
    */
+  @Deprecated
   SparkManager startSpark(String jobName);
 
   /**
@@ -81,7 +96,10 @@ public interface ApplicationManager {
    * @param jobName Name of the spark job to start.
    * @param arguments Arguments to be passed while starting a spark.
    * @return A {@link SparkManager} for controlling the started spark job.
+   *
+   * @deprecated Use {@link SparkManager#start(Map<String, String>)}
    */
+  @Deprecated
   SparkManager startSpark(String jobName, Map<String, String> arguments);
 
   /**
@@ -91,19 +109,15 @@ public interface ApplicationManager {
    */
   SparkManager getSparkManager(String jobName);
 
-    /**
-   * Starts a workflow
-   * @param workflowName name of the workflow to start
-   * @return {@link WorkflowManager} for controlling the started workflow
-   */
-  WorkflowManager startWorkflow(String workflowName);
-
   /**
    * Starts a workflow.
    * @param workflowName Name of the workflow to start
    * @param arguments arguments to be passed to the workflow
    * @return {@link WorkflowManager} for controlling the started workflow.
+   *
+   * @deprecated Use {@link WorkflowManager#start(Map<String, String>)}
    */
+  @Deprecated
   WorkflowManager startWorkflow(String workflowName, Map<String, String> arguments);
 
   /**
@@ -117,7 +131,10 @@ public interface ApplicationManager {
    * Starts a service.
    * @param serviceName Name of the service to be started.
    * @return {@link ServiceManager} to control the running service.
+   *
+   * @deprecated Use {@link ServiceManager#start()}
    */
+  @Deprecated
   ServiceManager startService(String serviceName);
 
   /**
@@ -125,7 +142,10 @@ public interface ApplicationManager {
    * @param serviceName Name of the service to be started.
    * @param arguments Arguments to be passed for the service.
    * @return {@link ServiceManager} to control the running service.
+   *
+   * @deprecated Use {@link ServiceManager#start(Map<String, String>)}
    */
+  @Deprecated
   ServiceManager startService(String serviceName, Map<String, String> arguments);
 
   /**
@@ -139,7 +159,10 @@ public interface ApplicationManager {
    * Starts a worker.
    * @param workerName name of the worker to be started
    * @return {@link WorkerManager} to control the running worker
+   *
+   * @deprecated Use {@link WorkerManager#start()}
    */
+  @Deprecated
   WorkerManager startWorker(String workerName);
 
   /**
@@ -147,7 +170,10 @@ public interface ApplicationManager {
    * @param workerName name of the worker to be started
    * @param arguments arguments to be passed to the worker
    * @return {@link WorkerManager} to control the running worker
+   *
+   * @deprecated Use {@link WorkerManager#start(Map<String, String>)}
    */
+  @Deprecated
   WorkerManager startWorker(String workerName, Map<String, String> arguments);
 
   /**
