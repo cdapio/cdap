@@ -34,6 +34,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import com.google.common.base.Predicate;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
@@ -45,6 +46,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -220,10 +222,29 @@ public class ProgramLifecycleService extends AbstractIdleService {
   /**
    * Fix all the possible inconsistent states for RunRecords that shows it is in RUNNING state but actually not
    * via check to {@link ProgramRuntimeService}.
-   *
-   * @param programType The type of programs the run records nee to validate and update.
    */
-  void validateAndCorrectRunningRunRecords(ProgramType programType) {
+  private void validateAndCorrectRunningRunRecords() {
+    Set<String> processedInvalidRunRecordIds = Sets.newHashSet();
+
+    // Lets update the running programs run records
+    for (ProgramType programType : ProgramType.values()) {
+      validateAndCorrectRunningRunRecords(programType, processedInvalidRunRecordIds);
+    }
+
+    if (!processedInvalidRunRecordIds.isEmpty()) {
+      LOG.info("Corrected {} of run records with RUNNING status but no actual program running.",
+               processedInvalidRunRecordIds.size());
+    }
+  }
+
+  /**
+   * Fix all the possible inconsistent states for RunRecords that shows it is in RUNNING state but actually not
+   * via check to {@link ProgramRuntimeService} for a type of CDAP program.
+   *
+   * @param programType The type of program the run records need to validate and update.
+   * @param processedInvalidRunRecordIds the {@link Set} of processed invalid run record ids.
+   */
+  void validateAndCorrectRunningRunRecords(ProgramType programType, Set<String> processedInvalidRunRecordIds) {
     final Map<RunId, RuntimeInfo> runIdToRuntimeInfo = runtimeService.list(programType);
 
     List<RunRecord> invalidRunRecords = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecord>() {
@@ -245,7 +266,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
     // Now lets correct the invalid RunRecords
     for (RunRecord rr : invalidRunRecords) {
-      boolean shouldCorrect = shouldCorrectForWorkflowChildren(rr);
+      boolean shouldCorrect = shouldCorrectForWorkflowChildren(rr, processedInvalidRunRecordIds);
       if (!shouldCorrect) {
         continue;
       }
@@ -260,6 +281,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
         store.compareAndSetStatus(targetProgramId, runId, ProgramController.State.ALIVE.getRunStatus(),
                                   ProgramController.State.ERROR.getRunStatus());
+
+        processedInvalidRunRecordIds.add(runId);
       }
     }
   }
@@ -268,24 +291,28 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * Helper method to check if the run record is a child program of a Workflow
    *
    * @param runRecord The target {@link RunRecord} to check
+   * @param processedInvalidRunRecordIds the {@link Set} of processed invalid run record ids.
    * @return {@code true} of we should check and {@code false} otherwise
    */
-  private boolean shouldCorrectForWorkflowChildren(RunRecord runRecord) {
+  private boolean shouldCorrectForWorkflowChildren(RunRecord runRecord, Set<String> processedInvalidRunRecordIds) {
     // check if it is part of workflow because it may not have actual runtime info
     if (runRecord.getProperties() != null && runRecord.getProperties().get("workflowrunid") != null) {
 
       // Get the parent Workflow info
       String workflowRunId = runRecord.getProperties().get("workflowrunid");
-      Id.Program workflowProgramId = retrieveProgramIdForRunRecord(ProgramType.WORKFLOW, workflowRunId);
-      if (workflowProgramId != null) {
-        // lets see if the parent workflow run records state is still running
-        RunRecord wfRunRecord = store.getRun(workflowProgramId, workflowRunId);
-        RuntimeInfo wfRuntimeInfo = runtimeService.lookup(workflowProgramId, RunIds.fromString(workflowRunId));
+      if (!processedInvalidRunRecordIds.contains(workflowRunId)) {
+        // If the parent workflow has not been processed, then check if it still valid
+        Id.Program workflowProgramId = retrieveProgramIdForRunRecord(ProgramType.WORKFLOW, workflowRunId);
+        if (workflowProgramId != null) {
+          // lets see if the parent workflow run records state is still running
+          RunRecord wfRunRecord = store.getRun(workflowProgramId, workflowRunId);
+          RuntimeInfo wfRuntimeInfo = runtimeService.lookup(workflowProgramId, RunIds.fromString(workflowRunId));
 
-        // Check of the parent workflow run record exists and it is running and runtime info said it is still there
-        // then do not update it
-        if (wfRunRecord != null && wfRunRecord.getStatus() == ProgramRunStatus.RUNNING && wfRuntimeInfo != null) {
-          return false;
+          // Check of the parent workflow run record exists and it is running and runtime info said it is still there
+          // then do not update it
+          if (wfRunRecord != null && wfRunRecord.getStatus() == ProgramRunStatus.RUNNING && wfRuntimeInfo != null) {
+            return false;
+          }
         }
       }
     }
@@ -317,7 +344,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
         switch (programType) {
           case FLOW:
             for (String programName : appSpec.getFlows().keySet()) {
-              Id.Program programId = validateProgramForRunRecord(store, nm.getName(), appSpec.getName(), programType,
+              Id.Program programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(), programType,
                                                                  programName, runId);
               if (programId != null) {
                 targetProgramId = programId;
@@ -327,7 +354,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
             break;
           case MAPREDUCE:
             for (String programName : appSpec.getMapReduce().keySet()) {
-              Id.Program programId = validateProgramForRunRecord(store, nm.getName(), appSpec.getName(), programType,
+              Id.Program programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(), programType,
                                                                  programName, runId);
               if (programId != null) {
                 targetProgramId = programId;
@@ -337,7 +364,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
             break;
           case SPARK:
             for (String programName : appSpec.getSpark().keySet()) {
-              Id.Program programId = validateProgramForRunRecord(store, nm.getName(), appSpec.getName(), programType,
+              Id.Program programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(), programType,
                                                                  programName, runId);
               if (programId != null) {
                 targetProgramId = programId;
@@ -347,7 +374,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
             break;
           case SERVICE:
             for (String programName : appSpec.getServices().keySet()) {
-              Id.Program programId = validateProgramForRunRecord(store, nm.getName(), appSpec.getName(), programType,
+              Id.Program programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(), programType,
                                                                  programName, runId);
               if (programId != null) {
                 targetProgramId = programId;
@@ -357,7 +384,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
             break;
           case WORKER:
             for (String programName : appSpec.getWorkers().keySet()) {
-              Id.Program programId = validateProgramForRunRecord(store, nm.getName(), appSpec.getName(), programType,
+              Id.Program programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(), programType,
                                                                  programName, runId);
               if (programId != null) {
                 targetProgramId = programId;
@@ -367,7 +394,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
             break;
           case WORKFLOW:
             for (String programName : appSpec.getWorkflows().keySet()) {
-              Id.Program programId = validateProgramForRunRecord(store, nm.getName(), appSpec.getName(), programType,
+              Id.Program programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(), programType,
                                                                  programName, runId);
               if (programId != null) {
                 targetProgramId = programId;
@@ -394,17 +421,11 @@ public class ProgramLifecycleService extends AbstractIdleService {
   /**
    * Helper method to get program id for a run record if it exists in the store.
    *
-   * @param store
-   * @param namespaceName
-   * @param appName
-   * @param programType
-   * @param programName
-   * @param runId
    * @return instance of {@link Id.Program} if exist for the runId or null if does not.
    */
   @Nullable
-  private static Id.Program validateProgramForRunRecord(Store store, String namespaceName, String appName,
-                                                        ProgramType programType, String programName, String runId) {
+  private Id.Program validateProgramForRunRecord(String namespaceName, String appName, ProgramType programType,
+                                                 String programName, String runId) {
     Id.Program programId = Id.Program.from(namespaceName, appName, programType, programName);
     RunRecord runRecord = store.getRun(programId, runId);
     if (runRecord != null) {
@@ -418,6 +439,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * Helper class to run in separate thread to validate the invalid running run records
    */
   public static class RunRecordsCorrectorRunnable implements Runnable {
+    private static final Logger LOG = LoggerFactory.getLogger(RunRecordsCorrectorRunnable.class);
+
     private final ProgramLifecycleService programLifecycleService;
 
     public RunRecordsCorrectorRunnable(ProgramLifecycleService programLifecycleService) {
@@ -426,9 +449,15 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
     @Override
     public void run() {
-      // Lets update the running programs run records
-      for (ProgramType programType : ProgramType.values()) {
-        programLifecycleService.validateAndCorrectRunningRunRecords(programType);
+      try {
+        RunRecordsCorrectorRunnable.LOG.debug("Start correcting invalid run records ...");
+
+        // Lets update the running programs run records
+        programLifecycleService.validateAndCorrectRunningRunRecords();
+
+        RunRecordsCorrectorRunnable.LOG.debug("End correcting invalid run records.");
+      } catch (Throwable t) {
+        // Ignore any exception thrown since this behaves like daemon thread.
       }
     }
   }
