@@ -63,12 +63,16 @@ changed, using the :ref:`http-restful-api-stream`, the :ref:`stream-client` of t
 :ref:`client-api`, or by using the :ref:`Command Line Interface. <cli>`
 
 
-.. rubric::  Truncating a Stream
+.. rubric::  Truncating and Deleting a Stream
 
 Streams can be truncated, which means deleting all events that were ever written to the
 Stream. This is permanent and cannot be undone. They can be truncated through the using
 the :ref:`http-restful-api-stream`, the :ref:`stream-client` of the :ref:`client-api`, or
-by using the :ref:`Command Line Interface. <cli>`
+by using the :ref:`Command Line Interface <cli>`.
+
+Deleting a stream means deleting the endpoint so that events can no longer be written to
+it. This is permanent and cannot be undone. If another stream is created with the same
+name, it will not return any of the previous stream's events.
 
 
 .. _streams-notifications:

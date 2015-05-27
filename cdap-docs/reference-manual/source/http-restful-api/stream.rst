@@ -294,6 +294,50 @@ A Stream can be truncated with an HTTP POST method to the URL::
    * - Description
      - Delete all events in the Stream named *mystream* in the namespace *default*
 
+Deleting a Stream
+-----------------
+Deleting a stream means both deleting all events that were ever written to the stream and
+the stream endpoint itself. This is permanent and cannot be undone. If another stream is
+created with the same name, it will not return any of the previous stream's events.
+
+A Stream can be deleted with an HTTP DELETE method to the URL::
+
+  DELETE <base-url>/namespaces/<namespace>/streams/<stream-id>
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<stream-id>``
+     - Name of an existing Stream
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The Stream was successfully deleted
+   * - ``404 Not Found``
+     - The Stream ``<stream-id>`` does not exist
+
+.. rubric:: Example
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``DELETE <base-url>/namespaces/default/streams/mystream``
+   * - Description
+     - Deletes the stream named *mystream* in the namespace *default* and all events in
+       the stream
+
 .. _http-restful-api-stream-setting-properties:
 
 Setting Stream Properties
