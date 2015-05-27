@@ -217,7 +217,7 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT) {
+  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT) {
 
     var activeThemeClass = caskTheme.getClassName();
 
@@ -245,6 +245,15 @@ angular
       classes.push(activeThemeClass);
 
       $scope.bodyClass = classes.join(' ');
+    });
+
+    $rootScope.$on(MYSOCKET_EVENT.reconnected, function () {
+      $log.log('[DataSource] reconnected, reloading...');
+
+      // https://github.com/angular-ui/ui-router/issues/582
+      $state.transitionTo($state.current, $state.$current.params,
+        { reload: true, inherit: true, notify: true }
+      );
     });
 
     console.timeEnd(PKG.name);
