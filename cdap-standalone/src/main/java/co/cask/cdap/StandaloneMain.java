@@ -251,7 +251,7 @@ public class StandaloneMain {
   }
 
   public static void main(String[] args) {
-    StandaloneMain main = null;
+    StandaloneMain main = create();
     try {
       if (args.length > 0) {
         System.out.printf("%s takes no arguments\n", StandaloneMain.class.getSimpleName());
@@ -260,15 +260,11 @@ public class StandaloneMain {
           System.out.printf("Parameter #%d: %s\n", i, args[i]);
         }
       }
-      main = create();
       main.startUp();
     } catch (Throwable e) {
       System.err.println("Failed to start Standalone CDAP. " + e.getMessage());
       LOG.error("Failed to start Standalone CDAP", e);
-      if (main != null) {
-        main.shutDown();
-      }
-      System.exit(-2);
+      Runtime.getRuntime().halt(-2);
     }
   }
 
