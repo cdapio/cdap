@@ -23,15 +23,15 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 /**
- * Provides ways to obtain the context for certain metrics.
+ * Provides ways to obtain the tags for certain metrics.
  */
-public final class MetricsContexts {
+public final class MetricsTags {
 
-  private MetricsContexts() {
+  private MetricsTags() {
   }
 
   // TODO: Use Id.Flow.Flowlet
-  public static Map<String, String> forFlowlet(Id.Program flowId, String flowletId) {
+  public static Map<String, String> flowlet(Id.Program flowId, String flowletId) {
     return ImmutableMap.of(
       Constants.Metrics.Tag.NAMESPACE, flowId.getNamespaceId(),
       Constants.Metrics.Tag.APP, flowId.getApplicationId(),
@@ -39,14 +39,14 @@ public final class MetricsContexts {
       Constants.Metrics.Tag.FLOWLET, flowletId);
   }
 
-  public static Map<String, String> forService(Id.Program id) {
+  public static Map<String, String> service(Id.Program id) {
     return ImmutableMap.of(
       Constants.Metrics.Tag.NAMESPACE, id.getNamespaceId(),
       Constants.Metrics.Tag.APP, id.getApplicationId(),
       Constants.Metrics.Tag.SERVICE, id.getId());
   }
 
-  public static Map<String, String> forServiceHandler(Id.Program id, String handlerId) {
+  public static Map<String, String> serviceHandler(Id.Program id, String handlerId) {
     return ImmutableMap.of(
       Constants.Metrics.Tag.NAMESPACE, id.getNamespaceId(),
       Constants.Metrics.Tag.APP, id.getApplicationId(),
