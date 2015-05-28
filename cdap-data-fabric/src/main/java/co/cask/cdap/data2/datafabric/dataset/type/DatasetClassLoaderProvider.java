@@ -18,13 +18,28 @@ package co.cask.cdap.data2.datafabric.dataset.type;
 
 import co.cask.cdap.proto.DatasetModuleMeta;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 /**
- * Creates a {@link ClassLoader} for a {@link DatasetModuleMeta}.
+ * Gets {@link ClassLoader ClassLoaders} for different {@link DatasetModuleMeta}.
  */
-public interface DatasetTypeClassLoaderFactory {
+public interface DatasetClassLoaderProvider extends Closeable {
 
-  ClassLoader create(DatasetModuleMeta moduleMeta, ClassLoader parentClassLoader) throws IOException;
+  /**
+   * Get the classloader for a specific dataset module.
+   *
+   * @param moduleMeta the metadata for the dataset module to get a classloader for
+   * @return classloader for the given dataset module
+   * @throws IOException
+   */
+  ClassLoader get(DatasetModuleMeta moduleMeta) throws IOException;
 
+  /**
+   * Get the parent classloader for module classloaders
+   *
+   * @return the parent classloader for module classloaders
+   * @throws IOException
+   */
+  ClassLoader getParent();
 }

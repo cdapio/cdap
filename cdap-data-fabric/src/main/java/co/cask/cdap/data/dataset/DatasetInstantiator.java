@@ -23,11 +23,11 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionAware;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import java.util.Map;
@@ -39,24 +39,20 @@ import javax.annotation.Nullable;
  */
 public class DatasetInstantiator implements DatasetContext {
 
-  private final DatasetFramework datasetFramework;
-  // the class loader to use for data set classes
-  private final ClassLoader classLoader;
-  private final Set<TransactionAware> txAware = Sets.newIdentityHashSet();
-  // in this collection we have only datasets initialized with getDataset() which is OK for now...
-  private final Map<TransactionAware, String> txAwareToMetricNames = Maps.newIdentityHashMap();
-
   private final MetricsContext metricsContext;
+  private final Set<TransactionAware> txAware;
   private final Id.Namespace namespace;
-  private final Iterable<? extends Id> owners;
+  private final SystemDatasetInstantiator datasetInstantiator;
 
   /**
    * Constructor from data fabric.
    *
    * @param namespace the {@link Id.Namespace} in which this dataset is used
+   * @param datasetFramework the dataset framework to use to get datasets
    * @param owners the {@link Id} which is using this dataset
-   * @param classLoader the class loader to use for loading dataset classes.
-   *                    If null, then the default class loader is used
+   * @param classLoader the class loader to use for loading dataset classes
+   * @param metricsContext the metrics context to use for collecting dataset metrics.
+   *                         If null, no metrics are collected
    */
   public DatasetInstantiator(Id.Namespace namespace,
                              DatasetFramework datasetFramework,
@@ -64,10 +60,10 @@ public class DatasetInstantiator implements DatasetContext {
                              @Nullable Iterable<? extends Id> owners,
                              @Nullable MetricsContext metricsContext) {
     this.namespace = namespace;
-    this.owners = owners;
-    this.classLoader = classLoader;
     this.metricsContext = metricsContext;
-    this.datasetFramework = datasetFramework;
+    this.txAware = Sets.newIdentityHashSet();
+    this.datasetInstantiator =
+      new SystemDatasetInstantiator(datasetFramework, new ConstantClassLoaderProvider(classLoader), owners);
   }
 
   @Override
@@ -81,25 +77,11 @@ public class DatasetInstantiator implements DatasetContext {
   public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
     throws DatasetInstantiationException {
 
-    T dataset;
-    try {
-      if (!datasetFramework.hasInstance(Id.DatasetInstance.from(namespace, name))) {
-        throw new DatasetInstantiationException("Trying to access dataset that does not exist: " + name);
-      }
-
-      dataset = datasetFramework.getDataset(Id.DatasetInstance.from(namespace, name),
-                                            arguments, classLoader, owners);
-      if (dataset == null) {
-        throw new DatasetInstantiationException("Failed to access dataset: " + name);
-      }
-
-    } catch (Exception e) {
-      throw new DatasetInstantiationException("Failed to access dataset: " + name, e);
-    }
+    Id.DatasetInstance datasetId = Id.DatasetInstance.from(namespace, name);
+    T dataset = datasetInstantiator.getDataset(datasetId, arguments);
 
     if (dataset instanceof TransactionAware) {
       txAware.add((TransactionAware) dataset);
-      txAwareToMetricNames.put((TransactionAware) dataset, name);
     }
 
     if (dataset instanceof MeteredDataset && metricsContext != null) {
