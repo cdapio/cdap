@@ -128,6 +128,11 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
                                cConf, new LocalLocationFactory(tmpFolder.newFolder()));
   }
 
+  @Override
+  protected boolean isIncrementWriteConflicting() {
+    return false;
+  }
+
   @Test
   public void testTTL() throws Exception {
     // for the purpose of this test it is fine not to configure ttl when creating table: we want to see if it

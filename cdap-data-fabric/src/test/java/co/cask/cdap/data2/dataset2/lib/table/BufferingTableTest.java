@@ -28,7 +28,6 @@ import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -408,8 +407,8 @@ public abstract class BufferingTableTest<T extends BufferingTable>
 
       String tx1ChangePrefix = new String(table1.getNameAsTxChangePrefix());
       String tx2ChangePrefix = new String(table2.getNameAsTxChangePrefix());
-      String tx1Change = new String(((ArrayList<byte []>) tx1Changes).get(0));
-      String tx2Change = new String(((ArrayList<byte []>) tx2Changes).get(0));
+      String tx1Change = new String(tx1Changes.iterator().next());
+      String tx2Change = new String(tx2Changes.iterator().next());
       Assert.assertNotEquals(tx1ChangePrefix, tx2ChangePrefix);
       Assert.assertTrue(tx1ChangePrefix.contains(NAMESPACE1.getId()));
       Assert.assertTrue(tx2ChangePrefix.contains(NAMESPACE2.getId()));

@@ -41,4 +41,9 @@ public class InMemoryTableTest extends BufferingTableTest<InMemoryTable> {
                                        DatasetProperties ignored) throws Exception {
     return new InMemoryTableAdmin(datasetContext, name, cConf);
   }
+
+  @Override
+  protected boolean isIncrementWriteConflicting() {
+    return true;
+  }
 }

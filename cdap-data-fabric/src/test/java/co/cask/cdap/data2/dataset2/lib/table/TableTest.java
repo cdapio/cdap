@@ -575,6 +575,8 @@ public abstract class TableTest<T extends Table> {
     Assert.assertTrue(txClient.commit(tx));
   }
 
+  protected abstract boolean isIncrementWriteConflicting();
+
   @Test
   public void testBasicIncrementWriteWithTx() throws Exception {
     DatasetProperties props = DatasetProperties.builder().add(
@@ -642,8 +644,9 @@ public abstract class TableTest<T extends Table> {
       // * second, make tx visible
       Assert.assertTrue(txClient.commit(tx1));
 
-      // verify that tx2 cannot commit because of the conflicts...
-      Assert.assertFalse(txClient.canCommit(tx2, ((TransactionAware) myTable2).getTxChanges()));
+      // verify conflict detection on increments
+      Assert.assertEquals(!isIncrementWriteConflicting(),
+                          txClient.canCommit(tx2, ((TransactionAware) myTable2).getTxChanges()));
       ((TransactionAware) myTable2).rollbackTx();
       txClient.abort(tx2);
 
@@ -666,8 +669,9 @@ public abstract class TableTest<T extends Table> {
       verify(null, myTable3.get(R1, C2));
       verify(null, myTable3.get(R1, C5));
       verify(a(C1, L4), myTable3.get(R1));
-      // and it cannot commit because its changes cause conflicts
-      Assert.assertFalse(txClient.canCommit(tx3, ((TransactionAware) myTable3).getTxChanges()));
+      // verify conflict detection on increments
+      Assert.assertEquals(!isIncrementWriteConflicting(),
+                          txClient.canCommit(tx3, ((TransactionAware) myTable3).getTxChanges()));
       ((TransactionAware) myTable3).rollbackTx();
       txClient.abort(tx3);
 
