@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin').controller('AdminNamespaceDatasetMetadataController',
-function ($scope, $state, $alert, MyDataSource, $filter) {
+function ($scope, $state, $alert, MyDataSource, $filter, myDatasetApi) {
 
   var dataSrc = new MyDataSource($scope);
 
@@ -20,21 +20,21 @@ function ($scope, $state, $alert, MyDataSource, $filter) {
     }
   });
 
-
-
   $scope.deleteDataset = function() {
-    dataSrc.request({
-      _cdapPath: '/namespaces/' + $state.params.nsadmin +
-                  '/data/datasets/' + $state.params.datasetId,
-      method: 'DELETE'
-    })
-    .then(function () {
-      $state.go('admin.namespace.detail.data', {}, {reload: true});
-      $alert({
-        type: 'success',
-        content: 'Successfully deleted dataset'
+    var params = {
+      namespace: $state.params.nsadmin,
+      datasetId: $state.params.datasetId,
+      scope: $scope
+    };
+    myDatasetApi.delete(params)
+      .$promise
+      .then(function () {
+        $state.go('admin.namespace.detail.data', {}, {reload: true});
+        $alert({
+          type: 'success',
+          content: 'Successfully deleted dataset'
+        });
       });
-    });
   };
 
 });

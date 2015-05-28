@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.overview').controller('OverviewCtrl',
-function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrderings, MyMetricsQueryHelper, myHelpers, MyChartHelpers) {
+function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrderings, MyMetricsQueryHelper, myHelpers, MyChartHelpers, myStreamApi, myDatasetApi) {
   $scope.MyOrderings = MyOrderings;
 
   if(!$state.params.namespace) {
@@ -59,24 +59,28 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrd
       $scope.apps = res;
     });
 
-  dataSrc.request({
-    _cdapNsPath: '/data/datasets'
-  })
+  var params = {
+    namespace: $state.params.namespace,
+    scope: $scope
+  };
+
+  myDatasetApi.list(params)
+    .$promise
     .then(function(res) {
       $scope.dataList = $scope.dataList.concat(res);
     });
 
-  dataSrc.request({
-    _cdapNsPath: '/streams'
-  }, function(res) {
-    if (angular.isArray(res) && res.length) {
-      angular.forEach(res, function(r) {
-        r.type = 'Stream';
-      });
+  myStreamApi.list(params)
+    .$promise
+    .then(function(res) {
+      if (angular.isArray(res) && res.length) {
+        angular.forEach(res, function(r) {
+          r.type = 'Stream';
+        });
 
-      $scope.dataList = $scope.dataList.concat(res);
-    }
-  });
+        $scope.dataList = $scope.dataList.concat(res);
+      }
+    });
 
   $scope.wdgts = [];
   // type field is overridden by what is rendered in view because we do not use widget.getPartial()
