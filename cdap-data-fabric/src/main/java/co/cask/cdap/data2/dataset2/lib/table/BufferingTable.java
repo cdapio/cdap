@@ -250,39 +250,48 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
 
   @Override
   public Collection<byte[]> getTxChanges() {
-    if (ConflictDetection.NONE == conflictLevel) {
-      return Collections.emptyList();
+    switch (conflictLevel) {
+      case NONE:
+        return Collections.emptyList();
+      case ROW:
+        return getRowChanges();
+      case COLUMN:
+        return getColumnChanges();
+      default:
+        throw new IllegalStateException("Unknown conflict detection level: " + conflictLevel);
     }
+  }
+
+  private Collection<byte[]> getRowChanges() {
     Collection<byte[]> changes = new TreeSet<byte[]>(UnsignedBytes.lexicographicalComparator());
     for (Map.Entry<byte[], NavigableMap<byte[], Update>> rowChange : buff.entrySet()) {
       for (Map.Entry<byte[], Update> updateEntry : rowChange.getValue().entrySet()) {
-        byte[] changeKey = getChangeKey(rowChange.getKey(), updateEntry.getKey(), updateEntry.getValue());
-        if (changeKey != null) {
-          changes.add(Bytes.add(getNameAsTxChangePrefix(), changeKey));
+        if (!(updateEntry.getValue() instanceof IncrementValue)) {
+          changes.add(Bytes.add(getNameAsTxChangePrefix(), rowChange.getKey()));
+          break;
         }
       }
     }
     return changes;
   }
 
-  @Nullable
-  private byte[] getChangeKey(byte[] row, byte[] column, Update update) {
-    if (update instanceof IncrementValue) {
-      // NOTE: increment writes will never create conflict, as they submit delta to add, not value to write
-      return null;
+  private Collection<byte[]> getColumnChanges() {
+    Collection<byte[]> changes = new TreeSet<byte[]>(UnsignedBytes.lexicographicalComparator());
+    for (Map.Entry<byte[], NavigableMap<byte[], Update>> rowChange : buff.entrySet()) {
+      for (Map.Entry<byte[], Update> updateEntry : rowChange.getValue().entrySet()) {
+        if (!(updateEntry.getValue() instanceof IncrementValue)) {
+          byte[] row = rowChange.getKey();
+          byte[] column = updateEntry.getKey();
+          // NOTE: using length + value format to prevent conflicts like row="ab", column="cd" vs row="abc", column="d"
+          byte[] changeKey = Bytes.concat(Bytes.toBytes(row.length), row,
+                                          Bytes.toBytes(column.length), column);
+          if (changeKey != null) {
+            changes.add(Bytes.add(getNameAsTxChangePrefix(), changeKey));
+          }
+        }
+      }
     }
-    switch (conflictLevel) {
-      case ROW:
-        return row;
-      case COLUMN:
-        // NOTE: using length + value format to prevent conflicts like row="ab", column="cd" vs row="abc", column="d"
-        return Bytes.concat(Bytes.toBytes(row.length), row,
-                            Bytes.toBytes(column.length), column);
-      case NONE:
-        throw new IllegalStateException("NONE conflict detection does not support change keys");
-      default:
-        throw new IllegalStateException("Unknown conflict detection level: " + conflictLevel);
-    }
+    return changes;
   }
 
   @Override
