@@ -98,7 +98,7 @@ angular.module(PKG.name+'.services')
 
   /* ----------------------------------------------------------------------- */
 
-  function __generateConfig(isNsPath, method, type, path, isArray) {
+  function __generateConfig(isNsPath, method, type, path, isArray, customConfig) {
     var config = {
       method: method,
       options: { type: type}
@@ -111,19 +111,20 @@ angular.module(PKG.name+'.services')
     if (isArray) {
       config.isArray = true;
     }
-    return config;
+
+    return angular.extend(config, customConfig || {});
   }
 
   /*
     Purpose: construct a resource config object for endpoints API services
   */
 
-  function getConfigNs (method, type, path, isArray) {
-    return __generateConfig(true, method, type, path, isArray);
+  function getConfigNs (method, type, path, isArray, customConfig) {
+    return __generateConfig(true, method, type, path, isArray, customConfig);
   }
 
-  function getConfig (method, type, path, isArray) {
-    return __generateConfig(false, method, type, path, isArray);
+  function getConfig (method, type, path, isArray, customConfig) {
+    return __generateConfig(false, method, type, path, isArray, customConfig);
   }
 
   /* ----------------------------------------------------------------------- */
