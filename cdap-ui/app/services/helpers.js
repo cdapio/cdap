@@ -98,32 +98,32 @@ angular.module(PKG.name+'.services')
 
   /* ----------------------------------------------------------------------- */
 
-  /*
-    Purpose: construct a resource config object for endpoints API services
-  */
-
-  function getConfigNs (method, type, path, isArray) {
+  function __generateConfig(isNsPath, method, type, path, isArray) {
     var config = {
-      url: myCdapUrl.constructUrl({ _cdapNsPath: path }),
       method: method,
       options: { type: type}
     };
+    if (isNsPath) {
+      config.url = myCdapUrl.constructUrl({ _cdapNsPath: path });
+    } else {
+      config.url = myCdapUrl.constructUrl({ _cdapPath: path });
+    }
     if (isArray) {
       config.isArray = true;
     }
     return config;
   }
 
+  /*
+    Purpose: construct a resource config object for endpoints API services
+  */
+
+  function getConfigNs (method, type, path, isArray) {
+    return __generateConfig(true, method, type, path, isArray);
+  }
+
   function getConfig (method, type, path, isArray) {
-    var config = {
-      url: myCdapUrl.constructUrl({ _cdapPath: path }),
-      method: method,
-      options: { type: type}
-    };
-    if (isArray) {
-      config.isArray = true;
-    }
-    return config;
+    return __generateConfig(false, method, type, path, isArray);
   }
 
   /* ----------------------------------------------------------------------- */
