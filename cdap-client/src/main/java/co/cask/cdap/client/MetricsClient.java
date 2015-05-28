@@ -137,6 +137,23 @@ public class MetricsClient {
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
+  public MetricQueryResult query(List<String> metrics, List<String> groupBys, Map<String, String> tags,
+                                 String start, String end)
+    throws IOException, UnauthorizedException {
+
+    return query(metrics, groupBys, tags, start, end, null, null, null, null, null);
+  }
+
+  /**
+   * Gets the value of the given metrics.
+   *
+   * @param metrics names of the metrics
+   * @param groupBys groupBys for the request
+   * @param tags tags for the request
+   * @return values of the metrics
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
   // TODO: take in query object shared by MetricsHandler
   public MetricQueryResult query(Map<String, String> tags, List<String> metrics, List<String> groupBys,
                                  @Nullable Map<String, String> timeRangeParams)
