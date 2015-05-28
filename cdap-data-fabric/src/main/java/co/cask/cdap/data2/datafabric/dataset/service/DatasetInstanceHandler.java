@@ -240,27 +240,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @DELETE
   @Path("/data/datasets/{name}")
   public void drop(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                   @PathParam("name") String name) {
+                   @PathParam("name") String name) throws Exception {
     LOG.info("Deleting dataset {}.{}", namespaceId, name);
-    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, name);
-    DatasetSpecification spec = instanceManager.get(Id.DatasetInstance.from(namespaceId, name));
-    if (spec == null) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      return;
-    }
-
-    try {
-      if (!dropDataset(datasetInstanceId, spec)) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
-    } catch (Exception e) {
-      String msg = String.format("Cannot delete dataset %s.%s: executing delete() failed, reason: %s",
-                                 namespaceId, name, e.getMessage());
-      LOG.error(msg, e);
-      throw new RuntimeException(msg, e);
-    }
-
+    Id.DatasetInstance instance = Id.DatasetInstance.from(namespaceId, name);
+    instanceService.drop(instance);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
