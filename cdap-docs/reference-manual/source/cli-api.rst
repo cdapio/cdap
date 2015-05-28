@@ -286,7 +286,7 @@ These are the available commands:
    **Explore**
    ``execute <query> [<timeout>]``,"Executes a Query with optional <timeout> in minutes (default is no timeout)."
    **Metrics**
-   ``get metric value <metric-name> [<tags>] [start <start>] [end <end>]``,"Gets the value of a metric. Provide <tags> as a map in the format 'a=b, c=d'."
+   ``get metric value <metric-name> [<tags>] [start <start>] [end <end>]``,"Gets the value of a metric. Provide <tags> as a map in the format 'tag1=value1 tag2=value2'."
    ``search metric names [<tags>]``,"Searches metric names. Provide <tags> as a map in the format 'tag1=value1 tag2=value2'."
    ``search metric tags [<tags>]``,"Searches metric tags. Provide <tags> as a map in the format 'tag1=value1 tag2=value2'."
    **Ingest**

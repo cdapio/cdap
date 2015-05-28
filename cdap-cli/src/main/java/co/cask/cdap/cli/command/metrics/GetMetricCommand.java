@@ -86,6 +86,6 @@ public class GetMetricCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Gets the value of a metric. Provide <tags> as a map in the format 'a=b, c=d'.";
+    return "Gets the value of a metric. Provide <tags> as a map in the format 'tag1=value1 tag2=value2'.";
   }
 }
