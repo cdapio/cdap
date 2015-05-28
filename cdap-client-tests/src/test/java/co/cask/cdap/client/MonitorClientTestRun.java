@@ -26,6 +26,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Test for {@link MonitorClient}.
@@ -53,5 +54,7 @@ public class MonitorClientTestRun extends ClientTestBase {
     SystemServiceLiveInfo systemServiceLiveInfo = monitorClient.getSystemServiceLiveInfo(someService);
     int systemServiceInstances = monitorClient.getSystemServiceInstances(someService);
     monitorClient.setSystemServiceInstances(someService, 1);
+
+    Assert.assertEquals(true, monitorClient.allSystemServicesOk());
   }
 }
