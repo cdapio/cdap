@@ -58,7 +58,7 @@ angular.module(PKG.name+'.services')
         re = {
           url: resource.url,
           id: resource.id,
-          json: true,
+          json: resource.json,
           method: resource.method
         };
         if (resource.interval) {
@@ -87,7 +87,7 @@ angular.module(PKG.name+'.services')
         re = {
           url: resource.url,
           id: resource.id,
-          json: true,
+          json: resource.json,
           method: resource.method
         };
       }
@@ -98,14 +98,6 @@ angular.module(PKG.name+'.services')
       });
     }
 
-    $rootScope.$on(MYSOCKET_EVENT.reconnected, function () {
-      $log.log('[DataSource] reconnected, reloading...');
-
-      // https://github.com/angular-ui/ui-router/issues/582
-      $state.transitionTo($state.current, $state.$current.params,
-        { reload: true, inherit: true, notify: true }
-      );
-    });
 
     function DataSource (scope) {
       scope = scope || $rootScope.$new();
@@ -144,6 +136,7 @@ angular.module(PKG.name+'.services')
           var b = self.bindings[i];
           if (b.resource.id === data.resource.id) {
             if (angular.isFunction(b.callback)) {
+              data.response = data.response || {};
               data.response.__pollId__ = b.resource.id;
               scope.$apply(b.callback.bind(null, data.response));
             } else if (b && b.resolve) {
@@ -189,7 +182,7 @@ angular.module(PKG.name+'.services')
       var promise = new MyPromise(function(resolve, reject) {
 
         generatedResource = {
-          json: true,
+          json: resource.json,
           id: id,
           interval: resource.interval,
           body: resource.body,
@@ -226,6 +219,7 @@ angular.module(PKG.name+'.services')
           return $q.when(res);
         });
       }
+      promise.__pollId__ = id;
       return promise;
     };
 
@@ -283,12 +277,17 @@ angular.module(PKG.name+'.services')
 
         var generatedResource = {
           id: id,
-          json: true,
+          json: resource.json,
           method: resource.method
         };
         if (resource.body) {
           generatedResource.body = resource.body;
         }
+
+        if (resource.data) {
+          generatedResource.body = resource.data;
+        }
+
         if (!resource.url) {
           generatedResource.url = buildUrl(myCdapUrl.constructUrl(resource), resource.params || {});
         } else {

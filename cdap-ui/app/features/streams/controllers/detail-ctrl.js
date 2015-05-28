@@ -1,17 +1,20 @@
 angular.module(PKG.name + '.feature.streams')
-  .controller('CdapStreamDetailController', function($scope, MyDataSource, $state, $alert, myStreamService) {
-    var dataSrc = new MyDataSource($scope);
+  .controller('CdapStreamDetailController', function($scope, $state, $alert, myStreamService, myStreamApi) {
 
     $scope.truncate = function() {
-      dataSrc.request({
-        _cdapNsPath: '/streams/' + $state.params.streamId + '/truncate',
-        method: 'POST'
-      }).then(function () {
-        $alert({
-          type: 'success',
-          content: 'Successfully truncated ' + $state.params.streamId + ' stream'
+      var params = {
+        namespace: $state.params.namespace,
+        streamId: $state.params.streamId,
+        scope: $scope
+      };
+      myStreamApi.truncate(params)
+        .$promise
+        .then(function () {
+          $alert({
+            type: 'success',
+            content: 'Successfully truncated ' + $state.params.streamId + ' stream'
+          });
         });
-      });
     };
 
     $scope.sendEvents = function() {

@@ -15,16 +15,30 @@
  */
 package co.cask.cdap.examples.purchase;
 
+import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableUtils;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
 /**
  * This class represents a purchase made by a customer. It is a very simple class and only contains
  * the name of the customer, the name of the product, product quantity, price paid, and the purchase time.
  */
-public class Purchase {
+public class Purchase implements Writable {
 
-  private final String customer, product;
-  private final int quantity, price;
-  private final long purchaseTime;
+  private String customer, product;
+  private int quantity, price;
+  private long purchaseTime;
   private String catalogId;
+
+  public Purchase() {
+  }
+
+  public Purchase(Purchase other) {
+    this(other.getCustomer(), other.getProduct(), other.getQuantity(), other.getPrice(), other.getPurchaseTime());
+  }
 
   public Purchase(String customer, String product, int quantity, int price, long purchaseTime) {
     this.customer = customer;
@@ -63,4 +77,23 @@ public class Purchase {
     this.catalogId = catalogId;
   }
 
+  @Override
+  public void write(DataOutput out) throws IOException {
+    WritableUtils.writeString(out, customer);
+    WritableUtils.writeString(out, product);
+    WritableUtils.writeVInt(out, quantity);
+    WritableUtils.writeVInt(out, price);
+    WritableUtils.writeVLong(out, purchaseTime);
+    WritableUtils.writeString(out, catalogId);
+  }
+
+  @Override
+  public void readFields(DataInput in) throws IOException {
+    customer = WritableUtils.readString(in);
+    product = WritableUtils.readString(in);
+    quantity = WritableUtils.readVInt(in);
+    price = WritableUtils.readVInt(in);
+    purchaseTime = WritableUtils.readVLong(in);
+    catalogId = WritableUtils.readString(in);
+  }
 }

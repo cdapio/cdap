@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsRunDetailStatusController', function($state, $scope, MyDataSource, myHelpers, FlowDiagramData, $timeout) {
+  .controller('FlowsRunDetailStatusController', function($state, $scope, MyDataSource, myHelpers, FlowDiagramData, $timeout, MyMetricsQueryHelper) {
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
 
@@ -16,7 +16,7 @@ angular.module(PKG.name + '.feature.flows')
         namespace: $state.params.namespace,
         stream: streamName
       };
-      return '/metrics/query?metric=system.collect.events&aggregate=true&' + myHelpers.tagsToParams(streamTags);
+      return '/metrics/query?metric=system.collect.events&aggregate=true&' + MyMetricsQueryHelper.tagsToParams(streamTags);
     }
 
     function generateFlowletMetricsPath(flowletName) {
@@ -27,7 +27,7 @@ angular.module(PKG.name + '.feature.flows')
         run: $scope.runs.selected.runid,
         flowlet: flowletName
       };
-      return '/metrics/query?metric=system.process.events.processed&aggregate=true&' + myHelpers.tagsToParams(flowletTags);
+      return '/metrics/query?metric=system.process.events.processed&aggregate=true&' + MyMetricsQueryHelper.tagsToParams(flowletTags);
     }
 
     function pollMetrics() {

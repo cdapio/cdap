@@ -1,12 +1,17 @@
 angular.module(PKG.name + '.feature.data')
-  .controller('CdapDataListController', function($state, $scope, MyDataSource, MyOrderings) {
+  .controller('CdapDataListController', function($state, $scope, MyDataSource, MyOrderings, myStreamApi) {
     $scope.MyOrderings = MyOrderings;
     var dataSrc = new MyDataSource($scope);
     $scope.dataList = [];
-    dataSrc.request({
-      _cdapNsPath: '/streams'
-    })
-      .then(function(res) {
+
+    var streamParams = {
+      namespace: $state.params.namespace,
+      scope: $scope
+    };
+
+    myStreamApi.list(streamParams)
+      .$promise
+      .then(function (res) {
         $scope.dataList = res
           .map(function(dataset) {
             dataset.dataType = 'Stream';

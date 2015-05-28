@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.overview').controller('OverviewCtrl',
-function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrderings) {
+function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrderings, MyMetricsQueryHelper, myHelpers, MyChartHelpers) {
   $scope.MyOrderings = MyOrderings;
 
   if(!$state.params.namespace) {
@@ -80,30 +80,87 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrd
 
   $scope.wdgts = [];
   // type field is overridden by what is rendered in view because we do not use widget.getPartial()
-  $scope.wdgts.push(new Widget({title: 'System', type: 'c3-line', isLive: true,
-                  metric: {
-                    context: 'namespace.*',
-                    names: ['system.services.log.error', 'system.services.log.warn'],
-                    startTime: 'now-3600s',
-                    endTime: 'now',
-                    resolution: '1m'
-                  },
-                  metricAlias: {'system.services.log.error': 'System Errors',
-                                'system.services.log.warn' : 'System Warnings'},
-                  interval: 60*1000,
-                  aggregate: 5
-  }));
-  $scope.wdgts.push(new Widget({title: 'Applications', type: 'c3-line', isLive: true,
-                  metric: {
-                    context: 'namespace.' + $state.params.namespace,
-                    names: ['system.app.log.error', 'system.app.log.warn'],
-                    startTime: 'now-3600s',
-                    endTime: 'now',
-                    resolution: '1m'
-                  },
-                  metricAlias: {'system.app.log.error': 'Application Errors',
-                                'system.app.log.warn' : 'Application Warnings'},
-                  interval: 60*1000,
-                  aggregate: 5
-  }));
+  var widgetSettings = {
+    size: {
+      height: 100,
+      width: 280
+    },
+    chartMetadata: {
+      showx: false,
+      showy: false,
+      legend: {
+        show: false,
+        position: 'inset'
+      }
+    },
+    color: {
+      pattern: ['red', '#f4b400']
+    },
+    isLive: true,
+    interval: 60*1000,
+    aggregate: 5
+  };
+
+  $scope.wdgts.push(
+    new Widget({
+      title: 'System',
+      type: 'c3-line',
+      settings: widgetSettings,
+      metric: {
+        context: 'namespace.*',
+        names: ['system.services.log.error', 'system.services.log.warn'],
+        startTime: 'now-3600s',
+        endTime: 'now',
+        resolution: '1m'
+      },
+      metricAlias: {
+        'system.services.log.error': 'System Errors',
+        'system.services.log.warn' : 'System Warnings'
+      }
+    })
+  ,
+    new Widget({
+      title: 'Applications',
+      type: 'c3-line',
+      settings: widgetSettings,
+      metric: {
+        context: 'namespace.' + $state.params.namespace,
+        names: ['system.app.log.error', 'system.app.log.warn'],
+        startTime: 'now-3600s',
+        endTime: 'now',
+        resolution: '1m'
+      },
+      metricAlias: {
+        'system.app.log.error': 'Application Errors',
+        'system.app.log.warn' : 'Application Warnings'
+      }
+    })
+  );
+
+  // TODO: There should be a better way. Right now the 'sort-of' legend for
+  // #of warnings and errors are outside the charts. Thats the reason
+  // polling happens in two different places.
+  angular.forEach($scope.wdgts, function(widget) {
+    dataSrc.poll({
+      _cdapPath: '/metrics/query',
+      method: 'POST',
+      body: MyMetricsQueryHelper.constructQuery(
+        'qid',
+        MyMetricsQueryHelper.contextToTags(widget.metric.context),
+        widget.metric
+      )
+    }, function(res) {
+
+      var processedData = MyChartHelpers.processData(
+        res,
+        'qid',
+        widget.metric.names,
+        widget.metric.resolution,
+        widget.settings.aggregate
+      );
+      processedData = MyChartHelpers.c3ifyData(processedData, widget.metric, widget.metricAlias);
+      widget.chartData = angular.copy(processedData);
+    });
+  });
+
 });

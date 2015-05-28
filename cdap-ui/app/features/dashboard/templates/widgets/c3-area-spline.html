@@ -1,8 +1,10 @@
 <div class="{{wdgt.color}}" ng-controller="C3WidgetTimeseriesCtrl">
 
   <c3-area-spline
-    data-chart-data="chartData"
-    chart-size="{ height: 200}"
+    chart-metric="wdgt.metric"
+    chart-metric-alias="wdgt.metricAlias"
+    chart-size="chartSize"
+    chart-settings="wdgt.settings"
   ></c3-area-spline>
 
 </div>
