@@ -346,6 +346,7 @@ function version() {
   PROJECT_SHORT_VERSION=`expr "${PROJECT_VERSION}" : '\([0-9]*\.[0-9]*\)'`
   local full_branch=`git rev-parse --abbrev-ref HEAD`
   IFS=/ read -a branch <<< "${full_branch}"
+  GIT_PARENT_BRANCH=""
   GIT_BRANCH="${branch[1]}"
   # Determine branch and branch type: one of develop, master, release, develop-feature, release-feature
   if [ "${full_branch}" == "develop" -o  "${full_branch}" == "master" ]; then
@@ -354,8 +355,8 @@ function version() {
   elif [ "${GIT_BRANCH:0:7}" == "release" ]; then
     GIT_BRANCH_TYPE="release"
   else
-    local parent_branch=`git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1 | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//'`
-    if [ "${parent_branch}" == "develop" ]; then
+    GIT_PARENT_BRANCH=`git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1 | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//'`
+    if [ "${GIT_PARENT_BRANCH}" == "develop" ]; then
       GIT_BRANCH_TYPE="develop-feature"
     else
       GIT_BRANCH_TYPE="release-feature"
@@ -374,6 +375,7 @@ function display_version() {
   echo "PROJECT_SHORT_VERSION: ${PROJECT_SHORT_VERSION}"
   echo "GIT_BRANCH: ${GIT_BRANCH}"
   echo "GIT_BRANCH_TYPE: ${GIT_BRANCH_TYPE}"
+  echo "GIT_PARENT_BRANCH: ${GIT_PARENT_BRANCH}"
 }
 
 function set_messages_file() {
@@ -384,7 +386,6 @@ function set_messages_file() {
 function cleanup_messages_file() {
   if [[ "x${TMP_MESSAGES_FILE}" != "x" && -a ${TMP_MESSAGES_FILE} ]]; then
     rm -f TMP_MESSAGES_FILE
-    echo "Deleted Message File ${TMP_MESSAGES_FILE}"
   fi
 }
 
@@ -421,7 +422,7 @@ function display_any_messages() {
 function display_messages_file() {
   if [[ "x${TMP_MESSAGES_FILE}" != "x" && -a ${TMP_MESSAGES_FILE} ]]; then
     echo ""
-    echo_red_bold "Warning Messages:"
+    echo "Warning Messages:"
     echo ""
     cat ${TMP_MESSAGES_FILE} | while read line
     do
