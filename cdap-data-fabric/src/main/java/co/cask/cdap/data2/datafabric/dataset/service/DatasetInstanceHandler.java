@@ -19,7 +19,9 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.HandlerException;
 import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
@@ -148,7 +150,12 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                            @PathParam("name") String instanceName,
                            @PathParam("method") String method) throws Exception {
     Id.DatasetInstance instance = Id.DatasetInstance.from(namespaceId, instanceName);
-    instanceService.executeAdmin(instance, method);
+    try {
+      DatasetAdminOpResponse response = instanceService.executeAdmin(instance, method);
+      responder.sendJson(HttpResponseStatus.OK, response);
+    } catch (HandlerException e) {
+      responder.sendStatus(e.getFailureStatus());
+    }
   }
 
   @POST
