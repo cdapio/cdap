@@ -303,6 +303,11 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     verifyProgramRuns(programId, "completed");
 
     waitState(programId, "STOPPED");
+
+    suspendWorkflow(programId, runId, 404);
+
+    resumeWorkflow(programId, runId, 404);
+
   }
 
   @Category(XSlowTests.class)

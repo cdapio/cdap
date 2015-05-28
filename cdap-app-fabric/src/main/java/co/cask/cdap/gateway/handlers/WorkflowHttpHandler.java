@@ -89,7 +89,8 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
       ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
       if (runtimeInfo == null) {
-        sendInvalidResponse(responder, id);
+        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Runtime information for run-id %s not found",
+                runId));
         return;
       }
       ProgramController controller = runtimeInfo.getController();
@@ -118,7 +119,8 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
       ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
       if (runtimeInfo == null) {
-        sendInvalidResponse(responder, id);
+        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Runtime information for run-id %s not found",
+                runId));
         return;
       }
       ProgramController controller = runtimeInfo.getController();
@@ -130,28 +132,6 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       controller.resume().get();
       responder.sendString(HttpResponseStatus.OK, "Program run resumed.");
     }  catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  private void sendInvalidResponse(HttpResponder responder, Id.Program id) {
-    try {
-      AppFabricServiceStatus status;
-      ProgramStatus programStatus = getProgramStatus(id, ProgramType.WORKFLOW);
-      if (programStatus.getStatus().equals(HttpResponseStatus.NOT_FOUND.toString())) {
-        status = AppFabricServiceStatus.PROGRAM_NOT_FOUND;
-      } else if (ProgramController.State.COMPLETED.toString().equals(programStatus.getStatus())
-          || ProgramController.State.KILLED.toString().equals(programStatus.getStatus())
-          || ProgramController.State.ERROR.toString().equals(programStatus.getStatus())) {
-        status = AppFabricServiceStatus.PROGRAM_ALREADY_STOPPED;
-      } else {
-        status = AppFabricServiceStatus.RUNTIME_INFO_NOT_FOUND;
-      }
-      responder.sendString(status.getCode(), status.getMessage());
-    } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
