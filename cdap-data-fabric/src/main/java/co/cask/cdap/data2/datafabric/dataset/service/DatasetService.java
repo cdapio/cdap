@@ -78,21 +78,16 @@ public class DatasetService extends AbstractExecutionThreadService {
                         DiscoveryService discoveryService,
                         DiscoveryServiceClient discoveryServiceClient,
                         DatasetTypeManager typeManager,
-                        DatasetInstanceManager instanceManager,
                         MetricsCollectionService metricsCollectionService,
                         DatasetOpExecutor opExecutorClient,
                         MDSDatasetsRegistry mdsDatasets,
-                        ExploreFacade exploreFacade,
                         Set<DatasetMetricsReporter> metricReporters,
                         UnderlyingSystemNamespaceAdmin underlyingSystemNamespaceAdmin,
-                        UsageRegistry usageRegistry,
                         DatasetInstanceService datasetInstanceService) throws Exception {
 
     this.typeManager = typeManager;
     DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(typeManager, cConf, namespacedLocationFactory);
-    DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(typeManager, instanceManager,
-                                                                               opExecutorClient, exploreFacade, cConf,
-                                                                               usageRegistry, datasetInstanceService);
+    DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(datasetInstanceService);
     UnderlyingSystemNamespaceHandler underlyingSystemNamespaceHandler =
       new UnderlyingSystemNamespaceHandler(underlyingSystemNamespaceAdmin);
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);

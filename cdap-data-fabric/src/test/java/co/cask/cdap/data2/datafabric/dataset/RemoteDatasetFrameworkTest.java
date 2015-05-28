@@ -137,15 +137,12 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  discoveryService,
                                  discoveryService,
                                  new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory, DEFAULT_MODULES),
-                                 new DatasetInstanceManager(mdsDatasetsRegistry),
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(framework),
                                  mdsDatasetsRegistry,
-                                 exploreFacade,
                                  new HashSet<DatasetMetricsReporter>(),
                                  new LocalUnderlyingSystemNamespaceAdmin(cConf, namespacedLocationFactory,
                                                                          exploreFacade),
-                                 new UsageRegistry(txExecutorFactory, framework),
                                  instanceService);
     // Start dataset service, wait for it to be discoverable
     service.start();

@@ -18,14 +18,8 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
-import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
-import co.cask.cdap.data2.registry.UsageRegistry;
-import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
@@ -79,24 +73,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     .registerTypeAdapter(DatasetSpecification.class, new DatasetSpecificationAdapter())
     .create();
 
-  private final DatasetTypeManager implManager;
-  private final DatasetInstanceManager instanceManager;
-  private final DatasetOpExecutor opExecutorClient;
-  private final ExploreFacade exploreFacade;
-  private final boolean allowDatasetUncheckedUpgrade;
-  private final UsageRegistry usageRegistry;
   private final DatasetInstanceService instanceService;
 
   @Inject
-  public DatasetInstanceHandler(DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
-                                DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade, CConfiguration conf,
-                                UsageRegistry usageRegistry, DatasetInstanceService instanceService) {
-    this.opExecutorClient = opExecutorClient;
-    this.implManager = implManager;
-    this.instanceManager = instanceManager;
-    this.exploreFacade = exploreFacade;
-    this.usageRegistry = usageRegistry;
-    this.allowDatasetUncheckedUpgrade = conf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
+  public DatasetInstanceHandler(DatasetInstanceService instanceService) {
     this.instanceService = instanceService;
   }
 

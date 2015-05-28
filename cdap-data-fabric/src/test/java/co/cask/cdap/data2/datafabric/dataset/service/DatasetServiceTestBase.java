@@ -185,15 +185,12 @@ public abstract class DatasetServiceTestBase {
                                  new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory,
                                                         // we don't need any default modules in this test
                                                         Collections.<String, DatasetModule>emptyMap()),
-                                 new DatasetInstanceManager(mdsDatasetsRegistry),
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(dsFramework),
                                  mdsDatasetsRegistry,
-                                 exploreFacade,
                                  new HashSet<DatasetMetricsReporter>(),
                                  new LocalUnderlyingSystemNamespaceAdmin(cConf, namespacedLocationFactory,
                                                                          exploreFacade),
-                                 new UsageRegistry(txExecutorFactory, dsFramework),
                                  instanceService);
 
     // Start dataset service, wait for it to be discoverable
