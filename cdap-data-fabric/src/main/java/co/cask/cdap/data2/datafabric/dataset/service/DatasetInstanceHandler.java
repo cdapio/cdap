@@ -169,32 +169,15 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
    */
   @PUT
   @Path("/data/datasets/{name}/properties")
-  public void update(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                     @PathParam("name") String name) {
+  public void update(HttpRequest request, HttpResponder responder,
+                     @PathParam("namespace-id") String namespaceId,
+                     @PathParam("name") String name) throws Exception {
+    Id.DatasetInstance instance = Id.DatasetInstance.from(namespaceId, name);
     Map<String, String> properties = getProperties(request);
 
     LOG.info("Update dataset {}, type name: {}, props: {}", name, GSON.toJson(properties));
-    DatasetSpecification existing = instanceManager.get(Id.DatasetInstance.from(namespaceId, name));
-
-    if (existing == null) {
-      // update is true , but dataset instance does not exist, return 404.
-      responder.sendString(HttpResponseStatus.NOT_FOUND,
-                           String.format("Dataset Instance %s.%s does not exist to update", namespaceId, name));
-      return;
-    }
-
-    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespaceId, name);
-    disableExplore(datasetInstance);
-
-    DatasetInstanceConfiguration creationProperties = new DatasetInstanceConfiguration(existing.getType(), properties);
-    if (!createDatasetInstance(creationProperties, namespaceId, name, responder, "update")) {
-      return;
-    }
-
-    enableExplore(datasetInstance, creationProperties);
-
-    //caling admin upgrade, after updating specification
-    executeAdmin(request, responder, namespaceId, name, "upgrade");
+    instanceService.update(instance, properties);
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   private Collection<DatasetSpecificationSummary> spec2Summary(Collection<DatasetSpecification> specs) {
