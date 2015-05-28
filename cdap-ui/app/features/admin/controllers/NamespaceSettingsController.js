@@ -23,7 +23,7 @@ angular.module(PKG.name + '.feature.admin')
       .then(function () {
         $alert({
           type: 'success',
-          content: 'Namespace have successfully updated'
+          content: 'Namespace successfully updated'
         });
       });
 
