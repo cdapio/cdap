@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.proto.ConfigEntry;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
@@ -50,7 +51,7 @@ public class ConfigServiceTest {
     ReaderInputStream cConfResource = new ReaderInputStream(new StringReader(cConfResourceString));
     cConf.addResource(cConfResource);
 
-    ConfigService.ConfigEntry cConfEntry = new ConfigService.ConfigEntry(
+    ConfigEntry cConfEntry = new ConfigEntry(
       "stream.zz.threshold", "1", cConfResource.toString());
 
     // hConf
@@ -68,15 +69,15 @@ public class ConfigServiceTest {
     ReaderInputStream hConfResource = new ReaderInputStream(new StringReader(hConfResourceString));
     hConf.addResource(hConfResource);
 
-    ConfigService.ConfigEntry hConfEntry = new ConfigService.ConfigEntry(
+    ConfigEntry hConfEntry = new ConfigEntry(
       "stream.notification.threshold", "3", hConfResource.toString());
 
     // test
     ConfigService configService = new ConfigService(cConf, hConf);
-    List<ConfigService.ConfigEntry> cConfEntries = configService.getCConf();
+    List<ConfigEntry> cConfEntries = configService.getCConf();
     Assert.assertTrue(cConfEntries.contains(cConfEntry));
 
-    List<ConfigService.ConfigEntry> hConfEntries = configService.getHConf();
+    List<ConfigEntry> hConfEntries = configService.getHConf();
     Assert.assertTrue(hConfEntries.contains(hConfEntry));
   }
 }
