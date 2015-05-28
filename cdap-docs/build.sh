@@ -234,15 +234,16 @@ function _build_docs() {
   echo "========================================================"
   echo "Building target \"${1}\"..."
   echo "--------------------------------------------------------"
-  clear_message
+  clear_messages
   build_docs_inner_level ${1}
   build_docs_outer_level ${2}
   copy_docs_lower_level
   build_zip ${3}
   zip_extras ${4}
   display_version
-  display_message_file
+  display_messages_file
   local warnings="$?"
+  cleanup_messages_file
   echo ""
   echo "--------------------------------------------------------"
   bell "Building target \"${1}\" completed."

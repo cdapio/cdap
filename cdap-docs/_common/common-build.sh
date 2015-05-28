@@ -93,6 +93,13 @@ function echo_red_bold() {
   echo -e "${RED}${BOLD}${1}${NC}${2}"
 }
 
+function echo_clean_colors() {
+  local c="${1//${RED}/}"
+  c="${c//${BOLD}/}"
+  c="${c//${NC}/}"
+  echo -e "${c}"
+}
+
 # Hash of file with "Not Found"; returned by GitHub
 NOT_FOUND_HASH="9d1ead73e678fa2f51a70a933b0bf017"
 
@@ -294,22 +301,22 @@ function test_an_include() {
     new_md5_hash=`md5sum ${target} | awk '{print $1}'`
   fi
   
-  local result_message=""
+  local m
   
   if [[ "${new_md5_hash}" == "${NOT_FOUND_HASH}" ]]; then
-    result_message="${WARNING} ${RED}${BOLD}${file_name} not found!${NC}"  
-    result_message="${result_message}\nfile: ${target}"  
+    m="${WARNING} ${RED}${BOLD}${file_name} not found!${NC}"  
+    m="${m}\nfile: ${target}"  
   elif [[ "${new_md5_hash}" != "${md5_hash}" ]]; then
-    result_message="${WARNING} ${RED}${BOLD}${file_name} has changed! Compare files and update hash!${NC}"   
-    result_message="${result_message}\nfile: ${target}"   
-    result_message="${result_message}\nOld MD5 Hash: ${md5_hash} New MD5 Hash: ${RED}${BOLD}${new_md5_hash}${NC}"   
+    m="${WARNING} ${RED}${BOLD}${file_name} has changed! Compare files and update hash!${NC}"   
+    m="${m}\nfile: ${target}"   
+    m="${m}\nOld MD5 Hash: ${md5_hash} New MD5 Hash: ${RED}${BOLD}${new_md5_hash}${NC}"   
   fi
-  if [ "${result_message}" != "" ]; then 
-    set_message "${result_message}"
+  if [ "x${m}" != "x" ]; then
+    set_message "${m}"
   else
-    result_message="MD5 Hash for ${file_name} matches"
+    m="MD5 Hash for ${file_name} matches"
   fi
-  echo -e "${result_message}"
+  echo -e "${m}"
 }
 
 function build_standalone() {
@@ -369,52 +376,58 @@ function display_version() {
   echo "GIT_BRANCH_TYPE: ${GIT_BRANCH_TYPE}"
 }
 
-function set_message_file() {
-  TMP_MESSAGE_FILE="/tmp/$(basename $0).$$.tmp"
-  export TMP_MESSAGE_FILE
+function set_messages_file() {
+  TMP_MESSAGES_FILE="/tmp/$(basename $0).$$.tmp"
+  export TMP_MESSAGES_FILE
 }
 
-function clear_message() {
-  MESSAGE=""
-  set_message_file
+function cleanup_messages_file() {
+  if [[ "x${TMP_MESSAGES_FILE}" != "x" && -a ${TMP_MESSAGES_FILE} ]]; then
+    rm -f TMP_MESSAGES_FILE
+    echo "Deleted Message File ${TMP_MESSAGES_FILE}"
+  fi
+}
+
+function clear_messages() {
+  MESSAGES=""
+  set_messages_file
 }
 
 function set_message() {
-  if [ "${MESSAGE}" == "" ]; then
-    MESSAGE="${1}"
+  if [ "x${MESSAGES}" == "x" ]; then
+    MESSAGES="${1}"
   else
-    MESSAGE="${MESSAGE}\n\n${1}"
+    MESSAGES="${MESSAGES}\n\n${1}"
   fi
-  if [ "x${TMP_MESSAGE_FILE}" != "x" ]; then
-    local warning_message="Warning Message for \"${MANUAL}\":\n${1}"
-    if [ -a ${TMP_MESSAGE_FILE} ]; then
-      echo -e "\n${warning_message}" >> ${TMP_MESSAGE_FILE}
-    else
-      echo -e "${warning_message}" >> ${TMP_MESSAGE_FILE}
+  if [ "x${TMP_MESSAGES_FILE}" != "x" ]; then
+    local clean_m=`echo_clean_colors "${1}"`
+    if [ -a ${TMP_MESSAGES_FILE} ]; then
+      echo -e "\n" >> ${TMP_MESSAGES_FILE}
     fi
+    echo -e "Warning Message for \"${MANUAL}\":\n${clean_m}" >> ${TMP_MESSAGES_FILE}
   fi
 }
 
 function display_any_messages() {
-  if [ "${MESSAGE}" != "" ]; then
+  if [ "x${MESSAGES}" != "x" ]; then
     echo ""
     echo_red_bold "Warning Messages for \"${MANUAL}\":"
     echo ""
-    echo -e "${MESSAGE}"
+    echo -e "${MESSAGES}"
     echo ""
   fi
 }
 
-function display_message_file() {
-  if [[ "x${TMP_MESSAGE_FILE}" != "x" && -a ${TMP_MESSAGE_FILE} ]]; then
+function display_messages_file() {
+  if [[ "x${TMP_MESSAGES_FILE}" != "x" && -a ${TMP_MESSAGES_FILE} ]]; then
     echo ""
     echo_red_bold "Warning Messages:"
     echo ""
-    cat ${TMP_MESSAGE_FILE} | while read line
+    cat ${TMP_MESSAGES_FILE} | while read line
     do
       echo -e "${line}"
     done
-    return 1 # Indicates warning messages
+    return 1 # Indicates warning messages present
   else
     return 0
   fi
