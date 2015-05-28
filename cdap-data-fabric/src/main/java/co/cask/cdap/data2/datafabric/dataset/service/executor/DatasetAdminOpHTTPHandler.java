@@ -20,10 +20,13 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.HandlerException;
 import co.cask.cdap.data2.datafabric.dataset.DatasetType;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
+import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
+import co.cask.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
@@ -34,6 +37,7 @@ import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.commons.lang.StringUtils;
+import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -54,10 +58,15 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   private static final Gson GSON = new Gson();
 
   private final RemoteDatasetFramework dsFramework;
+  private final CConfiguration cConf;
+  private final LocationFactory locationFactory;
 
   @Inject
-  public DatasetAdminOpHTTPHandler(RemoteDatasetFramework dsFramework) {
+  public DatasetAdminOpHTTPHandler(RemoteDatasetFramework dsFramework,
+                                   CConfiguration cConf, LocationFactory locationFactory) {
     this.dsFramework = dsFramework;
+    this.cConf = cConf;
+    this.locationFactory = locationFactory;
   }
 
   @POST
@@ -93,19 +102,22 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
     DatasetTypeMeta typeMeta = params.getTypeMeta();
 
     LOG.info("Creating dataset instance {}.{}, type meta: {}, props: {}", namespaceId, name, typeMeta, props);
-    DatasetType type = dsFramework.getDatasetType(typeMeta, null);
+    try (DatasetClassLoaderProvider classLoaderProvider =
+           new DirectoryClassLoaderProvider(cConf, null, locationFactory)) {
+      DatasetType type = dsFramework.getDatasetType(typeMeta, classLoaderProvider);
 
-    if (type == null) {
-      String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);
-      LOG.error(msg);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, msg);
-      return;
+      if (type == null) {
+        String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);
+        LOG.error(msg);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, msg);
+        return;
+      }
+
+      DatasetSpecification spec = type.configure(name, props);
+      DatasetAdmin admin = type.getAdmin(DatasetContext.from(namespaceId), spec);
+      admin.create();
+      responder.sendJson(HttpResponseStatus.OK, spec);
     }
-
-    DatasetSpecification spec = type.configure(name, props);
-    DatasetAdmin admin = type.getAdmin(DatasetContext.from(namespaceId), spec);
-    admin.create();
-    responder.sendJson(HttpResponseStatus.OK, spec);
   }
 
   @POST
@@ -123,18 +135,21 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
     DatasetTypeMeta typeMeta = params.getTypeMeta();
 
     LOG.info("Dropping dataset with spec: {}, type meta: {}", spec, typeMeta);
-    DatasetType type = dsFramework.getDatasetType(typeMeta, null);
+    try (DatasetClassLoaderProvider classLoaderProvider =
+           new DirectoryClassLoaderProvider(cConf, null, locationFactory)) {
+      DatasetType type = dsFramework.getDatasetType(typeMeta, classLoaderProvider);
 
-    if (type == null) {
-      String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);
-      LOG.error(msg);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, msg);
-      return;
+      if (type == null) {
+        String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);
+        LOG.error(msg);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, msg);
+        return;
+      }
+
+      DatasetAdmin admin = type.getAdmin(DatasetContext.from(namespaceId), spec);
+      admin.drop();
+      responder.sendJson(HttpResponseStatus.OK, spec);
     }
-
-    DatasetAdmin admin = type.getAdmin(DatasetContext.from(namespaceId), spec);
-    admin.drop();
-    responder.sendJson(HttpResponseStatus.OK, spec);
   }
 
   @POST
