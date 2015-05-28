@@ -106,7 +106,6 @@ angular.module(PKG.name + '.feature.admin')
         "notification.threshold.mb": $scope.threshold
       };
 
-      // setProperties does not work yet. Need to pass in body to the request on $resource
       myStreamApi.setProperties(requestParams, params)
         .$promise
         .then(function() {
