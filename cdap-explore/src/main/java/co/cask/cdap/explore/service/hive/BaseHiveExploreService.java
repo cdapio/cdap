@@ -24,12 +24,13 @@ import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
-import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.explore.service.ExploreTableManager;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.HiveStreamRedirector;
@@ -40,7 +41,6 @@ import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.HConfCodec;
 import co.cask.cdap.hive.context.TxnCodec;
-import co.cask.cdap.hive.datasets.DatasetAccessor;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.hive.stream.StreamStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;
@@ -154,6 +154,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final StreamAdmin streamAdmin;
   private final DatasetFramework datasetFramework;
   private final ExploreTableManager exploreTableManager;
+  private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
 
   private final ThreadLocal<Supplier<IMetaStoreClient>> metastoreClientLocal;
 
@@ -168,7 +169,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
-                                   File previewsDir, StreamAdmin streamAdmin, Store store) {
+                                   File previewsDir, StreamAdmin streamAdmin, Store store,
+                                   SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.hiveConf = hiveConf;
@@ -179,7 +181,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.metastoreClientReferenceQueue = new ReferenceQueue<>();
     this.datasetFramework = datasetFramework;
     this.streamAdmin = streamAdmin;
-    this.exploreTableManager = new ExploreTableManager(this, datasetFramework);
+    this.exploreTableManager = new ExploreTableManager(this, datasetInstantiatorFactory);
+    this.datasetInstantiatorFactory = datasetInstantiatorFactory;
 
     // Create a Timer thread to periodically collect metastore clients that are no longer in used and call close on them
     this.metastoreClientsExecutorService =
@@ -201,7 +204,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.cliService = createCLIService();
 
     this.txClient = txClient;
-    ContextManager.saveContext(datasetFramework, streamAdmin);
+    ContextManager.saveContext(datasetFramework, streamAdmin, datasetInstantiatorFactory);
 
     cleanupJobSchedule = cConf.getLong(Constants.Explore.CLEANUP_JOB_SCHEDULE_SECS);
 
@@ -324,9 +327,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
 
     cliService.stop();
-
-    // Close all resources associated with instantiated Datasets
-    DatasetAccessor.closeAllQueries();
   }
 
   @Override
@@ -949,7 +949,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     startAndWait();
     inactiveHandleCache.invalidate(handle);
     activeHandleCache.invalidate(handle);
-    DatasetAccessor.closeQuery(handle);
   }
 
   @Override
@@ -997,6 +996,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     // all old CDAP tables used to be in the default database
     LOG.info("Checking for tables that need upgrade...");
     List<TableNameInfo> tables = getTables("default");
+
     for (TableNameInfo tableNameInfo : tables) {
       String tableName = tableNameInfo.getTableName();
       TableInfo tableInfo = getTableInfo(tableNameInfo.getDatabaseName(), tableName);
@@ -1016,7 +1016,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         upgradeRecordScannableTable(tableInfo);
       } else {
         LOG.info("Upgrading file set table {}.", tableName);
-        // handle filesets differently since they can have partitions, and dropping the table will remove all partitions
+        // handle filesets differently since they can have partitions,
+        // and dropping the table will remove all partitions
         upgradeFilesetTable(tableInfo);
       }
     }
@@ -1049,20 +1050,24 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     // enable the new table
     enableDataset(datasetID, spec);
 
-    Dataset dataset = ExploreServiceUtils.instantiateDataset(datasetFramework, datasetID);
-    // if this is a time partitioned file set, we need to add all partitions
-    if (dataset instanceof TimePartitionedFileSet) {
-      TimePartitionedFileSet tpfs = (TimePartitionedFileSet) dataset;
-      Set<PartitionDetail> partitionDetails = tpfs.getPartitions(null);
-      if (!partitionDetails.isEmpty()) {
-        QueryHandle handle = exploreTableManager.addPartitions(datasetID, partitionDetails);
-        QueryStatus status = waitForCompletion(handle);
-        // if add partitions failed, stop
-        if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
-          throw new ExploreException("Failed to add all partitions to dataset " + datasetID);
+    try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
+      Dataset dataset = datasetInstantiator.getDataset(datasetID);
+
+      // if this is a time partitioned file set, we need to add all partitions
+      if (dataset instanceof TimePartitionedFileSet) {
+        TimePartitionedFileSet tpfs = (TimePartitionedFileSet) dataset;
+        Set<PartitionDetail> partitionDetails = tpfs.getPartitions(null);
+        if (!partitionDetails.isEmpty()) {
+          QueryHandle handle = exploreTableManager.addPartitions(datasetID, partitionDetails);
+          QueryStatus status = waitForCompletion(handle);
+          // if add partitions failed, stop
+          if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
+            throw new ExploreException("Failed to add all partitions to dataset " + datasetID);
+          }
         }
       }
     }
+
     // now it is safe to drop the old table
     dropTable(tableInfo.getTableName());
   }

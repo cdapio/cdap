@@ -20,6 +20,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.ExploreException;
@@ -68,8 +69,10 @@ public class HiveCDH4ExploreService extends BaseHiveExploreService {
   protected HiveCDH4ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
                                    @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir,
-                                   StreamAdmin streamAdmin, Store store) {
-    super(txClient, datasetFramework, cConf, hConf, hiveConf, previewsDir, streamAdmin, store);
+                                   StreamAdmin streamAdmin, Store store,
+                                   SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
+    super(txClient, datasetFramework, cConf, hConf, hiveConf, previewsDir,
+          streamAdmin, store, datasetInstantiatorFactory);
     System.setProperty("hive.server2.blocking.query", "false");
     if (cConf.getBoolean(Constants.Explore.WRITES_ENABLED)) {
       LOG.warn("Writing to datasets through Hive is not supported in CDH4.x, overriding {} setting to false.",

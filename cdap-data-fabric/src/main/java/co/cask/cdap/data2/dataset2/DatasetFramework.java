@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
@@ -219,6 +220,24 @@ public interface DatasetFramework {
   @Nullable
   <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
                                    @Nullable ClassLoader classLoader)
+    throws DatasetManagementException, IOException;
+
+  /**
+   * Gets dataset to be used to perform data operations.
+   *
+   * @param <T> dataset type to be returned
+   * @param datasetInstanceId dataset instance id
+   * @param arguments runtime arguments for the dataset instance
+   * @param classLoaderProvider providers to get classloaders for different dataset modules
+   * @param owners owners of the dataset
+   * @return instance of dataset or {@code null} if dataset instance of this name doesn't exist.
+   * @throws DatasetManagementException when there's trouble getting dataset meta info
+   * @throws IOException when there's trouble to instantiate {@link co.cask.cdap.api.dataset.Dataset}
+   */
+  @Nullable
+  <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
+                                   DatasetClassLoaderProvider classLoaderProvider,
+                                   @Nullable Iterable<? extends Id> owners)
     throws DatasetManagementException, IOException;
 
   void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException;

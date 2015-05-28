@@ -37,7 +37,6 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorS
 import co.cask.cdap.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
-import co.cask.cdap.data2.datafabric.dataset.type.LocalDatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
@@ -147,11 +146,10 @@ public abstract class DatasetServiceTestBase {
 
     locationFactory = injector.getInstance(LocationFactory.class);
     NamespacedLocationFactory namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
-    dsFramework = new RemoteDatasetFramework(discoveryService, registryFactory,
-                                             new LocalDatasetTypeClassLoaderFactory());
+    dsFramework = new RemoteDatasetFramework(discoveryService, registryFactory);
 
     ImmutableSet<HttpHandler> handlers =
-      ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(dsFramework));
+      ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(dsFramework, cConf, locationFactory));
     opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
 
     opExecutorService.startAndWait();
