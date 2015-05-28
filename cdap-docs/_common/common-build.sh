@@ -60,6 +60,7 @@ EOF`
 
 SCRIPT=`basename ${0}`
 SCRIPT_PATH=`pwd`
+MANUAL=`basename ${SCRIPT_PATH}`
 
 DOC_GEN_PY="${SCRIPT_PATH}/../tools/doc-gen.py"
 BUILD_PATH="${SCRIPT_PATH}/${BUILD}"
@@ -146,6 +147,7 @@ function build_docs() {
   cd ${SCRIPT_PATH}
   check_includes
   sphinx-build -b html -d build/doctrees source build/html
+  display_any_messages
 }
 
 function build_docs_google() {
@@ -153,6 +155,7 @@ function build_docs_google() {
   cd ${SCRIPT_PATH}
   check_includes
   sphinx-build -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d build/doctrees source build/html
+  display_any_messages
 }
 
 function build_javadocs_full() {
@@ -291,16 +294,22 @@ function test_an_include() {
     new_md5_hash=`md5sum ${target} | awk '{print $1}'`
   fi
   
+  local result_message=""
+  
   if [[ "${new_md5_hash}" == "${NOT_FOUND_HASH}" ]]; then
-    echo -e "${WARNING} ${RED}${BOLD}${file_name} not found!${NC}"  
-    echo -e "file: ${target}"  
-  elif [ "${new_md5_hash}" != "${md5_hash}" ]; then
-    echo -e "${WARNING} MD5 Hash for ${file_name} has changed! Compare files and update hash!"  
-    echo -e "file: ${target}"  
-    echo -e "Old MD5 Hash: ${md5_hash} New MD5 Hash: ${RED}${BOLD}${new_md5_hash}${NC}" 
-  else
-    echo "MD5 Hash for ${file_name} matches"  
+    result_message="${WARNING} ${RED}${BOLD}${file_name} not found!${NC}"  
+    result_message="${result_message}\nfile: ${target}"  
+  elif [[ "${new_md5_hash}" != "${md5_hash}" ]]; then
+    result_message="${WARNING} ${RED}${BOLD}${file_name} has changed! Compare files and update hash!${NC}"   
+    result_message="${result_message}\nfile: ${target}"   
+    result_message="${result_message}\nOld MD5 Hash: ${md5_hash} New MD5 Hash: ${RED}${BOLD}${new_md5_hash}${NC}"   
   fi
+  if [ "${result_message}" != "" ]; then 
+    set_message "${result_message}"
+  else
+    result_message="MD5 Hash for ${file_name} matches"
+  fi
+  echo -e "${result_message}"
 }
 
 function build_standalone() {
@@ -358,7 +367,57 @@ function display_version() {
   echo "PROJECT_SHORT_VERSION: ${PROJECT_SHORT_VERSION}"
   echo "GIT_BRANCH: ${GIT_BRANCH}"
   echo "GIT_BRANCH_TYPE: ${GIT_BRANCH_TYPE}"
-  echo ""
+}
+
+function set_message_file() {
+  TMP_MESSAGE_FILE="/tmp/$(basename $0).$$.tmp"
+  export TMP_MESSAGE_FILE
+}
+
+function clear_message() {
+  MESSAGE=""
+  set_message_file
+}
+
+function set_message() {
+  if [ "${MESSAGE}" == "" ]; then
+    MESSAGE="${1}"
+  else
+    MESSAGE="${MESSAGE}\n\n${1}"
+  fi
+  if [ "x${TMP_MESSAGE_FILE}" != "x" ]; then
+    local warning_message="Warning Message for \"${MANUAL}\":\n${1}"
+    if [ -a ${TMP_MESSAGE_FILE} ]; then
+      echo -e "\n${warning_message}" >> ${TMP_MESSAGE_FILE}
+    else
+      echo -e "${warning_message}" >> ${TMP_MESSAGE_FILE}
+    fi
+  fi
+}
+
+function display_any_messages() {
+  if [ "${MESSAGE}" != "" ]; then
+    echo ""
+    echo_red_bold "Warning Messages for \"${MANUAL}\":"
+    echo ""
+    echo -e "${MESSAGE}"
+    echo ""
+  fi
+}
+
+function display_message_file() {
+  if [[ "x${TMP_MESSAGE_FILE}" != "x" && -a ${TMP_MESSAGE_FILE} ]]; then
+    echo ""
+    echo_red_bold "Warning Messages:"
+    echo ""
+    cat ${TMP_MESSAGE_FILE} | while read line
+    do
+      echo -e "${line}"
+    done
+    return 1 # Indicates warning messages
+  else
+    return 0
+  fi
 }
 
 function rewrite() {
@@ -401,20 +460,20 @@ function rewrite() {
 
 function run_command() {
   case "${1}" in
-    build )             build; exit 1;;
-    build-github )      build_github; exit 1;;
-    build-web )         build_web; exit 1;;
-    check-includes )    check_includes; exit 1;;
+    build )             build;;
+    build-github )      build_github;;
+    build-web )         build_web;;
+    check-includes )    check_includes;;
     docs )              build_docs;;
-    license-pdfs )      build_license_pdfs; exit 1;;
-    build-standalone )  build_standalone; exit 1;;
-    copy-javadocs )     copy_javadocs; exit 1;;
-    copy-license-pdfs ) copy_license_pdfs; exit 1;;
-    javadocs )          build_javadocs_sdk; exit 1;;
-    javadocs-full )     build_javadocs_full; exit 1;;
-    depends )           build_dependencies; exit 1;;
-    sdk )               build_sdk; exit 1;;
-    version )           display_version; exit 1;;
-    * )                 usage; exit 1;;
+    license-pdfs )      build_license_pdfs;;
+    build-standalone )  build_standalone;;
+    copy-javadocs )     copy_javadocs;;
+    copy-license-pdfs ) copy_license_pdfs;;
+    javadocs )          build_javadocs_sdk;;
+    javadocs-full )     build_javadocs_full;;
+    depends )           build_dependencies;;
+    sdk )               build_sdk;;
+    version )           display_version;;
+    * )                 usage;;
   esac
 }

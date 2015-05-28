@@ -67,20 +67,20 @@ function usage() {
 
 function run_command() {
   case "${1}" in
-    all )               build_all; exit 0;;
-    clean )             clean_builds; exit 0;;
-    doc )               build_docs_outer_level; exit 0;;
-    docs )              build_docs; exit 0;;
+    all )               build_all;;
+    clean )             clean_builds;;
+    doc )               build_docs_outer_level;;
+    docs )              build_docs;;
     docs-github-part )  build_docs_github ${ARG_2} ${ARG_3};;
-    docs-github )       build_docs_github ${ARG_2} ${ARG_3}; exit 0;;
+    docs-github )       build_docs_github ${ARG_2} ${ARG_3};;
     docs-web-part )     build_docs_web ${ARG_2} ${ARG_3};;
-    docs-web )          build_docs_web ${ARG_2} ${ARG_3}; exit 0;;
-    javadocs )          build_javadocs; exit 0;;
-    licenses )          build_license_depends; exit 0;;
-    sdk )               build_sdk; exit 0;;
-    version )           print_version; exit 0;;
-    test )              test; exit 0;;
-    * )                 usage; exit 0;;
+    docs-web )          build_docs_web ${ARG_2} ${ARG_3};;
+    javadocs )          build_javadocs;;
+    licenses )          build_license_depends;;
+    sdk )               build_sdk;;
+    version )           print_version;;
+    test )              test;;
+    * )                 usage;;
   esac
 }
 
@@ -215,14 +215,17 @@ function build_docs_javadocs() {
 
 function build_docs() {
   _build_docs "docs" ${GOOGLE_ANALYTICS_WEB} ${WEB} ${TRUE}
+  return $?
 }
 
 function build_docs_github() {
   _build_docs "build-github" ${GOOGLE_ANALYTICS_GITHUB} ${GITHUB} ${FALSE}
+  return $?
 }
 
 function build_docs_web() {
   _build_docs "build-web" ${GOOGLE_ANALYTICS_WEB} ${WEB} ${TRUE}
+  return $?
 }
 
 function _build_docs() {
@@ -231,17 +234,22 @@ function _build_docs() {
   echo "========================================================"
   echo "Building target \"${1}\"..."
   echo "--------------------------------------------------------"
+  clear_message
   build_docs_inner_level ${1}
   build_docs_outer_level ${2}
   copy_docs_lower_level
   build_zip ${3}
   zip_extras ${4}
   display_version
+  display_message_file
+  local warnings="$?"
+  echo ""
   echo "--------------------------------------------------------"
   bell "Building target \"${1}\" completed."
   echo "========================================================"
   echo "========================================================"
   echo ""
+  return ${warnings}
 }
 
 function build_docs_inner_level() {
