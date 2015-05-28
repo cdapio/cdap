@@ -27,6 +27,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -89,9 +90,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
       ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
       if (runtimeInfo == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Runtime information for run-id %s not found",
-                runId));
-        return;
+        throw new NotFoundException(new Id.Run(id, runId));
       }
       ProgramController controller = runtimeInfo.getController();
       if (controller.getState() == ProgramController.State.SUSPENDED) {
@@ -101,8 +100,11 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       }
       controller.suspend().get();
       responder.sendString(HttpResponseStatus.OK, "Program run suspended.");
-    }  catch (SecurityException e) {
+    } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (NotFoundException e) {
+      LOG.warn("NotFoundException while runtime information for run id is not found.", e);
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -119,9 +121,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
       ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
       if (runtimeInfo == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Runtime information for run-id %s not found",
-                runId));
-        return;
+        throw new NotFoundException(new Id.Run(id, runId));
       }
       ProgramController controller = runtimeInfo.getController();
       if (controller.getState() == ProgramController.State.ALIVE) {
@@ -131,8 +131,11 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       }
       controller.resume().get();
       responder.sendString(HttpResponseStatus.OK, "Program run resumed.");
-    }  catch (SecurityException e) {
+    } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (NotFoundException e) {
+      LOG.warn("NotFoundException while runtime information for run id is not found.", e);
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
