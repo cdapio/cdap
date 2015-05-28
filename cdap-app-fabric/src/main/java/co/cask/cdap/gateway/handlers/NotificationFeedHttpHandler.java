@@ -17,11 +17,11 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
 import co.cask.cdap.proto.Id;
+import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
@@ -50,15 +50,14 @@ import javax.ws.rs.PathParam;
  * These endpoints are only reachable internally.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
-public class NotificationFeedHttpHandler extends AuthenticatedHttpHandler {
+public class NotificationFeedHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NotificationFeedHttpHandler.class);
 
   private static final Gson GSON = new Gson();
   private final NotificationFeedManager feedManager;
 
   @Inject
-  public NotificationFeedHttpHandler(Authenticator authenticator, NotificationFeedManager feedManager) {
-    super(authenticator);
+  public NotificationFeedHttpHandler(NotificationFeedManager feedManager) {
     this.feedManager = feedManager;
   }
 

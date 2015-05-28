@@ -45,7 +45,6 @@ import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
-import co.cask.cdap.gateway.auth.NoAuthenticator;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.common.http.HttpRequest;
@@ -152,7 +151,7 @@ public abstract class DatasetServiceTestBase {
                                              new LocalDatasetTypeClassLoaderFactory());
 
     ImmutableSet<HttpHandler> handlers =
-      ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(new NoAuthenticator(), dsFramework));
+      ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(dsFramework));
     opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
 
     opExecutorService.startAndWait();

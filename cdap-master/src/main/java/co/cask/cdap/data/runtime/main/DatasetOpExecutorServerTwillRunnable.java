@@ -33,7 +33,6 @@ import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -84,7 +83,6 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new DataSetsModules().getDistributedModules(),
       new DataSetServiceModules().getDistributedModules(),
       new LoggingModules().getDistributedModules(),
-      new AuthModule(),
       new ExploreClientModule());
 
     injector.getInstance(LogAppenderInitializer.class).initialize();

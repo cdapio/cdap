@@ -41,7 +41,6 @@ import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.gateway.router.RouterModules;
 import co.cask.cdap.internal.app.services.AppFabricServer;
@@ -325,7 +324,6 @@ public class StandaloneMain {
       new ConfigModule(configuration, hConf),
       new IOModule(),
       new MetricsHandlerModule(),
-      new AuthModule(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new LocationRuntimeModule().getStandaloneModules(),
       new AppFabricServiceRuntimeModule().getStandaloneModules(),

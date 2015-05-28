@@ -33,11 +33,10 @@ import co.cask.cdap.data.stream.service.upload.LengthBasedContentWriterFactory;
 import co.cask.cdap.data.stream.service.upload.StreamBodyConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpHandler;
@@ -90,7 +89,7 @@ import javax.ws.rs.PathParam;
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/streams")
-public final class StreamHandler extends AuthenticatedHttpHandler {
+public final class StreamHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
 
@@ -114,13 +113,12 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   private final StreamWriterSizeCollector sizeCollector;
 
   @Inject
-  public StreamHandler(CConfiguration cConf, Authenticator authenticator,
+  public StreamHandler(CConfiguration cConf,
                        StreamCoordinatorClient streamCoordinatorClient, StreamAdmin streamAdmin,
                        StreamFileWriterFactory writerFactory,
                        final MetricsCollectionService metricsCollectionService,
                        StreamWriterSizeCollector sizeCollector,
                        AbstractNamespaceClient namespaceClient) {
-    super(authenticator);
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.sizeCollector = sizeCollector;

@@ -21,7 +21,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.NamespaceCannotBeDeletedException;
 import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
@@ -52,8 +51,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   private final NamespaceAdmin namespaceAdmin;
 
   @Inject
-  public NamespaceHttpHandler(Authenticator authenticator, CConfiguration cConf, NamespaceAdmin namespaceAdmin) {
-    super(authenticator);
+  public NamespaceHttpHandler(CConfiguration cConf, NamespaceAdmin namespaceAdmin) {
     this.cConf = cConf;
     this.namespaceAdmin = namespaceAdmin;
   }
