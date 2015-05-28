@@ -54,6 +54,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -85,61 +86,44 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   @Path("/apps/{app-id}/workflows/{workflow-name}/runs/{run-id}/suspend")
   public void suspendWorkflowRun(HttpRequest request, final HttpResponder responder,
                                  @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
-                                 @PathParam("workflow-name") String workflowName, @PathParam("run-id") String runId) {
-    try {
-      Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
-      if (runtimeInfo == null) {
-        throw new NotFoundException(new Id.Run(id, runId));
-      }
-      ProgramController controller = runtimeInfo.getController();
-      if (controller.getState() == ProgramController.State.SUSPENDED) {
-        responder.sendString(AppFabricServiceStatus.PROGRAM_ALREADY_SUSPENDED.getCode(),
-                             AppFabricServiceStatus.PROGRAM_ALREADY_SUSPENDED.getMessage());
-        return;
-      }
-      controller.suspend().get();
-      responder.sendString(HttpResponseStatus.OK, "Program run suspended.");
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (NotFoundException e) {
-      LOG.warn("NotFoundException while runtime information for run id is not found.", e);
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                                 @PathParam("workflow-name") String workflowName, @PathParam("run-id") String runId)
+    throws NotFoundException, ExecutionException, InterruptedException {
+
+    Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
+    if (runtimeInfo == null) {
+      throw new NotFoundException(new Id.Run(id, runId));
     }
+    ProgramController controller = runtimeInfo.getController();
+    if (controller.getState() == ProgramController.State.SUSPENDED) {
+      responder.sendString(AppFabricServiceStatus.PROGRAM_ALREADY_SUSPENDED.getCode(),
+                           AppFabricServiceStatus.PROGRAM_ALREADY_SUSPENDED.getMessage());
+      return;
+    }
+    controller.suspend().get();
+    responder.sendString(HttpResponseStatus.OK, "Program run suspended.");
   }
 
   @POST
   @Path("/apps/{app-id}/workflows/{workflow-name}/runs/{run-id}/resume")
   public void resumeWorkflowRun(HttpRequest request, final HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
-                                @PathParam("workflow-name") String workflowName, @PathParam("run-id") String runId) {
+                                @PathParam("workflow-name") String workflowName, @PathParam("run-id") String runId)
+          throws NotFoundException, ExecutionException, InterruptedException {
 
-    try {
-      Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
-      if (runtimeInfo == null) {
-        throw new NotFoundException(new Id.Run(id, runId));
-      }
-      ProgramController controller = runtimeInfo.getController();
-      if (controller.getState() == ProgramController.State.ALIVE) {
-        responder.sendString(AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING.getCode(),
-                             AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING.getMessage());
-        return;
-      }
-      controller.resume().get();
-      responder.sendString(HttpResponseStatus.OK, "Program run resumed.");
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (NotFoundException e) {
-      LOG.warn("NotFoundException while runtime information for run id is not found.", e);
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
+    if (runtimeInfo == null) {
+      throw new NotFoundException(new Id.Run(id, runId));
     }
+    ProgramController controller = runtimeInfo.getController();
+    if (controller.getState() == ProgramController.State.ALIVE) {
+      responder.sendString(AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING.getCode(),
+                           AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING.getMessage());
+      return;
+    }
+    controller.resume().get();
+    responder.sendString(HttpResponseStatus.OK, "Program run resumed.");
   }
 
   @GET
