@@ -29,7 +29,10 @@ angular.module(PKG.name + '.feature.admin')
               namespace.datasetsCount = data.length;
             });
 
-          getStreams(namespace);
+          getStreams(namespace)
+            .then(function (streams) {
+              namespace.streamsCount = streams.length;
+            });
         });
       });
 
@@ -50,10 +53,6 @@ angular.module(PKG.name + '.feature.admin')
         namespace: namespace.name,
         scope: $scope
       };
-      myStreamApi.list(params)
-        .$promise
-        .then(function (streams) {
-          namespace.streamsCount = streams.length;
-        });
+      return myStreamApi.list(params).$promise;
     }
   });
