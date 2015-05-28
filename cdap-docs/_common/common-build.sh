@@ -251,7 +251,7 @@ function set_mvn_environment() {
 }
 
 function check_includes() {
-  if [ "x${CHECK_INCLUDES}" == "x${TRUE}" ]; then
+  if [ "${CHECK_INCLUDES}" == "${TRUE}" ]; then
     echo "Downloading and checking includes."
     # Build includes
     BUILD_INCLUDES_DIR=${SCRIPT_PATH}/${BUILD}/${INCLUDES}
@@ -285,16 +285,16 @@ function test_an_include() {
   
   local file_name=`basename ${target}`
   
-  if [[ "x${OSTYPE}" == "xdarwin"* ]]; then
+  if [[ "${OSTYPE}" == "darwin"* ]]; then
     new_md5_hash=`md5 -q ${target}`
   else
     new_md5_hash=`md5sum ${target} | awk '{print $1}'`
   fi
   
-  if [[ "x${new_md5_hash}" == "x${NOT_FOUND_HASH}" ]]; then
+  if [[ "${new_md5_hash}" == "${NOT_FOUND_HASH}" ]]; then
     echo -e "${WARNING} ${RED}${BOLD}${file_name} not found!${NC}"  
     echo -e "file: ${target}"  
-  elif [ "x${new_md5_hash}" != "x${md5_hash}" ]; then
+  elif [ "${new_md5_hash}" != "${md5_hash}" ]; then
     echo -e "${WARNING} MD5 Hash for ${file_name} has changed! Compare files and update hash!"  
     echo -e "file: ${target}"  
     echo -e "Old MD5 Hash: ${md5_hash} New MD5 Hash: ${RED}${BOLD}${new_md5_hash}${NC}" 
@@ -332,14 +332,14 @@ function version() {
   IFS=/ read -a branch <<< "${full_branch}"
   GIT_BRANCH="${branch[1]}"
   # Determine branch and branch type: one of develop, master, release, develop-feature, release-feature
-  if [ "x${full_branch}" == "xdevelop" -o  "x${full_branch}" == "xmaster" ]; then
+  if [ "${full_branch}" == "develop" -o  "${full_branch}" == "master" ]; then
     GIT_BRANCH="${full_branch}"
     GIT_BRANCH_TYPE=${GIT_BRANCH}
-  elif [ "x${GIT_BRANCH:0:7}" == "xrelease" ]; then
+  elif [ "${GIT_BRANCH:0:7}" == "release" ]; then
     GIT_BRANCH_TYPE="release"
   else
     local parent_branch=`git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1 | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//'`
-    if [ "x${parent_branch}" == "xdevelop" ]; then
+    if [ "${parent_branch}" == "develop" ]; then
       GIT_BRANCH_TYPE="develop-feature"
     else
       GIT_BRANCH_TYPE="release-feature"
