@@ -69,7 +69,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -126,28 +125,28 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework);
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
-    DatasetTypeManager typeManager = new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory,
-                                                            // we don't need any default modules in this test
-                                                            Collections.<String, DatasetModule>emptyMap());
     DatasetInstanceService instanceService = new DatasetInstanceService(
-      typeManager,
+      new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory, DEFAULT_MODULES),
       new DatasetInstanceManager(mdsDatasetsRegistry),
       new InMemoryDatasetOpExecutor(framework),
-      exploreFacade, cConf,
-      new UsageRegistry(txExecutorFactory, framework)
-    );
+      exploreFacade,
+      cConf,
+      new UsageRegistry(txExecutorFactory, framework));
     service = new DatasetService(cConf,
                                  namespacedLocationFactory,
                                  discoveryService,
                                  discoveryService,
-                                 typeManager,
-                                 instanceService,
+                                 new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory, DEFAULT_MODULES),
+                                 new DatasetInstanceManager(mdsDatasetsRegistry),
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(framework),
                                  mdsDatasetsRegistry,
+                                 exploreFacade,
                                  new HashSet<DatasetMetricsReporter>(),
                                  new LocalUnderlyingSystemNamespaceAdmin(cConf, namespacedLocationFactory,
-                                                                         exploreFacade));
+                                                                         exploreFacade),
+                                 new UsageRegistry(txExecutorFactory, framework),
+                                 instanceService);
     // Start dataset service, wait for it to be discoverable
     service.start();
     final CountDownLatch startLatch = new CountDownLatch(1);

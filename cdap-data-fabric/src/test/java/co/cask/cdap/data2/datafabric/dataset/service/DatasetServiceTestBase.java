@@ -169,27 +169,32 @@ public abstract class DatasetServiceTestBase {
       new MDSDatasetsRegistry(txSystemClient, new InMemoryDatasetFramework(registryFactory, modules, cConf));
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
-    DatasetTypeManager typeManager = new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory,
-                                                            Collections.<String, DatasetModule>emptyMap());
     DatasetInstanceService instanceService = new DatasetInstanceService(
-      typeManager,
+      new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory,
+                             // we don't need any default modules in this test
+                             Collections.<String, DatasetModule>emptyMap()),
       new DatasetInstanceManager(mdsDatasetsRegistry),
       new InMemoryDatasetOpExecutor(dsFramework),
-      exploreFacade, cConf,
-      new UsageRegistry(txExecutorFactory, dsFramework)
-    );
+      exploreFacade,
+      cConf,
+      new UsageRegistry(txExecutorFactory, dsFramework));
     service = new DatasetService(cConf,
                                  namespacedLocationFactory,
                                  discoveryService,
                                  discoveryService,
-                                 typeManager,
-                                 instanceService,
+                                 new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory,
+                                                        // we don't need any default modules in this test
+                                                        Collections.<String, DatasetModule>emptyMap()),
+                                 new DatasetInstanceManager(mdsDatasetsRegistry),
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(dsFramework),
                                  mdsDatasetsRegistry,
+                                 exploreFacade,
                                  new HashSet<DatasetMetricsReporter>(),
                                  new LocalUnderlyingSystemNamespaceAdmin(cConf, namespacedLocationFactory,
-                                                                         exploreFacade));
+                                                                         exploreFacade),
+                                 new UsageRegistry(txExecutorFactory, dsFramework),
+                                 instanceService);
 
     // Start dataset service, wait for it to be discoverable
     service.start();
