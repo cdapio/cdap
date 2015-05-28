@@ -37,6 +37,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -116,39 +117,34 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                   @PathParam("name") String name,
                   @QueryParam("owner") List<String> owners) throws NotFoundException {
 
-    Id.DatasetInstance datasetId = Id.DatasetInstance.from(namespaceId, name);
-    DatasetSpecification spec = instanceManager.get(datasetId);
-    if (spec == null) {
-      throw new NotFoundException(datasetId);
-    }
+    Id.DatasetInstance instance = Id.DatasetInstance.from(namespaceId, name);
+    responder.sendJson(HttpResponseStatus.OK,
+                       instanceService.get(instance, strings2Ids(owners)),
+                       DatasetMeta.class, GSON);
+  }
 
-    Id.DatasetType datasetTypeId = Id.DatasetType.from(namespaceId, spec.getType());
-    DatasetTypeMeta typeMeta = getTypeInfo(Id.Namespace.from(namespaceId), spec.getType());
-    if (typeMeta == null) {
-      // TODO: This shouldn't happen unless CDAP is in an invalid state - maybe give different error
-      throw new NotFoundException(datasetTypeId);
-    }
-
-    // register ownership
-    for (String owner : owners) {
-      String[] parts = owner.split("::", 2);
-      Preconditions.checkArgument(parts.length == 2);
-      String ownerType = parts[0];
-      String ownerId = parts[1];
-      try {
-        if (ownerType.equals(Id.getType(Id.Program.class))) {
-          usageRegistry.register(Id.Program.fromStrings(ownerId.split("/")), datasetId);
-        } else if (ownerType.equals(Id.getType(Id.Adapter.class))) {
-          usageRegistry.register(Id.Adapter.fromStrings(ownerId.split("/")), datasetId);
+  private List<? extends Id> strings2Ids(List<String> strings) {
+    return Lists.transform(strings, new Function<String, Id>() {
+      @Nullable
+      @Override
+      public Id apply(@Nullable String input) {
+        if (input == null) {
+          return null;
         }
-      } catch (Exception e) {
-        LOG.warn("Failed to register usage of {} -> {}", ownerId, datasetId);
-      }
-    }
 
-    // typeMeta is guaranteed to be non-null now.
-    DatasetMeta info = new DatasetMeta(spec, typeMeta, null);
-    responder.sendJson(HttpResponseStatus.OK, info, DatasetMeta.class, GSON);
+        String[] parts = input.split("::", 2);
+        Preconditions.checkArgument(parts.length == 2);
+        String ownerType = parts[0];
+        String ownerId = parts[1];
+        if (ownerType.equals(Id.getType(Id.Program.class))) {
+          return Id.Program.fromStrings(ownerId.split("/"));
+        } else if (ownerType.equals(Id.getType(Id.Adapter.class))) {
+          return Id.Adapter.fromStrings(ownerId.split("/"));
+        } else {
+          return null;
+        }
+      }
+    });
   }
 
   /**
@@ -157,33 +153,13 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @PUT
   @Path("/data/datasets/{name}")
   public void create(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                     @PathParam("name") String name) {
+                     @PathParam("name") String name) throws Exception {
     DatasetInstanceConfiguration creationProperties = getInstanceConfiguration(request);
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
 
     LOG.info("Creating dataset {}.{}, type name: {}, typeAndProps: {}",
              namespaceId, name, creationProperties.getTypeName(), creationProperties.getProperties());
-
-    DatasetSpecification existing = instanceManager.get(Id.DatasetInstance.from(namespaceId, name));
-    if (existing != null && !allowDatasetUncheckedUpgrade) {
-      String message = String.format("Cannot create dataset %s.%s: instance with same name already exists %s",
-                                     namespaceId, name, existing);
-      LOG.info(message);
-      responder.sendString(HttpResponseStatus.CONFLICT, message);
-      return;
-    }
-
-    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespaceId, name);
-    // Disable explore if the table already existed
-    if (existing != null) {
-      disableExplore(datasetInstance);
-    }
-
-    if (!createDatasetInstance(creationProperties, namespaceId, name, responder, "create")) {
-      return;
-    }
-
-    enableExplore(datasetInstance, creationProperties);
-
+    instanceService.create(namespace, name, creationProperties);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
