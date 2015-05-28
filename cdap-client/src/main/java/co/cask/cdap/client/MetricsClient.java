@@ -138,7 +138,7 @@ public class MetricsClient {
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
   public MetricQueryResult query(List<String> metrics, List<String> groupBys, Map<String, String> tags,
-                                 String start, String end)
+                                 @Nullable String start, @Nullable String end)
     throws IOException, UnauthorizedException {
 
     return query(metrics, groupBys, tags, start, end, null, null, null, null, null);
