@@ -22,7 +22,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.test.ApplicationManager;
+import co.cask.cdap.test.AbstractApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.DefaultMapReduceManager;
 import co.cask.cdap.test.DefaultSparkManager;
@@ -35,22 +35,19 @@ import co.cask.cdap.test.WorkerManager;
 import co.cask.cdap.test.WorkflowManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 
 /**
  *
  */
-public class RemoteApplicationManager implements ApplicationManager {
-  protected final Id.Application application;
-
+public class RemoteApplicationManager extends AbstractApplicationManager {
   private final ClientConfig clientConfig;
   private final ProgramClient programClient;
   private final ApplicationClient applicationClient;
 
   public RemoteApplicationManager(Id.Application application, ClientConfig clientConfig) {
-    this.application = application;
+    super(application);
 
     ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig).build();
     namespacedClientConfig.setNamespace(application.getNamespace());
@@ -60,75 +57,38 @@ public class RemoteApplicationManager implements ApplicationManager {
   }
 
   @Override
-  public FlowManager startFlow(final String flowName) {
-    return startFlow(flowName, ImmutableMap.<String, String>of());
-  }
-
-  @Override
-  public FlowManager startFlow(final String flowName, Map<String, String> arguments) {
-    final Id.Program flowId = startProgram(flowName, arguments, ProgramType.FLOW);
+  public FlowManager getFlowManager(String flowName) {
+    Id.Program flowId = Id.Program.from(application, ProgramType.FLOW, flowName);
     return new RemoteFlowManager(flowId, clientConfig, this);
   }
 
   @Override
-  public MapReduceManager startMapReduce(final String programName) {
-    return startMapReduce(programName, ImmutableMap.<String, String>of());
-  }
-
-  @Override
-  public MapReduceManager startMapReduce(final String programName, Map<String, String> arguments) {
-    Id.Program programId = startProgram(programName, arguments, ProgramType.MAPREDUCE);
+  public MapReduceManager getMapReduceManager(String programName) {
+    Id.Program programId = Id.Program.from(application, ProgramType.MAPREDUCE, programName);
     return new DefaultMapReduceManager(programId, this);
   }
 
   @Override
-  public SparkManager startSpark(String programName) {
-    return startSpark(programName, ImmutableMap.<String, String>of());
-  }
-
-  @Override
-  public SparkManager startSpark(String programName, Map<String, String> arguments) {
-    final Id.Program programId = startProgram(programName, arguments, ProgramType.SPARK);
+  public SparkManager getSparkManager(String jobName) {
+    Id.Program programId = Id.Program.from(application, ProgramType.SPARK, jobName);
     return new DefaultSparkManager(programId, this);
   }
 
-  private Id.Program startProgram(String programName, Map<String, String> arguments, ProgramType programType) {
-    try {
-      String status = programClient.getStatus(application.getId(), programType, programName);
-      Preconditions.checkState("STOPPED".equals(status), programType + " program %s is already running", programName);
-      programClient.start(application.getId(), programType, programName, arguments);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-    return Id.Program.from(application, programType, programName);
-  }
-
   @Override
-  public WorkflowManager startWorkflow(final String workflowName, Map<String, String> arguments) {
-    // currently we are using it for schedule, so not starting the workflow
+  public WorkflowManager getWorkflowManager(String workflowName) {
     Id.Program programId = Id.Program.from(application, ProgramType.WORKFLOW, workflowName);
     return new RemoteWorkflowManager(programId, clientConfig, this);
   }
 
   @Override
-  public ServiceManager startService(String serviceName) {
-    return startService(serviceName, ImmutableMap.<String, String>of());
-  }
-
-  @Override
-  public ServiceManager startService(final String serviceName, Map<String, String> arguments) {
-    Id.Program programId = startProgram(serviceName, arguments, ProgramType.SERVICE);
+  public ServiceManager getServiceManager(String serviceName) {
+    Id.Program programId = Id.Program.from(application, ProgramType.SERVICE, serviceName);
     return new RemoteServiceManager(programId, clientConfig, this);
   }
 
   @Override
-  public WorkerManager startWorker(String workerName) {
-    return startWorker(workerName, ImmutableMap.<String, String>of());
-  }
-
-  @Override
-  public WorkerManager startWorker(final String workerName, Map<String, String> arguments) {
-    final Id.Program programId = startProgram(workerName, arguments, ProgramType.WORKER);
+  public WorkerManager getWorkerManager(String workerName) {
+    Id.Program programId = Id.Program.from(application, ProgramType.WORKER, workerName);
     return new RemoteWorkerManager(programId, clientConfig, this);
   }
 
@@ -163,6 +123,17 @@ public class RemoteApplicationManager implements ApplicationManager {
   public void stopProgram(Id.Program programId) {
     try {
       programClient.stop(application.getId(), programId.getType(), programId.getId());
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public void startProgram(Id.Program programId, Map<String, String> arguments) {
+    try {
+      String status = programClient.getStatus(application.getId(), programId.getType(), programId.getId());
+      Preconditions.checkState("STOPPED".equals(status), "Program %s is already running", programId);
+      programClient.start(application.getId(), programId.getType(), programId.getId(), arguments);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

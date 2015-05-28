@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * A default implementation of {@link FlowManager}.
  */
-public class DefaultWorkflowManager extends AbstractProgramManager implements WorkflowManager {
+public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManager> implements WorkflowManager {
   private final AppFabricClient appFabricClient;
 
   public DefaultWorkflowManager(Id.Program programId, AppFabricClient appFabricClient,

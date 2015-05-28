@@ -18,13 +18,28 @@ package co.cask.cdap.test;
 
 import co.cask.cdap.proto.Id;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
  * Instance for this class is for managing a {@link Id.Program}.
+ * @param <T> The type of ProgramManager
  */
-public interface ProgramManager {
+public interface ProgramManager<T extends ProgramManager> {
+
+  /**
+   * Starts the program
+   * @return T The ProgramManager, itself
+   */
+  T start();
+
+  /**
+   * Starts the program with arguments
+   * @param arguments the arguments to start the program with
+   * @return T the ProgramManager, itself
+   */
+  T start(Map<String, String> arguments);
 
   /**
    * Stops the program.

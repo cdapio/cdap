@@ -44,7 +44,7 @@ public class SparkKMeansAppTest extends TestBase {
     // Deploy the Application
     ApplicationManager appManager = deployApplication(SparkKMeansApp.class);
     // Start the Flow
-    FlowManager flowManager = appManager.startFlow("PointsFlow");
+    FlowManager flowManager = appManager.getFlowManager("PointsFlow").start();
     // Send a few points to the stream
     StreamManager streamManager = getStreamManager("pointsStream");
     streamManager.send("10.6 519.2 110.3");
@@ -58,13 +58,13 @@ public class SparkKMeansAppTest extends TestBase {
     metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
     // Start a Spark Program
-    SparkManager sparkManager = appManager.startSpark("SparkKMeansProgram");
+    SparkManager sparkManager = appManager.getSparkManager("SparkKMeansProgram").start();
     sparkManager.waitForFinish(60, TimeUnit.SECONDS);
 
     flowManager.stop();
 
     // Start CentersService
-    ServiceManager serviceManager = appManager.startService(SparkKMeansApp.CentersService.SERVICE_NAME);
+    ServiceManager serviceManager = appManager.getServiceManager(SparkKMeansApp.CentersService.SERVICE_NAME).start();
 
     // Wait service startup
     serviceManager.waitForStatus(true);

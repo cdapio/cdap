@@ -27,7 +27,7 @@ import com.google.common.base.Throwables;
 /**
  * Remote implementation of {@link WorkerManager}
  */
-public class RemoteWorkerManager extends AbstractProgramManager implements WorkerManager {
+public class RemoteWorkerManager extends AbstractProgramManager<WorkerManager> implements WorkerManager {
   private final ProgramClient programClient;
 
   public RemoteWorkerManager(Id.Program programId, ClientConfig clientConfig,

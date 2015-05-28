@@ -42,7 +42,7 @@ import javax.annotation.Nullable;
 /**
  * A default implementation of {@link ServiceManager}.
  */
-public class DefaultServiceManager extends AbstractProgramManager implements ServiceManager {
+public class DefaultServiceManager extends AbstractProgramManager<ServiceManager> implements ServiceManager {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceManager.class);
 
   private final String namespace;
