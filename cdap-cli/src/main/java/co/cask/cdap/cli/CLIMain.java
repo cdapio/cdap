@@ -180,7 +180,7 @@ public class CLIMain {
         if (options.isDebug()) {
           e.printStackTrace(cliConfig.getOutput());
         } else {
-          cliConfig.getOutput().print(e.getMessage());
+          cliConfig.getOutput().println(e.getMessage());
         }
       }
     }
