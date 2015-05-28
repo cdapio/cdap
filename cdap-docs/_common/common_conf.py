@@ -235,16 +235,6 @@ if cdap_apps_version:
 
 """ % {'cdap-apps-version': cdap_apps_version}
 
-if git_hash:
-    rst_epilog = rst_epilog + """
-.. |git_hash| replace:: %(git_hash)s
-""" % {'git_hash': git_hash}
-
-if git_timestamp:
-    rst_epilog = rst_epilog + """
-.. |git_timestamp| replace:: %(git_timestamp)s
-""" % {'git_timestamp': git_timestamp}
-
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
 #today = ''
@@ -340,6 +330,11 @@ html_theme_options = {
   "manuals": manual_dirs_list,
   "manual_titles": manual_titles_list,
   "manual_icons": manual_icons_list,
+  "meta_git": 
+    { "git_hash": git_hash,
+      "git_timestamp": git_timestamp,
+      "git_release": release,
+    },
   "versions":"http://docs.cask.co/cdap/json-versions.js",
   "versions_data":
     { "development": [
