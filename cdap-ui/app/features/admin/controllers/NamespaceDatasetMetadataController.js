@@ -20,21 +20,7 @@ function ($scope, $state, $alert, MyDataSource, $filter, myDatasetApi) {
     }
   });
 
-
-
   $scope.deleteDataset = function() {
-    // dataSrc.request({
-    //   _cdapPath: '/namespaces/' + $state.params.nsadmin +
-    //               '/data/datasets/' + $state.params.datasetId,
-    //   method: 'DELETE'
-    // })
-    // .then(function () {
-    //   $state.go('admin.namespace.detail.data', {}, {reload: true});
-    //   $alert({
-    //     type: 'success',
-    //     content: 'Successfully deleted dataset'
-    //   });
-    // });
     var params = {
       namespace: $state.params.nsadmin,
       datasetId: $state.params.datasetId,

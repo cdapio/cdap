@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.datasets')
-  .controller('CdapDatasetsDetailController', function($scope, $state, MyDataSource, $alert, $filter) {
+  .controller('CdapDatasetsDetailController', function($scope, $state, MyDataSource, $alert, $filter, myDatasetApi) {
     var filterFilter = $filter('filter');
 
     var dataSrc = new MyDataSource($scope);
@@ -19,15 +19,19 @@ angular.module(PKG.name + '.feature.datasets')
     });
 
     $scope.truncate = function() {
-      dataSrc.request({
-        _cdapNsPath: '/data/datasets/' + $state.params.datasetId + '/admin/truncate',
-        method: 'POST'
-      }).then(function () {
-        $alert({
-          content: 'Succesfully truncated ' + $state.params.datasetId + ' dataset',
-          type: 'success'
+      var params = {
+        namespace: $state.params.namespace,
+        datasetId: $state.params.datasetId,
+        scope: $scope
+      };
+      myDatasetApi.truncate(params)
+        .$promise
+        .then(function () {
+          $alert({
+            content: 'Succesfully truncated ' + $state.params.datasetId + ' dataset',
+            type: 'success'
+          });
         });
-      });
     };
 
   });

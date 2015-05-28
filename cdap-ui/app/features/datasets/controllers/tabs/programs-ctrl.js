@@ -1,12 +1,13 @@
 angular.module(PKG.name + '.feature.datasets')
-  .controller('CdapDatasetDetailProgramsController', function($scope, MyDataSource, $state) {
-    var dataSrc = new MyDataSource($scope);
-
-    dataSrc.request({
-      _cdapNsPath: '/data/datasets/' + $state.params.datasetId + '/programs'
-    }).then(function(res) {
-
-      $scope.programs = res;
-
-    });
+  .controller('CdapDatasetDetailProgramsController', function($scope, $state, myDatasetApi) {
+    var params = {
+      namespace: $state.params.namespace,
+      datasetId: $state.params.datasetId,
+      scope: $scope
+    };
+    myDatasetApi.programsList(params)
+      .$promise
+      .then(function(res) {
+        $scope.programs = res;
+      });
   });

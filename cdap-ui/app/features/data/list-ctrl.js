@@ -1,15 +1,14 @@
 angular.module(PKG.name + '.feature.data')
-  .controller('CdapDataListController', function($state, $scope, MyDataSource, MyOrderings, myStreamApi) {
+  .controller('CdapDataListController', function($state, $scope, MyOrderings, myStreamApi, myDatasetApi) {
     $scope.MyOrderings = MyOrderings;
-    var dataSrc = new MyDataSource($scope);
     $scope.dataList = [];
 
-    var streamParams = {
+    var params = {
       namespace: $state.params.namespace,
       scope: $scope
     };
 
-    myStreamApi.list(streamParams)
+    myStreamApi.list(params)
       .$promise
       .then(function (res) {
         $scope.dataList = res
@@ -20,9 +19,8 @@ angular.module(PKG.name + '.feature.data')
           .concat($scope.dataList);
       });
 
-    dataSrc.request({
-      _cdapNsPath: '/data/datasets'
-    })
+    myDatasetApi.list(params)
+      .$promise
       .then(function(res) {
         $scope.dataList = res
           .map(function(stream) {
