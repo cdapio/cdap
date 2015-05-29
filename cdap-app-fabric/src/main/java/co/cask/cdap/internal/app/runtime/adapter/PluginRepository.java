@@ -360,7 +360,7 @@ public class PluginRepository {
         try {
           DirUtils.deleteDirectoryContents(unpackDir);
         } catch (IOException e) {
-          LOG.warn("Unable to delete dir : {}", unpackDir, e);
+          LOG.warn("Failed to delete directory {}", unpackDir, e);
         }
       }
     });

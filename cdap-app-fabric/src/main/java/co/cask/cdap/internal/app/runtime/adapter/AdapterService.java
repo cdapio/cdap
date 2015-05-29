@@ -684,8 +684,7 @@ public class AdapterService extends AbstractIdleService {
       // TODO: Performance improvement to only rebuild plugin information for those that changed
       pluginRepository.inspectPlugins(newInfoMap.values());
     } catch (Exception e) {
-      LOG.warn("Unable to read the plugins directory : {}",
-               configuration.get(Constants.AppFabric.APP_TEMPLATE_PLUGIN_DIR), e);
+      LOG.warn("Unable to read the plugins directory", e);
     }
   }
 
