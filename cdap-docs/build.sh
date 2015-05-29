@@ -38,6 +38,25 @@ function set_project_path() {
   fi
 }
 
+function check_starting_directory() {
+  E_WRONG_DIRECTORY=85
+
+  if [[ "x${MANUAL}" == "x" || "x${CDAP_DOCS}" == "x" ]]; then
+    echo "Manual or CDAP_DOCS set incorrectly: are you in the correct directory?"
+    exit ${E_WRONG_DIRECTORY}
+  fi
+  
+  if [[ " ${MANUALS[@]}" =~ "${MANUAL} " || "${MANUAL}" == "${CDAP_DOCS}" ]]; then
+    echo "Using \"${MANUAL}\""
+    return 0
+  else  
+    echo "Did not find MANUAL \"${MANUAL}\": are you in the correct directory?"
+    exit ${E_WRONG_DIRECTORY}
+  fi
+  
+  exit 1
+}
+
 function usage() {
   cd ${PROJECT_PATH}
   PROJECT_PATH=`pwd`
@@ -335,6 +354,8 @@ function clean_builds() {
     echo ""
   done
 }
+
+check_starting_directory
 
 set_project_path
 

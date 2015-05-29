@@ -28,6 +28,7 @@ APIDOCS="apidocs"
 APIS="apis"
 BUILD="build"
 BUILD_PDF="build-pdf"
+CDAP_DOCS="cdap-docs"
 HTML="html"
 INCLUDES="_includes"
 JAVADOCS="javadocs"
@@ -140,7 +141,6 @@ function usage() {
   echo "    source         Path to $PROJECT source for javadocs, if not $PROJECT_PATH"
   echo "    test_includes  local, remote or neither (default: remote); must specify source if used"
   echo " "
-#   exit 1
 }
 
 function clean() {
@@ -386,13 +386,11 @@ function set_messages_file() {
 }
 
 function cleanup_messages_file() {
-  if [[ "x${TMP_MESSAGES_FILE}" != "x" && -a ${TMP_MESSAGES_FILE} ]]; then
-    rm -f TMP_MESSAGES_FILE
-  fi
+  rm -f ${TMP_MESSAGES_FILE}
 }
 
 function clear_messages() {
-  MESSAGES=""
+  MESSAGES=
   set_messages_file
 }
 
@@ -404,8 +402,8 @@ function set_message() {
   fi
   if [ "x${TMP_MESSAGES_FILE}" != "x" ]; then
     local clean_m=`echo_clean_colors "${1}"`
-    if [ -a ${TMP_MESSAGES_FILE} ]; then
-      echo -e "\n" >> ${TMP_MESSAGES_FILE}
+    if [ -e ${TMP_MESSAGES_FILE} ]; then
+      echo >> ${TMP_MESSAGES_FILE}
     fi
     echo -e "Warning Message for \"${MANUAL}\":\n${clean_m}" >> ${TMP_MESSAGES_FILE}
   fi
