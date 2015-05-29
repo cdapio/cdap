@@ -3,9 +3,9 @@
    theme="bootstrap"
    ng-disabled="disabled"
    tagging-tokens="ENTER|TAB"
-   tagging tagging-label="(custom 'new' label)"
    reset-search-input="false"
-   title="Create New or Select draft">
+   title="Create New or Select draft"
+   tagging>
   <ui-select-match placeholder="Create New or Select draft"> {{selectedAdapterDraft}}</ui-select-match>
   <ui-select-choices
     repeat="adapter in adaptersDraftList| filter: $select.search">
