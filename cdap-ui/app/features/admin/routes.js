@@ -164,7 +164,8 @@ angular.module(PKG.name + '.feature.admin')
 
             .state('admin.namespace.detail.settings', {
               url: '/settings',
-              templateUrl: '/assets/features/admin/templates/namespace/settings.html'
+              templateUrl: '/assets/features/admin/templates/namespace/settings.html',
+              controller: 'AdminNamespaceSettingController'
             })
 
             .state('admin.namespace.detail.users', {
