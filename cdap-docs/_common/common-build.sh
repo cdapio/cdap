@@ -355,11 +355,12 @@ function version() {
   elif [ "${GIT_BRANCH:0:7}" == "release" ]; then
     GIT_BRANCH_TYPE="release"
   else
+    # We are on a feature branch: but from develop or release?
     GIT_PARENT_BRANCH=`git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1 | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//'`
-    if [ "${GIT_PARENT_BRANCH}" == "develop" ]; then
-      GIT_BRANCH_TYPE="develop-feature"
-    else
+    if [ "${GIT_PARENT_BRANCH}" == "release" ]; then
       GIT_BRANCH_TYPE="release-feature"
+    else
+      GIT_BRANCH_TYPE="develop-feature"
     fi
   fi
   cd $current_directory
