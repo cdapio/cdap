@@ -7,7 +7,7 @@ angular.module(PKG.name + '.feature.streams')
         streamId: $state.params.streamId,
         scope: $scope
       };
-      myStreamApi.truncate(params)
+      myStreamApi.truncate(params, {})
         .$promise
         .then(function () {
           $alert({

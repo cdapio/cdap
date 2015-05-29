@@ -35,7 +35,7 @@ angular.module(PKG.name + '.services')
         streamId: $scope.streamId,
         scope: $scope
       };
-      myStreamApi.sendEvent(params, {body: $scope.userInput});
+      myStreamApi.sendEvent(params, $scope.userInput);
 
       $scope.userInput = null;
     };

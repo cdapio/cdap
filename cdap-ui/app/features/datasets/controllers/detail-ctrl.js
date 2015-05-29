@@ -24,7 +24,7 @@ angular.module(PKG.name + '.feature.datasets')
         datasetId: $state.params.datasetId,
         scope: $scope
       };
-      myDatasetApi.truncate(params)
+      myDatasetApi.truncate(params, {})
         .$promise
         .then(function () {
           $alert({
