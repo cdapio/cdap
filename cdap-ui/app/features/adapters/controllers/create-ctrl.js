@@ -2,6 +2,29 @@ angular.module(PKG.name + '.feature.adapters')
   .controller('AdapterCreateController', function($scope, $q, $alert, $state, AdapterApiFactory, mySettings, $filter) {
     var apiFactory = new AdapterApiFactory($scope);
 
+    var defaultSource = {
+      name: 'Add a source',
+      properties: {},
+      placeHolderSource: true
+    };
+
+    var defaultSink = {
+      name: 'Add a sink',
+      placeHolderSink: true,
+      properties: {}
+    };
+
+    var defaultTransforms = [{
+      name: 'Add a transform',
+      placeHolderTransform: true,
+      properties: {}
+    }];
+
+
+    $scope.transforms = angular.copy(defaultTransforms);
+    $scope.source = angular.copy(defaultSource);
+    $scope.sink = angular.copy(defaultSink);
+
     // Loading flag to indicate source & sinks have
     // not been loaded yet (after/before choosing an etl template)
     // $scope.loadingEtlSourceProps = false;
@@ -28,13 +51,12 @@ angular.module(PKG.name + '.feature.adapters')
       } else {
         $scope.metadata.name = item;
         $scope.metadata.type = $scope.metadata.type;
-        $scope.transforms = defaultTransforms;
-        $scope.source = defaultSource;
-        $scope.sink = defaultSink;
+        $scope.transforms = angular.copy(defaultTransforms);
+        $scope.source = angular.copy(defaultSource);
+        $scope.sink = angular.copy(defaultSink);
       }
     };
 
-    apiFactory.fetchTemplates();
     $scope.adapterTypes = [];
 
     // Metadata Model
@@ -47,23 +69,6 @@ angular.module(PKG.name + '.feature.adapters')
     $scope.schedule = {
       cron: ''
     };
-    var defaultSource = {
-      name: 'Add a source',
-      properties: {},
-      placeHolderSource: true
-    };
-
-    var defaultSink = {
-      name: 'Add a sink',
-      placeHolderSink: true,
-      properties: {}
-    };
-
-    var defaultTransforms = [{
-      name: 'Add a transform',
-      placeHolderTransform: true,
-      properties: {}
-    }];
 
     // Source, Sink and Transform Models
     $scope.activePanel = 0;
@@ -73,9 +78,9 @@ angular.module(PKG.name + '.feature.adapters')
       if (!adapterType.length) {
         return;
       }
-      $scope.transforms = angular.copy(defaultTransforms);
-      $scope.source = angular.copy(defaultSource);
-      $scope.sink = angular.copy(defaultSink);
+      apiFactory.fetchSources($scope.metadata.type);
+      apiFactory.fetchSinks($scope.metadata.type);
+      apiFactory.fetchTransforms($scope.metadata.type);
       $scope.tabs = [
         {
           title: 'Default',
@@ -84,10 +89,15 @@ angular.module(PKG.name + '.feature.adapters')
           partial: '/assets/features/adapters/templates/create/tabs/default.html'
         }
       ];
+
+      if ($state.params.data) {
+        delete $scope.metadata.onDraftChange;
+        $scope.onAdapterTypeSelected = true;
+        $state.params.data = null;
+        return;
+      }
+
       $scope.onAdapterTypeSelected = true;
-      apiFactory.fetchSources(adapterType);
-      apiFactory.fetchSinks(adapterType);
-      apiFactory.fetchTransforms(adapterType);
     }, true);
 
     $scope.handleSourceDrop = function(sourceName) {
@@ -288,15 +298,21 @@ angular.module(PKG.name + '.feature.adapters')
           $scope.adaptersDraftList = Object.keys($scope.adapterDrafts);
           defer.resolve();
         });
+      return defer.promise;
     };
     if ($state.params.data) {
-      $scope.getDrafts()
+      apiFactory
+        .fetchTemplates()
+        .then($scope.getDrafts)
         .then(function() {
           $scope.selectedAdapterDraft = $state.params.data;
           $scope.onDraftChange($state.params.data);
         });
+    } else {
+      apiFactory
+        .fetchTemplates()
+        .then($scope.getDrafts);
     }
-    $scope.getDrafts();
 
     $scope.saveAsDraft = function() {
       if (!$scope.metadata.name.length) {
