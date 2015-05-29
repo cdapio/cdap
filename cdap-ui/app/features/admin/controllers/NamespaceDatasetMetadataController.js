@@ -1,24 +1,29 @@
 angular.module(PKG.name + '.feature.admin').controller('AdminNamespaceDatasetMetadataController',
-function ($scope, $state, $alert, MyDataSource, $filter, myDatasetApi) {
+function ($scope, $state, $alert, $filter, myDatasetApi, myExploreApi) {
 
-  var dataSrc = new MyDataSource($scope);
+  var params = {
+    namespace: $state.params.nsadmin,
+    scope: $scope
+  };
 
-  dataSrc.request({
-    _cdapPath: '/namespaces/' + $state.params.nsadmin
-                  + '/data/explore/tables'
-  }).then(function (tables) {
-    var match = $filter('filter')(tables, $state.params.datasetId);
-    if (match.length > 0) {
-      dataSrc.request({
-        _cdapPath: '/namespaces/' + $state.params.nsadmin
-                      + '/data/explore/tables/dataset_' + $state.params.datasetId + '/info'
-      }).then(function (res) {
-        $scope.metadata = res;
-      });
-    } else {
-      $scope.metadata = null;
-    }
-  });
+  myExploreApi.list(params)
+    .$promise
+    .then(function (tables) {
+      var match = $filter('filter')(tables, $state.params.datasetId);
+      if (match.length > 0) {
+        params.table = 'dataset_' + $state.params.datasetId;
+
+        myExploreApi.getInfo(params)
+          .$promise
+          .then(function (res) {
+            $scope.metadata = res;
+          });
+
+      } else {
+        $scope.metadata = null;
+      }
+    });
+
 
   $scope.deleteDataset = function() {
     var params = {
