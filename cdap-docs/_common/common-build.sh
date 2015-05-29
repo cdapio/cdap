@@ -346,7 +346,6 @@ function version() {
   PROJECT_SHORT_VERSION=`expr "${PROJECT_VERSION}" : '\([0-9]*\.[0-9]*\)'`
   local full_branch=`git rev-parse --abbrev-ref HEAD`
   IFS=/ read -a branch <<< "${full_branch}"
-  GIT_PARENT_BRANCH=""
   GIT_BRANCH="${branch[1]}"
   # Determine branch and branch type: one of develop, master, release, develop-feature, release-feature
   if [ "${full_branch}" == "develop" -o  "${full_branch}" == "master" ]; then
@@ -356,8 +355,10 @@ function version() {
     GIT_BRANCH_TYPE="release"
   else
     # We are on a feature branch: but from develop or release?
-    GIT_PARENT_BRANCH=`git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1 | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//'`
-    if [ "${GIT_PARENT_BRANCH}" == "release" ]; then
+    if [[ "x${GIT_BRANCH_PARENT}" == "x" ]]; then
+      GIT_BRANCH_PARENT=`git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1 | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//'`  
+    fi
+    if [ "${GIT_BRANCH_PARENT}" == "release" ]; then
       GIT_BRANCH_TYPE="release-feature"
     else
       GIT_BRANCH_TYPE="develop-feature"
@@ -376,7 +377,7 @@ function display_version() {
   echo "PROJECT_SHORT_VERSION: ${PROJECT_SHORT_VERSION}"
   echo "GIT_BRANCH: ${GIT_BRANCH}"
   echo "GIT_BRANCH_TYPE: ${GIT_BRANCH_TYPE}"
-  echo "GIT_PARENT_BRANCH: ${GIT_PARENT_BRANCH}"
+  echo "GIT_BRANCH_PARENT: ${GIT_BRANCH_PARENT}"
 }
 
 function set_messages_file() {
