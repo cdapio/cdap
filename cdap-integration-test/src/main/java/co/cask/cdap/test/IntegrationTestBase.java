@@ -21,6 +21,7 @@ import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.MetaClient;
+import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ClientConfig;
@@ -33,6 +34,7 @@ import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.StreamDetail;
@@ -69,31 +71,13 @@ public class IntegrationTestBase {
 
   @Before
   public void setUp() throws Exception {
-    assertNoApps();
-    assertNoUserDatasets();
-    // TODO: check metrics, streams, etc.
-
-    // TODO: check no streams once streams can be deleted instead of truncating all streams
-    StreamClient streamClient = getStreamClient();
-    List<StreamDetail> streamRecords = streamClient.list();
-    if (streamRecords.size() > 0) {
-      for (StreamDetail streamRecord : streamRecords) {
-        try {
-          streamClient.truncate(streamRecord.getName());
-        } catch (Exception e) {
-          Assert.fail("All existing streams must be truncated" +
-                      " - failed to truncate stream '" + streamRecord.getName() + "'");
-        }
-      }
-    }
+    assertIsClear();
   }
 
   @After
   public void tearDown() throws Exception {
     getTestManager().clear();
-    assertNoApps();
-    assertNoUserDatasets();
-    // TODO: check metrics, streams, etc.
+    assertIsClear();
   }
 
   protected TestManager getTestManager() {
@@ -118,6 +102,19 @@ public class IntegrationTestBase {
    */
   protected String getAccessToken() {
     return System.getProperty("accessToken", "");
+  }
+
+  private void assertIsClear() throws Exception {
+    // only namespace existing should be 'default'
+    NamespaceClient namespaceClient = new NamespaceClient(getClientConfig());
+    List<NamespaceMeta> list = namespaceClient.list();
+    Assert.assertEquals(1, list.size());
+    Assert.assertEquals(Constants.DEFAULT_NAMESPACE_META, list.get(0));
+
+    assertNoApps();
+    assertNoUserDatasets();
+    assertNoStreams();
+    // TODO: check metrics, etc.
   }
 
   protected ClientConfig getClientConfig() {
@@ -223,8 +220,18 @@ public class IntegrationTestBase {
       applicationIds.add(applicationRecord.getName());
     }
 
-    Assert.assertEquals("Must have no deployed apps, but found the following apps: "
-                        + Joiner.on(", ").join(applicationIds), 0, applicationRecords.size());
+    Assert.assertTrue("Must have no deployed apps, but found the following apps: "
+                        + Joiner.on(", ").join(applicationIds), applicationRecords.isEmpty());
+  }
+
+  private void assertNoStreams() throws Exception {
+    List<StreamDetail> streams = getStreamClient().list();
+    List<String> streamNames = Lists.newArrayList();
+    for (StreamDetail stream : streams) {
+      streamNames.add(stream.getName());
+    }
+    Assert.assertTrue("Must have no streams, but found the following streams: "
+                        + Joiner.on(", ").join(streamNames), streamNames.isEmpty());
   }
 
   private void verifyProgramNames(List<String> expected, List<ProgramRecord> actual) {
