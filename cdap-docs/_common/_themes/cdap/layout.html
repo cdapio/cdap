@@ -149,6 +149,10 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset={{ encoding }}" />
     {{ metatags }}
+    {# Code to add custom theme values as meta_tags #}
+    {%- for tag, tag_value in theme_meta_git.iteritems() %}
+    <meta name="{{ tag }}" content="{{ tag_value }}">
+    {%- endfor %}
     {%- block htmltitle %}
     <title>{{ title|striptags|e }}{{ titlesuffix }}</title>
     {%- endblock %}
