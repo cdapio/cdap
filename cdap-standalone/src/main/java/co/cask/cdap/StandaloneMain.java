@@ -144,7 +144,7 @@ public class StandaloneMain {
           shutDown();
         } catch (Throwable e) {
           LOG.error("Failed to shutdown", e);
-          // because shutdown hooks execute concurrently, the logger may be closed already: thus also print it.
+          // Because shutdown hooks execute concurrently, the logger may be closed already: thus also print it.
           System.err.println("Failed to shutdown: " + e.getMessage());
           e.printStackTrace(System.err);
         }
@@ -231,8 +231,8 @@ public class StandaloneMain {
 
     } catch (Throwable e) {
       LOG.error("Exception during shutdown", e);
-      // we can't do much but exit. Because there was an exception, some non-daemon threads may still be running.
-      // therefore System.exit() won't do it, we need to farce a halt.
+      // We can't do much but exit. Because there was an exception, some non-daemon threads may still be running.
+      // Therefore System.exit() won't do it, we need to force a halt.
       Runtime.getRuntime().halt(1);
     } finally {
       cleanupTempDir();
@@ -250,61 +250,21 @@ public class StandaloneMain {
     }
   }
 
-  /**
-   * Print the usage statement and return null.
-   *
-   * @param error indicates whether this was invoked as the result of an error
-   * @throws IllegalArgumentException in case of error
-   */
-  static void usage(boolean error) {
-
-    // Which output stream should we use?
-    PrintStream out = (error ? System.err : System.out);
-
-    // And our requirements and usage
-    out.println("Requirements: ");
-    out.println("  Java:    JDK 1.7 must be installed and JAVA_HOME environment variable set to the java executable");
-    out.println("  Node.js: Node.js must be installed (obtain from http://nodejs.org/#download).  ");
-    out.println("           The \"node\" executable must be in the system $PATH environment variable");
-    out.println("");
-    out.println("Usage: ");
-    if (OSDetector.isWindows()) {
-      out.println("  cdap.bat [options]");
-    } else {
-      out.println("  cdap.sh [options]");
-    }
-    out.println("");
-    out.println("Additional options:");
-    out.println("  --help     To print this message");
-    out.println("");
-
-    if (error) {
-      throw new IllegalArgumentException();
-    }
-  }
-
   public static void main(String[] args) {
-    if (args.length > 0) {
-      if ("--help".equals(args[0]) || "-h".equals(args[0])) {
-        usage(false);
-        return;
-      } else {
-        usage(true);
-      }
-    }
-
-    StandaloneMain main = null;
-
+    StandaloneMain main = create();
     try {
-      main = create();
+      if (args.length > 0) {
+        System.out.printf("%s takes no arguments\n", StandaloneMain.class.getSimpleName());
+        System.out.println("These arguments are being ignored:");
+        for (int i = 0; i <= args.length - 1; i++) {
+          System.out.printf("Parameter #%d: %s\n", i, args[i]);
+        }
+      }
       main.startUp();
     } catch (Throwable e) {
       System.err.println("Failed to start Standalone CDAP. " + e.getMessage());
       LOG.error("Failed to start Standalone CDAP", e);
-      if (main != null) {
-        main.shutDown();
-      }
-      System.exit(-2);
+      Runtime.getRuntime().halt(-2);
     }
   }
 
