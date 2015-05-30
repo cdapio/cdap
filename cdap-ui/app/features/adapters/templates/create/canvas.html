@@ -1,0 +1,51 @@
+<div class="panel panel-default">
+  <div class="panel-heading clearfix">
+    <div class="pull-left panel-title">
+      <span class="icon-app" ng-if="AdapterCreateController.model.metadata.name.length"></span>
+      <span>{{AdapterCreateController.model.metadata.name}}</span>
+    </div>
+    <div class="pull-right" aria-label="...">
+      <button type="button"
+              class="btn btn-default">
+              <!-- ng-click="saveAsDraft()"> -->
+        Draft
+      </button>
+      <button type="button"
+              class="btn btn-success">
+              <!-- ng-click="doSave()"> -->
+          Publish
+      </button>
+    </div>
+  </div>
+  <div class="panel-body">
+    <!-- {{AdapterCreateController.model.source | json }}
+    <hr>
+    {{AdapterCreateController.model.sink | json }}
+    <hr>
+    {{AdapterCreateController.model.transforms | json }} -->
+    <div class="row">
+      <div class="col-xs-12">
+        <tabset type="tabs slanted-tabs">
+          <tab ng-repeat="tab in AdapterCreateController.tabs" active="tab.active">
+            <tab-heading>
+              <span class="fa {{tab.icon}}"></span>
+              <span ng-if="tab.title.length > 10"
+                    tooltip="{{tab.title}}">{{tab.title |  myEllipsis: 10}}
+              </span>
+              <span ng-if="tab.title.length <= 10" >{{tab.title |  myEllipsis: 10}}</span>
+              <a href=""
+                 ng-if="tab.isCloseable !== false"
+                 ng-click="closeTab($index)"
+              >
+                <i class="fa fa-times-circle"></i>
+              </a>
+            </tab-heading>
+            <div ng-init="transform = tab.transform; tabIndex = $index;"
+                  ng-include="tab.partial">
+            </div>
+          </tab>
+        </tabset>
+      </div>
+    </div>
+  </div>
+</div>

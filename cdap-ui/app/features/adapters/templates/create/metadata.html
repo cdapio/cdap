@@ -1,0 +1,46 @@
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <div class="panel-title">
+      Metadata
+    </div>
+  </div>
+  <div class="panel-body">
+    <!-- {{AdapterCreateController.model.metadata | json}}
+    <hr>
+    {{AdapterCreateController.adapterTypes}} -->
+
+    <div class="row">
+      <div class="col-md-4 col-xs-12">
+        <label for="adapaterType" class="control-label">Choose an Application Template</label>
+        <select
+          id="adapaterType"
+          name="adaptertype"
+          class="form-control"
+          ng-model="AdapterCreateController.model.metadata.type"
+          ng-change="AdapterCreateController.onMetadataChange(adapter.name)"
+          ng-options="adapter.name as adapter.name for adapter in AdapterCreateController.adapterTypes" required></select>
+      </div>
+      <div class="col-md-3 col-xs-12">
+        <label class="control-label">Name</label>
+        <!-- <ui-select ng-model="selectedAdapterDraft"
+           on-select="onDraftChange($item, $model)"
+           theme="bootstrap"
+           ng-disabled="disabled"
+           tagging-tokens="ENTER|TAB"
+           tagging tagging-label="(custom 'new' label)"
+           reset-search-input="false"
+           title="Create New or Select draft">
+          <ui-select-match placeholder="Create New or Select draft" > {{selectedAdapterDraft}}</ui-select-match>
+          <ui-select-choices repeat="adapter in adaptersDraftList| filter: $select.search">
+            <div ng-bind-html="adapter | highlight: $select.search"></div>
+          </ui-select-choices>
+        </ui-select> -->
+        <input name="name" class="form-control" ng-model="AdapterCreateController.model.metadata.name"/>
+      </div>
+      <div class="col-md-5 col-xs-12">
+        <label class="control-label">Description</label>
+        <input class="form-control" ng-model="AdapterCreateController.model.metadata.description"/>
+      </div>
+    </div>
+  </div>
+</div>

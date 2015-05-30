@@ -1,0 +1,21 @@
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <div class="panel-title">
+      Configuration
+    </div>
+  </div>
+  <div class="panel-body">
+    <!-- {{AdapterCreateController.model.metadata | json }} -->
+    <div ng-if="AdapterCreateController.model.metadata.type === 'ETLBatch'">
+      <div data-name="field"
+           class="my-widget-container"
+           data-model="AdapterCreateController.model.schedule['cron']"
+           data-myconfig="{properties: {}, widget: 'schedule'}"
+           widget-container>
+      </div>
+    </div>
+    <div ng-if="AdapterCreateController.model.metadata.type === 'ETLRealtime'">
+      <h1>ETL Realtime Instances</h1>
+    </div>
+  </div>
+</div>
