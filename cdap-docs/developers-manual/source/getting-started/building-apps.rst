@@ -177,5 +177,5 @@ are independent of the application. Datasets can be deleted from the |datasets|_
 the CDAP UI, or by using the :ref:`HTTP Restful API <restful-api>`, the 
 :ref:`Java Client API <java-client-api>`, or the :ref:`Command Line Interface API <cli>`.
 
-Streams cannot be deleted; instead, they can be truncated.
+Streams can be either truncated or deleted, using similar methods.
 
