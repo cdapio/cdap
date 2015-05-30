@@ -1,0 +1,14 @@
+<ui-select ng-model="selectedAdapterDraft"
+   on-select="onDraftChange($item, $model)"
+   theme="bootstrap"
+   ng-disabled="disabled"
+   tagging-tokens="ENTER|TAB"
+   reset-search-input="false"
+   title="Create New or Select draft"
+   tagging>
+  <ui-select-match placeholder="Create New or Select draft"> {{selectedAdapterDraft}}</ui-select-match>
+  <ui-select-choices
+    repeat="adapter in adaptersDraftList| filter: $select.search">
+    <div ng-bind-html="adapter | highlight: $select.search"></div>
+  </ui-select-choices>
+</ui-select>
