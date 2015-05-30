@@ -33,7 +33,6 @@ import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
-import co.cask.tephra.runtime.DiscoveryModules;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Guice;
 import com.google.inject.Injector;

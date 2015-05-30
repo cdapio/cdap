@@ -46,7 +46,6 @@ import co.cask.cdap.proto.codec.WorkflowSpecificationCodec;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
-import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
 import com.google.gson.Gson;

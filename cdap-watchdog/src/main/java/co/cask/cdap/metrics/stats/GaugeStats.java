@@ -17,7 +17,6 @@
 package co.cask.cdap.metrics.stats;
 
 import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Multiset;
 
 /**

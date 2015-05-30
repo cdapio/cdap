@@ -22,8 +22,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
 import com.google.common.reflect.TypeToken;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This {@link co.cask.cdap.pipeline.Stage} is responsible for automatic

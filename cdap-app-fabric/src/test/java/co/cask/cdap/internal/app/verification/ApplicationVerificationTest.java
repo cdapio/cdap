@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.verification;
 
 import co.cask.cdap.WebCrawlApp;
-import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;

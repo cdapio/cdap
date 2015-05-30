@@ -140,7 +140,7 @@ public class OptionsParserTest {
       OptionsParser.init(myFlags, args, "OptionsParserTest", "0.1.0", System.out);
       Assert.assertTrue(false);  // Should have thrown an exception.
     } catch (UnsupportedOptionTypeException e) {
-      Assert.assertTrue(e.getMessage().contains("unsupportedFlagType"));;
+      Assert.assertTrue(e.getMessage().contains("unsupportedFlagType"));
     }
   }
 

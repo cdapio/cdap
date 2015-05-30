@@ -23,7 +23,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.dataset.table.Tables;
 
 /**
  * Demonstrates the use of column-level conflict detection by the example of managing user profiles,
