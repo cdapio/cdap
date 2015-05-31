@@ -15,7 +15,10 @@ angular.module(PKG.name + '.feature.adapters')
         fetchTemplates: myHelpers.getConfig('GET', 'REQUEST', templatePath, true),
         fetchSources: myHelpers.getConfig('GET', 'REQUEST', sourcePath, true),
         fetchSinks: myHelpers.getConfig('GET', 'REQUEST', sinkPath, true),
-        fetchTransforms: myHelpers.getConfig('GET', 'REQUEST', transformPath, true)
+        fetchTransforms: myHelpers.getConfig('GET', 'REQUEST', transformPath, true),
+        fetchSourceProperties: myHelpers.getConfig('GET', 'REQUEST', sourcePath + '/plugins/:source', true),
+        fetchSinkProperties: myHelpers.getConfig('GET', 'REQUEST', sinkPath + '/plugins/:sink', true),
+        fetchTransformProperties: myHelpers.getConfig('GET', 'REQUEST', transformPath + '/plugins/:transform', true)
       }
     );
   });

@@ -26,14 +26,30 @@ angular.module(PKG.name + '.feature.adapters')
       this.resetPlugins();
     }
 
-    Model.prototype.resetPlugins = function() {
+    Model.prototype.resetPlugins = function resetPlugins() {
       this.source = angular.copy(defaultSource);
       this.transforms = angular.copy(defaultTransforms);
       this.sink = angular.copy(defaultSink);
       this.schedule = {
         cron: ''
       };
-    }
+    };
+
+    Model.prototype.setSource = function setSource(source) {
+      this.source = source;
+    };
+
+    Model.prototype.setTransform = function setTransform(transform) {
+      if (this.transforms[0].placeHolder) {
+        this.transforms[0] = transform;
+      } else {
+        this.transforms.push(transform);
+      }
+    };
+
+    Model.prototype.setSink = function setSink(sink) {
+      this.sink = sink;
+    };
 
     return Model;
 
