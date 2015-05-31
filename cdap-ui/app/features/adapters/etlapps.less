@@ -150,6 +150,8 @@ body.theme-cdap.state-adapters-create {
             border: 0;
             border-bottom: 1px solid lightgray;
             background-color: transparent;
+            cursor: pointer;
+
             &:last-child { border: 1px solid transparent; }
 
             .description-overflow {
@@ -158,6 +160,13 @@ body.theme-cdap.state-adapters-create {
               text-overflow: ellipsis;
               color: darkgray;
               font-size: 11px;
+            }
+          }
+          li.list-group-item:hover {
+            background-color: #5a84e4;
+
+            .description-overflow {
+              color: black;
             }
           }
         }
