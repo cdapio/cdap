@@ -1,15 +1,20 @@
 angular.module(PKG.name + '.feature.adapters')
   .controller('AdapterCreateController', function ($scope, AdapterCreateModel, AdapterApiFactory, $q) {
     this.model = new AdapterCreateModel();
-
-    this.tabs = [
+    var defaultTabs = [
       {
         title: 'Default',
-        icon: 'cogs',
+        icon: 'fa-cogs',
         isCloseable: false,
         partial: '/assets/features/adapters/templates/create/tabs/default.html'
       }
-    ]
+    ];
+
+    this.tabs = defaultTabs.slice();
+
+    this.closeTab = function(index) {
+      this.tabs.splice(index, 1);
+    };
 
     AdapterApiFactory.fetchTemplates()
       .$promise
@@ -19,7 +24,9 @@ angular.module(PKG.name + '.feature.adapters')
 
 
     this.onMetadataChange = function() {
+      this.tabs = defaultTabs.slice();
       this.model.resetPlugins();
+      this.fetchDefaultPlugins();
     };
 
     function getIcon(plugin) {
@@ -48,23 +55,25 @@ angular.module(PKG.name + '.feature.adapters')
       return icon;
     }
 
-    $q.all([
-      AdapterApiFactory.fetchSources({adapterType: this.model.metadata.type}).$promise,
-      AdapterApiFactory.fetchSinks({adapterType: this.model.metadata.type}).$promise,
-      AdapterApiFactory.fetchTransforms({adapterType: this.model.metadata.type}).$promise
-    ])
-      .then(function(res) {
-        function setIcons(plugin) {
-          plugin.icon = getIcon(plugin.name);
-        }
+    this.fetchDefaultPlugins = function fetchDefaultPlugins() {
+      var params = {scope: $scope, adapterType: this.model.metadata.type};
+      $q.all([
+        AdapterApiFactory.fetchSources(params).$promise,
+        AdapterApiFactory.fetchSinks(params).$promise,
+        AdapterApiFactory.fetchTransforms(params).$promise
+      ])
+        .then(function(res) {
+          function setIcons(plugin) {
+            plugin.icon = getIcon(plugin.name);
+          }
 
-        this.defaultSources = res[0];
-        this.defaultSources.forEach(setIcons);
-        this.defaultSinks = res[1];
-        this.defaultSinks.forEach(setIcons);
-        this.defaultTransforms = res[2];
-        this.defaultTransforms.forEach(setIcons);
-      }.bind(this));
-
-
+          this.defaultSources = res[0];
+          this.defaultSources.forEach(setIcons);
+          this.defaultSinks = res[1];
+          this.defaultSinks.forEach(setIcons);
+          this.defaultTransforms = res[2];
+          this.defaultTransforms.forEach(setIcons);
+        }.bind(this));
+    };
+    this.fetchDefaultPlugins();
   });
