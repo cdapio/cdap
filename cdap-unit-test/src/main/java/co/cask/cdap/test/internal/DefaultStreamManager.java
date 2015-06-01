@@ -152,14 +152,8 @@ public class DefaultStreamManager implements StreamManager {
   }
 
   @Override
-  public List<StreamEvent> getEvents(String startTime, String endTime, int limit) throws IOException {
-    return getEvents(streamId, startTime, endTime, limit);
-  }
-
-  @Override
-  @Deprecated
-  public List<StreamEvent> getEvents(long startTime, long endTime, int limit) throws IOException {
-    return getEvents(String.valueOf(startTime), String.valueOf(endTime), limit);
+  public <T> List<StreamEvent> getEvents(T startTime, T endTime, int limit) throws IOException {
+    return getEvents(streamId, startTime.toString(), endTime.toString(), limit);
   }
 
   private List<StreamEvent> getEvents(Id.Stream streamId, String startTime, String endTime,

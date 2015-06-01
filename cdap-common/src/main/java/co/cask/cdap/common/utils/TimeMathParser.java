@@ -21,7 +21,6 @@ import com.google.common.base.Preconditions;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.ws.rs.DefaultValue;
 
 /**
  * Utility class for parsing time strings into timestamps, with support for some basic time math.
@@ -83,7 +82,8 @@ public class TimeMathParser {
     return output;
   }
 
-  /** parses a time in String format into a long value, assuming the input is in seconds if numeric
+  /**
+   * Parses a time in String format into a long value. If the input is numeric we assume the input is in seconds.
    *
    * @param timeStr the string to parse
    * @return the parsed time in seconds
@@ -92,7 +92,8 @@ public class TimeMathParser {
     return parseTime(timeStr, TimeUnit.SECONDS);
   }
 
-  /** parses a time in String format into a long value
+  /**
+   * Parses a time in String format into a long value
    *
    * @param timeStr the string to parse
    * @param timeUnit the unit of time to return, if timeStr is numeric then it is assumed to be in the unit timeUnit
@@ -102,7 +103,8 @@ public class TimeMathParser {
     return parseTime(nowInSeconds(), timeStr, timeUnit);
   }
 
-  /** parses a time in String format into a long value, assuming the input is in seconds if numeric
+  /**
+   * Parses a time in String format into a long value. If the input is numeric we assume the input is in seconds.
    *
    * @param now the present time in seconds
    * @param timeStr the string to parse
@@ -112,7 +114,8 @@ public class TimeMathParser {
     return parseTime(now, timeStr, TimeUnit.SECONDS);
   }
 
-  /** parses a time in String format into a long value
+  /**
+   * Parses a time in String format into a long value
    *
    * @param now the present time in seconds
    * @param timeStr the string to parse

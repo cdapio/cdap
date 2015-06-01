@@ -88,7 +88,8 @@ public class ETLWorkerTest extends TestBase {
     ETLStage sink = new ETLStage("Stream", ImmutableMap.of(Properties.Stream.NAME, "testS"));
     ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sink, Lists.<ETLStage>newArrayList());
 
-    AdapterConfig adapterConfig = new AdapterConfig("null properties", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
+    AdapterConfig adapterConfig = new AdapterConfig("null properties", TEMPLATE_ID.getId(),
+                                                    GSON.toJsonTree(etlConfig));
     Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "testAdap");
     AdapterManager adapterManager = createAdapter(adapterId, adapterConfig);
     Assert.assertNotNull(adapterManager);
@@ -119,7 +120,8 @@ public class ETLWorkerTest extends TestBase {
 
     StreamManager streamManager = getStreamManager(NAMESPACE, "testStream");
     long currentDiff = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime);
-    List<StreamEvent> streamEvents = streamManager.getEvents("now-" + Long.toString(currentDiff) + "s", "now", Integer.MAX_VALUE);
+    List<StreamEvent> streamEvents = streamManager.getEvents("now-" + Long.toString(currentDiff) + "s", "now",
+                                                             Integer.MAX_VALUE);
     // verify that some events were sent to the stream
     Assert.assertTrue(streamEvents.size() > 0);
     // since we sent all identical events, verify the contents of just one of them

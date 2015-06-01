@@ -87,7 +87,7 @@ public class StreamClient {
    * Gets the configuration of a stream.
    *
    * @param streamId ID of the stream
-   * @throws IOException if a network error occurred
+   * @throws IOException             if a network error occurred
    * @throws StreamNotFoundException if the stream was not found
    */
   public StreamProperties getConfig(String streamId)
@@ -106,11 +106,11 @@ public class StreamClient {
   /**
    * Sets properties of a stream.
    *
-   * @param streamId ID of the stream
+   * @param streamId   ID of the stream
    * @param properties properties to set
-   * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the client is unauthorized
-   * @throws BadRequestException if the request is bad
+   * @throws IOException             if a network error occurred
+   * @throws UnauthorizedException   if the client is unauthorized
+   * @throws BadRequestException     if the request is bad
    * @throws StreamNotFoundException if the stream was not found
    */
   public void setStreamProperties(String streamId, StreamProperties properties)
@@ -135,7 +135,7 @@ public class StreamClient {
    * Creates a stream.
    *
    * @param newStreamId ID of the new stream to create
-   * @throws IOException if a network error occurred
+   * @throws IOException         if a network error occurred
    * @throws BadRequestException if the provided stream ID was invalid
    */
   public void create(String newStreamId) throws IOException, BadRequestException, UnauthorizedException {
@@ -151,12 +151,12 @@ public class StreamClient {
    * Sends an event to a stream.
    *
    * @param streamId ID of the stream
-   * @param event event to send to the stream
-   * @throws IOException if a network error occurred
+   * @param event    event to send to the stream
+   * @throws IOException             if a network error occurred
    * @throws StreamNotFoundException if the stream with the specified ID was not found
    */
   public void sendEvent(String streamId, String event) throws IOException,
-                                                              StreamNotFoundException, UnauthorizedException {
+    StreamNotFoundException, UnauthorizedException {
     writeEvent(config.resolveNamespacedURLV3(String.format("streams/%s", streamId)), streamId, event);
   }
 
@@ -165,22 +165,22 @@ public class StreamClient {
    * the event has been received by the server, but may not get persisted.
    *
    * @param streamId ID of the stream
-   * @param event event to send to the stream
-   * @throws IOException if a network error occurred
+   * @param event    event to send to the stream
+   * @throws IOException             if a network error occurred
    * @throws StreamNotFoundException if the stream with the specified ID was not found
    */
   public void asyncSendEvent(String streamId, String event) throws IOException,
-                                                                   StreamNotFoundException, UnauthorizedException {
+    StreamNotFoundException, UnauthorizedException {
     writeEvent(config.resolveNamespacedURLV3(String.format("streams/%s/async", streamId)), streamId, event);
   }
 
   /**
    * Sends a file of the given content type to a stream batch endpoint.
    *
-   * @param streamId ID of the stream
+   * @param streamId    ID of the stream
    * @param contentType content type of the file
-   * @param file the file to upload
-   * @throws IOException if a network error occurred
+   * @param file        the file to upload
+   * @throws IOException             if a network error occurred
    * @throws StreamNotFoundException if the stream with the specified ID was not found
    */
   public void sendFile(String streamId, String contentType,
@@ -191,10 +191,10 @@ public class StreamClient {
   /**
    * Sends a batch request to a stream batch endpoint.
    *
-   * @param streamId ID of the stream
-   * @param contentType content type of the data
+   * @param streamId      ID of the stream
+   * @param contentType   content type of the data
    * @param inputSupplier provides content for the batch request
-   * @throws IOException if a network error occurred
+   * @throws IOException             if a network error occurred
    * @throws StreamNotFoundException if the stream with the specified ID was not found
    */
   public void sendBatch(String streamId, String contentType,
@@ -216,7 +216,7 @@ public class StreamClient {
    * Truncates a stream, deleting all stream events belonging to the stream.
    *
    * @param streamId ID of the stream to truncate
-   * @throws IOException if a network error occurred
+   * @throws IOException             if a network error occurred
    * @throws StreamNotFoundException if the stream with the specified name was not found
    */
   public void truncate(String streamId) throws IOException, StreamNotFoundException, UnauthorizedException {
@@ -233,7 +233,7 @@ public class StreamClient {
    * Deletes a stream.
    *
    * @param streamId ID of the stream to truncate
-   * @throws IOException if a network error occurred
+   * @throws IOException             if a network error occurred
    * @throws StreamNotFoundException if the stream with the specified name was not found
    */
   public void delete(String streamId) throws IOException, StreamNotFoundException, UnauthorizedException {
@@ -249,9 +249,9 @@ public class StreamClient {
   /**
    * Sets the Time-to-Live (TTL) of a stream. TTL governs how long stream events are readable.
    *
-   * @param streamId ID of the stream
+   * @param streamId     ID of the stream
    * @param ttlInSeconds desired TTL, in seconds
-   * @throws IOException if a network error occurred
+   * @throws IOException             if a network error occurred
    * @throws StreamNotFoundException if the stream with the specified name was not found
    */
   public void setTTL(String streamId, long ttlInSeconds)
@@ -276,20 +276,21 @@ public class StreamClient {
   public List<StreamDetail> list() throws IOException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3("streams");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<StreamDetail>>() { }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<StreamDetail>>() {
+    }).getResponseObject();
   }
 
   /**
    * Reads events from a stream
    *
-   * @param streamId ID of the stream
+   * @param streamId  ID of the stream
    * @param startTime Timestamp in milliseconds to start reading event from (inclusive)
-   * @param endTime Timestamp in milliseconds for the last event to read (exclusive)
-   * @param limit Maximum number of events to read
-   * @param results Collection for storing the resulting stream events
-   * @param <T> Type of the collection for storing results
+   * @param endTime   Timestamp in milliseconds for the last event to read (exclusive)
+   * @param limit     Maximum number of events to read
+   * @param results   Collection for storing the resulting stream events
+   * @param <T>       Type of the collection for storing results
    * @return The same collection object as passed in the {@code results} parameter
-   * @throws IOException If fails to read from stream
+   * @throws IOException             If fails to read from stream
    * @throws StreamNotFoundException If the given stream does not exists
    */
   public <T extends Collection<? super StreamEvent>> T getEvents(String streamId, String startTime,
@@ -308,40 +309,33 @@ public class StreamClient {
   /**
    * Reads events from a stream
    *
-   * @param streamId ID of the stream
+   * @param streamId  ID of the stream
    * @param startTime Timestamp in milliseconds to start reading event from (inclusive)
-   * @param endTime Timestamp in milliseconds for the last event to read (exclusive)
-   * @param limit Maximum number of events to read
-   * @param results Collection for storing the resulting stream events
-   * @param <T> Type of the collection for storing results
+   * @param endTime   Timestamp in milliseconds for the last event to read (exclusive)
+   * @param limit     Maximum number of events to read
+   * @param results   Collection for storing the resulting stream events
+   * @param <T>       Type of the collection for storing results
    * @return The same collection object as passed in the {@code results} parameter
-   * @throws IOException If fails to read from stream
+   * @throws IOException             If fails to read from stream
    * @throws StreamNotFoundException If the given stream does not exists
    */
   @Deprecated
   public <T extends Collection<? super StreamEvent>> T getEvents(String streamId, long startTime,
                                                                  long endTime, int limit, final T results)
     throws IOException, StreamNotFoundException, UnauthorizedException {
-    getEvents(streamId, startTime, endTime, limit, new Function<StreamEvent, Boolean>() {
-      @Override
-      public Boolean apply(StreamEvent input) {
-        results.add(input);
-        return true;
-      }
-    });
-    return results;
+    return getEvents(streamId, String.valueOf(startTime), String.valueOf(endTime), limit, results);
   }
 
   /**
    * Reads events from a stream
    *
    * @param streamId ID of the stream
-   * @param start Timestamp in milliseconds or now-xs format to start reading event from (inclusive)
-   * @param end Timestamp in milliseconds or now-xs format for the last event to read (exclusive)
-   * @param limit Maximum number of events to read
+   * @param start    Timestamp in milliseconds or now-xs format to start reading event from (inclusive)
+   * @param end      Timestamp in milliseconds or now-xs format for the last event to read (exclusive)
+   * @param limit    Maximum number of events to read
    * @param callback Callback to invoke for each stream event read. If the callback function returns {@code false}
    *                 upon invocation, it will stops the reading
-   * @throws IOException If fails to read from stream
+   * @throws IOException             If fails to read from stream
    * @throws StreamNotFoundException If the given stream does not exists
    */
   public void getEvents(String streamId, String start, String end, int limit,
@@ -399,13 +393,13 @@ public class StreamClient {
   /**
    * Reads events from a stream
    *
-   * @param streamId ID of the stream
+   * @param streamId  ID of the stream
    * @param startTime Timestamp in milliseconds to start reading event from (inclusive)
-   * @param endTime Timestamp in milliseconds for the last event to read (exclusive)
-   * @param limit Maximum number of events to read
-   * @param callback Callback to invoke for each stream event read. If the callback function returns {@code false}
-   *                 upon invocation, it will stops the reading
-   * @throws IOException If fails to read from stream
+   * @param endTime   Timestamp in milliseconds for the last event to read (exclusive)
+   * @param limit     Maximum number of events to read
+   * @param callback  Callback to invoke for each stream event read. If the callback function returns {@code false}
+   *                  upon invocation, it will stops the reading
+   * @throws IOException             If fails to read from stream
    * @throws StreamNotFoundException If the given stream does not exists
    */
   @Deprecated
