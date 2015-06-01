@@ -38,6 +38,7 @@ PROJECT="cdap"
 PROJECT_CAPS="CDAP"
 REFERENCE="reference-manual"
 SOURCE="source"
+SPHINX_MESSAGES="build/warnings.txt"
 
 FALSE="false"
 TRUE="true"
@@ -153,7 +154,7 @@ function build_docs() {
   clean
   cd ${SCRIPT_PATH}
   check_includes
-  sphinx-build -b html -d build/doctrees source build/html
+  sphinx-build -w ${SPHINX_MESSAGES} -b html -d build/doctrees source build/html
   display_any_messages
 }
 
@@ -161,7 +162,7 @@ function build_docs_google() {
   clean
   cd ${SCRIPT_PATH}
   check_includes
-  sphinx-build -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d build/doctrees source build/html
+  sphinx-build -w ${SPHINX_MESSAGES} -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d build/doctrees source build/html
   display_any_messages
 }
 
@@ -410,19 +411,32 @@ function set_message() {
 }
 
 function display_any_messages() {
-  if [ "x${MESSAGES}" != "x" ]; then
-    echo ""
-    echo_red_bold "Warning Messages for \"${MANUAL}\":"
-    echo ""
-    echo -e "${MESSAGES}"
-    echo ""
+  if [[ "x${MESSAGES}" != "x" || -s ${SPHINX_MESSAGES} ]]; then
+    local m="Warning Messages for \"${MANUAL}\":"
+    if [ "x${MESSAGES}" != "x" ]; then
+      echo ""
+      echo_red_bold "${m}"
+      echo ""
+      echo -e "${MESSAGES}"
+    fi
+    if [ -s ${SPHINX_MESSAGES} ]; then
+      m="Sphinx ${m}"
+      echo ""
+      echo_red_bold "${m}"
+      echo ${m} >> ${TMP_MESSAGES_FILE}
+      cat ${SPHINX_MESSAGES} | while read line
+      do
+        echo ${line}
+        echo ${line} >> ${TMP_MESSAGES_FILE}
+      done
+    fi
   fi
 }
 
 function display_messages_file() {
   if [[ "x${TMP_MESSAGES_FILE}" != "x" && -a ${TMP_MESSAGES_FILE} ]]; then
     echo ""
-    echo "Warning Messages:"
+    echo "Warning Messages: ${TMP_MESSAGES_FILE}"
     echo ""
     cat ${TMP_MESSAGES_FILE} | while read line
     do
