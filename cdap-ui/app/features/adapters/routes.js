@@ -27,6 +27,7 @@ angular.module(PKG.name + '.feature.adapters')
           params: {
             data: null
           },
+          controller: 'AdapterCreateController as AdapterCreateController',
           templateUrl: '/assets/features/adapters/templates/create.html',
           ncyBreadcrumb: {
             skip: true

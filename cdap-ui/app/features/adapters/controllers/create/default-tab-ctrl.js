@@ -99,7 +99,7 @@ angular.module(PKG.name + '.feature.adapters')
         );
         createCtrl.tabs.active = (createCtrl.tabs.push({
           title: createCtrl.model[type].name,
-          icon: icon && icon[0].icon,
+          icon: icon.length && icon[0].icon,
           type: type,
           active: true,
           partial: partialPath
@@ -138,7 +138,7 @@ angular.module(PKG.name + '.feature.adapters')
         );
         createCtrl.tabs.active = (createCtrl.tabs.push({
           title: transform.name,
-          icon: icon && icon[0].icon,
+          icon: icon.length && icon[0].icon,
           transformid: transform.$$hashKey,
           transform: transform,
           active: true,

@@ -94,7 +94,7 @@ angular.module(PKG.name + '.feature.adapters')
       var defer = $q.defer();
       if (this.source.placeHolder && this.sink.placeHolder) {
         defer.reject({
-          message: 'Adapter needs atleast a source/sink'
+          message: 'Adapter needs atleast a source and a sink'
         });
         return defer.promise;
       } else {
