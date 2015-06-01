@@ -2,6 +2,7 @@ angular.module(PKG.name + '.feature.adapters')
   .factory('AdapterApiFactory', function($resource, myHelpers, myCdapUrl) {
     var url = myCdapUrl.constructUrl,
         templatePath = '/templates',
+        adapterPath = '/namespaces/:namespace/adapters/:adapter'
         sourcePath = '/templates/:adapterType/extensions/source',
         sinkPath = '/templates/:adapterType/extensions/sink',
         transformPath = '/templates/:adapterType/extensions/transform';
@@ -12,6 +13,7 @@ angular.module(PKG.name + '.feature.adapters')
 
       },
       {
+        save: myHelpers.getConfig('PUT', 'REQUEST', adapterPath),
         fetchTemplates: myHelpers.getConfig('GET', 'REQUEST', templatePath, true),
         fetchSources: myHelpers.getConfig('GET', 'REQUEST', sourcePath, true),
         fetchSinks: myHelpers.getConfig('GET', 'REQUEST', sinkPath, true),
