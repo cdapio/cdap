@@ -21,7 +21,7 @@ The examples given below use the :ref:`Lifecycle HTTP RESTful API<http-restful-a
 
 Scaling Flowlets
 ----------------
-You can query and set the number of instances executing a given Flowlet
+You can query and set the number of instances executing a given flowlet
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
   GET /v3/namespaces/default/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
@@ -42,19 +42,19 @@ Where:
    * - ``<app-id>``
      - Name of the application
    * - ``<flow-id>``
-     - Name of the Flow
+     - Name of the flow
    * - ``<flowlet-id>``
-     - Name of the Flowlet
+     - Name of the flowlet
    * - ``<quantity>``
      - Number of instances to be used
 
-Example: Find out the number of instances of the Flowlet *saver* in
-the Flow *WhoFlow* of the application *HelloWorld*::
+Example: Find out the number of instances of the flowlet *saver* in
+the flow *WhoFlow* of the application *HelloWorld*::
 
   GET /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances
 
-Example: Change the number of instances of the Flowlet *saver*
-in the Flow *WhoFlow* of the application *HelloWorld*::
+Example: Change the number of instances of the flowlet *saver*
+in the flow *WhoFlow* of the application *HelloWorld*::
 
   PUT /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances
 
@@ -66,7 +66,7 @@ with the arguments as a JSON string in the body::
 Scaling Services
 ------------------
 
-In a similar way to `Scaling Flowlets`_, you can query or change the number of handler instances of a Service
+In a similar way to `Scaling Flowlets`_, you can query or change the number of handler instances of a service
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
   GET /v3/namespaces/default/apps/<app-id>/services/<service-id>/instances
@@ -87,16 +87,16 @@ Where:
    * - ``<app-id>``
      - Name of the application
    * - ``<service-id>``
-     - Name of the Service
+     - Name of the service
    * - ``<quantity>``
      - Number of handler instances requested
   
-Example: Find out the number of handler instances of the Service *RetrieveCounts*
+Example: Find out the number of handler instances of the service *RetrieveCounts*
 of the application *WordCount*::
 
   GET /v3/namespaces/default/apps/WordCount/services/RetrieveCounts/instances
 
-Example: Change the number of handler instances of the Service *RetrieveCounts*
+Example: Change the number of handler instances of the service *RetrieveCounts*
 of the application *WordCount*::
 
   PUT /v3/namespaces/default/apps/WordCount/services/RetrieveCounts/instances

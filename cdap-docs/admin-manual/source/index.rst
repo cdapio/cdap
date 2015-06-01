@@ -72,7 +72,7 @@ transaction service maintenance, troubleshooting, and introduces the CDAP UI.**
 .. |preferences| replace:: **Preferences and Runtime Arguments:**
 .. _preferences: operations/preferences.html
 
-- |preferences|_ Flows, MapReduce programs, Services, Workflows, and Workers can receive **runtime arguments.**
+- |preferences|_ Flows, MapReduce programs, services, workflows, and workers can receive **runtime arguments.**
 
 .. |scaling-instances| replace:: **Scaling Instances:**
 .. _scaling-instances: operations/scaling-instances.html

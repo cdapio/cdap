@@ -36,7 +36,7 @@ via the CDAP’s :ref:`restful-api`. The names given to the metrics (such as
 ``names.longnames`` and ``names.bytes`` as in the example below) should be composed only
 of alphanumeric characters.
 
-To add a count metric to a Flowlet *NameSaver*::
+To add a count metric to a flowlet *NameSaver*::
 
   public static class NameSaver extends AbstractFlowlet {
     static final byte[] NAME = { 'n', 'a', 'm', 'e' };
@@ -58,7 +58,7 @@ To add a count metric to a Flowlet *NameSaver*::
     }
   }
 
-To add a gauge metric to the Flowlet *WordProcessor*::
+To add a gauge metric to the flowlet *WordProcessor*::
 
   public class WordProcessor extends AbstractFlowlet {
     OutputEmitter<String> output;

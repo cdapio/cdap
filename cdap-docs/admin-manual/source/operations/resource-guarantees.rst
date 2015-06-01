@@ -10,8 +10,8 @@
 Resource Guarantees For CDAP Programs In YARN
 =============================================
 
-CDAP Master Services |---| Transaction, Twill, CDAP Programs (Flows, MapReduce, Services,
-Workers) and Explore Queries |---| run in YARN on default YARN queues. 
+CDAP Master Services |---| Transaction, Twill, CDAP Programs (flows, MapReduce, services,
+workers) and Explore Queries |---| run in YARN on default YARN queues. 
 
 YARN provides capabilites for resource guarantees via Capacity Schedulers and Fair
 Schedulers. CDAP provides capabilities to submit CDAP programs and Explore Queries to
