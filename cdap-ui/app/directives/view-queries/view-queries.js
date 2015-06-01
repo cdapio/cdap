@@ -7,23 +7,28 @@ angular.module(PKG.name + '.commons')
         panel: '='
       },
       templateUrl: 'view-queries/view-queries.html',
-      controller: function ($scope, MyDataSource, $state, EventPipe) {
+      controller: function ($scope, MyDataSource, $state, EventPipe, myExploreApi) {
         var dataSrc = new MyDataSource($scope);
         $scope.queries = [];
+        var params = {
+          namespace: $state.params.namespace,
+          scope: $scope
+        };
 
         $scope.getQueries = function() {
-          dataSrc
-            .request({
-              _cdapNsPath: '/data/explore/queries',
-              method: 'GET'
-            })
+
+          myExploreApi.getQueries(params)
+            .$promise
             .then(function (queries) {
 
               $scope.queries = queries;
 
               // Polling for status
               angular.forEach($scope.queries, function(q) {
+                q.isOpen = false;
                 if (q.status !== 'FINISHED') {
+
+                  // TODO: change to use myExploreApi once figure out how to manually stop poll with $resource
                   var promise = dataSrc.poll({
                     _cdapPath: '/data/explore/queries/' +
                                 q.query_handle + '/status',
@@ -39,9 +44,6 @@ angular.module(PKG.name + '.commons')
                 }
               });
 
-              angular.forEach($scope.queries, function(query) {
-                query.isOpen = false;
-              });
             });
         };
 
@@ -67,12 +69,13 @@ angular.module(PKG.name + '.commons')
           if (query.isOpen) {
             $scope.responses.request = query;
 
-            // request schema
-            dataSrc
-              .request({
-                _cdapPath: '/data/explore/queries/' +
-                              query.query_handle + '/schema'
-              })
+            var queryParams = {
+              queryhandle: query.query_handle,
+              scope: $scope
+            };
+
+            myExploreApi.getQuerySchema(queryParams)
+              .$promise
               .then(function (result) {
                 angular.forEach(result, function(v) {
                   v.name = v.name.split('.')[1];
@@ -81,14 +84,8 @@ angular.module(PKG.name + '.commons')
                 $scope.responses.schema = result;
               });
 
-            // request preview
-            dataSrc
-              .request({
-                _cdapPath: '/data/explore/queries/' +
-                              query.query_handle + '/preview',
-                method: 'POST'
-              })
-              .then(function (result) {
+            myExploreApi.getQueryPreview(queryParams, {},
+              function (result) {
                 $scope.responses.results = result;
               });
           }
@@ -96,6 +93,9 @@ angular.module(PKG.name + '.commons')
         };
 
         $scope.download = function(query) {
+
+          // Cannot use $resource: http://stackoverflow.com/questions/24876593/resource-query-return-split-strings-array-of-char-instead-of-a-string
+
           dataSrc
             .request({
               _cdapPath: '/data/explore/queries/' +
@@ -110,6 +110,7 @@ angular.module(PKG.name + '.commons')
                 download: 'result.csv'
               })[0].click();
             });
+
         };
 
       }

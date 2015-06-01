@@ -1,6 +1,6 @@
 angular.module(PKG.name + '.feature.datasets')
   .controller('CdapDatasetDetailStatusController',
-    function($scope, MyDataSource, $state, myHelpers, MyMetricsQueryHelper) {
+    function($scope, MyDataSource, $state, myHelpers, MyMetricsQueryHelper, myExploreApi) {
       $scope.writes = 0;
       $scope.reads = 0;
       $scope.storage = 0;
@@ -12,7 +12,6 @@ angular.module(PKG.name + '.feature.datasets')
             namespace: $state.params.namespace,
             dataset: currentDataset
           };
-
 
       [
         {
@@ -52,10 +51,15 @@ angular.module(PKG.name + '.feature.datasets')
         $scope.storage = data;
       });
 
-      dataSrc.request({
-        _cdapNsPath: '/data/explore/tables/dataset_' + currentDataset + '/info'
-      })
-        .then(function(res) {
+      var params = {
+        namespace: $state.params.namespace,
+        table: 'dataset_' + currentDataset,
+        scope: $scope
+      };
+
+      myExploreApi.getInfo(params)
+        .$promise
+        .then(function (res) {
           $scope.schema = query(res, 'schema');
         });
 

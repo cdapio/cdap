@@ -1,15 +1,18 @@
-angular.module(PKG.name + '.feature.datasets')
+angular.module(PKG.name + '.feature.streams')
   .controller('CdapStreamMetadataController',
-    function($scope, MyDataSource, $state) {
+    function($scope, $state, myExploreApi) {
 
-      var dataSrc = new MyDataSource($scope);
+      var params = {
+        namespace: $state.params.namespace,
+        table: 'stream_' + $state.params.streamId,
+        scope: $scope
+      };
 
-      dataSrc.request({
-        _cdapNsPath: '/data/explore/tables/stream_' + $state.params.streamId + '/info'
-      })
-      .then(function(res) {
-        $scope.metadata = res;
-      });
+      myExploreApi.getInfo(params)
+        .$promise
+        .then(function (res) {
+          $scope.metadata = res;
+        });
 
     }
   );
