@@ -16,15 +16,11 @@
             <div class="col-xs-12">
               <ul class="list-group" ng-if="AdapterCreateController.defaultSources.length > 0">
                 <li class="list-group-item"
-                    ng-repeat="source in AdapterCreateController.defaultSources">
-
-                  <div class="clearfix">
-                    <div class="pull-left">
-                      <span class="fa {{source.icon}}" ></span>
-                      <span> {{source.name}} </span>
-                    </div>
-
-                    <span class="fa fa-plus-square pull-right" ng-click="handleSourceDrop(source.name)"></span>
+                    ng-repeat="source in AdapterCreateController.defaultSources"
+                    ng-click="DefaultCanvasController.addSource(source.name)">
+                  <div>
+                    <span class="fa {{source.icon}}" ></span>
+                    <span> {{source.name}} </span>
                   </div>
 
                   <div tooltip="{{source.description}}"
@@ -59,14 +55,11 @@
             <div class="col-xs-12">
               <ul class="list-group" ng-if="AdapterCreateController.defaultTransforms.length > 0">
                 <li class="list-group-item"
-                    ng-repeat="transform in AdapterCreateController.defaultTransforms">
-
-                  <div class="clearfix">
-                    <div  class="pull-left">
+                    ng-repeat="transform in AdapterCreateController.defaultTransforms"
+                    ng-click="DefaultCanvasController.addTransform(transform.name)">
+                  <div>
                       <span class="fa {{transform.icon}}"></span>
                       <span> {{transform.name}} </span>
-                    </div>
-                    <span class="fa fa-plus-square pull-right" ng-click="handleTransformDrop(transform.name)"></span>
                   </div>
                   <div tooltip="{{transform.description}}"
                        tooltip-append-to-body="true"
@@ -85,7 +78,7 @@
       <div class="panel panel-default" ng-init="sinksTabOpen=true">
         <div class="panel-heading clearfix" ng-click="sinksTabOpen = !sinksTabOpen">
           <div class="pull-left">
-            <span class="icon-ETLsink"></span>
+            <span class="icon-ETLsinks"></span>
             <span> Sinks ({{AdapterCreateController.defaultSinks.length}}) </span>
           </div>
 
@@ -98,15 +91,12 @@
             <div class="col-xs-12">
               <ul class="list-group" ng-if="AdapterCreateController.defaultSinks.length > 0">
                 <li class="list-group-item clearfix"
-                    ng-repeat="sink in AdapterCreateController.defaultSinks">
-                    <div class="clearfix">
-                      <div class="pull-left">
-                        <span class="fa {{sink.icon}}"></span>
-                        <span> {{sink.name}} </span>
-                      </div>
-                      <span class="fa fa-plus-square pull-right" ng-click="handleSinkDrop(sink.name)"></span>
+                    ng-repeat="sink in AdapterCreateController.defaultSinks"
+                    ng-click="DefaultCanvasController.addSink(sink.name)">
+                    <div >
+                      <span class="fa {{sink.icon}}"></span>
+                      <span> {{sink.name}} </span>
                     </div>
-
                     <div tooltip="{{sink.description}}"
                          tooltip-append-to-body="true"
                          class="description-overflow">

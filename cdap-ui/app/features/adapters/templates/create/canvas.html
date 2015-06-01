@@ -1,8 +1,8 @@
 <div class="panel panel-default">
   <div class="panel-heading clearfix">
     <div class="pull-left panel-title">
-      <span class="icon-app" ng-if="AdapterCreateController.model.metadata.name.length"></span>
-      <span>{{AdapterCreateController.model.metadata.name}}</span>
+      <span class="icon-app"></span>
+      <span ng-if="AdapterCreateController.model.metadata.name.length">{{AdapterCreateController.model.metadata.name}}</span>
     </div>
     <div class="pull-right" aria-label="...">
       <button type="button"
@@ -35,7 +35,7 @@
               <span ng-if="tab.title.length <= 10" >{{tab.title |  myEllipsis: 10}}</span>
               <a href=""
                  ng-if="tab.isCloseable !== false"
-                 ng-click="closeTab($index)"
+                 ng-click="AdapterCreateController.closeTab($index)"
               >
                 <i class="fa fa-times-circle"></i>
               </a>
