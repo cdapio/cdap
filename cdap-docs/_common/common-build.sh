@@ -396,12 +396,12 @@ function clear_messages() {
 
 function set_message() {
   if [ "x${MESSAGES}" == "x" ]; then
-    MESSAGES="${1}"
+    MESSAGES=${*}
   else
-    MESSAGES="${MESSAGES}\n\n${1}"
+    MESSAGES="${MESSAGES}\n\n${*}"
   fi
   if [ "x${TMP_MESSAGES_FILE}" != "x" ]; then
-    local clean_m=`echo_clean_colors "${1}"`
+    local clean_m=`echo_clean_colors "${*}"`
     if [ -e ${TMP_MESSAGES_FILE} ]; then
       echo >> ${TMP_MESSAGES_FILE}
     fi
