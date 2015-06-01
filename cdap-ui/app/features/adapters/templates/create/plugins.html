@@ -26,6 +26,7 @@
                   <div tooltip="{{source.description}}"
                        tooltip-append-to-body="true"
                        class="description-overflow">
+                    <span class="fa fa-info-circle"></span>
                     {{source.description}}
                   </div>
 
@@ -63,7 +64,10 @@
                   </div>
                   <div tooltip="{{transform.description}}"
                        tooltip-append-to-body="true"
-                       class="description-overflow">{{transform.description}}</div>
+                       class="description-overflow">
+                    <span class="fa fa-info-circle"></span>
+                    {{transform.description}}
+                  </div>
                 </li>
               </ul>
               <div class="well well-xs text-center" ng-if="AdapterCreateController.defaultTransforms.length === 0">
@@ -100,6 +104,7 @@
                     <div tooltip="{{sink.description}}"
                          tooltip-append-to-body="true"
                          class="description-overflow">
+                      <span class="fa fa-info-circle"></span>
                       {{sink.description}}
                     </div>
 
