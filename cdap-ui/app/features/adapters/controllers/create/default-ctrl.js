@@ -1,6 +1,10 @@
 angular.module(PKG.name + '.feature.adapters')
   .controller('DefaultCanvasController', function($scope, AdapterApiFactory, $q, $filter) {
     var createCtrl = $scope.AdapterCreateController;
+    var filterFilter = $filter('filter'),
+        capitalizeFilter = $filter('caskCapitalizeFilter'),
+        icon,
+        match;
     function formatProperties(properties) {
       var defer = $q.defer();
       var obj = {};
@@ -75,67 +79,49 @@ angular.module(PKG.name + '.feature.adapters')
         });
     };
 
-    this.editSourceProperties = function() {
-      if (createCtrl.model.source.placeHolderSource) {
+    function editPluginProperties(type, partialPath) {
+      if (createCtrl.model[type].placeHolder) {
         return;
       }
-      var filterFilter = $filter('filter'),
-          icon,
-          match;
-      match = filterFilter(createCtrl.tabs, {type: 'source'});
+
+      match = filterFilter(createCtrl.tabs, {type: type});
       if (match.length) {
         createCtrl.tabs[
           createCtrl.tabs.indexOf(match[0])
         ].active = true;
       } else {
         icon = filterFilter(
-          createCtrl.defaultSources,
-          {name: createCtrl.model.source.name}
+          createCtrl['default' + capitalizeFilter(type) + 's'],
+          {name: createCtrl.model[type].name}
         );
-        createCtrl.tabs.push({
-          title: createCtrl.model.source.name,
+        createCtrl.tabs.active = (createCtrl.tabs.push({
+          title: createCtrl.model[type].name,
           icon: icon[0].icon,
-          type: 'source',
+          type: type,
           active: true,
-          partial: '/assets/features/adapters/templates/create/tabs/edit-source-properties.html'
-        });
+          partial: partialPath
+        })) -1;
       }
+    }
+    this.editSourceProperties = function() {
+      editPluginProperties(
+        'source',
+        '/assets/features/adapters/templates/create/tabs/edit-source-properties.html'
+      );
     };
 
     this.editSinkProperties = function() {
-      if (createCtrl.model.sink.placeHolderSink) {
-        return;
-      }
-
-      var filterFilter = $filter('filter'),
-          icon,
-          match;
-      match = filterFilter(createCtrl.tabs, {type: 'sink'});
-      if (match.length) {
-        createCtrl.tabs[
-          createCtrl.tabs.indexOf(match[0])
-        ].active = true;
-      } else {
-        icon = filterFilter(
-          createCtrl.defaultSinks,
-          {name: createCtrl.model.sink.name}
-        );
-        createCtrl.tabs.active = (createCtrl.tabs.push({
-          title: createCtrl.model.sink.name,
-          icon: icon[0].icon,
-          type: 'sink',
-          active: true,
-          partial: '/assets/features/adapters/templates/create/tabs/edit-sink-properties.html'
-        })) -1;
-      }
+      editPluginProperties(
+        'sink',
+        '/assets/features/adapters/templates/create/tabs/edit-sink-properties.html'
+      );
     };
 
     this.editTransformProperty = function(transform) {
-      if (transform.placeHolderTransform){
+      if (transform.placeHolder){
         return;
       }
-      var filterFilter = $filter('filter'),
-          match;
+
       match = filterFilter(createCtrl.tabs, {
         transformid: transform.$$hashKey,
         type: 'transform'
