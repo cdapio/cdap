@@ -11,6 +11,15 @@ describe 'cdap::kafka' do
         stub_command(/test -L /).and_return(false)
       end.converge(described_recipe)
     end
+    pkg = 'cdap-kafka-server'
+
+    %W(
+      /etc/init.d/#{pkg}
+    ).each do |file|
+      it "creates #{file} from template" do
+        expect(chef_run).to create_template(file)
+      end
+    end
 
     it 'installs cdap-kafka package' do
       expect(chef_run).to install_package('cdap-kafka')
@@ -20,8 +29,8 @@ describe 'cdap::kafka' do
       expect(chef_run).to create_directory('/data/cdap/kafka-logs')
     end
 
-    it 'creates cdap-kafka-server service, but does not run it' do
-      expect(chef_run).not_to start_service('cdap-kafka-server')
+    it "creates #{pkg} service, but does not run it" do
+      expect(chef_run).not_to start_service(pkg)
     end
   end
 end

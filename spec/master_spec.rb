@@ -11,19 +11,28 @@ describe 'cdap::master' do
         stub_command(/test -L /).and_return(false)
       end.converge(described_recipe)
     end
+    pkg = 'cdap-master'
 
-    %w(cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98).each do |pkg|
-      it "installs #{pkg} package" do
-        expect(chef_run).to install_package(pkg)
+    %w(cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98).each do |compat|
+      it "installs #{compat} package" do
+        expect(chef_run).to install_package(compat)
       end
     end
 
-    it 'installs cdap-master package' do
-      expect(chef_run).to install_package('cdap-master')
+    %W(
+      /etc/init.d/#{pkg}
+    ).each do |file|
+      it "creates #{file} from template" do
+        expect(chef_run).to create_template(file)
+      end
     end
 
-    it 'creates cdap-master service, but does not run it' do
-      expect(chef_run).not_to start_service('cdap-master')
+    it "installs #{pkg} package" do
+      expect(chef_run).to install_package(pkg)
+    end
+
+    it "creates #{pkg} service, but does not run it" do
+      expect(chef_run).not_to start_service(pkg)
     end
   end
 

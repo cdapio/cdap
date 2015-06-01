@@ -11,13 +11,22 @@ describe 'cdap::gateway' do
         stub_command(/test -L /).and_return(false)
       end.converge(described_recipe)
     end
+    pkg = 'cdap-router'
+
+    %W(
+      /etc/init.d/#{pkg}
+    ).each do |file|
+      it "creates #{file} from template" do
+        expect(chef_run).to create_template(file)
+      end
+    end
 
     it 'installs cdap-gateway package' do
       expect(chef_run).to install_package('cdap-gateway')
     end
 
-    it 'creates cdap-router service, but does not run it' do
-      expect(chef_run).not_to start_service('cdap-router')
+    it "creates #{pkg} service, but does not run it" do
+      expect(chef_run).not_to start_service(pkg)
     end
   end
 
@@ -32,9 +41,18 @@ describe 'cdap::gateway' do
         stub_command(/test -L /).and_return(false)
       end.converge(described_recipe)
     end
+    pkg = 'cdap-gateway'
 
-    it 'creates cdap-gateway service, but does not run it' do
-      expect(chef_run).not_to start_service('cdap-gateway')
+    %W(
+      /etc/init.d/#{pkg}
+    ).each do |file|
+      it "creates #{file} from template" do
+        expect(chef_run).to create_template(file)
+      end
+    end
+
+    it "creates #{pkg} service, but does not run it" do
+      expect(chef_run).not_to start_service(pkg)
     end
   end
 end

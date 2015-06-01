@@ -41,7 +41,16 @@ directory kafka_log_dir do
   recursive true
 end
 
+template '/etc/init.d/cdap-kafka-server' do
+  source 'cdap-service.erb'
+  mode 0755
+  owner 'root'
+  group 'root'
+  action :create
+  variables node['cdap']['kafka']
+end
+
 service 'cdap-kafka-server' do
   status_command 'service cdap-kafka-server status'
-  action :nothing
+  action node['cdap']['kafka']['init_actions']
 end

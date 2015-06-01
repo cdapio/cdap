@@ -11,13 +11,22 @@ describe 'cdap::ui' do
         stub_command('test -e /usr/bin/node').and_return(true)
       end.converge(described_recipe)
     end
+    pkg = 'cdap-ui'
 
-    it 'installs cdap-ui package' do
-      expect(chef_run).to install_package('cdap-ui')
+    it "installs #{pkg} package" do
+      expect(chef_run).to install_package(pkg)
     end
 
-    it 'creates cdap-ui service, but does not run it' do
-      expect(chef_run).not_to start_service('cdap-ui')
+    %W(
+      /etc/init.d/#{pkg}
+    ).each do |file|
+      it "creates #{file} from template" do
+        expect(chef_run).to create_template(file)
+      end
+    end
+
+    it "creates #{pkg} service, but does not run it" do
+      expect(chef_run).not_to start_service(pkg)
     end
 
     it 'does not create /usr/bin/node link' do

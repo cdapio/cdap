@@ -20,7 +20,7 @@
 # description: Starts and stops the <%= @init_name %> service
 # 
 ### BEGIN INIT INFO
-# Provides:          cdap-<%= @init_name.downcase %>
+# Provides:          cdap-<%= @init_name.downcase.gsub(' ', '-') %>
 # Short-Description: Cask CDAP <%= @init_name %>
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
@@ -33,8 +33,13 @@
 SVC_COMMAND="<%= @init_cmd %> $*"
 
 # source configuration, if it exists
-if [[ -r /etc/default/cdap-<%= @init_name.downcase %> ]]; then
-  . /etc/default/cdap-<%= @init_name.downcase %>
+if [[ -r /etc/default/cdap-<%= @init_name.downcase.gsub(' ', '-') %> ]]; then
+  . /etc/default/cdap-<%= @init_name.downcase.gsub(' ', '-') %>
+fi
+
+# how about jdk.sh
+if [[ -r /etc/profile.d/jdk.sh ]]; then
+  . /etc/profile.d/jdk.sh
 fi
 
 <% if @init_krb5.to_s == 'true' %>

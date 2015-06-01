@@ -25,7 +25,16 @@ package 'cdap-security' do
   version node['cdap']['version']
 end
 
+template '/etc/init.d/cdap-auth-server' do
+  source 'cdap-service.erb'
+  mode 0755
+  owner 'root'
+  group 'root'
+  action :create
+  variables node['cdap']['security']
+end
+
 service 'cdap-auth-server' do
   status_command 'service cdap-auth-server status'
-  action :nothing
+  action node['cdap']['security']['init_actions']
 end

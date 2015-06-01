@@ -51,7 +51,16 @@ if node['cdap'].key?('ui')
   end # End /etc/default/cdap-ui
 end
 
+template '/etc/init.d/cdap-ui' do
+  source 'cdap-service.erb'
+  mode 0755
+  owner 'root'
+  group 'root'
+  action :create
+  variables node['cdap']['ui']
+end
+
 service 'cdap-ui' do
   status_command 'service cdap-ui status'
-  action :nothing
+  action node['cdap']['ui']['init_actions']
 end
