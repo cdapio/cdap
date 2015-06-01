@@ -1,5 +1,6 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdapterCreateController', function ($scope, AdapterCreateModel, AdapterApiFactory, $q) {
+  .controller('AdapterCreateController', function ($scope, AdapterCreateModel, AdapterApiFactory, $q, $alert, $state, $rootScope, $timeout) {
+    window.aa = $rootScope;
     this.model = new AdapterCreateModel();
     var defaultTabs = [
       {
@@ -21,7 +22,6 @@ angular.module(PKG.name + '.feature.adapters')
       .then(function(res) {
         this.adapterTypes = res;
       }.bind(this));
-
 
     this.onMetadataChange = function() {
       this.tabs = defaultTabs.slice();
@@ -76,4 +76,57 @@ angular.module(PKG.name + '.feature.adapters')
         }.bind(this));
     };
     this.fetchDefaultPlugins();
+
+    this.publish = function() {
+      this.model
+          .save()
+          .then(function() {
+            $timeout(function() {
+              $state.go('^.list', $state.params, {reload: true});
+            });
+            $alert({
+              type: 'success',
+              content: 'Adapter Template created successfully!'
+            });
+          }, function(err) {
+            $alert({
+              type: 'danger',
+              content: err.message
+            });
+          });
+    };
+
+    this.saveAsDraft = function() {
+      this.model
+          .saveAsDraft()
+          .then(
+            function success() {
+              $alert({
+                type: 'success',
+                content: 'The Adapter Template ' + this.model.metadata.name + ' has been saved as draft!'
+              });
+              $state.go('^.list');
+            }.bind(this),
+            function error(err) {
+              $alert({
+                type: 'info',
+                content: err.message
+              });
+            }
+          );
+    };
+
+    this.model.getDrafts()
+      .then(function(res) {
+        if ($state.params.data) {
+          var draft = res[$state.params.data];
+          if (draft) {
+            this.model.setMetadata(draft.config.metadata);
+            this.model.setSource(draft.config.source);
+            this.model.setSink(draft.config.sink);
+            this.model.setTransform(draft.config.transforms);
+            this.model.setSchedule(draft.config.schedule);
+          }
+        }
+      }.bind(this));
   });

@@ -29,8 +29,9 @@ angular.module(PKG.name + '.feature.adapters')
         )
         .$promise
         .then(function(res) {
-          source._backendProperties = res[0].properties;
-          return formatProperties(res[0].properties);
+          var pluginProperties = (res.length? res[0].properties: {});
+          source._backendProperties = pluginProperties;
+          return formatProperties(pluginProperties);
         })
         .then(function(properties) {
           source.properties = properties;
@@ -52,12 +53,13 @@ angular.module(PKG.name + '.feature.adapters')
         )
         .$promise
         .then(function(res) {
-          transform._backendProperties = res[0].properties;
-          return formatProperties(res[0].properties);
+          var pluginProperties = (res.length? res[0].properties : {});
+          transform._backendProperties = pluginProperties;
+          return formatProperties(pluginProperties);
         })
         .then(function(properties) {
           transform.properties = properties;
-          createCtrl.model.setTransform(transform);
+          createCtrl.model.setTransform([transform]);
         });
     };
 
@@ -70,8 +72,9 @@ angular.module(PKG.name + '.feature.adapters')
           {scope: $scope, adapterType: createCtrl.model.metadata.type, sink: sinkName})
         .$promise
         .then(function(res) {
-          sink._backendProperties = res[0].properties;
-          return formatProperties(res[0].properties);
+          var pluginProperties = (res.length? res[0].properties : {});
+          sink._backendProperties = pluginProperties;
+          return formatProperties(pluginProperties);
         })
         .then(function(properties) {
           sink.properties = properties;
@@ -96,7 +99,7 @@ angular.module(PKG.name + '.feature.adapters')
         );
         createCtrl.tabs.active = (createCtrl.tabs.push({
           title: createCtrl.model[type].name,
-          icon: icon[0].icon,
+          icon: icon && icon[0].icon,
           type: type,
           active: true,
           partial: partialPath
@@ -135,7 +138,7 @@ angular.module(PKG.name + '.feature.adapters')
         );
         createCtrl.tabs.active = (createCtrl.tabs.push({
           title: transform.name,
-          icon: icon[0].icon,
+          icon: icon && icon[0].icon,
           transformid: transform.$$hashKey,
           transform: transform,
           active: true,
