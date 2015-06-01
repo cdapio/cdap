@@ -27,9 +27,9 @@ public abstract class ProgramLiveInfo {
   private final String name;
   private final String runtime;
 
-  public ProgramLiveInfo(Id.Program programId, ProgramType type, String runtime) {
+  public ProgramLiveInfo(Id.Program programId, String runtime) {
     this.app = programId.getApplicationId();
-    this.type = type.getPrettyName();
+    this.type = programId.getType().getPrettyName();
     this.id = programId.getId();
     this.name = programId.getId();
     this.runtime = runtime;

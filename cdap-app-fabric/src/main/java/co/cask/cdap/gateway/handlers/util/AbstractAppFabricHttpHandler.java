@@ -17,44 +17,30 @@
 package co.cask.cdap.gateway.handlers.util;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.flow.FlowletConnection;
-import co.cask.cdap.api.flow.FlowletDefinition;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.services.Data;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.proto.ApplicationRecord;
-import co.cask.cdap.proto.DatasetRecord;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.StreamRecord;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -69,7 +55,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -355,12 +340,10 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     return null;
   }
 
-  protected void getLiveInfo(HttpResponder responder, String namespaceId,
-                             final String appId, final String programId, ProgramType type,
+  protected void getLiveInfo(HttpResponder responder, Id.Program programId,
                              ProgramRuntimeService runtimeService) {
     try {
-      responder.sendJson(HttpResponseStatus.OK,
-                         runtimeService.getLiveInfo(Id.Program.from(namespaceId, appId, type, programId), type));
+      responder.sendJson(HttpResponseStatus.OK, runtimeService.getLiveInfo(programId));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {

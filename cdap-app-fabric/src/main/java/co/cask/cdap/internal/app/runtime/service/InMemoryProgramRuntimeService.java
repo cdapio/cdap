@@ -116,9 +116,9 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
   }
 
   @Override
-  public ProgramLiveInfo getLiveInfo(Id.Program programId, ProgramType type) {
-    return isRunning(programId, type) ? new InMemoryProgramLiveInfo(programId, type)
-                                      : new NotRunningProgramLiveInfo(programId, type);
+  public ProgramLiveInfo getLiveInfo(Id.Program programId) {
+    return isRunning(programId) ? new InMemoryProgramLiveInfo(programId)
+      : new NotRunningProgramLiveInfo(programId);
   }
 
   @Override
@@ -134,7 +134,7 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
     for (ProgramType type : ProgramType.values()) {
       for (Map.Entry<RunId, RuntimeInfo> entry : list(type).entrySet()) {
         RuntimeInfo runtimeInfo = entry.getValue();
-        if (isRunning(runtimeInfo.getProgramId(), type)) {
+        if (isRunning(runtimeInfo.getProgramId())) {
           futures.add(runtimeInfo.getController().stop());
         }
       }

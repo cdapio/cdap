@@ -188,7 +188,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         if (!twillRunId.equals(twillRunIdFromRecord)) {
           continue;
         }
-        runtimeInfo = createRuntimeInfo(programId.getType(), programId, controller, runId);
+        runtimeInfo = createRuntimeInfo(programId, controller, runId);
         if (runtimeInfo != null) {
           updateRuntimeInfo(programId.getType(), runId, runtimeInfo);
         } else {
@@ -252,7 +252,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       Map.Entry<Id.Program, TwillController> entry = mapForTwillId.entrySet().iterator().next();
 
       // Create RuntimeInfo for the current Twill RunId
-      RuntimeInfo runtimeInfo = createRuntimeInfo(type, entry.getKey(), entry.getValue(), runId);
+      RuntimeInfo runtimeInfo = createRuntimeInfo(entry.getKey(), entry.getValue(), runId);
       if (runtimeInfo != null) {
         result.put(runId, runtimeInfo);
         updateRuntimeInfo(type, runId, runtimeInfo);
@@ -264,10 +264,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     return ImmutableMap.copyOf(result);
   }
 
-  private RuntimeInfo createRuntimeInfo(ProgramType type, Id.Program programId, TwillController controller,
-                                        RunId runId) {
+  private RuntimeInfo createRuntimeInfo(Id.Program programId, TwillController controller, RunId runId) {
     try {
-      Program program = store.loadProgram(programId, type);
+      Program program = store.loadProgram(programId);
       Preconditions.checkNotNull(program, "Program not found");
 
       ProgramController programController = createController(program, controller, runId);
@@ -347,9 +346,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   }
 
   @Override
-  public ProgramLiveInfo getLiveInfo(Id.Program program, ProgramType type) {
-    String twillAppName = String.format("%s.%s.%s.%s", type.name().toLowerCase(),
-                                      program.getNamespaceId(), program.getApplicationId(), program.getId());
+  public ProgramLiveInfo getLiveInfo(Id.Program program) {
+    String twillAppName = String.format("%s.%s.%s.%s", program.getType().name().toLowerCase(),
+                                        program.getNamespaceId(), program.getApplicationId(), program.getId());
     Iterator<TwillController> controllers = twillRunner.lookup(twillAppName).iterator();
     // this will return an empty Json if there is no live instance
     if (controllers.hasNext()) {
@@ -359,11 +358,11 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       }
       ResourceReport report = controller.getResourceReport();
       if (report != null) {
-        DistributedProgramLiveInfo liveInfo = new DistributedProgramLiveInfo(program, type, report.getApplicationId());
+        DistributedProgramLiveInfo liveInfo = new DistributedProgramLiveInfo(program, report.getApplicationId());
 
         // if program type is flow then the container type is flowlet.
-        Containers.ContainerType containerType = ProgramType.FLOW.equals(type) ? FLOWLET :
-                                                 Containers.ContainerType.valueOf(type.name());
+        Containers.ContainerType containerType = ProgramType.FLOW.equals(program.getType()) ? FLOWLET :
+                                                 Containers.ContainerType.valueOf(program.getType().name());
 
         for (Map.Entry<String, Collection<TwillRunResources>> entry : report.getResources().entrySet()) {
           for (TwillRunResources resources : entry.getValue()) {
@@ -383,7 +382,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         return liveInfo;
       }
     }
-    return new NotRunningProgramLiveInfo(program, type);
+    return new NotRunningProgramLiveInfo(program);
   }
 
   /**

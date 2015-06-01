@@ -84,7 +84,7 @@ public interface ProgramRuntimeService extends Service {
    * for each runtime environment. For example, in a distributed environment, this would contain the
    * YARN application id and the container information for each runnable. For in-memory, it may be empty.
    */
-  ProgramLiveInfo getLiveInfo(Id.Program programId, ProgramType type);
+  ProgramLiveInfo getLiveInfo(Id.Program programId);
 
   /**
    * Check if any program that satisfy the given {@link Predicate} is running.

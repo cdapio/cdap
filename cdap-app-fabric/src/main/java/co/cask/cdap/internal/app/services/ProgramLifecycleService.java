@@ -92,8 +92,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
     }
   }
 
-  private Program getProgram(Id.Program id, ProgramType programType) throws IOException, ProgramNotFoundException {
-    Program program = store.loadProgram(id, programType);
+  private Program getProgram(Id.Program id) throws IOException, ProgramNotFoundException {
+    Program program = store.loadProgram(id);
     if (program == null) {
       throw new ProgramNotFoundException(id);
     }
@@ -104,7 +104,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * Start a Program.
    *
    * @param id {@link Id.Program}
-   * @param programType {@link ProgramType}
    * @param systemArgs system arguments
    * @param userArgs user arguments
    * @param debug enable debug mode
@@ -112,12 +111,11 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @throws IOException if there is an error starting the program
    * @throws ProgramNotFoundException if program is not found
    */
-  public ProgramRuntimeService.RuntimeInfo start(final Id.Program id, final ProgramType programType,
-                                                 Map<String, String> systemArgs, Map<String, String> userArgs,
-                                                 boolean debug)
+  public ProgramRuntimeService.RuntimeInfo start(final Id.Program id, Map<String, String> systemArgs,
+                                                 Map<String, String> userArgs, boolean debug)
     throws IOException, ProgramNotFoundException {
     final String adapterName = systemArgs.get(ProgramOptionConstants.ADAPTER_NAME);
-    Program program = getProgram(id, programType);
+    Program program = getProgram(id);
     BasicArguments systemArguments = new BasicArguments(systemArgs);
     BasicArguments userArguments = new BasicArguments(userArgs);
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(program, new SimpleProgramOptions(
@@ -126,7 +124,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     final ProgramController controller = runtimeInfo.getController();
     final String runId = controller.getRunId().getId();
     final String twillRunId = runtimeInfo.getTwillRunId() == null ? null : runtimeInfo.getTwillRunId().getId();
-    if (programType != ProgramType.MAPREDUCE && programType != ProgramType.SPARK) {
+    if (id.getType() != ProgramType.MAPREDUCE && id.getType() != ProgramType.SPARK) {
       // MapReduce state recording is done by the MapReduceProgramRunner
       // TODO [JIRA: CDAP-2013] Same needs to be done for other programs as well
       controller.addListener(new AbstractListener() {

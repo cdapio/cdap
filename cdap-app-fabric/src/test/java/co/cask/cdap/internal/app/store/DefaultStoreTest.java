@@ -113,8 +113,7 @@ public class DefaultStoreTest {
   public void testLoadingProgram() throws Exception {
     AppFabricTestHelper.deployApplication(ToyApp.class);
     Program program = store.loadProgram(Id.Program.from(DefaultId.NAMESPACE.getId(), "ToyApp",
-                                                        ProgramType.FLOW, "ToyFlow"),
-                                        ProgramType.FLOW);
+                                                        ProgramType.FLOW, "ToyFlow"));
     Assert.assertNotNull(program);
   }
 
@@ -553,7 +552,7 @@ public class DefaultStoreTest {
                         adjustedSpec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances());
 
     // checking that program spec in program jar was adjsuted
-    Program program = store.loadProgram(programId, ProgramType.FLOW);
+    Program program = store.loadProgram(programId);
     Assert.assertEquals(initialInstances + 5,
                         program.getApplicationSpecification().
                           getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances());
@@ -846,13 +845,13 @@ public class DefaultStoreTest {
                           "Schedule with the name 'Schedule2' already exists.");
     }
 
-    store.deleteSchedule(program, programType, "Schedule2");
+    store.deleteSchedule(program, "Schedule2");
     schedules = getSchedules(appId);
     Assert.assertEquals(1, schedules.size());
     Assert.assertEquals(null, schedules.get("Schedule2"));
 
     try {
-      store.deleteSchedule(program, programType, "Schedule2");
+      store.deleteSchedule(program, "Schedule2");
       Assert.fail();
     } catch (Exception e) {
       Assert.assertEquals(NoSuchElementException.class, Throwables.getRootCause(e).getClass());
