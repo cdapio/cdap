@@ -1,10 +1,16 @@
-<div class="panel panel-default">
-  <div class="panel-heading">
+<div class="panel panel-default" ng-init="metadataTabOpen=true">
+  <div class="panel-heading" ng-click="metadataTabOpen = !metadataTabOpen">
     <div class="panel-title">
-      Metadata
+      <div class="clearfix">
+        <span class="pull-left">
+          Metadata
+        </span>
+        <i class="fa fa-fw pull-right"
+            ng-class="{'fa-chevron-down': metadataTabOpen, 'fa-chevron-right': !metadataTabOpen}"></i>
+      </div>
     </div>
   </div>
-  <div class="panel-body">
+  <div class="panel-body" ng-if="metadataTabOpen">
     <!-- {{AdapterCreateController.model.metadata | json}}
     <hr>
     {{AdapterCreateController.adapterTypes}} -->
@@ -16,9 +22,10 @@
           id="adapaterType"
           name="adaptertype"
           class="form-control"
-          ng-model="AdapterCreateController.model.metadata.type"
+          ng-model="AdapterCreateController.model.metadata['type']"
           ng-change="AdapterCreateController.onMetadataChange(adapter.name)"
-          ng-options="adapter.name as adapter.name for adapter in AdapterCreateController.adapterTypes" required></select>
+          ng-options="adapter.name as adapter.name for adapter in AdapterCreateController.adapterTypes track by adapter.name" required>
+          </select>
       </div>
       <div class="col-md-3 col-xs-12">
         <label class="control-label">Name</label>

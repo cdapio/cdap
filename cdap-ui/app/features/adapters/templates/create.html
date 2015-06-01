@@ -1,5 +1,21 @@
-<div ng-controller="AdapterCreateController as AdapterCreateController">
+
+<div>
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="clearfix">
+        <h2 class="pull-left" style="margin-top:0;">
+          Create Adapter: {{AdapterCreateController.model.metadata.name}}
+        </h2>
+        <a ui-sref="adapters.list" class="btn btn-default pull-right">
+          <span class="fa fa-list-ul"></span>
+          <span>All Adapters</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
   <div ng-include="'/assets/features/adapters/templates/create/metadata.html'"></div>
   <div ng-include="'/assets/features/adapters/templates/create/configuration.html'"></div>
   <div ng-include="'/assets/features/adapters/templates/create/canvas.html'"></div>
+
 </div>

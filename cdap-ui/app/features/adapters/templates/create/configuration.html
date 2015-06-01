@@ -1,10 +1,14 @@
-<div class="panel panel-default">
-  <div class="panel-heading">
+<div class="panel panel-default" ng-init="configurationTabOpen=false">
+  <div class="panel-heading" ng-click="configurationTabOpen = !configurationTabOpen">
     <div class="panel-title">
-      Configuration
+      <div class="clearfix">
+        <span class="pull-left">Configuration</span>
+        <i class="fa fa-fw pull-right"
+            ng-class="{'fa-chevron-down': configurationTabOpen, 'fa-chevron-right': !configurationTabOpen}"></i>
+      </div>
     </div>
   </div>
-  <div class="panel-body">
+  <div class="panel-body" ng-if="configurationTabOpen">
     <!-- {{AdapterCreateController.model.metadata | json }} -->
     <div ng-if="AdapterCreateController.model.metadata.type === 'ETLBatch'">
       <div data-name="field"
