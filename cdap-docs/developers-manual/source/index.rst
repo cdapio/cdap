@@ -29,9 +29,9 @@ CDAP Developers’ Manual
 .. _building-blocks: building-blocks/index.html
 
 - |building-blocks|_ This section covers **the two core abstractions in the Cask Data
-  Application Platform: Data and Applications.** Data abstractions include Streams and
-  Datasets. Application abstraction is accomplished using Flows, MapReduce, Spark,
-  Workflows, and Services. Details are provided on working with these abstractions to
+  Application Platform: data and applications.** Data abstractions include streams and
+  datasets. Application abstraction is accomplished using flows, MapReduce, Spark,
+  workflows, and services. Details are provided on working with these abstractions to
   build Big Data applications.
 
 
@@ -61,7 +61,7 @@ CDAP Developers’ Manual
 .. _data-exploration: data-exploration/index.html
 
 - |data-exploration|_ Data in CDAP can be **explored without writing any code** through the use of **ad-hoc SQL-like queries**.
-  Exploration of Streams and Datasets, along with integration with business intelligence tools, are covered in this section.
+  Exploration of streams and datasets, along with integration with business intelligence tools, are covered in this section.
 
 
 .. |advanced| replace:: **Advanced Topics:**

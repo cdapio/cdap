@@ -51,7 +51,7 @@ Operations
 .. |resource-guarantees| replace:: **Resource Guarantees:**
 .. _resource-guarantees: resource-guarantees.html
 
-- |resource-guarantees|_ Providing resource guarantees **for CDAP Programs in YARN.**
+- |resource-guarantees|_ Providing resource guarantees **for CDAP programs in YARN.**
 
 
 .. |cdap-ui| replace:: **CDAP UI:**
