@@ -71,8 +71,7 @@ public class MetricsClientTestRun extends ClientTestBase {
       String flowlet = FakeFlow.FLOWLET_NAME;
 
       MetricQueryResult result = metricsClient.query(
-        ImmutableList.of(Constants.Metrics.Name.Flow.FLOWLET_INPUT),
-        ImmutableList.<String>of(),
+        Constants.Metrics.Name.Flow.FLOWLET_INPUT,
         MetricsTags.flowlet(programId, flowlet));
       Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
 

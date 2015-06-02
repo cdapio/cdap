@@ -32,6 +32,8 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 
@@ -39,6 +41,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
@@ -51,16 +54,18 @@ public class MetricsClient {
 
   private final RESTClient restClient;
   private final ClientConfig config;
+  private final Set<String> validTimeRangeParams;
 
   @Inject
   public MetricsClient(ClientConfig config, RESTClient restClient) {
     this.config = config;
     this.restClient = restClient;
+    this.validTimeRangeParams = ImmutableSet.of("start", "end", "aggregate", "resolution",
+                                                "interpolate", "maxInterpolateGap", "count");
   }
 
   public MetricsClient(ClientConfig config) {
-    this.config = config;
-    this.restClient = new RESTClient(config);
+    this(config, new RESTClient(config));
   }
 
   /**
@@ -110,17 +115,15 @@ public class MetricsClient {
   /**
    * Gets the value of the given metrics.
    *
-   * @param metrics names of the metrics
-   * @param groupBys groupBys for the request
+   * @param metric names of the metric
    * @param tags tags for the request
    * @return values of the metrics
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public MetricQueryResult query(List<String> metrics, List<String> groupBys, Map<String, String> tags)
+  public MetricQueryResult query(String metric, Map<String, String> tags)
     throws IOException, UnauthorizedException {
-
-    return query(metrics, groupBys, tags, null, null, null, null, null, null, null);
+    return query(ImmutableList.of(metric), ImmutableList.<String>of(), tags, ImmutableMap.<String, String>of());
   }
 
   /**
@@ -135,9 +138,7 @@ public class MetricsClient {
    */
   // TODO: take in query object shared by MetricsHandler
   public MetricQueryResult query(List<String> metrics, List<String> groupBys, Map<String, String> tags,
-                                 @Nullable String start, @Nullable String end, @Nullable String aggregate,
-                                 @Nullable String resolution, @Nullable String interpolate,
-                                 @Nullable String maxInterpolateGap, @Nullable Integer count)
+                                 @Nullable Map<String, String> timeRangeParams)
     throws IOException, UnauthorizedException {
 
     List<String> queryParts = Lists.newArrayList();
@@ -145,17 +146,19 @@ public class MetricsClient {
     add("metric", metrics, queryParts);
     add("groupBy", groupBys, queryParts);
     addTags(tags, queryParts);
-    addIfNotNull("start", start, queryParts);
-    addIfNotNull("end", end, queryParts);
-    addIfNotNull("aggregate", aggregate, queryParts);
-    addIfNotNull("resolution", resolution, queryParts);
-    addIfNotNull("interpolate", interpolate, queryParts);
-    addIfNotNull("maxInterpolateGap", maxInterpolateGap, queryParts);
-    addIfNotNull("count", count, queryParts);
+    addTimeRangeParametersToQuery(timeRangeParams, queryParts);
 
     URL url = config.resolveURLV3(String.format("metrics/query?%s", Joiner.on("&").join(queryParts)));
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, MetricQueryResult.class).getResponseObject();
+  }
+
+  private void addTimeRangeParametersToQuery(Map<String, String> timeRangeParams, List<String> queryParts) {
+    for (Map.Entry<String, String> entry : timeRangeParams.entrySet()) {
+      if (validTimeRangeParams.contains(entry.getKey())) {
+        queryParts.add(entry.getKey() + "=" + entry.getValue());
+      }
+    }
   }
 
   public RuntimeMetrics getFlowletMetrics(Id.Program flowId, String flowletId) {
@@ -170,12 +173,6 @@ public class MetricsClient {
                       Constants.Metrics.Name.Service.SERVICE_INPUT,
                       Constants.Metrics.Name.Service.SERVICE_PROCESSED,
                       Constants.Metrics.Name.Service.SERVICE_EXCEPTIONS);
-  }
-
-  private void addIfNotNull(String key, @Nullable Object value, List<String> outQueryParts) {
-    if (value != null) {
-      outQueryParts.add(key + "=" + value.toString());
-    }
   }
 
   private void add(String key, List<String> values, List<String> outQueryParts) {
@@ -271,7 +268,7 @@ public class MetricsClient {
 
   private long getTotalCounter(Map<String, String> tags, String metricName) {
     try {
-      MetricQueryResult result = query(ImmutableList.of(metricName), ImmutableList.<String>of(), tags);
+      MetricQueryResult result = query(metricName, tags);
       if (result.getSeries().length == 0) {
         return 0;
       }
