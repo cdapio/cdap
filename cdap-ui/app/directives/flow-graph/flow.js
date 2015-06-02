@@ -25,12 +25,21 @@ module.controller('myFlowController', function($scope) {
     }
   }
 
+  // to be used when the change of array to length 0
+  function updateWithoutCheck(newVal) {
+    if (angular.isObject(newVal)) {
+      $scope.render();
+    }
+  }
+
   $scope.instanceMap = {};
   $scope.labelMap = {};
 
   $scope.$watch('model', update);
   $scope.$watchCollection('model.metrics', update);
   $scope.$watchCollection('model.instances', update);
+  $scope.$watchCollection('model.current', updateWithoutCheck);
+
 });
 
 module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamService) {
@@ -274,8 +283,13 @@ module.directive('myWorkflowGraph', function ($filter) {
             { x: -xPoint, y: yPoint}
           ];
           var shapeSvg = parent.insert('polygon', ':first-child')
-            .attr('points', points.map(function(p) { return p.x + ',' + p.y; }).join(' '))
-            .attr('class', 'workflow-shapes foundation-shape job-svg');
+              .attr('points', points.map(function(p) { return p.x + ',' + p.y; }).join(' '));
+
+          if (scope.model.current.length > 0 && scope.model.current.indexOf(node.elem.__data__) !== -1) {
+            shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg running');
+          } else {
+            shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg');
+          }
 
           node.intersect = function(point) {
             return dagreD3.intersect.polygon(node, points, point);

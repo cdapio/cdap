@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsRunsStatusController', function($state, $scope, myWorkFlowApi, $filter, $alert, GraphHelpers) {
+  .controller('WorkflowsRunsStatusController', function($state, $scope, myWorkFlowApi, $filter, $alert, GraphHelpers, MyDataSource) {
     var filterFilter = $filter('filter'),
         params = {
           appId: $state.params.appId,
@@ -55,7 +55,8 @@ angular.module(PKG.name + '.feature.workflows')
         $scope.data = {
           nodes: nodes,
           edges: edges,
-          metrics: {}
+          metrics: {},
+          current: []
         };
 
         var programs = [];
@@ -64,6 +65,40 @@ angular.module(PKG.name + '.feature.workflows')
         });
         $scope.actions = programs;
       });
+
+    // Still using MyDataSource because the poll needs to be stopped
+    var dataSrc = new MyDataSource($scope);
+
+    var path = '/apps/' + $state.params.appId
+      + '/workflows/' + $state.params.programId
+      + '/runs/' + $scope.runs.selected.runid;
+
+    var runsParams = {
+      appId: $state.params.appId,
+      workflowId: $state.params.programId,
+      runid: $scope.runs.selected.runid,
+      scope: $scope
+    };
+
+    dataSrc.poll({
+      _cdapNsPath: path,
+      interval: 1000
+    }, function (response) {
+      if (response.status === 'RUNNING') {
+        myWorkFlowApi.getCurrent(runsParams)
+          .$promise
+          .then(function(res) {
+            var obj = [];
+            angular.forEach(res, function (r) {
+              obj.push(r.program.programName + r.nodeId);
+            });
+            $scope.data.current = obj;
+          });
+      } else {
+        $scope.data.current = [];
+        dataSrc.stopPoll(response.__pollid__);
+      }
+    });
 
 
     $scope.workflowProgramClick = function (instance) {
