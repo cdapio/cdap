@@ -105,11 +105,37 @@ my-workflow-graph {
     stroke: @cdap-darkness;
     stroke-width: 5px;
     cursor: pointer;
+
+    &.running {
+      stroke: @brand-success;
+    }
+
+    &.completed, &.failed {
+      + .label text {
+        fill: white;
+      }
+    }
+
+    &.completed {
+      fill: @brand-success;
+    }
+
+    &.failed {
+      fill: @brand-danger;
+    }
   }
 
-  .job-svg.running {
-    stroke: @brand-success;
-  }
+  // .job-svg.running {
+
+  // }
+
+  // .job-svg.completed {
+
+  // }
+
+  // .job-svg.failed {
+
+  // }
 
   .end-svg, .start-svg {
     stroke: @cdap-darkness;
@@ -123,8 +149,10 @@ my-workflow-graph {
   .end-svg { fill: @brand-danger; }
 
   .conditional-svg {
-    fill: @cdap-darkness;
+    fill: white;
     cursor: pointer;
+    stroke: @cdap-orange;
+    stroke-width: 5px;
   }
 
   .job-events {

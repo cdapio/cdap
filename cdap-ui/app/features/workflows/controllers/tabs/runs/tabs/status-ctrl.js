@@ -56,7 +56,7 @@ angular.module(PKG.name + '.feature.workflows')
           nodes: nodes,
           edges: edges,
           metrics: {},
-          current: []
+          current: {},
         };
 
         var programs = [];
@@ -80,25 +80,40 @@ angular.module(PKG.name + '.feature.workflows')
       scope: $scope
     };
 
-    dataSrc.poll({
-      _cdapNsPath: path,
-      interval: 1000
-    }, function (response) {
-      if (response.status === 'RUNNING') {
-        myWorkFlowApi.getCurrent(runsParams)
-          .$promise
-          .then(function(res) {
-            var obj = [];
-            angular.forEach(res, function (r) {
-              obj.push(r.program.programName + r.nodeId);
-            });
-            $scope.data.current = obj;
+    if ($scope.runs.length > 0) {
+      dataSrc.poll({
+        _cdapNsPath: path,
+        interval: 1000
+      })
+      .then(function (response) {
+
+        var pastNodes = Object.keys(response.properties);
+
+        var activeNodes = filterFilter($scope.data.nodes , function(node) {
+          return pastNodes.indexOf(node.nodeId) !== -1;
+        });
+
+        angular.forEach(activeNodes, function(n) {
+          var runid = response.properties[n.nodeId];
+
+          dataSrc.request({
+            _cdapNsPath: '/apps/' + $state.params.appId +
+              '/mapreduce/' + n.program.programName +
+              '/runs/' + runid
+          })
+          .then(function (result) {
+            $scope.data.current[n.name] = result.status;
           });
-      } else {
-        $scope.data.current = [];
-        dataSrc.stopPoll(response.__pollid__);
-      }
-    });
+        });
+
+        return response;
+      })
+      .then(function (response) {
+        if (response.status === 'COMPLETED') {
+          dataSrc.stopPoll(response.__pollId__);
+        }
+      });
+    }
 
 
     $scope.workflowProgramClick = function (instance) {
