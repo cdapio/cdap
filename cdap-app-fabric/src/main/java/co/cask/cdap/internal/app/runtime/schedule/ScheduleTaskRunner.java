@@ -93,10 +93,10 @@ public final class ScheduleTaskRunner {
     systemArgs.putAll(propertiesResolver.getSystemProperties(programId, programType));
     systemArgs.putAll(systemOverrides);
 
-    boolean runMultipleProgramInstances =
-      Boolean.parseBoolean(userArgs.get(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED));
+    boolean concurrentRunsDisabled =
+      Boolean.parseBoolean(userArgs.get(ProgramOptionConstants.CONCURRENT_RUNS_DISABLED));
 
-    if (!runMultipleProgramInstances) {
+    if (concurrentRunsDisabled) {
       ProgramRuntimeService.RuntimeInfo existingInfo = lifecycleService.findRuntimeInfo(programId, programType);
       if (existingInfo != null) {
         throw new TaskExecutionException(UserMessages.getMessage(UserErrors.ALREADY_RUNNING), false);

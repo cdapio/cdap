@@ -37,7 +37,6 @@ import co.cask.cdap.internal.app.deploy.pipeline.CreateStreamsStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
-import co.cask.cdap.internal.app.deploy.pipeline.EnableConcurrentRunsStage;
 import co.cask.cdap.internal.app.deploy.pipeline.LocalArchiveLoaderStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
@@ -115,7 +114,6 @@ public class LocalApplicationTemplateManager implements Manager<DeploymentInfo, 
                                                     queueAdmin, metricStore));
     pipeline.addLast(new ProgramGenerationStage(configuration, namespacedLocationFactory));
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry));
-    pipeline.addLast(new EnableConcurrentRunsStage(preferencesStore));
     return pipeline.execute(input);
   }
 }

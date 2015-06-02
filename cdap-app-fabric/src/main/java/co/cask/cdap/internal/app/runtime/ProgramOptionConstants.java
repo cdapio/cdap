@@ -45,7 +45,7 @@ public final class ProgramOptionConstants {
 
   public static final String SCHEDULE_NAME = "scheduleName";
 
-  public static final String CONCURRENT_RUNS_ENABLED = "concurrent.runs.enabled";
+  public static final String CONCURRENT_RUNS_DISABLED = "concurrentRunsDisabled";
 
   public static final String RUN_DATA_SIZE = "runDataSize";
 

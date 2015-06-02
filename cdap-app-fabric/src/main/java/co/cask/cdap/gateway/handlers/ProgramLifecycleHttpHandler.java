@@ -28,6 +28,7 @@ import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.NotFoundException;
@@ -315,6 +316,32 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Stops the particular run of the Workflow or MapReduce program.
+   */
+  @POST
+  @Path("/apps/{app-id}/{type}/{id}/runs/{run-id}/stop")
+  public void performRunLevelStop(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespaceId,
+                                  @PathParam("app-id") String appId,
+                                  @PathParam("type") String type,
+                                  @PathParam("id") String id,
+                                  @PathParam("run-id") String runId) {
+    try {
+      ProgramType programType = ProgramType.valueOfCategoryName(type);
+      if (!isRunLevelActionAllowed(programType)) {
+        responder.sendString(HttpResponseStatus.FORBIDDEN,
+                             "Run level operation is allowed only for MapReduce and Workflow program.");
+      }
+
+      Id.Program program = Id.Program.from(namespaceId, appId, programType, id);
+      AppFabricServiceStatus status = stop(program, programType, runId);
+      responder.sendString(status.getCode(), status.getMessage());
+     } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format("Invalid program type %s", type));
     }
   }
 
@@ -1344,7 +1371,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                        Map<String, String> overrides, boolean debug) {
 
     try {
-      if (isRunning(id, type)) {
+      if (isRunning(id, type) && isConcurrentRunsDisabled(id)) {
         return AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING;
       }
 
@@ -1369,11 +1396,35 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     return programStatus != null && !"STOPPED".equals(programStatus);
   }
 
+  private boolean isRunLevelActionAllowed(ProgramType type) {
+    // Run level actions only enabled for the Workflow and MapReduce
+    return EnumSet.of(ProgramType.WORKFLOW, ProgramType.MAPREDUCE).contains(type);
+  }
+
+  private boolean isConcurrentRunsDisabled(Id.Program id) {
+    if (!isRunLevelActionAllowed(id.getType())) {
+      return false;
+    }
+
+    Map<String, String> systemProperties = propertiesResolver.getSystemProperties(id, id.getType());
+    return Boolean.parseBoolean(systemProperties.get(ProgramOptionConstants.CONCURRENT_RUNS_DISABLED));
+  }
+
+  private AppFabricServiceStatus stop(Id.Program id, ProgramType type) {
+    return stop(id, type, null);
+  }
+
   /**
    * Stops a Program.
    */
-  private AppFabricServiceStatus stop(Id.Program identifier, ProgramType type) {
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier, type);
+  private AppFabricServiceStatus stop(Id.Program identifier, ProgramType type, String runId) {
+    ProgramRuntimeService.RuntimeInfo runtimeInfo;
+    if (runId == null) {
+      runtimeInfo = findRuntimeInfo(identifier, type);
+    } else {
+      runtimeInfo = runtimeService.list(identifier.getType()).get(RunIds.fromString(runId));
+    }
+
     if (runtimeInfo == null) {
       try {
         ProgramStatus status = getProgramStatus(identifier, type);

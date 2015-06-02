@@ -333,12 +333,9 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
                                            concurrentWorkflowName);
 
 
-    Map<String, String> propMap = ImmutableMap.of(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED, "true",
-                                                           "concurrentWorkflowSchedule1.file",
-                                                           schedule1File.getAbsolutePath(),
-                                                           "concurrentWorkflowSchedule2.file",
-                                                           schedule2File.getAbsolutePath(),
-                                                           "done.file", simpleActionDoneFile.getAbsolutePath());
+    Map<String, String> propMap = ImmutableMap.of("concurrentWorkflowSchedule1.file", schedule1File.getAbsolutePath(),
+                                                  "concurrentWorkflowSchedule2.file", schedule2File.getAbsolutePath(),
+                                                  "done.file", simpleActionDoneFile.getAbsolutePath());
 
     PreferencesStore store = getInjector().getInstance(PreferencesStore.class);
     store.setProperties(defaultNamespace, appWithConcurrentWorkflow, ProgramType.WORKFLOW.getCategoryName(),
