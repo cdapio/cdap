@@ -23,9 +23,6 @@ SET CDAP_HOME=%~dp0
 SET CDAP_HOME=%CDAP_HOME:~0,-5%
 SET JAVACMD=%JAVA_HOME%\bin\java.exe
 
-REM Specifies Web App Path
-SET UI_PATH=%CDAP_HOME%\ui\server.js
-
 REM %CDAP_HOME%
 SET CLASSPATH=%CDAP_HOME%\lib\*;%CDAP_HOME%\conf\
 SET PATH=%PATH%;%CDAP_HOME%\libexec\bin
