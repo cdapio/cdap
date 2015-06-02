@@ -278,15 +278,18 @@ module.directive('myWorkflowGraph', function ($filter) {
           var shapeSvg = parent.insert('polygon', ':first-child')
               .attr('points', points.map(function(p) { return p.x + ',' + p.y; }).join(' '));
 
-          // TODO: use switch statement
-          if (scope.model.current[node.elem.__data__] === 'COMPLETED') {
-            shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg completed');
-          } else if (scope.model.current[node.elem.__data__] === 'RUNNING') {
-            shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg running');
-          } else if (scope.model.current[node.elem.__data__] === 'FAILED') {
-            shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg failed');
-          } else {
-            shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg');
+          switch(scope.model.current[node.elem.__data__]) {
+            case 'COMPLETED':
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg completed');
+              break;
+            case 'RUNNING':
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg running');
+              break;
+            case 'FAILED':
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg failed');
+              break;
+            default:
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg');
           }
 
           node.intersect = function(point) {
