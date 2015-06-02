@@ -88,9 +88,9 @@ public final class ScheduleTaskRunner {
 
     // Schedule properties are overriden by resolved preferences
     userArgs.putAll(spec.getProperties());
-    userArgs.putAll(propertiesResolver.getUserProperties(programId, programType));
+    userArgs.putAll(propertiesResolver.getUserProperties(programId));
 
-    systemArgs.putAll(propertiesResolver.getSystemProperties(programId, programType));
+    systemArgs.putAll(propertiesResolver.getSystemProperties(programId));
     systemArgs.putAll(systemOverrides);
 
     boolean concurrentRunsDisabled =
@@ -114,7 +114,7 @@ public final class ScheduleTaskRunner {
                                       Map<String, String> userArgs) throws IOException, TaskExecutionException {
     ProgramRuntimeService.RuntimeInfo runtimeInfo;
     try {
-      runtimeInfo = lifecycleService.start(id, type, sysArgs, userArgs, false);
+      runtimeInfo = lifecycleService.start(id, sysArgs, userArgs, false);
     } catch (ProgramNotFoundException e) {
       throw new TaskExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), e, false);
     }

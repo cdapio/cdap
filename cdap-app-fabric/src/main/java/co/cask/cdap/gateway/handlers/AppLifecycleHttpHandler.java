@@ -297,8 +297,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
       Manager<DeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
         @Override
-        public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws ExecutionException {
-          deleteHandler(programId, type);
+        public void stop(Id.Program programId) throws ExecutionException {
+          deleteHandler(programId);
         }
       });
 
@@ -309,12 +309,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void deleteHandler(Id.Program programId, ProgramType type)
-    throws ExecutionException {
+  private void deleteHandler(Id.Program programId) throws ExecutionException {
     try {
-      switch (type) {
+      switch (programId.getType()) {
         case FLOW:
-          stopProgramIfRunning(programId, type);
+          stopProgramIfRunning(programId);
           break;
         case WORKFLOW:
           scheduler.deleteSchedules(programId, SchedulableProgramType.WORKFLOW);
@@ -323,10 +322,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           //no-op
           break;
         case SERVICE:
-          stopProgramIfRunning(programId, type);
+          stopProgramIfRunning(programId);
           break;
         case WORKER:
-          stopProgramIfRunning(programId, type);
+          stopProgramIfRunning(programId);
           break;
       }
     } catch (InterruptedException e) {
@@ -336,12 +335,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void stopProgramIfRunning(Id.Program programId, ProgramType type)
+  private void stopProgramIfRunning(Id.Program programId)
     throws InterruptedException, ExecutionException {
     ProgramRuntimeService.RuntimeInfo programRunInfo = findRuntimeInfo(programId.getNamespaceId(),
                                                                        programId.getApplicationId(),
                                                                        programId.getId(),
-                                                                       type, runtimeService);
+                                                                       programId.getType(),
+                                                                       runtimeService);
     if (programRunInfo != null) {
       doStop(programRunInfo);
     }

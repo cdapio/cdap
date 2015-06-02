@@ -18,7 +18,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr ng-repeat="data in dataList | orderBy:sortable.predicate:sortable.reverse">
+          <tr ng-repeat="data in dataList | myPaginate:currentPage | orderBy:sortable.predicate:sortable.reverse">
             <td class="col-xs-5"  ng-if="data.type === 'Stream'">
               <strong class="icon-streams"></strong>
               <a ui-sref="admin.namespace.detail.data.streammetadata({streamId: data.name})">
@@ -37,6 +37,11 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Switch to ng-if when we refactor to use controller as syntax -->
+    <div class="text-center" ng-show="dataList.length > 10">
+      <pagination total-items="dataList.length" ng-model="currentPage"></pagination>
     </div>
   </div>
 
