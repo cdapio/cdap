@@ -266,7 +266,7 @@ public class FileStreamAdmin implements StreamAdmin {
   @Override
   public boolean exists(Id.Stream streamId) throws Exception {
     try {
-      return getConfigLocation(streamId).exists();
+      return streamMetaStore.streamExists(streamId) && getConfigLocation(streamId).exists();
     } catch (IOException e) {
       LOG.error("Exception when check for stream exist.", e);
       return false;

@@ -65,6 +65,12 @@ public abstract class StreamAdminTest {
 
     streamAdmin.create(otherStreamId);
     Assert.assertTrue(streamAdmin.exists(otherStreamId));
+
+    streamAdmin.drop(streamId);
+    Assert.assertFalse(streamAdmin.exists(streamId));
+
+    streamAdmin.drop(otherStreamId);
+    Assert.assertFalse(streamAdmin.exists(otherStreamId));
   }
 
   @Test
