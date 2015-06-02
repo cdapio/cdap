@@ -228,6 +228,23 @@ public class StreamClient {
   }
 
   /**
+   * Deletes a stream.
+   *
+   * @param streamId ID of the stream to truncate
+   * @throws IOException if a network error occurred
+   * @throws StreamNotFoundException if the stream with the specified name was not found
+   */
+  public void delete(String streamId) throws IOException, StreamNotFoundException, UnauthorizedException {
+    Id.Stream stream = Id.Stream.from(config.getNamespace(), streamId);
+    URL url = config.resolveNamespacedURLV3(String.format("streams/%s", streamId));
+    HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new StreamNotFoundException(stream);
+    }
+  }
+
+  /**
    * Sets the Time-to-Live (TTL) of a stream. TTL governs how long stream events are readable.
    *
    * @param streamId ID of the stream

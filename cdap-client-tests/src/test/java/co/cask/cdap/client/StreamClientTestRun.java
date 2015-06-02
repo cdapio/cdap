@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -184,6 +184,44 @@ public class StreamClientTestRun extends ClientTestBase {
   @Test
   public void testSendLargeFile() throws Exception {
     testSendFile(500000);
+  }
+
+  @Test
+  public void testDelete() throws Exception {
+    String streamId = "testDelete";
+    streamClient.create(streamId);
+
+    // Send an event and get it back
+    String msg = "Test Delete";
+    streamClient.sendEvent(streamId, msg);
+    List<StreamEvent> events = Lists.newArrayList();
+    streamClient.getEvents(streamId, 0, Long.MAX_VALUE, Integer.MAX_VALUE, events);
+    Assert.assertEquals(1, events.size());
+    Assert.assertEquals(msg, Charsets.UTF_8.decode(events.get(0).getBody()).toString());
+
+    // Delete the stream
+    streamClient.delete(streamId);
+    // Try to get info, it should throw a StreamNotFoundException
+    try {
+      streamClient.getConfig(streamId);
+      Assert.fail();
+    } catch (StreamNotFoundException e) {
+      // Expected
+    }
+
+    // Try to get events, it should throw a StreamNotFoundException
+    try {
+      streamClient.getEvents(streamId, 0, Long.MAX_VALUE, Integer.MAX_VALUE, events);
+      Assert.fail();
+    } catch (StreamNotFoundException e) {
+      // Expected
+    }
+
+    // Create the stream again, it should returns empty events
+    streamClient.create(streamId);
+    events.clear();
+    streamClient.getEvents(streamId, 0, Long.MAX_VALUE, Integer.MAX_VALUE, events);
+    Assert.assertTrue(events.isEmpty());
   }
 
 

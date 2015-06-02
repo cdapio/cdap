@@ -19,6 +19,7 @@ package co.cask.cdap.cli.commandset;
 import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.command.CreateStreamCommand;
+import co.cask.cdap.cli.command.DeleteStreamCommand;
 import co.cask.cdap.cli.command.DescribeStreamCommand;
 import co.cask.cdap.cli.command.GetStreamEventsCommand;
 import co.cask.cdap.cli.command.GetStreamStatsCommand;
@@ -54,6 +55,7 @@ public class StreamCommands extends CommandSet<Command> implements Categorized {
         .add(injector.getInstance(SetStreamNotificationThresholdCommand.class))
         .add(injector.getInstance(SetStreamPropertiesCommand.class))
         .add(injector.getInstance(TruncateStreamCommand.class))
+        .add(injector.getInstance(DeleteStreamCommand.class))
         .add(injector.getInstance(SendStreamEventCommand.class))
         .add(injector.getInstance(LoadStreamCommand.class))
         .add(injector.getInstance(GetStreamStatsCommand.class))
