@@ -43,15 +43,8 @@ angular.module(PKG.name + '.feature.adapters')
         'jms': 'icon-jms'
       };
 
-      var pluginName = plugin.toLowerCase(),
-          icons = Object.keys(iconMap),
-          icon = 'fa-plug';
-      for(var i=0; i<icons.length; i++) {
-        if (pluginName.indexOf(icons[i]) !== -1) {
-          icon = iconMap[icons[i]];
-          break;
-        }
-      }
+      var pluginName = plugin.toLowerCase();
+      var icon = iconMap[pluginName] ? iconMap[pluginName]: 'fa-plug';
       return icon;
     }
 
