@@ -34,19 +34,18 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.gateway.handlers.UsageHandler;
 import co.cask.cdap.internal.app.services.AppFabricServer;
+import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
@@ -437,67 +436,50 @@ public abstract class AppFabricTestBase {
     return readResponse(response, typeToken);
   }
 
-  protected List<RunRecord> scheduleHistoryRuns(int retries, String url, int expected) throws Exception {
-    int trial = 0;
-    int workflowRuns = 0;
-    List<RunRecord> history;
-    String json;
-    HttpResponse response;
-    while (trial++ < retries) {
-      response = doGet(url);
-      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-      json = EntityUtils.toString(response.getEntity());
-      history = new Gson().fromJson(json, LIST_RUNRECORD_TYPE);
-      workflowRuns = history.size();
-      if (workflowRuns > expected) {
-        return history;
+  protected void assertRunHistory(final Id.Program program, final String status, int expected,
+                                  long timeout, TimeUnit timeoutUnit) throws Exception {
+    Tasks.waitFor(expected, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return getProgramRuns(program, status).size();
       }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    Assert.assertTrue(workflowRuns > expected);
-    return Lists.newArrayList();
+    }, timeout, timeoutUnit, 100, TimeUnit.MILLISECONDS);
   }
 
-  protected void scheduleStatusCheck(int retries, String url, String expected) throws Exception {
-    int trial = 0;
-    String status = null;
-    String json;
-    Map<String, String> output;
-    HttpResponse response;
-    while (trial++ < retries) {
-      response = doGet(url);
-      if (expected.equals("NOT_FOUND")) {
-        Assert.assertEquals(404, response.getStatusLine().getStatusCode());
-        return;
+  /**
+   * Checks the given schedule states.
+   */
+  protected void assertSchedule(final Id.Program program, final String scheduleName,
+                                boolean scheduled, long timeout, TimeUnit timeoutUnit) throws Exception {
+    Tasks.waitFor(scheduled, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        String statusURL = getVersionedAPIPath(String.format("apps/%s/schedules/%s/status",
+                                                             program.getApplicationId(), scheduleName),
+                                               Constants.Gateway.API_VERSION_3_TOKEN, program.getNamespaceId());
+        HttpResponse response = doGet(statusURL);
+        Preconditions.checkState(200 == response.getStatusLine().getStatusCode());
+        Map<String, String> result = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+                                                   MAP_STRING_STRING_TYPE);
+        return "SCHEDULED".equals(result.get("status"));
       }
-      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-      json = EntityUtils.toString(response.getEntity());
-      output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
-      status = output.get("status");
-      if (status.equals(expected)) {
-        return;
-      }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    Assert.assertEquals(expected, status);
+    }, timeout, timeoutUnit, 100, TimeUnit.MILLISECONDS);
   }
 
   protected void deleteApp(Id.Application app, int expectedResponseCode) throws Exception {
-    HttpResponse response = doDelete(String.format("/v3/namespaces/%s/apps/%s", app.getNamespaceId(), app.getId()));
+    HttpResponse response = doDelete(getVersionedAPIPath("apps/" + app.getId(), app.getNamespaceId()));
     Assert.assertEquals(expectedResponseCode, response.getStatusLine().getStatusCode());
   }
 
-  protected void deleteApplication(int retries, String deleteUrl, int expectedReturnCode) throws Exception {
-    int trial = 0;
-    HttpResponse response = null;
-    while (trial++ < retries) {
-      response = doDelete(deleteUrl);
-      if (200 == response.getStatusLine().getStatusCode()) {
-        return;
+  protected void deleteApp(final Id.Application app, int expectedResponseCode,
+                           long timeout, TimeUnit timeoutUnit) throws Exception {
+    Tasks.waitFor(expectedResponseCode, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        HttpResponse response = doDelete(getVersionedAPIPath("apps/" + app.getId(), app.getNamespaceId()));
+        return response.getStatusLine().getStatusCode();
       }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    Assert.assertEquals(expectedReturnCode, response.getStatusLine().getStatusCode());
+    }, timeout, timeoutUnit, 100, TimeUnit.MILLISECONDS);
   }
 
   /**

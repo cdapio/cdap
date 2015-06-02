@@ -41,7 +41,7 @@ public class FlowStreamIntegrationTestRun extends TestFrameworkTestBase {
       s1.send(String.valueOf(i));
     }
 
-    applicationManager.startFlow("StreamTestFlow");
+    applicationManager.getFlowManager("StreamTestFlow").start();
     RuntimeMetrics flowletMetrics1 = RuntimeStats.getFlowletMetrics("TestFlowStreamIntegrationApp",
                                                                     "StreamTestFlow", "StreamReader");
     flowletMetrics1.waitForProcessed(1, 10, TimeUnit.SECONDS);

@@ -56,6 +56,7 @@ import org.apache.commons.cli.ParseException;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.ConnectException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -143,7 +144,7 @@ public class CLIMain {
         } else if (e instanceof InvalidCommandException) {
           InvalidCommandException ex = (InvalidCommandException) e;
           output.printf("Invalid command '%s'. Enter 'help' for a list of commands\n", ex.getInput());
-        } else if (e instanceof DisconnectedException) {
+        } else if (e instanceof DisconnectedException || e instanceof ConnectException) {
           cli.getReader().setPrompt("cdap (DISCONNECTED)> ");
         } else {
           output.println("Error: " + e.getMessage());
@@ -178,6 +179,8 @@ public class CLIMain {
       } catch (Exception e) {
         if (options.isDebug()) {
           e.printStackTrace(cliConfig.getOutput());
+        } else {
+          cliConfig.getOutput().println(e.getMessage());
         }
       }
     }

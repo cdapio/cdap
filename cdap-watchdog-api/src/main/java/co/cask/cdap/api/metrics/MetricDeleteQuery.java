@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 /**

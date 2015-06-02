@@ -158,6 +158,7 @@
         </exclusion>
       </exclusions>
     </dependency>
+    <!-- End for JMS Source -->
     <!-- Start for Kafka Source -->
     <dependency>
       <groupId>org.apache.twill</groupId>

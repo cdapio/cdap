@@ -53,5 +53,7 @@ public class MonitorClientTestRun extends ClientTestBase {
     SystemServiceLiveInfo systemServiceLiveInfo = monitorClient.getSystemServiceLiveInfo(someService);
     int systemServiceInstances = monitorClient.getSystemServiceInstances(someService);
     monitorClient.setSystemServiceInstances(someService, 1);
+
+    Assert.assertEquals(true, monitorClient.allSystemServicesOk());
   }
 }

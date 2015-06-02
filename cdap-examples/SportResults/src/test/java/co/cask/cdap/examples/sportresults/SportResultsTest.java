@@ -59,7 +59,7 @@ public class SportResultsTest extends TestBase {
 
     // deploy the application and start the upload service
     ApplicationManager appManager = deployApplication(SportResults.class);
-    ServiceManager serviceManager = appManager.startService("UploadService");
+    ServiceManager serviceManager = appManager.getServiceManager("UploadService").start();
     serviceManager.waitForStatus(true);
 
     // upload a few dummy results
@@ -69,7 +69,8 @@ public class SportResultsTest extends TestBase {
     uploadResults(url, "critters", 2014, CRITTERS_2014);
 
     // start a map/reduce that counts all seasons for the fantasy league
-    MapReduceManager mrManager = appManager.startMapReduce("ScoreCounter", ImmutableMap.of("league", "fantasy"));
+    MapReduceManager mrManager =
+      appManager.getMapReduceManager("ScoreCounter").start(ImmutableMap.of("league", "fantasy"));
     mrManager.waitForFinish(5, TimeUnit.MINUTES); // should be much faster, though
 
     // validate the output by reading directly from the file set

@@ -25,20 +25,17 @@ angular.module(PKG.name + '.services')
      * @return {promise} resolved with the response from server
      */
     MyPersistentStorage.prototype.set = function (key, value) {
-      var deferred = $q.defer();
 
       myHelpers.deepSet(this.data, key, value);
 
-      data.request(
+      return data.request(
         {
           method: 'PUT',
           _cdapPath: this.endpoint,
           body: this.data
-        },
-        deferred.resolve
+        }
       );
 
-      return deferred.promise;
     };
 
 

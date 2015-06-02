@@ -17,6 +17,7 @@
 package co.cask.cdap.test.internal;
 
 import co.cask.cdap.api.metrics.RuntimeMetrics;
+import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.FlowManager;
@@ -27,7 +28,7 @@ import com.google.common.base.Throwables;
 /**
  * A default implementation of {@link co.cask.cdap.test.FlowManager}.
  */
-public class DefaultFlowManager extends AbstractProgramManager implements FlowManager {
+public class DefaultFlowManager extends AbstractProgramManager<FlowManager> implements FlowManager {
   private final AppFabricClient appFabricClient;
 
   public DefaultFlowManager(Id.Program programId, AppFabricClient appFabricClient,

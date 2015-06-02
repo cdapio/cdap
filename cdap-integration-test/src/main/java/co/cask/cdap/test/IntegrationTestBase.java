@@ -16,12 +16,12 @@
 
 package co.cask.cdap.test;
 
-import co.cask.cdap.StandaloneContainer;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.MetaClient;
+import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ClientConfig;
@@ -30,11 +30,11 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
-import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.StreamDetail;
@@ -42,17 +42,15 @@ import co.cask.cdap.security.authentication.client.AccessToken;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.io.Files;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
@@ -68,92 +66,64 @@ import javax.annotation.Nullable;
  */
 public class IntegrationTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(IntegrationTestBase.class);
-
-  /**
-   * If empty, start our own CDAP standalone instance for testing.
-   * If not empty, use the provided remote CDAP instance for testing.
-   */
-  private static final String INSTANCE_URI = System.getProperty("instanceUri", "");
-
-  /**
-   * CDAP access token for making requests to secure CDAP instances.
-   * Can be obtained via the CDAP authentication server.
-   */
-  private static final String ACCESS_TOKEN = System.getProperty("accessToken", "");
-
-  private static File tempDir;
-  private static LocalLocationFactory locationFactory;
-
-  @BeforeClass
-  public static void beforeClass() {
-    tempDir = Files.createTempDir();
-    locationFactory = new LocalLocationFactory(tempDir);
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    try {
-      DirUtils.deleteDirectoryContents(tempDir);
-    } catch (IOException e) {
-      LOG.warn("Failed to delete temp directory: " + tempDir.getAbsolutePath(), e);
-    }
-
-  }
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   @Before
   public void setUp() throws Exception {
-    if (INSTANCE_URI.isEmpty()) {
-      StandaloneContainer.start();
-    }
-
-    assertNoApps();
-    assertNoUserDatasets();
-    // TODO: check metrics, streams, etc.
-
-    // TODO: check no streams once streams can be deleted instead of truncating all streams
-    StreamClient streamClient = getStreamClient();
-    List<StreamDetail> streamRecords = streamClient.list();
-    if (streamRecords.size() > 0) {
-      for (StreamDetail streamRecord : streamRecords) {
-        try {
-          streamClient.truncate(streamRecord.getName());
-        } catch (Exception e) {
-          Assert.fail("All existing streams must be truncated" +
-                      " - failed to truncate stream '" + streamRecord.getName() + "'");
-        }
-      }
-    }
+    assertIsClear();
   }
 
   @After
   public void tearDown() throws Exception {
     getTestManager().clear();
+    assertIsClear();
+  }
+
+  protected TestManager getTestManager() {
+    try {
+      return new IntegrationTestManager(getClientConfig(), new LocalLocationFactory(TEMP_FOLDER.newFolder()));
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * If empty, start our own CDAP standalone instance for testing.
+   * If not empty, use the provided remote CDAP instance for testing.
+   */
+  protected String getInstanceURI() {
+    return System.getProperty("instanceUri", "");
+  }
+
+  /**
+   * CDAP access token for making requests to secure CDAP instances.
+   * Can be obtained via the CDAP authentication server.
+   */
+  protected String getAccessToken() {
+    return System.getProperty("accessToken", "");
+  }
+
+  private void assertIsClear() throws Exception {
+    // only namespace existing should be 'default'
+    NamespaceClient namespaceClient = new NamespaceClient(getClientConfig());
+    List<NamespaceMeta> list = namespaceClient.list();
+    Assert.assertEquals(1, list.size());
+    Assert.assertEquals(Constants.DEFAULT_NAMESPACE_META, list.get(0));
+
     assertNoApps();
     assertNoUserDatasets();
-    // TODO: check metrics, streams, etc.
-
-    if (INSTANCE_URI.isEmpty()) {
-      StandaloneContainer.stop();
-    }
+    assertNoStreams();
+    // TODO: check metrics, etc.
   }
 
-  protected static TestManager getTestManager() {
-    return new IntegrationTestManager(getClientConfig(), locationFactory);
-  }
-
-  protected static ClientConfig getClientConfig() {
+  protected ClientConfig getClientConfig() {
     ClientConfig.Builder builder = new ClientConfig.Builder();
-    if (INSTANCE_URI.isEmpty()) {
-      builder.setConnectionConfig(InstanceURIParser.DEFAULT.parse(
-        StandaloneContainer.DEFAULT_CONNECTION_URI.toString()));
-    } else {
-      builder.setConnectionConfig(InstanceURIParser.DEFAULT.parse(
-        URI.create(INSTANCE_URI).toString()));
-    }
+    builder.setConnectionConfig(InstanceURIParser.DEFAULT.parse(
+      URI.create(getInstanceURI()).toString()));
 
-    if (!ACCESS_TOKEN.isEmpty()) {
-      builder.setAccessToken(new AccessToken(ACCESS_TOKEN, 0L, null));
+    if (!getAccessToken().isEmpty()) {
+      builder.setAccessToken(new AccessToken(getAccessToken(), 0L, null));
     }
 
     builder.setDefaultConnectTimeout(120000);
@@ -250,8 +220,18 @@ public class IntegrationTestBase {
       applicationIds.add(applicationRecord.getName());
     }
 
-    Assert.assertEquals("Must have no deployed apps, but found the following apps: "
-                        + Joiner.on(", ").join(applicationIds), 0, applicationRecords.size());
+    Assert.assertTrue("Must have no deployed apps, but found the following apps: "
+                        + Joiner.on(", ").join(applicationIds), applicationRecords.isEmpty());
+  }
+
+  private void assertNoStreams() throws Exception {
+    List<StreamDetail> streams = getStreamClient().list();
+    List<String> streamNames = Lists.newArrayList();
+    for (StreamDetail stream : streams) {
+      streamNames.add(stream.getName());
+    }
+    Assert.assertTrue("Must have no streams, but found the following streams: "
+                        + Joiner.on(", ").join(streamNames), streamNames.isEmpty());
   }
 
   private void verifyProgramNames(List<String> expected, List<ProgramRecord> actual) {

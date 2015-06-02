@@ -13,8 +13,8 @@ angular.module(PKG.name+'.services')
 .provider('mySocket', function () {
 
   this.prefix = '/_sock';
-
-  this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope, SockJS, $log, MY_CONFIG, myCdapUrl, EventPipe) {
+  
+  this.$get = function (MYSOCKET_EVENT, $rootScope, SockJS, $log, myCdapUrl, EventPipe) {
 
     var self = this,
         socket = null,
@@ -81,10 +81,7 @@ angular.module(PKG.name+'.services')
     }
 
     function doSend(obj) {
-      var msg = angular.extend({
-            user: myAuth.currentUser || null
-          }, obj),
-
+      var msg = obj,
           r = obj.resource;
 
       if(r) {
@@ -103,12 +100,6 @@ angular.module(PKG.name+'.services')
 
         if (!r.method) {
           msg.resource.method = 'GET';
-        }
-
-        if(MY_CONFIG.securityEnabled) {
-          msg.resource.headers = angular.extend(r.headers || {}, {
-            authorization: 'Bearer ' + myAuth.currentUser.token
-          });
         }
 
         $log.log('[mySocket] →', msg.action, r.method, r.url);

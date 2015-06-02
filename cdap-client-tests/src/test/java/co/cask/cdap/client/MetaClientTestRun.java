@@ -17,7 +17,9 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.proto.ConfigEntry;
 import co.cask.cdap.proto.Version;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
@@ -27,6 +29,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Test for {@link MetaClient}.
@@ -42,5 +45,19 @@ public class MetaClientTestRun extends ClientTestBase {
     Version version = metaClient.getVersion();
     String expectedVersion = Resources.toString(Resources.getResource("VERSION"), Charsets.UTF_8).trim();
     Assert.assertEquals(expectedVersion, version.getVersion());
+
+    // check a key that we know exists, to ensure that we retrieved the configurations
+    Map<String, ConfigEntry> cdapConfig = metaClient.getCDAPConfig();
+    ConfigEntry configEntry = cdapConfig.get(Constants.Dangerous.UNRECOVERABLE_RESET);
+    Assert.assertNotNull(configEntry);
+    Assert.assertEquals(Constants.Dangerous.UNRECOVERABLE_RESET, configEntry.getName());
+    Assert.assertNotNull(configEntry.getValue());
+
+    Map<String, ConfigEntry> hadoopConfig = metaClient.getHadoopConfig();
+    configEntry = hadoopConfig.get("hadoop.tmp.dir");
+    Assert.assertNotNull(configEntry);
+    Assert.assertEquals("hadoop.tmp.dir", configEntry.getName());
+    Assert.assertNotNull(configEntry.getValue());
+
   }
 }

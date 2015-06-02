@@ -24,7 +24,6 @@ import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.io.LongWritable;
 
-import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**

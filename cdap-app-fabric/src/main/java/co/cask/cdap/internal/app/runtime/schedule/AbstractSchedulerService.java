@@ -221,14 +221,14 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   @Override
   public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
     throws NotFoundException, SchedulerException {
-    Scheduler scheduler = getSchedulerForSchedule(program, programType, scheduleName);
+    Scheduler scheduler = getSchedulerForSchedule(program, scheduleName);
     scheduler.suspendSchedule(program, programType, scheduleName);
   }
 
   @Override
   public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
     throws NotFoundException, SchedulerException {
-    Scheduler scheduler = getSchedulerForSchedule(program, programType, scheduleName);
+    Scheduler scheduler = getSchedulerForSchedule(program, scheduleName);
     if (!isStarted(scheduler) && isLazyStart()) {
       lazyStart(scheduler);
     }
@@ -244,14 +244,14 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   @Override
   public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
                              Map<String, String> properties) throws NotFoundException, SchedulerException {
-    Scheduler scheduler = getSchedulerForSchedule(program, programType, schedule.getName());
+    Scheduler scheduler = getSchedulerForSchedule(program, schedule.getName());
     scheduler.updateSchedule(program, programType, schedule, properties);
   }
 
   @Override
   public void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
     throws NotFoundException, SchedulerException {
-    Scheduler scheduler = getSchedulerForSchedule(program, programType, scheduleName);
+    Scheduler scheduler = getSchedulerForSchedule(program, scheduleName);
     scheduler.deleteSchedule(program, programType, scheduleName);
   }
 
@@ -283,7 +283,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName)
     throws SchedulerException {
     try {
-      Scheduler scheduler = getSchedulerForSchedule(program, programType, scheduleName);
+      Scheduler scheduler = getSchedulerForSchedule(program, scheduleName);
       return scheduler.scheduleState(program, programType, scheduleName);
     } catch (NotFoundException e) {
       return ScheduleState.NOT_FOUND;
@@ -299,8 +299,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
                          programType.name(), program.getId());
   }
 
-  private Scheduler getSchedulerForSchedule(Id.Program program, SchedulableProgramType programType,
-                                            String scheduleName) throws NotFoundException {
+  private Scheduler getSchedulerForSchedule(Id.Program program, String scheduleName) throws NotFoundException {
     ApplicationSpecification appSpec = store.getApplication(program.getApplication());
     if (appSpec == null) {
       throw new ApplicationNotFoundException(program.getApplication());

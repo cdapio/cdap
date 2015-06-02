@@ -16,13 +16,11 @@
 
 package co.cask.cdap.cli;
 
-import co.cask.cdap.StandaloneContainer;
-import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.StandaloneTester;
 import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.CsvTableRenderer;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
@@ -32,23 +30,20 @@ import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.app.FakeSpark;
 import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.app.PrefixedEchoHandler;
-import co.cask.cdap.client.app.TemplateApp;
+import co.cask.cdap.client.config.AuthenticatedConnectionConfig;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.DatasetTypeNotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
-import co.cask.cdap.test.standalone.StandaloneTestBase;
 import co.cask.common.cli.CLI;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -61,13 +56,14 @@ import com.google.gson.Gson;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,32 +72,29 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
  * Test for {@link CLIMain}.
  */
 @Category(XSlowTests.class)
-public class CLIMainTest extends StandaloneTestBase {
+public class CLIMainTest {
+
+  @ClassRule
+  public static final StandaloneTester STANDALONE = new StandaloneTester();
+
+  @ClassRule
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   private static final Logger LOG = LoggerFactory.getLogger(CLIMainTest.class);
   private static final Gson GSON = new Gson();
 
   private static final String PREFIX = "123ff1_";
-  private static final boolean START_LOCAL_STANDALONE = true;
-
-  private static final int PORT = 11000;
-  private static final String HOSTNAME = StandaloneContainer.HOSTNAME;
-  private static final URI CONNECTION = URI.create("http://" + HOSTNAME + ":" + PORT);
 
   private static ProgramClient programClient;
-  private static AdapterClient adapterClient;
   private static ClientConfig clientConfig;
   private static CLIConfig cliConfig;
   private static CLIMain cliMain;
@@ -109,29 +102,18 @@ public class CLIMainTest extends StandaloneTestBase {
 
   @BeforeClass
   public static void setUpClass() throws Exception {
-    if (START_LOCAL_STANDALONE) {
-      File adapterDir = TMP_FOLDER.newFolder("adapter");
-      configuration = CConfiguration.create();
-      configuration.set(Constants.Router.ROUTER_PORT, Integer.toString(CONNECTION.getPort()));
-      configuration.set(Constants.Router.ADDRESS, HOSTNAME);
-      configuration.set(Constants.AppFabric.APP_TEMPLATE_DIR, adapterDir.getAbsolutePath());
-      setupAdapters(adapterDir);
 
-      StandaloneTestBase.setUpClass();
-    }
-
-    ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(CONNECTION.toString());
+    ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(STANDALONE.getBaseURI().toString());
     clientConfig = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
     clientConfig.setAllTimeouts(60000);
     cliConfig = new CLIConfig(clientConfig, System.out, new CsvTableRenderer());
     LaunchOptions launchOptions = new LaunchOptions(LaunchOptions.DEFAULT.getUri(), true, true, false);
     cliMain = new CLIMain(launchOptions, cliConfig);
     programClient = new ProgramClient(cliConfig.getClientConfig());
-    adapterClient = new AdapterClient(cliConfig.getClientConfig());
 
     cli = cliMain.getCLI();
 
-    testCommandOutputContains(cli, "connect " + CONNECTION.toString(), "Successfully connected");
+    testCommandOutputContains(cli, "connect " + STANDALONE.getBaseURI(), "Successfully connected");
     testCommandOutputNotContains(cli, "list apps", FakeApp.NAME);
 
     File appJarFile = createAppJarFile(FakeApp.class);
@@ -144,16 +126,6 @@ public class CLIMainTest extends StandaloneTestBase {
   @AfterClass
   public static void tearDownClass() throws Exception {
     testCommandOutputContains(cli, "delete app " + FakeApp.NAME, "Successfully deleted app");
-
-    if (START_LOCAL_STANDALONE) {
-      StandaloneTestBase.tearDownClass();
-    }
-  }
-
-  @After
-  @Override
-  public void tearDownStandalone() throws Exception {
-    // NO-OP
   }
 
   @Before
@@ -164,7 +136,7 @@ public class CLIMainTest extends StandaloneTestBase {
   @Test
   public void testConnect() throws Exception {
     testCommandOutputContains(cli, "connect fakehost", "could not be reached");
-    testCommandOutputContains(cli, "connect " + CONNECTION.toString(), "Successfully connected");
+    testCommandOutputContains(cli, "connect " + STANDALONE.getBaseURI(), "Successfully connected");
   }
 
   @Test
@@ -173,6 +145,23 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "list dataset instances", FakeApp.DS_NAME);
     testCommandOutputContains(cli, "list streams", FakeApp.STREAM_NAME);
     testCommandOutputContains(cli, "list flows", FakeApp.FLOWS.get(0));
+  }
+
+  @Test
+  public void testPrompt() throws Exception {
+    String prompt = cliMain.getPrompt(cliConfig.getClientConfig());
+    Assert.assertFalse(prompt.contains("@"));
+    Assert.assertTrue(prompt.contains(STANDALONE.getBaseURI().getHost()));
+    Assert.assertTrue(prompt.contains(cliConfig.getCurrentNamespace().getId()));
+
+    ConnectionConfig oldConnectionConfig = clientConfig.getConnectionConfig();
+    ConnectionConfig authConnectionConfig = new AuthenticatedConnectionConfig(oldConnectionConfig, "test-username");
+    cliConfig.setConnectionConfig(authConnectionConfig);
+    prompt = cliMain.getPrompt(cliConfig.getClientConfig());
+    Assert.assertTrue(prompt.contains("test-username@"));
+    Assert.assertTrue(prompt.contains(STANDALONE.getBaseURI().getHost()));
+    Assert.assertTrue(prompt.contains(cliConfig.getCurrentNamespace().getId()));
+    cliConfig.setConnectionConfig(oldConnectionConfig);
   }
 
   @Test
@@ -214,14 +203,11 @@ public class CLIMainTest extends StandaloneTestBase {
                               "Not a file");
 
     // Generate a file to send
-    BufferedWriter writer = Files.newWriter(file, Charsets.UTF_8);
-    try {
+    try (BufferedWriter writer = Files.newWriter(file, Charsets.UTF_8)) {
       for (int i = 0; i < 10; i++) {
         writer.write(String.format("%s, Event %s", i, i));
         writer.newLine();
       }
-    } finally {
-      writer.close();
     }
     testCommandOutputContains(cli, "load stream " + streamId + " " + file.getAbsolutePath(),
                               "Successfully sent stream event to stream");
@@ -344,7 +330,7 @@ public class CLIMainTest extends StandaloneTestBase {
     propMap.put("key", "newinstance");
     propMap.put("k1", "v1");
     testCommandOutputContains(cli, "delete preferences instance", "successfully");
-    testCommandOutputContains(cli, String.format("set preferences instance 'key=newinstance k1=v1'"),
+    testCommandOutputContains(cli, "set preferences instance 'key=newinstance k1=v1'",
                               "successfully");
     testPreferencesOutput(cli, "get preferences instance", propMap);
     testPreferencesOutput(cli, "get resolved preferences instance", propMap);
@@ -359,7 +345,7 @@ public class CLIMainTest extends StandaloneTestBase {
                               "successfully");
     propMap.clear();
     testPreferencesOutput(cli, String.format("get preferences app %s", FakeApp.NAME), propMap);
-    testPreferencesOutput(cli, String.format("get preferences namespace"), propMap);
+    testPreferencesOutput(cli, "get preferences namespace", propMap);
     testCommandOutputContains(cli, "get preferences app invalidapp", "not found");
 
     File file = new File(TMP_FOLDER.newFolder(), "prefFile.txt");
@@ -450,32 +436,6 @@ public class CLIMainTest extends StandaloneTestBase {
     // TODO: uncomment when fixed - this makes build hang since it requires confirmation from user
 //    command = String.format("delete namespace %s", name);
 //    testCommandOutputContains(cli, command, String.format("Namespace '%s' deleted successfully.", name));
-  }
-
-  private static void setupAdapters(File adapterDir) throws IOException {
-    setupAdapter(adapterDir, TemplateApp.class, "dummyAdapter");
-  }
-
-  private static void setupAdapter(File adapterDir, Class<?> clz, String adapterType) throws IOException {
-    Attributes attributes = new Attributes();
-    attributes.put(ManifestFields.MAIN_CLASS, clz.getName());
-    attributes.put(ManifestFields.MANIFEST_VERSION, "1.0");
-    attributes.putValue("CDAP-Source-Type", "STREAM");
-    attributes.putValue("CDAP-Sink-Type", "DATASET");
-    attributes.putValue("CDAP-Adapter-Type", adapterType);
-    attributes.putValue("CDAP-Adapter-Program-Type", ProgramType.WORKFLOW.toString());
-
-    Manifest manifest = new Manifest();
-    manifest.getMainAttributes().putAll(attributes);
-
-    File tempDir = TMP_FOLDER.newFolder();
-    try {
-      Location adapterJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(tempDir), clz, manifest);
-      File destination =  new File(String.format("%s/%s", adapterDir.getAbsolutePath(), adapterJar.getName()));
-      Files.copy(Locations.newInputSupplier(adapterJar), destination);
-    } finally {
-      DirUtils.deleteDirectoryContents(tempDir);
-    }
   }
 
   private static File createAppJarFile(Class<?> cls) throws IOException {

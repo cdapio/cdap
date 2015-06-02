@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * Workflow manager interface for managing the workflow and its schedules
  */
-public interface WorkflowManager {
+public interface WorkflowManager extends ProgramManager<WorkflowManager> {
 
   /**
    * Get the list of schedules of the workflow

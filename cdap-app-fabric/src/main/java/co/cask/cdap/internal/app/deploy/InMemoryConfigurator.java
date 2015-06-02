@@ -27,7 +27,6 @@ import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;

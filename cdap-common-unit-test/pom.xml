@@ -30,4 +30,13 @@
   <name>CDAP Build Common</name>
   <packaging>jar</packaging>
 
+  <dependencies>
+    <!-- JUnit dependency on compile scope. This module should only be used in test scope only -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>compile</scope>
+    </dependency>
+  </dependencies>
+
 </project>

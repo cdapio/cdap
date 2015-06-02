@@ -84,27 +84,19 @@
 
 </div>
 
-<div class="row" ng-controller="WidgetColCtrl" ng-if="!unknownBoard">
-  <div ng-class="{'col-md-6': currentBoard.numColumn === 2, 'col-md-4': currentBoard.numColumn === 3, 'col-md-3': currentBoard.numColumn === 4 }"
-       ng-repeat="column in currentBoard.columns"
-       ng-model="column"
-       as-sortable="dragdrop"
-       is-disabled="!currentBoard.draggable">
-
-    <div class="panel"
-      ng-class="wdgt.getClassName($last)"
-      ng-repeat="wdgt in column"
-      as-sortable-item>
-
-      <div class="panel-heading"
-        ng-include="'/assets/features/dashboard/templates/partials/wdgt-head.html'" ng-controller="DropdownCtrl"
-        as-sortable-item-handle></div>
-
-      <div class="panel-body"
-        ng-include="wdgt.getPartial()"
-        ></div>
-
-    </div>
+<div ng-if="!unknownBoard">
+  <div gridster="gridsterOpts">
+    <ul>
+      <li gridster-item="wdgt"
+          ng-repeat="wdgt in currentBoard.columns">
+        <div class="panel panel-default widget" style="margin:0;">
+          <div class="panel-heading"
+               ng-include="'/assets/features/dashboard/templates/partials/wdgt-head.html'" ng-controller="DropdownCtrl">
+          </div>
+          <div class="panel-body" ng-include="wdgt.getPartial()"></div>
+        </div>
+      </li>
+    </ul>
   </div>
 
 </div>

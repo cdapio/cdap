@@ -1,7 +1,5 @@
 angular.module(PKG.name + '.feature.explore')
-  .controller('GlobalExploreController', function ($scope, MyDataSource, $state, myHelpers, EventPipe) {
-
-    var dataSrc = new MyDataSource($scope);
+  .controller('GlobalExploreController', function ($scope, $state, EventPipe, myExploreApi) {
 
     $scope.activeTab = 0;
 
@@ -12,18 +10,23 @@ angular.module(PKG.name + '.feature.explore')
 
     $scope.dataList = []; // combined datasets and streams
 
-    dataSrc.request({
-      _cdapNsPath: '/data/explore/tables'
-    }).then(function(res) {
-      angular.forEach(res, function(v) {
-        var split = v.table.split('_');
-        v.type = split[0];
-        v.name = split[1];
-      });
+    var params = {
+      namespace: $state.params.namespace,
+      scope: $scope
+    };
 
-      $scope.dataList = res;
-      $scope.selectTable(res[0]);
-    });
+    myExploreApi.list(params)
+      .$promise
+      .then(function (res) {
+        angular.forEach(res, function(v) {
+          var split = v.table.split('_');
+          v.type = split[0];
+          v.name = split[1];
+        });
+
+        $scope.dataList = res;
+        $scope.selectTable(res[0]);
+      });
 
     EventPipe.on('explore.newQuery', function() {
       if ($scope.activePanel.indexOf(1) === -1) {
@@ -36,12 +39,14 @@ angular.module(PKG.name + '.feature.explore')
       $scope.type = data.type;
       $scope.name = data.name;
 
+      params.table = data.table;
+
       // Fetching info of the table
-      dataSrc.request({
-        _cdapNsPath: '/data/explore/tables/' + data.table + '/info'
-      }).then(function (res) {
-        $scope.selectedInfo = res;
-      });
+      myExploreApi.getInfo(params)
+        .$promise
+        .then(function (res) {
+          $scope.selectedInfo = res;
+        });
 
     };
 

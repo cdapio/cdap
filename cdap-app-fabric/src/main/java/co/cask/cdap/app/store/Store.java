@@ -19,7 +19,6 @@ package co.cask.cdap.app.store;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -28,7 +27,6 @@ import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Predicate;
@@ -61,11 +59,10 @@ public interface Store {
    * Loads a given program.
    *
    * @param program id of the program
-   * @param type of program
    * @return An instance of {@link co.cask.cdap.app.program.DefaultProgram} if found.
    * @throws IOException
    */
-  Program loadProgram(Id.Program program, ProgramType type) throws IOException;
+  Program loadProgram(Id.Program program) throws IOException;
 
   /**
    * Logs start of program run.
@@ -328,18 +325,16 @@ public interface Store {
   /**
    * Deletes a schedules from a particular program
    * @param program defines program from which a schedule is being deleted
-   * @param programType defines the type of the program
    * @param scheduleName the name of the schedule to be removed from the program
    */
-  void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName);
+  void deleteSchedule(Id.Program program, String scheduleName);
 
   /**
    * Check if a program exists.
    * @param id id of program.
-   * @param type type of program.
    * @return true if the program exists, false otherwise.
    */
-  boolean programExists(Id.Program id, ProgramType type);
+  boolean programExists(Id.Program id);
 
   /**
    * Creates a new namespace.

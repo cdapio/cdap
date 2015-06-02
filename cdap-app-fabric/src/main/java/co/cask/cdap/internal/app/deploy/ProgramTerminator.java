@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.deploy;
 
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 
 /**
  * Interface that is responsible to stopping programs. Used while stop programs that are being deleted during
@@ -28,10 +27,8 @@ public interface ProgramTerminator {
   /**
    * Method to implement for stopping the programs.
    *
-   * @param id         Account id.
    * @param programId  Program id.
-   * @param type       Program Type.
    */
-  void stop (Id.Namespace id, Id.Program programId, ProgramType type) throws Exception;
+  void stop(Id.Program programId) throws Exception;
 
 }

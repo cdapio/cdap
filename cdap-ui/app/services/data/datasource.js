@@ -33,8 +33,8 @@ angular.module(PKG.name+'.services')
 
    */
 
-  .factory('MyDataSource', function ($state, $log, $rootScope, caskWindowManager, mySocket,
-    MYSOCKET_EVENT, $q, $filter) {
+  .factory('MyDataSource', function ($log, $rootScope, caskWindowManager, mySocket,
+    MYSOCKET_EVENT, $q, $filter, myCdapUrl, MyPromise) {
 
     var instances = {}; // keyed by scopeid
 
@@ -51,9 +51,27 @@ angular.module(PKG.name+'.services')
      * the node backend.
      */
     function _pollStart (resource) {
+      var re = {};
+      if (!resource.url) {
+        re = resource;
+      }else {
+        re = {
+          url: resource.url,
+          id: resource.id,
+          json: resource.json,
+          method: resource.method
+        };
+        if (resource.interval) {
+          re.interval = resource.interval;
+        }
+        if (resource.body) {
+          re.body = resource.body;
+        }
+      }
+
       mySocket.send({
         action: 'poll-start',
-        resource: resource
+        resource: re
       });
     }
 
@@ -62,20 +80,24 @@ angular.module(PKG.name+'.services')
      * the node backend.
      */
     function _pollStop (resource) {
+      var re = {};
+      if (!resource.url) {
+        re = resource;
+      }else {
+        re = {
+          url: resource.url,
+          id: resource.id,
+          json: resource.json,
+          method: resource.method
+        };
+      }
+
       mySocket.send({
         action: 'poll-stop',
-        resource: resource
+        resource: re
       });
     }
 
-    $rootScope.$on(MYSOCKET_EVENT.reconnected, function () {
-      $log.log('[DataSource] reconnected, reloading...');
-
-      // https://github.com/angular-ui/ui-router/issues/582
-      $state.transitionTo($state.current, $state.$current.params,
-        { reload: true, inherit: true, notify: true }
-      );
-    });
 
     function DataSource (scope) {
       scope = scope || $rootScope.$new();
@@ -87,26 +109,44 @@ angular.module(PKG.name+'.services')
         // Reuse the same instance if already created.
         return instances[id];
       }
+
+      if (!(this instanceof DataSource)) {
+        return new DataSource(scope);
+      }
       instances[id] = self;
 
       this.bindings = [];
 
       scope.$on(MYSOCKET_EVENT.message, function (event, data) {
+
         if(data.statusCode>299 || data.warning) {
           angular.forEach(self.bindings, function (b) {
-            if(b.resource.id === data.resource.id) {
-              if(b.errorCallback) {
-                scope.$apply(b.errorCallback.bind(null, data));
+            if (b.resource.id === data.resource.id) {
+              if (b.errorCallback) {
+                $rootScope.$apply(b.errorCallback.bind(null, data.response));
+              } else if (b.reject) {
+                $rootScope.$apply(b.reject.bind(null, {data: data.response}));
               }
             }
           });
           return; // errors are handled at $rootScope level
         }
-        angular.forEach(self.bindings, function (b) {
-          if(b.resource.id === data.resource.id) {
-            scope.$apply(b.callback.bind(null, data.response));
+        // Not using angular.forEach for performance reasons.
+        for (var i=0; i<self.bindings.length; i++) {
+          var b = self.bindings[i];
+          if (b.resource.id === data.resource.id) {
+            if (angular.isFunction(b.callback)) {
+              data.response = data.response || {};
+              data.response.__pollId__ = b.resource.id;
+              scope.$apply(b.callback.bind(null, data.response));
+            } else if (b && b.resolve) {
+              // https://github.com/angular/angular.js/wiki/When-to-use-$scope.$apply%28%29
+              scope.$apply(b.resolve.bind(null, {data: data.response, id: b.resource.id}));
+              return;
+            }
           }
-        });
+        }
+
       });
 
       scope.$on('$destroy', function () {
@@ -136,30 +176,61 @@ angular.module(PKG.name+'.services')
      * Start polling of a resource when in scope.
      */
     DataSource.prototype.poll = function (resource, cb, errorCb) {
+      var self = this;
       var id = generateUUID();
-      resource.id = id;
-      this.bindings.push({
-        poll: true,
-        resource: resource,
-        id: id,
-        callback: cb,
-        errorCallback: errorCb
-      });
+      var generatedResource = {};
+      var promise = new MyPromise(function(resolve, reject) {
 
-      this.scope.$on('$destroy', function () {
-        _pollStop(resource);
-      });
+        generatedResource = {
+          json: resource.json,
+          id: id,
+          interval: resource.interval,
+          body: resource.body,
+          method: resource.method || 'GET'
+        };
 
-      _pollStart(resource);
-      return id;
+        if (!resource.url) {
+          generatedResource.url = buildUrl(myCdapUrl.constructUrl(resource), resource.params || {});
+        } else {
+          generatedResource.url = buildUrl(resource.url, resource.params || {});
+        }
+
+        self.bindings.push({
+          poll: true,
+          resource: generatedResource,
+          callback: cb,
+          errorCallback: errorCb,
+          resolve: resolve,
+          reject: reject
+        });
+
+        self.scope.$on('$destroy', function () {
+          _pollStop(generatedResource);
+        });
+
+        _pollStart(generatedResource);
+      }, true);
+
+      if (!resource.$isResource) {
+        promise = promise.then(function(res) {
+          var id = res.id;
+          res = res.data;
+          res.__pollId__ = id;
+          return $q.when(res);
+        });
+      }
+      promise.__pollId__ = id;
+      return promise;
     };
 
     /**
-     * Stop polling of a resource when requested or when out of scope.
+     * Stop polling of a resource when requested.
+     * (when scope is destroyed Line 196 takes care of deleting the polling resource)
      */
-    DataSource.prototype.stopPoll = function(id) {
+    DataSource.prototype.stopPoll = function(resourceId) {
       var filterFilter = $filter('filter');
-      var match = filterFilter(this.bindings, {id: id});
+      var id = resourceId;
+      var match = filterFilter(this.bindings, { 'resource': {id: id} });
 
       if (match.length) {
         _pollStop(match[0].resource);
@@ -199,30 +270,97 @@ angular.module(PKG.name+'.services')
      * the node backend.
      */
     DataSource.prototype.request = function (resource, cb) {
-      var deferred = $q.defer();
+      var self = this;
 
-      var id = generateUUID();
-      resource.id = id;
-      this.bindings.push({
-        resource: resource,
-        id: id,
-        callback: function (result) {
-          /*jshint -W030 */
-          cb && cb.apply(this, arguments);
-          deferred.resolve(result);
-        },
-        errorCallback: function (err) {
-          deferred.reject(err);
+      var promise = new MyPromise(function(resolve, reject) {
+        var id = generateUUID();
+
+        var generatedResource = {
+          id: id,
+          json: resource.json,
+          method: resource.method
+        };
+        if (resource.body) {
+          generatedResource.body = resource.body;
         }
-      });
 
-      mySocket.send({
-        action: 'request',
-        resource: resource
-      });
+        if (resource.data) {
+          generatedResource.body = resource.data;
+        }
 
-      return deferred.promise;
+        if (!resource.url) {
+          generatedResource.url = buildUrl(myCdapUrl.constructUrl(resource), resource.params || {});
+        } else {
+          generatedResource.url = buildUrl(resource.url, resource.params || {});
+        }
+
+        self.bindings.push({
+          resource: generatedResource,
+          callback: cb,
+          resolve: resolve,
+          reject: reject
+        });
+
+        mySocket.send({
+          action: 'request',
+          resource: generatedResource
+        });
+      }, false);
+
+      if (!resource.$isResource) {
+        promise = promise.then(function(res) {
+          res = res.data;
+          return $q.when(res);
+        });
+      }
+
+      return promise;
     };
 
     return DataSource;
   });
+
+// Lifted from $http as a helper method to parse '@params' in the url for $resource.
+function buildUrl(url, params) {
+  if (!params) return url;
+  var parts = [];
+
+  function forEachSorted(obj, iterator, context) {
+    var keys = Object.keys(params).sort();
+    for (var i = 0; i < keys.length; i++) {
+      iterator.call(context, obj[keys[i]], keys[i]);
+    }
+    return keys;
+  }
+
+  function encodeUriQuery(val, pctEncodeSpaces) {
+    return encodeURIComponent(val).
+           replace(/%40/gi, '@').
+           replace(/%3A/gi, ':').
+           replace(/%24/g, '$').
+           replace(/%2C/gi, ',').
+           replace(/%3B/gi, ';').
+           replace(/%20/g, (pctEncodeSpaces ? '%20' : '+'));
+  }
+
+  forEachSorted(params, function(value, key) {
+    if (value === null || angular.isUndefined(value)) return;
+    if (!angular.isArray(value)) value = [value];
+
+    angular.forEach(value, function(v) {
+      if (angular.isObject(v)) {
+        if (angular.isDate(v)) {
+          v = v.toISOString();
+        } else {
+          v = toJson(v);
+        }
+      }
+      parts.push(encodeUriQuery(key) + '=' +
+                 encodeUriQuery(v));
+    });
+  });
+  if (parts.length > 0) {
+    url += ((url.indexOf('?') == -1) ? '?' : '&') + parts.join('&');
+  }
+  return url;
+}

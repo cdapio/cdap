@@ -21,7 +21,7 @@ package co.cask.cdap.proto;
  */
 public class NotRunningProgramLiveInfo extends ProgramLiveInfo {
 
-  public NotRunningProgramLiveInfo(Id.Program programId, ProgramType type) {
-    super(programId, type, null);
+  public NotRunningProgramLiveInfo(Id.Program programId) {
+    super(programId, null);
   }
 }

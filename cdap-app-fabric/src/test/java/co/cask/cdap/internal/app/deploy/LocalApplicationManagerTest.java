@@ -18,13 +18,13 @@ package co.cask.cdap.internal.app.deploy;
 
 import co.cask.cdap.ToyApp;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.internal.AppFabricTestHelper;
+import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.test.internal.AppFabricTestHelper;
-import co.cask.cdap.test.internal.DefaultId;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;

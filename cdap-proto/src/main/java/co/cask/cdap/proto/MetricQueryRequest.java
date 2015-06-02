@@ -17,7 +17,6 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.api.dataset.lib.cube.Interpolator;
-import com.google.common.collect.Maps;
 
 import java.util.List;
 import java.util.Map;

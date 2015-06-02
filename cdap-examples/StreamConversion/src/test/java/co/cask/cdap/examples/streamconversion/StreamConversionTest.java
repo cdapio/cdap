@@ -61,7 +61,7 @@ public class StreamConversionTest extends TestBase {
 
     // run the mapreduce
     MapReduceManager mapReduceManager =
-      appManager.startMapReduce("StreamConversionMapReduce", RuntimeArguments.NO_ARGUMENTS);
+      appManager.getMapReduceManager("StreamConversionMapReduce").start(RuntimeArguments.NO_ARGUMENTS);
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
     // verify the single partition in the file set

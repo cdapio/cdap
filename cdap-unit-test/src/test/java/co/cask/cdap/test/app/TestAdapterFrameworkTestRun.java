@@ -32,7 +32,6 @@ import co.cask.cdap.test.template.plugin.FlipPlugin;
 import co.cask.cdap.test.template.plugin.SquarePlugin;
 import com.google.gson.Gson;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 

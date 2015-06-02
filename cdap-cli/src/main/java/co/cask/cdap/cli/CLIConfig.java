@@ -22,6 +22,7 @@ import co.cask.cdap.cli.util.table.AltStyleTableRenderer;
 import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.cli.util.table.TableRendererConfig;
 import co.cask.cdap.client.MetaClient;
+import co.cask.cdap.client.config.AuthenticatedConnectionConfig;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.exception.UnauthorizedException;
@@ -31,16 +32,18 @@ import co.cask.cdap.security.authentication.client.AuthenticationClient;
 import co.cask.cdap.security.authentication.client.Credential;
 import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import jline.TerminalFactory;
 import jline.console.ConsoleReader;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,6 +62,7 @@ public class CLIConfig implements TableRendererConfig {
   private static final int DEFAULT_LINE_WIDTH = 80;
   private static final int MIN_LINE_WIDTH = 40;
 
+  private static final Gson GSON = new Gson();
   private final ClientConfig clientConfig;
   private final FilePathResolver resolver;
   private final String version;
@@ -76,6 +80,27 @@ public class CLIConfig implements TableRendererConfig {
       }
     }
   };
+
+  /*
+   * Wrapper class for reading/writing of username + accessToken
+   */
+  private class UserAccessToken {
+    private final AccessToken accessToken;
+    private final String username;
+
+    public UserAccessToken(AccessToken accessToken, String username) {
+      this.accessToken = accessToken;
+      this.username = username;
+    }
+
+    public AccessToken getAccessToken() {
+      return accessToken;
+    }
+
+    public String getUsername() {
+      return username;
+    }
+  }
 
   /**
    * @param clientConfig client configuration
@@ -116,7 +141,12 @@ public class CLIConfig implements TableRendererConfig {
 
   public void tryConnect(ConnectionConfig connectionConfig, PrintStream output, boolean debug) throws Exception {
     try {
-      AccessToken accessToken = acquireAccessToken(clientConfig, connectionConfig, output, debug);
+      UserAccessToken userToken = acquireAccessToken(clientConfig, connectionConfig, output, debug);
+      AccessToken accessToken = null;
+      if (userToken != null) {
+        accessToken = userToken.getAccessToken();
+        connectionConfig = new AuthenticatedConnectionConfig(connectionConfig, userToken.getUsername());
+      }
       checkConnection(clientConfig, connectionConfig, accessToken);
       setConnectionConfig(connectionConfig);
       output.printf("Successfully connected CDAP instance at %s", connectionConfig.getURI().toString());
@@ -128,8 +158,8 @@ public class CLIConfig implements TableRendererConfig {
   }
 
   public void updateAccessToken(PrintStream output) throws IOException {
-    AccessToken newAccessToken = getNewAccessToken(clientConfig.getConnectionConfig(), output, false);
-    clientConfig.setAccessToken(newAccessToken);
+    UserAccessToken newAccessToken = getNewAccessToken(clientConfig.getConnectionConfig(), output, false);
+    clientConfig.setAccessToken(newAccessToken.getAccessToken());
   }
 
   private void checkConnection(ClientConfig baseClientConfig,
@@ -147,17 +177,21 @@ public class CLIConfig implements TableRendererConfig {
     return getAuthenticationClient(connectionInfo).isAuthEnabled();
   }
 
-  private AccessToken acquireAccessToken(ClientConfig clientConfig, ConnectionConfig connectionInfo,
-                                         PrintStream output, boolean debug) throws IOException {
+  @Nullable
+  private UserAccessToken acquireAccessToken(ClientConfig clientConfig, ConnectionConfig connectionInfo,
+                                             PrintStream output, boolean debug) throws IOException {
 
     if (!isAuthenticationEnabled(connectionInfo)) {
       return null;
     }
 
     try {
-      AccessToken savedAccessToken = getSavedAccessToken(connectionInfo.getHostname());
-      checkConnection(clientConfig, connectionInfo, savedAccessToken);
-      return savedAccessToken;
+      UserAccessToken savedToken = getSavedAccessToken(connectionInfo.getHostname());
+      if (savedToken == null) {
+        throw new UnauthorizedException();
+      }
+      checkConnection(clientConfig, connectionInfo, savedToken.getAccessToken());
+      return savedToken;
     } catch (UnauthorizedException ignored) {
       // access token invalid - fall through to try acquiring token manually
     }
@@ -165,14 +199,15 @@ public class CLIConfig implements TableRendererConfig {
     return getNewAccessToken(connectionInfo, output, debug);
   }
 
-  private AccessToken getNewAccessToken(ConnectionConfig connectionInfo, PrintStream output,
-                                        boolean debug) throws IOException {
-
+  private UserAccessToken getNewAccessToken(ConnectionConfig connectionInfo,
+                                            PrintStream output, boolean debug) throws IOException {
     AuthenticationClient authenticationClient = getAuthenticationClient(connectionInfo);
 
     Properties properties = new Properties();
     properties.put(BasicAuthenticationClient.VERIFY_SSL_CERT_PROP_NAME,
                    String.valueOf(clientConfig.isVerifySSLCert()));
+
+    String username = "";
 
     // obtain new access token via manual user input
     output.printf("Authentication is enabled in the CDAP instance: %s.\n", connectionInfo.getHostname());
@@ -186,18 +221,21 @@ public class CLIConfig implements TableRendererConfig {
         credentialValue = reader.readLine(prompt);
       }
       properties.put(credential.getName(), credentialValue);
+      if (credential.getName().contains("username")) {
+        username = credentialValue;
+      }
     }
 
     authenticationClient.configure(properties);
     AccessToken accessToken = authenticationClient.getAccessToken();
-
+    UserAccessToken userToken = new UserAccessToken(accessToken, username);
     if (accessToken != null) {
-      if (saveAccessToken(accessToken, connectionInfo.getHostname()) && debug) {
+      if (saveAccessToken(userToken, connectionInfo.getHostname()) && debug) {
         output.printf("Saved access token to %s\n", getAccessTokenFile(connectionInfo.getHostname()).getAbsolutePath());
       }
     }
 
-    return accessToken;
+    return userToken;
   }
 
   private AuthenticationClient getAuthenticationClient(ConnectionConfig connectionInfo) {
@@ -206,26 +244,23 @@ public class CLIConfig implements TableRendererConfig {
                                            connectionInfo.isSSLEnabled());
     return authenticationClient;
   }
-
-  private AccessToken getSavedAccessToken(String hostname) {
+  @Nullable
+  private UserAccessToken getSavedAccessToken(String hostname) {
     File file = getAccessTokenFile(hostname);
-    if (file.exists() && file.canRead()) {
-      try {
-        String tokenString = Joiner.on("").join(Files.readLines(file, Charsets.UTF_8));
-        return new AccessToken(tokenString, -1L, null);
-      } catch (IOException ignored) {
-        // Fall through
-      }
+    try (BufferedReader reader = Files.newReader(file, Charsets.UTF_8)) {
+      return GSON.fromJson(reader, UserAccessToken.class);
+    } catch (IOException | JsonSyntaxException ignored) {
+      // Fall through
     }
+
     return null;
   }
 
-  private boolean saveAccessToken(AccessToken accessToken, String hostname) {
+  private boolean saveAccessToken(UserAccessToken accessToken, String hostname) {
     File accessTokenFile = getAccessTokenFile(hostname);
 
     try {
-      accessTokenFile.createNewFile();
-      Files.write(accessToken.getValue(), accessTokenFile, Charsets.UTF_8);
+      Files.write(GSON.toJson(accessToken), accessTokenFile, Charsets.UTF_8);
       return true;
     } catch (IOException ignored) {
       // NO-OP

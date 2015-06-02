@@ -40,7 +40,7 @@ public class WebAnalyticsTest extends TestBase {
     // Deploy the Application
     ApplicationManager appManager = deployApplication(WebAnalytics.class);
     // Start the Flow
-    appManager.startFlow("WebAnalyticsFlow");
+    appManager.getFlowManager("WebAnalyticsFlow").start();
 
     // Send events to the Stream
     StreamManager streamManager = getStreamManager("log");

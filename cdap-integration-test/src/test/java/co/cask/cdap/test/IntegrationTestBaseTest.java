@@ -16,6 +16,8 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.StandaloneTester;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 /**
@@ -23,10 +25,18 @@ import org.junit.Test;
  */
 public class IntegrationTestBaseTest extends IntegrationTestBase {
 
+  @ClassRule
+  public static final StandaloneTester STANDALONE = new StandaloneTester();
+
+  @Override
+  protected String getInstanceURI() {
+    return STANDALONE.getBaseURI().toString();
+  }
+
   @Test
   public void testFlowManager() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestApplication.class);
-    FlowManager flowManager = applicationManager.startFlow(TestFlow.NAME);
+    FlowManager flowManager = applicationManager.getFlowManager(TestFlow.NAME).start();
     flowManager.stop();
   }
 

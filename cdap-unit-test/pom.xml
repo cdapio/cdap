@@ -54,6 +54,12 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-app-fabric</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-api</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -89,6 +95,12 @@
     <dependency>
       <groupId>org.apache.twill</groupId>
       <artifactId>twill-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-common-unit-test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

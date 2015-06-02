@@ -28,9 +28,8 @@ module.controller('myFlowController', function($scope) {
   $scope.instanceMap = {};
   $scope.labelMap = {};
 
-  $scope.$watch('model', update);
-  $scope.$watchCollection('model.metrics', update);
-  $scope.$watchCollection('model.instances', update);
+  $scope.$watch('model', update, true);
+
 });
 
 module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamService) {
@@ -274,8 +273,21 @@ module.directive('myWorkflowGraph', function ($filter) {
             { x: -xPoint, y: yPoint}
           ];
           var shapeSvg = parent.insert('polygon', ':first-child')
-            .attr('points', points.map(function(p) { return p.x + ',' + p.y; }).join(' '))
-            .attr('class', 'workflow-shapes foundation-shape job-svg');
+              .attr('points', points.map(function(p) { return p.x + ',' + p.y; }).join(' '));
+
+          switch(scope.model.current[node.elem.__data__]) {
+            case 'COMPLETED':
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg completed');
+              break;
+            case 'RUNNING':
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg running');
+              break;
+            case 'FAILED':
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg failed');
+              break;
+            default:
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg');
+          }
 
           node.intersect = function(point) {
             return dagreD3.intersect.polygon(node, points, point);
@@ -327,10 +339,10 @@ module.directive('myWorkflowGraph', function ($filter) {
         shapes.conditional = function(parent, bbox, node) {
           var points = [
             // draw a diamond
-            { x:  0, y: -defaultRadius },
-            { x: -defaultRadius, y:  0 },
-            { x:  0, y:  defaultRadius },
-            { x:  defaultRadius, y:  0 }
+            { x:  0, y: -defaultRadius*3/4 },
+            { x: -defaultRadius*3/4, y:  0 },
+            { x:  0, y:  defaultRadius*3/4 },
+            { x:  defaultRadius*3/4, y:  0 }
           ],
           shapeSvg = parent.insert('polygon', ':first-child')
             .attr('points', points.map(function(p) { return p.x + ',' + p.y; }).join(' '))

@@ -275,11 +275,13 @@ These are the available commands:
    ``delete dataset instance <dataset-name>``,"Deletes a Dataset."
    ``delete dataset module <dataset-module>``,"Deletes a Dataset module."
    ``deploy dataset module <new-dataset-module> <module-jar-file> <module-jar-classname>``,"Deploys a Dataset module."
+   ``describe dataset instance <dataset-name>``,"Shows information about a Dataset."
    ``describe dataset module <dataset-module>``,"Shows information about a Dataset module."
    ``describe dataset type <dataset-type>``,"Shows information about a Dataset type."
    ``list dataset instances``,"Lists all Datasets."
    ``list dataset modules``,"Lists all Dataset modules."
    ``list dataset types``,"Lists all Dataset types."
+   ``set dataset instance properties <dataset-name> <dataset-properties>``,"Sets properties for a Dataset."
    ``truncate dataset instance <dataset-name>``,"Truncates a Dataset."
    **Explore**
    ``execute <query> [<timeout>]``,"Executes a Query with optional <timeout> in minutes (default is no timeout)."

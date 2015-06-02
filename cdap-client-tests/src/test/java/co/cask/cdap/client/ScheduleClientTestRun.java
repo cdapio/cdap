@@ -16,7 +16,6 @@
 
 package co.cask.cdap.client;
 
-import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeWorkflow;

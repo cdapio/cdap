@@ -17,6 +17,7 @@
 package co.cask.cdap.test.internal;
 
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.AbstractProgramManager;
@@ -29,7 +30,7 @@ import java.util.List;
 /**
  * A default implementation of {@link FlowManager}.
  */
-public class DefaultWorkflowManager extends AbstractProgramManager implements WorkflowManager {
+public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManager> implements WorkflowManager {
   private final AppFabricClient appFabricClient;
 
   public DefaultWorkflowManager(Id.Program programId, AppFabricClient appFabricClient,

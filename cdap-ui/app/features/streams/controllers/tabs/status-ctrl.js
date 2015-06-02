@@ -1,11 +1,16 @@
 angular.module(PKG.name + '.feature.streams')
-  .controller('StreamsDetailStatusController', function($scope, $state, myHelpers, MyDataSource) {
+  .controller('StreamsDetailStatusController', function($scope, $state, myHelpers, MyDataSource, myStreamApi) {
     var dataSrc = new MyDataSource($scope);
-    dataSrc.request({
-      _cdapNsPath: '/streams/' + $state.params.streamId
-    })
-      .then(function(stream) {
-        $scope.schema = stream.format.schema.fields;
+
+    var params = {
+      namespace: $state.params.namespace,
+      streamId: $state.params.streamId,
+      scope: $scope
+    };
+    myStreamApi.get(params)
+      .$promise
+      .then(function (res) {
+        $scope.schema = res.format.schema.fields;
       });
 
     [

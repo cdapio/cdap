@@ -31,7 +31,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-import com.google.inject.Inject;
 
 import java.io.PrintStream;
 import java.util.Collections;

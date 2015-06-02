@@ -1,18 +1,21 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('StreamPropertiesController', function($scope, MyDataSource, $stateParams, myHelpers, $alert) {
+  .controller('StreamPropertiesController', function($scope, $stateParams, myHelpers, $alert, myStreamApi) {
 
-    var dataSrc = new MyDataSource($scope);
     $scope.avro = {};
 
-    var basePath = '/namespaces/' + $stateParams.nsadmin + '/streams/' + $stateParams.streamId;
     $scope.formatOptions = ['avro', 'clf', 'csv', 'grok', 'syslog', 'text', 'tsv', 'stream'];
 
+    var requestParams = {
+      namespace: $stateParams.nsadmin,
+      streamId: $stateParams.streamId,
+      scope: $scope
+    };
+
     $scope.reload = function () {
-      dataSrc
-        .request({
-          _cdapPath: basePath
-        })
-        .then(function(res) {
+
+      myStreamApi.get(requestParams)
+        .$promise
+        .then(function (res) {
           $scope.ttl = myHelpers.objectQuery(res, 'ttl');
           $scope.format = myHelpers.objectQuery(res, 'format', 'name');
           $scope.threshold = myHelpers.objectQuery(res, 'notification.threshold.mb');
@@ -51,7 +54,6 @@ angular.module(PKG.name + '.feature.admin')
               value: v
             });
           });
-
         });
     };
 
@@ -104,12 +106,8 @@ angular.module(PKG.name + '.feature.admin')
         "notification.threshold.mb": $scope.threshold
       };
 
-      dataSrc
-        .request({
-          _cdapPath: basePath + '/properties',
-          method: 'PUT',
-          body: params
-        })
+      myStreamApi.setProperties(requestParams, params)
+        .$promise
         .then(function() {
           $scope.reload();
 
@@ -119,7 +117,7 @@ angular.module(PKG.name + '.feature.admin')
             content: 'Stream properties have been successfully saved!'
           });
 
-        }, function(err) {
+        }, function (err) {
           $scope.error = err;
         });
     };

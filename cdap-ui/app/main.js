@@ -23,7 +23,7 @@ angular
         PKG.name+'.config',
         'ngAnimate',
         'ngSanitize',
-        // 'ngResource',
+        'ngResource',
         'ngStorage',
         'ui.router',
         'cask-angular-window-manager',
@@ -64,7 +64,8 @@ angular
       'ncy-angular-breadcrumb',
       'angularMoment',
       'ui.select',
-      'ui.ace'
+      'ui.ace',
+      'gridster'
 
     ]).name,
 
@@ -86,6 +87,73 @@ angular
 
   .config(function ($locationProvider) {
     $locationProvider.html5Mode(true);
+  })
+
+  .config(function($provide) {
+
+    $provide.decorator('$http', function($delegate, MyDataSource) {
+
+
+      function newHttp(config) {
+        var promise,
+            myDataSrc;
+        if (config.options) {
+          // Can/Should make use of my<whatever>Api service in another service.
+          // So in that case the service will not have a scope. Hence the check
+          if (config.params && config.params.scope) {
+            myDataSrc = MyDataSource(config.params.scope);
+            delete config.params.scope;
+          } else {
+            myDataSrc = MyDataSource();
+          }
+          // We can use MyDataSource directly or through $resource'y way.
+          // If we use $resource'y way then we need to make some changes to
+          // the data we get for $resource.
+          config.$isResource = true;
+          switch(config.options.type) {
+            case 'POLL':
+              promise = myDataSrc.poll(config);
+              break;
+            case 'REQUEST':
+              promise = myDataSrc.request(config);
+              break;
+            case 'POLL-STOP':
+              promise = myDataSrc.pollStop(config);
+              break;
+          }
+          return promise;
+        } else {
+          return $delegate(config);
+        }
+      }
+
+      newHttp.get = $delegate.get;
+      newHttp.delete = $delegate.delete;
+      newHttp.save = $delegate.save;
+      newHttp.query = $delegate.query;
+      newHttp.remove = $delegate.remove;
+      return newHttp;
+    });
+  })
+
+  .config(function($httpProvider) {
+    $httpProvider.interceptors.push(function($rootScope) {
+      return {
+        'request': function(config) {
+          if ($rootScope.currentUser) {
+            angular.extend({
+              user: $rootScope.currentUser || null,
+              headers: {
+                // Accessing stuff from $rootScope is bad. This is done as to resolve circular dependency.
+                // $http <- myAuthPromise <- myAuth <- $http <- $templateFactory <- $view <- $state
+                authorization: ($rootScope.currentUser.token ? 'Bearer ' + $rootScope.currentUser.token: null)
+              }
+            }, config);
+          }
+          return config;
+        }
+      }
+    });
   })
 
   .config(function ($alertProvider) {
@@ -149,7 +217,7 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT) {
+  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT) {
 
     var activeThemeClass = caskTheme.getClassName();
 
@@ -177,6 +245,15 @@ angular
       classes.push(activeThemeClass);
 
       $scope.bodyClass = classes.join(' ');
+    });
+
+    $rootScope.$on(MYSOCKET_EVENT.reconnected, function () {
+      $log.log('[DataSource] reconnected, reloading...');
+
+      // https://github.com/angular-ui/ui-router/issues/582
+      $state.transitionTo($state.current, $state.$current.params,
+        { reload: true, inherit: true, notify: true }
+      );
     });
 
     console.timeEnd(PKG.name);

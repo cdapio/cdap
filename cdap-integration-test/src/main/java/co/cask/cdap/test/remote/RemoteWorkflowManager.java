@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * Remote implementation of {@link WorkflowManager}.
  */
-public class RemoteWorkflowManager extends AbstractProgramManager implements WorkflowManager {
+public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManager> implements WorkflowManager {
   private final ScheduleClient scheduleClient;
   private final ProgramClient programClient;
 

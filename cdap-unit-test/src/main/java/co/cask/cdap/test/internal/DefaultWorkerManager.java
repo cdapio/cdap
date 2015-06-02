@@ -16,18 +16,17 @@
 
 package co.cask.cdap.test.internal;
 
+import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.WorkerManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * A default implementation of {@link WorkerManager}
  */
-public class DefaultWorkerManager extends AbstractProgramManager implements WorkerManager {
+public class DefaultWorkerManager extends AbstractProgramManager<WorkerManager> implements WorkerManager {
   private final AppFabricClient appFabricClient;
 
   public DefaultWorkerManager(Id.Program programId,
