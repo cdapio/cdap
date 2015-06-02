@@ -813,7 +813,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }
   }
 
-
   @Category(XSlowTests.class)
   @Test
   public void testByteCodeClassLoader() throws Exception {

@@ -81,8 +81,7 @@ public abstract class StreamHandlerTest extends GatewayTestBase {
   @Test
   public void testStreamCreate() throws Exception {
     // Try to get info on a non-existent stream
-    HttpURLConnection urlConn = openURL(createStreamInfoURL("test_stream1"),
-                                        HttpMethod.GET);
+    HttpURLConnection urlConn = openURL(createStreamInfoURL("test_stream1"), HttpMethod.GET);
 
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
@@ -106,8 +105,7 @@ public abstract class StreamHandlerTest extends GatewayTestBase {
   @Test
   public void testSimpleStreamEnqueue() throws Exception {
     // Create new stream.
-    HttpURLConnection urlConn = openURL(createURL("streams/test_stream_enqueue"),
-                                        HttpMethod.PUT);
+    HttpURLConnection urlConn = openURL(createURL("streams/test_stream_enqueue"), HttpMethod.PUT);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
 
@@ -122,8 +120,7 @@ public abstract class StreamHandlerTest extends GatewayTestBase {
     }
 
     // Fetch 10 entries
-    urlConn = openURL(createURL("streams/test_stream_enqueue/events?limit=10"),
-                      HttpMethod.GET);
+    urlConn = openURL(createURL("streams/test_stream_enqueue/events?limit=10"), HttpMethod.GET);
     List<StreamEvent> events = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
                                                         Charsets.UTF_8),
                                              new TypeToken<List<StreamEvent>>() { }.getType());
@@ -157,8 +154,7 @@ public abstract class StreamHandlerTest extends GatewayTestBase {
     urlConn.disconnect();
 
     // test the config ttl by calling info
-    urlConn = openURL(createStreamInfoURL("stream_info"),
-                      HttpMethod.GET);
+    urlConn = openURL(createStreamInfoURL("stream_info"), HttpMethod.GET);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     StreamProperties actual = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
                                                         Charsets.UTF_8), StreamProperties.class);
@@ -184,8 +180,7 @@ public abstract class StreamHandlerTest extends GatewayTestBase {
     urlConn.disconnect();
 
     // test the config ttl by calling info
-    urlConn = openURL(createStreamInfoURL("stream_defaults"),
-                      HttpMethod.GET);
+    urlConn = openURL(createStreamInfoURL("stream_defaults"), HttpMethod.GET);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     StreamProperties actual = GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()),
                                                        Charsets.UTF_8), StreamProperties.class);
