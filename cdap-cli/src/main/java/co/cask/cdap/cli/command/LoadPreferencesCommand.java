@@ -86,8 +86,9 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public String getPattern() {
-    return String.format("load preferences %s <%s> <%s> [<%s>]", type.getName(), ArgumentName.LOCAL_FILE_PATH,
-                         ArgumentName.CONTENT_TYPE, type.getArgumentName());
+    return this.determinePattern("load");
+//    return String.format("load preferences %s <%s> <%s> [<%s>]", type.getName(), ArgumentName.LOCAL_FILE_PATH,
+//                         ArgumentName.CONTENT_TYPE, type.getArgumentName());
   }
 
   @Override

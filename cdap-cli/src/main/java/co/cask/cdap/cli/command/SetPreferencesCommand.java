@@ -60,8 +60,9 @@ public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public String getPattern() {
-    return String.format("set preferences %s <%s> [<%s>]", type.getName(), ArgumentName.RUNTIME_ARGS,
-                         type.getArgumentName());
+    return this.determinePattern("set");
+//    return String.format("set preferences %s <%s> [<%s>]", type.getName(), ArgumentName.RUNTIME_ARGS,
+//                         type.getArgumentName());
   }
 
   @Override

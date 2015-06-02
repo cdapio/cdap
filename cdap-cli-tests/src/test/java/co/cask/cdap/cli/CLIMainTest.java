@@ -377,6 +377,14 @@ public class CLIMainTest {
     }
     testCommandOutputContains(cli, "load preferences instance " + file.getAbsolutePath() + " json", "invalid");
     testCommandOutputContains(cli, "load preferences instance " + file.getAbsolutePath() + " xml", "Unsupported");
+
+    testCommandOutputContains(cli, "set preferences namespace 'k1=v1'",
+            "successfully");
+    testCommandOutputContains(cli, "set preferences namespace 'k1=v1' name",
+            "Error: Expected format: set preferences namespace <runtime-args>");
+    testCommandOutputContains(cli, "set preferences instance 'k1=v1' name",
+            "Error: Expected format: set preferences instance <runtime-args>");
+
   }
 
   @Test
@@ -451,6 +459,9 @@ public class CLIMainTest {
       @Nullable
       @Override
       public Void apply(@Nullable String output) {
+        System.out.println("expected output here");
+        System.out.println(output);
+
         Assert.assertTrue(String.format("Expected output '%s' to contain '%s'", output, expectedOutput),
                           output != null && output.contains(expectedOutput));
         return null;
