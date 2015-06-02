@@ -17,6 +17,10 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.StandaloneTester;
+import co.cask.cdap.client.ApplicationClient;
+import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.proto.Id;
+import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -40,4 +44,21 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
     flowManager.stop();
   }
 
+  @Test
+  public void testDeployApplicationInNamespace() throws Exception {
+    Id.Namespace namespace = createNamespace("Test1");
+    ClientConfig clientConfig = new ClientConfig.Builder(getClientConfig()).build();
+    clientConfig.setNamespace(namespace);
+    ApplicationManager applicationManager = deployApplication(namespace, TestApplication.class);
+
+    // Check the default namespaces applications to see whether the application wasnt made in the default namespace
+    ClientConfig defaultClientConfig = new ClientConfig.Builder(getClientConfig()).build();
+    Assert.assertEquals(0, new ApplicationClient(defaultClientConfig).list().size());
+
+    ApplicationClient applicationClient = new ApplicationClient(clientConfig);
+    Assert.assertEquals("TestApplication", applicationClient.list().get(0).getName());
+    applicationClient.delete("TestApplication");
+    Assert.assertEquals(0, new ApplicationClient(clientConfig).list().size());
+
+  }
 }

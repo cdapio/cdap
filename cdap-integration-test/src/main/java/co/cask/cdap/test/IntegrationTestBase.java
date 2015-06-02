@@ -80,12 +80,23 @@ public class IntegrationTestBase {
     assertIsClear();
   }
 
-  protected TestManager getTestManager() {
+  protected ClientConfig createNamespacedClientConfig(ClientConfig initialClientConfig, Id.Namespace namespace) {
+    ClientConfig newClientConfig = new ClientConfig.Builder(initialClientConfig).build();
+    newClientConfig.setNamespace(namespace);
+    return newClientConfig;
+  }
+
+  protected TestManager createTestManager(Id.Namespace namespace) {
     try {
-      return new IntegrationTestManager(getClientConfig(), new LocalLocationFactory(TEMP_FOLDER.newFolder()));
+      return new IntegrationTestManager(createNamespacedClientConfig(getClientConfig(), namespace),
+                                        new LocalLocationFactory(TEMP_FOLDER.newFolder()));
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  protected TestManager getTestManager() {
+    return createTestManager(Id.Namespace.DEFAULT);
   }
 
   /**
@@ -154,10 +165,17 @@ public class IntegrationTestBase {
     return new DatasetClient(getClientConfig());
   }
 
+  protected Id.Namespace createNamespace(String name) throws Exception {
+    Id.Namespace namespace = new Id.Namespace(name);
+    NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(namespace).build();
+    getTestManager().createNamespace(namespaceMeta);
+    return namespace;
+  }
+
   protected ApplicationManager deployApplication(Id.Namespace namespace,
                                                  Class<? extends Application> applicationClz,
                                                  File...bundleEmbeddedJars) throws IOException {
-    return getTestManager().deployApplication(namespace, applicationClz, bundleEmbeddedJars);
+    return createTestManager(namespace).deployApplication(namespace, applicationClz, bundleEmbeddedJars);
   }
 
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
