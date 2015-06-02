@@ -1,5 +1,18 @@
 <div ncy-breadcrumb></div>
-<h2> All Datasets </h2>
+<div class="row">
+  <div class="col-xs-8">
+    <h2> All Datasets </h2>
+  </div>
+
+  <div class="col-xs-4">
+    <div class="input-group pull-right h2">
+      <input type="text" class="form-control" ng-model="searchText" placeholder="search...">
+      <div class="input-group-addon">
+        <i class="fa fa-search"></i>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="table-responsive">
   <table class="table table-curved" cask-sortable>
     <thead>
@@ -9,7 +22,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr ng-repeat="data in dataList | orderBy:sortable.predicate:sortable.reverse">
+      <tr ng-repeat="data in dataList | myPaginate:currentPage | filter:{ name: searchText } | orderBy:sortable.predicate:sortable.reverse">
           <td>
             <a ng-click="goToDetail(data)"
                 href="">
@@ -24,4 +37,8 @@
       </tr>
     <tbody>
   </table>
+</div>
+
+<div class="text-center">
+  <pagination total-items="dataList.length" ng-model="currentPage"></pagination>
 </div>

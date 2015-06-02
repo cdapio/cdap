@@ -2,6 +2,7 @@ angular.module(PKG.name + '.feature.data')
   .controller('CdapDataListController', function($state, $scope, MyOrderings, myStreamApi, myDatasetApi) {
     $scope.MyOrderings = MyOrderings;
     $scope.dataList = [];
+    $scope.currentPage = 1;
 
     var params = {
       namespace: $state.params.namespace,

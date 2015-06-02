@@ -11,7 +11,7 @@ angular.module(PKG.name + '.feature.admin')
         streamId: $scope.streamId,
         scope: $scope
       };
-      myStreamApi.create(params)
+      myStreamApi.create(params, {})
         .$promise
         .then(function(res) {
           $modalInstance.close(res);
