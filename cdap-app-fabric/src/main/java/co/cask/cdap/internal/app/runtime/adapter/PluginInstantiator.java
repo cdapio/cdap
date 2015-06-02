@@ -46,6 +46,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.concurrent.ExecutionException;
@@ -150,9 +151,9 @@ public class PluginInstantiator implements Closeable {
       // Create the plugin instance
       return newInstance(pluginType, field, configFieldType, config);
     } catch (NoSuchFieldException e) {
-      throw new IllegalArgumentException("Config field not found in plugin class: " + pluginClass);
+      throw new InvalidPluginConfigException("Config field not found in plugin class: " + pluginClass, e);
     } catch (IllegalAccessException e) {
-      throw new IllegalArgumentException("Failed to set plugin config field: " + pluginClass);
+      throw new InvalidPluginConfigException("Failed to set plugin config field: " + pluginClass, e);
     }
   }
 
@@ -268,9 +269,16 @@ public class PluginInstantiator implements Closeable {
         rawType = Primitives.wrap(rawType);
       }
 
-      if (Primitives.isWrapperType(rawType)) {
-        Method valueOf = rawType.getMethod("valueOf", String.class);
-        return valueOf.invoke(null, value);
+      try {
+        if (Primitives.isWrapperType(rawType)) {
+          Method valueOf = rawType.getMethod("valueOf", String.class);
+          return valueOf.invoke(null, value);
+        }
+      } catch (InvocationTargetException e) {
+        if (e.getCause() instanceof NumberFormatException) {
+          // if exception is due to wrong value for integer/double conversion
+          throw new InvalidPluginConfigException(String.format("valueOf operation on %s failed", value), e.getCause());
+        }
       }
 
       throw new UnsupportedTypeException("Only primitive and String types are supported");

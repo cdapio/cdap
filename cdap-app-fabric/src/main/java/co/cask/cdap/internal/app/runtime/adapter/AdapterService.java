@@ -614,6 +614,10 @@ public class AdapterService extends AbstractIdleService {
       if (cause instanceof IllegalArgumentException) {
         throw (IllegalArgumentException) cause;
       }
+
+      if (cause instanceof InvalidPluginConfigException) {
+        throw (InvalidPluginConfigException) cause;
+      }
       throw new RuntimeException(e);
     } catch (Exception e) {
       throw new RuntimeException(e);
