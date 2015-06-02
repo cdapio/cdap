@@ -23,11 +23,17 @@
                     <span> {{source.name}} </span>
                   </div>
 
-                  <div tooltip="{{source.description}}"
+                  <div ng-if="source.description.length < 100"
+                       class="description-overflow">
+                   {{source.description}}
+                  </div>
+
+                  <div ng-if="source.description.length > 100"
+                       tooltip="{{source.description}}"
                        tooltip-append-to-body="true"
                        class="description-overflow">
                     <span class="fa fa-info-circle"></span>
-                    {{source.description}}
+                   {{source.description}}
                   </div>
 
                 </li>
@@ -62,7 +68,14 @@
                       <span class="fa {{transform.icon}}"></span>
                       <span> {{transform.name}} </span>
                   </div>
-                  <div tooltip="{{transform.description}}"
+
+                  <div ng-if="transform.description.length < 100"
+                       class="description-overflow">
+                   {{transform.description}}
+                  </div>
+
+                  <div ng-if="transform.description.legnth > 100"
+                       tooltip="{{transform.description}}"
                        tooltip-append-to-body="true"
                        class="description-overflow">
                     <span class="fa fa-info-circle"></span>
@@ -101,7 +114,14 @@
                       <span class="fa {{sink.icon}}"></span>
                       <span> {{sink.name}} </span>
                     </div>
-                    <div tooltip="{{sink.description}}"
+
+                    <div ng-if="sink.description.length < 100"
+                         class="description-overflow">
+                      {{sink.description}}
+                    </div>
+
+                    <div ng-if="sink.description.length > 100"
+                         tooltip="{{sink.description}}"
                          tooltip-append-to-body="true"
                          class="description-overflow">
                       <span class="fa fa-info-circle"></span>
