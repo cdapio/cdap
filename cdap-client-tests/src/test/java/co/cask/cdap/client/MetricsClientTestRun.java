@@ -27,6 +27,7 @@ import co.cask.cdap.proto.MetricTagValue;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -73,6 +74,16 @@ public class MetricsClientTestRun extends ClientTestBase {
       MetricQueryResult result = metricsClient.query(
         Constants.Metrics.Name.Flow.FLOWLET_INPUT,
         MetricsTags.flowlet(programId, flowlet));
+      Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
+
+      result = metricsClient.query(
+        ImmutableList.of(Constants.Metrics.Name.Flow.FLOWLET_INPUT), ImmutableList.<String>of(),
+        MetricsTags.flowlet(programId, flowlet), ImmutableMap.of("aggregate", "true"));
+      Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
+
+      result = metricsClient.query(
+        ImmutableList.of(Constants.Metrics.Name.Flow.FLOWLET_INPUT), ImmutableList.<String>of(),
+        MetricsTags.flowlet(programId, flowlet), ImmutableMap.of("start", "now-20s", "end", "now"));
       Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
 
       List<MetricTagValue> tags = metricsClient.searchTags(MetricsTags.flowlet(programId, flowlet));
