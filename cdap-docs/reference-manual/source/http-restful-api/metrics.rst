@@ -5,9 +5,9 @@
 
 .. _http-restful-api-metrics:
 
-===========================================================
+========================
 Metrics HTTP RESTful API
-===========================================================
+========================
 
 .. highlight:: console
 
@@ -37,7 +37,7 @@ For example, the metrics context::
 
   namespace:default app:PurchaseHistory flow:PurchaseFlow
   
-is a context that identifies a Flow. It has a parent context,
+is a context that identifies a flow. It has a parent context,
 ``namespace:default app:PurchaseHistory``, which identifies the parent application.
 
 Each level of the context is described by a pair |---| composed of a tag name and a value
@@ -63,7 +63,7 @@ available metrics.
 Available Contexts
 ..................
 The context of a metric is typically enclosed into a hierarchy of contexts. For example,
-the Flowlet context is enclosed in the Flow context, which in turn is enclosed in the
+the flowlet context is enclosed in the flow context, which in turn is enclosed in the
 Application context. A metric can always be queried (and aggregated) relative to any
 enclosing context. These are the available Application contexts of CDAP:
 
@@ -73,18 +73,14 @@ enclosing context. These are the available Application contexts of CDAP:
 
    * - System Metric
      - Context
-   * - One Run of a Flowlet
+   * - One Run of a flowlet
      - ``namespace:<namespace> app:<app-id> flow:<flow-id> flowlet:<flowlet-id> run:<run-id>``
-   * - One Flowlet of a Flow
+   * - One flowlet of a flow
      - ``namespace:<namespace> app:<app-id> flow:<flow-id> flowlet:<flowlet-id>``
-   * - All Flowlets of a Flow
+   * - All flowlets of a flow
      - ``namespace:<namespace> app:<app-id> flow:<flow-id>``
-   * - All Flowlets of all Flows of an Application
+   * - All flowlets of all flows of an application
      - ``namespace:<namespace> app:<app-id> flow:*``
-   * - One worker
-     - ``namespace:<namespace> app:<app-id> worker:<worker-id>``
-   * - All workers of an Application
-     - ``namespace:<namespace> app:<app-id> workers:*``
    * - All Mappers of a MapReduce
      - ``namespace:<namespace> app:<app-id> mapreduce:<mapreduce-id> tasktype:m``
    * - All Reducers of a MapReduce
@@ -93,19 +89,23 @@ enclosing context. These are the available Application contexts of CDAP:
      - ``namespace:<namespace> app:<app-id> mapreduce:<mapreduce-id> run:<run-id>``
    * - One MapReduce
      - ``namespace:<namespace> app:<app-id> mapreduce:<mapreduce-id>``
-   * - All MapReduce of an Application
+   * - All MapReduce of an application
      - ``namespace:<namespace> app:<app-id> mapreduce:*``
-   * - One Spark Program
-     - ``namespace:<namespace> app:<app-id> spark:<spark-id>``
-   * - One Service
+   * - One service
      - ``namespace:<namespace> app:<app-id> service:<service-id>``
-   * - One Service
-     - ``namespace:<namespace> app:<app-id> service:<service-id>``
-   * - All Services of an Application
+   * - All services of an application
      - ``namespace:<namespace> app:<app-id> service:*``
-   * - All components of an Application
+   * - One Spark program
+     - ``namespace:<namespace> app:<app-id> spark:<spark-id>``
+   * - All Spark programs of an application
+     - ``namespace:<namespace> app:<app-id> spark:*``
+   * - One worker
+     - ``namespace:<namespace> app:<app-id> worker:<worker-id>``
+   * - All workers of an application
+     - ``namespace:<namespace> app:<app-id> workers:*``
+   * - All components of an application
      - ``namespace:<namespace> app:<app-id>``
-   * - All components of all Applications
+   * - All components of all applications
      - ``namespace:<namespace> app:*``
 
 Stream metrics are only available at the Stream level and the only available context is:
@@ -120,7 +120,7 @@ Stream metrics are only available at the Stream level and the only available con
      - ``namespace:<namespace> stream:<stream-id>``
 
 Dataset metrics are available at the dataset level, but they can also be queried down to the
-Flowlet, worker, Service, Mapper, or Reducer level:
+flowlet, worker, service, Mapper, or Reducer level:
 
 .. list-table::
    :header-rows: 1
@@ -128,9 +128,9 @@ Flowlet, worker, Service, Mapper, or Reducer level:
 
    * - Dataset Metric
      - Context
-   * - A single dataset in the context of a single Flowlet
+   * - A single dataset in the context of a single flowlet
      - ``namespace:<namespace> dataset:<dataset-id> app:<app-id> flow:<flow-id> flowlet:<flowlet-id>``
-   * - A single dataset in the context of a single Flow
+   * - A single dataset in the context of a single flow
      - ``namespace:<namespace> dataset:<dataset-id> app:<app-id> flow:<flow-id>``
    * - A single dataset in the context of a specific Application
      - ``namespace:<namespace> dataset:<dataset-id> app:<app-id>``
@@ -163,7 +163,7 @@ These metrics are available in a datasets context:
    * - ``system.store.writes``
      - Write operations performed
 
-These metrics are available in a Flowlet context:
+These metrics are available in a flowlet context:
 
 .. list-table::
    :header-rows: 1
@@ -176,11 +176,11 @@ These metrics are available in a Flowlet context:
    * - ``system.process.events.processed``
      - Number of events/data objects processed
    * - ``system.process.events.in``
-     - Number of events read in by the Flowlet
+     - Number of events read in by the flowlet
    * - ``system.process.events.out``
-     - Number of events emitted by the Flowlet
+     - Number of events emitted by the flowlet
    * - ``system.process.tuples.read``
-     - Number of tuples read by the Flowlet
+     - Number of tuples read by the flowlet
    * - ``system.store.bytes``
      - Number of bytes written to datasets
    * - ``system.store.ops``
@@ -206,7 +206,7 @@ Reducer context is desired, as shown above):
    * - ``system.process.entries.out``
      - Number of entries written out by the Map or Reduce phase
 
-These metrics are available in a Services context:
+These metrics are available in a services context:
 
 .. list-table::
    :header-rows: 1
@@ -215,11 +215,11 @@ These metrics are available in a Services context:
    * - Services Metric
      - Description
    * - ``system.requests.count``
-     - Number of requests made to the Service
+     - Number of requests made to the service
    * - ``system.response.successful.count``
-     - Number of successful requests completed by the Service
+     - Number of successful requests completed by the service
    * - ``system.response.server.error.count``
-     - Number of failures seen by the Service
+     - Number of failures seen by the service
 
 These metrics are available in a Spark context, where ``<spark-id>``
 depends on the Spark program being queried:
@@ -337,7 +337,7 @@ should be replaced, as it will be removed in a later version of CDAP::
      - ``[{"name":"flowlet","value":"collector"},{"name":"flowlet","value":"reader"}]``
    * - Description
      - Queries all available contexts within the *PurchaseHistory*'s *PurchaseFlow* for any run; 
-       in this case, it returns all available Flowlets.
+       in this case, it returns all available flowlets.
 
 .. _http-restful-api-metrics-search-for-metrics:
 
@@ -467,7 +467,7 @@ Query Examples
    * - Returns
      - ``{"startTime":0,"endTime":1429328212,"series":[{"metricName":"user.names.bytes","grouping":{},"data":[{"time":0,"value":8}]}]}``
    * - Description
-     - Querying the *User-defined* metric *names.bytes*, of the Flowlet *saver*, by its run-ID
+     - Querying the *User-defined* metric *names.bytes*, of the flowlet *saver*, by its run-ID
    * - 
      - 
    * - HTTP Method
@@ -475,7 +475,7 @@ Query Examples
    * - Returns
      - ``{"startTime":0,"endTime":1429475995,"series":[]}``
    * - Description
-     - Using a *User-defined* metric, *names.bytes* in a Service's Handler, called before any data entered, returning an empty series
+     - Using a *User-defined* metric, *names.bytes* in a service's Handler, called before any data entered, returning an empty series
    * - 
      - 
    * - HTTP Method
@@ -483,7 +483,7 @@ Query Examples
    * - Returns
      - ``{"startTime":0,"endTime":1429477901,"series":[{"metricName":"user.names.bytes","grouping":{},"data":[{"time":0,"value":44}]}]}``
    * - Description
-     - Using a *User-defined* metric, *names.bytes* in a Service's Handler
+     - Using a *User-defined* metric, *names.bytes* in a service's Handler
 
 
 Query Results
@@ -644,9 +644,9 @@ multiple tags for grouping by providing a list, similar to a tag combination lis
    * - ``groupBy=app``
      - Retrieves the time series for each Application
    * - ``groupBy=flowlet``
-     - Retrieves the time series for each Flowlet
+     - Retrieves the time series for each flowlet
    * - ``groupBy=app&groupBy=flow``
-     - Retrieves a time series for each App and Flow combination
+     - Retrieves a time series for each App and flow combination
 
 An example method::
 
@@ -775,7 +775,7 @@ For example, this request will retrieve the completion percentage for the map-st
 Querying by Run-ID
 ..................
 
-Each execution of an program (Flow, MapReduce, Spark, Service, worker) has an :ref:`associated 
+Each execution of an program (flow, MapReduce, Spark, service, worker) has an :ref:`associated 
 run-ID <rest-program-runs>` that uniquely identifies that program's run. We can query 
 metrics for a program by its run-ID to retrieve the metrics for a particular run. Please see 
 the :ref:`Run Records and Schedule <rest-program-runs>` on retrieving active and historical
@@ -813,8 +813,8 @@ the time of the query) something similar to::
 Query Tips
 ..........
 
-- To retrieve the number of input data objects (“events”) processed by the Flowlet named *splitter*,
-  in the Flow *CountRandom* of the example application *CountRandom*, over the last 5 seconds, you can issue an HTTP
+- To retrieve the number of input data objects (“events”) processed by the flowlet named *splitter*,
+  in the flow *CountRandom* of the example application *CountRandom*, over the last 5 seconds, you can issue an HTTP
   POST method::
 
     POST '<base-url>/metrics/query?tag=namespace:default&tag=app:CountRandom&tag=flow:CountRandom
@@ -860,17 +860,17 @@ Query Tips
   The resulting timeseries will represent aggregated values for the context specified.
   Currently, summation is used as the aggregation function.
   
-  For example, if you query for the ``system.process.events.processed`` metric for a Flow
-  |---| and thus across all Flowlets |---| since this metric was actually emitted at the
-  Flowlet level, the resulting values retrieved will be a sum across all Flowlets of the Flow.
+  For example, if you query for the ``system.process.events.processed`` metric for a flow
+  |---| and thus across all flowlets |---| since this metric was actually emitted at the
+  flowlet level, the resulting values retrieved will be a sum across all flowlets of the flow.
 
-- To see events processed by all Flowlets of a Flow in an Application, instead of querying
-  for each individual Flowlet of the Flow, you can perform a single query, using 
+- To see events processed by all flowlets of a flow in an Application, instead of querying
+  for each individual flowlet of the flow, you can perform a single query, using 
   ``groupBy=flowlet``.
 
-  For example, to request the information for each of the Flowlets of the
+  For example, to request the information for each of the flowlets of the
   *PurchaseHistory* Application, this query will return a multiple series, each grouped by
-  Flowlet and with the returned value being the number of events processed (command and
+  flowlet and with the returned value being the number of events processed (command and
   result reformatted to fit)::
 
     POST '<base-url>/metrics/query?tag=namespace:default&tag=app:PurchaseHistory
@@ -891,7 +891,7 @@ Query Tips
   using that prefix with the metric name.
 
   For example, to request the user-defined metric *names.byte* for the *HelloWorld*
-  Application's *WhoFlow* Flow::
+  Application's *WhoFlow* flow::
 
     POST '<base-url>/metrics/query?tag=namespace:default&tag=app:HelloWorld
       &tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.bytes&aggregate=true'

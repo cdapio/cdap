@@ -6,9 +6,9 @@
 
 .. _java-client-api:
 
-============================================
+===============
 Java Client API
-============================================
+===============
 
 The Cask Data Application Platform (CDAP) Java Client API provides methods for interacting
 with CDAP from Java applications.
@@ -34,15 +34,15 @@ Components
 The Java Client API allows you to interact with these CDAP components:
 
 - `ApplicationClient: <#application-client>`_ interacting with applications
-- `ProgramClient: <#program-client>`_ interacting with Flows, MapReduce Programs, User Services, workflows, and workers
+- `ProgramClient: <#program-client>`_ interacting with flows, MapReduce programs, user services, workflows, and workers
 - `StreamClient: <#stream-client>`_ interacting with Streams
 - `DatasetClient: <#dataset-client>`_ interacting with datasets
 - `DatasetModuleClient: <#dataset-module-client>`_ interacting with dataset Modules
 - `DatasetTypeClient: <#dataset-type-client>`_ interacting with dataset Types
 - `QueryClient: <#query-client>`_ querying datasets
-- `ServiceClient: <#service-client>`_ interacting with User Services
+- `ServiceClient: <#service-client>`_ interacting with user services
 - `MetricsClient: <#metrics-client>`_ interacting with Metrics
-- `MonitorClient: <#monitor-client>`_ monitoring System Services
+- `MonitorClient: <#monitor-client>`_ monitoring system services
 - `PreferencesClient: <#preferences-client>`_ interacting with Preferences
 
 Alphabetical list:
@@ -52,11 +52,11 @@ Alphabetical list:
 - `DatasetModuleClient: <#dataset-module-client>`_ interacting with dataset Modules
 - `DatasetTypeClient: <#dataset-type-client>`_ interacting with dataset Types
 - `MetricsClient: <#metrics-client>`_ interacting with Metrics
-- `MonitorClient: <#monitor-client>`_ monitoring System Services
+- `MonitorClient: <#monitor-client>`_ monitoring system services
 - `PreferencesClient: <#preferences-client>`_ interacting with Preferences
-- `ProgramClient: <#program-client>`_ interacting with Flows, MapReduce Programs, User Services, workflows, and workers
+- `ProgramClient: <#program-client>`_ interacting with flows, MapReduce Programs, user services, workflows, and workers
 - `QueryClient: <#query-client>`_ querying datasets
-- `ServiceClient: <#service-client>`_ interacting with User Services
+- `ServiceClient: <#service-client>`_ interacting with user services
 - `StreamClient: <#stream-client>`_ interacting with Streams
 
 The above lists link to the examples below for each portion of the API.
@@ -161,7 +161,7 @@ ProgramClient
   // Construct the client used to interact with CDAP
   ProgramClient programClient = new ProgramClient(clientConfig);
 
-  // Start a Service in the WordCount example
+  // Start a service in the WordCount example
   programClient.start("WordCount", ProgramType.SERVICE, "RetrieveCounts");
 
   // Fetch live information from the HelloWorld example
@@ -173,22 +173,22 @@ ProgramClient
   programClient.getProgramLogs("WordCount", ProgramType.SERVICE, "RetrieveCounts", 0,
                                Long.MAX_VALUE);
 
-  // Scale a Service in the HelloWorld example
+  // Scale a service in the HelloWorld example
   programClient.setServiceInstances("HelloWorld", "greet", 3);
 
-  // Stop a Service in the HelloWorld example
+  // Stop a service in the HelloWorld example
   programClient.stop("HelloWorld", ProgramType.SERVICE, "greet");
 
-  // Start, scale, and stop a Flow in the WordCount example
+  // Start, scale, and stop a flow in the WordCount example
   programClient.start("WordCount", ProgramType.FLOW, "WordCountFlow");
 
-  // Fetch Flow history in the WordCount example
+  // Fetch flow history in the WordCount example
   programClient.getProgramHistory("WordCount", ProgramType.FLOW, "WordCountFlow");
 
-  // Scale a Flowlet in the WordCount example
+  // Scale a flowlet in the WordCount example
   programClient.setFlowletInstances("WordCount", "WordCountFlow", "Tokenizer", 3);
 
-  // Stop a Flow in the WordCount example
+  // Stop a flow in the WordCount example
   programClient.stop("WordCount", ProgramType.FLOW, "WordCountFlow");
 
 
@@ -379,7 +379,7 @@ ServiceClient
   // Construct the client used to interact with CDAP
   ServiceClient serviceClient = new ServiceClient(clientConfig);
 
-  // Fetch Service information using the Service in the PurchaseApp example
+  // Fetch service information using the service in the PurchaseApp example
   ServiceMeta serviceMeta = serviceClient.get("PurchaseApp", "CatalogLookup");
 
 
@@ -394,7 +394,7 @@ MetricsClient
   // Construct the client used to interact with CDAP
   MetricsClient metricsClient = new MetricsClient(clientConfig);
 
-  // Fetch the total number of events that have been processed by a Flow
+  // Fetch the total number of events that have been processed by a flow
   JsonObject metric = metricsClient.getMetric("user", "/apps/HelloWorld/flows",
                                               "process.events.processed", "aggregate=true");
 
@@ -410,14 +410,14 @@ MonitorClient
   // Construct the client used to interact with CDAP
   MonitorClient monitorClient = new MonitorClient(clientConfig);
 
-  // Fetch the list of System Services
+  // Fetch the list of system services
   List<SystemServiceMeta> services = monitorClient.listSystemServices();
 
-  // Fetch status of System Transaction Service
+  // Fetch status of system transaction service
   String serviceStatus = monitorClient.getSystemServiceStatus("transaction");
 
-  // Fetch the number of instances of the System Transaction Service
+  // Fetch the number of instances of the system transaction service
   int systemServiceInstances = monitorClient.getSystemServiceInstances("transaction");
 
-  // Set the number of instances of the System Transaction Service
+  // Set the number of instances of the system transaction service
   monitorClient.setSystemServiceInstances("transaction", 1);

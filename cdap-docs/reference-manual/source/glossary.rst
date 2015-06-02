@@ -18,8 +18,8 @@ Glossary
       abstraction layer in CDAP.
 
    Stream
-      The primary means of bringing data from external systems into CDAP in realtime; an
-      ordered, time-partitioned sequences of data, usable for realtime collection and
+      The primary means of bringing data from external systems into CDAP in real time; an
+      ordered, time-partitioned sequences of data, usable for real time collection and
       consumption of data.
       
    Dataset
@@ -27,13 +27,13 @@ Glossary
       data storage with generic reusable implementations of common data patterns.
       
    Flow
-      Flows are user-implemented realtime stream processors, comprised of one or
-      more Flowlets that are wired together into a directed acyclic graph. 
+      Flows are user-implemented real time stream processors, comprised of one or
+      more flowlets that are wired together into a directed acyclic graph. 
       
    Flowlet
-      A Flowlet represents an individual processing node within a Flow. Flowlets consume
+      A flowlet represents an individual processing node within a flow. flowlets consume
       data objects from their inputs and execute custom logic on each data object, able to
-      perform data operations as well as emit data objects to the Flowlet’s outputs.
+      perform data operations as well as emit data objects to the flowlet’s outputs.
       
    MapReduce
       MapReduce is a processing model used to process data in batch. MapReduce programs can be
@@ -53,7 +53,7 @@ Glossary
 
    Service
       Services can be run in a Cask Data Application Platform (CDAP) Application to serve
-      data to external clients. Similar to Flows, Services run in containers and the
+      data to external clients. Similar to flows, Services run in containers and the
       number of running service instances can be dynamically scaled. Developers can
       implement Custom Services to interface with a legacy system and perform additional
       processing beyond the CDAP processing paradigms. Examples could include running an
@@ -182,7 +182,7 @@ Glossary
    ETL Application Template
       Also referred to as an ETL Template. A type of :term:`Application Template`,
       designed to create an :term:`ETL Adapter`. Two ETL Templates are shipped with CDAP:
-      ``ETLBatch`` and ``ETLRealtime``, for the creation of either batch or realtime
+      ``ETLBatch`` and ``ETLRealtime``, for the creation of either batch or real time
       :term:`ETL` pipelines.
   
    ETL Template

@@ -136,9 +136,9 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
    *PurchaseFlow* in the list of Programs to get to the *Flow* detail page, then click the *Start*
    button.  (this will launch additional YARN containers.)
 
-#. Once the Flow is *RUNNING*, inject data by clicking on the *purchaseStream* icon in
-   the Flow diagram.  In the dialog that pops up, type ``Tom bought 5 apples for $3`` and click
-   *Inject*.  You should see activity in the graphs and the Flowlet counters increment.
+#. Once the flow is *RUNNING*, inject data by clicking on the *purchaseStream* icon in
+   the flow diagram.  In the dialog that pops up, type ``Tom bought 5 apples for $3`` and click
+   *Inject*.  You should see activity in the graphs and the flowlet counters increment.
 
 #. Run a MapReduce program against this data by navigating back to the *PurchaseHistory* list of 
    programs, select *PurchaseHistoryBuilder*, and click the *Start* button.  This will launch an
@@ -167,7 +167,7 @@ Upgrading an Existing Version
 
 When a new compatible CDAP parcel is released, it will be available via the Parcels page in the Cloudera Manager UI.
 
-#. Stop all Flows, Services, and other Programs in all your applications.
+#. Stop all flows, Services, and other Programs in all your applications.
 
 #. Stop CDAP services.
 
@@ -179,7 +179,7 @@ When a new compatible CDAP parcel is released, it will be available via the Parc
 
 These steps will upgrade from CDAP 2.8.0 to CDAP 3.0.0. (**Note:** Apps need to be both recompiled and re-deployed.)
 
-#. Stop all Flows, Services, and other Programs in all your applications.
+#. Stop all flows, Services, and other Programs in all your applications.
 
 #. Stop CDAP services.
 

@@ -36,7 +36,7 @@ In this tutorial, we'll show how easy it is to build a web analytics application
 In particular, we'll use these CDAP components:
 
 - A **stream** for web server log collection and persistence to the file system;
-- A **flow** for realtime data analysis over collected logs; and
+- A **flow** for real time data analysis over collected logs; and
 - **SQL Queries** to explore and develop insights from the data.
 
 How It Works
@@ -52,8 +52,8 @@ Once an event is ingested into a stream, it is persisted and available for proce
 
 Data Analysis using a Flow
 --------------------------
-The Web Analytics Application uses a **flow**, the realtime data processor in CDAP,
-to produce realtime analytics from the web server logs. A **flow** contains one or more
+The Web Analytics Application uses a **flow**, the real time data processor in CDAP,
+to produce real time analytics from the web server logs. A **flow** contains one or more
 **flowlets** that are wired together into a directed acyclic graph or DAG.
 
 To keep the example simple, we only compute the total visit count for each IP visiting the site.

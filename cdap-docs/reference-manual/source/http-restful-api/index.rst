@@ -42,7 +42,7 @@ data isolation. This is an inital step towards introducing `multi-tenancy
 - :doc:`Introduction: <introduction>` conventions, converting from HTTP RESTful API v2, 
   naming restrictions, status codes, and working with CDAP Security
 - :doc:`Namespace: <namespace>` creating and managing namespaces
-- :doc:`Lifecycle: <lifecycle>` deploying and managing Applications, and managing the lifecycle of Flows,
+- :doc:`Lifecycle: <lifecycle>` deploying and managing Applications, and managing the lifecycle of flows,
   MapReduce Programs, Spark Programs, workflows, and Custom Services
 - :doc:`Configuration: <configuration>` retrieving the CDAP and HBase configurations
 - :doc:`Preferences: <preferences>` setting, retrieving, and deleting Preferences

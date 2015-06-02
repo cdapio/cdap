@@ -110,7 +110,7 @@ Data Ingestion
 - Data is ingested into CDAP using :ref:`Streams <streams>`
 - Streams are abstractions over HDFS with an HTTP endpoint
 - Data in a Stream are ordered and time-partitioned
-- CDAP supports easy exploration and processing in both realtime and batch
+- CDAP supports easy exploration and processing in both real time and batch
 - Ingest using RESTful, Flume, language-specific APIs, or Tools
 - The abstraction of Streams lets you disconnect how you ingest from how you process
 
@@ -493,7 +493,7 @@ Data Exploration: Attaching A Schema
 Advanced Data Exploration
 =========================
 - CDAP has the ability to join multiple Streams using SQL
-- Data in a Stream can be ingested in realtime or batch
+- Data in a Stream can be ingested in real time or batch
 - CDAP supports joining with other Streams using Hive SQL
 
 
@@ -1127,7 +1127,7 @@ Building Real World Applications
 **Let's see how we would build a real-world application using CDAP:**
 
 - *Wise App* performs Web analytics on access logs
-- *WiseFlow* parses and computes pageview count per IP in realtime
+- *WiseFlow* parses and computes pageview count per IP in real time
 - A MapReduce computes bounce counts: percentage of pages that *don’t* go to another page before exiting
 - Service to expose the data 
 - Unified platform for different processing paradigms
@@ -1197,7 +1197,7 @@ Building Real World Applications
           +=====================================================================+
           | type      | id                    | description                     |
           +=====================================================================+
-          | Flow      | WiseFlow              | Wise Flow                       |
+          | Flow      | WiseFlow              | Wise flow                       |
           | MapReduce | BounceCountsMapReduce | Bounce Counts MapReduce Program |
           | Service   | WiseService           |                                 |
           | workflow  | Wiseworkflow          | Wise workflow                   |
@@ -1209,7 +1209,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Start the Application's Flow (for processing events)
+     * - Start the Application's flow (for processing events)
        - 
        
   .. list-table::
@@ -1229,7 +1229,7 @@ Building Real World Applications
      * -  
        - ::
 
-          Successfully started Flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}
+          Successfully started flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}
 
 .. container:: table-block
 
@@ -1237,7 +1237,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Check the status of the Flow
+     * - Check the status of the flow
        - 
        
   .. list-table::
@@ -1641,7 +1641,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Stop the Wise Flow
+     * - Stop the Wise flow
        - 
        
   .. list-table::
@@ -1661,7 +1661,7 @@ Building Real World Applications
      * -  
        - ::
        
-          Successfully stopped Flow 'WiseFlow' of application 'Wise'
+          Successfully stopped flow 'WiseFlow' of application 'Wise'
 
 .. container:: table-block
 

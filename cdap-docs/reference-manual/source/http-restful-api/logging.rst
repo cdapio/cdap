@@ -13,7 +13,7 @@ Logging HTTP RESTful API
 
 Downloading Application Logs
 ----------------------------
-Logs emitted by a *Flow*, *MapReduce*, *Service*, or *Spark* program running in CDAP can be
+Logs emitted by a *flow*, *MapReduce*, *Service*, or *Spark* program running in CDAP can be
 downloaded with the Logging HTTP API. To do that, send an HTTP GET request::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/logs?start=<ts>&stop=<ts>
@@ -31,7 +31,7 @@ downloaded with the Logging HTTP API. To do that, send an HTTP GET request::
    * - ``<program-type>``
      - One of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
    * - ``<program-id>``
-     - Name of the program (*Flow*, *MapReduce*, *Service*, *Spark*, *workflow*) being called
+     - Name of the program (*flow*, *MapReduce*, *Service*, *Spark*, *workflow*) being called
    * - ``<ts>``
      - *Start* and *stop* times, given as seconds since the start of the Epoch.
 
@@ -44,7 +44,7 @@ downloaded with the Logging HTTP API. To do that, send an HTTP GET request::
      - ``GET <base-url>/namespaces/default/apps/WordCount/flows/WordCountFlow/``\
        ``logs?start=1382576400&stop=1382576700``
    * - Description
-     - Return the logs for all the events from the Flow *WordCountFlow* of the *WordCount*
+     - Return the logs for all the events from the flow *WordCountFlow* of the *WordCount*
        Application in the namespace *default*,
        beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
@@ -69,7 +69,7 @@ To download logs for a program run, send an HTTP GET request::
    * - ``<program-type>``
      - One of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
    * - ``<program-id>``
-     - Name of the program (*Flow*, *MapReduce*, *Service*, *Spark*, *workflow*) being called
+     - Name of the program (*flow*, *MapReduce*, *Service*, *Spark*, *workflow*) being called
    * - ``<run-id>``
      - Run id of the program run
    * - ``<ts>``
@@ -84,7 +84,7 @@ To download logs for a program run, send an HTTP GET request::
      - ``GET <base-url>/namespaces/default/apps/WordCount/flows/WordCountFlow/``\
        ``runs/c826e692-ef8c-11e4-953d-d6686e126da6/logs?start=1382576400&stop=1382576700``
    * - Description
-     - Return the logs for all the events from the Flow *WordCountFlow* of the *WordCount*
+     - Return the logs for all the events from the flow *WordCountFlow* of the *WordCount*
        Application in the namespace *default* for run c826e692-ef8c-11e4-953d-d6686e126da6,
        beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
@@ -134,7 +134,7 @@ escaped. A line of a log may look like this::
   2013-10-23 18:03:09,793 - INFO [FlowletProcessDriver-source-0-
         executor:c.c.e.c.StreamSource@-1] – source: Emitting line: this is an &amp; character
 
-**Note:** The context of the log line shows the name of the Flowlet (*source*), its instance number (0) as
+**Note:** The context of the log line shows the name of the flowlet (*source*), its instance number (0) as
 well as the original line in the Application code. The character *&* is escaped as ``&amp;``; if you don’t desire
 this escaping, you can turn it off by adding the parameter ``&escape=false`` to the request URL.
 

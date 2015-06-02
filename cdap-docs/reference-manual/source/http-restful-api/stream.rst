@@ -14,8 +14,8 @@ Stream HTTP RESTful API
 This interface supports creation of a :ref:`Stream; <developers:streams>` sending, reading, and truncating events to
 and from a stream; and setting the TTL property of a stream.
 
-Streams may have multiple consumers (for example, multiple Flows), each of which may be a
-group of different agents (for example, multiple instances of a Flowlet).
+Streams may have multiple consumers (for example, multiple flows), each of which may be a
+group of different agents (for example, multiple instances of a flowlet).
 
 
 Creating a Stream

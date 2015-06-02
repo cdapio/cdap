@@ -95,7 +95,7 @@ Once the application is deployed:
 
     $ cdap-cli.sh start flow WordCount.WordCounter
   
-    Successfully started Flow 'WordCounter' of application 'WordCount' with stored runtime arguments '{}'
+    Successfully started flow 'WordCounter' of application 'WordCount' with stored runtime arguments '{}'
 
 Starting the Service
 ------------------------------
@@ -109,7 +109,7 @@ Once the application is deployed:
 
     $ cdap-cli.sh start service WordCount.RetrieveCounts
     
-    Successfully started Service 'RetrieveCounts' of application 'WordCount' with stored runtime arguments '{}'
+    Successfully started service 'RetrieveCounts' of application 'WordCount' with stored runtime arguments '{}'
 
 Injecting Sentences
 -------------------

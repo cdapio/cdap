@@ -73,13 +73,13 @@ New Features
   
 - Created a `queue introspection tool <https://github.com/caskdata/cdap/pull/2290>`__, 
   for counting processed and unprocessed entries in a 
-  Flowlet queue (`CDAP-2105 <https://issues.cask.co/browse/CDAP-2105>`__).
+  flowlet queue (`CDAP-2105 <https://issues.cask.co/browse/CDAP-2105>`__).
 
 - Support for CDAP SDK VM build automation has been added (`CDAP-2030 <https://issues.cask.co/browse/CDAP-2030>`__).
 
 - A Cube dataset has been added (`CDAP-1520 <https://issues.cask.co/browse/CDAP-1520>`__).
 
-- A Batch and realtime Cube dataset sink has been added (`CDAP-1520 <https://issues.cask.co/browse/CDAP-1966>`__).
+- A Batch and real time Cube dataset sink has been added (`CDAP-1520 <https://issues.cask.co/browse/CDAP-1966>`__).
 
 - Metrics and status information for MapReduce on a task level is now exposed (`CDAP-1520 <https://issues.cask.co/browse/CDAP-1958>`__).
 
@@ -94,7 +94,7 @@ New User Interface
 - **Development Section**
 
   - Introduces a UI for programs based on run-ids.
-  - Users can view logs and, in certain cases |---| Flows |---| Flowlets, of a program based on run ids.
+  - Users can view logs and, in certain cases |---| flows |---| flowlets, of a program based on run ids.
   - Shows a list of datasets and Streams used by a program, and shows programs using a specific dataset and Stream.
   - Shows the history of a program (list of runs).
   - Datasets or Streams are explorable on a dataset/Stream level or on a global level.
@@ -113,10 +113,10 @@ New User Interface
   
 - **Admin Section**
 
-  - Users can manage different objects of CDAP (Applications, Programs, datasets, and Streams).
+  - Users can manage different objects of CDAP (applications, programs, datasets, and streams).
   - Users can create namespaces.
-  - Through the Admin view, users can configure their preferences at the CDAP level, namespace level, or Application level.
-  - Users can manage the System Services, Applications, and Streams through the Admin view.
+  - Through the Admin view, users can configure their preferences at the CDAP level, namespace level, or application level.
+  - Users can manage the system services, applications, and streams through the Admin view.
   
 - **Adapters**
 
@@ -172,7 +172,7 @@ API Changes
   in a later version of CDAP (`CDAP-1998 <https://issues.cask.co/browse/CDAP-1998>`__). A
   :ref:`replacement endpoint <http-restful-api-metrics-querying-a-metric>` is available.
   
-- Metrics: The tag name for Service Handlers in previous releases was wrongly ``"runnable"``,
+- Metrics: The tag name for service handlers in previous releases was wrongly ``"runnable"``,
   and internally represented as ``"srn"``. These metrics are now tagged as ``"handler"`` (``"hnd"``), and
   metrics queries will only account for this tag name. If you need to query historic metrics
   that were emitted with the old tag ``"runnable"``, use ``"srn"`` to query them (instead of either
@@ -208,8 +208,8 @@ Deprecated and Removed Features
   are no longer supported as of Release 3.0.
 - Support for *Procedures* has been removed. After upgrading, an Application that
   contained a Procedure must be redeployed. 
-- Support for *Service Workers* have been removed. After upgrading, an Application that
-  contained a Service Worker must be redeployed.  
+- Support for *service workers* have been removed. After upgrading, an Application that
+  contained a service worker must be redeployed.  
 - The Old CDAP Console has been deprecated.
 - Support for JDK/JRE 1.6 (Java 6) has ended; JDK/JRE 1.7 (Java 7) is 
   :ref:`now required for CDAP <install-java-runtime>` or the 
@@ -248,7 +248,7 @@ General
 
 - Added the ability to submit to non-default YARN queues to provide 
   :ref:`resource guarantees <resource-guarantees>`
-  for CDAP Master Services, CDAP Programs, and Explore Queries
+  for CDAP Master services, CDAP Programs, and Explore Queries
   (`CDAP-1417 <https://issues.cask.co/browse/CDAP-1417>`__).
 
 - Added the ability to :ref:`prune invalid transactions <tx-maintenance>`
@@ -331,7 +331,7 @@ New Features
 Improvement
 -----------
 
-- Improved Flow performance and scalability with a new distributed queue implementation.
+- Improved flow performance and scalability with a new distributed queue implementation.
 
 
 API Changes
@@ -378,7 +378,7 @@ Known Issues
   to ``true`` in ``cdap-site.xml``. This will ensure that datasets are upgraded when the Application is redeployed.
   When this configuration is set, the recommended process to deploy an upgraded dataset is to first stop
   all Applications that are using the dataset before deploying the new version of the Application.
-  This lets all containers (Flows, Services, etc) to pick up the new dataset changes.
+  This lets all containers (flows, services, etc) to pick up the new dataset changes.
   When datasets are upgraded using ``dataset.unchecked.upgrade``, no schema compatibility checks are performed by the
   system. Hence it is very important that the developer verify the backward-compatibility, and makes sure that
   other Applications that are using the dataset can work with the new changes.
@@ -463,7 +463,7 @@ Known Issues
   to ``true`` in ``cdap-site.xml``. This will ensure that datasets are upgraded when the Application is redeployed.
   When this configuration is set, the recommended process to deploy an upgraded dataset is to first stop
   all Applications that are using the dataset before deploying the new version of the Application.
-  This lets all containers (Flows, Services, etc) to pick up the new dataset changes.
+  This lets all containers (flows, services, etc) to pick up the new dataset changes.
   When datasets are upgraded using ``dataset.unchecked.upgrade``, no schema compatibility checks are performed by the
   system. Hence it is very important that the developer verify the backward-compatibility, and makes sure that
   other Applications that are using the dataset can work with the new changes.
@@ -474,9 +474,9 @@ Known Issues
 
 API Changes
 -----------
--  API for specifying Services and MapReduce programs has been changed to use a "configurer" 
+-  API for specifying services and MapReduce programs has been changed to use a "configurer" 
    style; this will require modification of user classes implementing either MapReduce
-   or Service as the interfaces have changed (`CDAP-335
+   or service as the interfaces have changed (`CDAP-335
    <https://issues.cask.co/browse/CDAP-335>`__).
 
 
@@ -520,18 +520,18 @@ New Features
 
 - **Procedures**
 
-  - Procedures have been deprecated in favor of Services
+  - Procedures have been deprecated in favor of services
     (`CDAP-413 <https://issues.cask.co/browse/CDAP-413>`__).
 
 - **Services**
 
-  - Added an HTTP endpoint that returns the endpoints a particular Service exposes
+  - Added an HTTP endpoint that returns the endpoints a particular service exposes
     (`CDAP-412 <https://issues.cask.co/browse/CDAP-412>`__).
-  - Added an HTTP endpoint that lists all Services
+  - Added an HTTP endpoint that lists all services
     (`CDAP-469 <https://issues.cask.co/browse/CDAP-469>`__).
-  - Default metrics for Services have been added to the CDAP Console
+  - Default metrics for services have been added to the CDAP Console
     (`CDAP-512 <https://issues.cask.co/browse/CDAP-512>`__).
-  - The annotations ``@QueryParam`` and ``@DefaultValue`` are now supported in custom Service handlers
+  - The annotations ``@QueryParam`` and ``@DefaultValue`` are now supported in custom service handlers
     (`CDAP-664 <https://issues.cask.co/browse/CDAP-664>`__).
 
 - **Metrics**
@@ -701,9 +701,9 @@ Datasets
 
 Services
 .................
-- Added simplified APIs for using Services from other programs such as MapReduce, Flows and Procedures
-- Added an API for creating Services and handlers that can use datasets transactionally
-- Added a RESTful API to make requests to a Service via the Router
+- Added simplified APIs for using services from other programs such as MapReduce, flows and Procedures
+- Added an API for creating services and handlers that can use datasets transactionally
+- Added a RESTful API to make requests to a service via the Router
 
 Security
 .................
@@ -734,7 +734,7 @@ Major CDAP Bug Fixes
 --------------------
 - Fixed a problem with a HADOOP_HOME exception stacktrace when unit-testing an Application
 - Fixed an issue with Hive creating directories in /tmp in the Standalone and unit-test frameworks
-- Fixed a problem with type inconsistency of Service API calls, where numbers were showing up as strings
+- Fixed a problem with type inconsistency of service API calls, where numbers were showing up as strings
 - Fixed an issue with the premature expiration of long-term Authentication Tokens
 - Fixed an issue with the dataset size metric showing data operations size instead of resource usage
 

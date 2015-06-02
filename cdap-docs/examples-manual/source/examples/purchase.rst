@@ -36,8 +36,8 @@ and write to an ObjectStore dataset.
   - When scheduled by the ``PurchaseHistoryWorkFlow``, the ``PurchaseHistoryBuilder`` MapReduce
     reads the ``purchases`` dataset. It fetches the user profile information, if it is available, from
     the ``UserProfileService`` and creates a purchase history. It stores the purchase history in the
-    ``history`` dataset every morning at 4:00 A.M. using a Time Schedule, and also every time 1MB of data
-    is ingested by the ``purchaseStream`` using a Data Schedule.
+    ``history`` dataset every morning at 4:00 A.M. using a time schedule, and also every time 1MB of data
+    is ingested by the ``purchaseStream`` using a data schedule.
   - You can either manually (in the Process screen of the CDAP UI) or 
     programmatically execute the ``PurchaseHistoryBuilder`` MapReduce to store 
     customers' purchase history in the ``history`` dataset.
@@ -136,7 +136,7 @@ Once the application is deployed:
 
     $ cdap-cli.sh start flow PurchaseHistory.PurchaseFlow
   
-    Successfully started Flow 'PurchaseFlow' of application 'PurchaseHistory' with stored runtime arguments '{}'
+    Successfully started flow 'PurchaseFlow' of application 'PurchaseHistory' with stored runtime arguments '{}'
 
 Starting the Services
 ---------------------

@@ -22,7 +22,7 @@ This application uses one stream, one dataset, one flow and one service to imple
 
 
 The ``HelloWorld`` Application
--------------------------------
+------------------------------
 
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
    :language: java
@@ -98,10 +98,10 @@ Once the application is deployed:
 
     $ cdap-cli.sh start flow HelloWorld.WhoFlow
   
-    Successfully started Flow 'WhoFlow' of application 'HelloWorld' with stored runtime arguments '{}'
+    Successfully started flow 'WhoFlow' of application 'HelloWorld' with stored runtime arguments '{}'
 
 Starting the Service
-------------------------------
+--------------------
 
 Once the application is deployed:
 

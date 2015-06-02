@@ -37,7 +37,7 @@ Ingesting and Exploring Data with Impala
 ===========================================
 
 Streams are the primary means of bringing data from external systems into the CDAP in
-realtime. They are ordered, time-partitioned sequences of data, usable for realtime
+real time. They are ordered, time-partitioned sequences of data, usable for real time
 collection and consumption of data.
 
 They can easily be created by using the CDAP Command Line Interface (CLI).
