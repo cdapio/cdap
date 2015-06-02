@@ -26,7 +26,7 @@ angular.module(PKG.name + '.feature.adapters')
           description: '',
           type: 'ETLBatch'
       };
-      this.metadata= angular.copy(defaultMetadata);
+      this.metadata = defaultMetadata;
       this.resetPlugins();
     }
 
@@ -45,7 +45,7 @@ angular.module(PKG.name + '.feature.adapters')
     };
 
     Model.prototype.setSource = function setSource(source) {
-      this.source = angular.copy(source);
+      this.source = source;
     };
 
     Model.prototype.setTransform = function setTransform(transform) {

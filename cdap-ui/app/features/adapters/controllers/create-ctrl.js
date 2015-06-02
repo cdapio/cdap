@@ -1,7 +1,7 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdapterCreateController', function ($scope, AdapterCreateModel, AdapterApiFactory, $q, $alert, $state, $rootScope, $timeout) {
-    window.aa = $rootScope;
+  .controller('AdapterCreateController', function ($scope, AdapterCreateModel, AdapterApiFactory, $q, $alert, $state, $timeout) {
     this.model = new AdapterCreateModel();
+
     var defaultTabs = [
       {
         title: 'Default',
@@ -119,9 +119,10 @@ angular.module(PKG.name + '.feature.adapters')
     this.model.getDrafts()
       .then(function(res) {
         if ($state.params.data) {
-          var draft = res[$state.params.data];
+          var draft = angular.copy(res[$state.params.data]);
           if (draft) {
             this.model.setMetadata(draft.config.metadata);
+            this.onMetadataChange();
             this.model.setSource(draft.config.source);
             this.model.setSink(draft.config.sink);
             this.model.setTransform(draft.config.transforms);

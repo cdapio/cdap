@@ -14,14 +14,15 @@
     <div class="row">
       <div class="col-md-4 col-xs-12">
         <label for="adapaterType" class="control-label">Choose an Application Template</label>
-        <select
-          id="adapaterType"
-          name="adaptertype"
-          class="form-control"
-          ng-model="AdapterCreateController.model.metadata['type']"
-          ng-change="AdapterCreateController.onMetadataChange(adapter.name)"
-          ng-options="adapter.name as adapter.name for adapter in AdapterCreateController.adapterTypes track by adapter.name" required>
-          </select>
+        <select ng-model="AdapterCreateController.model.metadata.type"
+                ng-change="AdapterCreateController.onMetadataChange()"
+                class="form-control">
+          <option ng-selected="{{adapter.name == AdapterCreateController.model.metadata.type}}"
+                  ng-repeat="adapter in AdapterCreateController.adapterTypes"
+                  value="{{adapter.name}}">
+            {{adapter.name}}
+          </option>
+        </select>
       </div>
       <div class="col-md-3 col-xs-12">
         <label class="control-label">Name</label>
