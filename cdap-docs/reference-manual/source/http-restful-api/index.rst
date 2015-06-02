@@ -43,14 +43,14 @@ data isolation. This is an inital step towards introducing `multi-tenancy
   naming restrictions, status codes, and working with CDAP Security
 - :doc:`Namespace: <namespace>` creating and managing namespaces
 - :doc:`Lifecycle: <lifecycle>` deploying and managing Applications, and managing the lifecycle of Flows,
-  MapReduce Programs, Spark Programs, Workflows, and Custom Services
+  MapReduce Programs, Spark Programs, workflows, and Custom Services
 - :doc:`Configuration: <configuration>` retrieving the CDAP and HBase configurations
 - :doc:`Preferences: <preferences>` setting, retrieving, and deleting Preferences
 - :doc:`Application Templates and Adapters: <apptemplates>` obtaining available Application Templates and
   Plugins, and creating, deleting, and managing the lifecycle of Adapters
 - :doc:`Stream: <stream>` sending data events to a Stream or to inspect the contents of a Stream
-- :doc:`Dataset: <dataset>` interacting with Datasets, Dataset Modules, and Dataset Types
-- :doc:`Query: <query>` sending ad-hoc queries to CDAP Datasets
+- :doc:`Dataset: <dataset>` interacting with datasets, dataset Modules, and dataset Types
+- :doc:`Query: <query>` sending ad-hoc queries to CDAP datasets
 - :doc:`Service: <service>` supports making requests to the methods of an Application’s Services
 - :doc:`Logging: <logging>` retrieving Application logs
 - :doc:`Metrics: <metrics>` retrieving metrics for system and user Applications (user-defined metrics)

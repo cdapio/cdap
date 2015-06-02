@@ -4,22 +4,22 @@
 
 .. _stream-exploration:
 
-============================================
+==================
 Stream Exploration
-============================================
+==================
 
 Streams are the primary method of ingesting real-time data into CDAP.
-It is often useful to be able to examine data in a Stream in an ad-hoc manner through
+It is often useful to be able to examine data in a stream in an ad-hoc manner through
 SQL-like queries 
 
-Each event in a Stream contains a timestamp, a map of headers, and a body. When a Stream
+Each event in a stream contains a timestamp, a map of headers, and a body. When a stream
 is created, a corresponding Hive table is created that allows queries to be run over
 those three columns. Many times, stream event bodies are also structured and have
 a format and schema of their own. For example, event bodies may be comma-delimited
 text or Avro-encoded binary data. In those cases, it is possible to set a format and schema
-on a Stream, enabling more powerful queries.
+on a stream, enabling more powerful queries.
 
-Let's take a closer look at attaching format and schema on Streams.
+Let's take a closer look at attaching format and schema on streams.
 
 Stream Format
 -------------
@@ -158,10 +158,10 @@ For example::
 End-to-end Example
 ------------------
 
-In the following example, we will create a Stream, send data to it, attach a format
-and schema to the Stream, then query the Stream.
+In the following example, we will create a stream, send data to it, attach a format
+and schema to the stream, then query the stream.
 
-Suppose we want to create a Stream for stock trades. We first create the stream
+Suppose we want to create a stream for stock trades. We first create the stream
 and send some data to it as comma-delimited text::
 
   > create stream trades
@@ -170,7 +170,7 @@ and send some data to it as comma-delimited text::
   > send stream trades "AAPL,8,113.02"
   > send stream trades "NFLX,10,437.45"
 
-If we run a query over the Stream, we can see each event as text::
+If we run a query over the stream, we can see each event as text::
 
   > execute "select * from stream_trades"
   +===================================================================================================+
@@ -200,18 +200,18 @@ Formulating Queries
 When creating your queries, keep these limitations in mind:
 
 - The query syntax of CDAP is a subset of the variant of SQL that was first defined by Apache Hive.
-- Writing into a Stream using SQL is not supported.
+- Writing into a stream using SQL is not supported.
 - The SQL command ``DELETE`` is not supported.
 - When addressing your streams in queries, you need to prefix the stream name with
-  ``stream_``. For example, if your Stream is named ``Purchases``, then the corresponding table
+  ``stream_``. For example, if your stream is named ``Purchases``, then the corresponding table
   name is ``stream_purchases``. Note that the table name is all lower-case, regardless of how it was defined.
-- If your Stream name contains a '.' or a '-', those characters will be converted to '_' for the Hive table name.
-  For example, if your Stream is named ``my-stream.name``, the corresponding Hive table name will be ``stream_my_stream_name``.
+- If your stream name contains a '.' or a '-', those characters will be converted to '_' for the Hive table name.
+  For example, if your stream is named ``my-stream.name``, the corresponding Hive table name will be ``stream_my_stream_name``.
   Beware of name collisions. For example, ``my.stream`` will use the same Hive table name as ``my_stream``.
-- CDAP uses a custom storage handler to read Streams through Hive. This means that queries must be run through
+- CDAP uses a custom storage handler to read streams through Hive. This means that queries must be run through
   CDAP and not directly through Hive unless you place CDAP jars in your Hive classpath. This also means that
-  Streams cannot be queried directly by Impala. If you wish to use Impala to explore data in a Stream, you can
-  create an :ref:`Adapter <apptemplates-index>` that converts Stream data into a ``TimePartitionedFileSet``. 
+  streams cannot be queried directly by Impala. If you wish to use Impala to explore data in a stream, you can
+  create an :ref:`adapter <apptemplates-index>` that converts stream data into a ``TimePartitionedFileSet``. 
 - Some versions of Hive may try to create a temporary staging directory at the table location when executing queries.
   If you are seeing permission errors, try setting ``hive.exec.stagingdir`` in your Hive configuration to ``/tmp/hive-staging``.
 

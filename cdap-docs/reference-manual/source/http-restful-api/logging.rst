@@ -31,7 +31,7 @@ downloaded with the Logging HTTP API. To do that, send an HTTP GET request::
    * - ``<program-type>``
      - One of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
    * - ``<program-id>``
-     - Name of the program (*Flow*, *MapReduce*, *Service*, *Spark*, *Workflow*) being called
+     - Name of the program (*Flow*, *MapReduce*, *Service*, *Spark*, *workflow*) being called
    * - ``<ts>``
      - *Start* and *stop* times, given as seconds since the start of the Epoch.
 
@@ -69,7 +69,7 @@ To download logs for a program run, send an HTTP GET request::
    * - ``<program-type>``
      - One of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
    * - ``<program-id>``
-     - Name of the program (*Flow*, *MapReduce*, *Service*, *Spark*, *Workflow*) being called
+     - Name of the program (*Flow*, *MapReduce*, *Service*, *Spark*, *workflow*) being called
    * - ``<run-id>``
      - Run id of the program run
    * - ``<ts>``

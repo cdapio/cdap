@@ -610,9 +610,9 @@ appropriate status code (``404``) will be returned.
 
 Starting an Adapter
 -------------------
-Starting a Batch Adapter schedules a Workflow to be run periodically based on the cron
+Starting a Batch Adapter schedules a workflow to be run periodically based on the cron
 schedule that is configured in the Adapter. Starting a Realtime Adapter starts a CDAP
-Worker.
+worker.
 
 To start an Adapter, submit an HTTP POST request::
 
@@ -717,7 +717,7 @@ fit)::
 
 Retrieving Adapter Logs
 -----------------------
-As an Adapter is an instantiation of a particular program (a Workflow, MapReduce, Workers, etc.),
+As an Adapter is an instantiation of a particular program (a workflow, MapReduce, workers, etc.),
 the logs for an Adapter are the logs of the underlying program. To retrieve these logs
 using a RESTful API, you need to know which underlying program the Adapter uses
 and then use the CDAP :ref:`Logging API <http-restful-api-logging>` to retrieve its logs.
@@ -734,7 +734,7 @@ to determine how to build your request::
     },
 
 For example, using the previous ``streamAdapter``, you would be interested in the logs of the
-Workflow *ETLWorkflow* of the Application *ETLBatch* of the namespace *default*. From this,
+workflow *ETLWorkflow* of the Application *ETLBatch* of the namespace *default*. From this,
 you can formulate your request.
 
 The :ref:`CDAP CLI <cli>` has a command (``get adapter logs <adapter-id>``) that does this directly.

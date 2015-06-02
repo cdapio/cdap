@@ -903,7 +903,7 @@ Transforming Your Data
           |                     | tes it to a TimePar |          | ame":"Stream","prop | ntStreamConverter.schedule","descriptio |
           |                     | titionedFileSet     |          | erties":{"name":"lo | n":"Schedule for logEventStreamConverte |
           |                     |                     |          | gEventStream","dura | r Adapter"},"program":{"programName":"E |
-          |                     |                     |          | tion":"5m","format" | TLWorkflow","programType":"WORKFLOW"}," |
+          |                     |                     |          | tion":"5m","format" | TLworkflow","programType":"WORKFLOW"}," |
           |                     |                     |          | :"clf"}},"transform | properties":{"transformIds":"[\"Project |
           |                     |                     |          | s":[{"name":"Projec | ion:0\"]","name":"logEventStreamConvert |
           |                     |                     |          | tion","properties": | er","sinkId":"sink:TPFSAvro","config":" |
@@ -1001,7 +1001,7 @@ Transforming Your Data
      :widths: 80 20
      :stub-columns: 1
      
-     * - List available Datasets
+     * - List available datasets
        - 
        
   .. list-table::
@@ -1032,7 +1032,7 @@ Transforming Your Data
      :widths: 80 20
      :stub-columns: 1
      
-     * - Describe the converted Dataset
+     * - Describe the converted dataset
        - 
        
   .. list-table::
@@ -1120,7 +1120,7 @@ Transforming Your Data
 Building Real World Applications
 ================================
 - Build Data Applications using simple-to-use CDAP APIs
-- Compose complex applications consisting of Workflow, MapReduce, Realtime DAGs (Tigon) and Services
+- Compose complex applications consisting of workflow, MapReduce, Realtime DAGs (Tigon) and Services
 - Build using a collection of pre-defined data pattern libraries
 - Deploy and manage complex data applications such as Web Applications
 
@@ -1200,7 +1200,7 @@ Building Real World Applications
           | Flow      | WiseFlow              | Wise Flow                       |
           | MapReduce | BounceCountsMapReduce | Bounce Counts MapReduce Program |
           | Service   | WiseService           |                                 |
-          | Workflow  | WiseWorkflow          | Wise Workflow                   |
+          | workflow  | Wiseworkflow          | Wise workflow                   |
           +=====================================================================+
 
 .. container:: table-block
@@ -1343,7 +1343,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Start the Wise Application Workflow to process ingested data
+     * - Start the Wise Application workflow to process ingested data
        - 
        
   .. list-table::
@@ -1356,12 +1356,12 @@ Building Real World Applications
          - ``oozie job -start <arguments>``
          
      * - Using CDAP
-       - ``> start workflow Wise.WiseWorkflow``
+       - ``> start workflow Wise.Wiseworkflow``
           
      * -  
        - ::
 
-          Successfully started Workflow 'WiseWorkflow' of application 'Wise' with stored runtime arguments '{}'
+          Successfully started workflow 'Wiseworkflow' of application 'Wise' with stored runtime arguments '{}'
 
 
 .. container:: table-block
@@ -1370,7 +1370,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Check the status of the Workflow 
+     * - Check the status of the workflow 
        - 
        
   .. list-table::
@@ -1383,7 +1383,7 @@ Building Real World Applications
          - ``oozie job -info <jobid>``
          
      * - Using CDAP
-       - ``> get workflow status Wise.WiseWorkflow``
+       - ``> get workflow status Wise.Wiseworkflow``
           
      * -  
        - ::
@@ -1526,7 +1526,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - List the Dataset instances
+     * - List the dataset instances
        - 
        
   .. list-table::

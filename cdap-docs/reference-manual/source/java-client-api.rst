@@ -34,12 +34,12 @@ Components
 The Java Client API allows you to interact with these CDAP components:
 
 - `ApplicationClient: <#application-client>`_ interacting with applications
-- `ProgramClient: <#program-client>`_ interacting with Flows, MapReduce Programs, User Services, Workflows, and Workers
+- `ProgramClient: <#program-client>`_ interacting with Flows, MapReduce Programs, User Services, workflows, and workers
 - `StreamClient: <#stream-client>`_ interacting with Streams
-- `DatasetClient: <#dataset-client>`_ interacting with Datasets
-- `DatasetModuleClient: <#dataset-module-client>`_ interacting with Dataset Modules
-- `DatasetTypeClient: <#dataset-type-client>`_ interacting with Dataset Types
-- `QueryClient: <#query-client>`_ querying Datasets
+- `DatasetClient: <#dataset-client>`_ interacting with datasets
+- `DatasetModuleClient: <#dataset-module-client>`_ interacting with dataset Modules
+- `DatasetTypeClient: <#dataset-type-client>`_ interacting with dataset Types
+- `QueryClient: <#query-client>`_ querying datasets
 - `ServiceClient: <#service-client>`_ interacting with User Services
 - `MetricsClient: <#metrics-client>`_ interacting with Metrics
 - `MonitorClient: <#monitor-client>`_ monitoring System Services
@@ -48,14 +48,14 @@ The Java Client API allows you to interact with these CDAP components:
 Alphabetical list:
 
 - `ApplicationClient: <#application-client>`_ interacting with applications
-- `DatasetClient: <#dataset-client>`_ interacting with Datasets
-- `DatasetModuleClient: <#dataset-module-client>`_ interacting with Dataset Modules
-- `DatasetTypeClient: <#dataset-type-client>`_ interacting with Dataset Types
+- `DatasetClient: <#dataset-client>`_ interacting with datasets
+- `DatasetModuleClient: <#dataset-module-client>`_ interacting with dataset Modules
+- `DatasetTypeClient: <#dataset-type-client>`_ interacting with dataset Types
 - `MetricsClient: <#metrics-client>`_ interacting with Metrics
 - `MonitorClient: <#monitor-client>`_ monitoring System Services
 - `PreferencesClient: <#preferences-client>`_ interacting with Preferences
-- `ProgramClient: <#program-client>`_ interacting with Flows, MapReduce Programs, User Services, Workflows, and Workers
-- `QueryClient: <#query-client>`_ querying Datasets
+- `ProgramClient: <#program-client>`_ interacting with Flows, MapReduce Programs, User Services, workflows, and workers
+- `QueryClient: <#query-client>`_ querying datasets
 - `ServiceClient: <#service-client>`_ interacting with User Services
 - `StreamClient: <#stream-client>`_ interacting with Streams
 
@@ -271,16 +271,16 @@ DatasetClient
   // Construct the client used to interact with CDAP
   DatasetClient datasetClient = new DatasetClient(clientConfig);
 
-  // Fetch the list of Datasets
+  // Fetch the list of datasets
   List<DatasetSpecification> datasets = datasetClient.list();
 
-  // Create a Dataset
+  // Create a dataset
   datasetClient.create("someDataset", "someDatasetType");
 
-  // Truncate a Dataset
+  // Truncate a dataset
   datasetClient.truncate("someDataset");
 
-  // Delete a Dataset
+  // Delete a dataset
   datasetClient.delete("someDataset");
 
 
@@ -295,14 +295,14 @@ DatasetModuleClient
   // Construct the client used to interact with CDAP
   DatasetModuleClient datasetModuleClient = new DatasetModuleClient(clientConfig);
 
-  // Add a Dataset module
+  // Add a dataset module
   File moduleJarFile = createAppJarFile(someDatasetModule.class);
   datasetModuleClient("someDatasetModule", SomeDatasetModule.class.getName(), moduleJarFile);
 
-  // Fetch the Dataset module information
+  // Fetch the dataset module information
   DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get("someDatasetModule");
 
-  // Delete all Dataset modules
+  // Delete all dataset modules
   datasetModuleClient.deleteAll();
 
 
@@ -317,10 +317,10 @@ DatasetTypeClient
   // Construct the client used to interact with CDAP
   DatasetTypeClient datasetTypeClient = new DatasetTypeClient(clientConfig);
 
-  // Fetch the Dataset type information using the type name
+  // Fetch the dataset type information using the type name
   DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get("someDatasetType");
 
-  // Fetch the Dataset type information using the classname
+  // Fetch the dataset type information using the classname
   datasetTypeMeta = datasetTypeClient.get(SomeDataset.class.getName());
 
 

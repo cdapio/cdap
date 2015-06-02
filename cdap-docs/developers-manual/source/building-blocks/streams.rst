@@ -8,20 +8,20 @@
 Streams
 =======
 
-**Streams** are the primary means of bringing data from external systems into the CDAP in realtime.
-They are ordered, time-partitioned sequences of data, usable for realtime collection and consumption of data.
+**Streams** are the primary means of bringing data from external systems into the CDAP in real time.
+They are ordered, time-partitioned sequences of data, usable for real time collection and consumption of data.
 
 They can be created programmatically within your application, using the
 :ref:`http-restful-api-stream`, the :ref:`stream-client` of the :ref:`client-api`, or by
 using the :ref:`CDAP Command Line Interface. <cli>` 
 
-Data written to a stream can be consumed in real-time by :ref:`Flows <flows>` or in batch
+Data written to a stream can be consumed in real time by :ref:`flows <flows>` or in batch
 by :ref:`MapReduce programs. <mapreduce>`.
 
 
 .. rubric:: Creating a Stream
 
-You specify a Stream in your :ref:`Application <applications>` specification::
+You specify a stream in your :ref:`application <applications>` specification::
 
   addStream(new Stream("myStream"));
 
@@ -89,7 +89,7 @@ The notifications describe the absolute size of events ever ingested by a stream
 increasing data size. In particular, they do not reset when the stream is truncated, and they do not decrease when
 part of the data ingested by the stream has reach the TTL.
 
-Stream size notifications are used by :ref:`Stream Size Schedules <stream-size-schedules>`.
+Stream-size notifications are used by :ref:`stream-size schedules <stream-size-schedules>`.
 
 .. rubric::  Examples of Using Streams
 

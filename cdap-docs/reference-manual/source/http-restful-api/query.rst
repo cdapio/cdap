@@ -11,7 +11,7 @@ Query HTTP RESTful API
 
 .. highlight:: console
 
-This interface supports submitting SQL queries over Datasets. Queries are
+This interface supports submitting SQL queries over  datasets. Queries are
 processed asynchronously; to obtain query results, perform these steps:
 
 - first, **submit** the query;
@@ -75,7 +75,7 @@ used to identify the query in subsequent requests::
      - ``{"handle":"57cf1b01-8dba-423a-a8b4-66cd29dd75e2"}``
    * - Description
      - Submit a query in the namespace *default* to get the first 5 entries from the
-       Dataset, *mydataset* in the namespace *default*
+       dataset, *mydataset* in the namespace *default*
 
 
 Status of a Query

@@ -4,11 +4,11 @@
 
 .. _table-exploration:
 
-============================================
+=================
 Table Exploration
-============================================
+=================
 
-A ``Table`` is a core Dataset. Unlike relational database tables where every
+A ``Table`` is a core dataset. Unlike relational database tables where every
 row has the same schema, every row of a Table can have a different set of columns.
 Though Tables do not require a schema, in practice they are often written with an
 implicit schema. Column names are often strings, with a single data type used
@@ -90,14 +90,14 @@ For example, the same schema set through the example code above can also be set 
   }'
   
 CDAP schemas are adopted from the `Avro Schema Declaration <http://avro.apache.org/docs/1.7.3/spec.html#schemas>`__.
-Note that since Dataset properties must be strings, the schema JSON has to be escaped properly.
+Note that since dataset properties must be strings, the schema JSON has to be escaped properly.
 
 Formulating Queries
 -------------------
 When creating your queries, keep these limitations in mind:
 
 - The query syntax of CDAP is a subset of the variant of SQL that was first defined by Apache Hive.
-- The SQL commands ``UPDATE`` and ``DELETE`` are not allowed on CDAP Datasets.
+- The SQL commands ``UPDATE`` and ``DELETE`` are not allowed on CDAP datasets.
 - When addressing your datasets in queries, you need to prefix the Table name with ``dataset_``.
   For example, if your Table is named ``Purchases``, then the corresponding Hive table
   name is ``dataset_purchases``. Note that the table name is lower-case.

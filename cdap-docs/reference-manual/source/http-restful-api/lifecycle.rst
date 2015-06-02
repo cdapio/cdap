@@ -10,7 +10,7 @@ Lifecycle HTTP RESTful API
 ===========================================================
 
 Use the CDAP Lifecycle HTTP API to deploy or delete Applications and manage the lifecycle of 
-Flows, MapReduce programs, Workflows, Workers, and Custom Services.
+Flows, MapReduce programs, workflows, workers, and Custom Services.
 
 .. highlight:: console
 
@@ -81,7 +81,7 @@ of the application, the streams and datasets it uses, and all of its programs.
 Delete an Application
 ---------------------
 To delete an Application—together with all of its Flows, MapReduce or Spark
-programs, Services, Workflows, Schedules—submit an HTTP DELETE::
+programs, Services, workflows, Schedules—submit an HTTP DELETE::
 
   DELETE <base-url>/namespaces/<namespace>/apps/<application-name>
 
@@ -99,14 +99,14 @@ programs, Services, Workflows, Schedules—submit an HTTP DELETE::
 **Note:** The ``<application-name>`` in this URL is the name of the Application
 as configured by the Application Specification,
 and not necessarily the same as the name of the JAR file that was used to deploy the Application.
-This does not delete the Streams and Datasets associated with the Application
+This does not delete the Streams and datasets associated with the Application
 because they belong to the namespace, not the Application.
 
 
 Start, Stop, Status, and Runtime Arguments
 ------------------------------------------
 After an Application is deployed, you can start and stop its Flows, MapReduce 
-programs, Workflows, Workers, and Custom Services, and query for their status using HTTP POST and GET methods::
+programs, workflows, workers, and Custom Services, and query for their status using HTTP POST and GET methods::
 
   POST <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/<operation>
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/status
@@ -124,7 +124,7 @@ programs, Workflows, Workers, and Custom Services, and query for their status us
    * - ``<program-type>``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``workers``, or ``services``
    * - ``<program-id>``
-     - Name of the *Flow*, *MapReduce*, *Spark*, *Workflow*, or *Custom Service*
+     - Name of the *Flow*, *MapReduce*, *Spark*, *workflow*, or *Custom Service*
        being called
    * - ``<operation>``
      - One of ``start`` or ``stop``
@@ -149,7 +149,7 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"programType"``
      - One of ``flow``, ``mapreduce``, ``spark``, ``workflow`` or ``service``
    * - ``"programId"``
-     - Name of the *Flow*, *MapReduce*, *Spark*, *Workflow*, or *Custom Service*
+     - Name of the *Flow*, *MapReduce*, *Spark*, *workflow*, or *Custom Service*
        being called
 
 The response will be the same JSON array with additional parameters for each of the underlying JSON objects:
@@ -305,7 +305,7 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"programType"``
      - One of ``flow``, ``service``, or ``worker``
    * - ``"programId"``
-     - Name of the program (*Flow*, *Service*, or *Worker*) being called
+     - Name of the program (*Flow*, *Service*, or *worker*) being called
    * - ``"runnableId"``
      - Name of the *Flowlet*, only required if the program type is ``flow``
 
@@ -450,7 +450,7 @@ with the arguments as a JSON string in the body::
 
 Scaling Workers
 ...............
-You can query or change the number of instances of a Worker by using the ``instances``
+You can query or change the number of instances of a worker by using the ``instances``
 parameter with HTTP GET or PUT methods::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/workers/<worker-id>/instances
@@ -471,7 +471,7 @@ with the arguments as a JSON string in the body::
    * - ``<app-id>``
      - Name of the Application
    * - ``<worker-id>``
-     - Name of the Worker
+     - Name of the worker
    * - ``<quantity>``
      - Number of instances to be used
 
@@ -485,7 +485,7 @@ Example
      - ``GET <base-url>/namespaces/default/apps/HelloWorld/workers/DataWorker/instances``
        ``instances``
    * - Description
-     - Retrieve the number of instances of the Worker *DataWorker*
+     - Retrieve the number of instances of the worker *DataWorker*
        in the Application *HelloWorld* in the namespace *default*
 
 .. _rest-program-runs:
@@ -493,7 +493,7 @@ Example
 Run Records and Schedules
 -------------------------
 
-To see all the runs of a selected program (Flows, MapReduce programs, Spark programs, Workflows, and
+To see all the runs of a selected program (Flows, MapReduce programs, Spark programs, workflows, and
 Services), issue an HTTP GET to the program’s URL with the ``runs`` parameter.
 This will return a JSON list of all runs for the program, each with a start time,
 end time and program status::
@@ -617,7 +617,7 @@ For Services, you can retrieve:
 
     GET <base-url>/namespaces/<namespace>/apps/<app-id>/services/<service-id>/runs?status=completed
 
-For Workflows, you can retrieve:
+For workflows, you can retrieve:
 
 - the information about the specific run currently running::
 
@@ -671,7 +671,7 @@ For Workflows, you can retrieve:
      :class: triple-table
 
      * - Description
-       - Retrieves the schedules of the Workflow *PurchaseHistoryWorkflow* of the Application *PurchaseHistory*
+       - Retrieves the schedules of the workflow *PurchaseHistoryWorkflow* of the Application *PurchaseHistory*
       
      * - HTTP Method
        - ``GET <base-url>/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/schedules``
@@ -695,7 +695,7 @@ For Workflows, you can retrieve:
      :class: triple-table
 
      * - Description
-       - Retrieves the next runtime of the Workflow *PurchaseHistoryWorkflow* of the Application *PurchaseHistory*
+       - Retrieves the next runtime of the workflow *PurchaseHistoryWorkflow* of the Application *PurchaseHistory*
       
      * - HTTP Method
        - ``GET <base-url>/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/nextruntime``
@@ -761,25 +761,25 @@ where:
 Workflows: Suspend and Resume
 ...........................................
 
-For Workflows, you can suspend and resume them using the RESTful API.
+For workflows, you can suspend and resume them using the RESTful API.
 
 To *suspend* means that the current activity will be taken to completion, but no further 
 programs will be initiated. Programs will not be left partially uncompleted, barring any errors.
 
-In the case of a Workflow with multiple MapReduce programs, if one of them is running (first of
-three perhaps) and you suspend the Workflow, that first MapReduce will be completed but the
+In the case of a workflow with multiple MapReduce programs, if one of them is running (first of
+three perhaps) and you suspend the workflow, that first MapReduce will be completed but the
 following two will not be started.
 
 To *resume* means that activity will start up where it was left off, beginning with the start
 of the next program in the sequence.
 
-In the case of the Workflow mentioned above, resuming it after suspension would start up with the
+In the case of the workflow mentioned above, resuming it after suspension would start up with the
 second of the three MapReduce programs, which is where it would have left off when it was suspended.
 
-With Workflows, *suspend* and *resume* require a *run-id* as the action takes place on
-either a currently running or suspended Workflow.
+With workflows, *suspend* and *resume* require a *run-id* as the action takes place on
+either a currently running or suspended workflow.
 
-To suspend or resume a Workflow, use::
+To suspend or resume a workflow, use::
   
   POST <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/suspend
   POST <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/resume
@@ -797,9 +797,9 @@ where:
    * - ``<app-id>``
      - Name of the Application
    * - ``<workflow-name>``
-     - Name of the Workflow
+     - Name of the workflow
    * - ``<run-id>``
-     - UUID of the Workflow run
+     - UUID of the workflow run
 
 .. container:: table-block-example
 
@@ -807,7 +807,7 @@ where:
      :widths: 99 1
      :stub-columns: 1
 
-     * - Example: Suspending A Workflow
+     * - Example: Suspending A workflow
        - 
        
   .. list-table::
@@ -815,7 +815,7 @@ where:
      :class: triple-table
 
      * - Description
-       - Suspends the run ``0ce13912-e980-11e4-a7d7-8cae4cfd0e64`` of the Workflow
+       - Suspends the run ``0ce13912-e980-11e4-a7d7-8cae4cfd0e64`` of the workflow
          *PurchaseHistoryWorkflow* of the Application *PurchaseHistory*
       
      * - HTTP Method

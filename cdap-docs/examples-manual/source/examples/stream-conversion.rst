@@ -116,7 +116,7 @@ to send 10000 events at a rate of roughly two per second::
 
   $ examples/StreamConversion/bin/send-events.sh --events 10000 --delay 0.5
 
-You can now wait for the Workflow to run, after which you can query the partitions in the
+You can now wait for the workflow to run, after which you can query the partitions in the
 ``converted`` dataset::
 
   $ cdap-cli.sh execute \"show partitions dataset_converted\"

@@ -25,8 +25,8 @@ Building and Running CDAP Applications
 
 .. highlight:: console
 
-In the examples, we refer to the Standalone CDAP as "CDAP", and the example code that is
-running on it as an "Application". We'll assume that you are running your application in
+In the examples, we refer to the Standalone CDAP as *CDAP*, and the example code that is
+running on it as an *application*. We'll assume that you are running your application in
 the *default* :ref:`namespace <namespaces>`; if not, you will need to adjust commands
 accordingly. For example, in a URL such as::
 

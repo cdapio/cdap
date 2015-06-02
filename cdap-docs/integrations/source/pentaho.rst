@@ -9,7 +9,7 @@ Pentaho Data Integration
 
 *Pentaho Data Integration* is an advanced, open source business intelligence tool that can execute
 transformations of data coming from various sources. Let's see how to connect it to
-CDAP Datasets using the :ref:`CDAP JDBC driver <cdap-jdbc>`.
+CDAP datasets using the :ref:`CDAP JDBC driver <cdap-jdbc>`.
 
 #. Before opening the *Pentaho Data Integration* application, copy the 
    ``co.cask.cdap.cdap-explore-jdbc-``\ |literal-release|\ ``.jar``
@@ -32,7 +32,7 @@ CDAP Datasets using the :ref:`CDAP JDBC driver <cdap-jdbc>`.
       :width: 6in
 
 #. Right-click on ``Table input`` in your transformation and select ``Edit step``. You can specify an appropriate name
-   for this input such as ``CDAP Datasets query``. Under ``Connection``, select the newly created database connection;
+   for this input such as ``CDAP datasets query``. Under ``Connection``, select the newly created database connection;
    in this example, ``CDAP Standalone``. Enter a valid SQL query in the main ``SQL`` field. This will define the data
    available to your transformation.
 
@@ -40,6 +40,6 @@ CDAP Datasets using the :ref:`CDAP JDBC driver <cdap-jdbc>`.
       :width: 6in
 
 #. Click on ``OK``. Your input is now ready to be used in your transformation, and it will contain data coming
-   from the results of the SQL query on the CDAP Datasets.
+   from the results of the SQL query on the CDAP datasets.
 #. For more information on how to add components to a transformation and link them together, see the
    `Pentaho Data Integration page <http://community.pentaho.com/projects/data-integration/>`__.

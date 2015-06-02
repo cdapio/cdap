@@ -4,16 +4,16 @@
 
 .. _test-cdap:
 
-================================================
+==========================
 Testing a CDAP Application
-================================================
+==========================
 
 .. _test-framework:
 
 Strategies in Testing Applications: Test Framework
 ==================================================
 
-CDAP comes with a convenient way to unit test your Applications with CDAP’s Test Framework.
+CDAP comes with a convenient way to unit test your applications with CDAP’s *Test Framework.*
 The base for these tests is ``TestBase``, which is packaged
 separately from the API in its own artifact because it depends on the
 CDAP’s runtime classes. You can include it in your test dependencies
@@ -64,26 +64,26 @@ Let’s write a test case for the *WordCount* example::
 
 
 The first thing we do in this test is deploy the application,
-then we’ll start the Flow and the Service::
+then we’ll start the flow and the service::
 
-      // Deploy the Application
+      // Deploy the application
       ApplicationManager appManager = deployApplication(WordCount.class);
 
-      // Start the Flow and the Service
+      // Start the flow and the service
       FlowManager flowManager = appManager.startFlow("WordCounter");
       ServiceManager serviceManager = appManager.startService("RetrieveCounts");
       serviceManager.waitForStatus(true);
       
-Now that the Flow and Service are running, we can send some events to the Stream::
+Now that the flow and service are running, we can send some events to the stream::
 
-      // Send a few events to the Stream
+      // Send a few events to the stream
       StreamWriter writer = appManager.getStreamWriter("wordStream");
       writer.send("hello world");
       writer.send("a wonderful world");
       writer.send("the world says hello");
 
 To wait for all events to be processed, we can get a metrics observer
-for the last Flowlet in the pipeline (the "word associator") and wait for
+for the last flowlet in the pipeline (the "word associator") and wait for
 its processed count to either reach 3 or time out after 5 seconds::
 
       // Wait for the events to be processed, or at most 5 seconds
@@ -92,7 +92,7 @@ its processed count to either reach 3 or time out after 5 seconds::
       metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
 Now we can start verifying that the processing was correct by obtaining
-a client for the Service, and then submitting queries. We'll add a private method to the 
+a client for the service, and then submitting queries. We'll add a private method to the 
 ``WordCountTest`` Class to help us::
 
   private String requestService(URL url) throws IOException {
@@ -153,19 +153,19 @@ The ``PurchaseTest`` class should extend from
 The ``PurchaseApp`` application can be deployed using the ``deployApplication``
 method from the ``TestBase`` class::
 
-      // Deploy an Application
+      // Deploy an application
       ApplicationManager appManager = deployApplication(PurchaseApp.class);
 
-The MapReduce reads from the ``purchases`` Dataset. As a first
+The MapReduce reads from the ``purchases`` dataset. As a first
 step, the data to the ``purchases`` should be populated by running
 the ``PurchaseFlow`` and sending the data to the ``purchaseStream``
-Stream::
+stream::
 
       FlowManager flowManager = appManager.startFlow("PurchaseFlow");
-      // Send data to the Stream
+      // Send data to the stream
       sendData(appManager, now);
 
-      // Wait for the last Flowlet to process 3 events or at most 5 seconds
+      // Wait for the last flowlet to process 3 events or at most 5 seconds
       RuntimeMetrics metrics = RuntimeStats.
           getFlowletMetrics("PurchaseApp", "PurchaseFlow", "collector");
       metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
@@ -177,7 +177,7 @@ Start the MapReduce and wait for a maximum of 60 seconds::
       mrManager.waitForFinish(60, TimeUnit.SECONDS);
 
 We can start verifying that the MapReduce was run correctly by
-using the PurchaseHistoryService to retrieve a customer's purchase history::
+using the ``PurchaseHistoryService`` to retrieve a customer's purchase history::
 
     // Start PurchaseHistoryService
     ServiceManager purchaseHistoryServiceManager = appManager.startService(PurchaseHistoryService.SERVICE_NAME);
@@ -216,18 +216,18 @@ The ``SparkPageRankTest`` class should extend from
 The ``SparkPageRankTest`` application can be deployed using the ``deployApplication``
 method from the ``TestBase`` class::
 
-  // Deploy an Application
+  // Deploy an application
   ApplicationManager appManager = deployApplication(SparkPageRankApp.class);
 
-The Spark program reads from the ``backlinkURLs`` Dataset. As a first
+The Spark program reads from the ``backlinkURLs`` dataset. As a first
 step, data in the ``backlinkURLs`` should be populated by running
-the ``BackLinkFlow`` and sending the data to the Stream ``backlinkURLStream``::
+the ``BackLinkFlow`` and sending the data to the stream ``backlinkURLStream``::
 
   FlowManager flowManager = appManager.startFlow("BackLinkFlow");
-  // Send data to the Stream
+  // Send data to the stream
   sendData(appManager);
 
-  // Wait for the last Flowlet to process 4 events or at most 5 seconds
+  // Wait for the last flowlet to process 4 events or at most 5 seconds
   RuntimeMetrics metrics = RuntimeStats.
       getFlowletMetrics("SparkPageRank", "BackLinkFlow", "reader");
   metrics.waitForProcessed(4, 5, TimeUnit.SECONDS);
@@ -239,7 +239,7 @@ Start the Spark program and wait for a maximum of 60 seconds::
   sparkManager.waitForFinish(60, TimeUnit.SECONDS);
 
 We verify that the Spark program ran correctly by
-using the Ranks Service to check the results::
+using the Ranks service to check the results::
 
   // Wait for ranks service to start
   serviceManager.waitForStatus(true);

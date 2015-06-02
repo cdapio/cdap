@@ -28,9 +28,9 @@ Building Blocks
     Transaction System <transaction-system>
 
 This section covers the :doc:`core abstractions <core>` in the Cask Data Application Platform
-(CDAP)—**Data** and **Applications.**
+(CDAP): **data** and **applications.**
 
-An :doc:`Application <applications>` is a collection of application building blocks that read and
+An :doc:`application <applications>` is a collection of application building blocks that read and
 write data through the data abstraction layer in CDAP.
 
 **Data abstractions** include:
@@ -40,7 +40,7 @@ write data through the data abstraction layer in CDAP.
 
 **Applications** are composed from these building blocks:
 
-- :doc:`Flows (and Flowlets) <flows-flowlets/index>`
+- :doc:`Flows (and flowlets) <flows-flowlets/index>`
 - :doc:`MapReduce Programs <mapreduce-programs>`
 - :doc:`Workflows <workflows>`
 - :doc:`Schedules <schedules>`
@@ -48,18 +48,18 @@ write data through the data abstraction layer in CDAP.
 - :doc:`Spark Programs <spark-programs>`
 - :doc:`Services <services>`
 
-A :doc:`Namespace <namespaces>` is a physical grouping of application and data in CDAP.
+A :doc:`namespace <namespaces>` is a physical grouping of application and data in CDAP.
 Conceptually, namespaces can be thought of as a partitioning of a CDAP instance.
 All applications and data live in an explicit CDAP namespace.
 
-Additionally, the :doc:`Transaction System <transaction-system>` is an essential service
+Additionally, the :doc:`transaction system <transaction-system>` is an essential service
 that provides ACID (*atomicity, consistency, isolation,* and *durability*) guarantees,
 critical in applications where data accuracy is required.
 
 For a high-level view of the concepts of the Cask Data Application Platform, see the
-platform :doc:`Overview. </overview/index>`
+platform :doc:`overview. </overview/index>`
 
 For information beyond this section, see the :ref:`Javadocs <reference:javadocs>` and
-the code in the :ref:`Examples <examples-index>` directory, both of which are available at the
+the code in the :ref:`examples <examples-index>` directory, both of which are available at the
 `Cask.co resources page, <http://cask.co/resources>`_ as well as in your CDAP SDK
 installation directory.

@@ -49,7 +49,7 @@ PostgreSQL. Most tools allow the addition of non-standard JDBC drivers.
 
 Two business intelligence tools—:ref:`SquirrelSQL <squirrel-integration>` and 
 :ref:`Pentaho Data Integration <pentaho-integration>`—are covered, explaining connecting
-them to a running CDAP instance and interacting with CDAP Datasets.
+them to a running CDAP instance and interacting with CDAP datasets.
 
 The example :ref:`cdap-bi-guide` includes the use of Pentaho.
 

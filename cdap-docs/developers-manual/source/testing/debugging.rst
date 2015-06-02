@@ -4,13 +4,13 @@
 
 .. _debugging-cdap:
 
-================================================
+============================
 Debugging a CDAP Application
-================================================
+============================
 
 Debugging an Application in Standalone CDAP
 ===========================================
-Any CDAP Application can be debugged in the Standalone CDAP
+Any CDAP application can be debugged in the Standalone CDAP
 by attaching a remote debugger to the CDAP JVM. To enable remote
 debugging:
 
@@ -19,10 +19,10 @@ debugging:
    The CDAP should confirm that the debugger port is open with a message such as
    ``Remote debugger agent started on port 5005``.
 
-#. Deploy (for example) the *HelloWorld* Application to the CDAP by dragging and dropping the
+#. Deploy (for example) the *HelloWorld* application to the CDAP by dragging and dropping the
    ``HelloWorld.jar`` file from the ``/examples/HelloWorld`` directory onto the CDAP UI.
 
-#. Open the *HelloWorld* Application in an IDE and connect to the remote debugger.
+#. Open the *HelloWorld* application in an IDE and connect to the remote debugger.
 
 For more information, see `Attaching a Debugger`_.
 
@@ -40,9 +40,9 @@ are dispersed over multiple—if not many—containers in the Hadoop cluster. Th
 single place to debug the entire application.
 
 You can, however, debug every individual container by attaching a remote debugger to it.
-This is supported for each Flowlet of a Flow and each instance of a Service. In order
+This is supported for each flowlet of a flow and each instance of a service. In order
 to debug a container, you need to start the component with debugging enabled by making
-an HTTP request to the component’s URL. For example, the following will start a Flow for debugging::
+an HTTP request to the component’s URL. For example, the following will start a flow for debugging::
 
   POST <base-url>/namespaces/default/apps/WordCount/flows/WordCounter/debug
   
@@ -50,14 +50,14 @@ Using ``curl``::
 
   $ curl -w'\n' -X POST 'http://<hostname>:10000/v3/namespaces/default/apps/WordCount/flows/WordCounter/debug'
 
-Note that this URL differs from the URL for starting the Flow only by the last path
+Note that this URL differs from the URL for starting the flow only by the last path
 component (``debug`` instead of ``start``; see the :ref:`http-restful-api-lifecycle`). 
-You can pass in runtime arguments in the exact same way as you normally would start a Flow.
+You can pass in runtime arguments in the exact same way as you normally would start a flow.
 
-Once the Flow is running, each Flowlet will detect an available port in its container
+Once the flow is running, each flowlet will detect an available port in its container
 and open that port for attaching a debugger.
 To find out the address of a container’s host and the container’s debug port, you can query
-the CDAP for a Flow or Service’s live info via HTTP::
+the CDAP for a flow or service’s live info via HTTP::
 
   GET <base-url>/namespaces/default/apps/WordCount/flows/WordCounter/live-info
   
@@ -98,17 +98,17 @@ The response is formatted in JSON and—pretty-printed— would look similar to 
     "yarnAppId": "application_1397069870124_0010"
   }
 
-You see the YARN application id and the YARN container IDs of each Flowlet. More importantly, you
-can see the host name and debugging port for each Flowlet. For example, the only instance of the
-*splitter* Flowlet is running on ``node-1003.my.cluster.net`` and the debugging port is 37205. You can now
+You see the YARN application id and the YARN container IDs of each flowlet. More importantly, you
+can see the host name and debugging port for each flowlet. For example, the only instance of the
+*splitter* flowlet is running on ``node-1003.my.cluster.net`` and the debugging port is 37205. You can now
 attach your debugger to the container’s JVM (see `Attaching a Debugger`_).
 
-The corresponding HTTP requests for the ``RetrieveCounts`` Service of this application would be::
+The corresponding HTTP requests for the ``RetrieveCounts`` service of this application would be::
 
   POST <base-url>/namespaces/default/apps/WordCount/services/RetrieveCounts/debug
   GET <base-url>/namespaces/default/apps/WordCount/services/RetrieveCounts/live-info
 
-Analysis of the response would give you the host names and debugging ports for all instances of the Service.
+Analysis of the response would give you the host names and debugging ports for all instances of the service.
 
 .. highlight:: java
 
@@ -134,12 +134,12 @@ You may need to adjust them for your installation or version.
    .. image:: ../_images/debugging/intellij_2.png
 
 #. To start the debugger, select ``Run -> Debug -> CDAP``.
-#. Set a breakpoint in any code block, for example, a Flowlet method:
+#. Set a breakpoint in any code block, for example, a flowlet method:
 
    .. image:: ../_images/debugging/intellij_3.png
 
-#. Start the Flow in the CDAP UI.
-#. Send an event to the Stream. The control will stop at the breakpoint
+#. Start the flow in the CDAP UI.
+#. Send an event to the stream. The control will stop at the breakpoint
    and you can proceed with debugging.
 
 
@@ -166,12 +166,12 @@ You may need to adjust them for your installation or version.
 
 #. In your project, click ``Debug`` to start the debugger.
 
-#. Set a breakpoint in any code block, for example, a Flowlet method:
+#. Set a breakpoint in any code block, for example, a flowlet method:
 
    .. image:: ../_images/debugging/eclipse_3.png
 
-#. Start the Flow in the CDAP UI.
-#. Send an event to the Stream.
+#. Start the flow in the CDAP UI.
+#. Send an event to the stream.
 #. The control stops at the breakpoint and you can proceed with debugging.
 
 
@@ -235,7 +235,7 @@ Here are the states a transaction goes through in its lifecycle:
   of the transactions present in the structure.
 - If there are no conflicts, all the writes of the transaction along with its write pointer
   are stored in the `committing change sets` structure.
-- The client—namely, a Dataset—can then ask the TM to commit the writes. These are retrieved from the
+- The client |---| namely, a dataset |---| can then ask the TM to commit the writes. These are retrieved from the
   `committing change sets` structure. Since the `committed change sets` structure might
   have evolved since the last conflict check, another one is performed. If the
   transaction is in the `excluded set`, the commit will fail regardless
@@ -309,8 +309,8 @@ Here are options that you can use with the ``tx-debugger view`` commands:
   structures, this will print the keys where the transaction has
   performed writes.
 
-While transactions don't inform you about the tasks that launched them—whether
-it was a Flowlet, a MapReduce program, etc.—you can match the time
+While transactions don't inform you about the tasks that launched them |---| whether
+it was a flowlet, a MapReduce program, etc. |---| you can match the time
 they were started with the activity of your CDAP to track potential
 issues.
 

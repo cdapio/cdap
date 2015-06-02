@@ -183,7 +183,7 @@ to query in::
 
   protected abstract Cube getCube();
 
-Here’s an example of an Application with a Cube dataset and an HTTP Service that provides
+Here’s an example of an application with a Cube dataset and an HTTP Service that provides
 RESTful access to it::
 
   public class AppWithCube extends AbstractApplication {

@@ -2,16 +2,16 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014 Cask Data, Inc.
 
-============================================
+==========================
 System and Custom Datasets
-============================================
+==========================
 
 .. _system-datasets:
 
 System Datasets
-============================================
+===============
 
-The Cask Data Application Platform comes with several system-defined Datasets, including but not limited to
+The Cask Data Application Platform comes with several system-defined datasets, including but not limited to
 key/value Tables, indexed Tables and time series. Each of them is defined with the help of one or more embedded
 Tables, but defines its own interface. Examples include:
 
@@ -28,31 +28,31 @@ Tables, but defines its own interface. Examples include:
   in :ref:`ObjectMappedTable Exploration <object-mapped-table-exploration>`.
 
 See the :ref:`Javadocs <reference:javadocs>` for these classes and the :ref:`Examples <examples-index>`
-to learn more about these Datasets. Any class in the CDAP libraries that implements the ``Dataset`` interface is a
-system Dataset.
+to learn more about these datasets. Any class in the CDAP libraries that implements the ``Dataset`` interface is a
+system dataset.
 
 
 .. _custom-datasets:
 
 Custom Datasets
-============================================
+===============
 
 .. highlight:: java
 
-You can define your own Dataset classes to implement common data patterns specific to your code.
+You can define your own dataset classes to implement common data patterns specific to your code.
 
 Suppose you want to define a counter table that, in addition to counting words,
-counts how many unique words it has seen. The Dataset can be built on top of two underlying Datasets. The first a
+counts how many unique words it has seen. The dataset can be built on top of two underlying datasets. The first a
 Table (``entryCountTable``) to count all the words and the second a Table (``uniqueCountTable``) for the unique count.
 
-When your custom Dataset is built on top of one or more existing Datasets, the simplest way to implement
-it is to just define the data operations (by implementing the Dataset interface) and delegating all other
-work (such as  administrative operations) to the embedded Dataset.
+When your custom dataset is built on top of one or more existing datasets, the simplest way to implement
+it is to just define the data operations (by implementing the dataset interface) and delegating all other
+work (such as  administrative operations) to the embedded dataset.
 
-To do this, you need to implement the Dataset class and define the embedded Datasets by annotating
+To do this, you need to implement the dataset class and define the embedded datasets by annotating
 its constructor arguments.
 
-In this case, our  ``UniqueCountTableDefinition`` will have two underlying Datasets:
+In this case, our  ``UniqueCountTableDefinition`` will have two underlying datasets:
 an ``entryCountTable`` and an ``uniqueCountTable``, both of type ``Table``::
 
   public class UniqueCountTable extends AbstractDataset {
@@ -70,7 +70,7 @@ an ``entryCountTable`` and an ``uniqueCountTable``, both of type ``Table``::
 
 In this case, the class must have one constructor that takes a ``DatasetSpecification`` as a first
 parameter and any number of ``Dataset``\s annotated with the ``@EmbeddedDataset`` annotation as the
-remaining parameters. ``@EmbeddedDataset`` takes the embedded Dataset's name as a parameter.
+remaining parameters. ``@EmbeddedDataset`` takes the embedded dataset's name as a parameter.
 
 The ``UniqueCountTable`` stores a counter for each word in its own row of the entry count table.
 For each word the counter is incremented. If the result of the increment is 1, then this is the first time
@@ -90,11 +90,11 @@ Finally, we write a method to retrieve the number of unique words seen::
     }
 
 
-All administrative operations (such as create, drop, truncate) will be delegated to the embedded Datasets
+All administrative operations (such as create, drop, truncate) will be delegated to the embedded datasets
 in the order they are defined in the constructor. ``DatasetProperties`` that are passed during creation of
-the Dataset will be passed as-is to the embedded Datasets.
+the dataset will be passed as-is to the embedded datasets.
 
-To create a Dataset of type ``UniqueCountTable``, add the following into the Application implementation::
+To create a dataset of type ``UniqueCountTable``, add the following into the application implementation::
 
   Class MyApp extends AbstractApplication {
     public void configure() {
@@ -108,8 +108,8 @@ To create a Dataset of type ``UniqueCountTable``, add the following into the App
 Passing Properties
 ------------------
 You can also pass ``DatasetProperties`` as a third parameter to the ``createDataset`` method.
-These properties will be used by embedded Datasets during creation and will be available via the
-``DatasetSpecification`` passed to the Dataset constructor. For example, to create a Dataset with
+These properties will be used by embedded datasets during creation and will be available via the
+``DatasetSpecification`` passed to the dataset constructor. For example, to create a dataset with
 a TTL (time-to-live) property, you can use::
 
   createDataset("frequentCustomers", KeyValueTable.class,
@@ -123,7 +123,7 @@ You can pass other properties, such as for
 
 Accessing a Dataset
 -------------------
-Application components can access a created Dataset via the ``@UseDataSet`` annotation::
+Application components can access a created dataset via the ``@UseDataSet`` annotation::
 
   Class MyFlowlet extends AbstractFlowlet {
     @UseDataSet("myCounters")
@@ -131,7 +131,7 @@ Application components can access a created Dataset via the ``@UseDataSet`` anno
     ...
   }
 
-A complete application demonstrating the use of a custom Dataset is included in our
+A complete application demonstrating the use of a custom dataset is included in our
 :ref:`Purchase Example. <examples-purchase>`
 
-You can also create, drop, and truncate Datasets using the :ref:`http-restful-api-dataset`.
+You can also create, drop, and truncate datasets using the :ref:`http-restful-api-dataset`.

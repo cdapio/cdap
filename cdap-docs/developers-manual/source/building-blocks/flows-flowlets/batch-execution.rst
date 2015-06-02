@@ -2,11 +2,11 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014 Cask Data, Inc.
 
-============================================
+===============
 Batch Execution
-============================================
+===============
 
-By default, a Flowlet processes a single data object at a time within a single
+By default, a flowlet processes a single data object at a time within a single
 transaction. To increase throughput, you can also process a batch of data objects within
 the same transaction::
 

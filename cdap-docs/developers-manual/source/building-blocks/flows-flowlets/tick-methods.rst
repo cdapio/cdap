@@ -2,18 +2,18 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014 Cask Data, Inc.
 
-============================================
+============
 Tick Methods
-============================================
+============
 
-A Flowlet’s method can be annotated with ``@Tick``. Instead of
-processing data objects from a Flowlet input, this method is invoked
+A flowlet’s method can be annotated with ``@Tick``. Instead of
+processing data objects from a flowlet input, this method is invoked
 periodically, without arguments. This can be used, for example, to
 generate data, or pull data from an external data source periodically on
 a fixed cadence.
 
 In this code snippet from the *CountRandom* example, the ``@Tick``
-method in the Flowlet emits random numbers::
+method in the flowlet emits random numbers::
 
   public class RandomSource extends AbstractFlowlet {
 

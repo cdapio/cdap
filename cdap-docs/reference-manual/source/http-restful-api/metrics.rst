@@ -81,9 +81,9 @@ enclosing context. These are the available Application contexts of CDAP:
      - ``namespace:<namespace> app:<app-id> flow:<flow-id>``
    * - All Flowlets of all Flows of an Application
      - ``namespace:<namespace> app:<app-id> flow:*``
-   * - One Worker
+   * - One worker
      - ``namespace:<namespace> app:<app-id> worker:<worker-id>``
-   * - All Workers of an Application
+   * - All workers of an Application
      - ``namespace:<namespace> app:<app-id> workers:*``
    * - All Mappers of a MapReduce
      - ``namespace:<namespace> app:<app-id> mapreduce:<mapreduce-id> tasktype:m``
@@ -119,8 +119,8 @@ Stream metrics are only available at the Stream level and the only available con
    * - A single Stream
      - ``namespace:<namespace> stream:<stream-id>``
 
-Dataset metrics are available at the Dataset level, but they can also be queried down to the
-Flowlet, Worker, Service, Mapper, or Reducer level:
+Dataset metrics are available at the dataset level, but they can also be queried down to the
+Flowlet, worker, Service, Mapper, or Reducer level:
 
 .. list-table::
    :header-rows: 1
@@ -128,15 +128,15 @@ Flowlet, Worker, Service, Mapper, or Reducer level:
 
    * - Dataset Metric
      - Context
-   * - A single Dataset in the context of a single Flowlet
+   * - A single dataset in the context of a single Flowlet
      - ``namespace:<namespace> dataset:<dataset-id> app:<app-id> flow:<flow-id> flowlet:<flowlet-id>``
-   * - A single Dataset in the context of a single Flow
+   * - A single dataset in the context of a single Flow
      - ``namespace:<namespace> dataset:<dataset-id> app:<app-id> flow:<flow-id>``
-   * - A single Dataset in the context of a specific Application
+   * - A single dataset in the context of a specific Application
      - ``namespace:<namespace> dataset:<dataset-id> app:<app-id>``
-   * - A single Dataset
+   * - A single dataset
      - ``namespace:<namespace> dataset:<dataset-id>``
-   * - All Datasets
+   * - All datasets
      - ``namespace:<namespace> dataset:*``
 
 .. _available-system-metrics:
@@ -146,7 +146,7 @@ Available System Metrics
 **Note:** A user metric may have the same name as a system metric; they are distinguished 
 by prepending the respective prefix when querying: ``user`` or ``system``.
 
-These metrics are available in a Datasets context:
+These metrics are available in a datasets context:
 
 .. list-table::
    :header-rows: 1
@@ -182,13 +182,13 @@ These metrics are available in a Flowlet context:
    * - ``system.process.tuples.read``
      - Number of tuples read by the Flowlet
    * - ``system.store.bytes``
-     - Number of bytes written to Datasets
+     - Number of bytes written to datasets
    * - ``system.store.ops``
-     - Operations (writes and read) performed on Datasets
+     - Operations (writes and read) performed on datasets
    * - ``system.store.reads``
-     - Read operations performed on Datasets
+     - Read operations performed on datasets
    * - ``system.store.writes``
-     - Write operations performed on Datasets
+     - Write operations performed on datasets
 
 These metrics are available in a Mappers or Reducers context (specify whether a Mapper or
 Reducer context is desired, as shown above):
@@ -687,7 +687,7 @@ Querying by a Time Range
 
 The time range of a metric query can be specified in various ways: either
 ``aggregate=true`` to retrieve the total aggregated since the Application was deployed
-or |---| in the case of Dataset metrics |---| since a Dataset was created; 
+or |---| in the case of dataset metrics |---| since a dataset was created; 
 or as a ``start`` and ``end`` to define a specific range and return a series of data points.
 
 By default, queries without a time range retrieve a value based on ``aggregate=true``.
@@ -775,7 +775,7 @@ For example, this request will retrieve the completion percentage for the map-st
 Querying by Run-ID
 ..................
 
-Each execution of an program (Flow, MapReduce, Spark, Service, Worker) has an :ref:`associated 
+Each execution of an program (Flow, MapReduce, Spark, Service, worker) has an :ref:`associated 
 run-ID <rest-program-runs>` that uniquely identifies that program's run. We can query 
 metrics for a program by its run-ID to retrieve the metrics for a particular run. Please see 
 the :ref:`Run Records and Schedule <rest-program-runs>` on retrieving active and historical

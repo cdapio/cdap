@@ -37,18 +37,18 @@ Glossary
       
    MapReduce
       MapReduce is a processing model used to process data in batch. MapReduce programs can be
-      written as in a conventional Apache Hadoop system. CDAP Datasets can be accessed
+      written as in a conventional Apache Hadoop system. CDAP datasets can be accessed
       from MapReduce programs as both input and output.
       
    Workflow
-      A Workflow is used to execute a series of MapReduce programs, with an optional schedule
+      A workflow is used to execute a series of MapReduce programs, with an optional schedule
       to run itself periodically.
       
    Spark
       Spark is a fast and general processing engine, compatible with Hadoop data, used for
       in-memory cluster computing. It lets you load large sets of data into memory and
       query them repeatedly, making it suitable for both iterative and interactive
-      programs. Similar to :term:`MapReduce`, Spark can access Datasets as both input and output.
+      programs. Similar to :term:`MapReduce`, Spark can access datasets as both input and output.
       Spark programs in CDAP can be written in either Java or Scala.
 
    Service
@@ -57,13 +57,13 @@ Glossary
       number of running service instances can be dynamically scaled. Developers can
       implement Custom Services to interface with a legacy system and perform additional
       processing beyond the CDAP processing paradigms. Examples could include running an
-      IP-to-Geo lookup and serving user-profiles.      
+      IP-to-Geo lookup and serving user-profiles.
 
    Worker
       Workers are typically long-running background programs that can be used to execute tasks.
       Each instance of a worker runs either in its own YARN container (CDAP distributed mode) or
       a single thread (CDAP Standalone or In-Memory mode) and the number of instances may be updated
-      via RESTful APIs or the CLI. Datasets can be accessed from inside Workers.
+      via RESTful APIs or the CLI. Datasets can be accessed from inside workers.
 
    Data Abstraction
       Abstraction of the actual representation of data in storage.
