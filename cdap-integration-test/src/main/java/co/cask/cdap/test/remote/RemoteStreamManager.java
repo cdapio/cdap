@@ -122,10 +122,15 @@ public class RemoteStreamManager implements StreamManager {
   }
 
   @Override
-  public <T> List<StreamEvent> getEvents(T startTime, T endTime, int limit) throws IOException {
+  public List<StreamEvent> getEvents(long startTime, long endTime, int limit) throws IOException {
+    return getEvents(String.valueOf(startTime), String.valueOf(endTime), limit);
+  }
+
+  @Override
+  public List<StreamEvent> getEvents(String startTime, String endTime, int limit) throws IOException {
     List<StreamEvent> results = Lists.newArrayList();
     try {
-      streamClient.getEvents(streamName, startTime.toString(), endTime.toString(), limit, results);
+      streamClient.getEvents(streamName, startTime, endTime, limit, results);
     } catch (StreamNotFoundException e) {
       throw new IOException(e);
     } catch (Exception e) {

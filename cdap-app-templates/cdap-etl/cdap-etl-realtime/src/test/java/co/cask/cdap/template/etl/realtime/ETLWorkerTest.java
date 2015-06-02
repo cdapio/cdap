@@ -119,8 +119,8 @@ public class ETLWorkerTest extends TestBase {
     adapterManager.stop();
 
     StreamManager streamManager = getStreamManager(NAMESPACE, "testStream");
-    long currentDiff = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime);
-    List<StreamEvent> streamEvents = streamManager.getEvents("now-" + Long.toString(currentDiff) + "s", "now",
+    long currentDiff = System.currentTimeMillis() - startTime;
+    List<StreamEvent> streamEvents = streamManager.getEvents("now-" + Long.toString(currentDiff) + "ms", "now",
                                                              Integer.MAX_VALUE);
     // verify that some events were sent to the stream
     Assert.assertTrue(streamEvents.size() > 0);

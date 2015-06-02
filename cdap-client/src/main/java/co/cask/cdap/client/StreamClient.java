@@ -319,7 +319,6 @@ public class StreamClient {
    * @throws IOException             If fails to read from stream
    * @throws StreamNotFoundException If the given stream does not exists
    */
-  @Deprecated
   public <T extends Collection<? super StreamEvent>> T getEvents(String streamId, long startTime,
                                                                  long endTime, int limit, final T results)
     throws IOException, StreamNotFoundException, UnauthorizedException {
@@ -402,7 +401,6 @@ public class StreamClient {
    * @throws IOException             If fails to read from stream
    * @throws StreamNotFoundException If the given stream does not exists
    */
-  @Deprecated
   public void getEvents(String streamId, long startTime, long endTime, int limit,
                         Function<? super StreamEvent, Boolean> callback)
     throws IOException, StreamNotFoundException, UnauthorizedException {

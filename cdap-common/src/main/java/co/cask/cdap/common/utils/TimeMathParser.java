@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
 public class TimeMathParser {
 
   private static final String NOW = "now";
-  private static final String VALID_UNITS = "s|m|h|d";
+  private static final String VALID_UNITS = "ms|s|m|h|d";
   private static final Pattern OP_PATTERN = Pattern.compile("(\\-|\\+)(\\d+)(" + VALID_UNITS + ")");
   private static final Pattern RESOLUTION_PATTERN = Pattern.compile("(\\d+)(" + VALID_UNITS + ")");
   private static final Pattern TIMESTAMP_PATTERN = Pattern.compile("^(\\d+)$");
@@ -49,8 +49,11 @@ public class TimeMathParser {
       seconds = TimeUnit.HOURS.toSeconds(num);
     } else if ("d".equals(unitStr)) {
       seconds = TimeUnit.DAYS.toSeconds(num);
+    } else if ("ms".equals(unitStr)) {
+      seconds = TimeUnit.MILLISECONDS.toSeconds(num);
     } else {
-      throw new IllegalArgumentException("invalid time unit " + unitStr + ", should be one of 's', 'm', 'h', 'd'");
+      throw new IllegalArgumentException("invalid time unit " + unitStr +
+                                           ", should be one of 'ms', 's', 'm', 'h', 'd'");
     }
 
     if ("+".equals(op)) {
