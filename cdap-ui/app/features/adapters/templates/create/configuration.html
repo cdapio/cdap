@@ -1,0 +1,24 @@
+<div class="panel panel-default" ng-init="configurationTabOpen=false">
+  <div class="panel-heading" ng-click="configurationTabOpen = !configurationTabOpen">
+    <div class="panel-title">
+      <div class="clearfix">
+        <span class="pull-left">Configuration</span>
+        <i class="fa fa-fw pull-right"
+            ng-class="{'fa-chevron-down': configurationTabOpen, 'fa-chevron-right': !configurationTabOpen}"></i>
+      </div>
+    </div>
+  </div>
+  <div class="panel-body" ng-if="configurationTabOpen">
+    <div ng-if="AdapterCreateController.model.metadata.type === 'ETLBatch'">
+      <div data-name="field"
+           class="my-widget-container"
+           data-model="AdapterCreateController.model.schedule['cron']"
+           data-myconfig="{properties: {}, widget: 'schedule'}"
+           widget-container>
+      </div>
+    </div>
+    <div ng-if="AdapterCreateController.model.metadata.type === 'ETLRealtime'">
+      <h1>ETL Realtime Instances</h1>
+    </div>
+  </div>
+</div>
