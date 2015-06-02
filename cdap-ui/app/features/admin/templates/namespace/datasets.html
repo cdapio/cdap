@@ -39,7 +39,8 @@
       </table>
     </div>
 
-    <div class="text-center">
+    <!-- Switch to ng-if when we refactor to use controller as syntax -->
+    <div class="text-center" ng-show="dataList.length > 10">
       <pagination total-items="dataList.length" ng-model="currentPage"></pagination>
     </div>
   </div>

@@ -1,4 +1,4 @@
-<div ng-show="runs.length > 0">
+<div ng-if="runs.length > 0">
   <div class="table-responsive">
     <table class="table table-curved" cask-sortable>
       <thead>
@@ -35,13 +35,14 @@
     </table>
   </div>
 
-  <div class="text-center">
+  <!-- Switch to ng-if when we refactor to use controller as syntax -->
+  <div class="text-center" ng-show="runs.length > 10">
     <pagination total-items="runs.length" ng-model="currentPage"></pagination>
   </div>
 </div>
 
 
-<div ng-hide="runs.length > 0">
+<div ng-if="runs.length === 0">
   <div class="well well-lg text-center">
     <div> No History so far.</div>
   </div>

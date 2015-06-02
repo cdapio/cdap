@@ -6,7 +6,7 @@
 
   <div class="col-xs-4">
     <div class="input-group pull-right h2">
-      <input type="text" class="form-control" ng-model="searchText" placeholder="search...">
+      <input type="text" class="form-control" ng-model="dataCtrl.searchText" placeholder="search...">
       <div class="input-group-addon">
         <i class="fa fa-search"></i>
       </div>
@@ -16,13 +16,13 @@
 <div class="table-responsive">
   <table class="table table-curved" cask-sortable>
     <thead>
-      <tr ng-class="{'sort-enabled': dataList.length>0}">
+      <tr ng-class="{'sort-enabled': dataCtrl.dataList.length>0}">
         <th data-predicate="name"> Name </th>
         <th data-predicate="dataType"> Type </th>
       </tr>
     </thead>
     <tbody>
-      <tr ng-repeat="data in dataList | myPaginate:currentPage | filter:{ name: searchText } | orderBy:sortable.predicate:sortable.reverse">
+      <tr ng-repeat="data in dataCtrl.dataList | myPaginate:dataCtrl.currentPage | filter:{ name: dataCtrl.searchText } | orderBy:sortable.predicate:sortable.reverse">
           <td>
             <a ng-click="goToDetail(data)"
                 href="">
@@ -39,6 +39,6 @@
   </table>
 </div>
 
-<div class="text-center">
-  <pagination total-items="dataList.length" ng-model="currentPage"></pagination>
+<div class="text-center" ng-if="dataCtrl.dataList.length > 10">
+  <pagination total-items="dataCtrl.dataList.length" ng-model="dataCtrl.currentPage"></pagination>
 </div>
