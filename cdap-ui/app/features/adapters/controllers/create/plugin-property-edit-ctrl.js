@@ -83,8 +83,9 @@ angular.module(PKG.name + '.feature.adapters')
         var info = myHelpers.objectQuery(this, 'groups', group, 'fields', field, 'info') ;
         var label = myHelpers.objectQuery($scope, 'groups', group, 'fields', field, 'label');
 
-        if (description && !description.length) {
-          this.groups[group].fields[field].description =description || 'No Description Available';
+        if (!description || (description && !description.length)) {
+          description = myHelpers.objectQuery($scope, 'plugin', '_backendProperties', field, 'description');
+          this.groups[group].fields[field].description = description || 'No Description Available';
         }
         this.groups[group].fields[field].info = info || 'Info';
         if (!label) {
