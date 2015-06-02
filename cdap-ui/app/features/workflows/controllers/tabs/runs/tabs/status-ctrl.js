@@ -73,13 +73,6 @@ angular.module(PKG.name + '.feature.workflows')
       + '/workflows/' + $state.params.programId
       + '/runs/' + $scope.runs.selected.runid;
 
-    var runsParams = {
-      appId: $state.params.appId,
-      workflowId: $state.params.programId,
-      runid: $scope.runs.selected.runid,
-      scope: $scope
-    };
-
     if ($scope.runs.length > 0) {
       dataSrc.poll({
         _cdapNsPath: path,
