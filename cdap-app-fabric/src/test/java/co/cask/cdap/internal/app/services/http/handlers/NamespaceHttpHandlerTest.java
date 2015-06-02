@@ -167,6 +167,25 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
+  public void testCreateWithConfig() throws Exception {
+    // prepare - create namespace with config in its properties
+    String propertiesString = String.format("{\"%s\":\"%s\", \"%s\":\"%s\", \"%s\":%s}",
+                                            NAME_FIELD, NAME, DESCRIPTION_FIELD, DESCRIPTION,
+                                            CONFIG_FIELD, "{\"scheduler.queue.name\":\"testSchedulerQueueName\"}");
+    HttpResponse response = createNamespace(propertiesString, NAME);
+    assertResponseCode(200, response);
+    response = getNamespace(NAME);
+    JsonObject namespace = readGetResponse(response);
+    Assert.assertNotNull(namespace);
+    Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
+    Assert.assertEquals(DESCRIPTION, namespace.get(DESCRIPTION_FIELD).getAsString());
+    Assert.assertEquals("testSchedulerQueueName",
+                        namespace.get(CONFIG_FIELD).getAsJsonObject().get("scheduler.queue.name").getAsString());
+    response = deleteNamespace(NAME);
+    assertResponseCode(200, response);
+  }
+
+  @Test
   public void testInvalidReservedId() throws Exception {
     HttpResponse response = createNamespace(METADATA_VALID, INVALID_NAME);
     assertResponseCode(400, response);
@@ -402,13 +421,18 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
     Assert.assertEquals(EMPTY, namespace.get(DESCRIPTION_FIELD).getAsString());
 
-    NamespaceMeta meta = new NamespaceMeta.Builder().setName(NAME).setSchedulerQueueName("prod").build();
+    // Update scheduler queue name.
+    String nonexistentName = NAME + "nonexistent";
+    NamespaceMeta meta = new NamespaceMeta.Builder().setName(nonexistentName).setSchedulerQueueName("prod").build();
     setProperties(NAME, meta);
+    // assert that the name in the metadata is ignored (the name from the url should be used, instead
+    HttpResponse nonexistentGet = getNamespace(nonexistentName);
+    Assert.assertEquals(404, nonexistentGet.getStatusLine().getStatusCode());
+
     response = getNamespace(NAME);
     namespace = readGetResponse(response);
     Assert.assertNotNull(namespace);
 
-    // Update scheduler queue name.
     NamespaceConfig config = GSON.fromJson(namespace.get(CONFIG_FIELD).getAsJsonObject(),
                                                            NamespaceConfig.class);
     Assert.assertEquals("prod", config.getSchedulerQueueName());
@@ -427,8 +451,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(NAME, namespace.get(NAME_FIELD).getAsString());
 
     // verify other properties set earlier has not changed.
-    config = GSON.fromJson(namespace.get(CONFIG_FIELD).getAsJsonObject(),
-                           NamespaceConfig.class);
+    config = GSON.fromJson(namespace.get(CONFIG_FIELD).getAsJsonObject(), NamespaceConfig.class);
     Assert.assertEquals("prod", config.getSchedulerQueueName());
 
     // cleanup
