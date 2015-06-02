@@ -279,6 +279,7 @@ public class PluginInstantiator implements Closeable {
           // if exception is due to wrong value for integer/double conversion
           throw new InvalidPluginConfigException(String.format("valueOf operation on %s failed", value), e.getCause());
         }
+        throw e;
       }
 
       throw new UnsupportedTypeException("Only primitive and String types are supported");
