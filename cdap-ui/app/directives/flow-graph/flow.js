@@ -28,10 +28,7 @@ module.controller('myFlowController', function($scope) {
   $scope.instanceMap = {};
   $scope.labelMap = {};
 
-  $scope.$watch('model', update);
-  $scope.$watchCollection('model.metrics', update);
-  $scope.$watchCollection('model.instances', update);
-  $scope.$watchCollection('model.current', update);
+  $scope.$watch('model', update, true);
 
 });
 
