@@ -8,6 +8,7 @@ angular.module(PKG.name + '.commons')
       },
       templateUrl: 'program-history/program-history.html',
       controller: function ($scope) {
+        $scope.currentPage = 1;
         $scope.$watch('model', function (newVal) {
             if (!angular.isArray(newVal)) {
               return;
