@@ -120,7 +120,7 @@ New User Interface
   
 - **Adapters**
 
-  - Users can create ETLBatch and ETLRealtime Adapters from within the UI.
+  - Users can create ETLBatch and ETLRealtime adapters from within the UI.
   - Users can choose from a list of plugins that comes by default with CDAP when creating an adapter.
   - Users can save an adapter as a draft, to be created at a later point-in-time.
   - Users can configure plugin properties with appropriate editors from within the UI when creating an adapter.

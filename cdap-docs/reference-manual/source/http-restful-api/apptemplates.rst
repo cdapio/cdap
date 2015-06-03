@@ -47,7 +47,7 @@ description and type of program that it creates. Example output (pretty-printed)
     },
     {
       "name": "ETLRealtime",
-      "description": "Real time Extract-Transform-Load (ETL) Adapter",
+      "description": "Real Time Extract-Transform-Load (ETL) Adapter",
       "programType": "Worker"
     }
   ]
@@ -86,7 +86,7 @@ Example output of the ``ETLBatch`` application template (pretty-printed)::
     "programType": "Workflow"
   }
 
-``extensions`` is an array of the types of Plugins that are available for use by the
+``extensions`` is an array of the types of plugins that are available for use by the
 application template.
 
 
@@ -112,9 +112,9 @@ where
      - Name of the application template, such as ``ETLBatch`` or ``ETLRealtime``
   
 This will cause an application template to be updated, and can be used if you are
-deploying a custom JAR or Plugin and need to update an application template so that your
+deploying a custom JAR or plugin and need to update an application template so that your
 changes are seen. Any other updates required (such as the re-creation of adapters based on that
-Template) are left to the developer or user of the custom JAR or Plugin.
+Template) are left to the developer or user of the custom JAR or plugin.
 
 Note that even though application templates are not namespaced, this particular call is
 because it is governed by the adapters that use a Template. If different adapters in
@@ -268,8 +268,8 @@ where
    * - ``<plugin-id>``
      - Plugin name
 
-This will return a JSON String map that lists the details of the Plugin. This is the
-information needed when configuring an adapter using the Plugin, the type of each
+This will return a JSON String map that lists the details of the plugin. This is the
+information needed when configuring an adapter using the plugin, the type of each
 property, and whether it is a mandatory property (*"required"*).
 
 Example output for the ``Database`` plugin of type ``source`` of the ``ETLBatch``

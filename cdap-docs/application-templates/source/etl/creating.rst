@@ -13,8 +13,8 @@ Creating an ETL Adapter
 Introduction
 ============
 Adapters can be created using the :ref:`RESTful API <http-restful-api-apptemplates-adapters-creating>`,
-the :ref:`CDAP CLI <cli>`, or the :ref:`CDAP UI <cdap-ui>`. In order to create an Adapter,
-an Adapter configuration is required that specifies the source, transformations and sink
+the :ref:`CDAP CLI <cli>`, or the :ref:`CDAP UI <cdap-ui>`. In order to create an adapter,
+an adapter configuration is required that specifies the source, transformations and sink
 along with their properties.  (In the CDAP UI, the interface prompts you for the required
 information.)
 
@@ -57,11 +57,11 @@ configuration for a Batch Adapter that runs every minute, reading data from a St
      }
   }
 
-The Adapter launches a MapReduce program that runs every minute, reads data from the
+The adapter launches a MapReduce program that runs every minute, reads data from the
 Stream *myStream* and writes to a Table *myTable*. A Table Sink needs a row key field to
 be specified and can use the timestamp of a Stream event for that.
 
-To create an instance of this Adapter, called *streamAdapter*:
+To create an instance of this adapter, called *streamAdapter*:
 
 - Using the :ref:`RESTful API <http-restful-api-apptemplates-adapters-creating>`::
 
@@ -71,7 +71,7 @@ To create an instance of this Adapter, called *streamAdapter*:
 
     $ create adapter streamAdapter <path-to-config.json>
 
-where ``config.json`` is the file that contains the Adapter configuration.
+where ``config.json`` is the file that contains the adapter configuration.
 
 
 .. highlight:: console
@@ -127,7 +127,7 @@ In this case, we will use a *ProjectionTransform* (a type of Transform) to drop 
 columns in the incoming data. A *StreamSink* in the final step needs a data field property
 that it will use as the content for the data to be written. 
 
-Sample Adaptor Configurations
+Sample Adapter Configurations
 -----------------------------
 
 **Database:** Sample config for using a Database Source and a Database Sink::
