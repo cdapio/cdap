@@ -115,29 +115,30 @@ public class MetricsClient {
   /**
    * Gets the value of the given metrics.
    *
-   * @param metric names of the metric
    * @param tags tags for the request
+   * @param metric names of the metric
    * @return values of the metrics
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public MetricQueryResult query(String metric, Map<String, String> tags)
+  public MetricQueryResult query(Map<String, String> tags, String metric)
     throws IOException, UnauthorizedException {
-    return query(ImmutableList.of(metric), ImmutableList.<String>of(), tags, ImmutableMap.<String, String>of());
+    return query(tags, ImmutableList.of(metric), ImmutableList.<String>of(), ImmutableMap.<String, String>of());
   }
 
   /**
    * Gets the value of the given metrics.
    *
+   * @param tags tags for the request
    * @param metrics names of the metrics
    * @param groupBys groupBys for the request
-   * @param tags tags for the request
+   * @param timeRangeParams specifies parameters for time range of the query
    * @return values of the metrics
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
   // TODO: take in query object shared by MetricsHandler
-  public MetricQueryResult query(List<String> metrics, List<String> groupBys, Map<String, String> tags,
+  public MetricQueryResult query(Map<String, String> tags, List<String> metrics, List<String> groupBys,
                                  @Nullable Map<String, String> timeRangeParams)
     throws IOException, UnauthorizedException {
 
@@ -268,7 +269,7 @@ public class MetricsClient {
 
   private long getTotalCounter(Map<String, String> tags, String metricName) {
     try {
-      MetricQueryResult result = query(metricName, tags);
+      MetricQueryResult result = query(tags, metricName);
       if (result.getSeries().length == 0) {
         return 0;
       }
