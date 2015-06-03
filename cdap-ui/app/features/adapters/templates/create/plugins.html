@@ -29,10 +29,11 @@
                   </div>
 
                   <div ng-if="source.description.length > 54"
-                       tooltip="{{source.description}}"
-                       tooltip-append-to-body="true"
                        class="description-overflow">
-                    <span class="fa fa-info-circle"></span>
+                    <span class="fa fa-info-circle"
+                          tooltip="{{source.description}}"
+                          tooltip-append-to-body="true">
+                    </span>
                     {{source.description}}
                   </div>
 
@@ -75,10 +76,11 @@
                   </div>
 
                   <div ng-if="transform.description.length > 54"
-                       tooltip="{{transform.description}}"
-                       tooltip-append-to-body="true"
                        class="description-overflow">
-                    <span class="fa fa-info-circle"></span>
+                    <span class="fa fa-info-circle"
+                          tooltip="{{transform.description}}"
+                          tooltip-append-to-body="true">
+                    </span>
                     {{transform.description}}
                   </div>
                 </li>
@@ -121,10 +123,11 @@
                     </div>
 
                     <div ng-if="sink.description.length > 54"
-                         tooltip="{{sink.description}}"
-                         tooltip-append-to-body="true"
                          class="description-overflow">
-                      <span class="fa fa-info-circle"></span>
+                      <span class="fa fa-info-circle"
+                            tooltip="{{sink.description}}"
+                            tooltip-append-to-body="true">
+                      </span>
                       {{sink.description}}
                     </div>
 
