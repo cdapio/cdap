@@ -18,6 +18,7 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.app.DummyWorkerTemplate;
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.exception.NotFoundException;
@@ -56,7 +57,7 @@ public class AdapterClientTestRun extends ClientTestBase {
   @Before
   public void setUp() throws Throwable {
     super.setUp();
-    clientConfig.setNamespace(Constants.DEFAULT_NAMESPACE_ID);
+    this.clientConfig = new ClientConfig.Builder(clientConfig).setNamespace(Constants.DEFAULT_NAMESPACE_ID).build();
     adapterClient = new AdapterClient(clientConfig);
     appTemplateClient = new ApplicationTemplateClient(clientConfig);
   }

@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
 /**
  * Configuration for the Java client API
  */
-public class ClientConfig {
+public final class ClientConfig {
 
   private static final boolean DEFAULT_VERIFY_SSL_CERTIFICATE = true;
 
@@ -156,10 +156,6 @@ public class ClientConfig {
     return uploadConnectTimeout;
   }
 
-  public void setConnectionConfig(@Nullable ConnectionConfig connectionConfig) {
-    this.connectionConfig = connectionConfig;
-  }
-
   public ConnectionConfig getConnectionConfig() {
     if (connectionConfig == null) {
       throw new DisconnectedException();
@@ -171,36 +167,8 @@ public class ClientConfig {
     return verifySSLCert;
   }
 
-  public void setVerifySSLCert(boolean verifySSLCert) {
-    this.verifySSLCert = verifySSLCert;
-  }
-
-  public void setDefaultReadTimeout(int defaultReadTimeout) {
-    this.defaultReadTimeout = defaultReadTimeout;
-  }
-
-  public void setDefaultConnectTimeout(int defaultConnectTimeout) {
-    this.defaultConnectTimeout = defaultConnectTimeout;
-  }
-
-  public void setUploadReadTimeout(int uploadReadTimeout) {
-    this.uploadReadTimeout = uploadReadTimeout;
-  }
-
-  public void setUploadConnectTimeout(int uploadConnectTimeout) {
-    this.uploadConnectTimeout = uploadConnectTimeout;
-  }
-
-  public void setUnavailableRetryLimit(int unavailableRetryLimit) {
-    this.unavailableRetryLimit = unavailableRetryLimit;
-  }
-
   public Id.Namespace getNamespace() {
     return this.connectionConfig.getNamespace();
-  }
-
-  public void setNamespace(Id.Namespace namespace) {
-    this.connectionConfig = ConnectionConfig.builder(connectionConfig).setNamespace(namespace).build();
   }
 
   public String getApiVersion() {
@@ -276,6 +244,11 @@ public class ClientConfig {
 
     public Builder setConnectionConfig(ConnectionConfig connectionConfig) {
       this.connectionConfig = connectionConfig;
+      return this;
+    }
+
+    public Builder setNamespace(Id.Namespace namespace) {
+      this.connectionConfig = ConnectionConfig.builder(connectionConfig).setNamespace(namespace).build();
       return this;
     }
 

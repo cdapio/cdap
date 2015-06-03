@@ -63,7 +63,7 @@ public class CLIConfig implements TableRendererConfig {
   private static final int MIN_LINE_WIDTH = 40;
 
   private static final Gson GSON = new Gson();
-  private final ClientConfig clientConfig;
+  private ClientConfig clientConfig;
   private final FilePathResolver resolver;
   private final String version;
   private final PrintStream output;
@@ -135,8 +135,12 @@ public class CLIConfig implements TableRendererConfig {
   }
 
   public void setConnectionConfig(@Nullable ConnectionConfig connectionConfig) {
-    clientConfig.setConnectionConfig(connectionConfig);
+    clientConfig = new ClientConfig.Builder(clientConfig).setConnectionConfig(connectionConfig).build();
     notifyConnectionChanged();
+  }
+
+  public void setClientConfig(ClientConfig clientConfig) {
+    this.clientConfig = clientConfig;
   }
 
   public void tryConnect(ConnectionConfig connectionConfig, PrintStream output, boolean debug) throws Exception {

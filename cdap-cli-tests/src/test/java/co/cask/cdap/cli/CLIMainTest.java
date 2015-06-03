@@ -128,11 +128,6 @@ public class CLIMainTest {
     testCommandOutputContains(cli, "delete app " + FakeApp.NAME, "Successfully deleted app");
   }
 
-  @Before
-  public void setUp() {
-    clientConfig.setNamespace(Constants.DEFAULT_NAMESPACE_ID);
-  }
-
   @Test
   public void testConnect() throws Exception {
     testCommandOutputContains(cli, "connect fakehost", "could not be reached");
@@ -247,7 +242,7 @@ public class CLIMainTest {
     NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
     Id.Namespace barspace = Id.Namespace.from("bar");
     namespaceClient.create(new NamespaceMeta.Builder().setName(barspace).build());
-    cliConfig.getClientConfig().setNamespace(barspace);
+    cliConfig.setClientConfig(new ClientConfig.Builder(cliConfig.getClientConfig()).setNamespace(barspace).build());
     // list of dataset instances is different in 'foo' namespace
     testCommandOutputNotContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
 

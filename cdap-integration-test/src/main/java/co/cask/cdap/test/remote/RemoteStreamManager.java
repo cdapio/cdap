@@ -40,8 +40,8 @@ public class RemoteStreamManager implements StreamManager {
   private final String streamName;
 
   public RemoteStreamManager(ClientConfig clientConfig, Id.Stream streamId) {
-    ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig).build();
-    namespacedClientConfig.setNamespace(streamId.getNamespace());
+    ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig)
+      .setNamespace(streamId.getNamespace()).build();
     this.streamClient = new StreamClient(namespacedClientConfig);
     this.streamName = streamId.getId();
   }

@@ -33,8 +33,8 @@ public class RemoteWorkerManager extends AbstractProgramManager<WorkerManager> i
   public RemoteWorkerManager(Id.Program programId, ClientConfig clientConfig,
                              RemoteApplicationManager applicationManager) {
     super(programId, applicationManager);
-    ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig).build();
-    namespacedClientConfig.setNamespace(programId.getNamespace());
+    ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig)
+      .setNamespace(programId.getNamespace()).build();
     this.programClient = new ProgramClient(namespacedClientConfig);
   }
 

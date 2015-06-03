@@ -49,8 +49,8 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   public RemoteApplicationManager(Id.Application application, ClientConfig clientConfig) {
     super(application);
 
-    ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig).build();
-    namespacedClientConfig.setNamespace(application.getNamespace());
+    ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig)
+      .setNamespace(application.getNamespace()).build();
     this.clientConfig = namespacedClientConfig;
     this.programClient = new ProgramClient(clientConfig);
     this.applicationClient = new ApplicationClient(clientConfig);
