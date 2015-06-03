@@ -35,6 +35,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
@@ -132,24 +133,30 @@ public class MetricsClient {
    * @param tags tags for the request
    * @param metrics names of the metrics
    * @param groupBys groupBys for the request
-   * @param timeRangeParams specifies parameters for time range of the query
    * @return values of the metrics
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public MetricQueryResult query(List<String> metrics, List<String> groupBys, Map<String, String> tags,
+  public MetricQueryResult query(Map<String, String> tags, List<String> metrics, List<String> groupBys,
                                  @Nullable String start, @Nullable String end)
     throws IOException, UnauthorizedException {
 
-    return query(metrics, groupBys, tags, start, end, null, null, null, null, null);
+    Map<String, String> timeRangeParams = Maps.newHashMap();
+    if (start != null) {
+      timeRangeParams.put("start", start);
+    }
+    if (end != null) {
+      timeRangeParams.put("end", end);
+    }
+    return query(tags, metrics, groupBys, timeRangeParams);
   }
 
   /**
    * Gets the value of the given metrics.
    *
+   * @param tags tags for the request
    * @param metrics names of the metrics
    * @param groupBys groupBys for the request
-   * @param tags tags for the request
    * @return values of the metrics
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
@@ -214,9 +221,8 @@ public class MetricsClient {
    * @param exceptionName the metrics key for exception counter
    * @return the {@link RuntimeMetrics}
    */
-  private RuntimeMetrics getMetrics(
-    final Map<String, String> tags, final String inputName,
-    final String processedName, final String exceptionName) {
+  private RuntimeMetrics getMetrics(final Map<String, String> tags, final String inputName,
+                                    final String processedName, final String exceptionName) {
 
     return new RuntimeMetrics() {
       @Override

@@ -54,7 +54,7 @@ public class GetMetricCommand extends AbstractAuthCommand {
     String end = arguments.get("end", "");
 
     MetricQueryResult result = client.query(
-      ImmutableList.of(metric), ImmutableList.<String>of(), tags,
+      tags, ImmutableList.of(metric), ImmutableList.<String>of(),
       start.isEmpty() ? null : start,
       end.isEmpty() ? null : end);
 
