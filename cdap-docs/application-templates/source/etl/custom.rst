@@ -93,15 +93,15 @@ project for the Plugin from the archetype:
 In order to implement a Batch Source (to be used in the ETL Batch Template), you extend
 the BatchSource class. You need to define the types of the KEY and VALUE that the Batch
 Source will receive and the type of object that the Batch Source will emit to the
-subsequent stage (which could be either a TransformStage or a BatchSink). After defining
+subsequent stage (which could be either a Transform or a BatchSink). After defining
 the types, only one method is required to be implemented:
 
-  ``prepareJob()``
+  ``prepareRun()``
 
 Methods
 .......
 
-- ``prepareJob()``: Used to configure the Hadoop Job configuration (for example, set the
+- ``prepareRun()``: Used to configure the Hadoop Job configuration (for example, set the
   ``InputFormatClass``).
 - ``configurePipeline()``: Used to create any Streams or Datasets that are required by this 
   Batch Source.
@@ -118,7 +118,7 @@ Example::
   public class MyBatchSource extends BatchSource<LongWritable, String, String> {
 
     @Override
-    public void prepareJob(BatchSourceContext context) {
+    public void prepareRun(BatchSourceContext context) {
       Job job = context.getHadoopJob();
       job.setInputFormatClass(...);
       // Other Hadoop job configuration related to Input
@@ -142,16 +142,16 @@ A Batch Sink Plugin can be created from this Maven archetype:
 In order to implement a Batch Sink (to be used in the ETL Batch template), you extend the
 BatchSink class. Similar to a BatchSource, you need to define the types of the KEY and
 VALUE that the BatchSink will write in the Batch job and the type of object that it will
-accept from the previous stage (which could be either a ``TransformStage`` or a ``BatchSource``). 
+accept from the previous stage (which could be either a ``Transform`` or a ``BatchSource``).
 
 After defining the types, only one method is required to be implemented:
 
-  ``prepareJob()`` 
+  ``prepareRun()``
 
 Methods
 .......
 
-- ``prepareJob()``: Used to configure the Hadoop Job configuration (for ex, set ``OutputFormatClass``).
+- ``prepareRun()``: Used to configure the Hadoop Job configuration (for ex, set ``OutputFormatClass``).
 - ``configurePipeline()``: Used to create any datasets that are required by this Batch Sink.
 - ``initialize()``: Initialize the Batch Sink runtime. Guaranteed to be executed before
   any call to the plugin’s ``transform`` method.
@@ -165,13 +165,13 @@ Example::
   @Plugin(type = "sink")
   @Name("MyBatchSink")
   @Description("Demo Sink")
-  public class MyBatchSource extends BatchSink<String, String, NullWritable> {
+  public class MyBatchSink extends BatchSink<String, String, NullWritable> {
 
     @Override
-    public void prepareJob(BatchSourceContext context) {
+    public void prepareRun(BatchSinkContext context) {
       Job job = context.getHadoopJob();
       job.setOutputFormatClass(...);
-      // OtherHadoop job configuration related to Output
+      // Other Hadoop job configuration related to Output
     }
   }
 
@@ -244,7 +244,6 @@ Example::
     @Override
     public void initialize(RealtimeContext context) throws Exception {
       super.initialize(context);
-      // No-op
       // Get Config param and use to initialize
       // String param = config.param
       // Perform init operations, external operations etc.
@@ -335,11 +334,11 @@ Methods
 .......
 
 - ``initialize()``: Used to perform any initialization step that might be required during
-  the runtime of the ``TransformStage``. It is guaranteed that this method will be invoked
+  the runtime of the ``Transform``. It is guaranteed that this method will be invoked
   before the ``transform`` method.
 - ``transform()``: Transform method contains the logic that will be applied on each
   incoming data object. An emitter can be used to pass the results to the subsequent stage
-  (which could be either another ``TransformStage`` or a ``Sink``).
+  (which could be either another ``Transform`` or a ``Sink``).
 - ``destroy()``: Used to perform any cleanup before the Adapter shuts down.
 
 Below is an example of a ``DuplicateTransform`` that emits copies of the incoming record
@@ -352,7 +351,7 @@ copies in each transform is emitted. The user metrics can be queried by using th
   @Name("Duplicator")
   @Description("Transformation Example that makes copies")
 
-  public class DuplicateTransform extends TransformStage<StructuredRecord, StructuredRecord> {
+  public class DuplicateTransform extends Transform<StructuredRecord, StructuredRecord> {
   
   private final Config config;
 
