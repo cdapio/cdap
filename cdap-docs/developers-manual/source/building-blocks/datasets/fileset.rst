@@ -127,6 +127,12 @@ See the Apache™ Twill®
 `API documentation <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__
 for additional information about the ``Location`` abstraction.
 
+Exploring FileSets
+==================
+
+A file set can be explored with ad-hoc queries if you enable it at creation time;
+this is described under :ref:`fileset-exploration`.
+
 ==================
 PartitionedFileSet
 ==================
@@ -326,7 +332,8 @@ format::
 
 You need to specify the SerDe, the input format, the output format, and any additional properties
 any of these may need as table properties. This is an experimental feature and only tested for
-Avro; see the :ref:`StreamConversion <examples-stream-conversion>` example for more details.
+Avro; see the :ref:`StreamConversion <examples-stream-conversion>` example and
+the :ref:`fileset-exploration` for more details.
 
 ======================
 TimePartitionedFileSet
@@ -385,3 +392,10 @@ the MapReduce through a RESTful call::
 
 Note that the values for these times are milliseconds since the Epoch; the two times in this example represent
 the midnight time of January 1st, 2015 and February 1st, 2015.
+
+Exploring TimePartitionedFileSets
+=================================
+
+A time-partitioned file set can be explored with ad-hoc queries if you enable it at creation time,
+similar to a FileSet, as described under :ref:`fileset-exploration`.
+
