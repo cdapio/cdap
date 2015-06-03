@@ -1,0 +1,86 @@
+#!/bin/bash
+#
+# Copyright © 2015 Cask Data, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under
+# the License.
+
+#
+# Install and configure fluxbox
+#
+
+# Install
+apt-get install -y lxde
+
+# Symlink idea
+ln -sf /opt/idea* /opt/idea
+
+# Eclipse Menu entry
+cat > /usr/share/applications/eclipse.desktop << EOF
+[Desktop Entry]
+Encoding=UTF-8
+Name=Eclipse IDE
+Comment=Start Eclipse IDE
+Exec=/usr/local/bin/eclipse
+TryExec=/usr/local/bin/eclipse
+Type=Application
+Icon=eclipse
+Categories=GNOME;GTK;Development;
+EOF
+
+# IntelliJ Menu entry
+cat > /usr/share/applications/idea.desktop << EOF
+[Desktop Entry]
+Encoding=UTF-8
+Name=IntelliJ IDEA
+Comment=Start IntelliJ
+Exec=/opt/idea/bin/idea.sh
+TryExec=/opt/idea/bin/idea.sh
+Type=Application
+Icon=idea
+Categories=GNOME;GTK;Development;
+EOF
+
+# CDAP Docs Menu Entry
+cat > /usr/share/applications/cdap-docs.desktop << EOF
+[Desktop Entry]
+Encoding=UTF-8
+Name=CDAP Docs
+Comment=CDAP Documenation Site
+Exec=chromium-browser http://docs.cask.co/cdap 
+Type=Application
+Icon=chromium-browser
+Categories=GNOME;GTK;Development;
+EOF
+
+# CDAP UI Menu Entry
+cat > /usr/share/applications/cdap-ui.desktop << EOF
+[Desktop Entry]
+Encoding=UTF-8
+Name=CDAP UI
+Comment=CDAP UI Web Interface
+Exec=chromium-browser http://localhost:9999
+Type=Application
+Icon=chromium-browser
+Categories=GNOME;GTK;Development;
+EOF
+
+# Copy welcome.txt and some icons to the desktop
+mkdir -p ~cdap/Desktop
+cp /etc/welcome.txt ~cdap/Desktop
+for i in cdap-ui cdap-docs eclipse idea lxterminal ; do
+  cp /usr/share/applications/${i}.desktop ~cdap/Desktop
+done
+echo '@xterm -e "cat /etc/welcome.txt; bash -l"' >> /etc/xdg/lxsession/LXDE/autostart
+
+# Fix permissions
+chown -R cdap:cdap ~cdap
