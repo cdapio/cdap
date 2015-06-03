@@ -38,7 +38,7 @@ PROJECT="cdap"
 PROJECT_CAPS="CDAP"
 REFERENCE="reference-manual"
 SOURCE="source"
-SPHINX_MESSAGES="build/warnings.txt"
+SPHINX_MESSAGES="warnings.txt"
 
 FALSE="false"
 TRUE="true"
@@ -154,7 +154,7 @@ function build_docs() {
   clean
   cd ${SCRIPT_PATH}
   check_includes
-  sphinx-build -w ${SPHINX_MESSAGES} -b html -d build/doctrees source build/html
+  sphinx-build -w ${BUILD}/${SPHINX_MESSAGES} -b html -d ${BUILD}/doctrees source ${BUILD}/html
   display_any_messages
 }
 
@@ -162,7 +162,7 @@ function build_docs_google() {
   clean
   cd ${SCRIPT_PATH}
   check_includes
-  sphinx-build -w ${SPHINX_MESSAGES} -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d build/doctrees source build/html
+  sphinx-build -w ${BUILD}/${SPHINX_MESSAGES} -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d ${BUILD}/doctrees source ${BUILD}/html
   display_any_messages
 }
 
