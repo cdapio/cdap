@@ -120,6 +120,7 @@ angular.module(PKG.name + '.feature.adapters')
             this.model.setSink(draft.config.sink);
             this.model.setTransform(draft.config.transforms);
             this.model.setSchedule(draft.config.schedule);
+            this.model.setInstance(draft.config.instance);
           }
         }
       }.bind(this));

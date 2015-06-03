@@ -35,6 +35,7 @@ angular.module(PKG.name + '.feature.adapters')
       this.transforms = angular.copy(defaultTransforms);
       this.sink = angular.copy(defaultSink);
       this.schedule = angular.copy(defaultSchedule);
+      this.instance = 1;
     };
 
     Model.prototype.setMetadata = function (metadata) {
@@ -68,6 +69,10 @@ angular.module(PKG.name + '.feature.adapters')
       this.schedule = schedule || defaultSchedule;
     };
 
+    Model.prototype.setInstance = function setInstance(instance) {
+      this.instance = instance || 1;
+    };
+
     Model.prototype.saveAsDraft = function saveAsDraft() {
       var defer = $q.defer();
       if (!this.metadata.name.length) {
@@ -83,12 +88,13 @@ angular.module(PKG.name + '.feature.adapters')
           source: this.source,
           transforms: this.transforms,
           sink: this.sink,
-          schedule: this.schedule
+          schedule: this.schedule,
+          instance: this.instance
         }
       };
 
       return mySettings.set('adapterDrafts', this.adapterDrafts);
-    }
+    };
 
     Model.prototype.save = function save() {
       var defer = $q.defer();
@@ -131,7 +137,7 @@ angular.module(PKG.name + '.feature.adapters')
         }
       };
       if (this.metadata.type === 'ETLRealtime') {
-        data.config.instances = 1;
+        data.config.instances = this.instance;
       } else if (this.metadata.type === 'ETLBatch') {
         // default value should be * * * * *
         data.config.schedule = this.schedule.cron;
@@ -161,7 +167,7 @@ angular.module(PKG.name + '.feature.adapters')
       var defer = $q.defer();
       return mySettings.get('adapterDrafts')
         .then(function(res) {
-          this.adapterDrafts = res;
+          this.adapterDrafts = res || {};
           defer.resolve(this.adapterDrafts);
           return defer.promise;
         }.bind(this));
