@@ -32,7 +32,7 @@ import java.util.Map;
  * Sets preferences for instance, namespace, application, program.
  */
 public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
-  protected static final String SUCCESS = "Set Preferences successfully for the '%s'";
+  protected static final String SUCCESS = "Set preferences successfully for the '%s'";
 
   private final ElementType type;
 

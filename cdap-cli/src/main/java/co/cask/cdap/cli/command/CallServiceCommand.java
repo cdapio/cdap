@@ -27,8 +27,6 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
-import co.cask.cdap.cli.util.RowMaker;
-import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
@@ -37,9 +35,7 @@ import co.cask.common.cli.Arguments;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -47,9 +43,7 @@ import com.google.inject.Inject;
 
 import java.io.PrintStream;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -97,8 +91,7 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
       throw new CommandInputError(this, message);
     }
 
-    Map<String, String> headerMap = GSON.fromJson(headers, new TypeToken<Map<String, String>>() {
-    }.getType());
+    Map<String, String> headerMap = GSON.fromJson(headers, new TypeToken<Map<String, String>>() { }.getType());
     URL url = new URL(serviceClient.getServiceURL(appId, serviceId), path);
 
     HttpMethod httpMethod = HttpMethod.valueOf(method);
@@ -114,19 +107,11 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
     }
 
     HttpResponse response = restClient.execute(builder.build(), clientConfig.getAccessToken());
-
-    Table table = Table.builder()
-      .setHeader("status", "headers", "body size", "body")
-      .setRows(ImmutableList.of(response), new RowMaker<HttpResponse>() {
-        @Override
-        public List<?> makeRow(HttpResponse httpResponse) {
-          ByteBuffer byteBuffer = ByteBuffer.wrap(httpResponse.getResponseBody());
-          long bodySize = byteBuffer.remaining();
-          return Lists.newArrayList(httpResponse.getResponseCode(), formatHeaders(httpResponse),
-                                    bodySize, getBody(byteBuffer));
-        }
-      }).build();
-    cliConfig.getTableRenderer().render(cliConfig, output, table);
+    output.printf("< %s %s\n", response.getResponseCode(), response.getResponseMessage());
+    for (Map.Entry<String, String> header : response.getHeaders().entries()) {
+      output.printf("< %s: %s\n", header.getKey(), header.getValue());
+    }
+    output.print(response.getResponseBodyAsString());
   }
 
   @Override

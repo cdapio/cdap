@@ -44,6 +44,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -286,13 +287,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       builder.setDescription(namespaceMeta.getDescription());
     }
 
-    if (namespaceMeta.getName() != null) {
-      builder.setName(namespaceMeta.getName());
-    }
-
     NamespaceConfig config = namespaceMeta.getConfig();
-
-    if (config != null && config.getSchedulerQueueName() != null && !config.getSchedulerQueueName().isEmpty()) {
+    if (config != null && !Strings.isNullOrEmpty(config.getSchedulerQueueName())) {
       builder.setSchedulerQueueName(config.getSchedulerQueueName());
     }
 

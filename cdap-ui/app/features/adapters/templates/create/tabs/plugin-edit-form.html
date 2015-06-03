@@ -16,7 +16,7 @@
                      data-template="/assets/features/adapters/templates/create/popover.html"
                      bs-popover>
               </span>
-
+              <span class="fa fa-asterisk" ng-if="plugin._backendProperties[name].required"></span>
             </label>
             <div class="col-xs-12">
               <input type="text"
@@ -50,6 +50,7 @@
                         bs-popover>
                         <span class="fa fa-info-circle"></span>
                   </span>
+                  <span class="fa fa-asterisk" ng-if="plugin._backendProperties[field].required"></span>
                 </label>
                 <div class="col-xs-12">
                   <div data-name="field"

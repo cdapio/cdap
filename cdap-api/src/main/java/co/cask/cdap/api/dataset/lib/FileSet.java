@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.api.dataset.lib;
 
-import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.dataset.Dataset;
@@ -36,7 +35,6 @@ import java.util.Map;
  * created. The Hive table is not partitioned, and therefore querying will only work if every path in the
  * fileset is a file (not a subdirectory).
  */
-@Beta
 public interface FileSet extends Dataset, InputFormatProvider, OutputFormatProvider {
 
   /**

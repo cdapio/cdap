@@ -24,12 +24,12 @@ import java.util.List;
 public class InMemoryProgramLiveInfo extends ProgramLiveInfo {
   private final List<String> services;
 
-  public InMemoryProgramLiveInfo(Id.Program programId, ProgramType type) {
-    this(programId, type, null);
+  public InMemoryProgramLiveInfo(Id.Program programId) {
+    this(programId, null);
   }
 
-  public InMemoryProgramLiveInfo(Id.Program programId, ProgramType type, List<String> services) {
-    super(programId, type, "in-memory");
+  public InMemoryProgramLiveInfo(Id.Program programId, List<String> services) {
+    super(programId, "in-memory");
     this.services = services;
   }
 }

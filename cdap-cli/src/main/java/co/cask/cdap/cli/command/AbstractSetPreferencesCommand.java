@@ -70,7 +70,7 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
         break;
 
       default:
-        throw new IllegalArgumentException("Unrecognized Element Type for Preferences " + type.getTitleName());
+        throw new IllegalArgumentException("Unrecognized element type for preferences " + type.getTitleName());
     }
   }
 }

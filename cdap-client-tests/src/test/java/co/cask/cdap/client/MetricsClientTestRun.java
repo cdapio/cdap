@@ -27,6 +27,7 @@ import co.cask.cdap.proto.MetricTagValue;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -70,10 +71,18 @@ public class MetricsClientTestRun extends ClientTestBase {
       Id.Program programId = Id.Program.from(appId, ProgramType.FLOW, FakeFlow.NAME);
       String flowlet = FakeFlow.FLOWLET_NAME;
 
-      MetricQueryResult result = metricsClient.query(
-        ImmutableList.of(Constants.Metrics.Name.Flow.FLOWLET_INPUT),
-        ImmutableList.<String>of(),
-        MetricsTags.flowlet(programId, flowlet));
+      MetricQueryResult result = metricsClient.query(MetricsTags.flowlet(programId, flowlet),
+                                                     Constants.Metrics.Name.Flow.FLOWLET_INPUT);
+      Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
+
+      result = metricsClient.query(MetricsTags.flowlet(programId, flowlet),
+                                   ImmutableList.of(Constants.Metrics.Name.Flow.FLOWLET_INPUT),
+                                   ImmutableList.<String>of(), ImmutableMap.of("aggregate", "true"));
+      Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
+
+      result = metricsClient.query(MetricsTags.flowlet(programId, flowlet),
+                                   ImmutableList.of(Constants.Metrics.Name.Flow.FLOWLET_INPUT),
+                                   ImmutableList.<String>of(), ImmutableMap.of("start", "now-20s", "end", "now"));
       Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
 
       List<MetricTagValue> tags = metricsClient.searchTags(MetricsTags.flowlet(programId, flowlet));

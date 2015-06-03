@@ -120,8 +120,8 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
               programDir.mkdirs();
             }
             Location output = programDir.append(String.format("%s.jar", spec.getName()));
-            return ProgramBundle.create(input.getId(), bundler, output, spec.getName(),
-                                        spec.getClassName(), type, appSpec);
+            Id.Program programId = Id.Program.from(input.getId(), type, spec.getName());
+            return ProgramBundle.create(programId, bundler, output, spec.getClassName(), appSpec);
             }
         });
         futures.add(future);

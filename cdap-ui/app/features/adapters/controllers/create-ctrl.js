@@ -14,6 +14,13 @@ angular.module(PKG.name + '.feature.adapters')
     this.tabs = defaultTabs.slice();
 
     this.closeTab = function(index) {
+      var tab = this.tabs[index];
+      var type = tab.type;
+      if (type === 'transform' && tab.transform.valid === false) {
+        this.model.checkForValidRequiredField(tab.transform);
+      } else if (this.model[type] && this.model[type].valid === false){
+        this.model.checkForValidRequiredField(this.model[type]);
+      }
       this.tabs.splice(index, 1);
     };
 
@@ -120,6 +127,7 @@ angular.module(PKG.name + '.feature.adapters')
             this.model.setSink(draft.config.sink);
             this.model.setTransform(draft.config.transforms);
             this.model.setSchedule(draft.config.schedule);
+            this.model.setInstance(draft.config.instance);
           }
         }
       }.bind(this));

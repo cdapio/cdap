@@ -38,6 +38,25 @@ function set_project_path() {
   fi
 }
 
+function check_starting_directory() {
+  E_WRONG_DIRECTORY=85
+
+  if [[ "x${MANUAL}" == "x" || "x${CDAP_DOCS}" == "x" ]]; then
+    echo "Manual or CDAP_DOCS set incorrectly: are you in the correct directory?"
+    exit ${E_WRONG_DIRECTORY}
+  fi
+  
+  if [[ " ${MANUALS[@]}" =~ "${MANUAL} " || "${MANUAL}" == "${CDAP_DOCS}" ]]; then
+    echo "Using \"${MANUAL}\""
+    return 0
+  else  
+    echo "Did not find MANUAL \"${MANUAL}\": are you in the correct directory?"
+    exit ${E_WRONG_DIRECTORY}
+  fi
+  
+  exit 1
+}
+
 function usage() {
   cd ${PROJECT_PATH}
   PROJECT_PATH=`pwd`
@@ -67,20 +86,20 @@ function usage() {
 
 function run_command() {
   case "${1}" in
-    all )               build_all; exit 0;;
-    clean )             clean_builds; exit 0;;
-    doc )               build_docs_outer_level; exit 0;;
-    docs )              build_docs; exit 0;;
+    all )               build_all;;
+    clean )             clean_builds;;
+    doc )               build_docs_outer_level;;
+    docs )              build_docs;;
     docs-github-part )  build_docs_github ${ARG_2} ${ARG_3};;
-    docs-github )       build_docs_github ${ARG_2} ${ARG_3}; exit 0;;
+    docs-github )       build_docs_github ${ARG_2} ${ARG_3};;
     docs-web-part )     build_docs_web ${ARG_2} ${ARG_3};;
-    docs-web )          build_docs_web ${ARG_2} ${ARG_3}; exit 0;;
-    javadocs )          build_javadocs; exit 0;;
-    licenses )          build_license_depends; exit 0;;
-    sdk )               build_sdk; exit 0;;
-    version )           print_version; exit 0;;
-    test )              test; exit 0;;
-    * )                 usage; exit 0;;
+    docs-web )          build_docs_web ${ARG_2} ${ARG_3};;
+    javadocs )          build_javadocs;;
+    licenses )          build_license_depends;;
+    sdk )               build_sdk;;
+    version )           print_version;;
+    test )              test;;
+    * )                 usage;;
   esac
 }
 
@@ -215,14 +234,17 @@ function build_docs_javadocs() {
 
 function build_docs() {
   _build_docs "docs" ${GOOGLE_ANALYTICS_WEB} ${WEB} ${TRUE}
+  return $?
 }
 
 function build_docs_github() {
   _build_docs "build-github" ${GOOGLE_ANALYTICS_GITHUB} ${GITHUB} ${FALSE}
+  return $?
 }
 
 function build_docs_web() {
   _build_docs "build-web" ${GOOGLE_ANALYTICS_WEB} ${WEB} ${TRUE}
+  return $?
 }
 
 function _build_docs() {
@@ -231,17 +253,23 @@ function _build_docs() {
   echo "========================================================"
   echo "Building target \"${1}\"..."
   echo "--------------------------------------------------------"
+  clear_messages
   build_docs_inner_level ${1}
   build_docs_outer_level ${2}
   copy_docs_lower_level
   build_zip ${3}
   zip_extras ${4}
   display_version
+  display_messages_file
+  local warnings="$?"
+  cleanup_messages_file
+  echo ""
   echo "--------------------------------------------------------"
   bell "Building target \"${1}\" completed."
   echo "========================================================"
   echo "========================================================"
   echo ""
+  return ${warnings}
 }
 
 function build_docs_inner_level() {
@@ -326,6 +354,8 @@ function clean_builds() {
     echo ""
   done
 }
+
+check_starting_directory
 
 set_project_path
 
