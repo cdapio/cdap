@@ -93,8 +93,6 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
         return String.format("set preferences %s <%s>",
                              type.getName(), ArgumentName.RUNTIME_ARGS);
       case APP:
-        return String.format("set preferences %s <%s> <%s>", type.getName(),
-                             ArgumentName.RUNTIME_ARGS, type.getArgumentName());
       case FLOW:
       case MAPREDUCE:
       case WORKFLOW:
@@ -113,9 +111,6 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
         return String.format("load preferences %s <%s> <%s>", type.getName(),
                              ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE);
       case APP:
-        return String.format("load preferences %s <%s> <%s> <%s>", type.getName(),
-                             ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE,
-                             type.getArgumentName());
       case FLOW:
       case MAPREDUCE:
       case WORKFLOW:
