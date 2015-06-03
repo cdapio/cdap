@@ -128,6 +128,11 @@ public class CLIMainTest {
     testCommandOutputContains(cli, "delete app " + FakeApp.NAME, "Successfully deleted app");
   }
 
+  @Before
+  public void setUp() {
+    clientConfig = new ClientConfig.Builder(clientConfig).setNamespace(Constants.DEFAULT_NAMESPACE_ID).build();
+  }
+
   @Test
   public void testConnect() throws Exception {
     testCommandOutputContains(cli, "connect fakehost", "could not be reached");
