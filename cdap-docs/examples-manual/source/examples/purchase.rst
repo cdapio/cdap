@@ -23,13 +23,13 @@ and write to an ObjectStore dataset.
   - Send sentences of the form "Tom bought 5 apples for $10" to the ``purchaseStream``.
     You can send sentences either by using a ``curl`` call, using the ``inject-data`` script
     included in the example's ``/bin`` directory, or by using the CDAP UI.
-  - The ``PurchaseFlow`` reads the ``purchaseStream`` and converts every input String into a
+  - The ``PurchaseFlow`` reads the ``purchaseStream`` and converts every input string into a
     Purchase object and stores the object in the *purchases* dataset.
   - User profile information for the user can be added by using ``curl`` calls (or another method) which are
     then stored in the ``userProfiles`` dataset.
   - The ``CatalogLookup`` service fetches the catalog id for a given product. The ``CatalogLookup`` service
     is called from the PurchaseStore flowlet. The host and port of the ``CatalogLookup`` service is discovered
-    using the Service discovery framework.
+    using the service discovery framework.
   - The ``UserProfileService`` is responsible for storing and retrieving the user information
     for a given user ID from the ``userProfiles`` dataset. The host and port of the ``UserProfileService`` is
     discovered using the service discovery framework.
@@ -55,7 +55,7 @@ The Purchase Application
 ------------------------
 
 As in the other `examples <index.html>`__, the components
-of the Application are tied together by the class ``PurchaseApp``:
+of the application are tied together by the class ``PurchaseApp``:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseApp.java
    :language: java
@@ -110,7 +110,7 @@ Building and Starting
 
 
 Running CDAP Applications
-============================================
+=========================
 
 .. |example| replace:: Purchase
 .. |literal-example| replace:: ``Purchase``
@@ -276,7 +276,7 @@ Once execution has finished, you can retrieve the results of the query using the
 
   $ curl -w'\n' -v -X POST http://localhost:10000/v3/data/explore/queries/07fd9b6a-95b3-4831-992c-7164f11c3754/next
 
-This will return—up to a limited number—the results in JSON format::
+This will return |---| up to a limited number |---| the results in JSON format::
 
   [{"columns":["Alice","[{\"customer\":\"Alice\",\"product\":\"grapefruit\",\"quantity\":12,\"price\":10
     \"purchasetime\":1403737694225}]"]},

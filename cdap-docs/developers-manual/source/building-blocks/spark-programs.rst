@@ -202,7 +202,7 @@ Spark Metrics
 Spark programs in CDAP emit metrics, similar to a MapReduce program.
 CDAP collect system metrics emitted by Spark and display them in the **CDAP UI**.
 This helps in monitoring the progress and resources used by a Spark program.
-You can also emit custom user metrics from the worker nodes of your Spark Program::
+You can also emit custom user metrics from the worker nodes of your Spark program::
 
     final Metrics sparkMetrics = sc.getMetrics();
     JavaPairRDD<byte[], Integer> ranksRaw = ranks.mapToPair(new PairFunction<Tuple2<String, Double>,
@@ -221,7 +221,7 @@ Spark programs in CDAP can also be added to a :ref:`workflow <workflows>`, simil
 
 .. rubric::  Examples of Using Spark Programs
 
-- For an example of **a Spark Program,** see the :ref:`Spark K-Means <examples-spark-k-means>`
+- For an example of **a Spark program,** see the :ref:`Spark K-Means <examples-spark-k-means>`
   and :ref:`Spark Page Rank <examples-spark-page-rank>` examples.
 
 - For a longer example, the how-to guide :ref:`cdap-spark-guide` gives another demonstration.

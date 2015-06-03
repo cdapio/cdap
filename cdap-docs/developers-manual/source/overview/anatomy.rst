@@ -21,7 +21,7 @@ As an application developer building a Big Data application, you are primarily c
 
   Streams are a special type of datasets that are exposed as a push endpoint for external clients. They support
   ingesting events in real time at massive scale. Events in the stream can then be consumed by applications in
-  real-time or batch.
+  real time or batch.
 
 - **Data Exploration:** One of the most powerful paradigms of Big Data is the ability to
   collect and store data without knowing details about its structure. These details are only
@@ -40,13 +40,13 @@ As an application developer building a Big Data application, you are primarily c
   - . . .
 
   Processing can happen in real time, where a stream processor consumes events immediately after they are collected.
-  Realtime processing provides less expressive power than other processing paradigms, but it provides insights into the
+  Real time processing provides less expressive power than other processing paradigms, but it provides insights into the
   data in a very timely manner. CDAP offers Flows as the real time processing framework.
 
   Processing can also happen in batch, where many events are processed at the same time to analyze an entire data
   corpus at once. Batch processing is more powerful than real time processing, but due its very nature is always
   time-lagging and thus often performed over historical data. In CDAP, batch processing can be done via
-  Map/Reduce or Spark, and it can also be scheduled on a periodic basis as part of a workflow.
+  MapReduce or Spark, and it can also be scheduled on a periodic basis as part of a workflow.
 
 - **Data Storage:** The results of processing data must be stored in a persistent and durable way that allows other
   programs or applications to further process or analyze the data. In CDAP, data is stored in datasets.
@@ -58,7 +58,7 @@ As an application developer building a Big Data application, you are primarily c
 
 A CDAP application consists of combinations of these components:
 
-- :ref:`Streams <streams>` for real-time data collection;
+- :ref:`Streams <streams>` for real time data collection;
 - Programs—:ref:`Flows, <flows-flowlets-index>` :ref:`MapReduce, <mapreduce>`
   :ref:`Spark <spark>`—for data processing in real time or in batch;
 - :ref:`Datasets <datasets-index>` for data storage abstraction; and

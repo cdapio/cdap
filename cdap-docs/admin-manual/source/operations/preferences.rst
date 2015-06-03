@@ -21,9 +21,9 @@ The overriding order of preferences is (from lowest to highest precedence):
 
 CDAP Instance < Namespace < Application < Program < Runtime Arguments (passed in during start of the program)
 
-Example: A configuration preference ``SAMPLE_KEY`` is set to 20 at the Namespace level and is set to 10 at the
+Example: A configuration preference ``SAMPLE_KEY`` is set to 20 at the namespace level and is set to 10 at the
 program level. When the program is started, the value set at the program level overrides the value set at
-the Namespace level and thus the value for the preference ``SAMPLE_KEY`` will be 10.
+the namespace level and thus the value for the preference ``SAMPLE_KEY`` will be 10.
 
 Programs such as flows, MapReduce programs, services, workflows and workers will receive the resolved preferences
 and can be accessed through the ``getRuntimeArguments`` method of the context:

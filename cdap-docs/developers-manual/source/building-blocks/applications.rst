@@ -59,7 +59,7 @@ A typical design of a CDAP application consists of:
 - flows, consisting of flowlets linked together, to process the ingested data
   in real time or batch;
 - MapReduce programs, Spark programs, and workflows for batch processing tasks;
-- workers for processing data in an ad-hoc manner that doesn't fit into real-time or batch paradigms
+- workers for processing data in an ad-hoc manner that doesn't fit into real time or batch paradigms
 - datasets for storage of data, either raw or the processed results; and
 - services for serving data and processed results.
 

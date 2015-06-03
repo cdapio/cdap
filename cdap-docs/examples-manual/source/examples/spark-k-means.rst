@@ -26,13 +26,13 @@ goes through the entries, calculates centers and tabulates results in another Ob
 Once the application completes, you can query the *centers* dataset by using the ``centers/{index}`` endpoint
 of the *CentersService*. It will respond with the center's coordinates based on the ``index`` parameter (e.g. "9.1,9.1,9.1").
 
-Let's look at some of these components, and then run the Application and see the results.
+Let's look at some of these components, and then run the application and see the results.
 
 The SparkKMeans Application
 ---------------------------
 
 As in the other `examples <index.html>`__, the components
-of the Application are tied together by the class ``SparkKMeansApp``:
+of the application are tied together by the class ``SparkKMeansApp``:
 
 .. literalinclude:: /../../../cdap-examples/SparkKMeans/src/main/java/co/cask/cdap/examples/sparkkmeans/SparkKMeansApp.java
    :language: java

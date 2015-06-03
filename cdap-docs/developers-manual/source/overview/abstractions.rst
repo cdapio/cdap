@@ -33,7 +33,7 @@ In CDAP applications, you interact with data through datasets. Datasets provide 
 - Consistency of your data under highly concurrent access using Cask's 
   `Tephra™ transaction system <https://github.com/caskdata/tephra/>`__.
 - Injection of datasets into different programming paradigms and runtimes. As soon as your data is in a
-  dataset, you can immediately use it: in real-time programs; in batch processing applications such as Map/Reduce
+  dataset, you can immediately use it: in real time programs; in batch processing applications such as MapReduce
   and Spark; in ad-hoc SQL queries.
 
 Application Abstraction

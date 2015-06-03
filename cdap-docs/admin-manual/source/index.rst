@@ -82,7 +82,7 @@ transaction service maintenance, troubleshooting, and introduces the CDAP UI.**
 .. |resource-guarantees| replace:: **Resource Guarantees:**
 .. _resource-guarantees: operations/resource-guarantees.html
 
-- |resource-guarantees|_ Providing resource guarantees **for CDAP Programs in YARN.**
+- |resource-guarantees|_ Providing resource guarantees **for CDAP programs in YARN.**
 
 .. |tx-maintenance| replace:: **Transaction Service Maintenance:**
 .. _tx-maintenance: operations/tx-maintenance.html

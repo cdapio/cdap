@@ -21,7 +21,7 @@ by the ``<base-url>``, as described under :ref:`Conventions <http-restful-api-co
 
 Set Preferences
 ---------------
-To set preferences for the CDAP Instance, Namespace, Application, or Program, submit an HTTP PUT request::
+To set preferences for the CDAP instance, namespace, application, or program, submit an HTTP PUT request::
 
   PUT <base-url>/preferences/
 
@@ -48,7 +48,7 @@ To set preferences for the CDAP Instance, Namespace, Application, or Program, su
 
 Properties, as a map of string-string pairs, are passed in the JSON request body.
 
-Preferences can be set only for entities that exist. For example, Preferences cannot be set for a Namespace
+Preferences can be set only for entities that exist. For example, preferences cannot be set for a namespace
 that does not exist or an application that has not yet been deployed.
 
 .. rubric:: HTTP Responses
@@ -64,7 +64,7 @@ that does not exist or an application that has not yet been deployed.
    * - ``400 BAD REQUEST``
      - The JSON body has an invalid format
    * - ``404 NOT FOUND``
-     - The entity for which Preferences are being set was not found
+     - The entity for which preferences are being set was not found
 
 
 Get Preferences
@@ -84,7 +84,7 @@ This will return a JSON String map of the preferences::
 
   {"key1":"value1", "key2":"value2"}
 
-To retrieve the Resolved Preferences (collapsing Preferences from higher levels into a single level), set the
+To retrieve the resolved preferences (collapsing preferences from higher levels into a single level), set the
 ``resolved`` query parameter to ``true``::
 
   GET <base-url>/preferences?resolved=true
@@ -121,7 +121,7 @@ To retrieve the Resolved Preferences (collapsing Preferences from higher levels 
    * - ``200 OK``
      - The event successfully called the method, and the preferences were retrieved
    * - ``404 NOT FOUND``
-     - The entity for which Preferences are being set was not found
+     - The entity for which preferences are being set was not found
 
 Delete Preferences
 ------------------
@@ -161,4 +161,4 @@ To delete preferences, issue an HTTP DELETE. Preferences can be deleted only at 
    * - ``200 OK``
      - The event successfully called the method, and the preferences were retrieved
    * - ``404 NOT FOUND``
-     - The entity for which Preferences are being set was not found
+     - The entity for which preferences are being set was not found

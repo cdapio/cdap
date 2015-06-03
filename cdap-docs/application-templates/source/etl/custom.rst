@@ -18,7 +18,7 @@ Users of these should refer to the :ref:`Application Templates
 Creating Custom ETL Plugins
 ===========================
 
-CDAP provides for the creation of custom ETL plugins for batch/realtime sources/sinks and
+CDAP provides for the creation of custom ETL plugins for batch/real time sources/sinks and
 transformations to extend the existing ``ETLBatch`` and ``ETLRealtime`` application templates.
 
 To make a custom plugin available to one of the application templates (and thus available
@@ -55,8 +55,8 @@ There are five different Maven archetypes available for starting a plugin projec
 
 - Batch Source
 - Batch Sink
-- Realtime Source
-- Realtime Sink
+- Real Time Source
+- Real Time Sink
 - Transformation
 
 Available Annotations
@@ -176,9 +176,9 @@ Example::
   }
 
 
-Creating a Realtime Source Plugin
----------------------------------
-A realtime source plugin can be created from this Maven archetype:
+Creating a Real Time Source Plugin
+----------------------------------
+A real time source plugin can be created from this Maven archetype:
 
 .. container:: highlight
 
@@ -196,7 +196,7 @@ The only method that needs to be implemented is:
 Methods 
 .......
 
-- ``initialize()``: Initialize the Realtime Source runtime. Guaranteed to be executed
+- ``initialize()``: Initialize the Real Time Source runtime. Guaranteed to be executed
   before any call to the poll method. Usually used to setup the connection to external
   sources.
 - ``poll()``: Poll method will be invoked during the run of the adapter and in each call,
@@ -207,11 +207,11 @@ Methods
 Example::
 
   /**
-   * Realtime Source to poll data from external sources.
+   * Real Time Source to poll data from external sources.
    */
   @Plugin(type = "source")
   @Name("Source")
-  @Description("Realtime Source")
+  @Description("Real Time Source")
   public class Source extends RealtimeSource<StructuredRecord> {
 
     private final SourceConfig config;
@@ -265,9 +265,9 @@ Example::
   }
 
 
-Creating a Realtime Sink Plugin
--------------------------------
-A realtime sink plugin can be created from this Maven archetype:
+Creating a Real Time Sink Plugin
+--------------------------------
+A real time sink plugin can be created from this Maven archetype:
 
 .. container:: highlight
 
@@ -284,7 +284,7 @@ The only method that needs to be implemented is:
 
 Methods
 
-- ``initialize()``: Initialize the Realtime Sink runtime. Guaranteed to be executed before
+- ``initialize()``: Initialize the Real Time Sink runtime. Guaranteed to be executed before
   any call to the ``write`` method. 
 - ``write()``: The write method will be invoked for a set of objects that needs to be
   persisted. A ``DataWriter`` object can be used to write data to CDAP Streams and/or Datasets.
@@ -296,7 +296,7 @@ Example::
 
   @Plugin(type = "sink")
   @Name("Demo")
-  @Description("Demo Realtime Sink")
+  @Description("Demo Real Time Sink")
   public class DemoSink extends RealtimeSink<String> {
 
     @Override
@@ -393,10 +393,10 @@ adapter, as well as wait for runs to finish. Other than that, you can use normal
 methods to obtain Streams or Datasets and verify that they have the correct data.
 
 
-Source State in Realtime Source
-===============================
+Source State in Real Time Source
+================================
 
-Realtime adapters are executed in workers. During failure, there is the possibility that
+Real time adapters are executed in workers. During failure, there is the possibility that
 the data that is emitted from the Source will not be processed by subsequent stages. In
 order to avoid such data loss, SourceState can be used to persist the information about
 the external source (for example, offset) if supported by the Source. 
@@ -412,7 +412,7 @@ of failures.
 
   @Plugin(type = "source")
   @Name("Demo")
-  @Description("Demo Realtime Source")
+  @Description("Demo Real Time Source")
   public class DemoSource extends RealtimeSource<String> {
     private static final Logger LOG = LoggerFactory.getLogger(TestSource.class);
     private static final String COUNT = "count";

@@ -26,11 +26,11 @@ use case: web log analytics.
 
 This `web log analytics application
 <https://github.com/caskdata/cdap-apps/tree/develop/Wise>`__ will show you how CDAP can
-aggregate logs, perform real-time and batch analytics of the logs ingested, and expose the
+aggregate logs, perform real time and batch analytics of the logs ingested, and expose the
 results using multiple interfaces. 
 
 Specifically, this application processes web server access logs, counts page-views by IP
-in real-time, and computes the bounce ratio of each web page encountered in batch. (The
+in real time, and computes the bounce ratio of each web page encountered in batch. (The
 bounce rate is the percentage of views that are not followed by another view on the same
 site.)
 
@@ -101,9 +101,9 @@ include the ``cdap-apps/Wise`` directory.)
 **Learn More:** *You can also deploy apps by dragging and dropping their jars on* :ref:`the CDAP UI <cdap-ui>`.
 
 
-Starting Realtime Processing
-============================
-Now that the application is deployed, we can start the real-time processing::
+Starting Real Time Processing
+=============================
+Now that the application is deployed, we can start the real time processing::
 
   $ cdap-cli.sh start flow Wise.WiseFlow
   Successfully started Flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}'
@@ -214,7 +214,7 @@ Command Line.
 Monitoring with the CDAP UI
 ===========================
 You may recall that before we started injecting data into the stream, we started the
-*WiseFlow* to process these events in real-time. You can observe the flow while it is
+*WiseFlow* to process these events in real time. You can observe the flow while it is
 processing events by retrieving metrics about how many events it has processed. For that,
 we need to know the name of the flowlet inside the *WiseFlow* that performs the actual
 processing. 
@@ -340,7 +340,7 @@ that is scheduled to run every 10 minutes; we can also start the job immediately
 CLI::
 
   $ cdap-cli.sh start mapreduce Wise.BounceCountsMapReduce
-  Successfully started MapReduce Program 'BounceCountsMapReduce' of application 'Wise' with stored runtime arguments '{}'
+  Successfully started MapReduce program 'BounceCountsMapReduce' of application 'Wise' with stored runtime arguments '{}'
   
 or using a REST call::
 

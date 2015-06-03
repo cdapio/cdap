@@ -83,7 +83,7 @@ You can learn more about developing data application using CDAP by:
 - Look at our :ref:`How-To Guides<guides-index>` and
   :ref:`Tutorials<tutorials>`, with a collection of quick how-to-guides and
   longer tutorials covering a complete range of Big Data application topics.
-- Exploring the Web Analytics Application :doc:`source code.<web-analytics>` It includes 
+- Exploring the web analytics application :doc:`source code.<web-analytics>` It includes 
   test cases that show unit-testing an application.
 - For a detailed understanding of what CDAP is capable of, read our :ref:`Overview <cdap-overview>` and 
   :ref:`Building Blocks <building-blocks>` sections.

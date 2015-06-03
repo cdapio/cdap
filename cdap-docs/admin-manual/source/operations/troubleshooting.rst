@@ -49,7 +49,7 @@ Things to check as possible solutions:
    If the classpath is incorrect, review the :ref:`installation instructions <install>` and correct.
    
 
-.. rubric:: No Metrics/logs
+.. rubric:: No Metrics or Logs
 
 Make sure the *Kafka* server is running, and make sure local the logs directory is created and accessible.
 On the initial startup, the number of available seed brokers must be greater than or equal to the

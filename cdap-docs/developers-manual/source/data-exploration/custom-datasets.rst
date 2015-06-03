@@ -137,7 +137,7 @@ Refer to the Hive language manual for more details on schema and data types.
 Scanning Records
 ----------------
 The second requirement for enabling SQL queries over a dataset is to provide a means of scanning the dataset record
-by record. Similar to how the ``BatchReadable`` interface makes datasets readable by Map/Reduce jobs by iterating
+by record. Similar to how the ``BatchReadable`` interface makes datasets readable by MapReduce programs by iterating
 over pairs of key and value, ``RecordScannable`` iterates over records. You need to implement a method to partition the
 dataset into splits, and an additional method to create a record scanner for each split::
 

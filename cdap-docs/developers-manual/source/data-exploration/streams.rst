@@ -8,7 +8,7 @@
 Stream Exploration
 ==================
 
-Streams are the primary method of ingesting real-time data into CDAP.
+Streams are the primary method of ingesting real time data into CDAP.
 It is often useful to be able to examine data in a stream in an ad-hoc manner through
 SQL-like queries 
 

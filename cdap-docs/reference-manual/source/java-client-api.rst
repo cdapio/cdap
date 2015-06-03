@@ -35,15 +35,15 @@ The Java Client API allows you to interact with these CDAP components:
 
 - `ApplicationClient: <#application-client>`_ interacting with applications
 - `ProgramClient: <#program-client>`_ interacting with flows, MapReduce programs, user services, workflows, and workers
-- `StreamClient: <#stream-client>`_ interacting with Streams
+- `StreamClient: <#stream-client>`_ interacting with streams
 - `DatasetClient: <#dataset-client>`_ interacting with datasets
 - `DatasetModuleClient: <#dataset-module-client>`_ interacting with dataset Modules
 - `DatasetTypeClient: <#dataset-type-client>`_ interacting with dataset Types
 - `QueryClient: <#query-client>`_ querying datasets
 - `ServiceClient: <#service-client>`_ interacting with user services
-- `MetricsClient: <#metrics-client>`_ interacting with Metrics
+- `MetricsClient: <#metrics-client>`_ interacting with metrics
 - `MonitorClient: <#monitor-client>`_ monitoring system services
-- `PreferencesClient: <#preferences-client>`_ interacting with Preferences
+- `PreferencesClient: <#preferences-client>`_ interacting with preferences
 
 Alphabetical list:
 
@@ -51,13 +51,13 @@ Alphabetical list:
 - `DatasetClient: <#dataset-client>`_ interacting with datasets
 - `DatasetModuleClient: <#dataset-module-client>`_ interacting with dataset Modules
 - `DatasetTypeClient: <#dataset-type-client>`_ interacting with dataset Types
-- `MetricsClient: <#metrics-client>`_ interacting with Metrics
+- `MetricsClient: <#metrics-client>`_ interacting with metrics
 - `MonitorClient: <#monitor-client>`_ monitoring system services
-- `PreferencesClient: <#preferences-client>`_ interacting with Preferences
+- `PreferencesClient: <#preferences-client>`_ interacting with preferences
 - `ProgramClient: <#program-client>`_ interacting with flows, MapReduce Programs, user services, workflows, and workers
 - `QueryClient: <#query-client>`_ querying datasets
 - `ServiceClient: <#service-client>`_ interacting with user services
-- `StreamClient: <#stream-client>`_ interacting with Streams
+- `StreamClient: <#stream-client>`_ interacting with streams
 
 The above lists link to the examples below for each portion of the API.
 
@@ -132,22 +132,22 @@ PreferencesClient
   Map<String, String> propMap = Maps.newHashMap();
   propMap.put("k1", "v1");
 
-  // Set Preferences at the Instance level
+  // Set preferences at the Instance level
   preferencesClient.setInstancePreferences(propMap);
 
-  // Get Preferences at the Instance level
+  // Get preferences at the Instance level
   Map<String, String> currentPropMap = preferencesClient.getInstancePreferences();
 
-  // Delete Preferences at the Instance level
+  // Delete preferences at the Instance level
   preferencesClient.deleteInstancePreferences();
 
-  // Set Preferences of MyApp application which is deployed in the Dev namespace
+  // Set preferences of MyApp application which is deployed in the Dev namespace
   preferencesClient.setApplicationPreferences("Dev", "MyApp", propMap);
 
-  // Get only the Preferences of MyApp application which is deployed in the Dev namespace
+  // Get only the preferences of MyApp application which is deployed in the Dev namespace
   Map<String, String> appPrefs = preferencesClient.getApplicationPreferences("Dev", "MyApp", false);
 
-  // Get the resolved Preferences (collapsed with higher level(s) of preferences)
+  // Get the resolved preferences (collapsed with higher level(s) of preferences)
   Map<String, String> resolvedAppPrefs = preferencesClient.getApplicationPreferences("Dev", "MyApp", true);
 
 .. _program-client:
@@ -203,34 +203,34 @@ StreamClient
   // Construct the client used to interact with CDAP
   StreamClient streamClient = new StreamClient(clientConfig);
 
-  // Fetch the Stream list
+  // Fetch the stream list
   List streams = streamClient.list();
 
-  // Create a Stream, using the Purchase example
+  // Create a stream, using the Purchase example
   streamClient.create("purchaseStream");
 
-  // Fetch a Stream's properties, using the Purchase example
+  // Fetch a stream's properties, using the Purchase example
   StreamProperties config = streamClient.getConfig("purchaseStream");
 
-  // Send events to a Stream, using the Purchase example
+  // Send events to a stream, using the Purchase example
   streamClient.sendEvent("purchaseStream", "Tom bought 5 apples for $10");
 
-  // Read all events from a Stream (results in events)
+  // Read all events from a stream (results in events)
   List<StreamEvent> events = Lists.newArrayList();
   streamClient.getEvents("purchaseStream", 0, Long.MAX_VALUE, Integer.MAX_VALUE, events);
 
-  // Read first 5 events from a Stream (results in events)
+  // Read first 5 events from a stream (results in events)
   List<StreamEvent> events = Lists.newArrayList();
   streamClient.getEvents(streamId, 0, Long.MAX_VALUE, 5, events);
 
-  // Read 2nd and 3rd events from a Stream, after first calling getEvents
+  // Read 2nd and 3rd events from a stream, after first calling getEvents
   long startTime = events.get(1).getTimestamp();
   long endTime = events.get(2).getTimestamp() + 1;
   events.clear()
   streamClient.getEvents(streamId, startTime, endTime, Integer.MAX_VALUE, events);
 
   //
-  // Write asynchronously to a Stream
+  // Write asynchronously to a stream
   //
   String streamId = "testAsync";
   List<StreamEvent> events = Lists.newArrayList();

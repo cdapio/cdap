@@ -8,7 +8,7 @@
 .. _cdap-tutorial-wise:
 
 =====================================================
-CDAP Tutorial: WISE (Web Insights Engine Application)
+CDAP Tutorial: WISE (Web InSights Engine) Application
 =====================================================
 
 **A Case Study of Web Analytics using the Cask Data Application Platform (CDAP)**
@@ -23,7 +23,7 @@ this case where the system performs very simple analytics, such as counting the 
 visits made to a website in a day, the components needed to make it possible demand a lot
 of work.
 
-Using the **Web Insights Engine Application** or *WISE*, we’ll show you how to build
+Using the **Web Insights Engine** application or *WISE*, we’ll show you how to build
 such a system on CDAP that is easy, concise, and powerful. WISE extracts value from Web
 server access logs, counts visits made by different IP addresses seen in the logs in
 real time, and computes the bounce ratio of each web page encountered using batch
@@ -113,7 +113,7 @@ You should get responses similar to::
   Successfully connected CDAP instance at http://localhost:10000
   Successfully started flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}'
   ...
-  Successfully started Service 'WiseService' of application 'Wise' with stored runtime arguments '{}'
+  Successfully started service 'WiseService' of application 'Wise' with stored runtime arguments '{}'
   
   
 Overview of WISE
@@ -290,8 +290,8 @@ This requires that a Standalone CDAP instance be running with the WISE applicati
 deployed.
 
 
-Realtime Log Analytics with WiseFlow 
-====================================
+Real Time Log Analytics with WiseFlow 
+=====================================
 The goal of ``WiseFlow`` is to perform real time analytics on the Web server access logs
 received by *logEventStream*. For each IP address in the logs, ``WiseFlow`` counts the
 number of visits they made to different web pages.

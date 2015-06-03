@@ -35,11 +35,11 @@ a template in CDAP.
 
 CDAP provides two application templates |---| the ETL templates **ETLBatch** and
 **ETLRealtime** |---| which are used to create adapters that perform ETL in either batch
-and realtime. The  *ETLBatch* and *ETLRealtime* templates consist of a variety of sources,
+and real time. The  *ETLBatch* and *ETLRealtime* templates consist of a variety of sources,
 transformations and sinks that are packaged together.
 
-The batch sources can write to any batch sinks that are available and realtime sources can
-write to any realtime sinks. Transformations work with either sinks or sources.
+The batch sources can write to any batch sinks that are available and real time sources can
+write to any real time sinks. Transformations work with either sinks or sources.
 
 This lists the available sources, sinks and transformations (transforms):
 
@@ -71,7 +71,7 @@ This lists the available sources, sinks and transformations (transforms):
          - TPFSAvro
          - Table
 
-   * - - **Realtime Sources:**
+   * - - **Real Time Sources:**
 
          - JMS
          - Kafka
@@ -84,7 +84,7 @@ This lists the available sources, sinks and transformations (transforms):
          - Script
          - StructuredRecordToGenericRecord
 
-     - - **Realtime Sinks:**
+     - - **Real Time Sinks:**
 
          - Cube
          - Stream
@@ -101,8 +101,8 @@ configuration on creation.
 data from batch sources using a MapReduce job. The batch adapter then performs any
 optional transformations before writing to a batch sink.
 
-**Realtime adapters** are designed to poll sources periodically to fetch the data, perform any
-optional transformations, and then write to a realtime sink.
+**Real time adapters** are designed to poll sources periodically to fetch the data, perform any
+optional transformations, and then write to a real time sink.
 
 ETL adapters are created by preparing a configuration that specifies the ETL template and
 which source, transformations (transforms), and sinks are used to create the adapter. The

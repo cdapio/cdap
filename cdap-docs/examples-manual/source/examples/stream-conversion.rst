@@ -25,13 +25,13 @@ components of the application:
 - The ``StreamConversionWorkflow`` is scheduled every five minutes and only runs the
   ``StreamConversionMapReduce``.
 
-Let's look at some of these components, and then run the Application and see the results.
+Let's look at some of these components, and then run the application and see the results.
 
 The Stream Conversion Application
 ---------------------------------
 
 As in the other :ref:`examples <examples-index>`, the components
-of the Application are tied together by the class ``StreamConversionApp``:
+of the application are tied together by the class ``StreamConversionApp``:
 
 .. literalinclude:: /../../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionApp.java
      :language: java

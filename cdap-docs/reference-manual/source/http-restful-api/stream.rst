@@ -440,7 +440,7 @@ the stream and re-create it with the new schema.
 Streams used by an Application
 ------------------------------
 
-You can retrieve a list of streams used by an Application by issuing a HTTP GET request to the URL::
+You can retrieve a list of streams used by an application by issuing a HTTP GET request to the URL::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/streams
 
@@ -483,7 +483,7 @@ You can retrieve a list of streams used by a program by issuing a HTTP GET reque
    * - ``<app-id>``
      - Application ID
    * - ``<program-type>``
-     - Program Type, one of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
+     - Program type, one of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
    * - ``<program-id>``
      - Program ID
 
@@ -500,7 +500,7 @@ You can retrieve a list of streams used by a program by issuing a HTTP GET reque
 Streams used by an Adapter
 --------------------------
 
-You can retrieve a list of streams used by an Adapter by issuing a HTTP GET request to the URL::
+You can retrieve a list of streams used by an adapter by issuing a HTTP GET request to the URL::
 
   GET <base-url>/namespaces/<namespace>/adapters/<adapter-id>/streams 
 

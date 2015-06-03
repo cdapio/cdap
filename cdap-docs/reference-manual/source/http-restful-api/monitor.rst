@@ -70,10 +70,10 @@ The status of these CDAP system services can be checked:
      - Service that handles transactions
    * - ``Streams``
      - ``streams``
-     - Service that handles Stream management
+     - Service that handles stream management
    * - ``App Fabric``
      - ``appfabric``
-     - Service that handles Application Fabric requests
+     - Service that handles application fabric requests
    * - ``Log Saver``
      - ``log.saver``
      - Service that aggregates all system and application logs

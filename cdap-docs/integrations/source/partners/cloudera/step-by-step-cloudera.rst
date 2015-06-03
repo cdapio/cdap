@@ -60,7 +60,7 @@ The "Add Service" Wizard
    :class: bordered-image
 
    **Add Service Wizard, Page 3:** When customizing Role Assignments, CDAP **Security
-   Auth** Service can be added later.
+   Auth** service can be added later.
 
 
 .. figure:: ../../_images/integration-cloudera/cloudera-csd-06.png

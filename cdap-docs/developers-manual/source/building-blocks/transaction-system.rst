@@ -150,8 +150,8 @@ conflict detection. If another transaction overlaps with the long-running transa
 writes to the same row, it will not cause a conflict but simply overwrite it.
 
 It is not efficient to fail the long-running job based on a single conflict. Because of
-this, it is not recommended to write to the same dataset from both real-time and MapReduce
-programs. It is better to use different datasets, or at least ensure that the real-time
+this, it is not recommended to write to the same dataset from both real time and MapReduce
+programs. It is better to use different datasets, or at least ensure that the real time
 processing writes to a disjoint set of columns.
 
 It's important to note that the MapReduce framework will reattempt a task (Mapper or
