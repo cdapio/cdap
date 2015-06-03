@@ -19,7 +19,7 @@
 #
 
 # Grab cookbooks using knife
-for cb in idea maven nodejs cdap ; do
+for cb in hadoop idea maven nodejs cdap ; do
   knife cookbook site install $cb
 done
 
