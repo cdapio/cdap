@@ -32,7 +32,8 @@ public class UnderlyingSystemNamespaceHandlerTest extends DatasetServiceTestBase
   @Test
   public void test() throws IOException {
     Assert.assertEquals(200, createNamespace("myspace").getResponseCode());
-    Assert.assertEquals(500, createNamespace("myspace").getResponseCode());
+    // creation is idempotent, now that we delete the namespace directory if it exists
+    Assert.assertEquals(200, createNamespace("myspace").getResponseCode());
     Assert.assertEquals(200, deleteNamespace("myspace").getResponseCode());
   }
 

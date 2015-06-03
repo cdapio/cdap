@@ -20,16 +20,15 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.explore.client.ExploreFacade;
 import com.google.inject.Inject;
-import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * Manages namespaces on local underlying systems.
  */
-public final class LocalUnderlyingSystemNamespaceAdmin extends UnderlyingSystemNamespaceAdmin {
+public final class LocalStorageProviderNamespaceAdmin extends StorageProviderNamespaceAdmin {
 
   @Inject
-  public LocalUnderlyingSystemNamespaceAdmin(CConfiguration cConf, NamespacedLocationFactory namespacedLocationFactory,
-                                             ExploreFacade exploreFacade) {
+  public LocalStorageProviderNamespaceAdmin(CConfiguration cConf, NamespacedLocationFactory namespacedLocationFactory,
+                                            ExploreFacade exploreFacade) {
     super(cConf, namespacedLocationFactory, exploreFacade);
   }
 }
