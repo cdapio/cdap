@@ -21,7 +21,7 @@ angular.module(PKG.name + '.feature.mapreduce')
         templateUrl: '/assets/features/mapreduce/templates/detail.html',
         controller: 'MapreduceDetailController',
         ncyBreadcrumb: {
-          parent: 'apps.detail.overview',
+          parent: 'apps.detail.overview.status',
           label: 'Mapreduce',
           skip: true
         },
@@ -62,7 +62,7 @@ angular.module(PKG.name + '.feature.mapreduce')
           url: '/data',
           templateUrl: '/assets/features/mapreduce/templates/tabs/data.html',
           ncyBreadcrumb: {
-            parent: 'apps.detail.overview',
+            parent: 'apps.detail.overview.status',
             label: 'Data'
           }
         })
@@ -71,7 +71,7 @@ angular.module(PKG.name + '.feature.mapreduce')
           templateUrl: '/assets/features/mapreduce/templates/tabs/history.html',
           controller: 'MapreduceRunsController',
           ncyBreadcrumb: {
-            parent: 'apps.detail.overview',
+            parent: 'apps.detail.overview.status',
             label: 'History'
           }
         });

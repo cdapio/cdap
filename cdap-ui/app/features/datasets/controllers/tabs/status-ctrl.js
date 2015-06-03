@@ -1,10 +1,14 @@
 angular.module(PKG.name + '.feature.datasets')
   .controller('CdapDatasetDetailStatusController',
-    function($scope, MyDataSource, $state, myHelpers, MyMetricsQueryHelper, myExploreApi) {
+    function($scope, MyDataSource, $state, myHelpers, MyMetricsQueryHelper, myExploreApi, explorableDatasets) {
       $scope.writes = 0;
       $scope.reads = 0;
       $scope.storage = 0;
       $scope.transactions = 0;
+      $scope.explorable = explorableDatasets;
+      if (!explorableDatasets) {
+        return;
+      }
       var query = myHelpers.objectQuery;
       var dataSrc = new MyDataSource($scope),
           currentDataset = $state.params.datasetId,

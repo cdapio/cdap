@@ -19,7 +19,7 @@ angular.module(PKG.name + '.feature.workflows')
             highlightTab: 'development'
           },
           ncyBreadcrumb: {
-            parent: 'apps.detail.overview',
+            parent: 'apps.detail.overview.status',
             label: 'Workflows',
             skip: true
           },
