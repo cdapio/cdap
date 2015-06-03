@@ -148,7 +148,7 @@ public class HelpCommand implements Command {
 
   @Override
   public String getDescription() {
-    return String.format("Prints this helper text. Optionally, provide <%s> to get help with a specific category.",
+    return String.format("Prints this helper text. Optionally, provide <%s> for help for a specific category.",
                          ArgumentName.COMMAND_CATEGORY);
   }
 

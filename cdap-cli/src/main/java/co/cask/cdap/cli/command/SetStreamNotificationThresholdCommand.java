@@ -60,7 +60,7 @@ public class SetStreamNotificationThresholdCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Sets the Notification Threshold of %s.",
+    return String.format("Sets the notification threshold of %s.",
                          Fragment.of(Article.A, ElementType.STREAM.getTitleName()));
   }
 }

@@ -81,6 +81,6 @@ public class GetWorkflowCurrentRunCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Gets the currently running nodes of a Workflow for a given run id.";
+    return "Gets the currently running nodes of a workflow for a given run id.";
   }
 }
