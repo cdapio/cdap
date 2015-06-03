@@ -16,7 +16,7 @@ angular.module(PKG.name + '.feature.services')
         templateUrl: '/assets/features/services/templates/list.html',
         controller: 'ServicesListController',
         ncyBreadcrumb: {
-          parent: 'apps.detail.overview',
+          parent: 'apps.detail.overview.status',
           label: 'Services'
         }
       })
@@ -44,7 +44,7 @@ angular.module(PKG.name + '.feature.services')
           }
         },
         ncyBreadcrumb: {
-          parent: 'apps.detail.overview',
+          parent: 'apps.detail.overview.status',
           label: 'Services',
           skip: true
         }
@@ -99,7 +99,7 @@ angular.module(PKG.name + '.feature.services')
           url: '/history',
           templateUrl: '/assets/features/services/templates/tabs/history.html',
           ncyBreadcrumb: {
-            parent: 'apps.detail.overview',
+            parent: 'apps.detail.overview.status',
             label: '{{$state.params.programId}} / History'
           }
         })

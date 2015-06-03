@@ -39,7 +39,7 @@ angular.module(PKG.name + '.feature.worker')
 
         },
         ncyBreadcrumb: {
-          parent: 'apps.detail.overview',
+          parent: 'apps.detail.overview.status',
           label: 'Workers',
           skip: true
         },
