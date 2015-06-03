@@ -27,7 +27,7 @@
 
       <ul class="list-group" >
         <li class="list-group-item" ng-repeat="data in dataList | orderBy:MyOrderings.dataOrdering | limitTo: 5 track by $index ">
-          <a ng-if="data.type === 'Stream'" ui-sref="streams.detail.overview({streamId: data.name})" ng-click="MyOrderings.dataClicked(data.name)">
+          <a ng-if="data.type === 'Stream'" ui-sref="streams.detail.overview.status({streamId: data.name})" ng-click="MyOrderings.dataClicked(data.name)">
             <p ng-bind="data.name"> </p>
             <div class="title-type-image">
               <span class="icon-streams"></span>

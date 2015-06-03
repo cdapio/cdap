@@ -16,7 +16,7 @@
               <a ng-if="data.type === 'Dataset'" ui-sref="datasets.detail.overview.status({ datasetId: data.name })">
                 <strong>{{ ::data.name }}</strong>
               </a>
-              <a ng-if="data.type === 'Stream'" ui-sref="streams.detail.overview({ streamId: data.name })">
+              <a ng-if="data.type === 'Stream'" ui-sref="streams.detail.overview.status({ streamId: data.name })">
                 <strong>{{ ::data.name }}</strong>
               </a>
             </td>

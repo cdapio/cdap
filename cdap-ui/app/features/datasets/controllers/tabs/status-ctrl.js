@@ -6,7 +6,6 @@ angular.module(PKG.name + '.feature.datasets')
       $scope.storage = 0;
       $scope.transactions = 0;
       $scope.explorable = explorableDatasets;
-      debugger;
       if (!explorableDatasets) {
         return;
       }
