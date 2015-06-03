@@ -24,7 +24,7 @@
     <tbody>
       <tr ng-repeat="data in dataCtrl.dataList | myPaginate:dataCtrl.currentPage | filter:{ name: dataCtrl.searchText } | orderBy:sortable.predicate:sortable.reverse">
           <td>
-            <a ng-click="goToDetail(data)"
+            <a ng-click="dataCtrl.goToDetail(data)"
                 href="">
                 <strong ng-bind="data.name"> </strong>
             </a>
@@ -39,6 +39,6 @@
   </table>
 </div>
 
-<div class="text-center" ng-if="dataCtrl.dataList.length > 10">
+<div class="text-center" ng-if="dataCtrl.dataList.length > 10 && dataCtrl.searchText.length === 0">
   <pagination total-items="dataCtrl.dataList.length" ng-model="dataCtrl.currentPage"></pagination>
 </div>
