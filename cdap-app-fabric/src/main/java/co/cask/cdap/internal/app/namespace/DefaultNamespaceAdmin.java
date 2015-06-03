@@ -210,10 +210,10 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       // Another reason for not deleting the default namespace is that we do not want to call a delete on the default
       // namespace in the storage provider (Hive, HBase, etc), since we re-use their default namespace.
       if (!Constants.DEFAULT_NAMESPACE_ID.equals(namespaceId)) {
-        // Delete namespace in storage providers
-        dsFramework.deleteNamespace(namespaceId);
         // Finally delete namespace from MDS
         store.deleteNamespace(namespaceId);
+        // Delete namespace in storage providers
+        dsFramework.deleteNamespace(namespaceId);
       }
     } catch (Exception e) {
       LOG.warn("Error while deleting namespace {}", namespaceId, e);

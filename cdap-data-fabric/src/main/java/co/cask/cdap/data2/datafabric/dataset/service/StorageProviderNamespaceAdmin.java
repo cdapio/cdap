@@ -32,15 +32,15 @@ import java.sql.SQLException;
 /**
  * Performs namespace admin operations on underlying storage (HBase, Filesystem, Hive, etc)
  */
-public class UnderlyingSystemNamespaceAdmin {
-  private static final Logger LOG = LoggerFactory.getLogger(UnderlyingSystemNamespaceAdmin.class);
+public class StorageProviderNamespaceAdmin {
+  private static final Logger LOG = LoggerFactory.getLogger(StorageProviderNamespaceAdmin.class);
 
   private final CConfiguration cConf;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final ExploreFacade exploreFacade;
 
-  protected UnderlyingSystemNamespaceAdmin(CConfiguration cConf, NamespacedLocationFactory namespacedLocationFactory,
-                                           ExploreFacade exploreFacade) {
+  protected StorageProviderNamespaceAdmin(CConfiguration cConf, NamespacedLocationFactory namespacedLocationFactory,
+                                          ExploreFacade exploreFacade) {
     this.cConf = cConf;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.exploreFacade = exploreFacade;
@@ -58,8 +58,12 @@ public class UnderlyingSystemNamespaceAdmin {
   protected void create(Id.Namespace namespaceId) throws IOException, ExploreException, SQLException {
     Location namespaceHome = namespacedLocationFactory.get(namespaceId);
     if (namespaceHome.exists()) {
-      throw new IOException(String.format("Home directory '%s' for namespace '%s' already exists.",
-                                          namespaceHome.toURI().toString(), namespaceId));
+      LOG.warn("Home directory '{}' for namespace '{}' already exists. Deleting it.",
+               namespaceHome.toURI().toString(), namespaceId);
+      if (!namespaceHome.delete(true)) {
+        throw new IOException(String.format("Error while deleting home directory '%s' for namespace '%s'",
+                                            namespaceHome.toURI().toString(), namespaceId.getId()));
+      }
     }
     if (!namespaceHome.mkdirs()) {
       throw new IOException(String.format("Error while creating home directory '%s' for namesapce '%s'",
