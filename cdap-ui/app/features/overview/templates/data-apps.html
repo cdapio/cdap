@@ -89,7 +89,7 @@
 
       <ul class="list-group">
         <li class="list-group-item" ng-repeat="app in apps | orderBy:MyOrderings.appOrdering | limitTo:5">
-          <a ui-sref="apps.detail.overview({appId: app.id})"  ng-click="MyOrderings.appClicked(app.id)">
+          <a ui-sref="apps.detail.overview.status({appId: app.id})"  ng-click="MyOrderings.appClicked(app.id)">
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
               <span class="icon-fist"></span>
