@@ -1,8 +1,13 @@
 <ul class="dropdown-menu" role="menu" ng-show="currentUser">
 
 
-    <li ng-repeat="ns in namespaces" ng-show="namespaces.length > 1">
+    <li ng-if="!$state.includes('dashboard.**')" ng-repeat="ns in namespaces" ng-show="namespaces.length > 1">
       <a role="menuitem" ui-sref="overview({namespace: ns.name})" tabindex="-1">
+        <span ng-bind="ns.name | myEllipsis: 15"></span>
+      </a>
+    </li>
+    <li ng-if="$state.includes('dashboard.**')" ng-repeat="ns in namespaces" ng-show="namespaces.length > 1">
+      <a role="menuitem" ui-sref="dashboard.standard.cdap({namespace: ns.name})" tabindex="-1">
         <span ng-bind="ns.name | myEllipsis: 15"></span>
       </a>
     </li>
