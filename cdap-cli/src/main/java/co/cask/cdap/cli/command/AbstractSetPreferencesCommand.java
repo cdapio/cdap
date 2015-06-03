@@ -30,93 +30,101 @@ import java.util.Map;
  */
 public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
 
-    private final PreferencesClient client;
-    private final ElementType type;
+  private final PreferencesClient client;
+  private final ElementType type;
 
-    protected AbstractSetPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
-        super(cliConfig);
-        this.type = type;
-        this.client = client;
+  protected AbstractSetPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
+    super(cliConfig);
+    this.type = type;
+    this.client = client;
+  }
+
+  protected abstract void printSuccessMessage(PrintStream printStream, ElementType type);
+
+  protected void setPreferences(String[] programIdParts, PrintStream printStream,
+                                Map<String, String> args) throws Exception {
+    switch (type) {
+      case INSTANCE:
+        checkInputLength(programIdParts, 0);
+        client.setInstancePreferences(args);
+        printSuccessMessage(printStream, type);
+        break;
+
+      case NAMESPACE:
+        checkInputLength(programIdParts, 0);
+        client.setNamespacePreferences(cliConfig.getCurrentNamespace(), args);
+        printSuccessMessage(printStream, type);
+        break;
+
+      case APP:
+        client.setApplicationPreferences(parseAppId(programIdParts), args);
+        printSuccessMessage(printStream, type);
+        break;
+
+      case FLOW:
+      case MAPREDUCE:
+      case WORKFLOW:
+      case SERVICE:
+      case SPARK:
+        client.setProgramPreferences(parseProgramId(programIdParts, type.getProgramType()), args);
+        printSuccessMessage(printStream, type);
+        break;
+
+      default:
+        throw new IllegalArgumentException("Unrecognized Element Type for Preferences " + type.getTitleName());
     }
+  }
 
-    protected abstract void printSuccessMessage(PrintStream printStream, ElementType type);
+  protected String determinePattern(String action) {
 
-    protected void setPreferences(String[] programIdParts, PrintStream printStream,
-                                  Map<String, String> args) throws Exception {
-        switch (type) {
-            case INSTANCE:
-                checkInputLength(programIdParts, 0);
-                client.setInstancePreferences(args);
-                printSuccessMessage(printStream, type);
-                break;
-
-            case NAMESPACE:
-                checkInputLength(programIdParts, 0);
-                client.setNamespacePreferences(cliConfig.getCurrentNamespace(), args);
-                printSuccessMessage(printStream, type);
-                break;
-
-            case APP:
-                client.setApplicationPreferences(parseAppId(programIdParts), args);
-                printSuccessMessage(printStream, type);
-                break;
-
-            case FLOW:
-            case MAPREDUCE:
-            case WORKFLOW:
-            case SERVICE:
-            case SPARK:
-                client.setProgramPreferences(parseProgramId(programIdParts, type.getProgramType()), args);
-                printSuccessMessage(printStream, type);
-                break;
-
-            default:
-                throw new IllegalArgumentException("Unrecognized Element Type for Preferences " + type.getTitleName());
-        }
+    switch (action) {
+      case "set":
+        return determinePatternSetHelper();
+      case "load":
+        return determinePatternLoadHelper();
     }
+    return "None";
+  }
 
-
-
-    protected String determinePattern(String action) {
-
-        if ("set".equals(action)) {
-            switch (type) {
-                case INSTANCE:
-                case NAMESPACE:
-                    return String.format("set preferences %s <%s>",
-                                         type.getName(), ArgumentName.RUNTIME_ARGS);
-                case APP:
-                    return String.format("set preferences %s <%s> <%s>", type.getName(),
-                                         ArgumentName.RUNTIME_ARGS, type.getArgumentName());
-                case FLOW:
-                case MAPREDUCE:
-                case WORKFLOW:
-                case SERVICE:
-                case SPARK:
-                    return String.format("set preferences %s <%s> [<%s>]", type.getName(), ArgumentName.RUNTIME_ARGS,
-                            type.getArgumentName());
-            }
-        } else if ("load".equals(action)) {
-            switch (type) {
-                case INSTANCE:
-                case NAMESPACE:
-                    return String.format("load preferences %s <%s> <%s>", type.getName(),
-                                         ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE);
-                case APP:
-                  return String.format("load preferences %s <%s> <%s> <%s>", type.getName(),
-                                       ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE,
-                                       type.getArgumentName());
-                case FLOW:
-                case MAPREDUCE:
-                case WORKFLOW:
-                case SERVICE:
-                case SPARK:
-                    return String.format("load preferences %s <%s> <%s> [<%s>]", type.getName(),
-                                         ArgumentName.LOCAL_FILE_PATH,
-                            ArgumentName.CONTENT_TYPE, type.getArgumentName());
-            }
-        }
-        return "None";
+  private String determinePatternSetHelper() {
+    switch (type) {
+      case INSTANCE:
+      case NAMESPACE:
+        return String.format("set preferences %s <%s>",
+                             type.getName(), ArgumentName.RUNTIME_ARGS);
+      case APP:
+        return String.format("set preferences %s <%s> <%s>", type.getName(),
+                             ArgumentName.RUNTIME_ARGS, type.getArgumentName());
+      case FLOW:
+      case MAPREDUCE:
+      case WORKFLOW:
+      case SERVICE:
+      case SPARK:
+        return String.format("set preferences %s <%s> <%s>", type.getName(), ArgumentName.RUNTIME_ARGS,
+                             type.getArgumentName());
     }
+    return "None";
+  }
+
+  private String determinePatternLoadHelper() {
+    switch (type) {
+      case INSTANCE:
+      case NAMESPACE:
+        return String.format("load preferences %s <%s> <%s>", type.getName(),
+                             ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE);
+      case APP:
+        return String.format("load preferences %s <%s> <%s> <%s>", type.getName(),
+                             ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE,
+                             type.getArgumentName());
+      case FLOW:
+      case MAPREDUCE:
+      case WORKFLOW:
+      case SERVICE:
+      case SPARK:
+        return String.format("load preferences %s <%s> <%s> <%s>", type.getName(),
+                             ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE,
+                             type.getArgumentName());
+    }
+    return "None";
+  }
 }
-
