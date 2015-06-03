@@ -127,7 +127,7 @@ angular.module(PKG.name + '.feature.adapters')
         }
       }
       return plugin.valid;
-    }
+    };
 
     Model.prototype.validateRequiredProperties = function() {
       var isValidPlugin = this.checkForValidRequiredField(this.source);
@@ -184,10 +184,18 @@ angular.module(PKG.name + '.feature.adapters')
         data
       )
         .$promise
-        .then(function(res) {
-          delete this.adapterDrafts[this.metadata.name];
-          return mySettings.set('adapterdrafts', this.adapterDrafts);
-        }.bind(this));
+        .then(
+          function success(res) {
+            delete this.adapterDrafts[this.metadata.name];
+            return mySettings.set('adapterdrafts', this.adapterDrafts);
+          }.bind(this),
+          function error(err) {
+            defer.reject({
+              message: err
+            });
+            return defer.promise;
+          }
+        );
     }
 
     function pruneProperties(plugin, value, key) {
