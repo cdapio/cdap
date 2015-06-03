@@ -1367,16 +1367,15 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Starts a Program.
    */
   private AppFabricServiceStatus start(final Id.Program id, Map<String, String> overrides, boolean debug) {
-
     try {
-      if (isRunning(id) && isConcurrentRunsDisabled(id)) {
-        return AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING;
-      }
-
       Map<String, String> sysArgs = propertiesResolver.getSystemProperties(id);
       Map<String, String> userArgs = propertiesResolver.getUserProperties(id);
       if (overrides != null) {
         userArgs.putAll(overrides);
+      }
+
+      if (isRunning(id) && isConcurrentRunsDisabled(id, userArgs)) {
+        return AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING;
       }
 
       ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.start(id, sysArgs, userArgs, debug);
@@ -1399,13 +1398,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     return EnumSet.of(ProgramType.WORKFLOW, ProgramType.MAPREDUCE).contains(type);
   }
 
-  private boolean isConcurrentRunsDisabled(Id.Program id) {
+  private boolean isConcurrentRunsDisabled(Id.Program id, Map<String, String> properties) {
     if (!isRunLevelActionAllowed(id.getType())) {
       return false;
     }
 
-    Map<String, String> systemProperties = propertiesResolver.getSystemProperties(id);
-    return Boolean.parseBoolean(systemProperties.get(ProgramOptionConstants.CONCURRENT_RUNS_DISABLED));
+    return Boolean.parseBoolean(properties.get(ProgramOptionConstants.CONCURRENT_RUNS_DISABLED));
   }
 
   private AppFabricServiceStatus stop(Id.Program id) {

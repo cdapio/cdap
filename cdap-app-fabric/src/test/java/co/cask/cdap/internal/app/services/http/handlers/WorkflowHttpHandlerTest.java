@@ -31,6 +31,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -920,6 +921,31 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     // Verify that the Workflow should be marked as "FAILED".
     verifyProgramRuns(programId, "failed");
+
+    doneFile.delete();
+
+    // Disable concurrent runs.
+    PreferencesStore store = getInjector().getInstance(PreferencesStore.class);
+    store.setProperties(TEST_NAMESPACE2, appName, ProgramType.WORKFLOW.getCategoryName(),
+                        workflowName, ImmutableMap.of(ProgramOptionConstants.CONCURRENT_RUNS_DISABLED, "true"));
+
+    instanceFile = new File(tmpFolder.newFolder() + "/instance.file");
+    propertyMap = ImmutableMap.of("simple.action.file", instanceFile.getAbsolutePath(),
+                                  "simple.action.donefile", doneFile.getAbsolutePath());
+
+    startProgram(programId, propertyMap);
+
+    while (!instanceFile.exists()) {
+      TimeUnit.MILLISECONDS.sleep(50);
+    }
+
+    // Starting the program again should conflict.
+    startProgram(programId, 409);
+
+    doneFile.createNewFile();
+
+    // Two runs of the program should be completed now.
+    verifyProgramRuns(programId, "completed", 1);
   }
 
   private String createConditionInput(String folderName, int numGoodRecords, int numBadRecords) throws IOException {
