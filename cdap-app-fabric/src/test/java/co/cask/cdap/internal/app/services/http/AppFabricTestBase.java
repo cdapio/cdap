@@ -535,8 +535,8 @@ public abstract class AppFabricTestBase {
       path = String.format("apps/%s/%s/%s/stop", program.getApplicationId(), program.getType().getCategoryName(),
                            program.getId());
     } else {
-      path = String.format("apps/%s/%s/%s/runs/%s/stop", program.getApplicationId(), program.getType().getCategoryName(),
-                           program.getId(), runId);
+      path = String.format("apps/%s/%s/%s/runs/%s/stop", program.getApplicationId(),
+                           program.getType().getCategoryName(), program.getId(), runId);
     }
     HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespaceId()));
     Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
