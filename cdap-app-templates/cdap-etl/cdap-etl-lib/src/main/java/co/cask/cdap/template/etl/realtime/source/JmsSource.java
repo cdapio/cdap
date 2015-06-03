@@ -171,8 +171,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
           LOG.warn("Exception when closing connection", ex2);
         }
       }
-      throw new RuntimeException("JMSException thrown when trying to initialize connection: " + ex.getMessage(),
-                                 ex);
+      throw new RuntimeException("JMSException thrown when trying to initialize connection: " + ex.getMessage(), ex);
     }
   }
 
