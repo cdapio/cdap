@@ -236,9 +236,9 @@ public final class ConcurrentStreamWriter implements Closeable {
 
       return eventQueue;
 
+    } catch (NotFoundException | IOException e) {
+      throw e;
     } catch (Exception e) {
-      Throwables.propagateIfInstanceOf(e, NotFoundException.class);
-      Throwables.propagateIfInstanceOf(e, IOException.class);
       throw new IOException(e);
     } finally {
       createLock.unlock();

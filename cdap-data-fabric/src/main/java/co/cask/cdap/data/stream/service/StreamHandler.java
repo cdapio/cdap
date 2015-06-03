@@ -23,7 +23,6 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.BadRequestException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.data.format.RecordFormats;
@@ -197,7 +196,6 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     // TODO: Modify the REST API to support custom configurations.
     streamAdmin.create(streamId);
 
-    // TODO: For create successful, 201 Created should be returned instead of 200.
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
