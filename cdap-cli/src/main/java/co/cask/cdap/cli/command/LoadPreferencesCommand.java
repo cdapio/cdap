@@ -75,7 +75,7 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
       }
     } catch (JsonSyntaxException e) {
       throw new BadRequestException(
-        String.format("JSON Syntax in File is invalid. Support only for string-to-string map. %s", e.getMessage()));
+        String.format("JSON syntax in file is invalid. Support only for string-to-string map. %s", e.getMessage()));
     }
 
     if (arguments.hasArgument(type.getArgumentName().toString())) {
@@ -92,7 +92,7 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Set preferences of %s from a local Config File (supported formats = JSON).",
+    return String.format("Sets preferences of %s from a local config file (supported formats = JSON).",
                          Fragment.of(Article.A, type.getTitleName()));
   }
 }
