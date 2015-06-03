@@ -269,17 +269,17 @@ public class PluginInstantiator implements Closeable {
         rawType = Primitives.wrap(rawType);
       }
 
-      try {
-        if (Primitives.isWrapperType(rawType)) {
-          Method valueOf = rawType.getMethod("valueOf", String.class);
+      if (Primitives.isWrapperType(rawType)) {
+        Method valueOf = rawType.getMethod("valueOf", String.class);
+        try {
           return valueOf.invoke(null, value);
+        } catch (InvocationTargetException e) {
+          if (e.getCause() instanceof NumberFormatException) {
+            // if exception is due to wrong value for integer/double conversion
+            throw new InvalidPluginConfigException(String.format("valueOf operation on %s failed", value), e.getCause());
+          }
+          throw e;
         }
-      } catch (InvocationTargetException e) {
-        if (e.getCause() instanceof NumberFormatException) {
-          // if exception is due to wrong value for integer/double conversion
-          throw new InvalidPluginConfigException(String.format("valueOf operation on %s failed", value), e.getCause());
-        }
-        throw e;
       }
 
       throw new UnsupportedTypeException("Only primitive and String types are supported");
