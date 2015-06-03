@@ -23,17 +23,17 @@
                     <span> {{source.name}} </span>
                   </div>
 
-                  <div ng-if="source.description.length < 100"
+                  <div ng-if="source.description.length <= 54"
                        class="description-overflow">
-                   {{source.description}}
+                    {{source.description}}
                   </div>
 
-                  <div ng-if="source.description.length > 100"
+                  <div ng-if="source.description.length > 54"
                        tooltip="{{source.description}}"
                        tooltip-append-to-body="true"
                        class="description-overflow">
                     <span class="fa fa-info-circle"></span>
-                   {{source.description}}
+                    {{source.description}}
                   </div>
 
                 </li>
@@ -69,12 +69,12 @@
                       <span> {{transform.name}} </span>
                   </div>
 
-                  <div ng-if="transform.description.length < 100"
+                  <div ng-if="transform.description.length <= 54"
                        class="description-overflow">
-                   {{transform.description}}
+                    {{transform.description}}
                   </div>
 
-                  <div ng-if="transform.description.legnth > 100"
+                  <div ng-if="transform.description.length > 54"
                        tooltip="{{transform.description}}"
                        tooltip-append-to-body="true"
                        class="description-overflow">
@@ -115,12 +115,12 @@
                       <span> {{sink.name}} </span>
                     </div>
 
-                    <div ng-if="sink.description.length < 100"
+                    <div ng-if="sink.description.length <= 54"
                          class="description-overflow">
                       {{sink.description}}
                     </div>
 
-                    <div ng-if="sink.description.length > 100"
+                    <div ng-if="sink.description.length > 54"
                          tooltip="{{sink.description}}"
                          tooltip-append-to-body="true"
                          class="description-overflow">
