@@ -17,7 +17,6 @@ package co.cask.cdap.app.program;
 
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Objects;
 import org.apache.twill.filesystem.Location;
 
@@ -61,12 +60,11 @@ public final class Programs {
    * @param namespacedLocationFactory the namespaced location on the file system
    * @param appFabricDir app fabric output directory path
    * @param id program id
-   * @param type type of the program
    * @return Location corresponding to the program id
    * @throws IOException incase of errors
    */
   public static Location programLocation(NamespacedLocationFactory namespacedLocationFactory, String appFabricDir,
-                                         Id.Program id, ProgramType type) throws IOException {
+                                         Id.Program id) throws IOException {
     Location namespaceHome = namespacedLocationFactory.get(id.getNamespace());
     if (!namespaceHome.exists()) {
       throw new FileNotFoundException("Unable to locate the Program, namespace location doesn't exist: " +
@@ -74,7 +72,8 @@ public final class Programs {
     }
     Location appFabricLocation = namespaceHome.append(appFabricDir);
 
-    Location applicationProgramsLocation = appFabricLocation.append(id.getApplicationId()).append(type.toString());
+    Location applicationProgramsLocation =
+      appFabricLocation.append(id.getApplicationId()).append(id.getType().toString());
     if (!applicationProgramsLocation.exists()) {
       throw new FileNotFoundException("Unable to locate the Program,  location doesn't exist: " +
                                         applicationProgramsLocation.toURI().getPath());
@@ -82,7 +81,7 @@ public final class Programs {
     Location programLocation = applicationProgramsLocation.append(String.format("%s.jar", id.getId()));
     if (!programLocation.exists()) {
       throw new FileNotFoundException(String.format("Program %s.%s of type %s does not exists.",
-                                               id.getApplication(), id.getId(), type));
+                                               id.getApplication(), id.getId(), id.getType()));
     }
     return programLocation;
   }

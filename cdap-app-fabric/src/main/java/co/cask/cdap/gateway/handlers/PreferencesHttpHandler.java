@@ -243,7 +243,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
       return false;
     }
 
-    if (!store.programExists(Id.Program.from(namespace, appId, type, programId), type)) {
+    if (!store.programExists(Id.Program.from(namespace, appId, type, programId))) {
       responder.sendString(HttpResponseStatus.NOT_FOUND,
                            String.format("Program %s of Type %s in AppId %s in Namespace %s not present",
                                          programId, programType, appId, namespace));

@@ -49,12 +49,11 @@ public class DeleteNamespaceCommand extends AbstractCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream out) throws Exception {
-    out.println("WARNING: Deleting namespace is an unrecoverable operation");
-
     Id.Namespace namespaceId = Id.Namespace.from(arguments.get(ArgumentName.NAMESPACE_NAME.toString()));
 
     ConsoleReader consoleReader = new ConsoleReader();
     if (Constants.DEFAULT_NAMESPACE_ID.equals(namespaceId)) {
+      out.println("WARNING: Deleting contents of a namespace is an unrecoverable operation");
       String prompt = String.format("Are you sure you want to delete contents of namespace '%s' [y/N]? ",
                                     namespaceId.getId());
       String userConfirm = consoleReader.readLine(prompt);
@@ -64,6 +63,7 @@ public class DeleteNamespaceCommand extends AbstractCommand {
         out.println();
       }
     } else {
+      out.println("WARNING: Deleting a namespace is an unrecoverable operation");
       String prompt = String.format("Are you sure you want to delete namespace '%s' [y/N]? ",
                                     namespaceId.getId());
       String userConfirm = consoleReader.readLine(prompt);

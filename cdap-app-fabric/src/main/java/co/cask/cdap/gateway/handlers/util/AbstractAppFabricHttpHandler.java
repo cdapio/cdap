@@ -17,44 +17,30 @@
 package co.cask.cdap.gateway.handlers.util;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.flow.FlowletConnection;
-import co.cask.cdap.api.flow.FlowletDefinition;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.services.Data;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.proto.ApplicationRecord;
-import co.cask.cdap.proto.DatasetRecord;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.StreamRecord;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -69,7 +55,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -355,12 +340,10 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     return null;
   }
 
-  protected void getLiveInfo(HttpResponder responder, String namespaceId,
-                             final String appId, final String programId, ProgramType type,
+  protected void getLiveInfo(HttpResponder responder, Id.Program programId,
                              ProgramRuntimeService runtimeService) {
     try {
-      responder.sendJson(HttpResponseStatus.OK,
-                         runtimeService.getLiveInfo(Id.Program.from(namespaceId, appId, type, programId), type));
+      responder.sendJson(HttpResponseStatus.OK, runtimeService.getLiveInfo(programId));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -385,175 +368,5 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       return true;
     }
     return false;
-  }
-
-  // TODO: refactor
-  protected final void dataList(HttpResponder responder, Store store, DatasetFramework dsFramework,
-                                Data type, String namespaceId, String name, String appId) {
-    try {
-      if ((name != null && name.isEmpty()) || (appId != null && appId.isEmpty())) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Empty name provided");
-        return;
-      }
-
-      Id.Namespace namespace = Id.Namespace.from(namespaceId);
-
-      String json;
-      if (name != null) {
-        json = getDataEntity(store, dsFramework, namespace, type, name);
-      } else if (appId != null) {
-        Id.Application app = Id.Application.from(namespace, appId);
-        json = listDataEntitiesByApp(store, dsFramework, app, type);
-      } else {
-        json = listDataEntities(store, dsFramework, namespace, type);
-      }
-
-      if (json.isEmpty()) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      } else {
-        responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
-                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception : ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  private String getDataEntity(Store store, DatasetFramework dsFramework,
-                               Id.Namespace namespace, Data type, String name) {
-    if (type == Data.DATASET) {
-      DatasetSpecification dsSpec = getDatasetSpec(dsFramework, namespace, name);
-      return dsSpec == null ? "" : GSON.toJson(new DatasetRecord(name, dsSpec.getType()));
-    } else if (type == Data.STREAM) {
-      StreamSpecification spec = store.getStream(namespace, name);
-      return spec == null ? "" : GSON.toJson(makeStreamRecord(spec.getName(), spec));
-    }
-    return "";
-  }
-
-  private String listDataEntities(Store store, DatasetFramework dsFramework,
-                                  Id.Namespace namespace, Data type) throws Exception {
-    if (type == Data.DATASET) {
-      Collection<DatasetSpecificationSummary> instances = dsFramework.getInstances(namespace);
-      List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(instances.size());
-      for (DatasetSpecificationSummary instance : instances) {
-        result.add(new DatasetRecord(instance.getName(), instance.getType()));
-      }
-      return GSON.toJson(result);
-    } else if (type == Data.STREAM) {
-      Collection<StreamSpecification> specs = store.getAllStreams(namespace);
-      List<StreamRecord> result = Lists.newArrayListWithExpectedSize(specs.size());
-      for (StreamSpecification spec : specs) {
-        result.add(makeStreamRecord(spec.getName(), null));
-      }
-      return GSON.toJson(result);
-    }
-    return "";
-
-  }
-
-  private String listDataEntitiesByApp(Store store, DatasetFramework dsFramework,
-                                       Id.Application app, Data type) throws Exception {
-    ApplicationSpecification appSpec = store.getApplication(app);
-    if (appSpec == null) {
-      return "";
-    }
-    if (type == Data.DATASET) {
-      Set<String> dataSetsUsed = dataSetsUsedBy(appSpec);
-      List<DatasetRecord> result = Lists.newArrayListWithExpectedSize(dataSetsUsed.size());
-      for (String dsName : dataSetsUsed) {
-        String typeName = null;
-        DatasetSpecification dsSpec = getDatasetSpec(dsFramework, app.getNamespace(), dsName);
-        if (dsSpec != null) {
-          typeName = dsSpec.getType();
-        }
-        result.add(new DatasetRecord(dsName, typeName));
-      }
-      return GSON.toJson(result);
-    }
-    if (type == Data.STREAM) {
-      Set<String> streamsUsed = streamsUsedBy(appSpec);
-      List<StreamRecord> result = Lists.newArrayListWithExpectedSize(streamsUsed.size());
-      for (String streamName : streamsUsed) {
-        result.add(makeStreamRecord(streamName, null));
-      }
-      return GSON.toJson(result);
-    }
-    return "";
-  }
-
-  @Nullable
-  private DatasetSpecification getDatasetSpec(DatasetFramework dsFramework, Id.Namespace namespaceId, String dsName) {
-    try {
-      return dsFramework.getDatasetSpec(Id.DatasetInstance.from(namespaceId, dsName));
-    } catch (Exception e) {
-      LOG.warn("Couldn't get spec for dataset: " + dsName);
-      return null;
-    }
-  }
-
-  private Set<String> dataSetsUsedBy(FlowSpecification flowSpec) {
-    Set<String> result = Sets.newHashSet();
-    for (FlowletDefinition flowlet : flowSpec.getFlowlets().values()) {
-      result.addAll(flowlet.getDatasets());
-    }
-    return result;
-  }
-
-  private Set<String> dataSetsUsedBy(ApplicationSpecification appSpec) {
-    Set<String> result = Sets.newHashSet();
-    for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
-      result.addAll(dataSetsUsedBy(flowSpec));
-    }
-    for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
-      result.addAll(mrSpec.getDataSets());
-    }
-    return result;
-  }
-
-  private Set<String> streamsUsedBy(FlowSpecification flowSpec) {
-    Set<String> result = Sets.newHashSet();
-    for (FlowletConnection con : flowSpec.getConnections()) {
-      if (FlowletConnection.Type.STREAM == con.getSourceType()) {
-        result.add(con.getSourceName());
-      }
-    }
-    return result;
-  }
-
-  private Set<String> streamsUsedBy(ApplicationSpecification appSpec) {
-    Set<String> result = Sets.newHashSet();
-    for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
-      result.addAll(streamsUsedBy(flowSpec));
-    }
-    result.addAll(appSpec.getStreams().keySet());
-    return result;
-  }
-
-  private static boolean usesDataSet(FlowSpecification flowSpec, String dataset) {
-    for (FlowletDefinition flowlet : flowSpec.getFlowlets().values()) {
-      if (flowlet.getDatasets().contains(dataset)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean usesStream(FlowSpecification flowSpec, String stream) {
-    for (FlowletConnection con : flowSpec.getConnections()) {
-      if (FlowletConnection.Type.STREAM == con.getSourceType() && stream.equals(con.getSourceName())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /* -----------------  helpers to return Json consistently -------------- */
-
-  protected static StreamRecord makeStreamRecord(String name, StreamSpecification specification) {
-    return new StreamRecord(name, GSON.toJson(specification));
   }
 }

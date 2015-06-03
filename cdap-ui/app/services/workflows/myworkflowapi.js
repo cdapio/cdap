@@ -40,6 +40,7 @@ angular.module(PKG.name + '.services')
       schedulesPreviousRunTime: getConfig('GET', 'REQUEST', basepath + '/previousruntime', true),
       pollScheduleStatus: getConfig('GET', 'POLL', schedulepath + '/status'),
       scheduleSuspend: getConfig('POST', 'REQUEST', schedulepath + '/suspend'),
-      scheduleResume: getConfig('POST', 'REQUEST', schedulepath + '/resume')
+      scheduleResume: getConfig('POST', 'REQUEST', schedulepath + '/resume'),
+      getCurrent: getConfig('GET', 'REQUEST', basepath + '/:runid/current', true)
     });
   });

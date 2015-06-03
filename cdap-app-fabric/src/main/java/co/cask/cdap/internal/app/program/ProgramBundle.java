@@ -22,7 +22,6 @@ import co.cask.cdap.archive.ArchiveBundler;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
@@ -36,6 +35,7 @@ import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.Manifest;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -57,15 +57,13 @@ public final class ProgramBundle {
    *
    * @throws java.io.IOException in case of any issue related to copying jars.
    */
-  public static Location create(Id.Application id, ArchiveBundler bundler, Location output, String programName,
-                                String className, ProgramType type,
-                                ApplicationSpecification appSpec) throws IOException {
-    return create(id, bundler, output, programName, className, type, appSpec, null);
+  public static Location create(Id.Program programId, ArchiveBundler bundler, Location output,
+                                String className, ApplicationSpecification appSpec) throws IOException {
+    return create(programId, bundler, output, className, appSpec, null);
   }
 
-  public static Location create(Id.Application id, ArchiveBundler bundler, Location output, String programName,
-                               String className, ProgramType type, ApplicationSpecification appSpec,
-                               Manifest other) throws IOException {
+  public static Location create(Id.Program programId, ArchiveBundler bundler, Location output, String className,
+                                ApplicationSpecification appSpec, @Nullable Manifest other) throws IOException {
     // Create a MANIFEST file
     Manifest manifest = new Manifest();
 
@@ -81,10 +79,10 @@ public final class ProgramBundle {
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, ManifestFields.VERSION);
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, className);
     manifest.getMainAttributes().put(ManifestFields.SPEC_FILE, ManifestFields.MANIFEST_SPEC_FILE);
-    manifest.getMainAttributes().put(ManifestFields.ACCOUNT_ID, id.getNamespaceId());
-    manifest.getMainAttributes().put(ManifestFields.APPLICATION_ID, id.getId());
-    manifest.getMainAttributes().put(ManifestFields.PROGRAM_NAME, programName);
-    manifest.getMainAttributes().put(ManifestFields.PROGRAM_TYPE, type.name());
+    manifest.getMainAttributes().put(ManifestFields.ACCOUNT_ID, programId.getNamespaceId());
+    manifest.getMainAttributes().put(ManifestFields.APPLICATION_ID, programId.getApplicationId());
+    manifest.getMainAttributes().put(ManifestFields.PROGRAM_NAME, programId.getId());
+    manifest.getMainAttributes().put(ManifestFields.PROGRAM_TYPE, programId.getType().name());
 
     bundler.clone(output, manifest, ImmutableMap.of(APPLICATION_META_ENTRY, getInputSupplier(appSpec)), META_IGNORE);
     return output;

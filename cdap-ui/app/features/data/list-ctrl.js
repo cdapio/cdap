@@ -1,7 +1,8 @@
 angular.module(PKG.name + '.feature.data')
   .controller('CdapDataListController', function($state, $scope, MyOrderings, myStreamApi, myDatasetApi) {
-    $scope.MyOrderings = MyOrderings;
-    $scope.dataList = [];
+    this.MyOrderings = MyOrderings;
+    this.dataList = [];
+    this.currentPage = 1;
 
     var params = {
       namespace: $state.params.namespace,
@@ -11,26 +12,26 @@ angular.module(PKG.name + '.feature.data')
     myStreamApi.list(params)
       .$promise
       .then(function (res) {
-        $scope.dataList = res
+        this.dataList = res
           .map(function(dataset) {
             dataset.dataType = 'Stream';
             return dataset;
-          })
-          .concat($scope.dataList);
-      });
+          }.bind(this))
+          .concat(this.dataList);
+      }.bind(this));
 
     myDatasetApi.list(params)
       .$promise
       .then(function(res) {
-        $scope.dataList = res
+        this.dataList = res
           .map(function(stream) {
             stream.dataType = 'Dataset';
             return stream;
-          })
-          .concat($scope.dataList);
-      });
+          }.bind(this))
+          .concat(this.dataList);
+      }.bind(this));
 
-    $scope.goToDetail = function(data) {
+    this.goToDetail = function(data) {
       if (data.dataType === 'Dataset') {
         $state.go('datasets.detail.overview', {
           datasetId: data.name
@@ -43,7 +44,7 @@ angular.module(PKG.name + '.feature.data')
       MyOrderings.dataClicked(data.name);
     };
 
-    $scope.goToList = function(data) {
+    this.goToList = function(data) {
       if (data.dataType === 'Dataset') {
         $state.go('datasets.list');
       } else if (data.dataType === 'Stream') {

@@ -67,12 +67,27 @@ body.theme-cdap.state-adapters-create {
         }
       }
       .template {
+        cursor: pointer;
         &.plugin-added {
           background-color: @selected-plugin-bg;
+          &.plugin-invalid {
+            background-color: @brand-danger;
+          }
+          &:hover {
+            background-color: #5a84e4;
+            color: black;
+          }
         }
         &.transforms {
           .plugin-added {
             background-color: @selected-plugin-bg;
+            &.plugin-invalid {
+              background-color: @brand-danger;
+            }
+            &:hover {
+              background-color: #5a84e4;
+              color: black;
+            }
           }
           .fa-times {
             position: relative;
@@ -150,6 +165,8 @@ body.theme-cdap.state-adapters-create {
             border: 0;
             border-bottom: 1px solid lightgray;
             background-color: transparent;
+            cursor: pointer;
+
             &:last-child { border: 1px solid transparent; }
 
             .description-overflow {
@@ -158,6 +175,13 @@ body.theme-cdap.state-adapters-create {
               text-overflow: ellipsis;
               color: darkgray;
               font-size: 11px;
+            }
+          }
+          li.list-group-item:hover {
+            background-color: #5a84e4;
+
+            .description-overflow {
+              color: black;
             }
           }
         }
@@ -197,6 +221,10 @@ body.theme-cdap.state-adapters-create {
           }
         }
       }
+    }
+    .fa-asterisk {
+      font-size: 9px;
+      color: @brand-danger;
     }
   }
 
