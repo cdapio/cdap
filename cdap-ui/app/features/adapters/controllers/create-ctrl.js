@@ -14,6 +14,13 @@ angular.module(PKG.name + '.feature.adapters')
     this.tabs = defaultTabs.slice();
 
     this.closeTab = function(index) {
+      var tab = this.tabs[index];
+      var type = tab.type;
+      if (type === 'transform' && tab.transform.valid === false) {
+        this.model.checkForValidRequiredField(tab.transform);
+      } else if (this.model[type] && this.model[type].valid === false){
+        this.model.checkForValidRequiredField(this.model[type]);
+      }
       this.tabs.splice(index, 1);
     };
 
