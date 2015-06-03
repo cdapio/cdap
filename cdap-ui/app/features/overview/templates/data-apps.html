@@ -34,7 +34,7 @@
               <span> Stream </span>
             </div>
           </a>
-          <a ng-if="data.type !== 'Stream'" ui-sref="datasets.detail.overview({datasetId: data.name})" ng-click="MyOrderings.dataClicked(data.name)">
+          <a ng-if="data.type !== 'Stream'" ui-sref="datasets.detail.overview.status({datasetId: data.name})" ng-click="MyOrderings.dataClicked(data.name)">
             <p ng-bind="data.name"> </p>
             <div class="title-type-image">
               <span class="icon-datasets"></span>

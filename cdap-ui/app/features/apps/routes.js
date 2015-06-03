@@ -52,7 +52,8 @@ angular.module(PKG.name+'.feature.apps')
           .state('apps.detail.overview.dataset', {
             url: '/datasets',
             ncyBreadcrumb: {
-              skip: true
+              label: 'Dataset',
+              parent: 'apps.detail.overview.status'
             },
             templateUrl: '/assets/features/apps/templates/tabs/datasets.html'
           });

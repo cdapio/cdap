@@ -13,7 +13,7 @@
         <tbody>
           <tr ng-repeat="data in dataList | orderBy:sortable.predicate:sortable.reverse">
             <td>
-              <a ng-if="data.type === 'Dataset'" ui-sref="datasets.detail.overview({ datasetId: data.name })">
+              <a ng-if="data.type === 'Dataset'" ui-sref="datasets.detail.overview.status({ datasetId: data.name })">
                 <strong>{{ ::data.name }}</strong>
               </a>
               <a ng-if="data.type === 'Stream'" ui-sref="streams.detail.overview({ streamId: data.name })">

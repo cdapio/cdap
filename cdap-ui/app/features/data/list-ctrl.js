@@ -32,7 +32,7 @@ angular.module(PKG.name + '.feature.data')
 
     $scope.goToDetail = function(data) {
       if (data.dataType === 'Dataset') {
-        $state.go('datasets.detail.overview', {
+        $state.go('datasets.detail.overview.status', {
           datasetId: data.name
         });
       } else if (data.dataType === 'Stream') {

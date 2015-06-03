@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.datasets')
-  .controller('CdapDatasetsDetailController', function($scope, $state, MyDataSource, $alert, $filter, myDatasetApi, myExploreApi) {
+  .controller('CdapDatasetsDetailController', function($scope, $state, MyDataSource, $alert, $filter, myDatasetApi, explorableDatasets) {
     var filterFilter = $filter('filter');
 
     $scope.explorable = null;
@@ -8,19 +8,7 @@ angular.module(PKG.name + '.feature.datasets')
       scope: $scope
     };
 
-    // Checking whether dataset is explorable
-    myExploreApi.list(params)
-      .$promise
-      .then(function (res) {
-        var match = filterFilter(res, $state.params.datasetId);
-
-        if (match.length === 0) {
-          $scope.explorable = false;
-        } else {
-          $scope.explorable = true;
-        }
-      });
-
+    $scope.explorable = explorableDatasets;
 
     $scope.truncate = function() {
       params.datasetId = $state.params.datasetId;
