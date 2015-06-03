@@ -33,7 +33,6 @@ import java.util.Map;
  */
 public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
   protected static final String SUCCESS = "Set Preferences successfully for the '%s'";
-
   private final ElementType type;
 
   protected SetPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
@@ -60,7 +59,7 @@ public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public String getPattern() {
-    return this.determinePattern("set");
+    return determinePattern("set");
   }
 
   @Override

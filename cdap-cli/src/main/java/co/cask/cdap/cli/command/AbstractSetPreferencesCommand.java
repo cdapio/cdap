@@ -77,16 +77,17 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
 
 
 
-    protected String determinePattern(String action) { // action can either be set or load
-        if (action.equals("set")) {
+    protected String determinePattern(String action) {
+
+        if ("set".equals(action)) {
             switch (type) {
                 case INSTANCE:
-                    return String.format("set preferences %s <%s>", type.getName(), ArgumentName.RUNTIME_ARGS);
                 case NAMESPACE:
-                    return String.format("set preferences %s <%s>", type.getName(), ArgumentName.RUNTIME_ARGS);
+                    return String.format("set preferences %s <%s>",
+                                         type.getName(), ArgumentName.RUNTIME_ARGS);
                 case APP:
-                    return String.format("set preferences %s <%s> <%s>", type.getName(), ArgumentName.RUNTIME_ARGS,
-                            type.getArgumentName());
+                    return String.format("set preferences %s <%s> <%s>", type.getName(),
+                                         ArgumentName.RUNTIME_ARGS, type.getArgumentName());
                 case FLOW:
                 case MAPREDUCE:
                 case WORKFLOW:
@@ -95,24 +96,23 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
                     return String.format("set preferences %s <%s> [<%s>]", type.getName(), ArgumentName.RUNTIME_ARGS,
                             type.getArgumentName());
             }
-        }
-        else if(action.equals("load")) {
+        } else if ("load".equals(action)) {
             switch (type) {
                 case INSTANCE:
-                    return String.format("load preferences %s <%s> <%s>", type.getName(), ArgumentName.LOCAL_FILE_PATH,
-                            ArgumentName.CONTENT_TYPE);
                 case NAMESPACE:
-                    return String.format("load preferences %s <%s> <%s>", type.getName(), ArgumentName.LOCAL_FILE_PATH,
-                            ArgumentName.CONTENT_TYPE);
+                    return String.format("load preferences %s <%s> <%s>", type.getName(),
+                                         ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE);
                 case APP:
-                    return String.format("load preferences %s <%s> <%s> <%s>", type.getName(), ArgumentName.LOCAL_FILE_PATH,
-                            ArgumentName.CONTENT_TYPE, type.getArgumentName());
+                  return String.format("load preferences %s <%s> <%s> <%s>", type.getName(),
+                                       ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE,
+                                       type.getArgumentName());
                 case FLOW:
                 case MAPREDUCE:
                 case WORKFLOW:
                 case SERVICE:
                 case SPARK:
-                    return String.format("load preferences %s <%s> <%s> [<%s>]", type.getName(), ArgumentName.LOCAL_FILE_PATH,
+                    return String.format("load preferences %s <%s> <%s> [<%s>]", type.getName(),
+                                         ArgumentName.LOCAL_FILE_PATH,
                             ArgumentName.CONTENT_TYPE, type.getArgumentName());
             }
         }

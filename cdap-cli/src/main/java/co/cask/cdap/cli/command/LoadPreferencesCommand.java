@@ -86,7 +86,7 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public String getPattern() {
-    return this.determinePattern("load");
+    return determinePattern("load");
   }
 
   @Override
