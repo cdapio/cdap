@@ -81,7 +81,11 @@ angular.module(PKG.name + '.feature.adapters')
         // If there is a description in the config from nodejs use that otherwise fallback to description from backend.
         var description = myHelpers.objectQuery(res, 'groups', group, 'fields', field, 'description');
         var info = myHelpers.objectQuery(this, 'groups', group, 'fields', field, 'info') ;
-        var label = myHelpers.objectQuery($scope, 'groups', group, 'fields', field, 'label');
+        var label = myHelpers.objectQuery(this, 'groups', group, 'fields', field, 'label');
+        var defaultValue = myHelpers.objectQuery(this, 'groups', group, 'fields', field, 'properties', 'default');
+        if (defaultValue && $scope.plugin.properties && $scope.plugin.properties.hasOwnProperty(field) && !$scope.plugin.properties[field]) {
+          $scope.plugin.properties[field] = defaultValue;
+        }
 
         if (description && !description.length) {
           this.groups[group].fields[field].description =description || 'No Description Available';
