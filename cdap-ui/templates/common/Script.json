@@ -14,7 +14,10 @@
 
           "script" : {
              "widget": "javascript-editor",
-             "label" : "Script"
+             "label" : "Script",
+             "properties" : {
+                "default" : "function transform(input) {\n  return input;\n}"
+             }
           }
        }
     }
