@@ -39,11 +39,11 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class UnderlyingSystemNamespaceHandler extends AbstractHttpHandler {
 
-  private final UnderlyingSystemNamespaceAdmin underlyingSystemNamespaceAdmin;
+  private final StorageProviderNamespaceAdmin storageProviderNamespaceAdmin;
 
   @Inject
-  public UnderlyingSystemNamespaceHandler(UnderlyingSystemNamespaceAdmin underlyingSystemNamespaceAdmin) {
-    this.underlyingSystemNamespaceAdmin = underlyingSystemNamespaceAdmin;
+  public UnderlyingSystemNamespaceHandler(StorageProviderNamespaceAdmin storageProviderNamespaceAdmin) {
+    this.storageProviderNamespaceAdmin = storageProviderNamespaceAdmin;
   }
 
   @PUT
@@ -51,7 +51,7 @@ public class UnderlyingSystemNamespaceHandler extends AbstractHttpHandler {
   public void createNamespace(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId) {
     try {
-      underlyingSystemNamespaceAdmin.create(Id.Namespace.from(namespaceId));
+      storageProviderNamespaceAdmin.create(Id.Namespace.from(namespaceId));
     } catch (IOException e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            "Error while creating namespace - " + e.getMessage());
@@ -74,7 +74,7 @@ public class UnderlyingSystemNamespaceHandler extends AbstractHttpHandler {
   public void deleteNamespace(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId) {
     try {
-      underlyingSystemNamespaceAdmin.delete(Id.Namespace.from(namespaceId));
+      storageProviderNamespaceAdmin.delete(Id.Namespace.from(namespaceId));
     } catch (IOException e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            "Error while deleting namespace - " + e.getMessage());
