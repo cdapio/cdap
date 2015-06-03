@@ -208,7 +208,6 @@ body {
               span {
                 color: lightgray;
                 &:first-child { padding-right: 5px; }
-                &.fa-caret-down { .cdap-caret(); }
               }
             }
             &.open {
@@ -223,10 +222,7 @@ body {
                     color: @cdap-darkness;
                     float: left;
                   }
-                  &:last-child {
-                    color: lightgray;
-                    float: right;
-                  }
+                  &:last-child { display: none; }
                 }
               }
             }
