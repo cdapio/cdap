@@ -116,6 +116,7 @@
       "scripts": [
         "scripts/remove-chef.sh",
         "scripts/sdk-cleanup.sh",
+        "scripts/network-cleanup.sh",
         "scripts/apt-cleanup.sh"
       ]
     },
