@@ -459,9 +459,6 @@ public class CLIMainTest {
       @Nullable
       @Override
       public Void apply(@Nullable String output) {
-        System.out.println("expected output here");
-        System.out.println(output);
-
         Assert.assertTrue(String.format("Expected output '%s' to contain '%s'", output, expectedOutput),
                           output != null && output.contains(expectedOutput));
         return null;
