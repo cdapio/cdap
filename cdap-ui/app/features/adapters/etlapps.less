@@ -70,6 +70,9 @@ body.theme-cdap.state-adapters-create {
         cursor: pointer;
         &.plugin-added {
           background-color: @selected-plugin-bg;
+          &.plugin-invalid {
+            background-color: @brand-danger;
+          }
           &:hover {
             background-color: #5a84e4;
             color: black;
@@ -78,6 +81,9 @@ body.theme-cdap.state-adapters-create {
         &.transforms {
           .plugin-added {
             background-color: @selected-plugin-bg;
+            &.plugin-invalid {
+              background-color: @brand-danger;
+            }
             &:hover {
               background-color: #5a84e4;
               color: black;
@@ -215,6 +221,10 @@ body.theme-cdap.state-adapters-create {
           }
         }
       }
+    }
+    .fa-asterisk {
+      font-size: 9px;
+      color: @brand-danger;
     }
   }
 

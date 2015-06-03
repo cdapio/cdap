@@ -3,16 +3,19 @@ angular.module(PKG.name + '.feature.adapters')
     var defaultSource = {
       name: 'Add a source',
       properties: {},
+      valid: true,
       placeHolder: true
     };
     var defaultSink = {
       name: 'Add a sink',
       properties: {},
+      valid: true,
       placeHolder: true
     };
     var defaultTransforms = [{
       name: 'Add a transform',
       properties: {},
+      valid: true,
       placeHolder: true
     }];
 
@@ -47,13 +50,16 @@ angular.module(PKG.name + '.feature.adapters')
 
     Model.prototype.setSource = function setSource(source) {
       this.source = source;
+      this.source.valid = true;
     };
 
     Model.prototype.setTransform = function setTransform(transform) {
       if (!transform || !transform.length) {
         return;
       }
-
+      transform.forEach(function(t) {
+        t.valid = true;
+      });
       if (this.transforms[0].placeHolder) {
         this.transforms = transform.slice();
       } else {
@@ -63,6 +69,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     Model.prototype.setSink = function setSink(sink) {
       this.sink = sink;
+      this.sink.valid = true;
     };
 
     Model.prototype.setSchedule = function setSchedule(schedule) {
@@ -98,14 +105,47 @@ angular.module(PKG.name + '.feature.adapters')
 
     Model.prototype.save = function save() {
       var defer = $q.defer();
-      if (this.source.placeHolder && this.sink.placeHolder) {
+      if (this.source.placeHolder || this.sink.placeHolder) {
         defer.reject({
           message: 'Adapter needs atleast a source and a sink'
         });
         return defer.promise;
       } else {
+        if (!this.validateRequiredProperties()) {
+          defer.reject({
+            message: 'All required fields need to be set for all plugins.'
+          });
+          return defer.promise;
+        }
         return formatAndSave.bind(this)();
       }
+    };
+
+    Model.prototype.checkForValidRequiredField = function checkForValidRequiredField(plugin) {
+      var i;
+      var keys = Object.keys(plugin.properties);
+      plugin.valid = true;
+      for (i=0; i< keys.length; i++) {
+        var property = plugin.properties[keys[i]];
+        if (plugin._backendProperties[keys[i]].required && (!property || property === '')) {
+          plugin.valid = false;
+          break;
+        }
+      }
+      return plugin.valid;
+    };
+
+    Model.prototype.validateRequiredProperties = function() {
+      var isValidPlugin = this.checkForValidRequiredField(this.source);
+      isValidPlugin = this.checkForValidRequiredField(this.sink) && isValidPlugin;
+      this.transforms.forEach(function(transform) {
+        if (!transform.placeHolder) {
+          isValidPlugin = this.checkForValidRequiredField(transform) && isValidPlugin;
+        }
+      }.bind(this));
+
+      return isValidPlugin;
+
     };
 
     function formatAndSave() {
@@ -150,15 +190,23 @@ angular.module(PKG.name + '.feature.adapters')
         data
       )
         .$promise
-        .then(function(res) {
-          delete this.adapterDrafts[this.metadata.name];
-          return mySettings.set('adapterdrafts', this.adapterDrafts);
-        }.bind(this));
+        .then(
+          function success(res) {
+            delete this.adapterDrafts[this.metadata.name];
+            return mySettings.set('adapterdrafts', this.adapterDrafts);
+          }.bind(this),
+          function error(err) {
+            defer.reject({
+              message: err
+            });
+            return defer.promise;
+          }
+        );
     }
 
     function pruneProperties(plugin, value, key) {
       var match = plugin._backendProperties[key];
-      if (match && match.required === false && value === null) {
+      if (match && match.required === false && (value === null || value === '')) {
         delete plugin.properties[key];
       }
     }
