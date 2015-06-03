@@ -36,8 +36,6 @@ address either the entire Dataset or, by specifying its relative path as a runti
 an individual file in the Dataset. Specifying an individual file is only supported for
 MapReduce programs.
 
-Support for FileSet datasets is experimental in CDAP 2.6.0.
-
 Creating a FileSet
 ==================
 
