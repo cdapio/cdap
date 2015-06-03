@@ -45,7 +45,7 @@ public class MetricsReporterHookTestRun extends GatewayTestBase {
 
   @Test
   public void testMetricsSuccess() throws Exception {
-    String context = "namespace.system.component.appfabric.handler.PingHandler.method.ping";
+    String context = "tag=namespace:system&tag=component:appfabric&tag=handler:PingHandler&tag=method:ping";
 
     // todo: better fix needed: CDAP-2174
     TimeUnit.SECONDS.sleep(1);
@@ -66,7 +66,7 @@ public class MetricsReporterHookTestRun extends GatewayTestBase {
 
   @Test
   public void testMetricsNotFound() throws Exception {
-    String context = "namespace.system.component.appfabric.handler.StreamHandler.method.getInfo";
+    String context = "&tag=namespace:system&tag=component:appfabric&tag=handler:StreamHandler&tag=method:getInfo";
 
     long received = getMetricValue(context, "system.request.received");
     long successful = getMetricValue(context, "system.response.successful");
@@ -101,7 +101,7 @@ public class MetricsReporterHookTestRun extends GatewayTestBase {
   }
 
   private static long getMetricValue(String context, String metricName) throws Exception {
-    HttpResponse response = doPost("/v3/metrics/query?context=" + context + "&metric=" + metricName);
+    HttpResponse response = doPost("/v3/metrics/query?" + context + "&metric=" + metricName);
     Assert.assertEquals("POST " + context + " did not return 200 status.",
                         HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
     String content = new String(ByteStreams.toByteArray(response.getEntity().getContent()), Charsets.UTF_8);
