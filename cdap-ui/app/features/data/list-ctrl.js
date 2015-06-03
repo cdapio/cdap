@@ -3,7 +3,7 @@ angular.module(PKG.name + '.feature.data')
     this.MyOrderings = MyOrderings;
     this.dataList = [];
     this.currentPage = 1;
-
+    this.searchText = '';
     var params = {
       namespace: $state.params.namespace,
       scope: $scope
