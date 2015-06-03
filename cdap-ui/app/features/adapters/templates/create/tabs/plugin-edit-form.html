@@ -16,6 +16,7 @@
                      bs-popover>
                      {{name}}
               </span>
+              <span class="fa fa-asterisk" ng-if="plugin._backendProperties[name].required"></span>
             </label>
             <div class="col-xs-12">
               <input type="text"
@@ -48,6 +49,7 @@
                         bs-popover>
                     {{PluginEditController.groups[group].fields[field].label}}
                   </span>
+                  <span class="fa fa-asterisk" ng-if="plugin._backendProperties[field].required"></span>
                 </label>
                 <div class="col-xs-12">
                   <div data-name="field"
