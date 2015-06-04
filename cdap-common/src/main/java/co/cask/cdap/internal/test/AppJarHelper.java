@@ -26,6 +26,8 @@ import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
@@ -65,6 +67,7 @@ public final class AppJarHelper {
 
     // Create the program jar for deployment. It removes the "classes/" prefix as that's the convention taken
     // by the ApplicationBundler inside Twill.
+    Set<String> seenEntries = new HashSet<>();
     try (
       JarOutputStream jarOutput = new JarOutputStream(deployJar.getOutputStream(), jarManifest);
       JarInputStream jarInput = new JarInputStream(jarLocation.getInputStream())
@@ -87,9 +90,11 @@ public final class AppJarHelper {
             continue;
           }
 
-          jarOutput.putNextEntry(jarEntry);
-          if (!isDir) {
-            ByteStreams.copy(jarInput, jarOutput);
+          if (seenEntries.add(jarEntry.getName())) {
+            jarOutput.putNextEntry(jarEntry);
+            if (!isDir) {
+              ByteStreams.copy(jarInput, jarOutput);
+            }
           }
         }
 
@@ -98,8 +103,10 @@ public final class AppJarHelper {
 
       for (File embeddedJar : bundleEmbeddedJars) {
         jarEntry = new JarEntry("lib/" + embeddedJar.getName());
-        jarOutput.putNextEntry(jarEntry);
-        Files.copy(embeddedJar, jarOutput);
+        if (seenEntries.add(jarEntry.getName())) {
+          jarOutput.putNextEntry(jarEntry);
+          Files.copy(embeddedJar, jarOutput);
+        }
       }
     }
 
