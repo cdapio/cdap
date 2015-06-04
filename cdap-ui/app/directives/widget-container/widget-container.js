@@ -5,7 +5,8 @@ angular.module(PKG.name + '.commons')
       scope: {
         name: '=',
         model: '=',
-        myconfig: '='
+        myconfig: '=',
+        properties: '='
       },
       replace: false,
       link: function (scope, element) {
