@@ -91,6 +91,7 @@ public class ProgramClient {
    * @param appId ID of the application that the program belongs to
    * @param programType type of the program
    * @param programName name of the program
+   * @param debug true to start in debug mode
    * @param runtimeArgs runtime arguments to pass to the program
    * @throws IOException if a network error occurred
    * @throws ProgramNotFoundException if the program with the specified name could not be found
@@ -118,7 +119,7 @@ public class ProgramClient {
   }
 
   /**
-   * Starts a program using the stored runtime arguments.
+   * Starts a program, giving debug mode, using the stored runtime arguments.
    *
    * @param appId ID of the application that the program belongs to
    * @param programType type of the program
