@@ -168,7 +168,7 @@ public class CubeDatasetDefinition extends AbstractDatasetDefinition<CubeDataset
         if (PROPERTY_DIMENSIONS.equals(nameAndProp[1])) {
           aggDimensions.put(nameAndProp[0], Arrays.asList(dimensions));
         } else if (PROPERTY_REQUIRED_DIMENSIONS.equals(nameAndProp[1])) {
-          aggRequiredDimensions.put(nameAndProp[0], new HashSet<String>(Arrays.asList(dimensions)));
+          aggRequiredDimensions.put(nameAndProp[0], new HashSet<>(Arrays.asList(dimensions)));
         } else {
           throw new IllegalArgumentException("Invalid property: " + prop.getKey());
         }

@@ -44,8 +44,8 @@ public final class WorkerSpecification implements ProgramSpecification, Property
     this.className = className;
     this.name = name;
     this.description = description;
-    this.properties = Collections.unmodifiableMap(new HashMap<String, String>(properties));
-    this.datasets = Collections.unmodifiableSet(new HashSet<String>(datasets));
+    this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
+    this.datasets = Collections.unmodifiableSet(new HashSet<>(datasets));
     this.resources = resources;
     this.instances = instances;
   }

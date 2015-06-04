@@ -98,7 +98,7 @@ public class StandardMapObjectInspector implements SettableMapObjectInspector {
   // SettableMapObjectInspector
   @Override
   public Object create() {
-    Map<Object, Object> m = new HashMap<Object, Object>();
+    Map<Object, Object> m = new HashMap<>();
     return m;
   }
 

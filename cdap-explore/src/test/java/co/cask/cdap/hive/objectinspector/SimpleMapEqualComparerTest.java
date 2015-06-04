@@ -42,7 +42,7 @@ public class SimpleMapEqualComparerTest {
     Map<Integer, String> mMap;
 
     public IntegerStringMapHolder() {
-      mMap = new TreeMap<Integer, String>();
+      mMap = new TreeMap<>();
     }
   }
 
@@ -74,7 +74,7 @@ public class SimpleMapEqualComparerTest {
     Map<Text, String> mMap;
 
     public TextStringMapHolder() {
-      mMap = new TreeMap<Text, String>();
+      mMap = new TreeMap<>();
     }
   }
 
@@ -129,7 +129,7 @@ public class SimpleMapEqualComparerTest {
     Map<String, Text> mMap;
 
     public StringTextMapHolder() {
-      mMap = new TreeMap<String, Text>();
+      mMap = new TreeMap<>();
     }
   }
 

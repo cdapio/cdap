@@ -37,7 +37,7 @@ final class DefaultResourceAssigner<T> implements ResourceAssigner<T> {
    * @param assignments Currently set of assignments. This will get modified if any of the set methods are called.
    */
   static <T> ResourceAssigner<T> create(Multimap<T, PartitionReplica> assignments) {
-    return new DefaultResourceAssigner<T>(assignments);
+    return new DefaultResourceAssigner<>(assignments);
   }
 
   private DefaultResourceAssigner(Multimap<T, PartitionReplica> assignments) {

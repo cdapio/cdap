@@ -95,7 +95,7 @@ public abstract class AbstractMapReduce implements MapReduce {
    */
   @Deprecated
   protected final void useDatasets(String dataset, String...moreDatasets) {
-    List<String> datasets = new ArrayList<String>();
+    List<String> datasets = new ArrayList<>();
     datasets.add(dataset);
     datasets.addAll(Arrays.asList(moreDatasets));
     configurer.useDatasets(datasets);

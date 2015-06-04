@@ -208,7 +208,7 @@ public class StructuredRecordToCubeFactTest {
 
   private Map<String, String> toProperties(StructuredRecordToCubeFact.MappingConfig conf) {
     if (conf == null) {
-      return new HashMap<String, String>();
+      return new HashMap<>();
     }
     return ImmutableMap.of(StructuredRecordToCubeFact.MAPPING_CONFIG_PROPERTY, new Gson().toJson(conf));
   }

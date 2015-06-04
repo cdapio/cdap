@@ -34,7 +34,7 @@ public class FullMapEqualComparerTest {
     Map<Integer, Integer> mMap;
 
     public IntegerIntegerMapHolder() {
-      mMap = new TreeMap<Integer, Integer>();
+      mMap = new TreeMap<>();
     }
   }
 

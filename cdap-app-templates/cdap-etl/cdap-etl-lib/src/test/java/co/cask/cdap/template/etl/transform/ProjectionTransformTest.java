@@ -92,7 +92,7 @@ public class ProjectionTransformTest {
 
     Schema schema = Schema.recordOf("record", Schema.Field.of("x", Schema.of(Schema.Type.LONG)));
     StructuredRecord input = StructuredRecord.builder(schema).set("x", 5L).build();
-    MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
   }
 
@@ -113,7 +113,7 @@ public class ProjectionTransformTest {
     TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
 
-    MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
     StructuredRecord output = emitter.getEmitted().get(0);
 
@@ -139,7 +139,7 @@ public class ProjectionTransformTest {
     TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
 
-    MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
     StructuredRecord output = emitter.getEmitted().get(0);
 
@@ -169,7 +169,7 @@ public class ProjectionTransformTest {
     TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
 
-    MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
     StructuredRecord output = emitter.getEmitted().get(0);
 
@@ -188,7 +188,7 @@ public class ProjectionTransformTest {
     TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
 
-    MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(SIMPLE_TYPES_RECORD, emitter);
     StructuredRecord output = emitter.getEmitted().get(0);
 
@@ -237,7 +237,7 @@ public class ProjectionTransformTest {
       .set("stringField", "bar")
       .build();
 
-    MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
     StructuredRecord output = emitter.getEmitted().get(0);
 
@@ -260,7 +260,7 @@ public class ProjectionTransformTest {
     TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
 
-    MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(SIMPLE_TYPES_RECORD, emitter);
     StructuredRecord output = emitter.getEmitted().get(0);
 
@@ -309,7 +309,7 @@ public class ProjectionTransformTest {
     TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
 
-    MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
     StructuredRecord output = emitter.getEmitted().get(0);
 
@@ -331,7 +331,7 @@ public class ProjectionTransformTest {
     TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
 
-    MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(SIMPLE_TYPES_RECORD, emitter);
     StructuredRecord output = emitter.getEmitted().get(0);
 
@@ -362,7 +362,7 @@ public class ProjectionTransformTest {
     TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
 
-    MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(SIMPLE_TYPES_RECORD, emitter);
     StructuredRecord output = emitter.getEmitted().get(0);
 
@@ -393,7 +393,7 @@ public class ProjectionTransformTest {
     TransformContext transformContext = new MockTransformContext();
     transform.initialize(transformContext);
 
-    MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(SIMPLE_TYPES_RECORD, emitter);
     StructuredRecord output = emitter.getEmitted().get(0);
 

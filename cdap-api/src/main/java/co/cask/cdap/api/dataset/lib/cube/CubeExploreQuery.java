@@ -47,7 +47,7 @@ public class CubeExploreQuery {
     this.endTs = endTs;
     this.resolution = resolution;
     this.limit = limit;
-    this.dimensionValues = Collections.unmodifiableList(new ArrayList<DimensionValue>(dimensionValues));
+    this.dimensionValues = Collections.unmodifiableList(new ArrayList<>(dimensionValues));
   }
 
   public long getStartTs() {
@@ -98,7 +98,7 @@ public class CubeExploreQuery {
     private long endTs;
     private int resolution;
     private int limit;
-    private List<DimensionValue> dimensionValues = new ArrayList<DimensionValue>();
+    private List<DimensionValue> dimensionValues = new ArrayList<>();
 
     /**
      * @return builder for configuring {@link CubeExploreQuery}

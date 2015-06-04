@@ -516,7 +516,7 @@ public class TransactionManagerDebuggerMain {
     // sizes of the changesets
 
     // map of sizes with Size -> number of changesets with that size
-    Map<Integer, Integer> sizes = new HashMap<Integer, Integer>();
+    Map<Integer, Integer> sizes = new HashMap<>();
     Map.Entry<Long, Set<ChangeId>> oldest = null,
                                    biggest = null;
     for (Map.Entry<Long, Set<ChangeId>> tx : changeSets.entrySet()) {

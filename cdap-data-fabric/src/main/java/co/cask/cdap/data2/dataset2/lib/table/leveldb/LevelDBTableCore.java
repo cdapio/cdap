@@ -323,7 +323,7 @@ public class LevelDBTableCore {
       }
     }
     // note this will return null for the row being read if multiRow is false (because the caller knows the row)
-    return new ImmutablePair<byte[], NavigableMap<byte[], byte[]>>(rowBeingRead, map);
+    return new ImmutablePair<>(rowBeingRead, map);
   }
 
   public void deleteRows(byte[] prefix) throws IOException {

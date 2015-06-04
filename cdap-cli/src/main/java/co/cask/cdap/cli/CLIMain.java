@@ -127,14 +127,14 @@ public class CLIMain {
 
     this.commands = ImmutableList.of(
       injector.getInstance(DefaultCommands.class),
-      new CommandSet<Command>(ImmutableList.<Command>of(
+      new CommandSet<>(ImmutableList.<Command>of(
         new HelpCommand(getCommandsSupplier(), cliConfig),
         new SearchCommandsCommand(getCommandsSupplier(), cliConfig)
       )));
     filePathResolver = injector.getInstance(FilePathResolver.class);
 
     Map<String, Completer> completers = injector.getInstance(DefaultCompleters.class).get();
-    cli = new CLI<Command>(Iterables.concat(commands), completers);
+    cli = new CLI<>(Iterables.concat(commands), completers);
     cli.setExceptionHandler(new CLIExceptionHandler<Exception>() {
       @Override
       public boolean handleException(PrintStream output, Exception e, int timesRetried) {

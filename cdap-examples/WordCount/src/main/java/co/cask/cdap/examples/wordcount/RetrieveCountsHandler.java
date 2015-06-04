@@ -86,7 +86,7 @@ public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
     }
 
     // Return a map as JSON
-    Map<String, Object> results = new HashMap<String, Object>();
+    Map<String, Object> results = new HashMap<>();
     results.put("totalWords", totalWords);
     results.put("uniqueWords", uniqueWords);
     results.put("averageLength", averageLength);
@@ -110,7 +110,7 @@ public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
     Map<String, Long> wordsAssocs = associationTable.readWordAssocs(word, limit);
 
     // Build a map with results
-    Map<String, Object> results = new HashMap<String, Object>();
+    Map<String, Object> results = new HashMap<>();
     results.put("word", word);
     results.put("count", wordCount);
     results.put("assocs", wordsAssocs);
@@ -184,7 +184,7 @@ public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
     long count = associationTable.getAssoc(word1, word2);
 
     // Return a map as JSON
-    Map<String, Object> results = new HashMap<String, Object>();
+    Map<String, Object> results = new HashMap<>();
     results.put("word1", word1);
     results.put("word2", word2);
     results.put("count", count);

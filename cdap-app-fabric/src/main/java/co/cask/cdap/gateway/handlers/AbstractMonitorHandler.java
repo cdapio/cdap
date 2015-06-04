@@ -137,7 +137,7 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
 
 
   public void getBootStatus(HttpRequest request, HttpResponder responder) {
-    Map<String, String> result = new HashMap<String, String>();
+    Map<String, String> result = new HashMap<>();
     for (String service : serviceManagementMap.keySet()) {
       MasterServiceManager masterServiceManager = serviceManagementMap.get(service);
       if (masterServiceManager.isServiceEnabled() && masterServiceManager.canCheckStatus()) {
@@ -174,8 +174,8 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
 
   public void getServiceSpec(HttpRequest request, HttpResponder responder) throws Exception {
     List<SystemServiceMeta> response = Lists.newArrayList();
-    SortedSet<String> services = new TreeSet<String>(serviceManagementMap.keySet());
-    List<String> serviceList = new ArrayList<String>(services);
+    SortedSet<String> services = new TreeSet<>(serviceManagementMap.keySet());
+    List<String> serviceList = new ArrayList<>(services);
     for (String service : serviceList) {
       MasterServiceManager serviceManager = serviceManagementMap.get(service);
       if (serviceManager.isServiceEnabled()) {

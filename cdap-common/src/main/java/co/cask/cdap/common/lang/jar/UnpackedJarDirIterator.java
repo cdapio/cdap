@@ -28,7 +28,7 @@ import java.util.Queue;
 public class UnpackedJarDirIterator implements Enumeration<UnpackedJarDirEntry> {
 
   private final File bundleJarDir;
-  private final Queue<File> fileQueue = new LinkedList<File>();
+  private final Queue<File> fileQueue = new LinkedList<>();
 
   private File nextFile;
 

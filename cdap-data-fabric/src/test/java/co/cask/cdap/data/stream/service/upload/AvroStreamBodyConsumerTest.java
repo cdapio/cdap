@@ -47,7 +47,7 @@ public class AvroStreamBodyConsumerTest extends StreamBodyConsumerTestBase {
                             InputSupplier<? extends InputStream> contentSupplier) throws IOException {
         // Deserialize and verify the records
         Decoder decoder = DecoderFactory.get().binaryDecoder(contentSupplier.getInput(), null);
-        DatumReader<Record> reader = new ReflectDatumReader<Record>(Record.class);
+        DatumReader<Record> reader = new ReflectDatumReader<>(Record.class);
         reader.setSchema(new Schema.Parser().parse(headers.get("schema")));
         for (int i = 0; i < recordCount; i++) {
           Record record = reader.read(null, decoder);
@@ -76,7 +76,7 @@ public class AvroStreamBodyConsumerTest extends StreamBodyConsumerTestBase {
                                                                    Schema.create(Schema.Type.STRING))), null, null)
     ));
 
-    DataFileWriter<Record> writer = new DataFileWriter<Record>(new ReflectDatumWriter<Record>(Record.class));
+    DataFileWriter<Record> writer = new DataFileWriter<>(new ReflectDatumWriter<>(Record.class));
     try {
       writer.setCodec(CodecFactory.snappyCodec());
       writer.create(schema, file);

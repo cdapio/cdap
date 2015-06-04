@@ -32,11 +32,11 @@ public final class QueueReaderFactory {
 
   public <T> QueueReader<T> createQueueReader(Supplier<QueueConsumer> consumerSupplier,
                                               int batchSize, Function<ByteBuffer, T> decoder) {
-    return new SingleQueue2Reader<T>(consumerSupplier, batchSize, decoder);
+    return new SingleQueue2Reader<>(consumerSupplier, batchSize, decoder);
   }
 
   public <T> QueueReader<T> createStreamReader(Supplier<StreamConsumer> consumerSupplier,
                                                int batchSize, Function<StreamEvent, T> transformer) {
-    return new StreamQueueReader<T>(consumerSupplier, batchSize, transformer);
+    return new StreamQueueReader<>(consumerSupplier, batchSize, transformer);
   }
 }

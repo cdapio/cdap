@@ -66,8 +66,8 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
     this.typeRep = typeRep;
     this.typeRep.setClassLoader(classLoader);
     this.schema = schema;
-    this.datumWriter = new ReflectionDatumWriter<T>(this.schema);
-    this.datumReader = new ReflectionDatumReader<T>(this.schema, getTypeToken());
+    this.datumWriter = new ReflectionDatumWriter<>(this.schema);
+    this.datumReader = new ReflectionDatumReader<>(this.schema, getTypeToken());
   }
 
   public ObjectStoreDataset(String name, KeyValueTable kvTable,
@@ -100,7 +100,7 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
         Preconditions.checkState(!closed);
         if (keyValueIterator.hasNext()) {
           KeyValue<byte[], byte[]> row = keyValueIterator.next();
-          return new KeyValue<byte[], T>(row.getKey(), decode(row.getValue()));
+          return new KeyValue<>(row.getKey(), decode(row.getValue()));
         }
         close();
         return null;
@@ -192,7 +192,7 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
   public class ObjectRecordMaker implements Scannables.RecordMaker<byte[], T, KeyValue<byte[], T>> {
     @Override
     public KeyValue<byte[], T> makeRecord(byte[] key, T value) {
-      return new KeyValue<byte[], T>(key, value);
+      return new KeyValue<>(key, value);
     }
   }
 
