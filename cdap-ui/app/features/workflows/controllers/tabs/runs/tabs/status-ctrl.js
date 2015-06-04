@@ -1,8 +1,12 @@
 angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsRunsStatusController', function($state, $scope, MyDataSource, $filter, $alert) {
-    var dataSrc = new MyDataSource($scope),
-        filterFilter = $filter('filter'),
-        basePath = '/apps/' + $state.params.appId + '/workflows/' + $state.params.programId;
+  .controller('WorkflowsRunsStatusController', function($state, $scope, myWorkFlowApi, $filter, $alert, GraphHelpers, MyDataSource) {
+    var filterFilter = $filter('filter'),
+        params = {
+          appId: $state.params.appId,
+          workflowId: $state.params.programId,
+          scope: $scope
+        };
+
     if ($state.params.runid) {
       var match = filterFilter($scope.runs, {runid: $state.params.runid});
       if (match.length) {
@@ -11,35 +15,35 @@ angular.module(PKG.name + '.feature.workflows')
     }
 
     $scope.data = {};
-    dataSrc.request({
-      _cdapNsPath: basePath
-    })
+    myWorkFlowApi.get(params)
+      .$promise
       .then(function(res) {
         var edges = [],
-            nodes = [];
+            nodes = [],
+            nodesFromBackend = angular.copy(res.nodes);
 
-        res.nodes.unshift({
-          name: 'start',
+        // Add Start and End nodes as semantically workflow needs to have it.
+        nodesFromBackend.unshift({
           type: 'START',
           nodeType: 'ACTION',
-          nodeId: 'start',
+          nodeId: '',
           program: {
-            programName: ''
+            programName: 'Start'
           }
         });
 
-        res.nodes.push({
-          name: 'end',
+        nodesFromBackend.push({
+          label: 'end',
           type: 'END',
           nodeType: 'ACTION',
-          nodeId: 'end',
+          nodeId: '',
           program: {
-            programName: ''
+            programName: 'End'
           }
         });
 
-        convert(angular.copy(res.nodes), edges);
-        expandForks(res.nodes, nodes);
+        GraphHelpers.expandNodes(nodesFromBackend, nodes);
+        GraphHelpers.convertNodesToEdges(angular.copy(nodes), edges);
 
         nodes = nodes.map(function(item) {
           return angular.extend({
@@ -48,20 +52,61 @@ angular.module(PKG.name + '.feature.workflows')
           }, item);
         });
 
-        // addStartAndEndNodes(nodes, edges);
-
         $scope.data = {
           nodes: nodes,
           edges: edges,
-          metrics: {}
+          metrics: {},
+          current: {},
         };
 
         var programs = [];
-        angular.forEach(res.nodes, function(value, key) {
+        angular.forEach(res.nodes, function(value) {
           programs.push(value.program);
         });
         $scope.actions = programs;
       });
+
+    // Still using MyDataSource because the poll needs to be stopped
+    var dataSrc = new MyDataSource($scope);
+
+    var path = '/apps/' + $state.params.appId
+      + '/workflows/' + $state.params.programId
+      + '/runs/' + $scope.runs.selected.runid;
+
+    if ($scope.runs.length > 0) {
+      dataSrc.poll({
+        _cdapNsPath: path,
+        interval: 1000
+      })
+      .then(function (response) {
+
+        var pastNodes = Object.keys(response.properties);
+
+        var activeNodes = filterFilter($scope.data.nodes , function(node) {
+          return pastNodes.indexOf(node.nodeId) !== -1;
+        });
+
+        angular.forEach(activeNodes, function(n) {
+          var runid = response.properties[n.nodeId];
+
+          dataSrc.request({
+            _cdapNsPath: '/apps/' + $state.params.appId +
+              '/mapreduce/' + n.program.programName +
+              '/runs/' + runid
+          })
+          .then(function (result) {
+            $scope.data.current[n.name] = result.status;
+          });
+        });
+
+        return response;
+      })
+      .then(function (response) {
+        if (response.status === 'COMPLETED') {
+          dataSrc.stopPoll(response.__pollId__);
+        }
+      });
+    }
 
 
     $scope.workflowProgramClick = function (instance) {
@@ -69,7 +114,7 @@ angular.module(PKG.name + '.feature.workflows')
         return;
       }
       if ($scope.runs.length) {
-        if (instance.program.programType == 'MAPREDUCE') {
+        if (instance.program.programType === 'MAPREDUCE') {
           $state.go('mapreduce.detail.runs.run', {
             programId: instance.program.programName,
             runid: $scope.runs.selected.properties[instance.nodeId]
@@ -79,9 +124,9 @@ angular.module(PKG.name + '.feature.workflows')
         $alert({
           type: 'info',
           content: 'No runs for the workflow: '+ $state.params.programId +' yet.'
-        })
+        });
       }
-    }
+    };
 
     $scope.stop = function() {
       $alert({
@@ -90,10 +135,7 @@ angular.module(PKG.name + '.feature.workflows')
       });
       return;
       $scope.status = 'STOPPING';
-      dataSrc.request({
-        _cdapNsPath: basePath + '/stop',
-        method: 'POST'
-      });
+      myWorkFlowApi.stop(params);
     };
 
     $scope.goToDetailActionView = function(programId, programType) {
@@ -105,150 +147,4 @@ angular.module(PKG.name + '.feature.workflows')
       }
     };
 
-
   });
-
-/**
- * Adds start and end nodes to nodes list.
- * @param {Array} of nodes.
- */
-function addStartAndEndNodes(nodes, edges) {
-  if (nodes.length) {
-    nodes.unshift({
-      name: 'start',
-      type: 'START',
-      nodeType: 'START'
-    });
-    edges.unshift({
-      sourceName: nodes[0].name,
-      sourceType: nodes[0].nodeType,
-      targetName: nodes[1].name
-    });
-
-    nodes.push({
-      name: 'end',
-      type: 'END',
-      nodeType: 'END'
-    });
-    edges.push({
-      sourceName: nodes[nodes.length - 2].name,
-      sourceType: nodes[nodes.length - 2].nodeType,
-      targetName: nodes[nodes.length - 1].name
-    });
-
-  }
-
-}
-
-/**
-  * Purpose: Converts a list of nodes to a list of connections
-  * @param  [Array] of nodes
-  * @return [Array] of connections
-  * Usage: Can handle all cases, including:
-      1. Fork in the middle
-      2. Only a fork
-      3. Fork at the beginning
-      4. Fork at the end
-      5. Only an Action node
-
-      var z = [
-        {
-          nodeType: 'ACTION',
-          program: {
-            programName: "asd"
-          }
-        }, {
-          nodeType: 'FORK',
-          branches: [
-            [
-              [
-                {
-                  nodeType: 'ACTION',
-                  program: {
-                    programName: "1"
-                  }
-                }
-              ],
-              [
-                {
-                  nodeType: 'ACTION',
-                  program: {
-                    programName: "2"
-                  }
-                }
-              ]
-            ],
-            [
-              {
-                nodeType: 'ACTION',
-                program: {
-                  programName: "3"
-                }
-              }
-            ]
-          ]
-        }, {
-          nodeType: 'ACTION',
-          program: {
-            programName: "4"
-          }
-        }
-      ];
-*/
-function convert(nodes, connections) {
-
-  for (var i=0; i < nodes.length -1; i++) {
-
-    if (nodes[i].nodeType === 'ACTION' && nodes[i+1].nodeType === 'ACTION') {
-      connections.push({
-        sourceName: nodes[i].program.programName + nodes[i].nodeId,
-        targetName: nodes[i+1].program.programName + nodes[i+1].nodeId,
-        sourceType: nodes[i].nodeType
-      });
-    } else if (nodes[i].nodeType === 'FORK') {
-      flatten(nodes[i-1], nodes[i], nodes[i+1], connections);
-    }
-  }
-}
-
-/**
-  * Purpose: Flatten a source-fork-target combo to a list of connections
-  * @param  [Array] of nodes
-  * @param  [Array] of nodes
-  * @param  [Array] of nodes
-  * @return [Array] of connections
-
-*/
-function flatten(source, fork, target, connections) {
-  var branches = fork.branches,
-      temp = [];
-
-  for (var i =0; i<branches.length; i++) {
-    temp = branches[i];
-    if(source) {
-      temp.unshift(source);
-    }
-    if(target) {
-      temp.push(target);
-    }
-    convert(temp, connections);
-  }
-}
-
-/**
-  Purpose: Expand a fork and convert branched nodes to a list of connections
-  * @param  [Array] of nodes
-  * @return [Array] of connections
-
-*/
-function expandForks(nodes, expandedNodes) {
-  for(var i=0; i<nodes.length; i++) {
-    if (nodes[i].nodeType === 'ACTION') {
-      expandedNodes.push(nodes[i]);
-    } else if (nodes[i].nodeType === 'FORK') {
-      for (var j=0; j<nodes[i].branches.length; j++) {
-        expandForks(nodes[i].branches[j], expandedNodes);
-      }
-    }
-  }
-}

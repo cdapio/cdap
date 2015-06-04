@@ -52,7 +52,6 @@ angular.module(PKG.name + '.feature.admin')
           _cdapPath: path
         }).then(function (res) {
           var arr = [];
-          console.log('res', res);
           angular.forEach(res, function(v, k) {
             arr.push({
               key: k,

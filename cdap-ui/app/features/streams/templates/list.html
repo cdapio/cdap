@@ -11,7 +11,7 @@
     <tbody>
       <tr ng-repeat="stream in streams | orderBy:sortable.predicate:sortable.reverse">
         <td>
-          <a ui-sref="streams.detail.overview({streamId: stream.name})">
+          <a ui-sref="streams.detail.overview.status({streamId: stream.name})">
               <strong ng-bind="stream.name"></strong>
           </a>
         </td>

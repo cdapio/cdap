@@ -30,14 +30,6 @@ angular.module(PKG.name + '.feature.adapters')
           });
         }
       });
-    $scope.dragdrop = {
-      dragStart: function (drag) {
-        console.log('dragStart', drag.source, drag.dest);
-      },
-      dragEnd: function (drag) {
-        console.log('dragEnd', drag.source, drag.dest);
-      }
-    };
 
     function pollStatus(app) {
       dataSrc.poll({
@@ -52,7 +44,7 @@ angular.module(PKG.name + '.feature.adapters')
         _cdapNsPath: '/adapters/' + appName,
         method: 'DELETE'
       })
-        .then(function(res) {
+        .then(function() {
           $alert({
             type: 'success',
             content: 'Adapter ' + appName + ' deleted successfully.'

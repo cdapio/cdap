@@ -1,17 +1,30 @@
 <div ncy-breadcrumb></div>
-<h2> All Datasets </h2>
+<div class="row">
+  <div class="col-xs-8">
+    <h2> All Datasets </h2>
+  </div>
+
+  <div class="col-xs-4">
+    <div class="input-group pull-right h2">
+      <input type="text" class="form-control" ng-model="dataCtrl.searchText" placeholder="search...">
+      <div class="input-group-addon">
+        <i class="fa fa-search"></i>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="table-responsive">
   <table class="table table-curved" cask-sortable>
     <thead>
-      <tr ng-class="{'sort-enabled': dataList.length>0}">
+      <tr ng-class="{'sort-enabled': dataCtrl.dataList.length>0}">
         <th data-predicate="name"> Name </th>
         <th data-predicate="dataType"> Type </th>
       </tr>
     </thead>
     <tbody>
-      <tr ng-repeat="data in dataList | orderBy:sortable.predicate:sortable.reverse">
+      <tr ng-repeat="data in dataCtrl.filtered = (dataCtrl.dataList | filter:{ name: dataCtrl.searchText }) | myPaginate:dataCtrl.currentPage | orderBy:sortable.predicate:sortable.reverse">
           <td>
-            <a ng-click="goToDetail(data)"
+            <a ng-click="dataCtrl.goToDetail(data)"
                 href="">
                 <strong ng-bind="data.name"> </strong>
             </a>
@@ -24,4 +37,8 @@
       </tr>
     <tbody>
   </table>
+</div>
+
+<div class="text-center" ng-if="dataCtrl.filtered.length > 10">
+  <pagination total-items="dataCtrl.filtered.length" ng-model="dataCtrl.currentPage"></pagination>
 </div>

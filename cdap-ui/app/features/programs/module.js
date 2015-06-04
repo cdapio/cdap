@@ -5,4 +5,5 @@ angular.module(PKG.name + '.feature.programs', [
   PKG.name + '.feature.flows',
   PKG.name + '.feature.workflows',
   PKG.name + '.feature.spark',
+  PKG.name + '.feature.worker'
 ]);

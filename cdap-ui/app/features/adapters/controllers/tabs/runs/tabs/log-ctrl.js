@@ -1,8 +1,6 @@
 angular.module(PKG.name + '.feature.adapters')
   .controller('AdapterRunDetailLogController', function($scope, MyDataSource, $state, $q) {
     var dataSrc = new MyDataSource($scope),
-        basePath = '/adapters/' + $state.params.adapterId +
-                   '/runs/' + $scope.runs.selected.runid,
         logPath = '';
 
     if (!$scope.runs.length) {
@@ -27,7 +25,7 @@ angular.module(PKG.name + '.feature.adapters')
         }, function(res) {
           $scope.logs = res;
         });
-      })
+      });
 
     $scope.logs = [];
   });

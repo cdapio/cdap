@@ -22,26 +22,23 @@ angular.module(PKG.name + '.services')
     };
 
   })
-  .controller('FlowStreamDetailController', function($scope, MyDataSource) {
+  .controller('FlowStreamDetailController', function($scope, myStreamApi, $state) {
 
-    var dataSrc = new MyDataSource($scope);
-
-
-    $scope.doInject = function (event) {
+    $scope.doInject = function () {
       if(!$scope.userInput) {
         $scope.userInput = null;
         return;
       }
 
-      dataSrc.request({
-        _cdapNsPath: '/streams/' + $scope.streamId,
-        method: 'POST',
-        body: $scope.userInput,
-        json: false
-      });
+      var params = {
+        namespace: $state.params.namespace,
+        streamId: $scope.streamId,
+        scope: $scope
+      };
+      myStreamApi.sendEvent(params, $scope.userInput);
+
       $scope.userInput = null;
     };
-
 
     $scope.dismiss = function() {
       $scope.$dismiss();

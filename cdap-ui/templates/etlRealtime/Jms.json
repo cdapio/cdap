@@ -1,7 +1,7 @@
 {
   "id": "Jms",
   "groups" : {
-    "position": [ "group1" ],
+    "position": [ "group1", "group2" ],
     "group1": {
        "display" : "JMS Configuration",
        "position" : [ "jms.destination.name", "jms.messages.receive" ],
@@ -28,6 +28,38 @@
              "min": 1
           }
        }
+    },
+
+    "group2": {
+       "display" : "JMS Connection Factory",
+       "position" : [ "jms.jndi.connectionfactory.name", "jms.factory.initial", "jms.provider.url" ],
+       "fields" : {
+          "jms.jndi.connectionfactory.name" : {
+             "widget": "textbox",
+             "label": "Connection Factory Name"
+          },
+
+          "jms.factory.initial" : {
+             "widget": "textbox",
+             "label": "Factory Class Name"
+          },
+
+          "jms.provider.url" : {
+             "widget" : "textbox",
+             "label" : "Provider URL"
+          },
+
+         "jms.plugin.name" : {
+           "widget": "textbox",
+           "label": "JMS Provider Plugin Name"
+         },
+
+         "jms.plugin.type": {
+           "widget": "textbox",
+           "label": "JMS Provider Plugin Type"
+         }
+       }
     }
+
   }
 }

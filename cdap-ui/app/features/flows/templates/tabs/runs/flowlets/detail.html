@@ -56,7 +56,7 @@
       <tr ng-repeat="input in inputs track by $index">
         <td>
           <a href="" ng-click="selectFlowlet(input.name)" ng-if="input.type === 'FLOWLET'">{{ input.name }}</a>
-          <a ui-sref="streams.detail.overview({ streamId: input.name })" ng-if="input.type === 'STREAM'">{{ input.name }}</a>
+          <a ui-sref="streams.detail.overview.status({ streamId: input.name })" ng-if="input.type === 'STREAM'">{{ input.name }}</a>
         </td>
         <td>
           <strong ng-bind="input.total | myNumber: 1"></strong> events/s
@@ -106,10 +106,10 @@
           {{ dataset.name }}
         </td>
         <td>
-          {{ dataset.reads | myNumber:1 }}
+          {{ dataset.reads | myNumber }}
         </td>
         <td>
-          {{ dataset.writes | myNumber:1 }}
+          {{ dataset.writes | myNumber }}
         </td>
       </tr>
     </tbody>

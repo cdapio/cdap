@@ -2,7 +2,7 @@
  * various utility functions
  */
 angular.module(PKG.name+'.services')
-  .factory('myHelpers', function(){
+  .factory('myHelpers', function(myCdapUrl){
 
    /**
     * set a property deep in an object
@@ -85,57 +85,55 @@ angular.module(PKG.name+'.services')
 
   function objectQuery(obj) {
     if (!angular.isObject(obj)) {
-        return null;
+      return null;
     }
     for (var i = 1; i < arguments.length; i++) {
-        obj = obj[arguments[i]];
-        if (!angular.isObject(obj)) {
-          return obj;
-        }
+      obj = obj[arguments[i]];
+      if (!angular.isObject(obj)) {
+        return obj;
+      }
     }
     return obj;
   }
 
-    var roundUpToNearest = function(val, nearest) {
-      return Math.ceil(val / nearest) * nearest;
-    };
-    var roundDownToNearest = function(val, nearest) {
-      return Math.floor(val / nearest) * nearest;
-    };
+  /* ----------------------------------------------------------------------- */
 
-    function aggregate(inputMetrics, by) {
-      // Given an object in the format: { ts1: value, ts2: value, ts3: value, ts4: value },
-      // This will return an object in the same format, where each sequence of {by} timestamps will be summed up.
-      // Not currently considering resolution of the metric values (It groups simply starting from the first timestamp),
-      // as opposed to grouping into 5-minute interval.
-      var aggregated = {};
-      var timeValues = Object.keys(inputMetrics);
-      var roundedDown = roundDownToNearest(timeValues.length, by);
-      for (var i = 0; i < roundedDown; i += by) {
-        var sum = 0;
-        for (var j = 0; j < by; j++) {
-          sum += inputMetrics[timeValues[i + j]];
-        }
-        aggregated[timeValues[i]] = sum;
-      }
-      // Add up remainder elements (in case number of elements in obj is not evenly divisible by {by}
-      if (roundedDown < timeValues.length) {
-        var finalKey = timeValues[roundedDown];
-        aggregated[finalKey] = 0;
-        for (var i = roundedDown; i < timeValues.length; i++) {
-          aggregated[finalKey] += inputMetrics[timeValues[j]]
-        }
-      }
-      return aggregated;
+  function __generateConfig(isNsPath, method, type, path, isArray, customConfig) {
+    var config = {
+      method: method,
+      options: { type: type}
+    };
+    if (isNsPath) {
+      config.url = myCdapUrl.constructUrl({ _cdapNsPath: path });
+    } else {
+      config.url = myCdapUrl.constructUrl({ _cdapPath: path });
     }
+    if (isArray) {
+      config.isArray = true;
+    }
+
+    return angular.extend(config, customConfig || {});
+  }
+
+  /*
+    Purpose: construct a resource config object for endpoints API services
+  */
+
+  function getConfigNs (method, type, path, isArray, customConfig) {
+    return __generateConfig(true, method, type, path, isArray, customConfig);
+  }
+
+  function getConfig (method, type, path, isArray, customConfig) {
+    return __generateConfig(false, method, type, path, isArray, customConfig);
+  }
+
   /* ----------------------------------------------------------------------- */
 
   return {
     deepSet: deepSet,
     deepGet: deepGet,
     objectQuery: objectQuery,
-    roundUpToNearest: roundUpToNearest,
-    roundDownToNearest: roundDownToNearest,
-    aggregate: aggregate
+    getConfig: getConfig,
+    getConfigNs: getConfigNs
   };
 });

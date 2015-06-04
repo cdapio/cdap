@@ -7,7 +7,10 @@
        "fields" : {
           "script" : {
              "widget": "javascript-editor",
-             "label" : "Filter"
+             "label" : "Filter",
+             "properties" : {
+                "default" : "function shouldFilter(input) {\n  return false;\n}"
+             }
           }
        }
     }

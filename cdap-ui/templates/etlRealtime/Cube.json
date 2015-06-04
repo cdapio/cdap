@@ -16,7 +16,7 @@
 
     "group2" : {
       "display" : "Resolution & Aggregations",
-      "position" : [ "dataset.cube.resolutions", "mapping.config" ],
+      "position" : [ "dataset.cube.resolutions", "mapping.config", "custom.properties" ],
       "fields" : {
          "dataset.cube.resolutions" : {
            "widget" : "csv",
@@ -30,6 +30,10 @@
             "widget" : "json-editor",
             "label" : "Cube Configuration",
             "description" : "Provide the cube configuration"
+         },
+         "custom.properties" : {
+            "widget" : "json-editor",
+            "label" : "Additional Properties"
          }
       }
     }

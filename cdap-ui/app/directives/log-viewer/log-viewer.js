@@ -44,7 +44,7 @@ angular.module(PKG.name + '.commons')
 
       },
 
-      link: function (scope, element, attrs) {
+      link: function (scope, element) {
 
         var termEl = angular.element(element[0].querySelector('.terminal')),
             QPARAM = 'filter';

@@ -19,7 +19,7 @@ angular.module(PKG.name + '.feature.workflows')
             highlightTab: 'development'
           },
           ncyBreadcrumb: {
-            parent: 'apps.detail.overview',
+            parent: 'apps.detail.overview.status',
             label: 'Workflows',
             skip: true
           },
@@ -42,8 +42,7 @@ angular.module(PKG.name + '.feature.workflows')
               return defer.promise;
             }
           },
-          templateUrl: '/assets/features/workflows/templates/detail.html',
-          controller: 'WorkflowsDetailController'
+          templateUrl: '/assets/features/workflows/templates/detail.html'
         })
 
           .state('workflows.detail.runs', {
@@ -79,7 +78,7 @@ angular.module(PKG.name + '.feature.workflows')
             ncyBreadcrumb: {
               label: '{{$state.params.programId}}'
             },
-            templateUrl: '/assets/features/workflows/templates/tabs/history.html',
+            template: '<my-program-history data-runs="runs" data-type="WORKFLOWS"></my-program-history>',
             controller: 'WorkflowsRunsController'
           })
 
@@ -94,5 +93,5 @@ angular.module(PKG.name + '.feature.workflows')
             },
             templateUrl: '/assets/features/workflows/templates/tabs/schedules.html',
             controller: 'WorkflowsSchedulesController'
-          })
+          });
   });

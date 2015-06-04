@@ -80,7 +80,6 @@ ngEpoch.controller('epochController', function ($scope, $compile, caskWindowMana
   function render () {
     var o = $scope.options,
         el = angular.element(o.el).empty();
-    console.log('[epoch]', $scope.type, o);
     $scope.me = new Epoch._typeMap[$scope.type](o);
     $scope.me.draw();
     $compile(el)($scope);

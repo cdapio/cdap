@@ -1,11 +1,16 @@
 angular.module(PKG.name + '.feature.streams')
-  .controller('StreamsDetailStatusController', function($scope, $state, myHelpers, MyDataSource) {
+  .controller('StreamsDetailStatusController', function($scope, $state, myHelpers, MyDataSource, myStreamApi) {
     var dataSrc = new MyDataSource($scope);
-    dataSrc.request({
-      _cdapNsPath: '/streams/' + $state.params.streamId
-    })
-      .then(function(stream) {
-        $scope.schema = stream.format.schema.fields;
+
+    var params = {
+      namespace: $state.params.namespace,
+      streamId: $state.params.streamId,
+      scope: $scope
+    };
+    myStreamApi.get(params)
+      .$promise
+      .then(function (res) {
+        $scope.schema = res.format.schema.fields;
       });
 
     [
@@ -20,12 +25,9 @@ angular.module(PKG.name + '.feature.streams')
     ].forEach(fetchMetric);
 
     function fetchMetric(metric) {
-      var path = '/metrics/query?metric=' +
-                  metric.name +
-                  '&context=ns.' +
-                  $state.params.namespace +
-                  '.stream.' +
-                  $state.params.streamId;
+      var path = '/metrics/query?metric=' + metric.name +
+                  '&tag=ns:' + $state.params.namespace +
+                  '&tag=stream:' + $state.params.streamId;
 
       dataSrc.poll({
         _cdapPath : path ,
