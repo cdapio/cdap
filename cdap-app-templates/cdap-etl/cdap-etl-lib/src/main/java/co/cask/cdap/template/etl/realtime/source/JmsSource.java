@@ -56,7 +56,7 @@ import javax.naming.Context;
  */
 @Plugin(type = "source")
 @Name("JMS")
-@Description("JMS Realtime Source")
+@Description("JMS Realtime Source - Emits a record with a field 'message' of string type")
 public class JmsSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(JmsSource.class);
 
@@ -176,7 +176,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
           LOG.warn("Exception when closing connection", ex2);
         }
       }
-      throw new RuntimeException("JMSException thrown when trying to initialize connection: " + ex.getMessage(), ex);
+      throw new RuntimeException("JMSException thrown when trying to initialize connection", ex);
     }
   }
 

@@ -164,12 +164,13 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     try {
       DriverManager.getDriver(dbSinkConfig.connectionString);
     } catch (SQLException e) {
-      // Driver not found. We will try to register it with the DriverManager.
-      LOG.debug("Plugin Type : {} and Plugin Name : {} not found. Registering JDBC driver via shim {} ",
-                dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName, JDBCDriverShim.class.getName());
-
       // Load the plugin class to make sure it is available.
       Class<?> driverClass = context.loadPluginClass(getJDBCPluginId());
+
+      // Driver not found. We will try to register it with the DriverManager.
+      LOG.debug("Plugin Type: {} and Plugin Name: {}; Driver Class: {} not found. Registering JDBC driver via shim {} ",
+                dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName, driverClass.getName(),
+                JDBCDriverShim.class.getName());
       DriverManager.registerDriver(new JDBCDriverShim((Driver) driverClass.newInstance()));
     }
   }

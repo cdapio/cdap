@@ -44,7 +44,7 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = "source")
 @Name("Kafka")
-@Description("Kafka Realtime Source")
+@Description("Kafka Realtime Source - Emits a record with two fields - 'key' (nullable string) and 'message' (bytes)")
 public class KafkaSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaSource.class);
 
