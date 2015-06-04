@@ -81,7 +81,8 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
 
   @Override
   public void prepareRun(BatchSourceContext context) {
-    LOG.debug("tableName = {}; pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; countQuery = {}",
+    LOG.debug("tableName = {}; pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; " +
+                "countQuery = {}",
               dbSourceConfig.tableName, dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName,
               dbSourceConfig.connectionString, dbSourceConfig.importQuery, dbSourceConfig.countQuery);
 
