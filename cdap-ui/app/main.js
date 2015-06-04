@@ -160,7 +160,7 @@ angular
     angular.extend($alertProvider.defaults, {
       animation: 'am-fade-and-scale',
       container: '#alerts > .container',
-      duration: 3
+      duration: 5
     });
   })
 
