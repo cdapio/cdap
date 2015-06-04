@@ -50,7 +50,7 @@ import javax.annotation.Nullable;
 @Name("Twitter")
 @Description("Twitter Realtime Source. Output records will always contain id (long), message (string), " +
   "favCount (int), rtCount (int), and isRetweet (boolean) fields. Output records may contain lang (string), " +
-  "time (long), source (string), geolat (double), and geoLong (double) fields if they are available.")
+  "time (long), source (string), geoLat (double), and geoLong (double) fields if they are available.")
 public class TwitterSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(TwitterSource.class);
   private static final String CONSUMER_KEY = "ConsumerKey";
@@ -65,7 +65,7 @@ public class TwitterSource extends RealtimeSource<StructuredRecord> {
   private static final String FAVC = "favCount";
   private static final String RTC = "rtCount";
   private static final String SRC = "source";
-  private static final String GLAT = "geolat";
+  private static final String GLAT = "geoLat";
   private static final String GLNG = "geoLong";
   private static final String ISRT = "isRetweet";
 
