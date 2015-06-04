@@ -13,10 +13,10 @@ angular.module(PKG.name + '.feature.workflows')
     } else {
       $scope.runs.selected = {
         runid: 'No Runs!'
-      }
+      };
     }
 
-    $scope.$watch('runs.selected.runid', function(newVal) {
+    $scope.$watch('runs.selected.runid', function() {
      if ($state.params.runid) {
        return;
      } else {

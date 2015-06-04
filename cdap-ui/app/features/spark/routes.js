@@ -39,7 +39,7 @@ angular.module(PKG.name + '.feature.spark')
 
         },
         ncyBreadcrumb: {
-          parent: 'apps.detail.overview',
+          parent: 'apps.detail.overview.status',
           label: 'Spark',
           skip: true
         },
@@ -76,6 +76,6 @@ angular.module(PKG.name + '.feature.spark')
         ncyBreadcrumb: {
           label: 'History'
         }
-      })
+      });
 
   });

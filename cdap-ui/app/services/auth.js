@@ -122,12 +122,12 @@ module.factory('myAuthPromise', function myAuthPromiseFactory (MY_CONFIG, $q, $h
         method: 'POST',
         data: credentials
       })
-      .success(function (data, status, headers, config) {
+      .success(function (data) {
         deferred.resolve(angular.extend(data, {
           username: credentials.username
         }));
       })
-      .error(function (data, status, headers, config) {
+      .error(function (data) {
         deferred.reject(data);
       });
 

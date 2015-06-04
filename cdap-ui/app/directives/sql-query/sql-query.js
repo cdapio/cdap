@@ -8,27 +8,23 @@ angular.module(PKG.name + '.commons')
         name: '='
       },
       templateUrl: 'sql-query/sql-query.html',
-      controller: function ($scope, MyDataSource, $state, EventPipe) {
+      controller: function ($scope, $state, EventPipe, myExploreApi) {
 
-        var dataSrc = new MyDataSource($scope);
-
-        $scope.$watch('name', function(newVal) {
+        $scope.$watch('name', function() {
           $scope.query = 'SELECT * FROM ' + $scope.type + '_' + $scope.name + ' LIMIT 5';
         });
 
         $scope.execute = function() {
-          dataSrc
-            .request({
-              _cdapNsPath: '/data/explore/queries',
-              method: 'POST',
-              body: {
-                query: $scope.query
-              }
-            })
-            .then(function () {
+          var params = {
+            namespace: $state.params.namespace,
+            scope: $scope
+          };
 
+          myExploreApi.postQuery(params, { query: $scope.query },
+            function () {
               EventPipe.emit('explore.newQuery');
             });
+
         };
 
       }

@@ -39,7 +39,7 @@ angular.module(PKG.name + '.feature.flows')
 
         },
         ncyBreadcrumb: {
-          parent: 'apps.detail.overview',
+          parent: 'apps.detail.overview.status',
           label: 'Flows',
           skip: true
         },
@@ -85,6 +85,6 @@ angular.module(PKG.name + '.feature.flows')
         ncyBreadcrumb: {
           label: 'History'
         }
-      })
+      });
 
   });

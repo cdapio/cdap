@@ -13,6 +13,9 @@ body.theme-cdap.state-adapters {
     outline: none;
   }
   .fa-plus-square { color: @cdap-header; }
+  .fa-info-circle {
+    color: @brand-primary;
+  }
   .control-label { color: @cdap-header; }
   .text-success { color: @brand-success; }
   .text-danger { color: @brand-danger; }
@@ -67,12 +70,27 @@ body.theme-cdap.state-adapters-create {
         }
       }
       .template {
+        cursor: pointer;
         &.plugin-added {
-          background-color: #2c498b;
+          background-color: @selected-plugin-bg;
+          &.plugin-invalid {
+            background-color: @brand-danger;
+          }
+          &:hover {
+            background-color: #5a84e4;
+            color: black;
+          }
         }
         &.transforms {
           .plugin-added {
-            background-color: #2c498b;
+            background-color: @selected-plugin-bg;
+            &.plugin-invalid {
+              background-color: @brand-danger;
+            }
+            &:hover {
+              background-color: #5a84e4;
+              color: black;
+            }
           }
           .fa-times {
             position: relative;
@@ -150,6 +168,8 @@ body.theme-cdap.state-adapters-create {
             border: 0;
             border-bottom: 1px solid lightgray;
             background-color: transparent;
+            cursor: pointer;
+
             &:last-child { border: 1px solid transparent; }
 
             .description-overflow {
@@ -158,6 +178,13 @@ body.theme-cdap.state-adapters-create {
               text-overflow: ellipsis;
               color: darkgray;
               font-size: 11px;
+            }
+          }
+          li.list-group-item:hover {
+            background-color: #5a84e4;
+            .fa-info-circle { color: white; }
+            .description-overflow {
+              color: black;
             }
           }
         }
@@ -178,7 +205,6 @@ body.theme-cdap.state-adapters-create {
 
   [plugin-property-edit-view] {
     .widget-group-container {
-
       &.well {
         padding: 10px;
         h3 {
@@ -186,15 +212,22 @@ body.theme-cdap.state-adapters-create {
           font-weight: 500;
           margin: 0 0 10px 0;
         }
+
         .row-padding {
           padding: 0 30px;
           .popover {
             max-width: 550px;
             width: 500px;
           }
+          textarea.form-control {
+            min-height: 200px;
+          }
         }
-        // .control-label { font-weight: 400; }
       }
+    }
+    .fa-asterisk {
+      font-size: 9px;
+      color: @brand-danger;
     }
   }
 

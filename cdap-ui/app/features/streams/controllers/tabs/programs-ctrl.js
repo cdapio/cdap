@@ -1,13 +1,15 @@
 angular.module(PKG.name + '.feature.streams')
-  .controller('StreamsDetailProgramsController', function($scope, $state, MyDataSource) {
-    var dataSrc = new MyDataSource($scope);
+  .controller('StreamsDetailProgramsController', function($scope, $state, myStreamApi) {
 
-    dataSrc.request({
-      _cdapNsPath: '/streams/' + $state.params.streamId + '/programs'
-    }).then(function(res) {
-
-      $scope.programs = res;
-
-    });
+    var params = {
+      namespace: $state.params.namespace,
+      streamId: $state.params.streamId,
+      scope: $scope
+    };
+    myStreamApi.programsList(params)
+      .$promise
+      .then(function (res) {
+        $scope.programs = res;
+      });
 
   });

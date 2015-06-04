@@ -1,6 +1,5 @@
 angular.module(PKG.name + '.feature.flows')
   .controller('FlowletsController', function($scope, MyDataSource, $state, $filter, FlowDiagramData) {
-    var dataSrc = new MyDataSource($scope);
     var filterFilter = $filter('filter');
 
     $scope.flowlets = [];

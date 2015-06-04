@@ -1,5 +1,5 @@
 angular.module(PKG.name+'.feature.login')
-  .config(function ($stateProvider, $urlRouterProvider) {
+  .config(function ($stateProvider) {
 
     /**
      * State Configurations
@@ -87,7 +87,7 @@ angular.module(PKG.name+'.feature.login')
           // }
         ],
         function (v) {
-          $rootScope.$on(v.event, function (event) {
+          $rootScope.$on(v.event, function () {
             $alert({
               title: v.title,
               content: v.message,

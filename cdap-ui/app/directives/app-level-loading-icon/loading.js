@@ -48,7 +48,6 @@ angular.module(PKG.name + '.commons')
             if (!isBackendDown) {
               modal && !modal.$state && modal.close();
               modal = null;
-              isLoading = false;
             }
           }, 2000);
         });
@@ -60,5 +59,5 @@ angular.module(PKG.name + '.commons')
           }
         }.bind($scope));
       }
-    }
+    };
   });
