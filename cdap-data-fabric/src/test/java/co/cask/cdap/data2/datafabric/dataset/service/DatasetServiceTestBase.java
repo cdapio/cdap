@@ -189,9 +189,10 @@ public abstract class DatasetServiceTestBase {
                                  new InMemoryDatasetOpExecutor(dsFramework),
                                  mdsDatasetsRegistry,
                                  new HashSet<DatasetMetricsReporter>(),
-                                 new LocalUnderlyingSystemNamespaceAdmin(cConf, namespacedLocationFactory,
-                                                                         exploreFacade),
-                                 instanceService);
+                                 instanceService,
+                                 new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
+                                                                        exploreFacade)
+    );
 
     // Start dataset service, wait for it to be discoverable
     service.start();

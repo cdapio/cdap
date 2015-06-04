@@ -323,12 +323,6 @@ public abstract class AbstractDatasetFrameworkTest {
 
     Id.Namespace namespace = Id.Namespace.from("yourspace");
     framework.createNamespace(namespace);
-    try {
-      framework.createNamespace(namespace);
-      Assert.fail("Should not be able to create a duplicate namespace");
-    } catch (DatasetManagementException e) {
-      // expected
-    }
     framework.deleteNamespace(namespace);
   }
 

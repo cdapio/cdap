@@ -30,19 +30,31 @@
 
 <div class="cdap-subnav-end"></div>
 
-<!-- <my-tabs ng-if="false"
-  data-tabs-list="['Status','Explore','Programs','Inner','Metadata','Lineage','Resources']"
-  data-tabs-partial-path="/assets/features/datasets/templates/tabs/">
-</my-tabs> -->
+<ul class="nav nav-tabs slanted-tabs" role="tablist" ng-if="explorable">
 
-<my-tabs
-  data-tabs-list="['Status', 'Explore', 'Programs', 'Metadata']"
-  data-tabs-partial-path="/assets/features/datasets/templates/tabs/"
-  ng-if="explorable">
-</my-tabs>
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="datasets.detail.overview.status" ui-sref-opts="{reload: true}" role="tab">Status</a>
+  </li>
 
-<my-tabs
-  data-tabs-list="['Programs']"
-  data-tabs-partial-path="/assets/features/datasets/templates/tabs/"
-  ng-if="explorable === false">
-</my-tabs>
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="datasets.detail.overview.explore" ui-sref-opts="{reload: true}" role="tab">Explore</a>
+  </li>
+
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="datasets.detail.overview.programs" ui-sref-opts="{reload: true}" role="tab">Programs</a>
+  </li>
+
+  <li role="presentation" ui-sref-active="active">
+    <a ui-sref="datasets.detail.overview.metadata" ui-sref-opts="{reload: true}" role="tab">Metadata</a>
+  </li>
+
+</ul>
+
+<ul class="nav nav-tabs slanted-tabs" role="tablist" ng-if="explorable === false">
+  <li role="presentation" ng-class="{'active': $state.is('datasets.detail.overview.status') }">
+    <a ui-sref="datasets.detail.overview.programs" ui-sref-opts="{reload: true}" role="tab">Programs</a>
+  </li>
+</ul>
+
+<br />
+<ui-view role="tabpanel"/>

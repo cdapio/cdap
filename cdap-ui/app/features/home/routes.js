@@ -1,5 +1,10 @@
 angular.module(PKG.name+'.feature.home')
-  .config(function ($stateProvider, $urlRouterProvider) {
+  .config(function ($stateProvider, $urlRouterProvider, $urlMatcherFactoryProvider) {
+
+    /**
+     * Ignores trailing slash
+     */
+    $urlMatcherFactoryProvider.strictMode(false);
 
     /**
      * Redirects and Otherwise

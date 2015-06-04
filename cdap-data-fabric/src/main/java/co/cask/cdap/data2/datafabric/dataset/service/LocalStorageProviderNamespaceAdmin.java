@@ -24,11 +24,11 @@ import com.google.inject.Inject;
 /**
  * Manages namespaces on local underlying systems.
  */
-public final class LocalUnderlyingSystemNamespaceAdmin extends UnderlyingSystemNamespaceAdmin {
+public final class LocalStorageProviderNamespaceAdmin extends StorageProviderNamespaceAdmin {
 
   @Inject
-  public LocalUnderlyingSystemNamespaceAdmin(CConfiguration cConf, NamespacedLocationFactory namespacedLocationFactory,
-                                             ExploreFacade exploreFacade) {
+  public LocalStorageProviderNamespaceAdmin(CConfiguration cConf, NamespacedLocationFactory namespacedLocationFactory,
+                                            ExploreFacade exploreFacade) {
     super(cConf, namespacedLocationFactory, exploreFacade);
   }
 }
