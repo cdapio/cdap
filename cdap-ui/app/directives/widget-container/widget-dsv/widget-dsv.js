@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .directive('myDsv', function($window) {
+  .directive('myDsv', function() {
     return {
       restrict: 'E',
       scope: {

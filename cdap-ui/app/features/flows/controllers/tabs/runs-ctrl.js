@@ -13,10 +13,10 @@ angular.module(PKG.name + '.feature.flows')
    } else {
      $scope.runs.selected = {
        runid: 'No Runs!'
-     }
+     };
    }
 
-   $scope.$watch('runs.selected.runid', function(newVal) {
+   $scope.$watch('runs.selected.runid', function() {
      if ($state.params.runid) {
        return;
      } else {
@@ -24,7 +24,7 @@ angular.module(PKG.name + '.feature.flows')
          $scope.runs.selected = rRuns[0];
        }
      }
-   })
+   });
 
    $scope.tabs = [
    {

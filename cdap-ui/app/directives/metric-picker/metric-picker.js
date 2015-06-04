@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .directive('myMetricPicker', function (MyDataSource, $stateParams, $log) {
+  .directive('myMetricPicker', function (MyDataSource, $stateParams, $log, MyMetricsQueryHelper) {
 
     var dSrc = new MyDataSource();
 
@@ -35,7 +35,7 @@ angular.module(PKG.name + '.commons')
       };
 
       $scope.deleteMetric = function(idx) {
-        if ($scope.metric.names.length == 1) {
+        if ($scope.metric.names.length === 1) {
           // If its the only metric, simply clear it instead of removing it
           $scope.metric.resetNames();
         } else {
@@ -94,22 +94,28 @@ angular.module(PKG.name + '.commons')
         }
 
         function fetchAhead () {
-          var b = getBaseContext(),
-              bLen = b.length+1,
-              context = b;
+          var context = getBaseContext(),
+              bLen = context.length + 1;
 
           if(scope.metric.context) {
             context += '.' + scope.metric.context;
           }
+          var parts = context.split('.');
+          if (parts.length % 2 !== 0) {
+            return;
+          }
 
+          var tagQueryParams = MyMetricsQueryHelper.tagsToParams(MyMetricsQueryHelper.contextToTags(context));
           scope.available.contexts = [];
           dSrc.request(
             {
               method: 'POST',
-              _cdapPath: '/metrics/search?target=childContext' +
-                '&context=' + encodeURIComponent(context)
+              _cdapPath: '/metrics/search?target=tag&' + tagQueryParams
             },
             function (res) {
+              res = res.map(function(v) {
+                return context + '.' +  MyMetricsQueryHelper.tagToContext(v);
+              });
               scope.available.contexts = res.map(function(d){
                 return {
                   value: d.substring(bLen),
@@ -125,8 +131,7 @@ angular.module(PKG.name + '.commons')
           dSrc.request(
             {
               method: 'POST',
-              _cdapPath: '/metrics/search?target=metric' +
-                '&context=' + encodeURIComponent(context)
+              _cdapPath: '/metrics/search?target=metric&' + tagQueryParams
             },
             function (res) {
               // 'Add All' option to add all metrics in current context.
@@ -191,7 +196,7 @@ angular.module(PKG.name + '.commons')
 
           }
 
-        }
+        };
         scope.$watch('metric', metricChanged, true);
 
         fetchAhead();

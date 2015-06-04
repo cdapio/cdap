@@ -16,12 +16,11 @@ function ($scope, $state, MyDataSource) {
     } else {
       $scope.tabs.activeTab = ($state.is('admin.system.services.detail.metadata')? 0: 1);
     }
-    $scope.$watch('tabs.activeTab', function(newValue, oldValue) {
-      var toState = ($state.includes('admin.system.services.detail.*') ? '^': '');
+    $scope.$watch('tabs.activeTab', function(newValue) {
       if(newValue === 0) {
-        $state.go(toState + '.metadata');
+        $state.go('admin.system.services.detail.metadata');
       } else if(newValue === 1) {
-        $state.go(toState + '.logs');
+        $state.go('admin.system.services.detail.logs');
       }
     });
 });

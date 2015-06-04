@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.spark')
-  .controller('SparkRunDetailController', function($scope, $state) {
+  .controller('SparkRunDetailController', function($scope) {
 
     $scope.tabs = [{
       title: 'Status',
@@ -13,10 +13,10 @@ angular.module(PKG.name + '.feature.spark')
     $scope.activeTab = $scope.tabs[0];
 
     $scope.$on('$destroy', function(event) {
-      event.targetScope.runs.selected = null;
+      event.currentScope.runs.selected = null;
     });
 
-    $scope.selectTab = function(tab, node) {
+    $scope.selectTab = function(tab) {
       $scope.activeTab = tab;
 
     };

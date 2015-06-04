@@ -21,7 +21,7 @@
          },
 
          "rename": {
-           "widget": "textbox",
+           "widget": "keyvalue",
            "label": "Fields to rename"
          }
 

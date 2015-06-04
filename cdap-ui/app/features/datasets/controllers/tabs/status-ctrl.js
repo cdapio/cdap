@@ -1,13 +1,21 @@
 angular.module(PKG.name + '.feature.datasets')
   .controller('CdapDatasetDetailStatusController',
-    function($scope, MyDataSource, $state, myHelpers) {
+    function($scope, MyDataSource, $state, myHelpers, MyMetricsQueryHelper, myExploreApi, explorableDatasets) {
       $scope.writes = 0;
       $scope.reads = 0;
       $scope.storage = 0;
       $scope.transactions = 0;
+      $scope.explorable = explorableDatasets;
+      if (!explorableDatasets) {
+        return;
+      }
       var query = myHelpers.objectQuery;
       var dataSrc = new MyDataSource($scope),
-          currentDataset = $state.params.datasetId;
+          currentDataset = $state.params.datasetId,
+          datasetTags = {
+            namespace: $state.params.namespace,
+            dataset: currentDataset
+          };
 
       [
         {
@@ -20,15 +28,12 @@ angular.module(PKG.name + '.feature.datasets')
         }
       ].forEach(pollMetric);
 
+
       function pollMetric(metric) {
         // A temporary way to get the rate of a metric for a dataset.
         // Ideally this would be batched for datasets/streams
-        var path = '/metrics/query?metric=' +
-                    metric.name +
-                    '&context=namespace.' +
-                    $state.params.namespace +
-                    '.dataset.' +
-                    currentDataset +
+        var path = '/metrics/query?metric=' + metric.name +
+                    '&' + MyMetricsQueryHelper.tagsToParams(datasetTags) +
                     '&start=now-1s&end=now-1s&resolution=1s';
 
         dataSrc.poll({
@@ -41,18 +46,24 @@ angular.module(PKG.name + '.feature.datasets')
       }
 
       dataSrc.poll({
-        _cdapPath : '/metrics/query?metric=system.dataset.store.bytes&context=namespace.' +
-                    $state.params.namespace + '.dataset.' + currentDataset + '&aggregate=true',
+        _cdapPath : '/metrics/query?metric=system.dataset.store.bytes' +
+                    '&' + MyMetricsQueryHelper.tagsToParams(datasetTags) +
+                    '&aggregate=true',
         method: 'POST'
       }, function(metricData) {
         var data = query(metricData, 'series', 0, 'data', 0, 'value');
         $scope.storage = data;
       });
 
-      dataSrc.request({
-        _cdapNsPath: '/data/explore/tables/dataset_' + currentDataset + '/info'
-      })
-        .then(function(res) {
+      var params = {
+        namespace: $state.params.namespace,
+        table: 'dataset_' + currentDataset,
+        scope: $scope
+      };
+
+      myExploreApi.getInfo(params)
+        .$promise
+        .then(function (res) {
           $scope.schema = query(res, 'schema');
         });
 

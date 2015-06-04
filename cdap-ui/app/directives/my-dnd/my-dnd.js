@@ -4,8 +4,7 @@ angular.module(PKG.name + '.commons')
       var el = element[0];
       var dropZone = attrs.dropZone,
           // The actual data being transferred.
-          data = attrs.model,
-          dragType = attrs.dragType;
+          data = attrs.model;
        el.draggable = true;
 
        el.addEventListener(
@@ -25,13 +24,13 @@ angular.module(PKG.name + '.commons')
 
        el.addEventListener(
            'dragend',
-           function(e) {
+           function() {
             this.classList.remove('drag');
             return false;
            },
            false
        );
-    }
+    };
   })
 
   .directive('droppable', function() {
@@ -47,7 +46,9 @@ angular.module(PKG.name + '.commons')
             function(e) {
               e.dataTransfer.dropEffect = 'copy';
               this.classList.add('over');
-              if (e.preventDefault) e.preventDefault();
+              if (e.preventDefault) {
+                e.preventDefault();
+              }
               return false;
             },
             false
@@ -55,7 +56,7 @@ angular.module(PKG.name + '.commons')
 
           el.addEventListener(
             'dragenter',
-            function(e) {
+            function() {
               counter += 1;
               this.classList.add('over');
               return false;
@@ -65,7 +66,7 @@ angular.module(PKG.name + '.commons')
 
           el.addEventListener(
             'dragleave',
-            function(e) {
+            function() {
               counter -=1;
               if (counter === 0) {
                 this.classList.remove('over');
@@ -79,7 +80,9 @@ angular.module(PKG.name + '.commons')
                 'drop',
                 function(e) {
                     // Stops some browsers from redirecting.
-                    if (e.stopPropagation) e.stopPropagation();
+                    if (e.stopPropagation) {
+                      e.stopPropagation();
+                    }
                     counter = 0;
                     this.classList.remove('over');
                     var id = e.dataTransfer.getData('Id'),
@@ -101,5 +104,5 @@ angular.module(PKG.name + '.commons')
                 false
             );
         }
-    }
+    };
   });

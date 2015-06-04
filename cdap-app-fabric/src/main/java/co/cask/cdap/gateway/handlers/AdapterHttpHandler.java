@@ -27,6 +27,7 @@ import co.cask.cdap.internal.app.runtime.adapter.AdapterAlreadyExistsException;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.adapter.ApplicationTemplateInfo;
 import co.cask.cdap.internal.app.runtime.adapter.InvalidAdapterOperationException;
+import co.cask.cdap.internal.app.runtime.adapter.InvalidPluginConfigException;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterDetail;
@@ -329,7 +330,7 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
 
       adapterService.createAdapter(namespace, adapterName, config);
       responder.sendString(HttpResponseStatus.OK, String.format("Adapter: %s is created", adapterName));
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException | InvalidPluginConfigException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (AdapterAlreadyExistsException e) {
       responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());

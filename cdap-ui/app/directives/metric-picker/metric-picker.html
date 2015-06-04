@@ -17,7 +17,7 @@
         bs-options="c.value as c.display for c in available.contexts"
         data-watch-options="1"
         data-min-length="0"
-        data-limit="20"
+        data-limit="100"
         data-container="body"
         bs-typeahead />
     </div>
@@ -36,7 +36,7 @@
       bs-options="m for m in available.names"
       data-watch-options="1"
       data-min-length="0"
-      data-limit="20"
+      data-limit="100"
       data-container="body"
       bs-typeahead />
     <div class="input-group-addon" ng-click="deleteMetric($index)">

@@ -39,7 +39,7 @@ angular.module(PKG.name+'.services')
 
     function typeOrdering(arr, el) {
       var idx = arr.indexOf(el.name);
-      if (idx == -1) {
+      if (idx === -1) {
         return arr.length;
       }
       return idx;

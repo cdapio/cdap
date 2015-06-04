@@ -76,7 +76,7 @@
               </button>
               <button class="text-danger"
                       ng-click="caskConfirm()"
-                      ng-class="{'invisible': (app.status == 'STARTED' || app.status == 'STARTING' || app.status === 'STOPPING')}"
+                      ng-class="{'invisible': (app.status === 'STARTED' || app.status === 'STARTING' || app.status === 'STOPPING')}"
                       cask-confirmable="deleteAdapter(app.name)"
                       data-confirmable-content="Are you sure you want to delete this adapter?">
                 <span class="fa fa-trash"></span>

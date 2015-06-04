@@ -1,5 +1,10 @@
 angular.module(PKG.name+'.feature.home')
-  .config(function ($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
+  .config(function ($stateProvider, $urlRouterProvider, $urlMatcherFactoryProvider) {
+
+    /**
+     * Ignores trailing slash
+     */
+    $urlMatcherFactoryProvider.strictMode(false);
 
     /**
      * Redirects and Otherwise
@@ -23,7 +28,7 @@ angular.module(PKG.name+'.feature.home')
             // Skip even the login view. Don't show login if security is disabled.
             myAuth.login({username:'admin'})
               .then(function() {
-                myLoadingService.showLoadingIcon()
+                myLoadingService.showLoadingIcon();
                 $state.go('overview');
               });
           }
@@ -35,7 +40,7 @@ angular.module(PKG.name+'.feature.home')
         abstract: true,
         template: '<ui-view/>',
         resolve: {
-          rNsList: function (myNamespace, myLoadingService) {
+          rNsList: function (myNamespace) {
             return myNamespace.getList();
           }
         },
@@ -76,7 +81,7 @@ angular.module(PKG.name+'.feature.home')
           else {
             mySessionStorage.set(PREFKEY, $state.params.namespace);
           }
-          myLoadingService.hideLoadingIcon()
+          myLoadingService.hideLoadingIcon();
         }
       })
 

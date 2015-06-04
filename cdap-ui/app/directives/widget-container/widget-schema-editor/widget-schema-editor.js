@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .directive('mySchemaEditor', function($window) {
+  .directive('mySchemaEditor', function() {
     return {
       restrict: 'EA',
       scope: {
@@ -23,7 +23,7 @@ angular.module(PKG.name + '.commons')
             }
           }
 
-          var schema = myHelpers.objectQuery(schema, 'fields');
+          schema = myHelpers.objectQuery(schema, 'fields');
           $scope.properties = [];
           angular.forEach(schema, function(p) {
             if (angular.isArray(p.type)) {

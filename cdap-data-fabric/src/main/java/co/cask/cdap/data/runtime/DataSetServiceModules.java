@@ -23,9 +23,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.datafabric.dataset.service.DistributedUnderlyingSystemNamespaceAdmin;
-import co.cask.cdap.data2.datafabric.dataset.service.LocalUnderlyingSystemNamespaceAdmin;
-import co.cask.cdap.data2.datafabric.dataset.service.UnderlyingSystemNamespaceAdmin;
+import co.cask.cdap.data2.datafabric.dataset.service.DistributedStorageProviderNamespaceAdmin;
+import co.cask.cdap.data2.datafabric.dataset.service.LocalStorageProviderNamespaceAdmin;
+import co.cask.cdap.data2.datafabric.dataset.service.StorageProviderNamespaceAdmin;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
@@ -88,8 +88,8 @@ public class DataSetServiceModules extends RuntimeModule {
         bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
         expose(DatasetOpExecutor.class);
 
-        bind(UnderlyingSystemNamespaceAdmin.class).to(LocalUnderlyingSystemNamespaceAdmin.class);
-        expose(UnderlyingSystemNamespaceAdmin.class);
+        bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
+        expose(StorageProviderNamespaceAdmin.class);
       }
     };
 
@@ -125,8 +125,8 @@ public class DataSetServiceModules extends RuntimeModule {
         bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
         expose(DatasetOpExecutor.class);
 
-        bind(UnderlyingSystemNamespaceAdmin.class).to(LocalUnderlyingSystemNamespaceAdmin.class);
-        expose(UnderlyingSystemNamespaceAdmin.class);
+        bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
+        expose(StorageProviderNamespaceAdmin.class);
       }
     };
 
@@ -164,8 +164,8 @@ public class DataSetServiceModules extends RuntimeModule {
         bind(DatasetOpExecutor.class).to(YarnDatasetOpExecutor.class);
         expose(DatasetOpExecutor.class);
 
-        bind(UnderlyingSystemNamespaceAdmin.class).to(DistributedUnderlyingSystemNamespaceAdmin.class);
-        expose(UnderlyingSystemNamespaceAdmin.class);
+        bind(StorageProviderNamespaceAdmin.class).to(DistributedStorageProviderNamespaceAdmin.class);
+        expose(StorageProviderNamespaceAdmin.class);
       }
     };
   }

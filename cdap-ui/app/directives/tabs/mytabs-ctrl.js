@@ -14,7 +14,7 @@ angular.module(PKG.name + '.commons')
       });
     });
 
-    function checkTabParam (event, state) {
+    function checkTabParam () {
       var tab = $scope.tabs
         .map(function(t) {
           return t.state;

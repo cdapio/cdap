@@ -4,13 +4,6 @@ angular.module(PKG.name + '.feature.apps')
 
     $scope.programs = [];
     var datasrc = new MyDataSource($scope);
-    var programTypes = [
-          'flows',
-          'services',
-          'mapreduce',
-          'workflows',
-          'spark'
-        ];
     datasrc.request({
       _cdapNsPath: basePath
     })

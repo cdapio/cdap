@@ -39,17 +39,46 @@ function extractConfig(param) {
     tool.stdout.on('end', onConfigReadEnd.bind(this, deferred, param));
   } else {
     try {
-      cache[param] = require('../../../conf/generated/cdap-config.json');
+      path = getConfigPath(param);
+      if (path && path.length) {
+        path = path.replace(/\"/g, '');
+        cache[param] = require(path);
+      } else {
+        throw 'No configuration JSON provided.(No "cConf" and "sConf" commandline arguments passed)';
+      }
     } catch(e) {
+      log.warn(e);
       // Indicates the backend is not running in local environment and that we want only the
       // UI to be running. This is here for convenience.
-      log.info('Using development configuration for "' + param + '"');
+      log.warn('Using development configuration for "' + param + '"');
       cache[param] = require('./development/'+param+'.json');
     }
 
     deferred.resolve(cache[param]);
   }
   return deferred.promise;
+}
+
+function getConfigPath(param) {
+  var configName = (param ==='security'? 'sConf': 'cConf');
+  // If cConf and sConf are not provided (Starting node server
+  // from console) default to development config.
+  if (process.argv.length < 3) {
+    return null;
+  }
+  var args = process.argv.slice(2),
+      value = '',
+      i;
+  for (i=0; i<args.length; i++) {
+    if (args[i].indexOf(configName) !== -1) {
+      value = args[i].split('=');
+      if (value.length > 1) {
+        value = value[1];
+      }
+      break;
+    }
+  }
+  return value;
 }
 
 function onConfigReadEnd (deferred, param) {

@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.services')
-  .service('myNamespace', function myNamespace($q, MyDataSource, EventPipe, $http, MY_CONFIG) {
+  .service('myNamespace', function myNamespace($q, MyDataSource, EventPipe, $http) {
 
     this.namespaceList = [];
 
@@ -51,7 +51,7 @@ angular.module(PKG.name + '.services')
       var ns = this.namespaceList.filter(function(namespace) {
         return namespace.name === name;
       });
-      return ns[0].name || id;
+      return ns[0].name || name;
     };
 
     function startPolling() {
