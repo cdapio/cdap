@@ -164,7 +164,8 @@ function build_javadocs_full() {
 function build_javadocs_api() {
   cd ${PROJECT_PATH}
   set_mvn_environment
-  MAVEN_OPTS="-Xmx512m" mvn clean package javadoc:javadoc -pl $API -am -DskipTests -P release
+#   MAVEN_OPTS="-Xmx512m" mvn clean package javadoc:javadoc -pl $API -am -DskipTests -P release
+  MAVEN_OPTS="-Xmx512m" mvn clean package javadoc:aggregate -pl $API -P release -P templates
 }
 
 function build_javadocs_sdk() {
