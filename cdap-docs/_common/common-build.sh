@@ -72,7 +72,7 @@ else
   PROJECT_PATH="${SCRIPT_PATH}/../../../${2}"
 fi
 
-SDK_JAVADOCS="${PROJECT_PATH}/${API}/target/site/${APIDOCS}"
+SDK_JAVADOCS="${PROJECT_PATH}/${API}/target/${APIDOCS}"
 
 CHECK_INCLUDES="false"
 TEST_INCLUDES_LOCAL="local"
