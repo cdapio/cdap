@@ -107,40 +107,37 @@ angular.module(PKG.name + '.feature.adapters')
       var defer = $q.defer();
 
       var validation = this.basicValidation();
-
-      switch(validation.error) {
-        case 'name':
-          defer.reject({
-            message: 'Adapter needs a name to be saved'
-          });
-          return defer.promise;
-        case 'missingsourceorsink':
-          defer.reject({
-            message: 'Adapter needs atleast a source and a sink'
-          });
-          return defer.promise;
-        case 'invalidrequiredproperties':
-          defer.reject({
-            message: 'All required fields need to be set for all plugins.'
-          });
-          return defer.promise;
-        case 'none':
-          return formatAndSave.bind(this)();
+      if (!validation.messages.length) {
+        return formatAndSave.bind(this)();
+      } else {
+        defer.reject({
+          messages: validation.messages
+        });
+        return defer.promise;
       }
     };
 
     Model.prototype.basicValidation = function () {
       var errObj = {
-        error: ''
+        messages: []
       };
       if (!this.metadata.name.length) {
-        errObj.error = 'name';
-      } else if (this.source.placeHolder || this.sink.placeHolder) {
-        errObj.error = 'missingsourceorsink';
-      } else if (!this.validateRequiredProperties()) {
-        errObj.error = 'invalidrequiredproperties';
-      } else {
-        errObj.error = 'none';
+        errObj.messages.push({
+          error: 'Name',
+          message: 'Adapter needs a name to be saved'
+        });
+      }
+      if (this.source.placeHolder || this.sink.placeHolder) {
+        errObj.messages.push({
+          error: 'Missing Source or Sink',
+          message: 'Adapter needs atleast a source and a sink'
+        });
+      }
+      if (!this.validateRequiredProperties()) {
+        errObj.messages.push({
+          error: 'Required Fields',
+          message: 'All required fields need to be set for all plugins.'
+        });
       }
       return errObj;
     }
@@ -160,8 +157,10 @@ angular.module(PKG.name + '.feature.adapters')
     };
 
     Model.prototype.validateRequiredProperties = function() {
-      var isValidPlugin = this.checkForValidRequiredField(this.source);
-      isValidPlugin = this.checkForValidRequiredField(this.sink) && isValidPlugin;
+      var isValidPlugin = !this.source.placeHolder &&
+                          this.checkForValidRequiredField(this.source);
+      isValidPlugin = !this.sink.placeHolder &&
+                       this.checkForValidRequiredField(this.sink) && isValidPlugin;
       this.transforms.forEach(function(transform) {
         if (!transform.placeHolder) {
           isValidPlugin = this.checkForValidRequiredField(transform) && isValidPlugin;
@@ -221,7 +220,7 @@ angular.module(PKG.name + '.feature.adapters')
           }.bind(this),
           function error(err) {
             defer.reject({
-              message: err
+              messages: err
             });
             return defer.promise;
           }
