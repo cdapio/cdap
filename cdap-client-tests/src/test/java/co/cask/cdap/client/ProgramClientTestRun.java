@@ -79,6 +79,11 @@ public class ProgramClientTestRun extends ClientTestBase {
 
       testWorkflowCommand();
 
+      LOG.info("Starting flow with debug");
+      programClient.start(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME, true);
+      assertProgramRunning(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
+      programClient.stop(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
+      assertProgramStopped(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
     } finally {
       appClient.delete(FakeApp.NAME);
     }
