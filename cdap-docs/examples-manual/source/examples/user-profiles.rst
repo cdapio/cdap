@@ -40,7 +40,7 @@ of the Application are tied together by a class ``UserProfiles``:
 
 .. literalinclude:: /../../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java
     :language: java
-    :lines: 34-
+    :lines: 33-
 
 This application uses a Table with conflict detection either at the row level or
 at the column level.
@@ -100,7 +100,7 @@ Before building the application, set the ``ConflictDetection`` appropriately in 
 
 .. literalinclude:: /../../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java
       :language: java
-      :lines: 56-58
+      :lines: 55-57
       
 - The first time you build the application, set the ``Table.PROPERTY_CONFLICT_LEVEL`` to
   ``ConflictDetection.ROW.name()``. 
