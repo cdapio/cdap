@@ -26,7 +26,7 @@ import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.datafabric.dataset.service.LocalUnderlyingSystemNamespaceAdmin;
+import co.cask.cdap.data2.datafabric.dataset.service.LocalStorageProviderNamespaceAdmin;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
@@ -80,7 +80,6 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   private DatasetOpExecutorService opExecutorService;
   private DatasetService service;
   private RemoteDatasetFramework framework;
-  private LocalLocationFactory locationFactory;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -103,7 +102,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     txManager.startAndWait();
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
 
-    locationFactory = new LocalLocationFactory(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
+    LocalLocationFactory locationFactory = new LocalLocationFactory(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
     NamespacedLocationFactory namespacedLocationFactory = new DefaultNamespacedLocationFactory(cConf, locationFactory);
     framework = new RemoteDatasetFramework(discoveryService, registryFactory,
                                            new LocalDatasetTypeClassLoaderFactory());
@@ -135,8 +134,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  mdsDatasetsRegistry,
                                  exploreFacade,
                                  new HashSet<DatasetMetricsReporter>(),
-                                 new LocalUnderlyingSystemNamespaceAdmin(cConf, namespacedLocationFactory,
-                                                                         exploreFacade),
+                                 new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
+                                                                        exploreFacade),
                                  new UsageRegistry(txExecutorFactory, framework));
     // Start dataset service, wait for it to be discoverable
     service.start();

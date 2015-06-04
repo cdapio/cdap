@@ -33,16 +33,16 @@ import java.sql.SQLException;
 /**
  * Manages namespaces on underlying systems - HDFS, HBase, Hive, etc.
  */
-public final class DistributedUnderlyingSystemNamespaceAdmin extends UnderlyingSystemNamespaceAdmin {
+public final class DistributedStorageProviderNamespaceAdmin extends StorageProviderNamespaceAdmin {
 
   private final Configuration hConf;
   private final HBaseTableUtil tableUtil;
   private HBaseAdmin hBaseAdmin;
 
   @Inject
-  public DistributedUnderlyingSystemNamespaceAdmin(CConfiguration cConf,
-                                                   NamespacedLocationFactory namespacedLocationFactory,
-                                                   ExploreFacade exploreFacade, HBaseTableUtil tableUtil) {
+  public DistributedStorageProviderNamespaceAdmin(CConfiguration cConf,
+                                                  NamespacedLocationFactory namespacedLocationFactory,
+                                                  ExploreFacade exploreFacade, HBaseTableUtil tableUtil) {
     super(cConf, namespacedLocationFactory, exploreFacade);
     this.hConf = HBaseConfiguration.create();
     this.tableUtil = tableUtil;

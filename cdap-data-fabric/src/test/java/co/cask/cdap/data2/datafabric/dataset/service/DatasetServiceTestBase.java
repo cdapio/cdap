@@ -182,8 +182,8 @@ public abstract class DatasetServiceTestBase {
                                  mdsDatasetsRegistry,
                                  exploreFacade,
                                  new HashSet<DatasetMetricsReporter>(),
-                                 new LocalUnderlyingSystemNamespaceAdmin(cConf, namespacedLocationFactory,
-                                                                         exploreFacade),
+                                 new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
+                                                                        exploreFacade),
                                  new UsageRegistry(txExecutorFactory, dsFramework));
 
     // Start dataset service, wait for it to be discoverable
