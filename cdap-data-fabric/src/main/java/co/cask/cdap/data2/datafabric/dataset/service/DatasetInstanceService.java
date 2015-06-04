@@ -159,9 +159,11 @@ public class DatasetInstanceService {
   }
 
   /**
-   * Updates an existing Dataset specification properties  {@link DatasetInstanceConfiguration}
-   * is constructed based on request and the Dataset instance is updated.
+   * Updates an existing Dataset specification properties.
+   * {@link DatasetInstanceConfiguration} is constructed based on request and the Dataset instance is updated.
    *
+   * @param instance the dataset instance
+   * @param properties the dataset properties to be used
    * @throws DatasetNotFoundException if the dataset was not found
    * @throws DatasetTypeNotFoundException if the type of the existing dataset was not found
    */
@@ -253,6 +255,7 @@ public class DatasetInstanceService {
 
   /**
    * Drops a dataset.
+   *
    * @param spec specification of dataset to be dropped.
    * @throws Exception on error.
    */
