@@ -4,15 +4,18 @@ angular.module(PKG.name + '.feature.adapters')
 
     $scope.transforms = [{
       name: '',
-      properties: {}
+      properties: {},
+      type: ''
     }];
     $scope.source = {
       name: '',
-      properties: {}
+      properties: {},
+      type: ''
     };
     $scope.sink = {
       name: '',
-      properties: {}
+      properties: {},
+      type: ''
     };
 
     dataSrc.request({
@@ -22,6 +25,6 @@ angular.module(PKG.name + '.feature.adapters')
         $scope.source = res.config.source;
         $scope.sink = res.config.sink;
         $scope.transforms = res.config.transforms || [];
+        $scope.template = res.template;
       });
-
 });
