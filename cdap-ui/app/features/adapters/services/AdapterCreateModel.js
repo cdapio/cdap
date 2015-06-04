@@ -105,21 +105,45 @@ angular.module(PKG.name + '.feature.adapters')
 
     Model.prototype.save = function save() {
       var defer = $q.defer();
-      if (this.source.placeHolder || this.sink.placeHolder) {
-        defer.reject({
-          message: 'Adapter needs atleast a source and a sink'
-        });
-        return defer.promise;
-      } else {
-        if (!this.validateRequiredProperties()) {
+
+      var validation = this.basicValidation();
+
+      switch(validation.error) {
+        case 'name':
+          defer.reject({
+            message: 'Adapter needs a name to be saved'
+          });
+          return defer.promise;
+        case 'missingsourceorsink':
+          defer.reject({
+            message: 'Adapter needs atleast a source and a sink'
+          });
+          return defer.promise;
+        case 'invalidrequiredproperties':
           defer.reject({
             message: 'All required fields need to be set for all plugins.'
           });
           return defer.promise;
-        }
-        return formatAndSave.bind(this)();
+        case 'none':
+          return formatAndSave.bind(this)();
       }
     };
+
+    Model.prototype.basicValidation = function () {
+      var errObj = {
+        error: ''
+      };
+      if (!this.metadata.name.length) {
+        errObj.error = 'name';
+      } else if (this.source.placeHolder || this.sink.placeHolder) {
+        errObj.error = 'missingsourceorsink';
+      } else if (!this.validateRequiredProperties()) {
+        errObj.error = 'invalidrequiredproperties';
+      } else {
+        errObj.error = 'none';
+      }
+      return errObj;
+    }
 
     Model.prototype.checkForValidRequiredField = function checkForValidRequiredField(plugin) {
       var i;
