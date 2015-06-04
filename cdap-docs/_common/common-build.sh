@@ -438,6 +438,7 @@ function display_messages_file() {
     echo ""
     echo "Warning Messages: ${TMP_MESSAGES_FILE}"
     echo ""
+    echo >> ${TMP_MESSAGES_FILE}
     cat ${TMP_MESSAGES_FILE} | while read line
     do
       echo -e "${line}"
