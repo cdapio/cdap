@@ -72,6 +72,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.Location;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
@@ -85,7 +86,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -1271,10 +1271,17 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Temporarily protected. Should be made private when all v3 APIs (webapp in this case) have been implemented.
    */
   protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(Id.Program identifier) {
-    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(identifier.getType()).values();
-    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-                               identifier.getNamespaceId(), identifier.getApplicationId());
-    for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
+    return findRuntimeInfo(identifier, null);
+  }
+
+  protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(Id.Program identifier, @Nullable String runId) {
+    Map<RunId, ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(identifier.getType());
+
+    if (runId != null) {
+      return runtimeInfos.get(RunIds.fromString(runId));
+    }
+
+    for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos.values()) {
       if (identifier.equals(info.getProgramId())) {
         return info;
       }
@@ -1399,11 +1406,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private boolean isConcurrentRunsDisabled(Id.Program id, Map<String, String> properties) {
-    if (!isRunLevelActionAllowed(id.getType())) {
-      return false;
-    }
+    return isRunLevelActionAllowed(id.getType())
+      && Boolean.parseBoolean(properties.get(ProgramOptionConstants.CONCURRENT_RUNS_DISABLED));
 
-    return Boolean.parseBoolean(properties.get(ProgramOptionConstants.CONCURRENT_RUNS_DISABLED));
   }
 
   private AppFabricServiceStatus stop(Id.Program id) {
@@ -1413,13 +1418,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   /**
    * Stops a Program.
    */
-  private AppFabricServiceStatus stop(Id.Program identifier, String runId) {
-    ProgramRuntimeService.RuntimeInfo runtimeInfo;
-    if (runId == null) {
-      runtimeInfo = findRuntimeInfo(identifier);
-    } else {
-      runtimeInfo = runtimeService.list(identifier.getType()).get(RunIds.fromString(runId));
-    }
+  private AppFabricServiceStatus stop(Id.Program identifier, @Nullable String runId) {
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier, runId);
 
     if (runtimeInfo == null) {
       try {
