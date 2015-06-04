@@ -276,7 +276,8 @@ public class PluginInstantiator implements Closeable {
         } catch (InvocationTargetException e) {
           if (e.getCause() instanceof NumberFormatException) {
             // if exception is due to wrong value for integer/double conversion
-            throw new InvalidPluginConfigException(String.format("valueOf operation on %s failed", value), e.getCause());
+            throw new InvalidPluginConfigException(String.format("valueOf operation on %s failed", value),
+                                                   e.getCause());
           }
           throw e;
         }
