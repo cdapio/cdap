@@ -26,9 +26,6 @@ import javax.annotation.Nullable;
  */
 public class DBConfig extends PluginConfig {
 
-  @Description("Driver class to connect to the database.")
-  public String driverClass;
-
   @Description("JDBC connection string including database name.")
   public String connectionString;
 

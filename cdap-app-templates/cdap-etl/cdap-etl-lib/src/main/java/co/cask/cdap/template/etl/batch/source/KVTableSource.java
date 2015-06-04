@@ -44,7 +44,7 @@ public class KVTableSource extends BatchReadableSource<byte[], byte[], Structure
     Schema.Field.of("value", Schema.of(Schema.Type.BYTES))
   );
 
-  private static final String NAME_DESC = "Dataset Name";
+  private static final String NAME_DESC = "Name of the dataset. If it does not already exist, one will be created";
 
   /**
    * Config class for KVTableSource

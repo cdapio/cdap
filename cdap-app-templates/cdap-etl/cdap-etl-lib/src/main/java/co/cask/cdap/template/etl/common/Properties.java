@@ -25,7 +25,6 @@ public final class Properties {
    * Class to hold properties for DBSource and DBSink
    */
   public static class DB {
-    public static final String DRIVER_CLASS = "driverClass";
     public static final String CONNECTION_STRING = "connectionString";
     public static final String TABLE_NAME = "tableName";
     public static final String USER = "user";
