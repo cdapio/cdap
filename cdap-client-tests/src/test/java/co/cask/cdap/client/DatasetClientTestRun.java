@@ -21,6 +21,7 @@ import co.cask.cdap.client.app.StandaloneDataset;
 import co.cask.cdap.client.app.StandaloneDatasetModule;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.DatasetModuleNotFoundException;
 import co.cask.cdap.common.exception.DatasetTypeNotFoundException;
@@ -71,7 +72,9 @@ public class DatasetClientTestRun extends ClientTestBase {
       namespaceClient.create(new NamespaceMeta.Builder().setName(OTHER_NAMESPACE).build());
     } catch (AlreadyExistsException e) {
     }
-    clientConfig = new ClientConfig.Builder(clientConfig).setNamespace(TEST_NAMESPACE).build();
+    clientConfig = new ClientConfig.Builder(clientConfig)
+      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig())
+                             .setNamespace(TEST_NAMESPACE).build()).build();
   }
 
   @After
@@ -99,13 +102,17 @@ public class DatasetClientTestRun extends ClientTestBase {
     Assert.assertEquals(StandaloneDatasetModule.NAME, datasetModuleMeta.getName());
 
     LOG.info("Checking that the new Dataset module does not exist in a different namespace");
-    clientConfig = new ClientConfig.Builder(clientConfig).setNamespace(OTHER_NAMESPACE).build();
+    clientConfig = new ClientConfig.Builder(clientConfig)
+      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig())
+                             .setNamespace(OTHER_NAMESPACE).build()).build();
     try {
       moduleClient.get(StandaloneDatasetModule.NAME);
       Assert.fail("datasetModule found in namespace other than one in which it was expected");
     } catch (DatasetModuleNotFoundException expected) {
     }
-    clientConfig = new ClientConfig.Builder(clientConfig).setNamespace(TEST_NAMESPACE).build();
+    clientConfig = new ClientConfig.Builder(clientConfig)
+      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig())
+                             .setNamespace(TEST_NAMESPACE).build()).build();
 
     LOG.info("Checking that the new Dataset type exists");
     typeClient.waitForExists(StandaloneDataset.TYPE_NAME, 5, TimeUnit.SECONDS);
@@ -118,13 +125,17 @@ public class DatasetClientTestRun extends ClientTestBase {
     Assert.assertEquals(StandaloneDataset.class.getName(), datasetTypeMeta.getName());
 
     LOG.info("Checking that the new Dataset module does not exist in a different namespace");
-    clientConfig = new ClientConfig.Builder(clientConfig).setNamespace(OTHER_NAMESPACE).build();
+    clientConfig = new ClientConfig.Builder(clientConfig)
+      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig())
+                             .setNamespace(OTHER_NAMESPACE).build()).build();
     try {
       typeClient.get(StandaloneDataset.class.getName());
       Assert.fail("datasetType found in namespace other than one in which it was expected");
     } catch (DatasetTypeNotFoundException expected) {
     }
-    clientConfig = new ClientConfig.Builder(clientConfig).setNamespace(TEST_NAMESPACE).build();
+    clientConfig = new ClientConfig.Builder(clientConfig)
+      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig())
+                             .setNamespace(TEST_NAMESPACE).build()).build();
 
     LOG.info("Creating, truncating, and deleting dataset of new Dataset type");
     // Before creating dataset, there are some system datasets already exist

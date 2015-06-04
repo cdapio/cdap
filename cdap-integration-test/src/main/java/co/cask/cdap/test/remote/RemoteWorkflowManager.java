@@ -20,6 +20,7 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.ScheduleClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -41,7 +42,8 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
                                RemoteApplicationManager applicationManager) {
     super(programId, applicationManager);
     ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig)
-      .setNamespace(programId.getNamespace()).build();
+      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig())
+                             .setNamespace(programId.getNamespace()).build()).build();
     this.programClient = new ProgramClient(namespacedClientConfig);
     this.scheduleClient = new ScheduleClient(namespacedClientConfig);
   }

@@ -130,7 +130,9 @@ public class CLIMainTest {
 
   @Before
   public void setUp() {
-    clientConfig = new ClientConfig.Builder(clientConfig).setNamespace(Constants.DEFAULT_NAMESPACE_ID).build();
+    clientConfig = new ClientConfig.Builder(clientConfig)
+      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig())
+                             .setNamespace(Constants.DEFAULT_NAMESPACE_ID).build()).build();
   }
 
   @Test
@@ -247,7 +249,10 @@ public class CLIMainTest {
     NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
     Id.Namespace barspace = Id.Namespace.from("bar");
     namespaceClient.create(new NamespaceMeta.Builder().setName(barspace).build());
-    cliConfig.setClientConfig(new ClientConfig.Builder(cliConfig.getClientConfig()).setNamespace(barspace).build());
+    cliConfig.setClientConfig(new ClientConfig.Builder(cliConfig.getClientConfig())
+                                .setConnectionConfig(
+                                  new ConnectionConfig.Builder(cliConfig.getClientConfig().getConnectionConfig())
+                                                       .setNamespace(barspace).build()).build());
     // list of dataset instances is different in 'foo' namespace
     testCommandOutputNotContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
 

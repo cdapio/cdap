@@ -247,11 +247,6 @@ public final class ClientConfig {
       return this;
     }
 
-    public Builder setNamespace(Id.Namespace namespace) {
-      this.connectionConfig = ConnectionConfig.builder(connectionConfig).setNamespace(namespace).build();
-      return this;
-    }
-
     public Builder setVerifySSLCert(boolean verifySSLCert) {
       this.verifySSLCert = verifySSLCert;
       return this;
