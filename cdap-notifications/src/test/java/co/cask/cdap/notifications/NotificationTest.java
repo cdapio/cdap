@@ -34,7 +34,6 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
@@ -102,7 +101,6 @@ public abstract class NotificationTest {
                                     new MetricsClientRuntimeModule().getInMemoryModules(),
                                     new ExploreClientModule(),
                                     new IOModule(),
-                                    new AuthModule(),
                                     new DataFabricModules().getInMemoryModules(),
                                     new NotificationFeedServiceRuntimeModule().getInMemoryModules()
                                   ),

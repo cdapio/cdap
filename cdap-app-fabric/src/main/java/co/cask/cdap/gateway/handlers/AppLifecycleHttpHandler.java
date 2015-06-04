@@ -33,7 +33,6 @@ import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
-import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
@@ -104,13 +103,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final AdapterService adapterService;
 
   @Inject
-  public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
+  public AppLifecycleHttpHandler(CConfiguration configuration,
                                  ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory,
                                  Scheduler scheduler, ProgramRuntimeService runtimeService, Store store,
                                  NamespaceAdmin namespaceAdmin, NamespacedLocationFactory namespacedLocationFactory,
                                  ApplicationLifecycleService applicationLifecycleService,
                                  AdapterService adapterService) {
-    super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
     this.namespaceAdmin = namespaceAdmin;

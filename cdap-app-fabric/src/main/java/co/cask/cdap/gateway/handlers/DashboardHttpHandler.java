@@ -21,7 +21,7 @@ import co.cask.cdap.config.Config;
 import co.cask.cdap.config.ConfigExistsException;
 import co.cask.cdap.config.ConfigNotFoundException;
 import co.cask.cdap.config.DashboardStore;
-import co.cask.cdap.gateway.auth.Authenticator;
+import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
@@ -48,7 +48,7 @@ import javax.ws.rs.PathParam;
  * Dashboard HTTP Handler.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/configuration/dashboards")
-public class DashboardHttpHandler extends AuthenticatedHttpHandler {
+public class DashboardHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DashboardHttpHandler.class);
   private static final JsonParser JSON_PARSER = new JsonParser();
   private static final String CONFIG_PROPERTY = "config";
@@ -57,8 +57,7 @@ public class DashboardHttpHandler extends AuthenticatedHttpHandler {
   private final DashboardStore dashboardStore;
 
   @Inject
-  public DashboardHttpHandler(Authenticator authenticator, DashboardStore dashboardStore) {
-    super(authenticator);
+  public DashboardHttpHandler(DashboardStore dashboardStore) {
     this.dashboardStore = dashboardStore;
   }
 

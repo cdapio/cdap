@@ -20,7 +20,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.exception.BadRequestException;
 import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterAlreadyExistsException;
@@ -68,9 +67,7 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
   private final NamespaceAdmin namespaceAdmin;
 
   @Inject
-  public AdapterHttpHandler(Authenticator authenticator, AdapterService adapterService,
-                            NamespaceAdmin namespaceAdmin) {
-    super(authenticator);
+  public AdapterHttpHandler(AdapterService adapterService, NamespaceAdmin namespaceAdmin) {
     this.namespaceAdmin = namespaceAdmin;
     this.adapterService = adapterService;
   }

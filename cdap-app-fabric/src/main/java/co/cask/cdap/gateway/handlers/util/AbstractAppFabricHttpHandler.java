@@ -20,8 +20,6 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.proto.ApplicationRecord;
@@ -29,6 +27,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -60,7 +59,7 @@ import javax.annotation.Nullable;
 /**
  * Abstract Class that contains commonly used methods for parsing Http Requests.
  */
-public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHandler {
+public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractAppFabricHttpHandler.class);
 
   /**
@@ -125,10 +124,6 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     public String getMessage() {
       return message;
     }
-  }
-
-  public AbstractAppFabricHttpHandler(Authenticator authenticator) {
-    super(authenticator);
   }
 
   protected int getInstances(HttpRequest request) throws IllegalArgumentException, JsonSyntaxException {

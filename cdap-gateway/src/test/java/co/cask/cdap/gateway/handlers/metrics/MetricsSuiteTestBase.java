@@ -32,7 +32,6 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.logging.read.LogReader;
@@ -160,7 +159,6 @@ public abstract class MetricsSuiteTestBase {
     // mock metrics collection service while we need a real one.
     Injector injector = Guice.createInjector(Modules.override(
       new ConfigModule(cConf),
-      new AuthModule(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new MetricsHandlerModule(),

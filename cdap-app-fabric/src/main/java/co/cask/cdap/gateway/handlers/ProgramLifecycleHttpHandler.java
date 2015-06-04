@@ -35,7 +35,6 @@ import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
-import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
@@ -184,8 +183,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   protected final Scheduler scheduler;
 
   @Inject
-  public ProgramLifecycleHttpHandler(Authenticator authenticator, Store store,
-                                     CConfiguration cConf, ProgramRuntimeService runtimeService,
+  public ProgramLifecycleHttpHandler(Store store, CConfiguration cConf, ProgramRuntimeService runtimeService,
                                      ProgramLifecycleService lifecycleService,
                                      QueueAdmin queueAdmin,
                                      Scheduler scheduler, PreferencesStore preferencesStore,
@@ -193,7 +191,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      MRJobInfoFetcher mrJobInfoFetcher,
                                      PropertiesResolver propertiesResolver, AdapterService adapterService,
                                      MetricStore metricStore) {
-    super(authenticator);
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.store = store;
     this.runtimeService = runtimeService;

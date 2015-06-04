@@ -34,7 +34,6 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -87,7 +86,6 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
       new ExploreClientModule(),
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
-      new AuthModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

@@ -27,11 +27,10 @@ import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.TimeMathParser;
-import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.proto.MetricQueryRequest;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.cdap.proto.MetricTagValue;
+import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -69,7 +68,7 @@ import javax.ws.rs.QueryParam;
  * Search metrics handler.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/metrics")
-public class MetricsHandler extends AuthenticatedHttpHandler {
+public class MetricsHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsHandler.class);
   private static final Gson GSON = new Gson();
 
@@ -135,10 +134,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   }
 
   @Inject
-  public MetricsHandler(Authenticator authenticator,
-                        final MetricStore metricStore) {
-    super(authenticator);
-
+  public MetricsHandler(MetricStore metricStore) {
     this.metricStore = metricStore;
   }
 

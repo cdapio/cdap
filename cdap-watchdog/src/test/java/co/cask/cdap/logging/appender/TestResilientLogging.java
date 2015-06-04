@@ -36,7 +36,6 @@ import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.file.FileLogAppender;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
@@ -103,7 +102,6 @@ public class TestResilientLogging {
       new DataFabricModules().getInMemoryModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
-      new AuthModule(),
       new TransactionMetricsModule(),
       new ExploreClientModule(),
       new LoggingModules().getInMemoryModules());

@@ -19,7 +19,6 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.MasterServiceManager;
-import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.SystemServiceMeta;
 import co.cask.http.HttpResponder;
@@ -50,9 +49,8 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
   private final ServiceStore serviceStore;
 
   @Inject
-  public AbstractMonitorHandler(Authenticator authenticator, Map<String, MasterServiceManager> serviceMap,
+  public AbstractMonitorHandler(Map<String, MasterServiceManager> serviceMap,
                                 ServiceStore serviceStore) throws Exception {
-    super(authenticator);
     this.serviceManagementMap = serviceMap;
     this.serviceStore = serviceStore;
   }
