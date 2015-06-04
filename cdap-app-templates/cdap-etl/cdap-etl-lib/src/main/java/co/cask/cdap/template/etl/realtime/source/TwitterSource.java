@@ -48,7 +48,9 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = "source")
 @Name("Twitter")
-@Description("Twitter Realtime Source")
+@Description("Twitter Realtime Source. Output records will always contain id (long), message (string), " +
+  "favCount (int), rtCount (int), and isRetweet (boolean) fields. Output records may contain lang (string), " +
+  "time (long), source (string), geoLat (double), and geoLong (double) fields if they are available.")
 public class TwitterSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(TwitterSource.class);
   private static final String CONSUMER_KEY = "ConsumerKey";
@@ -63,7 +65,7 @@ public class TwitterSource extends RealtimeSource<StructuredRecord> {
   private static final String FAVC = "favCount";
   private static final String RTC = "rtCount";
   private static final String SRC = "source";
-  private static final String GLAT = "geolat";
+  private static final String GLAT = "geoLat";
   private static final String GLNG = "geoLong";
   private static final String ISRT = "isRetweet";
 
@@ -119,15 +121,15 @@ public class TwitterSource extends RealtimeSource<StructuredRecord> {
     if (tweet.getGeoLocation() != null) {
       recordBuilder.set(GLAT, tweet.getGeoLocation().getLatitude());
       recordBuilder.set(GLNG, tweet.getGeoLocation().getLongitude());
-    } else {
-      recordBuilder.set(GLAT, -1d);
-      recordBuilder.set(GLNG, -1d);
     }
     recordBuilder.set(ISRT, tweet.isRetweet());
     return recordBuilder.build();
   }
 
-  private long convertDataToTimeStamp(Date date) {
+  private Long convertDataToTimeStamp(Date date) {
+    if (date == null) {
+      return null;
+    }
     long startTime = date.getTime() * 1000000;
     return System.nanoTime() - startTime;
   }
@@ -152,13 +154,13 @@ public class TwitterSource extends RealtimeSource<StructuredRecord> {
 
     Schema.Field idField = Schema.Field.of(ID, Schema.of(Schema.Type.LONG));
     Schema.Field msgField = Schema.Field.of(MSG, Schema.of(Schema.Type.STRING));
-    Schema.Field langField = Schema.Field.of(LANG, Schema.of(Schema.Type.STRING));
-    Schema.Field timeField = Schema.Field.of(TIME, Schema.of(Schema.Type.LONG));
+    Schema.Field langField = Schema.Field.of(LANG, Schema.nullableOf(Schema.of(Schema.Type.STRING)));
+    Schema.Field timeField = Schema.Field.of(TIME, Schema.nullableOf(Schema.of(Schema.Type.LONG)));
     Schema.Field favCount = Schema.Field.of(FAVC, Schema.of(Schema.Type.INT));
     Schema.Field rtCount = Schema.Field.of(RTC, Schema.of(Schema.Type.INT));
-    Schema.Field sourceField = Schema.Field.of(SRC, Schema.of(Schema.Type.STRING));
-    Schema.Field geoLatField = Schema.Field.of(GLAT, Schema.of(Schema.Type.DOUBLE));
-    Schema.Field geoLongField = Schema.Field.of(GLNG, Schema.of(Schema.Type.DOUBLE));
+    Schema.Field sourceField = Schema.Field.of(SRC, Schema.nullableOf(Schema.of(Schema.Type.STRING)));
+    Schema.Field geoLatField = Schema.Field.of(GLAT, Schema.nullableOf(Schema.of(Schema.Type.DOUBLE)));
+    Schema.Field geoLongField = Schema.Field.of(GLNG, Schema.nullableOf(Schema.of(Schema.Type.DOUBLE)));
     Schema.Field reTweetField = Schema.Field.of(ISRT, Schema.of(Schema.Type.BOOLEAN));
     schema = Schema.recordOf("tweet", idField, msgField, langField, timeField, favCount, rtCount, sourceField,
                              geoLatField, geoLongField, reTweetField);
