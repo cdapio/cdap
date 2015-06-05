@@ -1,4 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
+  // TODO: We should use rAdapterDetail here since this data is already resolved at adapter.detail state
   .controller('AdapterRunDetailStatusController', function($scope, MyDataSource, $state) {
     var dataSrc = new MyDataSource($scope);
 
@@ -25,6 +26,5 @@ angular.module(PKG.name + '.feature.adapters')
         $scope.source = res.config.source;
         $scope.sink = res.config.sink;
         $scope.transforms = res.config.transforms || [];
-        $scope.template = res.template;
       });
 });
