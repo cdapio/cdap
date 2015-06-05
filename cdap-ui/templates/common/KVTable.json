@@ -8,8 +8,7 @@
        "fields" : {
           "name" : {
              "widget": "textbox",
-             "label": "Table Name",
-             "description" : "Specifies the name of the table to which data will be written to"
+             "label": "Table Name"
           }
        }
     }
