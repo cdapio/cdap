@@ -712,7 +712,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/flows")
   public void getAllFlows(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) {
-    programList(responder, namespaceId, ProgramType.FLOW, null, store);
+    programList(responder, namespaceId, ProgramType.FLOW, store);
   }
 
   /**
@@ -722,7 +722,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/mapreduce")
   public void getAllMapReduce(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId) {
-    programList(responder, namespaceId, ProgramType.MAPREDUCE, null, store);
+    programList(responder, namespaceId, ProgramType.MAPREDUCE, store);
   }
 
   /**
@@ -732,7 +732,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/spark")
   public void getAllSpark(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) {
-    programList(responder, namespaceId, ProgramType.SPARK, null, store);
+    programList(responder, namespaceId, ProgramType.SPARK, store);
   }
 
   /**
@@ -742,7 +742,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/workflows")
   public void getAllWorkflows(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId) {
-    programList(responder, namespaceId, ProgramType.WORKFLOW, null, store);
+    programList(responder, namespaceId, ProgramType.WORKFLOW, store);
   }
 
   /**
@@ -752,14 +752,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/services")
   public void getAllServices(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId) {
-    programList(responder, namespaceId, ProgramType.SERVICE, null, store);
+    programList(responder, namespaceId, ProgramType.SERVICE, store);
   }
 
   @GET
   @Path("/workers")
   public void getAllWorkers(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) {
-    programList(responder, namespaceId, ProgramType.WORKER, null, store);
+    programList(responder, namespaceId, ProgramType.WORKER, store);
   }
 
   /**
