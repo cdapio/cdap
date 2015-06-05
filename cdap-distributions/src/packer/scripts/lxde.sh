@@ -26,6 +26,7 @@ ln -sf /opt/idea* /opt/idea
 # Copy icons
 cp -f /opt/idea/bin/idea.png /usr/share/pixmaps
 cp -f /usr/local/eclipse/icon.xpm /usr/share/pixmaps/eclipse.xpm
+cp -f /opt/cdap/sdk/ui/dist/assets/img/favicon.png /usr/share/pixmaps/cdap.png
 
 # Eclipse Menu entry
 cat > /usr/share/applications/eclipse.desktop << EOF
@@ -61,7 +62,7 @@ Name=CDAP Docs
 Comment=CDAP Documenation Site
 Exec=chromium-browser http://docs.cask.co/cdap 
 Type=Application
-Icon=chromium-browser
+Icon=cdap
 Categories=GNOME;GTK;Development;
 EOF
 
@@ -73,7 +74,7 @@ Name=CDAP UI
 Comment=CDAP UI Web Interface
 Exec=chromium-browser http://localhost:9999
 Type=Application
-Icon=chromium-browser
+Icon=cdap
 Categories=GNOME;GTK;Development;
 EOF
 
