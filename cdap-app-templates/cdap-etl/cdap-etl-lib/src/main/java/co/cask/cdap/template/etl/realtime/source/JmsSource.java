@@ -125,7 +125,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
     envVars.put(Context.PROVIDER_URL, config.providerUrl);
 
     // load the class to this class loader
-    Class<Object> driver = context.loadPluginClass("jmsource.JMSProvider.Context");
+    Class<Object> driver = context.loadPluginClass(getPluginId());
 
     // Bootstrap the JMS consumer
     ClassLoader driverCL = null;
@@ -182,10 +182,14 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    String pluginId = String.format("%s.%s.%s", "jmsource", config.jmsPluginType, config.jmsPluginName);
+    String pluginId = getPluginId();
     Class<Object> driver  = pipelineConfigurer.usePluginClass(config.jmsPluginType, config.jmsPluginName, pluginId,
                                                               PluginProperties.builder().build());
     Preconditions.checkArgument(driver != null, "JMS Initial Connection Factory Context class must be found.");
+  }
+
+  private String getPluginId() {
+    return String.format("%s.%s.%s", "jmsource", config.jmsPluginType, config.jmsPluginName);
   }
 
   @Nullable
