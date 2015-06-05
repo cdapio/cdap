@@ -17,10 +17,12 @@
 package co.cask.cdap.data.stream.service.upload;
 
 import co.cask.cdap.api.stream.StreamEventData;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.io.ByteBuffers;
 import co.cask.cdap.data.stream.service.ConcurrentStreamWriter;
 import co.cask.cdap.data.stream.service.MutableStreamEventData;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -66,7 +68,11 @@ final class BufferedContentWriter implements ContentWriter, Iterable<ByteBuffer>
 
   @Override
   public void close() throws IOException {
-    streamWriter.enqueue(streamId, new StreamEventDataIterator(headers, bodies.iterator()));
+    try {
+      streamWriter.enqueue(streamId, new StreamEventDataIterator(headers, bodies.iterator()));
+    } catch (NotFoundException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override

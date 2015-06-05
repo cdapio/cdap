@@ -184,28 +184,17 @@ public final class StreamHandler extends AbstractHttpHandler {
   public void create(HttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("stream") String stream) throws Exception {
-    try {
-      // Verify stream name
-      Id.Stream streamId = Id.Stream.from(namespaceId, stream);
 
-      // Check for namespace existence. Throws NotFoundException if namespace doesn't exist
-      namespaceClient.get(namespaceId);
+    // Check for namespace existence. Throws NotFoundException if namespace doesn't exist
+    namespaceClient.get(namespaceId);
 
-      // TODO: Modify the REST API to support custom configurations.
-      streamAdmin.create(streamId);
+    // Verify stream name
+    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
 
-      // TODO: For create successful, 201 Created should be returned instead of 200.
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (IllegalArgumentException e) {
-      LOG.error("Failed to create stream {}", stream, e);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (NotFoundException e) {
-      LOG.error("Failed to create stream {}", stream, e);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Exception e) {
-      LOG.error("Failed to create stream {}", stream, e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
+    // TODO: Modify the REST API to support custom configurations.
+    streamAdmin.create(streamId);
+
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @POST
@@ -218,8 +207,6 @@ public final class StreamHandler extends AbstractHttpHandler {
     try {
       streamWriter.enqueue(streamId, getHeaders(request, stream), request.getContent().toByteBuffer());
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
     } catch (IOException e) {
       LOG.error("Failed to write to stream {}", stream, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
