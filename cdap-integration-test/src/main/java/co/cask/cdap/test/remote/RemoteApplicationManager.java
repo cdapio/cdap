@@ -19,6 +19,7 @@ package co.cask.cdap.test.remote;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
@@ -45,21 +46,23 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   private final ClientConfig clientConfig;
   private final ProgramClient programClient;
   private final ApplicationClient applicationClient;
+  private final RESTClient restClient;
 
-  public RemoteApplicationManager(Id.Application application, ClientConfig clientConfig) {
+  public RemoteApplicationManager(Id.Application application, ClientConfig clientConfig, RESTClient restClient) {
     super(application);
 
     ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig).build();
     namespacedClientConfig.setNamespace(application.getNamespace());
     this.clientConfig = namespacedClientConfig;
-    this.programClient = new ProgramClient(clientConfig);
-    this.applicationClient = new ApplicationClient(clientConfig);
+    this.restClient = restClient;
+    this.programClient = new ProgramClient(clientConfig, restClient);
+    this.applicationClient = new ApplicationClient(clientConfig, restClient);
   }
 
   @Override
   public FlowManager getFlowManager(String flowName) {
     Id.Program flowId = Id.Program.from(application, ProgramType.FLOW, flowName);
-    return new RemoteFlowManager(flowId, clientConfig, this);
+    return new RemoteFlowManager(flowId, clientConfig, restClient, this);
   }
 
   @Override
@@ -77,25 +80,25 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   @Override
   public WorkflowManager getWorkflowManager(String workflowName) {
     Id.Program programId = Id.Program.from(application, ProgramType.WORKFLOW, workflowName);
-    return new RemoteWorkflowManager(programId, clientConfig, this);
+    return new RemoteWorkflowManager(programId, clientConfig, restClient, this);
   }
 
   @Override
   public ServiceManager getServiceManager(String serviceName) {
     Id.Program programId = Id.Program.from(application, ProgramType.SERVICE, serviceName);
-    return new RemoteServiceManager(programId, clientConfig, this);
+    return new RemoteServiceManager(programId, clientConfig, restClient, this);
   }
 
   @Override
   public WorkerManager getWorkerManager(String workerName) {
     Id.Program programId = Id.Program.from(application, ProgramType.WORKER, workerName);
-    return new RemoteWorkerManager(programId, clientConfig, this);
+    return new RemoteWorkerManager(programId, clientConfig, restClient, this);
   }
 
   @Override
   @Deprecated
   public StreamWriter getStreamWriter(String streamName) {
-    return new RemoteStreamWriter(new RemoteStreamManager(clientConfig,
+    return new RemoteStreamWriter(new RemoteStreamManager(clientConfig, restClient,
                                                           Id.Stream.from(application.getNamespaceId(), streamName)));
   }
 

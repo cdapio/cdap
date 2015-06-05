@@ -21,10 +21,12 @@ import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.MetaClient;
+import co.cask.cdap.client.MetricsClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.NotFoundException;
@@ -88,7 +90,7 @@ public class IntegrationTestBase {
 
   protected TestManager createTestManager(Id.Namespace namespace) {
     try {
-      return new IntegrationTestManager(createNamespacedClientConfig(getClientConfig(), namespace),
+      return new IntegrationTestManager(createNamespacedClientConfig(getClientConfig(), namespace), getRestClient(),
                                         new LocalLocationFactory(TEMP_FOLDER.newFolder()));
     } catch (IOException e) {
       throw Throwables.propagate(e);
@@ -117,7 +119,7 @@ public class IntegrationTestBase {
 
   private void assertIsClear() throws Exception {
     // only namespace existing should be 'default'
-    NamespaceClient namespaceClient = new NamespaceClient(getClientConfig());
+    NamespaceClient namespaceClient = getNamespaceClient();
     List<NamespaceMeta> list = namespaceClient.list();
     Assert.assertEquals(1, list.size());
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE_META, list.get(0));
@@ -145,24 +147,36 @@ public class IntegrationTestBase {
     return builder.build();
   }
 
+  protected RESTClient getRestClient() {
+    return new RESTClient(getClientConfig());
+  }
+
   protected MetaClient getMetaClient() {
-    return new MetaClient(getClientConfig());
+    return new MetaClient(getClientConfig(), getRestClient());
+  }
+
+  protected NamespaceClient getNamespaceClient() {
+    return new NamespaceClient(getClientConfig(), getRestClient());
+  }
+
+  protected MetricsClient getMetricsClient() {
+    return new MetricsClient(getClientConfig(), getRestClient());
   }
 
   protected ApplicationClient getApplicationClient() {
-    return new ApplicationClient(getClientConfig());
+    return new ApplicationClient(getClientConfig(), getRestClient());
   }
 
   protected ProgramClient getProgramClient() {
-    return new ProgramClient(getClientConfig());
+    return new ProgramClient(getClientConfig(), getRestClient());
   }
 
   protected StreamClient getStreamClient() {
-    return new StreamClient(getClientConfig());
+    return new StreamClient(getClientConfig(), getRestClient());
   }
 
   protected DatasetClient getDatasetClient() {
-    return new DatasetClient(getClientConfig());
+    return new DatasetClient(getClientConfig(), getRestClient());
   }
 
   protected Id.Namespace createNamespace(String name) throws Exception {
