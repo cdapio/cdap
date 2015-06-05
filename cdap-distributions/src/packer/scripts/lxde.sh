@@ -23,6 +23,9 @@ apt-get install -y lxde
 
 # Symlink idea
 ln -sf /opt/idea* /opt/idea
+# Copy icons
+cp -f /opt/idea/bin/idea.png /usr/share/pixmaps
+cp -f /usr/local/eclipse/icon.xpm /usr/share/pixmaps/eclipse.xpm
 
 # Eclipse Menu entry
 cat > /usr/share/applications/eclipse.desktop << EOF
