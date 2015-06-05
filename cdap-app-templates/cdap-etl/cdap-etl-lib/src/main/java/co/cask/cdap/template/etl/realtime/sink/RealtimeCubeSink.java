@@ -64,11 +64,15 @@ public class RealtimeCubeSink extends RealtimeSink<StructuredRecord> {
   private static final String NAME_PROPERTY_DESC = "Name of the Cube dataset. If the Cube does not already exist, " +
     "one will be created.";
   private static final String PROPERTY_RESOLUTIONS_DESC = "Aggregation resolutions. See Cube dataset configuration " +
-    "details for more information";
-  private static final String MAPPING_CONFIG_PROPERTY_DESC = "The StructuredRecord to CubeFact mapping configuration.";
+    "details for more information : http://docs.cask.co/cdap/current/en/developers-manual/building-blocks/datasets/" +
+    "cube.html#cube-configuration";
+  private static final String MAPPING_CONFIG_PROPERTY_DESC = "The StructuredRecord to CubeFact mapping " +
+    "configuration. More info on the format of this configuration can be found at http://docs.cask.co/cdap/current/" +
+    "en/reference-manual/javadocs/co/cask/cdap/template/etl/common/StructuredRecordToCubeFact.html";
 
-  private static final String CUSTOM_PROPERTIES_DESC = "Provide any custom properties " +
-    "(such as Aggregations) as a JSON Map";
+  private static final String CUSTOM_PROPERTIES_DESC = "Provide any custom properties (such as Aggregations) as a " +
+    "JSON Map. For example if aggregations are desired on fields - abc and xyz, the property should have the value : " +
+    "\"{\"dataset.cube.aggregation.agg1.dimensions\":\"abc\", \"dataset.cube.aggregation.agg2.dimensions\":\"xyz\"}";
 
   /**
    * Config class for RealtimeCube

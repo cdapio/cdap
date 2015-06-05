@@ -65,7 +65,8 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
     Schema.Field.of("headers", Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.STRING))),
     Schema.Field.of("body", Schema.of(Schema.Type.BYTES))
   );
-  private static final String NAME_DESCRIPTION = "Name of the stream. Must be a valid stream name.";
+  private static final String NAME_DESCRIPTION = "Name of the stream. Must be a valid stream name. " +
+    "If it doesn't exist, it will be created";
   private static final String DURATION_DESCRIPTION = "Size of the time window to read with each run of the pipeline. " +
     "The format is expected to be a number followed by a 's', 'm', 'h', or 'd' specifying the time unit, with 's' " +
     "for seconds, 'm' for minutes, 'h' for hours, and 'd' for days. For example, a value of '5m' means each run of " +
