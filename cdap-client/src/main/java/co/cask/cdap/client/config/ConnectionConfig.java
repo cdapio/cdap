@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.client.config;
 
+import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
@@ -31,7 +32,7 @@ import javax.annotation.Nullable;
 /**
  * Connection information to a CDAP instance.
  */
-public class ConnectionConfig {
+public final class ConnectionConfig {
 
   private static final Logger LOG = LoggerFactory.getLogger(ConnectionConfig.class);
   private static final CConfiguration CONF = CConfiguration.create();
@@ -52,12 +53,23 @@ public class ConnectionConfig {
     return addressString;
   }
 
-  public static final ConnectionConfig DEFAULT = ConnectionConfig.builder().build();
+  public static final ConnectionConfig DEFAULT = ConnectionConfig.builder().unAuthenticatedConnection().get().build();
 
   private final String hostname;
   private final int port;
   private final boolean sslEnabled;
   private final Id.Namespace namespace;
+  private final String username;
+
+  public ConnectionConfig(Id.Namespace namespace, String hostname, int port, boolean sslEnabled, String userName) {
+    Preconditions.checkArgument(namespace != null, "namespace cannot be empty");
+    Preconditions.checkArgument(hostname != null && !hostname.isEmpty(), "hostname cannot be empty");
+    this.namespace = namespace;
+    this.hostname = hostname;
+    this.port = port;
+    this.sslEnabled = sslEnabled;
+    this.username = userName;
+  }
 
   public ConnectionConfig(Id.Namespace namespace, String hostname, int port, boolean sslEnabled) {
     Preconditions.checkArgument(namespace != null, "namespace cannot be empty");
@@ -66,10 +78,16 @@ public class ConnectionConfig {
     this.hostname = hostname;
     this.port = port;
     this.sslEnabled = sslEnabled;
+    this.username = "";
   }
 
   public URI getURI() {
-    return URI.create(String.format("%s://%s:%d", sslEnabled ? "https" : "http", hostname, port));
+    if (username.equals("")) {
+      return URI.create(String.format("%s://%s:%d", sslEnabled ? "https" : "http", hostname, port));
+    } else {
+      return URI.create(String.format("%s://%s%s:%d", sslEnabled ? "https" : "http", username,
+                                      hostname, port));
+    }
   }
 
   public URI resolveURI(String path) {
@@ -117,7 +135,8 @@ public class ConnectionConfig {
     return Objects.equal(this.hostname, other.hostname) &&
       Objects.equal(this.port, other.port) &&
       Objects.equal(this.sslEnabled, other.sslEnabled) &&
-      Objects.equal(this.namespace, other.namespace);
+      Objects.equal(this.namespace, other.namespace) &&
+      Objects.equal(this.username, other.username);
   }
 
   @Override
@@ -127,6 +146,7 @@ public class ConnectionConfig {
       .add("port", port)
       .add("sslEnabled", sslEnabled)
       .add("namespace", namespace)
+      .add("username", username)
       .toString();
   }
 
@@ -146,6 +166,7 @@ public class ConnectionConfig {
     private Integer port = null;
     private boolean sslEnabled = DEFAULT_SSL_ENABLED;
     private Id.Namespace namespace = Constants.DEFAULT_NAMESPACE_ID;
+    private String username = "";
 
     public Builder() {
     }
@@ -155,42 +176,77 @@ public class ConnectionConfig {
       this.port = connectionConfig.port;
       this.sslEnabled = connectionConfig.sslEnabled;
       this.namespace = connectionConfig.namespace;
+      this.username = connectionConfig.username;
     }
 
-    public Builder setHostname(String hostname) {
-      this.hostname = hostname;
-      return this;
+    public AuthenticatedConnection authenticatedConnection() {
+      return new AuthenticatedConnection();
+    }
+
+    public UnAuthenticatedConnection unAuthenticatedConnection() {
+      return new UnAuthenticatedConnection();
     }
 
     /**
-     * @param port connection port - use null if you want to use the default non-SSL or SSL port,
-     *             depending on sslEnabled
-     * @return this
+     *
      */
-    public Builder setPort(@Nullable Integer port) {
-      this.port = port;
-      return this;
-    }
+    public final class AuthenticatedConnection {
 
-    public Builder setSSLEnabled(boolean sslEnabled) {
-      this.sslEnabled = sslEnabled;
-      return this;
-    }
+      private AuthenticatedConnection() {}
 
-    public Builder setNamespace(Id.Namespace namespace) {
-      this.namespace = namespace;
-      return this;
-    }
-
-    public ConnectionConfig build() {
-      if (port == null) {
-        if (sslEnabled) {
-          port = DEFAULT_SSL_PORT;
-        } else {
-          port = DEFAULT_PORT;
-        }
+      public InternalBuilder userName(String userName) {
+        Builder.this.username = userName + "@";
+        return new InternalBuilder();
       }
-      return new ConnectionConfig(namespace, hostname, port, sslEnabled);
+
+    }
+
+    /**
+     *
+     */
+    public final class InternalBuilder {
+      public InternalBuilder setNamespace(Id.Namespace namespace) {
+        Builder.this.namespace = namespace;
+        return new InternalBuilder();
+      }
+
+      public InternalBuilder setHostname(String hostname) {
+        Builder.this.hostname = hostname;
+        return new InternalBuilder();
+      }
+
+      public InternalBuilder setPort(@Nullable Integer port) {
+        Builder.this.port = port;
+        return new InternalBuilder();
+      }
+
+      public InternalBuilder setSSLEnabled(boolean sslEnabled) {
+        Builder.this.sslEnabled = sslEnabled;
+        return new InternalBuilder();
+      }
+
+      public ConnectionConfig build() {
+        if (port == null) {
+          if (sslEnabled) {
+            port = DEFAULT_SSL_PORT;
+          } else {
+            port = DEFAULT_PORT;
+          }
+        }
+        return new ConnectionConfig(namespace, hostname, port, sslEnabled, username);
+      }
+
+    }
+
+    /**
+     *
+     */
+    public final class UnAuthenticatedConnection {
+      private UnAuthenticatedConnection() {}
+
+      public InternalBuilder get() {
+        return new InternalBuilder();
+      }
     }
   }
 }

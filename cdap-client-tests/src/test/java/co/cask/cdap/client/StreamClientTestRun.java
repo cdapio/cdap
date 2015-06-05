@@ -19,6 +19,8 @@ package co.cask.cdap.client;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.exception.BadRequestException;
 import co.cask.cdap.common.exception.CannotBeDeletedException;
 import co.cask.cdap.common.exception.NotFoundException;
@@ -62,7 +64,9 @@ public class StreamClientTestRun extends ClientTestBase {
     super.setUp();
     namespaceClient = new NamespaceClient(clientConfig);
     namespaceClient.create(new NamespaceMeta.Builder().setName(namespaceId).build());
-    clientConfig.setNamespace(namespaceId);
+    clientConfig = new ClientConfig.Builder(clientConfig)
+      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig()).unAuthenticatedConnection()
+                             .get().setNamespace(namespaceId).build()).build();
     streamClient = new StreamClient(clientConfig);
   }
 
@@ -255,6 +259,8 @@ public class StreamClientTestRun extends ClientTestBase {
   @After
   public void tearDown() throws CannotBeDeletedException, UnauthorizedException, NotFoundException, IOException {
     namespaceClient.delete(namespaceId.getId());
-    clientConfig.setNamespace(namespaceId);
+    clientConfig = new ClientConfig.Builder(clientConfig)
+      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig()).unAuthenticatedConnection()
+                             .get().setNamespace(namespaceId).build()).build();
   }
 }

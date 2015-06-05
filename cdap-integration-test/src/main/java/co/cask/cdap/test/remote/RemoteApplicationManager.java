@@ -19,6 +19,7 @@ package co.cask.cdap.test.remote;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
@@ -49,8 +50,9 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   public RemoteApplicationManager(Id.Application application, ClientConfig clientConfig) {
     super(application);
 
-    ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig).build();
-    namespacedClientConfig.setNamespace(application.getNamespace());
+    ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig)
+      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig()).unAuthenticatedConnection()
+                             .get().setNamespace(application.getNamespace()).build()).build();
     this.clientConfig = namespacedClientConfig;
     this.programClient = new ProgramClient(clientConfig);
     this.applicationClient = new ApplicationClient(clientConfig);

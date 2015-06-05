@@ -30,7 +30,6 @@ import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.app.FakeSpark;
 import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.app.PrefixedEchoHandler;
-import co.cask.cdap.client.config.AuthenticatedConnectionConfig;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.conf.Constants;
@@ -130,7 +129,10 @@ public class CLIMainTest {
 
   @Before
   public void setUp() {
-    clientConfig.setNamespace(Constants.DEFAULT_NAMESPACE_ID);
+    clientConfig = new ClientConfig.Builder(clientConfig)
+      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig())
+                             .unAuthenticatedConnection().get()
+                             .setNamespace(Constants.DEFAULT_NAMESPACE_ID).build()).build();
   }
 
   @Test
@@ -155,7 +157,9 @@ public class CLIMainTest {
     Assert.assertTrue(prompt.contains(cliConfig.getCurrentNamespace().getId()));
 
     ConnectionConfig oldConnectionConfig = clientConfig.getConnectionConfig();
-    ConnectionConfig authConnectionConfig = new AuthenticatedConnectionConfig(oldConnectionConfig, "test-username");
+    ConnectionConfig.Builder authConnectionConfigBuilder = new ConnectionConfig.Builder(oldConnectionConfig);
+    ConnectionConfig authConnectionConfig = authConnectionConfigBuilder.authenticatedConnection()
+      .userName("test-username").build();
     cliConfig.setConnectionConfig(authConnectionConfig);
     prompt = cliMain.getPrompt(cliConfig.getClientConfig());
     Assert.assertTrue(prompt.contains("test-username@"));
@@ -247,7 +251,11 @@ public class CLIMainTest {
     NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
     Id.Namespace barspace = Id.Namespace.from("bar");
     namespaceClient.create(new NamespaceMeta.Builder().setName(barspace).build());
-    cliConfig.getClientConfig().setNamespace(barspace);
+    cliConfig.setClientConfig(new ClientConfig.Builder(cliConfig.getClientConfig())
+                                .setConnectionConfig(
+                                  new ConnectionConfig.Builder(cliConfig.getClientConfig().getConnectionConfig())
+                                    .unAuthenticatedConnection().get()
+                                    .setNamespace(barspace).build()).build());
     // list of dataset instances is different in 'foo' namespace
     testCommandOutputNotContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
 

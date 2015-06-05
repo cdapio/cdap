@@ -111,7 +111,9 @@ public class CLIMain {
     this.options = options;
     this.cliConfig = cliConfig;
 
-    cliConfig.getClientConfig().setVerifySSLCert(options.isVerifySSL());
+    this.cliConfig.setClientConfig(new ClientConfig.Builder(cliConfig.getClientConfig())
+                                     .setVerifySSLCert(options.isVerifySSL()).build());
+
     injector = Guice.createInjector(
       new AbstractModule() {
         @Override
