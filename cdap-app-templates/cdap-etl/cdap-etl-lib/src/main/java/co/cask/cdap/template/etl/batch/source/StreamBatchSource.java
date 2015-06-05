@@ -34,6 +34,7 @@ import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.template.etl.common.ETLUtils;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -186,7 +187,8 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
         parseSchema();
       }
       // check duration and delay
-      ETLUtils.parseDuration(duration);
+      long durationInMs = ETLUtils.parseDuration(duration);
+      Preconditions.checkArgument(durationInMs > 0, "Duration must be greater than 0");
       if (!Strings.isNullOrEmpty(delay)) {
         ETLUtils.parseDuration(delay);
       }

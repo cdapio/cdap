@@ -47,7 +47,7 @@ public final class ETLUtils {
     } catch (NumberFormatException nfe) {
       Throwables.propagate(nfe);
     }
-    Preconditions.checkArgument(parsedValue > 0);
+    Preconditions.checkArgument(parsedValue >= 0);
 
     char lastChar = durationStr.charAt(durationStr.length() - 1);
     switch (lastChar) {
