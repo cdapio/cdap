@@ -34,6 +34,7 @@ import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.template.etl.common.ETLUtils;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -117,7 +118,7 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
   @Override
   public void transform(KeyValue<LongWritable, Object> input, Emitter<StructuredRecord> emitter) throws Exception {
     // if not format spec was given, the value is a StreamEvent
-    if (streamBatchConfig.format == null) {
+    if (Strings.isNullOrEmpty(streamBatchConfig.format)) {
       StreamEvent event = (StreamEvent) input.getValue();
       Map<String, String> headers = Objects.firstNonNull(event.getHeaders(), ImmutableMap.<String, String>of());
       StructuredRecord output = StructuredRecord.builder(DEFAULT_SCHEMA)
@@ -186,7 +187,8 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
         parseSchema();
       }
       // check duration and delay
-      ETLUtils.parseDuration(duration);
+      long durationInMs = ETLUtils.parseDuration(duration);
+      Preconditions.checkArgument(durationInMs > 0, "Duration must be greater than 0");
       if (!Strings.isNullOrEmpty(delay)) {
         ETLUtils.parseDuration(delay);
       }
@@ -214,7 +216,7 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
     private Schema parseSchema() {
       // try to parse the schema if there is one
       try {
-        return schema == null ? null : Schema.parseJson(schema);
+        return Strings.isNullOrEmpty(schema) ? null : Schema.parseJson(schema);
       } catch (IOException e) {
         throw new IllegalArgumentException("Invalid schema: " + e.getMessage());
       }
