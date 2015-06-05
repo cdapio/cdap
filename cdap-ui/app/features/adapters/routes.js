@@ -56,6 +56,12 @@ angular.module(PKG.name + '.feature.adapters')
                   defer.resolve(res);
                 });
               return defer.promise;
+            },
+            rAdapterDetail: function(MyDataSource, $stateParams, $q) {
+              var dataSrc = new MyDataSource();
+              return dataSrc.request({
+                _cdapPath: '/namespaces/' + $stateParams.namespace + '/adapters/' + $stateParams.adapterId
+              });
             }
           },
           ncyBreadcrumb: {
