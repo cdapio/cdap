@@ -115,7 +115,10 @@ public class TwitterSource extends RealtimeSource<StructuredRecord> {
     recordBuilder.set(ID, tweet.getId());
     recordBuilder.set(MSG, tweet.getText());
     recordBuilder.set(LANG, tweet.getLang());
-    recordBuilder.set(TIME, convertDataToTimeStamp(tweet.getCreatedAt()));
+    Date tweetDate = tweet.getCreatedAt();
+    if (tweetDate != null) {
+      recordBuilder.set(TIME, tweetDate.getTime());
+    }
     recordBuilder.set(FAVC, tweet.getFavoriteCount());
     recordBuilder.set(RTC, tweet.getRetweetCount());
     recordBuilder.set(SRC, tweet.getSource());
@@ -125,14 +128,6 @@ public class TwitterSource extends RealtimeSource<StructuredRecord> {
     }
     recordBuilder.set(ISRT, tweet.isRetweet());
     return recordBuilder.build();
-  }
-
-  private Long convertDataToTimeStamp(Date date) {
-    if (date == null) {
-      return null;
-    }
-    long startTime = date.getTime() * 1000000;
-    return System.nanoTime() - startTime;
   }
 
   @Nullable
