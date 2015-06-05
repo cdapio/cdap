@@ -8,7 +8,7 @@ angular.module(PKG.name + '.commons')
         plugins: '='
       },
       templateUrl: 'widget-container/widget-stream-properties/widget-stream-properties.html',
-      controller: function($scope, myHelpers) {
+      controller: function($scope) {
         $scope.options = $scope.config['schema-types'];
         var defaultType = $scope.config['schema-default-type'] || $scope.options[0];
 
@@ -34,7 +34,12 @@ angular.module(PKG.name + '.commons')
             watcher = $scope.$watch('avro', formatAvro, true);
 
             if ($scope.model) {
-              $scope.avro.schema = JSON.parse($scope.model);
+              try {
+                $scope.avro.schema = JSON.parse($scope.model);
+              } catch (e) {
+                $scope.error = 'Invalid JSON string';
+              }
+
             }
           } else if ($scope.plugins.format === 'grok') {
             $scope.fields = 'GROK';
@@ -61,7 +66,7 @@ angular.module(PKG.name + '.commons')
             }
           }
 
-          schema = myHelpers.objectQuery(schema, 'fields');
+          schema = schema.fields;
           $scope.properties = [];
           angular.forEach(schema, function(p) {
             if (angular.isArray(p.type)) {
