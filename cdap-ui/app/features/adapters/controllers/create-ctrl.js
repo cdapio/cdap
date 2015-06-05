@@ -89,11 +89,27 @@ angular.module(PKG.name + '.feature.adapters')
               content: 'Adapter Template created successfully!'
             });
           }, function(err) {
-            $alert({
+            var errorObj = {
               type: 'danger',
-              content: err.message
-            });
+              title: 'Error Creating Adapter',
+              content: (angular.isArray(err.messages)? formatErrorMessages(err.messages): err.messages)
+            };
+            $alert(errorObj);
           });
+
+          // TODO: Should move it to a template.
+          // Constructing html in controller is bad.
+          function formatErrorMessages(messages) {
+            var formattedMessage = '';
+            messages.forEach(function(message) {
+              formattedMessage += '<div>';
+              formattedMessage += '<strong>' + message.error + '</strong> '
+              formattedMessage += '<span>' + message.message + '</span>';
+              formattedMessage += '</div>';
+            });
+
+            return formattedMessage;
+          }
     };
 
     this.saveAsDraft = function() {
