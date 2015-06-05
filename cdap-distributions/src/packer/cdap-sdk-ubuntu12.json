@@ -107,6 +107,7 @@
         "scripts/fluxbox.sh",
         "scripts/slim.sh",
         "scripts/firefox.sh",
+        "scripts/fill-maven-cache.sh",
         "scripts/vbox-guest-additions.sh"
       ],
       "only": ["cdap-sdk-vm"]
