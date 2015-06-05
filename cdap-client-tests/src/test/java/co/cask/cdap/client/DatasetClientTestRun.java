@@ -73,8 +73,8 @@ public class DatasetClientTestRun extends ClientTestBase {
     } catch (AlreadyExistsException e) {
     }
     clientConfig = new ClientConfig.Builder(clientConfig)
-      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig())
-                             .setNamespace(TEST_NAMESPACE).build()).build();
+      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig()).unAuthenticatedConnection()
+                             .get().setNamespace(TEST_NAMESPACE).build()).build();
   }
 
   @After
@@ -103,16 +103,16 @@ public class DatasetClientTestRun extends ClientTestBase {
 
     LOG.info("Checking that the new Dataset module does not exist in a different namespace");
     clientConfig = new ClientConfig.Builder(clientConfig)
-      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig())
-                             .setNamespace(OTHER_NAMESPACE).build()).build();
+      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig()).unAuthenticatedConnection()
+                             .get().setNamespace(OTHER_NAMESPACE).build()).build();
     try {
       moduleClient.get(StandaloneDatasetModule.NAME);
       Assert.fail("datasetModule found in namespace other than one in which it was expected");
     } catch (DatasetModuleNotFoundException expected) {
     }
     clientConfig = new ClientConfig.Builder(clientConfig)
-      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig())
-                             .setNamespace(TEST_NAMESPACE).build()).build();
+      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig()).unAuthenticatedConnection()
+                             .get().setNamespace(TEST_NAMESPACE).build()).build();
 
     LOG.info("Checking that the new Dataset type exists");
     typeClient.waitForExists(StandaloneDataset.TYPE_NAME, 5, TimeUnit.SECONDS);
@@ -126,16 +126,16 @@ public class DatasetClientTestRun extends ClientTestBase {
 
     LOG.info("Checking that the new Dataset module does not exist in a different namespace");
     clientConfig = new ClientConfig.Builder(clientConfig)
-      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig())
-                             .setNamespace(OTHER_NAMESPACE).build()).build();
+      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig()).unAuthenticatedConnection()
+                             .get().setNamespace(OTHER_NAMESPACE).build()).build();
     try {
       typeClient.get(StandaloneDataset.class.getName());
       Assert.fail("datasetType found in namespace other than one in which it was expected");
     } catch (DatasetTypeNotFoundException expected) {
     }
     clientConfig = new ClientConfig.Builder(clientConfig)
-      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig())
-                             .setNamespace(TEST_NAMESPACE).build()).build();
+      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig()).unAuthenticatedConnection()
+                             .get().setNamespace(TEST_NAMESPACE).build()).build();
 
     LOG.info("Creating, truncating, and deleting dataset of new Dataset type");
     // Before creating dataset, there are some system datasets already exist

@@ -22,7 +22,6 @@ import co.cask.cdap.cli.util.table.AltStyleTableRenderer;
 import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.cli.util.table.TableRendererConfig;
 import co.cask.cdap.client.MetaClient;
-import co.cask.cdap.client.config.AuthenticatedConnectionConfig;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.exception.UnauthorizedException;
@@ -149,7 +148,8 @@ public class CLIConfig implements TableRendererConfig {
       AccessToken accessToken = null;
       if (userToken != null) {
         accessToken = userToken.getAccessToken();
-        connectionConfig = new AuthenticatedConnectionConfig(connectionConfig, userToken.getUsername());
+        connectionConfig = new ConnectionConfig.Builder(connectionConfig).authenticatedConnection()
+          .userName(userToken.getUsername()).build();
       }
       checkConnection(clientConfig, connectionConfig, accessToken);
       setConnectionConfig(connectionConfig);
@@ -297,7 +297,8 @@ public class CLIConfig implements TableRendererConfig {
   }
 
   public void setNamespace(Id.Namespace namespace) {
-    ConnectionConfig connectionConfig = ConnectionConfig.builder(clientConfig.getConnectionConfig())
+    ConnectionConfig connectionConfig = new ConnectionConfig.Builder(clientConfig.getConnectionConfig())
+      .unAuthenticatedConnection().get()
       .setNamespace(namespace)
       .build();
     this.setConnectionConfig(connectionConfig);

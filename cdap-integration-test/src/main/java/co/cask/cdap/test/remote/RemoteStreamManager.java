@@ -42,8 +42,8 @@ public class RemoteStreamManager implements StreamManager {
 
   public RemoteStreamManager(ClientConfig clientConfig, Id.Stream streamId) {
     ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig)
-      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig())
-                             .setNamespace(streamId.getNamespace()).build()).build();
+      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig()).unAuthenticatedConnection()
+                             .get().setNamespace(streamId.getNamespace()).build()).build();
     this.streamClient = new StreamClient(namespacedClientConfig);
     this.streamName = streamId.getId();
   }

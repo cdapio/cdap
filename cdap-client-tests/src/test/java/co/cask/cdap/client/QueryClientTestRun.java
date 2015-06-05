@@ -68,7 +68,7 @@ public class QueryClientTestRun extends ClientTestBase {
                                                   accessToken);
     namespaceClient = new NamespaceClient(clientConfig);
     ClientConfig config = new ClientConfig.Builder()
-      .setConnectionConfig(new ConnectionConfig.Builder(connectionConfig)
+      .setConnectionConfig(new ConnectionConfig.Builder(connectionConfig).unAuthenticatedConnection().get()
                              .setNamespace(otherNamespace).build()).build();
     queryClientOtherNamespace = new QueryClient(config);
   }

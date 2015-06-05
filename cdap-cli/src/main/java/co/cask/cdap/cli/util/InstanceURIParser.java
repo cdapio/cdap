@@ -59,6 +59,7 @@ public class InstanceURIParser {
     }
 
     return ConnectionConfig.builder()
+      .unAuthenticatedConnection().get()
       .setHostname(hostname)
       .setPort(port)
       .setSSLEnabled(sslEnabled)

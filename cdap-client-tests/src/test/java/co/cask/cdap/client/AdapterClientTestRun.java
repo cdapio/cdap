@@ -59,8 +59,8 @@ public class AdapterClientTestRun extends ClientTestBase {
   public void setUp() throws Throwable {
     super.setUp();
     this.clientConfig = new ClientConfig.Builder(clientConfig)
-      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig())
-                             .setNamespace(Constants.DEFAULT_NAMESPACE_ID).build()).build();
+      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig()).unAuthenticatedConnection()
+                             .get().setNamespace(Constants.DEFAULT_NAMESPACE_ID).build()).build();
     adapterClient = new AdapterClient(clientConfig);
     appTemplateClient = new ApplicationTemplateClient(clientConfig);
   }

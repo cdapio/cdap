@@ -65,8 +65,8 @@ public class StreamClientTestRun extends ClientTestBase {
     namespaceClient = new NamespaceClient(clientConfig);
     namespaceClient.create(new NamespaceMeta.Builder().setName(namespaceId).build());
     clientConfig = new ClientConfig.Builder(clientConfig)
-      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig())
-                             .setNamespace(namespaceId).build()).build();
+      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig()).unAuthenticatedConnection()
+                             .get().setNamespace(namespaceId).build()).build();
     streamClient = new StreamClient(clientConfig);
   }
 
@@ -260,7 +260,7 @@ public class StreamClientTestRun extends ClientTestBase {
   public void tearDown() throws CannotBeDeletedException, UnauthorizedException, NotFoundException, IOException {
     namespaceClient.delete(namespaceId.getId());
     clientConfig = new ClientConfig.Builder(clientConfig)
-      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig())
-                             .setNamespace(namespaceId).build()).build();
+      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig()).unAuthenticatedConnection()
+                             .get().setNamespace(namespaceId).build()).build();
   }
 }

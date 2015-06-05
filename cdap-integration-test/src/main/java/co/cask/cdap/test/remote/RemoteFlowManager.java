@@ -38,8 +38,8 @@ public class RemoteFlowManager extends AbstractProgramManager<FlowManager> imple
                            RemoteApplicationManager applicationManager) {
     super(programId, applicationManager);
     ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig)
-      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig())
-                             .setNamespace(programId.getNamespace()).build()).build();
+      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig()).unAuthenticatedConnection()
+                             .get().setNamespace(programId.getNamespace()).build()).build();
     this.programClient = new ProgramClient(namespacedClientConfig);
     this.metricsClient = new MetricsClient(namespacedClientConfig);
   }

@@ -42,8 +42,8 @@ public class RemoteServiceManager extends AbstractProgramManager<ServiceManager>
                               RemoteApplicationManager remoteApplicationManager) {
     super(programId, remoteApplicationManager);
     ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig)
-      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig())
-                             .setNamespace(programId.getNamespace()).build()).build();
+      .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig()).unAuthenticatedConnection()
+                             .get().setNamespace(programId.getNamespace()).build()).build();
     this.metricsClient = new MetricsClient(namespacedClientConfig);
     this.programClient = new ProgramClient(namespacedClientConfig);
     this.serviceClient = new ServiceClient(namespacedClientConfig);

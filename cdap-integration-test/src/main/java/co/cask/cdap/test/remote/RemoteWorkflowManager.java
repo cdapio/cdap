@@ -43,6 +43,7 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
     super(programId, applicationManager);
     ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig)
       .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig())
+                             .unAuthenticatedConnection().get()
                              .setNamespace(programId.getNamespace()).build()).build();
     this.programClient = new ProgramClient(namespacedClientConfig);
     this.scheduleClient = new ScheduleClient(namespacedClientConfig);
