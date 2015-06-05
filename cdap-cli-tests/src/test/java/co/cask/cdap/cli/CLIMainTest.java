@@ -256,15 +256,18 @@ public class CLIMainTest {
                                   new ConnectionConfig.Builder(cliConfig.getClientConfig().getConnectionConfig())
                                     .unAuthenticatedConnection().get()
                                     .setNamespace(barspace).build()).build());
+
+    CLIMain cMain = new CLIMain(new LaunchOptions(LaunchOptions.DEFAULT.getUri(), true, true, false), cliConfig);
+    CLI newCli = cMain.getCLI();
     // list of dataset instances is different in 'foo' namespace
-    testCommandOutputNotContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
+    testCommandOutputNotContains(newCli, "list dataset instances", FakeDataset.class.getSimpleName());
 
     // also can not create dataset instances if the type it depends on exists only in a different namespace.
     Id.DatasetType datasetType1 = Id.DatasetType.from(barspace, datasetType.getName());
-    testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName,
+    testCommandOutputContains(newCli, "create dataset instance " + datasetType.getName() + " " + datasetName,
                               new DatasetTypeNotFoundException(datasetType1).getMessage());
 
-    testCommandOutputContains(cli, "use namespace default", "Now using namespace 'default'");
+    testCommandOutputContains(newCli, "use namespace default", "Now using namespace 'default'");
     try {
       testCommandOutputContains(cli, "truncate dataset instance " + datasetName, "Successfully truncated dataset");
     } finally {

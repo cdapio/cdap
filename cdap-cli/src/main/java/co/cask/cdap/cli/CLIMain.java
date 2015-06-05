@@ -267,7 +267,8 @@ public class CLIMain {
       String[] commandArgs = cliMainArgs.getCommandTokens();
 
       try {
-        ClientConfig clientConfig = ClientConfig.builder().setConnectionConfig(null).build();
+        ClientConfig clientConfig = ClientConfig.builder()
+          .setConnectionConfig(new ConnectionConfig.Builder().unAuthenticatedConnection().get().build()).build();
         final CLIConfig cliConfig = new CLIConfig(clientConfig, output, new AltStyleTableRenderer());
         CLIMain cliMain = new CLIMain(launchOptions, cliConfig);
         CLI cli = cliMain.getCLI();

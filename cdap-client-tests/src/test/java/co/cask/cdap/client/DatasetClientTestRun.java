@@ -105,8 +105,9 @@ public class DatasetClientTestRun extends ClientTestBase {
     clientConfig = new ClientConfig.Builder(clientConfig)
       .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig()).unAuthenticatedConnection()
                              .get().setNamespace(OTHER_NAMESPACE).build()).build();
+    DatasetModuleClient newModuleClient = new DatasetModuleClient(clientConfig);
     try {
-      moduleClient.get(StandaloneDatasetModule.NAME);
+      newModuleClient.get(StandaloneDatasetModule.NAME);
       Assert.fail("datasetModule found in namespace other than one in which it was expected");
     } catch (DatasetModuleNotFoundException expected) {
     }
@@ -128,8 +129,9 @@ public class DatasetClientTestRun extends ClientTestBase {
     clientConfig = new ClientConfig.Builder(clientConfig)
       .setConnectionConfig(new ConnectionConfig.Builder(clientConfig.getConnectionConfig()).unAuthenticatedConnection()
                              .get().setNamespace(OTHER_NAMESPACE).build()).build();
+    DatasetTypeClient newTypeClient = new DatasetTypeClient(clientConfig);
     try {
-      typeClient.get(StandaloneDataset.class.getName());
+      newTypeClient.get(StandaloneDataset.class.getName());
       Assert.fail("datasetType found in namespace other than one in which it was expected");
     } catch (DatasetTypeNotFoundException expected) {
     }
