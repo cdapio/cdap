@@ -61,7 +61,7 @@ angular.module(PKG.name+'.feature.home')
             mySessionStorage.get(PREFKEY)
               .then(function (latest) {
 
-                if (checkNamespace(latest)) {
+                if (latest && checkNamespace(latest)) {
                   $state.go($state.current, {namespace: latest}, {reload: true});
                   return;
                 }
