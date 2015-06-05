@@ -18,7 +18,6 @@ angular.module(PKG.name + '.feature.explore')
     myExploreApi.list(params)
       .$promise
       .then(function (res) {
-        console.log('res', res);
         angular.forEach(res, function(v) {
           var split = v.table.split('_');
           v.type = split[0];
