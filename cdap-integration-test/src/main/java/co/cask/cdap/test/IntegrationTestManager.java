@@ -29,6 +29,7 @@ import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.AdapterConfig;
@@ -61,18 +62,20 @@ public class IntegrationTestManager implements TestManager {
 
   private final ApplicationClient applicationClient;
   private final ClientConfig clientConfig;
+  private final RESTClient restClient;
   private final LocationFactory locationFactory;
   private final ProgramClient programClient;
   private final NamespaceClient namespaceClient;
   private final AdapterClient adapterClient;
 
-  public IntegrationTestManager(ClientConfig clientConfig, LocationFactory locationFactory) {
+  public IntegrationTestManager(ClientConfig clientConfig, RESTClient restClient, LocationFactory locationFactory) {
     this.clientConfig = clientConfig;
+    this.restClient = restClient;
     this.locationFactory = locationFactory;
-    this.applicationClient = new ApplicationClient(clientConfig);
-    this.programClient = new ProgramClient(clientConfig);
-    this.namespaceClient = new NamespaceClient(clientConfig);
-    this.adapterClient = new AdapterClient(clientConfig);
+    this.applicationClient = new ApplicationClient(clientConfig, restClient);
+    this.programClient = new ProgramClient(clientConfig, restClient);
+    this.namespaceClient = new NamespaceClient(clientConfig, restClient);
+    this.adapterClient = new AdapterClient(clientConfig, restClient);
   }
 
   @Override
@@ -108,7 +111,7 @@ public class IntegrationTestManager implements TestManager {
       DefaultAppConfigurer configurer = new DefaultAppConfigurer(application);
       application.configure(configurer, new ApplicationContext());
       String applicationId = configurer.createSpecification().getName();
-      return new RemoteApplicationManager(Id.Application.from(namespace, applicationId), clientConfig);
+      return new RemoteApplicationManager(Id.Application.from(namespace, applicationId), clientConfig, restClient);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -188,7 +191,7 @@ public class IntegrationTestManager implements TestManager {
 
   @Override
   public StreamManager getStreamManager(Id.Stream streamId) {
-    return new RemoteStreamManager(clientConfig, streamId);
+    return new RemoteStreamManager(clientConfig, restClient, streamId);
   }
 
   /**
