@@ -44,7 +44,17 @@ body.state-overview {
         }
         .health-widget {
           display: inline-block;
-          margin-right: 28px;
+          @media (max-width: @screen-xs-max) {
+            display: block;
+            max-width: 280px;
+            margin: 0 auto;
+          }
+          &:last-of-type {
+            @media (min-width: @screen-lg-min) { margin-right: 28px; }
+          }
+        }
+        .health-widgets + .health-widget {
+          @media (min-width: @screen-sm-min) { margin-right: 28px; }
         }
         .health-metrics {
           position: relative;
@@ -143,6 +153,7 @@ body.state-overview {
             font-weight: bold;
             line-height: 32px;
             margin-bottom: 0;
+            white-space: nowrap;
           }
         }
         .col-xs-12.col-md-6 {
