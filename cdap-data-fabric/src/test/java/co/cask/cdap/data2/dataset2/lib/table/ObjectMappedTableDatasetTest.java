@@ -78,9 +78,9 @@ public class ObjectMappedTableDatasetTest {
       Record record3 = new Record(1, 0L, 3.14f, 3.14159265358979323846, "hello",
                                   Bytes.toBytes("world"), ByteBuffer.wrap(Bytes.toBytes("yo")), UUID.randomUUID());
       List<KeyValue<byte[], Record>> recordList = Lists.newArrayList();
-      recordList.add(new KeyValue<byte[], Record>(Bytes.toBytes("123"), record1));
-      recordList.add(new KeyValue<byte[], Record>(Bytes.toBytes("456"), record2));
-      recordList.add(new KeyValue<byte[], Record>(Bytes.toBytes("789"), record3));
+      recordList.add(new KeyValue<>(Bytes.toBytes("123"), record1));
+      recordList.add(new KeyValue<>(Bytes.toBytes("456"), record2));
+      recordList.add(new KeyValue<>(Bytes.toBytes("789"), record3));
 
       for (KeyValue<byte[], Record> record : recordList) {
         records.write(record.getKey(), record.getValue());

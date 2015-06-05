@@ -80,7 +80,7 @@ public class ASMDatumCodecTest {
     DatumWriter<Short> writer = getWriter(type);
     writer.encode((short) 3000, new BinaryEncoder(os));
 
-    ReflectionDatumReader<Short> reader = new ReflectionDatumReader<Short>(getSchema(type), type);
+    ReflectionDatumReader<Short> reader = new ReflectionDatumReader<>(getSchema(type), type);
     short value = reader.read(new BinaryDecoder(is), getSchema(type));
 
     Assert.assertEquals((short) 3000, value);
@@ -94,7 +94,7 @@ public class ASMDatumCodecTest {
     DatumWriter<Integer> writer = getWriter(type);
     writer.encode(12234234, new BinaryEncoder(os));
 
-    ReflectionDatumReader<Integer> reader = new ReflectionDatumReader<Integer>(getSchema(type), type);
+    ReflectionDatumReader<Integer> reader = new ReflectionDatumReader<>(getSchema(type), type);
     int value = reader.read(new BinaryDecoder(is), getSchema(type));
 
     Assert.assertEquals(12234234, value);
@@ -108,7 +108,7 @@ public class ASMDatumCodecTest {
     DatumWriter<Double> writer = getWriter(type);
     writer.encode(3.14d, new BinaryEncoder(os));
 
-    ReflectionDatumReader<Double> reader = new ReflectionDatumReader<Double>(getSchema(type), type);
+    ReflectionDatumReader<Double> reader = new ReflectionDatumReader<>(getSchema(type), type);
     double value = reader.read(new BinaryDecoder(is), getSchema(type));
 
     Assert.assertEquals(3.14d, value, 0.000001d);
@@ -122,7 +122,7 @@ public class ASMDatumCodecTest {
     DatumWriter<String> writer = getWriter(type);
     writer.encode("Testing message", new BinaryEncoder(os));
 
-    ReflectionDatumReader<String> reader = new ReflectionDatumReader<String>(getSchema(type), type);
+    ReflectionDatumReader<String> reader = new ReflectionDatumReader<>(getSchema(type), type);
     String value = reader.read(new BinaryDecoder(is), getSchema(type));
 
     Assert.assertEquals("Testing message", value);
@@ -138,7 +138,7 @@ public class ASMDatumCodecTest {
     UUID uuid = UUID.randomUUID();
     writer.encode(uuid, new BinaryEncoder(os));
 
-    ReflectionDatumReader<UUID> reader = new ReflectionDatumReader<UUID>(getSchema(type), type);
+    ReflectionDatumReader<UUID> reader = new ReflectionDatumReader<>(getSchema(type), type);
     UUID value = reader.read(new BinaryDecoder(is), getSchema(type));
 
     Assert.assertEquals(uuid, value);
@@ -155,7 +155,7 @@ public class ASMDatumCodecTest {
     writer.encode(TestEnum.VALUE4, encoder);
     writer.encode(TestEnum.VALUE3, encoder);
 
-    ReflectionDatumReader<TestEnum> reader = new ReflectionDatumReader<TestEnum>(getSchema(type), type);
+    ReflectionDatumReader<TestEnum> reader = new ReflectionDatumReader<>(getSchema(type), type);
 
     TestEnum value = reader.read(new BinaryDecoder(is), getSchema(type));
     Assert.assertEquals(TestEnum.VALUE1, value);
@@ -177,7 +177,7 @@ public class ASMDatumCodecTest {
     DatumWriter<int[]> writer = getWriter(type);
     writer.encode(writeValue, new BinaryEncoder(os));
 
-    ReflectionDatumReader<int[]> reader = new ReflectionDatumReader<int[]>(getSchema(type), type);
+    ReflectionDatumReader<int[]> reader = new ReflectionDatumReader<>(getSchema(type), type);
 
     int[] value = reader.read(new BinaryDecoder(is), getSchema(type));
     Assert.assertArrayEquals(writeValue, value);
@@ -193,7 +193,7 @@ public class ASMDatumCodecTest {
     DatumWriter<String[]> writer = getWriter(type);
     writer.encode(writeValue, new BinaryEncoder(os));
 
-    ReflectionDatumReader<String[]> reader = new ReflectionDatumReader<String[]>(getSchema(type), type);
+    ReflectionDatumReader<String[]> reader = new ReflectionDatumReader<>(getSchema(type), type);
 
     String[] value = reader.read(new BinaryDecoder(is), getSchema(type));
     Assert.assertArrayEquals(writeValue, value);
@@ -209,7 +209,7 @@ public class ASMDatumCodecTest {
     DatumWriter<List<Long>> writer = getWriter(type);
     writer.encode(writeValue, new BinaryEncoder(os));
 
-    ReflectionDatumReader<List<Long>> reader = new ReflectionDatumReader<List<Long>>(getSchema(type), type);
+    ReflectionDatumReader<List<Long>> reader = new ReflectionDatumReader<>(getSchema(type), type);
 
     List<Long> value = reader.read(new BinaryDecoder(is), getSchema(type));
     Assert.assertEquals(writeValue, value);
@@ -227,7 +227,7 @@ public class ASMDatumCodecTest {
     writer.encode(map, new BinaryEncoder(os));
 
     ReflectionDatumReader<Map<String, List<String>>> reader =
-      new ReflectionDatumReader<Map<String, List<String>>>(getSchema(type), type);
+      new ReflectionDatumReader<>(getSchema(type), type);
 
     Assert.assertEquals(map, reader.read(new BinaryDecoder(is), getSchema(type)));
   }
@@ -242,7 +242,7 @@ public class ASMDatumCodecTest {
     List<URI> writeValue = ImmutableList.of(URI.create("http://www.abc.com"));
     writer.encode(writeValue, new BinaryEncoder(os));
 
-    ReflectionDatumReader<List<URI>> reader = new ReflectionDatumReader<List<URI>>(getSchema(type), type);
+    ReflectionDatumReader<List<URI>> reader = new ReflectionDatumReader<>(getSchema(type), type);
     Assert.assertEquals(writeValue, reader.read(new BinaryDecoder(is), getSchema(type)));
   }
 
@@ -289,7 +289,7 @@ public class ASMDatumCodecTest {
     Record writeValue = new Record(10, "testing", ImmutableList.of("a", "b", "c"), TestEnum.VALUE2);
     writer.encode(writeValue, new BinaryEncoder(os));
 
-    ReflectionDatumReader<Record> reader = new ReflectionDatumReader<Record>(getSchema(type), type);
+    ReflectionDatumReader<Record> reader = new ReflectionDatumReader<>(getSchema(type), type);
     Record value = reader.read(new BinaryDecoder(is), getSchema(type));
 
     Assert.assertEquals(writeValue, value);
@@ -306,7 +306,7 @@ public class ASMDatumCodecTest {
                                   new Record(10, "testing", ImmutableList.of("a", "b", "c"), TestEnum.VALUE2));
     writer.encode(writeValue, new BinaryEncoder(os));
 
-    ReflectionDatumReader<List<Record>> reader = new ReflectionDatumReader<List<Record>>(getSchema(type), type);
+    ReflectionDatumReader<List<Record>> reader = new ReflectionDatumReader<>(getSchema(type), type);
     List<Record> value = reader.read(new BinaryDecoder(is), getSchema(type));
 
     Assert.assertEquals(writeValue, value);
@@ -323,7 +323,7 @@ public class ASMDatumCodecTest {
                                                          ImmutableList.of("a", "b", "c"), TestEnum.VALUE2)}};
     writer.encode(writeValue, new BinaryEncoder(os));
 
-    ReflectionDatumReader<Record[][]> reader = new ReflectionDatumReader<Record[][]>(getSchema(type), type);
+    ReflectionDatumReader<Record[][]> reader = new ReflectionDatumReader<>(getSchema(type), type);
     Record[][] value = reader.read(new BinaryDecoder(is), getSchema(type));
 
     Assert.assertArrayEquals(writeValue, value);
@@ -375,7 +375,7 @@ public class ASMDatumCodecTest {
     Node root = new Node(1, new Node(2, null, new Node(3, null, null)), new Node(4, new Node(5, null, null), null));
     writer.encode(root, new BinaryEncoder(os));
 
-    ReflectionDatumReader<Node> reader = new ReflectionDatumReader<Node>(getSchema(type), type);
+    ReflectionDatumReader<Node> reader = new ReflectionDatumReader<>(getSchema(type), type);
     Node value = reader.read(new BinaryDecoder(is), getSchema(type));
 
     Assert.assertEquals(root, value);
@@ -392,7 +392,7 @@ public class ASMDatumCodecTest {
                                         ByteBuffer.wrap("Testing message".getBytes(Charsets.UTF_8)));
     writer.encode(event, new BinaryEncoder(os));
 
-    ReflectionDatumReader<StreamEvent> reader = new ReflectionDatumReader<StreamEvent>(getSchema(type), type);
+    ReflectionDatumReader<StreamEvent> reader = new ReflectionDatumReader<>(getSchema(type), type);
     StreamEvent value = reader.read(new BinaryDecoder(is), getSchema(type));
 
     Assert.assertEquals(event.getHeaders(), value.getHeaders());
@@ -420,7 +420,7 @@ public class ASMDatumCodecTest {
     endTime = System.nanoTime();
     System.out.println("Time spent: " + TimeUnit.MILLISECONDS.convert(endTime - startTime, TimeUnit.NANOSECONDS));
 
-    ReflectionDatumWriter<Node> datumWriter = new ReflectionDatumWriter<Node>(getSchema(type));
+    ReflectionDatumWriter<Node> datumWriter = new ReflectionDatumWriter<>(getSchema(type));
     startTime = System.nanoTime();
     for (int i = 0; i < 100000; i++) {
       os.reset();
@@ -438,7 +438,7 @@ public class ASMDatumCodecTest {
     endTime = System.nanoTime();
     System.out.println("Time spent: " + TimeUnit.MILLISECONDS.convert(endTime - startTime, TimeUnit.NANOSECONDS));
 
-    datumWriter = new ReflectionDatumWriter<Node>(getSchema(type));
+    datumWriter = new ReflectionDatumWriter<>(getSchema(type));
     startTime = System.nanoTime();
     for (int i = 0; i < 100000; i++) {
       os.reset();

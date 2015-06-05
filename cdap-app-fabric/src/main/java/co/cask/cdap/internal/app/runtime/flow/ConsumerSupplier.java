@@ -60,7 +60,7 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
   static <T> ConsumerSupplier<T> create(Id.Namespace namespace, List<Id> owners, UsageRegistry usageRegistry,
                                         DataFabricFacade dataFabricFacade, QueueName queueName,
                                         ConsumerConfig consumerConfig, int numGroups) {
-    return new ConsumerSupplier<T>(namespace, owners, usageRegistry, dataFabricFacade,
+    return new ConsumerSupplier<>(namespace, owners, usageRegistry, dataFabricFacade,
                                    queueName, consumerConfig, numGroups);
   }
 

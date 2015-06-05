@@ -128,7 +128,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
     messagesToReceive = configMessagesToReceive.intValue();
 
     // Get environment vars - this would be prefixed with java.naming.*
-    final Hashtable<String, String> envVars = new Hashtable<String, String>();
+    final Hashtable<String, String> envVars = new Hashtable<>();
     for (Map.Entry<String, String> entry : runtimeArguments.entrySet()) {
       envVars.put(entry.getKey(), entry.getValue());
     }

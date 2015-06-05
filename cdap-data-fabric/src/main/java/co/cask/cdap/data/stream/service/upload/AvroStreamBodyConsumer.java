@@ -145,7 +145,7 @@ final class AvroStreamBodyConsumer extends BodyConsumer {
     public void run() {
       try {
         // Create an Avro reader from the given content stream.
-        try (DataFileStream<Object> reader = new DataFileStream<Object>(contentStream, new DummyDatumReader())) {
+        try (DataFileStream<Object> reader = new DataFileStream<>(contentStream, new DummyDatumReader())) {
           Schema schema = reader.getSchema();
           DecoderFactory decoderFactory = DecoderFactory.get();
           ByteBufferInputStream blockInput = new ByteBufferInputStream(ByteBuffers.EMPTY_BUFFER);

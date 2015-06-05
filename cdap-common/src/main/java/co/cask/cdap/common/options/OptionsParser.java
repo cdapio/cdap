@@ -70,7 +70,7 @@ public final class OptionsParser {
    * @return List of arguments that were not definied by annotations.
    */
   public static List<String> init(Object object, String[] args, String appName, String appVersion, PrintStream out) {
-    List<String> nonOptionArgs = new ArrayList<String>();
+    List<String> nonOptionArgs = new ArrayList<>();
     Map<String, String> parsedOptions = parseArgs(args, nonOptionArgs);
     Map<String, OptionSpec> declaredOptions = extractDeclarations(object);
 
@@ -129,7 +129,7 @@ public final class OptionsParser {
    * @return map of options to it's definitions.
    */
   private static Map<String, OptionSpec> extractDeclarations(Object object) {
-    Map<String, OptionSpec> options = new TreeMap<String, OptionSpec>();
+    Map<String, OptionSpec> options = new TreeMap<>();
 
     // Get the parent class name.
     Class<?> clazz = object.getClass();
@@ -154,7 +154,7 @@ public final class OptionsParser {
   }
 
   private static Map<String, String> parseArgs(String[] args, List<String> nonOptionArgs) {
-    Map<String, String> parsedOptions = new TreeMap<String, String>();
+    Map<String, String> parsedOptions = new TreeMap<>();
     boolean ignoreTheRest = false;
     for (String arg : args) {
       if (arg.startsWith("-") && !ignoreTheRest) {

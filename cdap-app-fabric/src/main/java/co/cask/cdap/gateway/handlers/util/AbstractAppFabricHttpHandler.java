@@ -179,7 +179,7 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
       List<ApplicationRecord> appRecords = Lists.newArrayList();
       List<ApplicationSpecification> specList;
       if (appId == null) {
-        specList = new ArrayList<ApplicationSpecification>(store.getAllApplications(accId));
+        specList = new ArrayList<>(store.getAllApplications(accId));
       } else {
         ApplicationSpecification appSpec = store.getApplication(new Id.Application(accId, appId));
         if (appSpec == null) {

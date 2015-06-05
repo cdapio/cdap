@@ -23,7 +23,7 @@ import java.util.Map;
  * Handy implementation of the {@link Split}. Acts as a map of attributes.
  */
 public final class SimpleSplit extends Split {
-  private Map<String, String> attributes = new HashMap<String, String>();
+  private Map<String, String> attributes = new HashMap<>();
 
   /**
    * Sets an attribute.

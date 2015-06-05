@@ -63,8 +63,8 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     LOG.info(String.format("Kafka topic is %s", this.topic));
 
     this.kafkaClient = kafkaClient;
-    this.kafkaCancelMap = new HashMap<Integer, Cancellable>();
-    this.kafkaCancelCallbackLatchMap = new HashMap<Integer, CountDownLatch>();
+    this.kafkaCancelMap = new HashMap<>();
+    this.kafkaCancelCallbackLatchMap = new HashMap<>();
     this.messageProcessors = messageProcessors;
   }
 

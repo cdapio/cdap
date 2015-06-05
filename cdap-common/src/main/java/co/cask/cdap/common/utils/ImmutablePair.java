@@ -44,7 +44,7 @@ public final class ImmutablePair<A, B> {
   private final B second;
 
   public static <A, B> ImmutablePair<A, B> of(A first, B second) {
-    return new ImmutablePair<A, B>(first, second);
+    return new ImmutablePair<>(first, second);
   }
 
   /**

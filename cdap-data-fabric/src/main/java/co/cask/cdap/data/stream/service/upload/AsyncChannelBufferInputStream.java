@@ -31,7 +31,7 @@ import java.util.concurrent.SynchronousQueue;
  */
 public final class AsyncChannelBufferInputStream extends InputStream {
 
-  private final BlockingQueue<ChannelBuffer> buffers = new SynchronousQueue<ChannelBuffer>();
+  private final BlockingQueue<ChannelBuffer> buffers = new SynchronousQueue<>();
   private ChannelBuffer currentBuffer = ChannelBuffers.EMPTY_BUFFER;
   private boolean eof;
 

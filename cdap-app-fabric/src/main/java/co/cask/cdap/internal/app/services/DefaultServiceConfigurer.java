@@ -141,7 +141,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
     HttpHandlerFactory factory = new HttpHandlerFactory("", noOpsMetricsCollector);
     @SuppressWarnings("unchecked")
     TypeToken<T> type = (TypeToken<T>) TypeToken.of(handler.getClass());
-    return factory.createHttpHandler(type, new VerificationDelegateContext<T>(handler));
+    return factory.createHttpHandler(type, new VerificationDelegateContext<>(handler));
   }
 
   private static final class VerificationDelegateContext<T extends HttpServiceHandler> implements DelegatorContext<T> {

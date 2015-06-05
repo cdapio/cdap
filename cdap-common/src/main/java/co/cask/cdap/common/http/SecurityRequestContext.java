@@ -21,7 +21,7 @@ import com.google.common.base.Optional;
  * RequestContext that maintains a ThreadLocal with references to {@code AccessTokenIdentifier}.
  */
 public final class SecurityRequestContext {
-  private static final ThreadLocal<String> userId = new InheritableThreadLocal<String>();
+  private static final ThreadLocal<String> userId = new InheritableThreadLocal<>();
 
   private SecurityRequestContext() {
   }

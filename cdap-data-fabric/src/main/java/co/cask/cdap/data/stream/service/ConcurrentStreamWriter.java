@@ -374,7 +374,7 @@ public final class ConcurrentStreamWriter implements Closeable {
     EventQueue(Id.Stream streamId, StreamMetricsCollectorFactory.StreamMetricsCollector metricsCollector) {
       this.streamId = streamId;
       this.streamEvent = new MutableStreamEvent();
-      this.queue = new ConcurrentLinkedQueue<WriteRequest>();
+      this.queue = new ConcurrentLinkedQueue<>();
       this.writerFlag = new AtomicBoolean(false);
       this.metrics = new WriteRequest.Metrics();
       this.metricsCollector = metricsCollector;

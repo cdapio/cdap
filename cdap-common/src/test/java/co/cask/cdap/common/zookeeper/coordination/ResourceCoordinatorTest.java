@@ -98,7 +98,7 @@ public class ResourceCoordinatorTest {
 
           // Add a change handler for this discoverable.
           final BlockingQueue<Collection<PartitionReplica>> assignmentQueue =
-            new SynchronousQueue<Collection<PartitionReplica>>();
+            new SynchronousQueue<>();
           final Semaphore finishSemaphore = new Semaphore(0);
           Cancellable cancelSubscribe1 = subscribe(client, discoverable1, assignmentQueue, finishSemaphore);
 

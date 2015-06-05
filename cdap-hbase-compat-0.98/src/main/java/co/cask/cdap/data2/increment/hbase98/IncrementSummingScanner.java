@@ -265,7 +265,7 @@ class IncrementSummingScanner implements RegionScanner {
   private static class WrappedScanner implements Closeable {
     private boolean hasMore;
     private byte[] currentRow;
-    private List<Cell> cellsToConsume = new ArrayList<Cell>();
+    private List<Cell> cellsToConsume = new ArrayList<>();
     private int currentIdx;
     private final InternalScanner scanner;
 

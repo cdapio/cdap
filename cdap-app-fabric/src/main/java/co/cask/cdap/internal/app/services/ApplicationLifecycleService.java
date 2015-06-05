@@ -123,7 +123,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception
    */
   public void removeAll(Id.Namespace identifier) throws Exception {
-    List<ApplicationSpecification> allSpecs = new ArrayList<ApplicationSpecification>(
+    List<ApplicationSpecification> allSpecs = new ArrayList<>(
       store.getAllApplications(identifier));
 
     //Check if any program associated with this namespace is running

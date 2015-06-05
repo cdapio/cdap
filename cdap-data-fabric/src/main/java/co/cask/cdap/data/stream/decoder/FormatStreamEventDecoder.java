@@ -53,6 +53,6 @@ public final class FormatStreamEventDecoder<T> implements StreamEventDecoder<Lon
     key.set(event.getTimestamp());
     T body = bodyFormat.read(event);
     Map<String, String> headers = Objects.firstNonNull(event.getHeaders(), ImmutableMap.<String, String>of());
-    return result.setKey(key).setValue(new GenericStreamEventData<T>(headers, body));
+    return result.setKey(key).setValue(new GenericStreamEventData<>(headers, body));
   }
 }

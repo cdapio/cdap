@@ -84,7 +84,7 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
     "mapreduce.local.reduce.tasks.maximum";
 
   private FileSystem fs;
-  private HashMap<JobID, Job> jobs = new HashMap<JobID, Job>();
+  private HashMap<JobID, Job> jobs = new HashMap<>();
   private JobConf conf;
   private AtomicInteger map_tasks = new AtomicInteger(0);
   private AtomicInteger reduce_tasks = new AtomicInteger(0);
@@ -267,7 +267,7 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
 
       int numTasks = 0;
       ArrayList<RunnableWithThrowable> list =
-        new ArrayList<RunnableWithThrowable>();
+        new ArrayList<>();
       for (TaskSplitMetaInfo task : taskInfo) {
         list.add(new MapTaskRunnable(task, numTasks++, jobId,
                                      mapOutputFiles));
@@ -345,7 +345,7 @@ public class LocalJobRunnerWithFix implements ClientProtocol {
 
       int taskId = 0;
       ArrayList<RunnableWithThrowable> list =
-        new ArrayList<RunnableWithThrowable>();
+        new ArrayList<>();
       for (int i = 0; i < this.numReduceTasks; i++) {
         list.add(new ReduceTaskRunnable(taskId++, jobId, mapOutputFiles));
       }

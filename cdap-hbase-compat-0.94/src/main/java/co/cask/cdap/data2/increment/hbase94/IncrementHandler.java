@@ -127,14 +127,14 @@ public class IncrementHandler extends BaseRegionObserver {
 
     if (isIncrement || !transactional) {
       // incremental write
-      NavigableMap<byte[], List<KeyValue>> newFamilyMap = new TreeMap<byte[], List<KeyValue>>(Bytes.BYTES_COMPARATOR);
+      NavigableMap<byte[], List<KeyValue>> newFamilyMap = new TreeMap<>(Bytes.BYTES_COMPARATOR);
 
       long tsToAssign = 0;
       if (!transactional) {
         tsToAssign = state.getUniqueTimestamp();
       }
       for (Map.Entry<byte[], List<KeyValue>> entry : put.getFamilyMap().entrySet()) {
-        List<KeyValue> newCells = new ArrayList<KeyValue>(entry.getValue().size());
+        List<KeyValue> newCells = new ArrayList<>(entry.getValue().size());
         for (KeyValue kv : entry.getValue()) {
           // rewrite the cell value with a special prefix to identify it as a delta
           // for 0.98 we can update this to use cell tags
@@ -162,9 +162,9 @@ public class IncrementHandler extends BaseRegionObserver {
       long tsToAssign = state.getUniqueTimestamp();
       delete.setTimestamp(tsToAssign);
       // new key values
-      NavigableMap<byte[], List<KeyValue>> newFamilyMap = new TreeMap<byte[], List<KeyValue>>(Bytes.BYTES_COMPARATOR);
+      NavigableMap<byte[], List<KeyValue>> newFamilyMap = new TreeMap<>(Bytes.BYTES_COMPARATOR);
       for (Map.Entry<byte[], List<KeyValue>> entry : delete.getFamilyMap().entrySet()) {
-        List<KeyValue> newCells = new ArrayList<KeyValue>(entry.getValue().size());
+        List<KeyValue> newCells = new ArrayList<>(entry.getValue().size());
         for (KeyValue kv : entry.getValue()) {
           // replace the timestamp
           newCells.add(new KeyValue(kv.getBuffer(), kv.getRowOffset(), kv.getRowLength(),

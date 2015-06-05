@@ -182,7 +182,7 @@ public final class LoggingEvent implements ILoggingEvent {
 
     if (loggingEvent.argumentArray != null) {
     GenericArray<String> argArray =
-      new GenericData.Array<String>(loggingEvent.argumentArray.length,
+      new GenericData.Array<>(loggingEvent.argumentArray.length,
                                     schema.getField("argumentArray").schema().getTypes().get(1));
       Collections.addAll(argArray, loggingEvent.argumentArray);
       datum.put("argumentArray", argArray);

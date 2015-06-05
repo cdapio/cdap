@@ -24,6 +24,6 @@ public class InMemoryPropertyStoreTest extends PropertyStoreTestBase {
 
   @Override
   protected <T> PropertyStore<T> createPropertyStore(Codec<T> codec) {
-    return new InMemoryPropertyStore<T>();
+    return new InMemoryPropertyStore<>();
   }
 }

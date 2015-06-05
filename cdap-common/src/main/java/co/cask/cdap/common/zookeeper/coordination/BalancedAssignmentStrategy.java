@@ -34,7 +34,7 @@ public class BalancedAssignmentStrategy implements AssignmentStrategy {
 
     // Compute for each handler how many partition replica is already assigned
     for (T handler : handlers) {
-      handlerQueue.add(new HandlerSize<T>(handler, assignments));
+      handlerQueue.add(new HandlerSize<>(handler, assignments));
     }
 
     // For each unassigned partition replica in the requirement, assign it to the handler

@@ -52,7 +52,7 @@ public final class SparkDatasetOutputFormat<KEY, VALUE> extends OutputFormat<KEY
     BatchWritable<KEY, VALUE> dataset = (BatchWritable<KEY, VALUE>) sparkContext.getDataset(getOutputDataSet(conf));
 
     // the record writer now owns the context and will close it
-    return new DatasetRecordWriter<KEY, VALUE>(dataset, sparkContext);
+    return new DatasetRecordWriter<>(dataset, sparkContext);
   }
 
   private String getOutputDataSet(Configuration conf) {

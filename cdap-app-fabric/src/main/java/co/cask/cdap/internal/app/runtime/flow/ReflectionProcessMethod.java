@@ -47,7 +47,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
   private final int maxRetries;
 
   public static <T> ReflectionProcessMethod<T> create(Flowlet flowlet, Method method, int maxRetries) {
-    return new ReflectionProcessMethod<T>(flowlet, method, maxRetries);
+    return new ReflectionProcessMethod<>(flowlet, method, maxRetries);
   }
 
   private ReflectionProcessMethod(Flowlet flowlet, Method method, int maxRetries) {
@@ -121,7 +121,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
   private ProcessResult<T> createResult(InputDatum<T> input, Throwable failureCause) {
     // If the method has param, then object for the result would be iterator or the first event (batch vs no-batch)
     T event = hasParam ? (batch ? (T) input.iterator() : input.iterator().next()) : null;
-    return new ReflectionProcessResult<T>(event, failureCause);
+    return new ReflectionProcessResult<>(event, failureCause);
   }
 
   private static final class ReflectionProcessResult<V> implements ProcessResult<V> {

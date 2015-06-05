@@ -1571,7 +1571,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     if (args == null) {
       return null;
     }
-    List<BatchEndpointInstances> retVal = new ArrayList<BatchEndpointInstances>(args.size());
+    List<BatchEndpointInstances> retVal = new ArrayList<>(args.size());
     for (BatchEndpointArgs arg: args) {
       retVal.add(new BatchEndpointInstances(arg));
     }
@@ -1582,7 +1582,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     if (args == null) {
       return null;
     }
-    List<BatchEndpointStatus> retVal = new ArrayList<BatchEndpointStatus>(args.size());
+    List<BatchEndpointStatus> retVal = new ArrayList<>(args.size());
     for (BatchEndpointArgs arg: args) {
       retVal.add(new BatchEndpointStatus(arg));
     }

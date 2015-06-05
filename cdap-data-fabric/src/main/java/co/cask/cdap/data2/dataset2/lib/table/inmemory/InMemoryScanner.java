@@ -57,7 +57,7 @@ public class InMemoryScanner implements Scanner {
 
   @Override
   public Row next() {
-    Map<byte[], byte[]> columns = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
+    Map<byte[], byte[]> columns = new TreeMap<>(Bytes.BYTES_COMPARATOR);
     Map.Entry<byte[], NavigableMap<byte[], byte[]>> rowEntry = null;
 
     while (columns.isEmpty() && this.rows.hasNext()) {

@@ -51,6 +51,6 @@ public final class SingleQueue2Reader<T> extends TimeTrackingQueueReader<T> {
   @Override
   public InputDatum<T> tryDequeue(long timeout, TimeUnit timeoutUnit) throws IOException {
     QueueConsumer consumer = consumerSupplier.get();
-    return new BasicInputDatum<byte[], T>(consumer.getQueueName(), consumer.dequeue(batchSize), decoder);
+    return new BasicInputDatum<>(consumer.getQueueName(), consumer.dequeue(batchSize), decoder);
   }
 }
