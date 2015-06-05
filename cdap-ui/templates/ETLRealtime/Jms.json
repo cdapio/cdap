@@ -9,6 +9,7 @@
           "jms.destination.name" : {
              "widget": "textbox",
              "label": "Destination Queue",
+             "description" : "Specifies the name of a JMS queue to retrieve the data from",
              "properties": {
                "width": "medium"
              }
@@ -17,6 +18,7 @@
           "jms.messages.receive" : {
              "widget": "number",
              "label": "Message Count",
+             "description" : "Number of messages to be retrieved from the JMS queue. Default is set to 50",
              "info": "",
              "properties": {
                "width": "extra-small",

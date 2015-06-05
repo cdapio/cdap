@@ -105,21 +105,42 @@ angular.module(PKG.name + '.feature.adapters')
 
     Model.prototype.save = function save() {
       var defer = $q.defer();
-      if (this.source.placeHolder || this.sink.placeHolder) {
+
+      var validation = this.basicValidation();
+      if (!validation.messages.length) {
+        return formatAndSave.bind(this)();
+      } else {
         defer.reject({
-          message: 'Adapter needs atleast a source and a sink'
+          messages: validation.messages
         });
         return defer.promise;
-      } else {
-        if (!this.validateRequiredProperties()) {
-          defer.reject({
-            message: 'All required fields need to be set for all plugins.'
-          });
-          return defer.promise;
-        }
-        return formatAndSave.bind(this)();
       }
     };
+
+    Model.prototype.basicValidation = function () {
+      var errObj = {
+        messages: []
+      };
+      if (!this.metadata.name.length) {
+        errObj.messages.push({
+          error: 'Name',
+          message: 'Adapter needs a name to be saved'
+        });
+      }
+      if (this.source.placeHolder || this.sink.placeHolder) {
+        errObj.messages.push({
+          error: 'Missing Source or Sink',
+          message: 'Adapter needs atleast a source and a sink'
+        });
+      }
+      if (!this.validateRequiredProperties()) {
+        errObj.messages.push({
+          error: 'Required Fields',
+          message: 'All required fields need to be set for all plugins.'
+        });
+      }
+      return errObj;
+    }
 
     Model.prototype.checkForValidRequiredField = function checkForValidRequiredField(plugin) {
       var i;
@@ -136,8 +157,10 @@ angular.module(PKG.name + '.feature.adapters')
     };
 
     Model.prototype.validateRequiredProperties = function() {
-      var isValidPlugin = this.checkForValidRequiredField(this.source);
-      isValidPlugin = this.checkForValidRequiredField(this.sink) && isValidPlugin;
+      var isValidPlugin = !this.source.placeHolder &&
+                          this.checkForValidRequiredField(this.source);
+      isValidPlugin = !this.sink.placeHolder &&
+                       this.checkForValidRequiredField(this.sink) && isValidPlugin;
       this.transforms.forEach(function(transform) {
         if (!transform.placeHolder) {
           isValidPlugin = this.checkForValidRequiredField(transform) && isValidPlugin;
@@ -197,7 +220,7 @@ angular.module(PKG.name + '.feature.adapters')
           }.bind(this),
           function error(err) {
             defer.reject({
-              message: err
+              messages: err
             });
             return defer.promise;
           }

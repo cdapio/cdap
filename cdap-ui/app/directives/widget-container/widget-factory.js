@@ -91,6 +91,14 @@ angular.module(PKG.name + '.commons')
           'ng-options': 'item as item for item in myconfig.properties.values',
           'ng-init': 'model = model.length ? model : myconfig.properties.default'
         }
+      },
+      'stream-properties': {
+        element: '<my-stream-properties></my-stream-properties>',
+        attributes: {
+          'ng-model': 'model',
+          'data-plugins': 'properties',
+          'data-config': 'myconfig'
+        }
       }
     };
     this.registry['__default__'] = this.registry['textbox'];
