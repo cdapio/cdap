@@ -32,7 +32,7 @@
 
     "group2": {
        "display" : "JMS Connection Factory",
-       "position" : [ "jms.jndi.connectionfactory.name", "jms.factory.initial", "jms.provider.url" ],
+       "position" : [ "jms.jndi.connectionfactory.name", "jms.factory.initial", "jms.provider.url", "jms.plugin.name", "jms.plugin.type", "jms.plugin.custom.properties"],
        "fields" : {
           "jms.jndi.connectionfactory.name" : {
              "widget": "textbox",
@@ -57,6 +57,11 @@
          "jms.plugin.type": {
            "widget": "textbox",
            "label": "JMS Provider Plugin Type"
+         },
+
+         "jms.plugin.custom.properties": {
+           "widget" : "json-editor",
+           "label": "JMS Provider Plugin Custom properties as JSON string"
          }
        }
     }
