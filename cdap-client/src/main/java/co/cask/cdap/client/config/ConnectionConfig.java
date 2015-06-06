@@ -61,7 +61,7 @@ public final class ConnectionConfig {
   private final Id.Namespace namespace;
   private final String username;
 
-  public ConnectionConfig(Id.Namespace namespace, String hostname, int port, boolean sslEnabled, String userName) {
+  private ConnectionConfig(Id.Namespace namespace, String hostname, int port, boolean sslEnabled, String userName) {
     Preconditions.checkArgument(namespace != null, "namespace cannot be empty");
     Preconditions.checkArgument(hostname != null && !hostname.isEmpty(), "hostname cannot be empty");
     this.namespace = namespace;
@@ -69,16 +69,6 @@ public final class ConnectionConfig {
     this.port = port;
     this.sslEnabled = sslEnabled;
     this.username = userName;
-  }
-
-  public ConnectionConfig(Id.Namespace namespace, String hostname, int port, boolean sslEnabled) {
-    Preconditions.checkArgument(namespace != null, "namespace cannot be empty");
-    Preconditions.checkArgument(hostname != null && !hostname.isEmpty(), "hostname cannot be empty");
-    this.namespace = namespace;
-    this.hostname = hostname;
-    this.port = port;
-    this.sslEnabled = sslEnabled;
-    this.username = "";
   }
 
   public URI getURI() {

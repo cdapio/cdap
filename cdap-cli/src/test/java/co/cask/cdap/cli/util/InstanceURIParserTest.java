@@ -37,25 +37,32 @@ public class InstanceURIParserTest {
     Id.Namespace someNamespace = Id.Namespace.from("nsx");
     InstanceURIParser parser = new InstanceURIParser(cConf);
 
-    Assert.assertEquals(new ConnectionConfig(defaultNamespace, "somehost", defaultPort, false),
+    Assert.assertEquals(new ConnectionConfig.Builder().unAuthenticatedConnection().get().setNamespace(defaultNamespace)
+                          .setHostname("somehost").setPort(defaultPort).setSSLEnabled(false).build(),
                         parser.parse("somehost"));
-    Assert.assertEquals(new ConnectionConfig(defaultNamespace, "somehost", defaultPort, false),
+    Assert.assertEquals(new ConnectionConfig.Builder().unAuthenticatedConnection().get().setNamespace(defaultNamespace)
+                          .setHostname("somehost").setPort(defaultPort).setSSLEnabled(false).build(),
                         parser.parse("http://somehost"));
-    Assert.assertEquals(new ConnectionConfig(defaultNamespace, "somehost", defaultSSLPort, true),
+    Assert.assertEquals(new ConnectionConfig.Builder().unAuthenticatedConnection().get().setNamespace(defaultNamespace)
+                          .setHostname("somehost").setPort(defaultSSLPort).setSSLEnabled(true).build(),
                         parser.parse("https://somehost"));
-
-    Assert.assertEquals(new ConnectionConfig(defaultNamespace, "somehost", 1234, false),
+    Assert.assertEquals(new ConnectionConfig.Builder().unAuthenticatedConnection().get().setNamespace(defaultNamespace)
+                          .setHostname("somehost").setPort(1234).setSSLEnabled(false).build(),
                         parser.parse("somehost:1234"));
-    Assert.assertEquals(new ConnectionConfig(defaultNamespace, "somehost", 1234, false),
+    Assert.assertEquals(new ConnectionConfig.Builder().unAuthenticatedConnection().get().setNamespace(defaultNamespace)
+                          .setHostname("somehost").setPort(1234).setSSLEnabled(false).build(),
                         parser.parse("http://somehost:1234"));
-    Assert.assertEquals(new ConnectionConfig(defaultNamespace, "somehost", 1234, true),
+    Assert.assertEquals(new ConnectionConfig.Builder().unAuthenticatedConnection().get().setNamespace(defaultNamespace)
+                          .setHostname("somehost").setPort(1234).setSSLEnabled(true).build(),
                         parser.parse("https://somehost:1234"));
-
-    Assert.assertEquals(new ConnectionConfig(someNamespace, "somehost", 1234, false),
+    Assert.assertEquals(new ConnectionConfig.Builder().unAuthenticatedConnection().get().setNamespace(someNamespace)
+                          .setHostname("somehost").setPort(1234).setSSLEnabled(false).build(),
                         parser.parse("somehost:1234/nsx"));
-    Assert.assertEquals(new ConnectionConfig(someNamespace, "somehost", 1234, false),
+    Assert.assertEquals(new ConnectionConfig.Builder().unAuthenticatedConnection().get().setNamespace(someNamespace)
+                          .setHostname("somehost").setPort(1234).setSSLEnabled(false).build(),
                         parser.parse("http://somehost:1234/nsx"));
-    Assert.assertEquals(new ConnectionConfig(someNamespace, "somehost", 1234, true),
+    Assert.assertEquals(new ConnectionConfig.Builder().unAuthenticatedConnection().get().setNamespace(someNamespace)
+                          .setHostname("somehost").setPort(1234).setSSLEnabled(true).build(),
                         parser.parse("https://somehost:1234/nsx"));
   }
 
@@ -65,7 +72,8 @@ public class InstanceURIParserTest {
     Id.Namespace defaultNamespace = Id.Namespace.from(Constants.DEFAULT_NAMESPACE);
     InstanceURIParser parser = new InstanceURIParser(cConf);
 
-    Assert.assertEquals(new ConnectionConfig(defaultNamespace, "somehost", 1234, true),
+    Assert.assertEquals(new ConnectionConfig.Builder().unAuthenticatedConnection().get().setNamespace(defaultNamespace)
+                          .setHostname("somehost").setPort(1234).setSSLEnabled(true).build(),
                         parser.parse("https://somehost:1234/"));
   }
 
