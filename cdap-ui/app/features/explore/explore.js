@@ -21,7 +21,8 @@ angular.module(PKG.name + '.feature.explore')
         angular.forEach(res, function(v) {
           var split = v.table.split('_');
           v.type = split[0];
-          v.name = split[1];
+          split.splice(0,1); // removing the data type from the array
+          v.name = split.join('_');
         });
 
         $scope.dataList = res;
