@@ -41,10 +41,11 @@ import javax.annotation.Nullable;
 /**
  * A {@link RealtimeSink} that writes data to a {@link Cube} dataset.
  * <p/>
- * This {@link RealtimeCubeSink} takes in {@link co.cask.cdap.api.data.format.StructuredRecord} in, maps it to a
- * {@link co.cask.cdap.api.dataset.lib.cube.CubeFact} using mapping configuration
- * provided with {@link Properties.Cube#MAPPING_CONFIG_PROPERTY} property, and writes it to a {@link Cube}
- * dataset identified by {@link Properties.Cube#NAME} property.
+ * This {@link RealtimeCubeSink} takes a {@link co.cask.cdap.api.data.format.StructuredRecord} in, maps it to a
+ * {@link co.cask.cdap.api.dataset.lib.cube.CubeFact} using the mapping configuration
+ * provided with the {@link co.cask.cdap.template.etl.common.Properties.Cube#MAPPING_CONFIG_PROPERTY} property,
+ * and writes it to a {@link Cube} dataset identified by the 
+ * {@link co.cask.cdap.template.etl.common.Properties.Cube#NAME} property.
  * <p/>
  * If {@link Cube} dataset does not exist, it will be created using properties provided with this sink. See more
  * information on available {@link Cube} dataset configuration properties at

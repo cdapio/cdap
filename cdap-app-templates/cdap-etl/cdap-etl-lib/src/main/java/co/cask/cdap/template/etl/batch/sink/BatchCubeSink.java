@@ -41,9 +41,9 @@ import javax.annotation.Nullable;
 /**
  * A {@link BatchSink} that writes data to a {@link Cube} dataset.
  * <p/>
- * This {@link BatchCubeSink} takes {@link StructuredRecord} in, maps it to a {@link CubeFact} using mapping
- * configuration provided with {@link Properties.Cube#MAPPING_CONFIG_PROPERTY} property, and writes it to a
- * {@link Cube} dataset identified by name property.
+ * This {@link BatchCubeSink} takes a {@link StructuredRecord} in, maps it to a {@link CubeFact} using the mapping
+ * configuration provided with the {@link co.cask.cdap.template.etl.common.Properties.Cube#MAPPING_CONFIG_PROPERTY}
+ * property, and writes it to the {@link Cube} dataset identified by the name property.
  * <p/>
  * If {@link Cube} dataset does not exist, it will be created using properties provided with this sink. See more
  * information on available {@link Cube} dataset configuration properties at

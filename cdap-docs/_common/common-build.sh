@@ -72,7 +72,7 @@ else
   PROJECT_PATH="${SCRIPT_PATH}/../../../${2}"
 fi
 
-SDK_JAVADOCS="${PROJECT_PATH}/${API}/target/site/${APIDOCS}"
+SDK_JAVADOCS="${PROJECT_PATH}/${API}/target/${APIDOCS}"
 
 CHECK_INCLUDES="false"
 TEST_INCLUDES_LOCAL="local"
@@ -164,7 +164,8 @@ function build_javadocs_full() {
 function build_javadocs_api() {
   cd ${PROJECT_PATH}
   set_mvn_environment
-  MAVEN_OPTS="-Xmx512m" mvn clean package javadoc:javadoc -pl $API -am -DskipTests -P release
+#   MAVEN_OPTS="-Xmx512m" mvn clean package javadoc:javadoc -pl $API -am -DskipTests -P release
+  MAVEN_OPTS="-Xmx512m" mvn clean package javadoc:aggregate -pl $API -P release -P templates
 }
 
 function build_javadocs_sdk() {
