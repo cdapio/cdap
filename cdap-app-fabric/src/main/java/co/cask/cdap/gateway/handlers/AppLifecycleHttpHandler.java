@@ -162,7 +162,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps")
   public void getAllApps(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId) {
-    getAppRecords(responder, store, namespaceId, null);
+    getAppRecords(responder, store, namespaceId);
   }
 
   /**

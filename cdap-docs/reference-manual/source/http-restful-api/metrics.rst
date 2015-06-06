@@ -775,7 +775,7 @@ For example, this request will retrieve the completion percentage for the map-st
 Querying by Run-ID
 ..................
 
-Each execution of an program (Flow, MapReduce, Spark, Service, Worker) has an :ref:`associated 
+Each execution of a program (Flow, MapReduce, Spark, Service, Worker) has an :ref:`associated
 run-ID <rest-program-runs>` that uniquely identifies that program's run. We can query 
 metrics for a program by its run-ID to retrieve the metrics for a particular run. Please see 
 the :ref:`Run Records and Schedule <rest-program-runs>` on retrieving active and historical
