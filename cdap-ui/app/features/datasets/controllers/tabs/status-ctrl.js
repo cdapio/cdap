@@ -55,9 +55,12 @@ angular.module(PKG.name + '.feature.datasets')
         $scope.storage = data;
       });
 
+      var datasetId = $state.params.datasetId;
+      datasetId = datasetId.replace(/[\.\-]/g, '_');
+
       var params = {
         namespace: $state.params.namespace,
-        table: 'dataset_' + currentDataset,
+        table: 'dataset_' + datasetId,
         scope: $scope
       };
 

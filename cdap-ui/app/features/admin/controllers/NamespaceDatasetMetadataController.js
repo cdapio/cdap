@@ -9,9 +9,14 @@ function ($scope, $state, $alert, $filter, myDatasetApi, myExploreApi) {
   myExploreApi.list(params)
     .$promise
     .then(function (tables) {
-      var match = $filter('filter')(tables, $state.params.datasetId);
+
+      var datasetId = $state.params.datasetId;
+      datasetId = datasetId.replace(/[\.\-]/g, '_');
+
+      var match = $filter('filter')(tables, datasetId);
       if (match.length > 0) {
-        params.table = 'dataset_' + $state.params.datasetId;
+
+        params.table = 'dataset_' + datasetId;
 
         myExploreApi.getInfo(params)
           .$promise
