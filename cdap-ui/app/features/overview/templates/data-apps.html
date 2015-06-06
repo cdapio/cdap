@@ -77,11 +77,11 @@
               <span class="fa fa-list-ul"></span>
                All Adapters
             </a>
-            <a ui-sref="admin.namespace.detail.apps({nsadmin: $state.params.namespace})"
-               class="btn btn-default">
-              <span class="fa fa-plus"></span>
-              <span> Add App </span>
-            </a>
+
+            <my-file-select ng-controller="OverviewCtrl"
+                            data-button-label="Add App"
+                            on-file-select="onFileSelected($files)">
+            </my-file-select>
 
           </div>
         </div>
@@ -107,11 +107,10 @@
       </div>
       <hr />
       <div class="text-left" ng-controller="AppsSectionCtrl">
-        <a ui-sref="admin.namespace.detail.apps({nsadmin: $state.params.namespace})"
-           class="btn btn-default">
-          <span class="fa fa-plus"></span>
-          <span> Add App </span>
-        </a>
+        <my-file-select ng-controller="AppsSectionCtrl"
+                        data-button-label="Add App"
+                        on-file-select="onFileSelected($files)">
+        </my-file-select>
         <a ui-sref="adapters.create" class="btn btn-default">
           <span class="fa fa-plus"></span>
           <span>Add Adapter</span>

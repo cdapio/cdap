@@ -10,11 +10,11 @@
       </button>
       <ul class="dropdown-menu dropdown-menu-right" role="menu">
         <li role="presentation">
-          <a role="menuitem" ui-sref="admin.namespace.detail.apps({nsadmin: $state.params.namespace})"
-             class="text-center clearfix">
-            <span class="pull-left"> Add App </span>
-            <span class="fa fa-plus pull-right"></span>
-          </a>
+          <my-file-select ng-controller="CdapAppListController"
+                          dropdown="true"
+                          data-button-label="Add App"
+                          on-file-select="onFileSelected($files)">
+          </my-file-select>
         </li>
       </ul>
     </div>
