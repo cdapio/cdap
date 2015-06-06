@@ -44,12 +44,16 @@ angular.module(PKG.name+'.feature.home')
             return myNamespace.getList();
           }
         },
-        controller: function ($state, rNsList, mySessionStorage, myLoadingService, myAlert, $filter) {
+        controller: function ($state, rNsList, mySessionStorage, myLoadingService, myAlert, $filter, EventPipe) {
           // check that $state.params.namespace is valid
           var n = rNsList.filter(function (one) {
             return one.name === $state.params.namespace;
           });
 
+          function checkNamespace (ns) {
+            var def = $filter('filter')(rNsList, { name: ns }, true);
+            return def.length > 0 ? true : false;
+          }
 
           var PREFKEY = 'feature.home.ns.latest';
 
@@ -57,25 +61,19 @@ angular.module(PKG.name+'.feature.home')
             mySessionStorage.get(PREFKEY)
               .then(function (latest) {
 
-                var def = $filter('filter')(rNsList, {name: 'default'}, true);
-
-                if (def.length === 0) {
-                  def = rNsList[0];
-                  myAlert({
-                    title: 'Cannot find default namespace',
-                    content: 'Reverting to ' + def.name + ' namespace.'
-                  });
-                } else {
-                  def = def[0];
+                if (latest && checkNamespace(latest)) {
+                  $state.go($state.current, {namespace: latest}, {reload: true});
+                  return;
+                }
+                //check for default
+                if (checkNamespace('default')){
+                  $state.go($state.current, {namespace: 'default'}, {reload: true});
+                  return;
                 }
 
-                var defaultNs = latest || def.name;
-                console.warn('invalid namespace, defaulting to', defaultNs);
-                $state.go(
-                  $state.current,
-                  { namespace: defaultNs },
-                  { reload: true }
-                );
+                // evoke backend is down
+                EventPipe.emit('backendDown');
+
               });
           }
           else {

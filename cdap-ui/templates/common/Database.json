@@ -8,7 +8,8 @@
        "fields" : {
           "user" : {
              "widget": "textbox",
-             "label": "Username"
+             "label": "Username",
+             "description" : "Username to connect to dashboard"
           },
 
           "password" : {
@@ -18,7 +19,8 @@
 
           "tableName" : {
              "widget": "textbox",
-             "label" : "Table Name"
+             "label" : "Table Name",
+             "description" : "Name of the table you want to import from"
           }
        }
     },
@@ -53,12 +55,14 @@
        "fields" : {
           "importQuery" : {
              "widget": "textbox",
-             "label": "Import SQL"
+             "label": "Import SQL",
+             "description" : "SQL query used to import the rows from the RDBMS"
           },
 
           "countQuery" : {
              "widget": "textbox",
-             "label": "Count SQL"
+             "label": "Count SQL",
+             "description" : "SQL query specifying how the counts need to be computed. This information is used in determining the degree of parallelism."
           }
        }
     }

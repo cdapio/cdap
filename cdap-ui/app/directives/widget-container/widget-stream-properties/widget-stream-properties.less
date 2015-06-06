@@ -1,0 +1,37 @@
+@import "../../../styles/variables.less";
+
+my-stream-properties {
+  .schema-container {
+    border: 2px solid @cdap-bluegray;
+    border-radius: 4px;
+    padding: 15px 0;
+
+    [class*="col-"] {
+
+      input.form-control {
+        width: 100%;
+        padding-left: 5px;
+      }
+    }
+
+    .add-property-btn {
+      margin-top: 10px;
+      margin-left: 15px;
+    }
+  }
+
+  .row {
+    margin-bottom: 2px;
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .nullable {
+    line-height: 30px;
+
+    input {
+      vertical-align: middle;
+    }
+  }
+
+}

@@ -160,7 +160,7 @@ angular
     angular.extend($alertProvider.defaults, {
       animation: 'am-fade-and-scale',
       container: '#alerts > .container',
-      duration: 3
+      duration: 5
     });
   })
 
@@ -217,16 +217,24 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT) {
+  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyDataSource) {
 
     var activeThemeClass = caskTheme.getClassName();
-
+    var dataSource = new MyDataSource($scope);
+    dataSource.request({
+      _cdapPath: '/version'
+    })
+      .then(function(res) {
+        $scope.version = res.version;
+      });
     $scope.$on(CASK_THEME_EVENT.changed, function (event, newClassName) {
       if(!event.defaultPrevented) {
         $scope.bodyClass = $scope.bodyClass.replace(activeThemeClass, newClassName);
         activeThemeClass = newClassName;
       }
     });
+
+
 
 
     $scope.$on('$stateChangeSuccess', function (event, state) {
