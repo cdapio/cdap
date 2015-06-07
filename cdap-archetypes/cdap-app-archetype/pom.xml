@@ -24,6 +24,11 @@
     <version>3.0.1</version>
   </parent>
 
+  <properties>
+    <!--TODO: JIRA CDAP-2677-->
+    <maven.javadoc.skip>true</maven.javadoc.skip>
+  </properties>
+
   <artifactId>cdap-app-archetype</artifactId>
   <packaging>jar</packaging>
   <name>CDAP Application Archetype</name>
