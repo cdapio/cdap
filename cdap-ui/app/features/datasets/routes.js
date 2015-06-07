@@ -37,7 +37,11 @@ angular.module(PKG.name + '.feature.datasets')
             myExploreApi.list(params)
               .$promise
               .then(function (res) {
-                var match = filterFilter(res, $stateParams.datasetId);
+                var datasetId = $stateParams.datasetId;
+                datasetId = datasetId.replace(/[\.\-]/g, '_');
+
+                var match = filterFilter(res, datasetId);
+
                 if (match.length === 0) {
                   defer.resolve(false);
                 } else {
