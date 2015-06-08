@@ -168,11 +168,12 @@ ngC3.controller('c3Controller', function ($scope, c3, $filter, $timeout, MyChart
     }
     chartConfig.axis = { x: { show: $scope.options.showx,
                               tick : xTick },
-                         y: { show: $scope.options.showy } };
+                         y: { show: $scope.options.showy,
+                              padding: { bottom: 0 } } };
     chartConfig.color = $scope.options.color;
     chartConfig.legend = $scope.options.legend;
     chartConfig.point = { show: false };
-    if($scope.options.subchart) {
+    if ($scope.options.subchart) {
       chartConfig.subchart = $scope.options.subchart;
     }
     chartConfig.zoom = { enabled: false };
