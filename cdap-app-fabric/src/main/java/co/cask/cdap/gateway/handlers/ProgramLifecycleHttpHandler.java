@@ -241,7 +241,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         mrJobInfo.setStopTime(TimeUnit.SECONDS.toMillis(stopTs));
       }
 
-      responder.sendJson(HttpResponseStatus.OK, mrJobInfo);
+      // JobClient (in DistributedMRJobInfoFetcher) can return NaN as some of the values, and GSON otherwise fails
+      Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().create();
+      responder.sendJson(HttpResponseStatus.OK, mrJobInfo, mrJobInfo.getClass(), gson);
     } catch (NotFoundException e) {
       LOG.warn("NotFoundException while getting MapReduce Run info.", e);
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
