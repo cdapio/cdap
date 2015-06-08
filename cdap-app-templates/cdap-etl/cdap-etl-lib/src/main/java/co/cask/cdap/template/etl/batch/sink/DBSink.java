@@ -81,9 +81,6 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     Preconditions.checkArgument(!(dbSinkConfig.user == null && dbSinkConfig.password != null),
                                 "dbUser is null. Please provide both user name and password if database requires " +
                                   "authentication. If not, please remove dbPassword and retry.");
-    Preconditions.checkArgument(!(dbSinkConfig.user != null && dbSinkConfig.password == null),
-                                "dbPassword is null. Please provide both user name and password if database requires" +
-                                  "authentication. If not, please remove dbUser and retry.");
     Class<Object> jdbcDriverClass = pipelineConfigurer.usePluginClass(dbSinkConfig.jdbcPluginType,
                                                                       dbSinkConfig.jdbcPluginName,
                                                                       getJDBCPluginId(),

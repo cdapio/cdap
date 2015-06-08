@@ -67,9 +67,6 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
     Preconditions.checkArgument(!(dbSourceConfig.user == null && dbSourceConfig.password != null),
                                 "dbUser is null. Please provide both user name and password if database requires " +
                                   "authentication. If not, please remove dbPassword and retry.");
-    Preconditions.checkArgument(!(dbSourceConfig.user != null && dbSourceConfig.password == null),
-                                "dbPassword is null. Please provide both user name and password if database requires" +
-                                  "authentication. If not, please remove dbUser and retry.");
     String jdbcPluginId = String.format("%s.%s.%s", "source", dbSourceConfig.jdbcPluginType,
                                         dbSourceConfig.jdbcPluginName);
     Class<Object> jdbcDriverClass = pipelineConfigurer.usePluginClass(dbSourceConfig.jdbcPluginType,
