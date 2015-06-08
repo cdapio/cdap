@@ -19,6 +19,7 @@ package co.cask.cdap.explore.guice;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
+import co.cask.cdap.data.format.RecordFormats;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.executor.ExploreExecutorHttpHandler;
@@ -269,9 +270,11 @@ public class ExploreRuntimeModule extends RuntimeModule {
     // LinkedHashSet maintains insertion order while removing duplicate entries.
     Set<File> orderedDependencies = new LinkedHashSet<File>();
     orderedDependencies.addAll(hBaseTableDeps);
-    orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(RemoteDatasetFramework.class.getCanonicalName(),
+    orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(RemoteDatasetFramework.class.getName(),
                                                                      bootstrapClassPaths, null));
-    orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(DatasetStorageHandler.class.getCanonicalName(),
+    orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(DatasetStorageHandler.class.getName(),
+                                                                     bootstrapClassPaths, null));
+    orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(RecordFormats.class.getName(),
                                                                      bootstrapClassPaths, null));
 
     // Note: the class path entries need to be prefixed with "file://" for the jars to work when
