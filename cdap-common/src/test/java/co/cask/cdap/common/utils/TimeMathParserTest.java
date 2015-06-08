@@ -57,6 +57,10 @@ public class TimeMathParserTest {
     Assert.assertEquals(now + 7 * 60, TimeMathParser.parseTime(now, "now+7m"));
     Assert.assertEquals(now + 7 * 3600, TimeMathParser.parseTime(now, "now+7h"));
     Assert.assertEquals(now + 7 * 86400, TimeMathParser.parseTime(now, "now+7d"));
+    Assert.assertEquals(System.currentTimeMillis() - 10, TimeMathParser.parseTime("now-10ms",
+                                                                                  TimeUnit.MILLISECONDS), 1);
+    Assert.assertEquals(System.currentTimeMillis() + 50, TimeMathParser.parseTime("now+50ms",
+                                                                                  TimeUnit.MILLISECONDS), 1);
   }
 
   @Test

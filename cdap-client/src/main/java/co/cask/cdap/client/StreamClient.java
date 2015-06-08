@@ -170,7 +170,7 @@ public class StreamClient {
    * @throws StreamNotFoundException if the stream with the specified ID was not found
    */
   public void asyncSendEvent(String streamId, String event) throws IOException,
-    StreamNotFoundException, UnauthorizedException {
+                                                                   StreamNotFoundException, UnauthorizedException {
     writeEvent(config.resolveNamespacedURLV3(String.format("streams/%s/async", streamId)), streamId, event);
   }
 
