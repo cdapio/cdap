@@ -23,6 +23,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.BadRequestException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.data.format.RecordFormats;
@@ -84,8 +85,6 @@ import javax.ws.rs.PathParam;
 
 /**
  * The {@link HttpHandler} for handling REST call to V3 stream APIs.
- *
- * TODO: Currently stream "dataset" is implementing old dataset API, hence not supporting multi-tenancy.
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/streams")
@@ -188,8 +187,13 @@ public final class StreamHandler extends AbstractHttpHandler {
     // Check for namespace existence. Throws NotFoundException if namespace doesn't exist
     namespaceClient.get(namespaceId);
 
-    // Verify stream name
-    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
+    Id.Stream streamId;
+    try {
+      // Verify stream name
+      streamId = Id.Stream.from(namespaceId, stream);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e);
+    }
 
     // TODO: Modify the REST API to support custom configurations.
     streamAdmin.create(streamId);

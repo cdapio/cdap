@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.format.TextRecordFormat;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.gateway.GatewayFastTestsSuite;
@@ -57,6 +58,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -282,8 +284,8 @@ public class StreamHandlerTest extends GatewayTestBase {
   public void testStreamCreateInNonexistentNamespace() throws Exception {
     Id.Namespace originallyNonExistentNamespace = Id.Namespace.from("originallyNonExistentNamespace");
     Id.Stream streamId = Id.Stream.from(originallyNonExistentNamespace, "streamName");
-    HttpResponse response = createStream(streamId, 400);
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getResponseCode());
+    HttpResponse response = createStream(streamId, 404);
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getResponseCode());
 
     // once the namespace exists, the same stream create works.
     namespaceAdmin.createNamespace(new NamespaceMeta.Builder().setName(originallyNonExistentNamespace).build());
@@ -303,7 +305,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     List<String> eventsSentToStream1 = Lists.newArrayList();
     // Enqueue 10 entries to the stream in the first namespace
     for (int i = 0; i < 10; ++i) {
-      String body = streamId1.getNamespaceId() + Integer.toString(i);
+      String body = streamId1.getNamespaceId() + i;
       sendEvent(streamId1, body);
       eventsSentToStream1.add(body);
     }
@@ -311,7 +313,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     List<String> eventsSentToStream2 = Lists.newArrayList();
     // Enqueue only 5 entries to the stream in the second namespace, decrementing the value each time
     for (int i = 0; i > -5; --i) {
-      String body = streamId1.getNamespaceId() + Integer.toString(i);
+      String body = streamId1.getNamespaceId() + i;
       sendEvent(streamId2, body);
       eventsSentToStream2.add(body);
     }
@@ -375,7 +377,6 @@ public class StreamHandlerTest extends GatewayTestBase {
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
 
-
     List<String> events = Lists.newArrayList();
     JsonArray jsonArray = new JsonParser().parse(response.getResponseBodyAsString()).getAsJsonArray();
     for (JsonElement jsonElement : jsonArray) {
@@ -384,21 +385,19 @@ public class StreamHandlerTest extends GatewayTestBase {
     return events;
   }
 
-  private void checkEventsProcessed(Id.Stream streamId, long expectedCount, int retries) throws Exception {
-    for (int i = 0; i < retries; i++) {
-      long numProcessed = getNumProcessed(streamId);
-      if (numProcessed == expectedCount) {
-        return;
+  private void checkEventsProcessed(final Id.Stream streamId, long expectedCount, int retries) throws Exception {
+    Tasks.waitFor(expectedCount, new Callable<Long>() {
+      @Override
+      public Long call() throws Exception {
+        return getNumProcessed(streamId);
       }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    Assert.assertEquals(expectedCount, getNumProcessed(streamId));
+    }, retries, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
 
   private long getNumProcessed(Id.Stream streamId) throws Exception {
     String path =
-      String.format("/v3/metrics/query?metric=system.collect.events&context=namespace.%s.stream.%s&aggregate=true",
+      String.format("/v3/metrics/query?metric=system.collect.events&tag=namespace:%s&tag=stream:%s&aggregate=true",
                     streamId.getNamespaceId(), streamId.getId());
     HttpRequest request = HttpRequest.post(getEndPoint(path).toURL()).build();
     HttpResponse response = HttpRequests.execute(request);
