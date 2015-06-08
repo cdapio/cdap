@@ -415,4 +415,27 @@ public class ProjectionTransformTest {
     Assert.assertArrayEquals(Bytes.toBytes("foo"), (byte[]) output.get("bytesField"));
     Assert.assertEquals("bar", output.get("stringField"));
   }
+
+  @Test
+  public void testConvertNullField() throws Exception {
+    ProjectionTransform.ProjectionTransformConfig config = new ProjectionTransform
+      .ProjectionTransformConfig(null, null, "x:long");
+    Transform<StructuredRecord, StructuredRecord> transform = new ProjectionTransform(config);
+    TransformContext transformContext = new MockTransformContext();
+    transform.initialize(transformContext);
+
+    Schema inputSchema = Schema.recordOf("record",
+      Schema.Field.of("x", Schema.nullableOf(Schema.of(Schema.Type.INT))));
+    StructuredRecord input = StructuredRecord.builder(inputSchema).build();
+
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
+    transform.transform(input, emitter);
+    StructuredRecord output = emitter.getEmitted().get(0);
+
+    Schema expectedSchema = Schema.recordOf("record.projected",
+      Schema.Field.of("x", Schema.nullableOf(Schema.of(Schema.Type.LONG))));
+
+    Assert.assertEquals(expectedSchema, output.getSchema());
+    Assert.assertNull(output.get("x"));
+  }
 }
