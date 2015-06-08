@@ -52,6 +52,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import com.google.common.base.Charsets;
+import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -67,6 +68,7 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
@@ -575,6 +577,9 @@ public class MasterServiceMain extends DaemonMain {
           // TokenSecureStoreUpdater.update() ignores parameters
           preparer.addSecureStore(secureStoreUpdater.update(null, null));
         }
+
+        preparer.withClassPaths(Splitter.on(',').trimResults()
+                                  .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, "")));
 
         // Add explore dependencies
         if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
