@@ -31,6 +31,7 @@ angular.module(PKG.name + '.feature.admin')
 
     $scope.deleteNamespace = function() {
       $scope.loading = true;
+      EventPipe.emit('showLoadingIcon');
 
       dataSrc.request({
         _cdapPath: '/unrecoverable/namespaces/' + $state.params.nsadmin,
@@ -42,6 +43,8 @@ angular.module(PKG.name + '.feature.admin')
         });
 
         $timeout(function() {
+          EventPipe.emit('hideLoadingIcon.immediate');
+
           $state.go('admin.overview', {}, {reload: true});
           $alert({
             type: 'success',
