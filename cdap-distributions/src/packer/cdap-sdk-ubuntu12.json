@@ -103,11 +103,11 @@
     {
       "type": "shell",
       "scripts": [
+        "scripts/motd.sh",
         "scripts/xorg.sh",
-        "scripts/fluxbox.sh",
         "scripts/slim.sh",
-        "scripts/firefox.sh",
         "scripts/fill-maven-cache.sh",
+        "scripts/lxde.sh",
         "scripts/vbox-guest-additions.sh"
       ],
       "only": ["cdap-sdk-vm"]
@@ -124,7 +124,6 @@
     {
       "type": "shell",
       "scripts": [
-        "scripts/motd.sh",
         "scripts/random-root-password.sh",
         "scripts/zero-disk.sh"
       ],
