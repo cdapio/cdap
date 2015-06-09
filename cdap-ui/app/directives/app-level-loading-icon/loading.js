@@ -52,6 +52,12 @@ angular.module(PKG.name + '.commons')
           }, 2000);
         });
 
+        // Should use this hide when we are just loading a state
+        EventPipe.on('hideLoadingIcon.immediate', function() {
+          modal && !modal.$state && modal.close();
+          modal = null;
+        });
+
         EventPipe.on('showLoadingIcon', function() {
           if(!modal && !isBackendDown) {
             $scope.message = '';
