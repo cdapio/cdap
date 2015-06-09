@@ -1,8 +1,6 @@
 angular.module(PKG.name + '.feature.flows')
   .controller('FlowletDetailInputController', function($state, $scope, MyDataSource, MyMetricsQueryHelper, myFlowsApi) {
 
-    // TODO: Refactor code to be more readable
-
     var dataSrc = new MyDataSource($scope);
     var flowletid = $scope.$parent.activeFlowlet.name;
 
@@ -18,7 +16,6 @@ angular.module(PKG.name + '.feature.flows')
     myFlowsApi.get(params)
       .$promise
       .then(function (res) {
-
         // INPUTS
         angular.forEach(res.connections, function(v) {
           if (v.targetName === flowletid) {
@@ -31,152 +28,159 @@ angular.module(PKG.name + '.feature.flows')
         });
 
         if ($scope.inputs.length > 0) {
+          formatInput();
+        }
+      });
 
-          angular.forEach($scope.inputs, function (input) {
-            var flowletTags = {
-              namespace: $state.params.namespace,
-              app: $state.params.appId,
-              flow: $state.params.programId,
-              consumer: flowletid,
-              producer: input.name
-            };
-            var streamTags = {
-              namespace: $state.params.namespace,
-              stream: input.name
-            };
-            var flowletPath = '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(flowletTags)
-                              + '&metric=system.queue.pending',
-                streamPath = '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(streamTags);
-                              + '&metric=system.collect.events';
 
-            var path = '';
-            if (input.sourceType === 'STREAM') {
-              path = streamPath;
-            } else {
-              path = flowletPath;
-            }
-            var aggregate = 0;
-            // Get Aggregate
-            dataSrc.request({
-              _cdapPath: path + '&start=now-60s&end=now&aggregate=true',
-              method: 'POST'
-            }).then(function(res) {
-              aggregate = res.series[0] ? res.series[0].data[0].value : 0;
-            }).then(function() {
+    function formatEmptyGraph(input) {
+      var val = [];
 
-              dataSrc.request({
-                _cdapPath: path + '&start=now-60s&end=now',
-                method: 'POST'
-              }).then(function(initial) {
-                if (initial.series[0]) {
-                  var response = initial.series[0].data;
-                  var v = [];
+      for (var i = 60; i > 0; i--) {
+        val.push({
+          time: Math.floor((new Date()).getTime()/1000 - (i)),
+          y: 0
+        });
+      }
 
-                  response[response.length - 1].value = aggregate - response[response.length - 1].value;
-                  for (var i = response.length - 2; i >= 0; i--) {
-                    response[i].value = response[i+1].value - response[i].value;
-                    v.unshift({
-                      time: response[i].time,
-                      y: response[i].value
-                    });
-                  }
+      if (input.history) {
+        input.stream = val.slice(-1);
+      }
 
-                  input.stream = v.slice(-1);
+      input.history = [{
+        label: 'output',
+        values: val
+      }];
+    }
 
-                  input.history = [
-                    {
-                      label: 'output',
-                      values: v
-                    }
-                  ];
+    function pollArrivalRate(input) {
+      var arrivalPath = '/metrics/query?metric=system.process.events.processed'+
+        '&tag=namespace:' + $state.params.namespace +
+        '&tag=app:' + $state.params.appId +
+        '&tag=flow' + $state.params.programId +
+        '&tag=flowlet:' + flowletid +
+        '&tag=run:' + $scope.runs.selected.runid +
+        '&start=now-1s&end=now';
+      // TODO: should this value be averaged over more than just the past 1 second?
+      // POLLING ARRIVAL RATE
+      dataSrc
+        .poll({
+          _cdapPath: arrivalPath,
+          method: 'POST'
+        }, function (res) {
+          if (res.series[0]) {
+            input.total = res.series[0].data[0].value;
+          }
+        });
+    }
 
-                } else {
+    function formatInitialTimeseries(aggregate, initial, input) {
+      var response = initial.series[0].data;
+      var v = [];
 
-                  var val = [];
+      response[response.length - 1].value = aggregate - response[response.length - 1].value;
+      for (var i = response.length - 2; i >= 0; i--) {
+        response[i].value = response[i+1].value - response[i].value;
+        v.unshift({
+          time: response[i].time,
+          y: response[i].value
+        });
+      }
 
-                  for (var i = 60; i > 0; i--) {
-                    val.push({
-                      time: Math.floor((new Date()).getTime()/1000 - (i)),
-                      y: 0
-                    });
-                  }
+      input.stream = v.slice(-1);
 
-                  if (input.history) {
-                    input.stream = val.slice(-1);
-                  }
+      input.history = [
+        {
+          label: 'output',
+          values: v
+        }
+      ];
+    }
 
-                  input.history = [{
-                    label: 'output',
-                    values: val
-                  }];
+    function pollAggregateQueue(path, input) {
+      dataSrc.poll({
+        _cdapPath: path + '&start=now-60s&end=now&aggregate=true',
+        method: 'POST',
+        interval: 1000
+      }, function(streamData) {
+        var stream = {};
 
-                }
-              }).then(function() {
-                // start polling aggregate
-
-                dataSrc.poll({
-                  _cdapPath: path + '&start=now-60s&end=now&aggregate=true',
-                  method: 'POST',
-                  interval: 1000
-                }, function(streamData) {
-                  var stream = {};
-
-                  if (streamData.series[0]) {
-                    stream = {
-                      time: Math.floor((new Date()).getTime()/1000),
-                      y: streamData.series[0].data[0].value
-                    };
-
-                  } else {
-
-                    stream = {
-                      time: Math.floor((new Date()).getTime()/1000),
-                      y: 0
-                    };
-                  }
-
-                  var array = input.history[0].values;
-                  array.shift();
-                  array.push(stream);
-
-                  input.history = [
-                    {
-                      label: 'output',
-                      values: array
-                    }
-                  ];
-
-                  input.stream = array.slice(-1);
-
-                  input.max = Math.max.apply(Math, array.map(function(o){return o.y;}));
-
-                });
-              });
-
-            });
-
-            var arrivalPath = '/metrics/query?metric=system.process.events.processed'+
-              '&tag=namespace:' + $state.params.namespace +
-              '&tag=app:' + $state.params.appId +
-              '&tag=flow' + $state.params.programId +
-              '&tag=flowlet:' + flowletid +
-              '&tag=run:' + $scope.runs.selected.runid +
-              '&start=now-1s&end=now';
-            // TODO: should this value be averaged over more than just the past 1 second?
-            // POLLING ARRIVAL RATE
-            dataSrc
-              .poll({
-                _cdapPath: arrivalPath,
-                method: 'POST'
-              }, function (res) {
-                if (res.series[0]) {
-                  input.total = res.series[0].data[0].value;
-                }
-              });
-
-          });
-
+        if (streamData.series[0]) {
+          stream = {
+            time: Math.floor((new Date()).getTime()/1000),
+            y: streamData.series[0].data[0].value
+          };
+        } else {
+          stream = {
+            time: Math.floor((new Date()).getTime()/1000),
+            y: 0
+          };
         }
 
+        var array = input.history[0].values;
+        array.shift();
+        array.push(stream);
+
+        input.history = [
+          {
+            label: 'output',
+            values: array
+          }
+        ];
+
+        input.stream = array.slice(-1);
+        input.max = Math.max.apply(Math, array.map(function(o){return o.y;}));
+
       });
+    }
+
+
+    function formatInput() {
+      angular.forEach($scope.inputs, function (input) {
+        var flowletTags = {
+          namespace: $state.params.namespace,
+          app: $state.params.appId,
+          flow: $state.params.programId,
+          consumer: flowletid,
+          producer: input.name
+        };
+
+        var path = '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(flowletTags)
+                          + '&metric=system.queue.pending';
+
+        var aggregate = 0;
+        // Get Aggregate
+        dataSrc.request({
+          _cdapPath: path + '&start=now-60s&end=now&aggregate=true',
+          method: 'POST'
+        }).then(function(res) {
+
+          // Get initial aggregate
+          aggregate = res.series[0] ? res.series[0].data[0].value : 0;
+
+        }).then(function() {
+
+          // Get timeseries
+          dataSrc.request({
+            _cdapPath: path + '&start=now-60s&end=now',
+            method: 'POST'
+          }).then(function(initial) {
+            if (initial.series[0]) {
+              formatInitialTimeseries(aggregate, initial, input);
+            } else {
+              formatEmptyGraph(input);
+            }
+
+          }).then(function() {
+            // start polling aggregate
+            pollAggregateQueue(path, input);
+          });
+
+        });
+
+        pollArrivalRate(input);
+
+      });
+    }
+
   });
