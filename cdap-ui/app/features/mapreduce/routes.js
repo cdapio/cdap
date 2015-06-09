@@ -58,12 +58,12 @@ angular.module(PKG.name + '.feature.mapreduce')
               label: '{{ $state.params.runid }}'
             }
           })
-        .state('mapreduce.detail.data', {
+        .state('mapreduce.detail.datasets', {
           url: '/data',
           templateUrl: '/assets/features/mapreduce/templates/tabs/data.html',
           ncyBreadcrumb: {
             parent: 'mapreduce.detail.runs',
-            label: 'Data'
+            label: 'Datasets'
           }
         })
         .state('mapreduce.detail.history', {

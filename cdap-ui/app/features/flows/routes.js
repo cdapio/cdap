@@ -63,7 +63,7 @@ angular.module(PKG.name + '.feature.flows')
           }
         })
 
-      .state('flows.detail.data', {
+      .state('flows.detail.datasets', {
         url: '/data',
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
@@ -71,7 +71,7 @@ angular.module(PKG.name + '.feature.flows')
         },
         templateUrl: '/assets/features/flows/templates/tabs/data.html',
         ncyBreadcrumb: {
-          label: 'Data',
+          label: 'Datasets',
           parent: 'flows.detail.runs'
         }
       })
