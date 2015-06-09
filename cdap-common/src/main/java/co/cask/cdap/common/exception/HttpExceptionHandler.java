@@ -41,6 +41,8 @@ public class HttpExceptionHandler extends ExceptionHandler {
       responder.sendString(HttpResponseStatus.NOT_FOUND, t.getMessage());
     } else if (t instanceof UnauthorizedException) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } else if (t instanceof ForbiddenException) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN, t.getMessage());
     } else {
       LOG.error("Unexpected error: request={} {} user={}:",
                 request.getMethod().getName(), request.getUri(),

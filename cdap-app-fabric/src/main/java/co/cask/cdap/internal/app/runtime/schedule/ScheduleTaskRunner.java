@@ -93,15 +93,6 @@ public final class ScheduleTaskRunner {
     systemArgs.putAll(propertiesResolver.getSystemProperties(programId));
     systemArgs.putAll(systemOverrides);
 
-    boolean concurrentRunsDisabled =
-      Boolean.parseBoolean(userArgs.get(ProgramOptionConstants.CONCURRENT_RUNS_DISABLED));
-
-    if (concurrentRunsDisabled) {
-      ProgramRuntimeService.RuntimeInfo existingInfo = lifecycleService.findRuntimeInfo(programId, programType);
-      if (existingInfo != null) {
-        throw new TaskExecutionException(UserMessages.getMessage(UserErrors.ALREADY_RUNNING), false);
-      }
-    }
     return execute(programId, programType, systemArgs, userArgs);
   }
 
