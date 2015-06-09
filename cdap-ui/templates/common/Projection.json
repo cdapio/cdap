@@ -9,7 +9,7 @@
          "convert": {
            "widget": "keyvalue",
            "label": "Convert",
-           "description": "List of fields to convert to a different type. This is a comma separated list of key-value pairs, where each pair is separated by a colon and specifies the field name and the desired type. For example: 'count:long,price:double' specifies that the 'count' field should be converted to a long and the 'price' field should be converted to a double. Only simple types are supported (boolean, int, long, float, double, bytes, string). Any simple type can be converted to bytes or a string. Otherwise, a type can only be converted to a larger type. For example, an int can be converted to a long, but a long cannot be converted to an int."
+           "description": "List of fields to convert to a different type. A key specifies the name of the field to convert, with its corresponding value specifying the type to convert it to. Only simple types are supported (boolean, int, long, float, double, bytes, string). Any simple type can be converted to bytes or a string. A string can be converted to any simple type, assuming it is the string representation of that type. Otherwise, a type can only be converted to a larger type. For example, an int can be converted to a long, but a long cannot be converted to an int."
          },
 
          "drop": {
@@ -22,7 +22,8 @@
 
          "rename": {
            "widget": "keyvalue",
-           "label": "Fields to rename"
+           "label": "Fields to rename",
+           "description": "List of fields to rename. A key specifies the name of the field to rename, with its corresponding value specifying the new name for that field. Rename occurs after drop and convert have been applied."
          }
 
        }
