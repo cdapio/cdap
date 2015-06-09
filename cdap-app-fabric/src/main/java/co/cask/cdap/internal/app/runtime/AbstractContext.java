@@ -91,7 +91,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
                             @Nullable AdapterDefinition adapterSpec,
                             @Nullable PluginInstantiator pluginInstantiator) {
-    super(program);
+    super(program.getId().getApplication());
     this.program = program;
     this.runId = runId;
     this.runtimeArguments = ImmutableMap.copyOf(arguments.asMap());

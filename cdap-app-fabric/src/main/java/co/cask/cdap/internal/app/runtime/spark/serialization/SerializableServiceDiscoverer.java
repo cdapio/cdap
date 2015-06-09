@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.app.services;
+package co.cask.cdap.internal.app.runtime.spark.serialization;
 
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.spark.Spark;
-import co.cask.cdap.app.program.Program;
-import org.apache.twill.discovery.DiscoveryServiceClient;
+import co.cask.cdap.app.services.AbstractServiceDiscoverer;
+import co.cask.cdap.proto.Id;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -31,37 +31,41 @@ import java.io.Serializable;
  * A {@link Serializable} {@link ServiceDiscoverer}. This is needed for {@link Spark} program which expects
  * object used in the Closure to be {@link Serializable}
  */
-public class SerializableServiceDiscoverer extends AbstractServiceDiscoverer implements Externalizable {
+public abstract class SerializableServiceDiscoverer extends AbstractServiceDiscoverer implements Externalizable {
 
   private static final long serialVersionUID = 6547316362453719580L;
-  private static DiscoveryServiceClient discoveryServiceClient;
 
   // no-arg constructor required for serialization/deserialization to work
+  @SuppressWarnings("unused")
   public SerializableServiceDiscoverer() {
   }
 
-  public static void setDiscoveryServiceClient(DiscoveryServiceClient discoveryServiceClient) {
-    SerializableServiceDiscoverer.discoveryServiceClient = discoveryServiceClient;
-  }
-
-  public SerializableServiceDiscoverer(Program program) {
-    super(program);
+  public SerializableServiceDiscoverer(Id.Application application) {
+    super(application);
   }
 
   @Override
   public void writeExternal(ObjectOutput objectOutput) throws IOException {
-    objectOutput.writeObject(namespaceId);
-    objectOutput.writeObject(applicationId);
+    objectOutput.writeUTF(namespaceId);
+    objectOutput.writeUTF(applicationId);
   }
 
   @Override
   public void readExternal(ObjectInput objectInput) throws IOException, ClassNotFoundException {
-    namespaceId = (String) objectInput.readObject();
-    applicationId = (String) objectInput.readObject();
+    namespaceId = objectInput.readUTF();
+    applicationId = objectInput.readUTF();
   }
 
-  @Override
-  public DiscoveryServiceClient getDiscoveryServiceClient() {
-    return discoveryServiceClient;
+  public String getNamespaceId() {
+    return namespaceId;
+  }
+
+  public String getApplicationId() {
+    return applicationId;
+  }
+
+  public void setAppId(Id.Application appId) {
+    this.namespaceId = appId.getNamespaceId();
+    this.applicationId = appId.getId();
   }
 }

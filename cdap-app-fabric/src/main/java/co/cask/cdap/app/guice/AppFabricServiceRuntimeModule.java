@@ -67,6 +67,7 @@ import co.cask.cdap.internal.app.runtime.schedule.LocalSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
+import co.cask.cdap.internal.app.runtime.spark.serialization.SparkRuntimeModule;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.StandaloneAppFabricServer;
@@ -125,6 +126,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   public Module getInMemoryModules() {
     return Modules.combine(new AppFabricServiceModule(StreamHandler.class, StreamFetchHandler.class),
                            new ConfigStoreModule().getInMemoryModule(),
+                           new SparkRuntimeModule().getInMemoryModules(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
@@ -171,6 +173,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
     return Modules.combine(new AppFabricServiceModule(StreamHandler.class, StreamFetchHandler.class),
                            new ConfigStoreModule().getStandaloneModule(),
+                           new SparkRuntimeModule().getStandaloneModules(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
@@ -218,6 +221,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
     return Modules.combine(new AppFabricServiceModule(),
                            new ConfigStoreModule().getDistributedModule(),
+                           new SparkRuntimeModule().getDistributedModules(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {

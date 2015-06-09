@@ -26,13 +26,13 @@ import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.app.services.SerializableServiceDiscoverer;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.spark.metrics.SparkUserMetrics;
+import co.cask.cdap.internal.app.runtime.spark.serialization.SerializableServiceDiscoverer;
 import co.cask.cdap.logging.context.SparkLoggingContext;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionAware;
@@ -85,15 +85,16 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
                            SparkSpecification sparkSpec, long logicalStartTime, String workflowBatch,
                            MetricsCollectionService metricsCollectionService,
                            DatasetFramework dsFramework,
-                           DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin) {
+                           DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin,
+                           SerializableServiceDiscoverer serializableServiceDiscoverer) {
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(metricsCollectionService, program, runId.getId()),
           dsFramework, discoveryServiceClient);
     this.logicalStartTime = logicalStartTime;
     this.workflowBatch = workflowBatch;
     this.streamAdmin = streamAdmin;
-    SerializableServiceDiscoverer.setDiscoveryServiceClient(getDiscoveryServiceClient());
-    this.serializableServiceDiscoverer = new SerializableServiceDiscoverer(getProgram());
+    this.serializableServiceDiscoverer = serializableServiceDiscoverer;
+    serializableServiceDiscoverer.setAppId(program.getId().getApplication());
     SparkUserMetrics.setMetricsCollector(getProgramMetrics());
     this.userMetrics = new SparkUserMetrics();
     this.loggingContext = new SparkLoggingContext(getNamespaceId(), getApplicationId(), getProgramName(),

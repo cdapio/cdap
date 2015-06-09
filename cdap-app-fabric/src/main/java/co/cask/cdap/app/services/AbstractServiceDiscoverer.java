@@ -20,6 +20,7 @@ import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.proto.Id;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -47,9 +48,9 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
   protected AbstractServiceDiscoverer() {
   }
 
-  public AbstractServiceDiscoverer(Program program) {
-    this.namespaceId = program.getNamespaceId();
-    this.applicationId = program.getApplicationId();
+  public AbstractServiceDiscoverer(Id.Application application) {
+    this.namespaceId = application.getNamespaceId();
+    this.applicationId = application.getId();
   }
 
   @Override
