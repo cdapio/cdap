@@ -11,7 +11,7 @@ provisioner:
   require_chef_omnibus: true
 
 platforms:
-  - name: centos-6.5
+  - name: centos-6.6
     attributes:
       hadoop:
         hdfs_site:
