@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsRunDetailStatusController', function($state, $scope, MyDataSource, myHelpers, FlowDiagramData, $timeout, MyMetricsQueryHelper) {
+  .controller('FlowsRunDetailStatusController', function($state, $scope, MyDataSource, myHelpers, FlowDiagramData, $timeout, MyMetricsQueryHelper, myFlowsApi) {
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
 
@@ -45,29 +45,24 @@ angular.module(PKG.name + '.feature.flows')
             $scope.data.metrics[node.name] = myHelpers.objectQuery(data, 'series' , 0, 'data', 0, 'value') || 0;
           });
 
+        // Polling for Flowlet Instance
         if (node.type !== 'STREAM') {
-          dataSrc.poll({
-            _cdapNsPath: '/apps/' + $state.params.appId +  '/flows/' + $state.params.programId + '/flowlets/' + node.name + '/instances'
-          }, function (res) {
-            $scope.data.instances[node.name] = res.instances;
-          });
+          var params = {
+            namespace: $state.params.namespace,
+            appId: $state.params.appId,
+            flowId: $state.params.programId,
+            flowletId: node.name,
+            scope: $scope
+          };
+          myFlowsApi.pollFlowletInstance(params)
+            .$promise
+            .then(function (res) {
+              $scope.data.instances[node.name] = res.instances;
+            });
         }
-
 
       });
     }
-
-    $scope.stopFlow = function() {
-      dataSrc.request({
-        _cdapNsPath: basePath + '/stop',
-        method: 'POST'
-      })
-      .then(function() {
-        $timeout(function() {
-          $state.go($state.current, {}, { reload: true });
-        });
-      });
-    };
 
     $scope.flowletClick = function(node) {
       $scope.selectTab($scope.tabs[1], node);
