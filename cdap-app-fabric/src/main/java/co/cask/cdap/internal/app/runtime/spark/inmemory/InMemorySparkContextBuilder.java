@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.spark.inmemory;
 
-import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -27,7 +26,6 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.runtime.spark.AbstractSparkContextBuilder;
 import co.cask.cdap.internal.app.runtime.spark.BasicSparkContext;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -72,7 +70,6 @@ public class InMemorySparkContextBuilder extends AbstractSparkContextBuilder {
       new ConfigModule(cConf),
       new LocalConfigModule(),
       new IOModule(),
-      new AuthModule(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
@@ -91,7 +88,6 @@ public class InMemorySparkContextBuilder extends AbstractSparkContextBuilder {
       new ConfigModule(cConf),
       new LocalConfigModule(),
       new IOModule(),
-      new AuthModule(),
       new LocationRuntimeModule().getStandaloneModules(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new DataFabricModules().getStandaloneModules(),

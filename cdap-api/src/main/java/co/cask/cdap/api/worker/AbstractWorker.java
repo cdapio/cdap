@@ -86,7 +86,7 @@ public abstract class AbstractWorker implements Worker {
    */
   @Deprecated
   protected void useDatasets(String dataset, String...datasets) {
-    List<String> datasetList = new ArrayList<String>();
+    List<String> datasetList = new ArrayList<>();
     datasetList.add(dataset);
     datasetList.addAll(Arrays.asList(datasets));
     useDatasets(datasetList);

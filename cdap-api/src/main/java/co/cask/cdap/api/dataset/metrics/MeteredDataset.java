@@ -33,7 +33,7 @@ public interface MeteredDataset {
   /**
    * Collector for data ops metrics.
    */
-  static interface MetricsCollector {
+  interface MetricsCollector {
 
     /**
      * Records read operation stats

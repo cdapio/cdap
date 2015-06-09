@@ -87,7 +87,7 @@ public class KeyValueListParser {
       if (keyValIter.hasNext()) {
         throw new IllegalArgumentException("Invalid syntax for key-value pair in list: " + pair);
       }
-      return new KeyValue<String, String>(key, val);
+      return new KeyValue<>(key, val);
     }
 
     @Override

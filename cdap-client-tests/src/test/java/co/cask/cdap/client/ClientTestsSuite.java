@@ -16,8 +16,8 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.test.XSlowTests;
-import co.cask.cdap.test.standalone.StandaloneTestBase;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -27,12 +27,20 @@ import org.junit.runners.Suite;
  */
 @Category(XSlowTests.class)
 @RunWith(Suite.class)
-@Suite.SuiteClasses({ ApplicationClientTestRun.class, DatasetClientTestRun.class, MetricsClientTestRun.class,
-                      MonitorClientTestRun.class, ProgramClientTestRun.class,
-                      QueryClientTestRun.class, StreamClientTestRun.class, ServiceClientTestRun.class,
-                      MetaClientTestRun.class, NamespaceClientTestRun.class, PreferencesClientTestRun.class,
-                      ScheduleClientTestRun.class })
-//@Suite.SuiteClasses({ ApplicationClientTestRun.class, QueryClientTestRun.class })
-public class ClientTestsSuite extends StandaloneTestBase {
+@Suite.SuiteClasses({
+  AdapterClientTestRun.class,
+  ApplicationClientTestRun.class,
+  DatasetClientTestRun.class,
+  MetricsClientTestRun.class,
+  MonitorClientTestRun.class,
+  ProgramClientTestRun.class,
+  QueryClientTestRun.class,
+  StreamClientTestRun.class,
+  ServiceClientTestRun.class,
+  MetaClientTestRun.class,
+  NamespaceClientTestRun.class,
+  PreferencesClientTestRun.class,
+  ScheduleClientTestRun.class })
+public class ClientTestsSuite extends ClientTestBase {
 
 }

@@ -65,7 +65,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
-import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -502,7 +501,7 @@ public class AdapterService extends AbstractIdleService {
     try {
       scheduler.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
       //TODO: Scheduler API should also manage the MDS.
-      store.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
+      store.deleteSchedule(workflowId, scheduleName);
     } catch (NotFoundException e) {
       // its possible a stop was already called and the schedule was deleted, but then there
       // was some failure stopping the active run.  In that case, the next time stop is called
@@ -523,8 +522,8 @@ public class AdapterService extends AbstractIdleService {
     final Id.Adapter adapterId = Id.Adapter.from(namespace.getId(), adapterSpec.getName());
     final Id.Program workerId = getProgramId(namespace, adapterSpec);
     try {
-      Map<String, String> sysArgs = resolver.getSystemProperties(workerId, ProgramType.WORKER);
-      Map<String, String> userArgs = resolver.getUserProperties(workerId, ProgramType.WORKER);
+      Map<String, String> sysArgs = resolver.getSystemProperties(workerId);
+      Map<String, String> userArgs = resolver.getUserProperties(workerId);
 
       // Pass Adapter Name as a system property
       sysArgs.put(ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName());
@@ -535,8 +534,7 @@ public class AdapterService extends AbstractIdleService {
       // Override resolved preferences with adapter worker spec properties.
       userArgs.putAll(adapterSpec.getRuntimeArgs());
 
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.start(workerId, ProgramType.WORKER,
-                                                                             sysArgs, userArgs, false);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.start(workerId, sysArgs, userArgs, false);
       final ProgramController controller = runtimeInfo.getController();
       controller.addListener(new AbstractListener() {
         @Override
@@ -599,7 +597,7 @@ public class AdapterService extends AbstractIdleService {
     Manager<AdapterDeploymentInfo, AdapterDefinition> manager = adapterManagerFactory.create(
       new ProgramTerminator() {
         @Override
-        public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws ExecutionException {
+        public void stop(Id.Program programId) throws ExecutionException {
           // no-op
         }
       });
@@ -628,7 +626,7 @@ public class AdapterService extends AbstractIdleService {
 
       Manager<DeploymentInfo, ApplicationWithPrograms> manager = templateManagerFactory.create(new ProgramTerminator() {
         @Override
-        public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws ExecutionException {
+        public void stop(Id.Program programId) throws ExecutionException {
           // no-op
         }
       });
@@ -707,11 +705,8 @@ public class AdapterService extends AbstractIdleService {
       throw new IllegalArgumentException("Failed to get template info");
     }
     ApplicationSpecification spec;
-    Reader configReader = configSupplier.getInput();
-    try {
+    try (Reader configReader = configSupplier.getInput()) {
       spec = GSON.fromJson(configReader, ApplicationSpecification.class);
-    } finally {
-      Closeables.closeQuietly(configReader);
     }
 
     // verify that the name is ok

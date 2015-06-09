@@ -26,7 +26,6 @@ import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
-import co.cask.cdap.api.flow.flowlet.FlowletException;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

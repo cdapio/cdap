@@ -22,7 +22,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>3.0.1</version>
+    <version>3.1.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-examples</artifactId>
@@ -31,6 +31,7 @@
 
   <modules>
     <module>CountRandom</module>
+    <module>CubeService</module>
     <module>FileSetExample</module>
     <module>HelloWorld</module>
     <module>Purchase</module>
@@ -41,7 +42,6 @@
     <module>UserProfiles</module>
     <module>WebAnalytics</module>
     <module>WordCount</module>
-    <module>CubeService</module>
   </modules>
 
   <repositories>
@@ -53,7 +53,6 @@
 
   <properties>
     <power.pack.version>[2.0.0,)</power.pack.version>
-    <maven.javadoc.skip>true</maven.javadoc.skip>
   </properties>
 
   <build>

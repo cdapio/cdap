@@ -68,6 +68,6 @@ public final class InMemoryStreamConsumerFactory implements StreamConsumerFactor
     Preconditions.checkArgument(namespaceParts.hasNext(), invalidNamespaceError);
     String flowId = namespaceParts.next();
 
-    queueService.truncateAllWithPrefix(QueueName.prefixForFlow(streamId.getNamespaceId(), appId, flowId));
+    queueService.truncateAllWithPrefix(QueueName.prefixForFlow(Id.Flow.from(streamId.getNamespaceId(), appId, flowId)));
   }
 }

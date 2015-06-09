@@ -382,7 +382,7 @@ public final class FactTable implements Closeable {
     String measureName = (scan.getMeasureNames().size() == 1) ? scan.getMeasureNames().iterator().next() : null;
     byte[] fuzzyRowMask = codec.createFuzzyRowMask(scan.getDimensionValues(), measureName);
     // note: we can use startRow, as it will contain all "fixed" parts of the key needed
-    return new FuzzyRowFilter(ImmutableList.of(new ImmutablePair<byte[], byte[]>(startRow, fuzzyRowMask)));
+    return new FuzzyRowFilter(ImmutableList.of(new ImmutablePair<>(startRow, fuzzyRowMask)));
   }
 
   // todo: shouldn't we aggregate "before" writing to FactTable? We could do it really efficient outside

@@ -66,7 +66,7 @@ public class SparkAppUsingObjectStore extends AbstractApplication {
         byte[], byte[]>() {
         @Override
         public Tuple2<byte[], byte[]> call(Tuple2<byte[], String> stringTuple2) throws Exception {
-          return new Tuple2<byte[], byte[]>(stringTuple2._1(), Bytes.toBytes(stringTuple2._2().length()));
+          return new Tuple2<>(stringTuple2._1(), Bytes.toBytes(stringTuple2._2().length()));
         }
       });
 

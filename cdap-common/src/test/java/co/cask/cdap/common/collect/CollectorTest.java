@@ -37,7 +37,7 @@ public class CollectorTest {
 
   @Test
   public void testAllCollector() {
-    Collector<Integer> collector = new AllCollector<Integer>();
+    Collector<Integer> collector = new AllCollector<>();
     Assert.assertEquals(collect(collector, 0), ImmutableList.<Integer>of());
     Assert.assertEquals(collect(collector, 4), ImmutableList.of(0, 1, 2, 3));
     Assert.assertEquals(collect(collector, 4), ImmutableList.of(0, 1, 2, 3));
@@ -45,9 +45,9 @@ public class CollectorTest {
 
   @Test
   public void testFirstNCollector() {
-    Collector<Integer> collector1 = new FirstNCollector<Integer>(1);
-    Collector<Integer> collector4 = new FirstNCollector<Integer>(4);
-    Collector<Integer> collector10 = new FirstNCollector<Integer>(10);
+    Collector<Integer> collector1 = new FirstNCollector<>(1);
+    Collector<Integer> collector4 = new FirstNCollector<>(4);
+    Collector<Integer> collector10 = new FirstNCollector<>(10);
 
     // add 0 elements
     Assert.assertEquals(collect(collector1, 0), ImmutableList.<Integer>of());
@@ -65,9 +65,9 @@ public class CollectorTest {
 
   @Test
   public void testLastNCollector() {
-    Collector<Integer> collector1 = new LastNCollector<Integer>(1);
-    Collector<Integer> collector4 = new LastNCollector<Integer>(4);
-    Collector<Integer> collector10 = new LastNCollector<Integer>(10);
+    Collector<Integer> collector1 = new LastNCollector<>(1);
+    Collector<Integer> collector4 = new LastNCollector<>(4);
+    Collector<Integer> collector10 = new LastNCollector<>(10);
 
     // add 0 elements
     Assert.assertEquals(collect(collector1, 0), ImmutableList.<Integer>of());

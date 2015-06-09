@@ -52,9 +52,9 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
   public synchronized StreamConsumerStateStore create(StreamConfig streamConfig) throws IOException {
     Id.Namespace namespace = streamConfig.getStreamId().getNamespace();
     TableId streamStateStoreTableId = StreamUtils.getStateStoreTableId(namespace);
-    HBaseAdmin admin = new HBaseAdmin(hConf);
-    if (!tableUtil.tableExists(admin, streamStateStoreTableId)) {
-      try {
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      if (!tableUtil.tableExists(admin, streamStateStoreTableId)) {
+
         HTableDescriptor htd = tableUtil.createHTableDescriptor(streamStateStoreTableId);
 
         HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
@@ -63,8 +63,6 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
 
         tableUtil.createTableIfNotExists(admin, streamStateStoreTableId, htd, null,
                                          QueueConstants.MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
-      } finally {
-        admin.close();
       }
     }
 
@@ -76,14 +74,11 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
 
   @Override
   public synchronized void dropAllInNamespace(Id.Namespace namespace) throws IOException {
-    HBaseAdmin admin = new HBaseAdmin(hConf);
-    try {
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
       TableId tableId = StreamUtils.getStateStoreTableId(namespace);
       if (tableUtil.tableExists(admin, tableId)) {
         tableUtil.dropTable(admin, tableId);
       }
-    } finally {
-      admin.close();
     }
   }
 }

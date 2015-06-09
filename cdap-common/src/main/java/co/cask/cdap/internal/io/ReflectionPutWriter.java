@@ -147,6 +147,9 @@ public class ReflectionPutWriter<T> extends ReflectionWriter<Put, T> {
     if (val != null) {
       seenRefs.remove(val);
       write(put, val, schema.getNonNullable());
+    } else {
+      // if the value is null, we want to generate a put with value null, to make sure to delete any existing values.
+      put.add(nextField(), (byte[]) null);
     }
   }
 }

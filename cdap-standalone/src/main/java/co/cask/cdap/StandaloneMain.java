@@ -41,7 +41,6 @@ import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.gateway.router.RouterModules;
 import co.cask.cdap.internal.app.services.AppFabricServer;
@@ -58,11 +57,9 @@ import co.cask.tephra.inmemory.InMemoryTransactionService;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
 import org.slf4j.Logger;
@@ -78,6 +75,10 @@ import java.util.List;
  * NOTE: Use AbstractIdleService
  */
 public class StandaloneMain {
+
+  // A special key in the CConfiguration to disable UI. It's mainly used for unit-tests that start Standalone.
+  public static final String DISABLE_UI = "standalone.disable.ui";
+
   private static final Logger LOG = LoggerFactory.getLogger(StandaloneMain.class);
 
   private final UserInterfaceService userInterfaceService;
@@ -100,7 +101,7 @@ public class StandaloneMain {
   private ExploreExecutorService exploreExecutorService;
   private final ExploreClient exploreClient;
 
-  private StandaloneMain(List<Module> modules, CConfiguration configuration, String uiPath) {
+  private StandaloneMain(List<Module> modules, CConfiguration configuration) {
     this.configuration = configuration;
 
     Injector injector = Guice.createInjector(modules);
@@ -115,7 +116,11 @@ public class StandaloneMain {
     serviceStore = injector.getInstance(ServiceStore.class);
     streamService = injector.getInstance(StreamService.class);
 
-    userInterfaceService = injector.getInstance(UserInterfaceService.class);
+    if (configuration.getBoolean(DISABLE_UI, false)) {
+      userInterfaceService = null;
+    } else {
+      userInterfaceService = injector.getInstance(UserInterfaceService.class);
+    }
 
     sslEnabled = configuration.getBoolean(Constants.Security.SSL_ENABLED);
     securityEnabled = configuration.getBoolean(Constants.Security.ENABLED);
@@ -138,7 +143,7 @@ public class StandaloneMain {
           shutDown();
         } catch (Throwable e) {
           LOG.error("Failed to shutdown", e);
-          // because shutdown hooks execute concurrently, the logger may be closed already: thus also print it.
+          // Because shutdown hooks execute concurrently, the logger may be closed already: thus also print it.
           System.err.println("Failed to shutdown: " + e.getMessage());
           e.printStackTrace(System.err);
         }
@@ -225,8 +230,8 @@ public class StandaloneMain {
 
     } catch (Throwable e) {
       LOG.error("Exception during shutdown", e);
-      // we can't do much but exit. Because there was an exception, some non-daemon threads may still be running.
-      // therefore System.exit() won't do it, we need to farce a halt.
+      // We can't do much but exit. Because there was an exception, some non-daemon threads may still be running.
+      // Therefore System.exit() won't do it, we need to force a halt.
       Runtime.getRuntime().halt(1);
     } finally {
       cleanupTempDir();
@@ -244,82 +249,32 @@ public class StandaloneMain {
     }
   }
 
-  /**
-   * Print the usage statement and return null.
-   *
-   * @param error indicates whether this was invoked as the result of an error
-   * @throws IllegalArgumentException in case of error
-   */
-  static void usage(boolean error) {
-
-    // Which output stream should we use?
-    PrintStream out = (error ? System.err : System.out);
-
-    // And our requirements and usage
-    out.println("Requirements: ");
-    out.println("  Java:    JDK 1.7 must be installed and JAVA_HOME environment variable set to the java executable");
-    out.println("  Node.js: Node.js must be installed (obtain from http://nodejs.org/#download).  ");
-    out.println("           The \"node\" executable must be in the system $PATH environment variable");
-    out.println("");
-    out.println("Usage: ");
-    if (OSDetector.isWindows()) {
-      out.println("  cdap.bat [options]");
-    } else {
-      out.println("  cdap.sh [options]");
-    }
-    out.println("");
-    out.println("Additional options:");
-    out.println("  --help     To print this message");
-    out.println("");
-
-    if (error) {
-      throw new IllegalArgumentException();
-    }
-  }
-
   public static void main(String[] args) {
-    String uiPath = UserInterfaceService.UI;
-
-    if (args.length > 0) {
-      if ("--help".equals(args[0]) || "-h".equals(args[0])) {
-        usage(false);
-        return;
-      } else {
-        usage(true);
-      }
-    }
-
-    StandaloneMain main = null;
-
+    StandaloneMain main = create();
     try {
-      main = create(uiPath);
+      if (args.length > 0) {
+        System.out.printf("%s takes no arguments\n", StandaloneMain.class.getSimpleName());
+        System.out.println("These arguments are being ignored:");
+        for (int i = 0; i <= args.length - 1; i++) {
+          System.out.printf("Parameter #%d: %s\n", i, args[i]);
+        }
+      }
       main.startUp();
     } catch (Throwable e) {
       System.err.println("Failed to start Standalone CDAP. " + e.getMessage());
       LOG.error("Failed to start Standalone CDAP", e);
-      if (main != null) {
-        main.shutDown();
-      }
-      System.exit(-2);
+      Runtime.getRuntime().halt(-2);
     }
-  }
-
-  public static StandaloneMain create() {
-    return create(UserInterfaceService.UI);
   }
 
   /**
    * The root of all goodness!
    */
-  public static StandaloneMain create(String uiPath) {
-    return create(uiPath, CConfiguration.create(), new Configuration());
+  public static StandaloneMain create() {
+    return create(CConfiguration.create(), new Configuration());
   }
 
   public static StandaloneMain create(CConfiguration cConf, Configuration hConf) {
-    return create(UserInterfaceService.UI, cConf, hConf);
-  }
-
-  public static StandaloneMain create(String uiPath, CConfiguration cConf, Configuration hConf) {
     // This is needed to use LocalJobRunner with fixes (we have it in app-fabric).
     // For the modified local job runner
     hConf.addResource("mapred-site-local.xml");
@@ -349,13 +304,12 @@ public class StandaloneMain {
     }
 
     //Run dataset service on random port
-    List<Module> modules = createPersistentModules(cConf, hConf, uiPath);
+    List<Module> modules = createPersistentModules(cConf, hConf);
 
-    return new StandaloneMain(modules, cConf, uiPath);
+    return new StandaloneMain(modules, cConf);
   }
 
-  private static List<Module> createPersistentModules(CConfiguration configuration, Configuration hConf,
-                                                      final String uiPath) {
+  private static List<Module> createPersistentModules(CConfiguration configuration, Configuration hConf) {
     configuration.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, Constants.DEFAULT_DATA_LEVELDB_DIR);
 
     String environment =
@@ -367,20 +321,9 @@ public class StandaloneMain {
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
 
     return ImmutableList.of(
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          if (uiPath != null) {
-            bindConstant().annotatedWith(Names.named("ui-path")).to(uiPath);
-          } else {
-            bindConstant().annotatedWith(Names.named("ui-path")).to("");
-          }
-        }
-      },
       new ConfigModule(configuration, hConf),
       new IOModule(),
       new MetricsHandlerModule(),
-      new AuthModule(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new LocationRuntimeModule().getStandaloneModules(),
       new AppFabricServiceRuntimeModule().getStandaloneModules(),

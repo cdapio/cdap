@@ -16,7 +16,6 @@
 
 package co.cask.cdap.cli.completer.element;
 
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.cli.completer.StringsCompleter;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.common.exception.UnauthorizedException;

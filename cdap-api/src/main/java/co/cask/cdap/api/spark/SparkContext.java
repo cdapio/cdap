@@ -134,7 +134,7 @@ public interface SparkContext extends RuntimeContext {
    * @param argsKey {@link String} which is the key for the argument
    * @return String[] containing all the arguments which is indexed by their position as they were supplied
    */
-  public String[] getRuntimeArguments(String argsKey);
+  String[] getRuntimeArguments(String argsKey);
 
   /**
    * Returns a {@link Serializable} {@link ServiceDiscoverer} for Service Discovery in Spark Program which can be
@@ -142,7 +142,7 @@ public interface SparkContext extends RuntimeContext {
    *
    * @return A {@link Serializable} {@link ServiceDiscoverer}
    */
-  public ServiceDiscoverer getServiceDiscoverer();
+  ServiceDiscoverer getServiceDiscoverer();
 
   /**
    * Returns a {@link Serializable} {@link Metrics} which can be used to emit custom metrics from user's {@link Spark}
@@ -150,5 +150,5 @@ public interface SparkContext extends RuntimeContext {
    *
    * @return {@link Serializable} {@link Metrics} for {@link Spark} programs
    */
-  public Metrics getMetrics();
+  Metrics getMetrics();
 }

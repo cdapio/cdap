@@ -108,7 +108,7 @@ public class PartitionFilter {
       if (null == lower && null == upper) { // filter is pointless if there is no bound
         return this;
       }
-      map.put(field, new Condition<T>(field, lower, upper));
+      map.put(field, new Condition<>(field, lower, upper));
       return this;
     }
 
@@ -128,7 +128,7 @@ public class PartitionFilter {
       if (map.containsKey(field)) {
         throw new IllegalArgumentException(String.format("Field '%s' already exists in partition filter.", field));
       }
-      map.put(field, new Condition<T>(field, value));
+      map.put(field, new Condition<>(field, value));
       return this;
     }
 

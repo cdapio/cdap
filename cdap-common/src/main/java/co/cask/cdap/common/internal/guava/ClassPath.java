@@ -355,7 +355,7 @@ public final class ClassPath {
   @VisibleForTesting static final class Scanner {
 
     private final ImmutableSortedSet.Builder<ResourceInfo> resources =
-        new ImmutableSortedSet.Builder<ResourceInfo>(Ordering.usingToString());
+        new ImmutableSortedSet.Builder<>(Ordering.usingToString());
     private final Set<URI> scannedUris = Sets.newHashSet();
 
     ImmutableSortedSet<ResourceInfo> getResources() {

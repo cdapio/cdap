@@ -166,7 +166,7 @@ public class StreamInputSplitFinder<T> {
      * @return a new instance of {@link StreamInputSplitFinder}
      */
     public <T> StreamInputSplitFinder<T> build(StreamInputSplitFactory<T> splitFactory) {
-      return new StreamInputSplitFinder<T>(path, startTime, endTime, maxSplitSize, minSplitSize, splitFactory);
+      return new StreamInputSplitFinder<>(path, startTime, endTime, maxSplitSize, minSplitSize, splitFactory);
     }
   }
 }

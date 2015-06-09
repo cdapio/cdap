@@ -30,7 +30,6 @@ import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -113,7 +112,6 @@ public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new LoggingModules().getDistributedModules(),
-      new AuthModule(),
       new MetricsHandlerModule(),
       new MetricsClientRuntimeModule().getDistributedModules()
     );

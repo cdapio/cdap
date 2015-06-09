@@ -84,10 +84,10 @@ public final class QueueName {
     return new QueueName(uri);
   }
 
-  public static String prefixForFlow(String namespace, String app, String flow) {
+  public static String prefixForFlow(Id.Flow flowId) {
     // queue:///namespace/app/flow/
     // Note that the trailing / is crucial, otherwise this could match queues of flow1, flowx, etc.
-    return String.format("queue:///%s/%s/%s/", namespace, app, flow);
+    return String.format("queue:///%s/%s/%s/", flowId.getNamespaceId(), flowId.getApplicationId(), flowId.getId());
   }
 
   // Note that like above the trailing '/' in the prefix for namespace is crucial,

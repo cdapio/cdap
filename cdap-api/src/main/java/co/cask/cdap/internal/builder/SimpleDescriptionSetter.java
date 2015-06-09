@@ -27,7 +27,7 @@ public final class SimpleDescriptionSetter<T> implements DescriptionSetter<T> {
   private final T next;
 
   public static <T> DescriptionSetter<T> create(Setter<String> setter, T next) {
-    return new SimpleDescriptionSetter<T>(setter, next);
+    return new SimpleDescriptionSetter<>(setter, next);
   }
 
   private SimpleDescriptionSetter(Setter<String> setter, T next) {

@@ -67,13 +67,13 @@ public class DefaultWorkflowForkConfigurer<T extends WorkflowForkJoiner & Workfl
   @Override
   @SuppressWarnings("unchecked")
   public WorkflowForkConfigurer<? extends WorkflowForkConfigurer<T>> fork() {
-    return new DefaultWorkflowForkConfigurer<DefaultWorkflowForkConfigurer<T>>(this);
+    return new DefaultWorkflowForkConfigurer<>(this);
   }
 
   @Override
   public WorkflowConditionConfigurer<? extends WorkflowForkConfigurer<T>> condition(
     Predicate<WorkflowContext> predicate) {
-    return new DefaultWorkflowConditionConfigurer<DefaultWorkflowForkConfigurer<T>>(this,
+    return new DefaultWorkflowConditionConfigurer<>(this,
                                                                                     predicate.getClass().getName());
   }
 

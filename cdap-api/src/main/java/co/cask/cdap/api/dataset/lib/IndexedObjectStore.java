@@ -157,7 +157,7 @@ public class IndexedObjectStore<T> extends AbstractDataset {
       existingSecondaryKeys = row.getColumns().keySet();
     }
 
-    Set<byte[]> newSecondaryKeys = new TreeSet<byte[]>(new Bytes.ByteArrayComparator());
+    Set<byte[]> newSecondaryKeys = new TreeSet<>(new Bytes.ByteArrayComparator());
     newSecondaryKeys.addAll(Arrays.asList(secondaryKeys));
 
     List<byte[]> secondaryKeysDeleted = secondaryKeysToDelete(existingSecondaryKeys, newSecondaryKeys);

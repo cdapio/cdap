@@ -81,26 +81,28 @@ angular.module(PKG.name + '.feature.services')
           })
 
 
-        .state('services.detail.data', {
+        .state('services.detail.datasets', {
           url: '/data',
           templateUrl: '/assets/features/services/templates/tabs/data.html',
           ncyBreadcrumb: {
-            skip: true
+            parent: 'services.detail.runs',
+            label: 'Datasets'
           }
         })
         .state('services.detail.metadata', {
           url: '/metadata',
           templateUrl: '/assets/features/services/templates/tabs/metadata.html',
           ncyBreadcrumb: {
-            skip: true
+            parent: 'services.detail.runs',
+            label: 'Metadata'
           }
         })
         .state('services.detail.history', {
           url: '/history',
           templateUrl: '/assets/features/services/templates/tabs/history.html',
           ncyBreadcrumb: {
-            parent: 'apps.detail.overview.status',
-            label: '{{$state.params.programId}} / History'
+            parent: 'services.detail.runs',
+            label: 'History'
           }
         })
 
@@ -108,7 +110,8 @@ angular.module(PKG.name + '.feature.services')
           url: '/resource',
           templateUrl: '/assets/features/services/templates/tabs/resources.html',
           ncyBreadcrumb: {
-            skip: true
+            parent: 'services.detail.runs',
+            label: 'Resources'
           }
         });
   });

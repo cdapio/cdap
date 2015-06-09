@@ -20,7 +20,6 @@ import co.cask.cdap.common.utils.DirUtils;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.io.Closeables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,11 +64,10 @@ public class DirectoryClassLoader extends URLClassLoader {
     // Try to load the Manifest from the unpacked directory
     Manifest manifest = null;
     try {
-      InputStream input = new FileInputStream(new File(dir, JarFile.MANIFEST_NAME.replace('/', File.separatorChar)));
-      try {
+      try (
+        InputStream input = new FileInputStream(new File(dir, JarFile.MANIFEST_NAME.replace('/', File.separatorChar)))
+      ) {
         manifest = new Manifest(input);
-      } finally {
-        Closeables.closeQuietly(input);
       }
     } catch (IOException e) {
       // Ignore, since it's possible that there is no MANIFEST

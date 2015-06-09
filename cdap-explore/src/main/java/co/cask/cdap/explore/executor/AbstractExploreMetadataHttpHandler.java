@@ -80,22 +80,19 @@ public class AbstractExploreMetadataHttpHandler extends AbstractHttpHandler {
     if (!content.readable()) {
       return defaultValue;
     }
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
-    try {
+    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
       T args = GSON.fromJson(reader, argsType);
       return (args == null) ? defaultValue : args;
     } catch (JsonSyntaxException e) {
       LOG.info("Failed to parse runtime arguments on {}", request.getUri(), e);
       throw e;
-    } finally {
-      reader.close();
     }
   }
 
   /**
    * Represents the core execution of an endpoint.
    */
-  protected static interface EndpointCoreExecution<T> {
+  protected interface EndpointCoreExecution<T> {
     T execute(HttpRequest request, HttpResponder responder)
       throws IllegalArgumentException, SQLException, ExploreException, IOException;
   }

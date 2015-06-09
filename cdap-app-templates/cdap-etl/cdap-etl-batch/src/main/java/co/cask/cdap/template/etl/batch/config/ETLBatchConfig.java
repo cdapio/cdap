@@ -40,6 +40,11 @@ public final class ETLBatchConfig extends ETLConfig {
     this(schedule, source, sink, transforms, null);
   }
 
+  @VisibleForTesting
+  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink) {
+    this(schedule, source, sink, null);
+  }
+
   public String getSchedule() {
     return schedule;
   }

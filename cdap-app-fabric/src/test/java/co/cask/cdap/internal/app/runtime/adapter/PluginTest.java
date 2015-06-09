@@ -350,7 +350,7 @@ public class PluginTest {
     ) {
       ClassReader reader = new ClassReader(byteCode);
       ClassWriter writer = new ClassWriter(0);
-      reader.accept(new ClassVisitor(Opcodes.ASM4, writer) {
+      reader.accept(new ClassVisitor(Opcodes.ASM5, writer) {
         @Override
         public void visit(int version, int access, String name, String signature,
                           String superName, String[] interfaces) {

@@ -281,6 +281,6 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
   }
 
   private <T extends ProgramSpecification> Verifier<T> createProgramVerifier(Class<T> clz) {
-    return new ProgramVerification<T>();
+    return new ProgramVerification<>();
   }
 }

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data.runtime.main;
 
-import co.cask.cdap.api.dataset.module.DatasetModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.multibindings.MapBinder;

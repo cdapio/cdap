@@ -37,7 +37,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.MRConfig;
@@ -337,13 +336,10 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
                                                                    context.getRunId().getId()));
 
     LOG.debug("Creating Spark Job Jar: {}", jobJarLocation.toURI());
-    JarOutputStream jarOut = new JarOutputStream(jobJarLocation.getOutputStream());
-    try {
+    try (JarOutputStream jarOut = new JarOutputStream(jobJarLocation.getOutputStream())) {
       // All we need is the serialized hConf in the job jar
       jarOut.putNextEntry(new JarEntry(SPARK_HCONF_FILENAME));
       conf.writeXml(jarOut);
-    } finally {
-      Closeables.closeQuietly(jarOut);
     }
 
     return jobJarLocation;

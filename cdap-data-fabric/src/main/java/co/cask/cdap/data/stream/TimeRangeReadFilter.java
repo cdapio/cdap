@@ -17,7 +17,6 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.data.file.ReadFilter;
-import co.cask.cdap.data.stream.service.StreamFetchHandler;
 
 /**
  * A {@link ReadFilter} for accepting events that are within a given time range.

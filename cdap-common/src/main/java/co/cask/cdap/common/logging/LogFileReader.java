@@ -104,16 +104,13 @@ public class LogFileReader implements LogReader {
 
     // open current file for reading
     byte[] bytes = new byte[(int) bytesToRead];
-    FSDataInputStream input = fileSystem.open(path);
-    try {
+    try (FSDataInputStream input = fileSystem.open(path)) {
       // seek into latest file
       if (seekPos > 0) {
         input.seek(seekPos);
       }
       // read to the end of current file
       input.readFully(bytes);
-    } finally {
-      input.close();
     }
     int pos = 0;
     if (seekPos > 0) {
@@ -144,8 +141,7 @@ public class LogFileReader implements LogReader {
 
   private long determineTrueFileSize(Path path, FileStatus status)
       throws IOException {
-    FSDataInputStream stream = fileSystem.open(path);
-    try {
+    try (FSDataInputStream stream = fileSystem.open(path)) {
       stream.seek(status.getLen());
       // we need to read repeatedly until we reach the end of the file
       byte[] buffer = new byte[1024 * 1024];
@@ -154,8 +150,6 @@ public class LogFileReader implements LogReader {
       }
       long trueSize = stream.getPos();
       return trueSize;
-    } finally {
-      stream.close();
     }
   }
 

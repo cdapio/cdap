@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014 Cask Data, Inc.
+  Copyright © 2014-2015 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -314,6 +314,14 @@ page at http://checkstyle.sourceforge.net/config.html -->
            8.4.3.  The prescribed order is:
            public, protected, private, abstract, static, final, transient, volatile,
            synchronized, native, strictfp
+        -->
+    </module>
+
+    <module name="RedundantModifier">
+      <!-- Checks for redundant modifiers in:
+           - interface and annotation definitions,
+           - the final modifier on methods of final classes, and
+           - inner interface declarations that are declared as static.
         -->
     </module>
 

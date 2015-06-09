@@ -26,7 +26,6 @@ import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Test;
@@ -51,7 +50,7 @@ public class TestBundleJarApp extends TestBase {
   public void testBundleJar() throws Exception {
     File helloWorldJar = new File(TestBundleJarApp.class.getClassLoader().getResource("helloworld.jar").toURI());
     ApplicationManager applicationManager = deployApplication(BundleJarApp.class, helloWorldJar);
-    FlowManager flowManager = applicationManager.startFlow("SimpleFlow");
+    FlowManager flowManager = applicationManager.getFlowManager("SimpleFlow").start();
     StreamManager streamManager = getStreamManager("simpleInputStream");
     for (int i = 0; i < 5; i++) {
       streamManager.send("test" + i + ":" + i);
@@ -64,7 +63,7 @@ public class TestBundleJarApp extends TestBase {
     flowManager.stop();
 
     // Query the result
-    ServiceManager serviceManager = applicationManager.startService("SimpleGetInput");
+    ServiceManager serviceManager = applicationManager.getServiceManager("SimpleGetInput").start();
 
     // Verify the query result
     String queryResult = callServiceGet(serviceManager.getServiceURL(), "/get/test1");
@@ -73,7 +72,7 @@ public class TestBundleJarApp extends TestBase {
     Assert.assertEquals(expectedQueryResult, queryResult);
     serviceManager.stop();
 
-    serviceManager = applicationManager.startService("PrintService");
+    serviceManager = applicationManager.getServiceManager("PrintService").start();
 
     String helloWorldClassName = "hello.HelloWorld";
     String result = callServiceGet(serviceManager.getServiceURL(), "/load/" + helloWorldClassName);
@@ -84,11 +83,10 @@ public class TestBundleJarApp extends TestBase {
 
   private String callServiceGet(URL serviceURL, String path) throws IOException {
     URLConnection connection = new URL(serviceURL.toString() + path).openConnection();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8));
-    try {
+    try (
+      BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8))
+    ) {
       return reader.readLine();
-    } finally {
-      Closeables.closeQuietly(reader);
     }
   }
 }

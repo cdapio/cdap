@@ -174,9 +174,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.hiveConf = hiveConf;
     this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, store);
     this.previewsDir = previewsDir;
-    this.metastoreClientLocal = new ThreadLocal<Supplier<IMetaStoreClient>>();
+    this.metastoreClientLocal = new ThreadLocal<>();
     this.metastoreClientReferences = Maps.newConcurrentMap();
-    this.metastoreClientReferenceQueue = new ReferenceQueue<Supplier<IMetaStoreClient>>();
+    this.metastoreClientReferenceQueue = new ReferenceQueue<>();
     this.datasetFramework = datasetFramework;
     this.streamAdmin = streamAdmin;
     this.exploreTableManager = new ExploreTableManager(this, datasetFramework);
@@ -247,7 +247,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         // We can use the weak reference, which is retrieved through polling the ReferenceQueue,
         // to get back the client and call close() on it.
         metastoreClientReferences.put(
-          new WeakReference<Supplier<IMetaStoreClient>>(supplier, metastoreClientReferenceQueue), client);
+          new WeakReference<>(supplier, metastoreClientReferenceQueue), client);
       } catch (MetaException e) {
         throw new ExploreException("Error initializing Hive Metastore client", e);
       }
@@ -861,14 +861,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       try {
         // Create preview results for query
         previewFile = new File(previewsDir, handle.getHandle());
-        FileWriter fileWriter = new FileWriter(previewFile);
-        try {
+        try (FileWriter fileWriter = new FileWriter(previewFile)) {
           List<QueryResult> results = fetchNextResults(handle, PREVIEW_COUNT);
           GSON.toJson(results, fileWriter);
           operationInfo.setPreviewFile(previewFile);
           return results;
-        } finally {
-          Closeables.closeQuietly(fileWriter);
         }
       } catch (IOException e) {
         LOG.error("Could not write preview results into file", e);

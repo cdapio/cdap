@@ -139,7 +139,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
   /**
    * List of configuration resources.
    */
-  private ArrayList<Object> resources = new ArrayList<Object>();
+  private ArrayList<Object> resources = new ArrayList<>();
 
   /**
    * The value reported as the setting resource when a key is set
@@ -150,16 +150,16 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
   /**
    * List of configuration parameters marked <b>final</b>.
    */
-  private Set<String> finalParameters = new HashSet<String>();
+  private Set<String> finalParameters = new HashSet<>();
 
   /**
    * Configuration objects.
    */
   private static final WeakHashMap<Configuration, Object> REGISTRY =
-    new WeakHashMap<Configuration, Object>();
+    new WeakHashMap<>();
 
   private static final Map<ClassLoader, Map<String, Class<?>>>
-    CACHE_CLASSES = new WeakHashMap<ClassLoader, Map<String, Class<?>>>();
+    CACHE_CLASSES = new WeakHashMap<>();
 
   /**
    * Sentinel value to store negative cache results in {@link #CACHE_CLASSES}.
@@ -262,7 +262,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
    *         or empty {@code Map} if no deprecated properties
    */
   protected Map<String, String[]> getDeprecatedProps() {
-    Map<String, String[]> result = new HashMap<String, String[]>();
+    Map<String, String[]> result = new HashMap<>();
     for (String key : deprecatedKeyMap.keySet()) {
       result.put(key, deprecatedKeyMap.get(key).newKeys);
     }
@@ -300,7 +300,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
    *         the <code>name</code> or the <code>name</code> itself.
    */
   private String[] handleDeprecation(String name) {
-    ArrayList<String> names = new ArrayList<String>();
+    ArrayList<String> names = new ArrayList<>();
     if (deprecatedKeyMap.containsKey(name)) {
       DeprecatedKeyInfo keyInfo = deprecatedKeyMap.get(name);
       warnOnceIfDeprecated(name);
@@ -329,7 +329,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
 
   private void handleDeprecation() {
     LOG.trace("Handling deprecation for all properties in config...");
-    Set<Object> keys = new HashSet<Object>();
+    Set<Object> keys = new HashSet<>();
     keys.addAll(getProps().keySet());
     for (Object item: keys) {
       LOG.trace("Handling deprecation for " + item);
@@ -350,7 +350,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
 
   /** A new configuration. */
   public Configuration() {
-    updatingResource = new HashMap<String, String>();
+    updatingResource = new HashMap<>();
     synchronized (Configuration.class) {
       REGISTRY.put(this, null);
     }
@@ -373,10 +373,10 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
         this.overlay = (Properties) other.overlay.clone();
       }
 
-      this.updatingResource = new HashMap<String, String>(other.updatingResource);
+      this.updatingResource = new HashMap<>(other.updatingResource);
     }
 
-    this.finalParameters = new HashSet<String>(other.finalParameters);
+    this.finalParameters = new HashSet<>(other.finalParameters);
     synchronized (Configuration.class) {
       REGISTRY.put(this, null);
     }
@@ -1092,7 +1092,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
       }
     };
 
-    List<Range> ranges = new ArrayList<Range>();
+    List<Range> ranges = new ArrayList<>();
 
     public IntegerRanges() {
     }
@@ -1261,7 +1261,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
   public Collection<String> getTrimmedStringCollection(String name) {
     String valueString = get(name);
     if (null == valueString) {
-      Collection<String> empty = new ArrayList<String>();
+      Collection<String> empty = new ArrayList<>();
       return empty;
     }
     return StringUtils.getTrimmedStringCollection(valueString);
@@ -1463,7 +1463,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
    */
   @SuppressWarnings("unchecked")
   public <U> List<U> getInstances(String name, Class<U> xface) {
-    List<U> ret = new ArrayList<U>();
+    List<U> ret = new ArrayList<>();
     Class<?>[] classes = getClasses(name);
     for (Class<?> cl: classes) {
       if (!xface.isAssignableFrom(cl)) {
@@ -1930,7 +1930,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
   public Map<String, String> getValByRegex(String regex) {
     Pattern p = Pattern.compile(regex);
 
-    Map<String, String> result = new HashMap<String, String>();
+    Map<String, String> result = new HashMap<>();
     Matcher m;
 
     for (Map.Entry<Object, Object> item: getProps().entrySet()) {

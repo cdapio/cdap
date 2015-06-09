@@ -45,7 +45,7 @@ public abstract class AbstractQueueProducer implements QueueProducer, Transactio
 
   protected AbstractQueueProducer(QueueMetrics queueMetrics, QueueName queueName) {
     this.queueMetrics = queueMetrics;
-    this.queue = new LinkedBlockingQueue<QueueEntry>();
+    this.queue = new LinkedBlockingQueue<>();
     this.queueName = queueName;
   }
 

@@ -45,8 +45,8 @@ public class FileWriterHelper {
       new Schema.Field("key", Schema.create(Schema.Type.STRING), null, null),
       new Schema.Field("value", Schema.create(Schema.Type.STRING), null, null)));
 
-    DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<GenericRecord>(schema);
-    DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<GenericRecord>(datumWriter);
+    DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(schema);
+    DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(datumWriter);
     dataFileWriter.create(schema, out);
     try {
       for (int i = start; i < end; i++) {

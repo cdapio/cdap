@@ -103,11 +103,8 @@ public class UploadService extends AbstractService {
       PartitionOutput output = results.getPartitionOutput(key);
       try {
         Location location = output.getLocation().append("file");
-        WritableByteChannel channel = Channels.newChannel(location.getOutputStream());
-        try {
+        try (WritableByteChannel channel = Channels.newChannel(location.getOutputStream())) {
           channel.write(request.getContent());
-        } finally {
-          channel.close();
         }
       } catch (IOException e) {
         responder.sendError(400, String.format("Unable to write path '%s'", output.getRelativePath()));

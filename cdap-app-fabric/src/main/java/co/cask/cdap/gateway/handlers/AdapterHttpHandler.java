@@ -18,15 +18,13 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AdapterNotFoundException;
-import co.cask.cdap.common.exception.CannotBeDeletedException;
+import co.cask.cdap.common.exception.BadRequestException;
 import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterAlreadyExistsException;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.adapter.ApplicationTemplateInfo;
-import co.cask.cdap.internal.app.runtime.adapter.InvalidAdapterOperationException;
 import co.cask.cdap.internal.app.runtime.adapter.InvalidPluginConfigException;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.proto.AdapterConfig;
@@ -70,9 +68,7 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
   private final NamespaceAdmin namespaceAdmin;
 
   @Inject
-  public AdapterHttpHandler(Authenticator authenticator, AdapterService adapterService,
-                            NamespaceAdmin namespaceAdmin) {
-    super(authenticator);
+  public AdapterHttpHandler(AdapterService adapterService, NamespaceAdmin namespaceAdmin) {
     this.namespaceAdmin = namespaceAdmin;
     this.adapterService = adapterService;
   }
@@ -86,25 +82,19 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/templates/{template-id}")
   public void deployTemplate(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
-                             @PathParam("template-id") String templateId) {
+                             @PathParam("template-id") String templateId) throws Exception {
     if (!namespaceAdmin.hasNamespace(Id.Namespace.from(namespaceId))) {
       responder.sendString(HttpResponseStatus.NOT_FOUND,
                            String.format("Namespace '%s' does not exist.", namespaceId));
       return;
     }
+
     try {
       adapterService.deployTemplate(Id.Namespace.from(namespaceId), templateId);
       responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
-    } catch (NotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND,
-                           String.format("Template '%s' does not exist.", templateId));
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
                            String.format("Template '%s' is invalid: %s", templateId, e.getMessage()));
-    } catch (Exception e) {
-      LOG.error("Exception while trying to deploy template {} in namespace {}.", templateId, namespaceId, e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                           "Internal error while trying to deploy template.");
     }
   }
 
@@ -145,16 +135,12 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/adapters/{adapter-id}")
   public void getAdapter(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
-                         @PathParam("adapter-id") String adapterName) {
-    try {
-      AdapterDefinition def = adapterService.getAdapter(Id.Namespace.from(namespaceId), adapterName);
-      AdapterDetail detail = new AdapterDetail(def.getName(), def.getDescription(), def.getTemplate(),
-                                               def.getProgram(), def.getConfig(), def.getScheduleSpecification(),
-                                               def.getInstances());
-      responder.sendJson(HttpResponseStatus.OK, detail);
-    } catch (AdapterNotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    }
+                         @PathParam("adapter-id") String adapterName) throws AdapterNotFoundException {
+    AdapterDefinition def = adapterService.getAdapter(Id.Namespace.from(namespaceId), adapterName);
+    AdapterDetail detail = new AdapterDetail(def.getName(), def.getDescription(), def.getTemplate(),
+                                             def.getProgram(), def.getConfig(), def.getScheduleSpecification(),
+                                             def.getInstances());
+    responder.sendJson(HttpResponseStatus.OK, detail);
   }
 
   /**
@@ -165,7 +151,7 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
   public void startStopAdapter(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("adapter-id") String adapterId,
-                               @PathParam("action") String action) {
+                               @PathParam("action") String action) throws Exception {
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     try {
       if ("start".equals(action)) {
@@ -178,16 +164,9 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (NotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    } catch (InvalidAdapterOperationException e) {
-      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
     } catch (SchedulerException e) {
       LOG.error("Scheduler error in namespace '{}' for adapter '{}' with action '{}'",
                 namespaceId, adapterId, action, e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    } catch (Throwable t) {
-      LOG.error("Error in namespace '{}' for adapter '{}' with action '{}'", namespaceId, adapterId, action, t);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -199,14 +178,10 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/adapters/{adapter-id}/status")
   public void getAdapterStatus(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
-                               @PathParam("adapter-id") String adapterId) {
-    try {
-      AdapterStatus adapterStatus = adapterService.getAdapterStatus(Id.Namespace.from(namespaceId), adapterId);
-      Map<String, String> status = ImmutableMap.of("status", adapterStatus.toString());
-      responder.sendJson(HttpResponseStatus.OK, status);
-    } catch (AdapterNotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    }
+                               @PathParam("adapter-id") String adapterId) throws AdapterNotFoundException {
+    AdapterStatus adapterStatus = adapterService.getAdapterStatus(Id.Namespace.from(namespaceId), adapterId);
+    Map<String, String> status = ImmutableMap.of("status", adapterStatus.toString());
+    responder.sendJson(HttpResponseStatus.OK, status);
   }
 
   /**
@@ -220,7 +195,7 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
                              @QueryParam("status") String status,
                              @QueryParam("start") String startTs,
                              @QueryParam("end") String endTs,
-                             @QueryParam("limit") @DefaultValue("100") final int resultLimit) {
+                             @QueryParam("limit") @DefaultValue("100") final int resultLimit) throws NotFoundException {
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     long start = (startTs == null || startTs.isEmpty()) ? 0 : Long.parseLong(startTs);
     long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
@@ -232,11 +207,6 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
                            "Supported options for status of runs are running/completed/failed");
-    } catch (NotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    } catch (Throwable t) {
-      LOG.error("Error in namespace '{}' for adapter '{}' when getting run records", namespaceId, adapterName, t);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -248,21 +218,14 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAdapterRun(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("adapter-id") String adapterId,
-                            @PathParam("run-id") String runId) {
+                            @PathParam("run-id") String runId) throws NotFoundException {
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
-    try {
-      RunRecord runRecord = adapterService.getRun(namespace, adapterId, runId);
-      if (runRecord != null) {
-        responder.sendJson(HttpResponseStatus.OK, runRecord);
-        return;
-      }
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } catch (NotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    } catch (Throwable t) {
-      LOG.error("Error in namespace '{}' for adapter '{}' when getting run records", namespaceId, adapterId, t);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    RunRecord runRecord = adapterService.getRun(namespace, adapterId, runId);
+    if (runRecord != null) {
+      responder.sendJson(HttpResponseStatus.OK, runRecord);
+      return;
     }
+    responder.sendStatus(HttpResponseStatus.NOT_FOUND);
   }
 
   /**
@@ -272,19 +235,9 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/adapters/{adapter-id}")
   public void deleteAdapter(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
-                            @PathParam("adapter-id") String adapterName) {
-    try {
-      adapterService.removeAdapter(Id.Namespace.from(namespaceId), adapterName);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (CannotBeDeletedException e) {
-      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
-    } catch (NotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    } catch (Throwable t) {
-      LOG.error("Error in namespace '{}' for adapter '{}' with action '{}'",
-                namespaceId, adapterName, "delete", t);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+                            @PathParam("adapter-id") String adapterName) throws Exception {
+    adapterService.removeAdapter(Id.Namespace.from(namespaceId), adapterName);
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   /**
@@ -294,7 +247,8 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/adapters/{adapter-id}")
   public void createAdapter(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
-                            @PathParam("adapter-id") String adapterName) {
+                            @PathParam("adapter-id") String adapterName)
+    throws AdapterAlreadyExistsException, BadRequestException {
 
     AdapterConfig config;
     try {
@@ -311,23 +265,23 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid adapter config: " + e.getMessage());
       return;
     }
+
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    if (!namespaceAdmin.hasNamespace(namespace)) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND,
+                           String.format("Create adapter failed - namespace '%s' does not exist.", namespaceId));
+      return;
+    }
+
+    // Validate the adapter
+    String templateName = config.getTemplate();
+    ApplicationTemplateInfo applicationTemplateInfo = adapterService.getApplicationTemplateInfo(templateName);
+    if (applicationTemplateInfo == null) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("App template %s not found", templateName));
+      return;
+    }
 
     try {
-      if (!namespaceAdmin.hasNamespace(namespace)) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND,
-                             String.format("Create adapter failed - namespace '%s' does not exist.", namespaceId));
-        return;
-      }
-
-      // Validate the adapter
-      String templateName = config.getTemplate();
-      ApplicationTemplateInfo applicationTemplateInfo = adapterService.getApplicationTemplateInfo(templateName);
-      if (applicationTemplateInfo == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("App template %s not found", templateName));
-        return;
-      }
-
       adapterService.createAdapter(namespace, adapterName, config);
       responder.sendString(HttpResponseStatus.OK, String.format("Adapter: %s is created", adapterName));
     } catch (IllegalArgumentException | InvalidPluginConfigException e) {

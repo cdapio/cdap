@@ -20,10 +20,6 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.table.Delete;
-
-import java.util.Iterator;
-import java.util.Map;
 
 /**
  * A dataset that stores objects of a particular class into a table.

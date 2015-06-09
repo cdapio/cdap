@@ -431,7 +431,7 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
 
     for (Map.Entry<TopicPartition, Integer> entry : config.entrySet()) {
       consumers.put(entry.getKey(),
-                    new KafkaConsumerInfo<OFFSET>(entry.getKey(), entry.getValue(), getBeginOffset(entry.getKey())));
+                    new KafkaConsumerInfo<>(entry.getKey(), entry.getValue(), getBeginOffset(entry.getKey())));
     }
     return consumers.build();
   }

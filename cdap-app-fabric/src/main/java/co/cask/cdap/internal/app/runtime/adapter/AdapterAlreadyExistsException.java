@@ -16,10 +16,12 @@
 
 package co.cask.cdap.internal.app.runtime.adapter;
 
+import co.cask.cdap.common.exception.ConflictException;
+
 /**
  * Thrown when Adapter creation is requested, but an adapter already exists.
  */
-public class AdapterAlreadyExistsException extends Exception {
+public class AdapterAlreadyExistsException extends ConflictException {
   public AdapterAlreadyExistsException(String adapterName) {
     super(String.format("Adapter %s already exists.", adapterName));
   }

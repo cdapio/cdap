@@ -86,7 +86,7 @@ public class ScoreCounter extends AbstractMapReduce {
   /**
    * The Mapper emits a record with the team name, points scored, and points conceded, for both teams.
    */
-  public static class ResultsMapper extends Mapper<LongWritable, Text, Text, Text> {
+  public static class ResultsMapper extends Mapper<LongWritable, Text, Text, GameStat> {
     @Override
     protected void map(LongWritable position, Text value, Context context)
       throws IOException, InterruptedException {
@@ -99,8 +99,8 @@ public class ScoreCounter extends AbstractMapReduce {
       try {
         int winnerPoints = Integer.parseInt(fields[3]);
         int loserPoints = Integer.parseInt(fields[4]);
-        context.write(new Text(winner), new Text(GSON.toJson(new GameStat(winnerPoints, loserPoints))));
-        context.write(new Text(loser), new Text(GSON.toJson(new GameStat(loserPoints, winnerPoints))));
+        context.write(new Text(winner), new GameStat(winnerPoints, loserPoints));
+        context.write(new Text(loser), new GameStat(loserPoints, winnerPoints));
       } catch (NumberFormatException e) {
         LOG.debug("Exception parsing input position {}: {}", position, value.toString());
       }
@@ -110,13 +110,12 @@ public class ScoreCounter extends AbstractMapReduce {
   /**
    *  The reducer counts all the different statistics.
    */
-  public static class TeamCounter extends Reducer<Text, Text, Text, String> {
+  public static class TeamCounter extends Reducer<Text, GameStat, Text, String> {
     @Override
-    protected void reduce(Text key, Iterable<Text> values, Context context)
+    protected void reduce(Text key, Iterable<GameStat> values, Context context)
       throws IOException, InterruptedException {
       int losses = 0, wins = 0, ties = 0, scored = 0, conceded = 0;
-      for (Text statText : values) {
-        GameStat stat = GSON.fromJson(statText.toString(), GameStat.class);
+      for (GameStat stat : values) {
         if (stat.getScored() > stat.getConceded()) {
           wins++;
         } else if (stat.getScored() < stat.getConceded()) {

@@ -17,7 +17,6 @@
 package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.auth.NoAuthenticator;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -38,7 +37,7 @@ public class RouterPathTest {
 
   @BeforeClass
   public static void init() throws Exception {
-    pathLookup = new RouterPathLookup(new NoAuthenticator());
+    pathLookup = new RouterPathLookup();
   }
 
   @Test

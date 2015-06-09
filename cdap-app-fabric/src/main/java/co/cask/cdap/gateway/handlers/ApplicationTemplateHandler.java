@@ -20,7 +20,6 @@ import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.adapter.ApplicationTemplateInfo;
 import co.cask.cdap.internal.app.runtime.adapter.PluginRepository;
@@ -29,6 +28,7 @@ import co.cask.cdap.proto.template.ApplicationTemplateDetail;
 import co.cask.cdap.proto.template.ApplicationTemplateMeta;
 import co.cask.cdap.proto.template.PluginDetail;
 import co.cask.cdap.proto.template.PluginMeta;
+import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
@@ -53,15 +53,13 @@ import javax.ws.rs.PathParam;
  * plugins information.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/templates")
-public class ApplicationTemplateHandler extends AuthenticatedHttpHandler {
+public class ApplicationTemplateHandler extends AbstractHttpHandler {
 
   private final AdapterService adapterService;
   private final PluginRepository pluginRepository;
 
   @Inject
-  ApplicationTemplateHandler(Authenticator authenticator,
-                             AdapterService adapterService, PluginRepository pluginRepository) {
-    super(authenticator);
+  ApplicationTemplateHandler(AdapterService adapterService, PluginRepository pluginRepository) {
     this.adapterService = adapterService;
     this.pluginRepository = pluginRepository;
   }

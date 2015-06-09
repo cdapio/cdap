@@ -56,6 +56,48 @@ public class ReflectionTableTest {
     50000000.02f,
     Double.MAX_VALUE,
     new byte[] { 0, 1, 2 });
+  private static final User SAMUEL_NO_FIRST = new User(
+    null, "Jackson",
+    123,
+    1234567890123L,
+    50000000.02f,
+    Double.MAX_VALUE,
+    new byte[] { 0, 4, 9 });
+  private static final User SAMUEL_NO_ID = new User(
+    "Samuel L.", "Jackson",
+    null,
+    1234567890000L,
+    50000000.02f,
+    Double.MAX_VALUE,
+    new byte[] { 0, 1, 2 });
+  private static final User SAMUEL_NO_TS = new User(
+    "Samuel L.", "Jackson",
+    123,
+    null,
+    50000000.02f,
+    Double.MAX_VALUE,
+    new byte[] { 0, 1, 2 });
+  private static final User SAMUEL_NO_SALARY = new User(
+    "Samuel L.", "Jackson",
+    123,
+    1234567890123L,
+    null,
+    Double.MAX_VALUE,
+    new byte[] { 0, 4, 9 });
+  private static final User SAMUEL_NO_PURCHASE = new User(
+    "Samuel L.", "Jackson",
+    123,
+    1234567890456L,
+    null,
+    Double.MAX_VALUE,
+    new byte[] { 0, 3, 7 });
+  private static final User SAMUEL_NO_BLOB = new User(
+    "Samuel L.", "Jackson",
+    123,
+    1234567890000L,
+    50000000.02f,
+    Double.MAX_VALUE,
+    null);
 
   public static class User {
     private String firstName;
@@ -100,6 +142,19 @@ public class ReflectionTableTest {
     @Override
     public int hashCode() {
       return Objects.hashCode(firstName, lastName, id, timestamp, salary, lastPurchase, blob);
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("firstName", firstName)
+        .add("lastName", lastName)
+        .add("id", id)
+        .add("timestamp", timestamp)
+        .add("salary", salary)
+        .add("lastPurchase", lastPurchase)
+        .add("blob", blob)
+        .toString();
     }
   }
 
@@ -166,6 +221,12 @@ public class ReflectionTableTest {
       final byte[] rowKey = Bytes.toBytes(123);
       final Schema schema = new ReflectionSchemaGenerator().generate(User.class);
       assertGetAndPut(usersTable, rowKey, SAMUEL, schema);
+      assertGetAndPut(usersTable, rowKey, SAMUEL_NO_TS, schema);
+      assertGetAndPut(usersTable, rowKey, SAMUEL_NO_ID, schema);
+      assertGetAndPut(usersTable, rowKey, SAMUEL_NO_FIRST, schema);
+      assertGetAndPut(usersTable, rowKey, SAMUEL_NO_SALARY, schema);
+      assertGetAndPut(usersTable, rowKey, SAMUEL_NO_PURCHASE, schema);
+      assertGetAndPut(usersTable, rowKey, SAMUEL_NO_BLOB, schema);
     } finally {
       dsFrameworkUtil.deleteInstance(users);
     }
@@ -188,11 +249,11 @@ public class ReflectionTableTest {
         @Override
         public void apply() throws Exception {
           Put put = new Put(rowKey);
-          ReflectionPutWriter<User> putWriter = new ReflectionPutWriter<User>(fullSchema);
+          ReflectionPutWriter<User> putWriter = new ReflectionPutWriter<>(fullSchema);
           putWriter.write(SAMUEL, put);
           usersTable.put(put);
           Row row = usersTable.get(rowKey);
-          ReflectionRowReader<User2> rowReader = new ReflectionRowReader<User2>(projSchema, TypeToken.of(User2.class));
+          ReflectionRowReader<User2> rowReader = new ReflectionRowReader<>(projSchema, TypeToken.of(User2.class));
           User2 actual = rowReader.read(row, fullSchema);
           Assert.assertEquals(projected, actual);
         }
@@ -216,7 +277,7 @@ public class ReflectionTableTest {
         @Override
         public void apply() throws Exception {
           Put put = new Put(rowKey);
-          ReflectionPutWriter<User> putWriter = new ReflectionPutWriter<User>(schema);
+          ReflectionPutWriter<User> putWriter = new ReflectionPutWriter<>(schema);
           putWriter.write(SAMUEL, put);
           usersTable.put(put);
           Row row = usersTable.get(rowKey);
@@ -247,7 +308,7 @@ public class ReflectionTableTest {
         @Override
         public void apply() throws Exception {
           Put put = new Put(rowKey);
-          ReflectionPutWriter<User> putWriter = new ReflectionPutWriter<User>(fullSchema);
+          ReflectionPutWriter<User> putWriter = new ReflectionPutWriter<>(fullSchema);
           putWriter.write(SAMUEL, put);
           usersTable.put(put);
           Row row = usersTable.get(rowKey);
@@ -269,11 +330,11 @@ public class ReflectionTableTest {
       @Override
       public void apply() throws Exception {
         Put put = new Put(rowKey);
-        ReflectionPutWriter<User> putWriter = new ReflectionPutWriter<User>(schema);
+        ReflectionPutWriter<User> putWriter = new ReflectionPutWriter<>(schema);
         putWriter.write(obj, put);
         table.put(put);
         Row row = table.get(rowKey);
-        ReflectionRowReader<User> rowReader = new ReflectionRowReader<User>(schema, TypeToken.of(User.class));
+        ReflectionRowReader<User> rowReader = new ReflectionRowReader<>(schema, TypeToken.of(User.class));
         User actual = rowReader.read(row, schema);
         Assert.assertEquals(obj, actual);
       }

@@ -17,7 +17,6 @@
 package co.cask.cdap.proto;
 
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.gson.annotations.SerializedName;
 

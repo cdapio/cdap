@@ -83,7 +83,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
       programClient.setRuntimeArgs(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE, setMap);
       assertEquals(setMap, programClient.getRuntimeArgs(AppReturnsArgs.NAME, ProgramType.SERVICE,
                                                         AppReturnsArgs.SERVICE));
-      programClient.start(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE,
+      programClient.start(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE, false,
                           ImmutableMap.of("run", "value"));
       assertProgramRunning(programClient, AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
       propMap.put("run", "value");

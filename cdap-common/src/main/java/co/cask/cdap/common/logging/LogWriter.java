@@ -27,23 +27,23 @@ public interface LogWriter {
    * Configures this writer.
    * @param config specifies what log to write to
    */
-  public void configure(LogConfiguration config) throws IOException;
+  void configure(LogConfiguration config) throws IOException;
 
   /**
    * logs a single event. This must ensure that - if desired - the event is
    * persisted.
    */
-  public void log(LogEvent event) throws IOException;
+  void log(LogEvent event) throws IOException;
 
   /**
    * return the current write position. This is used as a hint for the length
    * of the current log file - it has not been closed and hence the file system
    * status does not reflect its true size.
    */
-  public long getWritePosition() throws IOException;
+  long getWritePosition() throws IOException;
 
   /**
    * closes the writer and flushes and closes all open files.
    */
-  public void close() throws IOException;
+  void close() throws IOException;
 }

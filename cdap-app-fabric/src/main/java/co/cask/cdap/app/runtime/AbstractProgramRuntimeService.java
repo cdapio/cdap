@@ -174,8 +174,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     LOG.debug("RuntimeInfo removed: {}", removed);
   }
 
-  protected boolean isRunning(Id.Program programId, ProgramType type) {
-    for (Map.Entry<RunId, RuntimeInfo> entry : list(type).entrySet()) {
+  protected boolean isRunning(Id.Program programId) {
+    for (Map.Entry<RunId, RuntimeInfo> entry : list(programId.getType()).entrySet()) {
       if (entry.getValue().getProgramId().equals(programId)) {
         return true;
       }

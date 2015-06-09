@@ -126,8 +126,7 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
         @Override
         public List<HBaseQueueConsumer> call() throws Exception {
           List<HBaseConsumerState> states;
-          final HBaseConsumerStateStore stateStore = admin.getConsumerStateStore(queueName);
-          try {
+          try (HBaseConsumerStateStore stateStore = admin.getConsumerStateStore(queueName)) {
             TransactionExecutor txExecutor = Transactions.createTransactionExecutor(txExecutorFactory, stateStore);
 
             // Find all consumer states for consumers that need to be created based on current state
@@ -155,7 +154,7 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
                   @Override
                   public boolean apply(QueueBarrier barrier) {
                     return barrier.getGroupConfig().getGroupSize() > consumerConfig.getInstanceId()
-                            && stateStore.isAllConsumed(consumerConfig, barrier.getStartRow());
+                      && stateStore.isAllConsumed(consumerConfig, barrier.getStartRow());
                   }
                 }, queueBarriers.get(0));
 
@@ -166,9 +165,6 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
                 return consumerStates;
               }
             });
-
-          } finally {
-            Closeables.closeQuietly(stateStore);
           }
 
           List<HBaseQueueConsumer> consumers = Lists.newArrayList();

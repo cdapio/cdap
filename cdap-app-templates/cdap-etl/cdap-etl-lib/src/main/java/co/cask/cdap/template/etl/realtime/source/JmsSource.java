@@ -128,7 +128,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
     messagesToReceive = configMessagesToReceive.intValue();
 
     // Get environment vars - this would be prefixed with java.naming.*
-    final Hashtable<String, String> envVars = new Hashtable<String, String>();
+    final Hashtable<String, String> envVars = new Hashtable<>();
     for (Map.Entry<String, String> entry : runtimeArguments.entrySet()) {
       envVars.put(entry.getKey(), entry.getValue());
     }
@@ -382,7 +382,15 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
       if (connectionFactoryName != null) {
         this.connectionFactoryName = connectionFactoryName;
       } else {
-        this.connectionFactoryName = JMS_CONNECTION_FACTORY_NAME;
+        this.connectionFactoryName = DEFAULT_CONNECTION_FACTORY;
+      }
+      this.jmsPluginName = jmsPluginName;
+      if (this.jmsPluginName == null) {
+        this.jmsPluginName = Context.INITIAL_CONTEXT_FACTORY;
+      }
+      this.jmsPluginType = jmsPluginType;
+      if (this.jmsPluginType == null) {
+        this.jmsPluginType = JMS_PROVIDER;
       }
       this.jmsPluginName = jmsPluginName;
       if (this.jmsPluginName == null) {

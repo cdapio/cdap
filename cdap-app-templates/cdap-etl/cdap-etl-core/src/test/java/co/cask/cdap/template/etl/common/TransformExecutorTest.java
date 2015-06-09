@@ -32,7 +32,7 @@ public class TransformExecutorTest {
   @Test
   public void testEmptyTransforms() throws Exception {
     TransformExecutor<String, String> executor =
-      new TransformExecutor<String, String>(Lists.<Transformation>newArrayList(), Lists.<StageMetrics>newArrayList());
+      new TransformExecutor<>(Lists.<Transformation>newArrayList(), Lists.<StageMetrics>newArrayList());
     List<String> results = Lists.newArrayList(executor.runOneIteration("foo"));
     Assert.assertEquals(1, results.size());
     Assert.assertEquals("foo", results.get(0));
@@ -48,7 +48,7 @@ public class TransformExecutorTest {
       new StageMetrics(mockMetrics, StageMetrics.Type.TRANSFORM, "second"),
       new StageMetrics(mockMetrics, StageMetrics.Type.SINK, "third")
     );
-    TransformExecutor<Integer, String> executor = new TransformExecutor<Integer, String>(transforms, stageMetrics);
+    TransformExecutor<Integer, String> executor = new TransformExecutor<>(transforms, stageMetrics);
 
     List<String> results = Lists.newArrayList(executor.runOneIteration(1));
     Assert.assertTrue(results.isEmpty());

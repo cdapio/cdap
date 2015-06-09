@@ -32,8 +32,7 @@ import java.util.Map;
  * Sets preferences for instance, namespace, application, program.
  */
 public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
-  protected static final String SUCCESS = "Set Preferences successfully for the '%s'";
-
+  protected static final String SUCCESS = "Set preferences successfully for the '%s'";
   private final ElementType type;
 
   protected SetPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
@@ -60,8 +59,7 @@ public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public String getPattern() {
-    return String.format("set preferences %s <%s> [<%s>]", type.getName(), ArgumentName.RUNTIME_ARGS,
-                         type.getArgumentName());
+    return determinePattern("set");
   }
 
   @Override

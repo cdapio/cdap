@@ -16,11 +16,7 @@
 
 package co.cask.cdap.api.dataset.table;
 
-import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.dataset.Dataset;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * This class was previously used internally by CDAP for a generic table dataset interface.  Its implementation

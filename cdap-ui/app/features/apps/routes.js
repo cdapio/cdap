@@ -49,10 +49,10 @@ angular.module(PKG.name+'.feature.apps')
             templateUrl: '/assets/features/apps/templates/tabs/status.html'
           })
 
-          .state('apps.detail.overview.dataset', {
+          .state('apps.detail.overview.datasets', {
             url: '/datasets',
             ncyBreadcrumb: {
-              label: 'Dataset',
+              label: 'Datasets',
               parent: 'apps.detail.overview.status'
             },
             templateUrl: '/assets/features/apps/templates/tabs/datasets.html'

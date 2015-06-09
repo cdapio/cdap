@@ -25,10 +25,9 @@ import co.cask.cdap.common.exception.HandlerException;
 import co.cask.cdap.data2.datafabric.dataset.DatasetType;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -49,7 +48,7 @@ import javax.ws.rs.PathParam;
  * Provides REST endpoints for {@link DatasetAdmin} operations.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
-public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
+public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(DatasetAdminOpHTTPHandler.class);
   private static final Gson GSON = new Gson();
@@ -57,8 +56,7 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
   private final RemoteDatasetFramework dsFramework;
 
   @Inject
-  public DatasetAdminOpHTTPHandler(Authenticator authenticator, RemoteDatasetFramework dsFramework) {
-    super(authenticator);
+  public DatasetAdminOpHTTPHandler(RemoteDatasetFramework dsFramework) {
     this.dsFramework = dsFramework;
   }
 

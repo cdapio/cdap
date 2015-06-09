@@ -29,6 +29,6 @@ public class SynchronousPipelineFactory implements PipelineFactory {
    */
   @Override
   public <T> Pipeline<T> getPipeline() {
-    return new SynchronousPipeline<T>();
+    return new SynchronousPipeline<>();
   }
 }

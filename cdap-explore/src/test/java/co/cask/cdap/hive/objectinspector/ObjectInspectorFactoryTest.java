@@ -82,7 +82,7 @@ public class ObjectInspectorFactoryTest {
     Assert.assertNull(soi.getStructFieldsDataAsList(null));
 
     // non nulls
-    ArrayList<Object> afields = new ArrayList<Object>();
+    ArrayList<Object> afields = new ArrayList<>();
     for (int i = 0; i < expectedFields.size(); i++) {
       Assert.assertEquals(expectedFields.get(i).get(data), soi.getStructFieldData(data, inspectorFields.get(i)));
       afields.add(soi.getStructFieldData(data, inspectorFields.get(i)));
@@ -119,9 +119,9 @@ public class ObjectInspectorFactoryTest {
     a.myString = "test";
     a.dummyStruct = a;
     a.myListString = Arrays.asList(new String[]{"a", "b", "c"});
-    a.myMapStringString = new HashMap<String, String>();
+    a.myMapStringString = new HashMap<>();
     a.myMapStringString.put("key", "value");
-    a.employee = new DummyEmployee<DummyAddress<String>>(new DummyAddress<String>("foo"));
+    a.employee = new DummyEmployee<>(new DummyAddress<>("foo"));
     a.ints = new int[] { 1, 2 };
 
     assertObjectInspection(DummyStruct.class, a);
@@ -129,7 +129,7 @@ public class ObjectInspectorFactoryTest {
     // NOTE: type has to come from TokenType, otherwise, if doing new DummyEmployee<...>().getClass(),
     // type will not be recognized as ParameterizedType
     assertObjectInspection(new TypeToken<DummyEmployee<DummyAddress<String>>>() { }.getType(),
-                           new DummyEmployee<DummyAddress<String>>(new DummyAddress<String>("foo")));
+                           new DummyEmployee<>(new DummyAddress<>("foo")));
   }
 
   ////////////// Dummy classes used for this class test /////////////
