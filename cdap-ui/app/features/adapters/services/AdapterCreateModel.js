@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .factory('AdapterCreateModel', function(AdapterApiFactory, $state, $timeout, $q, mySettings) {
+  .factory('AdapterCreateModel', function(AdapterApiFactory, $state, $timeout, $q, mySettings, EventPipe) {
     var defaultSource = {
       name: 'Add a source',
       properties: {},
@@ -88,6 +88,7 @@ angular.module(PKG.name + '.feature.adapters')
         });
         return defer.promise;
       }
+      EventPipe.emit('showLoadingIcon', 'Saving adapter as draft');
       var adapterDrafts = {};
       this.adapterDrafts[this.metadata.name] = {
         config: {
@@ -108,6 +109,7 @@ angular.module(PKG.name + '.feature.adapters')
 
       var validation = this.basicValidation();
       if (!validation.messages.length) {
+        EventPipe.emit('showLoadingIcon', 'Creating Adapter');
         return formatAndSave.bind(this)();
       } else {
         defer.reject({
