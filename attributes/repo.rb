@@ -17,7 +17,9 @@
 # limitations under the License.
 #
 
+release = node['cdap']['version'].to_f
+
 # URL to repository
-default['cdap']['repo']['apt_repo_url'] = 'http://repository.cask.co/ubuntu/precise/amd64/cdap/2.8'
+default['cdap']['repo']['apt_repo_url'] = "http://repository.cask.co/ubuntu/precise/amd64/cdap/#{release}"
 default['cdap']['repo']['apt_components'] = ['cdap']
-default['cdap']['repo']['yum_repo_url'] = 'http://repository.cask.co/centos/6/x86_64/cdap/2.8'
+default['cdap']['repo']['yum_repo_url'] = "http://repository.cask.co/centos/6/x86_64/cdap/#{release}"
