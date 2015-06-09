@@ -67,7 +67,8 @@ angular.module(PKG.name + '.feature.datasets')
           .state('datasets.detail.overview.status', {
             url: '/status',
             templateUrl: '/assets/features/datasets/templates/tabs/status.html',
-            controller: 'CdapDatasetDetailStatusController',
+            controller: 'DatasetDetailStatusController',
+            controllerAs: 'DatasetDetailStatusController',
             ncyBreadcrumb: {
               parent: 'data.list',
               label: '{{$state.params.datasetId}}'
@@ -77,6 +78,8 @@ angular.module(PKG.name + '.feature.datasets')
           .state('datasets.detail.overview.explore', {
             url: '/explore',
             templateUrl: '/assets/features/datasets/templates/tabs/explore.html',
+            controller: 'DatasetExploreController',
+            controllerAs: 'DatasetExploreController',
             ncyBreadcrumb: {
               label: 'Explore',
               parent: 'datasets.detail.overview.status'
@@ -89,7 +92,9 @@ angular.module(PKG.name + '.feature.datasets')
             ncyBreadcrumb: {
               label: 'Programs',
               parent: 'datasets.detail.overview.status'
-            }
+            },
+            controller: 'DatasetDetailProgramsController',
+            controllerAs: 'DatasetDetailProgramsController'
           })
 
           .state('datasets.detail.overview.metadata', {
@@ -98,6 +103,8 @@ angular.module(PKG.name + '.feature.datasets')
             ncyBreadcrumb: {
               label: 'Metadata',
               parent: 'datasets.detail.overview.status'
-            }
+            },
+            controller: 'DatasetMetadataController',
+            controllerAs: 'DatasetMetadataController'
           });
   });
