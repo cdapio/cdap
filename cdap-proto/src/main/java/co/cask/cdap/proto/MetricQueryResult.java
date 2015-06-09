@@ -25,11 +25,13 @@ public final class MetricQueryResult {
   private final long startTime;
   private final long endTime;
   private final TimeSeries[] series;
+  private final int resolution;
 
-  public MetricQueryResult(long startTime, long endTime, TimeSeries[] series) {
+  public MetricQueryResult(long startTime, long endTime, TimeSeries[] series, int resolution) {
     this.startTime = startTime;
     this.endTime = endTime;
     this.series = series;
+    this.resolution = resolution;
   }
 
   public long getStartTime() {
@@ -43,6 +45,8 @@ public final class MetricQueryResult {
   public TimeSeries[] getSeries() {
     return series;
   }
+
+  public int getResolution() { return resolution; }
 
   /**
    * Represents time series of a metric. This is used for decorating REST API output.

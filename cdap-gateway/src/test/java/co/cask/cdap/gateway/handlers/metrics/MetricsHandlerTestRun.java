@@ -541,6 +541,38 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     metricStore.delete(deleteQuery);
   }
 
+  @Test
+  public void testResolutionInResponse() throws Exception {
+    long start = 1;
+    Map<String, String> sliceBy = getFlowletContext("resolutions", "WordCount1", "WordCounter", "run1", "splitter");
+
+    // 1 second
+    metricStore.add(new MetricValues(sliceBy, "reads", start, 1, MetricType.COUNTER));
+    // 30 second
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 30, 1, MetricType.COUNTER));
+    // 1 minute
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 60, 1, MetricType.COUNTER));
+    // 10 minutes
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 600, 1, MetricType.COUNTER));
+    // 1 hour
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 3600, 1, MetricType.COUNTER));
+    // 10 hours
+    metricStore.add(new MetricValues(sliceBy, "reads", start + 36000, 1, MetricType.COUNTER));
+
+    String url = "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter") +
+      "&metric=system.reads&resolution=auto&start=" + (start - 1) + "&end="
+      + (start + 36000);
+    MetricQueryResult queryResult = post(url, MetricQueryResult.class);
+    Assert.assertEquals(3600, queryResult.getResolution());
+
+    url = "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter") +
+      "&metric=system.reads&resolution=1m&start=" + (start - 1) + "&end="
+      + (start + 36000);
+    queryResult = post(url, MetricQueryResult.class);
+    Assert.assertEquals(60, queryResult.getResolution());
+
+  }
+
 
   @Test
   public void testAutoResolutions() throws Exception {
