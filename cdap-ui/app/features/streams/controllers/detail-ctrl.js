@@ -1,7 +1,7 @@
 angular.module(PKG.name + '.feature.streams')
   .controller('CdapStreamDetailController', function($scope, $state, $alert, myStreamService, myStreamApi) {
 
-    $scope.truncate = function() {
+    this.truncate = function() {
       var params = {
         namespace: $state.params.namespace,
         streamId: $state.params.streamId,
@@ -17,7 +17,7 @@ angular.module(PKG.name + '.feature.streams')
         });
     };
 
-    $scope.sendEvents = function() {
+    this.sendEvents = function() {
       myStreamService.show($state.params.streamId);
     };
 

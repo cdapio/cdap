@@ -15,7 +15,8 @@ angular.module(PKG.name + '.feature.streams')
       .state('streams.list', {
         url: '',
         templateUrl: '/assets/features/streams/templates/list.html',
-        controller: 'CdapStreamsListController',
+        controller: 'StreamsListController',
+        controllerAs: 'ListController',
         ncyBreadcrumb: {
           label: 'Streams',
           parent: 'data.list'
@@ -30,7 +31,7 @@ angular.module(PKG.name + '.feature.streams')
             size: 'lg',
             backdrop: true,
             keyboard: true,
-            controller: 'StreamsCreateController'
+            controller: 'StreamsCreateController as CreateController'
           }).result.finally(function() {
             $state.go('streams.list',{}, { reload: true });
           });
@@ -50,8 +51,9 @@ angular.module(PKG.name + '.feature.streams')
           parent: 'streams.detail',
           templateUrl: '/assets/features/streams/templates/detail.html',
           controller: 'CdapStreamDetailController',
+          controllerAs: 'DetailController',
           ncyBreadcrumb: {
-            parent: 'streams.list',
+            parent: 'data.list',
             label: '{{$state.params.streamId}}'
           }
         })
@@ -60,7 +62,7 @@ angular.module(PKG.name + '.feature.streams')
           url: '/status',
           templateUrl: '/assets/features/streams/templates/tabs/status.html',
           ncyBreadcrumb: {
-            parent: 'streams.list',
+            parent: 'data.list',
             label: '{{$state.params.streamId}}'
           }
         })
