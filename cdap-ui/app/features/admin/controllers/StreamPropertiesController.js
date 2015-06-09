@@ -179,6 +179,8 @@ angular.module(PKG.name + '.feature.admin')
           type: 'success',
           content: 'Successfully deleted stream'
         });
+      }, function error() {
+        EventPipe.emit('hideLoadingIcon.immediate');
       });
 
     };
