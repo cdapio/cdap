@@ -51,6 +51,8 @@ angular.module(PKG.name + '.feature.admin')
             content: 'You have successfully deleted a namespace.'
           });
         }, 500);
+      }, function error() {
+        EventPipe.emit('hideLoadingIcon.immediate');
       });
     };
 
