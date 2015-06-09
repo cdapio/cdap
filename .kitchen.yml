@@ -60,31 +60,31 @@ suites:
       - recipe[cdap::fullstack]
       - recipe[cdap::security_init]
       - recipe[cdap::web_app_init]
-    attributes: { hadoop: { distribution: 'cdh', distribution_version: 4 } }
+    attributes: { hadoop: { distribution: 'cdh', distribution_version: '4.7.1' } }
   - name: cdh5
     run_list:
       - recipe[cdap::fullstack]
       - recipe[cdap::security_init]
       - recipe[cdap::web_app_init]
-    attributes: { hadoop: { distribution: 'cdh', distribution_version: 5 } }
+    attributes: { hadoop: { distribution: 'cdh', distribution_version: '5.4.1' } }
   - name: hdp20
     run_list:
       - recipe[cdap::fullstack]
       - recipe[cdap::security_init]
       - recipe[cdap::web_app_init]
-    attributes: { hadoop: { distribution: 'hdp', distribution_version: '2.0' } }
+    attributes: { hadoop: { distribution: 'hdp', distribution_version: '2.0.11.0' } }
   - name: hdp21
     run_list:
       - recipe[cdap::fullstack]
       - recipe[cdap::security_init]
       - recipe[cdap::web_app_init]
-    attributes: { hadoop: { distribution: 'hdp', distribution_version: '2.1' } }
+    attributes: { hadoop: { distribution: 'hdp', distribution_version: '2.1.10.0' } }
   - name: hdp22
     run_list:
       - recipe[cdap::fullstack]
       - recipe[cdap::security_init]
       - recipe[cdap::web_app_init]
-    attributes: { hadoop: { distribution: 'hdp', distribution_version: '2.2' } }
+    attributes: { hadoop: { distribution: 'hdp', distribution_version: '2.2.4.2' } }
   - name: sdk
     run_list:
       - recipe[cdap::sdk]
