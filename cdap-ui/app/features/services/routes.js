@@ -81,12 +81,12 @@ angular.module(PKG.name + '.feature.services')
           })
 
 
-        .state('services.detail.data', {
+        .state('services.detail.datasets', {
           url: '/data',
           templateUrl: '/assets/features/services/templates/tabs/data.html',
           ncyBreadcrumb: {
             parent: 'services.detail.runs',
-            label: 'Data'
+            label: 'Datasets'
           }
         })
         .state('services.detail.metadata', {
