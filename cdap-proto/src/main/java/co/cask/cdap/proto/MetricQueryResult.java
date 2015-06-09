@@ -46,7 +46,9 @@ public final class MetricQueryResult {
     return series;
   }
 
-  public int getResolution() { return resolution; }
+  public int getResolution() {
+    return resolution;
+  }
 
   /**
    * Represents time series of a metric. This is used for decorating REST API output.

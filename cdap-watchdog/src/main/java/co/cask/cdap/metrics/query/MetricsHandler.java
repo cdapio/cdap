@@ -352,7 +352,7 @@ public class MetricsHandler extends AbstractHttpHandler {
       endTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     }
 
-    return decorate(queryResult, timeRange.getStart(), endTime, timeRange.getResolutionInSeconds());
+    return decorate(queryResult, timeRange.getStart(), endTime, timeRange.getResolutionInSeconds().intValue());
   }
 
   private Map<String, AggregationFunction> toMetrics(List<String> metrics) {
@@ -472,7 +472,7 @@ public class MetricsHandler extends AbstractHttpHandler {
   }
 
   private MetricQueryResult decorate(Collection<MetricTimeSeries> series, long startTs, long endTs,
-                                     Integer resolution) {
+                                     int resolution) {
     MetricQueryResult.TimeSeries[] serieses = new MetricQueryResult.TimeSeries[series.size()];
     int i = 0;
     for (MetricTimeSeries timeSeries : series) {
@@ -480,7 +480,7 @@ public class MetricsHandler extends AbstractHttpHandler {
       serieses[i++] = new MetricQueryResult.TimeSeries(timeSeries.getMetricName(),
                                                        tagNamesToHuman(timeSeries.getTagValues()), timeValues);
     }
-    return new MetricQueryResult(startTs, endTs, serieses, resolution.intValue());
+    return new MetricQueryResult(startTs, endTs, serieses, resolution);
   }
 
   private Map<String, String> tagNamesToHuman(Map<String, String> tagValues) {
