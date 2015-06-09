@@ -1,16 +1,15 @@
 angular.module(PKG.name + '.feature.datasets')
-  .controller('CdapDatasetsDetailController', function($scope, $state, MyDataSource, $alert, $filter, myDatasetApi, explorableDatasets) {
+  .controller('DatasetsDetailController', function($scope, $state, MyDataSource, $alert, $filter, myDatasetApi, explorableDatasets) {
     var filterFilter = $filter('filter');
 
-    $scope.explorable = null;
     var params = {
       namespace: $state.params.namespace,
       scope: $scope
     };
 
-    $scope.explorable = explorableDatasets;
+    this.explorable = explorableDatasets;
 
-    $scope.truncate = function() {
+    this.truncate = function() {
       params.datasetId = $state.params.datasetId;
       myDatasetApi.truncate(params, {})
         .$promise

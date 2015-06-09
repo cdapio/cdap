@@ -1,10 +1,11 @@
 angular.module(PKG.name + '.feature.datasets')
-  .controller('CdapDatasetsListController', function($scope, MyDataSource) {
+  .controller('DatasetsListController', function($scope, MyDataSource) {
     var datasrc = new MyDataSource($scope);
+    this.datasets = [];
     datasrc.request({
       _cdapNsPath: '/data/datasets'
     })
       .then(function(datasets) {
-        $scope.datasets = datasets;
-      });
+        this.datasets = datasets;
+      }.bind(this));
   });
