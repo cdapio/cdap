@@ -28,6 +28,7 @@ APIDOCS="apidocs"
 APIS="apis"
 BUILD="build"
 BUILD_PDF="build-pdf"
+CDAP_DOCS="cdap-docs"
 HTML="html"
 INCLUDES="_includes"
 JAVADOCS="javadocs"
@@ -37,6 +38,7 @@ PROJECT="cdap"
 PROJECT_CAPS="CDAP"
 REFERENCE="reference-manual"
 SOURCE="source"
+SPHINX_MESSAGES="warnings.txt"
 
 FALSE="false"
 TRUE="true"
@@ -60,6 +62,7 @@ EOF`
 
 SCRIPT=`basename ${0}`
 SCRIPT_PATH=`pwd`
+MANUAL=`basename ${SCRIPT_PATH}`
 
 DOC_GEN_PY="${SCRIPT_PATH}/../tools/doc-gen.py"
 BUILD_PATH="${SCRIPT_PATH}/${BUILD}"
@@ -90,6 +93,13 @@ WARNING="${RED}${BOLD}WARNING:${NC}"
 
 function echo_red_bold() {
   echo -e "${RED}${BOLD}${1}${NC}${2}"
+}
+
+function echo_clean_colors() {
+  local c="${1//${RED}/}"
+  c="${c//${BOLD}/}"
+  c="${c//${NC}/}"
+  echo -e "${c}"
 }
 
 # Hash of file with "Not Found"; returned by GitHub
@@ -132,7 +142,6 @@ function usage() {
   echo "    source         Path to $PROJECT source for javadocs, if not $PROJECT_PATH"
   echo "    test_includes  local, remote or neither (default: remote); must specify source if used"
   echo " "
-#   exit 1
 }
 
 function clean() {
@@ -145,14 +154,16 @@ function build_docs() {
   clean
   cd ${SCRIPT_PATH}
   check_includes
-  sphinx-build -b html -d build/doctrees source build/html
+  sphinx-build -w ${BUILD}/${SPHINX_MESSAGES} -b html -d ${BUILD}/doctrees source ${BUILD}/html
+  display_any_messages
 }
 
 function build_docs_google() {
   clean
   cd ${SCRIPT_PATH}
   check_includes
-  sphinx-build -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d build/doctrees source build/html
+  sphinx-build -w ${BUILD}/${SPHINX_MESSAGES} -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d ${BUILD}/doctrees source ${BUILD}/html
+  display_any_messages
 }
 
 function build_javadocs_full() {
@@ -252,7 +263,7 @@ function set_mvn_environment() {
 }
 
 function check_includes() {
-  if [ "x${CHECK_INCLUDES}" == "x${TRUE}" ]; then
+  if [ "${CHECK_INCLUDES}" == "${TRUE}" ]; then
     echo "Downloading and checking includes."
     # Build includes
     BUILD_INCLUDES_DIR=${SCRIPT_PATH}/${BUILD}/${INCLUDES}
@@ -286,22 +297,28 @@ function test_an_include() {
   
   local file_name=`basename ${target}`
   
-  if [[ "x${OSTYPE}" == "xdarwin"* ]]; then
+  if [[ "${OSTYPE}" == "darwin"* ]]; then
     new_md5_hash=`md5 -q ${target}`
   else
     new_md5_hash=`md5sum ${target} | awk '{print $1}'`
   fi
   
-  if [[ "x${new_md5_hash}" == "x${NOT_FOUND_HASH}" ]]; then
-    echo -e "${WARNING} ${RED}${BOLD}${file_name} not found!${NC}"  
-    echo -e "file: ${target}"  
-  elif [ "x${new_md5_hash}" != "x${md5_hash}" ]; then
-    echo -e "${WARNING} MD5 Hash for ${file_name} has changed! Compare files and update hash!"  
-    echo -e "file: ${target}"  
-    echo -e "Old MD5 Hash: ${md5_hash} New MD5 Hash: ${RED}${BOLD}${new_md5_hash}${NC}" 
-  else
-    echo "MD5 Hash for ${file_name} matches"  
+  local m
+  
+  if [[ "${new_md5_hash}" == "${NOT_FOUND_HASH}" ]]; then
+    m="${WARNING} ${RED}${BOLD}${file_name} not found!${NC}"  
+    m="${m}\nfile: ${target}"  
+  elif [[ "${new_md5_hash}" != "${md5_hash}" ]]; then
+    m="${WARNING} ${RED}${BOLD}${file_name} has changed! Compare files and update hash!${NC}"   
+    m="${m}\nfile: ${target}"   
+    m="${m}\nOld MD5 Hash: ${md5_hash} New MD5 Hash: ${RED}${BOLD}${new_md5_hash}${NC}"   
   fi
+  if [ "x${m}" != "x" ]; then
+    set_message "${m}"
+  else
+    m="MD5 Hash for ${file_name} matches"
+  fi
+  echo -e "${m}"
 }
 
 function build_standalone() {
@@ -321,6 +338,7 @@ function build_dependencies() {
 }
 
 function version() {
+  OIFS="${IFS}"
   local current_directory=`pwd`
   cd ${PROJECT_PATH}
   PROJECT_VERSION=`grep "<version>" pom.xml`
@@ -328,22 +346,28 @@ function version() {
   PROJECT_VERSION=${PROJECT_VERSION%%</version>*}
   PROJECT_LONG_VERSION=`expr "${PROJECT_VERSION}" : '\([0-9]*\.[0-9]*\.[0-9]*\)'`
   PROJECT_SHORT_VERSION=`expr "${PROJECT_VERSION}" : '\([0-9]*\.[0-9]*\)'`
-  IFS=/ read -a branch <<< "`git rev-parse --abbrev-ref HEAD`"
-  # Determine branch and branch type: one of develop, master, release, develop-feature, release-feature
+  local full_branch=`git rev-parse --abbrev-ref HEAD`
+  IFS=/ read -a branch <<< "${full_branch}"
   GIT_BRANCH="${branch[1]}"
-  if [ "x${GIT_BRANCH}" == "xdevelop" -o  "x${GIT_BRANCH}" == "xmaster" ]; then
+  # Determine branch and branch type: one of develop, master, release, develop-feature, release-feature
+  if [ "${full_branch}" == "develop" -o  "${full_branch}" == "master" ]; then
+    GIT_BRANCH="${full_branch}"
     GIT_BRANCH_TYPE=${GIT_BRANCH}
-  elif [ "x${GIT_BRANCH:0:7}" == "xrelease" ]; then
+  elif [ "${GIT_BRANCH:0:7}" == "release" ]; then
     GIT_BRANCH_TYPE="release"
   else
-    local parent_branch=`git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1 | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//'`
-    if [ "x${parent_branch}" == "xdevelop" ]; then
-      GIT_BRANCH_TYPE="develop-feature"
-    else
+    # We are on a feature branch: but from develop or release?
+    if [[ "x${GIT_BRANCH_PARENT}" == "x" ]]; then
+      GIT_BRANCH_PARENT=`git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1 | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//'`  
+    fi
+    if [ "${GIT_BRANCH_PARENT}" == "release" ]; then
       GIT_BRANCH_TYPE="release-feature"
+    else
+      GIT_BRANCH_TYPE="develop-feature"
     fi
   fi
   cd $current_directory
+  IFS="${OIFS}"
 }
 
 function display_version() {
@@ -355,7 +379,75 @@ function display_version() {
   echo "PROJECT_SHORT_VERSION: ${PROJECT_SHORT_VERSION}"
   echo "GIT_BRANCH: ${GIT_BRANCH}"
   echo "GIT_BRANCH_TYPE: ${GIT_BRANCH_TYPE}"
-  echo ""
+  echo "GIT_BRANCH_PARENT: ${GIT_BRANCH_PARENT}"
+}
+
+function set_messages_file() {
+  TMP_MESSAGES_FILE="/tmp/$(basename $0).$$.tmp"
+  export TMP_MESSAGES_FILE
+}
+
+function cleanup_messages_file() {
+  rm -f ${TMP_MESSAGES_FILE}
+}
+
+function clear_messages() {
+  MESSAGES=
+  set_messages_file
+}
+
+function set_message() {
+  if [ "x${MESSAGES}" == "x" ]; then
+    MESSAGES=${*}
+  else
+    MESSAGES="${MESSAGES}\n\n${*}"
+  fi
+  if [ "x${TMP_MESSAGES_FILE}" != "x" ]; then
+    local clean_m=`echo_clean_colors "${*}"`
+    if [ -e ${TMP_MESSAGES_FILE} ]; then
+      echo >> ${TMP_MESSAGES_FILE}
+    fi
+    echo -e "Warning Message for \"${MANUAL}\":\n${clean_m}" >> ${TMP_MESSAGES_FILE}
+  fi
+}
+
+function display_any_messages() {
+  if [[ "x${MESSAGES}" != "x" || -s ${SPHINX_MESSAGES} ]]; then
+    local m="Warning Messages for \"${MANUAL}\":"
+    if [ "x${MESSAGES}" != "x" ]; then
+      echo ""
+      echo_red_bold "${m}"
+      echo ""
+      echo -e "${MESSAGES}"
+    fi
+    if [ -s ${SPHINX_MESSAGES} ]; then
+      m="Sphinx ${m}"
+      echo ""
+      echo_red_bold "${m}"
+      echo ${m} >> ${TMP_MESSAGES_FILE}
+      cat ${SPHINX_MESSAGES} | while read line
+      do
+        echo ${line}
+        echo ${line} >> ${TMP_MESSAGES_FILE}
+      done
+    fi
+  fi
+}
+
+function display_messages_file() {
+  if [[ "x${TMP_MESSAGES_FILE}" != "x" && -a ${TMP_MESSAGES_FILE} ]]; then
+    echo ""
+    echo "Warning Messages: ${TMP_MESSAGES_FILE}"
+    echo ""
+    echo >> ${TMP_MESSAGES_FILE}
+    cat ${TMP_MESSAGES_FILE} | while read line
+    do
+      echo -e "${line}"
+    done
+    return 1 # Indicates warning messages present
+  else
+    return 0
+  fi
 }
 
 function rewrite() {
@@ -398,20 +490,20 @@ function rewrite() {
 
 function run_command() {
   case "${1}" in
-    build )             build; exit 1;;
-    build-github )      build_github; exit 1;;
-    build-web )         build_web; exit 1;;
-    check-includes )    check_includes; exit 1;;
+    build )             build;;
+    build-github )      build_github;;
+    build-web )         build_web;;
+    check-includes )    check_includes;;
     docs )              build_docs;;
-    license-pdfs )      build_license_pdfs; exit 1;;
-    build-standalone )  build_standalone; exit 1;;
-    copy-javadocs )     copy_javadocs; exit 1;;
-    copy-license-pdfs ) copy_license_pdfs; exit 1;;
-    javadocs )          build_javadocs_sdk; exit 1;;
-    javadocs-full )     build_javadocs_full; exit 1;;
-    depends )           build_dependencies; exit 1;;
-    sdk )               build_sdk; exit 1;;
-    version )           display_version; exit 1;;
-    * )                 usage; exit 1;;
+    license-pdfs )      build_license_pdfs;;
+    build-standalone )  build_standalone;;
+    copy-javadocs )     copy_javadocs;;
+    copy-license-pdfs ) copy_license_pdfs;;
+    javadocs )          build_javadocs_sdk;;
+    javadocs-full )     build_javadocs_full;;
+    depends )           build_dependencies;;
+    sdk )               build_sdk;;
+    version )           display_version;;
+    * )                 usage;;
   esac
 }

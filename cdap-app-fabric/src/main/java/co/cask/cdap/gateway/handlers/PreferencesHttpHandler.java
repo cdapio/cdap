@@ -19,7 +19,6 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -50,9 +49,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   private final Store store;
 
   @Inject
-  public PreferencesHttpHandler(Authenticator authenticator, PreferencesStore preferencesStore,
-                                Store store) {
-    super(authenticator);
+  public PreferencesHttpHandler(PreferencesStore preferencesStore, Store store) {
     this.preferencesStore = preferencesStore;
     this.store = store;
   }
@@ -243,7 +240,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
       return false;
     }
 
-    if (!store.programExists(Id.Program.from(namespace, appId, type, programId), type)) {
+    if (!store.programExists(Id.Program.from(namespace, appId, type, programId))) {
       responder.sendString(HttpResponseStatus.NOT_FOUND,
                            String.format("Program %s of Type %s in AppId %s in Namespace %s not present",
                                          programId, programType, appId, namespace));

@@ -53,7 +53,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class ObjectInspectorFactory {
 
   private static ConcurrentHashMap<Type, ObjectInspector> objectInspectorCache =
-      new ConcurrentHashMap<Type, ObjectInspector>();
+      new ConcurrentHashMap<>();
 
   public static ObjectInspector getReflectionObjectInspector(Type t) {
     ObjectInspector oi = objectInspectorCache.get(t);
@@ -139,7 +139,7 @@ public final class ObjectInspectorFactory {
     // recursive types.
     objectInspectorCache.put(t, oi);
     Field[] fields = ObjectInspectorUtils.getDeclaredNonStaticFields(c);
-    List<ObjectInspector> structFieldObjectInspectors = new ArrayList<ObjectInspector>(fields.length);
+    List<ObjectInspector> structFieldObjectInspectors = new ArrayList<>(fields.length);
     for (int i = 0; i < fields.length; i++) {
       // Exclude transient fields and synthetic fields. The latter has the effect of excluding the implicit
       // "this" pointer present in nested classes and that references the parent.
@@ -162,7 +162,7 @@ public final class ObjectInspectorFactory {
   }
 
   static ConcurrentHashMap<ObjectInspector, StandardListObjectInspector> cachedStandardListObjectInspector =
-      new ConcurrentHashMap<ObjectInspector, StandardListObjectInspector>();
+      new ConcurrentHashMap<>();
 
   public static StandardListObjectInspector getStandardListObjectInspector(ObjectInspector listElementObjectInspector) {
     StandardListObjectInspector result = cachedStandardListObjectInspector.get(listElementObjectInspector);
@@ -174,7 +174,7 @@ public final class ObjectInspectorFactory {
   }
 
   static ConcurrentHashMap<List<ObjectInspector>, StandardMapObjectInspector> cachedStandardMapObjectInspector =
-      new ConcurrentHashMap<List<ObjectInspector>, StandardMapObjectInspector>();
+      new ConcurrentHashMap<>();
 
   public static StandardMapObjectInspector getStandardMapObjectInspector(ObjectInspector mapKeyObjectInspector,
                                                                          ObjectInspector mapValueObjectInspector) {
@@ -189,7 +189,7 @@ public final class ObjectInspectorFactory {
 
   static ConcurrentHashMap<List<ObjectInspector>, StandardUnionObjectInspector>
       cachedStandardUnionObjectInspector =
-      new ConcurrentHashMap<List<ObjectInspector>, StandardUnionObjectInspector>();
+      new ConcurrentHashMap<>();
 
   public static StandardUnionObjectInspector getStandardUnionObjectInspector(
       List<ObjectInspector> unionObjectInspectors) {
@@ -203,7 +203,7 @@ public final class ObjectInspectorFactory {
   }
 
   static ConcurrentHashMap<ArrayList<List<?>>, StandardStructObjectInspector> cachedStandardStructObjectInspector =
-      new ConcurrentHashMap<ArrayList<List<?>>, StandardStructObjectInspector>();
+      new ConcurrentHashMap<>();
 
   public static StandardStructObjectInspector getStandardStructObjectInspector(
       List<String> structFieldNames,
@@ -215,7 +215,7 @@ public final class ObjectInspectorFactory {
       List<String> structFieldNames,
       List<ObjectInspector> structFieldObjectInspectors,
       List<String> structComments) {
-    ArrayList<List<?>> signature = new ArrayList<List<?>>(3);
+    ArrayList<List<?>> signature = new ArrayList<>(3);
     signature.add(structFieldNames);
     signature.add(structFieldObjectInspectors);
     if (structComments != null) {
@@ -230,7 +230,7 @@ public final class ObjectInspectorFactory {
   }
 
   static ConcurrentHashMap<List<StructObjectInspector>, UnionStructObjectInspector> cachedUnionStructObjectInspector =
-      new ConcurrentHashMap<List<StructObjectInspector>, UnionStructObjectInspector>();
+      new ConcurrentHashMap<>();
 
   public static UnionStructObjectInspector getUnionStructObjectInspector(
       List<StructObjectInspector> structObjectInspectors) {

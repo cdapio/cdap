@@ -19,7 +19,6 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.MasterServiceManager;
-import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -37,9 +36,9 @@ import javax.ws.rs.PathParam;
 public class MonitorHandler extends AbstractMonitorHandler {
 
   @Inject
-  public MonitorHandler(Authenticator authenticator, Map<String, MasterServiceManager> serviceMap,
+  public MonitorHandler(Map<String, MasterServiceManager> serviceMap,
                         ServiceStore serviceStore) throws Exception {
-    super(authenticator, serviceMap, serviceStore);
+    super(serviceMap, serviceStore);
   }
 
   /**

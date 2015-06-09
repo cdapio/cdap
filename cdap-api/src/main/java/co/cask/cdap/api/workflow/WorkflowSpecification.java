@@ -18,7 +18,6 @@ package co.cask.cdap.api.workflow;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.common.PropertyProvider;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,8 +43,8 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
     this.name = name;
     this.description = description;
     this.properties = properties == null ? Collections.<String, String>emptyMap() :
-                                           Collections.unmodifiableMap(new HashMap<String, String>(properties));
-    this.nodes = Collections.unmodifiableList(new ArrayList<WorkflowNode>(nodes));
+                                           Collections.unmodifiableMap(new HashMap<>(properties));
+    this.nodes = Collections.unmodifiableList(new ArrayList<>(nodes));
   }
 
   @Override

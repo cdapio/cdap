@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class AggregatedMetricsCollectionServiceTest {
 
-  private static final HashMap<String, String> EMPTY_TAGS = new HashMap<String, String>();
+  private static final HashMap<String, String> EMPTY_TAGS = new HashMap<>();
   private static final String NAMESPACE = "testnamespace";
   private static final String APP = "testapp";
   private static final String FLOW = "testprogram";
@@ -62,7 +62,7 @@ public class AggregatedMetricsCollectionServiceTest {
   @Category(SlowTests.class)
   @Test
   public void testPublish() throws InterruptedException {
-    final BlockingQueue<MetricValues> published = new LinkedBlockingQueue<MetricValues>();
+    final BlockingQueue<MetricValues> published = new LinkedBlockingQueue<>();
 
     AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService() {
       @Override

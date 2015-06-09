@@ -61,7 +61,7 @@ public class StreamConversionTest extends TestBase {
 
     // run the mapreduce
     MapReduceManager mapReduceManager =
-      appManager.startMapReduce("StreamConversionMapReduce", RuntimeArguments.NO_ARGUMENTS);
+      appManager.getMapReduceManager("StreamConversionMapReduce").start(RuntimeArguments.NO_ARGUMENTS);
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
     // verify the single partition in the file set
@@ -131,7 +131,7 @@ public class StreamConversionTest extends TestBase {
                         long sleepDelay, TimeUnit sleepDelayUnit)
     throws InterruptedException, ExecutionException, TimeoutException {
 
-    final AtomicMarkableReference<T> result = new AtomicMarkableReference<T>(null, false);
+    final AtomicMarkableReference<T> result = new AtomicMarkableReference<>(null, false);
     Tasks.waitFor(true, new Callable<Boolean>() {
       public Boolean call() throws Exception {
         try {

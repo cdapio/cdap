@@ -19,12 +19,17 @@ package co.cask.cdap.client;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.proto.ConfigEntry;
 import co.cask.cdap.proto.Version;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
+import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import javax.inject.Inject;
 
 /**
@@ -53,5 +58,24 @@ public class MetaClient {
   public Version getVersion() throws IOException, UnauthorizedException {
     HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL("version"), config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, Version.class).getResponseObject();
+  }
+
+  public Map<String, ConfigEntry> getCDAPConfig() throws IOException, UnauthorizedException {
+    return getConfig("config/cdap");
+  }
+
+  public Map<String, ConfigEntry> getHadoopConfig() throws IOException, UnauthorizedException {
+    return getConfig("config/hadoop");
+  }
+
+  private Map<String, ConfigEntry> getConfig(String url) throws IOException, UnauthorizedException {
+    HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL(url), config.getAccessToken());
+    List<ConfigEntry> responseObject =
+      ObjectResponse.fromJsonBody(response, new TypeToken<List<ConfigEntry>>() { }).getResponseObject();
+    Map<String, ConfigEntry> config = Maps.newHashMap();
+    for (ConfigEntry configEntry : responseObject) {
+      config.put(configEntry.getName(), configEntry);
+    }
+    return config;
   }
 }

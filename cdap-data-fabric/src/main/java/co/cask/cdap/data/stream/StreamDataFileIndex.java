@@ -19,7 +19,6 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.io.BinaryDecoder;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.primitives.Longs;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -60,11 +59,8 @@ final class StreamDataFileIndex {
     // Load the whole index into memory.
     try {
       Map.Entry<LongList, LongList> index;
-      InputStream indexInput = indexInputSupplier.getInput();
-      try {
+      try (InputStream indexInput = indexInputSupplier.getInput()) {
         index = loadIndex(indexInput);
-      } finally {
-        Closeables.closeQuietly(indexInput);
       }
       timestamps = LongLists.unmodifiable(index.getKey());
       positions = LongLists.unmodifiable(index.getValue());

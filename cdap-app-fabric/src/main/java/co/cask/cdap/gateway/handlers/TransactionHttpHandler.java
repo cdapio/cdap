@@ -17,7 +17,6 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
@@ -55,8 +54,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   private final TransactionSystemClient txClient;
 
   @Inject
-  public TransactionHttpHandler(Authenticator authenticator, TransactionSystemClient txClient) {
-    super(authenticator);
+  public TransactionHttpHandler(TransactionSystemClient txClient) {
     this.txClient = txClient;
   }
 
@@ -68,9 +66,8 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   public void getTxManagerSnapshot(HttpRequest request, HttpResponder responder) {
     try {
       LOG.trace("Taking transaction manager snapshot at time {}", System.currentTimeMillis());
-      InputStream in = txClient.getSnapshotInputStream();
       LOG.trace("Took and retrieved transaction manager snapshot successfully.");
-      try {
+      try (InputStream in = txClient.getSnapshotInputStream()) {
         ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK,
                                                                  ImmutableMultimap.<String, String>of());
         while (true) {
@@ -85,8 +82,6 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
           chunkResponder.sendChunk(ChannelBuffers.wrappedBuffer(readBytes, 0, res));
         }
         Closeables.closeQuietly(chunkResponder);
-      } finally {
-        in.close();
       }
     } catch (Exception e) {
       LOG.error("Could not take transaction manager snapshot", e);
@@ -117,7 +112,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
     }
   }
-  
+
   @Path("/transactions/invalid/remove/until")
   @POST
   public void truncateInvalidTxBefore(HttpRequest request, HttpResponder responder) {
@@ -129,12 +124,12 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time value in request");
         return;
       }
-      
+
       if (body == null || !body.containsKey("time")) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Time not specified");
         return;
       }
-      
+
       long time = body.get("time");
       txClient.truncateInvalidTxBefore(time);
       responder.sendStatus(HttpResponseStatus.OK);

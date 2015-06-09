@@ -64,7 +64,7 @@ public class StreamEventCodecTest {
 
     Assert.assertEquals(schema.getSchemaHash(), schemaHash);
 
-    StreamEvent decoded = new ReflectionDatumReader<StreamEvent>(schema, TypeToken.of(StreamEvent.class))
+    StreamEvent decoded = new ReflectionDatumReader<>(schema, TypeToken.of(StreamEvent.class))
           .read(new BinaryDecoder(new ByteBufferInputStream(payload)), schema);
 
     Assert.assertEquals(event.getHeaders(), decoded.getHeaders());

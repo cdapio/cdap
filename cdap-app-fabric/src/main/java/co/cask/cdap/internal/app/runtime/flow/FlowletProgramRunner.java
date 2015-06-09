@@ -243,7 +243,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       List<ConsumerSupplier<?>> consumerSuppliers = queueConsumerSupplierBuilder.build();
 
       // Create the flowlet driver
-      AtomicReference<FlowletProgramController> controllerRef = new AtomicReference<FlowletProgramController>();
+      AtomicReference<FlowletProgramController> controllerRef = new AtomicReference<>();
       Service serviceHook = createServiceHook(flowletName, consumerSuppliers, controllerRef);
       FlowletRuntimeService driver = new FlowletRuntimeService(flowlet, flowletContext, processSpecs,
                                                              createCallback(flowlet, flowletDef.getFlowletSpec()),
@@ -482,7 +482,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
             }
           });
           producerBuilder.add(producerSupplier);
-          return new DatumOutputEmitter<T>(producerSupplier, schema, datumWriterFactory.create(type, schema));
+          return new DatumOutputEmitter<>(producerSupplier, schema, datumWriterFactory.create(type, schema));
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
@@ -566,14 +566,14 @@ public final class FlowletProgramRunner implements ProgramRunner {
         if (!inputNames.isEmpty() && queueReaders.isEmpty()) {
           return null;
         }
-        return new ProcessSpecification<T>(new RoundRobinQueueReader<T>(queueReaders), method, tickAnnotation);
+        return new ProcessSpecification<>(new RoundRobinQueueReader<>(queueReaders), method, tickAnnotation);
       }
     };
   }
 
   private <T> Function<ByteBuffer, T> createInputDatumDecoder(final TypeToken<T> dataType, final Schema schema,
                                                               final SchemaCache schemaCache) {
-    final ReflectionDatumReader<T> datumReader = new ReflectionDatumReader<T>(schema, dataType);
+    final ReflectionDatumReader<T> datumReader = new ReflectionDatumReader<>(schema, dataType);
     final ByteBufferInputStream byteBufferInput = new ByteBufferInputStream(null);
     final BinaryDecoder decoder = new BinaryDecoder(byteBufferInput);
 
@@ -608,7 +608,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     final String eventsMetricsName = "process.events.in";
     final String queue = queueName.getSimpleName();
     final ImmutablePair<String, String> producerAndQueue = producerName == null ? null :
-      new ImmutablePair<String, String>(producerName, queue);
+      new ImmutablePair<>(producerName, queue);
     return new Function<S, T>() {
       @Override
       public T apply(S source) {

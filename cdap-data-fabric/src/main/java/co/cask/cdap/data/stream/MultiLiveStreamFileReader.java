@@ -56,7 +56,7 @@ public final class MultiLiveStreamFileReader implements FileReader<StreamEventOf
       allSources.add(eventSource);
     }
 
-    this.eventSources = new ObjectHeapPriorityQueue<StreamEventSource>(allSources.size());
+    this.eventSources = new ObjectHeapPriorityQueue<>(allSources.size());
     this.emptySources = Sets.newHashSet(allSources);
     this.offsetsView = Iterables.transform(allSources, new Function<StreamEventSource, StreamFileOffset>() {
       @Override

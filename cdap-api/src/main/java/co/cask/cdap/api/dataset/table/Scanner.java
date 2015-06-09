@@ -27,11 +27,11 @@ public interface Scanner {
    * Returns the next row or {@code null} if the scanner is exhausted.
    */
   @Nullable
-  public Row next();
+  Row next();
 
   /**
    * Closes the scanner and releases any resources.
    */
-  public void close();
+  void close();
 
 }

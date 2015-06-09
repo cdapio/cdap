@@ -39,7 +39,7 @@ import java.util.Set;
  * TwillApplication wrapper for Master Services running in YARN.
  */
 public class MasterTwillApplication implements TwillApplication {
-  private static final Logger LOG = LoggerFactory.getLogger(MasterServiceMain.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MasterTwillApplication.class);
   private static final String NAME = Constants.Service.MASTER_SERVICES;
 
   private final CConfiguration cConf;

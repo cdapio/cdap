@@ -339,7 +339,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   /**
    * Interface that produces a handle.
    */
-  private static interface HandleProducer {
+  private interface HandleProducer {
     QueryHandle getHandle() throws ExploreException, SQLException;
   }
 

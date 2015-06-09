@@ -53,7 +53,7 @@ public final class SparkDatasetInputFormat<KEY, VALUE> extends InputFormat<KEY, 
   public List<InputSplit> getSplits(final JobContext context) throws IOException, InterruptedException {
     SparkContextConfig sparkContextConfig = new SparkContextConfig(context.getConfiguration());
     List<Split> splits = sparkContextConfig.getInputSelection();
-    List<InputSplit> list = new ArrayList<InputSplit>();
+    List<InputSplit> list = new ArrayList<>();
     for (Split split : splits) {
       list.add(new DataSetInputSplit(split));
     }
@@ -77,7 +77,7 @@ public final class SparkDatasetInputFormat<KEY, VALUE> extends InputFormat<KEY, 
     SplitReader<KEY, VALUE> splitReader = inputDataset.createSplitReader(inputSplit.getSplit());
 
     // the record reader now owns the context and will close it
-    return new DatasetRecordReader<KEY, VALUE>(splitReader, sparkContext, dataSetName);
+    return new DatasetRecordReader<>(splitReader, sparkContext, dataSetName);
   }
 
   private String getInputName(Configuration conf) {

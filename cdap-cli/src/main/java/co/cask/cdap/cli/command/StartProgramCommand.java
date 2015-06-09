@@ -60,14 +60,14 @@ public class StartProgramCommand extends AbstractAuthCommand {
     String runtimeArgsString = arguments.get(ArgumentName.RUNTIME_ARGS.toString(), "");
     if (runtimeArgsString == null || runtimeArgsString.isEmpty()) {
       // run with stored runtime args
-      programClient.start(appId, elementType.getProgramType(), programId);
+      programClient.start(appId, elementType.getProgramType(), programId, false);
       runtimeArgsString = GSON.toJson(programClient.getRuntimeArgs(appId, elementType.getProgramType(), programId));
       output.printf("Successfully started %s '%s' of application '%s' with stored runtime arguments '%s'\n",
                     elementType.getTitleName(), programId, appId, runtimeArgsString);
     } else {
       // run with user-provided runtime args
       Map<String, String> runtimeArgs = ArgumentParser.parseMap(runtimeArgsString);
-      programClient.start(appId, elementType.getProgramType(), programId, runtimeArgs);
+      programClient.start(appId, elementType.getProgramType(), programId, false, runtimeArgs);
       output.printf("Successfully started %s '%s' of application '%s' with provided runtime arguments '%s'\n",
                     elementType.getTitleName(), programId, appId, runtimeArgsString);
     }

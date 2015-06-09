@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.stream.service.upload;
 
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.stream.StreamDataFileConstants;
 import co.cask.cdap.data.stream.StreamDataFileWriter;
@@ -23,6 +24,7 @@ import co.cask.cdap.data.stream.service.ConcurrentStreamWriter;
 import co.cask.cdap.data.stream.service.MutableStreamEvent;
 import co.cask.cdap.data.stream.service.MutableStreamEventData;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import org.apache.twill.filesystem.Location;
@@ -99,6 +101,8 @@ final class FileContentWriter implements ContentWriter {
     try {
       writer.flush();
       streamWriter.appendFile(streamConfig.getStreamId(), eventFile, indexFile, eventCount, writer);
+    } catch (NotFoundException e) {
+      throw Throwables.propagate(e);
     } finally {
       Locations.deleteQuietly(Locations.getParent(eventFile), true);
     }

@@ -30,7 +30,7 @@ import java.io.PrintStream;
  * Deletes preferences for instance, namespace, application, program.
  */
 public class DeletePreferencesCommand extends AbstractCommand {
-  private static final String SUCCESS = "Deleted Preferences successfully for the '%s'";
+  private static final String SUCCESS = "Deleted preferences successfully for the '%s'";
 
   private final PreferencesClient client;
   private final ElementType type;
@@ -82,7 +82,7 @@ public class DeletePreferencesCommand extends AbstractCommand {
         break;
 
       default:
-        throw new IllegalArgumentException("Unrecognized Element Type for Preferences " + type.getTitleName());
+        throw new IllegalArgumentException("Unrecognized element type for preferences " + type.getTitleName());
     }
   }
 

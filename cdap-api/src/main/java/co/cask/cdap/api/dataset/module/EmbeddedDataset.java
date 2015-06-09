@@ -53,7 +53,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.PARAMETER)
 public @interface EmbeddedDataset {
 
-  static final String DEFAULT_TYPE_NAME = "";
+  String DEFAULT_TYPE_NAME = "";
 
   /**
    * Returns name of the dataset.

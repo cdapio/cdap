@@ -19,7 +19,6 @@ package co.cask.cdap.data2.util.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.proto.Id;
@@ -254,7 +253,7 @@ public abstract class HBaseTableUtil {
     final Hasher hasher = Hashing.md5().newHasher();
     final byte[] buffer = new byte[COPY_BUFFER_SIZE];
 
-    final Map<String, URL> dependentClasses = new HashMap<String, URL>();
+    final Map<String, URL> dependentClasses = new HashMap<>();
     for (Class<? extends Coprocessor> clz : classes) {
       Dependencies.findClassDependencies(clz.getClassLoader(), new Dependencies.ClassAcceptor() {
         @Override
@@ -276,32 +275,23 @@ public abstract class HBaseTableUtil {
       LOG.debug("Adding " + dependentClasses.size() + " classes to jar");
       File jarFile = File.createTempFile(filePrefix, ".jar");
       try {
-        JarOutputStream jarOutput = null;
-        try {
-          jarOutput = new JarOutputStream(new FileOutputStream(jarFile));
+        try (JarOutputStream jarOutput = new JarOutputStream(new FileOutputStream(jarFile))) {
           for (Map.Entry<String, URL> entry : dependentClasses.entrySet()) {
             try {
               jarOutput.putNextEntry(new JarEntry(entry.getKey().replace('.', File.separatorChar) + ".class"));
-              InputStream inputStream = entry.getValue().openStream();
 
-              try {
+              try (InputStream inputStream = entry.getValue().openStream()) {
                 int len = inputStream.read(buffer);
                 while (len >= 0) {
                   hasher.putBytes(buffer, 0, len);
                   jarOutput.write(buffer, 0, len);
                   len = inputStream.read(buffer);
                 }
-              } finally {
-                inputStream.close();
               }
             } catch (IOException e) {
               LOG.info("Error writing to jar", e);
               throw Throwables.propagate(e);
             }
-          }
-        } finally {
-          if (jarOutput != null) {
-            jarOutput.close();
           }
         }
 

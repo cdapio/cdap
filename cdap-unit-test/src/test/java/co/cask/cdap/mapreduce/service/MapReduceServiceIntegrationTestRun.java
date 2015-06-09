@@ -32,7 +32,8 @@ public class MapReduceServiceIntegrationTestRun extends TestFrameworkTestBase {
   @Test
   public void test() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestMapReduceServiceIntegrationApp.class);
-    ServiceManager serviceManager = applicationManager.startService(TestMapReduceServiceIntegrationApp.SERVICE_NAME);
+    ServiceManager serviceManager =
+      applicationManager.getServiceManager(TestMapReduceServiceIntegrationApp.SERVICE_NAME).start();
     serviceManager.waitForStatus(true);
 
     DataSetManager<MyKeyValueTableDefinition.KeyValueTable> inDataSet =
@@ -41,7 +42,8 @@ public class MapReduceServiceIntegrationTestRun extends TestFrameworkTestBase {
     inDataSet.get().write("key2", "Plus three words");
     inDataSet.flush();
 
-    MapReduceManager mrManager = applicationManager.startMapReduce(TestMapReduceServiceIntegrationApp.MR_NAME);
+    MapReduceManager mrManager =
+      applicationManager.getMapReduceManager(TestMapReduceServiceIntegrationApp.MR_NAME).start();
     mrManager.waitForFinish(180, TimeUnit.SECONDS);
 
     DataSetManager<MyKeyValueTableDefinition.KeyValueTable> outDataSet =

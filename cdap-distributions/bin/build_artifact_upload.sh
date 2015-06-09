@@ -113,10 +113,11 @@ function sync_build_artifacts_to_server () {
     # filter out version in 2 steps: 
     #   remove trailing build revision (e.g. -1)
     #   keep just the first 3 digits in case name includes timestamp
-    decho "version stub=${_version_stub}"
+    decho "version stub = ${_version_stub}"
     _version=`echo ${_version_stub} | awk -F - '{ print $1 }' | awk -F . '{ print $1"."$2"."$3 }'`
     decho "version = ${_version}"
-    _snapshot_time=`echo ${_version_stub} | awk -F - '{ print $1 }' | sed 's/\([0-9]\.[0-9]\.[0-9]\)\.\([0-9]*\)/\2/'`
+    _snapshot_time=`echo ${_version_stub} | awk -F - '{ print $1 }' | sed 's/[0-9]\.[0-9]\.[0-9][\.]*\([0-9]*\)/\1/'`
+    decho "snapshot time = ${_snapshot_time}"
 
     # identify and create remote incoming directory
     if [ "${_snapshot_time}" == '' ]; then

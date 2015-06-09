@@ -229,7 +229,7 @@ public class KeyValueTable extends AbstractDataset implements
         Preconditions.checkState(!closed);
         Row next = scanner.next();
         if (next != null) {
-          return new KeyValue<byte[], byte[]>(next.getRow(), next.get(KEY_COLUMN));
+          return new KeyValue<>(next.getRow(), next.get(KEY_COLUMN));
         }
         close();
         return null;
@@ -250,7 +250,7 @@ public class KeyValueTable extends AbstractDataset implements
   public class KeyValueRecordMaker implements Scannables.RecordMaker<byte[], byte[], KeyValue<byte[], byte[]>> {
     @Override
     public KeyValue<byte[], byte[]> makeRecord(byte[] key, byte[] value) {
-      return new KeyValue<byte[], byte[]>(key, value);
+      return new KeyValue<>(key, value);
     }
   }
 

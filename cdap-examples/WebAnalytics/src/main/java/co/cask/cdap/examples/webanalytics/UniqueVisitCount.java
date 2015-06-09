@@ -102,7 +102,7 @@ public class UniqueVisitCount extends AbstractDataset implements RecordScannable
       @Override
       public KeyValue<String, Long> getCurrentRecord() throws InterruptedException {
         KeyValue<byte[], byte[]> record = scanner.getCurrentRecord();
-        return new KeyValue<String, Long>(Bytes.toString(record.getKey()), Bytes.toLong(record.getValue()));
+        return new KeyValue<>(Bytes.toString(record.getKey()), Bytes.toLong(record.getValue()));
       }
 
       @Override

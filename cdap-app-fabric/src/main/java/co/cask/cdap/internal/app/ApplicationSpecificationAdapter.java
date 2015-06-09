@@ -46,7 +46,6 @@ import co.cask.cdap.proto.codec.WorkflowSpecificationCodec;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
-import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
 import com.google.gson.Gson;
@@ -130,11 +129,8 @@ public final class ApplicationSpecificationAdapter {
 
   public void toJson(ApplicationSpecification appSpec,
                      OutputSupplier<? extends Writer> outputSupplier) throws IOException {
-    Writer writer = outputSupplier.getOutput();
-    try {
+    try (Writer writer = outputSupplier.getOutput()) {
       toJson(appSpec, writer);
-    } finally {
-      Closeables.closeQuietly(writer);
     }
   }
 
@@ -151,11 +147,8 @@ public final class ApplicationSpecificationAdapter {
   }
 
   public ApplicationSpecification fromJson(InputSupplier<? extends Reader> inputSupplier) throws IOException {
-    Reader reader = inputSupplier.getInput();
-    try {
+    try (Reader reader = inputSupplier.getInput()) {
       return fromJson(reader);
-    } finally {
-      Closeables.closeQuietly(reader);
     }
   }
 

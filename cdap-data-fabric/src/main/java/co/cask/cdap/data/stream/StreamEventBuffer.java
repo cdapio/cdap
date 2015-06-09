@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.io.ByteBuffers;
 import co.cask.cdap.common.io.Decoder;
@@ -24,7 +23,6 @@ import co.cask.cdap.common.io.SeekableInputStream;
 import co.cask.cdap.common.stream.StreamEventDataCodec;
 import co.cask.cdap.data.file.ReadFilter;
 import co.cask.common.io.ByteBufferInputStream;
-import com.google.common.collect.Maps;
 
 import java.io.EOFException;
 import java.io.IOException;

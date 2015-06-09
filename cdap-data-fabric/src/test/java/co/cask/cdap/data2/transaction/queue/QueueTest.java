@@ -106,7 +106,7 @@ public abstract class QueueTest {
                      }
                    });
     // drop all queues
-    queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE);
+    queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE_ID);
     // verify that queue is gone and stream is still there
     configureGroups(queueName, ImmutableList.of(consumerConfig));
     final QueueConsumer qConsumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1);
@@ -361,7 +361,7 @@ public abstract class QueueTest {
     verifyConsumerConfigExists(myQueue1, myQueue2, yourQueue1, yourQueue2);
 
     // drop queues in NAMESPACE_ID
-    queueAdmin.dropAllInNamespace(NAMESPACE_ID.getId());
+    queueAdmin.dropAllInNamespace(NAMESPACE_ID);
 
     // verify queues in NAMESPACE_ID are dropped
     Assert.assertFalse(queueAdmin.exists(myQueue1) || queueAdmin.exists(myQueue2));
@@ -374,7 +374,7 @@ public abstract class QueueTest {
     verifyConsumerConfigExists(yourQueue1, yourQueue2);
 
     // drop queues in NAMESPACE_ID1
-    queueAdmin.dropAllInNamespace(NAMESPACE_ID1.getId());
+    queueAdmin.dropAllInNamespace(NAMESPACE_ID1);
 
     // verify queues in NAMESPACE_ID are dropped
     Assert.assertFalse(queueAdmin.exists(yourQueue1) || queueAdmin.exists(yourQueue2));
@@ -384,14 +384,14 @@ public abstract class QueueTest {
 
   @Test
   public void testClearAllForFlowWithNoQueues() throws Exception {
-    queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE);
-    queueAdmin.clearAllForFlow(Constants.DEFAULT_NAMESPACE, "app", "flow");
+    queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE_ID);
+    queueAdmin.clearAllForFlow(Id.Flow.from(Constants.DEFAULT_NAMESPACE, "app", "flow"));
   }
 
   @Test
   public void testDropAllForFlowWithNoQueues() throws Exception {
-    queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE);
-    queueAdmin.dropAllForFlow(Constants.DEFAULT_NAMESPACE, "app", "flow");
+    queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE_ID);
+    queueAdmin.dropAllForFlow(Id.Flow.from(Constants.DEFAULT_NAMESPACE, "app", "flow"));
   }
 
   @Test
@@ -427,7 +427,7 @@ public abstract class QueueTest {
     txContext.finish();
 
     // Reset queues
-    queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE);
+    queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE_ID);
 
     // we gonna need another one to check again to avoid caching side-affects
     configureGroups(queueName, ImmutableList.of(new ConsumerGroupConfig(1L, 1, DequeueStrategy.FIFO, null)));
@@ -674,10 +674,11 @@ public abstract class QueueTest {
     verifyConsumerConfigExists(queueName1, queueName2);
 
     // clear/drop all queues for flow1
+    Id.Flow flow1Id = Id.Flow.from(Constants.DEFAULT_NAMESPACE, app, "flow1");
     if (doDrop) {
-      queueAdmin.dropAllForFlow(Constants.DEFAULT_NAMESPACE, app, "flow1");
+      queueAdmin.dropAllForFlow(flow1Id);
     } else {
-      queueAdmin.clearAllForFlow(Constants.DEFAULT_NAMESPACE, app, "flow1");
+      queueAdmin.clearAllForFlow(flow1Id);
     }
 
     if (doDrop) {

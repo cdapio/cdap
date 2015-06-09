@@ -20,15 +20,9 @@
   <parent>
     <artifactId>cdap</artifactId>
     <groupId>co.cask.cdap</groupId>
-    <version>3.0.1</version>
+    <version>3.1.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
-
-
-  <properties>
-    <!--TODO: JIRA CDAP-2677-->
-    <maven.javadoc.skip>true</maven.javadoc.skip>
-  </properties>
 
   <artifactId>cdap-integration-test</artifactId>
   <name>CDAP Integration Test Framework</name>
@@ -51,11 +45,6 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-common-unit-test</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-gateway</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -63,6 +52,12 @@
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-standalone</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-standalone</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
@@ -80,11 +75,18 @@
       <version>${project.version}</version>
     </dependency>
 
+    <!-- In compile scope because this module should only be used in test scope -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-common-unit-test</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
   </dependencies>
 
 </project>

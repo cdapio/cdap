@@ -82,7 +82,7 @@ public class UnionStructObjectInspector extends StructObjectInspector {
       totalSize += unionObjectInspectors.get(i).getAllStructFieldRefs().size();
     }
 
-    fields = new ArrayList<MyField>(totalSize);
+    fields = new ArrayList<>(totalSize);
     for (int i = 0; i < unionObjectInspectors.size(); i++) {
       StructObjectInspector oi = unionObjectInspectors.get(i);
       for (StructField sf : oi.getAllStructFieldRefs()) {
@@ -148,7 +148,7 @@ public class UnionStructObjectInspector extends StructObjectInspector {
     List<Object> list = (List<Object>) data;
     assert (list.size() == unionObjectInspectors.size());
     // Explode
-    ArrayList<Object> result = new ArrayList<Object>(fields.size());
+    ArrayList<Object> result = new ArrayList<>(fields.size());
     for (int i = 0; i < unionObjectInspectors.size(); i++) {
       result.addAll(unionObjectInspectors.get(i).getStructFieldsDataAsList(
           list.get(i)));

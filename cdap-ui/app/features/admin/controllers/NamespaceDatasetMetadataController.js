@@ -1,5 +1,9 @@
 angular.module(PKG.name + '.feature.admin').controller('AdminNamespaceDatasetMetadataController',
+<<<<<<< HEAD
 function ($scope, $state, $alert, $filter, myDatasetApi, myExploreApi) {
+=======
+function ($scope, $state, $alert, $filter, myDatasetApi, myExploreApi, EventPipe) {
+>>>>>>> develop
 
   var params = {
     namespace: $state.params.nsadmin,
@@ -31,6 +35,7 @@ function ($scope, $state, $alert, $filter, myDatasetApi, myExploreApi) {
 
 
   $scope.deleteDataset = function() {
+    EventPipe.emit('showLoadingIcon');
     var params = {
       namespace: $state.params.nsadmin,
       datasetId: $state.params.datasetId,
@@ -39,6 +44,8 @@ function ($scope, $state, $alert, $filter, myDatasetApi, myExploreApi) {
     myDatasetApi.delete(params)
       .$promise
       .then(function () {
+        EventPipe.emit('hideLoadingIcon.immediate');
+
         $state.go('admin.namespace.detail.data', {}, {reload: true});
         $alert({
           type: 'success',

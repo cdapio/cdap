@@ -16,15 +16,16 @@
 
 package co.cask.cdap.client;
 
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.exception.DatasetAlreadyExistsException;
 import co.cask.cdap.common.exception.DatasetNotFoundException;
 import co.cask.cdap.common.exception.DatasetTypeNotFoundException;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
+import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpMethod;
@@ -33,6 +34,7 @@ import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
@@ -40,6 +42,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -70,7 +73,7 @@ public class DatasetClient {
   /**
    * Lists all datasets.
    *
-   * @return list of {@link DatasetSpecification}.
+   * @return list of {@link DatasetSpecificationSummary}.
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
@@ -79,6 +82,27 @@ public class DatasetClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response,
                                        new TypeToken<List<DatasetSpecificationSummary>>() { }).getResponseObject();
+  }
+
+
+  /**
+   * Gets information about a dataset.
+   *
+   * @return a {@link DatasetSpecificationSummary}.
+   * @throws NotFoundException if the dataset is not found
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public DatasetMeta get(String datasetName)
+    throws IOException, UnauthorizedException, NotFoundException {
+
+    URL url = config.resolveNamespacedURLV3(String.format("data/datasets/%s", datasetName));
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      Id.DatasetInstance instance = Id.DatasetInstance.from(config.getNamespace(), datasetName);
+      throw new NotFoundException(instance);
+    }
+    return ObjectResponse.fromJsonBody(response, DatasetMeta.class).getResponseObject();
   }
 
   /**
@@ -120,6 +144,50 @@ public class DatasetClient {
   public void create(String datasetName, String typeName)
     throws DatasetTypeNotFoundException, DatasetAlreadyExistsException, IOException, UnauthorizedException {
     create(datasetName, new DatasetInstanceConfiguration(typeName, ImmutableMap.<String, String>of()));
+  }
+
+  /**
+   * Updates the properties of a dataset.
+   *
+   * @param datasetName Name of the dataset to update
+   * @param properties Properties to set
+   * @throws NotFoundException if the dataset is not found
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public void update(String datasetName, Map<String, String> properties)
+    throws NotFoundException, IOException, UnauthorizedException {
+    Id.DatasetInstance instance = Id.DatasetInstance.from(config.getNamespace(), datasetName);
+    URL url = config.resolveNamespacedURLV3(String.format("data/datasets/%s/properties", datasetName));
+    HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(properties)).build();
+
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
+                                               HttpURLConnection.HTTP_CONFLICT);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new NotFoundException(instance);
+    }
+  }
+
+  /**
+   * Updates the existing properties of a dataset.
+   *
+   * @param datasetName Name of the dataset to update
+   * @param properties Properties to set
+   * @throws NotFoundException if the dataset is not found
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public void updateExisting(String datasetName, Map<String, String> properties)
+    throws NotFoundException, IOException, UnauthorizedException {
+
+    DatasetMeta meta = get(datasetName);
+    Map<String, String> existingProperties = meta.getSpec().getProperties();
+
+    Map<String, String> resolvedProperties = Maps.newHashMap();
+    resolvedProperties.putAll(existingProperties);
+    resolvedProperties.putAll(properties);
+
+    update(datasetName, resolvedProperties);
   }
 
   /**
@@ -218,5 +286,4 @@ public class DatasetClient {
     URL url = config.resolveNamespacedURLV3(String.format("data/datasets/%s/admin/truncate", datasetName));
     restClient.execute(HttpMethod.POST, url, config.getAccessToken());
   }
-
 }

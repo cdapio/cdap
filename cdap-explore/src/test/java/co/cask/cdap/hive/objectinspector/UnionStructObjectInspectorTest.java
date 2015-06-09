@@ -38,11 +38,11 @@ public class UnionStructObjectInspectorTest {
   @Test
   public void testUnionStructObjectInspector() throws Throwable {
     try {
-      ArrayList<String> fieldNames1 = new ArrayList<String>();
+      ArrayList<String> fieldNames1 = new ArrayList<>();
       fieldNames1.add("firstInteger");
       fieldNames1.add("secondString");
       fieldNames1.add("thirdBoolean");
-      ArrayList<ObjectInspector> fieldObjectInspectors1 = new ArrayList<ObjectInspector>();
+      ArrayList<ObjectInspector> fieldObjectInspectors1 = new ArrayList<>();
       fieldObjectInspectors1
           .add(PrimitiveObjectInspectorFactory.javaIntObjectInspector);
       fieldObjectInspectors1
@@ -52,10 +52,10 @@ public class UnionStructObjectInspectorTest {
       StandardStructObjectInspector soi1 =
           ObjectInspectorFactory.getStandardStructObjectInspector(fieldNames1, fieldObjectInspectors1);
 
-      ArrayList<String> fieldNames2 = new ArrayList<String>();
+      ArrayList<String> fieldNames2 = new ArrayList<>();
       fieldNames2.add("fourthDouble");
       fieldNames2.add("fifthLong");
-      ArrayList<ObjectInspector> fieldObjectInspectors2 = new ArrayList<ObjectInspector>();
+      ArrayList<ObjectInspector> fieldObjectInspectors2 = new ArrayList<>();
       fieldObjectInspectors2
           .add(PrimitiveObjectInspectorFactory.javaDoubleObjectInspector);
       fieldObjectInspectors2
@@ -96,17 +96,17 @@ public class UnionStructObjectInspectorTest {
       }
 
       // real struct
-      ArrayList<Object> struct1 = new ArrayList<Object>(3);
+      ArrayList<Object> struct1 = new ArrayList<>(3);
       struct1.add(1);
       struct1.add("two");
       struct1.add(true);
-      ArrayList<Object> struct2 = new ArrayList<Object>(2);
+      ArrayList<Object> struct2 = new ArrayList<>(2);
       struct2.add(1.0);
       struct2.add(111);
-      ArrayList<Object> struct = new ArrayList<Object>(2);
+      ArrayList<Object> struct = new ArrayList<>(2);
       struct.add(struct1);
       struct.add(struct2);
-      ArrayList<Object> all = new ArrayList<Object>(5);
+      ArrayList<Object> all = new ArrayList<>(5);
       all.addAll(struct1);
       all.addAll(struct2);
 

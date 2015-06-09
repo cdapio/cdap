@@ -19,8 +19,6 @@ package co.cask.cdap.logging.gateway.handlers;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.Filter;
@@ -32,6 +30,7 @@ import co.cask.cdap.logging.read.ReadRange;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
@@ -54,7 +53,7 @@ import javax.ws.rs.QueryParam;
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3)
-public class LogHandler extends AuthenticatedHttpHandler {
+public class LogHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(LogHandler.class);
 
   private final LogReader logReader;
@@ -62,9 +61,7 @@ public class LogHandler extends AuthenticatedHttpHandler {
   private final String logPattern;
 
   @Inject
-  public LogHandler(Authenticator authenticator, LogReader logReader, CConfiguration cConfig,
-                    ProgramStore programStore) {
-    super(authenticator);
+  public LogHandler(LogReader logReader, CConfiguration cConfig, ProgramStore programStore) {
     this.logReader = logReader;
     this.programStore = programStore;
     this.logPattern = cConfig.get(LoggingConfiguration.LOG_PATTERN, LoggingConfiguration.DEFAULT_LOG_PATTERN);

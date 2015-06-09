@@ -24,7 +24,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 public interface Filter {
   boolean match(ILoggingEvent event);
 
-  static Filter EMPTY_FILTER = new EmptyFilter();
+  Filter EMPTY_FILTER = new EmptyFilter();
 
   /**
    * Empty filter.

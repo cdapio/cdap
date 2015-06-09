@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli.command;
 
+import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractCommand;
@@ -70,7 +71,55 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
         break;
 
       default:
-        throw new IllegalArgumentException("Unrecognized Element Type for Preferences " + type.getTitleName());
+        throw new IllegalArgumentException("Unrecognized element type for preferences " + type.getTitleName());
     }
+  }
+
+  protected String determinePattern(String action) {
+
+    switch (action) {
+      case "set":
+        return determinePatternSetHelper();
+      case "load":
+        return determinePatternLoadHelper();
+    }
+    return "None";
+  }
+
+  private String determinePatternSetHelper() {
+    switch (type) {
+      case INSTANCE:
+      case NAMESPACE:
+        return String.format("set preferences %s <%s>",
+                             type.getName(), ArgumentName.RUNTIME_ARGS);
+      case APP:
+      case FLOW:
+      case MAPREDUCE:
+      case WORKFLOW:
+      case SERVICE:
+      case SPARK:
+        return String.format("set preferences %s <%s> <%s>", type.getName(), ArgumentName.RUNTIME_ARGS,
+                             type.getArgumentName());
+    }
+    return "None";
+  }
+
+  private String determinePatternLoadHelper() {
+    switch (type) {
+      case INSTANCE:
+      case NAMESPACE:
+        return String.format("load preferences %s <%s> <%s>", type.getName(),
+                             ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE);
+      case APP:
+      case FLOW:
+      case MAPREDUCE:
+      case WORKFLOW:
+      case SERVICE:
+      case SPARK:
+        return String.format("load preferences %s <%s> <%s> <%s>", type.getName(),
+                             ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE,
+                             type.getArgumentName());
+    }
+    return "None";
   }
 }

@@ -29,8 +29,8 @@ public class DistributedProgramLiveInfo extends ProgramLiveInfo implements Conta
   private final List<Containers.ContainerInfo> containers = Lists.newArrayList();
   private final List<String> services = Lists.newArrayList();
 
-  public DistributedProgramLiveInfo(Id.Program program, ProgramType type, String yarnAppId) {
-    super(program, type, "distributed");
+  public DistributedProgramLiveInfo(Id.Program program, String yarnAppId) {
+    super(program, "distributed");
     this.yarnAppId = yarnAppId;
   }
 

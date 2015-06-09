@@ -27,19 +27,19 @@ public interface MasterServiceManager {
   /**
    * @return true if the configured to be available, false otherwise.
    */
-  public boolean isServiceEnabled();
+  boolean isServiceEnabled();
 
   /**
    * @return service description.
    */
-  public String getDescription();
+  String getDescription();
 
   /**
    * Used to get the count of the instances of the CDAP Service that are currently running.
    *
    * @return the number of instances of the CDAP Service instances alive.
    */
-  public int getInstances();
+  int getInstances();
 
   /**
    * Set the number of instances of the CDAP service.
@@ -47,42 +47,42 @@ public interface MasterServiceManager {
    * @param instanceCount number of instances (should be greater than 0)
    * @return was the operation successful
    */
-  public boolean setInstances(int instanceCount);
+  boolean setInstances(int instanceCount);
 
   /**
    * Get the minimum instance count for the service.
    *
    * @return the required minimum number of instances of the CDAP Service.
    */
-  public int getMinInstances();
+  int getMinInstances();
 
   /**
    * Get the maximum instance count for the service.
    *
    * @return the allowed maximum number of instances of the CDAP Service.
    */
-  public int getMaxInstances();
+  int getMaxInstances();
 
   /**
    * Logging availability.
    *
    * @return true if logs are available.
    */
-  public boolean isLogAvailable();
+  boolean isLogAvailable();
 
   /**
    * Possible to check the status of the service.
    *
    * @return true if the status of the service can be checked.
    */
-  public boolean canCheckStatus();
+  boolean canCheckStatus();
 
   /**
    * Service's availability.
    *
    * @return true if service is available.
    */
-  public boolean isServiceAvailable();
+  boolean isServiceAvailable();
 
   SystemServiceLiveInfo getLiveInfo();
 

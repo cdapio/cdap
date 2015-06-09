@@ -259,38 +259,32 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
       // Create the program jar for deployment. It removes the "classes/" prefix as that's the convention taken
       // by the ApplicationBundler inside Twill.
-      JarOutputStream jarOutput = new JarOutputStream(destination.getOutputStream());
-      try {
-        JarInputStream jarInput = new JarInputStream(tempBundle.getInputStream());
-        try {
-          Set<String> seen = Sets.newHashSet();
-          JarEntry jarEntry = jarInput.getNextJarEntry();
-          while (jarEntry != null) {
-            boolean isDir = jarEntry.isDirectory();
-            String entryName = jarEntry.getName();
-            if (!entryName.equals("classes/")) {
-              if (entryName.startsWith("classes/")) {
-                jarEntry = new JarEntry(entryName.substring("classes/".length()));
-              } else {
-                jarEntry = new JarEntry(entryName);
-              }
-              if (seen.add(jarEntry.getName())) {
-                jarOutput.putNextEntry(jarEntry);
+      try (
+        JarOutputStream jarOutput = new JarOutputStream(destination.getOutputStream());
+        JarInputStream jarInput = new JarInputStream(tempBundle.getInputStream())
+      ) {
+        Set<String> seen = Sets.newHashSet();
+        JarEntry jarEntry = jarInput.getNextJarEntry();
+        while (jarEntry != null) {
+          boolean isDir = jarEntry.isDirectory();
+          String entryName = jarEntry.getName();
+          if (!entryName.equals("classes/")) {
+            if (entryName.startsWith("classes/")) {
+              jarEntry = new JarEntry(entryName.substring("classes/".length()));
+            } else {
+              jarEntry = new JarEntry(entryName);
+            }
+            if (seen.add(jarEntry.getName())) {
+              jarOutput.putNextEntry(jarEntry);
 
-                if (!isDir) {
-                  ByteStreams.copy(jarInput, jarOutput);
-                }
+              if (!isDir) {
+                ByteStreams.copy(jarInput, jarOutput);
               }
             }
-
-            jarEntry = jarInput.getNextJarEntry();
           }
-        } finally {
-          jarInput.close();
-        }
 
-      } finally {
-        jarOutput.close();
+          jarEntry = jarInput.getNextJarEntry();
+        }
       }
 
       return destination;

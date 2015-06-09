@@ -121,7 +121,7 @@ public class StreamSizeScheduler implements Scheduler {
     this.propertiesResolver = propertiesResolver;
     this.scheduleStore = scheduleStore;
     this.streamSubscribers = Maps.newConcurrentMap();
-    this.scheduleSubscribers = new ConcurrentSkipListMap<String, StreamSubscriber>();
+    this.scheduleSubscribers = new ConcurrentSkipListMap<>();
     this.schedulerStarted = false;
   }
 

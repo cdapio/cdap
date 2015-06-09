@@ -17,17 +17,13 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import com.google.common.base.Charsets;
-import com.google.common.base.Objects;
+import co.cask.cdap.proto.ConfigEntry;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.nio.ByteOrder;
 import java.util.List;
 import java.util.Map;
 
@@ -89,56 +85,5 @@ public class ConfigService {
       result.add(new ConfigEntry(entry.getKey(), entry.getValue(), source));
     }
     return result;
-  }
-
-  /**
-   * Represents an entry in {@link Configuration} or {@link CConfiguration}.
-   */
-  public static final class ConfigEntry {
-    private final String name;
-    private final String value;
-    private final String source;
-
-    public ConfigEntry(String name, String value, String source) {
-      this.name = name;
-      this.value = value;
-      this.source = source;
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    public String getValue() {
-      return value;
-    }
-
-    public String getSource() {
-      return source;
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(name, value, source);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      }
-      if (obj == null || getClass() != obj.getClass()) {
-        return false;
-      }
-      final ConfigEntry other = (ConfigEntry) obj;
-      return Objects.equal(this.name, other.name) &&
-        Objects.equal(this.value, other.value) &&
-        Objects.equal(this.source, other.source);
-    }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this).add("name", name).add("value", value).add("source", source).toString();
-    }
   }
 }

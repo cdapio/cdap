@@ -101,11 +101,8 @@ public class DistributedDatasetTypeClassLoaderFactory implements DatasetTypeClas
     File tmpJar = File.createTempFile(jarLocation.getName(), null);
     try {
       MessageDigest messageDigest = MESSAGE_DIGEST.get();
-      DigestOutputStream digestOutput = new DigestOutputStream(new FileOutputStream(tmpJar), messageDigest);
-      try {
+      try (DigestOutputStream digestOutput = new DigestOutputStream(new FileOutputStream(tmpJar), messageDigest)) {
         ByteStreams.copy(Locations.newInputSupplier(jarLocation), digestOutput);
-      } finally {
-        digestOutput.close();
       }
 
       // The folder name to expand to is formed by the module name and the checksum.

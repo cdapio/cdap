@@ -69,7 +69,7 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
 
   @Override
   public WorkflowForkConfigurer<? extends WorkflowConditionConfigurer<T>> fork() {
-    return new DefaultWorkflowForkConfigurer<DefaultWorkflowConditionConfigurer<T>>(this);
+    return new DefaultWorkflowForkConfigurer<>(this);
   }
 
   @Override
@@ -77,7 +77,7 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   public WorkflowConditionConfigurer<? extends WorkflowConditionConfigurer<T>> condition(
     Predicate<WorkflowContext> predicate) {
     String predicateClassName = predicate.getClass().getName();
-    return new DefaultWorkflowConditionConfigurer<DefaultWorkflowConditionConfigurer<T>>(this, predicateClassName);
+    return new DefaultWorkflowConditionConfigurer<>(this, predicateClassName);
   }
 
   @Override

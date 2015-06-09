@@ -23,11 +23,13 @@ import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.DatasetModuleNotFoundException;
 import co.cask.cdap.common.exception.DatasetTypeNotFoundException;
+import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.XSlowTests;
+import com.google.common.collect.ImmutableMap;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -130,6 +132,26 @@ public class DatasetClientTestRun extends ClientTestBase {
     datasetClient.create("testDataset", StandaloneDataset.TYPE_NAME);
     Assert.assertEquals(numBaseDataset + 1, datasetClient.list().size());
     datasetClient.truncate("testDataset");
+
+    DatasetMeta metaBefore = datasetClient.get("testDataset");
+    Assert.assertEquals(0, metaBefore.getSpec().getProperties().size());
+
+    datasetClient.update("testDataset", ImmutableMap.of("sdf", "foo", "abc", "123"));
+    DatasetMeta metaAfter = datasetClient.get("testDataset");
+    Assert.assertEquals(2, metaAfter.getSpec().getProperties().size());
+    Assert.assertTrue(metaAfter.getSpec().getProperties().containsKey("sdf"));
+    Assert.assertTrue(metaAfter.getSpec().getProperties().containsKey("abc"));
+    Assert.assertEquals("foo", metaAfter.getSpec().getProperties().get("sdf"));
+    Assert.assertEquals("123", metaAfter.getSpec().getProperties().get("abc"));
+
+    datasetClient.updateExisting("testDataset", ImmutableMap.of("sdf", "fzz"));
+    metaAfter = datasetClient.get("testDataset");
+    Assert.assertEquals(2, metaAfter.getSpec().getProperties().size());
+    Assert.assertTrue(metaAfter.getSpec().getProperties().containsKey("sdf"));
+    Assert.assertTrue(metaAfter.getSpec().getProperties().containsKey("abc"));
+    Assert.assertEquals("fzz", metaAfter.getSpec().getProperties().get("sdf"));
+    Assert.assertEquals("123", metaAfter.getSpec().getProperties().get("abc"));
+
     datasetClient.delete("testDataset");
     datasetClient.waitForDeleted("testDataset", 10, TimeUnit.SECONDS);
     Assert.assertEquals(numBaseDataset, datasetClient.list().size());

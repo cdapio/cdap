@@ -327,7 +327,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
     @Provides
     @Named(Constants.AppFabric.SERVER_ADDRESS)
-    public final InetAddress providesHostname(CConfiguration cConf) {
+    public InetAddress providesHostname(CConfiguration cConf) {
       return Networks.resolve(cConf.get(Constants.AppFabric.SERVER_ADDRESS),
                               new InetSocketAddress("localhost", 0).getAddress());
     }

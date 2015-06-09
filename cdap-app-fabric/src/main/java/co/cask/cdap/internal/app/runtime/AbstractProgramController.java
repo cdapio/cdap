@@ -52,7 +52,7 @@ public abstract class AbstractProgramController implements ProgramController {
   private Throwable failureCause;
 
   protected AbstractProgramController(String programName, RunId runId) {
-    this.state = new AtomicReference<State>(State.STARTING);
+    this.state = new AtomicReference<>(State.STARTING);
     this.programName = programName;
     this.runId = runId;
     this.listeners = Maps.newConcurrentMap();
@@ -341,7 +341,7 @@ public abstract class AbstractProgramController implements ProgramController {
       this.listener = listener;
       this.executor = executor;
       this.initState = initState;
-      this.tasks = new LinkedList<ListenerTask>();
+      this.tasks = new LinkedList<>();
     }
 
     @Override

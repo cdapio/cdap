@@ -76,7 +76,7 @@ public class FilePathResolver {
 
     // resolve the "." and ".." in the path
     String[] tokens = path.split(File.separator);
-    LinkedList<String> finalTokens = new LinkedList<String>();
+    LinkedList<String> finalTokens = new LinkedList<>();
     for (String token : tokens) {
       if (token.equals("..")) {
         if (!finalTokens.isEmpty()) {

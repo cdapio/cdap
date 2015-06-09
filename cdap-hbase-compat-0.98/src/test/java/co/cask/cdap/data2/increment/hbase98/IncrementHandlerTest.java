@@ -167,7 +167,7 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
       }
       RegionScanner rs = region.getScanner(scan);
       try {
-        List<Cell> tmpResults = new ArrayList<Cell>();
+        List<Cell> tmpResults = new ArrayList<>();
         boolean hasMore = rs.next(tmpResults);
         for (Cell cell : tmpResults) {
           results.add(convertCell(cell));

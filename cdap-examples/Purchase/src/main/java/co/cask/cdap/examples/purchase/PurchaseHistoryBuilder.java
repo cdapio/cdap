@@ -76,7 +76,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
   /**
    * Mapper class to emit user and corresponding purchase information
    */
-  public static class PurchaseMapper extends Mapper<byte[], Purchase, Text, Text> {
+  public static class PurchaseMapper extends Mapper<byte[], Purchase, Text, Purchase> {
 
     private Metrics mapMetrics;
 
@@ -87,14 +87,14 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
       if (purchase.getPrice() > 100000) {
         mapMetrics.count("purchases.large", 1);
       }
-      context.write(new Text(user), new Text(new Gson().toJson(purchase)));
+      context.write(new Text(user), purchase);
     }
   }
 
   /**
    * Reducer class to aggregate all purchases per user
    */
-  public static class PerUserReducer extends Reducer<Text, Text, String, PurchaseHistory>
+  public static class PerUserReducer extends Reducer<Text, Purchase, String, PurchaseHistory>
     implements ProgramLifecycle<MapReduceContext> {
 
     @UseDataSet("frequentCustomers")
@@ -114,13 +114,12 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
       userProfileServiceURL = context.getServiceURL(UserProfileServiceHandler.SERVICE_NAME);
     }
 
-    public void reduce(Text customer, Iterable<Text> values, Context context)
+    public void reduce(Text customer, Iterable<Purchase> values, Context context)
       throws IOException, InterruptedException {
       UserProfile userProfile = null;
       try {
         URL url = new URL(userProfileServiceURL,
-                                        UserProfileServiceHandler.USER_ENDPOINT
-                                          + "/" + customer.toString());
+                          UserProfileServiceHandler.USER_ENDPOINT + "/" + customer.toString());
 
         HttpRequest request = HttpRequest.get(url).build();
         HttpResponse response = HttpRequests.execute(request);
@@ -134,8 +133,8 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
 
       PurchaseHistory purchases = new PurchaseHistory(customer.toString(), userProfile);
       int numPurchases = 0;
-      for (Text val : values) {
-        purchases.add(new Gson().fromJson(val.toString(), Purchase.class));
+      for (Purchase val : values) {
+        purchases.add(new Purchase(val));
         numPurchases++;
       }
       if (numPurchases == RARE_PURCHASE_COUNT) {

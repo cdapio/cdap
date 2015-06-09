@@ -44,8 +44,8 @@ public class CubeFact {
    * @param timestamp timestamp (epoch in sec) of the measurements
    */
   public CubeFact(long timestamp) {
-    this.dimensionValues = new HashMap<String, String>();
-    this.measurements = new LinkedList<Measurement>();
+    this.dimensionValues = new HashMap<>();
+    this.measurements = new LinkedList<>();
     this.timestamp = timestamp;
   }
 

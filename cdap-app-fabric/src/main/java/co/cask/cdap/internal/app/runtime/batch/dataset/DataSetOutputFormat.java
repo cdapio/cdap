@@ -59,7 +59,7 @@ public final class DataSetOutputFormat<KEY, VALUE> extends OutputFormat<KEY, VAL
     BatchWritable<KEY, VALUE> dataset = (BatchWritable<KEY, VALUE>) mrContext.getDataset(getOutputDataSet(conf));
 
     // the record writer now owns the context and will close it
-    return new DataSetRecordWriter<KEY, VALUE>(dataset, mrContext);
+    return new DataSetRecordWriter<>(dataset, mrContext);
   }
 
   private String getOutputDataSet(Configuration conf) {

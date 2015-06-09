@@ -244,7 +244,7 @@ public class StreamInputFormatTest {
     StreamEvent event = new StreamEvent(headers.build(), buffer, System.currentTimeMillis());
     StreamEventDecoder<LongWritable, StreamEvent> decoder = new IdentityStreamEventDecoder();
     StreamEventDecoder.DecodeResult<LongWritable, StreamEvent> result
-      = new StreamEventDecoder.DecodeResult<LongWritable, StreamEvent>();
+      = new StreamEventDecoder.DecodeResult<>();
     result = decoder.decode(event, result);
     Assert.assertEquals(new LongWritable(event.getTimestamp()), result.getKey());
     Assert.assertEquals(event, result.getValue());
@@ -256,7 +256,7 @@ public class StreamInputFormatTest {
     StreamEvent event = new StreamEvent(ImmutableMap.<String, String>of(), Charsets.UTF_8.encode(body));
     StreamEventDecoder<LongWritable, String> decoder = new StringStreamEventDecoder();
     StreamEventDecoder.DecodeResult<LongWritable, String> result
-      = new StreamEventDecoder.DecodeResult<LongWritable, String>();
+      = new StreamEventDecoder.DecodeResult<>();
     result = decoder.decode(event, result);
 
     Assert.assertEquals(event.getTimestamp(), result.getKey().get());
@@ -308,7 +308,7 @@ public class StreamInputFormatTest {
 
     // create a record reader for the 2nd split
     StreamRecordReader<LongWritable, StreamEvent> recordReader =
-      new StreamRecordReader<LongWritable, StreamEvent>(new IdentityStreamEventDecoder());
+      new StreamRecordReader<>(new IdentityStreamEventDecoder());
     recordReader.initialize(splits.get(1), context);
 
     // check that we read the 2nd stream event

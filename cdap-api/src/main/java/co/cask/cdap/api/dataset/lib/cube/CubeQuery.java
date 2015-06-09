@@ -80,8 +80,8 @@ public final class CubeQuery {
     this.resolution = resolution;
     this.limit = limit;
     this.measurements = measurements;
-    this.dimensionValues = Collections.unmodifiableMap(new HashMap<String, String>(dimensionValues));
-    this.groupByDimensions = Collections.unmodifiableList(new ArrayList<String>(groupByDimensions));
+    this.dimensionValues = Collections.unmodifiableMap(new HashMap<>(dimensionValues));
+    this.groupByDimensions = Collections.unmodifiableList(new ArrayList<>(groupByDimensions));
     this.interpolator = interpolator;
   }
 
@@ -156,9 +156,9 @@ public final class CubeQuery {
     private long endTs;
     private int resolution;
     private int limit;
-    private Map<String, AggregationFunction> measurements = new HashMap<String, AggregationFunction>();
-    private Map<String, String> dimensionValues = new HashMap<String, String>();
-    private List<String> groupByDimensions = new ArrayList<String>();
+    private Map<String, AggregationFunction> measurements = new HashMap<>();
+    private Map<String, String> dimensionValues = new HashMap<>();
+    private List<String> groupByDimensions = new ArrayList<>();
     private Interpolator interpolator;
 
     /**

@@ -17,6 +17,7 @@
 package co.cask.cdap.template.etl.common;
 
 import co.cask.cdap.api.Resources;
+import com.google.common.collect.Lists;
 
 import java.util.List;
 
@@ -45,7 +46,7 @@ public class ETLConfig {
   }
 
   public List<ETLStage> getTransforms() {
-    return transforms;
+    return transforms != null ? transforms : Lists.<ETLStage>newArrayList();
   }
 
   public Resources getResources() {

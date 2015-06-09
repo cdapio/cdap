@@ -39,7 +39,7 @@ public class NamespaceNameCompleter extends StringsCompleter {
     super(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
-        List<String> namespaceIds = new ArrayList<String>();
+        List<String> namespaceIds = new ArrayList<>();
         try {
           for (NamespaceMeta namespaceMeta : namespaceClient.list()) {
             namespaceIds.add(namespaceMeta.getName());

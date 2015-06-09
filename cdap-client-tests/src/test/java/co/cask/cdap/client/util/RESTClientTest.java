@@ -17,12 +17,10 @@
 
 package co.cask.cdap.client.util;
 
-import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequestConfig;
 import co.cask.common.http.HttpResponse;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;

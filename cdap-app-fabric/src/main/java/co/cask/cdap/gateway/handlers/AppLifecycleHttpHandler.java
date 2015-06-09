@@ -33,7 +33,6 @@ import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
-import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
@@ -104,13 +103,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final AdapterService adapterService;
 
   @Inject
-  public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
+  public AppLifecycleHttpHandler(CConfiguration configuration,
                                  ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory,
                                  Scheduler scheduler, ProgramRuntimeService runtimeService, Store store,
                                  NamespaceAdmin namespaceAdmin, NamespacedLocationFactory namespacedLocationFactory,
                                  ApplicationLifecycleService applicationLifecycleService,
                                  AdapterService adapterService) {
-    super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
     this.namespaceAdmin = namespaceAdmin;
@@ -164,7 +162,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps")
   public void getAllApps(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId) {
-    getAppRecords(responder, store, namespaceId, null);
+    getAppRecords(responder, store, namespaceId);
   }
 
   /**
@@ -297,8 +295,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
       Manager<DeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
         @Override
-        public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws ExecutionException {
-          deleteHandler(programId, type);
+        public void stop(Id.Program programId) throws ExecutionException {
+          deleteHandler(programId);
         }
       });
 
@@ -309,12 +307,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void deleteHandler(Id.Program programId, ProgramType type)
-    throws ExecutionException {
+  private void deleteHandler(Id.Program programId) throws ExecutionException {
     try {
-      switch (type) {
+      switch (programId.getType()) {
         case FLOW:
-          stopProgramIfRunning(programId, type);
+          stopProgramIfRunning(programId);
           break;
         case WORKFLOW:
           scheduler.deleteSchedules(programId, SchedulableProgramType.WORKFLOW);
@@ -323,10 +320,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           //no-op
           break;
         case SERVICE:
-          stopProgramIfRunning(programId, type);
+          stopProgramIfRunning(programId);
           break;
         case WORKER:
-          stopProgramIfRunning(programId, type);
+          stopProgramIfRunning(programId);
           break;
       }
     } catch (InterruptedException e) {
@@ -336,12 +333,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void stopProgramIfRunning(Id.Program programId, ProgramType type)
+  private void stopProgramIfRunning(Id.Program programId)
     throws InterruptedException, ExecutionException {
     ProgramRuntimeService.RuntimeInfo programRunInfo = findRuntimeInfo(programId.getNamespaceId(),
                                                                        programId.getApplicationId(),
                                                                        programId.getId(),
-                                                                       type, runtimeService);
+                                                                       programId.getType(),
+                                                                       runtimeService);
     if (programRunInfo != null) {
       doStop(programRunInfo);
     }

@@ -56,6 +56,7 @@ import org.apache.commons.cli.ParseException;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.ConnectException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -126,14 +127,14 @@ public class CLIMain {
 
     this.commands = ImmutableList.of(
       injector.getInstance(DefaultCommands.class),
-      new CommandSet<Command>(ImmutableList.<Command>of(
+      new CommandSet<>(ImmutableList.<Command>of(
         new HelpCommand(getCommandsSupplier(), cliConfig),
         new SearchCommandsCommand(getCommandsSupplier(), cliConfig)
       )));
     filePathResolver = injector.getInstance(FilePathResolver.class);
 
     Map<String, Completer> completers = injector.getInstance(DefaultCompleters.class).get();
-    cli = new CLI<Command>(Iterables.concat(commands), completers);
+    cli = new CLI<>(Iterables.concat(commands), completers);
     cli.setExceptionHandler(new CLIExceptionHandler<Exception>() {
       @Override
       public boolean handleException(PrintStream output, Exception e, int timesRetried) {
@@ -143,7 +144,7 @@ public class CLIMain {
         } else if (e instanceof InvalidCommandException) {
           InvalidCommandException ex = (InvalidCommandException) e;
           output.printf("Invalid command '%s'. Enter 'help' for a list of commands\n", ex.getInput());
-        } else if (e instanceof DisconnectedException) {
+        } else if (e instanceof DisconnectedException || e instanceof ConnectException) {
           cli.getReader().setPrompt("cdap (DISCONNECTED)> ");
         } else {
           output.println("Error: " + e.getMessage());

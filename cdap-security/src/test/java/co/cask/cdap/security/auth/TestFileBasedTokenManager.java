@@ -49,7 +49,7 @@ public class TestFileBasedTokenManager extends TestTokenManager {
     TokenManager tokenManager = injector.getInstance(TokenManager.class);
     tokenManager.startAndWait();
     Codec<AccessToken> tokenCodec = injector.getInstance(AccessTokenCodec.class);
-    return new ImmutablePair<TokenManager, Codec<AccessToken>>(tokenManager, tokenCodec);
+    return new ImmutablePair<>(tokenManager, tokenCodec);
   }
 
   /**

@@ -38,7 +38,7 @@ public class WeakReferenceDelegatorClassLoader extends ClassLoader implements De
   public WeakReferenceDelegatorClassLoader(ClassLoader classLoader) {
     // Parent is null, meaning it's the bootstrap ClassLoader
     super(null);
-    this.delegate = new WeakReference<ClassLoader>(classLoader);
+    this.delegate = new WeakReference<>(classLoader);
   }
 
   @Override

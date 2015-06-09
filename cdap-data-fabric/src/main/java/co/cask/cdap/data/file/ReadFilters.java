@@ -23,7 +23,7 @@ import co.cask.cdap.data.file.filter.AndReadFilter;
 public final class ReadFilters {
   private ReadFilters() {}
 
-  public static final ReadFilter and(ReadFilter...filters) {
+  public static ReadFilter and(ReadFilter...filters) {
     return new AndReadFilter(filters);
   }
 }

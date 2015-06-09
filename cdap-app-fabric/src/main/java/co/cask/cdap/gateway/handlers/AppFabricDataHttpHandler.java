@@ -19,7 +19,6 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamDetail;
@@ -50,8 +49,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
    * Constructs an new instance. Parameters are binded by Guice.
    */
   @Inject
-  public AppFabricDataHttpHandler(Authenticator authenticator, Store store) {
-    super(authenticator);
+  public AppFabricDataHttpHandler(Store store) {
     this.store = store;
   }
 

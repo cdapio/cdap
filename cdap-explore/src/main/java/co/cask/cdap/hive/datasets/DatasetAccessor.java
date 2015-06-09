@@ -128,8 +128,7 @@ public class DatasetAccessor {
    * @throws IOException in case the conf does not contain a valid RecordScannable.
    */
   private static Type getRecordType(Configuration conf, Id.DatasetInstance id) throws IOException {
-    Dataset dataset = instantiate(conf, id);
-    try {
+    try (Dataset dataset = instantiate(conf, id)) {
       if (dataset instanceof RecordWritable) {
         return ((RecordWritable) dataset).getRecordType();
       } else if (dataset instanceof RecordScannable) {
@@ -138,8 +137,6 @@ public class DatasetAccessor {
       throw new IOException(
         String.format("Dataset %s does not implement neither RecordScannable nor RecordWritable.",
                       getDatasetInstanceId(conf)));
-    } finally {
-      dataset.close();
     }
   }
 
