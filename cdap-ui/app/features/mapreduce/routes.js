@@ -62,7 +62,7 @@ angular.module(PKG.name + '.feature.mapreduce')
           url: '/data',
           templateUrl: '/assets/features/mapreduce/templates/tabs/data.html',
           ncyBreadcrumb: {
-            parent: 'apps.detail.overview.status',
+            parent: 'mapreduce.detail.runs',
             label: 'Data'
           }
         })
@@ -71,7 +71,7 @@ angular.module(PKG.name + '.feature.mapreduce')
           templateUrl: '/assets/features/mapreduce/templates/tabs/history.html',
           controller: 'MapreduceRunsController',
           ncyBreadcrumb: {
-            parent: 'apps.detail.overview.status',
+            parent: 'mapreduce.detail.runs',
             label: 'History'
           }
         });

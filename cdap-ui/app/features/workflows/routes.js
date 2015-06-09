@@ -76,7 +76,8 @@ angular.module(PKG.name + '.feature.workflows')
               highlightTab: 'development'
             },
             ncyBreadcrumb: {
-              label: '{{$state.params.programId}}'
+              parent: 'workflows.detail.runs',
+              label: 'History'
             },
             template: '<my-program-history data-runs="runs" data-type="WORKFLOWS"></my-program-history>',
             controller: 'WorkflowsRunsController'
@@ -89,7 +90,8 @@ angular.module(PKG.name + '.feature.workflows')
               highlightTab: 'development'
             },
             ncyBreadcrumb: {
-              label: 'Schedules'
+              label: 'Schedules',
+              parent: 'workflows.detail.runs'
             },
             templateUrl: '/assets/features/workflows/templates/tabs/schedules.html',
             controller: 'WorkflowsSchedulesController'
