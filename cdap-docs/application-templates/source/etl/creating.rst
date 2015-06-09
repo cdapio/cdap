@@ -136,13 +136,12 @@ Sample Adapter Configurations
     "config": {
       "schedule": "* * * * *",
       "source": {
-        "name": "DatabaseSource",
+        "name": "Database",
         "properties": {
           "importQuery": "select id,name,age from my_table",
           "countQuery": "select count(id) from my_table",
           "connectionString": "jdbc:mysql://localhost:3306/test",
-          "driverClass": "com.mysql.jdbc.Driver",
-          "tableName": "my_table",
+          "tableName": "src_table",
           "user": "my_user",
           "password": "my_password",
           "jdbcPluginName": "jdbc_plugin_name_defined_in_jdbc_plugin_json_config",
@@ -154,7 +153,6 @@ Sample Adapter Configurations
         "properties": {
           "columns": "id,name,age",
           "connectionString": "jdbc:mysql://localhost:3306/test",
-          "driverClass": "com.mysql.jdbc.Driver",
           "tableName": "dest_table",
           "user": "my_user",
           "password": "my_password",

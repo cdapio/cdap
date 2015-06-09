@@ -40,7 +40,6 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinition;
 import co.cask.cdap.explore.service.datasets.NotRecordScannableTableDefinition;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
@@ -206,7 +205,6 @@ public class ExploreDisabledTest {
         new DataSetsModules().getStandaloneModules(),
         new DataSetServiceModules().getInMemoryModules(),
         new MetricsClientRuntimeModule().getInMemoryModules(),
-        new AuthModule(),
         new ExploreRuntimeModule().getInMemoryModules(),
         new ExploreClientModule(),
         new StreamAdminModules().getInMemoryModules(),

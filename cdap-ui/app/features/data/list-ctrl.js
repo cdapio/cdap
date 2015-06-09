@@ -1,8 +1,9 @@
 angular.module(PKG.name + '.feature.data')
   .controller('CdapDataListController', function($state, $scope, MyOrderings, myStreamApi, myDatasetApi) {
-    $scope.MyOrderings = MyOrderings;
-    $scope.dataList = [];
-
+    this.MyOrderings = MyOrderings;
+    this.dataList = [];
+    this.currentPage = 1;
+    this.searchText = '';
     var params = {
       namespace: $state.params.namespace,
       scope: $scope
@@ -11,39 +12,39 @@ angular.module(PKG.name + '.feature.data')
     myStreamApi.list(params)
       .$promise
       .then(function (res) {
-        $scope.dataList = res
+        this.dataList = res
           .map(function(dataset) {
             dataset.dataType = 'Stream';
             return dataset;
-          })
-          .concat($scope.dataList);
-      });
+          }.bind(this))
+          .concat(this.dataList);
+      }.bind(this));
 
     myDatasetApi.list(params)
       .$promise
       .then(function(res) {
-        $scope.dataList = res
+        this.dataList = res
           .map(function(stream) {
             stream.dataType = 'Dataset';
             return stream;
-          })
-          .concat($scope.dataList);
-      });
+          }.bind(this))
+          .concat(this.dataList);
+      }.bind(this));
 
-    $scope.goToDetail = function(data) {
+    this.goToDetail = function(data) {
       if (data.dataType === 'Dataset') {
-        $state.go('datasets.detail.overview', {
+        $state.go('datasets.detail.overview.status', {
           datasetId: data.name
         });
       } else if (data.dataType === 'Stream') {
-        $state.go('streams.detail.overview', {
+        $state.go('streams.detail.overview.status', {
           streamId: data.name
         });
       }
       MyOrderings.dataClicked(data.name);
     };
 
-    $scope.goToList = function(data) {
+    this.goToList = function(data) {
       if (data.dataType === 'Dataset') {
         $state.go('datasets.list');
       } else if (data.dataType === 'Stream') {

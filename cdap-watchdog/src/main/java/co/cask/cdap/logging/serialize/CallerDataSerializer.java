@@ -30,7 +30,7 @@ public final class CallerDataSerializer {
   public static GenericArray<GenericRecord> encode(Schema schema, StackTraceElement[] stackTraceElements) {
     if (stackTraceElements != null) {
       Schema steArraySchema = schema.getTypes().get(1);
-      GenericArray<GenericRecord> steArray = new GenericData.Array<GenericRecord>(stackTraceElements.length,
+      GenericArray<GenericRecord> steArray = new GenericData.Array<>(stackTraceElements.length,
                                                                                   steArraySchema);
       for (StackTraceElement stackTraceElement : stackTraceElements) {
         steArray.add(StackTraceElementSerializer.encode(steArraySchema.getElementType(), stackTraceElement));

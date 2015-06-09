@@ -55,12 +55,12 @@ public final class SimpleKafkaProducer {
     ProducerConfig config = new ProducerConfig(props);
 
     kafkaTopic = KafkaTopic.getTopic();
-    producer = new Producer<String, byte[]>(config);
+    producer = new Producer<>(config);
   }
 
   public void publish(String key, byte[] bytes) {
     try {
-      KeyedMessage<String, byte[]> data = new KeyedMessage<String, byte[]>(kafkaTopic, key, bytes);
+      KeyedMessage<String, byte[]> data = new KeyedMessage<>(kafkaTopic, key, bytes);
       producer.send(data);
     } catch (Throwable t) {
       LOG.error("Exception when trying to publish log message to kafka with key {} and topic {}", key, kafkaTopic, t);

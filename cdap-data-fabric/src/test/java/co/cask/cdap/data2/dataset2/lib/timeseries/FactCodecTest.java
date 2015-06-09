@@ -89,7 +89,7 @@ public class FactCodecTest {
                                  new DimensionValue("dimension3", "value3"));
     byte[] mask = codec.createFuzzyRowMask(dimensionValues, "myMetric");
     rowKey = codec.createRowKey(dimensionValues, "myMetric", ts);
-    FuzzyRowFilter filter = new FuzzyRowFilter(ImmutableList.of(new ImmutablePair<byte[], byte[]>(rowKey, mask)));
+    FuzzyRowFilter filter = new FuzzyRowFilter(ImmutableList.of(new ImmutablePair<>(rowKey, mask)));
 
     dimensionValues = ImmutableList.of(new DimensionValue("dimension1", "value1"),
                                  new DimensionValue("dimension2", "annnnnnnnnny"),
@@ -137,7 +137,7 @@ public class FactCodecTest {
     dimensionValues = ImmutableList.of(new DimensionValue("myTag", "myValue"));
     rowKey = codec.createRowKey(dimensionValues, null, ts);
     mask = codec.createFuzzyRowMask(dimensionValues, null);
-    filter = new FuzzyRowFilter(ImmutableList.of(new ImmutablePair<byte[], byte[]>(rowKey, mask)));
+    filter = new FuzzyRowFilter(ImmutableList.of(new ImmutablePair<>(rowKey, mask)));
 
     rowKey = codec.createRowKey(dimensionValues, "annyyy", ts);
     Assert.assertEquals(FuzzyRowFilter.ReturnCode.INCLUDE, filter.filterRow(rowKey));

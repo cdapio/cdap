@@ -46,7 +46,7 @@ public class StringsCompleter implements Completer {
   }
 
   public TreeSet<String> getStrings() {
-    return new TreeSet<String>(strings.get());
+    return new TreeSet<>(strings.get());
   }
 
   @Override

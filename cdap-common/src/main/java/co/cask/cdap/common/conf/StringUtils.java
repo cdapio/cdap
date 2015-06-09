@@ -45,12 +45,12 @@ public class StringUtils {
    * @return an <code>ArrayList</code> of string values
    */
   public static Collection<String> getStringCollection(String str) {
-    List<String> values = new ArrayList<String>();
+    List<String> values = new ArrayList<>();
     if (str == null) {
       return values;
     }
     StringTokenizer tokenizer = new StringTokenizer (str, ",");
-    values = new ArrayList<String>();
+    values = new ArrayList<>();
     while (tokenizer.hasMoreTokens()) {
       values.add(tokenizer.nextToken());
     }
@@ -63,7 +63,7 @@ public class StringUtils {
    * @return a <code>Collection</code> of <code>String</code> values
    */
   public static Collection<String> getTrimmedStringCollection(String str) {
-    return new ArrayList<String>(
+    return new ArrayList<>(
                                   Arrays.asList(getTrimmedStrings(str)));
   }
 

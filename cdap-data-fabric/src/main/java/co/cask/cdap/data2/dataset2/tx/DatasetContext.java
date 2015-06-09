@@ -29,7 +29,7 @@ public class DatasetContext<T> implements Iterable<T> {
   private final T dataset;
 
   public static <TYPE> DatasetContext<TYPE> of(TYPE dateset) {
-    return new DatasetContext<TYPE>(dateset);
+    return new DatasetContext<>(dateset);
   }
 
   public DatasetContext(T dataset) {

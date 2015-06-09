@@ -56,10 +56,10 @@ import java.util.concurrent.ConcurrentSkipListMap;
 public class MockRegionServerServices implements RegionServerServices {
   private final Configuration hConf;
   private final ZooKeeperWatcher zookeeper;
-  private final Map<String, HRegion> regions = new HashMap<String, HRegion>();
+  private final Map<String, HRegion> regions = new HashMap<>();
   private boolean stopping = false;
   private final ConcurrentSkipListMap<byte[], Boolean> rit =
-    new ConcurrentSkipListMap<byte[], Boolean>(Bytes.BYTES_COMPARATOR);
+    new ConcurrentSkipListMap<>(Bytes.BYTES_COMPARATOR);
   private HFileSystem hfs = null;
   private ServerName serverName = null;
   private RpcServerInterface rpcServer = null;

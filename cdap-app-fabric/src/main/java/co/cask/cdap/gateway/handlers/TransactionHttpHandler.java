@@ -17,7 +17,6 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
@@ -55,8 +54,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   private final TransactionSystemClient txClient;
 
   @Inject
-  public TransactionHttpHandler(Authenticator authenticator, TransactionSystemClient txClient) {
-    super(authenticator);
+  public TransactionHttpHandler(TransactionSystemClient txClient) {
     this.txClient = txClient;
   }
 
@@ -114,7 +112,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
     }
   }
-  
+
   @Path("/transactions/invalid/remove/until")
   @POST
   public void truncateInvalidTxBefore(HttpRequest request, HttpResponder responder) {
@@ -126,12 +124,12 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid time value in request");
         return;
       }
-      
+
       if (body == null || !body.containsKey("time")) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Time not specified");
         return;
       }
-      
+
       long time = body.get("time");
       txClient.truncateInvalidTxBefore(time);
       responder.sendStatus(HttpResponseStatus.OK);

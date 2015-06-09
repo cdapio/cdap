@@ -41,9 +41,9 @@ import javax.annotation.Nullable;
 /**
  * A {@link BatchSink} that writes data to a {@link Cube} dataset.
  * <p/>
- * This {@link BatchCubeSink} takes {@link StructuredRecord} in, maps it to a {@link CubeFact} using mapping
- * configuration provided with {@link Properties.Cube#MAPPING_CONFIG_PROPERTY} property, and writes it to a
- * {@link Cube} dataset identified by name property.
+ * This {@link BatchCubeSink} takes a {@link StructuredRecord} in, maps it to a {@link CubeFact} using the mapping
+ * configuration provided with the {@link co.cask.cdap.template.etl.common.Properties.Cube#MAPPING_CONFIG_PROPERTY}
+ * property, and writes it to the {@link Cube} dataset identified by the name property.
  * <p/>
  * If {@link Cube} dataset does not exist, it will be created using properties provided with this sink. See more
  * information on available {@link Cube} dataset configuration properties at
@@ -63,11 +63,15 @@ public class BatchCubeSink extends BatchWritableSink<StructuredRecord, byte[], C
   private static final String NAME_PROPERTY_DESC = "Name of the Cube dataset. If the Cube does not already exist, " +
     "one will be created.";
   private static final String PROPERTY_RESOLUTIONS_DESC = "Aggregation resolutions. See Cube dataset configuration " +
-    "details for more information";
-  private static final String MAPPING_CONFIG_PROPERTY_DESC = "The StructuredRecord to CubeFact mapping configuration.";
+    "details for more information : http://docs.cask.co/cdap/current/en/developers-manual/building-blocks/datasets/" +
+    "cube.html#cube-configuration";
+  private static final String MAPPING_CONFIG_PROPERTY_DESC = "The StructuredRecord to CubeFact mapping " +
+    "configuration. More info on the format of this configuration can be found at http://docs.cask.co/cdap/current/" +
+    "en/reference-manual/javadocs/co/cask/cdap/template/etl/common/StructuredRecordToCubeFact.html";
 
-  private static final String CUSTOM_PROPERTIES_DESC = "Provide any custom properties " +
-    "(such as Aggregations) as a JSON Map";
+  private static final String CUSTOM_PROPERTIES_DESC = "Provide any custom properties (such as Aggregations) as a " +
+    "JSON Map. For example if aggregations are desired on fields - abc and xyz, the property should have the value : " +
+    "\"{\"dataset.cube.aggregation.agg1.dimensions\":\"abc\", \"dataset.cube.aggregation.agg2.dimensions\":\"xyz\"}";
 
   /**
    * Config class for BatchCube

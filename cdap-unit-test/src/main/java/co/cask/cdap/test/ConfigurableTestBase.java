@@ -66,7 +66,6 @@ import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.LocalNamespaceClient;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
@@ -222,7 +221,6 @@ public class ConfigurableTestBase {
       new DataSetServiceModules().getInMemoryModules(),
       new ConfigModule(cConf, hConf),
       new IOModule(),
-      new AuthModule(),
       new LocationRuntimeModule().getInMemoryModules(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new AppFabricServiceRuntimeModule().getInMemoryModules(),

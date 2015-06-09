@@ -122,7 +122,7 @@ public abstract class SecurityModule extends PrivateModule {
 
     @Inject
     public AuthenticationHandlerMapProvider(@Named("security.handlers.map") Map<String, Object> handlers) {
-      handlerMap = new HashMap<String, Object>(handlers);
+      handlerMap = new HashMap<>(handlers);
     }
 
     @Override

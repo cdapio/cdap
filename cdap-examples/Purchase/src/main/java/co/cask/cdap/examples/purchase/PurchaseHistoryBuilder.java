@@ -119,8 +119,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
       UserProfile userProfile = null;
       try {
         URL url = new URL(userProfileServiceURL,
-                                        UserProfileServiceHandler.USER_ENDPOINT
-                                          + "/" + customer.toString());
+                          UserProfileServiceHandler.USER_ENDPOINT + "/" + customer.toString());
 
         HttpRequest request = HttpRequest.get(url).build();
         HttpResponse response = HttpRequests.execute(request);

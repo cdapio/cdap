@@ -66,7 +66,7 @@ public class ProgramClientTestRun extends ClientTestBase {
 
       LOG.info("Getting flow history");
       programClient.getAllProgramRuns(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME, 0, Long.MAX_VALUE,
-                                   Integer.MAX_VALUE);
+                                      Integer.MAX_VALUE);
 
       LOG.info("Scaling flowlet");
       Assert.assertEquals(1, programClient.getFlowletInstances(FakeApp.NAME, FakeFlow.NAME, FakeFlow.FLOWLET_NAME));
@@ -79,6 +79,11 @@ public class ProgramClientTestRun extends ClientTestBase {
 
       testWorkflowCommand();
 
+      LOG.info("Starting flow with debug");
+      programClient.start(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME, true);
+      assertProgramRunning(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
+      programClient.stop(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
+      assertProgramStopped(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
     } finally {
       appClient.delete(FakeApp.NAME);
     }

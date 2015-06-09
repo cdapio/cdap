@@ -123,7 +123,7 @@ public class ServiceHttpServer extends AbstractIdleService {
 
     this.contextFactory = createHttpServiceContextFactory();
     this.handlerReferences = Maps.newConcurrentMap();
-    this.handlerReferenceQueue = new ReferenceQueue<Supplier<HandlerContextPair>>();
+    this.handlerReferenceQueue = new ReferenceQueue<>();
 
     constructNettyHttpService(runId, metricsCollectionService);
   }
@@ -368,7 +368,7 @@ public class ServiceHttpServer extends AbstractIdleService {
                                     BasicHttpServiceContextFactory contextFactory) {
       this.handlerType = handlerType;
       this.instantiatorFactory = instantiatorFactory;
-      this.handlerThreadLocal = new ThreadLocal<Supplier<HandlerContextPair>>();
+      this.handlerThreadLocal = new ThreadLocal<>();
       this.spec = spec;
       this.contextFactory = contextFactory;
     }
@@ -411,7 +411,7 @@ public class ServiceHttpServer extends AbstractIdleService {
       // (in the handlerReferences map), it won't block GC of the supplier instance.
       // We can use the weak reference, which retrieved through polling the ReferenceQueue,
       // to get back the handler and call destroy() on it.
-      handlerReferences.put(new WeakReference<Supplier<HandlerContextPair>>(supplier, handlerReferenceQueue),
+      handlerReferences.put(new WeakReference<>(supplier, handlerReferenceQueue),
                             handlerContextPair);
       handlerThreadLocal.set(supplier);
       return handlerContextPair;

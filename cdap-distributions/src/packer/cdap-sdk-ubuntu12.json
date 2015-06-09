@@ -71,7 +71,7 @@
     {
       "type": "chef-solo",
       "remote_cookbook_paths": "/var/chef/cookbooks",
-      "run_list": "recipe[maven],recipe[idea],recipe[eclipse]",
+      "run_list": "recipe[maven],recipe[hadoop::flume_agent],recipe[idea],recipe[eclipse]",
       "prevent_sudo": true,
       "skip_install": true,
       "json": {
@@ -103,10 +103,11 @@
     {
       "type": "shell",
       "scripts": [
+        "scripts/motd.sh",
         "scripts/xorg.sh",
-        "scripts/fluxbox.sh",
         "scripts/slim.sh",
-        "scripts/firefox.sh",
+        "scripts/fill-maven-cache.sh",
+        "scripts/lxde.sh",
         "scripts/vbox-guest-additions.sh"
       ],
       "only": ["cdap-sdk-vm"]
@@ -116,13 +117,13 @@
       "scripts": [
         "scripts/remove-chef.sh",
         "scripts/sdk-cleanup.sh",
+        "scripts/network-cleanup.sh",
         "scripts/apt-cleanup.sh"
       ]
     },
     {
       "type": "shell",
       "scripts": [
-        "scripts/motd.sh",
         "scripts/random-root-password.sh",
         "scripts/zero-disk.sh"
       ],

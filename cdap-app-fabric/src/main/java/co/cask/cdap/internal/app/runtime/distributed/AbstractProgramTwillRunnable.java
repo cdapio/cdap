@@ -41,7 +41,6 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -377,7 +376,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       new IOModule(),
       new ZKClientModule(),
       new KafkaClientModule(),
-      new AuthModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new LoggingModules().getDistributedModules(),

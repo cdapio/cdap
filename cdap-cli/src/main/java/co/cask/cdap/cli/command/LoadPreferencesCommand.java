@@ -71,11 +71,11 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
       if (contentType.equals("json")) {
         args = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
       } else {
-        throw new IllegalArgumentException("Unsupported file format. Only json format is supported");
+        throw new IllegalArgumentException("Unsupported file format. Only JSON format is supported");
       }
     } catch (JsonSyntaxException e) {
       throw new BadRequestException(
-        String.format("Json Syntax in File is invalid. Support only for string-to-string map. %s", e.getMessage()));
+        String.format("JSON syntax in file is invalid. Support only for string-to-string map. %s", e.getMessage()));
     }
 
     if (arguments.hasArgument(type.getArgumentName().toString())) {
@@ -86,13 +86,12 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public String getPattern() {
-    return String.format("load preferences %s <%s> <%s> [<%s>]", type.getName(), ArgumentName.LOCAL_FILE_PATH,
-                         ArgumentName.CONTENT_TYPE, type.getArgumentName());
+    return determinePattern("load");
   }
 
   @Override
   public String getDescription() {
-    return String.format("Set Preferences of %s from a local Config File (supported formats = JSON).",
+    return String.format("Sets preferences of %s from a local config file (supported formats = JSON).",
                          Fragment.of(Article.A, type.getTitleName()));
   }
 }

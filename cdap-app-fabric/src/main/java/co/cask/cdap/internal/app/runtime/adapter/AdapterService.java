@@ -58,6 +58,7 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.clearspring.analytics.util.Preconditions;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -500,7 +501,7 @@ public class AdapterService extends AbstractIdleService {
     try {
       scheduler.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
       //TODO: Scheduler API should also manage the MDS.
-      store.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
+      store.deleteSchedule(workflowId, scheduleName);
     } catch (NotFoundException e) {
       // its possible a stop was already called and the schedule was deleted, but then there
       // was some failure stopping the active run.  In that case, the next time stop is called
@@ -521,8 +522,8 @@ public class AdapterService extends AbstractIdleService {
     final Id.Adapter adapterId = Id.Adapter.from(namespace.getId(), adapterSpec.getName());
     final Id.Program workerId = getProgramId(namespace, adapterSpec);
     try {
-      Map<String, String> sysArgs = resolver.getSystemProperties(workerId, ProgramType.WORKER);
-      Map<String, String> userArgs = resolver.getUserProperties(workerId, ProgramType.WORKER);
+      Map<String, String> sysArgs = resolver.getSystemProperties(workerId);
+      Map<String, String> userArgs = resolver.getUserProperties(workerId);
 
       // Pass Adapter Name as a system property
       sysArgs.put(ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName());
@@ -533,8 +534,7 @@ public class AdapterService extends AbstractIdleService {
       // Override resolved preferences with adapter worker spec properties.
       userArgs.putAll(adapterSpec.getRuntimeArgs());
 
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.start(workerId, ProgramType.WORKER,
-                                                                             sysArgs, userArgs, false);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.start(workerId, sysArgs, userArgs, false);
       final ProgramController controller = runtimeInfo.getController();
       controller.addListener(new AbstractListener() {
         @Override
@@ -597,7 +597,7 @@ public class AdapterService extends AbstractIdleService {
     Manager<AdapterDeploymentInfo, AdapterDefinition> manager = adapterManagerFactory.create(
       new ProgramTerminator() {
         @Override
-        public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws ExecutionException {
+        public void stop(Id.Program programId) throws ExecutionException {
           // no-op
         }
       });
@@ -610,8 +610,8 @@ public class AdapterService extends AbstractIdleService {
     } catch (ExecutionException e) {
       // error handling for manager could use some work...
       Throwable cause = e.getCause();
-      if (cause instanceof IllegalArgumentException) {
-        throw (IllegalArgumentException) cause;
+      if (cause instanceof RuntimeException) {
+        throw Throwables.propagate(cause);
       }
       throw new RuntimeException(e);
     } catch (Exception e) {
@@ -626,7 +626,7 @@ public class AdapterService extends AbstractIdleService {
 
       Manager<DeploymentInfo, ApplicationWithPrograms> manager = templateManagerFactory.create(new ProgramTerminator() {
         @Override
-        public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws ExecutionException {
+        public void stop(Id.Program programId) throws ExecutionException {
           // no-op
         }
       });
@@ -683,7 +683,7 @@ public class AdapterService extends AbstractIdleService {
       // TODO: Performance improvement to only rebuild plugin information for those that changed
       pluginRepository.inspectPlugins(newInfoMap.values());
     } catch (Exception e) {
-      LOG.warn("Unable to read the plugins directory");
+      LOG.warn("Unable to read the plugins directory", e);
     }
   }
 

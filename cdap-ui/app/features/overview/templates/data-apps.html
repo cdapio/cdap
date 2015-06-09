@@ -27,14 +27,14 @@
 
       <ul class="list-group" >
         <li class="list-group-item" ng-repeat="data in dataList | orderBy:MyOrderings.dataOrdering | limitTo: 5 track by $index ">
-          <a ng-if="data.type === 'Stream'" ui-sref="streams.detail.overview({streamId: data.name})" ng-click="MyOrderings.dataClicked(data.name)">
+          <a ng-if="data.type === 'Stream'" ui-sref="streams.detail.overview.status({streamId: data.name})" ng-click="MyOrderings.dataClicked(data.name)">
             <p ng-bind="data.name"> </p>
             <div class="title-type-image">
               <span class="icon-streams"></span>
               <span> Stream </span>
             </div>
           </a>
-          <a ng-if="data.type !== 'Stream'" ui-sref="datasets.detail.overview({datasetId: data.name})" ng-click="MyOrderings.dataClicked(data.name)">
+          <a ng-if="data.type !== 'Stream'" ui-sref="datasets.detail.overview.status({datasetId: data.name})" ng-click="MyOrderings.dataClicked(data.name)">
             <p ng-bind="data.name"> </p>
             <div class="title-type-image">
               <span class="icon-datasets"></span>
@@ -59,7 +59,7 @@
       </div>
     </div>
   </div>
-  <div class="col-xs-12 col-md-6" my-drag-drop-upload>
+  <div class="col-xs-12 col-md-6">
     <div ng-if="apps.length > 0">
       <h3 class="text-uppercase"> Apps </h3>
       <div class="row">
@@ -77,11 +77,11 @@
               <span class="fa fa-list-ul"></span>
                All Adapters
             </a>
-            <a ui-sref="admin.namespace.detail.apps({nsadmin: $state.params.namespace})"
-               class="btn btn-default">
-              <span class="fa fa-plus"></span>
-              <span> Add App </span>
-            </a>
+
+            <my-file-select ng-controller="OverviewCtrl"
+                            data-button-label="Add App"
+                            on-file-select="onFileSelected($files)">
+            </my-file-select>
 
           </div>
         </div>
@@ -89,7 +89,7 @@
 
       <ul class="list-group">
         <li class="list-group-item" ng-repeat="app in apps | orderBy:MyOrderings.appOrdering | limitTo:5">
-          <a ui-sref="apps.detail.overview({appId: app.id})"  ng-click="MyOrderings.appClicked(app.id)">
+          <a ui-sref="apps.detail.overview.status({appId: app.id})"  ng-click="MyOrderings.appClicked(app.id)">
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
               <span class="icon-fist"></span>
@@ -107,11 +107,10 @@
       </div>
       <hr />
       <div class="text-left" ng-controller="AppsSectionCtrl">
-        <a ui-sref="admin.namespace.detail.apps({nsadmin: $state.params.namespace})"
-           class="btn btn-default">
-          <span class="fa fa-plus"></span>
-          <span> Add App </span>
-        </a>
+        <my-file-select ng-controller="AppsSectionCtrl"
+                        data-button-label="Add App"
+                        on-file-select="onFileSelected($files)">
+        </my-file-select>
         <a ui-sref="adapters.create" class="btn btn-default">
           <span class="fa fa-plus"></span>
           <span>Add Adapter</span>

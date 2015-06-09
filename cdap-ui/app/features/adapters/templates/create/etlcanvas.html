@@ -2,13 +2,13 @@
   <div class="row">
     <div class="col-md-4 col-xs-12">
       <div class="wrapper">
-        <div class="template" ng-class="{'plugin-added': !source['placeHolderSource']}">
+        <div class="template"
+             ng-class="{'plugin-added': !AdapterCreateController.model.source['placeHolder'], 'plugin-invalid': !AdapterCreateController.model.source['valid']}"
+
+             ng-click="DefaultCanvasController.editSourceProperties()">
           <div>
-            <span tooltip="{{source.name}}" ng-if="source.name.length > 18">{{source.name |  myEllipsis: 18}}</span>
-            <span ng-if="source.name.length <= 18">{{source.name }}</span>
-            <span class="fa fa-pencil fa-fw"
-                  ng-click="editSourceProperties()"
-                  ng-if="!source.placeHolderSource"></span>
+            <span tooltip="{{AdapterCreateController.model.source.name}}" ng-if="AdapterCreateController.model.source.name.length > 18">{{AdapterCreateController.model.source.name |  myEllipsis: 18}}</span>
+            <span ng-if="AdapterCreateController.model.source.name.length <= 18">{{AdapterCreateController.model.source.name }}</span>
           </div>
         </div>
 
@@ -17,19 +17,18 @@
     <div class="col-md-4 col-xs-12">
       <div class="wrapper transform-wrapper">
         <div class="template transforms"
-             ng-model="transforms"
+             ng-model="AdapterCreateController.model.transforms"
              as-sortable="dragdrop">
-          <div ng-repeat="transform in transforms"
-               ng-class="{'plugin-added': !transform['placeHolderTransform']}"
+          <div ng-repeat="transform in AdapterCreateController.model.transforms"
+               ng-click="DefaultCanvasController.editTransformProperty(transform)"
+               ng-class="{'plugin-added': !transform['placeHolder'], 'plugin-invalid': !transform['valid']}"
                as-sortable-item>
             <div as-sortable-item-handle>
+              <span tooltip="{{AdapterCreateController.model.transform.name}}" ng-if="AdapterCreateController.model.transform.name.length > 18">{{AdapterCreateController.model.transform.name |  myEllipsis: 18}}</span>
               <span tooltip="{{transform.name}}" ng-if="transform.name.length > 18">{{transform.name |  myEllipsis: 18}}</span>
               <span ng-if="transform.name.length <= 18">{{transform.name }}</span>
-              <span class="fa fa-pencil fa-fw"
-                    ng-click="editTransformProperty(transform)"
-                    ng-if="!transform.placeHolderTransform"></span>
               <span class="fa fa-times fa-fw pull-right"
-                    ng-click="deleteTransformProperty(transform)"
+                    ng-click="DefaultCanvasController.deleteTransform(transform)"
                     ng-if="!transform.placeHolderTransform"></span>
             </div>
           </div>
@@ -38,13 +37,12 @@
     </div>
     <div class="col-md-4 col-xs-12">
       <div class="wrapper">
-        <div class="template" ng-class="{'plugin-added': !sink['placeHolderSink']}">
+        <div class="template"
+             ng-class="{'plugin-added': !AdapterCreateController.model.sink['placeHolder'], 'plugin-invalid': !AdapterCreateController.model.sink['valid']}"
+             ng-click="DefaultCanvasController.editSinkProperties()">
           <div>
-            <span tooltip="{{sink.name}}" ng-if="sink.name.length > 18">{{sink.name |  myEllipsis: 18}}</span>
-            <span ng-if="sink.name.length <= 18">{{sink.name }}</span>
-            <span class="fa fa-pencil fa-fw"
-                  ng-click="editSinkProperties()"
-                  ng-if="!sink.placeHolderSink"></span>
+            <span tooltip="{{AdapterCreateController.model.sink.name}}" ng-if="AdapterCreateController.model.sink.name.length > 18">{{AdapterCreateController.model.sink.name |  myEllipsis: 18}}</span>
+            <span ng-if="AdapterCreateController.model.sink.name.length <= 18">{{AdapterCreateController.model.sink.name }}</span>
           </div>
         </div>
       </div>

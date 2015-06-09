@@ -30,7 +30,7 @@ RUN apt-get update && \
     curl -L http://chef.io/chef/install.sh | bash && \
     for i in apt-setup.sh cookbook-dir.sh cookbook-setup.sh ; do /tmp/scripts/$i ; done && \
     chef-solo -o cdap::sdk && \
-    for i in remove-chef.sh apt-cleanup.sh ; do /tmp/scripts/$i ; done && \
+    for i in remove-chef.sh sdk-cleanup.sh apt-cleanup.sh ; do /tmp/scripts/$i ; done && \
     rm -rf /root/.m2 /var/cache/debconf/*-old /usr/share/{doc,man} /tmp/scripts \
     /usr/share/locale/{a,b,c,d,e{l,o,s,t,u},f,g,h,i,j,k,lt,lv,m,n,o,p,r,s,t,u,v,w,x,z}*
 

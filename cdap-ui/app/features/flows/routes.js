@@ -39,7 +39,7 @@ angular.module(PKG.name + '.feature.flows')
 
         },
         ncyBreadcrumb: {
-          parent: 'apps.detail.overview',
+          parent: 'apps.detail.overview.status',
           label: 'Flows',
           skip: true
         },
@@ -63,7 +63,7 @@ angular.module(PKG.name + '.feature.flows')
           }
         })
 
-      .state('flows.detail.data', {
+      .state('flows.detail.datasets', {
         url: '/data',
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
@@ -71,7 +71,8 @@ angular.module(PKG.name + '.feature.flows')
         },
         templateUrl: '/assets/features/flows/templates/tabs/data.html',
         ncyBreadcrumb: {
-          label: 'Data'
+          label: 'Datasets',
+          parent: 'flows.detail.runs'
         }
       })
       .state('flows.detail.history', {
@@ -83,7 +84,8 @@ angular.module(PKG.name + '.feature.flows')
         templateUrl: '/assets/features/flows/templates/tabs/history.html',
         controller: 'FlowsRunsController',
         ncyBreadcrumb: {
-          label: 'History'
+          label: 'History',
+          parent: 'flows.detail.runs'
         }
       });
 

@@ -70,7 +70,7 @@ Here is what the ``UniqueVisitor`` flowlet looks like:
 
 .. literalinclude:: /../../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/UniqueVisitor.java
    :language: java
-   :lines: 35-
+   :lines: 33-
 
 The ``UniqueVisitCount`` dataset provides an abstraction of the data logic for incrementing the visit count for a
 given IP. It exposes an ``increment`` method, implemented as:

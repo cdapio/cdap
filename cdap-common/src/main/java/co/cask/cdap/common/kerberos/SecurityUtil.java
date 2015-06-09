@@ -91,7 +91,7 @@ public final class SecurityUtil {
     System.setProperty(Constants.External.Zookeeper.ENV_ALLOW_SASL_FAILED_CLIENTS, "true");
     System.setProperty(ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY, "Client");
 
-    final Map<String, String> properties = new HashMap<String, String>();
+    final Map<String, String> properties = new HashMap<>();
     properties.put("doNotPrompt", "true");
     properties.put("useKeyTab", "true");
     properties.put("useTicketCache", "false");

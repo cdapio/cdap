@@ -131,7 +131,7 @@ public class StreamConversionTest extends TestBase {
                         long sleepDelay, TimeUnit sleepDelayUnit)
     throws InterruptedException, ExecutionException, TimeoutException {
 
-    final AtomicMarkableReference<T> result = new AtomicMarkableReference<T>(null, false);
+    final AtomicMarkableReference<T> result = new AtomicMarkableReference<>(null, false);
     Tasks.waitFor(true, new Callable<Boolean>() {
       public Boolean call() throws Exception {
         try {

@@ -51,7 +51,7 @@ public class PluginProperties {
     private final Map<String, String> properties;
 
     private Builder() {
-      this.properties = new HashMap<String, String>();
+      this.properties = new HashMap<>();
     }
 
     /**
@@ -80,7 +80,7 @@ public class PluginProperties {
      * Creates a new instance of {@link PluginProperties} with the properties added to this builder prior to this call.
      */
     public PluginProperties build() {
-      return new PluginProperties(Collections.unmodifiableMap(new HashMap<String, String>(properties)));
+      return new PluginProperties(Collections.unmodifiableMap(new HashMap<>(properties)));
     }
   }
 }

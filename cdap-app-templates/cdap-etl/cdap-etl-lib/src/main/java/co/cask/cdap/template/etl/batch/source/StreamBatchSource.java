@@ -65,7 +65,8 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
     Schema.Field.of("headers", Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.STRING))),
     Schema.Field.of("body", Schema.of(Schema.Type.BYTES))
   );
-  private static final String NAME_DESCRIPTION = "Name of the stream. Must be a valid stream name.";
+  private static final String NAME_DESCRIPTION = "Name of the stream. Must be a valid stream name. " +
+    "If it doesn't exist, it will be created";
   private static final String DURATION_DESCRIPTION = "Size of the time window to read with each run of the pipeline. " +
     "The format is expected to be a number followed by a 's', 'm', 'h', or 'd' specifying the time unit, with 's' " +
     "for seconds, 'm' for minutes, 'h' for hours, and 'd' for days. For example, a value of '5m' means each run of " +
@@ -118,7 +119,7 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
   @Override
   public void transform(KeyValue<LongWritable, Object> input, Emitter<StructuredRecord> emitter) throws Exception {
     // if not format spec was given, the value is a StreamEvent
-    if (streamBatchConfig.format == null) {
+    if (Strings.isNullOrEmpty(streamBatchConfig.format)) {
       StreamEvent event = (StreamEvent) input.getValue();
       Map<String, String> headers = Objects.firstNonNull(event.getHeaders(), ImmutableMap.<String, String>of());
       StructuredRecord output = StructuredRecord.builder(DEFAULT_SCHEMA)
@@ -216,7 +217,7 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
     private Schema parseSchema() {
       // try to parse the schema if there is one
       try {
-        return schema == null ? null : Schema.parseJson(schema);
+        return Strings.isNullOrEmpty(schema) ? null : Schema.parseJson(schema);
       } catch (IOException e) {
         throw new IllegalArgumentException("Invalid schema: " + e.getMessage());
       }

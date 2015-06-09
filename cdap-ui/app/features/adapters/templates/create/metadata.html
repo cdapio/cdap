@@ -1,0 +1,38 @@
+<div class="panel panel-default" ng-init="metadataTabOpen=true">
+  <div class="panel-heading" ng-click="metadataTabOpen = !metadataTabOpen">
+    <div class="panel-title">
+      <div class="clearfix">
+        <span class="pull-left">
+          Metadata
+        </span>
+        <i class="fa fa-fw pull-right"
+            ng-class="{'fa-chevron-down': metadataTabOpen, 'fa-chevron-right': !metadataTabOpen}"></i>
+      </div>
+    </div>
+  </div>
+  <div class="panel-body" ng-if="metadataTabOpen">
+    <div class="row">
+      <div class="col-md-4 col-xs-12">
+        <label for="adapaterType" class="control-label">Choose an Application Template</label>
+        <select ng-model="AdapterCreateController.model.metadata.type"
+                ng-change="AdapterCreateController.onMetadataChange()"
+                class="form-control">
+          <option ng-selected="{{adapter.name == AdapterCreateController.model.metadata.type}}"
+                  ng-repeat="adapter in AdapterCreateController.adapterTypes"
+                  value="{{adapter.name}}">
+            {{adapter.name}}
+          </option>
+        </select>
+      </div>
+      <div class="col-md-3 col-xs-12">
+        <label class="control-label">Name</label>
+        <span class="fa fa-asterisk"></span>
+        <input name="name" class="form-control" ng-model="AdapterCreateController.model.metadata.name"/>
+      </div>
+      <div class="col-md-5 col-xs-12">
+        <label class="control-label">Description</label>
+        <input class="form-control" ng-model="AdapterCreateController.model.metadata.description"/>
+      </div>
+    </div>
+  </div>
+</div>

@@ -84,7 +84,7 @@ public class SparkPageRankProgram implements JavaSparkProgram {
         @Override
         public Tuple2<String, String> call(Text s) {
           String[] parts = SPACES.split(s.toString());
-          return new Tuple2<String, String>(parts[0], parts[1]);
+          return new Tuple2<>(parts[0], parts[1]);
         }
       }).distinct().groupByKey().cache();
 
@@ -105,9 +105,9 @@ public class SparkPageRankProgram implements JavaSparkProgram {
           public Iterable<Tuple2<String, Double>> call(Tuple2<Iterable<String>, Double> s) {
             LOG.debug("Processing {} with rank {}", s._1(), s._2());
             int urlCount = Iterables.size(s._1());
-            List<Tuple2<String, Double>> results = new ArrayList<Tuple2<String, Double>>();
+            List<Tuple2<String, Double>> results = new ArrayList<>();
             for (String n : s._1()) {
-              results.add(new Tuple2<String, Double>(n, s._2() / urlCount));
+              results.add(new Tuple2<>(n, s._2() / urlCount));
             }
             return results;
           }

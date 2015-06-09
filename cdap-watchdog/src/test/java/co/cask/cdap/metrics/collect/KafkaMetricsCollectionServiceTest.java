@@ -181,7 +181,7 @@ public class KafkaMetricsCollectionServiceTest {
     kafkaClient.getConsumer().prepare().addFromBeginning("metrics", 0)
                                        .consume(new KafkaConsumer.MessageCallback() {
 
-      ReflectionDatumReader<MetricValues> reader = new ReflectionDatumReader<MetricValues>(schema, metricRecordType);
+      ReflectionDatumReader<MetricValues> reader = new ReflectionDatumReader<>(schema, metricRecordType);
 
       @Override
       public void onReceived(Iterator<FetchedMessage> messages) {

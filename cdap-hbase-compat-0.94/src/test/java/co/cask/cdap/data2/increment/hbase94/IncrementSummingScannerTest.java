@@ -453,6 +453,6 @@ public class IncrementSummingScannerTest {
    * Work around a bug in HRegion.internalPut(), where RegionObserver.prePut() modifications are not applied.
    */
   static void doPut(HRegion region, Put p) throws Exception {
-    region.batchMutate(new Pair[]{ new Pair<Mutation, Integer>(p, null) });
+    region.batchMutate(new Pair[]{ new Pair<>(p, null) });
   }
 }

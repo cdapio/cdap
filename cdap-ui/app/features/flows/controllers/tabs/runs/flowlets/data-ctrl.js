@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowletDetailDataController', function($state, $scope, MyDataSource, myHelpers, FlowletDetailInputController) {
+  .controller('FlowletDetailDataController', function($state, $scope, MyDataSource, myHelpers, MyMetricsQueryHelper) {
     var dataSrc = new MyDataSource($scope);
     var flowletid = $scope.$parent.activeFlowlet.name;
     $scope.datasets = [];

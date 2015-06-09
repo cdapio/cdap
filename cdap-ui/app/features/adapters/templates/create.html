@@ -1,126 +1,21 @@
-<div ng-if="adapterTypes.length > 0">
-  <div class="row">
-    <div class="col-xs-12">
-      <div class="clearfix">
-        <h2 class="pull-left" style="margin-top:0;">Create Adapter</h2>
-        <a ui-sref="adapters.list" class="btn btn-default pull-right">
-          <span class="fa fa-list-ul"></span>
-          <span>All Adapters</span>
-        </a>
-      </div>
+
+<div>
+  <div class="row" create-adapter-container>
+    <div class="col-md-10 col-sm-9 col-xs-12">
+      <h2 class="adapter-name-label">
+        Create Adapter: {{AdapterCreateController.model.metadata.name}}
+      </h2>
     </div>
-    <div class="col-xs-12">
-      <div class="panel panel-default" ng-init="metadataTabOpen=true">
-        <div class="panel-heading clearfix" ng-click="metadataTabOpen = !metadataTabOpen">
-          <span class="pull-left"> Metadata</span>
-          <i class="fa fa-fw pull-right"
-            ng-class="{'fa-chevron-down': metadataTabOpen, 'fa-chevron-right': !metadataTabOpen}"></i>
-        </div>
-        <div class="panel-body" ng-if="metadataTabOpen">
-          <div class="row">
-            <div class="col-md-4 col-xs-12">
-              <label for="adapaterType" class="control-label">Choose an Application Template</label>
-              <select
-                id="adapaterType"
-                name="adaptertype"
-                class="form-control"
-                ng-model="metadata.type"
-                ng-options="adapter.name as adapter.name for adapter in adapterTypes" required></select>
-            </div>
-            <div class="col-md-3 col-xs-12">
-              <label class="control-label">Name</label>
-              <ui-select ng-model="selectedAdapterDraft"
-                 on-select="onDraftChange($item, $model)"
-                 theme="bootstrap"
-                 ng-disabled="disabled"
-                 tagging-tokens="ENTER|TAB"
-                 tagging tagging-label="(custom 'new' label)"
-                 reset-search-input="false"
-                 title="Create New or Select draft">
-                <ui-select-match placeholder="Create New or Select draft" > {{selectedAdapterDraft}}</ui-select-match>
-                <ui-select-choices repeat="adapter in adaptersDraftList| filter: $select.search">
-                  <div ng-bind-html="adapter | highlight: $select.search"></div>
-                </ui-select-choices>
-              </ui-select>
-            </div>
-            <div class="col-md-5 col-xs-12">
-              <label class="control-label">Description</label>
-              <input class="form-control" ng-model="metadata.description"/>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div class="col-md-2 col-sm-3 col-xs-12">
+      <a ui-sref="adapters.list" class="btn btn-default">
+        <span class="fa fa-list-ul"></span>
+        <span>All Adapters</span>
+      </a>
     </div>
   </div>
 
-  <div ng-if="onAdapterTypeSelected">
-
-    <!-- Hiding just for the demo.-->
-    <div class="row" ng-if="metadata.type === 'ETLBatch'">
-      <div class="col-xs-12">
-        <div class="panel panel-default" ng-init="configTabOpen=true">
-          <div class="panel-heading clearfix" ng-click="configTabOpen = !configTabOpen">
-            <span class="pull-left">Configurations</span>
-            <i class="fa fa-fw pull-right"
-              ng-class="{'fa-chevron-down': configTabOpen, 'fa-chevron-right': !configTabOpen}"></i>
-          </div>
-          <div class="panel-body" ng-if="configTabOpen">
-            <div data-name="field"
-                 class="my-widget-container"
-                 data-model="schedule['cron']"
-                 data-myconfig="{properties: {}, widget: 'schedule'}"
-                 widget-container>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div> <!-- END NG-IF -->
-
-  <div class="row">
-    <div class="col-xs-12">
-      <tabset type="tabs slanted-tabs">
-        <tab ng-repeat="tab in tabs" active="tab.active">
-          <tab-heading>
-            <span class="fa {{tab.icon}}"></span>
-            <span ng-if="tab.title.length > 10"
-                  tooltip="{{tab.title}}">{{tab.title |  myEllipsis: 10}}
-            </span>
-            <span ng-if="tab.title.length <= 10" >{{tab.title |  myEllipsis: 10}}</span>
-            <a href=""
-               ng-if="tab.isCloseable !== false"
-               ng-click="closeTab($index)"
-            >
-              <i class="fa fa-times-circle"></i>
-            </a>
-          </tab-heading>
-          <div ng-init="transform = tab.transform; tabIndex = $index;"
-                ng-include="tab.partial">
-          </div>
-        </tab>
-      </tabset>
-    </div>
-  </div>
-</div>
-
-<!-- TODO: restructure the page to reduce duplication -->
-<!-- WHEN THERE IS NO TEMPLATE -->
-<div ng-if="adapterTypes.length === 0">
-  <div class="row">
-    <div class="col-xs-12">
-      <div class="clearfix">
-        <h2 class="pull-left" style="margin-top:0;">Create Adapter</h2>
-        <a ui-sref="adapters.list" class="btn btn-default pull-right">
-          <span class="fa fa-list-ul"></span>
-          <span>All Adapters</span>
-        </a>
-      </div>
-    </div>
-  </div>
-
-  <div class="well well-lg text-center">
-    <h3>No application template found. Please check if the templates directory is configured correctly.</h3>
-  </div>
+  <div ng-include="'/assets/features/adapters/templates/create/metadata.html'"></div>
+  <div ng-include="'/assets/features/adapters/templates/create/configuration.html'"></div>
+  <div ng-include="'/assets/features/adapters/templates/create/canvas.html'"></div>
 
 </div>

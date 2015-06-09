@@ -31,7 +31,7 @@ public final class StackTraceElementProxyArraySerializer {
   public static GenericArray<GenericRecord> encode(Schema schema, StackTraceElementProxy[] stackTraceElementProxies) {
     if (stackTraceElementProxies != null) {
       Schema steArraySchema = schema.getTypes().get(1);
-      GenericArray<GenericRecord> steArray = new GenericData.Array<GenericRecord>(stackTraceElementProxies.length,
+      GenericArray<GenericRecord> steArray = new GenericData.Array<>(stackTraceElementProxies.length,
                                                                                   steArraySchema);
       for (StackTraceElementProxy ste : stackTraceElementProxies) {
         steArray.add(StackTraceElementProxySerializer.encode(steArraySchema.getElementType(), ste));

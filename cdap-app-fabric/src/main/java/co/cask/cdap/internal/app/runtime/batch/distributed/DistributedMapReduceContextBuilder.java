@@ -26,7 +26,6 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
@@ -61,7 +60,6 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getDistributedModules(),
       new IOModule(),
-      new AuthModule(),
       new ZKClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getMapReduceModules(taskContext),

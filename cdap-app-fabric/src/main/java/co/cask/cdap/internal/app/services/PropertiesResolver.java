@@ -22,7 +22,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
@@ -42,12 +41,12 @@ public class PropertiesResolver {
     this.queueResolver = new SchedulerQueueResolver(cConf, store);
   }
 
-  public Map<String, String> getUserProperties(Id.Program id, ProgramType type) {
+  public Map<String, String> getUserProperties(Id.Program id) {
     return prefStore.getResolvedProperties(id.getNamespaceId(), id.getApplicationId(),
-                                           type.getCategoryName(), id.getId());
+                                           id.getType().getCategoryName(), id.getId());
   }
 
-  public Map<String, String> getSystemProperties(Id.Program id, ProgramType type) {
+  public Map<String, String> getSystemProperties(Id.Program id) {
     Map<String, String> systemArgs = Maps.newHashMap();
     systemArgs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, queueResolver.getQueue(id.getNamespace()));
     return systemArgs;

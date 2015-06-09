@@ -18,7 +18,7 @@ Users of these should refer to the :ref:`Application Templates
 Creating Custom ETL Plugins
 ===========================
 
-CDAP provides for the creation of custom ETL plugins for batch/real time sources/sinks and
+CDAP provides for the creation of custom ETL plugins for batch/real-time sources/sinks and
 transformations to extend the existing ``ETLBatch`` and ``ETLRealtime`` application templates.
 
 To make a custom plugin available to one of the application templates (and thus available
@@ -55,8 +55,8 @@ There are five different Maven archetypes available for starting a plugin projec
 
 - Batch Source
 - Batch Sink
-- Real Time Source
-- Real Time Sink
+- Real-time Source
+- Real-time Sink
 - Transformation
 
 Available Annotations
@@ -93,15 +93,15 @@ project for the plugin from the archetype:
 In order to implement a Batch Source (to be used in the ETL Batch template), you extend
 the BatchSource class. You need to define the types of the KEY and VALUE that the Batch
 Source will receive and the type of object that the Batch Source will emit to the
-subsequent stage (which could be either a TransformStage or a BatchSink). After defining
+subsequent stage (which could be either a Transform or a BatchSink). After defining
 the types, only one method is required to be implemented:
 
-  ``prepareJob()``
+  ``prepareRun()``
 
 Methods
 .......
 
-- ``prepareJob()``: Used to configure the Hadoop Job configuration (for example, set the
+- ``prepareRun()``: Used to configure the Hadoop Job configuration (for example, set the
   ``InputFormatClass``).
 - ``configurePipeline()``: Used to create any Streams or Datasets that are required by this 
   Batch Source.
@@ -118,7 +118,7 @@ Example::
   public class MyBatchSource extends BatchSource<LongWritable, String, String> {
 
     @Override
-    public void prepareJob(BatchSourceContext context) {
+    public void prepareRun(BatchSourceContext context) {
       Job job = context.getHadoopJob();
       job.setInputFormatClass(...);
       // Other Hadoop job configuration related to Input
@@ -142,16 +142,16 @@ A batch sink plugin can be created from this Maven archetype:
 In order to implement a Batch Sink (to be used in the ETL Batch template), you extend the
 BatchSink class. Similar to a BatchSource, you need to define the types of the KEY and
 VALUE that the BatchSink will write in the Batch job and the type of object that it will
-accept from the previous stage (which could be either a ``TransformStage`` or a ``BatchSource``). 
+accept from the previous stage (which could be either a ``Transform`` or a ``BatchSource``).
 
 After defining the types, only one method is required to be implemented:
 
-  ``prepareJob()`` 
+  ``prepareRun()``
 
 Methods
 .......
 
-- ``prepareJob()``: Used to configure the Hadoop Job configuration (for ex, set ``OutputFormatClass``).
+- ``prepareRun()``: Used to configure the Hadoop Job configuration (for ex, set ``OutputFormatClass``).
 - ``configurePipeline()``: Used to create any datasets that are required by this Batch Sink.
 - ``initialize()``: Initialize the Batch Sink runtime. Guaranteed to be executed before
   any call to the plugin’s ``transform`` method.
@@ -165,20 +165,20 @@ Example::
   @Plugin(type = "sink")
   @Name("MyBatchSink")
   @Description("Demo Sink")
-  public class MyBatchSource extends BatchSink<String, String, NullWritable> {
+  public class MyBatchSink extends BatchSink<String, String, NullWritable> {
 
     @Override
-    public void prepareJob(BatchSourceContext context) {
+    public void prepareRun(BatchSinkContext context) {
       Job job = context.getHadoopJob();
       job.setOutputFormatClass(...);
-      // OtherHadoop job configuration related to Output
+      // Other Hadoop job configuration related to Output
     }
   }
 
 
-Creating a Real Time Source Plugin
+Creating a Real-time Source Plugin
 ----------------------------------
-A real time source plugin can be created from this Maven archetype:
+A real-time source plugin can be created from this Maven archetype:
 
 .. container:: highlight
 
@@ -196,7 +196,7 @@ The only method that needs to be implemented is:
 Methods 
 .......
 
-- ``initialize()``: Initialize the Real Time Source runtime. Guaranteed to be executed
+- ``initialize()``: Initialize the real-time source runtime. Guaranteed to be executed
   before any call to the poll method. Usually used to setup the connection to external
   sources.
 - ``poll()``: Poll method will be invoked during the run of the adapter and in each call,
@@ -207,11 +207,11 @@ Methods
 Example::
 
   /**
-   * Real Time Source to poll data from external sources.
+   * Real-time Source to poll data from external sources.
    */
   @Plugin(type = "source")
   @Name("Source")
-  @Description("Real Time Source")
+  @Description("Real-time Source")
   public class Source extends RealtimeSource<StructuredRecord> {
 
     private final SourceConfig config;
@@ -244,7 +244,6 @@ Example::
     @Override
     public void initialize(RealtimeContext context) throws Exception {
       super.initialize(context);
-      // No-op
       // Get Config param and use to initialize
       // String param = config.param
       // Perform init operations, external operations etc.
@@ -265,9 +264,9 @@ Example::
   }
 
 
-Creating a Real Time Sink Plugin
+Creating a Real-time Sink Plugin
 --------------------------------
-A real time sink plugin can be created from this Maven archetype:
+A real-time sink plugin can be created from this Maven archetype:
 
 .. container:: highlight
 
@@ -284,7 +283,7 @@ The only method that needs to be implemented is:
 
 Methods
 
-- ``initialize()``: Initialize the Real Time Sink runtime. Guaranteed to be executed before
+- ``initialize()``: Initialize the real-time sink runtime. Guaranteed to be executed before
   any call to the ``write`` method. 
 - ``write()``: The write method will be invoked for a set of objects that needs to be
   persisted. A ``DataWriter`` object can be used to write data to CDAP Streams and/or Datasets.
@@ -296,7 +295,7 @@ Example::
 
   @Plugin(type = "sink")
   @Name("Demo")
-  @Description("Demo Real Time Sink")
+  @Description("Demo Real-time Sink")
   public class DemoSink extends RealtimeSink<String> {
 
     @Override
@@ -335,11 +334,11 @@ Methods
 .......
 
 - ``initialize()``: Used to perform any initialization step that might be required during
-  the runtime of the ``TransformStage``. It is guaranteed that this method will be invoked
+  the runtime of the ``Transform``. It is guaranteed that this method will be invoked
   before the ``transform`` method.
 - ``transform()``: Transform method contains the logic that will be applied on each
   incoming data object. An emitter can be used to pass the results to the subsequent stage
-  (which could be either another ``TransformStage`` or a ``Sink``).
+  (which could be either another ``Transform`` or a ``Sink``).
 - ``destroy()``: Used to perform any cleanup before the adapter shuts down.
 
 Below is an example of a ``DuplicateTransform`` that emits copies of the incoming record
@@ -352,7 +351,7 @@ copies in each transform is emitted. The user metrics can be queried by using th
   @Name("Duplicator")
   @Description("Transformation Example that makes copies")
 
-  public class DuplicateTransform extends TransformStage<StructuredRecord, StructuredRecord> {
+  public class DuplicateTransform extends Transform<StructuredRecord, StructuredRecord> {
   
   private final Config config;
 
@@ -393,10 +392,10 @@ adapter, as well as wait for runs to finish. Other than that, you can use normal
 methods to obtain Streams or Datasets and verify that they have the correct data.
 
 
-Source State in Real Time Source
+Source State in Real-time Source
 ================================
 
-Real time adapters are executed in workers. During failure, there is the possibility that
+Real-time adapters are executed in workers. During failure, there is the possibility that
 the data that is emitted from the Source will not be processed by subsequent stages. In
 order to avoid such data loss, SourceState can be used to persist the information about
 the external source (for example, offset) if supported by the Source. 
@@ -412,7 +411,7 @@ of failures.
 
   @Plugin(type = "source")
   @Name("Demo")
-  @Description("Demo Real Time Source")
+  @Description("Demo Real-time Source")
   public class DemoSource extends RealtimeSource<String> {
     private static final Logger LOG = LoggerFactory.getLogger(TestSource.class);
     private static final String COUNT = "count";

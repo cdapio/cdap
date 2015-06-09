@@ -93,7 +93,7 @@ public enum ProgramType {
   private static final Map<String, ProgramType> CATEGORY_MAP;
 
   static {
-    CATEGORY_MAP = new HashMap<String, ProgramType>();
+    CATEGORY_MAP = new HashMap<>();
     for (ProgramType type : ProgramType.values()) {
       CATEGORY_MAP.put(type.getCategoryName(), type);
     }

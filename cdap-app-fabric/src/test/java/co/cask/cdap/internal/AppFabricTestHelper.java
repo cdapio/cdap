@@ -103,7 +103,7 @@ public class AppFabricTestHelper {
 
     return factory.create(new ProgramTerminator() {
       @Override
-      public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws Exception {
+      public void stop(Id.Program programId) throws Exception {
         //No-op
       }
     });

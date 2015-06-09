@@ -205,7 +205,7 @@ public abstract class StreamBodyConsumerTestBase {
    * A {@link HttpResponder} for testing. It only saved the first response status event sent.
    */
   private static class TestHttpResponder extends AbstractHttpResponder {
-    private final AtomicReference<HttpResponseStatus> responseStatus = new AtomicReference<HttpResponseStatus>();
+    private final AtomicReference<HttpResponseStatus> responseStatus = new AtomicReference<>();
 
     @Override
     public ChunkResponder sendChunkStart(HttpResponseStatus status, Multimap<String, String> headers) {

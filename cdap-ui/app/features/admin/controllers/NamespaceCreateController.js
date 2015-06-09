@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('AdminNamespaceCreateController', function ($scope, $alert, $modalInstance, MyDataSource, myNamespace) {
+  .controller('AdminNamespaceCreateController', function ($scope, $alert, $modalInstance, MyDataSource, myNamespace, EventPipe) {
     $scope.model = {
       name: '',
       description: ''
@@ -21,9 +21,10 @@ angular.module(PKG.name + '.feature.admin')
             content: 'Namespace Created!',
             type: 'success'
           });
-          // Only place where we force fetch the namespace list
-          // This is required as we need to update the list with the newly created namespace.
-          myNamespace.getList(true);
+
+          myNamespace.getList(true).then(function() {
+            EventPipe.emit('namespace.update');
+          });
         });
     });
     $scope.closeModal = function() {

@@ -44,7 +44,7 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = "source")
 @Name("Kafka")
-@Description("Kafka Realtime Source")
+@Description("Kafka Realtime Source - Emits a record with two fields - 'key' (nullable string) and 'message' (bytes)")
 public class KafkaSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaSource.class);
 
@@ -131,11 +131,11 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
   public static class KafkaPluginConfig extends PluginConfig {
 
     @Name(KAFKA_PARTITIONS)
-    @Description("Number of partitions. This is a required field.")
+    @Description("Number of partitions.")
     private final Integer partitions;
 
     @Name(KAFKA_TOPIC)
-    @Description("Topic of the messages. This is a required field.")
+    @Description("Topic of the messages.")
     private final String topic;
 
     @Name(KAFKA_ZOOKEEPER)

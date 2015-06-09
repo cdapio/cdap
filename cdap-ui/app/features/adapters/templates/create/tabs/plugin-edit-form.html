@@ -1,0 +1,78 @@
+<form ng-controller="PluginEditController as PluginEditController"
+      plugin-property-edit-view>
+  <div ng-if="PluginEditController.noconfig">
+    <div class="well well-lg widget-group-container">
+      <div ng-repeat="(name, value) in plugin.properties track by $index" class="row">
+        <div class="row-padding">
+          <div class="form-group">
+            <label
+                  ng-init="title='info';description=plugin._backendProperties[name].description"
+                  class="control-label col-xs-12">
+                  <span>{{name}}</span>
+              <span  class="fa fa-info-circle"
+                     data-placement="right"
+                     data-trigger="hover"
+                     data-auto-close="1"
+                     data-template="/assets/features/adapters/templates/create/popover.html"
+                     bs-popover>
+              </span>
+              <span class="fa fa-asterisk" ng-if="plugin._backendProperties[name].required"></span>
+            </label>
+            <div class="col-xs-12">
+              <input type="text"
+                      class="form-control"
+                      ng-model="plugin.properties[name]"/>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div ng-if="PluginEditController.configfetched" class="am-slide-right">
+    <div class="row">
+
+      <div class="col-xs-12"
+           ng-repeat="group in PluginEditController.config.groups.position">
+        <div class="well well-lg widget-group-container">
+          <h3>{{PluginEditController.groups[group].display}}</h3>
+
+          <div ng-repeat="field in PluginEditController.groups[group].position" class="row">
+            <div class="row-padding">
+              <div class="form-group">
+                <label class="control-label col-xs-12"
+                    ng-init="title=PluginEditController.groups[group].fields[field].info;description=PluginEditController.groups[group].fields[field].description">
+                    <span>{{PluginEditController.groups[group].fields[field].label}}</span>
+                  <span data-placement="right"
+                        data-trigger="hover"
+                        data-auto-close="1"
+                        data-template="/assets/features/adapters/templates/create/popover.html"
+                        bs-popover>
+                        <span class="fa fa-info-circle"></span>
+                  </span>
+                  <span class="fa fa-asterisk" ng-if="plugin._backendProperties[field].required"></span>
+                </label>
+                <div class="col-xs-12">
+                  <div data-name="field"
+                       class="my-widget-container"
+                       data-model="plugin.properties[field]"
+                       data-myconfig="PluginEditController.groups[group].fields[field]"
+                       data-properties="plugin.properties"
+                       widget-container>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div ng-if="!PluginEditController.noproperty">
+    <div class="well well-lg">
+      No Properties for this Plugin.
+    </div>
+  </div>
+</form>

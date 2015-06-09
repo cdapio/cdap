@@ -146,13 +146,13 @@ Available System Metrics
 **Note:** A user metric may have the same name as a system metric; they are distinguished 
 by prepending the respective prefix when querying: ``user`` or ``system``.
 
-These metrics are available in a datasets context:
+These metrics are available in a dataset context:
 
 .. list-table::
    :header-rows: 1
    :widths: 60 40
 
-   * - Datasets Metric
+   * - Dataset Metric
      - Description
    * - ``system.store.bytes``
      - Number of bytes written
@@ -206,13 +206,13 @@ Reducer context is desired, as shown above):
    * - ``system.process.entries.out``
      - Number of entries written out by the Map or Reduce phase
 
-These metrics are available in a services context:
+These metrics are available in a service context:
 
 .. list-table::
    :header-rows: 1
    :widths: 60 40
 
-   * - Services Metric
+   * - Service Metric
      - Description
    * - ``system.requests.count``
      - Number of requests made to the service
@@ -249,13 +249,13 @@ depends on the Spark program being queried:
    * - ``system.<spark-id>.driver.DAGScheduler.stage.waitingStages``
      - Number of waiting stages
 
-These metrics are available in a streams context:
+These metrics are available in a stream context:
 
 .. list-table::
    :header-rows: 1
    :widths: 60 40
 
-   * - Streams Metric
+   * - Stream Metric
      - Description
    * - ``system.collect.events``
      - Number of events collected by the stream

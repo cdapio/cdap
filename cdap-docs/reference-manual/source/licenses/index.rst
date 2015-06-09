@@ -58,6 +58,9 @@ Cloudera, Cloudera Impala, and Impala are trademarks of `Cloudera, Inc. <http://
 
 Hortonworks is a registered trademark of `Hortonworks, Inc. <http://hortonworks.com>`__
 
+`Node.js <http://www.nodejs.org>`__ is a registered trademark of `Joyent, Inc. <http://joyent.com>`__
+
+
 CDAP Product License
 --------------------
 
@@ -72,27 +75,6 @@ The Cask Data Application Platform (CDAP) product is copyright and licensed as f
        http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-
-
-
-CDAP Documentation License
---------------------------
-
-The Cask Data Application Platform (CDAP) documentation is copyright and licensed as follows:
-
-   Copyright © |copyright|
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, documentation
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
