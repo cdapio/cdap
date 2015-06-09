@@ -11,7 +11,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr ng-repeat="data in DatasetsListController.datasets | orderBy:sortable.predicate:sortable.reverse">
+      <tr ng-repeat="data in ListController.datasets | orderBy:sortable.predicate:sortable.reverse">
         <td>
           <a ui-sref="datasets.detail.overview.status({datasetId: data.name})">
             <strong ng-bind="data.name"> </strong>

@@ -1,5 +1,5 @@
 <section class="panel-group explore"
-     ng-model="DatasetExploreController.activePanel"
+     ng-model="ExploreController.activePanel"
      data-allow-multiple="true"
      bs-collapse>
 
@@ -7,8 +7,8 @@
     <div class="panel-heading" bs-collapse-toggle>
       <h3 class="panel-title" >
         <span
-          ng-class="{'fa-chevron-right': DatasetExploreController.activePanel.indexOf(0) === -1,
-                     'fa-chevron-down': DatasetExploreController.activePanel.indexOf(0) !== -1}"
+          ng-class="{'fa-chevron-right': ExploreController.activePanel.indexOf(0) === -1,
+                     'fa-chevron-down': ExploreController.activePanel.indexOf(0) !== -1}"
           class="fa fa-fw"
         ></span>Write &amp; Execute SQL
       </h3>
@@ -17,7 +17,7 @@
       <div class="panel-body">
 
         <my-sql-query data-type="'dataset'"
-                      data-name="DatasetExploreController.name">
+                      data-name="ExploreController.name">
         </my-sql-query>
 
       </div>
@@ -28,8 +28,8 @@
     <div class="panel-heading" bs-collapse-toggle>
       <h3 class="panel-title" >
         <span
-          ng-class="{'fa-chevron-right': DatasetExploreController.activePanel.indexOf(1) === -1,
-                     'fa-chevron-down': DatasetExploreController.activePanel.indexOf(1) !== -1}"
+          ng-class="{'fa-chevron-right': ExploreController.activePanel.indexOf(1) === -1,
+                     'fa-chevron-down': ExploreController.activePanel.indexOf(1) !== -1}"
           class="fa fa-fw"
         ></span>View Queries
       </h3>
