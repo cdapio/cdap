@@ -58,6 +58,7 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.clearspring.analytics.util.Preconditions;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -609,8 +610,8 @@ public class AdapterService extends AbstractIdleService {
     } catch (ExecutionException e) {
       // error handling for manager could use some work...
       Throwable cause = e.getCause();
-      if (cause instanceof IllegalArgumentException) {
-        throw (IllegalArgumentException) cause;
+      if (cause instanceof RuntimeException) {
+        throw Throwables.propagate(cause);
       }
       throw new RuntimeException(e);
     } catch (Exception e) {
@@ -682,7 +683,7 @@ public class AdapterService extends AbstractIdleService {
       // TODO: Performance improvement to only rebuild plugin information for those that changed
       pluginRepository.inspectPlugins(newInfoMap.values());
     } catch (Exception e) {
-      LOG.warn("Unable to read the plugins directory");
+      LOG.warn("Unable to read the plugins directory", e);
     }
   }
 

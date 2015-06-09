@@ -53,7 +53,7 @@ import java.sql.Statement;
 import java.util.List;
 
 /**
- * Sink that can be configured to export data to a database table
+ * Sink that can be configured to export data to a database table.
  */
 @Plugin(type = "sink")
 @Name("Database")
@@ -72,6 +72,10 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     this.dbSinkConfig = dbSinkConfig;
   }
 
+  private String getJDBCPluginId() {
+    return String.format("%s.%s.%s", "sink", dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName);
+  }
+
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     Preconditions.checkArgument(!(dbSinkConfig.user == null && dbSinkConfig.password != null),
@@ -80,28 +84,28 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     Preconditions.checkArgument(!(dbSinkConfig.user != null && dbSinkConfig.password == null),
                                 "dbPassword is null. Please provide both user name and password if database requires" +
                                   "authentication. If not, please remove dbUser and retry.");
-    String jdbcPluginId = String.format("%s.%s.%s", "sink", dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName);
     Class<Object> jdbcDriverClass = pipelineConfigurer.usePluginClass(dbSinkConfig.jdbcPluginType,
                                                                       dbSinkConfig.jdbcPluginName,
-                                                                      jdbcPluginId,
+                                                                      getJDBCPluginId(),
                                                                       PluginProperties.builder().build());
     Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
   }
 
   @Override
   public void prepareRun(BatchSinkContext context) {
-    LOG.debug("tableName = {}; driverClass = {}; connectionString = {}; importQuery = {}; columns = {}",
-              dbSinkConfig.tableName, dbSinkConfig.driverClass, dbSinkConfig.connectionString, dbSinkConfig.columns);
+    LOG.debug("tableName = {}; pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; columns = {}",
+              dbSinkConfig.tableName, dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName,
+              dbSinkConfig.connectionString, dbSinkConfig.columns);
 
     Job job = context.getHadoopJob();
     conf = job.getConfiguration();
-    String jdbcPluginId = String.format("%s.%s.%s", "sink", dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName);
+
     // Load the plugin class to make sure it is available.
-    context.loadPluginClass(jdbcPluginId);
+    Class<?> driverClass = context.loadPluginClass(getJDBCPluginId());
     if (dbSinkConfig.user == null && dbSinkConfig.password == null) {
-      DBConfiguration.configureDB(conf, dbSinkConfig.driverClass, dbSinkConfig.connectionString);
+      DBConfiguration.configureDB(conf, driverClass.getName(), dbSinkConfig.connectionString);
     } else {
-      DBConfiguration.configureDB(conf, dbSinkConfig.driverClass, dbSinkConfig.connectionString,
+      DBConfiguration.configureDB(conf, driverClass.getName(), dbSinkConfig.connectionString,
                                   dbSinkConfig.user, dbSinkConfig.password);
     }
     List<String> fields = Lists.newArrayList(Splitter.on(",").omitEmptyStrings().split(dbSinkConfig.columns));
@@ -116,7 +120,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
   @Override
   public void initialize(BatchSinkContext context) throws Exception {
     super.initialize(context);
-    setResultSetMetadata();
+    setResultSetMetadata(context);
   }
 
   @Override
@@ -124,8 +128,8 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     emitter.emit(new KeyValue<DBRecord, NullWritable>(new DBRecord(input, resultSetMetadata), null));
   }
 
-  private void setResultSetMetadata() throws Exception {
-    ensureJDBCDriverIsAvailable();
+  private void setResultSetMetadata(BatchSinkContext context) throws Exception {
+    ensureJDBCDriverIsAvailable(context);
     Connection connection;
     if (dbSinkConfig.user == null) {
       connection = DriverManager.getConnection(dbSinkConfig.connectionString);
@@ -151,15 +155,17 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
    *
    * @throws Exception if the driver is not available
    */
-  private void ensureJDBCDriverIsAvailable() throws Exception {
+  private void ensureJDBCDriverIsAvailable(BatchSinkContext context) throws Exception {
     try {
       DriverManager.getDriver(dbSinkConfig.connectionString);
     } catch (SQLException e) {
+      // Load the plugin class to make sure it is available.
+      Class<?> driverClass = context.loadPluginClass(getJDBCPluginId());
+
       // Driver not found. We will try to register it with the DriverManager.
-      LOG.debug("Driver {} not found. Registering JDBC driver via shim {} ",
-                dbSinkConfig.driverClass, JDBCDriverShim.class.getName());
-      ClassLoader classLoader = conf.getClassLoader();
-      Class<?> driverClass = classLoader.loadClass(dbSinkConfig.driverClass);
+      LOG.debug("Plugin Type: {} and Plugin Name: {}; Driver Class: {} not found. Registering JDBC driver via shim {} ",
+                dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName, driverClass.getName(),
+                JDBCDriverShim.class.getName());
       DriverManager.registerDriver(new JDBCDriverShim((Driver) driverClass.newInstance()));
     }
   }

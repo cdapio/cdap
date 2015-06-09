@@ -43,7 +43,7 @@ import javax.annotation.Nullable;
 @Name("Table")
 @Description("CDAP Table Dataset Batch Sink")
 public class TableSink extends BatchWritableSink<StructuredRecord, byte[], Put> {
-  private static final String NAME_DESC = "Name of the table. If the table does not already exist, one will be " +
+  private static final String NAME_DESC = "Name of the table dataset. If it does not already exist, one will be " +
     "created.";
   private static final String PROPERTY_SCHEMA_DESC = "Optional schema of the table as a JSON Object. If the table " +
     "does not already exist, one will be created with this schema, which will allow the table to be explored " +

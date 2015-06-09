@@ -25,6 +25,7 @@ import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterAlreadyExistsException;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.adapter.ApplicationTemplateInfo;
+import co.cask.cdap.internal.app.runtime.adapter.InvalidPluginConfigException;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterDetail;
@@ -283,8 +284,13 @@ public class AdapterHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       adapterService.createAdapter(namespace, adapterName, config);
       responder.sendString(HttpResponseStatus.OK, String.format("Adapter: %s is created", adapterName));
-    } catch (IllegalArgumentException e) {
-      throw new BadRequestException(e);
+    } catch (IllegalArgumentException | InvalidPluginConfigException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (AdapterAlreadyExistsException e) {
+      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+    } catch (Throwable th) {
+      LOG.error("Failed to deploy adapter", th);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, th.getMessage());
     }
   }
 }
