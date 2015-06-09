@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdapterCreateController', function ($scope, AdapterCreateModel, AdapterApiFactory, $q, $alert, $state, $timeout) {
+  .controller('AdapterCreateController', function ($scope, AdapterCreateModel, AdapterApiFactory, $q, $alert, $state, $timeout, EventPipe) {
     this.model = new AdapterCreateModel();
 
     var defaultTabs = [
@@ -84,15 +84,19 @@ angular.module(PKG.name + '.feature.adapters')
             $timeout(function() {
               $state.go('^.list', $state.params, {reload: true});
             });
+            // Loading icon shown in model
+            EventPipe.emit('hideLoadingIcon.immediate');
             $alert({
               type: 'success',
               content: 'Adapter Template created successfully!'
             });
           }, function(err) {
+            // Loading icon shown in model
+            EventPipe.emit('hideLoadingIcon.immediate');
             var errorObj = {
               type: 'danger',
               title: 'Error Creating Adapter',
-              content: (angular.isArray(err.messages)? formatErrorMessages(err.messages): err.messages)
+              content: (angular.isArray(err.messages)? formatErrorMessages(err.messages): err.messages.data)
             };
             $alert(errorObj);
           });
@@ -117,6 +121,8 @@ angular.module(PKG.name + '.feature.adapters')
           .saveAsDraft()
           .then(
             function success() {
+              // Loading icon shown in model
+              EventPipe.emit('hideLoadingIcon.immediate');
               $alert({
                 type: 'success',
                 content: 'The Adapter Template ' + this.model.metadata.name + ' has been saved as draft!'
@@ -124,6 +130,8 @@ angular.module(PKG.name + '.feature.adapters')
               $state.go('^.list');
             }.bind(this),
             function error(err) {
+              // Loading icon shown in model
+              EventPipe.emit('hideLoadingIcon.immediate');
               $alert({
                 type: 'info',
                 content: err.message
