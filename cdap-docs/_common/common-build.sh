@@ -158,15 +158,15 @@ function build_docs_google() {
 function build_javadocs_full() {
   cd ${PROJECT_PATH}
   set_mvn_environment
-  MAVEN_OPTS="-Xmx512m" mvn clean site -DskipTests
+  echo "Currently not implemented"
+  return
+  # MAVEN_OPTS="-Xmx512m" mvn clean site -DskipTests
 }
 
 function build_javadocs_api() {
   cd ${PROJECT_PATH}
   set_mvn_environment
-#   MAVEN_OPTS="-Xmx512m" mvn clean package javadoc:javadoc -pl $API -am -DskipTests -P release
-  MAVEN_OPTS="-Xmx512m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true
-  MAVEN_OPTS="-Xmx512m" mvn clean site -DskipTests -P templates -DisOffline=false
+  MAVEN_OPTS="-Xmx1024m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && mvn clean site -DskipTests -P templates -DisOffline=false
 }
 
 function build_javadocs_sdk() {
