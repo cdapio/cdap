@@ -24,11 +24,6 @@
     <version>3.0.1</version>
   </parent>
 
-  <properties>
-    <!--TODO: JIRA CDAP-2677-->
-    <maven.javadoc.skip>true</maven.javadoc.skip>
-  </properties>
-
   <artifactId>cdap-spark-java-archetype</artifactId>
   <packaging>jar</packaging>
   <name>CDAP Spark Java Archetype</name>
