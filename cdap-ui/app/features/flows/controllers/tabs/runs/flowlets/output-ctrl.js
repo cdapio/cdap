@@ -1,10 +1,17 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowletDetailOutputController', function($state, $scope, MyDataSource, MyMetricsQueryHelper) {
+  .controller('FlowletDetailOutputController', function($state, $scope, MyDataSource, MyMetricsQueryHelper, myFlowsApi) {
 
     var dataSrc = new MyDataSource($scope);
     var flowletid = $scope.$parent.activeFlowlet.name;
     var runid = $scope.runs.selected.runid;
     $scope.outputs = [];
+
+    var params = {
+      namespace: $state.params.namespace,
+      appId: $state.params.appId,
+      flowId: $state.params.programId,
+      scope: $scope
+    };
 
     var flowletTags = {
       namespace: $state.params.namespace,
@@ -14,11 +21,8 @@ angular.module(PKG.name + '.feature.flows')
       flowlet: flowletid
     };
 
-    // Initialize
-    dataSrc
-      .request({
-        _cdapNsPath: '/apps/' + $state.params.appId+  '/flows/' + $state.params.programId
-      })
+    myFlowsApi.get(params)
+      .$promise
       .then(function (res) {
 
         // OUTPUTS

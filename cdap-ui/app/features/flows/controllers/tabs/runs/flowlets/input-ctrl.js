@@ -1,16 +1,22 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowletDetailInputController', function($state, $scope, MyDataSource, MyMetricsQueryHelper) {
+  .controller('FlowletDetailInputController', function($state, $scope, MyDataSource, MyMetricsQueryHelper, myFlowsApi) {
+
+    // TODO: Refactor code to be more readable
 
     var dataSrc = new MyDataSource($scope);
     var flowletid = $scope.$parent.activeFlowlet.name;
 
     $scope.inputs = [];
 
-    // Initialize
-    dataSrc
-      .request({
-        _cdapNsPath: '/apps/' + $state.params.appId+  '/flows/' + $state.params.programId
-      })
+    var params = {
+      namespace: $state.params.namespace,
+      appId: $state.params.appId,
+      flowId: $state.params.programId,
+      scope: $scope
+    };
+
+    myFlowsApi.get(params)
+      .$promise
       .then(function (res) {
 
         // INPUTS
