@@ -1,6 +1,5 @@
 angular.module(PKG.name + '.feature.mapreduce')
-  .controller('MapreduceRunsDetailController', function($scope, MyDataSource, $state, $filter) {
-    var dataSrc = new MyDataSource($scope);
+  .controller('MapreduceRunsDetailController', function($scope, $state, $filter, myMapreduceApi) {
     var myNumber = $filter('myNumber');
 
     $scope.tabs = [{
@@ -29,25 +28,29 @@ angular.module(PKG.name + '.feature.mapreduce')
     if ($scope.runs.length > 0) {
       var runid = $scope.current;
 
-      dataSrc.poll({
-        _cdapNsPath: '/apps/' + $state.params.appId
-                      + '/mapreduce/' + $state.params.programId
-                      + '/runs/' + runid + '/info'
-      }, function (res) {
+      var params = {
+        namespace: $state.params.namespace,
+        appId: $state.params.appId,
+        mapreduceId: $state.params.programId,
+        runId: runid,
+        scope: $scope
+      };
+      myMapreduceApi.pollInfo(params)
+        .$promise
+        .then(function (res) {
+          $scope.info = res;
 
-        $scope.info = res;
+          $scope.mapProgress = Math.floor(res.mapProgress * 100);
+          $scope.reduceProgress = Math.floor(res.reduceProgress * 100);
 
-        $scope.mapProgress = Math.floor(res.mapProgress * 100);
-        $scope.reduceProgress = Math.floor(res.reduceProgress * 100);
+          $scope.mapperStats = getStats($scope.info.mapTasks, $scope.info.complete);
+          $scope.mapperStats.inputRecords = myNumber($scope.info.counters.MAP_INPUT_RECORDS);
+          $scope.mapperStats.outputRecords = myNumber($scope.info.counters.MAP_OUTPUT_RECORDS);
 
-        $scope.mapperStats = getStats($scope.info.mapTasks, $scope.info.complete);
-        $scope.mapperStats.inputRecords = myNumber($scope.info.counters.MAP_INPUT_RECORDS);
-        $scope.mapperStats.outputRecords = myNumber($scope.info.counters.MAP_OUTPUT_RECORDS);
-
-        $scope.reducerStats = getStats($scope.info.reduceTasks, $scope.info.complete);
-        $scope.reducerStats.inputRecords = myNumber($scope.info.counters.REDUCE_INPUT_RECORDS);
-        $scope.reducerStats.outputRecords = myNumber($scope.info.counters.REDUCE_OUTPUT_RECORDS);
-      });
+          $scope.reducerStats = getStats($scope.info.reduceTasks, $scope.info.complete);
+          $scope.reducerStats.inputRecords = myNumber($scope.info.counters.REDUCE_INPUT_RECORDS);
+          $scope.reducerStats.outputRecords = myNumber($scope.info.counters.REDUCE_OUTPUT_RECORDS);
+        });
     }
 
     $scope.getFailedTasks = function (tasks) {
