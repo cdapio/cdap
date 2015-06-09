@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsRunsStatusController', function($state, $scope, myWorkFlowApi, $filter, $alert, GraphHelpers, MyDataSource) {
+  .controller('WorkflowsRunsStatusController', function($state, $scope, myWorkFlowApi, $filter, $alert, GraphHelpers, MyDataSource, myMapreduceApi) {
     var filterFilter = $filter('filter'),
         params = {
           appId: $state.params.appId,
@@ -74,6 +74,7 @@ angular.module(PKG.name + '.feature.workflows')
       + '/runs/' + $scope.runs.selected.runid;
 
     if ($scope.runs.length > 0) {
+
       dataSrc.poll({
         _cdapNsPath: path,
         interval: 1000
@@ -90,14 +91,18 @@ angular.module(PKG.name + '.feature.workflows')
         angular.forEach(activeNodes, function(n) {
           var runid = response.properties[n.nodeId];
 
-          dataSrc.request({
-            _cdapNsPath: '/apps/' + $state.params.appId +
-              '/mapreduce/' + n.program.programName +
-              '/runs/' + runid
-          })
-          .then(function (result) {
-            $scope.data.current[n.name] = result.status;
-          });
+          var mapreduceParams = {
+            namespace: $state.params.namespace,
+            appId: $state.params.appId,
+            mapreduceId: n.program.programName,
+            runId: runid,
+            scope: $scope
+          };
+          myMapreduceApi.runDetail(mapreduceParams)
+            .$promise
+            .then(function (result) {
+              $scope.data.current[n.name] = result.status;
+            });
         });
 
         return response;
