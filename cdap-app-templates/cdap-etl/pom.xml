@@ -43,7 +43,6 @@
     <etl.avro.version>1.7.7</etl.avro.version>
     <hsqldb.version>2.3.1</hsqldb.version>
     <snappy.version>1.1.1.7</snappy.version>
-    <maven.javadoc.skip>true</maven.javadoc.skip>
   </properties>
 
   <dependencyManagement>

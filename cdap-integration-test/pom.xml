@@ -24,12 +24,6 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-
-  <properties>
-    <!--TODO: JIRA CDAP-2677-->
-    <maven.javadoc.skip>true</maven.javadoc.skip>
-  </properties>
-
   <artifactId>cdap-integration-test</artifactId>
   <name>CDAP Integration Test Framework</name>
 
