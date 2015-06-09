@@ -71,7 +71,8 @@ angular.module(PKG.name + '.feature.flows')
         },
         templateUrl: '/assets/features/flows/templates/tabs/data.html',
         ncyBreadcrumb: {
-          label: 'Data'
+          label: 'Data',
+          parent: 'flows.detail.runs'
         }
       })
       .state('flows.detail.history', {
@@ -83,7 +84,8 @@ angular.module(PKG.name + '.feature.flows')
         templateUrl: '/assets/features/flows/templates/tabs/history.html',
         controller: 'FlowsRunsController',
         ncyBreadcrumb: {
-          label: 'History'
+          label: 'History',
+          parent: 'flows.detail.runs'
         }
       });
 

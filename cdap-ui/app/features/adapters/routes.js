@@ -97,7 +97,7 @@ angular.module(PKG.name + '.feature.adapters')
           templateUrl: 'data-list/data-list.html',
           controller: 'AdapterDatasetsController',
           ncyBreadcrumb: {
-            label: 'History',
+            label: 'Data',
             parent: 'adapters.detail.runs'
           }
         })
