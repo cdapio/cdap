@@ -1,5 +1,9 @@
 angular.module(PKG.name + '.feature.admin').controller('AdminNamespaceDatasetMetadataController',
+<<<<<<< HEAD
+function ($scope, $state, $alert, $filter, myDatasetApi, myExploreApi) {
+=======
 function ($scope, $state, $alert, $filter, myDatasetApi, myExploreApi, EventPipe) {
+>>>>>>> develop
 
   var params = {
     namespace: $state.params.nsadmin,
