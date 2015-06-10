@@ -7,9 +7,9 @@
 
 .. _cdap-tutorial-wise:
 
-=========================================================
-CDAP Tutorial: WISE (Web Insights Engine Application)
-=========================================================
+=====================================================
+CDAP Tutorial: WISE (Web InSights Engine) Application
+=====================================================
 
 **A Case Study of Web Analytics using the Cask Data Application Platform (CDAP)**
 
@@ -17,27 +17,27 @@ Introduction
 ============
 Performing analytics on a Web application using access logs is a common use case when
 managing a Web site. A system capable of analytics needs to ingest logs, and implement
-realtime or batch processing computations to process the data. The information has to be
+real-time or batch processing computations to process the data. The information has to be
 stored somewhere in the system, and the system should expose ways to retrieve it. Even in
 this case where the system performs very simple analytics, such as counting the number of
 visits made to a website in a day, the components needed to make it possible demand a lot
 of work.
 
-Using the **Web Insights Engine Application** or *WISE*, we’ll show you how to build
+Using the **Web Insights Engine** application or *WISE*, we’ll show you how to build
 such a system on CDAP that is easy, concise, and powerful. WISE extracts value from Web
 server access logs, counts visits made by different IP addresses seen in the logs in
-realtime, and computes the bounce ratio of each web page encountered using batch
+real time, and computes the bounce ratio of each web page encountered using batch
 processing.
 
 The WISE v\ |cdap-apps-version| application uses these Cask Data Application Platform (CDAP) constructs to
 analyze web server logs:
 
-- **Stream:** Ingests log data in realtime 
-- **Flow:** Computes web page visits counts per IP address based on the log data in realtime 
+- **Stream:** Ingests log data in real time 
+- **Flow:** Computes web page visits counts per IP address based on the log data in real time 
 - **Datasets:** Store web page visits counts and bounce ratio based on custom data access patterns 
 - **MapReduce:** Computes the bounce ratio of each web page present in the log data 
 - **Service:** Exposes HTTP APIs to query the page visit counts per IP address 
-- **Explore:** Runs SQL queries on the data stored in Datasets 
+- **Explore:** Runs SQL queries on the data stored in datasets 
 
 Conventions
 -----------
@@ -111,9 +111,9 @@ To deploy and start the application, make sure CDAP is running and then execute:
 You should get responses similar to::
 
   Successfully connected CDAP instance at http://localhost:10000
-  Successfully started Flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}'
+  Successfully started flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}'
   ...
-  Successfully started Service 'WiseService' of application 'Wise' with stored runtime arguments '{}'
+  Successfully started service 'WiseService' of application 'Wise' with stored runtime arguments '{}'
   
   
 Overview of WISE
@@ -128,7 +128,7 @@ WISE application’s architecture:
    
 - The WISE application has one stream, ``logEventStream``, which receives Web server
   access logs. It sends the events it receives to two CDAP components: the
-  flow ``WiseFlow`` and the Workflow ``WiseWorkflow``.
+  flow ``WiseFlow`` and the workflow ``WiseWorkflow``.
   
 - ``WiseFlow`` has two flowlets. The first, ``parser``, extracts information from the logs
   received from the stream. It then sends the information to the second flowlet,
@@ -136,7 +136,7 @@ WISE application’s architecture:
   ``pageViewStore``.
   
 - ``WiseWorkflow`` executes a MapReduce every ten minutes. The input of this job are events
-  from the stream which have not yet been processed by the Workflow. For each web page
+  from the stream which have not yet been processed by the workflow. For each web page
   recorded in the access logs, the MapReduce counts the number of times people have
   “bounced” from it. A “bounce” is counted whenever a user’s activity stops for a specified
   amount of time. The last page they visited is counted as a bounce. This information is
@@ -145,7 +145,7 @@ WISE application’s architecture:
 - The WISE application contains the ``WiseService``, a service which exposes RESTful endpoints
   to query the ``pageViewStore`` dataset.
   
-- Finally, both the ``pageViewStore`` and ``bounceCountStore`` Datasets expose a SQL interface. They
+- Finally, both the ``pageViewStore`` and ``bounceCountStore`` datasets expose a SQL interface. They
   can be queried using SQL queries through our Explore module in the CDAP UI. 
 
 Now let’s talk about each of these components in more detail.
@@ -164,7 +164,7 @@ WISE is only interested in three parts of a log:
 - The time the log was saved: **23/Sep/2014:11:45:38 -0400**
 - The web page visited: **/cdap.html**
 
-WISE has two Datasets, *pageViewStore* and *bounceCountStore*, which both store
+WISE has two datasets, *pageViewStore* and *bounceCountStore*, which both store
 information about the access logs, but according to different patterns.
 
 
@@ -290,9 +290,9 @@ This requires that a Standalone CDAP instance be running with the WISE applicati
 deployed.
 
 
-Realtime Log Analytics with WiseFlow 
+Real-Time Log Analytics with WiseFlow 
 =====================================
-The goal of ``WiseFlow`` is to perform realtime analytics on the Web server access logs
+The goal of ``WiseFlow`` is to perform real-time analytics on the Web server access logs
 received by *logEventStream*. For each IP address in the logs, ``WiseFlow`` counts the
 number of visits they made to different web pages.
 
@@ -383,7 +383,7 @@ Here is how ``WiseFlow`` looks in the CDAP UI:
 
 
 Batch Processing with WiseWorkflow
-==========================================
+==================================
 WISE executes every ten minutes a MapReduce program that computes the bounce counts of the
 web pages seen in the Web server access logs.
 
@@ -395,7 +395,7 @@ The ``configure()`` method is defined as:
    :language: java
    :lines: 41-48   
 
-It sets the ID (name) of the MapReduce program as *BounceCountsMapReduce*, and specifies any Datasets
+It sets the ID (name) of the MapReduce program as *BounceCountsMapReduce*, and specifies any datasets
 that will be used in the program. 
 
 Plugging a Stream to the Input of the MapReduce
@@ -411,9 +411,9 @@ done in the ``beforeSubmit()`` method of the ``BounceCountsMapReduce`` class:
 As mentioned earlier, the input of the MapReduce is the *logEventStream*. This
 connection is made above using the ``StreamBatchReadable.useStreamInput()`` method.
 
-This MapReduce program runs as part of a Workflow that is scheduled every ten minutes.
+This MapReduce program runs as part of a workflow that is scheduled every ten minutes.
 Every time it runs, it reads ten minutes' worth of events from the stream, ending at the
-logical start time of the job (the same as the scheduled time of the containing Workflow).
+logical start time of the job (the same as the scheduled time of the containing workflow).
 
 Writing to the *bounceCountStore* dataset from the MapReduce 
 ------------------------------------------------------------
@@ -435,7 +435,7 @@ interface:
    :lines: 96-99   
    :prepend: . . . 
 
-This ``BatchWritable`` interface, defining a ``write()`` method, is intended to allow Datasets to
+This ``BatchWritable`` interface, defining a ``write()`` method, is intended to allow datasets to
 be the output of MapReduce programs. The two generic types that it takes as parameters must
 match the types of the key and value that the Reduce part of the MapReduce outputs. In this
 case, the *bounceCountStore* dataset can be used as output of a MapReduce where the
@@ -563,7 +563,7 @@ a specific IP address. For example, to query the pageview count of page ``/index
   
 Exploring Datasets through SQL
 ==============================
-With WISE, you can explore the Datasets using SQL queries. The SQL interface on CDAP,
+With WISE, you can explore the datasets using SQL queries. The SQL interface on CDAP,
 called *Explore*, can be accessed through the CDAP UI:
 
 1. After deploying WISE in your Standalone CDAP instance, go to the *WISE* 
@@ -586,10 +586,10 @@ called *Explore*, can be accessed through the CDAP UI:
      :align: center
 
 This is the **Explore** tab, where you can run ad-hoc SQL queries and see information about
-the Datasets that expose a SQL interface.
+the datasets that expose a SQL interface.
 
-You will notice that the Datasets have names such as *dataset_bouncecountstore*.
-Those are the SQL table names of the Datasets which have a SQL interface.
+You will notice that the datasets have names such as *dataset_bouncecountstore*.
+Those are the SQL table names of the datasets which have a SQL interface.
 
 Here are some of the SQL queries that you can run:
 
@@ -689,7 +689,7 @@ With this object, we can:
      :append:     . . .  
      :dedent: 4
 
-- Test a SQL query on Datasets:
+- Test a SQL query on datasets:
 
   .. literalinclude:: /../build/_includes/tutorial-wise/WiseAppTest.java
      :language: java

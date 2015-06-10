@@ -4,20 +4,20 @@
 
 .. _fileset-exploration:
 
-============================================
+===================
 Fileset Exploration
-============================================
+===================
 
-The ``FileSet`` and ``TimePartitionedFileSet`` Datasets can be explored through ad-hoc SQL-like queries.
-To enable exploration, you must set several properties when creating the Dataset, and the files in 
-your Dataset must meet certain requirements. These properties and requirements are described below. 
+The ``FileSet`` and ``TimePartitionedFileSet`` datasets can be explored through ad-hoc SQL-like queries.
+To enable exploration, you must set several properties when creating the dataset, and the files in 
+your dataset must meet certain requirements. These properties and requirements are described below. 
 
 Explore Properties
 ------------------
 A ``FileSet`` or ``TimePartitionedFileSet`` is made explorable by setting several properties when
 creating the dataset. The ``FileSetProperties`` class should be used to set the following required properties:
 
-- EnableExploreOnCreate must be set to true to create a Hive table when the Dataset is created
+- EnableExploreOnCreate must be set to true to create a Hive table when the dataset is created
 - SerDe class that Hive should use for serialization and deserialization
 - InputFormat that Hive should use for reading files
 - OutputFormat that Hive should use for writing files 
@@ -43,8 +43,8 @@ For example, in the configure method of your application::
       .setTableProperty("avro.schema.literal", schema.toString())
       .build());
 
-These Dataset properties map directly to table properties in Hive. 
-For example, the Dataset above would result in the following "create table" statement being generated::
+These dataset properties map directly to table properties in Hive. 
+For example, the dataset above would result in the following "create table" statement being generated::
 
   CREATE EXTERNAL TABLE dataset_myfiles(
     user string,

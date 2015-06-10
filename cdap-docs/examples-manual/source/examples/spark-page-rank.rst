@@ -12,7 +12,7 @@ Spark Page Rank Example
 A Cask Data Application Platform (CDAP) example demonstrating Spark and page ranking.
 
 Overview
-===========
+========
 
 This example demonstrates a Spark application performing streaming log analysis, computing the page rank based on
 information about backlink URLs.
@@ -26,25 +26,25 @@ goes through the entries, calculates page rank and tabulates results in an Objec
 Once the application completes, you can query the *ranks* dataset by using the ``rank`` endpoint of the *RanksService*.
 It will send back a string result with page rank based on the ``url`` query parameter.
 
-Let's look at some of these components, and then run the Application and see the results.
+Let's look at some of these components, and then run the application and see the results.
 
 The SparkPageRank Application
-------------------------------
+-----------------------------
 
 As in the other `examples <index.html>`__, the components
-of the Application are tied together by the class ``SparkPageRankApp``:
+of the application are tied together by the class ``SparkPageRankApp``:
 
 .. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
    :language: java
    :lines: 41-76
 
-``ranks``: ObjectStore Data Storage
-------------------------------------
+The ``ranks`` ObjectStore Data Storage
+--------------------------------------
 
 The calculated page rank data is stored in an ObjectStore dataset, *ranks*.
 
-``RanksService``: service
---------------------------
+The ``RanksService`` Service
+----------------------------
 
 This service has a ``rank`` endpoint to obtain the page rank of a given URL.
 
@@ -56,7 +56,7 @@ Building and Starting
 
 
 Running CDAP Applications
-============================================
+=========================
 
 .. |example| replace:: SparkPageRank
 
@@ -68,7 +68,7 @@ Running the Example
 ===================
 
 Starting the Services
-------------------------------
+---------------------
 
 Once the application is deployed:
 
@@ -81,11 +81,11 @@ Once the application is deployed:
     $ cdap-cli.sh start service SparkPageRank.RanksService
     $ cdap-cli.sh start service SparkPageRank.GoogleTypePR
     
-    Successfully started Service 'RanksService' of application 'SparkPageRank' with stored runtime arguments '{}'
-    Successfully started Service 'GoogleTypePR' of application 'SparkPageRank' with stored runtime arguments '{}'
+    Successfully started service 'RanksService' of application 'SparkPageRank' with stored runtime arguments '{}'
+    Successfully started service 'GoogleTypePR' of application 'SparkPageRank' with stored runtime arguments '{}'
 
 Injecting URL Pairs
-------------------------------
+-------------------
 
 Inject a file of URL pairs to the stream *backlinkURLStream* by running this command from the
 Standalone CDAP SDK directory, using the Command Line Interface::
@@ -95,7 +95,7 @@ Standalone CDAP SDK directory, using the Command Line Interface::
   Successfully sent stream event to stream 'pointsStream' 
 
 Running the Spark program
-------------------------------
+-------------------------
 There are three ways to start the Spark program:
 
 1. Go to the *SparkPageRank* `application overview page 
@@ -112,7 +112,7 @@ There are three ways to start the Spark program:
     $ cdap-cli.sh start spark SparkPageRank.SparkPageRankProgram "args='3'"
 
 Querying the Results
-------------------------------
+--------------------
 
 To query the *ranks* ObjectStore through the ``RanksService``, send a query via an HTTP
 request using the ``curl`` command. For example::

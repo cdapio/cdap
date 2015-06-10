@@ -4,11 +4,11 @@
 
 .. _workflows:
 
-============================================
+=========
 Workflows
-============================================
+=========
 
-**Workflows** are used to automate the execution of a series of :ref:`MapReduce
+*Workflows* are used to automate the execution of a series of :ref:`MapReduce
 <mapreduce>`, :ref:`Spark <spark>` or :ref:`custom actions <workflow-custom-actions>`. It
 allows for both sequential and :ref:`parallel execution <workflow_parallel>` of programs.
 
@@ -19,17 +19,17 @@ maintain millions of historic workflow logs.
 Overview
 ========
 
-A Workflow is given a sequence of programs that follow each other, with an optional
-schedule to run the Workflow periodically. Upon successful execution of a program, the
+A *Workflow* is given a sequence of programs that follow each other, with an optional
+schedule to run the workflow periodically. Upon successful execution of a program, the
 control is transferred to the next program in the sequence until the last program in the
 sequence is executed. Upon failure, the execution is stopped at the failed program and no
 subsequent programs in the sequence are executed.
 
-To execute MapReduce or Spark programs in a Workflow, you will need to add them in your
-application along with the Workflow. You can optionally add a :ref:`Schedule <schedules>` 
+To execute MapReduce or Spark programs in a workflow, you will need to add them in your
+application along with the workflow. You can optionally add a :ref:`schedule <schedules>` 
 (such as a `crontab schedule 
 <../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#scheduleWorkflow(java.lang.String,%20java.lang.String,%20java.lang.String)>`__)
-to the Workflow::
+to the workflow::
 
   public void configure() {
     ...
@@ -46,7 +46,7 @@ to the Workflow::
 
 You'll then extend the ``AbstractWorkflow`` class and implement the ``configure()``
 method. Inside ``configure``, you can add multiple MapReduce, Spark programs or custom
-actions to the Workflow. The programs will be executed in the order they are specified in
+actions to the workflow. The programs will be executed in the order they are specified in
 the ``configure`` method::
 
   public static class MyWorkflow extends AbstractWorkflow {
@@ -63,14 +63,14 @@ the ``configure`` method::
   }
 
 In this example, the ``MyWorkflow`` will be executed every 5 hours. During each execution
-of the Workflow, the ``MyMapReduce``, ``MySpark``, and ``AnotherMapReduce`` programs and
+of the workflow, the ``MyMapReduce``, ``MySpark``, and ``AnotherMapReduce`` programs and
 the ``MyAction`` custom action will be executed in order.
 
 .. _workflow-custom-actions:
 
 Workflow Custom Action
 ----------------------
-In addition to MapReduce and Spark programs, Workflow can also execute custom actions.
+In addition to MapReduce and Spark programs, workflow can also execute custom actions.
 Custom actions are implemented in Java and can perform tasks such as sending an email. To
 define a custom action, you will need to extend the ``AbstractWorkflowAction`` and
 implement the ``run()`` method::
@@ -83,13 +83,13 @@ implement the ``run()`` method::
     }
   }
 
-The custom action then can be added to the Workflow using the ``addAction()`` method as
+The custom action then can be added to the workflow using the ``addAction()`` method as
 shown above.
 
 Concurrent Workflows
 --------------------
-By default, a Workflow runs sequentially. Multiple instances of a Workflow can be run
-concurrently. To enable concurrent runs for a Workflow, set its runtime argument
+By default, a workflow runs sequentially. Multiple instances of a workflow can be run
+concurrently. To enable concurrent runs for a workflow, set its runtime argument
 ``concurrent.runs.enabled`` to ``true``.
 
 .. _workflow_parallel:
@@ -97,7 +97,7 @@ concurrently. To enable concurrent runs for a Workflow, set its runtime argument
 Parallelizing Workflow Execution
 ================================
 
-The control flow of a Workflow can be described as a directed, acyclic graph (DAG) of actions.
+The control flow of a workflow can be described as a directed, acyclic graph (DAG) of actions.
 To be more precise, we require that it be a series-parallel graph. This is a graph with a
 single start node and a single finish node. In between, execution can fork into concurrent
 branches, but the graph may not have cycles. Every action can be a batch job or a custom
@@ -118,7 +118,7 @@ terminates:
 Forks and Joins
 ---------------
 
-To create such a Workflow, you provide a series of *forks* and *joins* in your Workflow
+To create such a workflow, you provide a series of *forks* and *joins* in your workflow
 specification, following these rules:
 
 - Where your control flow initially splits, you place a ``fork`` method. 
@@ -137,7 +137,7 @@ The application shown above could be coded (assuming the other classes referred 
     @Override
     public void configure() {
       setName("ParallelizedWorkflow");
-      setDescription("Demonstration of parallelizing execution of a Workflow");
+      setDescription("Demonstration of parallelizing execution of a workflow");
       
       addMapReduce("JoinWithCatalogMR");
     
@@ -163,7 +163,7 @@ that runs in parallel to the entire process described above, you could use code 
     @Override
     public void configure() {
       setName("ComplexParallelizedWorkflow");
-      setDescription("Demonstration of parallelized execution using a complex fork in a Workflow");
+      setDescription("Demonstration of parallelized execution using a complex fork in a workflow");
 
       fork()
         .addMapReduce("JoinWithCatalogMR")
@@ -198,7 +198,7 @@ Taking our first example and modifying it, you could use code such as::
     @Override
     public void configure() {
       setName("ConditionalWorkflow");
-      setDescription("Demonstration of conditional execution of a Workflow");
+      setDescription("Demonstration of conditional execution of a workflow");
       
       addMapReduce("JoinWithCatalogMR");
       
@@ -241,7 +241,7 @@ governs which condition to follow::
     @Override
     public void configure() {
       setName("JoinWithCatalogMR");
-      setDescription("MapReduce program to demonstrate a Conditional Workflow");
+      setDescription("MapReduce program to demonstrate a Conditional workflow");
     }
 
     @Override
@@ -283,5 +283,5 @@ to the ``WorkflowContext`` which will allow for more complex decisions.
 Example of Using a Workflow
 ===========================
 
-- For an example of the use of **a Workflow,** see the :ref:`Purchase
+- For an example of the use of **a workflow,** see the :ref:`Purchase
   <examples-purchase>` example.

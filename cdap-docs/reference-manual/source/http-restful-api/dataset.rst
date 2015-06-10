@@ -267,7 +267,7 @@ This will clear the existing data from the dataset. This cannot be undone.
 Datasets used by an Application
 -------------------------------
 
-You can retrieve a list of datasets used by an Application by issuing a HTTP GET request to the URL::
+You can retrieve a list of datasets used by an application by issuing a HTTP GET request to the URL::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/datasets
 
@@ -310,7 +310,7 @@ You can retrieve a list of datasets used by a program by issuing a HTTP GET requ
    * - ``<app-id>``
      - Application ID
    * - ``<program-type>``
-     - Program Type, one of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
+     - Program type, one of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
    * - ``<program-id>``
      - Program ID
 
@@ -327,7 +327,7 @@ You can retrieve a list of datasets used by a program by issuing a HTTP GET requ
 Datasets used by an Adapter
 ---------------------------
 
-You can retrieve a list of datasets used by an Adapter by issuing a HTTP GET request to the URL::
+You can retrieve a list of datasets used by an adapter by issuing a HTTP GET request to the URL::
 
   GET <base-url>/namespaces/<namespace>/adapters/<adapter-id>/datasets
 

@@ -6,9 +6,9 @@
 
 .. _java-client-api:
 
-============================================
+===============
 Java Client API
-============================================
+===============
 
 The Cask Data Application Platform (CDAP) Java Client API provides methods for interacting
 with CDAP from Java applications.
@@ -34,30 +34,30 @@ Components
 The Java Client API allows you to interact with these CDAP components:
 
 - `ApplicationClient: <#application-client>`_ interacting with applications
-- `ProgramClient: <#program-client>`_ interacting with Flows, MapReduce Programs, User Services, Workflows, and Workers
-- `StreamClient: <#stream-client>`_ interacting with Streams
-- `DatasetClient: <#dataset-client>`_ interacting with Datasets
-- `DatasetModuleClient: <#dataset-module-client>`_ interacting with Dataset Modules
-- `DatasetTypeClient: <#dataset-type-client>`_ interacting with Dataset Types
-- `QueryClient: <#query-client>`_ querying Datasets
-- `ServiceClient: <#service-client>`_ interacting with User Services
-- `MetricsClient: <#metrics-client>`_ interacting with Metrics
-- `MonitorClient: <#monitor-client>`_ monitoring System Services
-- `PreferencesClient: <#preferences-client>`_ interacting with Preferences
+- `ProgramClient: <#program-client>`_ interacting with flows, MapReduce programs, user services, workflows, and workers
+- `StreamClient: <#stream-client>`_ interacting with streams
+- `DatasetClient: <#dataset-client>`_ interacting with datasets
+- `DatasetModuleClient: <#dataset-module-client>`_ interacting with dataset Modules
+- `DatasetTypeClient: <#dataset-type-client>`_ interacting with dataset Types
+- `QueryClient: <#query-client>`_ querying datasets
+- `ServiceClient: <#service-client>`_ interacting with user services
+- `MetricsClient: <#metrics-client>`_ interacting with metrics
+- `MonitorClient: <#monitor-client>`_ monitoring system services
+- `PreferencesClient: <#preferences-client>`_ interacting with preferences
 
 Alphabetical list:
 
 - `ApplicationClient: <#application-client>`_ interacting with applications
-- `DatasetClient: <#dataset-client>`_ interacting with Datasets
-- `DatasetModuleClient: <#dataset-module-client>`_ interacting with Dataset Modules
-- `DatasetTypeClient: <#dataset-type-client>`_ interacting with Dataset Types
-- `MetricsClient: <#metrics-client>`_ interacting with Metrics
-- `MonitorClient: <#monitor-client>`_ monitoring System Services
-- `PreferencesClient: <#preferences-client>`_ interacting with Preferences
-- `ProgramClient: <#program-client>`_ interacting with Flows, MapReduce Programs, User Services, Workflows, and Workers
-- `QueryClient: <#query-client>`_ querying Datasets
-- `ServiceClient: <#service-client>`_ interacting with User Services
-- `StreamClient: <#stream-client>`_ interacting with Streams
+- `DatasetClient: <#dataset-client>`_ interacting with datasets
+- `DatasetModuleClient: <#dataset-module-client>`_ interacting with dataset Modules
+- `DatasetTypeClient: <#dataset-type-client>`_ interacting with dataset Types
+- `MetricsClient: <#metrics-client>`_ interacting with metrics
+- `MonitorClient: <#monitor-client>`_ monitoring system services
+- `PreferencesClient: <#preferences-client>`_ interacting with preferences
+- `ProgramClient: <#program-client>`_ interacting with flows, MapReduce Programs, user services, workflows, and workers
+- `QueryClient: <#query-client>`_ querying datasets
+- `ServiceClient: <#service-client>`_ interacting with user services
+- `StreamClient: <#stream-client>`_ interacting with streams
 
 The above lists link to the examples below for each portion of the API.
 
@@ -132,22 +132,22 @@ PreferencesClient
   Map<String, String> propMap = Maps.newHashMap();
   propMap.put("k1", "v1");
 
-  // Set Preferences at the Instance level
+  // Set preferences at the Instance level
   preferencesClient.setInstancePreferences(propMap);
 
-  // Get Preferences at the Instance level
+  // Get preferences at the Instance level
   Map<String, String> currentPropMap = preferencesClient.getInstancePreferences();
 
-  // Delete Preferences at the Instance level
+  // Delete preferences at the Instance level
   preferencesClient.deleteInstancePreferences();
 
-  // Set Preferences of MyApp application which is deployed in the Dev namespace
+  // Set preferences of MyApp application which is deployed in the Dev namespace
   preferencesClient.setApplicationPreferences("Dev", "MyApp", propMap);
 
-  // Get only the Preferences of MyApp application which is deployed in the Dev namespace
+  // Get only the preferences of MyApp application which is deployed in the Dev namespace
   Map<String, String> appPrefs = preferencesClient.getApplicationPreferences("Dev", "MyApp", false);
 
-  // Get the resolved Preferences (collapsed with higher level(s) of preferences)
+  // Get the resolved preferences (collapsed with higher level(s) of preferences)
   Map<String, String> resolvedAppPrefs = preferencesClient.getApplicationPreferences("Dev", "MyApp", true);
 
 .. _program-client:
@@ -161,7 +161,7 @@ ProgramClient
   // Construct the client used to interact with CDAP
   ProgramClient programClient = new ProgramClient(clientConfig);
 
-  // Start a Service in the WordCount example
+  // Start a service in the WordCount example
   programClient.start("WordCount", ProgramType.SERVICE, "RetrieveCounts");
 
   // Fetch live information from the HelloWorld example
@@ -173,22 +173,22 @@ ProgramClient
   programClient.getProgramLogs("WordCount", ProgramType.SERVICE, "RetrieveCounts", 0,
                                Long.MAX_VALUE);
 
-  // Scale a Service in the HelloWorld example
+  // Scale a service in the HelloWorld example
   programClient.setServiceInstances("HelloWorld", "greet", 3);
 
-  // Stop a Service in the HelloWorld example
+  // Stop a service in the HelloWorld example
   programClient.stop("HelloWorld", ProgramType.SERVICE, "greet");
 
-  // Start, scale, and stop a Flow in the WordCount example
+  // Start, scale, and stop a flow in the WordCount example
   programClient.start("WordCount", ProgramType.FLOW, "WordCountFlow");
 
-  // Fetch Flow history in the WordCount example
+  // Fetch flow history in the WordCount example
   programClient.getProgramHistory("WordCount", ProgramType.FLOW, "WordCountFlow");
 
-  // Scale a Flowlet in the WordCount example
+  // Scale a flowlet in the WordCount example
   programClient.setFlowletInstances("WordCount", "WordCountFlow", "Tokenizer", 3);
 
-  // Stop a Flow in the WordCount example
+  // Stop a flow in the WordCount example
   programClient.stop("WordCount", ProgramType.FLOW, "WordCountFlow");
 
 
@@ -203,34 +203,34 @@ StreamClient
   // Construct the client used to interact with CDAP
   StreamClient streamClient = new StreamClient(clientConfig);
 
-  // Fetch the Stream list
+  // Fetch the stream list
   List streams = streamClient.list();
 
-  // Create a Stream, using the Purchase example
+  // Create a stream, using the Purchase example
   streamClient.create("purchaseStream");
 
-  // Fetch a Stream's properties, using the Purchase example
+  // Fetch a stream's properties, using the Purchase example
   StreamProperties config = streamClient.getConfig("purchaseStream");
 
-  // Send events to a Stream, using the Purchase example
+  // Send events to a stream, using the Purchase example
   streamClient.sendEvent("purchaseStream", "Tom bought 5 apples for $10");
 
-  // Read all events from a Stream (results in events)
+  // Read all events from a stream (results in events)
   List<StreamEvent> events = Lists.newArrayList();
   streamClient.getEvents("purchaseStream", 0, Long.MAX_VALUE, Integer.MAX_VALUE, events);
 
-  // Read first 5 events from a Stream (results in events)
+  // Read first 5 events from a stream (results in events)
   List<StreamEvent> events = Lists.newArrayList();
   streamClient.getEvents(streamId, 0, Long.MAX_VALUE, 5, events);
 
-  // Read 2nd and 3rd events from a Stream, after first calling getEvents
+  // Read 2nd and 3rd events from a stream, after first calling getEvents
   long startTime = events.get(1).getTimestamp();
   long endTime = events.get(2).getTimestamp() + 1;
   events.clear()
   streamClient.getEvents(streamId, startTime, endTime, Integer.MAX_VALUE, events);
 
   //
-  // Write asynchronously to a Stream
+  // Write asynchronously to a stream
   //
   String streamId = "testAsync";
   List<StreamEvent> events = Lists.newArrayList();
@@ -271,16 +271,16 @@ DatasetClient
   // Construct the client used to interact with CDAP
   DatasetClient datasetClient = new DatasetClient(clientConfig);
 
-  // Fetch the list of Datasets
+  // Fetch the list of datasets
   List<DatasetSpecification> datasets = datasetClient.list();
 
-  // Create a Dataset
+  // Create a dataset
   datasetClient.create("someDataset", "someDatasetType");
 
-  // Truncate a Dataset
+  // Truncate a dataset
   datasetClient.truncate("someDataset");
 
-  // Delete a Dataset
+  // Delete a dataset
   datasetClient.delete("someDataset");
 
 
@@ -295,14 +295,14 @@ DatasetModuleClient
   // Construct the client used to interact with CDAP
   DatasetModuleClient datasetModuleClient = new DatasetModuleClient(clientConfig);
 
-  // Add a Dataset module
+  // Add a dataset module
   File moduleJarFile = createAppJarFile(someDatasetModule.class);
   datasetModuleClient("someDatasetModule", SomeDatasetModule.class.getName(), moduleJarFile);
 
-  // Fetch the Dataset module information
+  // Fetch the dataset module information
   DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get("someDatasetModule");
 
-  // Delete all Dataset modules
+  // Delete all dataset modules
   datasetModuleClient.deleteAll();
 
 
@@ -317,10 +317,10 @@ DatasetTypeClient
   // Construct the client used to interact with CDAP
   DatasetTypeClient datasetTypeClient = new DatasetTypeClient(clientConfig);
 
-  // Fetch the Dataset type information using the type name
+  // Fetch the dataset type information using the type name
   DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get("someDatasetType");
 
-  // Fetch the Dataset type information using the classname
+  // Fetch the dataset type information using the classname
   datasetTypeMeta = datasetTypeClient.get(SomeDataset.class.getName());
 
 
@@ -379,7 +379,7 @@ ServiceClient
   // Construct the client used to interact with CDAP
   ServiceClient serviceClient = new ServiceClient(clientConfig);
 
-  // Fetch Service information using the Service in the PurchaseApp example
+  // Fetch service information using the service in the PurchaseApp example
   ServiceMeta serviceMeta = serviceClient.get("PurchaseApp", "CatalogLookup");
 
 
@@ -394,7 +394,7 @@ MetricsClient
   // Construct the client used to interact with CDAP
   MetricsClient metricsClient = new MetricsClient(clientConfig);
 
-  // Fetch the total number of events that have been processed by a Flow
+  // Fetch the total number of events that have been processed by a flow
   JsonObject metric = metricsClient.getMetric("user", "/apps/HelloWorld/flows",
                                               "process.events.processed", "aggregate=true");
 
@@ -410,14 +410,14 @@ MonitorClient
   // Construct the client used to interact with CDAP
   MonitorClient monitorClient = new MonitorClient(clientConfig);
 
-  // Fetch the list of System Services
+  // Fetch the list of system services
   List<SystemServiceMeta> services = monitorClient.listSystemServices();
 
-  // Fetch status of System Transaction Service
+  // Fetch status of system transaction service
   String serviceStatus = monitorClient.getSystemServiceStatus("transaction");
 
-  // Fetch the number of instances of the System Transaction Service
+  // Fetch the number of instances of the system transaction service
   int systemServiceInstances = monitorClient.getSystemServiceInstances("transaction");
 
-  // Set the number of instances of the System Transaction Service
+  // Set the number of instances of the system transaction service
   monitorClient.setSystemServiceInstances("transaction", 1);

@@ -31,13 +31,13 @@ process the sentences and store the results and statistics in datasets.
 - The ``unique`` flowlet receives a word and updates the ``uniqueCount`` table, if it is 
   seeing this word for the first time.
 
-Let's look at some of these components, and then run the Application and see the results.
+Let's look at some of these components, and then run the application and see the results.
 
 The Word Count Application
 --------------------------
 
 As in the other :ref:`examples <examples-index>`, the components
-of the Application are tied together by the class ``WordCount``:
+of the application are tied together by the class ``WordCount``:
 
 .. literalinclude:: /../../../cdap-examples/WordCount/src/main/java/co/cask/cdap/examples/wordcount/WordCount.java
    :language: java
@@ -95,10 +95,10 @@ Once the application is deployed:
 
     $ cdap-cli.sh start flow WordCount.WordCounter
   
-    Successfully started Flow 'WordCounter' of application 'WordCount' with stored runtime arguments '{}'
+    Successfully started flow 'WordCounter' of application 'WordCount' with stored runtime arguments '{}'
 
 Starting the Service
-------------------------------
+--------------------
 
 Once the application is deployed:
 
@@ -109,7 +109,7 @@ Once the application is deployed:
 
     $ cdap-cli.sh start service WordCount.RetrieveCounts
     
-    Successfully started Service 'RetrieveCounts' of application 'WordCount' with stored runtime arguments '{}'
+    Successfully started service 'RetrieveCounts' of application 'WordCount' with stored runtime arguments '{}'
 
 Injecting Sentences
 -------------------
