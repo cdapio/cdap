@@ -8,8 +8,8 @@
 Schedules
 =========
 
-**Schedules** are used to execute :ref:`workflows <workflows>` on a recurring basis. You can add a schedule
-to a workflow using the ``scheduleWorkflow`` method of the
+*Schedules* are used to execute :ref:`workflows <workflows>` on a recurring basis. You
+can add a schedule to a workflow using the ``scheduleWorkflow`` method of the
 `AbstractApplication class <../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#scheduleWorkflow(co.cask.cdap.api.schedule.Schedule,%20java.lang.String)>`__
 
 The `Schedules <../../reference-manual/javadocs/co/cask/cdap/api/schedule/Schedules.html>`__

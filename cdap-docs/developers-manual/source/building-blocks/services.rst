@@ -8,7 +8,7 @@
 Services
 ========
 
-Services can be run in a Cask Data Application Platform (CDAP) application to serve data to external clients.
+*Services* can be run in a Cask Data Application Platform (CDAP) application to serve data to external clients.
 Similar to flows, services run in containers and the number of running service instances can be dynamically scaled.
 Developers can implement custom services to interface with a legacy system and perform additional processing beyond
 the CDAP processing paradigms. Examples could include running an IP-to-geo lookup and serving user-profiles.

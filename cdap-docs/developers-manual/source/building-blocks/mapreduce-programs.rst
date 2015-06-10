@@ -8,7 +8,7 @@
 MapReduce Programs
 ==================
 
-A **MapReduce** program is used to process data in batch. MapReduce can be
+A *MapReduce* program is used to process data in batch. MapReduce can be
 written as in a conventional Hadoop system. Additionally, CDAP
 **datasets** can be accessed from MapReduce as both input and
 output.

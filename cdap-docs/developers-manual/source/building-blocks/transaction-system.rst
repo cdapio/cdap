@@ -13,7 +13,7 @@ The Need for Transactions
 
 A flowlet processes the data objects received on its inputs one at a time. While processing
 a single input object, all operations, including the removal of the data from the input,
-and emission of data to the outputs, are executed in a **transaction**. This provides us
+and emission of data to the outputs, are executed in a *transaction*. This provides us
 with ACID—atomicity, consistency, isolation, and durability properties:
 
 - The process method runs under read isolation to ensure that it does not see dirty writes

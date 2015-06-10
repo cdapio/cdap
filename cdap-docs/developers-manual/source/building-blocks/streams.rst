@@ -8,7 +8,7 @@
 Streams
 =======
 
-**Streams** are the primary means of bringing data from external systems into the CDAP in real time.
+*Streams* are the primary means of bringing data from external systems into the CDAP in real time.
 They are ordered, time-partitioned sequences of data, usable for real-time collection and consumption of data.
 
 They can be created programmatically within your application, using the

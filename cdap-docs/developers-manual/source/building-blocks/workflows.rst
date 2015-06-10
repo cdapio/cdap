@@ -8,7 +8,7 @@
 Workflows
 =========
 
-**Workflows** are used to automate the execution of a series of :ref:`MapReduce
+*Workflows* are used to automate the execution of a series of :ref:`MapReduce
 <mapreduce>`, :ref:`Spark <spark>` or :ref:`custom actions <workflow-custom-actions>`. It
 allows for both sequential and :ref:`parallel execution <workflow_parallel>` of programs.
 
@@ -19,7 +19,7 @@ maintain millions of historic workflow logs.
 Overview
 ========
 
-A workflow is given a sequence of programs that follow each other, with an optional
+A *Workflow* is given a sequence of programs that follow each other, with an optional
 schedule to run the workflow periodically. Upon successful execution of a program, the
 control is transferred to the next program in the sequence until the last program in the
 sequence is executed. Upon failure, the execution is stopped at the failed program and no

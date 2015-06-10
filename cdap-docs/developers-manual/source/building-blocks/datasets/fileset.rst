@@ -13,9 +13,9 @@ FileSet Dataset
 While real-time programs such as flows normally require datasets with random access, batch-oriented
 programming paradigms such as MapReduce are more suitable for data that can be read and written sequentially.
 The most prominent form of such data is an HDFS file, and MapReduce is highly optimized for such files.
-CDAP's abstraction for files is the FileSet dataset.
+CDAP's abstraction for files is the *FileSet* dataset.
 
-A FileSet represents a set of files on the file system that share certain properties:
+A *FileSet* represents a set of files on the file system that share certain properties:
 
 - The location in the file system. All files in a FileSet are located relative to a
   base path, which is created when the FileSet is created. Deleting the

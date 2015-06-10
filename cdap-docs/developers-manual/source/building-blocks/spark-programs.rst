@@ -8,10 +8,10 @@
 Spark Programs *(Beta, Standalone CDAP only)*
 =============================================
 
-**Apache Spark** is used for in-memory cluster computing. It lets you load large sets of
+*Apache Spark* is used for in-memory cluster computing. It lets you load large sets of
 data into memory and query them repeatedly. This makes it suitable for both iterative and
 interactive programs. Similar to MapReduce, Spark can access **datasets** as both input
-and output. Spark programs in CDAP can be written in either Java or Scala.
+and output. *Spark programs* in CDAP can be written in either Java or Scala.
 
 In the current release, Spark (version 1.0 or higher) is supported only in the Standalone CDAP. 
 

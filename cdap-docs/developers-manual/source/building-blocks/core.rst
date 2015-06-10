@@ -8,7 +8,7 @@ Core Abstractions
 
 .. rubric:: Data Abstractions
 
-There are two main data abstractions: *streams* and *datasets*. Streams are ordered,
+There are two main data abstractions: *Streams* and *Datasets*. Streams are ordered,
 partitioned sequences of data, and are the primary means of bringing data from external
 systems into the CDAP in real time. Datasets are abstractions on top of data, allowing you
 to access your data using higher-level abstractions and generic, reusable Java
@@ -31,9 +31,9 @@ seamlessly deploy it in a different environment—such as your distributed stagi
 
 .. rubric:: Data and Applications Combined
 
-With your data represented in CDAP as *streams* and *datasets*, you are able to process
-that data in real time or in batch using a program (*flow,* *MapReduce*, *Spark*,
-*workflow*) and you can serve data to external clients using a *service*.
+With your data represented in CDAP as streams and datasets, you are able to process
+that data in real time or in batch using a program (*Flow,* *MapReduce*, *Spark*,
+*Workflow*) and you can serve data to external clients using a *Service*.
 
 This diagram how the CDAP components relate in an Apache Hadoop installation: 
 

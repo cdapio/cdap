@@ -10,10 +10,10 @@ Applications
 
 .. highlight:: java
 
-An **Application** is a collection of building blocks that read and write data through the data
+An *Application* is a collection of building blocks that read and write data through the data
 abstraction layer in CDAP. 
 
-**Applications** are composed from *Programs,* *Services,* and *Schedules*.
+*Applications* are composed from *Programs,* *Services,* and *Schedules*.
 
 Programs include :doc:`Flows <flows-flowlets/index>`, :doc:`MapReduce programs <mapreduce-programs>`,
 :doc:`Workflows <workflows>`, :doc:`Spark programs <spark-programs>`, and :doc:`Workers <workers>` are used to process
@@ -41,15 +41,15 @@ configuring each of the application components::
         }
       }
 
-Notice that *streams* are defined using the provided ``Stream`` class, and *datasets* are
+Notice that *Streams* are defined using the provided ``Stream`` class, and *Datasets* are
 defined by passing a ``Table`` class; both are referenced by name.
 
 Other components are defined using user-written classes that implement correspondent
 interfaces and are referenced by passing an object, in addition to being assigned a unique
 name.
 
-Names used for *streams* and *datasets* need to be unique across the CDAP instance, while
-names used for *programs* and *services* need to be unique only to the application.
+Names used for streams and datasets need to be unique across the CDAP instance, while
+names used for programs and services need to be unique only to the application.
 
 .. rubric:: A Typical CDAP Application
 

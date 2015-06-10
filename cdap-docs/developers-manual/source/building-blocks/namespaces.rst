@@ -10,7 +10,7 @@ Namespaces
 
 Overview
 ========
-A namespace is a physical grouping of application, data and its metadata in CDAP. Conceptually,
+A *Namespace* is a physical grouping of application, data and its metadata in CDAP. Conceptually,
 namespaces can be thought of as a partitioning of a CDAP instance. Any application or data
 (referred to here as an “entity”) can exist independently in multiple namespaces at the
 same time. The data and metadata of an entity is stored independent of another instance of

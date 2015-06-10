@@ -24,8 +24,8 @@ Flows and Flowlets
     Partitioning Strategies <partitioning-strategies>
 
 
-**Flows** are user-implemented real-time stream processors. They are comprised of one or
-more **flowlets** that are wired together into a directed acyclic graph or DAG. Flowlets
+*Flows* are user-implemented real-time stream processors. They are comprised of one or
+more *Flowlets* that are wired together into a directed acyclic graph or DAG. Flowlets
 pass data between one another; each flowlet is able to perform custom logic and execute
 data operations for each individual data object it processes. All data operations happen
 in a consistent and durable way.

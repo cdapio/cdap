@@ -25,7 +25,7 @@ infrastructure in grey.
 Data Abstraction
 ----------------
 
-In CDAP applications, you interact with data through datasets. Datasets provide abstraction through:
+In CDAP applications, you interact with data through *datasets*. Datasets provide abstraction through:
 
 - Abstraction of the actual representation of data in storage. You can write your code or queries without
   having to know where and how your data is stored—be it in HBase, LevelDB or a relational database.

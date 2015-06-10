@@ -22,19 +22,19 @@ Datasets
 
 .. highlight:: java
 
-**Datasets** store and retrieve data. Datasets are your means of reading
+*Datasets* store and retrieve data. Datasets are your means of reading
 from and writing to the CDAP’s storage capabilities. Instead of
 forcing you to manipulate data with low-level APIs, datasets provide
 higher-level abstractions and generic, reusable implementations of
 common data patterns.
 
-The core datasets of CDAP are Tables and FileSets:
+The core datasets of CDAP are *Tables* and *FileSets*:
 
-- Unlike relational database systems, CDAP **tables** are not organized into rows with a fixed schema.
+- Unlike relational database systems, CDAP *Tables* are not organized into rows with a fixed schema.
   They are optimized for efficient storage of semi-structured data, data with unknown or variable
   schema, or sparse data.
   
-- CDAP **file sets** provide an abstraction over the raw file system, and associate properties such as
+- CDAP *File sets* provide an abstraction over the raw file system, and associate properties such as
   the format or the schema with the files they contain. In addition, partitioned file sets
   allow addressing files by their partition meta data, removing the need for applications to
   be aware of actual file system locations.
