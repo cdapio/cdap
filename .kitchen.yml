@@ -11,7 +11,7 @@ provisioner:
   require_chef_omnibus: true
 
 platforms:
-  - name: centos-6.5
+  - name: centos-6.6
     attributes:
       hadoop:
         hdfs_site:
@@ -60,35 +60,30 @@ suites:
       - recipe[cdap::fullstack]
       - recipe[cdap::security_init]
       - recipe[cdap::web_app_init]
-      - recipe[minitest-handler::default]
     attributes: { hadoop: { distribution: 'cdh', distribution_version: 4 } }
   - name: cdh5
     run_list:
       - recipe[cdap::fullstack]
       - recipe[cdap::security_init]
       - recipe[cdap::web_app_init]
-      - recipe[minitest-handler::default]
     attributes: { hadoop: { distribution: 'cdh', distribution_version: 5 } }
   - name: hdp20
     run_list:
       - recipe[cdap::fullstack]
       - recipe[cdap::security_init]
       - recipe[cdap::web_app_init]
-      - recipe[minitest-handler::default]
     attributes: { hadoop: { distribution: 'hdp', distribution_version: '2.0' } }
   - name: hdp21
     run_list:
       - recipe[cdap::fullstack]
       - recipe[cdap::security_init]
       - recipe[cdap::web_app_init]
-      - recipe[minitest-handler::default]
     attributes: { hadoop: { distribution: 'hdp', distribution_version: '2.1' } }
   - name: hdp22
     run_list:
       - recipe[cdap::fullstack]
       - recipe[cdap::security_init]
       - recipe[cdap::web_app_init]
-      - recipe[minitest-handler::default]
     attributes: { hadoop: { distribution: 'hdp', distribution_version: '2.2' } }
   - name: sdk
     run_list:
