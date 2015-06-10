@@ -259,10 +259,10 @@ public class MetricsHandler extends AbstractHttpHandler {
   private void setTimeRangeInQueryRequest(MetricQueryRequest request, Map<String, List<String>> queryTimeParams) {
     Long start =
       queryTimeParams.containsKey(PARAM_START_TIME) ?
-        TimeMathParser.parseTime(queryTimeParams.get(PARAM_START_TIME).get(0)) : null;
+        TimeMathParser.parseTimeInSeconds(queryTimeParams.get(PARAM_START_TIME).get(0)) : null;
     Long end =
       queryTimeParams.containsKey(PARAM_END_TIME) ?
-        TimeMathParser.parseTime(queryTimeParams.get(PARAM_END_TIME).get(0)) : null;
+        TimeMathParser.parseTimeInSeconds(queryTimeParams.get(PARAM_END_TIME).get(0)) : null;
     Integer count = null;
 
     boolean aggregate =

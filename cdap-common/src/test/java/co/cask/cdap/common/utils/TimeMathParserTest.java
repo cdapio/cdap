@@ -33,30 +33,34 @@ public class TimeMathParserTest {
 
   @Test
   public void testParseTimestamp() {
-    Assert.assertEquals(1234567890, TimeMathParser.parseTime("1234567890"));
-    Assert.assertEquals(1234567890, TimeMathParser.parseTime(0, "1234567890"));
+    Assert.assertEquals(1234567890, TimeMathParser.parseTimeInSeconds("1234567890"));
+    Assert.assertEquals(1234567890, TimeMathParser.parseTimeInSeconds(0, "1234567890"));
   }
 
   @Test
   public void testParseNow() {
     long now = TimeMathParser.nowInSeconds();
-    long result = TimeMathParser.parseTime("now");
+    long result = TimeMathParser.parseTimeInSeconds("now");
     // in case we're on the border between seconds
     Assert.assertTrue((result - now) == 1 || (result == now));
-    Assert.assertEquals(1234567890, TimeMathParser.parseTime(1234567890, "now"));
+    Assert.assertEquals(1234567890, TimeMathParser.parseTimeInSeconds(1234567890, "now"));
   }
 
   @Test
   public void testOneOperation() {
     long now = TimeMathParser.nowInSeconds();
-    Assert.assertEquals(now - 7, TimeMathParser.parseTime(now, "now-7s"));
-    Assert.assertEquals(now - 7 * 60, TimeMathParser.parseTime(now, "now-7m"));
-    Assert.assertEquals(now - 7 * 3600, TimeMathParser.parseTime(now, "now-7h"));
-    Assert.assertEquals(now - 7 * 86400, TimeMathParser.parseTime(now, "now-7d"));
-    Assert.assertEquals(now + 7, TimeMathParser.parseTime(now, "now+7s"));
-    Assert.assertEquals(now + 7 * 60, TimeMathParser.parseTime(now, "now+7m"));
-    Assert.assertEquals(now + 7 * 3600, TimeMathParser.parseTime(now, "now+7h"));
-    Assert.assertEquals(now + 7 * 86400, TimeMathParser.parseTime(now, "now+7d"));
+    Assert.assertEquals(now - 7, TimeMathParser.parseTimeInSeconds(now, "now-7s"));
+    Assert.assertEquals(now - 7 * 60, TimeMathParser.parseTimeInSeconds(now, "now-7m"));
+    Assert.assertEquals(now - 7 * 3600, TimeMathParser.parseTimeInSeconds(now, "now-7h"));
+    Assert.assertEquals(now - 7 * 86400, TimeMathParser.parseTimeInSeconds(now, "now-7d"));
+    Assert.assertEquals(now + 7, TimeMathParser.parseTimeInSeconds(now, "now+7s"));
+    Assert.assertEquals(now + 7 * 60, TimeMathParser.parseTimeInSeconds(now, "now+7m"));
+    Assert.assertEquals(now + 7 * 3600, TimeMathParser.parseTimeInSeconds(now, "now+7h"));
+    Assert.assertEquals(now + 7 * 86400, TimeMathParser.parseTimeInSeconds(now, "now+7d"));
+    Assert.assertEquals(System.currentTimeMillis() - 10, TimeMathParser.parseTime("now-10ms",
+                                                                                  TimeUnit.MILLISECONDS), 1);
+    Assert.assertEquals(System.currentTimeMillis() + 50, TimeMathParser.parseTime("now+50ms",
+                                                                                  TimeUnit.MILLISECONDS), 1);
   }
 
   @Test
@@ -77,31 +81,31 @@ public class TimeMathParserTest {
   public void testMultipleOperations() {
     long now = TimeMathParser.nowInSeconds();
     Assert.assertEquals(now - 7 * 86400 + 3 * 3600 - 13 * 60 + 11,
-                        TimeMathParser.parseTime(now, "now-7d+3h-13m+11s"));
+                        TimeMathParser.parseTimeInSeconds(now, "now-7d+3h-13m+11s"));
   }
 
   // happens if input is supposed to be url encoded but is not
   @Test(expected = IllegalArgumentException.class)
   public void testSpaceInsteadOfPlusThrowsException() {
     long now = TimeMathParser.nowInSeconds();
-    TimeMathParser.parseTime(now, "now 6h");
+    TimeMathParser.parseTimeInSeconds(now, "now 6h");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testGibberishInMiddleThrowsException() {
     long now = TimeMathParser.nowInSeconds();
-    TimeMathParser.parseTime(now, "now-3d+23lnkfasd-6h");
+    TimeMathParser.parseTimeInSeconds(now, "now-3d+23lnkfasd-6h");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidOperationThrowsException() {
     long now = TimeMathParser.nowInSeconds();
-    TimeMathParser.parseTime(now, "now/1d");
+    TimeMathParser.parseTimeInSeconds(now, "now/1d");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidUnitThrowsException() {
     long now = TimeMathParser.nowInSeconds();
-    TimeMathParser.parseTime(now, "now-1w");
+    TimeMathParser.parseTimeInSeconds(now, "now-1w");
   }
 }

@@ -458,8 +458,8 @@ final class MetricQueryParser {
     }
 
     if (queryParams.containsKey(START_TIME) && queryParams.containsKey(END_TIME)) {
-      startTime = TimeMathParser.parseTime(now, queryParams.get(START_TIME).get(0));
-      endTime = TimeMathParser.parseTime(now, queryParams.get(END_TIME).get(0));
+      startTime = TimeMathParser.parseTimeInSeconds(now, queryParams.get(START_TIME).get(0));
+      endTime = TimeMathParser.parseTimeInSeconds(now, queryParams.get(END_TIME).get(0));
       if (queryParams.containsKey(RESOLUTION)) {
         if (isAutoResolution(queryParams)) {
           // auto determine resolution, based on time difference.
@@ -478,10 +478,10 @@ final class MetricQueryParser {
       count = Integer.parseInt(queryParams.get(COUNT).get(0));
       // both start and end times are inclusive, which is the reason for the +-1.
       if (queryParams.containsKey(START_TIME)) {
-        startTime = TimeMathParser.parseTime(now, queryParams.get(START_TIME).get(0));
+        startTime = TimeMathParser.parseTimeInSeconds(now, queryParams.get(START_TIME).get(0));
         endTime = startTime + (count * resolution) - resolution;
       } else if (queryParams.containsKey(END_TIME)) {
-        endTime = TimeMathParser.parseTime(now, queryParams.get(END_TIME).get(0));
+        endTime = TimeMathParser.parseTimeInSeconds(now, queryParams.get(END_TIME).get(0));
         startTime = endTime - (count * resolution) + resolution;
       } else {
         // if only count is specified, assume the current time is desired as the end.
