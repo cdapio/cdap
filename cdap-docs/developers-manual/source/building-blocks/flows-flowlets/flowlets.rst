@@ -8,7 +8,7 @@
 Flowlets
 ========
 
-**Flowlets**, the basic building blocks of a flow, represent each
+*Flowlets*, the basic building blocks of a flow, represent each
 individual processing node within a flow. Flowlets consume data objects
 from their inputs and execute custom logic on each data object, allowing
 you to perform data operations as well as emit data objects to the
