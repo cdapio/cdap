@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowletDetailInputController', function($state, $scope, MyDataSource, MyMetricsQueryHelper, myFlowsApi) {
+  .controller('FlowletDetailInputController', function($state, $scope, MyDataSource, MyMetricsQueryHelper, myFlowsApi, myAlert) {
 
     var dataSrc = new MyDataSource($scope);
     var flowletid = $scope.$parent.activeFlowlet.name;
@@ -32,27 +32,6 @@ angular.module(PKG.name + '.feature.flows')
         }
       });
 
-
-    function formatEmptyGraph(input) {
-      var val = [];
-
-      for (var i = 60; i > 0; i--) {
-        val.push({
-          time: Math.floor((new Date()).getTime()/1000 - (i)),
-          y: 0
-        });
-      }
-
-      if (input.history) {
-        input.stream = val.slice(-1);
-      }
-
-      input.history = [{
-        label: 'output',
-        values: val
-      }];
-    }
-
     function pollArrivalRate(input) {
       var arrivalPath = '/metrics/query?metric=system.process.events.processed'+
         '&tag=namespace:' + $state.params.namespace +
@@ -75,26 +54,35 @@ angular.module(PKG.name + '.feature.flows')
     }
 
     function formatInitialTimeseries(aggregate, initial, input) {
-      var response = initial.series[0].data;
       var v = [];
 
-      response[response.length - 1].value = aggregate - response[response.length - 1].value;
-      for (var i = response.length - 2; i >= 0; i--) {
-        response[i].value = response[i+1].value - response[i].value;
-        v.unshift({
-          time: response[i].time,
-          y: response[i].value
-        });
+      if (initial.series[0]) {
+        var response = initial.series[0].data;
+
+        response[response.length - 1].value = aggregate - response[response.length - 1].value;
+        for (var i = response.length - 2; i >= 0; i--) {
+          response[i].value = response[i+1].value - response[i].value;
+          v.unshift({
+            time: response[i].time,
+            y: response[i].value
+          });
+        }
+      } else {
+        // when there is no data
+        for (var i = 60; i > 0; i--) {
+          v.push({
+            time: Math.floor((new Date()).getTime()/1000 - (i)),
+            y: 0
+          });
+        }
       }
 
       input.stream = v.slice(-1);
 
-      input.history = [
-        {
-          label: 'output',
-          values: v
-        }
-      ];
+      input.history = [{
+        label: 'output',
+        values: v
+      }];
     }
 
     function pollAggregateQueue(path, input) {
@@ -134,7 +122,6 @@ angular.module(PKG.name + '.feature.flows')
       });
     }
 
-
     function formatInput() {
       angular.forEach($scope.inputs, function (input) {
         var flowletTags = {
@@ -158,24 +145,23 @@ angular.module(PKG.name + '.feature.flows')
           // Get initial aggregate
           aggregate = res.series[0] ? res.series[0].data[0].value : 0;
 
-        }).then(function() {
-
           // Get timeseries
-          dataSrc.request({
+          return dataSrc.request({
             _cdapPath: path + '&start=now-60s&end=now',
             method: 'POST'
-          }).then(function(initial) {
-            if (initial.series[0]) {
-              formatInitialTimeseries(aggregate, initial, input);
-            } else {
-              formatEmptyGraph(input);
-            }
-
-          }).then(function() {
-            // start polling aggregate
-            pollAggregateQueue(path, input);
           });
 
+        }).then(function(initial) {
+          formatInitialTimeseries(aggregate, initial, input);
+
+          // start polling aggregate
+          pollAggregateQueue(path, input);
+
+        }).catch(function () {
+          myAlert({
+            title: 'Flowlet Input Error',
+            content: 'Please refresh the page'
+          });
         });
 
         pollArrivalRate(input);
