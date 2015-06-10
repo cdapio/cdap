@@ -23,14 +23,14 @@ For example, perhaps you need to copy data from five different relational tables
 Datasets periodically; you wouldn't want to deploy five different applications to
 perform these tasks. Instead, you would want to reuse code or a common program that can be
 configured to perform similar actions on differently configured data sources. In situations
-like these, you can create or use an *application template*.
+like these, you can create or use an *Application Template*.
 
-An **application template** is an application that is reusable through configuration and
+An **Application Template** is an application that is reusable through configuration and
 extensible through plugins. Plugins extend the application template by implementing an
 interface expected by the template. One or more plugins are packaged in a specifically
 constructed JAR file.
 
-To create an instantiation of an application template |---| called an **adapter** |---| you
+To create an instantiation of an application template |---| called an **Adapter** |---| you
 can make a RESTful call, use a CLI command, or use the CDAP UI, providing the
 configuration at the time. Users of CDAP manage the lifecycle of an adapter in a very
 similar manner to managing the life cycle of a CDAP program.

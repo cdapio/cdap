@@ -55,13 +55,13 @@ names used for *programs* and *services* need to be unique only to the applicati
 
 A typical design of a CDAP application consists of:
 
-- streams to ingest data into CDAP;
-- flows, consisting of flowlets linked together, to process the ingested data
+- *Streams* to ingest data into CDAP;
+- *Flows*, consisting of *Flowlets* linked together, to process the ingested data
   in real time or batch;
-- MapReduce programs, Spark programs, and workflows for batch processing tasks;
-- workers for processing data in an ad-hoc manner that doesn't fit into real-time or batch paradigms
-- datasets for storage of data, either raw or the processed results; and
-- services for serving data and processed results.
+- *MapReduce programs*, *Spark programs*, and *Workflows* for batch processing tasks;
+- *Workers* for processing data in an ad-hoc manner that doesn't fit into real-time or batch paradigms
+- *Datasets* for storage of data, either raw or the processed results; and
+- *Services* for serving data and processed results.
 
 Of course, not all components are required: it depends on the application. A minimal
 application could include a stream, a flow, a flowlet, and a dataset. It's possible a

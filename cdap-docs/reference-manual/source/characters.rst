@@ -10,7 +10,7 @@
 Supported Characters
 ====================
 
-The Cask Data Application Platform (CDAP) has naming conventions for different elements of CDAP.
+The Cask Data Application Platform (CDAP) has naming conventions for different components of CDAP.
 
 Streams
 -------

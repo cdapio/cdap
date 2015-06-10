@@ -12,7 +12,7 @@ CDAP Reference Manual: APIs, Licenses, and Dependencies
 .. |characters| replace:: **Supported Characters:**
 .. _characters: characters.html
 
-- |characters|_ Accepted naming conventions for CDAP elements.
+- |characters|_ Accepted naming conventions for CDAP components.
 
 
 .. |cli| replace:: **Command Line Interface API:**

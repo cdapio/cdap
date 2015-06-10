@@ -31,7 +31,7 @@ A **metrics context** consists of a collection of tags.
 Each tag is composed of a *tag name* and a *tag value*.
 
 Metrics contexts are hierarchal, rooted in the CDAP instance, and extend through
-namespaces, applications, and down to the individual elements.
+namespaces, applications, and down to the individual components.
 
 For example, the metrics context::
 

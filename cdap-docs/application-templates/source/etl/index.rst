@@ -30,7 +30,7 @@ an *ETL pipeline:*
 ETL Templates, Adapters and Plugins 
 -----------------------------------
 
-An *application template* is a blueprint that is used to create an adapter, an instantiation of
+An *Application Template* is a blueprint that is used to create an *Adapter*, an instantiation of
 a template in CDAP.
 
 CDAP provides two application templates |---| the ETL templates **ETLBatch** and
@@ -94,7 +94,7 @@ This lists the available sources, sinks and transformations (transforms):
 
 ETL Adapters
 ............
-An *ETL adapter* is an instantiation of an ETL template that has been given a specific
+An *ETL Adapter* is an instantiation of an ETL template that has been given a specific
 configuration on creation.
 
 **Batch adapters** can be scheduled to run periodically using a cron expression and can read
