@@ -12,17 +12,6 @@ angular.module(PKG.name + '.feature.datasets')
         parent: 'ns'
       })
 
-      .state('datasets.list', {
-        url: '',
-        templateUrl: '/assets/features/datasets/templates/list.html',
-        controller: 'DatasetsListController',
-        controllerAs: 'ListController',
-        ncyBreadcrumb: {
-          label: 'Datasets',
-          parent: 'data.list'
-        }
-      })
-
       .state('datasets.detail', {
         url: '/:datasetId',
         abstract: true,
