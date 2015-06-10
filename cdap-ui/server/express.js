@@ -150,8 +150,8 @@ function makeApp (authAddress, cdapConfig) {
           rejectUnauthorized: false,
           requestCert: true,
           agent: false
-        }, function(err) {
-          if (!err) {
+        }, function(err, response) {
+          if (!err && response.statusCode === 200) {
             res.status(200).send();
           } else {
             res.status(404).send();
