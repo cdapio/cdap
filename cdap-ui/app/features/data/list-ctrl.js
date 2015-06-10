@@ -44,12 +44,4 @@ angular.module(PKG.name + '.feature.data')
       MyOrderings.dataClicked(data.name);
     };
 
-    this.goToList = function(data) {
-      if (data.dataType === 'Dataset') {
-        $state.go('datasets.list');
-      } else if (data.dataType === 'Stream') {
-        $state.go('streams.list');
-      }
-    };
-
   });

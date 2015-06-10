@@ -3,19 +3,30 @@
 </div>
 <div class="modal-body">
   <form class="form-horizontal">
-    <div class="text-center bg-danger" ng-show="error">
-      <p><i class="fa fa-exclamation-circle"></i>  {{error}}</p>
+    <div class="text-center bg-danger" ng-show="CreateController.error">
+      <p><i class="fa fa-exclamation-circle"></i>  {{CreateController.error}}</p>
     </div>
 
     <div class="form-group">
       <label class="col-sm-2 control-label">Stream ID</label>
       <div class="col-sm-10">
-        <input type="text" class="form-control" ng-model="streamId" placeholder="Stream ID" name="streamId" cask-focus="streamId">
+        <input type="text"
+               class="form-control"
+               ng-model="CreateController.streamId"
+               placeholder="Stream ID"
+               name="streamId"
+               cask-focus="streamId">
       </div>
     </div>
   </form>
 </div>
 <div class="modal-footer">
-    <button class="btn btn-default" ng-click="closeModal()">Cancel</button>
-    <button class="btn btn-primary" ng-click="createStream()" ng-class="{disabled: streamId.length === 0}">Create</button>
+    <button class="btn btn-default" ng-click="CreateController.closeModal()">
+      Cancel
+    </button>
+    <button class="btn btn-primary"
+            ng-click="CreateController.createStream()" 
+            ng-class="{disabled: streamId.length === 0}">
+      Create
+    </button>
 </div>
