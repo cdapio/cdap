@@ -12,16 +12,6 @@ angular.module(PKG.name + '.feature.datasets')
         parent: 'ns'
       })
 
-      .state('datasets.list', {
-        url: '',
-        templateUrl: '/assets/features/datasets/templates/list.html',
-        controller: 'CdapDatasetsListController',
-        ncyBreadcrumb: {
-          label: 'Datasets',
-          parent: 'data.list'
-        }
-      })
-
       .state('datasets.detail', {
         url: '/:datasetId',
         abstract: true,
@@ -56,7 +46,8 @@ angular.module(PKG.name + '.feature.datasets')
         .state('datasets.detail.overview', {
           url: '/overview',
           templateUrl: '/assets/features/datasets/templates/detail.html',
-          controller: 'CdapDatasetsDetailController',
+          controller: 'DatasetsDetailController',
+          controllerAs: 'DetailController',
           ncyBreadcrumb: {
             skip: true
           }
@@ -65,7 +56,8 @@ angular.module(PKG.name + '.feature.datasets')
           .state('datasets.detail.overview.status', {
             url: '/status',
             templateUrl: '/assets/features/datasets/templates/tabs/status.html',
-            controller: 'CdapDatasetDetailStatusController',
+            controller: 'DatasetDetailStatusController',
+            controllerAs: 'StatusController',
             ncyBreadcrumb: {
               parent: 'data.list',
               label: '{{$state.params.datasetId}}'
@@ -75,6 +67,8 @@ angular.module(PKG.name + '.feature.datasets')
           .state('datasets.detail.overview.explore', {
             url: '/explore',
             templateUrl: '/assets/features/datasets/templates/tabs/explore.html',
+            controller: 'DatasetExploreController',
+            controllerAs: 'ExploreController',
             ncyBreadcrumb: {
               label: 'Explore',
               parent: 'datasets.detail.overview.status'
@@ -87,7 +81,9 @@ angular.module(PKG.name + '.feature.datasets')
             ncyBreadcrumb: {
               label: 'Programs',
               parent: 'datasets.detail.overview.status'
-            }
+            },
+            controller: 'DatasetDetailProgramsController',
+            controllerAs: 'ProgramsController'
           })
 
           .state('datasets.detail.overview.metadata', {
@@ -96,6 +92,8 @@ angular.module(PKG.name + '.feature.datasets')
             ncyBreadcrumb: {
               label: 'Metadata',
               parent: 'datasets.detail.overview.status'
-            }
+            },
+            controller: 'DatasetMetadataController',
+            controllerAs: 'MetadataController'
           });
   });
