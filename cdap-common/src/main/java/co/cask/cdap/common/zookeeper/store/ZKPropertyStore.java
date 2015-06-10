@@ -62,7 +62,7 @@ public final class ZKPropertyStore<T> extends AbstractPropertyStore<T> {
    * @param codec The codec for encode/decode property
    */
   public static <T> ZKPropertyStore<T> create(ZKClient zkClient, Codec<T> codec) {
-    return new ZKPropertyStore<T>(zkClient, codec);
+    return new ZKPropertyStore<>(zkClient, codec);
   }
 
   /**
@@ -73,7 +73,7 @@ public final class ZKPropertyStore<T> extends AbstractPropertyStore<T> {
    * @param codec The codec for encode/decode property
    */
   public static <T> ZKPropertyStore<T> create(ZKClient zkClient, String namespace, Codec<T> codec) {
-    return new ZKPropertyStore<T>(ZKClients.namespace(zkClient, namespace), codec);
+    return new ZKPropertyStore<>(ZKClients.namespace(zkClient, namespace), codec);
   }
 
   /**

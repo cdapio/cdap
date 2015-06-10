@@ -21,22 +21,24 @@ angular.module(PKG.name + '.feature.mapreduce')
         templateUrl: '/assets/features/mapreduce/templates/detail.html',
         controller: 'MapreduceDetailController',
         ncyBreadcrumb: {
-          parent: 'apps.detail.overview',
+          parent: 'apps.detail.overview.status',
           label: 'Mapreduce',
           skip: true
         },
         resolve: {
-          rRuns: function(MyDataSource, $stateParams, $q) {
+          rRuns: function($stateParams, $q, myMapreduceApi) {
             var defer = $q.defer();
 
-            var dataSrc = new MyDataSource();
-
-            dataSrc.request({
-              _cdapPath: '/namespaces/' + $stateParams.namespace + '/apps/' + $stateParams.appId + '/mapreduce/' + $stateParams.programId + '/runs'
-            })
-            .then(function (res) {
-              defer.resolve(res);
-            });
+            var params = {
+              namespace: $stateParams.namespace,
+              appId: $stateParams.appId,
+              mapreduceId: $stateParams.programId
+            };
+            myMapreduceApi.runs(params)
+              .$promise
+              .then(function (res) {
+                defer.resolve(res);
+              });
 
             return defer.promise;
           }
@@ -58,12 +60,12 @@ angular.module(PKG.name + '.feature.mapreduce')
               label: '{{ $state.params.runid }}'
             }
           })
-        .state('mapreduce.detail.data', {
+        .state('mapreduce.detail.datasets', {
           url: '/data',
           templateUrl: '/assets/features/mapreduce/templates/tabs/data.html',
           ncyBreadcrumb: {
-            parent: 'apps.detail.overview',
-            label: 'Data'
+            parent: 'mapreduce.detail.runs',
+            label: 'Datasets'
           }
         })
         .state('mapreduce.detail.history', {
@@ -71,7 +73,7 @@ angular.module(PKG.name + '.feature.mapreduce')
           templateUrl: '/assets/features/mapreduce/templates/tabs/history.html',
           controller: 'MapreduceRunsController',
           ncyBreadcrumb: {
-            parent: 'apps.detail.overview',
+            parent: 'mapreduce.detail.runs',
             label: 'History'
           }
         });

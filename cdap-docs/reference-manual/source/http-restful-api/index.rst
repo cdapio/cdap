@@ -33,26 +33,26 @@ CDAP HTTP RESTful API v3
 .. highlight:: console
 
 The Cask Data Application Platform (CDAP) has an HTTP interface for a multitude of
-purposes: everything from sending data events to a Stream or to inspect the contents of a
-Stream through checking the status of various System and Custom CDAP services. V3 of the
+purposes: everything from sending data events to a stream or to inspect the contents of a
+stream through checking the status of various system and custom CDAP services. V3 of the
 API includes the namespacing of applications, data and metadata to achieve application and
 data isolation. This is an inital step towards introducing `multi-tenancy
 <http://en.wikipedia.org/wiki/Multitenancy>`__ into CDAP.
 
 - :doc:`Introduction: <introduction>` conventions, converting from HTTP RESTful API v2, 
-  naming restrictions, status codes, and working with CDAP Security
+  naming restrictions, status codes, and working with CDAP security
 - :doc:`Namespace: <namespace>` creating and managing namespaces
-- :doc:`Lifecycle: <lifecycle>` deploying and managing Applications, and managing the lifecycle of Flows,
-  MapReduce Programs, Spark Programs, Workflows, and Custom Services
+- :doc:`Lifecycle: <lifecycle>` deploying and managing applications, and managing the lifecycle of flows,
+  MapReduce programs, Spark programs, workflows, and custom services
 - :doc:`Configuration: <configuration>` retrieving the CDAP and HBase configurations
-- :doc:`Preferences: <preferences>` setting, retrieving, and deleting Preferences
-- :doc:`Application Templates and Adapters: <apptemplates>` obtaining available Application Templates and
-  Plugins, and creating, deleting, and managing the lifecycle of Adapters
-- :doc:`Stream: <stream>` sending data events to a Stream or to inspect the contents of a Stream
-- :doc:`Dataset: <dataset>` interacting with Datasets, Dataset Modules, and Dataset Types
-- :doc:`Query: <query>` sending ad-hoc queries to CDAP Datasets
-- :doc:`Service: <service>` supports making requests to the methods of an Application’s Services
-- :doc:`Logging: <logging>` retrieving Application logs
-- :doc:`Metrics: <metrics>` retrieving metrics for system and user Applications (user-defined metrics)
-- :doc:`Monitor: <monitor>` checking the status of various System and Custom CDAP services
-- :doc:`Transactions: <transactions>` interacting with the Transaction Service
+- :doc:`Preferences: <preferences>` setting, retrieving, and deleting preferences
+- :doc:`Application Templates and Adapters: <apptemplates>` obtaining available application templates and
+  plugins, and creating, deleting, and managing the lifecycle of adapters
+- :doc:`Stream: <stream>` sending data events to a stream or to inspect the contents of a stream
+- :doc:`Dataset: <dataset>` interacting with datasets, dataset modules, and dataset types
+- :doc:`Query: <query>` sending ad-hoc queries to CDAP datasets
+- :doc:`Service: <service>` supports making requests to the methods of an application’s services
+- :doc:`Logging: <logging>` retrieving application logs
+- :doc:`Metrics: <metrics>` retrieving metrics for system and user applications (user-defined metrics)
+- :doc:`Monitor: <monitor>` checking the status of various system and custom CDAP services
+- :doc:`Transactions: <transactions>` interacting with the transaction service

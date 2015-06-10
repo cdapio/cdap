@@ -61,7 +61,7 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 
   - **Getting Started Developing:** A quick, hands-on introduction to developing with CDAP
   - **Overview:** The overall architecture and technology behind CDAP
-  - **Building Blocks:** The two core abstractions in CDAP: Data and Applications, and their components
+  - **Building Blocks:** The two core abstractions in CDAP: *Data* and *Applications*, and their components
   - **Security:** Perimeter security, configuration and client authentication
   - **Testing and Debugging:** Test framework plus tools and practices for debugging your applications
   - **Ingesting Data:** Different techniques for ingesting data into CDAP
@@ -77,7 +77,7 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Introduction to Application Templates:** Applications that are reusable through configuration and
     extensible through plugins 
   - **ETL:** Making performing ETL possible without writing code 
-  - **Creating Custom ETL Plugins:**: For developers of custom ETL Plugins 
+  - **Creating Custom ETL Plugins:** For developers of custom ETL plugins 
   
   
 .. |admin-manual| replace:: **Administration Manual:**
@@ -96,8 +96,8 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 - |integrations|_ 
 
   - **Cloudera:** Integrating CDAP into Cloudera, using Cloudera Manager, and running interactive queries with Impala
-  - **JDBC:** The CDAP JDBC Driver, included with CDAP
-  - **Pentaho:** *Pentaho Data Integration*, a Business Intelligence tool that can be used with CDAP
+  - **JDBC:** The CDAP JDBC driver, included with CDAP
+  - **Pentaho:** *Pentaho Data Integration*, a business intelligence tool that can be used with CDAP
   - **Squirrel:** *SquirrelSQL*, a simple JDBC client that can be integrated with CDAP
 
 
@@ -120,8 +120,8 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Command Line Interface API:** Methods for interacting with a CDAP instance from within a shell
   - **HTTP RESTful API:** HTTP interface for a multitude of purposes
   - **Java Client API:** Methods for interacting with CDAP from external Java applications
-  - **Javadocs:** The Java APIs for writing CDAP Applications
-  - **Trademarks, Licenses, and Dependencies:** Trademark and License information for CDAP and lists of CDAP Dependent Packages
+  - **Javadocs:** The Java APIs for writing CDAP applications
+  - **Trademarks, Licenses, and Dependencies:** Trademark and License information for CDAP and lists of CDAP dependent packages
 
 
 .. |release-notes| replace:: **Release Notes:**

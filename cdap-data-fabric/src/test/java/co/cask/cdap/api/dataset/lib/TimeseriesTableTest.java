@@ -234,7 +234,7 @@ public class TimeseriesTableTest {
                                      TimeseriesTable.createRow(key2, ts1, timeIntervalPerRow)));
 
     // * We can get all possible rows for a given time interval with getRowsForInterval
-    List<byte[]> rows = new ArrayList<byte[]>();
+    List<byte[]> rows = new ArrayList<>();
     long startTime = timeIntervalPerRow * 4;
     long endTime = timeIntervalPerRow * 100;
     for (long i = startTime; i <= endTime; i += timeIntervalPerRow / 10) {

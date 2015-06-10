@@ -132,7 +132,7 @@ public final class AdapterDefinition implements AdapterSpecification {
    * Returns set of {@link PluginInfo} for the plugins in this specification.
    */
   public NavigableSet<PluginInfo> getPluginInfos() {
-    NavigableSet<PluginInfo> result = new TreeSet<PluginInfo>();
+    NavigableSet<PluginInfo> result = new TreeSet<>();
     for (AdapterPlugin plugin : plugins.values()) {
       result.add(plugin.getPluginInfo());
     }

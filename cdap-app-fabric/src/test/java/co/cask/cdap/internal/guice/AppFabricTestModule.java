@@ -34,7 +34,6 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -82,7 +81,6 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new DataSetServiceModules().getInMemoryModules());
     install(new ConfigModule(cConf, hConf));
     install(new IOModule());
-    install(new AuthModule());
     install(new DiscoveryRuntimeModule().getInMemoryModules());
     install(new AppFabricServiceRuntimeModule().getInMemoryModules());
     install(new ServiceStoreModules().getInMemoryModules());

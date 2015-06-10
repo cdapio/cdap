@@ -23,7 +23,6 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.gateway.auth.NoAuthenticator;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.http.AbstractHttpHandler;
@@ -78,7 +77,7 @@ public class RoutingToDataSetsTest {
     nettyRouter = new NettyRouter(cConf, sConf, InetAddresses.forString("127.0.0.1"),
 
                                   new RouterServiceLookup(discoveryServiceClient,
-                                                          new RouterPathLookup(new NoAuthenticator())),
+                                                          new RouterPathLookup()),
                                   new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient);
     nettyRouter.startAndWait();
 

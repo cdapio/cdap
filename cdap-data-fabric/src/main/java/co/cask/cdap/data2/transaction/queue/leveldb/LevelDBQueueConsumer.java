@@ -153,7 +153,7 @@ public final class LevelDBQueueConsumer extends AbstractQueueConsumer {
         if (next == null) {
           return null;
         }
-        return new ImmutablePair<byte[], Map<byte[], byte[]>>(next.getRow(), next.getColumns());
+        return new ImmutablePair<>(next.getRow(), next.getColumns());
       }
 
       @Override

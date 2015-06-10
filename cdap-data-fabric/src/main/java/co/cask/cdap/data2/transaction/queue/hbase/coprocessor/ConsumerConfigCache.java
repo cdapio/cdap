@@ -58,7 +58,7 @@ public class ConsumerConfigCache {
   private static final long CONFIG_UPDATE_FREQUENCY = 300 * 1000L;
 
   private static final ConcurrentMap<byte[], ConsumerConfigCache> INSTANCES =
-    new ConcurrentSkipListMap<byte[], ConsumerConfigCache>(Bytes.BYTES_COMPARATOR);
+    new ConcurrentSkipListMap<>(Bytes.BYTES_COMPARATOR);
 
   private final byte[] queueConfigTableName;
   private final Configuration hConf;
@@ -158,7 +158,7 @@ public class ConsumerConfigCache {
           NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
           if (familyMap != null) {
             configCnt++;
-            Map<ConsumerInstance, byte[]> consumerInstances = new HashMap<ConsumerInstance, byte[]>();
+            Map<ConsumerInstance, byte[]> consumerInstances = new HashMap<>();
             // Gather the startRow of all instances across all consumer groups.
             int numGroups = 0;
             Long groupId = null;

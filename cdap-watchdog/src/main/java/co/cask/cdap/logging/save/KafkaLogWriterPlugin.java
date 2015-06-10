@@ -210,7 +210,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
           long eventArrivalBucketKey = System.currentTimeMillis() / eventBucketIntervalMs;
           msgList = Lists.newArrayList();
           messageTable.put(key, loggingContext.getLogPathFragment(logBaseDir),
-                           new AbstractMap.SimpleEntry<Long, List<KafkaLogEvent>>(eventArrivalBucketKey, msgList));
+                           new AbstractMap.SimpleEntry<>(eventArrivalBucketKey, msgList));
         } else {
           msgList = messageTable.get(key, loggingContext.getLogPathFragment(logBaseDir)).getValue();
         }

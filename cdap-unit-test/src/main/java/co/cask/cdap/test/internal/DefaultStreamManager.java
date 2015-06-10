@@ -19,6 +19,7 @@ package co.cask.cdap.test.internal;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
+import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.data.stream.service.StreamFetchHandler;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.internal.MockResponder;
@@ -47,6 +48,7 @@ import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Default implementation of {@link StreamManager} for use in tests
@@ -150,13 +152,22 @@ public class DefaultStreamManager implements StreamManager {
   }
 
   @Override
-  public List<StreamEvent> getEvents(long startTime, long endTime, int limit) throws IOException {
+  public List<StreamEvent> getEvents(String startTime, String endTime, int limit) throws IOException {
     return getEvents(streamId, startTime, endTime, limit);
   }
 
-  private List<StreamEvent> getEvents(Id.Stream streamId, long startTime, long endTime, int limit) throws IOException {
+  @Override
+  public List<StreamEvent> getEvents(long startTime, long endTime, int limit) throws IOException {
+    return getEvents(streamId, String.valueOf(startTime), String.valueOf(endTime), limit);
+  }
+
+  private List<StreamEvent> getEvents(Id.Stream streamId, String startTime, String endTime,
+                                      int limit) throws IOException {
+    long start = TimeMathParser.parseTime(startTime, TimeUnit.MILLISECONDS);
+    long end = TimeMathParser.parseTime(endTime, TimeUnit.MILLISECONDS);
+
     String path = String.format("/v3/namespaces/%s/streams/%s/events?start=%d&end=%d&limit=%d",
-                                streamId.getNamespaceId(), streamId.getId(), startTime, endTime, limit);
+                                streamId.getNamespaceId(), streamId.getId(), start, end, limit);
     HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, path);
 
     MockResponder responder = new MockResponder();

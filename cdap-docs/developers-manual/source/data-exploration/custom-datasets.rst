@@ -4,19 +4,19 @@
 
 .. _custom-dataset-exploration:
 
-============================================
+==========================
 Custom Dataset Exploration
-============================================
+==========================
 
 
-It is often useful to be able to explore a Dataset in an ad-hoc manner.
-This can be done using SQL if your Dataset fulfills two requirements:
+It is often useful to be able to explore a dataset in an ad-hoc manner.
+This can be done using SQL if your dataset fulfills two requirements:
 
 * it defines the schema for each record; and
 * it has a method to scan its data record by record.
 
-For CDAP Datasets, this is done by implementing the ``RecordScannable`` interface.
-The CDAP built-in ``KeyValueTable`` and ``ObjectMappedTable`` Datasets already implement this
+For CDAP datasets, this is done by implementing the ``RecordScannable`` interface.
+The CDAP built-in ``KeyValueTable`` and ``ObjectMappedTable`` datasets already implement this
 and can be used for ad-hoc queries.
 
 Let's take a closer look at the ``RecordScannable`` interface.
@@ -36,7 +36,7 @@ For example, suppose you have a class ``Entry`` defined as::
     ...
   }
 
-You can implement a record-scannable Dataset that uses ``Entry`` as the record type::
+You can implement a record-scannable dataset that uses ``Entry`` as the record type::
 
   class MyDataset ... implements RecordScannable<Entry> {
     ...
@@ -73,17 +73,17 @@ Limitations
 * Fields of a class that are declared static or transient are ignored during schema generation. This means that the
   record type must have at least one non-transient and non-static field. For example,
   the ``java.util.Date`` class has only static and transient fields. Therefore a record type of ``Date`` is not
-  supported and will result in an exception when the Dataset is created.
+  supported and will result in an exception when the dataset is created.
 
-* A Dataset can only be used in ad-hoc queries if its record type is completely contained in the Dataset definition.
+* A dataset can only be used in ad-hoc queries if its record type is completely contained in the dataset definition.
   This means that if the record type is or contains a parameterized type, then the type parameters must be present in
-  the Dataset definition. The reason is that the record type must be instantiated when executing an ad-hoc query.
-  If a type parameter depends on the jar file of the application that created the Dataset, then this jar file is not
+  the dataset definition. The reason is that the record type must be instantiated when executing an ad-hoc query.
+  If a type parameter depends on the jar file of the application that created the dataset, then this jar file is not
   available to the query execution runtime.
 
   For example, you cannot execute ad-hoc queries over an ``ObjectStore<MyObject>`` if the ``MyObject`` is contained in
-  the application jar. However, if you define your own Dataset type ``MyObjectStore`` that extends or encapsulates an
-  ``ObjectStore<MyObject>``, then ``MyObject`` becomes part of the Dataset definition for ``MyObjectStore``. See the
+  the application jar. However, if you define your own dataset type ``MyObjectStore`` that extends or encapsulates an
+  ``ObjectStore<MyObject>``, then ``MyObject`` becomes part of the dataset definition for ``MyObjectStore``. See the
   :ref:`Purchase <examples-purchase>` application for an example.
 
 
@@ -136,10 +136,10 @@ Refer to the Hive language manual for more details on schema and data types.
 
 Scanning Records
 ----------------
-The second requirement for enabling SQL queries over a Dataset is to provide a means of scanning the Dataset record
-by record. Similar to how the ``BatchReadable`` interface makes Datasets readable by Map/Reduce jobs by iterating
+The second requirement for enabling SQL queries over a dataset is to provide a means of scanning the dataset record
+by record. Similar to how the ``BatchReadable`` interface makes datasets readable by MapReduce programs by iterating
 over pairs of key and value, ``RecordScannable`` iterates over records. You need to implement a method to partition the
-Dataset into splits, and an additional method to create a record scanner for each split::
+dataset into splits, and an additional method to create a record scanner for each split::
 
       List<Split> getSplits();
       RecordScanner<RECORD> createSplitRecordScanner(Split split);
@@ -148,7 +148,7 @@ The ``RecordScanner`` is very similar to a ``SplitReader``; except that instead 
 ``getCurrentKey()``, and ``getCurrentValue()``, it implements ``nextRecord()`` and ``getCurrentRecord()``.
 
 Typically, you do not implement these methods from scratch but rely on the ``BatchReadable``
-implementation of the underlying Tables and Datasets. For example, if your Dataset is backed by a ``Table``::
+implementation of the underlying Tables and datasets. For example, if your dataset is backed by a ``Table``::
 
   class MyDataset implements Dataset, RecordScannable<Entry> {
 
@@ -156,7 +156,7 @@ implementation of the underlying Tables and Datasets. For example, if your Datas
     private static final byte[] VALUE_COLUMN = { 'c' };
 
     // ..
-    // All other Dataset methods
+    // All other dataset methods
     // ...
 
     @Override
@@ -201,7 +201,7 @@ implementation of the underlying Tables and Datasets. For example, if your Datas
     }
   }
 
-While this is straightforward, it is even easier if your Dataset already implements ``BatchReadable``.
+While this is straightforward, it is even easier if your dataset already implements ``BatchReadable``.
 In that case, you can reuse its implementation of ``getSplits()`` and implement the split record scanner
 with a helper method
 (``Scannables.splitRecordScanner``) already defined by CDAP. It takes a split reader and a ``RecordMaker``
@@ -236,16 +236,16 @@ directory ``examples/Purchase``, namely the ``PurchaseHistoryStore``.
 
 Writing to Datasets with SQL
 ----------------------------
-Data can be inserted into Datasets using SQL. For example, you can write to a Dataset named
+Data can be inserted into datasets using SQL. For example, you can write to a dataset named
 ``ProductCatalog`` with this SQL query::
 
   INSERT INTO TABLE dataset_productcatalog SELECT ...
 
-In order for a Dataset to enable record insertion from SQL query, it simply has to expose a way to write records
+In order for a dataset to enable record insertion from SQL query, it simply has to expose a way to write records
 into itself.
 
-For CDAP Datasets, this is done by implementing the ``RecordWritable`` interface.
-The system Dataset KeyValueTable already implements this and can be used to insert records from SQL queries.
+For CDAP datasets, this is done by implementing the ``RecordWritable`` interface.
+The system dataset KeyValueTable already implements this and can be used to insert records from SQL queries.
 
 Let's take a closer look at the ``RecordWritable`` interface.
 
@@ -258,20 +258,20 @@ using the method::
   Type getRecordType();
 
 :ref:`The same rules <sql-limitations>` that apply to the type of the ``RecordScannable`` interface apply
-to the type of the ``RecordWritable`` interface. In fact, if a Dataset implements both ``RecordScannable`` and
+to the type of the ``RecordWritable`` interface. In fact, if a dataset implements both ``RecordScannable`` and
 ``RecordWritable`` interfaces, they will have to use identical record types.
 
 Writing Records
 ...............
 
-To enable inserting SQL query results, a Dataset needs to provide a means of writing a record into itself.
-This is similar to how the ``BatchWritable`` interface makes Datasets writable from MapReduce programs by providing
+To enable inserting SQL query results, a dataset needs to provide a means of writing a record into itself.
+This is similar to how the ``BatchWritable`` interface makes datasets writable from MapReduce programs by providing
 a way to write pairs of key and value. You need to implement the ``RecordWritable`` method::
 
   void write(RECORD record) throws IOException;
 
 Continuing the *MyDataset* :ref:`example used above <sql-scanning-records>`, which showed an implementation of
-``RecordScannable``, this example an implementation of a ``RecordWritable`` Dataset that is backed by a ``Table``::
+``RecordScannable``, this example an implementation of a ``RecordWritable`` dataset that is backed by a ``Table``::
 
   class MyDataset implements Dataset, ..., RecordWritable<Entry> {
 
@@ -279,7 +279,7 @@ Continuing the *MyDataset* :ref:`example used above <sql-scanning-records>`, whi
     private static final byte[] VALUE_COLUMN = { 'c' };
 
     // ..
-    // All other Dataset methods
+    // All other dataset methods
     // ...
 
     @Override
@@ -293,20 +293,20 @@ Continuing the *MyDataset* :ref:`example used above <sql-scanning-records>`, whi
     }
   }
 
-Note that a Dataset can implement either ``RecordScannable``, ``RecordWritable``, or both.
+Note that a dataset can implement either ``RecordScannable``, ``RecordWritable``, or both.
 
 Formulating Queries
 -------------------
 When creating your queries, keep these limitations in mind:
 
 - The query syntax of CDAP is a subset of the variant of SQL that was first defined by Apache Hive.
-- The SQL commands ``UPDATE`` and ``DELETE`` are not allowed on CDAP Datasets.
-- When addressing your Datasets in queries, you need to prefix the Dataset name with
-  ``dataset_``. For example, if your Dataset is named ``ProductCatalog``, then the
+- The SQL commands ``UPDATE`` and ``DELETE`` are not allowed on CDAP datasets.
+- When addressing your datasets in queries, you need to prefix the dataset name with
+  ``dataset_``. For example, if your dataset is named ``ProductCatalog``, then the
   corresponding table name is ``dataset_productcatalog``. Note that the table name is
   lower-case.
-- If your Dataset name contains a '.' or a '-', those characters will be converted to '_' for the Hive
-  table name. For example, if your Dataset is named ``my-table.name``, the corresponding Hive table
+- If your dataset name contains a '.' or a '-', those characters will be converted to '_' for the Hive
+  table name. For example, if your dataset is named ``my-table.name``, the corresponding Hive table
   name will be ``dataset_my_table_name``. Beware of name collisions. For example, ``my.table`` will
   use the same Hive table name as ``my_table``.
 

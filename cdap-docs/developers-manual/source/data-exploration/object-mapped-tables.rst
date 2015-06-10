@@ -4,11 +4,11 @@
 
 .. _object-mapped-table-exploration:
 
-============================================
+=============================
 ObjectMappedTable Exploration
-============================================
+=============================
 
-An ``ObjectMappedTable`` is a system Dataset that can write Java objects to a Table
+An ``ObjectMappedTable`` is a system dataset that can write Java objects to a Table
 by mapping object fields to Table columns. It can also be explored in an ad-hoc manner.
 
 Creating an ObjectMappedTable
@@ -60,7 +60,7 @@ Note that all column names have been changed to lowercase letters. This is becau
 In addition to the object fields, the object key has been inserted into the schema as a binary column ``key``.
 
 If you wish to name the key column differently, perhaps because your object already contains a field named "key", you 
-can do so by providing an additional property when creating your Dataset. You can also set the key type to ``STRING``
+can do so by providing an additional property when creating your dataset. You can also set the key type to ``STRING``
 instead of ``BINARY`` if desired::
   
   @Override
@@ -83,7 +83,7 @@ instead of ``BINARY`` if desired::
     }
   } 
 
-Creating the Dataset in this manner would result in a different column name and type for the object key:: 
+Creating the dataset in this manner would result in a different column name and type for the object key:: 
 
   (rowkey STRING, catalogid STRING, customer STRING, price INT, product STRING, purchasetime BIGINT, quantity INT)
 
@@ -102,7 +102,7 @@ Limitations
 * Fields of a class that are declared static or transient are ignored during schema generation. This means that the
   record type must have at least one non-transient and non-static field. For example,
   the ``java.util.Date`` class has only static and transient fields. Therefore a record type of ``Date`` is not
-  supported and will result in an exception when the Dataset is created.
+  supported and will result in an exception when the dataset is created.
 
 * You cannot insert data into an ``ObjectMappedTable`` using SQL.
 
@@ -111,12 +111,12 @@ Formulating Queries
 When creating your queries, keep these limitations in mind:
 
 - The query syntax of CDAP is a subset of the variant of SQL that was first defined by Apache Hive.
-- The SQL commands ``UPDATE`` and ``DELETE`` are not allowed on CDAP Datasets.
-- When addressing your datasets in queries, you need to prefix the Dataset name with the CDAP
-  namespace ``dataset_``. For example, if your Dataset is named ``Purchases``, then the corresponding table
+- The SQL commands ``UPDATE`` and ``DELETE`` are not allowed on CDAP datasets.
+- When addressing your datasets in queries, you need to prefix the dataset name with the CDAP
+  namespace ``dataset_``. For example, if your dataset is named ``Purchases``, then the corresponding table
   name is ``dataset_purchases``. Note that the table name is lower-case.
-- If your Dataset name contains a '.' or a '-', those characters will be converted to '_' for the Hive
-  table name. For example, if your Dataset is named ``my-table.name``, the corresponding Hive table
+- If your dataset name contains a '.' or a '-', those characters will be converted to '_' for the Hive
+  table name. For example, if your dataset is named ``my-table.name``, the corresponding Hive table
   name will be ``dataset_my_table_name``. Beware of name collisions. For example, ``my.table`` will
   use the same Hive table name as ``my_table``.
 

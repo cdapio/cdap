@@ -52,7 +52,7 @@
              "description": "Specifies the start offset for processing from the queue",
              "properties": {
                "width": "extra-small",
-               "default": 1
+               "default": 0
              },
              "min": 1
           }

@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsRunsStatusController', function($state, $scope, myWorkFlowApi, $filter, $alert, GraphHelpers, MyDataSource) {
+  .controller('WorkflowsRunsStatusController', function($state, $scope, myWorkFlowApi, $filter, $alert, GraphHelpers, MyDataSource, myMapreduceApi) {
     var filterFilter = $filter('filter'),
         params = {
           appId: $state.params.appId,
@@ -74,6 +74,7 @@ angular.module(PKG.name + '.feature.workflows')
       + '/runs/' + $scope.runs.selected.runid;
 
     if ($scope.runs.length > 0) {
+
       dataSrc.poll({
         _cdapNsPath: path,
         interval: 1000
@@ -81,6 +82,7 @@ angular.module(PKG.name + '.feature.workflows')
       .then(function (response) {
 
         var pastNodes = Object.keys(response.properties);
+        $scope.runs.selected.properties = response.properties;
 
         var activeNodes = filterFilter($scope.data.nodes , function(node) {
           return pastNodes.indexOf(node.nodeId) !== -1;
@@ -89,20 +91,24 @@ angular.module(PKG.name + '.feature.workflows')
         angular.forEach(activeNodes, function(n) {
           var runid = response.properties[n.nodeId];
 
-          dataSrc.request({
-            _cdapNsPath: '/apps/' + $state.params.appId +
-              '/mapreduce/' + n.program.programName +
-              '/runs/' + runid
-          })
-          .then(function (result) {
-            $scope.data.current[n.name] = result.status;
-          });
+          var mapreduceParams = {
+            namespace: $state.params.namespace,
+            appId: $state.params.appId,
+            mapreduceId: n.program.programName,
+            runId: runid,
+            scope: $scope
+          };
+          myMapreduceApi.runDetail(mapreduceParams)
+            .$promise
+            .then(function (result) {
+              $scope.data.current[n.name] = result.status;
+            });
         });
 
         return response;
       })
       .then(function (response) {
-        if (response.status === 'COMPLETED') {
+        if (response.status === 'COMPLETED' || response.status === 'FAILED') {
           dataSrc.stopPoll(response.__pollId__);
         }
       });
@@ -110,11 +116,11 @@ angular.module(PKG.name + '.feature.workflows')
 
 
     $scope.workflowProgramClick = function (instance) {
-      if (['START', 'END'].indexOf(instance.type) > -1) {
+      if (['START', 'END'].indexOf(instance.type) > -1 ) {
         return;
       }
       if ($scope.runs.length) {
-        if (instance.program.programType === 'MAPREDUCE') {
+        if (instance.program.programType === 'MAPREDUCE' && $scope.runs.selected.properties[instance.nodeId]) {
           $state.go('mapreduce.detail.runs.run', {
             programId: instance.program.programName,
             runid: $scope.runs.selected.properties[instance.nodeId]
@@ -136,15 +142,6 @@ angular.module(PKG.name + '.feature.workflows')
       return;
       $scope.status = 'STOPPING';
       myWorkFlowApi.stop(params);
-    };
-
-    $scope.goToDetailActionView = function(programId, programType) {
-      // As of 2.7 only a mapreduce job is scheduled in a workflow.
-      if (programType === 'MAPREDUCE') {
-        $state.go('mapreduce.detail', {
-          programId: programId
-        });
-      }
     };
 
   });

@@ -126,7 +126,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       localizeFiles.put("hConf.xml", saveHConf(hConf, File.createTempFile("hConf", ".xml", tempDir)));
       localizeFiles.put("cConf.xml", saveCConf(cConf, File.createTempFile("cConf", ".xml", tempDir)));
       programDir = DirUtils.createTempDir(tempDir);
-      copiedProgram = copyProgramJar(program, programDir);
+      copiedProgram = copyProgramJar(program, tempDir, programDir);
 
       final URI logbackURI = getLogBackURI(copiedProgram, programDir, tempDir);
       final String programOptions = GSON.toJson(options);
@@ -261,8 +261,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
    * Copies the program jar to a local temp file and return a {@link Program} instance
    * with {@link Program#getJarLocation()} points to the local temp file.
    */
-  private Program copyProgramJar(final Program program, File programDir) throws IOException {
-    File tempJar = File.createTempFile(program.getName(), ".jar");
+  private Program copyProgramJar(final Program program, File tempDir, File programDir) throws IOException {
+    File tempJar = File.createTempFile(program.getName(), ".jar", tempDir);
     Files.copy(new InputSupplier<InputStream>() {
       @Override
       public InputStream getInput() throws IOException {

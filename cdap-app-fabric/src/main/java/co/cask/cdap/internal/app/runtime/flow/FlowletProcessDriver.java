@@ -78,7 +78,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     this.txCallback = txCallback;
     this.loggingContext = flowletContext.getLoggingContext();
 
-    processQueue = new PriorityQueue<FlowletProcessEntry<?>>(processSpecifications.size());
+    processQueue = new PriorityQueue<>(processSpecifications.size());
     for (ProcessSpecification<?> spec : processSpecifications) {
       processQueue.offer(FlowletProcessEntry.create(spec));
     }
@@ -95,7 +95,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     this.dataFabricFacade = other.dataFabricFacade;
     this.txCallback = other.txCallback;
     this.loggingContext = other.loggingContext;
-    this.processQueue = new PriorityQueue<FlowletProcessEntry<?>>(other.processQueue.size());
+    this.processQueue = new PriorityQueue<>(other.processQueue.size());
     Iterables.addAll(processQueue, other.processQueue);
   }
 
@@ -370,7 +370,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           FlowletProcessEntry retryEntry = processEntry.isRetry() ?
             processEntry :
             FlowletProcessEntry.create(processEntry.getProcessSpec(),
-                                       new ProcessSpecification<T>(new SingleItemQueueReader<T>(input),
+                                       new ProcessSpecification<>(new SingleItemQueueReader<>(input),
                                                                    processEntry.getProcessSpec().getProcessMethod(),
                                                                    null));
           processQueue.offer(retryEntry);

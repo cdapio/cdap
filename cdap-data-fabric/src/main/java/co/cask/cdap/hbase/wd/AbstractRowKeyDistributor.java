@@ -62,7 +62,7 @@ public abstract class AbstractRowKeyDistributor implements Parametrizable {
 
     Pair<byte[], byte[]>[] intervals = new Pair[startKeys.length];
     for (int i = 0; i < startKeys.length; i++) {
-      intervals[i] = new Pair<byte[], byte[]>(startKeys[i], stopKeys[i]);
+      intervals[i] = new Pair<>(startKeys[i], stopKeys[i]);
     }
 
     return intervals;

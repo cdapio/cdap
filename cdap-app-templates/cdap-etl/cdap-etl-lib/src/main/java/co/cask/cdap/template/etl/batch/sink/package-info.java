@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,24 +14,8 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.auth;
-
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
-
 /**
- * Guice modules for authentication.
+ * Packages for ETL Application Template.
+ *
  */
-public class AuthModule extends AbstractModule {
-
-  @Override
-  protected void configure() {
-  }
-
-  @Provides
-  @Singleton
-  public final Authenticator providesAuthenticator() {
-    return new NoAuthenticator();
-  }
-}
+package co.cask.cdap.template.etl.batch.sink;

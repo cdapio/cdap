@@ -4,9 +4,9 @@
 
 .. _quick-start:
 
-============================================
+===========
 Quick Start
-============================================
+===========
 
 These instructions will take you from downloading the CDAP SDK through the running of an application.
 
@@ -30,7 +30,7 @@ aggregate logs, perform real-time and batch analytics of the logs ingested, and 
 results using multiple interfaces. 
 
 Specifically, this application processes web server access logs, counts page-views by IP
-in real-time, and computes the bounce ratio of each web page encountered in batch. (The
+in real time, and computes the bounce ratio of each web page encountered in batch. (The
 bounce rate is the percentage of views that are not followed by another view on the same
 site.)
 
@@ -101,19 +101,19 @@ include the ``cdap-apps/Wise`` directory.)
 **Learn More:** *You can also deploy apps by dragging and dropping their jars on* :ref:`the CDAP UI <cdap-ui>`.
 
 
-Starting Realtime Processing
-============================
+Starting Real-time Processing
+=============================
 Now that the application is deployed, we can start the real-time processing::
 
   $ cdap-cli.sh start flow Wise.WiseFlow
   Successfully started Flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}'
 
-This starts the Flow named *WiseFlow,* which listens for log events from web servers to
-analyze them in realtime. Another way to start the flow is using ``curl``::
+This starts the flow named *WiseFlow,* which listens for log events from web servers to
+analyze them in real time. Another way to start the flow is using ``curl``::
 
   $ curl -w'\n' -X POST localhost:10000/v3/namespaces/default/apps/Wise/flows/WiseFlow/start
 
-At any time, you can find out whether the Flow is running::
+At any time, you can find out whether the flow is running::
 
   $ cdap-cli.sh get flow status Wise.WiseFlow
   RUNNING
@@ -124,7 +124,7 @@ At any time, you can find out whether the Flow is running::
 
 Injecting Data 
 ==============
-The *WiseFlow* uses a Stream to receive log events from Web servers. The Stream has a REST
+The *WiseFlow* uses a stream to receive log events from Web servers. The stream has a REST
 endpoint used to ingest data with HTTP requests, and you can do that using the
 Command Line Interface::
 
@@ -141,7 +141,7 @@ Or, you can use an HTTP request::
 Because it is tedious to send events manually (not to mention difficult to correctly quote
 a multi-line command), a file with sample web log events is included in the Wise
 application source. The CDAP CLI can read it line-by-line and submit them as events
-to the Stream. Use the CLI to send the events to the stream:
+to the stream. Use the CLI to send the events to the stream:
 
 .. container:: highlight
 
@@ -153,12 +153,12 @@ This will run for a number of seconds until all events are inserted.
 
 Inspecting the Injected Data 
 ============================
-Now that you have data in the Stream, you can verify it by reading the events back. Each
+Now that you have data in the stream, you can verify it by reading the events back. Each
 event is tagged with a timestamp of when it was received by CDAP. (Note: this is not the
 same time as the date included in each event—that is the time when the event actually
 occurred on the web server.) 
 
-You can retrieve events from a Stream by specifying a time range and a limit on the number
+You can retrieve events from a stream by specifying a time range and a limit on the number
 of events you want to see. For example, using the Command Line Interface, this shows up to 5 events
 in a time range of 3 minutes duration, starting 5 minutes ago::
 
@@ -190,7 +190,7 @@ in a time range of 3 minutes duration, starting 5 minutes ago::
   Fetched 5 events from stream logEventStream
   
 Note: you may have to adjust the time range according to when you injected the
-events into the Stream. The longer after you inject the events, the farther back in time
+events into the stream. The longer after you inject the events, the farther back in time
 you will need to go to find the events::
 
   $ cdap-cli.sh get stream logEventStream -60m +3m 5
@@ -213,13 +213,13 @@ Command Line.
 
 Monitoring with the CDAP UI
 ===========================
-You may recall that before we started injecting data into the Stream, we started the
-*WiseFlow* to process these events in real-time. You can observe the Flow while it is
+You may recall that before we started injecting data into the stream, we started the
+*WiseFlow* to process these events in real time. You can observe the flow while it is
 processing events by retrieving metrics about how many events it has processed. For that,
-we need to know the name of the Flowlet inside the *WiseFlow* that performs the actual
+we need to know the name of the flowlet inside the *WiseFlow* that performs the actual
 processing. 
 
-In this case, it is a Flowlet named *parser*. Here is a ``curl`` command to retreive the
+In this case, it is a flowlet named *parser*. Here is a ``curl`` command to retreive the
 number of events it has processed (the endTime and the value returned will vary, depending 
 on when and how many events you have sent)::
 
@@ -228,16 +228,16 @@ on when and how many events you have sent)::
   '&metric=system.process.events.processed&aggregate=true'
   {"startTime":0,"endTime":1431467057,"series":[{"metricName":"system.process.events.processed","grouping":{},"data":[{"time":0,"value":3007}]}]}
 
-A much easier way to observe the Flow is in the `CDAP UI: <http://localhost:9999>`__
-it shows a `visualization of the Flow, <http://localhost:9999/ns/default/apps/Wise/programs/flows/WiseFlow/runs>`__
-annotated with its realtime metrics:
+A much easier way to observe the flow is in the `CDAP UI: <http://localhost:9999>`__
+it shows a `visualization of the flow, <http://localhost:9999/ns/default/apps/Wise/programs/flows/WiseFlow/runs>`__
+annotated with its real-time metrics:
 
 .. image:: ../_images/quickstart/wise-flow1.png
    :width: 600px
 
-In this screenshot, we see that the Stream has about thirty thousand events and all of them
-have been processed by both Flowlets. You can watch these metrics update in realtime by
-repeating the injection of events into the Stream:
+In this screenshot, we see that the stream has about thirty thousand events and all of them
+have been processed by both flowlets. You can watch these metrics update in real time by
+repeating the injection of events into the stream:
 
 .. container:: highlight
 
@@ -245,7 +245,7 @@ repeating the injection of events into the Stream:
     |$| cdap-wise-|cdap-apps-version|/bin/inject-data.sh
   
 If you click on the right-most flowlet (*pageViewCount*) you see the current number of
-events being processed by each Flowlet, in this case up to about 60 events per second:
+events being processed by each flowlet, in this case up to about 60 events per second:
 
 .. image:: ../_images/quickstart/wise-flow2.png
    :width: 600px
@@ -253,7 +253,7 @@ events being processed by each Flowlet, in this case up to about 60 events per s
 
 Retrieving the Results of Processing 
 ====================================
-The Flow counts URL requests by the origin IP address, using a Dataset called
+The flow counts URL requests by the origin IP address, using a dataset called
 *pageViewStore*. To make these counts available, the application implements a service called
 *WiseService*. Before we can use this service, we need to make sure that it is running. We
 can start the service using the Command Line Interface::
@@ -330,7 +330,7 @@ The Wise application also processes the web log to compute the “bounce count�
 For this purpose, we consider it a “bounce” if a user views a page but does not view
 another page within a time threshold: essentially, that means the user has left the web site. 
 
-Bounces are difficult to detect with a Flow. This is because processing in a Flow is
+Bounces are difficult to detect with a flow. This is because processing in a flow is
 triggered by incoming events; a bounce, however, is indicated by the absence of an event:
 the same user’s next page view. 
 
@@ -340,7 +340,7 @@ that is scheduled to run every 10 minutes; we can also start the job immediately
 CLI::
 
   $ cdap-cli.sh start mapreduce Wise.BounceCountsMapReduce
-  Successfully started MapReduce Program 'BounceCountsMapReduce' of application 'Wise' with stored runtime arguments '{}'
+  Successfully started MapReduce program 'BounceCountsMapReduce' of application 'Wise' with stored runtime arguments '{}'
   
 or using a REST call::
 
@@ -408,7 +408,7 @@ fixed columns::
   | 255.255.255.180 | /index.html      | 7             |
   +====================================================+
 
-We can even join two datasets: the one produced by the realtime flow; and the other one
+We can even join two datasets: the one produced by the real-time flow; and the other one
 produced by the MapReduce. The query below returns, for each of the three URLs with the
 highest bounce ratio, the IP addresses that have made more than three requests for that
 URL. In other words: who are the users who are most interested in the least interesting

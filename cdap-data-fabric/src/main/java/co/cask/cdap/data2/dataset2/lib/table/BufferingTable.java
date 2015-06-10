@@ -140,7 +140,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     // we want it to be of format length+value to avoid conflicts like table="ab", row="cd" vs table="abc", row="d"
     // Default uses the above scheme. Subclasses can change it by overriding the #getNameAsTxChangePrefix method
     this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) name.length()}, Bytes.toBytes(name));
-    this.buff = new ConcurrentSkipListMap<byte[], NavigableMap<byte[], Update>>(Bytes.BYTES_COMPARATOR);
+    this.buff = new ConcurrentSkipListMap<>(Bytes.BYTES_COMPARATOR);
   }
 
   /**
@@ -263,7 +263,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
 
   private Collection<byte[]> getRowChanges() {
     // we resolve conflicts on row level of individual table
-    List<byte[]> changes = new ArrayList<byte[]>(buff.size());
+    List<byte[]> changes = new ArrayList<>(buff.size());
     for (byte[] changedRow : buff.keySet()) {
       changes.add(Bytes.add(getNameAsTxChangePrefix(), changedRow));
     }
@@ -272,7 +272,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
 
   private Collection<byte[]> getColumnChanges() {
     // we resolve conflicts on row level of individual table
-    List<byte[]> changes = new ArrayList<byte[]>(buff.size());
+    List<byte[]> changes = new ArrayList<>(buff.size());
     for (Map.Entry<byte[], NavigableMap<byte[], Update>> rowChange : buff.entrySet()) {
       if (rowChange.getValue() == null) {
         // NOTE: as of now we cannot detect conflict between delete whole row and row's column value change.
@@ -300,7 +300,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
       // clearing up in-memory buffer by initializing new map.
       // NOTE: we want to init map here so that if no changes are made we re-use same instance of the map in next tx
       // NOTE: we could cache two maps and swap them to avoid creation of map instances, but code would be ugly
-      buff = new ConcurrentSkipListMap<byte[], NavigableMap<byte[], Update>>(Bytes.BYTES_COMPARATOR);
+      buff = new ConcurrentSkipListMap<>(Bytes.BYTES_COMPARATOR);
       // TODO: tracking of persisted items can be optimized by returning a pair {succeededOrNot, persisted} which
       //       tells if persisting succeeded and what was persisted (i.e. what we will have to undo in case of rollback)
       persist(toUndo);

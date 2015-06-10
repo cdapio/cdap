@@ -3,7 +3,7 @@ angular.module(PKG.name + '.feature.data')
     this.MyOrderings = MyOrderings;
     this.dataList = [];
     this.currentPage = 1;
-
+    this.searchText = '';
     var params = {
       namespace: $state.params.namespace,
       scope: $scope
@@ -33,11 +33,11 @@ angular.module(PKG.name + '.feature.data')
 
     this.goToDetail = function(data) {
       if (data.dataType === 'Dataset') {
-        $state.go('datasets.detail.overview', {
+        $state.go('datasets.detail.overview.status', {
           datasetId: data.name
         });
       } else if (data.dataType === 'Stream') {
-        $state.go('streams.detail.overview', {
+        $state.go('streams.detail.overview.status', {
           streamId: data.name
         });
       }

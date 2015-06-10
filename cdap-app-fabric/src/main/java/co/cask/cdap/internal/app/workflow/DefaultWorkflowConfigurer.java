@@ -87,12 +87,12 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
 
   @Override
   public WorkflowForkConfigurer<? extends WorkflowConfigurer> fork() {
-    return new DefaultWorkflowForkConfigurer<DefaultWorkflowConfigurer>(this);
+    return new DefaultWorkflowForkConfigurer<>(this);
   }
 
   @Override
   public WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<WorkflowContext> predicate) {
-    return new DefaultWorkflowConditionConfigurer<DefaultWorkflowConfigurer>(this, predicate.getClass().getName());
+    return new DefaultWorkflowConditionConfigurer<>(this, predicate.getClass().getName());
   }
 
   public WorkflowSpecification createSpecification() {

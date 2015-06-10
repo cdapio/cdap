@@ -29,6 +29,7 @@ import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.AdapterConfig;
@@ -37,8 +38,10 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.remote.RemoteAdapterManager;
 import co.cask.cdap.test.remote.RemoteApplicationManager;
 import co.cask.cdap.test.remote.RemoteStreamManager;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
+import com.google.common.io.Resources;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -46,6 +49,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.JarURLConnection;
+import java.net.URL;
 import java.sql.Connection;
 
 /**
@@ -57,41 +62,56 @@ public class IntegrationTestManager implements TestManager {
 
   private final ApplicationClient applicationClient;
   private final ClientConfig clientConfig;
+  private final RESTClient restClient;
   private final LocationFactory locationFactory;
   private final ProgramClient programClient;
   private final NamespaceClient namespaceClient;
   private final AdapterClient adapterClient;
 
-  public IntegrationTestManager(ClientConfig clientConfig, LocationFactory locationFactory) {
+  public IntegrationTestManager(ClientConfig clientConfig, RESTClient restClient, LocationFactory locationFactory) {
     this.clientConfig = clientConfig;
+    this.restClient = restClient;
     this.locationFactory = locationFactory;
-    this.applicationClient = new ApplicationClient(clientConfig);
-    this.programClient = new ProgramClient(clientConfig);
-    this.namespaceClient = new NamespaceClient(clientConfig);
-    this.adapterClient = new AdapterClient(clientConfig);
+    this.applicationClient = new ApplicationClient(clientConfig, restClient);
+    this.programClient = new ProgramClient(clientConfig, restClient);
+    this.namespaceClient = new NamespaceClient(clientConfig, restClient);
+    this.adapterClient = new AdapterClient(clientConfig, restClient);
   }
 
   @Override
   public ApplicationManager deployApplication(Id.Namespace namespace,
                                               Class<? extends Application> applicationClz,
                                               File... bundleEmbeddedJars) {
+    // See if the application class comes from file or jar.
+    // If it's from JAR, no need to trace dependency since it should already be in an application jar.
+    URL appClassURL = applicationClz.getClassLoader()
+                                    .getResource(applicationClz.getName().replace('.', '/') + ".class");
+    // Should never happen, otherwise the ClassLoader is broken
+    Preconditions.checkNotNull(appClassURL, "Cannot find class %s from the classloader", applicationClz);
+
     try {
-      Location appJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClz, bundleEmbeddedJars);
+      // Create and deploy application jar
       File appJarFile = File.createTempFile(applicationClz.getSimpleName(), ".jar");
       try {
-        Files.copy(Locations.newInputSupplier(appJar), appJarFile);
+        if ("jar".equals(appClassURL.getProtocol())) {
+          copyJarFile(appClassURL, appJarFile);
+        } else {
+          Location appJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClz, bundleEmbeddedJars);
+          Files.copy(Locations.newInputSupplier(appJar), appJarFile);
+        }
         applicationClient.deploy(appJarFile);
-
-        Application application = applicationClz.newInstance();
-        DefaultAppConfigurer configurer = new DefaultAppConfigurer(application);
-        application.configure(configurer, new ApplicationContext());
-        String applicationId = configurer.createSpecification().getName();
-        return new RemoteApplicationManager(Id.Application.from(namespace, applicationId), clientConfig);
       } finally {
         if (!appJarFile.delete()) {
           LOG.warn("Failed to delete temporary app jar {}", appJarFile.getAbsolutePath());
         }
       }
+
+      // Extracts application id from the application class
+      Application application = applicationClz.newInstance();
+      DefaultAppConfigurer configurer = new DefaultAppConfigurer(application);
+      application.configure(configurer, new ApplicationContext());
+      String applicationId = configurer.createSpecification().getName();
+      return new RemoteApplicationManager(Id.Application.from(namespace, applicationId), clientConfig, restClient);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -171,6 +191,26 @@ public class IntegrationTestManager implements TestManager {
 
   @Override
   public StreamManager getStreamManager(Id.Stream streamId) {
-    return new RemoteStreamManager(clientConfig, streamId);
+    return new RemoteStreamManager(clientConfig, restClient, streamId);
+  }
+
+  /**
+   * Copies the jar content to a local file
+   *
+   * @param jarURL URL representing the jar location or an entry in the jar. An entry URL has format of
+   *               {@code jar:[jarURL]!/path/to/entry}
+   * @param file the local file to copy to
+   */
+  private void copyJarFile(URL jarURL, File file) {
+    try {
+      JarURLConnection jarConn = (JarURLConnection) jarURL.openConnection();
+      try {
+        Files.copy(Resources.newInputStreamSupplier(jarConn.getJarFileURL()), file);
+      } finally {
+        jarConn.getJarFile().close();
+      }
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 }

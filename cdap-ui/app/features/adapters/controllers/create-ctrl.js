@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdapterCreateController', function ($scope, AdapterCreateModel, AdapterApiFactory, $q, $alert, $state, $timeout) {
+  .controller('AdapterCreateController', function ($scope, AdapterCreateModel, AdapterApiFactory, $q, $alert, $state, $timeout, EventPipe) {
     this.model = new AdapterCreateModel();
 
     var defaultTabs = [
@@ -84,16 +84,36 @@ angular.module(PKG.name + '.feature.adapters')
             $timeout(function() {
               $state.go('^.list', $state.params, {reload: true});
             });
+            // Loading icon shown in model
+            EventPipe.emit('hideLoadingIcon.immediate');
             $alert({
               type: 'success',
               content: 'Adapter Template created successfully!'
             });
           }, function(err) {
-            $alert({
+            // Loading icon shown in model
+            EventPipe.emit('hideLoadingIcon.immediate');
+            var errorObj = {
               type: 'danger',
-              content: err.message
-            });
+              title: 'Error Creating Adapter',
+              content: (angular.isArray(err.messages)? formatErrorMessages(err.messages): err.messages.data)
+            };
+            $alert(errorObj);
           });
+
+          // TODO: Should move it to a template.
+          // Constructing html in controller is bad.
+          function formatErrorMessages(messages) {
+            var formattedMessage = '';
+            messages.forEach(function(message) {
+              formattedMessage += '<div>';
+              formattedMessage += '<strong>' + message.error + '</strong> '
+              formattedMessage += '<span>' + message.message + '</span>';
+              formattedMessage += '</div>';
+            });
+
+            return formattedMessage;
+          }
     };
 
     this.saveAsDraft = function() {
@@ -101,6 +121,8 @@ angular.module(PKG.name + '.feature.adapters')
           .saveAsDraft()
           .then(
             function success() {
+              // Loading icon shown in model
+              EventPipe.emit('hideLoadingIcon.immediate');
               $alert({
                 type: 'success',
                 content: 'The Adapter Template ' + this.model.metadata.name + ' has been saved as draft!'
@@ -108,6 +130,8 @@ angular.module(PKG.name + '.feature.adapters')
               $state.go('^.list');
             }.bind(this),
             function error(err) {
+              // Loading icon shown in model
+              EventPipe.emit('hideLoadingIcon.immediate');
               $alert({
                 type: 'info',
                 content: err.message

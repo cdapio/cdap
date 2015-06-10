@@ -14,9 +14,5 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-#
-# Install firefox
-#
-
-# Install firefox
-apt-get install -y firefox
+# Remove UDEV persistent network rules
+rm -f /etc/udev/rules.d/70-persistent-net.rules

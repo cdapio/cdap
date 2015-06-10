@@ -29,24 +29,24 @@ The fields of a user profile are updated in different ways:
 
 This application illustrates both row-level and column-level conflict detection for a Table.
 
-Let's look at some of these components, and then run the Application and see the results.
+Let's look at some of these components, and then run the application and see the results.
 
 
 Introducing a Feature: Column-Level Conflict Detection
 ======================================================
 
 As in the other :ref:`examples <examples-index>`, the components
-of the Application are tied together by a class ``UserProfiles``:
+of the application are tied together by a class ``UserProfiles``:
 
 .. literalinclude:: /../../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java
     :language: java
-    :lines: 34-
+    :lines: 33-
 
 This application uses a Table with conflict detection either at the row level or
 at the column level.
 
 A conflict occurs if two transactions that overlap in time modify the same data in a table.
-For example, a flowlet's process method might overlap with a Service handler.
+For example, a flowlet's process method might overlap with a service handler.
 Such a conflict is detected at the time that the transactions are committed,
 and the transaction that attempts to commit last is rolled back.
 
@@ -100,7 +100,7 @@ Before building the application, set the ``ConflictDetection`` appropriately in 
 
 .. literalinclude:: /../../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java
       :language: java
-      :lines: 56-58
+      :lines: 55-57
       
 - The first time you build the application, set the ``Table.PROPERTY_CONFLICT_LEVEL`` to
   ``ConflictDetection.ROW.name()``. 
@@ -115,7 +115,7 @@ Before building the application, set the ``ConflictDetection`` appropriately in 
 Re-build the Application with Column-level Conflict Detection
 -------------------------------------------------------------
 
-- Stop the Application's flow and service (as described `below <#stopping-the-application>`__).
+- Stop the application's flow and service (as described `below <#stopping-the-application>`__).
 - Delete the ``profiles`` dataset, either through the CDAP Command Line Interface or
   by making a ``curl`` call::
 
@@ -127,7 +127,7 @@ Re-build the Application with Column-level Conflict Detection
 
 
 Running CDAP Applications
-============================================
+=========================
 
 .. |example| replace:: UserProfiles
 
@@ -170,7 +170,7 @@ Once the application is deployed:
     Successfully started Flow 'ActivityFlow' of application 'UserProfiles' with stored runtime arguments '{}'
 
 Starting the Service
-------------------------------
+--------------------
 
 Once the application is deployed:
 
@@ -181,7 +181,7 @@ Once the application is deployed:
 
     $ cdap-cli.sh start service UserProfiles.UserProfileService
     
-    Successfully started Service 'UserProfileService' of application 'UserProfiles' with stored runtime arguments '{}'
+    Successfully started service 'UserProfileService' of application 'UserProfiles' with stored runtime arguments '{}'
 
 Populate the ``profiles`` Table
 -------------------------------

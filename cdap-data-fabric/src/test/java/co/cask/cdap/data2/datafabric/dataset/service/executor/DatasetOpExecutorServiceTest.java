@@ -39,7 +39,6 @@ import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -112,7 +111,6 @@ public class DatasetOpExecutorServiceTest {
       new DataFabricModules().getInMemoryModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
-      new AuthModule(),
       new TransactionMetricsModule(),
       new ExploreClientModule());
 

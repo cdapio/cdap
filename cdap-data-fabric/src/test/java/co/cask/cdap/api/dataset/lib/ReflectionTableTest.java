@@ -249,11 +249,11 @@ public class ReflectionTableTest {
         @Override
         public void apply() throws Exception {
           Put put = new Put(rowKey);
-          ReflectionPutWriter<User> putWriter = new ReflectionPutWriter<User>(fullSchema);
+          ReflectionPutWriter<User> putWriter = new ReflectionPutWriter<>(fullSchema);
           putWriter.write(SAMUEL, put);
           usersTable.put(put);
           Row row = usersTable.get(rowKey);
-          ReflectionRowReader<User2> rowReader = new ReflectionRowReader<User2>(projSchema, TypeToken.of(User2.class));
+          ReflectionRowReader<User2> rowReader = new ReflectionRowReader<>(projSchema, TypeToken.of(User2.class));
           User2 actual = rowReader.read(row, fullSchema);
           Assert.assertEquals(projected, actual);
         }
@@ -277,7 +277,7 @@ public class ReflectionTableTest {
         @Override
         public void apply() throws Exception {
           Put put = new Put(rowKey);
-          ReflectionPutWriter<User> putWriter = new ReflectionPutWriter<User>(schema);
+          ReflectionPutWriter<User> putWriter = new ReflectionPutWriter<>(schema);
           putWriter.write(SAMUEL, put);
           usersTable.put(put);
           Row row = usersTable.get(rowKey);
@@ -308,7 +308,7 @@ public class ReflectionTableTest {
         @Override
         public void apply() throws Exception {
           Put put = new Put(rowKey);
-          ReflectionPutWriter<User> putWriter = new ReflectionPutWriter<User>(fullSchema);
+          ReflectionPutWriter<User> putWriter = new ReflectionPutWriter<>(fullSchema);
           putWriter.write(SAMUEL, put);
           usersTable.put(put);
           Row row = usersTable.get(rowKey);
@@ -330,11 +330,11 @@ public class ReflectionTableTest {
       @Override
       public void apply() throws Exception {
         Put put = new Put(rowKey);
-        ReflectionPutWriter<User> putWriter = new ReflectionPutWriter<User>(schema);
+        ReflectionPutWriter<User> putWriter = new ReflectionPutWriter<>(schema);
         putWriter.write(obj, put);
         table.put(put);
         Row row = table.get(rowKey);
-        ReflectionRowReader<User> rowReader = new ReflectionRowReader<User>(schema, TypeToken.of(User.class));
+        ReflectionRowReader<User> rowReader = new ReflectionRowReader<>(schema, TypeToken.of(User.class));
         User actual = rowReader.read(row, schema);
         Assert.assertEquals(obj, actual);
       }

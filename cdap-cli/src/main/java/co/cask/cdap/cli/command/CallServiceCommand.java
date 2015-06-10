@@ -138,7 +138,7 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
    */
   private String formatHeaders(HttpResponse response) {
     Multimap<String, String> headers = response.getHeaders();
-    ImmutableMap.Builder<String, String> builder = new ImmutableMap.Builder<String, String>();
+    ImmutableMap.Builder<String, String> builder = new ImmutableMap.Builder<>();
     for (String key : headers.keySet()) {
       Collection<String> value = headers.get(key);
       builder.put(key, StringUtils.arrayToString(value.toArray(new String[value.size()])));

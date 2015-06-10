@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.DatasetNotFoundException;
+import co.cask.cdap.data.format.RecordFormats;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -275,9 +276,9 @@ public class ExploreServiceUtils {
 
     // Note the order of dependency jars is important so that HBase jars come first in the classpath order
     // LinkedHashSet maintains insertion order while removing duplicate entries.
-    Set<File> orderedDependencies = new LinkedHashSet<File>();
+    Set<File> orderedDependencies = new LinkedHashSet<>();
     orderedDependencies.addAll(hBaseTableDeps);
-    orderedDependencies.addAll(traceDependencies(DatasetService.class.getCanonicalName(),
+    orderedDependencies.addAll(traceDependencies(DatasetService.class.getName(),
                                                  bootstrapClassPaths, usingCL));
     orderedDependencies.addAll(traceDependencies("co.cask.cdap.hive.datasets.DatasetStorageHandler",
                                                  bootstrapClassPaths, usingCL));
@@ -288,6 +289,8 @@ public class ExploreServiceUtils {
     orderedDependencies.addAll(traceDependencies("org.apache.hive.service.cli.CLIService",
                                                  bootstrapClassPaths, usingCL));
     orderedDependencies.addAll(traceDependencies("org.apache.hadoop.mapred.YarnClientProtocolProvider",
+                                                 bootstrapClassPaths, usingCL));
+    orderedDependencies.addAll(traceDependencies(RecordFormats.class.getName(),
                                                  bootstrapClassPaths, usingCL));
 
     // Needed for - at least - CDH 4.4 integration

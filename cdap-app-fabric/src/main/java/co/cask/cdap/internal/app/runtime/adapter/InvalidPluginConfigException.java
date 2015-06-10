@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,29 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.auth;
-
-import co.cask.cdap.common.conf.Constants;
-import org.jboss.netty.handler.codec.http.HttpRequest;
+package co.cask.cdap.internal.app.runtime.adapter;
 
 /**
- * Authenticator used when authentication is disabled.
+ * Thrown when Plugin configuration is wrong.
  */
-public class NoAuthenticator implements Authenticator {
+public class InvalidPluginConfigException extends RuntimeException {
 
-  @Override
-  public boolean authenticateRequest(HttpRequest request) {
-    return true;
+  public InvalidPluginConfigException(String message) {
+    super(message);
   }
 
-  @Override
-  public String getAccountId(HttpRequest httpRequest) {
-    return Constants.DEFAULT_NAMESPACE;
+  public InvalidPluginConfigException(String message, Throwable cause) {
+    super(message, cause);
   }
-
-  @Override
-  public boolean isAuthenticationRequired() {
-    return false;
-  }
-
 }

@@ -129,14 +129,14 @@ public class IncrementHandler extends BaseRegionObserver {
 
     if (isIncrement || !transactional) {
       // incremental write
-      NavigableMap<byte[], List<Cell>> newFamilyMap = new TreeMap<byte[], List<Cell>>(Bytes.BYTES_COMPARATOR);
+      NavigableMap<byte[], List<Cell>> newFamilyMap = new TreeMap<>(Bytes.BYTES_COMPARATOR);
 
       long tsToAssign = 0;
       if (!transactional) {
         tsToAssign = state.getUniqueTimestamp();
       }
       for (Map.Entry<byte[], List<Cell>> entry : put.getFamilyCellMap().entrySet()) {
-        List<Cell> newCells = new ArrayList<Cell>(entry.getValue().size());
+        List<Cell> newCells = new ArrayList<>(entry.getValue().size());
         for (Cell cell : entry.getValue()) {
           // rewrite the cell value with a special prefix to identify it as a delta
           // for 0.98 we can update this to use cell tags
@@ -163,9 +163,9 @@ public class IncrementHandler extends BaseRegionObserver {
       long tsToAssign = state.getUniqueTimestamp();
       delete.setTimestamp(tsToAssign);
       // new key values
-      NavigableMap<byte[], List<Cell>> newFamilyMap = new TreeMap<byte[], List<Cell>>(Bytes.BYTES_COMPARATOR);
+      NavigableMap<byte[], List<Cell>> newFamilyMap = new TreeMap<>(Bytes.BYTES_COMPARATOR);
       for (Map.Entry<byte[], List<Cell>> entry : delete.getFamilyCellMap().entrySet()) {
-        List<Cell> newCells = new ArrayList<Cell>(entry.getValue().size());
+        List<Cell> newCells = new ArrayList<>(entry.getValue().size());
         for (Cell kv : entry.getValue()) {
           //LOG.info("Replacing delete cell: " + kv);
           // replace the timestamp

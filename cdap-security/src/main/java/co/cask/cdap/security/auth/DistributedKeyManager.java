@@ -84,7 +84,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
       acls = ZooDefs.Ids.OPEN_ACL_UNSAFE;
     }
     LOG.info("Zookeeper ACLs {} for keys", acls);
-    this.keyCache = new SharedResourceCache<KeyIdentifier>(zookeeper, codec, "/keys", acls);
+    this.keyCache = new SharedResourceCache<>(zookeeper, codec, "/keys", acls);
   }
 
   @Override

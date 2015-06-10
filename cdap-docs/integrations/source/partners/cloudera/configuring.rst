@@ -32,9 +32,9 @@ The CDAP CSD consists of four mandatory roles:
 - Kafka-Server
 - UI
 
-and an optional role—Security Auth Service—plus a Gateway client configuration. 
+and an optional role |---| Security Auth Service |---| plus a Gateway client configuration. 
 
-CDAP depends on HBase, YARN, HDFS, Zookeeper, and—optionally—Hive. All services run as
+CDAP depends on HBase, YARN, HDFS, Zookeeper, and |---| optionally |---| Hive. All services run as
 the 'cdap' user installed by the parcel.
 
 
@@ -94,7 +94,7 @@ When completing the Wizard, these notes may help:
    - *Add Service* Wizard, Page 2: **Optional Hive dependency** is for the optional CDAP
      "Explore" component which can be enabled later.
      
-   - *Add Service* Wizard, Page 3: CDAP **Security Auth** Service is an optional service
+   - *Add Service* Wizard, Page 3: CDAP **Security Auth** service is an optional service
      for CDAP perimeter security; it can be configured and enabled post-wizard.
      
    - *Add Service* Wizard, Page 5: **Kerberos Auth Enabled** is needed if running against a
@@ -132,13 +132,13 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 
 #. From the CDAP UI Development tab, under "Apps" click "Add App” and navigate to the jar.
 
-#. Once it is deployed, click on it in the list of Applications (*PurchaseHistory*), then click on
-   *PurchaseFlow* in the list of Programs to get to the *Flow* detail page, then click the *Start*
-   button.  (this will launch additional YARN containers.)
+#. Once it is deployed, click on it in the list of applications (*PurchaseHistory*), then click on
+   *PurchaseFlow* in the list of programs to get to the *Flow* detail page, then click the *Start*
+   button.  (This will launch additional YARN containers.)
 
-#. Once the Flow is *RUNNING*, inject data by clicking on the *purchaseStream* icon in
-   the Flow diagram.  In the dialog that pops up, type ``Tom bought 5 apples for $3`` and click
-   *Inject*.  You should see activity in the graphs and the Flowlet counters increment.
+#. Once the flow is *RUNNING*, inject data by clicking on the *purchaseStream* icon in
+   the flow diagram.  In the dialog that pops up, type ``Tom bought 5 apples for $3`` and click
+   *Inject*.  You should see activity in the graphs and the flowlet counters increment.
 
 #. Run a MapReduce program against this data by navigating back to the *PurchaseHistory* list of 
    programs, select *PurchaseHistoryBuilder*, and click the *Start* button.  This will launch an
@@ -148,7 +148,7 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 
 #. After the MapReduce job is complete, we can startup a query service which will read
    from the processed dataset.  Navigate to Application -> PurchaseHistory ->
-   PurchaseHistoryService.  Click the Start button to start the Service.  (This will launch another YARN container)
+   PurchaseHistoryService.  Click the Start button to start the service.  (This will launch another YARN container.)
 
 #. From the *PurchaseHistoryService* page, click *Make Request* for the */history/{customer}* endpoint listed.
    In the dialog that pops up, enter ``Tom`` in the *Path Params* field and click *Make Request*.
@@ -167,7 +167,7 @@ Upgrading an Existing Version
 
 When a new compatible CDAP parcel is released, it will be available via the Parcels page in the Cloudera Manager UI.
 
-#. Stop all Flows, Services, and other Programs in all your applications.
+#. Stop all flows, services, and other programs in all your applications.
 
 #. Stop CDAP services.
 
@@ -179,7 +179,7 @@ When a new compatible CDAP parcel is released, it will be available via the Parc
 
 These steps will upgrade from CDAP 2.8.0 to CDAP 3.0.0. (**Note:** Apps need to be both recompiled and re-deployed.)
 
-#. Stop all Flows, Services, and other Programs in all your applications.
+#. Stop all flows, services, and other programs in all your applications.
 
 #. Stop CDAP services.
 

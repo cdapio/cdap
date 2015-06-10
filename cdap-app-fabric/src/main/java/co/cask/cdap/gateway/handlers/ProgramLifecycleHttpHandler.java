@@ -35,7 +35,6 @@ import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
-import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
@@ -184,8 +183,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   protected final Scheduler scheduler;
 
   @Inject
-  public ProgramLifecycleHttpHandler(Authenticator authenticator, Store store,
-                                     CConfiguration cConf, ProgramRuntimeService runtimeService,
+  public ProgramLifecycleHttpHandler(Store store, CConfiguration cConf, ProgramRuntimeService runtimeService,
                                      ProgramLifecycleService lifecycleService,
                                      QueueAdmin queueAdmin,
                                      Scheduler scheduler, PreferencesStore preferencesStore,
@@ -193,7 +191,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      MRJobInfoFetcher mrJobInfoFetcher,
                                      PropertiesResolver propertiesResolver, AdapterService adapterService,
                                      MetricStore metricStore) {
-    super(authenticator);
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.store = store;
     this.runtimeService = runtimeService;
@@ -244,7 +241,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         mrJobInfo.setStopTime(TimeUnit.SECONDS.toMillis(stopTs));
       }
 
-      responder.sendJson(HttpResponseStatus.OK, mrJobInfo);
+      // JobClient (in DistributedMRJobInfoFetcher) can return NaN as some of the values, and GSON otherwise fails
+      Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().create();
+      responder.sendJson(HttpResponseStatus.OK, mrJobInfo, mrJobInfo.getClass(), gson);
     } catch (NotFoundException e) {
       LOG.warn("NotFoundException while getting MapReduce Run info.", e);
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
@@ -715,7 +714,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/flows")
   public void getAllFlows(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) {
-    programList(responder, namespaceId, ProgramType.FLOW, null, store);
+    programList(responder, namespaceId, ProgramType.FLOW, store);
   }
 
   /**
@@ -725,7 +724,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/mapreduce")
   public void getAllMapReduce(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId) {
-    programList(responder, namespaceId, ProgramType.MAPREDUCE, null, store);
+    programList(responder, namespaceId, ProgramType.MAPREDUCE, store);
   }
 
   /**
@@ -735,7 +734,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/spark")
   public void getAllSpark(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) {
-    programList(responder, namespaceId, ProgramType.SPARK, null, store);
+    programList(responder, namespaceId, ProgramType.SPARK, store);
   }
 
   /**
@@ -745,7 +744,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/workflows")
   public void getAllWorkflows(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId) {
-    programList(responder, namespaceId, ProgramType.WORKFLOW, null, store);
+    programList(responder, namespaceId, ProgramType.WORKFLOW, store);
   }
 
   /**
@@ -755,14 +754,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/services")
   public void getAllServices(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId) {
-    programList(responder, namespaceId, ProgramType.SERVICE, null, store);
+    programList(responder, namespaceId, ProgramType.SERVICE, store);
   }
 
   @GET
   @Path("/workers")
   public void getAllWorkers(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) {
-    programList(responder, namespaceId, ProgramType.WORKER, null, store);
+    programList(responder, namespaceId, ProgramType.WORKER, store);
   }
 
   /**
@@ -1574,7 +1573,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     if (args == null) {
       return null;
     }
-    List<BatchEndpointInstances> retVal = new ArrayList<BatchEndpointInstances>(args.size());
+    List<BatchEndpointInstances> retVal = new ArrayList<>(args.size());
     for (BatchEndpointArgs arg: args) {
       retVal.add(new BatchEndpointInstances(arg));
     }
@@ -1585,7 +1584,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     if (args == null) {
       return null;
     }
-    List<BatchEndpointStatus> retVal = new ArrayList<BatchEndpointStatus>(args.size());
+    List<BatchEndpointStatus> retVal = new ArrayList<>(args.size());
     for (BatchEndpointArgs arg: args) {
       retVal.add(new BatchEndpointStatus(arg));
     }

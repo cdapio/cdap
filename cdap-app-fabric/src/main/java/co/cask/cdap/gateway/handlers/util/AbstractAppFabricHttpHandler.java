@@ -20,8 +20,6 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.proto.ApplicationRecord;
@@ -29,6 +27,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -49,9 +48,7 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -60,7 +57,7 @@ import javax.annotation.Nullable;
 /**
  * Abstract Class that contains commonly used methods for parsing Http Requests.
  */
-public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHandler {
+public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractAppFabricHttpHandler.class);
 
   /**
@@ -127,10 +124,6 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     }
   }
 
-  public AbstractAppFabricHttpHandler(Authenticator authenticator) {
-    super(authenticator);
-  }
-
   protected int getInstances(HttpRequest request) throws IllegalArgumentException, JsonSyntaxException {
     Instances instances = parseBody(request, Instances.class);
     if (instances == null) {
@@ -173,36 +166,15 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     }
   }
 
-  protected final void getAppRecords(HttpResponder responder, Store store, String namespaceId, String appId) {
-    if (appId != null && appId.isEmpty()) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "app-id is empty");
-      return;
-    }
-
+  protected final void getAppRecords(HttpResponder responder, Store store, String namespaceId) {
     try {
-      Id.Namespace accId = Id.Namespace.from(namespaceId);
+      Id.Namespace namespace = Id.Namespace.from(namespaceId);
       List<ApplicationRecord> appRecords = Lists.newArrayList();
-      List<ApplicationSpecification> specList;
-      if (appId == null) {
-        specList = new ArrayList<ApplicationSpecification>(store.getAllApplications(accId));
-      } else {
-        ApplicationSpecification appSpec = store.getApplication(new Id.Application(accId, appId));
-        if (appSpec == null) {
-          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-          return;
-        }
-        specList = Collections.singletonList(store.getApplication(new Id.Application(accId, appId)));
-      }
-
-      for (ApplicationSpecification appSpec : specList) {
+      for (ApplicationSpecification appSpec : store.getAllApplications(namespace)) {
         appRecords.add(new ApplicationRecord(appSpec.getName(), appSpec.getVersion(), appSpec.getDescription()));
       }
 
-      if (appId == null) {
-        responder.sendJson(HttpResponseStatus.OK, appRecords);
-      } else {
-        responder.sendJson(HttpResponseStatus.OK, appRecords.get(0));
-      }
+      responder.sendJson(HttpResponseStatus.OK, appRecords);
     } catch (SecurityException e) {
       LOG.debug("Security Exception while retrieving app details: ", e);
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -212,22 +184,10 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     }
   }
 
-  protected final void programList(HttpResponder responder, String namespaceId, ProgramType type,
-                                   @Nullable String applicationId, Store store) {
-    if (applicationId != null && applicationId.isEmpty()) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Application id is empty");
-      return;
-    }
-
+  protected final void programList(HttpResponder responder, String namespaceId, ProgramType type, Store store) {
     try {
-      List<ProgramRecord> programRecords;
-      if (applicationId == null) {
-        Id.Namespace accId = Id.Namespace.from(namespaceId);
-        programRecords = listPrograms(accId, type, store);
-      } else {
-        Id.Application appId = Id.Application.from(namespaceId, applicationId);
-        programRecords = listProgramsByApp(appId, type, store);
-      }
+      Id.Namespace namespace = Id.Namespace.from(namespaceId);
+      List<ProgramRecord> programRecords = listPrograms(namespace, type, store);
 
       if (programRecords == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -251,23 +211,6 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       LOG.warn(throwable.getMessage(), throwable);
       String errorMessage = String.format("Could not retrieve application spec for namespace '%s', reason: %s",
                                            namespaceId.toString(), throwable.getMessage());
-      throw new Exception(errorMessage, throwable);
-    }
-  }
-
-  /**
-   * Return a list of {@link ProgramRecord} for a {@link ProgramType} in an Application. The return value may be
-   * null if the applicationId does not exist.
-   */
-  private List<ProgramRecord> listProgramsByApp(Id.Application appId, ProgramType type, Store store) throws Exception {
-    ApplicationSpecification appSpec;
-    try {
-      appSpec = store.getApplication(appId);
-      return appSpec == null ? null : listPrograms(Collections.singletonList(appSpec), type);
-    } catch (Throwable throwable) {
-      LOG.warn(throwable.getMessage(), throwable);
-      String errorMessage = String.format("Could not retrieve application spec for application id '%s', reason: %s",
-                                          appId.toString(), throwable.getMessage());
       throw new Exception(errorMessage, throwable);
     }
   }

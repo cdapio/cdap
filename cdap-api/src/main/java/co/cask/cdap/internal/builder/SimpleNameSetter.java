@@ -27,7 +27,7 @@ public final class SimpleNameSetter<T> implements NameSetter<T> {
   private final T next;
 
   public static <T> NameSetter<T> create(Setter<String> setter, T next) {
-    return new SimpleNameSetter<T>(setter, next);
+    return new SimpleNameSetter<>(setter, next);
   }
 
   private SimpleNameSetter(Setter<String> setter, T next) {

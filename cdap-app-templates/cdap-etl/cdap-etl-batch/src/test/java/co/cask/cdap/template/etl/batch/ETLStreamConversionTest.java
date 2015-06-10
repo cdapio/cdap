@@ -106,7 +106,7 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
 
   private List<GenericRecord> readOutput(TimePartitionedFileSet fileSet, Schema schema) throws IOException {
     org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(schema.toString());
-    DatumReader<GenericRecord> datumReader = new GenericDatumReader<GenericRecord>(avroSchema);
+    DatumReader<GenericRecord> datumReader = new GenericDatumReader<>(avroSchema);
     List<GenericRecord> records = com.google.common.collect.Lists.newArrayList();
     for (Location dayLoc : fileSet.getEmbeddedFileSet().getBaseLocation().list()) {
       // this level should be the day (ex: 2015-01-19)
@@ -118,7 +118,7 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
 
           if (locName.endsWith(".avro")) {
             DataFileStream<GenericRecord> fileStream =
-              new DataFileStream<GenericRecord>(file.getInputStream(), datumReader);
+              new DataFileStream<>(file.getInputStream(), datumReader);
             while (fileStream.hasNext()) {
               records.add(fileStream.next());
             }

@@ -8,9 +8,9 @@
 Fileset Exploration
 ===================
 
-The ``FileSet``, ``PartitionedFileSet``, and ``TimePartitionedFileSet`` Datasets can be explored through ad-hoc SQL-like queries.
-To enable exploration, you must set several properties when creating the Dataset, and the files in 
-your Dataset must meet certain requirements. These properties and requirements are described below. 
+The ``FileSet``, ``PartitionedFileSet``, and ``TimePartitionedFileSet`` datasets can be explored through ad-hoc SQL-like queries.
+To enable exploration, you must set several properties when creating the dataset, and the files in 
+your dataset must meet certain requirements. These properties and requirements are described below. 
 
 Explore Properties
 ------------------
@@ -18,7 +18,7 @@ A ``FileSet``, ``PartitionedFileSet``, or ``TimePartitionedFileSet`` is made exp
 creating the dataset. The ``FileSetProperties`` class (``PartitionedFileSetProperties`` or ``TimePartitionedFileSetsProperties``
 classes for the other two types) should be used to set the following required properties:
 
-- ``EnableExploreOnCreate`` must be set to true to create a Hive table when the Dataset is created
+- ``EnableExploreOnCreate`` must be set to true to create a Hive table when the dataset is created
 - ``SerDe`` class that Hive should use for serialization and deserialization
 - ``InputFormat`` that Hive should use for reading files
 - ``OutputFormat`` that Hive should use for writing files 
@@ -44,7 +44,7 @@ For example, in the configure method of your application::
       .setTableProperty("avro.schema.literal", schema.toString())
       .build());
 
-These Dataset properties map directly to table properties in Hive. In the case of the
+These dataset properties map directly to table properties in Hive. In the case of the
 ``setBasePath`` method, the partial-path given is added to 
 ``/<CDAP-home>/namespaces/<current-namespace>/data/``.
 

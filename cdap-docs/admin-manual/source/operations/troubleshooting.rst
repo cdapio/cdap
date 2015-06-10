@@ -49,7 +49,7 @@ Things to check as possible solutions:
    If the classpath is incorrect, review the :ref:`installation instructions <install>` and correct.
    
 
-.. rubric:: No Metrics/logs
+.. rubric:: No Metrics or Logs
 
 Make sure the *Kafka* server is running, and make sure local the logs directory is created and accessible.
 On the initial startup, the number of available seed brokers must be greater than or equal to the
@@ -79,7 +79,7 @@ either due to a lack of disk space or permissions.
 
 The CDAP Log Saver uses an internal buffer that may overflow and result in Out-of-Memory
 Errors when applications create excessive amounts of logs. One symptom of this is that the CDAP
-UI *Services Explorer* shows the ``log.saver`` Service as not OK, in addition to seeing error
+UI *Services Explorer* shows the ``log.saver`` service as not OK, in addition to seeing error
 messages in the logs.
 
 By default, the Log Saver process is limited to 1GB of memory and the buffer keeps eight buckets of events

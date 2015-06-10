@@ -26,7 +26,6 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.gateway.auth.NoAuthenticator;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.guice.SecurityModules;
@@ -228,7 +227,7 @@ public class NettyRouterPipelineTest {
       router =
         new NettyRouter(cConf, sConf, InetAddresses.forString(hostname),
                         new RouterServiceLookup((DiscoveryServiceClient) discoveryService,
-                                                new RouterPathLookup(new NoAuthenticator())),
+                                                new RouterPathLookup()),
                         new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient);
       router.startAndWait();
 

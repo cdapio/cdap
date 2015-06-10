@@ -152,7 +152,7 @@ public class DatumCodecTest {
     Schema targetSchema = new ReflectionSchemaGenerator().generate(Record2.class);
 
     new ReflectionDatumWriter<Record1>(sourceSchema).encode(r1, new BinaryEncoder(output));
-    Record2 r2 = new ReflectionDatumReader<Record2>(targetSchema, TypeToken.of(Record2.class))
+    Record2 r2 = new ReflectionDatumReader<>(targetSchema, TypeToken.of(Record2.class))
                             .read(new BinaryDecoder(input), sourceSchema);
 
     Assert.assertEquals(10L, r2.i.longValue());
@@ -183,7 +183,7 @@ public class DatumCodecTest {
     PipedInputStream input = new PipedInputStream(output);
 
     new ReflectionDatumWriter<List<String>>(sourceSchema).encode(list, new BinaryEncoder(output));
-    Set<String> set = new ReflectionDatumReader<Set<String>>(targetSchema, new TypeToken<Set<String>>() { })
+    Set<String> set = new ReflectionDatumReader<>(targetSchema, new TypeToken<Set<String>>() { })
                         .read(new BinaryDecoder(input), sourceSchema);
 
     Assert.assertEquals(Sets.newHashSet("1", "2", "3"), set);
@@ -191,7 +191,7 @@ public class DatumCodecTest {
 
     targetSchema = new ReflectionSchemaGenerator().generate(String[].class);
     new ReflectionDatumWriter<List<String>>(sourceSchema).encode(list, new BinaryEncoder(output));
-    String[] array = new ReflectionDatumReader<String[]>(targetSchema, new TypeToken<String[]>() { })
+    String[] array = new ReflectionDatumReader<>(targetSchema, new TypeToken<String[]>() { })
                         .read(new BinaryDecoder(input), sourceSchema);
 
     Assert.assertArrayEquals(new String[]{"1", "2", "3"}, array);
@@ -276,7 +276,7 @@ public class DatumCodecTest {
 
     MoreFields moreFields = new MoreFields(10, 20.2, "30", ImmutableList.of("1", "2"));
     new ReflectionDatumWriter<MoreFields>(sourceSchema).encode(moreFields, new BinaryEncoder(output));
-    LessFields lessFields = new ReflectionDatumReader<LessFields>(targetSchema, TypeToken.of(LessFields.class))
+    LessFields lessFields = new ReflectionDatumReader<>(targetSchema, TypeToken.of(LessFields.class))
                                             .read(new BinaryDecoder(input), sourceSchema);
 
     Assert.assertEquals("30", lessFields.k);
@@ -296,14 +296,14 @@ public class DatumCodecTest {
     PipedInputStream input = new PipedInputStream(output);
 
     Schema schema = new ReflectionSchemaGenerator().generate(TestEnum.class);
-    ReflectionDatumWriter<TestEnum> writer = new ReflectionDatumWriter<TestEnum>(schema);
+    ReflectionDatumWriter<TestEnum> writer = new ReflectionDatumWriter<>(schema);
     BinaryEncoder encoder = new BinaryEncoder(output);
     writer.encode(TestEnum.VALUE1, encoder);
     writer.encode(TestEnum.VALUE3, encoder);
     writer.encode(TestEnum.VALUE2, encoder);
 
     BinaryDecoder decoder = new BinaryDecoder(input);
-    ReflectionDatumReader<TestEnum> reader = new ReflectionDatumReader<TestEnum>(schema, TypeToken.of(TestEnum.class));
+    ReflectionDatumReader<TestEnum> reader = new ReflectionDatumReader<>(schema, TypeToken.of(TestEnum.class));
 
     Assert.assertEquals(TestEnum.VALUE1, reader.read(decoder, schema));
     Assert.assertEquals(TestEnum.VALUE3, reader.read(decoder, schema));
@@ -315,9 +315,9 @@ public class DatumCodecTest {
   public void testEmptyValue() throws UnsupportedTypeException, IOException {
     Schema schema = new ReflectionSchemaGenerator().generate(RecordWithString.class);
     TypeRepresentation typeRep = new TypeRepresentation(RecordWithString.class);
-    DatumWriter<RecordWithString> datumWriter = new ReflectionDatumWriter<RecordWithString>(schema);
+    DatumWriter<RecordWithString> datumWriter = new ReflectionDatumWriter<>(schema);
     @SuppressWarnings("unchecked")
-    ReflectionDatumReader<RecordWithString> datumReader = new ReflectionDatumReader<RecordWithString>(
+    ReflectionDatumReader<RecordWithString> datumReader = new ReflectionDatumReader<>(
       schema, (TypeToken<RecordWithString>) TypeToken.of(typeRep.toType()));
 
     RecordWithString record = new RecordWithString();

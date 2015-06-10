@@ -31,7 +31,6 @@ import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
-import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
@@ -70,13 +69,13 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   private final WorkflowClient workflowClient;
 
   @Inject
-  public WorkflowHttpHandler(Authenticator authenticator, Store store, WorkflowClient workflowClient,
+  public WorkflowHttpHandler(Store store, WorkflowClient workflowClient,
                              CConfiguration configuration, ProgramRuntimeService runtimeService,
                              QueueAdmin queueAdmin, Scheduler scheduler, PreferencesStore preferencesStore,
                              NamespacedLocationFactory namespacedLocationFactory, MRJobInfoFetcher mrJobInfoFetcher,
                              ProgramLifecycleService lifecycleService, PropertiesResolver resolver,
                              AdapterService adapterService, MetricStore metricStore) {
-    super(authenticator, store, configuration, runtimeService, lifecycleService, queueAdmin, scheduler,
+    super(store, configuration, runtimeService, lifecycleService, queueAdmin, scheduler,
           preferencesStore, namespacedLocationFactory, mrJobInfoFetcher, resolver, adapterService, metricStore);
     this.workflowClient = workflowClient;
   }

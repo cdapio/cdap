@@ -165,7 +165,7 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
 
           // Lets get the Kafka message based on last offset
           Message message = messageAndOffset.message();
-          return new KafkaMessage<Long>(topicPartition, messageAndOffset.nextOffset(), message.key(),
+          return new KafkaMessage<>(topicPartition, messageAndOffset.nextOffset(), message.key(),
                                         message.payload());
         }
         return endOfData();

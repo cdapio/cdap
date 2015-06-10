@@ -17,21 +17,14 @@
 package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
-import com.google.inject.Inject;
+import co.cask.http.AbstractHttpHandler;
 import org.apache.commons.lang.StringUtils;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
 /**
  * Class to match the request path to corresponding service like app-fabric, or metrics service.
  */
-public final class RouterPathLookup extends AuthenticatedHttpHandler {
-
-  @Inject
-  public RouterPathLookup(Authenticator authenticator) {
-    super(authenticator);
-  }
+public final class RouterPathLookup extends AbstractHttpHandler {
 
   @SuppressWarnings("unused")
   private enum AllowedMethod {

@@ -1,10 +1,14 @@
 angular.module(PKG.name + '.feature.datasets')
   .controller('CdapDatasetDetailStatusController',
-    function($scope, MyDataSource, $state, myHelpers, MyMetricsQueryHelper, myExploreApi) {
+    function($scope, MyDataSource, $state, myHelpers, MyMetricsQueryHelper, myExploreApi, explorableDatasets) {
       $scope.writes = 0;
       $scope.reads = 0;
       $scope.storage = 0;
       $scope.transactions = 0;
+      $scope.explorable = explorableDatasets;
+      if (!explorableDatasets) {
+        return;
+      }
       var query = myHelpers.objectQuery;
       var dataSrc = new MyDataSource($scope),
           currentDataset = $state.params.datasetId,
@@ -51,9 +55,12 @@ angular.module(PKG.name + '.feature.datasets')
         $scope.storage = data;
       });
 
+      var datasetId = $state.params.datasetId;
+      datasetId = datasetId.replace(/[\.\-]/g, '_');
+
       var params = {
         namespace: $state.params.namespace,
-        table: 'dataset_' + currentDataset,
+        table: 'dataset_' + datasetId,
         scope: $scope
       };
 

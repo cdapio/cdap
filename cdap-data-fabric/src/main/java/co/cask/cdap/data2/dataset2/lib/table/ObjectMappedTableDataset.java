@@ -73,7 +73,7 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
     this.objectSchema = objectSchema;
     this.typeRepresentation = typeRep;
     this.typeRepresentation.setClassLoader(classLoader);
-    this.putWriter = new ReflectionPutWriter<T>(objectSchema);
+    this.putWriter = new ReflectionPutWriter<>(objectSchema);
   }
 
   @SuppressWarnings("unchecked")
@@ -82,7 +82,7 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
       try {
         // this can throw a runtime exception from a ClassNotFoundException
         Type type = typeRepresentation.toType();
-        this.rowReader = new ReflectionRowReader<T>(objectSchema, (TypeToken<T>) TypeToken.of(type));
+        this.rowReader = new ReflectionRowReader<>(objectSchema, (TypeToken<T>) TypeToken.of(type));
       } catch (RuntimeException e) {
         String missingClass = isClassNotFoundException(e);
         if (missingClass != null) {
@@ -186,7 +186,7 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
       Preconditions.checkState(!closed);
       Row row = scanner.next();
       if (row != null) {
-        return new KeyValue<byte[], T>(row.getRow(), readRow(row));
+        return new KeyValue<>(row.getRow(), readRow(row));
       }
       close();
       return endOfData();

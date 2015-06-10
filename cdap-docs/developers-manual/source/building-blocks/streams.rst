@@ -8,20 +8,20 @@
 Streams
 =======
 
-**Streams** are the primary means of bringing data from external systems into the CDAP in realtime.
-They are ordered, time-partitioned sequences of data, usable for realtime collection and consumption of data.
+*Streams* are the primary means of bringing data from external systems into the CDAP in real time.
+They are ordered, time-partitioned sequences of data, usable for real-time collection and consumption of data.
 
 They can be created programmatically within your application, using the
 :ref:`http-restful-api-stream`, the :ref:`stream-client` of the :ref:`client-api`, or by
 using the :ref:`CDAP Command Line Interface. <cli>` 
 
-Data written to a stream can be consumed in real-time by :ref:`Flows <flows>` or in batch
+Data written to a stream can be consumed in real time by :ref:`flows <flows>` or in batch
 by :ref:`MapReduce programs. <mapreduce>`.
 
 
 .. rubric:: Creating a Stream
 
-You specify a Stream in your :ref:`Application <applications>` specification::
+You specify a stream in your :ref:`application <applications>` specification::
 
   addStream(new Stream("myStream"));
 
@@ -32,7 +32,7 @@ before being used. Names used for streams need to be unique across the CDAP inst
 streams are shared between applications.
 
 
-.. rubric::  Writing To a Stream
+.. rubric:: Writing To a Stream
 
 You can write to streams either one operation at a time or in batches, using either the
 :ref:`http-restful-api-stream` or the :ref:`Command Line Interface. <cli>`
@@ -53,7 +53,7 @@ encoding of the data, such as shown in this code fragment::
   }
 
 
-.. rubric::  Stream Time-To-Live (TTL)
+.. rubric:: Stream Time-To-Live (TTL)
 
 Streams are persisted by CDAP, and once an event has been sent to a stream, by default it
 never expires. The Time-To-Live (TTL) property governs how long an event is valid for
@@ -63,7 +63,7 @@ changed, using the :ref:`http-restful-api-stream`, the :ref:`stream-client` of t
 :ref:`client-api`, or by using the :ref:`Command Line Interface. <cli>`
 
 
-.. rubric::  Truncating and Deleting a Stream
+.. rubric:: Truncating and Deleting a Stream
 
 Streams can be truncated, which means deleting all events that were ever written to the
 stream. This is permanent and cannot be undone. They can be truncated through the using
@@ -89,9 +89,9 @@ The notifications describe the absolute size of events ever ingested by a stream
 increasing data size. In particular, they do not reset when the stream is truncated, and they do not decrease when
 part of the data ingested by the stream has reach the TTL.
 
-Stream size notifications are used by :ref:`Stream Size Schedules <stream-size-schedules>`.
+Stream-size notifications are used by :ref:`stream-size schedules <stream-size-schedules>`.
 
-.. rubric::  Examples of Using Streams
+.. rubric:: Examples of Using Streams
 
 Streams are included in just about every CDAP :ref:`application <apps-and-packs>`,
 :ref:`tutorial <tutorials>`, :ref:`guide <guides-index>` or :ref:`example <examples-index>`.
