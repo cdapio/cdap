@@ -28,7 +28,7 @@ import os
 import subprocess
 import sys
 
-VERSION = "0.0.9"
+VERSION = "0.0.9.1"
 
 COPYRIGHT_YEAR = "2015"
 
@@ -90,6 +90,13 @@ def parse_options():
         help="The built version of the CDAP SDK "
              "(default: %s)" % sdk_version,
         default=sdk_version)
+
+    parser.add_option(
+        "-u", "--ui",
+        action="store_true",
+        dest="cdap_ui",
+        help="Process CDAP UI dependencies",
+        default=False)
 
     parser.add_option(
         "-e", "--enterprise",
@@ -206,14 +213,18 @@ def master_print():
     for i, k in enumerate(keys):
         master_libs_dict[k].pretty_print(i+1, max)    
 
-
-def process_enterprise(input_file, options):
-    return process_dependencies(ENTERPRISE)
-
-
-def process_standalone(input_file, options):
-    return process_dependencies(STANDALONE)
+def process_cdap_ui(input_file, options):
+    # Read in the current master ui csv file and create a structure with it
+    # Read in the new dependencies files:
+    #   cdap-ui/bower.json
+    #   cdap-ui/package.json
+    # Create and print to standard out the list of the references
+    # Make a list of the references for which links are missing and need to be added to the master
+    # Make a new master list
+    # Return "Package","Version","License","License URL"
     
+    return
+
 def process_level_1(input_file, options):
     master_libs_dict = process_master()
     level_1_dict = {}
@@ -256,6 +267,12 @@ def process_level_1(input_file, options):
         rst_data.append(row)
     return rst_data
 
+def process_enterprise(input_file, options):
+    return process_dependencies(ENTERPRISE)
+
+def process_standalone(input_file, options):
+    return process_dependencies(STANDALONE)
+    
 def process_dependencies(dependency):
     # Read in the current master csv file and create a structure with it
     # Read in the new dependencies csv file
@@ -511,7 +528,11 @@ def main():
 
     try:
         options.logger = log
-        if options.enterprise:
+
+        if options.cdap_ui:
+            process_cdap_ui(input_file, options)
+
+        elif options.enterprise:
             process_enterprise(input_file, options)
             
         elif options.level_1:
@@ -531,7 +552,7 @@ def main():
             
         elif options.master_print:
             master_print()
-            
+
         else:
             print "Unknown test type: %s" % options.test
             sys.exit(1)
