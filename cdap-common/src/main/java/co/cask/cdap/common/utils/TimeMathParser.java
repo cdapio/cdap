@@ -92,7 +92,7 @@ public class TimeMathParser {
    * @param timeStr the string to parse
    * @return the parsed time in seconds
    */
-  public static long parseTime(String timeStr) {
+  public static long parseTimeInSeconds(String timeStr) {
     return parseTime(timeStr, TimeUnit.SECONDS);
   }
 
@@ -114,7 +114,7 @@ public class TimeMathParser {
    * @param timeStr the string to parse
    * @return the parsed time in seconds
    */
-  public static long parseTime(long now, String timeStr) {
+  public static long parseTimeInSeconds(long now, String timeStr) {
     return parseTime(TimeUnit.MILLISECONDS.convert(now, TimeUnit.SECONDS), timeStr, TimeUnit.SECONDS);
   }
 
