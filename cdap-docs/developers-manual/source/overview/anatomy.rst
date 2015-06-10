@@ -25,7 +25,7 @@ As an application developer building a Big Data application, you are primarily c
 
 - **Data Exploration:** One of the most powerful paradigms of Big Data is the ability to
   collect and store data without knowing details about its structure. These details are only
-  needed at processing time. An important step |—--| between collecting the data and processing
+  needed at processing time. An important step |---| between collecting the data and processing
   it |---| is exploration; that is, examining data with ad-hoc queries to learn about its
   structure and nature.
 
