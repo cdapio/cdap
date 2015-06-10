@@ -40,28 +40,7 @@ angular.module(PKG.name + '.feature.flows')
                             + '&metric=system.process.events.out&start=now-60s&count=60',
               method: 'POST'
             }, function(res) {
-              if (res.series[0]) {
-                updateOutput(res.series[0].data);
-              } else {
-                var val = [];
-
-                for (var i = 60; i > 0; i--) {
-                  val.push({
-                    time: Math.floor((new Date()).getTime()/1000 - (i)),
-                    y: 0
-                  });
-                }
-
-                if ($scope.outputHistory) {
-                  $scope.outputStream = val.slice(-1);
-                }
-
-                $scope.outputHistory = [{
-                  label: 'output',
-                  values: val
-                }];
-
-              }
+              updateOutput(res);
             });
 
           // Total
@@ -80,29 +59,34 @@ angular.module(PKG.name + '.feature.flows')
 
       });
 
-    function updateOutput(newVal) {
-      if(angular.isObject(newVal)) {
-        var v = [];
+    function updateOutput(res) {
+      var v = [];
 
-        angular.forEach(newVal, function(val) {
+      if (res.series[0]) {
+        angular.forEach(res.series[0].data, function(val) {
           v.push({
             time: val.time,
             y: val.value
           });
         });
-
-        if ($scope.outputHistory) {
-          $scope.outputStream = v.slice(-1);
+      } else {
+        for (var i = 60; i > 0; i--) {
+          v.push({
+            time: Math.floor((new Date()).getTime()/1000 - (i)),
+            y: 0
+          });
         }
-
-        $scope.outputHistory = [
-          {
-            label: 'output',
-            values: v
-          }
-        ];
-
       }
+
+      if ($scope.outputHistory) {
+        $scope.outputStream = v.slice(-1);
+      }
+
+      $scope.outputHistory = [{
+        label: 'output',
+        values: v
+      }];
+
     }
 
   });
