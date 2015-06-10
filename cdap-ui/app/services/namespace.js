@@ -62,6 +62,7 @@ angular.module(PKG.name + '.services')
               }, 2000)();
 
     }
+
     function success() {
       EventPipe.emit('backendUp');
       startPolling();
