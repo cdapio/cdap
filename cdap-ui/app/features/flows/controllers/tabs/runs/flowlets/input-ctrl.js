@@ -157,11 +157,6 @@ angular.module(PKG.name + '.feature.flows')
           // start polling aggregate
           pollAggregateQueue(path, input);
 
-        }).catch(function () {
-          myAlert({
-            title: 'Flowlet Input Error',
-            content: 'Please refresh the page'
-          });
         });
 
         pollArrivalRate(input);
