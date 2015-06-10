@@ -76,7 +76,7 @@ where ``config.json`` is the file that contains the adapter configuration.
 
 .. highlight:: console
 
-Using the ETL Real-time Template
+Using the ETL Real-Time Template
 --------------------------------
 
 This next configuration creates a real-time adapter that reads from Twitter and writes to a
@@ -115,7 +115,7 @@ Stream after performing a projection transformation::
   }
 
 
-The ETL Real-time Template expects an instance property that will create *N* instances of the
+The ETL Real-Time Template expects an instance property that will create *N* instances of the
 adapter that run concurrently. In Standalone CDAP mode, this is implemented as multiple threads;
 while in Distributed CDAP mode, it will create different YARN containers. The
 number of instances of a real-time adapter cannot be changed during runtime.

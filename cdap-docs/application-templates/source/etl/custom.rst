@@ -176,7 +176,7 @@ Example::
   }
 
 
-Creating a Real-time Source Plugin
+Creating a Real-Time Source Plugin
 ----------------------------------
 A real-time source plugin can be created from this Maven archetype:
 
@@ -207,11 +207,11 @@ Methods
 Example::
 
   /**
-   * Real-time Source to poll data from external sources.
+   * Real-Time Source to poll data from external sources.
    */
   @Plugin(type = "source")
   @Name("Source")
-  @Description("Real-time Source")
+  @Description("Real-Time Source")
   public class Source extends RealtimeSource<StructuredRecord> {
 
     private final SourceConfig config;
@@ -264,7 +264,7 @@ Example::
   }
 
 
-Creating a Real-time Sink Plugin
+Creating a Real-Time Sink Plugin
 --------------------------------
 A real-time sink plugin can be created from this Maven archetype:
 
@@ -295,7 +295,7 @@ Example::
 
   @Plugin(type = "sink")
   @Name("Demo")
-  @Description("Demo Real-time Sink")
+  @Description("Demo Real-Time Sink")
   public class DemoSink extends RealtimeSink<String> {
 
     @Override
@@ -392,7 +392,7 @@ adapter, as well as wait for runs to finish. Other than that, you can use normal
 methods to obtain Streams or Datasets and verify that they have the correct data.
 
 
-Source State in Real-time Source
+Source State in Real-Time Source
 ================================
 
 Real-time adapters are executed in workers. During failure, there is the possibility that
@@ -411,7 +411,7 @@ of failures.
 
   @Plugin(type = "source")
   @Name("Demo")
-  @Description("Demo Real-time Source")
+  @Description("Demo Real-Time Source")
   public class DemoSource extends RealtimeSource<String> {
     private static final Logger LOG = LoggerFactory.getLogger(TestSource.class);
     private static final String COUNT = "count";

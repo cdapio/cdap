@@ -30,7 +30,7 @@ aggregate logs, perform real-time and batch analytics of the logs ingested, and 
 results using multiple interfaces. 
 
 Specifically, this application processes web server access logs, counts page-views by IP
-in real-time, and computes the bounce ratio of each web page encountered in batch. (The
+in real time, and computes the bounce ratio of each web page encountered in batch. (The
 bounce rate is the percentage of views that are not followed by another view on the same
 site.)
 
@@ -109,7 +109,7 @@ Now that the application is deployed, we can start the real-time processing::
   Successfully started Flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}'
 
 This starts the flow named *WiseFlow,* which listens for log events from web servers to
-analyze them in real-time. Another way to start the flow is using ``curl``::
+analyze them in real time. Another way to start the flow is using ``curl``::
 
   $ curl -w'\n' -X POST localhost:10000/v3/namespaces/default/apps/Wise/flows/WiseFlow/start
 
@@ -214,7 +214,7 @@ Command Line.
 Monitoring with the CDAP UI
 ===========================
 You may recall that before we started injecting data into the stream, we started the
-*WiseFlow* to process these events in real-time. You can observe the flow while it is
+*WiseFlow* to process these events in real time. You can observe the flow while it is
 processing events by retrieving metrics about how many events it has processed. For that,
 we need to know the name of the flowlet inside the *WiseFlow* that performs the actual
 processing. 
@@ -236,7 +236,7 @@ annotated with its real-time metrics:
    :width: 600px
 
 In this screenshot, we see that the stream has about thirty thousand events and all of them
-have been processed by both flowlets. You can watch these metrics update in real-time by
+have been processed by both flowlets. You can watch these metrics update in real time by
 repeating the injection of events into the stream:
 
 .. container:: highlight

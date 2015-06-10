@@ -37,7 +37,7 @@ Ingesting and Exploring Data with Impala
 ========================================
 
 Streams are the primary means of bringing data from external systems into the CDAP in
-real-time. They are ordered, time-partitioned sequences of data, usable for real-time
+real time. They are ordered, time-partitioned sequences of data, usable for real-time
 collection and consumption of data.
 
 They can easily be created by using the CDAP Command Line Interface (CLI).
@@ -59,7 +59,7 @@ Or, you can add the entire contents of a file::
 
   > load stream trades /my/path/trades.csv
 
-Or you can use the other tools and APIs available to ingest data in real-time or batch.
+Or you can use the other tools and APIs available to ingest data in real time or batch.
 For more information on what are other ways of ingesting data into CDAP, see the links at
 the top of this page.
 

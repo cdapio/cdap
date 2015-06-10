@@ -107,7 +107,7 @@ property of an existing dataset can be changed using the :ref:`http-restful-api-
 
 A dataset abstraction is defined by a Java class that implements the ``DatasetDefinition`` interface.
 The implementation of a dataset typically relies on one or more underlying (embedded) datasets.
-For example, the ``IndexedTable`` dataset can be implemented by two underlying Table datasets –
+For example, the ``IndexedTable`` dataset can be implemented by two underlying Table datasets |---|
 one holding the data and one holding the index.
 
 We distinguish three categories of datasets: *core*, *system*, and *custom* datasets:

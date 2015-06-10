@@ -9,7 +9,7 @@ Workers
 =======
 
 Workers can be used to run background processes. Workers provide the ability to write data processing logic
-that doesn't fit into the other paradigms such as flows and MapReduce or real-time and batch.
+that doesn't fit into the other paradigms such as flows and MapReduce or real time and batch.
 
 You can add workers to your application by calling the ``addWorker`` method in the application's
 ``configure`` method::

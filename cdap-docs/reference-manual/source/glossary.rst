@@ -18,7 +18,7 @@ Glossary
       abstraction layer in CDAP.
 
    Stream
-      The primary means of bringing data from external systems into CDAP in real-time; an
+      The primary means of bringing data from external systems into CDAP in real time; an
       ordered, time-partitioned sequences of data, usable for real-time collection and
       consumption of data.
       

@@ -6,9 +6,9 @@
 
 .. _introduction-to-cdap:
 
-==================================================
+====================
 Introduction to CDAP
-==================================================
+====================
 
 Simple Access to Powerful Technology
 ====================================
@@ -110,7 +110,7 @@ Data Ingestion
 - Data is ingested into CDAP using :ref:`streams <streams>`
 - Streams are abstractions over HDFS with an HTTP endpoint
 - Data in a stream are ordered and time-partitioned
-- CDAP supports easy exploration and processing in both real-time and batch
+- CDAP supports easy exploration and processing in both real time and batch
 - Ingest using RESTful, Flume, language-specific APIs, or Tools
 - The abstraction of streams lets you disconnect how you ingest from how you process
 
@@ -493,7 +493,7 @@ Data Exploration: Attaching A Schema
 Advanced Data Exploration
 =========================
 - CDAP has the ability to join multiple streams using SQL
-- Data in a stream can be ingested in real-time or batch
+- Data in a stream can be ingested in real time or batch
 - CDAP supports joining with other streams using Hive SQL
 
 
@@ -1127,7 +1127,7 @@ Building Real World Applications
 **Let's see how we would build a real-world application using CDAP:**
 
 - *Wise App* performs Web analytics on access logs
-- *WiseFlow* parses and computes pageview count per IP in real-time
+- *WiseFlow* parses and computes pageview count per IP in real time
 - A MapReduce computes bounce counts: percentage of pages that *don’t* go to another page before exiting
 - Service to expose the data 
 - Unified platform for different processing paradigms
@@ -1447,7 +1447,7 @@ Building Real World Applications
           RUNNING
 
 
-.. rubric:: Serve the processed data in real-time
+.. rubric:: Serve the processed data in real time
 
 .. container:: table-block
 

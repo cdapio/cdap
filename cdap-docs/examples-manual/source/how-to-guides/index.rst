@@ -52,20 +52,20 @@ instructions for building the “Hello World” of any development task with CDA
 .. |flow-guide| replace:: **Real-time Data Processing With a Flow:**
 .. _flow-guide: cdap-flow-guide.html
 
-- |flow-guide|_  Learn how to **process data in real-time** with CDAP. You will discover how
+- |flow-guide|_  Learn how to **process data in real time** with CDAP. You will discover how
   easy it is to scale out applications on CDAP.
 
 
 .. |flume-guide| replace:: **Ingesting Data into CDAP using Apache Flume:**
 .. _flume-guide: cdap-flume-guide.html
 
-- |flume-guide|_ Learn how to use **Flume to ingest data into CDAP** in real-time.
+- |flume-guide|_ Learn how to use **Flume to ingest data into CDAP** in real time.
 
 
 .. |kafka-ingest-guide| replace:: **Consuming Data From Kafka:**
 .. _kafka-ingest-guide: cdap-kafka-ingest-guide.html
 
-- |kafka-ingest-guide|_ Learn how to **consume data from a Kafka topic** to process data **in real-time.**
+- |kafka-ingest-guide|_ Learn how to **consume data from a Kafka topic** to process data **in real time.**
 
 
 .. |mapreduce-guide| replace:: **Batch Data Processing With CDAP:**
@@ -89,7 +89,7 @@ instructions for building the “Hello World” of any development task with CDA
 .. |twitter-ingest-guide| replace:: **Consuming Twitter Data in Real-time:**
 .. _twitter-ingest-guide: cdap-twitter-ingest-guide.html
 
-- |twitter-ingest-guide|_ Learn how to **consume a live tweets stream in real-time,** one of
+- |twitter-ingest-guide|_ Learn how to **consume a live tweets stream in real time,** one of
   the common tasks of big data applications that power the social analytics.
 
 

@@ -35,7 +35,7 @@ a template in CDAP.
 
 CDAP provides two application templates |---| the ETL templates **ETLBatch** and
 **ETLRealtime** |---| which are used to create adapters that perform ETL in either batch
-and real-time. The  *ETLBatch* and *ETLRealtime* templates consist of a variety of sources,
+or real time. The  *ETLBatch* and *ETLRealtime* templates consist of a variety of sources,
 transformations and sinks that are packaged together.
 
 The batch sources can write to any batch sinks that are available and real-time sources can

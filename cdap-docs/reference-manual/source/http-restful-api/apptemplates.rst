@@ -47,14 +47,14 @@ description and type of program that it creates. Example output (pretty-printed)
     },
     {
       "name": "ETLRealtime",
-      "description": "Real-time Extract-Transform-Load (ETL) Adapter",
+      "description": "Real-Time Extract-Transform-Load (ETL) Adapter",
       "programType": "Worker"
     }
   ]
 
 
 Template Details
------------------
+----------------
 To retrieve the details of a particular application templates, submit an HTTP GET request::
 
   GET <base-url>/templates/<template-id>
@@ -93,7 +93,7 @@ application template.
 .. _http-restful-api-apptemplates-update:
 
 Template Update
------------------
+---------------
 To update a particular application template, submit an HTTP PUT request::
 
   PUT <base-url>/namespaces/<namespace-id>/templates/<template-id>
