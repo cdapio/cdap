@@ -19,19 +19,20 @@ angular.module(PKG.name + '.feature.flows')
           highlightTab: 'development'
         },
         resolve : {
-          rRuns: function(MyDataSource, $stateParams, $q) {
+          rRuns: function($stateParams, $q, myFlowsApi) {
             var defer = $q.defer();
-            var dataSrc = new MyDataSource();
+
             // Using _cdapPath here as $state.params is not updated with
             // runid param when the request goes out
             // (timing issue with re-direct from login state).
-            dataSrc.request({
-              _cdapPath: '/namespaces/' + $stateParams.namespace +
-                         '/apps/' + $stateParams.appId +
-                         '/flows/' + $stateParams.programId +
-                         '/runs'
-            })
-              .then(function(res) {
+            var params = {
+              namespace: $stateParams.namespace,
+              appId: $stateParams.appId,
+              flowId: $stateParams.programId
+            };
+            myFlowsApi.runs(params)
+              .$promise
+              .then(function (res) {
                 defer.resolve(res);
               });
             return defer.promise;
