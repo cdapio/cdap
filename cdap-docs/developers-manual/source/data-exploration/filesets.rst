@@ -4,9 +4,9 @@
 
 .. _fileset-exploration:
 
-============================================
+===================
 Fileset Exploration
-============================================
+===================
 
 The ``FileSet``, ``PartitionedFileSet``, and ``TimePartitionedFileSet`` Datasets can be explored through ad-hoc SQL-like queries.
 To enable exploration, you must set several properties when creating the Dataset, and the files in 
@@ -44,8 +44,12 @@ For example, in the configure method of your application::
       .setTableProperty("avro.schema.literal", schema.toString())
       .build());
 
-These Dataset properties map directly to table properties in Hive. 
-For example, the Dataset above would result in the following "create table" statement being generated::
+These Dataset properties map directly to table properties in Hive. In the case of the
+``setBasePath`` method, the partial-path given is added to 
+``/<CDAP-home>/namespaces/<current-namespace>/data/``.
+
+For example, if ``<CDAP-home>`` is *cdap*, and the current namespace is *default*, 
+the above Dataset would result in this "create table" statement being generated::
 
   CREATE EXTERNAL TABLE dataset_myfiles(
     user string,
@@ -54,7 +58,7 @@ For example, the Dataset above would result in the following "create table" stat
   ROW FORMAT SERDE "org.apache.hadoop.hive.serde2.avro.AvroSerDe"
   STORED AS INPUTFORMAT "org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat"
   OUTPUTFORMAT "org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat"
-  LOCATION "/cdap/mylocation"
+  LOCATION "/cdap/namespaces/default/data/mylocation"
   TBLPROPERTIES (
     "avro.schema.literal"="{\"type\": \"record\", \"name\": \"stringBody\", \"fields\": [{ \"name\":\"ts\", \"type\":\"long\" }, { \"name\":\"body\", \"type\":\"string\" } ] }"
   );
@@ -83,7 +87,9 @@ A ``FileSet`` has some additional limitations that the ``PartitionedFileSet`` or
 If you wish to use Impala to explore a ``FileSet``, ``PartitionedFileSet``, or ``TimePartitionedFileSet``, there are several
 additional restrictions you must keep in mind:
 
-- Impala only supports scalar types. See `Data Type Considerations for Avro Tables <http://www.cloudera.com/content/cloudera/en/documentation/cloudera-impala/latest/topics/impala_avro.html#avro_data_types_unique_1>`__ for details.
+- Impala only supports scalar types. See `Data Type Considerations for Avro Tables 
+  <http://www.cloudera.com/content/cloudera/en/documentation/cloudera-impala/latest/topics/impala_avro.html#avro_data_types_unique_1>`__ 
+  for details.
 - If your underlying data contains non-scalars, you cannot tell Impala to use a different read schema of just scalars.
   For example, if you have Avro files that contain a map field, you cannot simply leave out the field when specifying the table schema.
 - Impala caches table metadata, which clients must invalidate when there are changes. 
@@ -93,4 +99,3 @@ additional restrictions you must keep in mind:
   metadata (such as when adding a partition), then you need to issue a ``REFRESH [tablename]`` command to force
   Impala to see the changes. Though Impala also caches info on table files and blocks, any calls to the
   ``REFRESH`` command will cause it to re-read the information.
-
