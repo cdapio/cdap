@@ -17,7 +17,7 @@ Introduction
 ============
 Performing analytics on a Web application using access logs is a common use case when
 managing a Web site. A system capable of analytics needs to ingest logs, and implement
-real time or batch processing computations to process the data. The information has to be
+real-time or batch processing computations to process the data. The information has to be
 stored somewhere in the system, and the system should expose ways to retrieve it. Even in
 this case where the system performs very simple analytics, such as counting the number of
 visits made to a website in a day, the components needed to make it possible demand a lot
@@ -26,14 +26,14 @@ of work.
 Using the **Web Insights Engine** application or *WISE*, we’ll show you how to build
 such a system on CDAP that is easy, concise, and powerful. WISE extracts value from Web
 server access logs, counts visits made by different IP addresses seen in the logs in
-real time, and computes the bounce ratio of each web page encountered using batch
+real-time, and computes the bounce ratio of each web page encountered using batch
 processing.
 
 The WISE v\ |cdap-apps-version| application uses these Cask Data Application Platform (CDAP) constructs to
 analyze web server logs:
 
-- **Stream:** Ingests log data in real time 
-- **Flow:** Computes web page visits counts per IP address based on the log data in real time 
+- **Stream:** Ingests log data in real-time 
+- **Flow:** Computes web page visits counts per IP address based on the log data in real-time 
 - **Datasets:** Store web page visits counts and bounce ratio based on custom data access patterns 
 - **MapReduce:** Computes the bounce ratio of each web page present in the log data 
 - **Service:** Exposes HTTP APIs to query the page visit counts per IP address 
@@ -266,7 +266,7 @@ a ``uri``, a ``visits`` count and a ``bounces`` count.
 
 Ingesting Access Logs in WISE 
 =============================
-CDAP has an easy way to ingest data in real time into an application, using streams. A
+CDAP has an easy way to ingest data in real-time into an application, using streams. A
 stream exposes a simple RESTful API to ingest data events.
 
 .. highlight:: console
@@ -290,9 +290,9 @@ This requires that a Standalone CDAP instance be running with the WISE applicati
 deployed.
 
 
-Real Time Log Analytics with WiseFlow 
+Real-time Log Analytics with WiseFlow 
 =====================================
-The goal of ``WiseFlow`` is to perform real time analytics on the Web server access logs
+The goal of ``WiseFlow`` is to perform real-time analytics on the Web server access logs
 received by *logEventStream*. For each IP address in the logs, ``WiseFlow`` counts the
 number of visits they made to different web pages.
 

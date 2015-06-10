@@ -47,7 +47,7 @@ description and type of program that it creates. Example output (pretty-printed)
     },
     {
       "name": "ETLRealtime",
-      "description": "Real Time Extract-Transform-Load (ETL) Adapter",
+      "description": "Real-time Extract-Transform-Load (ETL) Adapter",
       "programType": "Worker"
     }
   ]
@@ -611,7 +611,7 @@ appropriate status code (``404``) will be returned.
 Starting an Adapter
 -------------------
 Starting a batch adapter schedules a workflow to be run periodically based on the cron
-schedule that is configured in the adapter. Starting a real time adapter starts a CDAP
+schedule that is configured in the adapter. Starting a real-time adapter starts a CDAP
 worker.
 
 To start an adapter, submit an HTTP POST request::

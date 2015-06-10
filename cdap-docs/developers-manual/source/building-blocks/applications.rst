@@ -10,16 +10,16 @@ Applications
 
 .. highlight:: java
 
-An **application** is a collection of building blocks that read and write data through the data
+An **Application** is a collection of building blocks that read and write data through the data
 abstraction layer in CDAP. 
 
-**Applications** are composed from *programs,* *services,* and *schedules*.
+**Applications** are composed from *Programs,* *Services,* and *Schedules*.
 
-Programs include :doc:`flows <flows-flowlets/index>`, :doc:`MapReduce programs <mapreduce-programs>`,
-:doc:`workflows <workflows>`, :doc:`Spark programs <spark-programs>`, and :doc:`workers <workers>` are used to process
+Programs include :doc:`Flows <flows-flowlets/index>`, :doc:`MapReduce programs <mapreduce-programs>`,
+:doc:`Workflows <workflows>`, :doc:`Spark programs <spark-programs>`, and :doc:`Workers <workers>` are used to process
 data. :doc:`Services <services>` are used to serve data.
 
-**Data abstractions** include :doc:`streams <streams>` and :doc:`datasets <datasets/index>`.
+**Data abstractions** include :doc:`Streams <streams>` and :doc:`Datasets <datasets/index>`.
 
 .. rubric:: Creating an Application with an Application Specification
 
@@ -57,9 +57,9 @@ A typical design of a CDAP application consists of:
 
 - streams to ingest data into CDAP;
 - flows, consisting of flowlets linked together, to process the ingested data
-  in real time or batch;
+  in real-time or batch;
 - MapReduce programs, Spark programs, and workflows for batch processing tasks;
-- workers for processing data in an ad-hoc manner that doesn't fit into real time or batch paradigms
+- workers for processing data in an ad-hoc manner that doesn't fit into real-time or batch paradigms
 - datasets for storage of data, either raw or the processed results; and
 - services for serving data and processed results.
 

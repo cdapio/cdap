@@ -192,7 +192,7 @@ such as the format and schema, while abstracting from the actual underlying file
   ranges.
 
   Time-partitioned FileSets are typically written in batch: into large files, every *N* minutes or
-  hours...while a timeseries table is typically written in real time, one data point at a
+  hours...while a timeseries table is typically written in real-time, one data point at a
   time.
  
 - A ``CubeDataset`` is a multidimensional dataset, optimized for data warehousing and OLAP

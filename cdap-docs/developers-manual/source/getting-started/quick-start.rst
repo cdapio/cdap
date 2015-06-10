@@ -26,11 +26,11 @@ use case: web log analytics.
 
 This `web log analytics application
 <https://github.com/caskdata/cdap-apps/tree/develop/Wise>`__ will show you how CDAP can
-aggregate logs, perform real time and batch analytics of the logs ingested, and expose the
+aggregate logs, perform real-time and batch analytics of the logs ingested, and expose the
 results using multiple interfaces. 
 
 Specifically, this application processes web server access logs, counts page-views by IP
-in real time, and computes the bounce ratio of each web page encountered in batch. (The
+in real-time, and computes the bounce ratio of each web page encountered in batch. (The
 bounce rate is the percentage of views that are not followed by another view on the same
 site.)
 
@@ -101,15 +101,15 @@ include the ``cdap-apps/Wise`` directory.)
 **Learn More:** *You can also deploy apps by dragging and dropping their jars on* :ref:`the CDAP UI <cdap-ui>`.
 
 
-Starting Real Time Processing
+Starting Real-time Processing
 =============================
-Now that the application is deployed, we can start the real time processing::
+Now that the application is deployed, we can start the real-time processing::
 
   $ cdap-cli.sh start flow Wise.WiseFlow
   Successfully started Flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}'
 
 This starts the flow named *WiseFlow,* which listens for log events from web servers to
-analyze them in real time. Another way to start the flow is using ``curl``::
+analyze them in real-time. Another way to start the flow is using ``curl``::
 
   $ curl -w'\n' -X POST localhost:10000/v3/namespaces/default/apps/Wise/flows/WiseFlow/start
 
@@ -214,7 +214,7 @@ Command Line.
 Monitoring with the CDAP UI
 ===========================
 You may recall that before we started injecting data into the stream, we started the
-*WiseFlow* to process these events in real time. You can observe the flow while it is
+*WiseFlow* to process these events in real-time. You can observe the flow while it is
 processing events by retrieving metrics about how many events it has processed. For that,
 we need to know the name of the flowlet inside the *WiseFlow* that performs the actual
 processing. 
@@ -230,13 +230,13 @@ on when and how many events you have sent)::
 
 A much easier way to observe the flow is in the `CDAP UI: <http://localhost:9999>`__
 it shows a `visualization of the flow, <http://localhost:9999/ns/default/apps/Wise/programs/flows/WiseFlow/runs>`__
-annotated with its real time metrics:
+annotated with its real-time metrics:
 
 .. image:: ../_images/quickstart/wise-flow1.png
    :width: 600px
 
 In this screenshot, we see that the stream has about thirty thousand events and all of them
-have been processed by both flowlets. You can watch these metrics update in real time by
+have been processed by both flowlets. You can watch these metrics update in real-time by
 repeating the injection of events into the stream:
 
 .. container:: highlight
@@ -408,7 +408,7 @@ fixed columns::
   | 255.255.255.180 | /index.html      | 7             |
   +====================================================+
 
-We can even join two datasets: the one produced by the real time flow; and the other one
+We can even join two datasets: the one produced by the real-time flow; and the other one
 produced by the MapReduce. The query below returns, for each of the three URLs with the
 highest bounce ratio, the IP addresses that have made more than three requests for that
 URL. In other words: who are the users who are most interested in the least interesting

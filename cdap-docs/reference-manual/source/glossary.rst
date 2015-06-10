@@ -18,8 +18,8 @@ Glossary
       abstraction layer in CDAP.
 
    Stream
-      The primary means of bringing data from external systems into CDAP in real time; an
-      ordered, time-partitioned sequences of data, usable for real time collection and
+      The primary means of bringing data from external systems into CDAP in real-time; an
+      ordered, time-partitioned sequences of data, usable for real-time collection and
       consumption of data.
       
    Dataset
@@ -27,7 +27,7 @@ Glossary
       data storage with generic reusable implementations of common data patterns.
       
    Flow
-      Flows are user-implemented real time stream processors, comprised of one or
+      Flows are user-implemented real-time stream processors, comprised of one or
       more flowlets that are wired together into a directed acyclic graph. 
       
    Flowlet
@@ -182,7 +182,7 @@ Glossary
    ETL Application Template
       Also referred to as an *ETL template.* A type of :term:`application template`,
       designed to create an :term:`ETL adapter`. Two ETL templates are shipped with CDAP:
-      ``ETLBatch`` and ``ETLRealtime``, for the creation of either batch or real time
+      ``ETLBatch`` and ``ETLRealtime``, for the creation of either batch or real-time
       :term:`ETL` pipelines.
   
    ETL Template

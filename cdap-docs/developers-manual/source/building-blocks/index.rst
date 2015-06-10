@@ -28,9 +28,9 @@ Building Blocks
     Transaction System <transaction-system>
 
 This section covers the :doc:`core abstractions <core>` in the Cask Data Application Platform
-(CDAP): **data** and **applications.**
+(CDAP): **Data** and **Applications.**
 
-An :doc:`application <applications>` is a collection of application building blocks that read and
+An :doc:`Application <applications>` is a collection of application building blocks that read and
 write data through the data abstraction layer in CDAP.
 
 **Data abstractions** include:
@@ -48,11 +48,11 @@ write data through the data abstraction layer in CDAP.
 - :doc:`Spark Programs <spark-programs>`
 - :doc:`Services <services>`
 
-A :doc:`namespace <namespaces>` is a physical grouping of application and data in CDAP.
+A :doc:`Namespace <namespaces>` is a physical grouping of application and data in CDAP.
 Conceptually, namespaces can be thought of as a partitioning of a CDAP instance.
 All applications and data live in an explicit CDAP namespace.
 
-Additionally, the :doc:`transaction system <transaction-system>` is an essential service
+Additionally, the :doc:`Transaction System <transaction-system>` is an essential service
 that provides ACID (*atomicity, consistency, isolation,* and *durability*) guarantees,
 critical in applications where data accuracy is required.
 

@@ -8,14 +8,14 @@
 Streams
 =======
 
-**Streams** are the primary means of bringing data from external systems into the CDAP in real time.
-They are ordered, time-partitioned sequences of data, usable for real time collection and consumption of data.
+**Streams** are the primary means of bringing data from external systems into the CDAP in real-time.
+They are ordered, time-partitioned sequences of data, usable for real-time collection and consumption of data.
 
 They can be created programmatically within your application, using the
 :ref:`http-restful-api-stream`, the :ref:`stream-client` of the :ref:`client-api`, or by
 using the :ref:`CDAP Command Line Interface. <cli>` 
 
-Data written to a stream can be consumed in real time by :ref:`flows <flows>` or in batch
+Data written to a stream can be consumed in real-time by :ref:`flows <flows>` or in batch
 by :ref:`MapReduce programs. <mapreduce>`.
 
 

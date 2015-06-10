@@ -18,7 +18,7 @@ CDAP Documentation v\ |version|
 The Cask |(TM)| Data Application Platform (CDAP) is an integrated, open source application
 development platform for the Hadoop ecosystem that provides developers with data and
 application abstractions to simplify and accelerate application development, address a
-broader range of real time and batch use cases, and deploy applications into production
+broader range of real-time and batch use cases, and deploy applications into production
 while satisfying enterprise requirements.
 
 CDAP is a layer of software running on top of Apache Hadoop |(R)| platforms such as the
@@ -61,7 +61,7 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 
   - **Getting Started Developing:** A quick, hands-on introduction to developing with CDAP
   - **Overview:** The overall architecture and technology behind CDAP
-  - **Building Blocks:** The two core abstractions in CDAP: data and applications, and their components
+  - **Building Blocks:** The two core abstractions in CDAP: *Data* and *Applications*, and their components
   - **Security:** Perimeter security, configuration and client authentication
   - **Testing and Debugging:** Test framework plus tools and practices for debugging your applications
   - **Ingesting Data:** Different techniques for ingesting data into CDAP

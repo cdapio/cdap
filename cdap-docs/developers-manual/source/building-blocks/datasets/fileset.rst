@@ -10,7 +10,7 @@ FileSet Dataset
 
 .. highlight:: java
 
-While real time programs such as flows normally require datasets with random access, batch-oriented
+While real-time programs such as flows normally require datasets with random access, batch-oriented
 programming paradigms such as MapReduce are more suitable for data that can be read and written sequentially.
 The most prominent form of such data is an HDFS file, and MapReduce is highly optimized for such files.
 CDAP's abstraction for files is the FileSet dataset.
