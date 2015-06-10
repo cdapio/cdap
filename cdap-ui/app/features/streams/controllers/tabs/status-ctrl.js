@@ -35,7 +35,6 @@ angular.module(PKG.name + '.feature.streams')
         method: 'POST'
       }, function(metricData) {
           var data = myHelpers.objectQuery(metricData, 'series', 0, 'data', 0, 'value');
-          console.info(metric.scopeProperty, data);
           this[metric.scopeProperty] = data;
       }.bind(this));
     }

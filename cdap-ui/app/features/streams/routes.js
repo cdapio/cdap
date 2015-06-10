@@ -12,35 +12,6 @@ angular.module(PKG.name + '.feature.streams')
         parent: 'ns'
       })
 
-      .state('streams.list', {
-        url: '',
-        templateUrl: '/assets/features/streams/templates/list.html',
-        controller: 'StreamsListController',
-        controllerAs: 'ListController',
-        ncyBreadcrumb: {
-          label: 'Streams',
-          parent: 'data.list'
-        }
-      })
-
-      .state('streams.list.create', {
-        url: '/create',
-        onEnter: function($bootstrapModal, $state) {
-          $bootstrapModal.open({
-            templateUrl: '/assets/features/streams/templates/streamscreate.html',
-            size: 'lg',
-            backdrop: true,
-            keyboard: true,
-            controller: 'StreamsCreateController as CreateController'
-          }).result.finally(function() {
-            $state.go('streams.list',{}, { reload: true });
-          });
-        },
-        onExit: function($modalStack) {
-          $modalStack.dismissAll();
-        }
-      })
-
       .state('streams.detail', {
         url: '/:streamId',
         abstract: true,
