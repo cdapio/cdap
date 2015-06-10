@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.lib.PartitionMetadata;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.lib.TimePartition;
@@ -37,6 +38,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.explore.client.ExploreFacade;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -101,11 +103,21 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
 
   @Override
   public void addPartition(long time, String path) {
+    addPartition(time, path, new PartitionMetadata(ImmutableMap.<String, String>of()));
+  }
+
+  @Override
+  public void addPartition(long time, String path, PartitionMetadata metadata) {
     if (isLegacyDataset && getLegacyPartition(time) != null) {
       throw new DataSetException(String.format("Dataset '%s' already has a partition with the same time: %d",
                                                getName(), time));
     }
-    addPartition(partitionKeyForTime(time), path);
+    addPartition(partitionKeyForTime(time), path, metadata);
+  }
+
+  @Override
+  public void updateMetadata(long time, PartitionMetadata metadata) {
+    updateMetadata(partitionKeyForTime(time), metadata);
   }
 
   @Override
@@ -121,7 +133,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
   public TimePartition getPartitionByTime(long time) {
     Partition partition = getPartition(partitionKeyForTime(time));
     return partition == null ? null
-      : new BasicTimePartition(partition.getRelativePath(), partition.getPartitionKey());
+      : new BasicTimePartition(partition.getRelativePath(), partition.getPartitionKey(), partition.getMetadata());
   }
 
   @Override
@@ -130,8 +142,8 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     for (PartitionFilter filter : partitionFiltersForTimeRange(startTime, endTime)) {
       super.getPartitions(filter, new PartitionedFileSetDataset.PartitionConsumer() {
         @Override
-        public void consume(PartitionKey key, String path) {
-          partitions.add(new BasicTimePartition(path, key));
+        public void consume(PartitionKey key, String path, @Nullable PartitionMetadata metadata) {
+          partitions.add(new BasicTimePartition(path, key, metadata));
         }
       });
     }
@@ -139,7 +151,9 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
       getLegacyPartitions(startTime, endTime, new PartitionConsumer() {
         @Override
         public void consume(byte[] row, String path) {
-          partitions.add(new BasicTimePartition(path, Bytes.toLong(row)));
+          // legacy partitions had no metadata
+          partitions.add(new BasicTimePartition(path, Bytes.toLong(row),
+                                                new PartitionMetadata(ImmutableMap.<String, String>of())));
         }
       });
     }
@@ -567,7 +581,8 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
         if (pathBytes != null) {
           String path = Bytes.toString(pathBytes);
           addPartition(partitionKeyForTime(partitionTime), path,
-                       false); // do not register in explore - it is already there
+                       false, // do not register in explore - it is already there
+                       new PartitionMetadata(ImmutableMap.<String, String>of()));
           partitionsTable.delete(row.getRow());
         } else {
           LOG.info("Dropping legacy partition for time %d because it has no path.", partitionTime);
@@ -584,13 +599,13 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
 
     private final Long time;
 
-    private BasicTimePartition(String relativePath, PartitionKey key) {
-      super(relativePath, key);
+    private BasicTimePartition(String relativePath, PartitionKey key, PartitionMetadata metadata) {
+      super(relativePath, key, metadata);
       this.time = timeForPartitionKey(key);
     }
 
-    private BasicTimePartition(String relativePath, long time) {
-      super(relativePath, partitionKeyForTime(time));
+    private BasicTimePartition(String relativePath, long time, PartitionMetadata metadata) {
+      super(relativePath, partitionKeyForTime(time), metadata);
       this.time = time;
     }
 

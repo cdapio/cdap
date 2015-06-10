@@ -37,4 +37,9 @@ public interface Partition {
    * @return the partition key
    */
   PartitionKey getPartitionKey();
+
+  /**
+   * Gets the metadata for the partition
+   */
+  PartitionMetadata getMetadata();
 }

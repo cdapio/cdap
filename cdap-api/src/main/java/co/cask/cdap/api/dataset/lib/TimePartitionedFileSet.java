@@ -50,6 +50,19 @@ public interface TimePartitionedFileSet extends PartitionedFileSet {
    */
   void addPartition(long time, String path);
 
+  // Why are some of these methods methodNameByTime, while others are just methodName?
+  // (why are some suffixed by 'ByTime')
+  /**
+   * Add a partition for a given time, stored at a given path (relative to the file set's base path),
+   * with given metadata.
+   */
+  void addPartition(long time, String path, PartitionMetadata metadata);
+
+  /**
+   * Updates the metadata for a particular partition.
+   */
+  void updateMetadata(long time, PartitionMetadata metadata);
+
   /**
    * Remove a partition for a given time.
    */

@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.lib.PartitionMetadata;
 import co.cask.cdap.api.dataset.lib.TimePartition;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
@@ -76,6 +77,24 @@ public class TimePartitionedFileSetTest {
   @After
   public void after() throws Exception {
     dsFrameworkUtil.deleteInstance(TPFS_INSTANCE);
+  }
+
+  @Test
+  public void testPartitionMetadata() throws Exception {
+    // make sure the dataset has no partitions
+    final TimePartitionedFileSet tpfs = dsFrameworkUtil.getInstance(TPFS_INSTANCE);
+    validateTimePartitions(tpfs, 0L, MAX, Collections.<Long, String>emptyMap());
+
+    Date date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse("6/4/12 10:00 am");
+    final long time = date.getTime();
+
+    final PartitionMetadata metadata = new PartitionMetadata(ImmutableMap.of("key1", "value1",
+                                                                             "key2", "value3",
+                                                                             "key100", "value4"));
+    tpfs.addPartition(time, "file", metadata);
+    TimePartition partitionByTime = tpfs.getPartitionByTime(time);
+    Assert.assertNotNull(partitionByTime);
+    Assert.assertEquals(metadata, partitionByTime.getMetadata());
   }
 
   @Test
@@ -205,6 +224,8 @@ public class TimePartitionedFileSetTest {
 
     Date date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse("6/4/12 10:00 am");
     final long time = date.getTime();
+
+    // TODO: why is this txExtr required?
     dsFrameworkUtil.newTransactionExecutor((TransactionAware) tpfs).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {

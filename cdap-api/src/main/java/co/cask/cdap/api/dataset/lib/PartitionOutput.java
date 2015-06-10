@@ -25,4 +25,9 @@ public interface PartitionOutput extends Partition {
    * Add the partition to the partitioned file set.
    */
   void addPartition();
+
+  /**
+   * Sets the metadata of a partition.
+   */
+  void setMetadata(PartitionMetadata metadata);
 }

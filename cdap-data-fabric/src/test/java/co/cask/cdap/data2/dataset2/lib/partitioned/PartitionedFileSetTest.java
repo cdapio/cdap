@@ -19,6 +19,7 @@ package co.cask.cdap.data2.dataset2.lib.partitioned;
 import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.lib.PartitionMetadata;
 import co.cask.cdap.api.dataset.lib.PartitionOutput;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
@@ -29,6 +30,7 @@ import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -113,6 +115,51 @@ public class PartitionedFileSetTest {
       .build();
     byte[] rowKey = PartitionedFileSetDataset.generateRowKey(key, PARTITIONING_1);
     PartitionedFileSetDataset.parseRowKey(rowKey, PARTITIONING_2);
+  }
+
+  @Test
+  public void testPartitionMetadata() throws Exception {
+    final PartitionedFileSet dataset = dsFrameworkUtil.getInstance(pfsInstance);
+
+    PartitionKey partitionKey = PartitionKey.builder()
+      .addIntField("i", 42)
+      .addLongField("l", 17L)
+      .addStringField("s", "x")
+      .build();
+
+    PartitionMetadata metadata = new PartitionMetadata(ImmutableMap.of("key1", "value",
+                                                                       "key2", "value2",
+                                                                       "key3", "value2"));
+
+    PartitionOutput partitionOutput = dataset.getPartitionOutput(partitionKey);
+    partitionOutput.setMetadata(metadata);
+    partitionOutput.addPartition();
+
+    Partition partition = dataset.getPartition(partitionKey);
+    Assert.assertNotNull(partition);
+    Assert.assertEquals(metadata, partition.getMetadata());
+  }
+
+  @Test
+  public void testUpdateMetadata() throws Exception {
+    final PartitionedFileSet dataset = dsFrameworkUtil.getInstance(pfsInstance);
+
+    PartitionKey partitionKey = PartitionKey.builder()
+      .addIntField("i", 42)
+      .addLongField("l", 17L)
+      .addStringField("s", "x")
+      .build();
+
+    PartitionOutput partitionOutput = dataset.getPartitionOutput(partitionKey);
+    partitionOutput.setMetadata(new PartitionMetadata(ImmutableMap.of("key1", "value1")));
+    partitionOutput.addPartition();
+
+    PartitionMetadata updatedMetadata = new PartitionMetadata(ImmutableMap.of("key2", "value2"));
+    dataset.updateMetadata(partitionKey, updatedMetadata);
+
+    Partition partition = dataset.getPartition(partitionKey);
+    Assert.assertNotNull(partition);
+    Assert.assertEquals(updatedMetadata, partition.getMetadata());
   }
 
   @Test
