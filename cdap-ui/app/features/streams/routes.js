@@ -64,12 +64,16 @@ angular.module(PKG.name + '.feature.streams')
           ncyBreadcrumb: {
             parent: 'data.list',
             label: '{{$state.params.streamId}}'
-          }
+          },
+          controller: 'StreamDetailStatusController',
+          controllerAs: 'StatusController'
         })
 
         .state('streams.detail.overview.explore', {
           url: '/explore',
           templateUrl: '/assets/features/streams/templates/tabs/explore.html',
+          controller: 'StreamExploreController',
+          controllerAs: 'ExploreController',
           ncyBreadcrumb: {
             label: 'Explore',
             parent: 'streams.detail.overview.status'
@@ -79,6 +83,8 @@ angular.module(PKG.name + '.feature.streams')
         .state('streams.detail.overview.programs', {
           url: '/programs',
           templateUrl: '/assets/features/streams/templates/tabs/programs.html',
+          controller: 'StreamProgramsController',
+          controllerAs: 'ProgramsController',
           ncyBreadcrumb: {
             label: 'Programs',
             parent: 'streams.detail.overview.status'
@@ -88,6 +94,8 @@ angular.module(PKG.name + '.feature.streams')
         .state('streams.detail.overview.metadata', {
           url: '/metadata',
           templateUrl: '/assets/features/streams/templates/tabs/metadata.html',
+          controller: 'StreamMetadataController',
+          controllerAs: 'MetadataController',
           ncyBreadcrumb: {
             label: 'Metadata',
             parent: 'streams.detail.overview.status'

@@ -1,6 +1,5 @@
 <section class="panel-group explore"
-     ng-controller="CdapStreamExploreController"
-     ng-model="activePanel"
+     ng-model="ExploreController.activePanel"
      data-allow-multiple="true"
      bs-collapse>
 
@@ -9,8 +8,8 @@
     <div class="panel-heading" bs-collapse-toggle>
       <h3 class="panel-title">
         <span
-          ng-class="{'fa-chevron-right': activePanel.indexOf(0) === -1,
-                     'fa-chevron-down': activePanel.indexOf(0) !== -1}"
+          ng-class="{'fa-chevron-right': ExploreController.activePanel.indexOf(0) === -1,
+                     'fa-chevron-down': ExploreController.activePanel.indexOf(0) !== -1}"
           class="fa fa-fw"
         ></span>View Data
       </h3>
@@ -18,25 +17,25 @@
     <div class="panel-collapse" bs-collapse-target>
       <div class="panel-body">
 
-        <form ng-submit="doEventSearch()">
+        <form ng-submit="ExploreController.doEventSearch()">
           <div class="row">
             <div class="col-xs-4">
               <my-timestamp-picker
                 data-label="From:"
-                ng-model="eventSearch.startMs"
+                ng-model="ExploreController.eventSearch.startMs"
               ></my-timestamp-picker>
 
             </div>
             <div class="col-xs-4">
               <my-timestamp-picker
                 data-label="To:"
-                ng-model="eventSearch.endMs"
+                ng-model="ExploreController.eventSearch.endMs"
               ></my-timestamp-picker>
             </div>
             <div class="col-xs-2">
               <div class="input-group">
                 <label class="input-group-addon" for="exploreEventsLimit">Limit</label>
-                <input type="number" class="form-control" id="exploreEventsLimit" ng-model="eventSearch.limit" min="1" max="100" />
+                <input type="number" class="form-control" id="exploreEventsLimit" ng-model="ExploreController.eventSearch.limit" min="1" max="100" />
               </div>
             </div>
             <div class="col-xs-2">
@@ -48,7 +47,7 @@
           </div>
         </form>
 
-        <table class="table" ng-if="eventSearch.results.length">
+        <table class="table" ng-if="ExploreController.eventSearch.results.length">
           <thead>
             <tr>
               <th>Timestamp</th>
@@ -57,7 +56,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr ng-repeat="event in eventSearch.results | orderBy:'-timestamp'">
+            <tr ng-repeat="event in ExploreController.eventSearch.results | orderBy:'-timestamp'">
               <td>
                 {{event.timestamp | amDateFormat: 'MM/DD/YY h:mm:ss a'}}
               </td>
@@ -66,7 +65,7 @@
             </tr>
           </tbody>
         </table>
-        <p ng-hide="eventSearch.results.length">
+        <p ng-hide="ExploreController.eventSearch.results.length">
           (no events)
         </p>
       </div>
@@ -78,15 +77,15 @@
     <div class="panel-heading" bs-collapse-toggle>
       <h3 class="panel-title">
         <span
-          ng-class="{'fa-chevron-right': activePanel.indexOf(1) === -1,
-                     'fa-chevron-down': activePanel.indexOf(1) !== -1}"
+          ng-class="{'fa-chevron-right': ExploreController.activePanel.indexOf(1) === -1,
+                     'fa-chevron-down': ExploreController.activePanel.indexOf(1) !== -1}"
           class="fa fa-fw"
         ></span>Write &amp; Execute SQL
       </h3>
     </div>
     <div class="panel-collapse" bs-collapse-target>
       <div class="panel-body">
-        <my-sql-query data-type="'stream'" data-name="name"></my-sql-query>
+        <my-sql-query data-type="'stream'" data-name="ExploreController.name"></my-sql-query>
       </div>
     </div>
   </div>
@@ -96,8 +95,8 @@
     <div class="panel-heading" bs-collapse-toggle>
       <h3 class="panel-title">
         <span
-          ng-class="{'fa-chevron-right': activePanel.indexOf(2) === -1,
-                     'fa-chevron-down': activePanel.indexOf(2) !== -1}"
+          ng-class="{'fa-chevron-right': ExploreController.activePanel.indexOf(2) === -1,
+                     'fa-chevron-down': ExploreController.activePanel.indexOf(2) !== -1}"
           class="fa fa-fw"
         ></span>View Queries
       </h3>
