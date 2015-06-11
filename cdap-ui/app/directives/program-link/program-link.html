@@ -1,0 +1,12 @@
+<a ng-if="type === 'Mapreduce'" ui-sref="mapreduce.detail.runs({ appId: app, programId: program })">
+  {{ ::program }}</a>
+<a ng-if="type === 'Flow'" ui-sref="flows.detail.runs({ appId: app, programId: program })">
+  {{ ::program }}</a>
+<a ng-if="type === 'Workflow'" ui-sref="workflows.detail.runs({ appId: app, programId: program })">
+  {{ ::program }}</a>
+<a ng-if="type === 'Service'" ui-sref="services.detail.runs({ appId: app, programId: program })">
+  {{ ::program }}</a>
+<a ng-if="type === 'Spark'" ui-sref="spark.detail.runs({ appId: app, programId: program })">
+  {{ ::program }}</a>
+<a ng-if="type === 'Worker'" ui-sref="worker.detail.runs({ appId: app, programId: program })">
+  {{ ::program }}</a>
