@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#  Copyright © 2014 Cask Data, Inc.
+#  Copyright © 2014-2015 Cask Data, Inc.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ VERSION = "0.0.9.1"
 COPYRIGHT_YEAR = "2015"
 
 MASTER_CSV = "cdap-dependencies-master.csv"
+MASTER_CDAP_UI_CSV = "cdap-ui-dependencies-master.csv"
 
 ENTERPRISE = "cdap-enterprise-dependencies"
 LEVEL_1    = "cdap-level-1-dependencies"
@@ -212,6 +213,40 @@ def master_print():
     max = len("%d" % len(keys)) # set max to maximum number of characters in keys
     for i, k in enumerate(keys):
         master_libs_dict[k].pretty_print(i+1, max)    
+
+def process_master_cdap_ui():
+    # Read in the master cdap ui csv files and create a dictionary of it
+    # Keys are the dependencies, Values are the Library instances
+    # Get the current master cdap ui csv file
+    # "dependency","version","homepage","license","license_url"
+    # Example:
+    # "angular","1.3.15","https://github.com/angular/bower-angular","MIT License","https://github.com/angular/angular.js/blob/master/LICENSE"
+    master_ui_libs_dict = {}
+    print "Reading master file"
+    csv_path = os.path.join(SCRIPT_DIR_PATH, MASTER_CDAP_UI_CSV)
+    with open(csv_path, 'rb') as csvfile:
+        row_count = 0
+        csv_reader = csv.reader(csvfile)
+        for row in csv_reader:
+            row_count += 1
+            dependency = row[0]
+            if len(row)==5:
+                lib = UI_Library(row)
+                # Place lib reference in dictionary
+                if not master_ui_libs_dict.has_key(lib.dependency):
+                    master_ui_libs_dict[lib.dependency] = lib
+                else:
+                    lib.print_duplicate(master_ui_libs_dict)
+            else:
+                print "%sError with %s\n%srow: %s" % (SPACE, jar, SPACE, row)
+                
+    # Print out the results
+    keys = master_ui_libs_dict.keys()
+#     keys.sort()
+#     for k in keys:
+#         master_ui_libs_dict[k].pretty_print()    
+    print "Master CDAP UI CSV: Rows read: %s; Unique Keys created: %s" % (row_count, len(keys))
+    return master_ui_libs_dict
 
 def process_cdap_ui(input_file, options):
     # Read in the current master ui csv file and create a structure with it
@@ -516,7 +551,30 @@ class Library:
         print "Duplicate key: %s" % self.id
         print "%sCurrent library: %s" % (self.SPACE, lib_dict[self.id])
         print "%sNew library:     %s" % (self.SPACE, self)
+
+
+class UI_Library(Library):
+    PRINT_ORDER = ['dependency','version','homepage','license','license_url']
     
+    def __init__(self, row):
+        self.dependency = row[0]
+        self.version = row[1]
+        self.homepage = row[2]
+        self.license =  row[3]
+        self.license_url = row[4]
+        
+    def __str__(self):
+        return "%s : %s" % (self.dependency, self.version)
+
+    def get_row(self):
+        return (self.dependency, self.version, self.homepage, self.license, self.license_url)
+
+    def print_duplicate(self, lib_dict):
+        print "Duplicate key: %s" % self.dependency
+        print "%sCurrent library: %s" % (self.SPACE, lib_dict[self.dependency])
+        print "%sNew library:     %s" % (self.SPACE, self)
+
+
 #
 # Main function
 #
