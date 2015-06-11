@@ -1,0 +1,31 @@
+{
+  "id": "S3",
+  "groups" : {
+    "position": [ "group1" ],
+    "group1": {
+      "display" : "S3",
+      "position" : [ "name", "path", "accessID", "accessKey"],
+      "fields" : {
+        "name" : {
+          "widget": "textbox",
+          "label": "S3 Name"
+        },
+
+        "basePath" : {
+          "widget": "textbox",
+          "label": "path"
+        },
+
+        "basePath" : {
+          "widget": "textbox",
+          "label": "accessID"
+        },
+
+        "basePath" : {
+          "widget": "textbox",
+          "label": "accessKey"
+        }
+      }
+    }
+  }
+}
