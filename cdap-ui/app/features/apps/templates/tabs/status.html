@@ -23,24 +23,15 @@
               <td>
                 <!-- RUNNING is green, SUSPENDED is yellow. All else is grey. -->
                 <span ng-class="{'status-green': program.status === 'RUNNING', 'status-yellow': program.status === 'SUSPENDED', 'status-grey': program.status !== 'RUNNING' && program.status !== 'SUSPENDED'}"> </span>
-                <a ng-if="program.type === 'Flow'" ui-sref="flows.detail.runs({programId: program.name})">
-                  <strong> {{program.name}} </strong>
-                </a>
-                <a ng-if="program.type === 'Workflow'" ui-sref="workflows.detail.runs({programId: program.name})">
-                  <strong> {{program.name}} </strong>
-                </a>
-                <a ng-if="program.type === 'Service'" ui-sref="services.detail.runs({programId: program.name})">
-                  <strong> {{program.name}} </strong>
-                </a>
-                <a ng-if="program.type === 'Mapreduce'" ui-sref="mapreduce.detail.runs({programId: program.name})">
-                  <strong> {{program.name}} </strong>
-                </a>
-                <a ng-if="program.type === 'Spark'" ui-sref="spark.detail.runs({programId: program.name})">
-                  <strong> {{program.name}} </strong>
-                </a>
-                <a ng-if="program.type === 'Worker'" ui-sref="worker.detail.runs({programId: program.name})">
-                  <strong> {{program.name}} </strong>
-                </a>
+
+                <my-program-link
+                  type="program.type"
+                  namespace="$state.params.namespace"
+                  app="$state.params.appId"
+                  program="program.name"
+                  bold="true">
+                </my-program-link>
+
               </td>
               <td ng-bind="program.status"></td>
               <td ng-bind="program.description"></td>
