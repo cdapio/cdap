@@ -2,7 +2,7 @@ angular.module(PKG.name + '.feature.flows')
   .controller('FlowletDetailOutputController', function($state, $scope, MyDataSource, MyMetricsQueryHelper, myFlowsApi) {
 
     var dataSrc = new MyDataSource($scope);
-    var flowletid = $scope.$parent.activeFlowlet.name;
+    var flowletid = $scope.RunsController.activeFlowlet.name;
     var runid = $scope.runs.selected.runid;
     $scope.outputs = [];
 

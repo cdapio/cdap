@@ -1,7 +1,7 @@
 angular.module(PKG.name + '.feature.flows')
   .controller('FlowsRunDetailLogController', function($scope, $state, myFlowsApi) {
 
-    $scope.logs = [];
+    this.logs = [];
     if (!$scope.RunsController.runs.length) {
       return;
     }
@@ -18,7 +18,7 @@ angular.module(PKG.name + '.feature.flows')
     myFlowsApi.logs(params)
       .$promise
       .then(function (res) {
-        $scope.logs = res;
-      });
+        this.logs = res;
+      }.bind(this));
 
   });
