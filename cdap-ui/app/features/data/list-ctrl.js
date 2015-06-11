@@ -9,23 +9,49 @@ angular.module(PKG.name + '.feature.data')
       scope: $scope
     };
 
-    myStreamApi.list(params)
+    myDatasetApi.list(params)
       .$promise
       .then(function (res) {
         this.dataList = res
           .map(function(dataset) {
-            dataset.dataType = 'Stream';
+            dataset.dataType = 'Dataset';
+
+            var datasetParams = {
+              namespace: $state.params.namespace,
+              datasetId: dataset.name,
+              scope: $scope
+            };
+
+            myDatasetApi.programsList(datasetParams)
+              .$promise
+              .then(function (programs) {
+                dataset.programs = programs;
+              });
+
             return dataset;
           }.bind(this))
           .concat(this.dataList);
       }.bind(this));
 
-    myDatasetApi.list(params)
+    myStreamApi.list(params)
       .$promise
       .then(function(res) {
         this.dataList = res
           .map(function(stream) {
-            stream.dataType = 'Dataset';
+            stream.dataType = 'Stream';
+
+            var streamParams = {
+              namespace: $state.params.namespace,
+              streamId: stream.name,
+              scope: $scope
+            };
+
+            myStreamApi.programsList(streamParams)
+              .$promise
+              .then(function (programs) {
+                stream.programs = programs;
+              });
+
             return stream;
           }.bind(this))
           .concat(this.dataList);

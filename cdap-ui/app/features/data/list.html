@@ -19,6 +19,7 @@
       <tr ng-class="{'sort-enabled': dataCtrl.dataList.length>0}">
         <th data-predicate="name"> Name </th>
         <th data-predicate="dataType"> Type </th>
+        <th data-predicate="programs"> Programs </th>
       </tr>
     </thead>
     <tbody>
@@ -33,6 +34,26 @@
             <span class="icon-streams" ng-if="data.dataType === 'Stream'"></span>
             <span class="icon-datasets" ng-if="data.dataType === 'Dataset'"></span>
             <span> {{data.dataType}} </span>
+          </td>
+          <td>
+            <span ng-repeat="program in data.programs | limitTo:5" ng-if="data.programs.length > 0">
+              <a ng-if="program.type === 'Mapreduce'" ui-sref="mapreduce.detail.runs({ appId: program.application.applicationId, programId: program.id })">
+                {{ ::program.id }}</a>
+              <a ng-if="program.type === 'Flow'" ui-sref="flows.detail.runs({ appId: program.application.applicationId, programId: program.id })">
+                {{ ::program.id }}</a>
+              <a ng-if="program.type === 'Workflow'" ui-sref="workflows.detail.runs({ appId: program.application.applicationId, programId: program.id })">
+                {{ ::program.id }}</a>
+              <a ng-if="program.type === 'Service'" ui-sref="services.detail.runs({ appId: program.application.applicationId, programId: program.id })">
+                {{ ::program.id }}</a>
+              <a ng-if="program.type === 'Spark'" ui-sref="spark.detail.runs({ appId: program.application.applicationId, programId: program.id })">
+                {{ ::program.id }}</a>
+              <a ng-if="program.type === 'Worker'" ui-sref="worker.detail.runs({ appId: program.application.applicationId, programId: program.id })">
+                {{ ::program.id }}</a>
+
+              <span ng-if="!$last">|</span>
+            </span>
+            <span ng-if="data.programs.length > 5">| ...</span>
+            <span ng-if="data.programs.length === 0">---</span>
           </td>
       </tr>
     <tbody>
