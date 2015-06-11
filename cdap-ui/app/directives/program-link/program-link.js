@@ -6,7 +6,8 @@ angular.module(PKG.name + '.commons')
         type: '=',
         app: '=',
         program: '=',
-        namespace: '='
+        namespace: '=',
+        bold: '='
       },
       templateUrl: 'program-link/program-link.html'
     };

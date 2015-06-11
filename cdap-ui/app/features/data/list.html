@@ -37,18 +37,7 @@
           </td>
           <td>
             <span ng-repeat="program in data.programs | limitTo:5" ng-if="data.programs.length > 0">
-              <!-- <a ng-if="program.type === 'Mapreduce'" ui-sref="mapreduce.detail.runs({ appId: program.application.applicationId, programId: program.id })">
-                {{ ::program.id }}</a>
-              <a ng-if="program.type === 'Flow'" ui-sref="flows.detail.runs({ appId: program.application.applicationId, programId: program.id })">
-                {{ ::program.id }}</a>
-              <a ng-if="program.type === 'Workflow'" ui-sref="workflows.detail.runs({ appId: program.application.applicationId, programId: program.id })">
-                {{ ::program.id }}</a>
-              <a ng-if="program.type === 'Service'" ui-sref="services.detail.runs({ appId: program.application.applicationId, programId: program.id })">
-                {{ ::program.id }}</a>
-              <a ng-if="program.type === 'Spark'" ui-sref="spark.detail.runs({ appId: program.application.applicationId, programId: program.id })">
-                {{ ::program.id }}</a>
-              <a ng-if="program.type === 'Worker'" ui-sref="worker.detail.runs({ appId: program.application.applicationId, programId: program.id })">
-                {{ ::program.id }}</a> -->
+
               <my-program-link
                 namespace="$state.params.namespace"
                 app="program.application.applicationId"
