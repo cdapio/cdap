@@ -257,13 +257,6 @@
                         <include>*.dll</include>
                       </includes>
                     </resource>
-                    <!-- Copy api jars -->
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-api/target</directory>
-                      <includes>
-                        <include>cdap-api-${project.version}*.jar</include>
-                      </includes>
-                    </resource>
                     <!-- Copy cdap-ui -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-ui/server</directory>
