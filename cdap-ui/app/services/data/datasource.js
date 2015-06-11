@@ -117,6 +117,8 @@ angular.module(PKG.name+'.services')
 
       this.bindings = [];
 
+
+
       scope.$on(MYSOCKET_EVENT.message, function (event, data) {
 
         if(data.statusCode>299 || data.warning) {
@@ -150,7 +152,16 @@ angular.module(PKG.name+'.services')
       });
 
       scope.$on('$destroy', function () {
-        delete instances[id];
+        setTimeout(function() {
+          for (var i=0; i<self.bindings.length; i++) {
+            var b = self.bindings[i];
+            if (b.poll) {
+              _pollStop(b.resource);
+            }
+          }
+
+          delete instances[id];
+        });
       });
 
       scope.$on(caskWindowManager.event.blur, function () {
@@ -202,10 +213,6 @@ angular.module(PKG.name+'.services')
           errorCallback: errorCb,
           resolve: resolve,
           reject: reject
-        });
-
-        self.scope.$on('$destroy', function () {
-          _pollStop(generatedResource);
         });
 
         _pollStart(generatedResource);
