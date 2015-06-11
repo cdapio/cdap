@@ -45,10 +45,10 @@ For example, in the configure method of your application::
       .build());
 
 These dataset properties map directly to table properties in Hive. In the case of the
-``setBasePath`` method, the partial-path given is added to 
-``/<CDAP-home>/namespaces/<current-namespace>/data/``.
+``setBasePath`` method, the partial-path given will be a sub-directory of
+``<CDAP-home>/namespaces/<current-namespace>/data/``.
 
-For example, if ``<CDAP-home>`` is *cdap*, and the current namespace is *default*, 
+For example, if ``<CDAP-home>`` is */cdap*, and the current namespace is *default*, 
 the above Dataset would result in this "create table" statement being generated::
 
   CREATE EXTERNAL TABLE dataset_myfiles(
