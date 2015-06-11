@@ -2,7 +2,7 @@ angular.module(PKG.name + '.feature.flows')
   .controller('FlowsRunDetailLogController', function($scope, $state, myFlowsApi) {
 
     $scope.logs = [];
-    if (!$scope.runs.length) {
+    if (!$scope.RunsController.runs.length) {
       return;
     }
 
@@ -10,7 +10,7 @@ angular.module(PKG.name + '.feature.flows')
       namespace: $state.params.namespace,
       appId: $state.params.appId,
       flowId: $state.params.programId,
-      runId: $scope.runs.selected.runid,
+      runId: $scope.RunsController.runs.selected.runid,
       max: 50,
       scope: $scope
     };

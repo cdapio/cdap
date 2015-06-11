@@ -24,7 +24,7 @@ angular.module(PKG.name + '.feature.flows')
         namespace: $state.params.namespace,
         app: $state.params.appId,
         flow: $state.params.programId,
-        run: $scope.runs.selected.runid,
+        run: $scope.RunsController.runs.selected.runid,
         flowlet: flowletName
       };
       return '/metrics/query?metric=system.process.events.processed&aggregate=true&' + MyMetricsQueryHelper.tagsToParams(flowletTags);
@@ -35,7 +35,7 @@ angular.module(PKG.name + '.feature.flows')
       $scope.data.instances = {};
       // Requesting Metrics data
       angular.forEach(nodes, function (node) {
-        if (node.type !== 'STREAM' && !$scope.runs.length) {
+        if (node.type !== 'STREAM' && !$scope.RunsController.runs.length) {
           return;
         }
         dataSrc.poll({
