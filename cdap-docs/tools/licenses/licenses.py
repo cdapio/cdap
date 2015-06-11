@@ -179,40 +179,6 @@ def log(message, type):
     (sys.stdout if type == 'notice' else sys.stderr).write(message + "\n")
 
 
-def process_master_orig():
-    # Read in the master csv files and create a dictionary of it
-    # Keys are the jars, Values are the Library instances
-    # Get the current dependencies master csv file
-    # "jar","Version","Classifier","License","License URL"
-    # Example:
-    # "bonecp-0.8.0.RELEASE.jar","0.8.0","RELEASE","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-    master_libs_dict = {}
-    print "Reading master file"
-    csv_path = os.path.join(SCRIPT_DIR_PATH, MASTER_CSV)
-    with open(csv_path, 'rb') as csvfile:
-        row_count = 0
-        csv_reader = csv.reader(csvfile)
-        for row in csv_reader:
-            row_count += 1
-            jar = row[0]
-            if len(row)==5:
-                lib = Library(row[0], row[3], row[4])
-                # Place lib reference in dictionary
-                if not master_libs_dict.has_key(lib.id):
-                    master_libs_dict[lib.jar] = lib
-                else:
-                    lib.print_duplicate(master_libs_dict)
-            else:
-                print "%sError with %s\n%srow: %s" % (SPACE, jar, SPACE, row)
-                
-    # Print out the results
-    keys = master_libs_dict.keys()
-#     keys.sort()
-#     for k in keys:
-#         master_libs_dict[k].pretty_print()    
-    print "Master CSV: Rows read: %s; Unique Keys created: %s" % (row_count, len(keys))
-    return master_libs_dict
-
 def process_master():
     # Read in the master csv files and create a dictionary of it
     # Contains both Jars and Bower dependencies
@@ -224,25 +190,27 @@ def process_master():
     # NPM & Bower dependencies:
     #   Keys are the dependencies, Values are the Library instances
     #   "dependency","version","homepage","license","license_url", "type"
+    #   dependency,version,type,license,license_url,homepage,license_page
     #   Example:
-    #       "angular","1.3.15","https://github.com/angular/bower-angular","MIT License","https://github.com/angular/angular.js/blob/master/LICENSE","bower"
+    #       "angular","1.3.15","bower","MIT License","http://opensource.org/licenses/MIT","https://github.com/angular/bower-angular","https://github.com/angular/angular.js/blob/master/LICENSE"
     # Get the current dependencies master csv file
     master_libs_dict = {}
     print "Reading master file"
     csv_path = os.path.join(SCRIPT_DIR_PATH, MASTER_CSV)
     with open(csv_path, 'rb') as csvfile:
         row_count = 0
+        comment_count = 0
         csv_reader = csv.reader(csvfile)
         for row in csv_reader:
             row_count += 1
             dependency = row[0]
             if dependency.startswith('#'):
                 # Comment line
-                continue
+                comment_count += 1
             elif len(row)>=5:
                 if len(row)==5:
                     lib = Library(dependency, row[3], row[4])
-                elif len(row)==6:
+                elif len(row)==7:
                     lib = UI_Library(row)
                 else:
                     print "%sError with %s\n%srow: %s" % (SPACE, dependency, SPACE, row)
@@ -259,7 +227,7 @@ def process_master():
 #     keys.sort()
 #     for k in keys:
 #         master_libs_dict[k].pretty_print()    
-    print "Master CSV: Rows read: %s; Unique Keys created: %s" % (row_count, len(keys))
+    print "Master CSV: Rows read: %s (comments: %s); Unique Keys created: %s" % (row_count, comment_count, len(keys))
     return master_libs_dict
 
     
@@ -273,39 +241,16 @@ def master_print():
         master_libs_dict[k].pretty_print(i+1, max)    
 
 
-# def process_master_cdap_ui():
-#     # Read in the master cdap ui csv files and create a dictionary of it
-#     # Keys are the dependencies, Values are the Library instances
-#     # Get the current master cdap ui csv file
-#     # "dependency","version","homepage","license","license_url"
-#     # Example:
-#     # "angular","1.3.15","https://github.com/angular/bower-angular","MIT License","https://github.com/angular/angular.js/blob/master/LICENSE"
-#     master_ui_libs_dict = {}
-#     print "Reading master file"
-#     csv_path = os.path.join(SCRIPT_DIR_PATH, MASTER_CDAP_UI_CSV)
-#     with open(csv_path, 'rb') as csvfile:
-#         row_count = 0
-#         csv_reader = csv.reader(csvfile)
-#         for row in csv_reader:
-#             row_count += 1
-#             dependency = row[0]
-#             if len(row)==5:
-#                 lib = UI_Library(row)
-#                 # Place lib reference in dictionary
-#                 if not master_ui_libs_dict.has_key(lib.dependency):
-#                     master_ui_libs_dict[lib.dependency] = lib
-#                 else:
-#                     lib.print_duplicate(master_ui_libs_dict)
-#             else:
-#                 print "%sError with %s\n%srow: %s" % (SPACE, jar, SPACE, row)
-#                 
-#     # Print out the results
-#     keys = master_ui_libs_dict.keys()
-# #     keys.sort()
-# #     for k in keys:
-# #         master_ui_libs_dict[k].pretty_print()    
-#     print "Master CDAP UI CSV: Rows read: %s; Unique Keys created: %s" % (row_count, len(keys))
-#     return master_ui_libs_dict
+def test_for_application(app):
+    import subprocess
+    try: 
+        subprocess.call(["which", app])
+        print "Found executable for '%s'" % app
+        return 1
+    except: 
+        print "No executable of '%s'" % app
+        return 0
+
 
 def process_cdap_ui(input_file, options):
     # Read in the current master csv file and create a structure with it
@@ -316,8 +261,7 @@ def process_cdap_ui(input_file, options):
     # Make a list of the references for which links are missing and need to be added to the master
     # Make a new master list (not done)
     # Return a list:
-    #   "Package","Version","License","License URL"
-#     master_libs_dict = process_master_cdap_ui()
+    #   "Dependency","Version","homepage","License","License URL","type"    
     master_libs_dict = process_master()
     cdap_ui_dict = {}
     missing_libs_dict = {}
@@ -326,10 +270,12 @@ def process_cdap_ui(input_file, options):
     from pprint import pprint
     
     for type in CDAP_UI_SOURCES.keys():
+        
         source = CDAP_UI_SOURCES[type]
         json_path = os.path.join(SCRIPT_DIR_PATH, source)
         print "Reading '%s' dependencies file:\n%s" % (type, json_path)
-
+        if not test_for_application(type):
+            continue
         with open(json_path) as data_file:    
             data = json.load(data_file)
             
@@ -702,22 +648,23 @@ class Library:
 
 
 class UI_Library(Library):
-    PRINT_ORDER = ['dependency','version','homepage','license','license_url','type']
+    PRINT_ORDER = ['dependency','version','type','license','license_url','homepage','license_page']
     
     def __init__(self, row):
         self.id = row[0]
         self.dependency = row[0]
         self.version = row[1]
-        self.homepage = row[2]
+        self.type = row[2]
         self.license =  row[3]
         self.license_url = row[4]
-        self.type = row[5]
+        self.homepage = row[5]
+        self.license_page = row[6]
         
     def __str__(self):
         return "%s : %s (%s)" % (self.id, self.version, self.type)
 
     def get_row(self):
-        return (self.id, self.version, self.homepage, self.license, self.license_url, self.type)
+        return (self.id, self.version, self.type, self.license, self.license_url, self.homepage, self.license_page)
 
 
 #
