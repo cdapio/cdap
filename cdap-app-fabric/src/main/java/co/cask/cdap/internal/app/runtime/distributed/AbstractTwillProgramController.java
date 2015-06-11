@@ -17,10 +17,8 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
-import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
-import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +55,26 @@ abstract class AbstractTwillProgramController extends AbstractProgramController 
    * @return this instance.
    */
   public ProgramController startListen() {
-    twillController.addListener(createTwillListener(), Threads.SAME_THREAD_EXECUTOR);
+    twillController.onRunning(new Runnable() {
+      @Override
+      public void run() {
+        LOG.info("Twill program running: {} {}", programName, twillController.getRunId());
+        started();
+      }
+    }, Threads.SAME_THREAD_EXECUTOR);
+    twillController.onTerminated(new Runnable() {
+      @Override
+      public void run() {
+        LOG.info("Twill program terminated: {} {}", programName, twillController.getRunId());
+        if (stopRequested) {
+          // Service was killed
+          stop();
+        } else {
+          // Service completed by itself. Simply signal the state change of this controller.
+          complete();
+        }
+      }
+    }, Threads.SAME_THREAD_EXECUTOR);
     return this;
   }
 
@@ -74,10 +91,10 @@ abstract class AbstractTwillProgramController extends AbstractProgramController 
   @Override
   protected final void doStop() throws Exception {
     stopRequested = true;
-    twillController.stopAndWait();
+    twillController.awaitTerminated();
   }
 
-  private TwillController.Listener createTwillListener() {
+/*  private TwillController.Listener createTwillListener() {
     return new ServiceListenerAdapter() {
 
       @Override
@@ -104,5 +121,5 @@ abstract class AbstractTwillProgramController extends AbstractProgramController 
         error(failure);
       }
     };
-  }
+  }*/
 }

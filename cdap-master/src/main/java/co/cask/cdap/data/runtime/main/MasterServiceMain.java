@@ -76,7 +76,6 @@ import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.kafka.client.KafkaClientService;
@@ -99,6 +98,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -170,7 +170,7 @@ public class MasterServiceMain extends DaemonMain {
     logAppenderInitializer.initialize();
 
     zkClient.startAndWait();
-    twillRunner.startAndWait();
+    twillRunner.start();
     kafkaClient.startAndWait();
     metricsCollectionService.startAndWait();
     serviceStore.startAndWait();
@@ -204,6 +204,17 @@ public class MasterServiceMain extends DaemonMain {
   private void stopQuietly(Service service) {
     try {
       service.stopAndWait();
+    } catch (Exception e) {
+      LOG.warn("Exception when stopping service {}", service, e);
+    }
+  }
+
+  /**
+   * Stops a guava {@link Service}. No exception will be thrown even stopping failed.
+   */
+  private void stopQuietly(TwillRunnerService service) {
+    try {
+      service.stop();
     } catch (Exception e) {
       LOG.warn("Exception when stopping service {}", service, e);
     }
@@ -364,7 +375,13 @@ public class MasterServiceMain extends DaemonMain {
           LOG.info("Stopping master twill application");
           TwillController twillController = controller.get();
           if (twillController != null) {
-            twillController.stopAndWait();
+            try {
+              twillController.terminate().get();
+            } catch (InterruptedException e) {
+              LOG.error("Twill controller termination interrupted while stopping master ", e);
+            } catch (ExecutionException e) {
+              LOG.error("Exception while stopping master ", e);
+            }
           }
         }
         // Stop local services last since DatasetService is running locally
@@ -464,18 +481,9 @@ public class MasterServiceMain extends DaemonMain {
 
     // Monitor the application
     serviceController.set(controller);
-    controller.addListener(new ServiceListenerAdapter() {
+    controller.onTerminated(new Runnable() {
       @Override
-      public void failed(Service.State from, Throwable failure) {
-        if (executor.isShutdown()) {
-          return;
-        }
-        LOG.error("{} failed with exception; restarting with back-off", Constants.Service.MASTER_SERVICES, failure);
-        backoffRun();
-      }
-
-      @Override
-      public void terminated(Service.State from) {
+      public void run() {
         if (executor.isShutdown()) {
           return;
         }
@@ -520,7 +528,11 @@ public class MasterServiceMain extends DaemonMain {
       for (TwillController controller : twillRunner.lookup(Constants.Service.MASTER_SERVICES)) {
         if (result != null) {
           LOG.warn("Stopping one extra instance of {}", Constants.Service.MASTER_SERVICES);
-          controller.stopAndWait();
+          try {
+            controller.awaitTerminated();
+          } catch (ExecutionException e) {
+            LOG.warn("Exception while Stopping one extra instance of {} - {}", Constants.Service.MASTER_SERVICES, e);
+          }
         } else {
           result = controller;
         }
@@ -588,23 +600,9 @@ public class MasterServiceMain extends DaemonMain {
 
         // Add a listener to delete temp files when application started/terminated.
         TwillController controller = preparer.start();
-        controller.addListener(new ServiceListenerAdapter() {
+        Runnable cleanup = new Runnable() {
           @Override
-          public void failed(Service.State from, Throwable failure) {
-            cleanup();
-          }
-
-          @Override
-          public void running() {
-            cleanup();
-          }
-
-          @Override
-          public void terminated(Service.State from) {
-            cleanup();
-          }
-
-          private void cleanup() {
+          public void run() {
             try {
               File dir = runDir.toFile();
               if (dir.isDirectory()) {
@@ -614,9 +612,9 @@ public class MasterServiceMain extends DaemonMain {
               LOG.warn("Failed to cleanup directory {}", runDir, e);
             }
           }
-
-        }, Threads.SAME_THREAD_EXECUTOR);
-
+        };
+        controller.onRunning(cleanup, Threads.SAME_THREAD_EXECUTOR);
+        controller.onTerminated(cleanup, Threads.SAME_THREAD_EXECUTOR);
         return controller;
       } catch (Exception e) {
         try {
