@@ -2,7 +2,7 @@ angular.module(PKG.name + '.feature.flows')
   .controller('FlowsFlowletDetailController', function($state, $scope, myHelpers, myFlowsApi) {
 
     $scope.activeTab = 0;
-    var flowletid = $scope.$parent.activeFlowlet.name;
+    var flowletid = $scope.RunsController.activeFlowlet.name;
 
     var params = {
       namespace: $state.params.namespace,
