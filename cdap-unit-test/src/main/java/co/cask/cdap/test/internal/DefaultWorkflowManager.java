@@ -24,6 +24,7 @@ import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.ScheduleManager;
 import co.cask.cdap.test.WorkflowManager;
+import com.google.common.base.Throwables;
 
 import java.util.List;
 
@@ -54,12 +55,20 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
     return new ScheduleManager() {
       @Override
       public void suspend() {
-        appFabricClient.suspend(programId.getNamespaceId(), programId.getApplicationId(), schedName);
+        try {
+          appFabricClient.suspend(programId.getNamespaceId(), programId.getApplicationId(), schedName);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
       }
 
       @Override
       public void resume() {
-        appFabricClient.resume(programId.getNamespaceId(), programId.getApplicationId(), schedName);
+        try {
+          appFabricClient.resume(programId.getNamespaceId(), programId.getApplicationId(), schedName);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
       }
 
       @Override

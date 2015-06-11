@@ -23,6 +23,7 @@ import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -35,7 +36,6 @@ public class WorkflowAppWithErrorRuns extends AbstractApplication {
     setName("WorkflowAppWithErrorRuns");
     setDescription("Sample Workflow application with some error runs.");
     addWorkflow(new WorkflowWithErrorRuns());
-    scheduleWorkflow(Schedules.createTimeSchedule("SampleSchedule", "", "0/1 * * * * ?"), "WorkflowWithErrorRuns");
   }
 
   /**
@@ -47,25 +47,30 @@ public class WorkflowAppWithErrorRuns extends AbstractApplication {
     public void configure() {
       setName("WorkflowWithErrorRuns");
       setDescription("Sample Workflow which throws exception based on the runtime arguments.");
-      addAction(new DummyAction());
+      addAction(new SimpleAction());
     }
   }
 
-  /**
-   * DummyAction
-   */
-  public static class DummyAction extends AbstractWorkflowAction {
-    private static final Logger LOG = LoggerFactory.getLogger(DummyAction.class);
+  static final class SimpleAction extends AbstractWorkflowAction {
+    private static final Logger LOG = LoggerFactory.getLogger(SimpleAction.class);
+
     @Override
     public void run() {
-      LOG.info("Ran dummy action");
+      LOG.info("Running SimpleAction");
+
       if (getContext().getRuntimeArguments().containsKey("ThrowError")) {
         throw new RuntimeException("Error");
       }
+
       try {
-        TimeUnit.MILLISECONDS.sleep(500);
-      } catch (InterruptedException e) {
-        LOG.info("Interrupted");
+        File file = new File(getContext().getRuntimeArguments().get("simple.action.file"));
+        file.createNewFile();
+        File doneFile = new File(getContext().getRuntimeArguments().get("simple.action.donefile"));
+        while (!doneFile.exists()) {
+          TimeUnit.MILLISECONDS.sleep(50);
+        }
+      } catch (Exception e) {
+        // no-op
       }
     }
   }
