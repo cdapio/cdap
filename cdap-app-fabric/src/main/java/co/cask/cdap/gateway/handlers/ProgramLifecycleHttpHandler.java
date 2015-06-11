@@ -32,7 +32,6 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.BadRequestException;
-import co.cask.cdap.common.exception.ForbiddenException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -329,13 +328,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("type") String type,
                                   @PathParam("id") String id,
                                   @PathParam("run-id") String runId)
-    throws ForbiddenException, BadRequestException, NotFoundException {
+    throws BadRequestException, NotFoundException {
     try {
       ProgramType programType = ProgramType.valueOfCategoryName(type);
-      if (!isRunLevelActionAllowed(programType)) {
-        throw new ForbiddenException("Run level operation is allowed only for MapReduce and Workflow program.");
-      }
-
       Id.Program program = Id.Program.from(namespaceId, appId, programType, id);
       AppFabricServiceStatus status = stop(program, runId);
       responder.sendString(status.getCode(), status.getMessage());
@@ -1378,7 +1373,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         userArgs.putAll(overrides);
       }
 
-      if (isRunning(id) && !isRunLevelActionAllowed(id.getType())) {
+      if (isRunning(id) && !isConcurrentRunsAllowed(id.getType())) {
         return AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING;
       }
 
@@ -1397,8 +1392,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     return programStatus != null && !"STOPPED".equals(programStatus);
   }
 
-  private boolean isRunLevelActionAllowed(ProgramType type) {
-    // Run level actions only enabled for the Workflow and MapReduce
+  private boolean isConcurrentRunsAllowed(ProgramType type) {
+    // Concurrent runs are only allowed for the Workflow and MapReduce
     return EnumSet.of(ProgramType.WORKFLOW, ProgramType.MAPREDUCE).contains(type);
   }
 
