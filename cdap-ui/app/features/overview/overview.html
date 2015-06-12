@@ -1,6 +1,6 @@
 <div ng-hide="welcomeIsHidden">
   <div class="panel panel-message">
-    <a class="btn-close pull-right" ng-click="hideWelcome()">
+    <a class="btn-close pull-right" ng-click="OverviewCtrl.hideWelcome()">
       <span class="fa fa-close"></span>
       <span class="sr-only"> Hide Welcome Message </span>
     </a>
@@ -49,15 +49,15 @@
     <div class="col-xs-12 col-lg-4">
       <div>
         <svg xmlns="http://www.w3.org/2000/svg" version="1.1">
-          <circle cx="50" cy="70" r="30" stroke="#C9C9D1" stroke-width="10" fill="{{systemStatus}}" />
+          <circle cx="50" cy="70" r="30" stroke="#C9C9D1" stroke-width="10" fill="{{OverviewCtrl.systemStatus}}" />
         </svg>
-        <p ng-if="systemStatus === 'yellow'">
+        <p ng-if="OverviewCtrl.systemStatus === 'yellow'">
           Some <a ui-sref="admin.system.services"> services</a> might have an issue.
         </p>
-        <p ng-if="systemStatus === 'red'">
+        <p ng-if="OverviewCtrl.systemStatus === 'red'">
           All <a ui-sref="admin.system.services"> services</a> are down.
         </p>
-        <p ng-if="systemStatus === 'green'">
+        <p ng-if="OverviewCtrl.systemStatus === 'green'">
           <a ui-sref="admin.system.services" class="nounderline">All services are up and running</a>
         </p>
       </div>
@@ -74,7 +74,7 @@
       </div>
 
 
-        <div ng-controller="C3WidgetTimeseriesCtrl" ng-repeat="wdgt in wdgts" class="health-widget">
+        <div ng-controller="C3WidgetTimeseriesCtrl" ng-repeat="wdgt in OverviewCtrl.wdgts" class="health-widget">
           <br ng-hide="$first">
           <c3-spline
             chart-metric="wdgt.metric"
