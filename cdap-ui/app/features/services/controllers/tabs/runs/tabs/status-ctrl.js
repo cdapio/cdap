@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.services')
-  .controller('ServicesRunsDetailStatusController', function($state, $scope, MyDataSource, $filter) {
+  .controller('ServicesRunsDetailStatusController', function($state, $scope, $filter, myServiceApi) {
     var filterFilter = $filter('filter');
 
     if ($state.params.runid) {
@@ -9,8 +9,7 @@ angular.module(PKG.name + '.feature.services')
       }
     }
 
-    var dataSrc = new MyDataSource($scope),
-        path = '/apps/' +
+    var path = '/apps/' +
           $state.params.appId + '/services/' +
           $state.params.programId;
 
@@ -18,21 +17,27 @@ angular.module(PKG.name + '.feature.services')
 
     $scope.basePath = '/namespaces/' + $state.params.namespace + path;
 
-    dataSrc.request({
-      _cdapNsPath: path
-    })
+    var params = {
+      namespace: $state.params.namespace,
+      appId: $state.params.appId,
+      serviceId: $state.params.programId,
+      scope: $scope
+    };
+
+    myServiceApi.get(params)
+      .$promise
       .then(function(res) {
         angular.forEach(res.handlers, function(value) {
           $scope.endPoints = $scope.endPoints.concat(value.endpoints);
         });
       });
 
-    // disable make request button on inactive runs
-    dataSrc.request({
-      _cdapNsPath: path + '/runs/' + $scope.runs.selected.runid
-    })
-    .then(function(res) {
-      $scope.status = res.status;
-    });
+    params.runId = $scope.runs.selected.runid;
+
+    myServiceApi.runDetail(params)
+      .$promise
+      .then(function(res) {
+        $scope.status = res.status;
+      });
 
   });
