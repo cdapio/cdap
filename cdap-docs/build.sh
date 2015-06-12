@@ -95,6 +95,7 @@ function run_command() {
     docs-web-part )     build_docs_web ${ARG_2} ${ARG_3};;
     docs-web )          build_docs_web ${ARG_2} ${ARG_3};;
     javadocs )          build_javadocs;;
+    javadocs-full )     build_javadocs_full;;
     licenses )          build_license_depends;;
     sdk )               build_sdk;;
     version )           print_version;;
