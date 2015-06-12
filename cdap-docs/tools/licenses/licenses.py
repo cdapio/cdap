@@ -28,7 +28,7 @@ import os
 import subprocess
 import sys
 
-VERSION = "0.0.9.1"
+VERSION = "0.1.0"
 
 COPYRIGHT_YEAR = "2015"
 
