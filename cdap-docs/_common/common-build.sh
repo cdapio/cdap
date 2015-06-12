@@ -187,21 +187,15 @@ function build_license_pdfs() {
   PROJECT_VERSION_TRIMMED=${PROJECT_VERSION%%-SNAPSHOT*}
   rm -rf ${SCRIPT_PATH}/${LICENSES_PDF}
   mkdir ${SCRIPT_PATH}/${LICENSES_PDF}
-  E_DEP="cdap-enterprise-dependencies"
-  L_DEP="cdap-level-1-dependencies"
-  S_DEP="cdap-standalone-dependencies"
   # paths are relative to location of $DOC_GEN_PY script
   LIC_PDF="../../../${REFERENCE}/${LICENSES_PDF}"
   LIC_RST="../${REFERENCE}/source/${LICENSES}"
-  echo ""
-  echo "Building ${E_DEP}"
-  python ${DOC_GEN_PY} -g pdf -o ${LIC_PDF}/${E_DEP}.pdf -b ${PROJECT_VERSION_TRIMMED} ${LIC_RST}/${E_DEP}.rst
-  echo ""
-  echo "Building $L_DEP"
-  python ${DOC_GEN_PY} -g pdf -o ${LIC_PDF}/${L_DEP}.pdf -b ${PROJECT_VERSION_TRIMMED} ${LIC_RST}/${L_DEP}.rst
-  echo ""
-  echo "Building $S_DEP"
-  python ${DOC_GEN_PY} -g pdf -o ${LIC_PDF}/${S_DEP}.pdf -b ${PROJECT_VERSION_TRIMMED} ${LIC_RST}/${S_DEP}.rst
+  PDFS="cdap-enterprise-dependencies cdap-level-1-dependencies cdap-standalone-dependencies cdap-ui-dependencies"
+  for PDF in ${PDFS}; do
+    echo ""
+    echo "Building ${PDF}"
+    python ${DOC_GEN_PY} -g pdf -o ${LIC_PDF}/${PDF}.pdf -b ${PROJECT_VERSION_TRIMMED} ${LIC_RST}/${PDF}.rst
+  done
 }
 
 function copy_license_pdfs() {
