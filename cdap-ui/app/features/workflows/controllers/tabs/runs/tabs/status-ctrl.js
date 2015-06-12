@@ -8,9 +8,9 @@ angular.module(PKG.name + '.feature.workflows')
         };
 
     if ($state.params.runid) {
-      var match = filterFilter($scope.runs, {runid: $state.params.runid});
+      var match = filterFilter($scope.RunsController.runs, {runid: $state.params.runid});
       if (match.length) {
-        $scope.runs.selected = match[0];
+        $scope.RunsController.runs.selected = match[0];
       }
     }
 
@@ -71,9 +71,9 @@ angular.module(PKG.name + '.feature.workflows')
 
     var path = '/apps/' + $state.params.appId
       + '/workflows/' + $state.params.programId
-      + '/runs/' + $scope.runs.selected.runid;
+      + '/runs/' + $scope.RunsController.runs.selected.runid;
 
-    if ($scope.runs.length > 0) {
+    if ($scope.RunsController.runs.length > 0) {
 
       dataSrc.poll({
         _cdapNsPath: path,
@@ -82,7 +82,7 @@ angular.module(PKG.name + '.feature.workflows')
       .then(function (response) {
 
         var pastNodes = Object.keys(response.properties);
-        $scope.runs.selected.properties = response.properties;
+        $scope.RunsController.runs.selected.properties = response.properties;
 
         var activeNodes = filterFilter($scope.data.nodes , function(node) {
           return pastNodes.indexOf(node.nodeId) !== -1;
@@ -119,11 +119,11 @@ angular.module(PKG.name + '.feature.workflows')
       if (['START', 'END'].indexOf(instance.type) > -1 ) {
         return;
       }
-      if ($scope.runs.length) {
-        if (instance.program.programType === 'MAPREDUCE' && $scope.runs.selected.properties[instance.nodeId]) {
+      if ($scope.RunsController.runs.length) {
+        if (instance.program.programType === 'MAPREDUCE' && $scope.RunsController.runs.selected.properties[instance.nodeId]) {
           $state.go('mapreduce.detail.runs.run', {
             programId: instance.program.programName,
-            runid: $scope.runs.selected.properties[instance.nodeId]
+            runid: $scope.RunsController.runs.selected.properties[instance.nodeId]
           });
         }
       } else {
