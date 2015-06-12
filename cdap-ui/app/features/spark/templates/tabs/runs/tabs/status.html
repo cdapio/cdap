@@ -18,19 +18,19 @@
         <div class="title-stage">
           STAGES
         </div>
-          <div class="progress stage-status-line">
-            <div class="progress-bar running" data-animation="am-flip-x" bs-tooltip="runningTooltip" ng-style="{ 'width': getStagePercentage('running') + '%' }" title="">
-              {{data.schedulerRunningStages}}
-            </div>
-
-            <div class="progress-bar failed" data-animation="am-flip-x" bs-tooltip="failedTooltip" ng-style="{ 'width': getStagePercentage('failed') + '%' }" title="">
-              {{data.schedulerFailedStages}}
-            </div>
-
-            <div class="progress-bar waiting" data-animation="am-flip-x" bs-tooltip="waitingTooltip" ng-style="{ 'width': getStagePercentage('waiting') + '%' }" title="">
-              {{data.schedulerWaitingStages}}
-            </div>
+        <div class="progress stage-status-line">
+          <div class="progress-bar running" data-animation="am-flip-x" bs-tooltip="runningTooltip" ng-style="{ 'width': getStagePercentage('running') + '%' }" title="">
+            {{data.schedulerRunningStages}}
           </div>
+
+          <div class="progress-bar failed" data-animation="am-flip-x" bs-tooltip="failedTooltip" ng-style="{ 'width': getStagePercentage('failed') + '%' }" title="">
+            {{data.schedulerFailedStages}}
+          </div>
+
+          <div class="progress-bar waiting" data-animation="am-flip-x" bs-tooltip="waitingTooltip" ng-style="{ 'width': getStagePercentage('waiting') + '%' }" title="">
+            {{data.schedulerWaitingStages}}
+          </div>
+        </div>
       </div>
     </div>
 </div>
