@@ -19,11 +19,11 @@ package co.cask.cdap.api.workflow;
 /**
  * Class representing the value for the key along with the timestamp inside the {@link WorkflowToken}.
  */
-public final class TokenValueWithTimestamp {
+public final class ValueWithTime {
   private final String value;
   private final long timeStamp;
 
-  public TokenValueWithTimestamp(String value, long timeStamp) {
+  public ValueWithTime(String value, long timeStamp) {
     this.value = value;
     this.timeStamp = timeStamp;
   }

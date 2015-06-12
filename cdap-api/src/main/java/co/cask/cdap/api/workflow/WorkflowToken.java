@@ -30,7 +30,7 @@ public interface WorkflowToken {
    * @param key   the key representing the entry
    * @param value the value for the key
    */
-  void putValue(String key, String value);
+  void setValue(String key, String value);
 
   /**
    * Get the name of the node which most recently set the value for the key.
@@ -40,7 +40,7 @@ public interface WorkflowToken {
    * @return the name of the node that most recently set the value for the key
    */
   @Nullable
-  String getLastSetterNode(String key);
+  String getLastSetter(String key);
 
   /**
    * Get the most recent value for the key.
@@ -59,7 +59,7 @@ public interface WorkflowToken {
    * @return the map of node name to the value
    */
   @Nullable
-  Map<String, TokenValueWithTimestamp> getAllValues(String key);
+  Map<String, ValueWithTime> getAllValues(String key);
 
   /**
    * Get the Hadoop counters from the previous MapReduce program in the Workflow. The method returns null

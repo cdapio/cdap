@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.workflow.TokenValueWithTimestamp;
+import co.cask.cdap.api.workflow.ValueWithTime;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -40,7 +40,7 @@ public class BasicWorkflowToken implements WorkflowToken {
   }
 
   @Override
-  public void putValue(String key, String value) {
+  public void setValue(String key, String value) {
     Preconditions.checkNotNull(nodeName, "Node name cannot be null.");
     WorkflowTokenValue tokenValue = keyTokenValue.get(key);
     if (tokenValue == null) {
@@ -51,12 +51,12 @@ public class BasicWorkflowToken implements WorkflowToken {
 
   @Nullable
   @Override
-  public String getLastSetterNode(String key) {
+  public String getLastSetter(String key) {
     if (!keyTokenValue.containsKey(key)) {
       return null;
     }
 
-    return keyTokenValue.get(key).getLastSetterNode();
+    return keyTokenValue.get(key).getLastSetter();
   }
 
   @Nullable
@@ -71,7 +71,7 @@ public class BasicWorkflowToken implements WorkflowToken {
 
   @Nullable
   @Override
-  public Map<String, TokenValueWithTimestamp> getAllValues(String key) {
+  public Map<String, ValueWithTime> getAllValues(String key) {
     if (!keyTokenValue.containsKey(key)) {
       return null;
     }
