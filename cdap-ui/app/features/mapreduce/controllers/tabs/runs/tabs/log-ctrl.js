@@ -2,7 +2,7 @@ angular.module(PKG.name + '.feature.mapreduce')
   .controller('MapreduceRunDetailLogsController', function ($scope, $state, myMapreduceApi) {
 
     $scope.logs = [];
-    if (!$scope.runs.length) {
+    if (!$scope.RunsController.runs.length) {
       return;
     }
 
@@ -10,7 +10,7 @@ angular.module(PKG.name + '.feature.mapreduce')
       namespace: $state.params.namespace,
       appId: $state.params.appId,
       mapreduceId: $state.params.programId,
-      runId: $scope.current,
+      runId: $scope.RunsController.runs.selected.runid,
       max: 50,
       scope: $scope
     };
