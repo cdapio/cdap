@@ -118,6 +118,10 @@ WEB="web"
 GOOGLE_ANALYTICS_GITHUB="UA-55081520-2"
 GITHUB="github"
 
+# BUILD.rst
+BUILD_RST = "${PROJECT_PATH}/BUILD.rst"
+BUILD_RST_HASH = "XXX"
+
 
 function usage() {
   cd $PROJECT_PATH
@@ -323,6 +327,7 @@ function test_an_include() {
 function build_standalone() {
   cd ${PROJECT_PATH}
   set_mvn_environment
+  check_build_for_changes
   MAVEN_OPTS="-Xmx1024m" mvn clean package -DskipTests -P examples,templates -pl cdap-examples,cdap-app-templates/cdap-etl -am -amd && MAVEN_OPTS="-Xmx1024m" mvn package -pl cdap-standalone -am -DskipTests -P dist,release
 }
 
@@ -334,6 +339,10 @@ function build_dependencies() {
   cd $PROJECT_PATH
   set_mvn_environment
   mvn clean package site -am -Pjavadocs -DskipTests
+}
+
+function check_build_for_changes() {
+  test_an_include ${BUILD_RST_HASH} ${BUILD_RST}
 }
 
 function version() {
