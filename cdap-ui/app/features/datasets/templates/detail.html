@@ -53,18 +53,30 @@
 
 </ul>
 
-<ul class="nav nav-tabs slanted-tabs"
-    role="tablist"
-    ng-if="DetailController.explorable === false">
-  <li role="presentation"
-      ng-class="{'active': $state.is('datasets.detail.overview.status') }">
-    <a ui-sref="datasets.detail.overview.programs"
-       ui-sref-opts="{reload: true}"
-       role="tab">
-      Programs
-    </a>
-  </li>
-</ul>
+<!--
+  If dataset is not explorable just show programs.
+  Since there is only programs tab that need to be shown its done
+  in a static way. 
+-->
+<div ng-if="DetailController.explorable === false">
+  <ul class="nav nav-tabs slanted-tabs"
+      role="tablist">
+    <li role="presentation"
+        ng-class="{'active': $state.is('datasets.detail.overview.status') }">
+      <a href
+         role="tab">
+        Programs
+      </a>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <div role="tabpanel" class="tab-pane active">
+      <div ng-controller="DatasetDetailProgramsController as ProgramsController"
+           ng-include="'/assets/features/datasets/templates/tabs/programs.html'"></div>
+    </div>
+  </div>
+</div>
 
 <br />
 <ui-view role="tabpanel"/>
