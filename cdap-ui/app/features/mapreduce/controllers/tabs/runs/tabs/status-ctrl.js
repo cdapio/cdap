@@ -14,22 +14,22 @@ angular.module(PKG.name + '.feature.mapreduce')
       myMapreduceApi.pollInfo(params)
         .$promise
         .then(function (res) {
-          $scope.info = res;
+          this.info = res;
 
-          $scope.mapProgress = Math.floor(res.mapProgress * 100);
-          $scope.reduceProgress = Math.floor(res.reduceProgress * 100);
+          this.mapProgress = Math.floor(res.mapProgress * 100);
+          this.reduceProgress = Math.floor(res.reduceProgress * 100);
 
-          $scope.mapperStats = getStats($scope.info.mapTasks, $scope.info.complete);
-          $scope.mapperStats.inputRecords = myNumber($scope.info.counters.MAP_INPUT_RECORDS);
-          $scope.mapperStats.outputRecords = myNumber($scope.info.counters.MAP_OUTPUT_RECORDS);
+          this.mapperStats = getStats(this.info.mapTasks, this.info.complete);
+          this.mapperStats.inputRecords = myNumber(this.info.counters.MAP_INPUT_RECORDS);
+          this.mapperStats.outputRecords = myNumber(this.info.counters.MAP_OUTPUT_RECORDS);
 
-          $scope.reducerStats = getStats($scope.info.reduceTasks, $scope.info.complete);
-          $scope.reducerStats.inputRecords = myNumber($scope.info.counters.REDUCE_INPUT_RECORDS);
-          $scope.reducerStats.outputRecords = myNumber($scope.info.counters.REDUCE_OUTPUT_RECORDS);
-        });
+          this.reducerStats = getStats(this.info.reduceTasks, this.info.complete);
+          this.reducerStats.inputRecords = myNumber(this.info.counters.REDUCE_INPUT_RECORDS);
+          this.reducerStats.outputRecords = myNumber(this.info.counters.REDUCE_OUTPUT_RECORDS);
+        }.bind(this));
     }
 
-    $scope.getFailedTasks = function (tasks) {
+    this.getFailedTasks = function (tasks) {
       var failed = 0;
       angular.forEach(tasks, function (task) {
         if(task.state === 'FAILED') {
