@@ -63,9 +63,9 @@
               </div>
 
               <!-- FIELDS -->
-              <div ng-repeat="property in properties" class="clearfix field-row">
+              <div ng-repeat="property in properties" class="clearfix field-row" ng-keypress="enter($event, $last, 'preference')">
                 <div class="col-sm-4">
-                  <input type="text" class="form-control" ng-model="property.name" placeholder="name"/>
+                  <input type="text" class="form-control" ng-model="property.name" placeholder="name"/ my-focus-watch="$last">
                 </div>
                 <div class="col-sm-4">
 
@@ -121,13 +121,12 @@
           <div class="col-sm-10">
 
             <div class="row" ng-if="format !== 'grok'">
-              <div ng-repeat="setting in settings" class="clearfix field-row">
+              <div ng-repeat="setting in settings" class="clearfix field-row" ng-keypress="enter($event, $last, 'settings')">
                 <div class="col-sm-4">
-                  <input type="text" class="form-control" ng-model="setting.key" placeholder="key"/>
+                  <input type="text" class="form-control" ng-class="{'setting-last': $last}" ng-model="setting.key" placeholder="key" my-focus-watch="$last"/>
                 </div>
                 <div class="col-sm-6">
                   <input type="text" class="form-control" ng-model="setting.value" placeholder="value"/>
-
                 </div>
                 <div class="col-sm-1">
                   <a href="" class="btn btn-danger" ng-click="removeSetting(setting)" ng-hide="disableButtons">

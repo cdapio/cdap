@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('StreamPropertiesController', function($scope, $stateParams, myHelpers, $alert, myStreamApi, $state, EventPipe) {
+  .controller('StreamPropertiesController', function($scope, $stateParams, myHelpers, $alert, myStreamApi, $state, EventPipe, $timeout, $rootScope, $document) {
 
     $scope.avro = {};
 
@@ -183,6 +183,18 @@ angular.module(PKG.name + '.feature.admin')
         EventPipe.emit('hideLoadingIcon.immediate');
       });
 
+    };
+
+    $scope.enter = function (event, last, source) {
+      if (last && event.keyCode === 13) {
+        if (source === 'settings') {
+          $scope.addSetting();
+        } else if (source === 'preference') {
+          $scope.addProperties();
+        }
+      } else {
+        return;
+      }
     };
 
   });

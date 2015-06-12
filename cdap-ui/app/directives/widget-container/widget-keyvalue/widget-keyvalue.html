@@ -17,9 +17,9 @@
 
   </div>
 
-  <div ng-repeat="property in properties" class="row">
+  <div ng-repeat="property in properties" class="row" ng-keypress="enter($event, $last)">
     <div class="col-xs-5">
-      <input type="text" class="form-control" ng-model="property.key" placeholder="key"/>
+      <input type="text" class="form-control" ng-model="property.key" placeholder="key" my-focus-watch="$last" />
     </div>
     <div class="col-xs-5">
       <input type="text" class="form-control" ng-model="property.value" placeholder="value"/>
