@@ -25,17 +25,27 @@ import javax.annotation.Nullable;
 public interface WorkflowToken {
 
   /**
-   * Put the specified key-value entry in the WorkflowToken.
-   * The entry is stored against the node at which it is being added.
+   * Put the specified key-value entry in the {@link WorkflowToken}.
+   * The value is stored against the node at which it is being added.
    * @param key   the key representing the entry
    * @param value the value for the key
    */
   void putValue(String key, String value);
 
   /**
-   * Get the latest value for the key from the WorkflowToken.
-   * Multiple nodes in the Workflow can add same key. In this case, the value that was most recently added
-   * will be returned.
+   * Get the name of the node which most recently set the value for the key.
+   * Multiple nodes in the Workflow can add the same key. In this case, the name of the node that most
+   * recently added the key to the {@link WorkflowToken} will be returned.
+   * @param key the key to be searched
+   * @return the name of the node that most recently set the value for the key
+   */
+  @Nullable
+  String getLastSetterNode(String key);
+
+  /**
+   * Get the most recent value for the key.
+   * Multiple nodes in the Workflow can add the same key. In this case, the value that was most
+   * recently added for the key in the {@link WorkflowToken} will be returned.
    * @param key the key to be searched
    * @return the most recent value that was set for the key
    */

@@ -39,37 +39,44 @@ public class BasicWorkflowToken implements WorkflowToken {
     this.nodeName = nodeName;
   }
 
-
   @Override
   public void putValue(String key, String value) {
     Preconditions.checkNotNull(nodeName, "Node name cannot be null.");
-    WorkflowTokenValue tokenValue = keyTokenValue.get(nodeName);
+    WorkflowTokenValue tokenValue = keyTokenValue.get(key);
     if (tokenValue == null) {
       tokenValue = new WorkflowTokenValue();
     }
     tokenValue.putValue(nodeName, value);
   }
 
+  @Nullable
+  @Override
+  public String getLastSetterNode(String key) {
+    if (!keyTokenValue.containsKey(key)) {
+      return null;
+    }
+
+    return keyTokenValue.get(key).getLastSetterNode();
+  }
 
   @Nullable
   @Override
   public String getValue(String key) {
-    WorkflowTokenValue tokenValue = keyTokenValue.get(key);
-    if (tokenValue == null) {
+    if (!keyTokenValue.containsKey(key)) {
       return null;
     }
 
-    return tokenValue.getValue();
+    return keyTokenValue.get(key).getValue();
   }
 
   @Nullable
   @Override
   public Map<String, TokenValueWithTimestamp> getAllValues(String key) {
-    WorkflowTokenValue tokenValue = keyTokenValue.get(key);
-    if (tokenValue == null) {
+    if (!keyTokenValue.containsKey(key)) {
       return null;
     }
-    return tokenValue.getAllValues();
+
+    return keyTokenValue.get(key).getAllValues();
   }
 
   @Nullable

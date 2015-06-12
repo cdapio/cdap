@@ -30,16 +30,24 @@ final class WorkflowTokenValue {
 
   private final Map<String, TokenValueWithTimestamp> nodeTokenValue = Maps.newHashMap();
 
-  private String lastValue = null;
+  private String lastSetterNode = null;
 
   void putValue(String nodeName, String value) {
     nodeTokenValue.put(nodeName, new TokenValueWithTimestamp(value, System.currentTimeMillis()));
-    lastValue = value;
+    lastSetterNode = nodeName;
+  }
+
+  @Nullable
+  String getLastSetterNode() {
+    return lastSetterNode;
   }
 
   @Nullable
   String getValue() {
-    return lastValue;
+    if (!nodeTokenValue.containsKey(lastSetterNode)) {
+      return null;
+    }
+    return nodeTokenValue.get(lastSetterNode).getValue();
   }
 
   Map<String, TokenValueWithTimestamp> getAllValues() {
