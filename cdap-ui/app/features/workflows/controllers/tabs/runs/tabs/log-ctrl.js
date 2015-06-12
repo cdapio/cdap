@@ -3,18 +3,18 @@ angular.module(PKG.name + '.feature.workflows')
     var params = {
       appId: $state.params.appId,
       workflowId: $state.params.programId,
-      runId: $scope.runs.selected.runid,
+      runId: $scope.RunsController.runs.selected.runid,
       scope: $scope,
       max: 50
     };
 
-    $scope.logs = [];
-    if (!$scope.runs.length) {
+    this.logs = [];
+    if (!$scope.RunsController.runs.length) {
       return;
     }
     myWorkFlowApi.logs(params)
       .$promise
       .then(function(res) {
-        $scope.logs = res;
-      });
+        this.logs = res;
+      }.bind(this));
 });

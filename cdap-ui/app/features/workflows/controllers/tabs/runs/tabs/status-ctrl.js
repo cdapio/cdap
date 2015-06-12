@@ -8,13 +8,13 @@ angular.module(PKG.name + '.feature.workflows')
         };
 
     if ($state.params.runid) {
-      var match = filterFilter($scope.runs, {runid: $state.params.runid});
+      var match = filterFilter($scope.RunsController.runs, {runid: $state.params.runid});
       if (match.length) {
-        $scope.runs.selected = match[0];
+        $scope.RunsController.runs.selected = match[0];
       }
     }
 
-    $scope.data = {};
+    this.data = {};
     myWorkFlowApi.get(params)
       .$promise
       .then(function(res) {
@@ -52,7 +52,7 @@ angular.module(PKG.name + '.feature.workflows')
           }, item);
         });
 
-        $scope.data = {
+        this.data = {
           nodes: nodes,
           edges: edges,
           metrics: {},
@@ -63,17 +63,17 @@ angular.module(PKG.name + '.feature.workflows')
         angular.forEach(res.nodes, function(value) {
           programs.push(value.program);
         });
-        $scope.actions = programs;
-      });
+        this.actions = programs;
+      }.bind(this));
 
     // Still using MyDataSource because the poll needs to be stopped
     var dataSrc = new MyDataSource($scope);
 
     var path = '/apps/' + $state.params.appId
       + '/workflows/' + $state.params.programId
-      + '/runs/' + $scope.runs.selected.runid;
+      + '/runs/' + $scope.RunsController.runs.selected.runid;
 
-    if ($scope.runs.length > 0) {
+    if ($scope.RunsController.runs.length > 0) {
 
       dataSrc.poll({
         _cdapNsPath: path,
@@ -82,9 +82,9 @@ angular.module(PKG.name + '.feature.workflows')
       .then(function (response) {
 
         var pastNodes = Object.keys(response.properties);
-        $scope.runs.selected.properties = response.properties;
+        $scope.RunsController.runs.selected.properties = response.properties;
 
-        var activeNodes = filterFilter($scope.data.nodes , function(node) {
+        var activeNodes = filterFilter(this.data.nodes , function(node) {
           return pastNodes.indexOf(node.nodeId) !== -1;
         });
 
@@ -101,12 +101,12 @@ angular.module(PKG.name + '.feature.workflows')
           myMapreduceApi.runDetail(mapreduceParams)
             .$promise
             .then(function (result) {
-              $scope.data.current[n.name] = result.status;
-            });
-        });
+              this.data.current[n.name] = result.status;
+            }.bind(this));
+        }.bind(this));
 
         return response;
-      })
+      }.bind(this))
       .then(function (response) {
         if (response.status === 'COMPLETED' || response.status === 'FAILED') {
           dataSrc.stopPoll(response.__pollId__);
@@ -115,15 +115,15 @@ angular.module(PKG.name + '.feature.workflows')
     }
 
 
-    $scope.workflowProgramClick = function (instance) {
+    this.workflowProgramClick = function (instance) {
       if (['START', 'END'].indexOf(instance.type) > -1 ) {
         return;
       }
-      if ($scope.runs.length) {
-        if (instance.program.programType === 'MAPREDUCE' && $scope.runs.selected.properties[instance.nodeId]) {
+      if ($scope.RunsController.runs.length) {
+        if (instance.program.programType === 'MAPREDUCE' && $scope.RunsController.runs.selected.properties[instance.nodeId]) {
           $state.go('mapreduce.detail.runs.run', {
             programId: instance.program.programName,
-            runid: $scope.runs.selected.properties[instance.nodeId]
+            runid: $scope.RunsController.runs.selected.properties[instance.nodeId]
           });
         }
       } else {
@@ -134,14 +134,15 @@ angular.module(PKG.name + '.feature.workflows')
       }
     };
 
-    $scope.stop = function() {
+    this.stop = function() {
       $alert({
         type: 'info',
         content: 'Stopping a workflow at run level is not possible yet. Will be fixed soon.'
       });
       return;
-      $scope.status = 'STOPPING';
-      myWorkFlowApi.stop(params);
+      // TODO: There is support from backend. We should implement this in UI
+      // this.status = 'STOPPING';
+      // myWorkFlowApi.stop(params);
     };
 
   });
