@@ -1,7 +1,7 @@
 angular.module(PKG.name + '.feature.mapreduce')
   .controller('MapreduceRunDetailLogsController', function ($scope, $state, myMapreduceApi) {
 
-    $scope.logs = [];
+    this.logs = [];
     if (!$scope.RunsController.runs.length) {
       return;
     }
@@ -18,6 +18,6 @@ angular.module(PKG.name + '.feature.mapreduce')
     myMapreduceApi.logs(params)
       .$promise
       .then(function (res) {
-        $scope.logs = res;
-      });
+        this.logs = res;
+      }.bind(this));
   });
