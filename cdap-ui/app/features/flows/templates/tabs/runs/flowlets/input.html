@@ -1,0 +1,41 @@
+<!-- INPUT -->
+<div ng-if="DetailCtrl.activeTab === 0" ng-controller="FlowletDetailInputController as InputCtrl">
+  <table class="table table-responsive" ng-if="InputCtrl.inputs.length > 0" cask-sortable>
+    <thead>
+      <tr ng-class="{'sort-enabled': InputCtrl.inputs.length>0}">
+        <th data-predicate="name">Source</th>
+        <th data-predicate="total">Arrival Rate</th>
+        <th>Pending Events</th>
+        <th data-predicate="max">Max Pending</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="input in InputCtrl.inputs track by $index">
+        <td>
+          <a href="" ng-click="FlowletsController.selectFlowlet(input.name)" ng-if="input.type === 'FLOWLET'">{{ input.name }}</a>
+          <a ui-sref="streams.detail.overview.status({ streamId: input.name })" ng-if="input.type === 'STREAM'">{{ input.name }}</a>
+        </td>
+        <td>
+          <strong ng-bind="input.total | myNumber: 1"></strong> events/s
+        </td>
+        <td class="table-graph" ng-if="input.type === 'FLOWLET'">
+          <epoch-line
+            data-history="input.history"
+            data-stream="input.stream"
+            chart-height="100"
+            chart-axes="['left', 'bottom']"
+            ></epoch-line>
+        </td>
+        <td ng-if="input.type === 'STREAM'">Not Available</td>
+        <td>
+          <span ng-if="input.type === 'FLOWLET'">{{ input.max }}</span>
+          <span ng-if="input.type === 'STREAM'">Not Available</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="well text-center" ng-if="InputCtrl.inputs.length === 0">
+    <h3>No Input</h3>
+  </div>
+</div>

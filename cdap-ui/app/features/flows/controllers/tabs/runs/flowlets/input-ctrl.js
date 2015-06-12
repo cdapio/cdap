@@ -2,9 +2,9 @@ angular.module(PKG.name + '.feature.flows')
   .controller('FlowletDetailInputController', function($state, $scope, MyDataSource, MyMetricsQueryHelper, myFlowsApi, myAlert) {
 
     var dataSrc = new MyDataSource($scope);
-    var flowletid = $scope.RunsController.activeFlowlet.name;
+    var flowletid = $scope.FlowletsController.activeFlowlet.name;
 
-    $scope.inputs = [];
+    this.inputs = [];
 
     var params = {
       namespace: $state.params.namespace,
@@ -19,18 +19,18 @@ angular.module(PKG.name + '.feature.flows')
         // INPUTS
         angular.forEach(res.connections, function(v) {
           if (v.targetName === flowletid) {
-            $scope.inputs.push({
+            this.inputs.push({
               name: v.sourceName,
               max: 0,
               type: v.sourceType
             });
           }
-        });
+        }.bind(this));
 
-        if ($scope.inputs.length > 0) {
-          formatInput();
+        if (this.inputs.length > 0) {
+          formatInput.bind(this)();
         }
-      });
+      }.bind(this));
 
     function pollArrivalRate(input) {
       var arrivalPath = '/metrics/query?metric=system.process.events.processed'+
@@ -38,7 +38,7 @@ angular.module(PKG.name + '.feature.flows')
         '&tag=app:' + $state.params.appId +
         '&tag=flow' + $state.params.programId +
         '&tag=flowlet:' + flowletid +
-        '&tag=run:' + $scope.runs.selected.runid +
+        '&tag=run:' + $scope.RunsController.runs.selected.runid +
         '&start=now-1s&end=now';
       // TODO: should this value be averaged over more than just the past 1 second?
       // POLLING ARRIVAL RATE
@@ -123,7 +123,7 @@ angular.module(PKG.name + '.feature.flows')
     }
 
     function formatInput() {
-      angular.forEach($scope.inputs, function (input) {
+      angular.forEach(this.inputs, function (input) {
         var flowletTags = {
           namespace: $state.params.namespace,
           app: $state.params.appId,
