@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('StreamPropertiesController', function($scope, $stateParams, myHelpers, $alert, myStreamApi, $state, EventPipe, $timeout, $rootScope, $document) {
+  .controller('StreamPropertiesController', function($scope, $stateParams, myHelpers, $alert, myStreamApi, $state, EventPipe) {
 
     $scope.avro = {};
 
