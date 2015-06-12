@@ -33,20 +33,28 @@ VERSION = "0.0.9.1"
 COPYRIGHT_YEAR = "2015"
 
 MASTER_CSV = "cdap-dependencies-master.csv"
-MASTER_CDAP_UI_CSV = "cdap-ui-dependencies-master.csv"
+MASTER_CSV_COMMENTS = {"bower": """# Bower Dependencies
+# dependency,version,type,license,license_url,homepage,license_page""",
+                       "npm": """# NPM Dependencies
+# dependency,version,type,license,license_url,homepage,license_page""",
+                       "jar": """# Jar Dependencies
+# dependency,version,type,license,license_url""",
+}
+MASTER_CSV_TYPES = ("bower", "npm", "jar")
 
 ENTERPRISE = "cdap-enterprise-dependencies"
 LEVEL_1    = "cdap-level-1-dependencies"
 STANDALONE = "cdap-standalone-dependencies"
+CDAP_UI    = "cdap-ui-dependencies"
 
 CASK_REVERSE_DOMAIN = "co.cask"
 
 LICENSES_SOURCE = "../../reference-manual/source/licenses"
 
-CDAP_BOWER_DEPENDENCIES = "../../../cdap-ui/bower.json"
-CDAP_NPM_DEPENDENCIES = "../../../cdap-ui/package.json"
+CDAP_BOWER_DEPENDENCIES = ("../../../cdap-ui/bower.json", "#")
+CDAP_NPM_DEPENDENCIES = ("../../../cdap-ui/package.json", "@")
 
-CDAP_UI_SOURCES = {"bower": CDAP_BOWER_DEPENDENCIES,  "npm": CDAP_NPM_DEPENDENCIES}
+CDAP_UI_SOURCES = {"bower": CDAP_BOWER_DEPENDENCIES, "npm": CDAP_NPM_DEPENDENCIES}
 
 CDAP_UI_CASK_DEPENDENCIES = u'cask-'
 CDAP_UI_DEPENDENCIES_KEY = "dependencies"
@@ -76,7 +84,7 @@ def parse_options():
     """
 
     parser = OptionParser(
-        usage="%prog [options]",
+        usage="%prog [options] [file]",
         description="Checks that the license dependencies files used match the dependencies in the product.")
 
     parser.add_option(
@@ -148,6 +156,13 @@ def parse_options():
         action="store_true",
         dest="rst_standalone",
         help="Print standalone dependencies to an rst file",
+        default=False)
+
+    parser.add_option(
+        "-f", "--rst_cdap_ui",
+        action="store_true",
+        dest="rst_cdap_ui",
+        help="Print CDAP UI dependencies to an rst file",
         default=False)
 
     parser.add_option(
@@ -252,9 +267,9 @@ def test_for_application(app):
         return 0
 
 
-def process_cdap_ui(input_file, options):
+def process_cdap_ui(options):
     # Read in the current master csv file and create a structure with it
-    # Read in the new dependencies files:
+    # Read in the checked-in dependency files:
     #   cdap-ui/bower.json
     #   cdap-ui/package.json
     # Create and print to standard out the list of the references
@@ -271,11 +286,9 @@ def process_cdap_ui(input_file, options):
     
     for type in CDAP_UI_SOURCES.keys():
         
-        source = CDAP_UI_SOURCES[type]
+        source = CDAP_UI_SOURCES[type][0]
         json_path = os.path.join(SCRIPT_DIR_PATH, source)
         print "Reading '%s' dependencies file:\n%s" % (type, json_path)
-        if not test_for_application(type):
-            continue
         with open(json_path) as data_file:    
             data = json.load(data_file)
             
@@ -293,61 +306,63 @@ def process_cdap_ui(input_file, options):
     count_missing = len(keys)
     print "\nCDAP UI: Missing Artifacts: %s" % count_missing
     if count_missing:
-        import subprocess
-        keys.sort()
-        missing_list = []
-        for dependency in keys:
-            type, version = missing_libs_dict[dependency]
-#             if not version[0].isdigit():
-#             version = version[1:]
-            if type == 'bower':
-                dependency_version = "%s#%s" % (dependency, version)
-                print dependency_version
-                p1 = subprocess.Popen(["bower", "info", dependency_version, "homepage" ], stdout=subprocess.PIPE)
-                results = p1.communicate()[0]
-                homepage = results.strip().split('\n')[-1:][0].replace("'", "")
-                row = '"%s","%s","%s","","","%s"' % (dependency, version, homepage, type)
-                missing_list.append(row)
-            elif type == 'npm':
-                dependency_version = "%s@%s" % (dependency, version)
-                print dependency_version
-                p1 = subprocess.Popen(["npm", "--json", "view", dependency_version, "homepage" ], stdout=subprocess.PIPE)
-                results = p1.communicate()[0]
-                homepage = results.strip().split('\n')[-1:][0]
-                homepage = homepage.split(' ')[-1:][0].replace('"', '')
-                row = '"%s","%s","%s","","","%s"' % (dependency, version, homepage, type)
-                missing_list.append(row)
-            else:
-                print "Unknown type: '%s' for dependency '%s', version '%s'" % (type, dependency, version)
-        
-        print "\nCDAP UI: Missing Artifacts List: \n"
-        for row in missing_list:
-            print row
-        
-        if options.debug:
+        all_apps_available = True
+        type_keys = CDAP_UI_SOURCES.keys()
+        for type in type_keys:
+            if not test_for_application(type):
+                all_apps_available = False
+                
+        if all_apps_available: 
+            import subprocess
+            keys.sort()
+            missing_list = []
             for dependency in keys:
-                version = missing_libs_dict[dependency]
-                dependency_version = "%s#%s" % (dependency, version)
-                print dependency_version
-                p1 = subprocess.Popen(["bower", "info", dependency_version, "license" ], stdout=subprocess.PIPE)
-                results = p1.communicate()[0]
-                if results.count(MIT_LICENSE):
-                    # Includes MIT License
-                    print "MIT License\n"
+                type, version = missing_libs_dict[dependency]
+                if type in type_keys:
+                    dependency_version = "%s%s%s" % (dependency, CDAP_UI_SOURCES[type][1], version)
+                    print dependency_version
+                    if type == 'bower':
+                        p1 = subprocess.Popen([type, "info", dependency_version, "homepage" ], stdout=subprocess.PIPE)
+                        homepage = p1.communicate()[0].strip().split('\n')[-1:][0].replace("'", "")
+                    elif type == 'npm':
+                        p1 = subprocess.Popen([type, "--json", "view", dependency_version, "homepage" ], stdout=subprocess.PIPE)
+                        homepage = p1.communicate()[0].strip().split('\n')[-1:][0]
+                        homepage = homepage.split(' ')[-1:][0].replace('"', '')
+                    row = '"%s","%s","%s","","","%s",""' % (dependency, version, type, homepage)
+                    missing_list.append(row)
                 else:
-                    # Unknown license
-                    p1 = subprocess.Popen(["bower", "info", dependency_version], stdout=subprocess.PIPE)
+                    print "Unknown type: '%s' for dependency '%s', version '%s'" % (type, dependency, version)
+        
+            print "\nCDAP UI: Missing Artifacts List: \n"
+            for row in missing_list:
+                print row
+        
+            if options.debug:
+                for dependency in keys:
+                    version = missing_libs_dict[dependency]
+                    dependency_version = "%s#%s" % (dependency, version)
+                    print dependency_version
+                    p1 = subprocess.Popen(["bower", "info", dependency_version, "license" ], stdout=subprocess.PIPE)
                     results = p1.communicate()[0]
-                    print "Debug:\n%s" % results
-                    p1 = subprocess.Popen(["bower", "home", dependency_version], stdout=subprocess.PIPE)        
+                    if results.count(MIT_LICENSE):
+                        # Includes MIT License
+                        print "MIT License\n"
+                    else:
+                        # Unknown license
+                        p1 = subprocess.Popen(["bower", "info", dependency_version], stdout=subprocess.PIPE)
+                        results = p1.communicate()[0]
+                        print "Debug:\n%s" % results
+                        p1 = subprocess.Popen(["bower", "home", dependency_version], stdout=subprocess.PIPE)        
         
     print "\nCDAP UI: Row count: %s" % len(cdap_ui_dict.keys())
 
+    # Return "Dependency","Version","License","License URL"
     cdap_ui_data = []
     keys = cdap_ui_dict.keys()
     keys.sort()
     for dependency in keys:
-        row = cdap_ui_dict[dependency]
+        lib = cdap_ui_dict[dependency]
+        row = list(lib.get_row())
         cdap_ui_data.append(row)
         print "%s : %s" % (dependency, row)
         
@@ -396,12 +411,12 @@ def process_level_1(input_file, options):
     return rst_data
 
 def process_enterprise(input_file, options):
-    return process_dependencies(ENTERPRISE)
+    return _process_dependencies(ENTERPRISE)
 
 def process_standalone(input_file, options):
-    return process_dependencies(STANDALONE)
+    return _process_dependencies(STANDALONE)
     
-def process_dependencies(dependency):
+def _process_dependencies(dependency):
     # Read in the current master csv file and create a structure with it
     # Read in the new dependencies csv file
     # Create and print to standard out the list of the references
@@ -474,10 +489,14 @@ def process_dependencies(dependency):
                 csv_writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
                 keys = master_libs_dict.keys()
                 keys.sort()
-                for k in keys:
-                    r = lib_dict[k].get_row()
-                    print_debug(r)
-                    csv_writer.writerow(r)
+                for type in MASTER_CSV_TYPES:
+                    csv_writer.writerow(MASTER_CSV_COMMENTS[type])
+                    for k in keys:
+                        r = lib_dict[k].get_row()
+                        row_type = r[2]
+                        if (type == "jar" and type != row_type) or (type != "jar" and type == row_type):
+                            print_debug(r)
+                            csv_writer.writerow(r)
             print "New master CSV: wrote %s records to:\n%s" % (len(keys), csv_path)
 
     # Return the "Package","Version","Classifier","License","License URL"
@@ -500,7 +519,7 @@ def print_rst_level_1(input_file, options):
     header = '"Package","Artifact","License","License URL"'
     widths = "20, 20, 20, 40"
     data_list = process_level_1(input_file, options)
-    print_dependencies(title, file_base, header, widths, data_list)
+    _print_dependencies(title, file_base, header, widths, data_list)
 
 
 def print_rst_enterprise(input_file, options):
@@ -509,7 +528,7 @@ def print_rst_enterprise(input_file, options):
     header = '"Package","Version","Classifier","License","License URL"'
     widths = "20, 10, 10, 20, 35"
     data_list = process_enterprise(input_file, options)
-    print_dependencies(title, file_base, header, widths, data_list)
+    _print_dependencies(title, file_base, header, widths, data_list)
 
 
 def print_rst_standalone(input_file, options):
@@ -518,10 +537,17 @@ def print_rst_standalone(input_file, options):
     header = '"Package","Version","Classifier","License","License URL"'
     widths = "20, 10, 10, 20, 30"
     data_list = process_standalone(input_file, options)
-    print_dependencies(title, file_base, header, widths, data_list)
+    _print_dependencies(title, file_base, header, widths, data_list)
 
-   
-def print_dependencies(title, file_base, header, widths, data_list):
+def print_rst_cdap_ui(options):
+    title = "UI"
+    file_base = CDAP_UI
+    header = '"Dependency","Version","Type","License","License URL"'
+    widths = "20, 10, 10, 20, 40"
+    data_list = process_cdap_ui(options)
+    _print_dependencies(title, file_base, header, widths, data_list)
+
+def _print_dependencies(title, file_base, header, widths, data_list):
 # Example: "Level 1", LEVEL_1, ...
     RST_HEADER=""".. meta::
     :author: Cask Data, Inc.
@@ -664,7 +690,7 @@ class UI_Library(Library):
         return "%s : %s (%s)" % (self.id, self.version, self.type)
 
     def get_row(self):
-        return (self.id, self.version, self.type, self.license, self.license_url, self.homepage, self.license_page)
+        return (self.id, self.version, self.type, self.license, self.license_url)
 
 
 #
@@ -680,7 +706,7 @@ def main():
         options.logger = log
 
         if options.cdap_ui:
-            process_cdap_ui(input_file, options)
+            process_cdap_ui(options)
 
         elif options.enterprise:
             process_enterprise(input_file, options)
@@ -699,6 +725,9 @@ def main():
             
         elif options.rst_standalone:
             print_rst_standalone(input_file, options)
+            
+        elif options.rst_cdap_ui:
+            print_rst_cdap_ui(options)
             
         elif options.master_print:
             master_print()
