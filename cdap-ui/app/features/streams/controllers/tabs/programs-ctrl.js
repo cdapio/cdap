@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.streams')
-  .controller('StreamsDetailProgramsController', function($scope, $state, myStreamApi) {
+  .controller('StreamProgramsController', function($scope, $state, myStreamApi) {
 
     var params = {
       namespace: $state.params.namespace,
@@ -9,7 +9,7 @@ angular.module(PKG.name + '.feature.streams')
     myStreamApi.programsList(params)
       .$promise
       .then(function (res) {
-        $scope.programs = res;
-      });
+        this.programs = res;
+      }.bind(this));
 
   });

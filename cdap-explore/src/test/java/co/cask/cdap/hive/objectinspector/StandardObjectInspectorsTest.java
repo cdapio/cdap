@@ -68,7 +68,7 @@ public class StandardObjectInspectorsTest {
       Assert.assertNull("loi1.getListElement(null, 100) should be null", loi1.getListElement(null, 100));
 
       // ArrayList
-      ArrayList<Integer> list = new ArrayList<Integer>();
+      ArrayList<Integer> list = new ArrayList<>();
       list.add(0);
       list.add(1);
       list.add(2);
@@ -114,7 +114,7 @@ public class StandardObjectInspectorsTest {
                           loi.getListElementObjectInspector());
 
       // Test set inspection
-      HashSet<Integer> set = new HashSet<Integer>();
+      HashSet<Integer> set = new HashSet<>();
       set.add(0);
       set.add(1);
       set.add(2);
@@ -154,7 +154,7 @@ public class StandardObjectInspectorsTest {
           loi.getListElementObjectInspector());
 
       // Test queue inspection
-      Queue<Integer> queue = new ArrayDeque<Integer>();
+      Queue<Integer> queue = new ArrayDeque<>();
       queue.add(0);
       queue.add(1);
       queue.add(2);
@@ -283,7 +283,7 @@ public class StandardObjectInspectorsTest {
     Assert.assertTrue(oi instanceof StandardListObjectInspector);
     loi = (StandardListObjectInspector) oi;
 
-    Queue<String> queue = new LinkedList<String>();
+    Queue<String> queue = new LinkedList<>();
     queue.add("foo");
     queue.add("bar");
     List<?> inspectedQueue = loi.getList(set);
@@ -319,7 +319,7 @@ public class StandardObjectInspectorsTest {
                           moi1.getTypeName());
 
       // HashMap
-      HashMap<String, Integer> map = new HashMap<String, Integer>();
+      HashMap<String, Integer> map = new HashMap<>();
       map.put("one", 1);
       map.put("two", 2);
       map.put("three", 3);
@@ -361,18 +361,18 @@ public class StandardObjectInspectorsTest {
   }
 
   private void doStandardObjectInspectorTest(boolean testComments) {
-    ArrayList<String> fieldNames = new ArrayList<String>();
+    ArrayList<String> fieldNames = new ArrayList<>();
     fieldNames.add("firstInteger");
     fieldNames.add("secondString");
     fieldNames.add("thirdBoolean");
-    ArrayList<ObjectInspector> fieldObjectInspectors = new ArrayList<ObjectInspector>();
+    ArrayList<ObjectInspector> fieldObjectInspectors = new ArrayList<>();
     fieldObjectInspectors
         .add(PrimitiveObjectInspectorFactory.javaIntObjectInspector);
     fieldObjectInspectors
         .add(PrimitiveObjectInspectorFactory.javaStringObjectInspector);
     fieldObjectInspectors
         .add(PrimitiveObjectInspectorFactory.javaBooleanObjectInspector);
-    ArrayList<String> fieldComments = new ArrayList<String>(3);
+    ArrayList<String> fieldComments = new ArrayList<>(3);
     if (testComments) {
       fieldComments.add("firstInteger comment");
       fieldComments.add("secondString comment");
@@ -433,7 +433,7 @@ public class StandardObjectInspectorsTest {
     Assert.assertNull(soi1.getStructFieldsDataAsList(null));
 
     // HashStruct
-    ArrayList<Object> struct = new ArrayList<Object>(3);
+    ArrayList<Object> struct = new ArrayList<>(3);
     struct.add(1);
     struct.add("two");
     struct.add(true);
@@ -453,7 +453,7 @@ public class StandardObjectInspectorsTest {
   @Test
   public void testStandardUnionObjectInspector() throws Throwable {
     try {
-      ArrayList<ObjectInspector> objectInspectors = new ArrayList<ObjectInspector>();
+      ArrayList<ObjectInspector> objectInspectors = new ArrayList<>();
       // add primitive types
       objectInspectors
           .add(PrimitiveObjectInspectorFactory.javaIntObjectInspector);
@@ -475,10 +475,10 @@ public class StandardObjectInspectorsTest {
           PrimitiveObjectInspectorFactory.javaStringObjectInspector));
 
       // add a struct
-      List<String> fieldNames = new ArrayList<String>();
+      List<String> fieldNames = new ArrayList<>();
       fieldNames.add("myDouble");
       fieldNames.add("myLong");
-      ArrayList<ObjectInspector> fieldObjectInspectors = new ArrayList<ObjectInspector>();
+      ArrayList<ObjectInspector> fieldObjectInspectors = new ArrayList<>();
       fieldObjectInspectors
           .add(PrimitiveObjectInspectorFactory.javaDoubleObjectInspector);
       fieldObjectInspectors
@@ -574,7 +574,7 @@ public class StandardObjectInspectorsTest {
       Assert.assertTrue(ObjectInspectorUtils.copyToStandardObject(
           union, uoi1).equals(true));
 
-      ArrayList<Integer> iList = new ArrayList<Integer>();
+      ArrayList<Integer> iList = new ArrayList<>();
       iList.add(4);
       iList.add(5);
       union = new StandardUnionObjectInspector.StandardUnion((byte) 3, iList);
@@ -586,7 +586,7 @@ public class StandardObjectInspectorsTest {
       Assert.assertTrue(ObjectInspectorUtils.copyToStandardObject(
           union, uoi1).equals(iList));
 
-      HashMap<Integer, String> map = new HashMap<Integer, String>();
+      HashMap<Integer, String> map = new HashMap<>();
       map.put(6, "six");
       map.put(7, "seven");
       map.put(8, "eight");
@@ -608,7 +608,7 @@ public class StandardObjectInspectorsTest {
           union, uoi1).equals(map));
 
 
-      ArrayList<Object> struct = new ArrayList<Object>(2);
+      ArrayList<Object> struct = new ArrayList<>(2);
       struct.add(9.0);
       struct.add(10L);
       union = new StandardUnionObjectInspector.StandardUnion((byte) 5, struct);

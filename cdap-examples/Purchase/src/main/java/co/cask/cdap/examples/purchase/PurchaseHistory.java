@@ -31,7 +31,7 @@ public class PurchaseHistory {
   public PurchaseHistory(String customer, @Nullable UserProfile userProfile) {
     this.customer = customer;
     this.userProfile = userProfile;
-    this.purchases = new ArrayList<Purchase>();
+    this.purchases = new ArrayList<>();
   }
 
   public String getCustomer() {

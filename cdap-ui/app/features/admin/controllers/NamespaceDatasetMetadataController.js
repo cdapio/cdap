@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin').controller('AdminNamespaceDatasetMetadataController',
-function ($scope, $state, $alert, $filter, myDatasetApi, myExploreApi) {
+function ($scope, $state, $alert, $filter, myDatasetApi, myExploreApi, EventPipe) {
 
   var params = {
     namespace: $state.params.nsadmin,
@@ -9,9 +9,14 @@ function ($scope, $state, $alert, $filter, myDatasetApi, myExploreApi) {
   myExploreApi.list(params)
     .$promise
     .then(function (tables) {
-      var match = $filter('filter')(tables, $state.params.datasetId);
+
+      var datasetId = $state.params.datasetId;
+      datasetId = datasetId.replace(/[\.\-]/g, '_');
+
+      var match = $filter('filter')(tables, datasetId);
       if (match.length > 0) {
-        params.table = 'dataset_' + $state.params.datasetId;
+
+        params.table = 'dataset_' + datasetId;
 
         myExploreApi.getInfo(params)
           .$promise
@@ -26,20 +31,23 @@ function ($scope, $state, $alert, $filter, myDatasetApi, myExploreApi) {
 
 
   $scope.deleteDataset = function() {
+    EventPipe.emit('showLoadingIcon');
     var params = {
       namespace: $state.params.nsadmin,
       datasetId: $state.params.datasetId,
       scope: $scope
     };
-    myDatasetApi.delete(params)
-      .$promise
-      .then(function () {
-        $state.go('admin.namespace.detail.data', {}, {reload: true});
-        $alert({
-          type: 'success',
-          content: 'Successfully deleted dataset'
-        });
+    myDatasetApi.delete(params, {}, function success() {
+      EventPipe.emit('hideLoadingIcon.immediate');
+
+      $state.go('admin.namespace.detail.data', {}, {reload: true});
+      $alert({
+        type: 'success',
+        content: 'Successfully deleted dataset'
       });
+    }, function error() {
+      EventPipe.emit('hideLoadingIcon.immediate');
+    });
   };
 
 });

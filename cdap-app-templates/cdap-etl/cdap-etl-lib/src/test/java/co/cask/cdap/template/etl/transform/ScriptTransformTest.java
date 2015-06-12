@@ -79,7 +79,7 @@ public class ScriptTransformTest {
     Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
     transform.initialize(null);
 
-    MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(RECORD1, emitter);
     StructuredRecord output = emitter.getEmitted().get(0);
 
@@ -131,7 +131,7 @@ public class ScriptTransformTest {
     Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
     transform.initialize(null);
 
-    MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(RECORD1, emitter);
     StructuredRecord output = emitter.getEmitted().get(0);
     Assert.assertEquals(outputSchema, output.getSchema());
@@ -210,7 +210,7 @@ public class ScriptTransformTest {
     Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
     transform.initialize(null);
 
-    MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
     StructuredRecord output = emitter.getEmitted().get(0);
     Assert.assertEquals(outputSchema, output.getSchema());

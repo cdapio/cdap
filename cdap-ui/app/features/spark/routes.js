@@ -39,7 +39,7 @@ angular.module(PKG.name + '.feature.spark')
 
         },
         ncyBreadcrumb: {
-          parent: 'apps.detail.overview',
+          parent: 'apps.detail.overview.status',
           label: 'Spark',
           skip: true
         },
@@ -74,7 +74,8 @@ angular.module(PKG.name + '.feature.spark')
         templateUrl: '/assets/features/spark/templates/tabs/history.html',
         controller: 'SparkRunsController',
         ncyBreadcrumb: {
-          label: 'History'
+          label: 'History',
+          parent: 'spark.detail.runs'
         }
       });
 

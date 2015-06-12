@@ -5,18 +5,18 @@
 
 .. _http-restful-api-lifecycle:
 
-===========================================================
+==========================
 Lifecycle HTTP RESTful API
-===========================================================
+==========================
 
-Use the CDAP Lifecycle HTTP API to deploy or delete Applications and manage the lifecycle of 
-Flows, MapReduce programs, Workflows, Workers, and Custom Services.
+Use the CDAP Lifecycle HTTP API to deploy or delete applications and manage the lifecycle of 
+flows, MapReduce programs, workflows, workers, and custom services.
 
 .. highlight:: console
 
 Deploy an Application
 ---------------------
-To deploy an Application from your local file system into the namespace *<namespace>*,
+To deploy an application from your local file system into the namespace *<namespace>*,
 submit an HTTP POST request::
 
   POST <base-url>/namespaces/<namespace>/apps
@@ -29,8 +29,8 @@ and its content as the body of the request::
 
   <JAR binary content>
 
-Invoke the same command to update an Application to a newer version.
-However, be sure to stop all of its Flows, Spark and MapReduce programs before updating the Application.
+Invoke the same command to update an application to a newer version.
+However, be sure to stop all of its flows, Spark and MapReduce programs before updating the application.
 
 
 Deployed Applications
@@ -41,7 +41,7 @@ GET request::
 
   GET <base-url>/namespaces/<namespace>/apps
 
-This will return a JSON String map that lists each Application with its name and description.
+This will return a JSON String map that lists each application with its name and description.
 
 
 Details of a Deployed Application
@@ -64,7 +64,7 @@ of the application, the streams and datasets it uses, and all of its programs.
    * - ``<namespace>``
      - Namespace ID
    * - ``<app-id>``
-     - Name of the Application
+     - Name of the application
 
 .. rubric:: HTTP Responses
 
@@ -80,8 +80,8 @@ of the application, the streams and datasets it uses, and all of its programs.
 
 Delete an Application
 ---------------------
-To delete an Application—together with all of its Flows, MapReduce or Spark
-programs, Services, Workflows, Schedules—submit an HTTP DELETE::
+To delete an application |---| together with all of its flows, MapReduce or Spark
+programs, services, workflows, schedules |---| submit an HTTP DELETE::
 
   DELETE <base-url>/namespaces/<namespace>/apps/<application-name>
 
@@ -94,19 +94,19 @@ programs, Services, Workflows, Schedules—submit an HTTP DELETE::
    * - ``<namespace>``
      - Namespace ID
    * - ``<application-name>``
-     - Name of the Application to be deleted
+     - Name of the application to be deleted
 
-**Note:** The ``<application-name>`` in this URL is the name of the Application
-as configured by the Application Specification,
-and not necessarily the same as the name of the JAR file that was used to deploy the Application.
-This does not delete the Streams and Datasets associated with the Application
-because they belong to the namespace, not the Application.
+**Note:** The ``<application-name>`` in this URL is the name of the application
+as configured by the application Specification,
+and not necessarily the same as the name of the JAR file that was used to deploy the application.
+This does not delete the streams and datasets associated with the application
+because they belong to the namespace, not the application.
 
 
 Start, Stop, Status, and Runtime Arguments
 ------------------------------------------
-After an Application is deployed, you can start and stop its Flows, MapReduce 
-programs, Workflows, Workers, and Custom Services, and query for their status using HTTP POST and GET methods::
+After an application is deployed, you can start and stop its flows, MapReduce 
+programs, workflows, workers, and custom services, and query for their status using HTTP POST and GET methods::
 
   POST <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/<operation>
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/status
@@ -120,11 +120,11 @@ programs, Workflows, Workers, and Custom Services, and query for their status us
    * - ``<namespace>``
      - Namespace ID
    * - ``<app-id>``
-     - Name of the Application being called
+     - Name of the application being called
    * - ``<program-type>``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``workers``, or ``services``
    * - ``<program-id>``
-     - Name of the *Flow*, *MapReduce*, *Spark*, *Workflow*, or *Custom Service*
+     - Name of the *flow*, *MapReduce*, *Spark*, *workflow*, or *custom service*
        being called
    * - ``<operation>``
      - One of ``start`` or ``stop``
@@ -145,11 +145,11 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``<namespace>``
      - Namespace ID
    * - ``"appId"``
-     - Name of the Application being called
+     - Name of the application being called
    * - ``"programType"``
      - One of ``flow``, ``mapreduce``, ``spark``, ``workflow`` or ``service``
    * - ``"programId"``
-     - Name of the *Flow*, *MapReduce*, *Spark*, *Workflow*, or *Custom Service*
+     - Name of the *flow*, *MapReduce*, *Spark*, *workflow*, or *custom service*
        being called
 
 The response will be the same JSON array with additional parameters for each of the underlying JSON objects:
@@ -180,19 +180,19 @@ then there will never be a status and vice versa.
    * - HTTP Method
      - ``POST <base-url>/namespaces/default/apps/HelloWorld/flows/WhoFlow/start``
    * - Description
-     - Start a Flow *WhoFlow* in the Application *HelloWorld* in the namespace *default*
+     - Start a flow *WhoFlow* in the application *HelloWorld* in the namespace *default*
    * - 
      - 
    * - HTTP Method
      - ``POST <base-url>/namespaces/default/apps/Count/services/GetCounts/stop``
    * - Description
-     - Stop the Service *GetCounts* in the Application *Count* in the namespace *default*
+     - Stop the service *GetCounts* in the application *Count* in the namespace *default*
    * - 
      - 
    * - HTTP Method
      - ``GET <base-url>/namespaces/default/apps/HelloWorld/flows/WhoFlow/status``
    * - Description
-     - Get the status of the Flow *WhoFlow* in the Application *HelloWorld* in the namespace *default*
+     - Get the status of the flow *WhoFlow* in the application *HelloWorld* in the namespace *default*
    * - 
      - 
    * - HTTP Method
@@ -205,8 +205,8 @@ then there will never be a status and vice versa.
        ``{"appId":"MyApp2", "programType":"service", "programId":"MyService",``
        ``"error":"Program not found", "statusCode":404}]``
    * - Description
-     - Attempt to get the status of the Flow *MyFlow* in the Application *MyApp* and of the Service *MyService*
-       in the Application *MyApp2* in the namespace *default*
+     - Attempt to get the status of the flow *MyFlow* in the application *MyApp* and of the service *MyService*
+       in the application *MyApp2* in the namespace *default*
 
 When starting an program, you can optionally specify runtime arguments as a JSON map in the request body::
 
@@ -235,7 +235,7 @@ with the arguments as a JSON string in the body::
 
   {"foo":"bar","this":"that"}
 
-To retrieve the runtime arguments saved for an Application's program, issue an HTTP GET 
+To retrieve the runtime arguments saved for an application's program, issue an HTTP GET 
 request to the program's URL using the same parameter ``runtimeargs``::
 
   GET <base-url>/namespaces/default/apps/HelloWorld/flows/WhoFlow/runtimeargs
@@ -246,7 +246,7 @@ Container Information
 ---------------------
 
 To find out the address of an program's container host and the container’s debug port, you can query
-CDAP for a Flow or Service’s live info via an HTTP GET method::
+CDAP for a flow or service’s live info via an HTTP GET method::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/live-info
 
@@ -259,11 +259,11 @@ CDAP for a Flow or Service’s live info via an HTTP GET method::
    * - ``<namespace>``
      - Namespace ID
    * - ``<app-id>``
-     - Name of the Application being called
+     - Name of the application being called
    * - ``<program-type>``
      - One of ``flows``, ``workers``, or ``services``
    * - ``<program-id>``
-     - Name of the program (*Flow* or *Custom Service*)
+     - Name of the program (*flow* or *custom service*)
 
 Example::
 
@@ -301,13 +301,13 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - Parameter
      - Description
    * - ``"appId"``
-     - Name of the Application being called
+     - Name of the application being called
    * - ``"programType"``
      - One of ``flow``, ``service``, or ``worker``
    * - ``"programId"``
-     - Name of the program (*Flow*, *Service*, or *Worker*) being called
+     - Name of the program (*flow*, *service*, or *worker*) being called
    * - ``"runnableId"``
-     - Name of the *Flowlet*, only required if the program type is ``flow``
+     - Name of the *flowlet*, only required if the program type is ``flow``
 
 The response will be the same JSON array with additional parameters for each of the underlying JSON objects:
 
@@ -346,15 +346,15 @@ The response will be the same JSON array with additional parameters for each of 
        ``{"appId":"MyApp3","programType":"Service","programId":"MySvc1,``
        ``"runnableId":"MyHandler1","statusCode":404,"error":"Runnable: MyHandler1 not found"}]``
    * - Description
-     - Try to get the instances of the Flowlet *MyFlowlet5* in the Flow *MyFlow1* in the
-       Application *MyApp1*, and the Service Handler *MyHandler1* in the User Service
-       *MySvc1* in the Application *MyApp3*, all in the namespace *default*
+     - Try to get the instances of the flowlet *MyFlowlet5* in the flow *MyFlow1* in the
+       application *MyApp1*, and the service handler *MyHandler1* in the user service
+       *MySvc1* in the application *MyApp3*, all in the namespace *default*
 
 .. _rest-scaling-flowlets:
 
 Scaling Flowlets
 ................
-You can query and set the number of instances executing a given Flowlet
+You can query and set the number of instances executing a given flowlet
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/flows/<flow-id>/flowlets/<flowlet-id>/instances
@@ -373,11 +373,11 @@ with the arguments as a JSON string in the body::
    * - ``<namespace>``
      - Namespace ID
    * - ``<app-id>``
-     - Name of the Application being called
+     - Name of the application being called
    * - ``<flow-id>``
-     - Name of the Flow
+     - Name of the flow
    * - ``<flowlet-id>``
-     - Name of the Flowlet
+     - Name of the flowlet
    * - ``<quantity>``
      - Number of instances to be used
 
@@ -391,8 +391,8 @@ with the arguments as a JSON string in the body::
      - ``GET <base-url>/namespaces/default/apps/HelloWorld/flows/WhoFlow/flowlets/saver/``
        ``instances``
    * - Description
-     - Find out the number of instances of the Flowlet *saver*
-       in the Flow *WhoFlow* of the Application *HelloWorld* in the namespace *default*
+     - Find out the number of instances of the flowlet *saver*
+       in the flow *WhoFlow* of the application *HelloWorld* in the namespace *default*
 
 .. list-table::
    :widths: 20 80
@@ -407,12 +407,12 @@ with the arguments as a JSON string in the body::
          { "instances" : 2 }
 
    * - Description
-     - Change the number of instances of the Flowlet *saver* in the Flow *WhoFlow* of the
-       Application *HelloWorld* in the namespace *default*
+     - Change the number of instances of the flowlet *saver* in the flow *WhoFlow* of the
+       application *HelloWorld* in the namespace *default*
 
 Scaling Services
 ................
-You can query or change the number of instances of a Service
+You can query or change the number of instances of a service
 by using the ``instances`` parameter with HTTP GET or PUT methods::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/services/<service-id>/instances
@@ -431,9 +431,9 @@ with the arguments as a JSON string in the body::
    * - ``<namespace>``
      - Namespace ID
    * - ``<app-id>``
-     - Name of the Application
+     - Name of the application
    * - ``<service-id>``
-     - Name of the Service
+     - Name of the service
    * - ``<quantity>``
      - Number of instances to be used
 
@@ -445,12 +445,12 @@ with the arguments as a JSON string in the body::
    * - HTTP Method
      - ``GET <base-url>/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/instances``
    * - Description
-     - Retrieve the number of instances of the Service *CatalogLookup* in the application
+     - Retrieve the number of instances of the service *CatalogLookup* in the application
        *PurchaseHistory* in the namespace *default*
 
 Scaling Workers
 ...............
-You can query or change the number of instances of a Worker by using the ``instances``
+You can query or change the number of instances of a worker by using the ``instances``
 parameter with HTTP GET or PUT methods::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/workers/<worker-id>/instances
@@ -469,9 +469,9 @@ with the arguments as a JSON string in the body::
    * - ``<namespace>``
      - Namespace ID
    * - ``<app-id>``
-     - Name of the Application
+     - Name of the application
    * - ``<worker-id>``
-     - Name of the Worker
+     - Name of the worker
    * - ``<quantity>``
      - Number of instances to be used
 
@@ -485,16 +485,16 @@ Example
      - ``GET <base-url>/namespaces/default/apps/HelloWorld/workers/DataWorker/instances``
        ``instances``
    * - Description
-     - Retrieve the number of instances of the Worker *DataWorker*
-       in the Application *HelloWorld* in the namespace *default*
+     - Retrieve the number of instances of the worker *DataWorker*
+       in the application *HelloWorld* in the namespace *default*
 
 .. _rest-program-runs:
 
 Run Records and Schedules
 -------------------------
 
-To see all the runs of a selected program (Flows, MapReduce programs, Spark programs, Workflows, and
-Services), issue an HTTP GET to the program’s URL with the ``runs`` parameter.
+To see all the runs of a selected program (flows, MapReduce programs, Spark programs, workflows, and
+services), issue an HTTP GET to the program’s URL with the ``runs`` parameter.
 This will return a JSON list of all runs for the program, each with a start time,
 end time and program status::
 
@@ -509,7 +509,7 @@ end time and program status::
    * - ``<namespace>``
      - Namespace ID
    * - ``<app-id>``
-     - Name of the Application
+     - Name of the application
    * - ``<program-type>``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows`` or ``services``
    * - ``<program-id>``
@@ -551,7 +551,7 @@ Use that runid in subsequent calls to obtain additional information.
      :class: triple-table
 
      * - Description
-       - Retrieve the run records of the Flow *WhoFlow* of the Application *HelloWorld*
+       - Retrieve the run records of the flow *WhoFlow* of the application *HelloWorld*
       
      * - HTTP Method
        - ``GET <base-url>/namespaces/default/apps/HelloWorld/flows/WhoFlow/runs``
@@ -579,7 +579,7 @@ To fetch the run record for a particular run of a program, use::
    * - ``<namespace>``
      - Namespace ID
    * - ``<app-id>``
-     - Name of the Application
+     - Name of the application
    * - ``<program-type>``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows`` or ``services``
    * - ``<program-id>``
@@ -602,7 +602,7 @@ To fetch the run record for a particular run of a program, use::
      :class: triple-table
 
      * - Description
-       - Retrieve the run record of the Flow *WhoFlow* of the Application *HelloWorld* for run *b78d0091-da42-11e4-878c-2217c18f435d*
+       - Retrieve the run record of the flow *WhoFlow* of the application *HelloWorld* for run *b78d0091-da42-11e4-878c-2217c18f435d*
       
      * - HTTP Method
        - ``GET <base-url>/namespaces/default/apps/HelloWorld/flows/WhoFlow/runs/b78d0091-da42-11e4-878c-2217c18f435d``
@@ -611,13 +611,13 @@ To fetch the run record for a particular run of a program, use::
        - | ``{"runid":"...","start":1382567598,"status":"RUNNING"}``
 
 
-For Services, you can retrieve:
+For services, you can retrieve:
 
-- the history of successfully completed Twill Service runs using::
+- the history of successfully completed Twill service runs using::
 
     GET <base-url>/namespaces/<namespace>/apps/<app-id>/services/<service-id>/runs?status=completed
 
-For Workflows, you can retrieve:
+For workflows, you can retrieve:
 
 - the information about the specific run currently running::
 
@@ -648,7 +648,7 @@ For Workflows, you can retrieve:
      :class: triple-table
 
      * - Description
-       - Retrieve the most recent successful completed run of the Service *CatalogLookup* of the Application *PurchaseHistory*
+       - Retrieve the most recent successful completed run of the service *CatalogLookup* of the application *PurchaseHistory*
       
      * - HTTP Method
        - ``GET <base-url>/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/runs?status=completed&limit=1``
@@ -663,7 +663,7 @@ For Workflows, you can retrieve:
      :widths: 99 1
      :stub-columns: 1
 
-     * - Example: Retrieving A Schedule
+     * - Example: Retrieving a Schedule
        - 
        
   .. list-table::
@@ -671,7 +671,7 @@ For Workflows, you can retrieve:
      :class: triple-table
 
      * - Description
-       - Retrieves the schedules of the Workflow *PurchaseHistoryWorkflow* of the Application *PurchaseHistory*
+       - Retrieves the schedules of the workflow *PurchaseHistoryWorkflow* of the application *PurchaseHistory*
       
      * - HTTP Method
        - ``GET <base-url>/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/schedules``
@@ -695,7 +695,7 @@ For Workflows, you can retrieve:
      :class: triple-table
 
      * - Description
-       - Retrieves the next runtime of the Workflow *PurchaseHistoryWorkflow* of the Application *PurchaseHistory*
+       - Retrieves the next runtime of the workflow *PurchaseHistoryWorkflow* of the application *PurchaseHistory*
       
      * - HTTP Method
        - ``GET <base-url>/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/nextruntime``
@@ -705,17 +705,17 @@ For Workflows, you can retrieve:
        
 
 Schedules: Suspend and Resume
-...........................................
+.............................
 
-For Schedules, you can suspend and resume them using the RESTful API.
+For schedules, you can suspend and resume them using the RESTful API.
 
-To *suspend* a Schedule means that the program associated with that schedule will not
-trigger again until the Schedule is resumed.
+To *suspend* a schedule means that the program associated with that schedule will not
+trigger again until the schedule is resumed.
 
-To *resume* a Schedule means that the trigger is reset, and the program associated will
+To *resume* a schedule means that the trigger is reset, and the program associated will
 run again at the next scheduled time.
 
-To suspend or resume a Schedule use::
+To suspend or resume a schedule use::
 
   POST <base-url>/namespaces/<namespace>/apps/<app-id>/schedules/<schedule-name>/suspend
   POST <base-url>/namespaces/<namespace>/apps/<app-id>/schedules/<schedule-name>/resume
@@ -731,9 +731,9 @@ where:
    * - ``<namespace>``
      - Namespace ID
    * - ``<app-id>``
-     - Name of the Application
+     - Name of the application
    * - ``<schedule-name>``
-     - Name of the Schedule
+     - Name of the schedule
 
 .. container:: table-block-example
 
@@ -741,7 +741,7 @@ where:
      :widths: 99 1
      :stub-columns: 1
 
-     * - Example: Suspending A Schedule
+     * - Example: Suspending a Schedule
        - 
        
   .. list-table::
@@ -749,7 +749,7 @@ where:
      :class: triple-table
 
      * - Description
-       - Suspends the Schedule *DailySchedule* of the Application *PurchaseHistory*
+       - Suspends the schedule *DailySchedule* of the application *PurchaseHistory*
       
      * - HTTP Method
        - ``POST <base-url>/namespaces/default/apps/PurchaseHistory/schedules/DailySchedule/suspend``
@@ -761,25 +761,25 @@ where:
 Workflows: Suspend and Resume
 ...........................................
 
-For Workflows, you can suspend and resume them using the RESTful API.
+For workflows, you can suspend and resume them using the RESTful API.
 
 To *suspend* means that the current activity will be taken to completion, but no further 
 programs will be initiated. Programs will not be left partially uncompleted, barring any errors.
 
-In the case of a Workflow with multiple MapReduce programs, if one of them is running (first of
-three perhaps) and you suspend the Workflow, that first MapReduce will be completed but the
+In the case of a workflow with multiple MapReduce programs, if one of them is running (first of
+three perhaps) and you suspend the workflow, that first MapReduce will be completed but the
 following two will not be started.
 
 To *resume* means that activity will start up where it was left off, beginning with the start
 of the next program in the sequence.
 
-In the case of the Workflow mentioned above, resuming it after suspension would start up with the
+In the case of the workflow mentioned above, resuming it after suspension would start up with the
 second of the three MapReduce programs, which is where it would have left off when it was suspended.
 
-With Workflows, *suspend* and *resume* require a *run-id* as the action takes place on
-either a currently running or suspended Workflow.
+With workflows, *suspend* and *resume* require a *run-id* as the action takes place on
+either a currently running or suspended workflow.
 
-To suspend or resume a Workflow, use::
+To suspend or resume a workflow, use::
   
   POST <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/suspend
   POST <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/resume
@@ -795,11 +795,11 @@ where:
    * - ``<namespace>``
      - Namespace ID
    * - ``<app-id>``
-     - Name of the Application
+     - Name of the application
    * - ``<workflow-name>``
-     - Name of the Workflow
+     - Name of the workflow
    * - ``<run-id>``
-     - UUID of the Workflow run
+     - UUID of the workflow run
 
 .. container:: table-block-example
 
@@ -807,7 +807,7 @@ where:
      :widths: 99 1
      :stub-columns: 1
 
-     * - Example: Suspending A Workflow
+     * - Example: Suspending A workflow
        - 
        
   .. list-table::
@@ -815,8 +815,8 @@ where:
      :class: triple-table
 
      * - Description
-       - Suspends the run ``0ce13912-e980-11e4-a7d7-8cae4cfd0e64`` of the Workflow
-         *PurchaseHistoryWorkflow* of the Application *PurchaseHistory*
+       - Suspends the run ``0ce13912-e980-11e4-a7d7-8cae4cfd0e64`` of the workflow
+         *PurchaseHistoryWorkflow* of the application *PurchaseHistory*
       
      * - HTTP Method
        - ``POST <base-url>/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/runs/0ce13912-e980-11e4-a7d7-8cae4cfd0e64/suspend``

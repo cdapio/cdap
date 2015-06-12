@@ -110,7 +110,7 @@ class ScalaSparkContext extends AbstractSparkContext {
     Configuration hConf = setOutputDataset(datasetName);
     ClassTag<K> kClassTag = ClassTag$.MODULE$.apply(kClass);
     ClassTag<V> vClassTag = ClassTag$.MODULE$.apply(vClass);
-    PairRDDFunctions pairRDD = new PairRDDFunctions<K, V>((RDD<Tuple2<K, V>>) rdd, kClassTag, vClassTag, null);
+    PairRDDFunctions pairRDD = new PairRDDFunctions<>((RDD<Tuple2<K, V>>) rdd, kClassTag, vClassTag, null);
     pairRDD.saveAsNewAPIHadoopFile(datasetName, kClass, vClass, SparkDatasetOutputFormat.class, hConf);
   }
 

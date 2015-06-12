@@ -2,11 +2,11 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014 Cask Data, Inc.
 
-============================================
+===============
 Type Projection
-============================================
+===============
 
-Flowlets perform an implicit projection on the input objects if they do
+flowlets perform an implicit projection on the input objects if they do
 not match exactly what the process method accepts as arguments. This
 allows you to write a single process method that can accept multiple
 **compatible** types. For example, if you have a process method::
@@ -16,7 +16,7 @@ allows you to write a single process method that can accept multiple
     ...
   }
 
-and you send data of type ``Long`` to this Flowlet, then that type does
+and you send data of type ``Long`` to this flowlet, then that type does
 not exactly match what the process method expects. You could now write
 another process method for ``Long`` numbers::
 
@@ -67,6 +67,6 @@ conversions are:
     }
 
 Type projections help you keep your code generic and reusable. They also
-interact well with inheritance. If a Flowlet can process a specific
+interact well with inheritance. If a flowlet can process a specific
 object class, then it can also process any subclass of that class.
 

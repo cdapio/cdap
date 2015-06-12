@@ -32,14 +32,14 @@ public class BasicService extends AbstractService {
 
   public BasicService(String name, HttpServiceHandler handler, HttpServiceHandler...handlers) {
     this.name = name;
-    this.handlers = new ArrayList<HttpServiceHandler>();
+    this.handlers = new ArrayList<>();
     this.handlers.add(handler);
     this.handlers.addAll(Arrays.asList(handlers));
   }
 
   public BasicService(String name, Iterable<? extends HttpServiceHandler> handlers) {
     this.name = name;
-    this.handlers = new ArrayList<HttpServiceHandler>();
+    this.handlers = new ArrayList<>();
     for (HttpServiceHandler handler : handlers) {
       this.handlers.add(handler);
     }

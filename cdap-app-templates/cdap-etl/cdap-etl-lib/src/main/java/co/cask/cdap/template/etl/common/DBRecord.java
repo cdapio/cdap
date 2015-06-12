@@ -46,7 +46,9 @@ import javax.sql.rowset.serial.SerialBlob;
 /**
  * Writable class for DB Source/Sink
  *
- * {@see DBWritable}, {@see DBInputFormat}, {@see DBOutputFormat}
+ * @see org.apache.hadoop.mapreduce.lib.db.DBInputFormat DBInputFormat
+ * @see org.apache.hadoop.mapreduce.lib.db.DBOutputFormat DBOutputFormat
+ * @see org.apache.hadoop.mapreduce.lib.db.DBWritable DBWritable
  */
 public class DBRecord implements Writable, DBWritable {
 

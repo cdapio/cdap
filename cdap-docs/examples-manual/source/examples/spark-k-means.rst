@@ -12,7 +12,7 @@ Spark K-Means
 A Cask Data Application Platform (CDAP) example demonstrating Spark.
 
 Overview
-=============
+========
 
 This example demonstrates a Spark application performing streaming analysis, computing the centers of points from an
 input stream using the K-Means Clustering method.
@@ -26,26 +26,26 @@ goes through the entries, calculates centers and tabulates results in another Ob
 Once the application completes, you can query the *centers* dataset by using the ``centers/{index}`` endpoint
 of the *CentersService*. It will respond with the center's coordinates based on the ``index`` parameter (e.g. "9.1,9.1,9.1").
 
-Let's look at some of these components, and then run the Application and see the results.
+Let's look at some of these components, and then run the application and see the results.
 
 The SparkKMeans Application
-------------------------------------------------------------
+---------------------------
 
 As in the other `examples <index.html>`__, the components
-of the Application are tied together by the class ``SparkKMeansApp``:
+of the application are tied together by the class ``SparkKMeansApp``:
 
 .. literalinclude:: /../../../cdap-examples/SparkKMeans/src/main/java/co/cask/cdap/examples/sparkkmeans/SparkKMeansApp.java
    :language: java
    :lines: 49-82
 
-``points`` and ``centers``: ObjectStore Data Storage
-------------------------------------------------------------
+The ``points`` and ``centers`` ObjectStore Data Storage
+-------------------------------------------------------
 
 The raw points data is stored in an ObjectStore dataset, *points*.
 The calculated centers data is stored in a second ObjectStore dataset, *centers*.
 
-``CentersService``: service
-------------------------------------------------------------
+The ``CentersService`` Service
+------------------------------
 
 This service has a ``centers/{index}`` endpoint to obtain the center's coordinates of a given index.
 
@@ -57,7 +57,7 @@ Building and Starting
 
 
 Running CDAP Applications
-============================================
+=========================
 
 .. |example| replace:: SparkKMeans
 
@@ -71,7 +71,7 @@ Running the Example
 .. highlight:: console
 
 Starting the Flow
-------------------------------
+-----------------
 
 Once the application is deployed:
 
@@ -82,10 +82,10 @@ Once the application is deployed:
 
     $ cdap-cli.sh start flow SparkKMeans.PointsFlow
   
-    Successfully started Flow 'PointsFlow' of application 'SparkKMeans' with stored runtime arguments '{}'
+    Successfully started flow 'PointsFlow' of application 'SparkKMeans' with stored runtime arguments '{}'
 
 Starting the Service
-------------------------------
+--------------------
 
 Once the application is deployed:
 
@@ -99,7 +99,7 @@ Once the application is deployed:
     Successfully started service 'CentersService' of application 'SparkKMeans' with stored runtime arguments '{}'
 
 Injecting Points Data
-------------------------------
+---------------------
 
 Inject a file of points data to the stream *pointsStream* by running this command from the
 Standalone CDAP SDK directory, using the Command Line Interface::
@@ -107,8 +107,8 @@ Standalone CDAP SDK directory, using the Command Line Interface::
   $ cdap-cli.sh load stream pointsStream examples/SparkKMeans/resources/points.txt 
   Successfully sent stream event to stream 'pointsStream' 
 
-Running the Spark program
-------------------------------
+Running the Spark Program
+-------------------------
 There are three ways to start the Spark program:
 
 1. Go to the *SparkKMeans* `application overview page 
@@ -125,7 +125,7 @@ There are three ways to start the Spark program:
     $ cdap-cli.sh start spark SparkKMeans.SparkKMeansProgram "args='3'"
 
 Querying the Results
-------------------------------
+--------------------
 
 To query the *centers* ObjectStore using the ``CentersService``, you can:
 

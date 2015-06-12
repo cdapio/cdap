@@ -182,7 +182,7 @@ public class AvroFileReader {
   }
 
   private DataFileReader<GenericRecord> createReader(Location location) throws IOException {
-    return new DataFileReader<GenericRecord>(new LocationSeekableInput(location),
+    return new DataFileReader<>(new LocationSeekableInput(location),
                                              new GenericDatumReader<GenericRecord>(schema));
 
   }

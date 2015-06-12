@@ -57,7 +57,7 @@ public final class LoggingEventSerializer {
   public byte[] toBytes(ILoggingEvent loggingEvent, LoggingContext loggingContext) {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     BinaryEncoder encoder = EncoderFactory.get().directBinaryEncoder(out, null);
-    GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>(logSchema.getAvroSchema());
+    GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<>(logSchema.getAvroSchema());
     try {
       writer.write(LoggingEvent.encode(logSchema.getAvroSchema(), loggingEvent, loggingContext), encoder);
     } catch (IOException e) {
@@ -81,7 +81,7 @@ public final class LoggingEventSerializer {
     }
 
     BinaryDecoder decoder = DecoderFactory.get().directBinaryDecoder(in, null);
-    GenericDatumReader<GenericRecord> reader = new GenericDatumReader<GenericRecord>(logSchema.getAvroSchema());
+    GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(logSchema.getAvroSchema());
     try {
       return reader.read(null, decoder);
     } catch (IOException e) {

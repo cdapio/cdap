@@ -5,19 +5,19 @@
 
 .. _http-restful-api-monitor:
 
-===========================================================
+========================
 Monitor HTTP RESTful API
-===========================================================
+========================
 
 .. highlight:: console
 
-CDAP internally uses a variety of System Services that are critical to its functionality.
-This section describes the RESTful APIs that can be used to see into System Services.
+CDAP internally uses a variety of system services that are critical to its functionality.
+This section describes the RESTful APIs that can be used to see into system services.
 
 Details of All Available System Services
 ----------------------------------------
 
-For the detailed information of all available System Services, use::
+For the detailed information of all available system services, use::
 
   GET <base-url>/system/services
 
@@ -33,7 +33,7 @@ For the detailed information of all available System Services, use::
 
 Checking Status of All CDAP System Services
 -------------------------------------------
-To check the status of all the System Services, use::
+To check the status of all the system services, use::
 
   GET <base-url>/system/services/status
 
@@ -49,11 +49,11 @@ To check the status of all the System Services, use::
 
 Checking Status of a Specific CDAP System Service
 -------------------------------------------------
-To check the status of a specific System Service, use::
+To check the status of a specific system service, use::
 
   GET <base-url>/system/services/<service-name>/status
 
-The status of these CDAP System Services can be checked:
+The status of these CDAP system services can be checked:
 
 .. list-table::
    :header-rows: 1
@@ -61,7 +61,7 @@ The status of these CDAP System Services can be checked:
    
    * - Service 
      - Service-Name
-     - Description of the Service
+     - Description of the service
    * - ``Metrics``
      - ``metrics``
      - Service that handles metrics related HTTP requests
@@ -70,10 +70,10 @@ The status of these CDAP System Services can be checked:
      - Service that handles transactions
    * - ``Streams``
      - ``streams``
-     - Service that handles Stream management
+     - Service that handles stream management
    * - ``App Fabric``
      - ``appfabric``
-     - Service that handles Application Fabric requests
+     - Service that handles application fabric requests
    * - ``Log Saver``
      - ``log.saver``
      - Service that aggregates all system and application logs
@@ -87,7 +87,7 @@ The status of these CDAP System Services can be checked:
      - ``explore.service``
      - Service that handles all HTTP requests for ad-hoc data exploration
 
-**Note:** The Service status checks are more useful when CDAP is running in a distributed cluster mode.
+**Note:** The service status checks are more useful when CDAP is running in a distributed cluster mode.
 
 .. rubric:: HTTP Responses
 .. list-table::
@@ -109,7 +109,7 @@ The status of these CDAP System Services can be checked:
    * - HTTP Method
      - ``GET <base-url>/system/services/metrics/status``
    * - Description
-     - Returns the status of the Metrics Service
+     - Returns the status of the metrics service
 
 Scaling System Services
 -----------------------

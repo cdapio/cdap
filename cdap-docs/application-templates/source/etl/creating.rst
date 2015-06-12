@@ -13,8 +13,8 @@ Creating an ETL Adapter
 Introduction
 ============
 Adapters can be created using the :ref:`RESTful API <http-restful-api-apptemplates-adapters-creating>`,
-the :ref:`CDAP CLI <cli>`, or the :ref:`CDAP UI <cdap-ui>`. In order to create an Adapter,
-an Adapter configuration is required that specifies the source, transformations and sink
+the :ref:`CDAP CLI <cli>`, or the :ref:`CDAP UI <cdap-ui>`. In order to create an adapter,
+an adapter configuration is required that specifies the source, transformations and sink
 along with their properties.  (In the CDAP UI, the interface prompts you for the required
 information.)
 
@@ -57,11 +57,11 @@ configuration for a Batch Adapter that runs every minute, reading data from a St
      }
   }
 
-The Adapter launches a MapReduce program that runs every minute, reads data from the
+The adapter launches a MapReduce program that runs every minute, reads data from the
 Stream *myStream* and writes to a Table *myTable*. A Table Sink needs a row key field to
 be specified and can use the timestamp of a Stream event for that.
 
-To create an instance of this Adapter, called *streamAdapter*:
+To create an instance of this adapter, called *streamAdapter*:
 
 - Using the :ref:`RESTful API <http-restful-api-apptemplates-adapters-creating>`::
 
@@ -71,15 +71,15 @@ To create an instance of this Adapter, called *streamAdapter*:
 
     $ create adapter streamAdapter <path-to-config.json>
 
-where ``config.json`` is the file that contains the Adapter configuration.
+where ``config.json`` is the file that contains the adapter configuration.
 
 
 .. highlight:: console
 
-Using the ETL Realtime Template
--------------------------------
+Using the ETL Real-Time Template
+--------------------------------
 
-This next configuration creates a Realtime Adapter that reads from Twitter and writes to a
+This next configuration creates a real-time adapter that reads from Twitter and writes to a
 Stream after performing a projection transformation::
 
   {
@@ -115,10 +115,10 @@ Stream after performing a projection transformation::
   }
 
 
-The ETL Realtime Template expects an instance property that will create *N* instances of the
+The ETL Real-Time Template expects an instance property that will create *N* instances of the
 adapter that run concurrently. In Standalone CDAP mode, this is implemented as multiple threads;
 while in Distributed CDAP mode, it will create different YARN containers. The
-number of instances of a Realtime Adapter cannot be changed during runtime.
+number of instances of a real-time adapter cannot be changed during runtime.
 
 The ``instances`` property value needs to be greater than 0. Note that the ``instance``
 property replaces the ``schedule`` property of the ETL Batch Template.
@@ -127,7 +127,7 @@ In this case, we will use a *ProjectionTransform* (a type of Transform) to drop 
 columns in the incoming data. A *StreamSink* in the final step needs a data field property
 that it will use as the content for the data to be written. 
 
-Sample Adaptor Configurations
+Sample Adapter Configurations
 -----------------------------
 
 **Database:** Sample config for using a Database Source and a Database Sink::
@@ -136,13 +136,12 @@ Sample Adaptor Configurations
     "config": {
       "schedule": "* * * * *",
       "source": {
-        "name": "DatabaseSource",
+        "name": "Database",
         "properties": {
           "importQuery": "select id,name,age from my_table",
           "countQuery": "select count(id) from my_table",
           "connectionString": "jdbc:mysql://localhost:3306/test",
-          "driverClass": "com.mysql.jdbc.Driver",
-          "tableName": "my_table",
+          "tableName": "src_table",
           "user": "my_user",
           "password": "my_password",
           "jdbcPluginName": "jdbc_plugin_name_defined_in_jdbc_plugin_json_config",
@@ -154,7 +153,6 @@ Sample Adaptor Configurations
         "properties": {
           "columns": "id,name,age",
           "connectionString": "jdbc:mysql://localhost:3306/test",
-          "driverClass": "com.mysql.jdbc.Driver",
           "tableName": "dest_table",
           "user": "my_user",
           "password": "my_password",

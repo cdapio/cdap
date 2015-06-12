@@ -84,7 +84,7 @@ public class DatasetService extends AbstractExecutionThreadService {
                         MDSDatasetsRegistry mdsDatasets,
                         ExploreFacade exploreFacade,
                         Set<DatasetMetricsReporter> metricReporters,
-                        UnderlyingSystemNamespaceAdmin underlyingSystemNamespaceAdmin,
+                        StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
                         UsageRegistry usageRegistry) throws Exception {
 
     this.typeManager = typeManager;
@@ -93,7 +93,7 @@ public class DatasetService extends AbstractExecutionThreadService {
                                                                                opExecutorClient, exploreFacade, cConf,
                                                                                usageRegistry);
     UnderlyingSystemNamespaceHandler underlyingSystemNamespaceHandler =
-      new UnderlyingSystemNamespaceHandler(underlyingSystemNamespaceAdmin);
+      new UnderlyingSystemNamespaceHandler(storageProviderNamespaceAdmin);
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);
     builder.addHttpHandlers(ImmutableList.of(datasetTypeHandler,
                                              datasetInstanceHandler,

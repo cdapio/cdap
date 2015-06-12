@@ -605,7 +605,7 @@ recompiled and re-deployed.)
 
 .. highlight:: console
 
-1. Stop all Flows, Services, and other Programs in all your applications.
+1. Stop all flows, services, and other programs in all your applications.
 
 #. Stop all CDAP processes::
 
@@ -643,7 +643,7 @@ recompiled and re-deployed.)
 
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
      
-#. Run the Flow Queue pending metrics corrector::
+#. Run the flow queue pending metrics corrector::
 
      $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.flow.FlowQueuePendingCorrector
 

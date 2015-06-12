@@ -52,7 +52,7 @@ public final class InMemoryStreamCoordinatorClient extends AbstractStreamCoordin
 
   @Override
   protected <T> PropertyStore<T> createPropertyStore(Codec<T> codec) {
-    return new InMemoryPropertyStore<T>();
+    return new InMemoryPropertyStore<>();
   }
 
   @Override

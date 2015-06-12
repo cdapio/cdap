@@ -356,8 +356,12 @@ public class PluginRepository {
     ProgramClassLoader programClassLoader = ProgramClassLoader.create(unpackDir, getClass().getClassLoader());
     return new CloseableClassLoader(programClassLoader, new Closeable() {
       @Override
-      public void close() throws IOException {
-        DirUtils.deleteDirectoryContents(unpackDir);
+      public void close() {
+        try {
+          DirUtils.deleteDirectoryContents(unpackDir);
+        } catch (IOException e) {
+          LOG.warn("Failed to delete directory {}", unpackDir, e);
+        }
       }
     });
   }

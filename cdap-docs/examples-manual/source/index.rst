@@ -14,7 +14,7 @@ CDAP Examples, How-To Guides, and Tutorials
 
 - |examples|_ Included with the :ref:`CDAP SDK, <getting-started-index>` they range from a
   simple introductory :ref:`Hello World <examples-hello-world>` to more elaborate examples
-  such as the :ref:`Purchase Application <examples-purchase>` that uses many of the CDAP
+  such as the :ref:`Purchase application <examples-purchase>` that uses many of the CDAP
   components.
 
 

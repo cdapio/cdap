@@ -58,7 +58,7 @@ public class TestSparkStreamIntegrationApp extends AbstractApplication {
         byte[], byte[]>() {
         @Override
         public Tuple2<byte[], byte[]> call(Tuple2<LongWritable, String> longWritableTextTuple2) throws Exception {
-          return new Tuple2<byte[], byte[]>(Bytes.toBytes(longWritableTextTuple2._2()),
+          return new Tuple2<>(Bytes.toBytes(longWritableTextTuple2._2()),
                                             Bytes.toBytes(longWritableTextTuple2._2()));
         }
       });

@@ -252,7 +252,7 @@ public final class Constants {
       //max-instances of dataset executor service
       public static final String MAX_INSTANCES = "dataset.executor.max.instances";
 
-      public static final String SERVICE_DESCRIPTION = "Service to perform Dataset operations.";
+      public static final String SERVICE_DESCRIPTION = "Service to perform dataset operations.";
     }
   }
 
@@ -707,7 +707,7 @@ public final class Constants {
     public static final String INACTIVE_OPERATION_TIMEOUT_SECS = "explore.inactive.operation.timeout.secs";
     public static final String CLEANUP_JOB_SCHEDULE_SECS = "explore.cleanup.job.schedule.secs";
 
-    public static final String SERVICE_DESCRIPTION = "Service to run Ad-hoc queries.";
+    public static final String SERVICE_DESCRIPTION = "Service to run ad-hoc queries.";
 
     /**
      * Explore JDBC constants.

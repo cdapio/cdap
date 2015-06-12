@@ -108,8 +108,8 @@ public abstract class StreamCoordinatorTestBase {
 
 
     StreamCoordinatorClient coordinator = getStreamCoordinator();
-    final BlockingDeque<Integer> thresholds = new LinkedBlockingDeque<Integer>();
-    final BlockingDeque<Long> ttls = new LinkedBlockingDeque<Long>();
+    final BlockingDeque<Integer> thresholds = new LinkedBlockingDeque<>();
+    final BlockingDeque<Long> ttls = new LinkedBlockingDeque<>();
     coordinator.addListener(streamId, new StreamPropertyListener() {
       @Override
       public void thresholdChanged(Id.Stream streamId, int threshold) {

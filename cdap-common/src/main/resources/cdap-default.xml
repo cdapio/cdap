@@ -642,7 +642,7 @@
 
     <property>
         <name>app.program.jvm.opts</name>
-        <value>${twill.jvm.gc.opts}</value>
+        <value>-XX:MaxPermSize=128M ${twill.jvm.gc.opts}</value>
         <description>Java options for all program containers</description>
     </property>
 

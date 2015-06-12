@@ -55,7 +55,7 @@ public final class HiveTokenUtils {
       Method getDelegationToken = hiveClass.getMethod("getDelegationToken", String.class, String.class);
       String tokenStr = (String) getDelegationToken.invoke(hiveObject, user, user);
 
-      Token<DelegationTokenIdentifier> delegationToken = new Token<DelegationTokenIdentifier>();
+      Token<DelegationTokenIdentifier> delegationToken = new Token<>();
       delegationToken.decodeFromUrlString(tokenStr);
       delegationToken.setService(new Text(HiveAuthFactory.HS2_CLIENT_TOKEN));
       LOG.info("Adding delegation token {} from MetaStore for service {} for user {}",

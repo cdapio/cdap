@@ -19,7 +19,6 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -50,9 +49,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   private final Store store;
 
   @Inject
-  public PreferencesHttpHandler(Authenticator authenticator, PreferencesStore preferencesStore,
-                                Store store) {
-    super(authenticator);
+  public PreferencesHttpHandler(PreferencesStore preferencesStore, Store store) {
     this.preferencesStore = preferencesStore;
     this.store = store;
   }

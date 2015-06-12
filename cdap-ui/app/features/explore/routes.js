@@ -9,6 +9,7 @@ angular.module(PKG.name + '.feature.explore')
         },
         templateUrl: '/assets/features/explore/explore.html',
         controller: 'GlobalExploreController',
+        controllerAs: 'GlobalExploreController',
         parent: 'ns',
         ncyBreadcrumb: {
           label: 'Explore',

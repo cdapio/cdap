@@ -16,7 +16,7 @@ Overview
 ========
 
 This tutorial provides the basic steps for the development of a data application using the
-Cask Data Application Platform (CDAP). We will use a Web Analytics Application to
+Cask Data Application Platform (CDAP). We will use a web analytics application to
 demonstrate how to develop with CDAP and how CDAP helps when building data applications
 that run in the Hadoop ecosystem.
 
@@ -36,24 +36,24 @@ In this tutorial, we'll show how easy it is to build a web analytics application
 In particular, we'll use these CDAP components:
 
 - A **stream** for web server log collection and persistence to the file system;
-- A **flow** for realtime data analysis over collected logs; and
+- A **flow** for real-time data analysis over collected logs; and
 - **SQL Queries** to explore and develop insights from the data.
 
 How It Works
 ============
-In this section, we’ll go through the details about how to develop a Web Analytics Application using CDAP.
+In this section, we’ll go through the details about how to develop a web analytics application using CDAP.
 
 Data Collection with a Stream
 -----------------------------
-The sole data source that the Web Analytics Application uses is web server logs. Log events are ingested to
+The sole data source that the web analytics application uses is web server logs. Log events are ingested to
 a **stream** called *log* using the RESTful API provided by CDAP.
 
 Once an event is ingested into a stream, it is persisted and available for processing.
 
 Data Analysis using a Flow
 --------------------------
-The Web Analytics Application uses a **flow**, the realtime data processor in CDAP,
-to produce realtime analytics from the web server logs. A **flow** contains one or more
+The web analytics application uses a **flow**, the real-time data processor in CDAP,
+to produce real-time analytics from the web server logs. A **flow** contains one or more
 **flowlets** that are wired together into a directed acyclic graph or DAG.
 
 To keep the example simple, we only compute the total visit count for each IP visiting the site.
@@ -70,7 +70,7 @@ Here is what the ``UniqueVisitor`` flowlet looks like:
 
 .. literalinclude:: /../../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/UniqueVisitor.java
    :language: java
-   :lines: 35-
+   :lines: 33-
 
 The ``UniqueVisitCount`` dataset provides an abstraction of the data logic for incrementing the visit count for a
 given IP. It exposes an ``increment`` method, implemented as:
@@ -89,7 +89,7 @@ that specifies the flow:
    :language: java
    :lines: 26-
 
-Lastly, we bundle up the dataset and the flow we've defined together to form an ``Application`` that can be deployed
+Lastly, we bundle up the dataset and the flow we've defined together to form an ``application`` that can be deployed
 and executed in CDAP:
 
 .. literalinclude:: /../../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/WebAnalytics.java
@@ -143,7 +143,7 @@ To inject a single log event, you can use the ``curl`` command:
 This sends the log event (formatted in the Common Log Format or CLF) to the CDAP instance located at
 ``localhost`` and listening on port ``10000``.
 
-The Application includes sample logs, located in ``examples/resources/accesslog.txt`` that you can inject 
+The application includes sample logs, located in ``examples/resources/accesslog.txt`` that you can inject 
 using the CDAP Commmand Line Interface::
 
   $ cdap-cli.sh load stream log examples/resources/accesslog.txt

@@ -30,9 +30,9 @@ Cask Data Application Platform Release Notes
 New Features
 ------------
 
-- Support for Application Templates has been added (`CDAP-1753 <https://issues.cask.co/browse/CDAP-1753>`__).
+- Support for application templates has been added (`CDAP-1753 <https://issues.cask.co/browse/CDAP-1753>`__).
 
-- Built-in ETL Application Templates and Plugins have been added (`CDAP-1767 <https://issues.cask.co/browse/CDAP-1767>`__).
+- Built-in ETL application templates and plugins have been added (`CDAP-1767 <https://issues.cask.co/browse/CDAP-1767>`__).
 
 - New :ref:`CDAP UI <cdap-ui>`, supports creating ETL applications directly in the web UI.
   See section below (:ref:`New User Interface <new-user-interface-300>`) for details.
@@ -40,14 +40,14 @@ New Features
 - Workflow logs can now be retrieved using the :ref:`CDP HTTP Logging RESTful API 
   <http-restful-api-logging>` (`CDAP-1089 <https://issues.cask.co/browse/CDAP-1089>`__).
   
-- Support has been added for suspending and resuming of a Workflow (`CDAP-1610
+- Support has been added for suspending and resuming of a workflow (`CDAP-1610
   <https://issues.cask.co/browse/CDAP-1610>`__).
   
-- Condition nodes in a Workflow now allow branching based on a boolean predicate
+- Condition nodes in a workflow now allow branching based on a boolean predicate
   (`CDAP-1928 <https://issues.cask.co/browse/CDAP-1928>`__).
   
-- Condition nodes in a Workflow now allow passing the Hadoop counters from a MapReduce
-  program to following Condition nodes in the Workflow (`CDAP-1611
+- Condition nodes in a workflow now allow passing the Hadoop counters from a MapReduce
+  program to following Condition nodes in the workflow (`CDAP-1611
   <https://issues.cask.co/browse/CDAP-1611>`__).
   
 - Logs can now be fetched based on the ``run-id`` (`CDAP-1582
@@ -56,7 +56,7 @@ New Features
 - CDAP Tables are :ref:`now explorable <table-exploration>` (`CDAP-946
   <https://issues.cask.co/browse/CDAP-946>`__).
 
-- The :ref:`CDAP CLI <cli>` supports the new :ref:`Application Template and Adapters APIs 
+- The :ref:`CDAP CLI <cli>` supports the new :ref:`application template and adapters APIs 
   <apptemplates-index>`. (`CDAP-1773 <https://issues.cask.co/browse/CDAP-1773>`__).
   
 - The :ref:`CDAP CLI <cli>` startup options have been changed to accommodate a new option
@@ -64,22 +64,22 @@ New Features
   
 - Both `grok <http://logstash.net/docs/1.4.2/filters/grok>`__ and 
   `syslog <http://en.wikipedia.org/wiki/Syslog>`__ record formats can now be used when 
-  :ref:`setting the format of a Stream <http-restful-api-stream-setting-properties>`
+  :ref:`setting the format of a stream <http-restful-api-stream-setting-properties>`
   (`CDAP-1949 <https://issues.cask.co/browse/CDAP-1949>`__).
   
-- Added HTTP RESTful endpoints for listing Datasets and Streams as used by Adapters, 
-  Programs, and Applications, and vice-versa 
+- Added HTTP RESTful endpoints for listing datasets and streams as used by adapters, 
+  programs, and applications, and vice-versa 
   (`CDAP-2214 <https://issues.cask.co/browse/CDAP-2214>`__).
   
 - Created a `queue introspection tool <https://github.com/caskdata/cdap/pull/2290>`__, 
   for counting processed and unprocessed entries in a 
-  Flowlet queue (`CDAP-2105 <https://issues.cask.co/browse/CDAP-2105>`__).
+  flowlet queue (`CDAP-2105 <https://issues.cask.co/browse/CDAP-2105>`__).
 
 - Support for CDAP SDK VM build automation has been added (`CDAP-2030 <https://issues.cask.co/browse/CDAP-2030>`__).
 
-- A Cube Dataset has been added (`CDAP-1520 <https://issues.cask.co/browse/CDAP-1520>`__).
+- A Cube dataset has been added (`CDAP-1520 <https://issues.cask.co/browse/CDAP-1520>`__).
 
-- A Batch and realtime Cube dataset sink has been added (`CDAP-1520 <https://issues.cask.co/browse/CDAP-1966>`__).
+- A Batch and Real-Time Cube dataset sink has been added (`CDAP-1520 <https://issues.cask.co/browse/CDAP-1966>`__).
 
 - Metrics and status information for MapReduce on a task level is now exposed (`CDAP-1520 <https://issues.cask.co/browse/CDAP-1958>`__).
 
@@ -94,10 +94,10 @@ New User Interface
 - **Development Section**
 
   - Introduces a UI for programs based on run-ids.
-  - Users can view logs and, in certain cases |---| Flows |---| Flowlets, of a program based on run ids.
-  - Shows a list of Datasets and Streams used by a program, and shows programs using a specific Dataset and Stream.
+  - Users can view logs and, in certain cases |---| flows |---| flowlets, of a program based on run ids.
+  - Shows a list of datasets and streams used by a program, and shows programs using a specific dataset and stream.
   - Shows the history of a program (list of runs).
-  - Datasets or Streams are explorable on a Dataset/Stream level or on a global level.
+  - Datasets or streams are explorable on a dataset/stream level or on a global level.
   - Shows program level metrics on under each program.
   
 - **Operations section**
@@ -113,26 +113,26 @@ New User Interface
   
 - **Admin Section**
 
-  - Users can manage different objects of CDAP (Applications, Programs, Datasets, and Streams).
+  - Users can manage different objects of CDAP (applications, programs, datasets, and streams).
   - Users can create namespaces.
-  - Through the Admin view, users can configure their preferences at the CDAP level, namespace level, or Application level.
-  - Users can manage the System Services, Applications, and Streams through the Admin view.
+  - Through the Admin view, users can configure their preferences at the CDAP level, namespace level, or application level.
+  - Users can manage the system services, applications, and streams through the Admin view.
   
 - **Adapters**
 
-  - Users can create ETLBatch and ETLRealtime Adapters from within the UI.
-  - Users can choose from a list of Plugins that comes by default with CDAP when creating an Adapter.
-  - Users can save an Adapter as a draft, to be created at a later point-in-time.
-  - Users can configure plugin properties with appropriate editors from within the UI when creating an Adapter.
+  - Users can create ETLBatch and ETLRealtime adapters from within the UI.
+  - Users can choose from a list of plugins that comes by default with CDAP when creating an adapter.
+  - Users can save an adapter as a draft, to be created at a later point-in-time.
+  - Users can configure plugin properties with appropriate editors from within the UI when creating an adapter.
   
 - The Old CDAP Console has been deprecated.
 
 Improvement
 -----------
 
-- The :ref:`Metrics system APIs<http-restful-api-metrics>` have been revised and improved
+- The :ref:`metrics system APIs<http-restful-api-metrics>` have been revised and improved
   (`CDAP-1596 <https://issues.cask.co/browse/CDAP-1596>`__).
-- The Metrics system performance has been improved
+- The metrics system performance has been improved
   (`CDAP-2124 <https://issues.cask.co/browse/CDAP-2124>`__, 
   `CDAP-2125 <https://issues.cask.co/browse/CDAP-2125>`__).
 
@@ -142,10 +142,10 @@ Bug Fixes
 - The CDAP Authentication server now reports the port correctly when the port is set to 0
   (`CDAP-614 <https://issues.cask.co/browse/CDAP-614>`__).
 
-- History of the programs running under Workflow (Spark and MapReduce) is now updated correctly
+- History of the programs running under workflow (Spark and MapReduce) is now updated correctly
   (`CDAP-1293 <https://issues.cask.co/browse/CDAP-1293>`__).
 
-- Programs running under a Workflow now receive a unique ``run-id``
+- Programs running under a workflow now receive a unique ``run-id``
   (`CDAP-2025 <https://issues.cask.co/browse/CDAP-2025>`__).
 
 - RunRecords are now updated with the RuntimeService to account for node failures
@@ -172,7 +172,7 @@ API Changes
   in a later version of CDAP (`CDAP-1998 <https://issues.cask.co/browse/CDAP-1998>`__). A
   :ref:`replacement endpoint <http-restful-api-metrics-querying-a-metric>` is available.
   
-- Metrics: The tag name for Service Handlers in previous releases was wrongly ``"runnable"``,
+- Metrics: The tag name for service handlers in previous releases was wrongly ``"runnable"``,
   and internally represented as ``"srn"``. These metrics are now tagged as ``"handler"`` (``"hnd"``), and
   metrics queries will only account for this tag name. If you need to query historic metrics
   that were emitted with the old tag ``"runnable"``, use ``"srn"`` to query them (instead of either
@@ -206,11 +206,11 @@ Deprecated and Removed Features
 - The `File DropZone <http://docs.cask.co/cdap/2.8.0/en/developers-manual/ingesting-tools/cdap-file-drop-zone.html>`__ 
   and `File Tailer <http://docs.cask.co/cdap/2.8.0/en/developers-manual/ingesting-tools/cdap-file-tailer.html>`__
   are no longer supported as of Release 3.0.
-- Support for *Procedures* has been removed. After upgrading, an Application that
-  contained a Procedure must be redeployed. 
-- Support for *Service Workers* have been removed. After upgrading, an Application that
-  contained a Service Worker must be redeployed.  
-- The Old CDAP Console has been deprecated.
+- Support for *procedures* has been removed. After upgrading, an application that
+  contained a procedure must be redeployed. 
+- Support for *service workers* have been removed. After upgrading, an application that
+  contained a service worker must be redeployed.  
+- The old CDAP Console has been deprecated.
 - Support for JDK/JRE 1.6 (Java 6) has ended; JDK/JRE 1.7 (Java 7) is 
   :ref:`now required for CDAP <install-java-runtime>` or the 
   :ref:`CDAP SDK <standalone-index>`.
@@ -248,7 +248,7 @@ General
 
 - Added the ability to submit to non-default YARN queues to provide 
   :ref:`resource guarantees <resource-guarantees>`
-  for CDAP Master Services, CDAP Programs, and Explore Queries
+  for CDAP Master services, CDAP programs, and Explore Queries
   (`CDAP-1417 <https://issues.cask.co/browse/CDAP-1417>`__).
 
 - Added the ability to :ref:`prune invalid transactions <tx-maintenance>`
@@ -274,10 +274,10 @@ New Features
   
 - **Datasets**
 
-  - Added an ObjectMappedTable Dataset that maps object fields to table columns and that is also explorable.
-  - Added a PartitionedFileSet Dataset that allows addressing files by meta data and that is also explorable.  
-  - Table Datasets now support a multi-get operation for batched reads.
-  - Allow an unchecked Dataset upgrade upon application deployment
+  - Added an ObjectMappedTable dataset that maps object fields to table columns and that is also explorable.
+  - Added a PartitionedFileSet dataset that allows addressing files by meta data and that is also explorable.  
+  - Table datasets now support a multi-get operation for batched reads.
+  - Allow an unchecked dataset upgrade upon application deployment
     (`CDAP-1574 <https://issues.cask.co/browse/CDAP-1574>`__).
 
 - **Metrics**
@@ -289,7 +289,7 @@ New Features
   
 - **Namespaces**
 
-  - Applications and Programs are now managed within namespaces.
+  - Applications and programs are now managed within namespaces.
   - Application logs are available within namespaces.
   - Metrics are now collected and queried within namespaces.
   - Datasets can now created and managed within namespaces.
@@ -308,15 +308,15 @@ New Features
   
 - **Workflows**
 
-  - Users can schedule a Workflow based on increments of data being ingested into a Stream.
+  - Users can schedule a workflow based on increments of data being ingested into a stream.
   - Workflows can be stopped.
-  - The execution of a Workflow can be forked into parallelized branches.
-  - The runtime arguments for Workflow can be scoped.
+  - The execution of a workflow can be forked into parallelized branches.
+  - The runtime arguments for workflow can be scoped.
   
 - **Workers**
 
-  - Added :ref:`Worker <workers>`, a new Program type that can be added to CDAP Applications, 
-    used to run background processes and (beta feature) can write to Streams through the
+  - Added :ref:`Worker <workers>`, a new program type that can be added to CDAP applications, 
+    used to run background processes and (beta feature) can write to streams through the
     WorkerContext.
     
 - **Upgrade and Data Migration Tool**
@@ -331,14 +331,14 @@ New Features
 Improvement
 -----------
 
-- Improved Flow performance and scalability with a new distributed queue implementation.
+- Improved flow performance and scalability with a new distributed queue implementation.
 
 
 API Changes
 -----------
 
 - The endpoint (``GET <base-url>/data/explore/datasets/<dataset-name>/schema``) that
-  retrieved the schema of a Dataset's underlying Hive table has been removed
+  retrieved the schema of a dataset's underlying Hive table has been removed
   (`CDAP-1603 <https://issues.cask.co/browse/CDAP-1603>`__).
 - Endpoints have been added to retrieve the CDAP version and the current configurations of
   CDAP and HBase (:ref:`Configuration HTTP RESTful API <http-restful-api-configuration>`).
@@ -367,21 +367,21 @@ Known Issues
   supported in the 
   `Metrics HTTP RESTful API v3 <http://docs.cask.co/cdap/2.8.0/en/reference-manual/http-restful-api/http-restful-api-v3/metrics.html#query-tips>`__.
   Instead, use the v2 API. It will be supported in a future release.
-- Typically, Datasets are bundled as part of Applications. When an Application is upgraded and redeployed,
-  any changes in Datasets will not be redeployed. This is because Datasets can be shared across applications,
-  and an incompatible schema change can break other applications that are using the Dataset.
-  A workaround (`CDAP-1253 <https://issues.cask.co/browse/CDAP-1253>`__) is to allow *unchecked Dataset upgrades*.
-  Upgrades cause the Dataset metadata, i.e. its specification including properties, to be updated. The Dataset
+- Typically, datasets are bundled as part of applications. When an application is upgraded and redeployed,
+  any changes in datasets will not be redeployed. This is because datasets can be shared across applications,
+  and an incompatible schema change can break other applications that are using the dataset.
+  A workaround (`CDAP-1253 <https://issues.cask.co/browse/CDAP-1253>`__) is to allow *unchecked dataset upgrades*.
+  Upgrades cause the dataset metadata, i.e. its specification including properties, to be updated. The dataset
   runtime code is also updated. To prevent data loss the existing data and the underlying HBase tables remain as-is.
 
-  You can allow *unchecked Dataset upgrades* by setting the configuration property ``dataset.unchecked.upgrade``
-  to ``true`` in ``cdap-site.xml``. This will ensure that Datasets are upgraded when the Application is redeployed.
-  When this configuration is set, the recommended process to deploy an upgraded Dataset is to first stop
-  all Applications that are using the Dataset before deploying the new version of the Application.
-  This lets all containers (Flows, Services, etc) to pick up the new Dataset changes.
-  When Datasets are upgraded using ``dataset.unchecked.upgrade``, no schema compatibility checks are performed by the
+  You can allow *unchecked dataset upgrades* by setting the configuration property ``dataset.unchecked.upgrade``
+  to ``true`` in ``cdap-site.xml``. This will ensure that datasets are upgraded when the application is redeployed.
+  When this configuration is set, the recommended process to deploy an upgraded dataset is to first stop
+  all applications that are using the dataset before deploying the new version of the application.
+  This lets all containers (flows, services, etc) to pick up the new dataset changes.
+  When datasets are upgraded using ``dataset.unchecked.upgrade``, no schema compatibility checks are performed by the
   system. Hence it is very important that the developer verify the backward-compatibility, and makes sure that
-  other Applications that are using the Dataset can work with the new changes.
+  other applications that are using the dataset can work with the new changes.
 
 
 `Release 2.7.1 <http://docs.cask.co/cdap/2.7.1/index.html>`__
@@ -399,7 +399,7 @@ New Features
 - **Spark**
 
   - Spark now uses a configurer-style API for specifying (`CDAP-382 <https://issues.cask.co/browse/CDAP-382>`__).
-  - Spark can now run as a part of a Workflow (`CDAP-465 <https://issues.cask.co/browse/CDAP-465>`__).
+  - Spark can now run as a part of a workflow (`CDAP-465 <https://issues.cask.co/browse/CDAP-465>`__).
 
 - **Security**
 
@@ -413,15 +413,15 @@ New Features
     converts it into partitions of a time-partitioned File set (`CDAP-1129 <https://issues.cask.co/browse/CDAP-1129>`__).
   - Support for different levels of conflict detection: ``ROW``, ``COLUMN``, or ``NONE`` (`CDAP-1016 <https://issues.cask.co/browse/CDAP-1016>`__).
   - Removed support for ``@DisableTransaction`` (`CDAP-1279 <https://issues.cask.co/browse/CDAP-1279>`__).
-  - Support for annotating a Stream with a schema (`CDAP-606 <https://issues.cask.co/browse/CDAP-606>`__).
-  - A new API for uploading entire files to a Stream has been added (`CDAP-411 <https://issues.cask.co/browse/CDAP-411>`__).
+  - Support for annotating a stream with a schema (`CDAP-606 <https://issues.cask.co/browse/CDAP-606>`__).
+  - A new API for uploading entire files to a stream has been added (`CDAP-411 <https://issues.cask.co/browse/CDAP-411>`__).
 
 - **Workflow**
 
   - Workflow now uses a configurer-style API for specifying (`CDAP-1207 <https://issues.cask.co/browse/CDAP-1207>`__).
-  - Multiple instances of a Workflow can be run concurrently (`CDAP-513 <https://issues.cask.co/browse/CDAP-513>`__).
-  - Programs are no longer part of a Workflow; instead, they are added in the application
-    and are referenced by a Workflow using their names (`CDAP-1116 <https://issues.cask.co/browse/CDAP-1116>`__).
+  - Multiple instances of a workflow can be run concurrently (`CDAP-513 <https://issues.cask.co/browse/CDAP-513>`__).
+  - Programs are no longer part of a workflow; instead, they are added in the application
+    and are referenced by a workflow using their names (`CDAP-1116 <https://issues.cask.co/browse/CDAP-1116>`__).
   - Schedules are now at the application level and properties can be specified for
     Schedules; these properties will be passed to the scheduled program as runtime
     arguments (`CDAP-1148 <https://issues.cask.co/browse/CDAP-1148>`__).
@@ -439,9 +439,9 @@ Known Issues
 
 CDAP Bug Fixes
 --------------
-- Allow an *unchecked Dataset upgrade* upon application deployment
+- Allow an *unchecked dataset upgrade* upon application deployment
   (`CDAP-1253 <https://issues.cask.co/browse/CDAP-1253>`__).
-- Update the Hive Dataset table when a Dataset is updated
+- Update the Hive dataset table when a dataset is updated
   (`CDAP-71 <https://issues.cask.co/browse/CDAP-71>`__).
 - Use Hadoop configuration files bundled with the Explore Service
   (`CDAP-1250 <https://issues.cask.co/browse/CDAP-1250>`__).
@@ -452,21 +452,21 @@ Known Issues
 ------------
 - See also the *Known Issues* of `version 2.6.0. <#known-issues-260>`_
 
-- Typically, Datasets are bundled as part of Applications. When an Application is upgraded and redeployed,
-  any changes in Datasets will not be redeployed. This is because Datasets can be shared across applications,
-  and an incompatible schema change can break other applications that are using the Dataset.
-  A workaround (`CDAP-1253 <https://issues.cask.co/browse/CDAP-1253>`__) is to allow *unchecked Dataset upgrades*.
-  Upgrades cause the Dataset metadata, i.e. its specification including properties, to be updated. The Dataset
+- Typically, datasets are bundled as part of applications. When an application is upgraded and redeployed,
+  any changes in datasets will not be redeployed. This is because datasets can be shared across applications,
+  and an incompatible schema change can break other applications that are using the dataset.
+  A workaround (`CDAP-1253 <https://issues.cask.co/browse/CDAP-1253>`__) is to allow *unchecked dataset upgrades*.
+  Upgrades cause the dataset metadata, i.e. its specification including properties, to be updated. The dataset
   runtime code is also updated. To prevent data loss the existing data and the underlying HBase tables remain as-is.
 
-  You can allow *unchecked Dataset upgrades* by setting the configuration property ``dataset.unchecked.upgrade``
-  to ``true`` in ``cdap-site.xml``. This will ensure that Datasets are upgraded when the Application is redeployed.
-  When this configuration is set, the recommended process to deploy an upgraded Dataset is to first stop
-  all Applications that are using the Dataset before deploying the new version of the Application.
-  This lets all containers (Flows, Services, etc) to pick up the new Dataset changes.
-  When Datasets are upgraded using ``dataset.unchecked.upgrade``, no schema compatibility checks are performed by the
+  You can allow *unchecked dataset upgrades* by setting the configuration property ``dataset.unchecked.upgrade``
+  to ``true`` in ``cdap-site.xml``. This will ensure that datasets are upgraded when the application is redeployed.
+  When this configuration is set, the recommended process to deploy an upgraded dataset is to first stop
+  all applications that are using the dataset before deploying the new version of the application.
+  This lets all containers (flows, services, etc) to pick up the new dataset changes.
+  When datasets are upgraded using ``dataset.unchecked.upgrade``, no schema compatibility checks are performed by the
   system. Hence it is very important that the developer verify the backward-compatibility, and makes sure that
-  other Applications that are using the Dataset can work with the new changes.
+  other applications that are using the dataset can work with the new changes.
 
 
 `Release 2.6.0 <http://docs.cask.co/cdap/2.6.0/index.html>`__
@@ -474,9 +474,9 @@ Known Issues
 
 API Changes
 -----------
--  API for specifying Services and MapReduce programs has been changed to use a "configurer" 
+-  API for specifying services and MapReduce programs has been changed to use a "configurer" 
    style; this will require modification of user classes implementing either MapReduce
-   or Service as the interfaces have changed (`CDAP-335
+   or service as the interfaces have changed (`CDAP-335
    <https://issues.cask.co/browse/CDAP-335>`__).
 
 
@@ -509,36 +509,36 @@ New Features
     (`CDAP-346 <https://issues.cask.co/browse/CDAP-346>`__).
   - Services can be called from Spark programs and its worker nodes
     (`CDAP-348 <https://issues.cask.co/browse/CDAP-348>`__).
-  - Spark programs can now read from Streams
+  - Spark programs can now read from streams
     (`CDAP-403 <https://issues.cask.co/browse/CDAP-403>`__).
   - Added Spark support to the CDAP CLI (Command-line Interface)
     (`CDAP-425 <https://issues.cask.co/browse/CDAP-425>`__).
   - Improved speed of Spark unit tests
     (`CDAP-600 <https://issues.cask.co/browse/CDAP-600>`__).
-  - Spark Programs now display system metrics in the CDAP Console
+  - Spark programs now display system metrics in the CDAP Console
     (`CDAP-652 <https://issues.cask.co/browse/CDAP-652>`__).
 
 - **Procedures**
 
-  - Procedures have been deprecated in favor of Services
+  - Procedures have been deprecated in favor of services
     (`CDAP-413 <https://issues.cask.co/browse/CDAP-413>`__).
 
 - **Services**
 
-  - Added an HTTP endpoint that returns the endpoints a particular Service exposes
+  - Added an HTTP endpoint that returns the endpoints a particular service exposes
     (`CDAP-412 <https://issues.cask.co/browse/CDAP-412>`__).
-  - Added an HTTP endpoint that lists all Services
+  - Added an HTTP endpoint that lists all services
     (`CDAP-469 <https://issues.cask.co/browse/CDAP-469>`__).
-  - Default metrics for Services have been added to the CDAP Console
+  - Default metrics for services have been added to the CDAP Console
     (`CDAP-512 <https://issues.cask.co/browse/CDAP-512>`__).
-  - The annotations ``@QueryParam`` and ``@DefaultValue`` are now supported in custom Service handlers
+  - The annotations ``@QueryParam`` and ``@DefaultValue`` are now supported in custom service handlers
     (`CDAP-664 <https://issues.cask.co/browse/CDAP-664>`__).
 
 - **Metrics**
 
-  - System and User Metrics now support gauge metrics
+  - System and user metrics now support gauge metrics
     (`CDAP-484 <https://issues.cask.co/browse/CDAP-484>`__).
-  - Metrics can be queried using a Program’s run-ID
+  - Metrics can be queried using a program’s run-ID
     (`CDAP-620 <https://issues.cask.co/browse/CDAP-620>`__).
 
 - **Documentation**
@@ -550,13 +550,13 @@ New Features
 CDAP Bug Fixes
 --------------
 
-- Fixed a problem with readless increments not being used when they were enabled in a Dataset
+- Fixed a problem with readless increments not being used when they were enabled in a dataset
   (`CDAP-383 <https://issues.cask.co/browse/CDAP-383>`__).
 - Fixed a problem with applications, whose Spark or Scala user classes were not extended
   from either ``JavaSparkProgram`` or ``ScalaSparkProgram``, failing with a class loading error
   (`CDAP-599 <https://issues.cask.co/browse/CDAP-599>`__).
-- Fixed a problem with the :ref:`CDAP upgrade tool <install-upgrade>` not preserving—for 
-  tables with readless increments enabled—the coprocessor configuration during an upgrade
+- Fixed a problem with the :ref:`CDAP upgrade tool <install-upgrade>` not preserving |---| for 
+  tables with readless increments enabled |---| the coprocessor configuration during an upgrade
   (`CDAP-1044 <https://issues.cask.co/browse/CDAP-1044>`__).
 - Fixed a problem with the readless increment implementation dropping increment cells when 
   a region flush or compaction occurred (`CDAP-1062 <https://issues.cask.co/browse/CDAP-1062>`__).
@@ -605,7 +605,7 @@ CDAP Bug Fixes
 - Fixed a problem with the WISE app zip distribution not packaged correctly; a new version
   (0.2.1) has been released (`CDAP-533 <https://issues.cask.co/browse/CDAP-533>`__).
 - Fixed a problem with the examples and tests incorrectly using the ByteBuffer.array
-  method when reading a Stream event (`CDAP-549 <https://issues.cask.co/browse/CDAP-549>`__).
+  method when reading a stream event (`CDAP-549 <https://issues.cask.co/browse/CDAP-549>`__).
 - Fixed a problem with the Authentication Server so that it can now communicate with an LDAP
   instance over SSL (`CDAP-556 <https://issues.cask.co/browse/CDAP-556>`__).
 - Fixed a problem with the program class loader to allow applications to use a different
@@ -621,8 +621,8 @@ Other Changes
 
 - Improved the CDAP documentation:
 
-  - Re-organized the documentation into three manuals—Developers' Manual, Administration
-    Manual, Reference Manual—and a set of examples, how-to guides and tutorials;
+  - Re-organized the documentation into three manuals |---| Developers' Manual, Administration
+    Manual, Reference Manual |---| and a set of examples, how-to guides and tutorials;
   - Documents are now in smaller chapters, with numerous updates and revisions;
   - Added a link for downloading an archive of the documentation for offline use;
   - Added links to examples relevant to a particular component;
@@ -646,7 +646,7 @@ Known Issues
 CDAP Bug Fixes
 --------------
 
-- Improved the documentation of the CDAP Authentication and Stream Clients, both Java and Python APIs.
+- Improved the documentation of the CDAP authentication and stream clients, both Java and Python APIs.
 - Fixed problems with the CDAP Command Line Interface (CLI):
 
   - Did not work in non-interactive mode;
@@ -682,7 +682,7 @@ New Features
 
 Ad-hoc querying
 .................
-- Capability to write to Datasets using SQL
+- Capability to write to datasets using SQL
 - Added a CDAP JDBC driver allowing connections from Java applications and third-party business intelligence tools
 - Ability to perform ad-hoc queries from the CDAP Console:
 
@@ -692,18 +692,18 @@ Ad-hoc querying
 
 Datasets
 .................
-- Datasets can be tested with TestBase outside of the context of an Application
-- CDAP now checks Datasets for compatibility in a verification stage
+- Datasets can be tested with TestBase outside of the context of an application
+- CDAP now checks datasets for compatibility in a verification stage
 - The Transaction engine uses server-side filtering for efficient transactional reads
 - Dataset specifications can now be dynamically reconfigured through the use of RESTful endpoints
-- The Bundle jar format is now used for Dataset libs
-- Increments on Datasets are now read-less
+- The Bundle jar format is now used for dataset libs
+- Increments on datasets are now read-less
 
 Services
 .................
-- Added simplified APIs for using Services from other programs such as MapReduce, Flows and Procedures
-- Added an API for creating Services and handlers that can use Datasets transactionally
-- Added a RESTful API to make requests to a Service via the Router
+- Added simplified APIs for using services from other programs such as MapReduce, flows and Procedures
+- Added an API for creating services and handlers that can use datasets transactionally
+- Added a RESTful API to make requests to a service via the Router
 
 Security
 .................
@@ -722,7 +722,7 @@ Spark Integration
 Streams
 .................
 - Added a collection of applications, tools and APIs specifically for the ETL (Extract, Transform and Loading) of data
-- Added support for asynchronously writing to Streams
+- Added support for asynchronously writing to streams
 
 Clients
 .................
@@ -732,11 +732,11 @@ Clients
 
 Major CDAP Bug Fixes
 --------------------
-- Fixed a problem with a HADOOP_HOME exception stacktrace when unit-testing an Application
+- Fixed a problem with a HADOOP_HOME exception stacktrace when unit-testing an application
 - Fixed an issue with Hive creating directories in /tmp in the Standalone and unit-test frameworks
-- Fixed a problem with type inconsistency of Service API calls, where numbers were showing up as strings
+- Fixed a problem with type inconsistency of service API calls, where numbers were showing up as strings
 - Fixed an issue with the premature expiration of long-term Authentication Tokens
-- Fixed an issue with the Dataset size metric showing data operations size instead of resource usage
+- Fixed an issue with the dataset size metric showing data operations size instead of resource usage
 
 
 .. _known-issues-250:

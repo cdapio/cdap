@@ -133,7 +133,7 @@ class TopKCollector {
   }
 
   final int limit;
-  TreeSet<Entry> entries = new TreeSet<Entry>();
+  TreeSet<Entry> entries = new TreeSet<>();
 
   TopKCollector(int limit) {
     this.limit = limit;
@@ -151,7 +151,7 @@ class TopKCollector {
   }
 
   Map<String, Long> getTopK() {
-    TreeMap<String, Long> topK = new TreeMap<String, Long>();
+    TreeMap<String, Long> topK = new TreeMap<>();
     for (int i = 0; i < limit; i++) {
       Entry entry = entries.pollLast();
       if (entry == null) {

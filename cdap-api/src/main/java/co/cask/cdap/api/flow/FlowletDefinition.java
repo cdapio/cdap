@@ -196,7 +196,7 @@ public final class FlowletDefinition {
 
   private Map<String, Set<Schema>> generateSchema(SchemaGenerator generator, Map<String, Set<Type>> types)
                                                   throws UnsupportedTypeException {
-    Map<String, Set<Schema>> result = new HashMap<String, Set<Schema>>();
+    Map<String, Set<Schema>> result = new HashMap<>();
     for (Map.Entry<String, Set<Type>> entry : types.entrySet()) {
       ImmutableSet.Builder<Schema> schemas = ImmutableSet.builder();
       for (Type type : entry.getValue()) {
@@ -208,7 +208,7 @@ public final class FlowletDefinition {
   }
 
   private <K, V> Map<K, Set<V>> immutableCopyOf(Map<K, Set<V>> map) {
-    Map<K, Set<V>> result = new HashMap<K, Set<V>>();
+    Map<K, Set<V>> result = new HashMap<>();
     for (Map.Entry<K, Set<V>> entry : map.entrySet()) {
       result.put(entry.getKey(), ImmutableSet.copyOf(entry.getValue()));
     }

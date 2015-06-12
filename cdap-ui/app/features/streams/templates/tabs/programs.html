@@ -1,13 +1,13 @@
-<div class="container" ng-controller="StreamsDetailProgramsController">
-  <div class="row" ng-if="programs.length > 0">
+<div class="container">
+  <div class="row" ng-if="ProgramsController.programs.length > 0">
     <h2><span>Programs</span></h2>
   </div>
 
   <div class="row">
-    <div class="table-responsive" ng-if="programs.length > 0">
+    <div class="table-responsive" ng-if="ProgramsController.programs.length > 0">
       <table class="table table-curved" cask-sortable>
         <thead>
-          <tr ng-class="{'sort-enabled': programs.length > 0}">
+          <tr ng-class="{'sort-enabled': ProgramsController.programs.length > 0}">
             <th data-predicate="id">Name</th>
             <th data-predicate="type">Type</th>
             <th data-predicate="application.applicationId">Application</th>
@@ -15,30 +15,20 @@
         </thead>
 
         <tbody>
-          <tr ng-repeat="program in programs | orderBy:sortable.predicate:sortable.reverse">
+          <tr ng-repeat="program in ProgramsController.programs | orderBy:sortable.predicate:sortable.reverse">
             <td>
-              <a ng-if="program.type === 'Mapreduce'" ui-sref="mapreduce.detail.runs({ appId: program.application.applicationId, programId: program.id })">
-                {{ ::program.id }}
-              </a>
-              <a ng-if="program.type === 'Flow'" ui-sref="flows.detail.runs({ appId: program.application.applicationId, programId: program.id })">
-                {{ ::program.id }}
-              </a>
-              <a ng-if="program.type === 'Workflow'" ui-sref="workflows.detail.runs({ appId: program.application.applicationId, programId: program.id })">
-                {{ ::program.id }}
-              </a>
-              <a ng-if="program.type === 'Service'" ui-sref="services.detail.runs({ appId: program.application.applicationId, programId: program.id })">
-                {{ ::program.id }}
-              </a>
-              <a ng-if="program.type === 'Spark'" ui-sref="spark.detail.runs({ appId: program.application.applicationId, programId: program.id })">
-                {{ ::program.id }}
-              </a>
-              <a ng-if="program.type === 'Worker'" ui-sref="worker.detail.runs({ appId: program.application.applicationId, programId: program.id })">
-                {{ ::program.id }}
-              </a>
+
+              <my-program-link
+                type="program.type"
+                namespace="$state.params.namespace"
+                app="program.application.applicationId"
+                program="program.id">
+              </my-program-link>
+
             </td>
             <td>{{ ::program.type }}</td>
             <td>
-              <a ui-sref="apps.detail.overview({ appId: program.application.applicationId })">
+              <a ui-sref="apps.detail.overview.status({ appId: program.application.applicationId })">
                 {{ ::program.application.applicationId }}
               </a>
             </td>
@@ -48,7 +38,7 @@
     </div>
 
     <br />
-    <div class="well text-center" ng-if="programs.length === 0">
+    <div class="well text-center" ng-if="ProgramsController.programs.length === 0">
       <h3>No program currently using this stream.</h3>
     </div>
   </div>

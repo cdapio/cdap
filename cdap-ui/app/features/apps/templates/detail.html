@@ -37,7 +37,17 @@
     </div>
   </div>
   <div class="cdap-subnav-end"></div>
-  <my-tabs
-    data-tabs-list="['Status', 'Datasets']"
-    data-tabs-partial-path="/assets/features/apps/templates/tabs/">
-  </my-tabs>
+  <ul class="nav nav-tabs slanted-tabs" role="tablist">
+
+    <li role="presentation" ui-sref-active="active">
+      <a ui-sref="apps.detail.overview.status" ui-sref-opts="{reload: true}" role="tab">Status</a>
+    </li>
+
+    <li role="presentation" ui-sref-active="active">
+      <a ui-sref="apps.detail.overview.datasets" ui-sref-opts="{reload: true}" role="tab">Datasets</a>
+    </li>
+
+  </ul>
+
+  <br />
+  <ui-view role="tabpanel"/>

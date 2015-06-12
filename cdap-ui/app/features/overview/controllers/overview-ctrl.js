@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.overview').controller('OverviewCtrl',
-function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrderings, MyMetricsQueryHelper, myHelpers, MyChartHelpers, myStreamApi, myDatasetApi) {
+function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrderings, MyMetricsQueryHelper, myHelpers, MyChartHelpers, myStreamApi, myDatasetApi, myAppUploader) {
   $scope.MyOrderings = MyOrderings;
 
   if(!$state.params.namespace) {
@@ -12,6 +12,9 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrd
     // still be instantiated. avoid making useless api calls.
     return;
   }
+
+  // Takes care of file upload for App.
+  $scope.onFileSelected = myAppUploader.upload;
 
   $scope.apps = [];
 
@@ -41,13 +44,13 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrd
     var serviceStatuses = Object.keys(res).map(function(value) {
       return res[value];
     });
-    if (serviceStatuses.indexOf('NOT OK') > -1) {
+    if (serviceStatuses.indexOf('NOTOK') > -1) {
       $scope.systemStatus = 'yellow';
     }
     if (serviceStatuses.indexOf('OK') === -1) {
       $scope.systemStatus = 'red';
     }
-    if (serviceStatuses.indexOf('NOT OK') === -1) {
+    if (serviceStatuses.indexOf('NOTOK') === -1) {
       $scope.systemStatus = 'green';
     }
   });

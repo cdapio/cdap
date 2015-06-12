@@ -12,34 +12,6 @@ angular.module(PKG.name + '.feature.streams')
         parent: 'ns'
       })
 
-      .state('streams.list', {
-        url: '',
-        templateUrl: '/assets/features/streams/templates/list.html',
-        controller: 'CdapStreamsListController',
-        ncyBreadcrumb: {
-          label: 'Streams',
-          parent: 'data.list'
-        }
-      })
-
-      .state('streams.list.create', {
-        url: '/create',
-        onEnter: function($bootstrapModal, $state) {
-          $bootstrapModal.open({
-            templateUrl: '/assets/features/streams/templates/streamscreate.html',
-            size: 'lg',
-            backdrop: true,
-            keyboard: true,
-            controller: 'StreamsCreateController'
-          }).result.finally(function() {
-            $state.go('streams.list',{}, { reload: true });
-          });
-        },
-        onExit: function($modalStack) {
-          $modalStack.dismissAll();
-        }
-      })
-
       .state('streams.detail', {
         url: '/:streamId',
         abstract: true,
@@ -50,15 +22,54 @@ angular.module(PKG.name + '.feature.streams')
           parent: 'streams.detail',
           templateUrl: '/assets/features/streams/templates/detail.html',
           controller: 'CdapStreamDetailController',
+          controllerAs: 'DetailController',
           ncyBreadcrumb: {
             parent: 'data.list',
             label: '{{$state.params.streamId}}'
           }
         })
-          .state('streams.detail.overview.tab', {
-            url: '/:tab',
-            ncyBreadcrumb: {
-              skip: true
-            }
-          });
+
+        .state('streams.detail.overview.status', {
+          url: '/status',
+          templateUrl: '/assets/features/streams/templates/tabs/status.html',
+          ncyBreadcrumb: {
+            parent: 'data.list',
+            label: '{{$state.params.streamId}}'
+          },
+          controller: 'StreamDetailStatusController',
+          controllerAs: 'StatusController'
+        })
+
+        .state('streams.detail.overview.explore', {
+          url: '/explore',
+          templateUrl: '/assets/features/streams/templates/tabs/explore.html',
+          controller: 'StreamExploreController',
+          controllerAs: 'ExploreController',
+          ncyBreadcrumb: {
+            label: 'Explore',
+            parent: 'streams.detail.overview.status'
+          }
+        })
+
+        .state('streams.detail.overview.programs', {
+          url: '/programs',
+          templateUrl: '/assets/features/streams/templates/tabs/programs.html',
+          controller: 'StreamProgramsController',
+          controllerAs: 'ProgramsController',
+          ncyBreadcrumb: {
+            label: 'Programs',
+            parent: 'streams.detail.overview.status'
+          }
+        })
+
+        .state('streams.detail.overview.metadata', {
+          url: '/metadata',
+          templateUrl: '/assets/features/streams/templates/tabs/metadata.html',
+          controller: 'StreamMetadataController',
+          controllerAs: 'MetadataController',
+          ncyBreadcrumb: {
+            label: 'Metadata',
+            parent: 'streams.detail.overview.status'
+          }
+        });
 });

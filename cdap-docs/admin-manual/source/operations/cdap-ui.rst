@@ -32,7 +32,7 @@ managing each of categories.
 In the upper-left is menu for setting the namespace. In the upper-right is a menu
 with access to the main Cask Website and Support.
 
-On the **Development** page, Data and Applications are displayed. The **Operations** page
+On the **Development** page, data and applications are displayed. The **Operations** page
 gives you views of current system and user metrics, with customizable dashboards. The
 **Management** page provides features and controls for administering the CDAP installation.
 

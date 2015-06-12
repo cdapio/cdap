@@ -269,13 +269,6 @@
                         <include>*.dll</include>
                       </includes>
                     </resource>
-                    <!-- Copy api jars -->
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-api/target</directory>
-                      <includes>
-                        <include>cdap-api-${project.version}*.jar</include>
-                      </includes>
-                    </resource>
                     <!-- Copy cdap-ui -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-ui/server</directory>
@@ -301,12 +294,7 @@
                         <include>package.json</include>
                       </includes>
                     </resource>
-                    <!-- Copy api javadocs -->
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-api/target/apidocs</directory>
-                      <targetPath>javadocs</targetPath>
-                    </resource>
-                    <!-- Copy examples. The assume the example is already built -->
+                    <!-- Copy examples. This assumes the examples are already built -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-examples</directory>
                       <targetPath>examples</targetPath>

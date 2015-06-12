@@ -18,7 +18,9 @@
             <a ui-sref="workflows.detail.runs.run({runid: run.runid})" ng-if="type === 'WORKFLOWS'">{{run.runid}}</a>
             <a ui-sref="spark.detail.runs.run({runid: run.runid})" ng-if="type === 'SPARK'">{{run.runid}}</a>
             <a ui-sref="worker.detail.runs.run({runid: run.runid})" ng-if="type === 'WORKER'">{{run.runid}}</a>
-            <span ng-if="type === 'SERVICES' || type === 'ADAPTERS'">{{run.runid}}</span>
+            <a ui-sref="services.detail.runs.run({runid: run.runid})" ng-if="type === 'SERVICES'">{{run.runid}}</a>
+
+            <span ng-if="type === 'ADAPTERS'">{{run.runid}}</span>
           </td>
           <td> {{ (run.start * 1000) | date: 'medium'}}</td>
           <td>
@@ -41,9 +43,7 @@
   </div>
 </div>
 
-
-<div ng-if="runs.length === 0">
-  <div class="well well-lg text-center">
-    <div> No History so far.</div>
-  </div>
+<div ng-if="runs.length === 0"
+     class="well well-lg text-center">
+  <h3> No history so far.</h3>
 </div>

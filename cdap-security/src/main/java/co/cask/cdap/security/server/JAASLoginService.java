@@ -145,7 +145,7 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
 
   /* ------------------------------------------------------------ */
   public void setRoleClassNames (String[] classnames) {
-    ArrayList<String> tmp = new ArrayList<String>();
+    ArrayList<String> tmp = new ArrayList<>();
 
     if (classnames != null) {
       tmp.addAll(Arrays.asList(classnames));
@@ -272,7 +272,7 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
   private String[] getGroups (Subject subject) {
     //get all the roles of the various types
     String[] roleClassNames = getRoleClassNames();
-    Collection<String> groups = new LinkedHashSet<String>();
+    Collection<String> groups = new LinkedHashSet<>();
     try {
       for (String roleClassName : roleClassNames) {
         Class loadClass = Thread.currentThread().getContextClassLoader().loadClass(roleClassName);

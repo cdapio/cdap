@@ -1,17 +1,21 @@
 angular.module(PKG.name + '.feature.services')
-  .controller('ServicesRunDetailLogController', function($scope, MyDataSource, $state) {
-
-    var dataSrc = new MyDataSource($scope),
-        basePath = '/apps/' + $state.params.appId +
-                   '/services/' + $state.params.programId +
-                   '/runs/' + $scope.runs.selected.runid;
+  .controller('ServicesRunDetailLogController', function($scope, $state, myServiceApi) {
 
     $scope.logs = [];
 
-    dataSrc.poll({
-      _cdapNsPath: basePath + '/logs/next?max=50'
-    }, function(res) {
-      $scope.logs = res;
-    });
+    var params = {
+      namespace: $state.params.namespace,
+      appId: $state.params.appId,
+      serviceId: $state.params.programId,
+      runId: $scope.runs.selected.runid,
+      max: 50,
+      scope: $scope
+    };
+
+    myServiceApi.logs(params)
+      .$promise
+      .then(function (res) {
+        $scope.logs = res;
+      });
 
   });

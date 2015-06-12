@@ -124,7 +124,7 @@ public class ReflectionStructObjectInspector extends
 
     this.objectClass = objectClass;
     Field[] reflectionFields = ObjectInspectorUtils.getDeclaredNonStaticFields(objectClass);
-    fields = new ArrayList<MyField>(structFieldObjectInspectors.size());
+    fields = new ArrayList<>(structFieldObjectInspectors.size());
     int used = 0;
     for (int i = 0; i < reflectionFields.length; i++) {
       // Exclude transient fields and synthetic fields. The latter has the effect of excluding the implicit
@@ -180,7 +180,7 @@ public class ReflectionStructObjectInspector extends
       return null;
     }
     try {
-      ArrayList<Object> result = new ArrayList<Object>(fields.size());
+      ArrayList<Object> result = new ArrayList<>(fields.size());
       for (int i = 0; i < fields.size(); i++) {
         result.add(fields.get(i).field.get(data));
       }

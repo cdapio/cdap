@@ -27,17 +27,14 @@ import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.TimeMathParser;
-import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.proto.MetricQueryRequest;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.cdap.proto.MetricTagValue;
+import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
-import com.google.common.base.Splitter;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -56,7 +53,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -69,7 +65,7 @@ import javax.ws.rs.QueryParam;
  * Search metrics handler.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/metrics")
-public class MetricsHandler extends AuthenticatedHttpHandler {
+public class MetricsHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsHandler.class);
   private static final Gson GSON = new Gson();
 
@@ -86,8 +82,6 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   private static final String PARAM_AUTO_RESOLUTION = "auto";
 
   public static final String ANY_TAG_VALUE = "*";
-  public static final String TAG_DELIM = ".";
-  public static final String DOT_ESCAPE_CHAR = "~";
 
   private final MetricStore metricStore;
 
@@ -135,41 +129,30 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
   }
 
   @Inject
-  public MetricsHandler(Authenticator authenticator,
-                        final MetricStore metricStore) {
-    super(authenticator);
-
+  public MetricsHandler(MetricStore metricStore) {
     this.metricStore = metricStore;
   }
 
-  // todo supporting 2.8 format - context param should be removed after deprecation (CDAP-1998)
   @POST
   @Path("/search")
   public void search(HttpRequest request, HttpResponder responder,
                      @QueryParam("target") String target,
-                     @QueryParam("context") String context,
                      @QueryParam("tag") List<String> tags) throws IOException {
     if (target == null) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Required target param is missing");
       return;
     }
 
-    if (target.equals("tag")) {
-      tagBasedSearchAndRespond(responder, tags);
-    } else if (target.equals("childContext")) {
-      // todo supporting 2.8 format - should be removed after deprecation (CDAP-1998)
-      searchChildContextAndRespond(responder, context);
-    } else if (target.equals("metric")) {
-      if (tags.size() > 0) {
+    switch (target) {
+      case "tag":
+        searchTagAndRespond(responder, tags);
+        break;
+      case "metric":
         searchMetricAndRespond(responder, tags);
-      } else {
-        // todo supporting 2.8 format - should be removed after deprecation (CDAP-1998)
-        // if there are no tags, we use the context call, however
-        // since the returned format is same between for metrics, we wouldn't notice a difference in result.
-        searchMetricAndRespond(responder, context);
-      }
-    } else {
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Unknown target param value: " + target);
+        break;
+      default:
+        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Unknown target param value: " + target);
+        break;
     }
   }
 
@@ -198,11 +181,9 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     return result;
   }
 
-  // todo supporting 2.8 format - context param should be removed after deprecation (CDAP-1998)
   @POST
   @Path("/query")
   public void query(HttpRequest request, HttpResponder responder,
-                    @QueryParam("context") String context,
                     @QueryParam("metric") List<String> metrics,
                     @QueryParam("groupBy") List<String> groupBy,
                     @QueryParam("tag") List<String> tags) throws Exception {
@@ -212,12 +193,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       return;
     }
 
-    if (tags.size() > 0 || (groupBy.size() > 1) || metrics.size() > 1) {
-      tagsQuerying(request, responder, tags, metrics, groupBy);
-    } else {
-      // context querying support for 2.8 compatibility.
-      contextQuerying(request, responder, context, metrics, groupBy.size() > 0 ? groupBy.get(0) : null);
-    }
+    tagsQuerying(request, responder, tags, metrics, groupBy);
   }
 
   private void executeBatchQueries(HttpRequest request, HttpResponder responder) {
@@ -273,42 +249,20 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private void contextQuerying(HttpRequest request, HttpResponder responder,
-                               String context, List<String> metrics, String groupBy) {
-    try {
-      List<String> groupByTags = parseGroupBy(groupBy);
-      MetricQueryResult queryResult = executeQuery(request, parseTagValuesAsMap(context),
-                                                   groupByTags, metrics);
-      responder.sendJson(HttpResponseStatus.OK, queryResult);
-    } catch (IllegalArgumentException e) {
-      LOG.warn("Invalid request", e);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Exception e) {
-      LOG.error("Exception querying metrics ", e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
-    }
-  }
-
   private MetricQueryResult executeQuery(HttpRequest request, Map<String, String> sliceByTags,
-                                         List<String> groupByTags, List<String> metrics) {
-    try {
-      MetricQueryRequest queryRequest = new MetricQueryRequest(sliceByTags, metrics, groupByTags);
-      setTimeRangeInQueryRequest(queryRequest, new QueryStringDecoder(request.getUri()).getParameters());
-      return executeQuery(queryRequest);
-    } catch (IllegalArgumentException e) {
-      throw Throwables.propagate(e);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+                                         List<String> groupByTags, List<String> metrics) throws Exception {
+    MetricQueryRequest queryRequest = new MetricQueryRequest(sliceByTags, metrics, groupByTags);
+    setTimeRangeInQueryRequest(queryRequest, new QueryStringDecoder(request.getUri()).getParameters());
+    return executeQuery(queryRequest);
   }
 
   private void setTimeRangeInQueryRequest(MetricQueryRequest request, Map<String, List<String>> queryTimeParams) {
     Long start =
       queryTimeParams.containsKey(PARAM_START_TIME) ?
-        TimeMathParser.parseTime(queryTimeParams.get(PARAM_START_TIME).get(0)) : null;
+        TimeMathParser.parseTimeInSeconds(queryTimeParams.get(PARAM_START_TIME).get(0)) : null;
     Long end =
       queryTimeParams.containsKey(PARAM_END_TIME) ?
-        TimeMathParser.parseTime(queryTimeParams.get(PARAM_END_TIME).get(0)) : null;
+        TimeMathParser.parseTimeInSeconds(queryTimeParams.get(PARAM_END_TIME).get(0)) : null;
     Integer count = null;
 
     boolean aggregate =
@@ -376,35 +330,29 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private MetricQueryResult executeQuery(MetricQueryRequest queryRequest) {
-    try {
-      if (queryRequest.getMetrics().size() == 0) {
-        throw new IllegalArgumentException("Missing metrics parameter in the query");
-      }
-
-      Map<String, String> tagsSliceBy = humanToTagNames(transformTagMap(queryRequest.getTags()));
-
-      MetricQueryRequest.TimeRange timeRange = queryRequest.getTimeRange();
-
-      MetricDataQuery query = new MetricDataQuery(timeRange.getStart(), timeRange.getEnd(),
-                                                  timeRange.getResolutionInSeconds(),
-                                                  timeRange.getCount(), toMetrics(queryRequest.getMetrics()),
-                                                  tagsSliceBy, transformGroupByTags(queryRequest.getGroupBy()),
-                                                  timeRange.getInterpolate());
-      Collection<MetricTimeSeries> queryResult = metricStore.query(query);
-
-      long endTime = timeRange.getEnd();
-      if (timeRange.getResolutionInSeconds() == Integer.MAX_VALUE && endTime == 0) {
-        // for aggregate query, we set the end time to be query time (current time)
-        endTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-      }
-
-      return decorate(queryResult, timeRange.getStart(), endTime);
-    } catch (IllegalArgumentException e) {
-      throw Throwables.propagate(e);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
+  private MetricQueryResult executeQuery(MetricQueryRequest queryRequest) throws Exception {
+    if (queryRequest.getMetrics().size() == 0) {
+      throw new IllegalArgumentException("Missing metrics parameter in the query");
     }
+
+    Map<String, String> tagsSliceBy = humanToTagNames(transformTagMap(queryRequest.getTags()));
+
+    MetricQueryRequest.TimeRange timeRange = queryRequest.getTimeRange();
+
+    MetricDataQuery query = new MetricDataQuery(timeRange.getStart(), timeRange.getEnd(),
+                                                timeRange.getResolutionInSeconds(),
+                                                timeRange.getCount(), toMetrics(queryRequest.getMetrics()),
+                                                tagsSliceBy, transformGroupByTags(queryRequest.getGroupBy()),
+                                                timeRange.getInterpolate());
+    Collection<MetricTimeSeries> queryResult = metricStore.query(query);
+
+    long endTime = timeRange.getEnd();
+    if (timeRange.getResolutionInSeconds() == Integer.MAX_VALUE && endTime == 0) {
+      // for aggregate query, we set the end time to be query time (current time)
+      endTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    }
+
+    return decorate(queryResult, timeRange.getStart(), endTime);
   }
 
   private Map<String, AggregationFunction> toMetrics(List<String> metrics) {
@@ -440,46 +388,6 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     });
   }
 
-  private List<String> parseGroupBy(String groupBy) {
-    // groupBy tags are comma separated
-    return (groupBy == null) ? Lists.<String>newArrayList() :
-      humanToTagNamesGroupBy(Lists.newArrayList(Splitter.on(",").split(groupBy).iterator()));
-  }
-
-  private List<String> humanToTagNamesGroupBy(List<String> groupByTags) {
-    return Lists.transform(groupByTags, new Function<String, String>() {
-      @Nullable
-      @Override
-      public String apply(@Nullable String input) {
-        return humanToTagName(input);
-      }
-    });
-  }
-
-  private Map<String, String> parseTagValuesAsMap(@Nullable String context) {
-    if (context == null) {
-      return new HashMap<String, String>();
-    }
-    String[] tagValues = context.split("\\.");
-
-    // order matters
-    Map<String, String> result = Maps.newLinkedHashMap();
-    for (int i = 0; i < tagValues.length; i += 2) {
-      String name = tagValues[i];
-      // if odd number, the value for last tag is assumed to be null
-      String val = i + 1 < tagValues.length ? tagValues[i + 1] : null;
-      if (ANY_TAG_VALUE.equals(val)) {
-        val = null;
-      }
-      if (val != null) {
-        val = decodeTag(val);
-      }
-      result.put(decodeTag(name), val);
-    }
-
-    return result;
-  }
-
   private Map<String, String> parseTagValuesAsMap(List<String> tags) {
     List<MetricTagValue> tagValues = parseTagValues(tags);
 
@@ -490,29 +398,7 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     return result;
   }
 
-  private String decodeTag(String val) {
-    // we use "." as separator between tags, so if tag name or value has dot in it, we encode it with "~"
-    return val.replaceAll(DOT_ESCAPE_CHAR, ".");
-  }
-
-  private String encodeTag(String val) {
-    // we use "." as separator between tags, so if tag name or value has dot in it, we encode it with "~"
-    return val.replaceAll("\\.", DOT_ESCAPE_CHAR);
-  }
-
-  private void searchMetricAndRespond(HttpResponder responder, String context) {
-    try {
-      responder.sendJson(HttpResponseStatus.OK, searchMetric(context));
-    } catch (IllegalArgumentException e) {
-      LOG.warn("Invalid request", e);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Exception e) {
-      LOG.warn("Exception while retrieving available metrics", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  private void tagBasedSearchAndRespond(HttpResponder responder, List<String> tags) {
+  private void searchTagAndRespond(HttpResponder responder, List<String> tags) {
     try {
       // we want to search the entire range, so startTimestamp is '0' and end Timestamp is Integer.MAX_VALUE and
       // limit is -1 , to include the entire search result.
@@ -529,51 +415,6 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
     }
   }
 
-  private void searchChildContextAndRespond(HttpResponder responder, String context) {
-    try {
-      responder.sendJson(HttpResponseStatus.OK, searchChildContext(context));
-    } catch (IllegalArgumentException e) {
-      LOG.warn("Invalid request", e);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Exception e) {
-      LOG.warn("Exception while retrieving contexts", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  private List<MetricTagValue> parseTagValues(String contextPrefix) throws Exception {
-    Map<String, String> map = parseTagValuesAsMap(contextPrefix);
-    List<MetricTagValue> contextTags = Lists.newArrayList();
-    for (Map.Entry<String, String> entry : map.entrySet()) {
-      contextTags.add(new MetricTagValue(entry.getKey(), entry.getValue()));
-    }
-
-    return contextTags;
-  }
-
-  private Collection<String> searchChildContext(String contextPrefix) throws Exception {
-    List<MetricTagValue> tagValues = parseTagValues(contextPrefix);
-
-    // we want to search the entire range, so startTimestamp is '0' and endTimestamp is Integer.MAX_VALUE and
-    // limit is -1 , to include the entire search result.
-    MetricSearchQuery searchQuery = new MetricSearchQuery(0, Integer.MAX_VALUE, -1,
-                                                          toTagValues(humanToTagNames(tagValues)));
-    Collection<TagValue> nextTags = metricStore.findNextAvailableTags(searchQuery);
-
-    contextPrefix = toCanonicalContext(tagValues);
-    Collection<String> result = Lists.newArrayList();
-    for (TagValue tag : nextTags) {
-      // for now, if tag value is null, we use ANY_TAG_VALUE as returned for convenience: this allows to easy build UI
-      // and do simple copy-pasting when accessing HTTP endpoint via e.g. curl
-      String value = tag.getValue() == null ? ANY_TAG_VALUE : tag.getValue();
-      String name = tagNameToHuman(tag.getName());
-      String tagValue = encodeTag(name) + TAG_DELIM + encodeTag(value);
-      String resultTag = contextPrefix.length() == 0 ? tagValue : contextPrefix + TAG_DELIM + tagValue;
-      result.add(resultTag);
-    }
-    return result;
-  }
-
   private List<MetricTagValue> tagValuesToHuman(Collection<TagValue> tagValues) {
     List<MetricTagValue> result = Lists.newArrayList();
     for (TagValue tagValue : tagValues) {
@@ -583,11 +424,6 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       result.add(new MetricTagValue(human, value));
     }
     return result;
-  }
-
-  private String tagNameToHuman(String tagName) {
-    String human = tagNameToHuman.get(tagName);
-    return human != null ? human : tagName;
   }
 
   private List<TagValue> toTagValues(List<MetricTagValue> tagValues) {
@@ -624,25 +460,6 @@ public class MetricsHandler extends AuthenticatedHttpHandler {
       result.put(humanToTagName(tagValue.getKey()), tagValue.getValue());
     }
     return result;
-  }
-
-  private String toCanonicalContext(List<MetricTagValue> tagValues) {
-    StringBuilder sb = new StringBuilder();
-    boolean first = true;
-    for (MetricTagValue tv : tagValues) {
-      if (!first) {
-        sb.append(TAG_DELIM);
-      }
-      first = false;
-      sb.append(encodeTag(tv.getName())).append(TAG_DELIM)
-        .append(tv.getValue() == null ? ANY_TAG_VALUE : encodeTag(tv.getValue()));
-    }
-    return sb.toString();
-  }
-
-  private Collection<String> searchMetric(String contextPrefix) throws Exception {
-    List<MetricTagValue> tagValues = humanToTagNames(parseTagValues(contextPrefix));
-    return getMetrics(tagValues);
   }
 
   private Collection<String> getMetrics(List<MetricTagValue> tagValues) throws Exception {

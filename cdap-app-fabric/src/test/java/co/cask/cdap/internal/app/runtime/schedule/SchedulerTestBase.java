@@ -81,8 +81,6 @@ public abstract class SchedulerTestBase {
   public static void init() throws Exception {
     injector = AppFabricTestHelper.getInjector(CCONF);
     PreferencesStore preferencesStore = injector.getInstance(PreferencesStore.class);
-    Map<String, String> properties = ImmutableMap.of(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED, "true");
-    preferencesStore.setProperties(Constants.DEFAULT_NAMESPACE_ID.getId(), APP_ID.getId(), properties);
     streamSizeScheduler = injector.getInstance(StreamSizeScheduler.class);
     store = injector.getInstance(Store.class);
     metricStore = injector.getInstance(MetricStore.class);

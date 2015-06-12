@@ -32,7 +32,7 @@ big data application development topics, leaving you ready to implement real-wor
 .. _netlens: https://github.com/caskdata/cdap-apps/tree/develop/Netlens
 
 - |netlens|_ Learn how to build a CDAP application to analyze network packets to provide traffic stats 
-  and detect anomalies in the traffic patterns in real-time.
+  and detect anomalies in the traffic patterns in real time.
 
 
 .. |twittersentiment| replace:: **TwitterSentiment: Social Analytics:**

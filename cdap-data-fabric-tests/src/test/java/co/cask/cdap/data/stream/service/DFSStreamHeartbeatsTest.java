@@ -41,7 +41,6 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
@@ -112,7 +111,6 @@ public class DFSStreamHeartbeatsTest {
         new ZKClientModule(),
         new DataFabricModules().getInMemoryModules(),
         new ConfigModule(cConf, new Configuration()),
-        new AuthModule(),
         new DiscoveryRuntimeModule().getInMemoryModules(),
         new LocationRuntimeModule().getInMemoryModules(),
         new ExploreClientModule(),

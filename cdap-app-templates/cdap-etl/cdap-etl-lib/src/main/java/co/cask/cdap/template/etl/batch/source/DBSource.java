@@ -81,20 +81,21 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
 
   @Override
   public void prepareRun(BatchSourceContext context) {
-    LOG.debug("tableName = {}; driverClass = {}; connectionString = {}; importQuery = {}; countQuery = {}",
-              dbSourceConfig.tableName, dbSourceConfig.driverClass, dbSourceConfig.connectionString,
-              dbSourceConfig.importQuery, dbSourceConfig.countQuery);
+    LOG.debug("tableName = {}; pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; " +
+                "countQuery = {}",
+              dbSourceConfig.tableName, dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName,
+              dbSourceConfig.connectionString, dbSourceConfig.importQuery, dbSourceConfig.countQuery);
 
     Job job = context.getHadoopJob();
     Configuration conf = job.getConfiguration();
     String jdbcPluginId = String.format("%s.%s.%s", "source", dbSourceConfig.jdbcPluginType,
                                         dbSourceConfig.jdbcPluginName);
     // Load the plugin class to make sure it is available.
-    context.loadPluginClass(jdbcPluginId);
+    Class<?> driverClass = context.loadPluginClass(jdbcPluginId);
     if (dbSourceConfig.user == null && dbSourceConfig.password == null) {
-      DBConfiguration.configureDB(conf, dbSourceConfig.driverClass, dbSourceConfig.connectionString);
+      DBConfiguration.configureDB(conf, driverClass.getName(), dbSourceConfig.connectionString);
     } else {
-      DBConfiguration.configureDB(conf, dbSourceConfig.driverClass, dbSourceConfig.connectionString,
+      DBConfiguration.configureDB(conf, driverClass.getName(), dbSourceConfig.connectionString,
                                   dbSourceConfig.user, dbSourceConfig.password);
     }
     ETLDBInputFormat.setInput(job, DBRecord.class, dbSourceConfig.importQuery, dbSourceConfig.countQuery);

@@ -55,10 +55,14 @@ Standalone and Distributed CDAP
 - Build the limited set of Javadocs used in distribution ZIP::
 
     mvn clean package javadoc:javadoc -pl cdap-api -am -DskipTests -P release
+    
+- Build the limited set of Javadocs, including the App Templates, used in documentation::
 
-- Build the complete set of Javadocs, for all modules::
+    MAVEN_OPTS="-Xmx1024m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && mvn clean site -DskipTests -P templates -DisOffline=false
 
-    MAVEN_OPTS="-Xmx512m" mvn clean site -Dmaxmemory=1024m -DskipTests
+- Build the complete set of Javadocs, for all modules (currently incomplete)::
+
+    MAVEN_OPTS="-Xmx1024m" mvn clean site -Dmaxmemory=1024m -DskipTests
     
 - Build distributions (rpm, deb, tgz)::
 

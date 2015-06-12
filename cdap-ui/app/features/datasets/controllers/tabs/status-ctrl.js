@@ -1,10 +1,14 @@
 angular.module(PKG.name + '.feature.datasets')
-  .controller('CdapDatasetDetailStatusController',
-    function($scope, MyDataSource, $state, myHelpers, MyMetricsQueryHelper, myExploreApi) {
-      $scope.writes = 0;
-      $scope.reads = 0;
-      $scope.storage = 0;
-      $scope.transactions = 0;
+  .controller('DatasetDetailStatusController',
+    function($scope, MyDataSource, $state, myHelpers, MyMetricsQueryHelper, myExploreApi, explorableDatasets) {
+      this.writes = 0;
+      this.reads = 0;
+      this.storage = 0;
+      this.transactions = 0;
+      this.explorable = explorableDatasets;
+      if (!explorableDatasets) {
+        return;
+      }
       var query = myHelpers.objectQuery;
       var dataSrc = new MyDataSource($scope),
           currentDataset = $state.params.datasetId,
@@ -37,8 +41,8 @@ angular.module(PKG.name + '.feature.datasets')
           method: 'POST'
         }, function(metricData) {
           var data = query(metricData, 'series', 0, 'data', 0, 'value');
-          $scope[metric.scopeProperty] = data;
-        });
+          this[metric.scopeProperty] = data;
+        }.bind(this));
       }
 
       dataSrc.poll({
@@ -48,19 +52,22 @@ angular.module(PKG.name + '.feature.datasets')
         method: 'POST'
       }, function(metricData) {
         var data = query(metricData, 'series', 0, 'data', 0, 'value');
-        $scope.storage = data;
-      });
+        this.storage = data;
+      }.bind(this));
+
+      var datasetId = $state.params.datasetId;
+      datasetId = datasetId.replace(/[\.\-]/g, '_');
 
       var params = {
         namespace: $state.params.namespace,
-        table: 'dataset_' + currentDataset,
+        table: 'dataset_' + datasetId,
         scope: $scope
       };
 
       myExploreApi.getInfo(params)
         .$promise
         .then(function (res) {
-          $scope.schema = query(res, 'schema');
-        });
+          this.schema = query(res, 'schema');
+        }.bind(this));
 
   });

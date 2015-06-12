@@ -37,6 +37,7 @@ public class DefaultCommands extends CommandSet<Command> {
         .build(),
       ImmutableList.<CommandSet<Command>>builder()
         .add(injector.getInstance(GeneralCommands.class))
+        .add(injector.getInstance(MetricsCommands.class))
         .add(injector.getInstance(ApplicationCommands.class))
         .add(injector.getInstance(ApplicationTemplateCommands.class))
         .add(injector.getInstance(StreamCommands.class))

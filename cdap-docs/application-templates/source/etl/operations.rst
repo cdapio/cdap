@@ -4,13 +4,13 @@
 
 .. _apptemplates-etl-operations:
 
-===================================
+============================
 Adapter Lifecycle Management 
-===================================
+============================
 
 Introduction
 ------------
-These lifecycle operations can be performed with ETL Adapters once they are created.
+These lifecycle operations can be performed with ETL adapters once they are created.
 
 
 .. include:: ../../../reference-manual/source/http-restful-api/apptemplates.rst 

@@ -41,8 +41,8 @@
           </thead>
           <tbody>
               <td>
-                <a ui-sref="apps.detail.overview({namespace: $state.params.nsadmin, appId: apps.name})">
-                  {{ ::apps.name }}
+                <a ui-sref="apps.detail.overview.status({namespace: $state.params.nsadmin, appId: apps.name})">
+                  <strong>{{ ::apps.name }}</strong>
                 </a>
               </td>
               <td>{{ ::apps.version}}</td>
@@ -67,12 +67,15 @@
         <tbody>
           <tr ng-repeat="program in apps.programs | orderBy:sortable.predicate:sortable.reverse">
             <td>
-              <a ui-sref="spark.detail.runs({namespace: $state.params.nsadmin, appId: apps.name, programId: program.name})" ng-if="program.type === 'Spark'">{{ ::program.name }}</a>
-              <a ui-sref="flows.detail.runs({namespace: $state.params.nsadmin, appId: apps.name, programId: program.name})" ng-if="program.type === 'Flow'">{{ ::program.name }}</a>
-              <a ui-sref="mapreduce.detail.runs({namespace: $state.params.nsadmin, appId: apps.name, programId: program.name})" ng-if="program.type === 'Mapreduce'">{{ ::program.name }}</a>
-              <a ui-sref="services.detail.runs({namespace: $state.params.nsadmin, appId: apps.name, programId: program.name})" ng-if="program.type === 'Service'">{{ ::program.name }}</a>
-              <a ui-sref="workflows.detail.runs({namespace: $state.params.nsadmin, appId: apps.name, programId: program.name})" ng-if="program.type === 'Workflow'">{{ ::program.name }}</a>
-              <a ui-sref="worker.detail.runs({namespace: $state.params.nsadmin, appId: apps.name, programId: program.name})" ng-if="program.type === 'Worker'">{{ ::program.name }}</a>
+
+              <my-program-link
+                type="program.type"
+                namespace="$state.params.nsadmin"
+                app="apps.name"
+                program="program.name"
+                bold="true">
+              </my-program-link>
+
             </td>
             <td>{{ ::program.type }}</td>
             <td>{{ ::program.description }}</td>

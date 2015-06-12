@@ -45,7 +45,6 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -282,7 +281,6 @@ public class MasterServiceMain extends DaemonMain {
       new LocationRuntimeModule().getDistributedModules(),
       new LoggingModules().getDistributedModules(),
       new IOModule(),
-      new AuthModule(),
       new KafkaClientModule(),
       new TwillModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),

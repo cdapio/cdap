@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('StreamPropertiesController', function($scope, $stateParams, myHelpers, $alert, myStreamApi) {
+  .controller('StreamPropertiesController', function($scope, $stateParams, myHelpers, $alert, myStreamApi, $state, EventPipe) {
 
     $scope.avro = {};
 
@@ -167,6 +167,34 @@ angular.module(PKG.name + '.feature.admin')
     $scope.removeSetting = function(setting) {
       var index = $scope.settings.indexOf(setting);
       $scope.settings.splice(index, 1);
+    };
+
+    $scope.deleteStream = function() {
+      EventPipe.emit('showLoadingIcon');
+      myStreamApi.delete(requestParams, {}, function success() {
+        EventPipe.emit('hideLoadingIcon.immediate');
+
+        $state.go('admin.namespace.detail.data', {}, {reload: true});
+        $alert({
+          type: 'success',
+          content: 'Successfully deleted stream'
+        });
+      }, function error() {
+        EventPipe.emit('hideLoadingIcon.immediate');
+      });
+
+    };
+
+    $scope.enter = function (event, last, source) {
+      if (last && event.keyCode === 13) {
+        if (source === 'settings') {
+          $scope.addSetting();
+        } else if (source === 'preference') {
+          $scope.addProperties();
+        }
+      } else {
+        return;
+      }
     };
 
   });

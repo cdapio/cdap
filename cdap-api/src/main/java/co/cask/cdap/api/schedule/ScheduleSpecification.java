@@ -34,7 +34,7 @@ public final class ScheduleSpecification {
     this.schedule = schedule;
     this.program = program;
     this.properties = properties == null ? new HashMap<String, String>() :
-      Collections.unmodifiableMap(new HashMap<String, String>(properties));
+      Collections.unmodifiableMap(new HashMap<>(properties));
   }
 
   /**

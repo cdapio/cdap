@@ -9,23 +9,49 @@ angular.module(PKG.name + '.feature.data')
       scope: $scope
     };
 
-    myStreamApi.list(params)
+    myDatasetApi.list(params)
       .$promise
       .then(function (res) {
         this.dataList = res
           .map(function(dataset) {
-            dataset.dataType = 'Stream';
+            dataset.dataType = 'Dataset';
+
+            var datasetParams = {
+              namespace: $state.params.namespace,
+              datasetId: dataset.name,
+              scope: $scope
+            };
+
+            myDatasetApi.programsList(datasetParams)
+              .$promise
+              .then(function (programs) {
+                dataset.programs = programs;
+              });
+
             return dataset;
           }.bind(this))
           .concat(this.dataList);
       }.bind(this));
 
-    myDatasetApi.list(params)
+    myStreamApi.list(params)
       .$promise
       .then(function(res) {
         this.dataList = res
           .map(function(stream) {
-            stream.dataType = 'Dataset';
+            stream.dataType = 'Stream';
+
+            var streamParams = {
+              namespace: $state.params.namespace,
+              streamId: stream.name,
+              scope: $scope
+            };
+
+            myStreamApi.programsList(streamParams)
+              .$promise
+              .then(function (programs) {
+                stream.programs = programs;
+              });
+
             return stream;
           }.bind(this))
           .concat(this.dataList);
@@ -33,23 +59,15 @@ angular.module(PKG.name + '.feature.data')
 
     this.goToDetail = function(data) {
       if (data.dataType === 'Dataset') {
-        $state.go('datasets.detail.overview', {
+        $state.go('datasets.detail.overview.status', {
           datasetId: data.name
         });
       } else if (data.dataType === 'Stream') {
-        $state.go('streams.detail.overview', {
+        $state.go('streams.detail.overview.status', {
           streamId: data.name
         });
       }
       MyOrderings.dataClicked(data.name);
-    };
-
-    this.goToList = function(data) {
-      if (data.dataType === 'Dataset') {
-        $state.go('datasets.list');
-      } else if (data.dataType === 'Stream') {
-        $state.go('streams.list');
-      }
     };
 
   });

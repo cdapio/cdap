@@ -45,7 +45,6 @@ import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -348,7 +347,6 @@ public class BaseHiveExploreServiceTest {
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
-      new AuthModule(),
       new ExploreRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
       new StreamServiceRuntimeModule().getInMemoryModules(),
@@ -405,7 +403,6 @@ public class BaseHiveExploreServiceTest {
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getStandaloneModules(),
       new MetricsClientRuntimeModule().getStandaloneModules(),
-      new AuthModule(),
       new ExploreRuntimeModule().getStandaloneModules(),
       new ExploreClientModule(),
       new StreamServiceRuntimeModule().getStandaloneModules(),

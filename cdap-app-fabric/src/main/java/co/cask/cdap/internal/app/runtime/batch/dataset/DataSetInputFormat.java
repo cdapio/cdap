@@ -53,7 +53,7 @@ public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE
   public List<InputSplit> getSplits(final JobContext context) throws IOException, InterruptedException {
     MapReduceContextConfig mrContextConfig = new MapReduceContextConfig(context.getConfiguration());
     List<Split> splits = mrContextConfig.getInputSelection();
-    List<InputSplit> list = new ArrayList<InputSplit>();
+    List<InputSplit> list = new ArrayList<>();
     for (Split split : splits) {
       list.add(new DataSetInputSplit(split));
     }
@@ -79,7 +79,7 @@ public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE
     SplitReader<KEY, VALUE> splitReader = inputDataset.createSplitReader(inputSplit.getSplit());
 
     // the record reader now owns the context and will close it
-    return new DataSetRecordReader<KEY, VALUE>(splitReader, mrContext, dataSetName);
+    return new DataSetRecordReader<>(splitReader, mrContext, dataSetName);
   }
 
   private String getInputName(Configuration conf) {

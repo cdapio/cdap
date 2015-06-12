@@ -93,7 +93,7 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
         .set("time", streamEvent.getTimestamp())
         .set("body", Bytes.toString(streamEvent.getBody()));
       GenericRecord record = recordBuilder.build();
-      context.write(new AvroKey<GenericRecord>(record), NullWritable.get());
+      context.write(new AvroKey<>(record), NullWritable.get());
     }
   }
 }

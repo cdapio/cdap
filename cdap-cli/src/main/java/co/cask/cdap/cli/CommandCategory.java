@@ -26,6 +26,7 @@ public enum CommandCategory {
   ADAPTER_LIFECYCLE("Adapter Lifecycle"),
   DATASET("Dataset"),
   EXPLORE("Explore"),
+  METRICS("Metrics"),
   INGEST("Ingest"),
   EGRESS("Egress");
 
