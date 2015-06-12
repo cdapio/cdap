@@ -3,13 +3,13 @@ angular.module(PKG.name + '.feature.flows')
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
 
-    $scope.data = {};
+    this.data = {};
 
     FlowDiagramData.fetchData($state.params.appId, $state.params.programId)
       .then(function(data) {
-        $scope.data = data;
-        pollMetrics();
-      });
+        this.data = data;
+        pollMetrics.bind(this)();
+      }.bind(this));
 
     function generateStreamMetricsPath(streamName) {
       var streamTags = {
@@ -24,26 +24,26 @@ angular.module(PKG.name + '.feature.flows')
         namespace: $state.params.namespace,
         app: $state.params.appId,
         flow: $state.params.programId,
-        run: $scope.runs.selected.runid,
+        run: $scope.RunsController.runs.selected.runid,
         flowlet: flowletName
       };
       return '/metrics/query?metric=system.process.events.processed&aggregate=true&' + MyMetricsQueryHelper.tagsToParams(flowletTags);
     }
 
     function pollMetrics() {
-      var nodes = $scope.data.nodes;
-      $scope.data.instances = {};
+      var nodes = this.data.nodes;
+      this.data.instances = {};
       // Requesting Metrics data
       angular.forEach(nodes, function (node) {
-        if (node.type !== 'STREAM' && !$scope.runs.length) {
+        if (node.type !== 'STREAM' && !$scope.RunsController.runs.length) {
           return;
         }
         dataSrc.poll({
           _cdapPath: (node.type === 'STREAM' ? generateStreamMetricsPath(node.name): generateFlowletMetricsPath(node.name)),
           method: 'POST'
         }, function (data) {
-            $scope.data.metrics[node.name] = myHelpers.objectQuery(data, 'series' , 0, 'data', 0, 'value') || 0;
-          });
+          this.data.metrics[node.name] = myHelpers.objectQuery(data, 'series' , 0, 'data', 0, 'value') || 0;
+        }.bind(this));
 
         // Polling for Flowlet Instance
         if (node.type !== 'STREAM') {
@@ -57,14 +57,14 @@ angular.module(PKG.name + '.feature.flows')
           myFlowsApi.pollFlowletInstance(params)
             .$promise
             .then(function (res) {
-              $scope.data.instances[node.name] = res.instances;
-            });
+              this.data.instances[node.name] = res.instances;
+            }.bind(this));
         }
 
-      });
+      }.bind(this));
     }
 
-    $scope.flowletClick = function(node) {
-      $scope.selectTab($scope.tabs[1], node);
+    this.flowletClick = function(node) {
+      $scope.RunsController.selectTab($scope.RunsController.tabs[1], node);
     };
   });
