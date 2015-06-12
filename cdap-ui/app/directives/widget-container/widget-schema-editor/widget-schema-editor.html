@@ -15,10 +15,10 @@
         <strong>Nullable</strong>
       </div>
     </div>
-    <div class="row" ng-repeat="property in properties">
+    <div class="row" ng-repeat="property in properties" ng-keypress="enter($event, $last)">
 
       <div class="col-xs-5">
-        <input type="text" class="form-control" ng-model="property.name" placeholder="name"/>
+        <input type="text" class="form-control" ng-model="property.name" placeholder="name" my-focus-watch="$last" />
       </div>
 
       <div class="col-xs-5">
