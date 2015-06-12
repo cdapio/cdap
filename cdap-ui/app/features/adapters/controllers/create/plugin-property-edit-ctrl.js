@@ -53,7 +53,7 @@ angular.module(PKG.name + '.feature.adapters')
           function error() {
             // Didn't receive a configuration from the backend. Fallback to all textboxes.
             this.noconfig = true;
-          }
+          }.bind(this)
         );
     }
 
