@@ -42,14 +42,19 @@ import org.slf4j.LoggerFactory;
 @Name("S3")
 @Description("Batch source for S3")
 public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRecord> {
-  private static final Logger LOG = LoggerFactory.getLogger(S3BatchSource.class);
 
+  private static final Logger LOG = LoggerFactory.getLogger(S3BatchSource.class);
   private S3BatchConfig config;
   private static final Schema DEFAULT_SCHEMA = Schema.recordOf(
     "event",
    Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
    Schema.Field.of("body", Schema.of(Schema.Type.BYTES))
   );
+
+
+  public S3BatchSource (S3BatchConfig config) {
+    this.config = config;
+  }
 
   @Override
   public void prepareRun(BatchSourceContext context) throws Exception {
@@ -71,6 +76,9 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
 
   }
 
+  /**
+   * insert javadoc here
+   */
   public static class S3BatchConfig extends PluginConfig {
 
     private String name;
@@ -80,6 +88,13 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
     private String accessKey;
 
     private String path;
+
+    public S3BatchConfig(String name, String accessID, String accessKey, String path) {
+      this.name = name;
+      this.accessID = accessID;
+      this.accessKey = accessKey;
+      this.path = path;
+    }
 
   }
 }

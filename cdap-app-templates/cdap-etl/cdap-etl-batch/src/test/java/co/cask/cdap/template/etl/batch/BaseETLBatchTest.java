@@ -27,6 +27,7 @@ import co.cask.cdap.template.etl.batch.sink.TableSink;
 import co.cask.cdap.template.etl.batch.sink.TimePartitionedFileSetDatasetAvroSink;
 import co.cask.cdap.template.etl.batch.source.DBSource;
 import co.cask.cdap.template.etl.batch.source.KVTableSource;
+import co.cask.cdap.template.etl.batch.source.S3BatchSource;
 import co.cask.cdap.template.etl.batch.source.StreamBatchSource;
 import co.cask.cdap.template.etl.batch.source.TableSource;
 import co.cask.cdap.template.etl.common.DBRecord;
