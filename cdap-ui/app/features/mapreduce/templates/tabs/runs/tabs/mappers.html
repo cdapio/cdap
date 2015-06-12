@@ -1,8 +1,8 @@
-<div class="mapreduce-components">
+<div class="mapreduce-components" ng-controller="MapreduceStatusController as StatusController">
   <div class="table-responsive">
     <table class="table table-curved" cask-sortable>
       <thead>
-        <tr ng-class="{'sort-enabled': info.mapTasks.length>0}">
+        <tr ng-class="{'sort-enabled': StatusController.info.mapTasks.length>0}">
           <th data-predicate="taskId">ID</th>
           <th data-predicate="state">Status</th>
           <th data-predicate="progress">% Complete</th>
@@ -14,20 +14,20 @@
       </thead>
 
       <tbody>
-        <tr ng-repeat="map in info.mapTasks | orderBy:sortable.predicate:sortable.reverse">
-          <td>{{ ::map.taskId }}</td>
-          <td ng-if="map.state">{{ map.state }}</td>
-          <td ng-if="!map.state">NA</td>
-          <td>{{ map.progress * 100 }}%</td>
+        <tr ng-repeat="map in StatusController.info.mapTasks | orderBy:sortable.predicate:sortable.reverse">
+          <td>{{ ::StatusController.map.taskId }}</td>
+          <td ng-if="StatusController.map.state">{{ StatusController.map.state }}</td>
+          <td ng-if="!StatusController.map.state">NA</td>
+          <td>{{ StatusController.map.progress * 100 }}%</td>
           <td>
-            <span ng-show="map.finishTime !== 0">{{ (map.finishTime - map.startTime)/1000 | amDurationFormat}}</span>
-            <span ng-show="map.finishTime === 0"> &mdash; </span>
+            <span ng-show="StatusController.map.finishTime !== 0">{{ (StatusController.map.finishTime - StatusController.map.startTime)/1000 | amDurationFormat}}</span>
+            <span ng-show="StatusController.map.finishTime === 0"> &mdash; </span>
           </td>
-          <td>{{ map.counters.MAP_INPUT_RECORDS | myNumber: 0}}</td>
-          <td>{{ map.counters.MAP_OUTPUT_RECORDS | myNumber: 0 }}</td>
-          <td>{{ map.counters.MAP_OUTPUT_BYTES | bytes: 2 }}</td>
+          <td>{{ StatusController.map.counters.MAP_INPUT_RECORDS | myNumber: 0}}</td>
+          <td>{{ StatusController.map.counters.MAP_OUTPUT_RECORDS | myNumber: 0 }}</td>
+          <td>{{ StatusController.map.counters.MAP_OUTPUT_BYTES | bytes: 2 }}</td>
         </tr>
-        <tr class="text-center" ng-if="!info.mapTasks.length">
+        <tr class="text-center" ng-if="!StatusController.info.mapTasks.length">
           <td colspan='8'>Not Available</td>
         </tr>
       </tbody>

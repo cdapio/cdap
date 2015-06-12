@@ -1,8 +1,8 @@
-<div class="mapreduce-components">
+<div class="mapreduce-components" ng-controller="MapreduceStatusController as StatusController">
   <div class="table-responsive">
     <table class="table table-curved" cask-sortable>
       <thead>
-        <tr ng-class="{'sort-enabled': info.mapTasks.length>0}">
+        <tr ng-class="{'sort-enabled': StatusController.info.mapTasks.length>0}">
           <th data-predicate="taskId">ID</th>
           <th data-predicate="state">Status</th>
           <th data-predicate="progress">% Complete</th>
@@ -13,20 +13,20 @@
       </thead>
 
       <tbody>
-        <tr ng-repeat="reduce in info.reduceTasks | orderBy:sortable.predicate:sortable.reverse">
-          <td>{{ ::reduce.taskId }}</td>
-          <td ng-if="reduce.state">{{ reduce.state }}</td>
+        <tr ng-repeat="reduce in StatusController.info.reduceTasks | orderBy:sortable.predicate:sortable.reverse">
+          <td>{{ ::StatusController.reduce.taskId }}</td>
+          <td ng-if="reduce.state">{{ StatusController.reduce.state }}</td>
           <td ng-if="!reduce.state">NA</td>
-          <td>{{ reduce.progress * 100 }}%</td>
+          <td>{{ StatusController.reduce.progress * 100 }}%</td>
           <td>
-            <span ng-show="reduce.finishTime !== 0">{{ (reduce.finishTime - reduce.startTime)/1000 | amDurationFormat}}</span>
-            <span ng-show="reduce.finishTime === 0"> &mdash; </span>
+            <span ng-show="StatusController.reduce.finishTime !== 0">{{ (StatusController.reduce.finishTime - reduce.startTime)/1000 | amDurationFormat}}</span>
+            <span ng-show="StatusController.reduce.finishTime === 0"> &mdash; </span>
           </td>
-          <td>{{ reduce.counters.REDUCE_INPUT_RECORDS | myNumber: 0}}</td>
-          <td>{{ reduce.counters.REDUCE_OUTPUT_RECORDS | myNumber: 0}}</td>
+          <td>{{ StatusController.reduce.counters.REDUCE_INPUT_RECORDS | myNumber: 0}}</td>
+          <td>{{ StatusController.reduce.counters.REDUCE_OUTPUT_RECORDS | myNumber: 0}}</td>
         </tr>
 
-        <tr class="text-center" ng-if="!info.reduceTasks.length">
+        <tr class="text-center" ng-if="!StatusController.info.reduceTasks.length">
           <td colspan='8'> Not Available </td>
         </tr>
       </tbody>

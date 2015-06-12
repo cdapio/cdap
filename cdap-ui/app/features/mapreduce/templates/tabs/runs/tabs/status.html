@@ -1,87 +1,87 @@
-<div class="mapreduce-components">
+<div class="mapreduce-components" ng-controller="MapreduceStatusController as StatusController">
 
   <h3>Mappers</h3>
-  <p>{{ mapProgress }}% completed, {{ getFailedTasks(info.mapTasks) }} failed</p>
+  <p>{{ StatusController.mapProgress }}% completed, {{ StatusController.getFailedTasks(info.mapTasks) }} failed</p>
 
   <div class="well">
     <div class="progress">
-      <div class="progress-bar progress-bar-success" style="width: {{ mapProgress }}%"></div>
+      <div class="progress-bar progress-bar-success" style="width: {{ StatusController.mapProgress }}%"></div>
     </div>
     <div class="row component-box">
       <div class="task-item">
         <div class="title">Completed</div>
-        <div class="entry">{{mapperStats.completed}}</div>
+        <div class="entry">{{StatusController.mapperStats.completed}}</div>
       </div>
       <div class="task-item">
         <div class="title">Running</div>
-        <div class="entry">{{mapperStats.running}}</div>
+        <div class="entry">{{StatusController.mapperStats.running}}</div>
       </div>
       <div class="task-item">
         <div class="title">Pending</div>
-        <div class="entry">{{mapperStats.pending}}</div>
+        <div class="entry">{{StatusController.mapperStats.pending}}</div>
       </div>
       <div class="task-item">
         <div class="title">Killed</div>
-        <div class="entry">{{mapperStats.killed}}</div>
+        <div class="entry">{{StatusController.mapperStats.killed}}</div>
       </div>
       <div class="task-item">
         <div class="title">Failed</div>
-        <div class="entry">{{mapperStats.failed}}</div>
+        <div class="entry">{{StatusController.mapperStats.failed}}</div>
       </div>
       <div class="task-item">
         <div class="title">Records in</div>
-        <div class="entry">{{mapperStats.inputRecords}}</div>
+        <div class="entry">{{StatusController.mapperStats.inputRecords}}</div>
       </div>
       <div class="task-item">
         <div class="title">Records out</div>
-        <div class="entry">{{mapperStats.outputRecords}}</div>
+        <div class="entry">{{StatusController.mapperStats.outputRecords}}</div>
       </div>
       <div class="task-item">
         <div class="title">Total</div>
-        <div class="entry">{{mapperStats.total}}</div>
+        <div class="entry">{{StatusController.mapperStats.total}}</div>
       </div>
     </div>
   </div>
 
   <h3>Reducers</h3>
-  <p>{{ reduceProgress }}% completed, {{ getFailedTasks(info.reduceTasks) }} failed</p>
+  <p>{{ StatusController.reduceProgress }}% completed, {{ StatusController.getFailedTasks(StatusController.info.reduceTasks) }} failed</p>
 
   <div class="well">
     <div class="progress">
-      <div class="progress-bar progress-bar-success" style="width: {{ reduceProgress }}%"></div>
+      <div class="progress-bar progress-bar-success" style="width: {{ StatusController.reduceProgress }}%"></div>
     </div>
     <div class="row component-box">
       <div class="task-item">
         <div class="title">Completed</div>
-        <div class="entry">{{reducerStats.completed}}</div>
+        <div class="entry">{{StatusController.reducerStats.completed}}</div>
       </div>
       <div class="task-item">
         <div class="title">Running</div>
-        <div class="entry">{{reducerStats.running}}</div>
+        <div class="entry">{{StatusController.reducerStats.running}}</div>
       </div>
       <div class="task-item">
         <div class="title">Pending</div>
-        <div class="entry">{{reducerStats.pending}}</div>
+        <div class="entry">{{StatusController.reducerStats.pending}}</div>
       </div>
       <div class="task-item">
         <div class="title">Killed</div>
-        <div class="entry">{{reducerStats.killed}}</div>
+        <div class="entry">{{StatusController.reducerStats.killed}}</div>
       </div>
       <div class="task-item">
         <div class="title">Failed</div>
-        <div class="entry">{{reducerStats.failed}}</div>
+        <div class="entry">{{StatusController.reducerStats.failed}}</div>
       </div>
       <div class="task-item">
         <div class="title">Records in</div>
-        <div class="entry">{{reducerStats.inputRecords}}</div>
+        <div class="entry">{{StatusController.reducerStats.inputRecords}}</div>
       </div>
       <div class="task-item">
         <div class="title">Records out</div>
-        <div class="entry">{{reducerStats.outputRecords}}</div>
+        <div class="entry">{{StatusController.reducerStats.outputRecords}}</div>
       </div>
       <div class="task-item">
         <div class="title">Total</div>
-        <div class="entry">{{reducerStats.total}}</div>
+        <div class="entry">{{StatusController.reducerStats.total}}</div>
       </div>
 
     </div>
