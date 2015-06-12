@@ -299,6 +299,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private void executeNode(ApplicationSpecification appSpec, WorkflowNode node, InstantiatorFactory instantiator,
                            ClassLoader classLoader, WorkflowToken token) throws Exception {
     WorkflowNodeType nodeType = node.getType();
+    ((BasicWorkflowToken) token).setCurrentNode(node.getNodeId());
     switch (nodeType) {
       case ACTION:
         executeAction(appSpec, (WorkflowActionNode) node, instantiator, classLoader, token);

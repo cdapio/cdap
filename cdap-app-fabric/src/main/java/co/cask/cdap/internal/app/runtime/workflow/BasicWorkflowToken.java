@@ -16,8 +16,11 @@
 
 package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.workflow.TokenValueWithTimestamp;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -27,6 +30,47 @@ import javax.annotation.Nullable;
  */
 public class BasicWorkflowToken implements WorkflowToken {
   private Map<String, Map<String, Long>> mapReduceCounters;
+
+  private Map<String, WorkflowTokenValue> keyTokenValue = Maps.newHashMap();
+
+  private String nodeName = null;
+
+  void setCurrentNode(String nodeName) {
+    this.nodeName = nodeName;
+  }
+
+
+  @Override
+  public void putValue(String key, String value) {
+    Preconditions.checkNotNull(nodeName, "Node name cannot be null.");
+    WorkflowTokenValue tokenValue = keyTokenValue.get(nodeName);
+    if (tokenValue == null) {
+      tokenValue = new WorkflowTokenValue();
+    }
+    tokenValue.putValue(nodeName, value);
+  }
+
+
+  @Nullable
+  @Override
+  public String getValue(String key) {
+    WorkflowTokenValue tokenValue = keyTokenValue.get(key);
+    if (tokenValue == null) {
+      return null;
+    }
+
+    return tokenValue.getValue();
+  }
+
+  @Nullable
+  @Override
+  public Map<String, TokenValueWithTimestamp> getAllValues(String key) {
+    WorkflowTokenValue tokenValue = keyTokenValue.get(key);
+    if (tokenValue == null) {
+      return null;
+    }
+    return tokenValue.getAllValues();
+  }
 
   @Nullable
   @Override
