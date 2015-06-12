@@ -15,6 +15,7 @@ angular.module(PKG.name+'.feature.overview')
         url: '',
         templateUrl: '/assets/features/overview/overview.html',
         controller: 'OverviewCtrl',
+        controllerAs: 'OverviewCtrl',
         ncyBreadcrumb: {
           label: 'Home'
         }
