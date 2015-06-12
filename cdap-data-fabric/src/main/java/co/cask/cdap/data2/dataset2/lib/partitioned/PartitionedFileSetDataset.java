@@ -44,6 +44,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -135,15 +136,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
     // delete all the old metadata and then write the new metadata
     Delete delete = new Delete(rowKey);
-    for (Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
-      if (Bytes.startsWith(entry.getKey(), METADATA_PREFIX)) {
-        // we only need to delete the keys that are not in the new metadata entries
-        String metadataKey = metadataKeyFromColumnKey(entry.getKey());
-        if (!metadata.getAsMap().containsKey(metadataKey)) {
-          delete.add(entry.getKey());
-        }
-      }
-    }
+    addMetadataToDelete(row, metadata, delete);
     partitionsTable.delete(delete);
 
     Put put = new Put(rowKey);
@@ -151,8 +144,21 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     partitionsTable.put(put);
   }
 
+  // removes all metadata columns, except those that have keys also in the new metadata.
+  private void addMetadataToDelete(Row oldRow, PartitionMetadata newMetadata, Delete delete) {
+    for (Map.Entry<byte[], byte[]> entry : oldRow.getColumns().entrySet()) {
+      if (Bytes.startsWith(entry.getKey(), METADATA_PREFIX)) {
+        // we only need to delete the keys that are not in the new metadata entries
+        String metadataKey = metadataKeyFromColumnKey(entry.getKey());
+        if (!newMetadata.asMap().containsKey(metadataKey)) {
+          delete.add(entry.getKey());
+        }
+      }
+    }
+  }
+
   protected void addPartition(PartitionKey key, String path, boolean addToExplore, PartitionMetadata metadata) {
-    final byte[] rowKey = generateRowKey(key, partitioning);
+    byte[] rowKey = generateRowKey(key, partitioning);
     Row row = partitionsTable.get(rowKey);
     if (row != null && !row.isEmpty()) {
       if (key.equals(partitionsAddedInSameTx.get(path))) {
@@ -206,7 +212,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   @Override
   public void dropPartition(PartitionKey key) {
-    final byte[] rowKey = generateRowKey(key, partitioning);
+    byte[] rowKey = generateRowKey(key, partitioning);
     partitionsTable.delete(rowKey);
     dropPartitionFromExplore(key);
     // TODO: make DDL operations transactional [CDAP-1393]
@@ -233,17 +239,15 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   @Override
   public Partition getPartition(PartitionKey key) {
-    final byte[] rowKey = generateRowKey(key, partitioning);
+    byte[] rowKey = generateRowKey(key, partitioning);
     Row row = partitionsTable.get(rowKey);
     if (row == null) {
       return null;
     }
 
     byte[] pathBytes = row.get(RELATIVE_PATH);
-    if (pathBytes == null) {
-      // why a check for relativePath here?
-      return null;
-    }
+    Preconditions.checkNotNull(pathBytes,
+                               "pathBytes is null for partitionKey: {}, with rowKey: {}", key, row.getRow());
     return new BasicPartition(Bytes.toString(pathBytes), key, metadataFromRow(row));
   }
 
@@ -280,8 +284,8 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   // if parseMetadata is false, null is passed as the PartitionMetadata to the PartitionConsumer,
   // for efficiency reasons, since the metadata is not always needed
   protected void getPartitions(@Nullable PartitionFilter filter, PartitionConsumer consumer, boolean parseMetadata) {
-    final byte[] startKey = generateStartKey(filter);
-    final byte[] endKey = generateStopKey(filter);
+    byte[] startKey = generateStartKey(filter);
+    byte[] endKey = generateStopKey(filter);
     Scanner scanner = partitionsTable.scan(startKey, endKey);
     try {
       while (true) {
@@ -303,10 +307,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
           continue;
         }
         byte[] pathBytes = row.get(RELATIVE_PATH);
-        // why a check for relativePath here?
-        if (pathBytes != null) {
-          consumer.consume(key, Bytes.toString(pathBytes), parseMetadata ? metadataFromRow(row) : null);
-        }
+        Preconditions.checkNotNull(pathBytes,
+                                   "pathBytes is null for partitionKey: {}, with rowKey: {}", key, row.getRow());
+        consumer.consume(key, Bytes.toString(pathBytes), parseMetadata ? metadataFromRow(row) : null);
       }
     } finally {
       scanner.close();

@@ -18,6 +18,8 @@ package co.cask.cdap.api.dataset.lib;
 
 import com.google.common.base.Objects;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -28,14 +30,14 @@ public class PartitionMetadata implements Iterable<Map.Entry<String, String>> {
   private final Map<String, String> metadata;
 
   public PartitionMetadata(Map<String, String> metadata) {
-    this.metadata = metadata;
+    this.metadata = Collections.unmodifiableMap(new HashMap<>(metadata));
   }
 
   public String get(String key) {
     return metadata.get(key);
   }
 
-  public Map<String, String> getAsMap() {
+  public Map<String, String> asMap() {
     return metadata;
   }
 
