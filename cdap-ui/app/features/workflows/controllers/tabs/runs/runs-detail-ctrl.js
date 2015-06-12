@@ -3,9 +3,9 @@ angular.module(PKG.name + '.feature.workflows')
     var dataSrc = new MyDataSource($scope),
         filterFilter = $filter('filter');
     if ($state.params.runid) {
-      var match = filterFilter($scope.runs, {runid: $state.params.runid});
+      var match = filterFilter($scope.RunsController.runs, {runid: $state.params.runid});
       if (match.length) {
-        $scope.runs.selected = match[0];
+        $scope.RunsController.runs.selected = match[0];
       }
     }
 

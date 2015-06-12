@@ -55,7 +55,8 @@ angular.module(PKG.name + '.feature.workflows')
               label: '{{$state.params.programId}}'
             },
             templateUrl: '/assets/features/workflows/templates/tabs/runs.html',
-            controller: 'WorkflowsRunsController'
+            controller: 'WorkflowsRunsController',
+            controllerAs: 'RunsController'
           })
             .state('workflows.detail.runs.run', {
               url: '/:runid',
@@ -94,6 +95,7 @@ angular.module(PKG.name + '.feature.workflows')
               parent: 'workflows.detail.runs'
             },
             templateUrl: '/assets/features/workflows/templates/tabs/schedules.html',
-            controller: 'WorkflowsSchedulesController'
+            controller: 'WorkflowsSchedulesController',
+            controllerAs: 'SchedulesController'
           });
   });
