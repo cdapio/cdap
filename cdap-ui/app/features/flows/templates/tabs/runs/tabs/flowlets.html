@@ -1,7 +1,7 @@
-<div ng-controller="FlowletsController">
+<div ng-controller="FlowletsController as FlowletsController">
 <div class="panel-group">
-  <div class="panel panel-default" ng-repeat="flowlet in flowlets">
-    <div class="panel-heading" ng-click="selectFlowlet(flowlet)">
+  <div class="panel panel-default" ng-repeat="flowlet in FlowletsController.flowlets">
+    <div class="panel-heading" ng-click="FlowletsController.selectFlowlet(flowlet)">
       <span
         ng-class="{'fa-caret-right': !flowlet.isOpen,
                    'fa-caret-down': flowlet.isOpen}"
