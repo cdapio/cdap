@@ -16,12 +16,11 @@
 
 package co.cask.cdap.api.dataset.lib;
 
-import com.google.common.base.Objects;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Contains metadata associated with a particular {@link Partition} of a {@link @PartitionedFileSet}
@@ -33,10 +32,19 @@ public class PartitionMetadata implements Iterable<Map.Entry<String, String>> {
     this.metadata = Collections.unmodifiableMap(new HashMap<>(metadata));
   }
 
+  /**
+   * Perform a get on the underlying map of user-defined metadata.
+   * @param key the key to use in the lookup on the underlying map.
+   * @return the value returned by the underlying map.
+   */
+  @Nullable
   public String get(String key) {
     return metadata.get(key);
   }
 
+  /**
+   * @return the underlying map of user-defined metadata.
+   */
   public Map<String, String> asMap() {
     return metadata;
   }
@@ -52,12 +60,12 @@ public class PartitionMetadata implements Iterable<Map.Entry<String, String>> {
 
     PartitionMetadata that = (PartitionMetadata) o;
 
-    return Objects.equal(this.metadata, that.metadata);
+    return this.metadata.equals(that.metadata);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(metadata);
+    return metadata.hashCode();
   }
 
   @Override

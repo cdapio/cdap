@@ -50,18 +50,23 @@ public interface TimePartitionedFileSet extends PartitionedFileSet {
    */
   void addPartition(long time, String path);
 
-  // Why are some of these methods methodNameByTime, while others are just methodName?
-  // (why are some suffixed by 'ByTime')
   /**
    * Add a partition for a given time, stored at a given path (relative to the file set's base path),
    * with given metadata.
    */
-  void addPartition(long time, String path, PartitionMetadata metadata);
+  void addPartition(long time, String path, Map<String, String> metadata);
 
   /**
-   * Updates the metadata for a particular partition.
+   * Adds a new metadata entry for a particular partition.
+   * Note that existing entries can not be updated.
    */
-  void updateMetadata(long time, PartitionMetadata metadata);
+  void addMetadata(long time, String metadataKey, String metadataValue);
+
+  /**
+   * Adds a set of new metadata entries for a particular partition
+   * Note that existing entries can not be updated.
+   */
+  void addMetadata(long time, Map<String, String> metadata);
 
   /**
    * Remove a partition for a given time.
@@ -73,13 +78,13 @@ public interface TimePartitionedFileSet extends PartitionedFileSet {
    * or null if no such partition exists.
    */
   @Nullable
-  TimePartition getPartitionByTime(long time);
+  TimePartitionDetail getPartitionByTime(long time);
 
   /**
    * Return all partitions within the time range given by startTime (inclusive) and endTime (exclusive),
    * both rounded to the full minute.
    */
-  Set<TimePartition> getPartitionsByTime(long startTime, long endTime);
+  Set<TimePartitionDetail> getPartitionsByTime(long startTime, long endTime);
 
   /**
    * Return a partition output for a specific time, rounded to the minute, in preparation for creating a new partition.

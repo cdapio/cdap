@@ -25,7 +25,7 @@ import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.dataset.lib.Partition;
+import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionMetadata;
@@ -34,7 +34,6 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.lib.Partitioning.FieldType;
-import co.cask.cdap.api.dataset.table.Delete;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
@@ -43,7 +42,6 @@ import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -118,46 +116,24 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   @Override
   public void addPartition(PartitionKey key, String path) {
-    addPartition(key, path, new PartitionMetadata(ImmutableMap.<String, String>of()));
+    addPartition(key, path, ImmutableMap.<String, String>of());
   }
 
   @Override
-  public void addPartition(PartitionKey key, String path, PartitionMetadata metadata) {
+  public void addPartition(PartitionKey key, String path, Map<String, String> metadata) {
     addPartition(key, path, true, metadata);
   }
 
-  @Override
-  public void updateMetadata(PartitionKey key, PartitionMetadata metadata) {
-    final byte[] rowKey = generateRowKey(key, partitioning);
-    Row row = partitionsTable.get(rowKey);
-    if (row == null) {
-      throw new DataSetException(String.format("Dataset '%s' does not have a partition for key: %s", getName(), key));
-    }
-
-    // delete all the old metadata and then write the new metadata
-    Delete delete = new Delete(rowKey);
-    addMetadataToDelete(row, metadata, delete);
-    partitionsTable.delete(delete);
-
-    Put put = new Put(rowKey);
-    addMetadataToPut(metadata, put);
-    partitionsTable.put(put);
-  }
-
-  // removes all metadata columns, except those that have keys also in the new metadata.
-  private void addMetadataToDelete(Row oldRow, PartitionMetadata newMetadata, Delete delete) {
-    for (Map.Entry<byte[], byte[]> entry : oldRow.getColumns().entrySet()) {
-      if (Bytes.startsWith(entry.getKey(), METADATA_PREFIX)) {
-        // we only need to delete the keys that are not in the new metadata entries
-        String metadataKey = metadataKeyFromColumnKey(entry.getKey());
-        if (!newMetadata.asMap().containsKey(metadataKey)) {
-          delete.add(entry.getKey());
-        }
-      }
-    }
-  }
-
-  protected void addPartition(PartitionKey key, String path, boolean addToExplore, PartitionMetadata metadata) {
+  /**
+   * Add a partition for a given partition key, stored at a given path (relative to the file set's base path),
+   * with the given metadata.
+   *
+   * @param key the partitionKey for the partition.
+   * @param path the path for the partition.
+   * @param explorable whether to add the partition to explore
+   * @param metadata the metadata associated with the partition.
+   */
+  protected void addPartition(PartitionKey key, String path, boolean explorable, Map<String, String> metadata) {
     byte[] rowKey = generateRowKey(key, partitioning);
     Row row = partitionsTable.get(rowKey);
     if (row != null && !row.isEmpty()) {
@@ -183,15 +159,40 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     partitionsTable.put(put);
     partitionsAddedInSameTx.put(path, key);
 
-    if (addToExplore) {
+    if (explorable) {
       addPartitionToExplore(key, path);
       // TODO: make DDL operations transactional [CDAP-1393]
     }
   }
 
-  private void addMetadataToPut(PartitionMetadata metadata, Put put) {
-    for (Map.Entry<String, String> entry : metadata) {
-      byte[] columnKey = Bytes.add(METADATA_PREFIX, Bytes.toBytes(entry.getKey()));
+  @Override
+  public void addMetadata(PartitionKey key, String metadataKey, String metadataValue) {
+    addMetadata(key, ImmutableMap.of(metadataKey, metadataValue));
+  }
+
+  @Override
+  public void addMetadata(PartitionKey key, Map<String, String> metadata) {
+    final byte[] rowKey = generateRowKey(key, partitioning);
+    Row row = partitionsTable.get(rowKey);
+    if (row == null) {
+      throw new DataSetException(String.format("Dataset '%s' does not have a partition for key: %s", getName(), key));
+    }
+
+    // ensure that none of the entries already exist in the metadata
+    for (Map.Entry<String, String> metadataEntry : metadata.entrySet()) {
+      String metadataKey = metadataEntry.getKey();
+      byte[] columnKey = columnKeyFromMetadataKey(metadataKey);
+      Preconditions.checkArgument(row.get(columnKey) == null, "Entry already exists for metadata key: {}", metadataKey);
+    }
+
+    Put put = new Put(rowKey);
+    addMetadataToPut(metadata, put);
+    partitionsTable.put(put);
+  }
+
+  private void addMetadataToPut(Map<String, String> metadata, Put put) {
+    for (Map.Entry<String, String> entry : metadata.entrySet()) {
+      byte[] columnKey = columnKeyFromMetadataKey(entry.getKey());
       put.add(columnKey, Bytes.toBytes(entry.getValue()));
     }
   }
@@ -238,7 +239,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   }
 
   @Override
-  public Partition getPartition(PartitionKey key) {
+  public PartitionDetail getPartition(PartitionKey key) {
     byte[] rowKey = generateRowKey(key, partitioning);
     Row row = partitionsTable.get(rowKey);
     if (row == null) {
@@ -246,21 +247,22 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     }
 
     byte[] pathBytes = row.get(RELATIVE_PATH);
-    Preconditions.checkNotNull(pathBytes,
-                               "pathBytes is null for partitionKey: {}, with rowKey: {}", key, row.getRow());
-    return new BasicPartition(Bytes.toString(pathBytes), key, metadataFromRow(row));
+    if (pathBytes == null) {
+      return null;
+    }
+    return new BasicPartitionDetail(this, Bytes.toString(pathBytes), key, metadataFromRow(row));
   }
 
   @Override
-  public Set<Partition> getPartitions(@Nullable PartitionFilter filter) {
-    final Set<Partition> partitions = Sets.newHashSet();
+  public Set<PartitionDetail> getPartitions(@Nullable PartitionFilter filter) {
+    final Set<PartitionDetail> partitionDetails = Sets.newHashSet();
     getPartitions(filter, new PartitionConsumer() {
       @Override
       public void consume(PartitionKey key, String path, @Nullable PartitionMetadata metadata) {
-        partitions.add(new BasicPartition(path, key, metadata));
+        partitionDetails.add(new BasicPartitionDetail(PartitionedFileSetDataset.this, path, key, metadata));
       }
     });
-    return partitions;
+    return partitionDetails;
   }
 
   @VisibleForTesting
@@ -281,9 +283,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     getPartitions(filter, consumer, true);
   }
 
-  // if parseMetadata is false, null is passed as the PartitionMetadata to the PartitionConsumer,
+  // if decodeMetadata is false, null is passed as the PartitionMetadata to the PartitionConsumer,
   // for efficiency reasons, since the metadata is not always needed
-  protected void getPartitions(@Nullable PartitionFilter filter, PartitionConsumer consumer, boolean parseMetadata) {
+  protected void getPartitions(@Nullable PartitionFilter filter, PartitionConsumer consumer, boolean decodeMetadata) {
     byte[] startKey = generateStartKey(filter);
     byte[] endKey = generateStopKey(filter);
     Scanner scanner = partitionsTable.scan(startKey, endKey);
@@ -307,9 +309,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
           continue;
         }
         byte[] pathBytes = row.get(RELATIVE_PATH);
-        Preconditions.checkNotNull(pathBytes,
-                                   "pathBytes is null for partitionKey: {}, with rowKey: {}", key, row.getRow());
-        consumer.consume(key, Bytes.toString(pathBytes), parseMetadata ? metadataFromRow(row) : null);
+        if (pathBytes != null) {
+          consumer.consume(key, Bytes.toString(pathBytes), decodeMetadata ? metadataFromRow(row) : null);
+        }
       }
     } finally {
       scanner.close();
@@ -317,18 +319,22 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   }
 
   private PartitionMetadata metadataFromRow(Row row) {
-    Map<String, String> metadataEntries = Maps.newHashMap();
+    Map<String, String> metadata = Maps.newHashMap();
     for (Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
       if (Bytes.startsWith(entry.getKey(), METADATA_PREFIX)) {
         String metadataKey = metadataKeyFromColumnKey(entry.getKey());
-        metadataEntries.put(metadataKey, Bytes.toString(entry.getValue()));
+        metadata.put(metadataKey, Bytes.toString(entry.getValue()));
       }
     }
-    return new PartitionMetadata(metadataEntries);
+    return new PartitionMetadata(metadata);
   }
 
   private String metadataKeyFromColumnKey(byte[] columnKey) {
-    return Bytes.toString(columnKey, METADATA_PREFIX.length, columnKey.length);
+    return Bytes.toString(columnKey, METADATA_PREFIX.length, columnKey.length - METADATA_PREFIX.length);
+  }
+
+  private byte[] columnKeyFromMetadataKey(String metadataKey) {
+    return Bytes.add(METADATA_PREFIX, Bytes.toBytes(metadataKey));
   }
 
   /**
@@ -343,6 +349,10 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       sep = "/";
     }
     return builder.toString();
+  }
+
+  FileSet getFiles() {
+    return files;
   }
 
   /**
@@ -414,7 +424,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     }
     // we know for sure there is an output partition key (checked in getOutputFormatConfig())
     PartitionKey outputKey = PartitionedFileSetArguments.getOutputPartitionKey(runtimeArguments, getPartitioning());
-    // TODO: how will, from mapreduce, write metadata to the partition?
+    // TODO: Add support to write to metadata from MapReduce - https://issues.cask.co/browse/CDAP-2784
     addPartition(outputKey, outputPath);
   }
 
@@ -602,64 +612,14 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   }
 
   /**
-   * Simple Implementation of Partition.
-   */
-  protected class BasicPartition implements Partition {
-    protected final String relativePath;
-    protected final PartitionKey key;
-    protected PartitionMetadata metadata;
-
-    protected BasicPartition(String relativePath, PartitionKey key, PartitionMetadata metadata) {
-      this.relativePath = relativePath;
-      this.key = key;
-      this.metadata = metadata;
-    }
-
-    @Override
-    public Location getLocation() {
-      return files.getLocation(relativePath);
-    }
-
-    @Override
-    public String getRelativePath() {
-      return relativePath;
-    }
-
-    @Override
-    public PartitionKey getPartitionKey() {
-      return key;
-    }
-
-    @Override
-    public PartitionMetadata getMetadata() {
-      return metadata;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || !(o instanceof BasicPartition)) {
-        return false;
-      }
-      BasicPartition that = (BasicPartition) o;
-      return key.equals(that.key) && relativePath.equals(that.relativePath) && metadata.equals(that.metadata);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(key, relativePath, metadata);
-    }
-  }
-
-  /**
    * Simple Implementation of PartitionOutput.
    */
   protected class BasicPartitionOutput extends BasicPartition implements PartitionOutput {
+    private Map<String, String> metadata;
 
     protected BasicPartitionOutput(String relativePath, PartitionKey key) {
-      super(relativePath, key, new PartitionMetadata(ImmutableMap.<String, String>of()));
+      super(PartitionedFileSetDataset.this, relativePath, key);
+      this.metadata = Maps.newHashMap();
     }
 
     @Override
@@ -668,7 +628,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     }
 
     @Override
-    public void setMetadata(PartitionMetadata metadata) {
+    public void setMetadata(Map<String, String> metadata) {
       this.metadata = metadata;
     }
   }

@@ -52,12 +52,19 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
    * Add a partition for a given partition key, stored at a given path (relative to the file set's base path),
    * with the given metadata.
    */
-  void addPartition(PartitionKey key, String path, PartitionMetadata metadata);
+  void addPartition(PartitionKey key, String path, Map<String, String> metadata);
 
   /**
-   * Updates the metadata for a particular partition.
+   * Adds a new metadata entry for a particular partition.
+   * Note that existing entries can not be updated; {@link IllegalArgumentException} will be thrown in that case.
    */
-  void updateMetadata(PartitionKey key, PartitionMetadata metadata);
+  void addMetadata(PartitionKey key, String metadataKey, String metadataValue);
+
+  /**
+   * Adds a set of new metadata entries for a particular partition
+   * Note that existing entries can not be updated; {@link IllegalArgumentException} will be thrown in that case.
+   */
+  void addMetadata(PartitionKey key, Map<String, String> metadata);
 
   /**
    * Remove a partition for a given partition key.
@@ -68,14 +75,14 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
    * Return the partition for a specific partition key.
    */
   @Nullable
-  Partition getPartition(PartitionKey key);
+  PartitionDetail getPartition(PartitionKey key);
 
   /**
    * Return all partitions matching the partition filter.
    * @param filter If non null, only partitions that match this filter are returned. If null,
    *               all partitions are returned.
    */
-  Set<Partition> getPartitions(@Nullable PartitionFilter filter);
+  Set<PartitionDetail> getPartitions(@Nullable PartitionFilter filter);
 
   /**
    * Return a partition output for a specific partition key, in preparation for creating a new partition.
