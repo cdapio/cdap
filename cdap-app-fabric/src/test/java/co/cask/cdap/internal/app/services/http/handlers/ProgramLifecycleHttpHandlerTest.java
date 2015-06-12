@@ -159,6 +159,26 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     stopProgram(dummyMR2);
     waitState(dummyMR2, STOPPED);
 
+    // start multiple runs of the map-reduce program
+    startProgram(dummyMR2);
+    startProgram(dummyMR2);
+
+    // verify that more than one map-reduce program runs are running
+    verifyProgramRuns(dummyMR2, "running", 1);
+
+    // get run records corresponding to the program runs
+    List<RunRecord> historyRuns = getProgramRuns(dummyMR2, "running");
+    Assert.assertTrue(2 == historyRuns.size());
+
+    // stop individual runs of the map-reduce program
+    String runId = historyRuns.get(0).getPid();
+    stopProgram(dummyMR2, 200, runId);
+
+    runId = historyRuns.get(1).getPid();
+    stopProgram(dummyMR2, 200, runId);
+
+    waitState(dummyMR2, STOPPED);
+
     // deploy an app containing a workflow
     response = deploy(SleepingWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
