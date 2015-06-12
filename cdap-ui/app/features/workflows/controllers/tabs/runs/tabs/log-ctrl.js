@@ -8,13 +8,13 @@ angular.module(PKG.name + '.feature.workflows')
       max: 50
     };
 
-    $scope.logs = [];
+    this.logs = [];
     if (!$scope.RunsController.runs.length) {
       return;
     }
     myWorkFlowApi.logs(params)
       .$promise
       .then(function(res) {
-        $scope.logs = res;
-      });
+        this.logs = res;
+      }.bind(this));
 });

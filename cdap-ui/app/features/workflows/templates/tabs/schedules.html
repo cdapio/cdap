@@ -18,55 +18,55 @@
 <div class="schedule-content">
   <div class="schedule-rows" ng-repeat="schedule in SchedulesController.schedules">
     <div class="row schedule-row"
-      ng-click="SchedulesController.schedule.isOpen = !SchedulesController.schedule.isOpen"
-      ng-class="{ 'active': SchedulesController.schedule.isOpen }">
+      ng-click="schedule.isOpen = !schedule.isOpen"
+      ng-class="{ 'active': schedule.isOpen }">
       <div class="col-xs-1">
         <i class="fa"
-        ng-class="{'fa-chevron-down': SchedulesController.schedule.isOpen, 'fa-chevron-right': !schedule.isOpen}"></i>
+        ng-class="{'fa-chevron-down': schedule.isOpen, 'fa-chevron-right': !schedule.isOpen}"></i>
       </div>
 
       <div class="col-xs-3">
-        <p>{{ SchedulesController.schedule.schedule.name }}</p>
+        <p>{{ schedule.schedule.name }}</p>
       </div>
 
       <div class="col-xs-4">
-        <p>{{ SchedulesController.schedule.schedule.description | myEllipsis: 50 }}</p>
+        <p>{{ schedule.schedule.description | myEllipsis: 50 }}</p>
       </div>
 
       <div class="col-xs-2">
-        <p ng-if="SchedulesController.schedule.lastrun !== 'NA'"> {{ SchedulesController.schedule.lastrun | amDateFormat:'MM/DD/YY h:mm:ss a'}} </p>
-        <p ng-if="SchedulesController.schedule.lastrun === 'NA'">Not Available</p>
+        <p ng-if="schedule.lastrun !== 'NA'"> {{ schedule.lastrun | amDateFormat:'MM/DD/YY h:mm:ss a'}} </p>
+        <p ng-if="schedule.lastrun === 'NA'">Not Available</p>
       </div>
 
       <div class="col-xs-2">
-        <p>{{ SchedulesController.schedule.status }}</p>
+        <p>{{ schedule.status }}</p>
       </div>
     </div>
 
-    <div class="row schedule-detail" ng-if="SchedulesController.schedule.isOpen">
+    <div class="row schedule-detail" ng-if="schedule.isOpen">
       <div class="row">
         <div class="col-xs-offset-2 col-xs-2">
           <p>Trigger</p>
         </div>
         <div class="col-xs-6">
-          <p>{{ SchedulesController.schedule.scheduleType }}</p>
+          <p>{{ schedule.scheduleType }}</p>
         </div>
         <div class="col-xs-2">
           <button class="btn btn-default"
-            ng-show="SchedulesController.schedule.status === 'SCHEDULED'"
+            ng-show="schedule.status === 'SCHEDULED'"
             ng-click="SchedulesController.suspendSchedule(schedule)">
             <i class="fa fa-pause"></i>
           </button>
 
           <button class="btn btn-default"
-            ng-show="SchedulesController.schedule.status === 'SUSPENDED'"
+            ng-show="schedule.status === 'SUSPENDED'"
             ng-click="SchedulesController.resumeSchedule(schedule)">
             <i class="fa fa-play"></i>
           </button>
         </div>
       </div>
       <div class="row">
-        <div ng-if="SchedulesController.schedule.scheduleType === 'TIME'">
+        <div ng-if="schedule.scheduleType === 'TIME'">
           <div class="col-xs-offset-2 col-xs-2">
             <p>Crontab</p>
           </div>
@@ -84,24 +84,24 @@
 
               <tbody class="text-center">
                 <tr>
-                  <td>{{ SchedulesController.schedule.time.min }}</td>
-                  <td>{{ SchedulesController.schedule.time.hour }}</td>
-                  <td>{{ SchedulesController.schedule.time.day }}</td>
-                  <td>{{ SchedulesController.schedule.time.month }}</td>
-                  <td>{{ SchedulesController.schedule.time.week }}</td>
+                  <td>{{ schedule.time.min }}</td>
+                  <td>{{ schedule.time.hour }}</td>
+                  <td>{{ schedule.time.day }}</td>
+                  <td>{{ schedule.time.month }}</td>
+                  <td>{{ schedule.time.week }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
 
-        <div ng-if="SchedulesController.schedule.scheduleType === 'STREAM'">
+        <div ng-if="schedule.scheduleType === 'STREAM'">
           <div class="col-xs-offset-2 col-xs-2">
             <p>Data Trigger</p>
           </div>
 
           <div class="col-xs-8">
-            <p>{{ SchedulesController.schedule.schedule.dataTriggerMB }} MB</p>
+            <p>{{ schedule.schedule.dataTriggerMB }} MB</p>
           </div>
         </div>
       </div>

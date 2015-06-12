@@ -55,7 +55,7 @@ angular.module(PKG.name + '.feature.workflows')
         appId: $state.params.appId,
         scheduleId: obj.schedule.name,
         scope: $scope
-      });
+      }, {});
     };
 
     this.resumeSchedule = function (obj) {
@@ -63,7 +63,7 @@ angular.module(PKG.name + '.feature.workflows')
         appId: $state.params.appId,
         scheduleId: obj.schedule.name,
         scope: $scope
-      });
+      }, {});
     };
 
   });

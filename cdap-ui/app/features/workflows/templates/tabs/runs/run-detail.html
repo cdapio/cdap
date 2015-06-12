@@ -8,12 +8,10 @@
   </button>
 </div>
 
-<div ng-controller="WorkflowsRunsDetailController">
-  <my-program-status
-    data-type="workflows"
-    data-runid="{{ RunsController.runs.selected.runid }}"
-    data-runs="RunsController.runs"
-  ></my-program-status>
-</div>
+<my-program-status
+  data-type="workflows"
+  data-runid="{{ RunsController.runs.selected.runid }}"
+  data-runs="RunsController.runs"
+></my-program-status>
 
 <div ng-include="RunsController.activeTab.template"></div>
