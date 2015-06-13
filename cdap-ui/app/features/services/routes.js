@@ -13,7 +13,6 @@ angular.module(PKG.name + '.feature.services')
       })
       .state('services.detail', {
         url: '/:programId',
-        controller: 'ServicesDetailController',
         templateUrl: '/assets/features/services/templates/detail.html',
         resolve : {
           rRuns: function($stateParams, $q, myServiceApi) {
@@ -43,6 +42,7 @@ angular.module(PKG.name + '.feature.services')
           url: '/runs',
           templateUrl: '/assets/features/services/templates/tabs/runs.html',
           controller: 'ServicesRunsController',
+          controllerAs: 'RunsController',
           ncyBreadcrumb: {
             label: '{{$state.params.programId}}'
           }
@@ -83,6 +83,7 @@ angular.module(PKG.name + '.feature.services')
           url: '/history',
           templateUrl: '/assets/features/services/templates/tabs/history.html',
           controller: 'ServicesRunsController',
+          controllerAs: 'RunsController',
           ncyBreadcrumb: {
             parent: 'services.detail.runs',
             label: 'History'

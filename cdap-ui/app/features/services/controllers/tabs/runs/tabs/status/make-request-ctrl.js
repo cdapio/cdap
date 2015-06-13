@@ -1,17 +1,19 @@
 angular.module(PKG.name + '.feature.services')
   .controller('StatusMakeRequestController', function($scope, $state, MyDataSource) {
-    $scope.programId = $state.params.programId;
-    $scope.requestUrl = $state.params.requestUrl;
-    $scope.requestMethod = $state.params.requestMethod;
-    $scope.urlParams = [];
-    $scope.queryParams = [];
-    $scope.response = null;
-    $scope.postBody = {};
+    var vm = this;
+
+    vm.programId = $state.params.programId;
+    vm.requestUrl = $state.params.requestUrl;
+    vm.requestMethod = $state.params.requestMethod;
+    vm.urlParams = [];
+    vm.queryParams = [];
+    vm.response = null;
+    vm.postBody = {};
 
     var pattern = /\{([\w\-]+)\}/g,
         dataSrc = new MyDataSource($scope);
 
-    $scope.requestUrl.split('?')
+    vm.requestUrl.split('?')
       .forEach(function(item, index) {
         var patternMatch;
         if (index === 0) {
@@ -20,7 +22,7 @@ angular.module(PKG.name + '.feature.services')
             .forEach(function(item) {
               if (item.length === 0) { return;}
               patternMatch = item.match(pattern);
-              $scope.urlParams.push({
+              vm.urlParams.push({
                 /* If the url param matches the pattern {param1}
                     then add that as key,
                     otherwise mark key as null
@@ -49,13 +51,13 @@ angular.module(PKG.name + '.feature.services')
               // In the latter case we still need to include the query
               // param 'aggregate' to be a static value
               if (angular.isArray(pat)) {
-                $scope.queryParams.push({
+                vm.queryParams.push({
                   key: pat[0].substr(1, (pat[0].length - 2)),
                   value: pat[0]
                 });
               } else {
                 keyValArr = item.split('=');
-                $scope.queryParams.push({
+                vm.queryParams.push({
                   key: keyValArr[0],
                   value: keyValArr[1]
                 });
@@ -64,34 +66,34 @@ angular.module(PKG.name + '.feature.services')
         }
       });
 
-    $scope.makeRequest = function() {
+    vm.makeRequest = function() {
       var compiledUrl = '/apps/' +
         $state.params.appId + '/services/' +
         $state.params.programId + '/methods';
 
-      angular.forEach($scope.urlParams, function(param) {
+      angular.forEach(vm.urlParams, function(param) {
         compiledUrl = compiledUrl + '/' + param.value;
       });
 
-      angular.forEach($scope.queryParams, function(param, index) {
+      angular.forEach(vm.queryParams, function(param, index) {
         compiledUrl += (index === 0 ? '?': '&') +
                         param.key + '=' + encodeURIComponent(param.value);
       });
 
       var requestObj = {
         _cdapNsPath: compiledUrl,
-        method: $scope.requestMethod.toUpperCase()
+        method: vm.requestMethod.toUpperCase()
       };
 
-      if ($scope.requestMethod === 'POST' || $scope.requestMethod === 'PUT') {
+      if (vm.requestMethod === 'POST' || vm.requestMethod === 'PUT') {
         angular.extend(requestObj, {
-          body: $scope.postBody
+          body: vm.postBody
         });
       }
 
       dataSrc.request(requestObj)
         .then(function(res) {
-          $scope.response = res;
+          vm.response = res;
         });
     };
 
@@ -99,7 +101,7 @@ angular.module(PKG.name + '.feature.services')
     $scope.$watch('urlParams', resetResponse, true);
 
     function resetResponse() {
-      $scope.response = null;
+      vm.response = null;
     }
 
 
