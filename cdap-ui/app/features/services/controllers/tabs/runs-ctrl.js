@@ -1,17 +1,20 @@
 angular.module(PKG.name + '.feature.services')
   .controller('ServicesRunsController', function($scope, $filter, $state, rRuns) {
     var fFilter = $filter('filter');
-    $scope.runs = rRuns;
+    this.runs = rRuns;
 
     if ($state.params.runid) {
       var match = fFilter(rRuns, {runid: $state.params.runid});
       if (match.length) {
-        $scope.runs.selected = match[0];
+        this.runs.selected = match[0];
+      } else {
+        $state.go('404');
+        return;
       }
     } else if (rRuns.length) {
-      $scope.runs.selected = rRuns[0];
+      this.runs.selected = rRuns[0];
     } else {
-      $scope.runs.selected = {
+      this.runs.selected = {
         runid: 'No Runs!'
       };
     }
@@ -21,12 +24,12 @@ angular.module(PKG.name + '.feature.services')
         return;
       } else {
         if (rRuns.length) {
-          $scope.runs.selected = rRuns[0];
+          this.runs.selected = rRuns[0];
         }
       }
-    });
+    }.bind(this));
 
-    $scope.tabs = [
+    this.tabs = [
       {
         title: 'Status',
         template: '/assets/features/services/templates/tabs/runs/tabs/status.html'
@@ -37,9 +40,9 @@ angular.module(PKG.name + '.feature.services')
       }
     ];
 
-    $scope.activeTab = $scope.tabs[0];
+    this.activeTab = this.tabs[0];
 
-    $scope.selectTab = function(tab) {
-      $scope.activeTab = tab;
+    this.selectTab = function(tab) {
+      this.activeTab = tab;
     };
   });

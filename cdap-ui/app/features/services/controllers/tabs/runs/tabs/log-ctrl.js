@@ -1,13 +1,13 @@
 angular.module(PKG.name + '.feature.services')
   .controller('ServicesRunDetailLogController', function($scope, $state, myServiceApi) {
 
-    $scope.logs = [];
+    this.logs = [];
 
     var params = {
       namespace: $state.params.namespace,
       appId: $state.params.appId,
       serviceId: $state.params.programId,
-      runId: $scope.runs.selected.runid,
+      runId: $scope.RunsController.runs.selected.runid,
       max: 50,
       scope: $scope
     };
@@ -15,7 +15,7 @@ angular.module(PKG.name + '.feature.services')
     myServiceApi.logs(params)
       .$promise
       .then(function (res) {
-        $scope.logs = res;
-      });
+        this.logs = res;
+      }.bind(this));
 
   });
