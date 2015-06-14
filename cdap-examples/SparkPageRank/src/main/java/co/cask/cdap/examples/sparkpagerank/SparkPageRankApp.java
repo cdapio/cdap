@@ -179,11 +179,12 @@ public class SparkPageRankApp extends AbstractApplication {
    */
   public static final class TotalPagesHandler extends AbstractHttpServiceHandler {
 
+    public static final String TOTAL_PAGES_PATH = "total";
 
     @UseDataSet("rankscount")
     private ObjectStore<Integer> store;
 
-    @Path("total/{pr}")
+    @Path(TOTAL_PAGES_PATH + "/{pr}")
     @GET
     public void centers(HttpServiceRequest request, HttpServiceResponder responder,
                         @PathParam("pr") String pageRank) {
