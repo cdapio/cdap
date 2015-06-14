@@ -18,19 +18,28 @@ package co.cask.cdap.examples.sparkpagerank;
 
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
+import co.cask.cdap.api.mapreduce.AbstractMapReduce;
+import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
 
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -44,6 +53,7 @@ public class SparkPageRankApp extends AbstractApplication {
 
   public static final String RANKS_SERVICE_NAME = "RanksService";
   public static final String GOOGLE_TYPE_PR_SERVICE_NAME = "GoogleTypePR";
+  public static final String TOTAL_PAGES_PR_SERVICE_NAME = "TotalPagesPR";
   public static final String BACKLINK_URL_STREAM = "backlinkURLStream";
 
   @Override
@@ -57,21 +67,45 @@ public class SparkPageRankApp extends AbstractApplication {
     // Run a Spark program on the acquired data
     addSpark(new SparkPageRankSpecification());
 
+    // Runs MapReduce program on data emitted by Spark program
+    addMapReduce(new RanksCounter());
+
+    // Runs Spark followed by a MapReduce in a Workflow
+    addWorkflow(new PageRankWorkflow());
+
     // Retrieve the processed data using a Service
     addService(RANKS_SERVICE_NAME, new RanksServiceHandler());
 
     // Service which converts calculated pageranks to Google type page ranks
     addService(GOOGLE_TYPE_PR_SERVICE_NAME, new GoogleTypePRHandler());
 
+    // Service which gives the total number of pages with a given page rank
+    addService(TOTAL_PAGES_PR_SERVICE_NAME, new TotalPagesHandler());
+
     // Store input and processed data in ObjectStore Datasets
     try {
       ObjectStores.createObjectStore(getConfigurer(), "ranks", Integer.class);
+      ObjectStores.createObjectStore(getConfigurer(), "rankscount", Integer.class);
     } catch (UnsupportedTypeException e) {
       // This exception is thrown by ObjectStore if its parameter type cannot be
       // (de)serialized (for example, if it is an interface and not a class, then there is
       // no auto-magic way deserialize an object.) In this case that will not happen
       // because String and Double are actual classes.
       throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * PageRankWorkflow which connect a Spark program followed by a MapReduce
+   */
+  public static class PageRankWorkflow extends AbstractWorkflow {
+
+    @Override
+    public void configure() {
+      setName("PageRankWorkflow");
+      setDescription("Runs SparkPageRankProgram followed by RanksCounter MapReduce");
+      addSpark("SparkPageRankProgram");
+      addMapReduce("RanksCounter");
     }
   }
 
@@ -137,6 +171,81 @@ public class SparkPageRankApp extends AbstractApplication {
     @GET
     public void transform(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("pr") String pr) {
       responder.sendString(String.valueOf((int) (Math.round(Double.parseDouble(pr) * 10))));
+    }
+  }
+
+  /**
+   * Total Pages Handler which gives the total number of a pages which has then given page rank
+   */
+  public static final class TotalPagesHandler extends AbstractHttpServiceHandler {
+
+
+    @UseDataSet("rankscount")
+    private ObjectStore<Integer> store;
+
+    @Path("total/{pr}")
+    @GET
+    public void centers(HttpServiceRequest request, HttpServiceResponder responder,
+                        @PathParam("pr") String pageRank) {
+
+      Integer totalPages = store.read(Bytes.toBytes(Integer.parseInt(pageRank)));
+      if (totalPages == null) {
+        responder.sendString(HttpURLConnection.HTTP_NO_CONTENT,
+                             String.format("No pages found with pr: %s", pageRank), Charsets.UTF_8);
+      } else {
+        responder.sendString(HttpURLConnection.HTTP_OK, totalPages.toString(), Charsets.UTF_8);
+      }
+    }
+  }
+
+  /**
+   * MapReduce job which counts the total number of pages for every unique page rank
+   */
+  public static class RanksCounter extends AbstractMapReduce {
+
+    @Override
+    public void configure() {
+      setName("RanksCounter");
+      setInputDataset("ranks");
+      setOutputDataset("rankscount");
+    }
+
+    @Override
+    public void beforeSubmit(MapReduceContext context) throws Exception {
+      Job job = context.getHadoopJob();
+      job.setMapperClass(Emitter.class);
+      job.setReducerClass(Counter.class);
+      job.setNumReduceTasks(1);
+    }
+
+    /**
+     * A mapper that emits each url's page rank with a value of 1.
+     */
+    public static class Emitter extends Mapper<byte[], Integer, IntWritable, IntWritable> {
+
+      private static final IntWritable ONE = new IntWritable(1);
+
+      @Override
+      protected void map(byte[] key, Integer value, Context context)
+        throws IOException, InterruptedException {
+        context.write(new IntWritable(value), ONE);
+      }
+    }
+
+    /**
+     * A reducer that sums up the counts for each key.
+     */
+    public static class Counter extends Reducer<IntWritable, IntWritable, byte[], Integer> {
+
+      @Override
+      public void reduce(IntWritable key, Iterable<IntWritable> values, Context context)
+        throws IOException, InterruptedException {
+        int sum = 0;
+        for (IntWritable value : values) {
+          sum += value.get();
+        }
+        context.write(Bytes.toBytes(key.get()), sum);
+      }
     }
   }
 }
