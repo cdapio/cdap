@@ -26,6 +26,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext;
 import co.cask.cdap.internal.app.runtime.spark.inmemory.InMemorySparkContextBuilder;
+import co.cask.cdap.internal.app.runtime.spark.serialization.SerializableServiceDiscoverer;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import com.google.common.base.Throwables;
@@ -86,12 +87,15 @@ public abstract class AbstractSparkContextBuilder {
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
 
+    SerializableServiceDiscoverer serializableServiceDiscoverer =
+      injector.getInstance(SerializableServiceDiscoverer.class);
+
     // Creating Spark job context
     SparkSpecification sparkSpec = program.getApplicationSpecification().getSpark().get(program.getName());
     BasicSparkContext context =
       new BasicSparkContext(program, RunIds.fromString(runId), runtimeArguments, appSpec.getDatasets().keySet(),
                             sparkSpec, logicalStartTime, workflowBatch, metricsCollectionService,
-                            datasetFramework, discoveryServiceClient, streamAdmin);
+                            datasetFramework, discoveryServiceClient, streamAdmin, serializableServiceDiscoverer);
 
     // propagating tx to all txAware guys
     // The tx is committed or aborted depending upon the job success by the ProgramRunner and DatasetRecordWriter

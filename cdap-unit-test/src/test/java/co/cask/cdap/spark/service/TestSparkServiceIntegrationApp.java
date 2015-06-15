@@ -89,8 +89,7 @@ public class TestSparkServiceIntegrationApp extends AbstractApplication {
           BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
           String squaredVale = reader.readLine();
           Closeables.closeQuietly(reader);
-          return new Tuple2<>(Bytes.toBytes(String.valueOf(num)),
-                                            Bytes.toBytes(squaredVale));
+          return new Tuple2<>(Bytes.toBytes(String.valueOf(num)), Bytes.toBytes(squaredVale));
         }
       });
       context.writeToDataset(resultRDD, "result", byte[].class, byte[].class);

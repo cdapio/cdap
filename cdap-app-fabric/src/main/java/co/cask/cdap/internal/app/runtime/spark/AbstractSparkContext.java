@@ -74,7 +74,7 @@ abstract class AbstractSparkContext implements SparkContext {
   private final SparkConf sparkConf;
 
   public AbstractSparkContext(BasicSparkContext basicSparkContext) {
-    hConf = loadHConf();
+    this.hConf = loadHConf();
     this.basicSparkContext = basicSparkContext;
     this.logicalStartTime = basicSparkContext.getLogicalStartTime();
     this.spec = basicSparkContext.getSpecification();

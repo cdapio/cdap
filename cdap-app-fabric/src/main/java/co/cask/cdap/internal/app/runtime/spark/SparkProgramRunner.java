@@ -33,6 +33,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.spark.serialization.SerializableServiceDiscoverer;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
@@ -67,12 +68,14 @@ public class SparkProgramRunner implements ProgramRunner {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final StreamAdmin streamAdmin;
   private final Store store;
+  private final SerializableServiceDiscoverer serializableServiceDiscoverer;
 
   @Inject
   public SparkProgramRunner(DatasetFramework datasetFramework, CConfiguration cConf,
                             MetricsCollectionService metricsCollectionService, Configuration hConf,
                             TransactionSystemClient txSystemClient, LocationFactory locationFactory,
-                            DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin, Store store) {
+                            DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin, Store store,
+                            SerializableServiceDiscoverer serializableServiceDiscoverer) {
     this.hConf = hConf;
     this.datasetFramework = datasetFramework;
     this.cConf = cConf;
@@ -82,6 +85,7 @@ public class SparkProgramRunner implements ProgramRunner {
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamAdmin = streamAdmin;
     this.store = store;
+    this.serializableServiceDiscoverer = serializableServiceDiscoverer;
   }
 
   @Override
@@ -118,7 +122,8 @@ public class SparkProgramRunner implements ProgramRunner {
                                                             appSpec.getDatasets().keySet(), spec,
                                                             logicalStartTime, workflowBatch,
                                                             metricsCollectionService, datasetFramework,
-                                                            discoveryServiceClient, streamAdmin);
+                                                            discoveryServiceClient, streamAdmin,
+                                                            serializableServiceDiscoverer);
 
     LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
 
