@@ -86,5 +86,11 @@ for i in cdap-ui cdap-docs eclipse idea lxterminal ; do
 done
 echo '@xterm -e "cat /etc/welcome.txt; bash -l"' >> /etc/xdg/lxsession/LXDE/autostart
 
+# Customize look and feel
+sed -i \
+    -e 's/wallpaper_mode=.*/wallpaper_mode=0/' \
+    -e 's/desktop_bg=.*/desktop_bg=#7f7f7f/' \
+  /usr/share/lxde/pcmanfm/LXDE.conf
+
 # Fix permissions
 chown -R cdap:cdap ~cdap
