@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.workflow.ValueWithTime;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -31,7 +30,7 @@ import javax.annotation.Nullable;
 public class BasicWorkflowToken implements WorkflowToken {
   private Map<String, Map<String, Long>> mapReduceCounters;
 
-  private Map<String, WorkflowTokenValue> keyTokenValue = Maps.newHashMap();
+  private Map<String, WorkflowTokenValue> tokenValueMap = Maps.newHashMap();
 
   private String nodeName = null;
 
@@ -42,41 +41,47 @@ public class BasicWorkflowToken implements WorkflowToken {
   @Override
   public void setValue(String key, String value) {
     Preconditions.checkNotNull(nodeName, "Node name cannot be null.");
-    WorkflowTokenValue tokenValue = keyTokenValue.get(key);
+    WorkflowTokenValue tokenValue = tokenValueMap.get(key);
     if (tokenValue == null) {
       tokenValue = new WorkflowTokenValue();
     }
     tokenValue.putValue(nodeName, value);
+    tokenValueMap.put(key, tokenValue);
   }
 
   @Nullable
   @Override
   public String getLastSetter(String key) {
-    if (!keyTokenValue.containsKey(key)) {
+    if (!tokenValueMap.containsKey(key)) {
       return null;
     }
 
-    return keyTokenValue.get(key).getLastSetter();
+    return tokenValueMap.get(key).getLastSetter();
   }
 
   @Nullable
   @Override
   public String getValue(String key) {
-    if (!keyTokenValue.containsKey(key)) {
+    if (!tokenValueMap.containsKey(key)) {
       return null;
     }
 
-    return keyTokenValue.get(key).getValue();
+    return tokenValueMap.get(key).getValue();
   }
 
   @Nullable
   @Override
-  public Map<String, ValueWithTime> getAllValues(String key) {
-    if (!keyTokenValue.containsKey(key)) {
-      return null;
+  public String getValue(String key, String nodeName) {
+    return getAllValues(key).get(nodeName);
+  }
+
+  @Override
+  public Map<String, String> getAllValues(String key) {
+    if (!tokenValueMap.containsKey(key)) {
+      return ImmutableMap.of();
     }
 
-    return keyTokenValue.get(key).getAllValues();
+    return tokenValueMap.get(key).getAllValues();
   }
 
   @Nullable

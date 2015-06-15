@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.workflow.ValueWithTime;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 import java.util.Map;
@@ -28,12 +28,12 @@ import javax.annotation.Nullable;
  */
 final class WorkflowTokenValue {
 
-  private final Map<String, ValueWithTime> nodeTokenValue = Maps.newHashMap();
+  private final Map<String, String> nodeTokenValue = Maps.newHashMap();
 
-  private String lastSetterNode = null;
+  private String lastSetterNode;
 
   void putValue(String nodeName, String value) {
-    nodeTokenValue.put(nodeName, new ValueWithTime(value, System.currentTimeMillis()));
+    nodeTokenValue.put(nodeName, value);
     lastSetterNode = nodeName;
   }
 
@@ -47,11 +47,11 @@ final class WorkflowTokenValue {
     if (!nodeTokenValue.containsKey(lastSetterNode)) {
       return null;
     }
-    return nodeTokenValue.get(lastSetterNode).getValue();
+    return nodeTokenValue.get(lastSetterNode);
   }
 
-  Map<String, ValueWithTime> getAllValues() {
-    return nodeTokenValue;
+  Map<String, String> getAllValues() {
+    return ImmutableMap.copyOf(nodeTokenValue);
   }
 }
 

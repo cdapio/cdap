@@ -26,7 +26,8 @@ public interface WorkflowToken {
 
   /**
    * Put the specified key-value entry in the {@link WorkflowToken}.
-   * The value is stored against the node at which it is being added.
+   * The token may store additional information about the context in which
+   * this key is being set, for example, the unique name of the workflow node.
    * @param key   the key representing the entry
    * @param value the value for the key
    */
@@ -53,13 +54,21 @@ public interface WorkflowToken {
   String getValue(String key);
 
   /**
+   * Get the value for the key set by particular node.
+   * @param key the key to be searched for
+   * @param nodeName the unique name of the node
+   * @return the value set for the key by nodeName
+   */
+  @Nullable
+  String getValue(String key, String nodeName);
+
+  /**
    * Same key can be added to the WorkflowToken by multiple nodes.
    * This method returns the map of node name to the value which was set by the node for this key.
    * @param key the key to be searched
    * @return the map of node name to the value
    */
-  @Nullable
-  Map<String, ValueWithTime> getAllValues(String key);
+  Map<String, String> getAllValues(String key);
 
   /**
    * Get the Hadoop counters from the previous MapReduce program in the Workflow. The method returns null
