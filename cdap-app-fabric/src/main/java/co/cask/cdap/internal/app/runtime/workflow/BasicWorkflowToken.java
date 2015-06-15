@@ -44,9 +44,9 @@ public class BasicWorkflowToken implements WorkflowToken {
     WorkflowTokenValue tokenValue = tokenValueMap.get(key);
     if (tokenValue == null) {
       tokenValue = new WorkflowTokenValue();
+      tokenValueMap.put(key, tokenValue);
     }
     tokenValue.putValue(nodeName, value);
-    tokenValueMap.put(key, tokenValue);
   }
 
   @Nullable
