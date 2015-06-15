@@ -25,13 +25,13 @@ public final class MetricQueryResult {
   private final long startTime;
   private final long endTime;
   private final TimeSeries[] series;
-  private final int resolution;
+  private final String resolution;
 
   public MetricQueryResult(long startTime, long endTime, TimeSeries[] series, int resolution) {
     this.startTime = startTime;
     this.endTime = endTime;
     this.series = series;
-    this.resolution = resolution;
+    this.resolution = resolution + "s";
   }
 
   public long getStartTime() {
@@ -46,7 +46,7 @@ public final class MetricQueryResult {
     return series;
   }
 
-  public int getResolution() {
+  public String getResolution() {
     return resolution;
   }
 
