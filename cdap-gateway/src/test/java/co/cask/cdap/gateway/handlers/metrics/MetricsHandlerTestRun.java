@@ -588,9 +588,6 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     queryResult = post(url, MetricQueryResult.class);
     Assert.assertEquals(Integer.MAX_VALUE + "s", queryResult.getResolution());
 
-    // Have a batched query and ensure the resolution is correct
-
-
   }
 
 
