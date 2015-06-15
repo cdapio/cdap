@@ -90,6 +90,11 @@ public class BasicWorkflowToken implements WorkflowToken {
     return mapReduceCounters;
   }
 
+  @Override
+  public boolean containsKey(String key) {
+    return tokenValueMap.containsKey(key);
+  }
+
   public void setMapReduceCounters(Map<String, Map<String, Long>> mapReduceCounters) {
     this.mapReduceCounters = copyHadoopCounters(mapReduceCounters);
   }

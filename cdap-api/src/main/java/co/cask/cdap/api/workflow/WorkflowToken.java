@@ -44,11 +44,16 @@ public interface WorkflowToken {
   String getLastSetter(String key);
 
   /**
-   * Get the most recent value for the key.
-   * Multiple nodes in the Workflow can add the same key. In this case, the value that was most
-   * recently added for the key in the {@link WorkflowToken} will be returned.
+   * Get the most recent value for the key. Return value does not
+   * necessarily indicate that the {@link WorkflowToken} contains no
+   * value for the key; it's also possible that the value of the key
+   * was explicitly set to {@code null}. The {@link #containsKey containsKey}
+   * operation may be used to distinguish these two cases.
+   * Multiple nodes in the Workflow can add the same key. In this case,
+   * the value that was most recently added for the key in the {@link WorkflowToken}
+   * will be returned.
    * @param key the key to be searched
-   * @return the most recent value that was set for the key
+   * @return the most recent value that was set for the key.
    */
   @Nullable
   String getValue(String key);
@@ -77,4 +82,11 @@ public interface WorkflowToken {
    */
   @Nullable
   Map<String, Map<String, Long>> getMapReduceCounters();
+
+  /**
+   * Return true if the {@link WorkflowToken} contains the specified key.
+   * @param key the key to be tested for the presence in the {@link WorkflowToken}
+   * @return the result of the test
+   */
+  boolean containsKey(String key);
 }

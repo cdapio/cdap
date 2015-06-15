@@ -44,9 +44,6 @@ final class WorkflowTokenValue {
 
   @Nullable
   String getValue() {
-    if (!nodeTokenValue.containsKey(lastSetterNode)) {
-      return null;
-    }
     return nodeTokenValue.get(lastSetterNode);
   }
 
