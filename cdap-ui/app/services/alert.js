@@ -3,10 +3,10 @@ angular.module(PKG.name+'.services')
     var __list = [];
     function alert(item) {
       if (angular.isObject(item) && Object.keys(item).length) {
-        if (__list.length > 0 && __list[__list.length - 1].content === item.content && __list[__list.length-1].title === item.title) {
+        if (__list.length > 0 && __list[0].content === item.content && __list[0].title === item.title) {
           __list[__list.length - 1].count++;
         } else {
-          __list.push({
+          __list.unshift({
             content: item.content,
             title: item.title,
             count: 1
