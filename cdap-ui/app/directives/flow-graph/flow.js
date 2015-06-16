@@ -32,10 +32,10 @@ module.controller('myFlowController', function($scope) {
 
 });
 
-module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamService) {
+module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamService, $location) {
   return angular.extend({
     link: function (scope, elem, attr) {
-      scope.render = genericRender.bind(null, scope, $filter);
+      scope.render = genericRender.bind(null, scope, $filter, $location);
       scope.parentSelector = attr.parent;
 
       /**
@@ -195,6 +195,10 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
           .show();
       };
 
+      scope.arrowheadRule = function(edge) {
+        return false;
+      };
+
       /**
        * Draws a leaf shape and positions it next to the parent svg.
        */
@@ -251,10 +255,11 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
   }, baseDirective);
 });
 
-module.directive('myWorkflowGraph', function ($filter) {
+module.directive('myWorkflowGraph', function ($filter, $location) {
   return angular.extend({
     link: function (scope) {
-      scope.render = genericRender.bind(null, scope, $filter);
+      scope.render = genericRender.bind(null, scope, $filter, $location);
+
       var defaultRadius = 50;
       scope.getShapes = function() {
         var shapes = {};
@@ -423,11 +428,19 @@ module.directive('myWorkflowGraph', function ($filter) {
         }
 
       };
+
+      scope.arrowheadRule = function(edge) {
+        if (edge.targetType === 'JOINNODE' || edge.targetType === 'FORKNODE') {
+          return false;
+        } else {
+          return true;
+        }
+      };
     }
   }, baseDirective);
 });
 
-function genericRender(scope) {
+function genericRender(scope, filter, location) {
   var nodes = scope.model.nodes;
   var edges = scope.model.edges;
 
@@ -445,7 +458,7 @@ function genericRender(scope) {
 
   // First set nodes and edges.
   angular.forEach(nodes, function (node) {
-    var nodeLabel = "";
+    var nodeLabel = '';
     if (node.label && node.label.length) {
       nodeLabel = node.label.length > 8? node.label.substr(0,5) + '...': node.label;
     } else {
@@ -457,10 +470,15 @@ function genericRender(scope) {
   });
 
   angular.forEach(edges, function (edge) {
-    g.setEdge(edge.sourceName, edge.targetName);
+    if (scope.arrowheadRule(edge)) {
+      g.setEdge(edge.sourceName, edge.targetName);
+    } else {
+      g.setEdge(edge.sourceName, edge.targetName, { arrowhead: 'undirected' });
+    }
   });
 
   angular.extend(renderer.shapes(), scope.getShapes());
+
   var selector = '';
   // Making the query to be more specific instead of doing
   // it under the entire DOM. This allows us to draw the diagram
@@ -544,6 +562,15 @@ function genericRender(scope) {
   renderer(d3.select(selector + ' g'), g);
 
   /**
+   * We need to specify the full URL for the arrowhead.
+   * http://stackoverflow.com/questions/19742805/angular-and-svg-filters
+   */
+  var paths = svgGroup.selectAll('g.edgePath > path.path');
+  angular.forEach(paths[0], function(p) {
+    p.attributes['marker-end'].nodeValue = 'url(' + location.absUrl() + p.attributes['marker-end'].nodeValue.substr(4);
+  });
+
+  /**
    * Handles showing tooltip on mouseover of node name.
    */
   scope.handleShowTip = scope.handleTooltip.bind(null, tip);
@@ -573,27 +600,20 @@ function genericRender(scope) {
     var svgWidth = svg.node().getBoundingClientRect().width;
     if (svgWidth - g.graph().width <= 0) {
       scope.currentScale = svg.width()/g.graph().width;
-
-      zoom.translate([0,0])
-          .scale(scope.currentScale)
-          .event(svg);
-      svg.attr('height', g.graph().height * initialScale + 40);
-
       scope.translateX = 0;
       scope.translateY = 0;
 
     } else {
       scope.translateX = (svgWidth - g.graph().width * initialScale) / 2;
       scope.translateY = 20;
-
-      zoom
-        .translate([scope.translateX, scope.translateY])
-        .scale(initialScale)
-        .event(svg);
-      svg.attr('height', g.graph().height * initialScale + 40);
-
       scope.currentScale = initialScale;
     }
+
+    zoom
+      .translate([scope.translateX, scope.translateY])
+      .scale(scope.currentScale)
+      .event(svg);
+    svg.attr('height', g.graph().height * initialScale + 40);
   };
 
   scope.centerImage();
