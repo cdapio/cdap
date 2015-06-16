@@ -34,7 +34,7 @@ angular.module(PKG.name+'.services')
    */
 
   .factory('MyDataSource', function ($log, $rootScope, caskWindowManager, mySocket,
-    MYSOCKET_EVENT, $q, $filter, myCdapUrl, MyPromise) {
+    MYSOCKET_EVENT, $q, $filter, myCdapUrl, MyPromise, MyAuthUser) {
 
     var instances = {}; // keyed by scopeid
 
@@ -69,6 +69,15 @@ angular.module(PKG.name+'.services')
         }
       }
 
+      // FIXME: There is a circular dependency and that is why
+      // myAuth.isAuthenticated is not used. There should be a better way to do this.
+      if ($rootScope.currentUser && $rootScope.currentUser.token) {
+        re.headers = {
+          Authorization: 'Bearer '+ $rootScope.currentUser.token,
+          'X-ApiKey': ''
+        };
+      }
+
       mySocket.send({
         action: 'poll-start',
         resource: re
@@ -89,6 +98,12 @@ angular.module(PKG.name+'.services')
           id: resource.id,
           json: resource.json,
           method: resource.method
+        };
+      }
+      if ($rootScope.currentUser && $rootScope.currentUser.token) {
+        re.headers = {
+          Authorization: 'Bearer '+ $rootScope.currentUser.token,
+          'X-ApiKey': ''
         };
       }
 
@@ -293,6 +308,12 @@ angular.module(PKG.name+'.services')
 
         if (resource.data) {
           generatedResource.body = resource.data;
+        }
+        if ($rootScope.currentUser && $rootScope.currentUser.token) {
+          generatedResource.headers = {
+            Authorization: 'Bearer '+ $rootScope.currentUser.token,
+            'X-ApiKey': ''
+          };
         }
 
         if (!resource.url) {
