@@ -20,7 +20,7 @@ import co.cask.cdap.api.data.format.RecordFormat;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.BadRequestException;
@@ -99,9 +99,9 @@ public final class StreamHandler extends AbstractHttpHandler {
 
   private final CConfiguration cConf;
   private final StreamAdmin streamAdmin;
-  private final MetricsCollector streamHandlerMetricsCollector;
+  private final MetricsContext streamHandlerMetricsContext;
 
-  private final LoadingCache<Id.Namespace, MetricsCollector> streamMetricsCollectors;
+  private final LoadingCache<Id.Namespace, MetricsContext> streamMetricsCollectors;
   private final ConcurrentStreamWriter streamWriter;
   private final long batchBufferThreshold;
   private final StreamBodyConsumerFactory streamBodyConsumerFactory;
@@ -123,12 +123,12 @@ public final class StreamHandler extends AbstractHttpHandler {
     this.sizeCollector = sizeCollector;
     this.batchBufferThreshold = cConf.getLong(Constants.Stream.BATCH_BUFFER_THRESHOLD);
     this.streamBodyConsumerFactory = new StreamBodyConsumerFactory();
-    this.streamHandlerMetricsCollector = metricsCollectionService.getCollector(getStreamHandlerMetricsContext());
+    this.streamHandlerMetricsContext = metricsCollectionService.getContext(getStreamHandlerMetricsContext());
     streamMetricsCollectors = CacheBuilder.newBuilder()
-      .build(new CacheLoader<Id.Namespace, MetricsCollector>() {
+      .build(new CacheLoader<Id.Namespace, MetricsContext>() {
         @Override
-        public MetricsCollector load(Id.Namespace namespaceId) {
-          return metricsCollectionService.getCollector(getStreamMetricsContext(namespaceId));
+        public MetricsContext load(Id.Namespace namespaceId) {
+          return metricsCollectionService.getContext(getStreamMetricsContext(namespaceId));
         }
       });
     StreamMetricsCollectorFactory metricsCollectorFactory = createStreamMetricsCollectorFactory();
@@ -299,9 +299,9 @@ public final class StreamHandler extends AbstractHttpHandler {
     return new StreamMetricsCollectorFactory() {
       @Override
       public StreamMetricsCollector createMetricsCollector(final Id.Stream streamId) {
-        MetricsCollector streamMetricsCollector = streamMetricsCollectors.getUnchecked(streamId.getNamespace());
-        final MetricsCollector childCollector =
-          streamMetricsCollector.childCollector(Constants.Metrics.Tag.STREAM, streamId.getId());
+        MetricsContext streamMetricsContext = streamMetricsCollectors.getUnchecked(streamId.getNamespace());
+        final MetricsContext childCollector =
+          streamMetricsContext.childContext(Constants.Metrics.Tag.STREAM, streamId.getId());
         return new StreamMetricsCollector() {
           @Override
           public void emitMetrics(long bytesWritten, long eventsWritten) {
@@ -396,7 +396,7 @@ public final class StreamHandler extends AbstractHttpHandler {
       @Override
       public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
         if (!executor.isShutdown()) {
-          streamHandlerMetricsCollector.increment("collect.async.reject", 1);
+          streamHandlerMetricsContext.increment("collect.async.reject", 1);
           r.run();
         }
       }

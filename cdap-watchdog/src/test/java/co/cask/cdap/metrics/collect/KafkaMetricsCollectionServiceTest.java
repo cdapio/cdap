@@ -107,7 +107,7 @@ public class KafkaMetricsCollectionServiceTest {
 
     // publish metrics for different context
     for (int i = 1; i <= 3; i++) {
-      collectionService.getCollector(ImmutableMap.of("tag", "" + i)).increment("processed", i);
+      collectionService.getContext(ImmutableMap.of("tag", "" + i)).increment("processed", i);
     }
 
     // Sleep to make sure metrics get published
@@ -158,7 +158,7 @@ public class KafkaMetricsCollectionServiceTest {
     TimeUnit.SECONDS.sleep(5);
 
     // public a metric
-    collectionService.getCollector(ImmutableMap.of("tag", "test")).increment("metric", 5);
+    collectionService.getContext(ImmutableMap.of("tag", "test")).increment("metric", 5);
 
     // Sleep to make sure metrics get published
     TimeUnit.SECONDS.sleep(2);

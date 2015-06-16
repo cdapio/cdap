@@ -20,7 +20,7 @@ import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.proto.MetricQueryResult;
@@ -60,15 +60,15 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
   private static void setupMetrics() throws Exception {
     // Adding metrics for app "WordCount1" in namespace "myspace", "WCount1" in "yourspace"
-    MetricsCollector collector =
-      collectionService.getCollector(getFlowletContext("myspace", "WordCount1", "WordCounter", "run1", "splitter"));
+    MetricsContext collector =
+      collectionService.getContext(getFlowletContext("myspace", "WordCount1", "WordCounter", "run1", "splitter"));
     collector.increment("reads", 1);
     collector.increment("writes", 1);
-    collector = collectionService.getCollector(getFlowletContext("yourspace", "WCount1", "WordCounter",
-                                                                 "run1", "splitter"));
+    collector = collectionService.getContext(getFlowletContext("yourspace", "WCount1", "WordCounter",
+                                                               "run1", "splitter"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(getFlowletContext("yourspace", "WCount1", "WCounter",
-                                                                 "run1", "splitter"));
+    collector = collectionService.getContext(getFlowletContext("yourspace", "WCount1", "WCounter",
+                                                               "run1", "splitter"));
     emitTs = System.currentTimeMillis();
     // we want to emit in two different seconds
     // todo : figure out why we need this
@@ -77,60 +77,60 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     TimeUnit.MILLISECONDS.sleep(2000);
     collector.increment("reads", 2);
 
-    collector = collectionService.getCollector(getFlowletContext("yourspace", "WCount1", "WCounter",
-                                                                 "run1", "counter"));
+    collector = collectionService.getContext(getFlowletContext("yourspace", "WCount1", "WCounter",
+                                                               "run1", "counter"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(getMapReduceTaskContext("yourspace", "WCount1", "ClassicWordCount",
-                                                                       MapReduceMetrics.TaskType.Mapper,
-                                                                       "run1", "task1"));
+    collector = collectionService.getContext(getMapReduceTaskContext("yourspace", "WCount1", "ClassicWordCount",
+                                                                     MapReduceMetrics.TaskType.Mapper,
+                                                                     "run1", "task1"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(
+    collector = collectionService.getContext(
       getMapReduceTaskContext("yourspace", "WCount1", "ClassicWordCount",
                               MapReduceMetrics.TaskType.Reducer, "run1", "task2"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(getFlowletContext("myspace", "WordCount1", "WordCounter",
-                                                                 "run1", "splitter"));
+    collector = collectionService.getContext(getFlowletContext("myspace", "WordCount1", "WordCounter",
+                                                               "run1", "splitter"));
     collector.increment("reads", 1);
     collector.increment("writes", 1);
 
-    collector = collectionService.getCollector(getFlowletContext("myspace", "WordCount1", "WordCounter",
-                                                                 "run1", "collector"));
+    collector = collectionService.getContext(getFlowletContext("myspace", "WordCount1", "WordCounter",
+                                                               "run1", "collector"));
     collector.increment("aa", 1);
     collector.increment("zz", 1);
     collector.increment("ab", 1);
 
-    collector = collectionService.getCollector(getAdapterContext("yourspace", "WCount1", "ClassicWordCount",
-                                                                 MapReduceMetrics.TaskType.Mapper,
-                                                                 "run1", "task1", "adapter1"));
+    collector = collectionService.getContext(getAdapterContext("yourspace", "WCount1", "ClassicWordCount",
+                                                               MapReduceMetrics.TaskType.Mapper,
+                                                               "run1", "task1", "adapter1"));
     collector.increment("areads", 3);
     collector.increment("awrites", 4);
 
-    collector = collectionService.getCollector(getAdapterContext("yourspace", "WCount1", "ClassicWordCount",
-                                                                 MapReduceMetrics.TaskType.Mapper,
-                                                                 "run2", "task1", "adapter1"));
+    collector = collectionService.getContext(getAdapterContext("yourspace", "WCount1", "ClassicWordCount",
+                                                               MapReduceMetrics.TaskType.Mapper,
+                                                               "run2", "task1", "adapter1"));
     collector.increment("areads", 3);
     collector.increment("awrites", 4);
 
-    collector = collectionService.getCollector(getWorkerAdapterContext("yourspace", "WCount1", "WorkerWordCount",
-                                                                       "run1", "task1", "adapter2"));
+    collector = collectionService.getContext(getWorkerAdapterContext("yourspace", "WCount1", "WorkerWordCount",
+                                                                     "run1", "task1", "adapter2"));
 
     collector.increment("workerreads", 5);
     collector.increment("workerwrites", 6);
 
-    collector = collectionService.getCollector(getWorkerAdapterContext("yourspace", "WCount1", "WorkerWordCount",
-                                                                       "run2", "task1", "adapter2"));
+    collector = collectionService.getContext(getWorkerAdapterContext("yourspace", "WCount1", "WorkerWordCount",
+                                                                     "run2", "task1", "adapter2"));
 
     collector.increment("workerreads", 5);
     collector.increment("workerwrites", 6);
 
     // also: user metrics
     Metrics userMetrics = new ProgramUserMetrics(
-      collectionService.getCollector(getFlowletContext("myspace", "WordCount1", "WordCounter",
-                                                       "run1", "splitter")));
+      collectionService.getContext(getFlowletContext("myspace", "WordCount1", "WordCounter",
+                                                     "run1", "splitter")));
     userMetrics.count("reads", 1);
     userMetrics.count("writes", 2);
 
-    collector = collectionService.getCollector(new HashMap<String, String>());
+    collector = collectionService.getContext(new HashMap<String, String>());
     collector.increment("resources.total.storage", 10);
 
     // need a better way to do this

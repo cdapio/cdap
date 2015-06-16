@@ -18,7 +18,7 @@ package co.cask.cdap.app.metrics;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 
 import java.io.Externalizable;
@@ -34,25 +34,25 @@ import java.io.ObjectOutput;
 public class ProgramUserMetrics implements Metrics, Externalizable {
   private static final long serialVersionUID = -5913108632034346101L;
 
-  private final MetricsCollector metricsCollector;
+  private final MetricsContext metricsContext;
 
   /** For serde purposes only */
   public ProgramUserMetrics() {
-    metricsCollector = null;
+    metricsContext = null;
   }
 
-  public ProgramUserMetrics(MetricsCollector metricsCollector) {
-    this.metricsCollector = metricsCollector.childCollector(Constants.Metrics.Tag.SCOPE, "user");
+  public ProgramUserMetrics(MetricsContext metricsContext) {
+    this.metricsContext = metricsContext.childContext(Constants.Metrics.Tag.SCOPE, "user");
   }
 
   @Override
   public void count(String metricName, int delta) {
-    metricsCollector.increment(metricName, delta);
+    metricsContext.increment(metricName, delta);
   }
 
   @Override
   public void gauge(String metricName, long value) {
-    metricsCollector.gauge(metricName, value);
+    metricsContext.gauge(metricName, value);
   }
 
   @Override

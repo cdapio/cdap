@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
@@ -91,9 +91,9 @@ public class HttpHandlerGeneratorTest {
 
   @Test
   public void testHttpHandlerGenerator() throws Exception {
-    MetricsCollector noOpsMetricsCollector =
-      new NoOpMetricsCollectionService().getCollector(new HashMap<String, String>());
-    HttpHandlerFactory factory = new HttpHandlerFactory("/prefix", noOpsMetricsCollector);
+    MetricsContext noOpsMetricsContext =
+      new NoOpMetricsCollectionService().getContext(new HashMap<String, String>());
+    HttpHandlerFactory factory = new HttpHandlerFactory("/prefix", noOpsMetricsContext);
 
     HttpHandler httpHandler = factory.createHttpHandler(
       TypeToken.of(MyHttpHandler.class), new AbstractDelegatorContext<MyHttpHandler>() {

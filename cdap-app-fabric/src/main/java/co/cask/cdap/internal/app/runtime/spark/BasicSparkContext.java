@@ -20,7 +20,7 @@ import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
@@ -94,7 +94,7 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
     this.streamAdmin = streamAdmin;
     SerializableServiceDiscoverer.setDiscoveryServiceClient(getDiscoveryServiceClient());
     this.serializableServiceDiscoverer = new SerializableServiceDiscoverer(getProgram());
-    SparkUserMetrics.setMetricsCollector(getProgramMetrics());
+    SparkUserMetrics.setMetricsContext(getProgramMetrics());
     this.userMetrics = new SparkUserMetrics();
     this.loggingContext = new SparkLoggingContext(getNamespaceId(), getApplicationId(), getProgramName(),
                                                   getRunId().getId());
@@ -153,7 +153,7 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
     throw new IllegalStateException("Reading stream is not supported here");
   }
 
-  private static MetricsCollector getMetricCollector(MetricsCollectionService service, Program program, String runId) {
+  private static MetricsContext getMetricCollector(MetricsCollectionService service, Program program, String runId) {
     if (service == null) {
       return null;
     }
@@ -161,7 +161,7 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
     // todo: use proper spark instance id. For now we have to emit smth for test framework's waitFor metric to work
     tags.put(Constants.Metrics.Tag.INSTANCE_ID, "0");
 
-    return service.getCollector(tags);
+    return service.getContext(tags);
   }
 
   @Override

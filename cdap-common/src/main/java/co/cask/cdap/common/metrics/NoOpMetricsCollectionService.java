@@ -17,7 +17,7 @@
 package co.cask.cdap.common.metrics;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import com.google.common.util.concurrent.AbstractIdleService;
 
 import java.util.Map;
@@ -38,8 +38,8 @@ public class NoOpMetricsCollectionService extends AbstractIdleService implements
   }
 
   @Override
-  public MetricsCollector getCollector(Map<String, String> tags) {
-    return new MetricsCollector() {
+  public MetricsContext getContext(Map<String, String> tags) {
+    return new MetricsContext() {
       @Override
       public void increment(String metricName, long value) {
         // no-op
@@ -51,12 +51,12 @@ public class NoOpMetricsCollectionService extends AbstractIdleService implements
       }
 
       @Override
-      public MetricsCollector childCollector(Map<String, String> tags) {
+      public MetricsContext childContext(Map<String, String> tags) {
         return this;
       }
 
       @Override
-      public MetricsCollector childCollector(String tagName, String tagValue) {
+      public MetricsContext childContext(String tagName, String tagValue) {
         return this;
       }
     };

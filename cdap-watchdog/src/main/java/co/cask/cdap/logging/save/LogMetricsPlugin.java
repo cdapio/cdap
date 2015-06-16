@@ -17,7 +17,7 @@
 package co.cask.cdap.logging.save;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.appender.kafka.KafkaTopic;
@@ -88,7 +88,7 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
 
     LoggingContext context = event.getLoggingContext();
     Map<String, String> tags = LoggingContextHelper.getMetricsTags(context);
-    MetricsCollector collector = metricsCollectionService.getCollector(tags);
+    MetricsContext collector = metricsCollectionService.getContext(tags);
 
     String metricName = getMetricName(tags.get(Constants.Metrics.Tag.NAMESPACE),
                                       event.getLogEvent().getLevel().toString().toLowerCase());
