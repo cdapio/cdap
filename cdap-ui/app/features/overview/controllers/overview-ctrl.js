@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.overview').controller('OverviewCtrl',
-function ($scope, $state, myLocalStorage, MY_CONFIG, Widget, MyMetricsQueryHelper, myHelpers, MyChartHelpers, MyDataSource) {
+function ($scope, $state, myLocalStorage, MY_CONFIG, Widget, MyMetricsQueryHelper, myHelpers, MyChartHelpers, MyDataSource, EventPipe) {
 
   var dataSrc = new MyDataSource($scope);
   if(!$state.params.namespace) {
@@ -33,7 +33,8 @@ function ($scope, $state, myLocalStorage, MY_CONFIG, Widget, MyMetricsQueryHelpe
   dataSrc.poll({
     _cdapPath: '/system/services/status',
     interval: 10000
-  }, function(res) {
+  },
+  function success(res) {
     var serviceStatuses = Object.keys(res).map(function(value) {
       return res[value];
     });
@@ -46,7 +47,15 @@ function ($scope, $state, myLocalStorage, MY_CONFIG, Widget, MyMetricsQueryHelpe
     if (serviceStatuses.indexOf('NOTOK') === -1) {
       this.systemStatus = 'green';
     }
-  }.bind(this));
+  }.bind(this),
+  function error(res) {
+    if (res.auth_uri) {
+      EventPipe.emit('backendDown', 'Invalid Auth Token. Please refresh to re-authenticate.');
+    } else {
+      EventPipe.emit('backendDown');
+    }
+  }
+  );
 
   this.wdgts = [];
   // type field is overridden by what is rendered in view because we do not use widget.getPartial()
