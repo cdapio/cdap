@@ -96,8 +96,10 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
    * logout
    */
   this.logout = function () {
-    persist(null);
-    $rootScope.$broadcast(MYAUTH_EVENT.logoutSuccess);
+    if (this.currentUser){
+      persist(null);
+      $rootScope.$broadcast(MYAUTH_EVENT.logoutSuccess);
+    }
   };
 
   /**
