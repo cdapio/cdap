@@ -97,12 +97,7 @@ public class KafkaMetricsCollectionServiceTest {
 
     MetricsCollectionService collectionService = new KafkaMetricsCollectionService(kafkaClient, "metrics",
                                                                                    KafkaPublisher.Ack.FIRE_AND_FORGET,
-                                                                                   metricRecordDatumWriter) {
-      @Override
-      protected boolean isPublishMetaMetrics() {
-        return false;
-      }
-    };
+                                                                                   metricRecordDatumWriter);
     collectionService.startAndWait();
 
     // publish metrics for different context
@@ -141,12 +136,7 @@ public class KafkaMetricsCollectionServiceTest {
 
     MetricsCollectionService collectionService = new KafkaMetricsCollectionService(kafkaClient, "metrics",
                                                                                    KafkaPublisher.Ack.FIRE_AND_FORGET,
-                                                                                   metricRecordDatumWriter) {
-      @Override
-      protected boolean isPublishMetaMetrics() {
-        return false;
-      }
-    };
+                                                                                   metricRecordDatumWriter);
     collectionService.startAndWait();
 
     // start the kafka server
