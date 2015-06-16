@@ -354,6 +354,24 @@ module.directive('myWorkflowGraph', function ($filter) {
           return shapeSvg;
         };
 
+        shapes.forkjoin = function(parent, bbox, node) {
+
+          parent.select('.label')
+            .attr('style', 'display: none;');
+
+          var shapeSvg = parent.insert('circle', ':first-child')
+            .attr('x', -bbox.width / 2)
+            .attr('y', -bbox.height / 2)
+            .attr('r', 0);
+
+
+          node.intersect = function(p) {
+            return dagreD3.intersect.circle(node, 1, p);
+          };
+
+          return shapeSvg;
+        };
+
         return shapes;
       };
 
@@ -365,10 +383,10 @@ module.directive('myWorkflowGraph', function ($filter) {
             shapeName = 'job';
             break;
           case 'FORKNODE':
-            shapeName = 'circle';
+            shapeName = 'forkjoin';
             break;
           case 'JOINNODE':
-            shapeName = 'circle';
+            shapeName = 'forkjoin';
             break;
           case 'START':
             shapeName = 'start';
@@ -503,6 +521,9 @@ function genericRender(scope) {
     if (scope.currentScale > 2.5) {
       scope.currentScale = 2.5;
     }
+
+    scope.translateX = scope.translateX - (scope.translateX * 0.1);
+    scope.translateY = scope.translateY - (scope.translateY * 0.1);
 
     var arr = [scope.translateX, scope.translateY];
     svgGroup.attr('transform', 'translate(' + arr + ')' + ' scale(' + scope.currentScale + ')');
