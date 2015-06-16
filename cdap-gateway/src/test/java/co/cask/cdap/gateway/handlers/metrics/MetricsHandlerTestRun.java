@@ -277,8 +277,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
     expected = ImmutableMap.of("testQuery3",
                                new QueryResult(ImmutableList.of(
-                                 new TimeSeriesSummary( ImmutableMap.<String, String>of(), "system.reads", 1, 4))
-                                 ,resolution),
+                                 new TimeSeriesSummary(ImmutableMap.<String, String>of(), "system.reads", 1, 4))
+                                 , resolution),
                                "testQuery4",
                                new QueryResult(ImmutableList.of(
                                  new TimeSeriesSummary(ImmutableMap.<String, String>of(), "system.reads", 1, 2),
