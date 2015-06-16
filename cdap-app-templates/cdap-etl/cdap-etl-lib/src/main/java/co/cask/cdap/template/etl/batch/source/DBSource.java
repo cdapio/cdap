@@ -29,6 +29,7 @@ import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.template.etl.common.DBConfig;
 import co.cask.cdap.template.etl.common.DBRecord;
+import co.cask.cdap.template.etl.common.DBUtils;
 import co.cask.cdap.template.etl.common.ETLDBInputFormat;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
@@ -57,6 +58,7 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
     "used in the import query to reflect an accurate number of records to import.";
 
   private final DBSourceConfig dbSourceConfig;
+  private Class<?> cachedDriverClass;
 
   public DBSource(DBSourceConfig dbSourceConfig) {
     this.dbSourceConfig = dbSourceConfig;
@@ -72,10 +74,10 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
                                   "authentication. If not, please remove dbUser and retry.");
     String jdbcPluginId = String.format("%s.%s.%s", "source", dbSourceConfig.jdbcPluginType,
                                         dbSourceConfig.jdbcPluginName);
-    Class<Object> jdbcDriverClass = pipelineConfigurer.usePluginClass(dbSourceConfig.jdbcPluginType,
-                                                                      dbSourceConfig.jdbcPluginName,
-                                                                      jdbcPluginId,
-                                                                      PluginProperties.builder().build());
+    Class<?> jdbcDriverClass = pipelineConfigurer.usePluginClass(dbSourceConfig.jdbcPluginType,
+                                                                 dbSourceConfig.jdbcPluginName,
+                                                                 jdbcPluginId,
+                                                                 PluginProperties.builder().build());
     Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
   }
 
@@ -87,15 +89,14 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
               dbSourceConfig.connectionString, dbSourceConfig.importQuery, dbSourceConfig.countQuery);
 
     Job job = context.getHadoopJob();
-    Configuration conf = job.getConfiguration();
-    String jdbcPluginId = String.format("%s.%s.%s", "source", dbSourceConfig.jdbcPluginType,
-                                        dbSourceConfig.jdbcPluginName);
+    Configuration hConf = job.getConfiguration();
+    String jdbcPluginId = getJDBCPluginId();
     // Load the plugin class to make sure it is available.
     Class<?> driverClass = context.loadPluginClass(jdbcPluginId);
     if (dbSourceConfig.user == null && dbSourceConfig.password == null) {
-      DBConfiguration.configureDB(conf, driverClass.getName(), dbSourceConfig.connectionString);
+      DBConfiguration.configureDB(hConf, driverClass.getName(), dbSourceConfig.connectionString);
     } else {
-      DBConfiguration.configureDB(conf, driverClass.getName(), dbSourceConfig.connectionString,
+      DBConfiguration.configureDB(hConf, driverClass.getName(), dbSourceConfig.connectionString,
                                   dbSourceConfig.user, dbSourceConfig.password);
     }
     ETLDBInputFormat.setInput(job, DBRecord.class, dbSourceConfig.importQuery, dbSourceConfig.countQuery);
@@ -103,8 +104,23 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
   }
 
   @Override
+  public void initialize(BatchSourceContext context) throws Exception {
+    super.initialize(context);
+    cachedDriverClass = context.loadPluginClass(getJDBCPluginId());
+  }
+
+  @Override
   public void transform(KeyValue<LongWritable, DBRecord> input, Emitter<StructuredRecord> emitter) throws Exception {
     emitter.emit(input.getValue().getRecord());
+  }
+
+  @Override
+  public void destroy() {
+    DBUtils.cleanup(cachedDriverClass.getClassLoader());
+  }
+
+  private String getJDBCPluginId() {
+    return String.format("%s.%s.%s", "source", dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName);
   }
 
   /**
