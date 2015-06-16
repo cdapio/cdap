@@ -54,30 +54,4 @@ angular.module(PKG.name + '.services')
       return ns[0].name || name;
     };
 
-    function startPolling() {
-
-      _.debounce(function() {
-        $http.get('http://' + window.location.host + '/backendstatus', {ignoreLoadingBar: true})
-             .success(success)
-             .error(error);
-      }, 2000)();
-
-    }
-
-    function success() {
-      EventPipe.emit('backendUp');
-      if (myAuth.isAuthenticated) {
-        startPolling();
-      }
-    }
-
-    function error() {
-      EventPipe.emit('backendDown');
-      if (myAuth.isAuthenticated) {
-        startPolling();
-      }
-    }
-
-    $rootScope.$on(MYAUTH_EVENT.loginSuccess, startPolling);
-
   });
