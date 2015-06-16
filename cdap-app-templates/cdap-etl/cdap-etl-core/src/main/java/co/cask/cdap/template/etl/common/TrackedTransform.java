@@ -46,7 +46,7 @@ public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT>, Destr
   @Override
   public void destroy() {
     if (transform instanceof Destroyable) {
-      Destroyables.destroyQuietly((Destroyable) transform);
+      ((Destroyable) transform).destroy();
     }
   }
 }

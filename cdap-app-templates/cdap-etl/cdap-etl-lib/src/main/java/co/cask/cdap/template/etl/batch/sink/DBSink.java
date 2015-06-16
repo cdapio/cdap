@@ -67,7 +67,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
 
   private final DBSinkConfig dbSinkConfig;
   private ResultSetMetaData resultSetMetadata;
-  private Class<?> cachedDriverClass;
+  private Class<? extends Driver> driverClass;
 
   public DBSink(DBSinkConfig dbSinkConfig) {
     this.dbSinkConfig = dbSinkConfig;
@@ -85,10 +85,10 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     Preconditions.checkArgument(!(dbSinkConfig.user != null && dbSinkConfig.password == null),
                                 "dbPassword is null. Please provide both user name and password if database requires" +
                                   "authentication. If not, please remove dbUser and retry.");
-    Class<Object> jdbcDriverClass = pipelineConfigurer.usePluginClass(dbSinkConfig.jdbcPluginType,
-                                                                      dbSinkConfig.jdbcPluginName,
-                                                                      getJDBCPluginId(),
-                                                                      PluginProperties.builder().build());
+    Class<? extends Driver> jdbcDriverClass = pipelineConfigurer.usePluginClass(dbSinkConfig.jdbcPluginType,
+                                                                                dbSinkConfig.jdbcPluginName,
+                                                                                getJDBCPluginId(),
+                                                                                PluginProperties.builder().build());
     Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
   }
 
@@ -102,7 +102,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     Configuration hConf = job.getConfiguration();
 
     // Load the plugin class to make sure it is available.
-    Class<?> driverClass = context.loadPluginClass(getJDBCPluginId());
+    Class<? extends Driver> driverClass = context.loadPluginClass(getJDBCPluginId());
     if (dbSinkConfig.user == null && dbSinkConfig.password == null) {
       DBConfiguration.configureDB(hConf, driverClass.getName(), dbSinkConfig.connectionString);
     } else {
@@ -122,7 +122,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
   public void initialize(BatchSinkContext context) throws Exception {
     super.initialize(context);
     setResultSetMetadata(context);
-    cachedDriverClass = context.loadPluginClass(getJDBCPluginId());
+    driverClass = context.loadPluginClass(getJDBCPluginId());
   }
 
   @Override
@@ -132,7 +132,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
 
   @Override
   public void destroy() {
-    DBUtils.cleanup(cachedDriverClass.getClassLoader());
+    DBUtils.cleanup(driverClass);
   }
 
   private void setResultSetMetadata(BatchSinkContext context) throws Exception {
@@ -144,12 +144,12 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
       connection = DriverManager.getConnection(dbSinkConfig.connectionString, dbSinkConfig.user, dbSinkConfig.password);
     }
     try {
-      try (Statement statement = connection.createStatement()) {
-        // Using LIMIT in the following query even though its not SQL standard since DBInputFormat already depends on it
-        try (ResultSet rs = statement.executeQuery(String.format("SELECT %s from %s LIMIT 1",
-                                                                 dbSinkConfig.columns, dbSinkConfig.tableName))) {
-          resultSetMetadata = rs.getMetaData();
-        }
+      try (Statement statement = connection.createStatement();
+           // Using LIMIT even though its not SQL standard since DBInputFormat already depends on it
+           ResultSet rs = statement.executeQuery(String.format("SELECT %s from %s LIMIT 1",
+                                                               dbSinkConfig.columns, dbSinkConfig.tableName))
+      ) {
+        resultSetMetadata = rs.getMetaData();
       }
     } finally {
       connection.close();

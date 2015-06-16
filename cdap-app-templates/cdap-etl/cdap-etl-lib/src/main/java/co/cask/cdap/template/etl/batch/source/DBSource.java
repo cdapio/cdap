@@ -39,6 +39,8 @@ import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Driver;
+
 /**
  * Batch source to read from a Database table
  */
@@ -58,7 +60,7 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
     "used in the import query to reflect an accurate number of records to import.";
 
   private final DBSourceConfig dbSourceConfig;
-  private Class<?> cachedDriverClass;
+  private Class<? extends Driver> driverClass;
 
   public DBSource(DBSourceConfig dbSourceConfig) {
     this.dbSourceConfig = dbSourceConfig;
@@ -74,10 +76,10 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
                                   "authentication. If not, please remove dbUser and retry.");
     String jdbcPluginId = String.format("%s.%s.%s", "source", dbSourceConfig.jdbcPluginType,
                                         dbSourceConfig.jdbcPluginName);
-    Class<?> jdbcDriverClass = pipelineConfigurer.usePluginClass(dbSourceConfig.jdbcPluginType,
-                                                                 dbSourceConfig.jdbcPluginName,
-                                                                 jdbcPluginId,
-                                                                 PluginProperties.builder().build());
+    Class<? extends Driver> jdbcDriverClass = pipelineConfigurer.usePluginClass(dbSourceConfig.jdbcPluginType,
+                                                                                dbSourceConfig.jdbcPluginName,
+                                                                                jdbcPluginId,
+                                                                                PluginProperties.builder().build());
     Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
   }
 
@@ -92,7 +94,7 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
     Configuration hConf = job.getConfiguration();
     String jdbcPluginId = getJDBCPluginId();
     // Load the plugin class to make sure it is available.
-    Class<?> driverClass = context.loadPluginClass(jdbcPluginId);
+    Class<? extends Driver> driverClass = context.loadPluginClass(jdbcPluginId);
     if (dbSourceConfig.user == null && dbSourceConfig.password == null) {
       DBConfiguration.configureDB(hConf, driverClass.getName(), dbSourceConfig.connectionString);
     } else {
@@ -106,7 +108,7 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
   @Override
   public void initialize(BatchSourceContext context) throws Exception {
     super.initialize(context);
-    cachedDriverClass = context.loadPluginClass(getJDBCPluginId());
+    driverClass = context.loadPluginClass(getJDBCPluginId());
   }
 
   @Override
@@ -116,7 +118,7 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
 
   @Override
   public void destroy() {
-    DBUtils.cleanup(cachedDriverClass.getClassLoader());
+    DBUtils.cleanup(driverClass);
   }
 
   private String getJDBCPluginId() {

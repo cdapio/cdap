@@ -22,9 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
+import java.sql.Driver;
 
 /**
- * Utility methods for MySQL shared by {@link DBSource} and {@link DBSink}
+ * Utility methods for Database plugins shared by {@link DBSource} and {@link DBSink}
  */
 public final class DBUtils {
   private static final Logger LOG = LoggerFactory.getLogger(DBUtils.class);
@@ -32,10 +33,10 @@ public final class DBUtils {
   /**
    * Performs any Database related cleanup
    *
-   * @param classLoader the unfiltered classloader of the jdbc driver class
+   * @param driverClass the JDBC driver class
    */
-  public static void cleanup(ClassLoader classLoader) {
-    shutDownMySQLAbandonedConnectionCleanupThread(classLoader);
+  public static void cleanup(Class<? extends Driver> driverClass) {
+    shutDownMySQLAbandonedConnectionCleanupThread(driverClass.getClassLoader());
   }
 
   /**
@@ -50,18 +51,12 @@ public final class DBUtils {
         return;
       }
       Class<?> mysqlCleanupThreadClass = classLoader.loadClass("com.mysql.jdbc.AbandonedConnectionCleanupThread");
-      if (mysqlCleanupThreadClass == null) {
-        // Ignore. Could perhaps be a different database other than MySQL.
-        return;
-      }
       Method shutdownMethod = mysqlCleanupThreadClass.getMethod("shutdown");
-      if (shutdownMethod != null) {
-        shutdownMethod.invoke(null);
-        LOG.info("Successfully shutdown MySQL connection cleanup thread.");
-      }
+      shutdownMethod.invoke(null);
+      LOG.info("Successfully shutdown MySQL connection cleanup thread.");
     } catch (Throwable e) {
       // cleanup failed, ignoring silently
-      LOG.info("Failed to shutdown MySQL connection cleanup thread. Ignoring.", e);
+      LOG.warn("Failed to shutdown MySQL connection cleanup thread. Ignoring.", e);
     }
   }
 
