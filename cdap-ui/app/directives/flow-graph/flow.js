@@ -459,28 +459,65 @@ function genericRender(scope) {
     .offset([-10, 0]);
   svg.call(tip);
 
-  // Set up zoom support
-  var zoom = d3.behavior.zoom().scaleExtent([0.1, 2]);
+  // initializing value
+  scope.translateX = 0;
+  scope.translateY = 0;
+  scope.currentScale = 1.1;
+
+
+  // only being used to center and fit diagram
+  var zoom = d3.behavior.zoom();
   zoom.on('zoom', function() {
-    var t = zoom.translate(),
-        tx = t[0],
-        ty = t[1];
-    var scale = d3.event.scale;
-    scale = Math.min(2, scale);
-
-    tx = Math.max(tx, (-g.graph().width+100)*scale );
-    tx = Math.min(tx, svg.width() - 100);
-
-    ty = Math.max(ty, -g.graph().height*scale);
-    ty = Math.min(ty, (g.graph().height));
-
-    var arr = [tx, ty];
-
-    zoom.translate(arr);
-    svgGroup.attr('transform', 'translate(' + arr + ') ' +
-                                'scale(' + d3.event.scale + ')');
+    svgGroup.attr('transform', 'translate(' + d3.event.translate + ')' + ' scale(' + scope.currentScale + ')');
   });
-  svg.call(zoom);
+
+  var drag = d3.behavior.drag();
+  drag.on('drag', function () {
+    d3.event.sourceEvent.stopPropagation();
+    scope.translateX = scope.translateX + d3.event.dx;
+    scope.translateY = scope.translateY + d3.event.dy;
+
+    if (scope.translateX > svg.width()) {
+      scope.translateX = svg.width();
+    }
+    if (scope.translateX < -(g.graph().width * scope.currentScale)) {
+      scope.translateX = -(g.graph().width * scope.currentScale);
+    }
+
+    if (scope.translateY > svg.height()) {
+      scope.translateY = svg.height();
+    }
+    if (scope.translateY < -(g.graph().height * scope.currentScale)) {
+      scope.translateY = -(g.graph().height * scope.currentScale);
+    }
+
+    var arr = [scope.translateX, scope.translateY];
+
+    svgGroup.attr('transform', 'translate(' + arr + ')' + ' scale(' + scope.currentScale + ')');
+  });
+  svg.call(drag);
+
+  scope.zoomIn = function() {
+    scope.currentScale += 0.1;
+
+    if (scope.currentScale > 2.5) {
+      scope.currentScale = 2.5;
+    }
+
+    var arr = [scope.translateX, scope.translateY];
+    svgGroup.attr('transform', 'translate(' + arr + ')' + ' scale(' + scope.currentScale + ')');
+  };
+
+  scope.zoomOut = function() {
+    scope.currentScale -= 0.1;
+
+    if (scope.currentScale < 0.1) {
+      scope.currentScale = 0.1;
+    }
+
+    var arr = [scope.translateX, scope.translateY];
+    svgGroup.attr('transform', 'translate(' + arr + ')' + ' scale(' + scope.currentScale + ')');
+  };
 
   // Run the renderer. This is what draws the final graph.
   renderer(d3.select(selector + ' g'), g);
@@ -508,20 +545,36 @@ function genericRender(scope) {
     .on('mouseout', scope.handleHideTip);
 
   scope.$on('$destroy', scope.handleHideTip);
-  // Center svg.
-  var initialScale = 1.1;
-  var svgWidth = svg.node().getBoundingClientRect().width;
-  if (svgWidth - g.graph().width <= 0) {
-    zoom.translate([0,0])
-        .scale(svg.width()/g.graph().width)
-        .event(svg);
-    svg.attr('height', g.graph().height * initialScale + 40);
-  } else {
-    zoom
-      .translate([(svgWidth - g.graph().width * initialScale) / 2, 20])
-      .scale(initialScale)
-      .event(svg);
-    svg.attr('height', g.graph().height * initialScale + 40);
 
-  }
+  scope.centerImage = function() {
+    // Center svg.
+    var initialScale = 1.1;
+    var svgWidth = svg.node().getBoundingClientRect().width;
+    if (svgWidth - g.graph().width <= 0) {
+      scope.currentScale = svg.width()/g.graph().width;
+
+      zoom.translate([0,0])
+          .scale(scope.currentScale)
+          .event(svg);
+      svg.attr('height', g.graph().height * initialScale + 40);
+
+      scope.translateX = 0;
+      scope.translateY = 0;
+
+    } else {
+      scope.translateX = (svgWidth - g.graph().width * initialScale) / 2;
+      scope.translateY = 20;
+
+      zoom
+        .translate([scope.translateX, scope.translateY])
+        .scale(initialScale)
+        .event(svg);
+      svg.attr('height', g.graph().height * initialScale + 40);
+
+      scope.currentScale = initialScale;
+    }
+  };
+
+  scope.centerImage();
+
 }
