@@ -73,8 +73,7 @@ angular.module(PKG.name+'.services')
       // myAuth.isAuthenticated is not used. There should be a better way to do this.
       if ($rootScope.currentUser && $rootScope.currentUser.token) {
         re.headers = {
-          Authorization: 'Bearer '+ $rootScope.currentUser.token,
-          'X-ApiKey': ''
+          Authorization: 'Bearer '+ $rootScope.currentUser.token
         };
       }
 
@@ -102,8 +101,7 @@ angular.module(PKG.name+'.services')
       }
       if ($rootScope.currentUser && $rootScope.currentUser.token) {
         re.headers = {
-          Authorization: 'Bearer '+ $rootScope.currentUser.token,
-          'X-ApiKey': ''
+          Authorization: 'Bearer '+ $rootScope.currentUser.token
         };
       }
 
@@ -311,8 +309,7 @@ angular.module(PKG.name+'.services')
         }
         if ($rootScope.currentUser && $rootScope.currentUser.token) {
           generatedResource.headers = {
-            Authorization: 'Bearer '+ $rootScope.currentUser.token,
-            'X-ApiKey': ''
+            Authorization: 'Bearer '+ $rootScope.currentUser.token
           };
         }
 
