@@ -14,16 +14,16 @@
 
       <tbody>
         <tr ng-repeat="reduce in StatusController.info.reduceTasks | orderBy:sortable.predicate:sortable.reverse">
-          <td>{{ ::StatusController.reduce.taskId }}</td>
-          <td ng-if="reduce.state">{{ StatusController.reduce.state }}</td>
+          <td>{{ ::reduce.taskId }}</td>
+          <td ng-if="reduce.state">{{ reduce.state }}</td>
           <td ng-if="!reduce.state">NA</td>
-          <td>{{ StatusController.reduce.progress * 100 }}%</td>
+          <td>{{ reduce.progress * 100 }}%</td>
           <td>
-            <span ng-show="StatusController.reduce.finishTime !== 0">{{ (StatusController.reduce.finishTime - reduce.startTime)/1000 | amDurationFormat}}</span>
-            <span ng-show="StatusController.reduce.finishTime === 0"> &mdash; </span>
+            <span ng-show="reduce.finishTime !== 0">{{ (reduce.finishTime - reduce.startTime)/1000 | amDurationFormat}}</span>
+            <span ng-show="reduce.finishTime === 0"> &mdash; </span>
           </td>
-          <td>{{ StatusController.reduce.counters.REDUCE_INPUT_RECORDS | myNumber: 0}}</td>
-          <td>{{ StatusController.reduce.counters.REDUCE_OUTPUT_RECORDS | myNumber: 0}}</td>
+          <td>{{ reduce.counters.REDUCE_INPUT_RECORDS | myNumber: 0}}</td>
+          <td>{{ reduce.counters.REDUCE_OUTPUT_RECORDS | myNumber: 0}}</td>
         </tr>
 
         <tr class="text-center" ng-if="!StatusController.info.reduceTasks.length">
