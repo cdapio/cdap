@@ -26,7 +26,8 @@ angular.module(PKG.name + '.services')
           connections.push({
             sourceName: nodes[i].program.programName + nodes[i].nodeId,
             targetName: nodes[i+1].program.programName + nodes[i+1].nodeId,
-            sourceType: nodes[i].nodeType
+            sourceType: nodes[i].nodeType,
+            targetType: nodes[i+1].nodeType
           });
         } else if (nodes[i].nodeType === 'FORK' || nodes[i].nodeType === 'CONDITION') {
           flatten(nodes[i-1], nodes[i], nodes[i+1], connections);
