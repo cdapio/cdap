@@ -31,7 +31,7 @@ public final class MetricQueryResult {
     this.startTime = startTime;
     this.endTime = endTime;
     this.series = series;
-    this.resolution = resolution + "s";
+    this.resolution = String.valueOf(resolution) + "s";
   }
 
   public long getStartTime() {

@@ -327,7 +327,6 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     List<String> metrics;
     List<String> groupBy;
     Map<String, String> timeRange;
-    String resolution;
 
     QueryRequestFormat(Map<String, String> tags, List<String> metrics, List<String> groupBy,
                        Map<String, String> timeRange) {
@@ -335,7 +334,6 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
       this.metrics = metrics;
       this.groupBy = groupBy;
       this.timeRange = timeRange;
-      this.resolution = resolution;
     }
   }
 

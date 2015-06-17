@@ -352,7 +352,7 @@ public class MetricsHandler extends AbstractHttpHandler {
       endTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     }
 
-    return decorate(queryResult, timeRange.getStart(), endTime, timeRange.getResolutionInSeconds().intValue());
+    return decorate(queryResult, timeRange.getStart(), endTime, timeRange.getResolutionInSeconds());
   }
 
   private Map<String, AggregationFunction> toMetrics(List<String> metrics) {
