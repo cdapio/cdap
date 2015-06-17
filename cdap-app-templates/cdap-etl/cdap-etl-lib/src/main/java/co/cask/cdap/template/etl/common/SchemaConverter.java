@@ -14,8 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.data.schema;
+package co.cask.cdap.template.etl.common;
 
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 
 import java.lang.reflect.Type;
