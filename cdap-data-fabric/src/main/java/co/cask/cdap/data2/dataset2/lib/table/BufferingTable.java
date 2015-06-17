@@ -34,10 +34,10 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.primitives.UnsignedBytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -45,6 +45,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListMap;
 import javax.annotation.Nullable;
 
@@ -257,35 +258,37 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
       case COLUMN:
         return getColumnChanges();
       default:
-        throw new RuntimeException("Unknown conflict detection level: " + conflictLevel);
+        throw new IllegalStateException("Unknown conflict detection level: " + conflictLevel);
     }
   }
 
   private Collection<byte[]> getRowChanges() {
-    // we resolve conflicts on row level of individual table
-    List<byte[]> changes = new ArrayList<byte[]>(buff.size());
-    for (byte[] changedRow : buff.keySet()) {
-      changes.add(Bytes.add(getNameAsTxChangePrefix(), changedRow));
+    Collection<byte[]> changes = new TreeSet<byte[]>(UnsignedBytes.lexicographicalComparator());
+    for (Map.Entry<byte[], NavigableMap<byte[], Update>> rowChange : buff.entrySet()) {
+      for (Map.Entry<byte[], Update> updateEntry : rowChange.getValue().entrySet()) {
+        if (!(updateEntry.getValue() instanceof IncrementValue)) {
+          changes.add(Bytes.add(getNameAsTxChangePrefix(), rowChange.getKey()));
+          break;
+        }
+      }
     }
     return changes;
   }
 
   private Collection<byte[]> getColumnChanges() {
-    // we resolve conflicts on row level of individual table
-    List<byte[]> changes = new ArrayList<byte[]>(buff.size());
+    Collection<byte[]> changes = new TreeSet<byte[]>(UnsignedBytes.lexicographicalComparator());
     for (Map.Entry<byte[], NavigableMap<byte[], Update>> rowChange : buff.entrySet()) {
-      if (rowChange.getValue() == null) {
-        // NOTE: as of now we cannot detect conflict between delete whole row and row's column value change.
-        //       this is not a big problem as of now, as row deletion is now act as deletion of every column, but this
-        //       will change in future, so we will have to address the issue.
-        continue;
-      }
-
-      // using length + value format to prevent conflicts like row="ab", column="cd" vs row="abc", column="d"
-      byte[] rowTxChange = Bytes.add(Bytes.toBytes(rowChange.getKey().length), rowChange.getKey());
-
-      for (byte[] column : rowChange.getValue().keySet()) {
-        changes.add(Bytes.add(getNameAsTxChangePrefix(), rowTxChange, column));
+      for (Map.Entry<byte[], Update> updateEntry : rowChange.getValue().entrySet()) {
+        if (!(updateEntry.getValue() instanceof IncrementValue)) {
+          byte[] row = rowChange.getKey();
+          byte[] column = updateEntry.getKey();
+          // NOTE: using length + value format to prevent conflicts like row="ab", column="cd" vs row="abc", column="d"
+          byte[] changeKey = Bytes.concat(Bytes.toBytes(row.length), row,
+                                          Bytes.toBytes(column.length), column);
+          if (changeKey != null) {
+            changes.add(Bytes.add(getNameAsTxChangePrefix(), changeKey));
+          }
+        }
       }
     }
     return changes;

@@ -79,6 +79,11 @@ public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
     return new LevelDBTableAdmin(datasetContext, spec, service, cConf);
   }
 
+  @Override
+  protected boolean isIncrementWriteConflicting() {
+    return true;
+  }
+
   @Test
   public void testTablesSurviveAcrossRestart() throws Exception {
     // todo make this test run for hbase, too - requires refactoring of their injection
