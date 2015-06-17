@@ -101,7 +101,7 @@ public class TimePartitionedFileSetDatasetParquetSink extends
       .setInputFormat(AvroParquetInputFormat.class)
       .setOutputFormat(AvroParquetOutputFormat.class)
       .setEnableExploreOnCreate(true)
-      .setExploreFormat("PARQUET")
+      .setExploreFormat("parquet")
       .setExploreSchema(hiveSchema.substring(1, hiveSchema.length() - 1))
       .build());
   }
