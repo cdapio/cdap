@@ -172,6 +172,9 @@ public class MasterServiceMain extends DaemonMain {
     logAppenderInitializer.initialize();
 
     zkClient.startAndWait();
+    // Tries to create the ZK root node (which can be namespaced through the zk connection string)
+    Futures.getUnchecked(ZKOperations.ignoreError(zkClient.create("/", null, CreateMode.PERSISTENT),
+                                                  KeeperException.NodeExistsException.class, null));
     twillRunner.startAndWait();
     kafkaClient.startAndWait();
     metricsCollectionService.startAndWait();
