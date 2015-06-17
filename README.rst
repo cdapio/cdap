@@ -6,6 +6,7 @@
 Cask Data Application Platform - CDAP
 =====================================
 
+
 .. image:: cdap-docs/developers-manual/source/_images/CDAP.png
 
 
