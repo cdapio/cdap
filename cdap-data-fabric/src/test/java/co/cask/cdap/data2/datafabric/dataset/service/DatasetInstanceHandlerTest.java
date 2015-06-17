@@ -26,6 +26,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
+import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
@@ -90,7 +91,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       Assert.assertEquals(spec2Summary(dataset1Spec), instances.get(0));
 
       // verify created instance info can be retrieved
-      DatasetInstanceMeta datasetInfo = getInstance("dataset1").getResponseObject();
+      DatasetMeta datasetInfo = getInstanceObject("dataset1").getResponseObject();
       Assert.assertEquals(dataset1Spec, datasetInfo.getSpec());
       Assert.assertEquals(dataset1Spec.getType(), datasetInfo.getType().getName());
       // type meta should have 2 modules that has to be loaded to create type's class and in the order they must be loaded
@@ -149,8 +150,8 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
       // update dataset instance
       Assert.assertEquals(HttpStatus.SC_OK, updateInstance("dataset1", newProps));
-      Assert.assertEquals("val2", getInstance("dataset1").getResponseObject().getSpec().getProperty("prop2"));
-      Assert.assertNull(getInstance("dataset1").getResponseObject().getSpec().getProperty("prop1"));
+      Assert.assertEquals("val2", getInstanceObject("dataset1").getResponseObject().getSpec().getProperty("prop2"));
+      Assert.assertNull(getInstanceObject("dataset1").getResponseObject().getSpec().getProperty("prop1"));
     } finally {
       // delete dataset instance
       Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("dataset1"));
@@ -264,10 +265,15 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
                                        new TypeToken<List<DatasetSpecificationSummary>>() { }.getType());
   }
 
-  private ObjectResponse<DatasetInstanceMeta> getInstance(String instanceName) throws IOException {
+  private HttpResponse getInstance(String instanceName) throws IOException {
+    HttpRequest request = HttpRequest.get(getUrl("/data/datasets/" + instanceName)).build();
+    return HttpRequests.execute(request);
+  }
+
+  private ObjectResponse<DatasetMeta> getInstanceObject(String instanceName) throws IOException {
     HttpRequest request = HttpRequest.get(getUrl("/data/datasets/" + instanceName)).build();
     HttpResponse response = HttpRequests.execute(request);
-    return ObjectResponse.fromJsonBody(response, DatasetInstanceMeta.class);
+    return ObjectResponse.fromJsonBody(response, DatasetMeta.class);
   }
 
   private int deleteInstance(String instanceName) throws IOException {
