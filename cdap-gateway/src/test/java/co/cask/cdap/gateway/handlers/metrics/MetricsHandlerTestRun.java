@@ -150,8 +150,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   public void testSearchWithTags() throws Exception {
     // empty context
     verifySearchResultWithTags("/v3/metrics/search?target=tag", getSearchResultExpected("namespace", "myspace",
-                                                                                        "namespace", "yourspace",
-                                                                                        "namespace", "system"));
+                                                                                        "namespace", "yourspace"));
 
     // WordCount is in myspace, WCount in yourspace
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:myspace",
@@ -217,8 +216,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                getSearchResultExpected("adapter", "adapter1",
                                                        "adapter", "adapter2",
                                                        "app", "WordCount1",
-                                                       "app", "WCount1",
-                                                       "component", "metrics.processor"));
+                                                       "app", "WCount1"));
 
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:*&tag=app:*",
                                getSearchResultExpected("flow", "WCounter",
