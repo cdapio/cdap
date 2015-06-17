@@ -298,10 +298,6 @@ function zip_extras() {
     return
   fi
   # Add JSON file
-#   cd ${SCRIPT_PATH}/${BUILD}/${SOURCE}
-#   JSON_FILE=`python -c 'import conf; conf.print_json_versions_file();'`
-#   local json_file_path=${SCRIPT_PATH}/${BUILD}/${PROJECT_VERSION}/${JSON_FILE}
-#   echo `python -c 'import conf; conf.print_json_versions();'` > ${json_file_path}
   build_json
   # Add .htaccess file (404 file)
   cd ${SCRIPT_PATH}
