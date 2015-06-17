@@ -27,6 +27,7 @@ import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetModuleMeta;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -58,7 +59,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   public void testBasics() throws Exception {
 
     // nothing has been created, modules and types list is empty
-    List<DatasetSpecification> instances = getInstances().getResponseObject();
+    List<DatasetSpecificationSummary> instances = getInstances().getResponseObject();
 
     // nothing in the beginning
     Assert.assertEquals(0, instances.size());
@@ -86,7 +87,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       Assert.assertEquals(1, instances.size());
       // verifying spec is same as expected
       DatasetSpecification dataset1Spec = createSpec("dataset1", "datasetType2", props);
-      Assert.assertEquals(dataset1Spec, instances.get(0));
+      Assert.assertEquals(spec2Summary(dataset1Spec), instances.get(0));
 
       // verify created instance info can be retrieved
       DatasetInstanceMeta datasetInfo = getInstance("dataset1").getResponseObject();
@@ -125,7 +126,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   public void testUpdateInstance() throws Exception {
 
     // nothing has been created, modules and types list is empty
-    List<DatasetSpecification> instances = getInstances().getResponseObject();
+    List<DatasetSpecificationSummary> instances = getInstances().getResponseObject();
 
     // nothing in the beginning
     Assert.assertEquals(0, instances.size());
@@ -201,7 +202,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
       // delete table, check that it is deleted, create again and verify that it is empty
       Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("myTable1"));
-      ObjectResponse<List<DatasetSpecification>> instances = getInstances();
+      ObjectResponse<List<DatasetSpecificationSummary>> instances = getInstances();
       Assert.assertEquals(1, instances.getResponseObject().size());
       Assert.assertEquals("myTable2", instances.getResponseObject().get(0).getName());
       Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable1", "table", DatasetProperties.EMPTY));
@@ -257,10 +258,10 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     return HttpRequests.execute(request).getResponseCode();
   }
 
-  private ObjectResponse<List<DatasetSpecification>> getInstances() throws IOException {
+  private ObjectResponse<List<DatasetSpecificationSummary>> getInstances() throws IOException {
     HttpRequest request = HttpRequest.get(getUrl("/data/datasets")).build();
     return ObjectResponse.fromJsonBody(HttpRequests.execute(request),
-                                       new TypeToken<List<DatasetSpecification>>() { }.getType());
+                                       new TypeToken<List<DatasetSpecificationSummary>>() { }.getType());
   }
 
   private ObjectResponse<DatasetInstanceMeta> getInstance(String instanceName) throws IOException {
@@ -277,7 +278,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   private void deleteInstances() throws IOException {
     // NOTE: intentionally, there's no endpoint to delete all datasets instances currently to prevent bad things
     //       happen by accident
-    for (DatasetSpecification spec : getInstances().getResponseObject()) {
+    for (DatasetSpecificationSummary spec : getInstances().getResponseObject()) {
       deleteInstance(spec.getName());
     }
   }
@@ -285,5 +286,9 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   private static DatasetSpecification createSpec(String instanceName, String typeName,
                                                  DatasetProperties properties) {
     return DatasetSpecification.builder(instanceName, typeName).properties(properties.getProperties()).build();
+  }
+
+  private DatasetSpecificationSummary spec2Summary(DatasetSpecification spec) {
+    return new DatasetSpecificationSummary(spec.getName(), spec.getType(), spec.getProperties());
   }
 }
