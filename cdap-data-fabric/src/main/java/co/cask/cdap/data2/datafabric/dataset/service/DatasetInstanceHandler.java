@@ -231,9 +231,6 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   private DatasetInstanceConfiguration  getInstanceConfiguration(HttpRequest request) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
     DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
-    if (creationProperties.getProperties() == null) {
-      creationProperties = new DatasetInstanceConfiguration(creationProperties.getTypeName());
-    }
     fixProperties(creationProperties.getProperties());
     return creationProperties;
   }

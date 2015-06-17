@@ -16,8 +16,7 @@
 
 package co.cask.cdap.proto;
 
-import com.google.gson.internal.LinkedTreeMap;
-
+import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 /**
@@ -27,14 +26,13 @@ public final class DatasetInstanceConfiguration {
   private final String typeName;
   private final Map<String, String> properties;
 
-  public DatasetInstanceConfiguration(String typeName) {
-    this.typeName = typeName;
-    this.properties = new LinkedTreeMap<>();
-  }
-
   public DatasetInstanceConfiguration(String typeName, Map<String, String> properties) {
     this.typeName = typeName;
-    this.properties = properties;
+    if (properties == null) {
+      this.properties = ImmutableMap.of();
+    } else {
+      this.properties = properties;
+    }
   }
 
   public String getTypeName() {
