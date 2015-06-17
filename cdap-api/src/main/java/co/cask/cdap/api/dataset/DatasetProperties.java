@@ -101,7 +101,7 @@ public final class DatasetProperties {
      * @return this builder object to allow chaining
      */
     public Builder addAll(Map<String, String> properties) {
-        this.properties.putAll(properties);
+      this.properties.putAll(properties);
       return this;
     }
 
