@@ -14,7 +14,9 @@ angular.module(PKG.name + '.feature.workflows')
       }
     }
 
-    this.data = {};
+    var vm = this;
+
+    vm.data = {};
     myWorkFlowApi.get(params)
       .$promise
       .then(function(res) {
@@ -52,7 +54,7 @@ angular.module(PKG.name + '.feature.workflows')
           }, item);
         });
 
-        this.data = {
+        vm.data = {
           nodes: nodes,
           edges: edges,
           metrics: {},
@@ -63,65 +65,88 @@ angular.module(PKG.name + '.feature.workflows')
         angular.forEach(res.nodes, function(value) {
           programs.push(value.program);
         });
-        this.actions = programs;
-      }.bind(this));
+        vm.actions = programs;
 
-    // Still using MyDataSource because the poll needs to be stopped
-    var dataSrc = new MyDataSource($scope);
+        pollNodes();
 
-    var path = '/apps/' + $state.params.appId
-      + '/workflows/' + $state.params.programId
-      + '/runs/' + $scope.RunsController.runs.selected.runid;
-
-    if ($scope.RunsController.runs.length > 0) {
-
-      dataSrc.poll({
-        _cdapNsPath: path,
-        interval: 1000
-      })
-      .then(function (response) {
-
-        var pastNodes = Object.keys(response.properties);
-        $scope.RunsController.runs.selected.properties = response.properties;
-
-        var activeNodes = filterFilter(this.data.nodes , function(node) {
-          return pastNodes.indexOf(node.nodeId) !== -1;
-        });
-
-        angular.forEach(activeNodes, function(n) {
-          var runid = response.properties[n.nodeId];
-
-          var mapreduceParams = {
-            namespace: $state.params.namespace,
-            appId: $state.params.appId,
-            mapreduceId: n.program.programName,
-            runId: runid,
-            scope: $scope
-          };
-          myMapreduceApi.runDetail(mapreduceParams)
-            .$promise
-            .then(function (result) {
-              this.data.current[n.name] = result.status;
-            }.bind(this));
-        }.bind(this));
-
-        return response;
-      }.bind(this))
-      .then(function (response) {
-        if (response.status === 'COMPLETED' || response.status === 'FAILED') {
-          dataSrc.stopPoll(response.__pollId__);
-        }
       });
+
+
+    // Need to make sure that the list of nodes is already generated
+    function pollNodes() {
+      // Still using MyDataSource because the poll needs to be stopped
+      var dataSrc = new MyDataSource($scope);
+
+      var path = '/apps/' + $state.params.appId
+        + '/workflows/' + $state.params.programId
+        + '/runs/' + $scope.RunsController.runs.selected.runid;
+
+      if ($scope.RunsController.runs.length > 0) {
+
+        dataSrc.poll({
+          _cdapNsPath: path,
+          interval: 1000
+        })
+        .then(function (response) {
+
+          var pastNodes = Object.keys(response.properties);
+          $scope.RunsController.runs.selected.properties = response.properties;
+
+          var activeNodes = filterFilter(vm.data.nodes , function(node) {
+            return pastNodes.indexOf(node.nodeId) !== -1;
+          });
+          angular.forEach(activeNodes, function(n) {
+            var runid = response.properties[n.nodeId];
+
+            if (n.program.programType === 'MAPREDUCE') {
+              var mapreduceParams = {
+                namespace: $state.params.namespace,
+                appId: $state.params.appId,
+                mapreduceId: n.program.programName,
+                runId: runid,
+                scope: $scope
+              };
+              myMapreduceApi.runDetail(mapreduceParams)
+                .$promise
+                .then(function (result) {
+                  vm.data.current[n.name] = result.status;
+                });
+              } else if (n.program.programType === 'SPARK') {
+
+                // TODO: Change to data-modelling once available for Spark
+                var sparkPath = '/apps/' + $state.params.appId + '/spark/' + n.program.programName + '/runs/' + runid;
+
+                dataSrc.request({
+                  _cdapNsPath: sparkPath
+                })
+                .then(function (result) {
+                  vm.data.current[n.name] = result.status;
+                });
+              }
+
+          });
+
+          if (response.status === 'COMPLETED' || response.status === 'FAILED') {
+            dataSrc.stopPoll(response.__pollId__);
+          }
+
+        });
+      }
     }
 
 
-    this.workflowProgramClick = function (instance) {
+    vm.workflowProgramClick = function (instance) {
       if (['START', 'END'].indexOf(instance.type) > -1 ) {
         return;
       }
       if ($scope.RunsController.runs.length) {
         if (instance.program.programType === 'MAPREDUCE' && $scope.RunsController.runs.selected.properties[instance.nodeId]) {
           $state.go('mapreduce.detail.runs.run', {
+            programId: instance.program.programName,
+            runid: $scope.RunsController.runs.selected.properties[instance.nodeId]
+          });
+        } else if (instance.program.programType === 'SPARK' && $scope.RunsController.runs.selected.properties[instance.nodeId]) {
+          $state.go('spark.detail.runs.run', {
             programId: instance.program.programName,
             runid: $scope.RunsController.runs.selected.properties[instance.nodeId]
           });
@@ -134,7 +159,7 @@ angular.module(PKG.name + '.feature.workflows')
       }
     };
 
-    this.stop = function() {
+    vm.stop = function() {
       $alert({
         type: 'info',
         content: 'Stopping a workflow at run level is not possible yet. Will be fixed soon.'
