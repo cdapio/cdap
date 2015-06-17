@@ -33,7 +33,7 @@ import co.cask.cdap.api.flow.flowlet.InputContext;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
@@ -455,15 +455,15 @@ public final class FlowletProgramRunner implements ProgramRunner {
           }
 
           // create a metric collector for this queue, and also one for each consumer flowlet
-          final MetricsCollector metrics = flowletContext.getProgramMetrics()
-            .childCollector(Constants.Metrics.Tag.FLOWLET_QUEUE, outputName);
-          final MetricsCollector producerMetrics = metrics.childCollector(
+          final MetricsContext metrics = flowletContext.getProgramMetrics()
+            .childContext(Constants.Metrics.Tag.FLOWLET_QUEUE, outputName);
+          final MetricsContext producerMetrics = metrics.childContext(
             Constants.Metrics.Tag.PRODUCER, flowletContext.getFlowletId());
-          final Iterable<MetricsCollector> consumerMetrics =
-            Iterables.transform(consumerFlowlets, new Function<String, MetricsCollector>() {
+          final Iterable<MetricsContext> consumerMetrics =
+            Iterables.transform(consumerFlowlets, new Function<String, MetricsContext>() {
               @Override
-              public MetricsCollector apply(String consumer) {
-                return producerMetrics.childCollector(
+              public MetricsContext apply(String consumer) {
+                return producerMetrics.childContext(
                   Constants.Metrics.Tag.CONSUMER, consumer);
               }});
 
@@ -472,7 +472,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
             @Override
             public void emitEnqueue(int count) {
               metrics.increment("process.events.out", count);
-              for (MetricsCollector collector : consumerMetrics) {
+              for (MetricsContext collector : consumerMetrics) {
                 collector.increment("queue.pending", count);
               }
             }

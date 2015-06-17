@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,24 +13,24 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package co.cask.cdap.api.metrics;
 
+import java.util.Map;
+
 /**
- * Collects metrics.
+ * A context of metrics collection.
  */
-public interface MetricsCollector {
+public interface MetricsContext extends MetricsCollector {
   /**
-   * Increment a metric value at the current time.
-   * @param metricName Name of the metric.
-   * @param value value of the metric.
+   * Creates child {@link MetricsContext} that inherits the metrics context from this one and adds extra context
+   * information.
+   * @param tags tags to add to the child metrics context
+   * @return child {@link MetricsContext}
    */
-  void increment(String metricName, long value);
+  MetricsContext childContext(Map<String, String> tags);
 
   /**
-   * Gauge a metric value at the current time.
-   * @param metricName Name of the metric.
-   * @param value value of the metric.
+   * Convenience method that acts as {@link #childContext(java.util.Map)} by supplying single tag.
    */
-  void gauge(String metricName, long value);
+  MetricsContext childContext(String tagName, String tagValue);
 }

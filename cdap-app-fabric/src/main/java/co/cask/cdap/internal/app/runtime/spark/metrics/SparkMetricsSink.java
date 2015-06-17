@@ -17,7 +17,7 @@
 
 package co.cask.cdap.internal.app.runtime.spark.metrics;
 
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.spark.Spark;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link Sink} which collects Metrics from {@link Spark} program and used {@link SparkMetricsReporter} to report it
- * to {@link MetricsCollector}
+ * to {@link MetricsContext}
  * <p/>
  * This full qualified name of this class is given to spark through the metrics configuration file.
  */

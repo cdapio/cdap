@@ -21,7 +21,7 @@ import co.cask.cdap.api.flow.flowlet.FailurePolicy;
 import co.cask.cdap.api.flow.flowlet.FailureReason;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.api.flow.flowlet.InputContext;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.app.queue.InputDatum;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -322,12 +322,12 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     final int processedCount = processEntry.getProcessSpec().getProcessMethod().needsInput() ? input.size() : 1;
 
     return new ProcessMethodCallback() {
-      private final LoadingCache<String, MetricsCollector> queueMetricsCollectors = CacheBuilder.newBuilder()
+      private final LoadingCache<String, MetricsContext> queueMetricsCollectors = CacheBuilder.newBuilder()
         .expireAfterAccess(1, TimeUnit.HOURS)
-        .build(new CacheLoader<String, MetricsCollector>() {
+        .build(new CacheLoader<String, MetricsContext>() {
           @Override
-          public MetricsCollector load(String key) throws Exception {
-            return flowletContext.getProgramMetrics().childCollector(Constants.Metrics.Tag.FLOWLET_QUEUE, key);
+          public MetricsContext load(String key) throws Exception {
+            return flowletContext.getProgramMetrics().childContext(Constants.Metrics.Tag.FLOWLET_QUEUE, key);
           }
         });
 

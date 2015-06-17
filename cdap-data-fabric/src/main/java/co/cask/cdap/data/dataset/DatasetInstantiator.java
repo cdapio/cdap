@@ -21,7 +21,7 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.proto.Id;
@@ -55,7 +55,7 @@ public class DatasetInstantiator implements DatasetContext {
   // in this collection we have only datasets initialized with getDataset() which is OK for now...
   private final Map<TransactionAware, String> txAwareToMetricNames = Maps.newIdentityHashMap();
 
-  private final MetricsCollector metricsCollector;
+  private final MetricsContext metricsContext;
   private final Id.Namespace namespace;
   private final Iterable<? extends Id> owners;
 
@@ -71,11 +71,11 @@ public class DatasetInstantiator implements DatasetContext {
                              DatasetFramework datasetFramework,
                              ClassLoader classLoader,
                              @Nullable Iterable<? extends Id> owners,
-                             @Nullable MetricsCollector metricsCollector) {
+                             @Nullable MetricsContext metricsContext) {
     this.namespace = namespace;
     this.owners = owners;
     this.classLoader = classLoader;
-    this.metricsCollector = metricsCollector;
+    this.metricsContext = metricsContext;
     this.datasetFramework = datasetFramework;
   }
 
@@ -112,7 +112,7 @@ public class DatasetInstantiator implements DatasetContext {
     }
 
     if (dataset instanceof MeteredDataset) {
-      ((MeteredDataset) dataset).setMetricsCollector(new MetricsCollectorImpl(name, metricsCollector));
+      ((MeteredDataset) dataset).setMetricsCollector(new MetricsCollectorImpl(name, metricsContext));
     }
 
     return dataset;
@@ -135,36 +135,36 @@ public class DatasetInstantiator implements DatasetContext {
   }
 
   private static final class MetricsCollectorImpl implements MeteredDataset.MetricsCollector {
-    private final MetricsCollector metricsCollector;
+    private final MetricsContext metricsContext;
 
     private MetricsCollectorImpl(String datasetName,
                                  @Nullable
-                                 MetricsCollector metricsCollector) {
-      this.metricsCollector = metricsCollector == null ? null :
-        metricsCollector.childCollector(Constants.Metrics.Tag.DATASET, datasetName);
+                                 MetricsContext metricsContext) {
+      this.metricsContext = metricsContext == null ? null :
+        metricsContext.childContext(Constants.Metrics.Tag.DATASET, datasetName);
     }
 
     @Override
     public void recordRead(int opsCount, int dataSize) {
-      if (metricsCollector != null) {
+      if (metricsContext != null) {
         // todo: here we report duplicate metrics - need to change UI/docs and report once
-        metricsCollector.increment("store.reads", 1);
-        metricsCollector.increment("store.ops", 1);
-        metricsCollector.increment("dataset.store.reads", 1);
-        metricsCollector.increment("dataset.store.ops", 1);
+        metricsContext.increment("store.reads", 1);
+        metricsContext.increment("store.ops", 1);
+        metricsContext.increment("dataset.store.reads", 1);
+        metricsContext.increment("dataset.store.ops", 1);
       }
     }
 
     @Override
     public void recordWrite(int opsCount, int dataSize) {
       // todo: here we report duplicate metrics - need to change UI/docs and report once
-      if (metricsCollector != null) {
-        metricsCollector.increment("store.writes", 1);
-        metricsCollector.increment("store.bytes", dataSize);
-        metricsCollector.increment("store.ops", 1);
-        metricsCollector.increment("dataset.store.writes", 1);
-        metricsCollector.increment("dataset.store.bytes", dataSize);
-        metricsCollector.increment("dataset.store.ops", 1);
+      if (metricsContext != null) {
+        metricsContext.increment("store.writes", 1);
+        metricsContext.increment("store.bytes", dataSize);
+        metricsContext.increment("store.ops", 1);
+        metricsContext.increment("dataset.store.writes", 1);
+        metricsContext.increment("dataset.store.bytes", dataSize);
+        metricsContext.increment("dataset.store.ops", 1);
       }
     }
   }

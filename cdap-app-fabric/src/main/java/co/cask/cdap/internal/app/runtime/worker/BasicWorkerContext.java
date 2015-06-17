@@ -22,7 +22,7 @@ import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.templates.AdapterSpecification;
 import co.cask.cdap.api.worker.WorkerContext;
@@ -162,7 +162,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
   }
 
   @Nullable
-  private static MetricsCollector getMetricCollector(Program program, String runId, int instanceId,
+  private static MetricsContext getMetricCollector(Program program, String runId, int instanceId,
                                                      @Nullable MetricsCollectionService service,
                                                      @Nullable AdapterSpecification adapterSpec) {
     if (service == null) {
@@ -175,7 +175,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
       tags.put(Constants.Metrics.Tag.ADAPTER, adapterSpec.getName());
     }
 
-    return service.getCollector(tags);
+    return service.getContext(tags);
   }
 
   @Override

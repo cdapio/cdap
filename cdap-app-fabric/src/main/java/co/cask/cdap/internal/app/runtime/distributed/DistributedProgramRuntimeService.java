@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.queue.QueueSpecification;
 import co.cask.cdap.app.queue.QueueSpecificationGenerator;
@@ -399,7 +399,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
     public ClusterResourceReporter(MetricsCollectionService metricsCollectionService, Configuration hConf,
                                    CConfiguration cConf) {
-      super(metricsCollectionService.getCollector(
+      super(metricsCollectionService.getContext(
         ImmutableMap.<String, String>of()));
       try {
         this.hdfs = FileSystem.get(hConf);
@@ -529,7 +529,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
           JsonObject clusterMetrics = response.getAsJsonObject("clusterMetrics");
           long totalMemory = clusterMetrics.get("totalMB").getAsLong();
           long availableMemory = clusterMetrics.get("availableMB").getAsLong();
-          MetricsCollector collector = getCollector();
+          MetricsContext collector = getCollector();
           LOG.trace("resource manager, total memory = " + totalMemory + " available = " + availableMemory);
           collector.gauge("resources.total.memory", totalMemory);
           collector.gauge("resources.available.memory", availableMemory);
@@ -572,7 +572,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         long storageCapacity = hdfsStatus.getCapacity();
         long storageAvailable = hdfsStatus.getRemaining();
 
-        MetricsCollector collector = getCollector();
+        MetricsContext collector = getCollector();
         LOG.trace("total cluster storage = " + storageCapacity + " total used = " + totalUsed);
         collector.gauge("resources.total.storage", (storageCapacity / 1024 / 1024));
         collector.gauge("resources.available.storage", (storageAvailable / 1024 / 1024));
