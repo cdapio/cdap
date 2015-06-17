@@ -7,7 +7,7 @@
       <span></span>
       <span class="pull-right">
         {{ query.timestamp | amDateFormat:'dddd, MMMM Do YYYY, h:mm:ss a'}}
-        <span class="status fa fa-circle" ng-class="{ 'green': query.status === 'FINISHED', 'red': query.status !== 'FINISHED' }"></span>
+        <span class="status fa fa-circle" ng-class="{ 'green': query.status === 'FINISHED', 'yellow': query.status === 'RUNNING', 'red': ['RUNNING', 'FINISHED'].indexOf(query.status) === -1 }"></span>
       </span>
     </div>
     <div class="panel-body" ng-if="query.isOpen">
