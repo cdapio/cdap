@@ -30,7 +30,6 @@ public final class DatasetInstanceConfiguration {
   public DatasetInstanceConfiguration(String typeName) {
     this.typeName = typeName;
     this.properties = new LinkedTreeMap<>();
-    properties.put("", "");
   }
 
   public DatasetInstanceConfiguration(String typeName, Map<String, String> properties) {
