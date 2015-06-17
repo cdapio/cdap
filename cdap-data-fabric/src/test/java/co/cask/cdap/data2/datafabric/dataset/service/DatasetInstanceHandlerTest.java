@@ -94,7 +94,8 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       DatasetMeta datasetInfo = getInstanceObject("dataset1").getResponseObject();
       Assert.assertEquals(dataset1Spec, datasetInfo.getSpec());
       Assert.assertEquals(dataset1Spec.getType(), datasetInfo.getType().getName());
-      // type meta should have 2 modules that has to be loaded to create type's class and in the order they must be loaded
+      // type meta should have 2 modules that has to be loaded to create type's class
+      // and in the order they must be loaded
       List<DatasetModuleMeta> modules = datasetInfo.getType().getModules();
       Assert.assertEquals(2, modules.size());
       DatasetTypeHandlerTest.verify(modules.get(0), "module1", TestModule1.class, ImmutableList.of("datasetType1"),
