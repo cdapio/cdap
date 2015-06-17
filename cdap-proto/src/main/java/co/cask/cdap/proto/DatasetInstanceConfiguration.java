@@ -16,6 +16,8 @@
 
 package co.cask.cdap.proto;
 
+import com.google.gson.internal.LinkedTreeMap;
+
 import java.util.Map;
 
 /**
@@ -24,6 +26,12 @@ import java.util.Map;
 public final class DatasetInstanceConfiguration {
   private final String typeName;
   private final Map<String, String> properties;
+
+  public DatasetInstanceConfiguration(String typeName) {
+    this.typeName = typeName;
+    this.properties = new LinkedTreeMap<>();
+    properties.put("", "");
+  }
 
   public DatasetInstanceConfiguration(String typeName, Map<String, String> properties) {
     this.typeName = typeName;
