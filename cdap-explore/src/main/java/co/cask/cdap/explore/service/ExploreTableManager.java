@@ -375,20 +375,25 @@ public class ExploreTableManager {
 
     String format = FileSetProperties.getExploreFormat(properties);
     if (format != null) {
-      // for text and csv, we know what to do
-      Preconditions.checkArgument("text".equals(format) || "csv".equals(format),
-                                  "Only text and csv are supported as native formats");
-      String schema = FileSetProperties.getExploreSchema(properties);
-      Preconditions.checkNotNull(schema, "for native formats, explore schema must be given in dataset properties");
-      String delimiter = null;
-      if ("text".equals(format)) {
-        delimiter = FileSetProperties.getExploreFormatProperties(properties).get("delimiter");
-      } else if ("csv".equals(format)) {
-        delimiter = ",";
+      if ("PARQUET".equals(format)) {
+        return createStatementBuilder.setSchema(FileSetProperties.getExploreSchema(properties))
+          .buildWithFileFormat("PARQUET");
+      } else {
+        // for text and csv, we know what to do
+        Preconditions.checkArgument("text".equals(format) || "csv".equals(format) || "PARQUET".equals(format),
+                                   "Only text and csv are supported as native formats");
+        String schema = FileSetProperties.getExploreSchema(properties);
+        Preconditions.checkNotNull(schema, "for native formats, explore schema must be given in dataset properties");
+        String delimiter = null;
+        if ("text".equals(format)) {
+          delimiter = FileSetProperties.getExploreFormatProperties(properties).get("delimiter");
+        } else if ("csv".equals(format)) {
+          delimiter = ",";
+        }
+        return createStatementBuilder.setSchema(schema)
+          .setRowFormatDelimited(delimiter, null)
+          .buildWithFileFormat("TEXTFILE");
       }
-      return createStatementBuilder.setSchema(schema)
-        .setRowFormatDelimited(delimiter, null)
-        .buildWithFileFormat("TEXTFILE");
     } else {
       // format not given, look for serde, input format, etc.
       String serde = FileSetProperties.getSerDe(properties);
