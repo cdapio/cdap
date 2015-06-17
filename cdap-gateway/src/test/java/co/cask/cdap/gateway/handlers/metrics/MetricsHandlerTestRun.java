@@ -259,24 +259,29 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
     // test batching of multiple queries
 
-    ImmutableMap<String, ImmutableList<TimeSeriesSummary>> expected =
+    String resolution = Integer.MAX_VALUE + "s";
+
+    ImmutableMap<String, QueryResult> expected =
       ImmutableMap.of("testQuery1",
-                      ImmutableList.of(new TimeSeriesSummary(ImmutableMap.<String, String>of(), "system.reads", 1, 3)),
+                      new QueryResult(ImmutableList.of(new TimeSeriesSummary(
+                        ImmutableMap.<String, String>of(), "system.reads", 1, 3)), resolution),
                       "testQuery2",
-                      ImmutableList.of(new TimeSeriesSummary(ImmutableMap.<String, String>of(), "system.reads", 1, 1)));
+                      new QueryResult(ImmutableList.of(new TimeSeriesSummary(
+                          ImmutableMap.<String, String>of(), "system.reads", 1, 1)), resolution));
 
     batchTest(ImmutableMap.of("testQuery1", query1, "testQuery2", query2), expected);
 
     // test batching of multiple queries, with one query having multiple metrics to query
 
     expected = ImmutableMap.of("testQuery3",
-                               ImmutableList.of(new TimeSeriesSummary(ImmutableMap.<String, String>of(),
-                                                                "system.reads", 1, 4)),
+                               new QueryResult(ImmutableList.of(
+                                 new TimeSeriesSummary(ImmutableMap.<String, String>of(), "system.reads", 1, 4))
+                                 , resolution),
                                "testQuery4",
-                               ImmutableList.of(new TimeSeriesSummary(ImmutableMap.<String, String>of(),
-                                                                "system.reads", 1, 2),
+                               new QueryResult(ImmutableList.of(
+                                 new TimeSeriesSummary(ImmutableMap.<String, String>of(), "system.reads", 1, 2),
                                                 new TimeSeriesSummary(ImmutableMap.<String, String>of(),
-                                                                "system.writes", 1, 2))
+                                                                "system.writes", 1, 2)), resolution)
     );
 
     batchTest(ImmutableMap.of("testQuery3", query3, "testQuery4", query4), expected);
@@ -330,6 +335,25 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
+  private class QueryResult {
+    private ImmutableList<TimeSeriesSummary> expectedList;
+    private String expectedResolution;
+
+    public QueryResult(ImmutableList<TimeSeriesSummary> list, String resolution) {
+      expectedList = list;
+      expectedResolution = resolution;
+    }
+
+    public String getExpectedResolution() {
+      return expectedResolution;
+    }
+
+    public ImmutableList<TimeSeriesSummary> getExpectedList() {
+      return expectedList;
+    }
+
+  }
+
   @Test
   public void testTimeRangeQueryBatch() throws Exception {
     // note: times are in seconds, hence "divide by 1000";
@@ -349,15 +373,14 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                            ImmutableMap.of("start", String.valueOf(start),
                                                            "count", String.valueOf(count)));
 
-    ImmutableMap<String, ImmutableList<TimeSeriesSummary>> expected =
+    ImmutableMap<String, QueryResult> expected =
       ImmutableMap.of("timeRangeQuery1",
-                      ImmutableList.of(new TimeSeriesSummary(ImmutableMap.<String, String>of(), "system.reads", 2, 3)),
+                      new QueryResult(ImmutableList.of(new TimeSeriesSummary(ImmutableMap.<String,
+                        String>of(), "system.reads", 2, 3)), "1s"),
                       "timeRangeQuery2",
-                      ImmutableList.of(new TimeSeriesSummary(ImmutableMap.of("flowlet", "counter"),
-                                                             "system.reads", 1, 1),
-                                       new TimeSeriesSummary(ImmutableMap.of("flowlet", "splitter"),
-                                                             "system.reads", 2, 3)
-                      ));
+                      new QueryResult(ImmutableList.of(
+                        new TimeSeriesSummary(ImmutableMap.of("flowlet", "counter"), "system.reads", 1, 1),
+                        new TimeSeriesSummary(ImmutableMap.of("flowlet", "splitter"), "system.reads", 2, 3)), "1s"));
 
     Map<String, QueryRequestFormat> batchQueries = ImmutableMap.of("timeRangeQuery1", query1,
                                                                    "timeRangeQuery2", query2);
@@ -539,6 +562,30 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     metricStore.delete(deleteQuery);
   }
 
+  @Test
+  public void testResolutionInResponse() throws Exception {
+    long start = 1;
+
+    String url = "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter") +
+      "&metric=system.reads&resolution=auto&start=" + (start - 1) + "&end="
+      + (start + 36000);
+    MetricQueryResult queryResult = post(url, MetricQueryResult.class);
+    Assert.assertEquals("3600s", queryResult.getResolution());
+
+    url = "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter") +
+      "&metric=system.reads&resolution=1m&start=" + (start - 1) + "&end="
+      + (start + 36000);
+    queryResult = post(url, MetricQueryResult.class);
+    Assert.assertEquals("60s", queryResult.getResolution());
+
+    // Have an aggregate query and ensure that its resolution is INT_MAX
+    url = "/v3/metrics/query?" + getTags("WordCount1", "WordCounter", "splitter") +
+      "&metric=system.reads";
+    queryResult = post(url, MetricQueryResult.class);
+    Assert.assertEquals(Integer.MAX_VALUE + "s", queryResult.getResolution());
+
+  }
+
 
   @Test
   public void testAutoResolutions() throws Exception {
@@ -706,7 +753,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   private  void batchTest(Map<String, QueryRequestFormat> jsonBatch,
-                          ImmutableMap<String, ImmutableList<TimeSeriesSummary>> expected) throws Exception {
+                          ImmutableMap<String, QueryResult> expected) throws Exception {
     String url = "/v3/metrics/query";
     Map<String, MetricQueryResult> results =
       post(url, GSON.toJson(jsonBatch), new TypeToken<Map<String, MetricQueryResult>>() { }.getType());
@@ -714,9 +761,10 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     // check we have all the keys
     Assert.assertEquals(expected.keySet(), results.keySet());
     for (Map.Entry<String, MetricQueryResult> entry : results.entrySet()) {
-      ImmutableList<TimeSeriesSummary> expectedTimeSeriesSummary = expected.get(entry.getKey());
+      ImmutableList<TimeSeriesSummary> expectedTimeSeriesSummary = expected.get(entry.getKey()).getExpectedList();
       MetricQueryResult actualQueryResult = entry.getValue();
       compareQueryResults(expectedTimeSeriesSummary, actualQueryResult);
+      Assert.assertEquals(expected.get(entry.getKey()).getExpectedResolution(), actualQueryResult.getResolution());
     }
   }
 
