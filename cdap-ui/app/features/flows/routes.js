@@ -44,14 +44,14 @@ angular.module(PKG.name + '.feature.flows')
           label: 'Flows',
           skip: true
         },
-        templateUrl: '/assets/features/flows/templates/detail.html',
-        controller: 'FlowsDetailController'
+        templateUrl: '/assets/features/flows/templates/detail.html'
       })
 
       .state('flows.detail.runs', {
         url: '/runs',
         templateUrl: '/assets/features/flows/templates/tabs/runs.html',
         controller: 'FlowsRunsController',
+        controllerAs: 'RunsController',
         ncyBreadcrumb: {
           label: '{{$state.params.programId}}'
         }
@@ -59,6 +59,7 @@ angular.module(PKG.name + '.feature.flows')
         .state('flows.detail.runs.run', {
           url: '/:runid',
           templateUrl: '/assets/features/flows/templates/tabs/runs/run-detail.html',
+          controller: 'FlowsRunDetailController',
           ncyBreadcrumb: {
             label: '{{$state.params.runid}}'
           }
@@ -84,6 +85,7 @@ angular.module(PKG.name + '.feature.flows')
         },
         templateUrl: '/assets/features/flows/templates/tabs/history.html',
         controller: 'FlowsRunsController',
+        controllerAs: 'RunsController',
         ncyBreadcrumb: {
           label: 'History',
           parent: 'flows.detail.runs'

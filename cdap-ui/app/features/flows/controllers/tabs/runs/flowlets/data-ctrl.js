@@ -1,8 +1,8 @@
 angular.module(PKG.name + '.feature.flows')
   .controller('FlowletDetailDataController', function($state, $scope, MyDataSource, myHelpers, MyMetricsQueryHelper, myFlowsApi) {
     var dataSrc = new MyDataSource($scope);
-    var flowletid = $scope.$parent.activeFlowlet.name;
-    $scope.datasets = [];
+    var flowletid = $scope.FlowletsController.activeFlowlet.name;
+    this.datasets = [];
 
     var params = {
       namespace: $state.params.namespace,
@@ -23,14 +23,14 @@ angular.module(PKG.name + '.feature.flows')
           });
         });
 
-        $scope.datasets = obj;
+        this.datasets = obj;
 
         pollDatasets();
 
-      });
+      }.bind(this));
 
     function pollDatasets() {
-      angular.forEach($scope.datasets, function (dataset) {
+      angular.forEach(this.datasets, function (dataset) {
         var datasetTags = {
           namespace: $state.params.namespace,
           dataset: dataset.name,

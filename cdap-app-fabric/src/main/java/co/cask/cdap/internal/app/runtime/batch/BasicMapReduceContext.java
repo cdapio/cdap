@@ -27,7 +27,7 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
@@ -248,7 +248,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   }
 
   @Nullable
-  private static MetricsCollector getMetricCollector(Program program, String runId, String taskId,
+  private static MetricsContext getMetricCollector(Program program, String runId, String taskId,
                                                      @Nullable MetricsCollectionService service,
                                                      @Nullable MapReduceMetrics.TaskType type,
                                                      @Nullable AdapterDefinition adapterSpec) {
@@ -272,7 +272,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
       tags.put(Constants.Metrics.Tag.ADAPTER, adapterSpec.getName());
     }
 
-    return service.getCollector(tags);
+    return service.getContext(tags);
   }
 
   @Override

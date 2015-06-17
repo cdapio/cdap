@@ -1,16 +1,16 @@
 <div class="modal" tabindex="-1" role="dialog">
-  <div class="modal-lg modal-dialog" ng-controller="StatusMakeRequestController">
+  <div class="modal-lg modal-dialog" ng-controller="StatusMakeRequestController as RequestController">
     <div class="modal-content">
 
       <form name="makeRequestForm"
             class="form-horizontal"
-            ng-submit="makeRequest()"
+            ng-submit="RequestController.makeRequest()"
             novalidate>
 
 
         <div class="modal-header clearfix">
           <h3 class="modal-title pull-left">
-            <span ng-bind="programId"></span>
+            <span ng-bind="RequestController.programId"></span>
             <small> Type: Service </small>
           </h3>
           <a class="btn pull-right" ng-click="$hide()">
@@ -25,8 +25,8 @@
             <label class="control-label col-sm-2"> Make a Request </label>
             <div class="col-sm-10">
               <div class="input-group">
-                <span class="input-group-addon" ng-bind="requestMethod"></span>
-                <input type="text" disabled="true" class="form-control" ng-model="requestUrl"/>
+                <span class="input-group-addon" ng-bind="RequestController.requestMethod"></span>
+                <input type="text" disabled="true" class="form-control" ng-model="RequestController.requestUrl"/>
               </div>
             </div>
           </div>
@@ -35,8 +35,8 @@
             <label class="col-sm-2 control-label"> Preview </label>
             <div class="col-sm-10">
               <div class="form-control" disabled="true">
-                <em ng-repeat="urlParam in urlParams  track by urlParam.value">/{{urlParam.value}}</em>
-                <em ng-repeat="queryParam in queryParams track by queryParam.value">
+                <em ng-repeat="urlParam in RequestController.urlParams  track by urlParam.value">/{{urlParam.value}}</em>
+                <em ng-repeat="queryParam in RequestController.queryParams track by queryParam.value">
                     <span ng-show="$first">?{{queryParam.key}}={{queryParam.value}}</span>
                     <span ng-show="!$first">&amp;{{queryParam.key}}={{queryParam.value}}</span>
                 </em>
@@ -44,7 +44,7 @@
             </div>
           </div>
 
-          <div class="form-group" ng-repeat="urlParam in urlParams track by urlParam.value">
+          <div class="form-group" ng-repeat="urlParam in RequestController.urlParams track by urlParam.value">
             <div ng-show="urlParam.key !== null">
               <label class="col-sm-2 control-label">
                 Path Params
@@ -58,7 +58,7 @@
             </div>
           </div>
 
-          <div class="form-group" ng-repeat="queryParam in queryParams track by queryParam.value">
+          <div class="form-group" ng-repeat="queryParam in RequestController.queryParams track by queryParam.value">
             <div ng-show="queryParam.key !== null">
               <label class="col-sm-2 control-label">
                 Query Params
@@ -70,10 +70,10 @@
             </div>
           </div>
 
-          <div class="form-group" ng-show="requestMethod == 'POST' || requestMethod == 'PUT'">
+          <div class="form-group" ng-show="RequestController.requestMethod == 'POST' || RequestController.requestMethod == 'PUT'">
             <label class="col-sm-2 control-label"> POST or PUT Body </label>
             <div class="col-sm-10">
-              <textarea class="form-control" cask-json-edit="postBody" rows="5" cols="50"></textarea>
+              <textarea class="form-control" cask-json-edit="RequestController.postBody" rows="5" cols="50"></textarea>
             </div>
           </div>
         </div>
@@ -95,7 +95,7 @@
               <textarea class="form-control"
                         rows="10"
                         cols="50"
-                        ng-bind="response | json"
+                        ng-bind="RequestController.response | json"
                         disabled="true">
 
               </textarea>

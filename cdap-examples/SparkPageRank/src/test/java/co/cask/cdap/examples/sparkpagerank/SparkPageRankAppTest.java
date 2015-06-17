@@ -22,21 +22,23 @@ import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.io.ByteStreams;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
 public class SparkPageRankAppTest extends TestBase {
 
-  private static final String URL_PAIR12 = "http://example.com/page1 http://example.com/page2";
-  private static final String URL_PAIR13 = "http://example.com/page1 http://example.com/page3";
-  private static final String URL_PAIR21 = "http://example.com/page2 http://example.com/page1";
-  private static final String URL_PAIR31 = "http://example.com/page3 http://example.com/page1";
+  private static final String URL_1 = "http://example.com/page1";
+  private static final String URL_2 = "http://example.com/page2";
+  private static final String URL_3 = "http://example.com/page3";
 
   private static final String RANK = "14";
 
@@ -46,11 +48,11 @@ public class SparkPageRankAppTest extends TestBase {
     ApplicationManager appManager = deployApplication(SparkPageRankApp.class);
 
     // Send a stream events to the Stream
-    StreamManager streamManager = getStreamManager("backlinkURLStream");
-    streamManager.send(URL_PAIR12);
-    streamManager.send(URL_PAIR13);
-    streamManager.send(URL_PAIR21);
-    streamManager.send(URL_PAIR31);
+    StreamManager streamManager = getStreamManager(SparkPageRankApp.BACKLINK_URL_STREAM);
+    streamManager.send(Joiner.on(" ").join(URL_1, URL_2));
+    streamManager.send(Joiner.on(" ").join(URL_1, URL_3));
+    streamManager.send(Joiner.on(" ").join(URL_2, URL_1));
+    streamManager.send(Joiner.on(" ").join(URL_3, URL_1));
 
     // Start GoogleTypePR
     ServiceManager transformServiceManager =
@@ -68,9 +70,25 @@ public class SparkPageRankAppTest extends TestBase {
     // Wait for ranks service to start
     serviceManager.waitForStatus(true);
 
-    String response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS),
-                                             "rank?url=http://example.com/page1"));
-    Assert.assertEquals(RANK, response);
+    //Query for rank
+    URL ranksURL = new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS),
+                           SparkPageRankApp.RanksServiceHandler.RANKS_SERVICE_PATH);
+    HttpURLConnection ranksURLConnection = (HttpURLConnection) ranksURL.openConnection();
+
+    try {
+      ranksURLConnection.setDoOutput(true);
+      ranksURLConnection.setRequestMethod("POST");
+      ranksURLConnection.getOutputStream().write(("{\"url\":\"" + URL_1 + "\"}").getBytes(Charsets.UTF_8));
+
+      Assert.assertEquals(HttpURLConnection.HTTP_OK, ranksURLConnection.getResponseCode());
+
+      if (ranksURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(ranksURLConnection.getInputStream()));
+        Assert.assertEquals(RANK, reader.readLine());
+      }
+    } finally {
+      ranksURLConnection.disconnect();
+    }
   }
 
   private String requestService(URL url) throws IOException {

@@ -79,7 +79,8 @@ angular.module(PKG.name + '.feature.spark')
       angular.forEach(metricPaths, function (name, path) {
         dataSrc.poll({
           _cdapPath: path,
-          method: 'POST'
+          method: 'POST',
+          interval: 1000
         }, function(res) {
           $scope.data[name] = myHelpers.objectQuery(res, 'series', 0, 'data', 0, 'value') || 0;
         });

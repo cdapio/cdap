@@ -17,24 +17,14 @@
         <tbody>
           <tr ng-repeat="program in ProgramsController.programs | orderBy:sortable.predicate:sortable.reverse">
             <td>
-              <a ng-if="program.type === 'Mapreduce'" ui-sref="mapreduce.detail.runs({ appId: program.application.applicationId, programId: program.id })">
-                {{ ::program.id }}
-              </a>
-              <a ng-if="program.type === 'Flow'" ui-sref="flows.detail.runs({ appId: program.application.applicationId, programId: program.id })">
-                {{ ::program.id }}
-              </a>
-              <a ng-if="program.type === 'Workflow'" ui-sref="workflows.detail.runs({ appId: program.application.applicationId, programId: program.id })">
-                {{ ::program.id }}
-              </a>
-              <a ng-if="program.type === 'Service'" ui-sref="services.detail.runs({ appId: program.application.applicationId, programId: program.id })">
-                {{ ::program.id }}
-              </a>
-              <a ng-if="program.type === 'Spark'" ui-sref="spark.detail.runs({ appId: program.application.applicationId, programId: program.id })">
-                {{ ::program.id }}
-              </a>
-              <a ng-if="program.type === 'Worker'" ui-sref="worker.detail.runs({ appId: program.application.applicationId, programId: program.id })">
-                {{ ::program.id }}
-              </a>
+
+              <my-program-link
+                type="program.type"
+                namespace="$state.params.namespace"
+                app="program.application.applicationId"
+                program="program.id">
+              </my-program-link>
+
             </td>
             <td>{{ ::program.type }}</td>
             <td>
