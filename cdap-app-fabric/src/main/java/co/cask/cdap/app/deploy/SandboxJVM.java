@@ -17,9 +17,9 @@
 package co.cask.cdap.app.deploy;
 
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
+import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -148,7 +148,7 @@ public class SandboxJVM {
 
       // Now, we call configure, which returns application specification.
       DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
-      app.configure(configurer, new ApplicationContext());
+      app.configure(configurer, new DefaultApplicationContext());
       ApplicationSpecification specification = configurer.createSpecification();
 
       // Convert the specification to JSON.

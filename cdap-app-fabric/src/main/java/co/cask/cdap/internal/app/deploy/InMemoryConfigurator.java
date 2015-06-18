@@ -17,9 +17,9 @@
 package co.cask.cdap.internal.app.deploy;
 
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
+import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.deploy.Configurator;
 import co.cask.cdap.app.program.Archive;
@@ -121,7 +121,7 @@ public final class InMemoryConfigurator implements Configurator {
   private static String getSpecJson(Application app, final String bundleVersion) {
     // Now, we call configure, which returns application specification.
     DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
-    app.configure(configurer, new ApplicationContext());
+    app.configure(configurer, new DefaultApplicationContext());
     ApplicationSpecification specification = configurer.createSpecification(bundleVersion);
 
     // Convert the specification to JSON.
