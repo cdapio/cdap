@@ -28,11 +28,7 @@ public final class DatasetInstanceConfiguration {
 
   public DatasetInstanceConfiguration(String typeName, Map<String, String> properties) {
     this.typeName = typeName;
-    if (properties == null) {
-      this.properties = ImmutableMap.of();
-    } else {
-      this.properties = properties;
-    }
+    this.properties = properties;
   }
 
   public String getTypeName() {
@@ -40,7 +36,7 @@ public final class DatasetInstanceConfiguration {
   }
 
   public Map<String, String> getProperties() {
-    return properties;
+    return properties == null ? ImmutableMap.<String, String>of() : properties;
   }
 
 }
