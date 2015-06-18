@@ -88,7 +88,7 @@ angular.module(PKG.name + '.feature.adapters')
             EventPipe.emit('hideLoadingIcon.immediate');
             $alert({
               type: 'success',
-              content: 'Adapter Template created successfully!'
+              content: 'Adapter Template created successfully'
             });
           }, function(err) {
             // Loading icon shown in model
@@ -125,7 +125,7 @@ angular.module(PKG.name + '.feature.adapters')
               EventPipe.emit('hideLoadingIcon.immediate');
               $alert({
                 type: 'success',
-                content: 'The Adapter Template ' + this.model.metadata.name + ' has been saved as draft!'
+                content: 'The Adapter Template ' + this.model.metadata.name + ' has been saved as draft'
               });
               $state.go('^.list');
             }.bind(this),

@@ -16,7 +16,7 @@ angular.module(PKG.name + '.feature.flows')
      this.runs.selected = rRuns[0];
    } else {
      this.runs.selected = {
-       runid: 'No Runs!'
+       runid: 'No Runs'
      };
    }
 

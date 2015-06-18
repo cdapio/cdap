@@ -97,7 +97,7 @@ angular.module(PKG.name + '.feature.admin')
         })
         .then(function() {
           $alert({
-            content: 'Your preferences have been successfully saved!',
+            content: 'Your preferences have been successfully saved',
             type: 'success'
           });
           $scope.loadProperties();

@@ -13,7 +13,7 @@ angular.module(PKG.name + '.services')
         var xhr = new $window.XMLHttpRequest();
         xhr.upload.addEventListener('progress', function (e) {
           if (e.type === 'progress') {
-            console.info('App Upload in progress!');
+            console.info('App Upload in progress');
           }
         });
         var path = fileObj.path;
