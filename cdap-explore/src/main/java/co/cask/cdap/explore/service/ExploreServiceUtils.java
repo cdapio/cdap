@@ -28,6 +28,7 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.explore.service.hive.Hive12ExploreService;
 import co.cask.cdap.explore.service.hive.Hive13ExploreService;
+import co.cask.cdap.explore.service.hive.Hive14ExploreService;
 import co.cask.cdap.explore.service.hive.HiveCDH4ExploreService;
 import co.cask.cdap.explore.service.hive.HiveCDH5ExploreService;
 import co.cask.cdap.proto.Id;
@@ -74,7 +75,8 @@ public class ExploreServiceUtils {
     HIVE_CDH5(Pattern.compile("^.*cdh5\\..*$"), HiveCDH5ExploreService.class),
 
     HIVE_12(null, Hive12ExploreService.class),
-    HIVE_13(null, Hive13ExploreService.class);
+    HIVE_13(null, Hive13ExploreService.class),
+    HIVE_14(null, Hive14ExploreService.class);
 
     private final Pattern hadoopVersionPattern;
     private final Class<? extends ExploreService> hiveExploreServiceClass;
@@ -194,6 +196,8 @@ public class ExploreServiceUtils {
         return HiveSupport.HIVE_12;
       } else if (hiveVersion.startsWith("0.13.")) {
         return HiveSupport.HIVE_13;
+      } else if (hiveVersion.startsWith("0.14.")) {
+        return HiveSupport.HIVE_14;
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
