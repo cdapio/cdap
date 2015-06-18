@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
@@ -33,7 +34,6 @@ import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.template.etl.common.SchemaConverter;
 import co.cask.cdap.template.etl.common.StructuredToAvroTransformer;
 import com.google.common.collect.Maps;
-import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.mapreduce.Job;
 import parquet.avro.AvroParquetInputFormat;
@@ -89,12 +89,9 @@ public class TimePartitionedFileSetDatasetParquetSink extends
     String tpfsName = tpfsParquetSinkConfig.name;
     String basePath = tpfsParquetSinkConfig.basePath == null ? tpfsName : tpfsParquetSinkConfig.basePath;
     try {
-      hiveSchema = SchemaConverter.toHiveSchema(
-        co.cask.cdap.api.data.schema.Schema.parseJson(tpfsParquetSinkConfig.schema.toLowerCase()));
-    } catch (UnsupportedTypeException e) {
-      //do nothing
-    } catch (IOException e) {
-      //do nothing
+      hiveSchema = SchemaConverter.toHiveSchema(Schema.parseJson(tpfsParquetSinkConfig.schema.toLowerCase()));
+    } catch (UnsupportedTypeException | IOException e) {
+      throw new RuntimeException("Error: Schema is not valid ", e);
     }
     pipelineConfigurer.createDataset(tpfsName, TimePartitionedFileSet.class.getName(), FileSetProperties.builder()
       .setBasePath(basePath)
@@ -112,7 +109,8 @@ public class TimePartitionedFileSetDatasetParquetSink extends
     TimePartitionedFileSetArguments.setOutputPartitionTime(sinkArgs, context.getLogicalStartTime());
     TimePartitionedFileSet sink = context.getDataset(tpfsParquetSinkConfig.name, sinkArgs);
     context.setOutput(tpfsParquetSinkConfig.name, sink);
-    Schema avroSchema = new Schema.Parser().parse(tpfsParquetSinkConfig.schema.toLowerCase());
+    org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(
+      tpfsParquetSinkConfig.schema.toLowerCase());
     Job job = context.getHadoopJob();
     AvroParquetOutputFormat.setSchema(job, avroSchema);
   }

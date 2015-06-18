@@ -18,31 +18,16 @@ package co.cask.cdap.template.etl.common;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 
-import java.lang.reflect.Type;
 import java.util.Iterator;
 import java.util.Map;
 
 /**
  * Helper class for converting a {@link Schema} into a hive schema.
  */
-public class SchemaConverter {
-  private static final ReflectionSchemaGenerator schemaGenerator = new ReflectionSchemaGenerator();
+public final class SchemaConverter {
 
   private SchemaConverter() { }
-
-  /**
-   * Create a hive schema from the given type using reflection.
-   *
-   * @param type type of class to derive the schema from.
-   * @return hive schema that can be used in a create statement.
-   * @throws UnsupportedTypeException if there is an unsupported type.
-   */
-  public static String toHiveSchema(Type type) throws UnsupportedTypeException {
-    // false is to disallow recursive schemas, which hive can't handle
-    return toHiveSchema(schemaGenerator.generate(type, false));
-  }
 
   /**
    * Translate the given schema into a hive schema. Assumes the input schema is not recursive.
