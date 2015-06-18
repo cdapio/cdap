@@ -98,6 +98,37 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
 
     List<GenericRecord> records = readOutput(fileSet, EVENT_SCHEMA);
     Assert.assertEquals(1, records.size());
+
+    ETLStage source = new ETLStage("TPFSAvro",
+                                   ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
+                                                   EVENT_SCHEMA.toString(),
+                                                   Properties.TimePartitionedFileSetDataset.TPFS_NAME, filesetName,
+                                                   Properties.TimePartitionedFileSetDataset.DELAY, "0d",
+                                                   Properties.TimePartitionedFileSetDataset.DURATION, "10m"));
+    ETLStage sink = new ETLStage("TPFSAvro",
+                                 ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
+                                                 EVENT_SCHEMA.toString(),
+                                                 Properties.TimePartitionedFileSetDataset.TPFS_NAME,
+                                                 filesetName + "_op"));
+
+    ETLStage transform = new ETLStage("Projection", ImmutableMap.<String, String>of());
+    ETLBatchConfig etlBatchConfig = new ETLBatchConfig("* * * * *", source, sink, Lists.newArrayList(transform));
+
+    AdapterConfig newAdapterConfig = new AdapterConfig("description", TEMPLATE_ID.getId(),
+                                                       GSON.toJsonTree(etlBatchConfig));
+    Id.Adapter newAdapterId = Id.Adapter.from(NAMESPACE, "sconversion1");
+    AdapterManager newManager = createAdapter(newAdapterId, newAdapterConfig);
+
+    newManager.start();
+    newManager.waitForOneRunToFinish(4, TimeUnit.MINUTES);
+    newManager.stop();
+
+    DataSetManager<TimePartitionedFileSet> newFileSetManager = getDataset(filesetName + "_op");
+    TimePartitionedFileSet newFileSet = newFileSetManager.get();
+
+    List<GenericRecord> newRecords = readOutput(newFileSet, EVENT_SCHEMA);
+    Assert.assertEquals(1, newRecords.size());
+
     clear();
   }
 

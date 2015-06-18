@@ -37,12 +37,15 @@ public class AvroToStructuredTransformer {
     if (schemaCache.containsKey(hashCode)) {
       structuredSchema = schemaCache.get(hashCode);
     } else {
-      structuredSchema =
+      structuredSchema = Schema.parseJson(genericRecordSchema.toString());
       schemaCache.put(hashCode, structuredSchema);
     }
 
-
-
-    return structuredSchema;
+    StructuredRecord.Builder builder = StructuredRecord.builder(structuredSchema);
+    for (Schema.Field field: structuredSchema.getFields()) {
+      String fieldName = field.getName();
+      builder.set(fieldName, genericRecord.get(fieldName));
+    }
+    return builder.build();
   }
 }
