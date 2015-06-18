@@ -53,6 +53,7 @@ import javax.annotation.Nullable;
 /**
  * A {@link BatchSource} to use S3 as a Source.
  */
+@SuppressWarnings("unused")
 @Plugin(type = "source")
 @Name("S3")
 @Description("Batch source for S3")
@@ -63,7 +64,7 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
   private static String currentTime;
 
   private static final String REGEX_DESCRIPTION = "Regex to filter out filenames in the path. " +
-    "To use the TimeFilter, input \"timefilter\". The Hourly TimeFilter assumes that we " +
+    "To use the TimeFilter, input \"timefilter\". The TimeFilter assumes that we " +
     "are reading in files with the S3 log naming convention of YYYY-MM-DD-HH-mm-SS-Tag. The TimeFilter " +
     "reads in files from the previous hour if the timeTable field is left blank. So if it's currently " +
     "2015-06-16-15, (June 16th 2015, 3pm), it will read in files that contain 2015-06-16-14 in the filename. " +
@@ -146,13 +147,14 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
     @Override
     public boolean accept(Path path) {
       String filename = path.toString();
-
+      System.out.println("attempt :" + filename);
       //InputPathFilter will first check the directory if a directory is given
-      if (filename.equals(pathName)) {
+      if (filename.equals(pathName) || filename.equals(pathName + "/")) {
         return true;
       }
 
       if (useTimeFilter) {
+        //use stateful time filter
         if (table != null) {
           String lastRead = Bytes.toString(table.read("lastTimeRead"));
           SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
@@ -166,6 +168,8 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
 
           Date fileDate;
           try {
+            System.out.println("FILENAME puppies: " + path.toString());
+            System.out.println("PATHNAME :" + pathName);
             fileDate = sdf.parse(path.getName().substring(0, DATE_LENGTH));
           } catch (ParseException pe) {
             //this should never happen
@@ -178,6 +182,7 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
           }
           return false;
         } else {
+          //use hourly time filter
           Date prevHour = new Date();
           prevHour.setTime(System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1));
           String currentTime = new SimpleDateFormat("yyyy-MM-dd-HH").format(prevHour);
@@ -189,6 +194,7 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
         }
       }
 
+      //use regex
       Matcher matcher = regex.matcher(filename);
       return matcher.matches();
     }

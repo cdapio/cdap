@@ -19,6 +19,7 @@ package co.cask.cdap.template.etl.batch;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
@@ -33,9 +34,16 @@ import co.cask.cdap.test.AdapterManager;
 import co.cask.cdap.test.DataSetManager;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystemDummy;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.s3native.S3NInMemoryFileSystem;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.net.URI;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -168,6 +176,57 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
     Assert.assertEquals(10, (int) row.getInt("count"));
     Assert.assertTrue(Math.abs(123456789 - row.getDouble("price")) < 0.000001);
     Assert.assertEquals("island", row.getString("item"));
+  }
+
+  @Test
+  public void testS3toTPFS() throws Exception {
+    String TEST_PATH = "s3n://test/2015-06-17-00-00-00.txt";
+    String TEST_DATA = "Sample data for testing.";
+    Schema DEFAULT_SCHEMA = Schema.recordOf(
+      "event",
+      Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("body", Schema.of(Schema.Type.STRING))
+    );
+
+    S3NInMemoryFileSystem fs = new S3NInMemoryFileSystem();
+    Configuration conf = new Configuration();
+    conf.set("fs.s3n.impl", S3NInMemoryFileSystem.class.getName());
+    fs.initialize(URI.create("s3n://test/"), conf);
+    fs.createNewFile(new Path(TEST_PATH));
+
+    FSDataOutputStream writeData = fs.create(new Path(TEST_PATH));
+    writeData.write(TEST_DATA.getBytes());
+    writeData.flush();
+    writeData.close();
+
+    FileSystemDummy.addFileSystemForTesting(URI.create("s3n://test/"), conf, fs);
+    ETLStage source = new ETLStage("S3", ImmutableMap.<String, String>builder()
+      .put(Properties.S3.NAME, "S3Test")
+      .put(Properties.S3.ACCESS_ID, "-")
+      .put(Properties.S3.ACCESS_KEY, "-")
+      .put(Properties.S3.PATH, TEST_PATH)
+      .build());
+
+    ETLStage sink = new ETLStage("TPFSAvro",
+                                 ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
+                                                 DEFAULT_SCHEMA.toString(),
+                                                 Properties.TimePartitionedFileSetDataset.TPFS_NAME, "TPFSsink"));
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, Lists.<ETLStage>newArrayList());
+    AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
+    Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "testS3Adapter");
+    AdapterManager manager = createAdapter(adapterId, adapterConfig);
+
+    manager.start();
+    manager.waitForOneRunToFinish(2, TimeUnit.MINUTES);
+    manager.stop();
+
+    DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset("TPFSsink");
+    TimePartitionedFileSet fileSet = fileSetManager.get();
+    List<GenericRecord> records = ETLStreamConversionTest.readOutput(fileSet, DEFAULT_SCHEMA);
+    Assert.assertEquals(1, records.size());
+    System.out.println(records.get(0).get("body"));
+    Assert.assertEquals(records.get(0).get("body").toString(), TEST_DATA);
+
   }
 
 }

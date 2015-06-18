@@ -104,7 +104,7 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
     return new ETLBatchConfig("* * * * *", source, sink, Lists.newArrayList(transform));
   }
 
-  private List<GenericRecord> readOutput(TimePartitionedFileSet fileSet, Schema schema) throws IOException {
+  public static List<GenericRecord> readOutput(TimePartitionedFileSet fileSet, Schema schema) throws IOException {
     org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(schema.toString());
     DatumReader<GenericRecord> datumReader = new GenericDatumReader<>(avroSchema);
     List<GenericRecord> records = com.google.common.collect.Lists.newArrayList();
