@@ -147,9 +147,6 @@ public class DatasetInstantiator implements DatasetContext {
     @Override
     public void recordRead(int opsCount, int dataSize) {
       if (metricsContext != null) {
-        // todo: here we report duplicate metrics - need to change UI/docs and report once
-        metricsContext.increment("store.reads", 1);
-        metricsContext.increment("store.ops", 1);
         metricsContext.increment("dataset.store.reads", 1);
         metricsContext.increment("dataset.store.ops", 1);
       }
@@ -157,11 +154,7 @@ public class DatasetInstantiator implements DatasetContext {
 
     @Override
     public void recordWrite(int opsCount, int dataSize) {
-      // todo: here we report duplicate metrics - need to change UI/docs and report once
       if (metricsContext != null) {
-        metricsContext.increment("store.writes", 1);
-        metricsContext.increment("store.bytes", dataSize);
-        metricsContext.increment("store.ops", 1);
         metricsContext.increment("dataset.store.writes", 1);
         metricsContext.increment("dataset.store.bytes", dataSize);
         metricsContext.increment("dataset.store.ops", 1);

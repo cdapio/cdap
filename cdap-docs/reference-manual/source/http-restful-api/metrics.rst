@@ -154,13 +154,13 @@ These metrics are available in a dataset context:
 
    * - Dataset Metric
      - Description
-   * - ``system.store.bytes``
+   * - ``system.dataset.store.bytes``
      - Number of bytes written
-   * - ``system.store.ops``
+   * - ``system.dataset.store.ops``
      - Operations (reads and writes) performed
-   * - ``system.store.reads``
+   * - ``system.dataset.store.reads``
      - Read operations performed
-   * - ``system.store.writes``
+   * - ``system.dataset.store.writes``
      - Write operations performed
 
 These metrics are available in a flowlet context:
@@ -181,13 +181,13 @@ These metrics are available in a flowlet context:
      - Number of events emitted by the flowlet
    * - ``system.process.tuples.read``
      - Number of tuples read by the flowlet
-   * - ``system.store.bytes``
+   * - ``system.dataset.store.bytes``
      - Number of bytes written to datasets
-   * - ``system.store.ops``
+   * - ``system.dataset.store.ops``
      - Operations (writes and read) performed on datasets
-   * - ``system.store.reads``
+   * - ``system.dataset.store.reads``
      - Read operations performed on datasets
-   * - ``system.store.writes``
+   * - ``system.dataset.store.writes``
      - Write operations performed on datasets
 
 These metrics are available in a Mappers or Reducers context (specify whether a Mapper or
