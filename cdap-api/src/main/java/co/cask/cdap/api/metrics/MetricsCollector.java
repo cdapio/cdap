@@ -16,9 +16,13 @@
 
 package co.cask.cdap.api.metrics;
 
+import co.cask.cdap.api.annotation.Beta;
+
 /**
  * Collects metrics.
  */
+// todo: consider unifying with Metrics interface
+@Beta
 public interface MetricsCollector {
   /**
    * Increment a metric value at the current time.
