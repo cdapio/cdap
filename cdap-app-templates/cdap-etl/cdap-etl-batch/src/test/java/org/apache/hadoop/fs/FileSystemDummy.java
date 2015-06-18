@@ -26,8 +26,7 @@ import java.net.URI;
  */
 public class FileSystemDummy {
   public static void addFileSystemForTesting(URI uri, Configuration conf,
-                                      FileSystem fs) throws IOException {
+                                             FileSystem fs) throws IOException {
    FileSystem.addFileSystemForTesting(uri, conf, fs);
   }
-
 }

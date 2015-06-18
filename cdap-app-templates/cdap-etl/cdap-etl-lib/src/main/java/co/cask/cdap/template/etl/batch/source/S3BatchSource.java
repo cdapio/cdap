@@ -64,11 +64,19 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
   private static String currentTime;
 
   private static final String REGEX_DESCRIPTION = "Regex to filter out filenames in the path. " +
-    "To use the TimeFilter, input \"timefilter\". The TimeFilter assumes that we " +
+    "To use the TimeFilter, input \"timefilter\". The TimeFilter assumes that it " +
     "are reading in files with the S3 log naming convention of YYYY-MM-DD-HH-mm-SS-Tag. The TimeFilter " +
     "reads in files from the previous hour if the timeTable field is left blank. So if it's currently " +
-    "2015-06-16-15, (June 16th 2015, 3pm), it will read in files that contain 2015-06-16-14 in the filename. " +
+    "2015-06-16-15 (June 16th 2015, 3pm), it will read in files that contain 2015-06-16-14 in the filename. " +
     "If the field timeTable is present, then it will read files in that haven't been read yet.";
+  private static final String NAME_DESCRIPTION = "Name of the S3 source.";
+  private static final String ACCESS_ID_DESCRIPTION = "AccessID of the S3 source.";
+  private static final String ACCESS_KEY_DESCRIPTION = "AccessKey of the S3 source.";
+  private static final String PATH_DESCRIPTION = "Path to file(s) to be read. If a directory is specified, " +
+    "terminate the path name with a \'/\'";
+  private static final String TABLE_DESCRIPTION = "Name of the Table that keeps track of the last time files " +
+    "were read in.";
+
 
   //length of 'YYYY-MM-dd-HH-mm"
   private static final int DATE_LENGTH = 16;
@@ -78,7 +86,7 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
   private static final Schema DEFAULT_SCHEMA = Schema.recordOf(
     "event",
     Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
-   Schema.Field.of("body", Schema.of(Schema.Type.STRING))
+    Schema.Field.of("body", Schema.of(Schema.Type.STRING))
   );
 
   public S3BatchSource (S3BatchConfig config) {
@@ -96,8 +104,7 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
   @Override
   public void prepareRun(BatchSourceContext context) throws Exception {
     //calculate date one minute ago, rounded down to the nearest minute
-    prevMinute = new Date();
-    prevMinute.setTime(System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(1));
+    prevMinute = new Date(System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(1));
     Calendar cal = Calendar.getInstance();
     cal.setTime(prevMinute);
     cal.set(Calendar.SECOND, 0);
@@ -147,7 +154,6 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
     @Override
     public boolean accept(Path path) {
       String filename = path.toString();
-      System.out.println("attempt :" + filename);
       //InputPathFilter will first check the directory if a directory is given
       if (filename.equals(pathName) || filename.equals(pathName + "/")) {
         return true;
@@ -168,8 +174,6 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
 
           Date fileDate;
           try {
-            System.out.println("FILENAME puppies: " + path.toString());
-            System.out.println("PATHNAME :" + pathName);
             fileDate = sdf.parse(path.getName().substring(0, DATE_LENGTH));
           } catch (ParseException pe) {
             //this should never happen
@@ -194,27 +198,28 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
         }
       }
 
-      //use regex
+      //filter by file name using regex from configuration
       Matcher matcher = regex.matcher(filename);
       return matcher.matches();
     }
 
     public void setConf(Configuration conf) {
-      if (conf != null) {
-        pathName = conf.get("input.path.name", "/");
+      if (conf == null) {
+        return;
+      }
+      pathName = conf.get("input.path.name", "/");
 
-        //path is a directory so remove trailing '/'
-        if (pathName.endsWith("/")) {
-          pathName = pathName.substring(0, pathName.length() - 1);
-        }
+      //path is a directory so remove trailing '/'
+      if (pathName.endsWith("/")) {
+        pathName = pathName.substring(0, pathName.length() - 1);
+      }
 
-        String input = conf.get("input.path.regex", ".*");
-        if (input.equals("timefilter")) {
-          useTimeFilter = true;
-        } else {
-          useTimeFilter = false;
-          regex = Pattern.compile(input);
-        }
+      String input = conf.get("input.path.regex", ".*");
+      if (input.equals("timefilter")) {
+        useTimeFilter = true;
+      } else {
+        useTimeFilter = false;
+        regex = Pattern.compile(input);
       }
     }
   }
@@ -225,19 +230,19 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
   public static class S3BatchConfig extends PluginConfig {
 
     @Name("name")
-    @Description("Name of the S3 source")
+    @Description(NAME_DESCRIPTION)
     private String name;
 
     @Name("accessID")
-    @Description("Access Id for s3")
+    @Description(ACCESS_ID_DESCRIPTION)
     private String accessID;
 
     @Name("accessKey")
-    @Description("Access Key for s3")
+    @Description(ACCESS_KEY_DESCRIPTION)
     private String accessKey;
 
     @Name("path")
-    @Description("Path to file(s) to be read. If a directory is specified, terminate the path name with a \'\\\'")
+    @Description(PATH_DESCRIPTION)
     private String path;
 
     @Name("fileRegex")
@@ -247,7 +252,7 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
 
     @Name("timeTable")
     @Nullable
-    @Description("Name of the Table that keeps track of the last time files were read in.")
+    @Description(TABLE_DESCRIPTION)
     private String timeTable;
 
     public S3BatchConfig(String name, String accessID, String accessKey, String path, String regex,
@@ -259,6 +264,5 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
       this.fileRegex = regex;
       this.timeTable = timeTable;
     }
-
   }
 }

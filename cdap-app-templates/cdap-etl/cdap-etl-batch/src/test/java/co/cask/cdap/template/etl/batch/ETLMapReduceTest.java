@@ -180,9 +180,9 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
 
   @Test
   public void testS3toTPFS() throws Exception {
-    String TEST_PATH = "s3n://test/2015-06-17-00-00-00.txt";
-    String TEST_DATA = "Sample data for testing.";
-    Schema DEFAULT_SCHEMA = Schema.recordOf(
+    String testPath = "s3n://test/2015-06-17-00-00-00.txt";
+    String testData = "Sample data for testing.";
+    Schema defaultSchema = Schema.recordOf(
       "event",
       Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
       Schema.Field.of("body", Schema.of(Schema.Type.STRING))
@@ -192,10 +192,10 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
     Configuration conf = new Configuration();
     conf.set("fs.s3n.impl", S3NInMemoryFileSystem.class.getName());
     fs.initialize(URI.create("s3n://test/"), conf);
-    fs.createNewFile(new Path(TEST_PATH));
+    fs.createNewFile(new Path(testPath));
 
-    FSDataOutputStream writeData = fs.create(new Path(TEST_PATH));
-    writeData.write(TEST_DATA.getBytes());
+    FSDataOutputStream writeData = fs.create(new Path(testPath));
+    writeData.write(testData.getBytes());
     writeData.flush();
     writeData.close();
 
@@ -204,12 +204,12 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
       .put(Properties.S3.NAME, "S3Test")
       .put(Properties.S3.ACCESS_ID, "-")
       .put(Properties.S3.ACCESS_KEY, "-")
-      .put(Properties.S3.PATH, TEST_PATH)
+      .put(Properties.S3.PATH, testPath)
       .build());
 
     ETLStage sink = new ETLStage("TPFSAvro",
                                  ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
-                                                 DEFAULT_SCHEMA.toString(),
+                                                 defaultSchema.toString(),
                                                  Properties.TimePartitionedFileSetDataset.TPFS_NAME, "TPFSsink"));
     ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, Lists.<ETLStage>newArrayList());
     AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
@@ -222,11 +222,9 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
 
     DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset("TPFSsink");
     TimePartitionedFileSet fileSet = fileSetManager.get();
-    List<GenericRecord> records = ETLStreamConversionTest.readOutput(fileSet, DEFAULT_SCHEMA);
+    List<GenericRecord> records = ETLStreamConversionTest.readOutput(fileSet, defaultSchema);
     Assert.assertEquals(1, records.size());
-    System.out.println(records.get(0).get("body"));
-    Assert.assertEquals(records.get(0).get("body").toString(), TEST_DATA);
-
+    Assert.assertEquals(records.get(0).get("body").toString(), testData);
   }
 
 }
