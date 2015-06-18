@@ -1,8 +1,8 @@
 <div class="btn-group pull-right nested-tabs">
   <button class="btn btn-default"
-      ng-repeat="tab in tabs"
-      ng-click="selectTab(tab)"
-      ng-class="{'active': tab.title == activeTab.title}"
+      ng-repeat="tab in RunsController.tabs"
+      ng-click="RunsController.selectTab(tab)"
+      ng-class="{'active': tab.title == RunsController.activeTab.title}"
   >
     {{ tab.title }}
   </button>
@@ -10,8 +10,8 @@
 
 <my-program-status
   data-type="mapreduce"
-  data-runid="{{ current }}"
-  data-runs="runs"
+  data-runid="{{ RunsController.runs.selected.runid }}"
+  data-runs="RunsController.runs"
 ></my-program-status>
 
-<div ng-include="activeTab.template"></div>
+<div ng-include="RunsController.activeTab.template"></div>

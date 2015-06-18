@@ -1,38 +1,45 @@
 angular.module(PKG.name + '.feature.services')
-  .controller('ServicesRunsDetailStatusController', function($state, $scope, MyDataSource, $filter) {
+  .controller('ServicesRunsDetailStatusController', function($state, $scope, $filter, myServiceApi) {
     var filterFilter = $filter('filter');
 
     if ($state.params.runid) {
-      var match = filterFilter($scope.runs, {runid: $state.params.runid});
+      var match = filterFilter($scope.RunsController.runs, {runid: $state.params.runid});
       if (match.length) {
-        $scope.runs.selected = match[0];
+        $scope.RunsController.runs.selected = match[0];
       }
     }
 
-    var dataSrc = new MyDataSource($scope),
-        path = '/apps/' +
+    var path = '/apps/' +
           $state.params.appId + '/services/' +
           $state.params.programId;
 
-    $scope.endPoints = [];
+    this.endPoints = [];
 
-    $scope.basePath = '/namespaces/' + $state.params.namespace + path;
+    this.basePath = '/namespaces/' + $state.params.namespace + path;
 
-    dataSrc.request({
-      _cdapNsPath: path
-    })
+    var params = {
+      namespace: $state.params.namespace,
+      appId: $state.params.appId,
+      serviceId: $state.params.programId,
+      scope: $scope
+    };
+
+    myServiceApi.get(params)
+      .$promise
       .then(function(res) {
         angular.forEach(res.handlers, function(value) {
-          $scope.endPoints = $scope.endPoints.concat(value.endpoints);
-        });
-      });
+          this.endPoints = this.endPoints.concat(value.endpoints);
+        }, this);
+      }.bind(this));
 
-    // disable make request button on inactive runs
-    dataSrc.request({
-      _cdapNsPath: path + '/runs/' + $scope.runs.selected.runid
-    })
-    .then(function(res) {
-      $scope.status = res.status;
-    });
+    if ($scope.RunsController.runs.length > 0) {
+      params.runId = $scope.RunsController.runs.selected.runid;
+
+      myServiceApi.runDetail(params)
+        .$promise
+        .then(function(res) {
+          this.status = res.status;
+        }.bind(this));
+    }
 
   });

@@ -17,7 +17,7 @@
       </button>
       <ul class="dropdown-menu dropdown-menu-right" role="menu">
         <li role="presentation">
-          <a href="" ng-click="sendEvents()">
+          <a href="" ng-click="DetailController.sendEvents()">
             Send Events
           </a>
         </li>
@@ -31,7 +31,7 @@
           <a role="menuitem"
              href=""
              ng-click="caskConfirm()"
-             cask-confirmable="truncate()"
+             cask-confirmable="DetailController.truncate()"
              data-confirmable-content="Are you sure you want to truncate this stream?">
              Truncate
           </a>

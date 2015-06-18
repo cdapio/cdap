@@ -74,7 +74,8 @@ angular.module(PKG.name + '.feature.worker')
         templateUrl: '/assets/features/workers/templates/tabs/history.html',
         controller: 'WorkersRunsController',
         ncyBreadcrumb: {
-          label: 'History'
+          label: 'History',
+          parent: 'worker.detail.runs'
         }
       })
 

@@ -7,7 +7,7 @@
       <span></span>
       <span class="pull-right">
         {{ query.timestamp | amDateFormat:'dddd, MMMM Do YYYY, h:mm:ss a'}}
-        <span class="status fa fa-circle" ng-class="{ 'green': query.status === 'FINISHED', 'red': query.status !== 'FINISHED' }"></span>
+        <span class="status fa fa-circle" ng-class="{ 'green': query.status === 'FINISHED', 'yellow': query.status === 'RUNNING', 'red': ['RUNNING', 'FINISHED'].indexOf(query.status) === -1 }"></span>
       </span>
     </div>
     <div class="panel-body" ng-if="query.isOpen">
@@ -47,8 +47,8 @@
               <tbody>
                 <tr ng-repeat="results in responses.results">
                   <td ng-repeat="result in results.columns track by $index">
-                    <span>{{ result }}</span>
-                    <span ng-if="!result && result !== 0">null</span>
+                    <span ng-if="result !== null">{{ result }}</span>
+                    <span ng-if="result === null">null</span>
                   </td>
                 </tr>
                 <tr class="text-center" ng-if="responses.results.length === 0">

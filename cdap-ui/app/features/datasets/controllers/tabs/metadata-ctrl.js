@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.datasets')
-  .controller('CdapDatasetMetadataController',
+  .controller('DatasetMetadataController',
     function($scope, $state, myExploreApi) {
 
       var datasetId = $state.params.datasetId;
@@ -10,12 +10,12 @@ angular.module(PKG.name + '.feature.datasets')
         table: 'dataset_' + datasetId,
         scope: $scope
       };
-
+      this.metadata = {};
       myExploreApi.getInfo(params)
         .$promise
         .then(function (res) {
-          $scope.metadata = res;
-        });
+          this.metadata = res;
+        }.bind(this));
 
     }
   );

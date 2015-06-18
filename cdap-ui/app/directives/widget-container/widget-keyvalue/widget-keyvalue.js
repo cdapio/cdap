@@ -71,6 +71,12 @@ angular.module(PKG.name + '.commons')
           var index = $scope.properties.indexOf(property);
           $scope.properties.splice(index, 1);
         };
+
+        $scope.enter = function (event, last) {
+          if (last && event.keyCode === 13) {
+            $scope.addProperty();
+          }
+        };
       }
     };
   });

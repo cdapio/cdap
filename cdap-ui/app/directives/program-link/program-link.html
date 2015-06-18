@@ -1,0 +1,18 @@
+<a ng-class="{ 'text-bold': bold }" ng-if="type === 'Mapreduce'"
+    ui-sref="mapreduce.detail.runs({ namespace: namespace, appId: app, programId: program })">
+  {{ ::program }}</a>
+<a ng-class="{ 'text-bold': bold }" ng-if="type === 'Flow'"
+    ui-sref="flows.detail.runs({ namespace: namespace, appId: app, programId: program })">
+  {{ ::program }}</a>
+<a ng-class="{ 'text-bold': bold }" ng-if="type === 'Workflow'"
+    ui-sref="workflows.detail.runs({ namespace: namespace, appId: app, programId: program })">
+  {{ ::program }}</a>
+<a ng-class="{ 'text-bold': bold }" ng-if="type === 'Service'"
+    ui-sref="services.detail.runs({ namespace: namespace, appId: app, programId: program })">
+  {{ ::program }}</a>
+<a ng-class="{ 'text-bold': bold }" ng-if="type === 'Spark'"
+    ui-sref="spark.detail.runs({ namespace: namespace, appId: app, programId: program })">
+  {{ ::program }}</a>
+<a ng-class="{ 'text-bold': bold }" ng-if="type === 'Worker'"
+    ui-sref="worker.detail.runs({ namespace: namespace, appId: app, programId: program })">
+  {{ ::program }}</a>

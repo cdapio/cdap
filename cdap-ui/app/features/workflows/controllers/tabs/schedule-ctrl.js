@@ -9,9 +9,9 @@ angular.module(PKG.name + '.feature.workflows')
     myWorkFlowApi.schedules(params)
       .$promise
       .then(function(res) {
-        $scope.schedules = res;
+        this.schedules = res;
 
-        angular.forEach($scope.schedules, function(v) {
+        angular.forEach(this.schedules, function(v) {
           if (v.scheduleType === 'TIME') {
             var parse = v.schedule.cronExpression.split(' ');
             v.time = {};
@@ -45,25 +45,25 @@ angular.module(PKG.name + '.feature.workflows')
             });
         });
 
-        if ($scope.schedules.length > 0) {
-          $scope.schedules[0].isOpen = true;
+        if (this.schedules.length > 0) {
+          this.schedules[0].isOpen = true;
         }
-      });
+      }.bind(this));
 
-    $scope.suspendSchedule = function (obj) {
+    this.suspendSchedule = function (obj) {
       myWorkFlowApi.scheduleSuspend({
         appId: $state.params.appId,
         scheduleId: obj.schedule.name,
         scope: $scope
-      });
+      }, {});
     };
 
-    $scope.resumeSchedule = function (obj) {
+    this.resumeSchedule = function (obj) {
       myWorkFlowApi.scheduleResume({
         appId: $state.params.appId,
         scheduleId: obj.schedule.name,
         scope: $scope
-      });
+      }, {});
     };
 
   });

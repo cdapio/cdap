@@ -3,9 +3,9 @@
  */
 
 angular.module(PKG.name+'.feature.overview').controller('OverviewCtrl',
-function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrderings, MyMetricsQueryHelper, myHelpers, MyChartHelpers, myStreamApi, myDatasetApi, myAppUploader) {
-  $scope.MyOrderings = MyOrderings;
+function ($scope, $state, myLocalStorage, MY_CONFIG, Widget, MyMetricsQueryHelper, MyChartHelpers, MyDataSource, ServiceStatusFactory) {
 
+  var dataSrc = new MyDataSource($scope);
   if(!$state.params.namespace) {
     // the controller for "ns" state should handle the case of
     // an empty namespace. but this nested state controller will
@@ -13,79 +13,26 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrd
     return;
   }
 
-  // Takes care of file upload for App.
-  $scope.onFileSelected = myAppUploader.upload;
-
-  $scope.apps = [];
-
-  $scope.dataList = [];
-  $scope.hideWelcomeMessage = false;
+  this.hideWelcomeMessage = false;
 
 
-  var dataSrc = new MyDataSource($scope),
-      PREFKEY = 'feature.overview.welcomeIsHidden';
+  var PREFKEY = 'feature.overview.welcomeIsHidden';
 
   myLocalStorage.get(PREFKEY)
     .then(function (v) {
-      $scope.welcomeIsHidden = v;
-    });
+      this.welcomeIsHidden = v;
+    }.bind(this));
 
-  $scope.hideWelcome = function () {
+  this.hideWelcome = function () {
     myLocalStorage.set(PREFKEY, true);
-    $scope.welcomeIsHidden = true;
+    this.welcomeIsHidden = true;
   };
 
-  $scope.isEnterprise = MY_CONFIG.isEnterprise;
-  $scope.systemStatus = '#C9C9D1';
-  dataSrc.poll({
-    _cdapPath: '/system/services/status',
-    interval: 10000
-  }, function(res) {
-    var serviceStatuses = Object.keys(res).map(function(value) {
-      return res[value];
-    });
-    if (serviceStatuses.indexOf('NOT OK') > -1) {
-      $scope.systemStatus = 'yellow';
-    }
-    if (serviceStatuses.indexOf('OK') === -1) {
-      $scope.systemStatus = 'red';
-    }
-    if (serviceStatuses.indexOf('NOT OK') === -1) {
-      $scope.systemStatus = 'green';
-    }
-  });
+  this.isEnterprise = MY_CONFIG.isEnterprise;
+  // this.systemStatus = '#C9C9D1';
+  this.systemStatus = ServiceStatusFactory.systemStatus;
 
-  dataSrc.request({
-    _cdapNsPath: '/apps'
-  })
-    .then(function(res) {
-      $scope.apps = res;
-    });
-
-  var params = {
-    namespace: $state.params.namespace,
-    scope: $scope
-  };
-
-  myDatasetApi.list(params)
-    .$promise
-    .then(function(res) {
-      $scope.dataList = $scope.dataList.concat(res);
-    });
-
-  myStreamApi.list(params)
-    .$promise
-    .then(function(res) {
-      if (angular.isArray(res) && res.length) {
-        angular.forEach(res, function(r) {
-          r.type = 'Stream';
-        });
-
-        $scope.dataList = $scope.dataList.concat(res);
-      }
-    });
-
-  $scope.wdgts = [];
+  this.wdgts = [];
   // type field is overridden by what is rendered in view because we do not use widget.getPartial()
   var widgetSettings = {
     size: {
@@ -108,7 +55,7 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrd
     aggregate: 5
   };
 
-  $scope.wdgts.push(
+  this.wdgts.push(
     new Widget({
       title: 'System',
       type: 'c3-line',
@@ -147,7 +94,7 @@ function ($scope, MyDataSource, $state, myLocalStorage, MY_CONFIG, Widget, MyOrd
   // TODO: There should be a better way. Right now the 'sort-of' legend for
   // #of warnings and errors are outside the charts. Thats the reason
   // polling happens in two different places.
-  angular.forEach($scope.wdgts, function(widget) {
+  angular.forEach(this.wdgts, function(widget) {
     dataSrc.poll({
       _cdapPath: '/metrics/query',
       method: 'POST',
