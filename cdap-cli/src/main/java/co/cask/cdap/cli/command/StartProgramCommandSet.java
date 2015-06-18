@@ -41,6 +41,7 @@ public class StartProgramCommandSet extends CommandSet<Command> {
     for (ElementType elementType : ElementType.values()) {
       if (elementType.canStart()) {
         commands.add(new StartProgramCommand(elementType, programClient, cliConfig));
+        commands.add(new StartDebugProgramCommand(elementType, programClient, cliConfig));
       }
     }
     return commands;

@@ -2,9 +2,9 @@ angular.module(PKG.name + '.feature.flows')
   .controller('FlowletDetailOutputController', function($state, $scope, MyDataSource, MyMetricsQueryHelper, myFlowsApi) {
 
     var dataSrc = new MyDataSource($scope);
-    var flowletid = $scope.$parent.activeFlowlet.name;
-    var runid = $scope.runs.selected.runid;
-    $scope.outputs = [];
+    var flowletid = $scope.FlowletsController.activeFlowlet.name;
+    var runid = $scope.RunsController.runs.selected.runid;
+    this.outputs = [];
 
     var params = {
       namespace: $state.params.namespace,
@@ -28,11 +28,11 @@ angular.module(PKG.name + '.feature.flows')
         // OUTPUTS
         angular.forEach(res.connections, function(v) {
           if (v.sourceName === flowletid) {
-            $scope.outputs.push(v.targetName);
+            this.outputs.push(v.targetName);
           }
-        });
+        }.bind(this));
 
-        if ($scope.outputs.length > 0) {
+        if (this.outputs.length > 0) {
           // OUTPUT METRICS
           dataSrc
             .poll({
@@ -40,8 +40,8 @@ angular.module(PKG.name + '.feature.flows')
                             + '&metric=system.process.events.out&start=now-60s&count=60',
               method: 'POST'
             }, function(res) {
-              updateOutput(res);
-            });
+              updateOutput.bind(this)(res);
+            }.bind(this));
 
           // Total
           dataSrc
@@ -51,13 +51,13 @@ angular.module(PKG.name + '.feature.flows')
               method: 'POST'
             }, function(res) {
               if (res.series[0]) {
-                $scope.total = res.series[0].data[0].value;
+                this.total = res.series[0].data[0].value;
               }
-            });
+            }.bind(this));
 
         }
 
-      });
+      }.bind(this));
 
     function updateOutput(res) {
       var v = [];
@@ -78,11 +78,11 @@ angular.module(PKG.name + '.feature.flows')
         }
       }
 
-      if ($scope.outputHistory) {
-        $scope.outputStream = v.slice(-1);
+      if (this.outputHistory) {
+        this.outputStream = v.slice(-1);
       }
 
-      $scope.outputHistory = [{
+      this.outputHistory = [{
         label: 'output',
         values: v
       }];

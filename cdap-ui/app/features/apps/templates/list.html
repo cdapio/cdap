@@ -1,37 +1,57 @@
 <div ncy-breadcrumb></div>
+
+<br/>
+
 <div class="row">
-  <div class="col-xs-6 text-left">
+  <div class="col-xs-7 col-md-6 text-left">
     <h2> All Applications </h2>
   </div>
-  <div class="col-xs-6 h2 text-right">
+  <div class="col-xs-5 col-md-2 h2 text-right">
     <div class="btn-group dropdown-right" dropdown>
-      <button type="button" class="btn btn-default dropdown-toggle" dropdown-toggle="" aria-haspopup="true" aria-expanded="false">
+      <button type="button"
+              class="btn btn-default dropdown-toggle"
+              dropdown-toggle=""
+              aria-haspopup="true"
+              aria-expanded="false">
         Actions <span class="caret"></span>
       </button>
       <ul class="dropdown-menu dropdown-menu-right" role="menu">
         <li role="presentation">
-          <my-file-select ng-controller="CdapAppListController"
-                          dropdown="true"
+          <my-file-select dropdown="true"
                           data-button-label="Add App"
-                          on-file-select="onFileSelected($files)">
+                          on-file-select="ListController.onFileSelected($files)">
           </my-file-select>
         </li>
       </ul>
     </div>
   </div>
+  <div class="col-md-4 h2 text-right">
+    <div class="input-group pull-right">
+      <input type="text" class="form-control" ng-model="ListController.searchText" placeholder="search...">
+      <div class="input-group-addon">
+        <i class="fa fa-search"></i>
+      </div>
+    </div>
+  </div>
 </div>
 
-<div class="table-responsive">
+<div ng-if="ListController.apps.length === 0">
+  <div class="well well-lg text-center">
+    <h3>You haven't deployed any apps.</h3>
+  </div>
+</div>
+
+<div class="table-responsive"  ng-if="ListController.apps.length > 0">
   <table class="table table-curved" cask-sortable>
     <thead>
-      <tr ng-class="{'sort-enabled': apps.length>0}">
+      <tr ng-class="{'sort-enabled': ListController.apps.length>0}">
         <th data-predicate="name"> Name </th>
         <th data-predicate="version"> Version </th>
         <th data-predicate="description"> Description </th>
       </tr>
     </thead>
     <tbody>
-      <tr ng-repeat="app in apps | orderBy:sortable.predicate:sortable.reverse">
+      <tr ng-repeat="app in ListController.filtered = (ListController.apps | filter: ListController.searchText ) | myPaginate:ListController.currentPage | orderBy:sortable.predicate:sortable.reverse">
         <td >
           <a ui-sref="apps.detail.overview.status({ appId: app.id })" ng-click="MyOrderings.appClicked(app.id)">
             <strong> {{ ::app.name }} </strong>
@@ -42,4 +62,8 @@
       </tr>
     </tbody>
   </table>
+</div>
+
+<div class="text-center" ng-if="ListController.filtered.length > 10">
+  <pagination total-items="ListController.filtered.length" ng-model="ListController.currentPage"></pagination>
 </div>

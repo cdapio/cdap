@@ -1,8 +1,8 @@
 angular.module(PKG.name + '.feature.flows')
   .controller('FlowsFlowletDetailController', function($state, $scope, myHelpers, myFlowsApi) {
 
-    $scope.activeTab = 0;
-    var flowletid = $scope.$parent.activeFlowlet.name;
+    this.activeTab = 0;
+    var flowletid = $scope.FlowletsController.activeFlowlet.name;
 
     var params = {
       namespace: $state.params.namespace,
@@ -14,27 +14,26 @@ angular.module(PKG.name + '.feature.flows')
     myFlowsApi.get(params)
       .$promise
       .then(function (res) {
-        $scope.description = myHelpers.objectQuery(res, 'flowlets', flowletid, 'flowletSpec', 'description');
-
-      });
+        this.description = myHelpers.objectQuery(res, 'flowlets', flowletid, 'flowletSpec', 'description');
+      }.bind(this));
 
     params.flowletId = flowletid;
 
     myFlowsApi.getFlowletInstance(params)
       .$promise
       .then(function (res){
-        $scope.provisionedInstances = res.instances;
-        $scope.instance = res.instances;
-      });
+        this.provisionedInstances = res.instances;
+        this.instance = res.instances;
+      }.bind(this));
 
     myFlowsApi.pollFlowletInstance(params)
       .$promise
       .then(function (res) {
-        $scope.provisionedInstances = res.instances;
-      });
+        this.provisionedInstances = res.instances;
+      }.bind(this));
 
-    $scope.setInstance = function () {
-      myFlowsApi.setFlowletInstance(params, { 'instances': $scope.instance });
+    this.setInstance = function () {
+      myFlowsApi.setFlowletInstance(params, { 'instances': this.instance });
     };
 
   });

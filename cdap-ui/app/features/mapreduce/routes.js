@@ -19,7 +19,6 @@ angular.module(PKG.name + '.feature.mapreduce')
           highlightTab: 'development'
         },
         templateUrl: '/assets/features/mapreduce/templates/detail.html',
-        controller: 'MapreduceDetailController',
         ncyBreadcrumb: {
           parent: 'apps.detail.overview.status',
           label: 'Mapreduce',
@@ -48,6 +47,7 @@ angular.module(PKG.name + '.feature.mapreduce')
           url: '/runs',
           templateUrl: '/assets/features/mapreduce/templates/tabs/runs.html',
           controller: 'MapreduceRunsController',
+          controllerAs: 'RunsController',
           ncyBreadcrumb: {
             label: '{{$state.params.programId}}'
           }
@@ -62,7 +62,7 @@ angular.module(PKG.name + '.feature.mapreduce')
           })
         .state('mapreduce.detail.datasets', {
           url: '/data',
-          templateUrl: '/assets/features/mapreduce/templates/tabs/data.html',
+          template: '<my-data-list data-level="program" data-program="mapreduce"></my-data-list>',
           ncyBreadcrumb: {
             parent: 'mapreduce.detail.runs',
             label: 'Datasets'
@@ -70,8 +70,9 @@ angular.module(PKG.name + '.feature.mapreduce')
         })
         .state('mapreduce.detail.history', {
           url: '/history',
-          templateUrl: '/assets/features/mapreduce/templates/tabs/history.html',
+          template: '<my-program-history data-runs="RunsController.runs" data-type="MAPREDUCE"></my-program-history>',
           controller: 'MapreduceRunsController',
+          controllerAs: 'RunsController',
           ncyBreadcrumb: {
             parent: 'mapreduce.detail.runs',
             label: 'History'

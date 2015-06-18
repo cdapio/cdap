@@ -7,9 +7,9 @@
       <input type="text" class="form-control" ng-model="delimiter" />
     </div>
   </div>
-  <div ng-repeat="property in properties" class="clearfix property-row">
+  <div ng-repeat="property in properties" class="clearfix property-row" ng-keypress="enter($event, $last)">
     <div class="col-xs-10">
-      <input type="text" class="form-control" ng-model="property.value" placeholder="value"/>
+      <input type="text" class="form-control" ng-model="property.value" placeholder="value" my-focus-watch="$last" />
     </div>
 
     <div class="col-xs-1 text-center">

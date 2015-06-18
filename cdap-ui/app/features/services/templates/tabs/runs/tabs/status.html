@@ -1,12 +1,12 @@
-<div ng-controller="ServicesRunsDetailStatusController">
+<div ng-controller="ServicesRunsDetailStatusController as StatusController">
 
   <div class="row">
-    <my-instance-control data-base-path="basePath"></my-instance-control>
+    <my-instance-control data-base-path="StatusController.basePath"></my-instance-control>
   </div>
 
   <div class="row">
     <div class="col-xs-9">
-      <h2> Endpoints [{{endPoints.length}}] </h2>
+      <h2> Endpoints [{{StatusController.endPoints.length}}] </h2>
         <table class="table table-curved">
           <thead>
             <tr>
@@ -15,7 +15,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr ng-repeat="ep in endPoints">
+            <tr ng-repeat="ep in StatusController.endPoints">
               <td ng-bind="ep.method"></td>
               <td>
                 <div class="row">
@@ -24,7 +24,7 @@
                   </div>
                   <div class="col-xs-6">
                       <a class="btn btn-default"
-                        ng-disabled="status !== 'RUNNING'"
+                        ng-disabled="StatusController.status !== 'RUNNING'"
                         ui-sref="services.detail.runs.makerequest({ requestUrl: ep.path, requestMethod: ep.method})">
                       Make Request </a>
                   </div>

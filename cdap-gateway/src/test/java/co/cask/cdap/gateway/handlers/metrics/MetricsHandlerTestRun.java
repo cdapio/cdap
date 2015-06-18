@@ -20,7 +20,7 @@ import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.proto.MetricQueryResult;
@@ -60,15 +60,15 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
   private static void setupMetrics() throws Exception {
     // Adding metrics for app "WordCount1" in namespace "myspace", "WCount1" in "yourspace"
-    MetricsCollector collector =
-      collectionService.getCollector(getFlowletContext("myspace", "WordCount1", "WordCounter", "run1", "splitter"));
+    MetricsContext collector =
+      collectionService.getContext(getFlowletContext("myspace", "WordCount1", "WordCounter", "run1", "splitter"));
     collector.increment("reads", 1);
     collector.increment("writes", 1);
-    collector = collectionService.getCollector(getFlowletContext("yourspace", "WCount1", "WordCounter",
-                                                                 "run1", "splitter"));
+    collector = collectionService.getContext(getFlowletContext("yourspace", "WCount1", "WordCounter",
+                                                               "run1", "splitter"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(getFlowletContext("yourspace", "WCount1", "WCounter",
-                                                                 "run1", "splitter"));
+    collector = collectionService.getContext(getFlowletContext("yourspace", "WCount1", "WCounter",
+                                                               "run1", "splitter"));
     emitTs = System.currentTimeMillis();
     // we want to emit in two different seconds
     // todo : figure out why we need this
@@ -77,60 +77,60 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     TimeUnit.MILLISECONDS.sleep(2000);
     collector.increment("reads", 2);
 
-    collector = collectionService.getCollector(getFlowletContext("yourspace", "WCount1", "WCounter",
-                                                                 "run1", "counter"));
+    collector = collectionService.getContext(getFlowletContext("yourspace", "WCount1", "WCounter",
+                                                               "run1", "counter"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(getMapReduceTaskContext("yourspace", "WCount1", "ClassicWordCount",
-                                                                       MapReduceMetrics.TaskType.Mapper,
-                                                                       "run1", "task1"));
+    collector = collectionService.getContext(getMapReduceTaskContext("yourspace", "WCount1", "ClassicWordCount",
+                                                                     MapReduceMetrics.TaskType.Mapper,
+                                                                     "run1", "task1"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(
+    collector = collectionService.getContext(
       getMapReduceTaskContext("yourspace", "WCount1", "ClassicWordCount",
                               MapReduceMetrics.TaskType.Reducer, "run1", "task2"));
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(getFlowletContext("myspace", "WordCount1", "WordCounter",
-                                                                 "run1", "splitter"));
+    collector = collectionService.getContext(getFlowletContext("myspace", "WordCount1", "WordCounter",
+                                                               "run1", "splitter"));
     collector.increment("reads", 1);
     collector.increment("writes", 1);
 
-    collector = collectionService.getCollector(getFlowletContext("myspace", "WordCount1", "WordCounter",
-                                                                 "run1", "collector"));
+    collector = collectionService.getContext(getFlowletContext("myspace", "WordCount1", "WordCounter",
+                                                               "run1", "collector"));
     collector.increment("aa", 1);
     collector.increment("zz", 1);
     collector.increment("ab", 1);
 
-    collector = collectionService.getCollector(getAdapterContext("yourspace", "WCount1", "ClassicWordCount",
-                                                                 MapReduceMetrics.TaskType.Mapper,
-                                                                 "run1", "task1", "adapter1"));
+    collector = collectionService.getContext(getAdapterContext("yourspace", "WCount1", "ClassicWordCount",
+                                                               MapReduceMetrics.TaskType.Mapper,
+                                                               "run1", "task1", "adapter1"));
     collector.increment("areads", 3);
     collector.increment("awrites", 4);
 
-    collector = collectionService.getCollector(getAdapterContext("yourspace", "WCount1", "ClassicWordCount",
-                                                                 MapReduceMetrics.TaskType.Mapper,
-                                                                 "run2", "task1", "adapter1"));
+    collector = collectionService.getContext(getAdapterContext("yourspace", "WCount1", "ClassicWordCount",
+                                                               MapReduceMetrics.TaskType.Mapper,
+                                                               "run2", "task1", "adapter1"));
     collector.increment("areads", 3);
     collector.increment("awrites", 4);
 
-    collector = collectionService.getCollector(getWorkerAdapterContext("yourspace", "WCount1", "WorkerWordCount",
-                                                                       "run1", "task1", "adapter2"));
+    collector = collectionService.getContext(getWorkerAdapterContext("yourspace", "WCount1", "WorkerWordCount",
+                                                                     "run1", "task1", "adapter2"));
 
     collector.increment("workerreads", 5);
     collector.increment("workerwrites", 6);
 
-    collector = collectionService.getCollector(getWorkerAdapterContext("yourspace", "WCount1", "WorkerWordCount",
-                                                                       "run2", "task1", "adapter2"));
+    collector = collectionService.getContext(getWorkerAdapterContext("yourspace", "WCount1", "WorkerWordCount",
+                                                                     "run2", "task1", "adapter2"));
 
     collector.increment("workerreads", 5);
     collector.increment("workerwrites", 6);
 
     // also: user metrics
     Metrics userMetrics = new ProgramUserMetrics(
-      collectionService.getCollector(getFlowletContext("myspace", "WordCount1", "WordCounter",
-                                                       "run1", "splitter")));
+      collectionService.getContext(getFlowletContext("myspace", "WordCount1", "WordCounter",
+                                                     "run1", "splitter")));
     userMetrics.count("reads", 1);
     userMetrics.count("writes", 2);
 
-    collector = collectionService.getCollector(new HashMap<String, String>());
+    collector = collectionService.getContext(new HashMap<String, String>());
     collector.increment("resources.total.storage", 10);
 
     // need a better way to do this
@@ -150,8 +150,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   public void testSearchWithTags() throws Exception {
     // empty context
     verifySearchResultWithTags("/v3/metrics/search?target=tag", getSearchResultExpected("namespace", "myspace",
-                                                                                        "namespace", "yourspace",
-                                                                                        "namespace", "system"));
+                                                                                        "namespace", "yourspace"));
 
     // WordCount is in myspace, WCount in yourspace
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:myspace",
@@ -217,8 +216,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                getSearchResultExpected("adapter", "adapter1",
                                                        "adapter", "adapter2",
                                                        "app", "WordCount1",
-                                                       "app", "WCount1",
-                                                       "component", "metrics.processor"));
+                                                       "app", "WCount1"));
 
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:*&tag=app:*",
                                getSearchResultExpected("flow", "WCounter",
@@ -261,24 +259,29 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
     // test batching of multiple queries
 
-    ImmutableMap<String, ImmutableList<TimeSeriesSummary>> expected =
+    String resolution = Integer.MAX_VALUE + "s";
+
+    ImmutableMap<String, QueryResult> expected =
       ImmutableMap.of("testQuery1",
-                      ImmutableList.of(new TimeSeriesSummary(ImmutableMap.<String, String>of(), "system.reads", 1, 3)),
+                      new QueryResult(ImmutableList.of(new TimeSeriesSummary(
+                        ImmutableMap.<String, String>of(), "system.reads", 1, 3)), resolution),
                       "testQuery2",
-                      ImmutableList.of(new TimeSeriesSummary(ImmutableMap.<String, String>of(), "system.reads", 1, 1)));
+                      new QueryResult(ImmutableList.of(new TimeSeriesSummary(
+                          ImmutableMap.<String, String>of(), "system.reads", 1, 1)), resolution));
 
     batchTest(ImmutableMap.of("testQuery1", query1, "testQuery2", query2), expected);
 
     // test batching of multiple queries, with one query having multiple metrics to query
 
     expected = ImmutableMap.of("testQuery3",
-                               ImmutableList.of(new TimeSeriesSummary(ImmutableMap.<String, String>of(),
-                                                                "system.reads", 1, 4)),
+                               new QueryResult(ImmutableList.of(
+                                 new TimeSeriesSummary(ImmutableMap.<String, String>of(), "system.reads", 1, 4))
+                                 , resolution),
                                "testQuery4",
-                               ImmutableList.of(new TimeSeriesSummary(ImmutableMap.<String, String>of(),
-                                                                "system.reads", 1, 2),
+                               new QueryResult(ImmutableList.of(
+                                 new TimeSeriesSummary(ImmutableMap.<String, String>of(), "system.reads", 1, 2),
                                                 new TimeSeriesSummary(ImmutableMap.<String, String>of(),
-                                                                "system.writes", 1, 2))
+                                                                "system.writes", 1, 2)), resolution)
     );
 
     batchTest(ImmutableMap.of("testQuery3", query3, "testQuery4", query4), expected);
@@ -332,6 +335,25 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
+  private class QueryResult {
+    private ImmutableList<TimeSeriesSummary> expectedList;
+    private String expectedResolution;
+
+    public QueryResult(ImmutableList<TimeSeriesSummary> list, String resolution) {
+      expectedList = list;
+      expectedResolution = resolution;
+    }
+
+    public String getExpectedResolution() {
+      return expectedResolution;
+    }
+
+    public ImmutableList<TimeSeriesSummary> getExpectedList() {
+      return expectedList;
+    }
+
+  }
+
   @Test
   public void testTimeRangeQueryBatch() throws Exception {
     // note: times are in seconds, hence "divide by 1000";
@@ -351,15 +373,14 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                            ImmutableMap.of("start", String.valueOf(start),
                                                            "count", String.valueOf(count)));
 
-    ImmutableMap<String, ImmutableList<TimeSeriesSummary>> expected =
+    ImmutableMap<String, QueryResult> expected =
       ImmutableMap.of("timeRangeQuery1",
-                      ImmutableList.of(new TimeSeriesSummary(ImmutableMap.<String, String>of(), "system.reads", 2, 3)),
+                      new QueryResult(ImmutableList.of(new TimeSeriesSummary(ImmutableMap.<String,
+                        String>of(), "system.reads", 2, 3)), "1s"),
                       "timeRangeQuery2",
-                      ImmutableList.of(new TimeSeriesSummary(ImmutableMap.of("flowlet", "counter"),
-                                                             "system.reads", 1, 1),
-                                       new TimeSeriesSummary(ImmutableMap.of("flowlet", "splitter"),
-                                                             "system.reads", 2, 3)
-                      ));
+                      new QueryResult(ImmutableList.of(
+                        new TimeSeriesSummary(ImmutableMap.of("flowlet", "counter"), "system.reads", 1, 1),
+                        new TimeSeriesSummary(ImmutableMap.of("flowlet", "splitter"), "system.reads", 2, 3)), "1s"));
 
     Map<String, QueryRequestFormat> batchQueries = ImmutableMap.of("timeRangeQuery1", query1,
                                                                    "timeRangeQuery2", query2);
@@ -541,6 +562,30 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     metricStore.delete(deleteQuery);
   }
 
+  @Test
+  public void testResolutionInResponse() throws Exception {
+    long start = 1;
+
+    String url = "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter") +
+      "&metric=system.reads&resolution=auto&start=" + (start - 1) + "&end="
+      + (start + 36000);
+    MetricQueryResult queryResult = post(url, MetricQueryResult.class);
+    Assert.assertEquals("3600s", queryResult.getResolution());
+
+    url = "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter") +
+      "&metric=system.reads&resolution=1m&start=" + (start - 1) + "&end="
+      + (start + 36000);
+    queryResult = post(url, MetricQueryResult.class);
+    Assert.assertEquals("60s", queryResult.getResolution());
+
+    // Have an aggregate query and ensure that its resolution is INT_MAX
+    url = "/v3/metrics/query?" + getTags("WordCount1", "WordCounter", "splitter") +
+      "&metric=system.reads";
+    queryResult = post(url, MetricQueryResult.class);
+    Assert.assertEquals(Integer.MAX_VALUE + "s", queryResult.getResolution());
+
+  }
+
 
   @Test
   public void testAutoResolutions() throws Exception {
@@ -708,7 +753,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   private  void batchTest(Map<String, QueryRequestFormat> jsonBatch,
-                          ImmutableMap<String, ImmutableList<TimeSeriesSummary>> expected) throws Exception {
+                          ImmutableMap<String, QueryResult> expected) throws Exception {
     String url = "/v3/metrics/query";
     Map<String, MetricQueryResult> results =
       post(url, GSON.toJson(jsonBatch), new TypeToken<Map<String, MetricQueryResult>>() { }.getType());
@@ -716,9 +761,10 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     // check we have all the keys
     Assert.assertEquals(expected.keySet(), results.keySet());
     for (Map.Entry<String, MetricQueryResult> entry : results.entrySet()) {
-      ImmutableList<TimeSeriesSummary> expectedTimeSeriesSummary = expected.get(entry.getKey());
+      ImmutableList<TimeSeriesSummary> expectedTimeSeriesSummary = expected.get(entry.getKey()).getExpectedList();
       MetricQueryResult actualQueryResult = entry.getValue();
       compareQueryResults(expectedTimeSeriesSummary, actualQueryResult);
+      Assert.assertEquals(expected.get(entry.getKey()).getExpectedResolution(), actualQueryResult.getResolution());
     }
   }
 

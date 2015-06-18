@@ -28,12 +28,14 @@ import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
 import com.google.common.base.Charsets;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 import java.net.HttpURLConnection;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 
 /**
  * An Application that calculates page rank of URLs from an input stream.
@@ -42,6 +44,7 @@ public class SparkPageRankApp extends AbstractApplication {
 
   public static final String RANKS_SERVICE_NAME = "RanksService";
   public static final String GOOGLE_TYPE_PR_SERVICE_NAME = "GoogleTypePR";
+  public static final String BACKLINK_URL_STREAM = "backlinkURLStream";
 
   @Override
   public void configure() {
@@ -49,7 +52,7 @@ public class SparkPageRankApp extends AbstractApplication {
     setDescription("Spark page rank application.");
 
     // Ingest data into the Application via a Stream
-    addStream(new Stream("backlinkURLStream"));
+    addStream(new Stream(BACKLINK_URL_STREAM));
 
     // Run a Spark program on the acquired data
     addSpark(new SparkPageRankSpecification());
@@ -79,7 +82,7 @@ public class SparkPageRankApp extends AbstractApplication {
 
     @Override
     public void configure() {
-      setName("SparkPageRankProgram");
+      setName(SparkPageRankProgram.class.getSimpleName());
       setDescription("Spark Page Rank Program");
       setMainClass(SparkPageRankProgram.class);
     }
@@ -90,15 +93,27 @@ public class SparkPageRankApp extends AbstractApplication {
    */
   public static final class RanksServiceHandler extends AbstractHttpServiceHandler {
 
+    private static final Gson GSON = new Gson();
+    public static final String URL_KEY = "url";
+    public static final String RANKS_SERVICE_PATH = "rank";
+
     @UseDataSet("ranks")
     private ObjectStore<Integer> ranks;
 
-    @Path("rank")
-    @GET
-    public void getRank(HttpServiceRequest request, HttpServiceResponder responder, @QueryParam("url") String url) {
+    @Path(RANKS_SERVICE_PATH)
+    @POST
+    public void getRank(HttpServiceRequest request, HttpServiceResponder responder) {
+      String urlRequest = Charsets.UTF_8.decode(request.getContent()).toString();
+      if (urlRequest == null) {
+        responder.sendString(HttpURLConnection.HTTP_BAD_REQUEST,
+                             String.format("Please provide an url to query for its rank in JSON."), Charsets.UTF_8);
+        return;
+      }
+
+      String url = GSON.fromJson(urlRequest, JsonObject.class).get(URL_KEY).getAsString();
       if (url == null) {
         responder.sendString(HttpURLConnection.HTTP_BAD_REQUEST,
-                             String.format("The url parameter must be specified"), Charsets.UTF_8);
+                             String.format("The url must be specified with \"url\" as key in JSON."), Charsets.UTF_8);
         return;
       }
 
@@ -108,7 +123,7 @@ public class SparkPageRankApp extends AbstractApplication {
         responder.sendString(HttpURLConnection.HTTP_NO_CONTENT,
                              String.format("No rank found of %s", url), Charsets.UTF_8);
       } else {
-        responder.sendString(rank.toString());
+        responder.sendString(HttpURLConnection.HTTP_OK, rank.toString(), Charsets.UTF_8);
       }
     }
   }

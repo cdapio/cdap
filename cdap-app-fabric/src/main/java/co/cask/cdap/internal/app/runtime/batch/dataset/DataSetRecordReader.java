@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.runtime.batch.dataset;
 
 import co.cask.cdap.api.data.batch.SplitReader;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext;
@@ -35,13 +35,13 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
   private static final Logger LOG = LoggerFactory.getLogger(DataSetRecordReader.class);
   private final SplitReader<KEY, VALUE> splitReader;
   private final BasicMapReduceContext context;
-  private final MetricsCollector dataSetMetrics;
+  private final MetricsContext dataSetMetrics;
 
   public DataSetRecordReader(final SplitReader<KEY, VALUE> splitReader,
                              BasicMapReduceContext context, String dataSetName) {
     this.splitReader = splitReader;
     this.context = context;
-    this.dataSetMetrics = context.getMetricsCollectionService().getCollector(
+    this.dataSetMetrics = context.getMetricsCollectionService().getContext(
       ImmutableMap.of(Constants.Metrics.Tag.DATASET, dataSetName,
                       Constants.Metrics.Tag.RUN_ID, context.getRunId().getId()));
   }
