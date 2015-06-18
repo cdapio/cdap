@@ -332,6 +332,7 @@ function build_standalone() {
   cd ${PROJECT_PATH}
   set_mvn_environment
   check_build_for_changes
+  mvn clean
   MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn package -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-examples -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
 }
 
