@@ -31,11 +31,18 @@ angular.module(PKG.name + '.services')
       start: getConfig('POST', 'REQUEST', basepath + '/start'),
       stop: getConfig('POST', 'REQUEST', basepath + '/stop'),
       pollStatus: getConfig('GET', 'POLL', basepath + '/status'),
+
       runs: getConfig('GET', 'REQUEST', basepath + '/runs', true),
       runDetail: getConfig('GET', 'REQUEST', basepath + '/runs/:runId'),
       pollRuns: getConfig('GET', 'POLL', basepath + '/runs', true),
       pollRunDetail: getConfig('GET', 'POLL', basepath + '/runs/:runId'),
+      stopPollRunDetail: getConfig('GET', 'POLL-STOP', basepath + '/runs/:runId'),
+      stopRun: getConfig('POST', 'REQUEST', basepath + '/runs/:runId/stop'),
+      suspendRun: getConfig('POST', 'REQUEST', basepath + '/runs/:runId/suspend'),
+      resumeRun: getConfig('POST', 'REQUEST', basepath + '/runs/:runId/resume'),
+
       logs: getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/next', true),
+
       schedules: getConfig('GET', 'REQUEST', basepath + '/schedules', true),
       schedulesPreviousRunTime: getConfig('GET', 'REQUEST', basepath + '/previousruntime', true),
       pollScheduleStatus: getConfig('GET', 'POLL', schedulepath + '/status'),

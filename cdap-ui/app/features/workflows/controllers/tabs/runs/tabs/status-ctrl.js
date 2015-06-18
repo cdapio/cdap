@@ -5,10 +5,14 @@ angular.module(PKG.name + '.feature.workflows')
           appId: $state.params.appId,
           workflowId: $state.params.programId,
           scope: $scope
-        };
+        },
+        match,
+        runparams;
+
+    vm.runStatus = null;
 
     if ($state.params.runid) {
-      var match = filterFilter($scope.RunsController.runs, {runid: $state.params.runid});
+      match = filterFilter($scope.RunsController.runs, {runid: $state.params.runid});
       if (match.length) {
         $scope.RunsController.runs.selected = match[0];
       }
@@ -17,6 +21,24 @@ angular.module(PKG.name + '.feature.workflows')
     var vm = this;
 
     vm.data = {};
+
+    runparams = angular.extend(
+      {
+        runId: $scope.RunsController.runs.selected.runid
+      }, params);
+
+    if ($scope.RunsController.runs.length) {
+      myWorkFlowApi
+        .pollRunDetail(runparams)
+        .$promise
+        .then(function(res) {
+          vm.runStatus = res.status;
+          if (['STOPPED', 'KILLED', 'COMPLETED'].indexOf(vm.runStatus) !== -1) {
+            myWorkFlowApi.stopPollRunDetail(runparams);
+          }
+        });
+    }
+
     myWorkFlowApi.get(params)
       .$promise
       .then(function(res) {
@@ -160,14 +182,19 @@ angular.module(PKG.name + '.feature.workflows')
     };
 
     vm.stop = function() {
-      $alert({
-        type: 'info',
-        content: 'Stopping a workflow at run level is not possible yet. Will be fixed soon.'
-      });
-      return;
-      // TODO: There is support from backend. We should implement this in UI
-      // this.status = 'STOPPING';
-      // myWorkFlowApi.stop(params);
+      vm.runStatus = 'STOPPING';
+      myWorkFlowApi
+        .stopRun(runparams, {});
+    };
+    vm.suspend = function() {
+      vm.runStatus = 'SUSPENDING';
+      myWorkFlowApi
+        .suspendRun(runparams, {});
+    };
+    vm.resume = function() {
+      vm.runStatus = 'RESUMING';
+      myWorkFlowApi
+        .resumeRun(runparams, {});
     };
 
   });
