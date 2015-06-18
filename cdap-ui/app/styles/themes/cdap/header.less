@@ -11,7 +11,7 @@ body {
         .fa-cog:before { font-size: 16px; }
       }
 
-      @media (max-width: @screen-sm-max) {
+      @media (max-width: @screen-md-max) {
         a.dropdown-toggle {
           padding-left: 10px;
           span.fa-cog { display: none; }
@@ -33,7 +33,7 @@ body {
         }
       }
 
-      @media (min-width: @screen-md-min) {
+      @media (min-width: @screen-lg-min) {
         a.dropdown-toggle {
           color: lightgray;
           padding: 5px 3px;
@@ -46,7 +46,7 @@ body {
       }
     }
 
-    @media (min-width: @screen-md-min) {
+    @media (min-width: @screen-lg-min) {
       li.dropdown {
         background-color: transparent;
         .border-radius(4px 4px 0 0);
@@ -169,7 +169,7 @@ body {
         }
       }
     }
-    @media (max-width: @screen-sm-max) {
+    @media (max-width: @screen-md-max) {
       // Disable dropdown menu animations on smaller devices
       ul.dropdown-menu.am-flip-x {
         .transition(none);
@@ -181,22 +181,26 @@ body {
         display: block;
         max-height: 0;
         visibility: visible;
-        > ul.navbar-nav {
+        ul.navbar-nav {
           display: none;
+          visibility: hidden;
         }
         &.in {
-          > ul.navbar-nav {
+          margin-top: 15px;
+          max-height: 800px;
+          ul.navbar-nav {
             display: block;
+            visibility: visible;
             &.navbar-right {
 
             }
           }
         }
       }
-      .navbar-collapse.in {
-        margin-top: 15px;
-        max-height: none;
-      }
+      // .navbar-collapse.in {
+
+      //   max-height: none;
+      // }
       .navbar-inverse {
         .navbar-toggle {
           &:hover, &:focus { background-color: lighten(@cdap-header, 10%); }
