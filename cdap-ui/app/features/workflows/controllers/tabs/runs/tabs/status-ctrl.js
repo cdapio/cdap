@@ -9,8 +9,6 @@ angular.module(PKG.name + '.feature.workflows')
         match,
         runparams;
 
-    vm.runStatus = null;
-
     if ($state.params.runid) {
       match = filterFilter($scope.RunsController.runs, {runid: $state.params.runid});
       if (match.length) {
@@ -19,6 +17,7 @@ angular.module(PKG.name + '.feature.workflows')
     }
 
     var vm = this;
+    vm.runStatus = null;
 
     vm.data = {};
 
