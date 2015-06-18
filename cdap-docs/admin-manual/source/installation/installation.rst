@@ -129,7 +129,7 @@ Node.js Runtime
 +++++++++++++++
 You can download the appropriate version of Node.js (from |node-js-version|) from `nodejs.org <http://nodejs.org>`__:
 
-#. The version of Node.js must be from |node-js-version|.
+#. The version of Node.js must be from |node-js-version|; we recommend |recommended-node-js-version|.
 #. Download the appropriate Linux or Solaris binary ``.tar.gz`` from
    `nodejs.org/download/ <http://nodejs.org/dist/>`__.
 

@@ -84,7 +84,7 @@ in your environment; we recommend the Oracle JDK.
 
 .. rubric:: What Version of Node.JS is Required by CDAP?
 
-The version of Node.js must be from |node-js-version|.
+The version of Node.js must be from |node-js-version|; we recommend |recommended-node-js-version|.
 
 
 Hadoop
