@@ -12,7 +12,7 @@ angular.module(PKG.name + '.feature.adapters')
      $scope.runs.selected = rRuns[0];
    } else {
      $scope.runs.selected = {
-       runid: 'No Runs!'
+       runid: 'No Runs'
      };
    }
 

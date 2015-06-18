@@ -114,7 +114,7 @@ angular.module(PKG.name + '.feature.admin')
           $alert({
             type: 'success',
             title: 'Success',
-            content: 'Stream properties have been successfully saved!'
+            content: 'Stream properties have been successfully saved'
           });
 
         }, function (err) {

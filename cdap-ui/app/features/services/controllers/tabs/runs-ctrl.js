@@ -15,7 +15,7 @@ angular.module(PKG.name + '.feature.services')
       this.runs.selected = rRuns[0];
     } else {
       this.runs.selected = {
-        runid: 'No Runs!'
+        runid: 'No Runs'
       };
     }
 
