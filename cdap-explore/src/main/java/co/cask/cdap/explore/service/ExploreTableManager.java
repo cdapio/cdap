@@ -375,9 +375,13 @@ public class ExploreTableManager {
 
     String format = FileSetProperties.getExploreFormat(properties);
     if (format != null) {
+      if ("parquet".equals(format)) {
+        return createStatementBuilder.setSchema(FileSetProperties.getExploreSchema(properties))
+          .buildWithFileFormat("parquet");
+      }
       // for text and csv, we know what to do
       Preconditions.checkArgument("text".equals(format) || "csv".equals(format),
-                                  "Only text and csv are supported as native formats");
+        "Only text and csv are supported as native formats");
       String schema = FileSetProperties.getExploreSchema(properties);
       Preconditions.checkNotNull(schema, "for native formats, explore schema must be given in dataset properties");
       String delimiter = null;

@@ -185,6 +185,11 @@
       <artifactId>snappy-java</artifactId>
     </dependency>
     <!-- End for Kafka Source -->
+    <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>parquet-avro</artifactId>
+      <version>1.6.0</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -203,7 +208,7 @@
               <instructions>
                 <!-- build bundle jar for batch. excluding realtime-->
                 <Export-Package>co.cask.cdap.template.etl.batch.*;co.cask.cdap.template.etl.transform.*;
-                  co.cask.cdap.template.etl.common;org.apache.avro.mapreduce</Export-Package>
+                  co.cask.cdap.template.etl.common;org.apache.avro.mapreduce;parquet.avro;</Export-Package>
                 <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
                 <Embed-Transitive>true</Embed-Transitive>
                 <Embed-Directory>lib</Embed-Directory>
