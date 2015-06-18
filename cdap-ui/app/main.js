@@ -118,7 +118,7 @@ angular
               promise = myDataSrc.request(config);
               break;
             case 'POLL-STOP':
-              promise = myDataSrc.pollStop(config);
+              promise = myDataSrc.stopPoll(config);
               break;
           }
           return promise;
