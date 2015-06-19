@@ -30,37 +30,31 @@ import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.conf.Configured;
+import co.cask.cdap.template.etl.common.S3FileFilter;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /**
  * A {@link BatchSource} to use S3 as a Source.
  */
-@SuppressWarnings("unused")
 @Plugin(type = "source")
 @Name("S3")
 @Description("Batch source for S3")
-public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRecord> {
+public class S3BatchSource extends BatchSource<LongWritable, Writable, StructuredRecord> {
 
-  private static KeyValueTable table;
-  private static Date prevMinute;
+  private KeyValueTable table;
+  private Date prevMinute;
 
   private static final String REGEX_DESCRIPTION = "Regex to filter out filenames in the path. " +
     "To use the TimeFilter, input \"timefilter\". The TimeFilter assumes that it " +
@@ -76,8 +70,6 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
   private static final String TABLE_DESCRIPTION = "Name of the Table that keeps track of the last time files " +
     "were read in.";
 
-  //length of 'YYYY-MM-dd-HH-mm"
-  private static final int DATE_LENGTH = 16;
   private static final Logger LOG = LoggerFactory.getLogger(S3BatchSource.class);
   private S3BatchConfig config;
 
@@ -87,13 +79,8 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
     Schema.Field.of("body", Schema.of(Schema.Type.STRING))
   );
 
-  public S3BatchSource (S3BatchConfig config) {
-    this.config = config;
-  }
-
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    //will create the table if it doesn't exist already
     if (config.timeTable != null) {
       pipelineConfigurer.createDataset(config.timeTable, KeyValueTable.class, DatasetProperties.EMPTY);
     }
@@ -102,7 +89,7 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
   @Override
   public void prepareRun(BatchSourceContext context) throws Exception {
     //calculate date one minute ago, rounded down to the nearest minute
-    prevMinute = new Date(System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(1));
+    prevMinute = new Date(context.getLogicalStartTime() - TimeUnit.MINUTES.toMillis(1));
     Calendar cal = Calendar.getInstance();
     cal.setTime(prevMinute);
     cal.set(Calendar.SECOND, 0);
@@ -118,14 +105,20 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
     job.getConfiguration().set("input.path.name", config.path);
     if (config.timeTable != null) {
       table = context.getDataset(config.timeTable);
+      String lastTimeRead = Bytes.toString(table.read("lastTimeRead"));
+      if (lastTimeRead == null) {
+        lastTimeRead = "0";
+      }
+      job.getConfiguration().set("last.time.read", lastTimeRead);
     }
+    job.getConfiguration().set("cutoff.read.time", new SimpleDateFormat("yyyy-MM-dd-HH-mm").format(prevMinute));
 
-    FileInputFormat.setInputPathFilter(job, S3Filter.class);
+    FileInputFormat.setInputPathFilter(job, S3FileFilter.class);
     FileInputFormat.addInputPath(job, new Path(config.path));
   }
 
   @Override
-  public void transform(KeyValue<LongWritable, Text> input, Emitter<StructuredRecord> emitter) throws Exception {
+  public void transform(KeyValue<LongWritable, Writable> input, Emitter<StructuredRecord> emitter) throws Exception {
     StructuredRecord output = StructuredRecord.builder(DEFAULT_SCHEMA)
       .set("ts", System.currentTimeMillis())
       .set("body", input.getValue().toString())
@@ -137,78 +130,6 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
   public void onRunFinish(boolean succeeded, BatchSourceContext context) {
     if (succeeded && table != null && "timefilter".equals(config.fileRegex)) {
       table.write("lastTimeRead", new SimpleDateFormat("yyyy-MM-dd-HH-mm").format(prevMinute));
-    }
-  }
-
-  /**
-   * Filter class to filter out filenames in the input path.
-   */
-  public static class S3Filter extends Configured implements PathFilter {
-    private boolean useTimeFilter;
-    private Pattern regex;
-    private String pathName;
-
-    @Override
-    public boolean accept(Path path) {
-      String filename = path.toString();
-      //InputPathFilter will first check the directory if a directory is given
-      if (filename.equals(pathName) || filename.equals(pathName + "/")) {
-        return true;
-      }
-
-      //filter by file name using regex from configuration
-      if (!useTimeFilter) {
-        Matcher matcher = regex.matcher(filename);
-        return matcher.matches();
-      }
-
-      //use hourly time filter
-      if (table == null) {
-        Date prevHour = new Date(System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1));
-        String currentTime = new SimpleDateFormat("yyyy-MM-dd-HH").format(prevHour);
-        return filename.contains(currentTime);
-      }
-
-      //use stateful time filter
-      String lastRead = Bytes.toString(table.read("lastTimeRead"));
-      SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
-      Date dateLastRead;
-      try {
-        dateLastRead = sdf.parse(lastRead);
-      } catch (Exception e) {
-        dateLastRead = new Date();
-        dateLastRead.setTime(0);
-      }
-
-      Date fileDate;
-      try {
-        fileDate = sdf.parse(path.getName().substring(0, DATE_LENGTH));
-      } catch (ParseException pe) {
-        //this should never happen
-        LOG.warn("Couldn't parse file: " + path.getName());
-        fileDate = prevMinute;
-      }
-      return fileDate.compareTo(dateLastRead) > 0 && fileDate.compareTo(prevMinute) <= 0;
-    }
-
-    public void setConf(Configuration conf) {
-      if (conf == null) {
-        return;
-      }
-      pathName = conf.get("input.path.name", "/");
-
-      //path is a directory so remove trailing '/'
-      if (pathName.endsWith("/")) {
-        pathName = pathName.substring(0, pathName.length() - 1);
-      }
-
-      String input = conf.get("input.path.regex", ".*");
-      if (input.equals("timefilter")) {
-        useTimeFilter = true;
-      } else {
-        useTimeFilter = false;
-        regex = Pattern.compile(input);
-      }
     }
   }
 
@@ -242,7 +163,6 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
     @Nullable
     @Description(TABLE_DESCRIPTION)
     private String timeTable;
-
 
     public S3BatchConfig(String name, String accessID, String accessKey, String path, @Nullable String regex,
                          @Nullable String timeTable) {

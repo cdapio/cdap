@@ -201,7 +201,7 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
     writeData.close();
 
     Method method = FileSystem.class.getDeclaredMethod("addFileSystemForTesting",
-                                                       new Class[] {URI.class, Configuration.class, FileSystem.class});
+                                                       new Class[]{URI.class, Configuration.class, FileSystem.class});
     method.setAccessible(true);
     method.invoke(FileSystem.class, URI.create("s3n://test/"), conf, fs);
     ETLStage source = new ETLStage("S3", ImmutableMap.<String, String>builder()
@@ -228,7 +228,7 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
     TimePartitionedFileSet fileSet = fileSetManager.get();
     List<GenericRecord> records = readOutput(fileSet, defaultSchema);
     Assert.assertEquals(1, records.size());
-    Assert.assertEquals(records.get(0).get("body").toString(), testData);
+    Assert.assertEquals(testData, records.get(0).get("body").toString());
   }
 
 }

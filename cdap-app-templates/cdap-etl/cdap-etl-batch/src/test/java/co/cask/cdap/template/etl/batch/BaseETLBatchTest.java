@@ -38,6 +38,8 @@ import co.cask.cdap.template.etl.transform.StructuredRecordToGenericRecordTransf
 import co.cask.cdap.template.test.sink.MetaKVTableSink;
 import co.cask.cdap.template.test.source.MetaKVTableSource;
 import co.cask.cdap.test.TestBase;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
@@ -82,7 +84,7 @@ public class BaseETLBatchTest extends TestBase {
   protected List<GenericRecord> readOutput(TimePartitionedFileSet fileSet, Schema schema) throws IOException {
     org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(schema.toString());
     DatumReader<GenericRecord> datumReader = new GenericDatumReader<>(avroSchema);
-    List<GenericRecord> records = com.google.common.collect.Lists.newArrayList();
+    List<GenericRecord> records = Lists.newArrayList();
     for (Location dayLoc : fileSet.getEmbeddedFileSet().getBaseLocation().list()) {
       // this level should be the day (ex: 2015-01-19)
       for (Location timeLoc : dayLoc.list()) {
@@ -94,9 +96,8 @@ public class BaseETLBatchTest extends TestBase {
           if (locName.endsWith(".avro")) {
             DataFileStream<GenericRecord> fileStream =
               new DataFileStream<>(file.getInputStream(), datumReader);
-            while (fileStream.hasNext()) {
-              records.add(fileStream.next());
-            }
+            Iterables.addAll(records, fileStream);
+            fileStream.close();
           }
         }
       }

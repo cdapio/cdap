@@ -25,5 +25,3 @@ public class S3NInMemoryFileSystem extends NativeS3FileSystem {
     super(new InMemoryNativeFileSystemStore());
   }
 }
-
-
