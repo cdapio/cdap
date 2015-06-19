@@ -383,7 +383,7 @@ should be replaced, as it will be removed in a later version of CDAP::
      - ``POST '<base-url>/metrics/search?target=metric&tag=namespace:default&tag=app:HelloWorld&tag=service:Greeting'``
    * - Returns
      - | ``["system.dataset.store.ops","system.dataset.store.reads","system.requests.count",``
-       | `` "system.response.successful.count","system.store.ops","system.store.reads",``
+       | `` "system.response.successful.count",``
        | `` "user.greetings.count.jane_doe"]``
    * - Description
      - Returns all metrics in the context of the service *Greeting* of the application *HelloWorld* of the
