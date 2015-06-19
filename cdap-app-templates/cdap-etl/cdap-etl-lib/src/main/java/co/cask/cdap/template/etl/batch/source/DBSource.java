@@ -40,6 +40,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Driver;
+import java.sql.DriverManager;
+import java.util.Enumeration;
 
 /**
  * Batch source to read from a Database table
@@ -92,9 +94,8 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
 
     Job job = context.getHadoopJob();
     Configuration hConf = job.getConfiguration();
-    String jdbcPluginId = getJDBCPluginId();
     // Load the plugin class to make sure it is available.
-    Class<? extends Driver> driverClass = context.loadPluginClass(jdbcPluginId);
+    Class<? extends Driver> driverClass = context.loadPluginClass(getJDBCPluginId());
     if (dbSourceConfig.user == null && dbSourceConfig.password == null) {
       DBConfiguration.configureDB(hConf, driverClass.getName(), dbSourceConfig.connectionString);
     } else {
@@ -118,6 +119,7 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
 
   @Override
   public void destroy() {
+    ETLDBInputFormat.deregisterDrivers();
     DBUtils.cleanup(driverClass);
   }
 

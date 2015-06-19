@@ -46,17 +46,17 @@ public final class DBUtils {
    * @param classLoader the unfiltered classloader of the jdbc driver class
    */
   private static void shutDownMySQLAbandonedConnectionCleanupThread(ClassLoader classLoader) {
+    if (classLoader == null) {
+      return;
+    }
     try {
-      if (classLoader == null) {
-        return;
-      }
       Class<?> mysqlCleanupThreadClass = classLoader.loadClass("com.mysql.jdbc.AbandonedConnectionCleanupThread");
       Method shutdownMethod = mysqlCleanupThreadClass.getMethod("shutdown");
       shutdownMethod.invoke(null);
       LOG.info("Successfully shutdown MySQL connection cleanup thread.");
     } catch (Throwable e) {
       // cleanup failed, ignoring silently
-      LOG.warn("Failed to shutdown MySQL connection cleanup thread. Ignoring.", e);
+      LOG.warn("Failed to shutdown MySQL connection cleanup thread. Ignoring.");
     }
   }
 
