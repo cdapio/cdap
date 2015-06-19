@@ -206,7 +206,7 @@ angular.module(PKG.name+'.services')
         generatedResource = {
           json: resource.json,
           id: id,
-          interval: resource.interval || myHelpers.objectQuery(resource, 'params', 'interval') ,
+          interval: resource.interval || myHelpers.objectQuery(resource, 'options', 'interval') ,
           body: resource.body,
           method: resource.method || 'GET'
         };

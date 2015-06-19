@@ -5,11 +5,14 @@ angular.module(PKG.name + '.services')
         schedulepath = '/apps/:appId/schedules/:scheduleId',
         basepath = '/apps/:appId/workflows/:workflowId';
 
-    function getConfig (method, type, path, isArray) {
+    function getConfig (method, type, path, isArray, interval) {
       var config = {
         url: url({ _cdapNsPath: path }),
         method: method,
-        options: { type: type}
+        options: {
+          type: type,
+          interval: interval || 10000
+        }
       };
       if (isArray) {
         config.isArray = true;
@@ -35,7 +38,7 @@ angular.module(PKG.name + '.services')
       runs: getConfig('GET', 'REQUEST', basepath + '/runs', true),
       runDetail: getConfig('GET', 'REQUEST', basepath + '/runs/:runId'),
       pollRuns: getConfig('GET', 'POLL', basepath + '/runs', true),
-      pollRunDetail: getConfig('GET', 'POLL', basepath + '/runs/:runId'),
+      pollRunDetail: getConfig('GET', 'POLL', basepath + '/runs/:runId', false, 1000),
       stopPollRunDetail: getConfig('GET', 'POLL-STOP', basepath + '/runs/:runId'),
       stopRun: getConfig('POST', 'REQUEST', basepath + '/runs/:runId/stop'),
       suspendRun: getConfig('POST', 'REQUEST', basepath + '/runs/:runId/suspend'),
