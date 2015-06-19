@@ -137,10 +137,16 @@ angular
   })
 
   .config(function($httpProvider) {
-    $httpProvider.interceptors.push(function($rootScope) {
+    $httpProvider.interceptors.push(function($rootScope, myHelpers) {
       return {
         'request': function(config) {
-          if ($rootScope.currentUser) {
+
+          /**
+           * We are running into problem where this intereptor is causing the username and password
+           * are not being passed to express (coming from profile-ctrl). So we add another data 'istoken'
+           * to bypass this interceptor
+           **/
+          if ($rootScope.currentUser && !myHelpers.objectQuery(config, 'data', 'istoken')) {
             angular.extend(config, {
               user: $rootScope.currentUser || null,
               headers: {
@@ -152,7 +158,7 @@ angular
           }
           return config;
         }
-      }
+      };
     });
   })
 

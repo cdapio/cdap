@@ -13,7 +13,8 @@ angular.module(PKG.name + '.feature.userprofile')
         url: '/accessToken',
         data: {
           username: credentials.username,
-          password: credentials.password
+          password: credentials.password,
+          istoken: true // bypassing httpProvider interceptor decorator
         }
       })
         .success(function(res) {
