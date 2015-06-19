@@ -7,6 +7,16 @@
       <button class="btn btn-default pull-right" ui-sref="admin.namespace.detail.data.streamcreate({nsadmin: $stateParams.nsadmin})"><span class="fa fa-plus"></span> Add Stream</button>
     </div>
   </div>
+  <div class="row">
+    <div class="col-xs-4 text-right">
+      <div class="input-group pull-right h2">
+        <input type="text" class="form-control" ng-model="searchText" placeholder="search...">
+        <div class="input-group-addon">
+          <i class="fa fa-search"></i>
+        </div>
+      </div>
+    </div>
+  </div>
   <div ng-if="dataList.length > 0" datasets-list>
     <div class="table-responsive">
       <table class="table table-curved" cask-sortable>
@@ -18,7 +28,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr ng-repeat="data in dataList | orderBy:sortable.predicate:sortable.reverse | myPaginate:currentPage">
+          <tr ng-repeat="data in filtered = (dataList | filter: searchText )| orderBy:sortable.predicate:sortable.reverse | myPaginate:currentPage">
             <td class="col-xs-5"  ng-if="data.type === 'Stream'">
               <strong class="icon-streams"></strong>
               <a ui-sref="admin.namespace.detail.data.streammetadata({streamId: data.name})">
@@ -40,7 +50,7 @@
     </div>
 
     <!-- Switch to ng-if when we refactor to use controller as syntax -->
-    <div class="text-center" ng-show="dataList.length > 10">
+    <div class="text-center" ng-show="filtered.length > 10">
       <pagination total-items="dataList.length" ng-model="currentPage"></pagination>
     </div>
   </div>

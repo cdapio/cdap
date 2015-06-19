@@ -22,7 +22,6 @@ angular.module(PKG.name + '.feature.admin')
           $timeout(function() {
             $alert({
               type: 'success',
-              title: 'Success',
               content: 'Stream ' + $scope.streamId + ' created successfully'
             });
           }, 100);

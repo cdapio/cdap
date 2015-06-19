@@ -23,7 +23,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr ng-repeat="data in dataCtrl.filtered = (dataCtrl.dataList | filter: dataCtrl.searchText ) | myPaginate:dataCtrl.currentPage | orderBy:sortable.predicate:sortable.reverse">
+      <tr ng-repeat="data in dataCtrl.filtered = (dataCtrl.dataList | filter: dataCtrl.searchText ) | orderBy:sortable.predicate:sortable.reverse | myPaginate:dataCtrl.currentPage ">
           <td>
             <a ng-click="dataCtrl.goToDetail(data)"
                 href="">
