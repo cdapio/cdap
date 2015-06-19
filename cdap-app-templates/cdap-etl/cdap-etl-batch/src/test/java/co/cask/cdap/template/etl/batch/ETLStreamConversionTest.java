@@ -84,6 +84,49 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
     testSink(sinkType);
   }
 
+  @Test
+  public void testAvroSourceConversionToAvroSink() throws Exception {
+    String filesetName = "converted_stream";
+    StreamManager streamManager = getStreamManager("myStream");
+    streamManager.createStream();
+    streamManager.send(ImmutableMap.of("header1", "bar"), "AAPL|10|500.32");
+
+    ETLBatchConfig etlConfig = constructETLBatchConfig(filesetName, "TPFSAvro");
+    AdapterConfig adapterConfig = new AdapterConfig("description", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
+    Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "sconversion");
+    AdapterManager manager = createAdapter(adapterId, adapterConfig);
+
+    manager.start();
+    manager.waitForOneRunToFinish(4, TimeUnit.MINUTES);
+    manager.stop();
+
+    // get the output fileset, and read the parquet/avro files it output.
+    DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset(filesetName);
+    TimePartitionedFileSet fileSet = fileSetManager.get();
+
+    List<GenericRecord> records = readOutput(fileSet, EVENT_SCHEMA_1);
+    Assert.assertEquals(1, records.size());
+
+    String newFilesetName = filesetName + "_op";
+    ETLBatchConfig etlBatchConfig = constructTPFSETLConfig(filesetName, newFilesetName);
+
+    AdapterConfig newAdapterConfig = new AdapterConfig("description", TEMPLATE_ID.getId(),
+                                                       GSON.toJsonTree(etlBatchConfig));
+    Id.Adapter newAdapterId = Id.Adapter.from(NAMESPACE, "sconversion1");
+    AdapterManager newManager = createAdapter(newAdapterId, newAdapterConfig);
+
+    newManager.start();
+    newManager.waitForOneRunToFinish(4, TimeUnit.MINUTES);
+    newManager.stop();
+
+    DataSetManager<TimePartitionedFileSet> newFileSetManager = getDataset(newFilesetName);
+    TimePartitionedFileSet newFileSet = newFileSetManager.get();
+
+    List<GenericRecord> newRecords = readOutput(newFileSet, EVENT_SCHEMA_1);
+    Assert.assertEquals(1, newRecords.size());
+
+  }
+
   private void testSink(String sinkType) throws Exception {
     String filesetName = "converted_stream";
     StreamManager streamManager = getStreamManager("myStream");
@@ -106,37 +149,6 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
     List<GenericRecord> records = readOutput(fileSet, EVENT_SCHEMA_1);
     Assert.assertEquals(1, records.size());
 
-    ETLStage source = new ETLStage("TPFSAvro",
-                                   ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
-                                                   EVENT_SCHEMA_1.toString(),
-                                                   Properties.TimePartitionedFileSetDataset.TPFS_NAME, filesetName,
-                                                   Properties.TimePartitionedFileSetDataset.DELAY, "0d",
-                                                   Properties.TimePartitionedFileSetDataset.DURATION, "10m"));
-    ETLStage sink = new ETLStage("TPFSAvro",
-                                 ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
-                                                 EVENT_SCHEMA_1.toString(),
-                                                 Properties.TimePartitionedFileSetDataset.TPFS_NAME,
-                                                 filesetName + "_op"));
-
-    ETLStage transform = new ETLStage("Projection", ImmutableMap.of("drop", "headers"));
-    ETLBatchConfig etlBatchConfig = new ETLBatchConfig("* * * * *", source, sink, Lists.newArrayList(transform));
-
-    AdapterConfig newAdapterConfig = new AdapterConfig("description", TEMPLATE_ID.getId(),
-                                                       GSON.toJsonTree(etlBatchConfig));
-    Id.Adapter newAdapterId = Id.Adapter.from(NAMESPACE, "sconversion1");
-    AdapterManager newManager = createAdapter(newAdapterId, newAdapterConfig);
-
-    newManager.start();
-    newManager.waitForOneRunToFinish(4, TimeUnit.MINUTES);
-    newManager.stop();
-
-    DataSetManager<TimePartitionedFileSet> newFileSetManager = getDataset(filesetName + "_op");
-    TimePartitionedFileSet newFileSet = newFileSetManager.get();
-
-    List<GenericRecord> newRecords = readOutput(newFileSet, EVENT_SCHEMA_1);
-    Assert.assertEquals(1, newRecords.size());
-
-    clear();
   }
 
   private ETLBatchConfig constructETLBatchConfig(String fileSetName, String sinkType) {
@@ -153,6 +165,23 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
                                                  EVENT_SCHEMA.toString(),
                                                  Properties.TimePartitionedFileSetDataset.TPFS_NAME, fileSetName));
     ETLStage transform = new ETLStage("Projection", ImmutableMap.<String, String>of());
+    return new ETLBatchConfig("* * * * *", source, sink, Lists.newArrayList(transform));
+  }
+
+  private ETLBatchConfig constructTPFSETLConfig(String filesetName, String newFilesetName) {
+    ETLStage source = new ETLStage("TPFSAvro",
+                                   ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
+                                                   EVENT_SCHEMA_1.toString(),
+                                                   Properties.TimePartitionedFileSetDataset.TPFS_NAME, filesetName,
+                                                   Properties.TimePartitionedFileSetDataset.DELAY, "0d",
+                                                   Properties.TimePartitionedFileSetDataset.DURATION, "10m"));
+    ETLStage sink = new ETLStage("TPFSAvro",
+                                 ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
+                                                 EVENT_SCHEMA_1.toString(),
+                                                 Properties.TimePartitionedFileSetDataset.TPFS_NAME,
+                                                 newFilesetName));
+
+    ETLStage transform = new ETLStage("Projection", ImmutableMap.of("drop", "headers"));
     return new ETLBatchConfig("* * * * *", source, sink, Lists.newArrayList(transform));
   }
 
