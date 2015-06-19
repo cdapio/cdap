@@ -24,6 +24,271 @@ Cask Data Application Platform Release Notes
    :depth: 2
 
 
+`Release 3.0.1 <http://docs.cask.co/cdap/3.0.1/index.html>`__
+=============================================================
+
+
+New Features
+------------
+
+- Added the CDAP Application Templates (``cdap-app-templates``) to the `CDAP Javadocs 
+  <javadocs/index.html>`__
+  (`CDAP-2643 <https://issues.cask.co/browse/CDAP-2643>`__).
+  
+- In the CDAP UI, mandatory parameters for Application Template creation are marked with
+  asterisks, and if a user tries to create a template without one of those parameters, the
+  missing parameter is highlighted
+  (`CDAP-2499 <https://issues.cask.co/browse/CDAP-2499>`__).
+
+
+Improvements
+------------
+
+**Tools**
+
+- Added a tool (`HBaseQueueDebugger 
+  <https://github.com/caskdata/cdap/blob/release/3.0/cdap-master/src/main/java/co/cask/cdap/data/tools/HBaseQueueDebugger.java>`__)
+  that counts consumed and unconsumed entries in an HBase queue
+  (`CDAP-2105 <https://issues.cask.co/browse/CDAP-2105>`__).
+
+**CDAP UI**
+
+- The currently executing node of a workflow is now highlighted in the CDAP UI
+  (`CDAP-2615 <https://issues.cask.co/browse/CDAP-2615>`__).
+  
+- The list of datasets and the run histories in the CDAP UI are now paginated 
+  (`CDAP-2626, CDAP-2627 <https://issues.cask.co/browse/CDAP-2626>`__).
+  
+- Added improvements to the CDAP UI when creating Application Templates
+  (`CDAP-2601, CDAP-2602, CDAP-2603, CDAP-2605, CDAP-2606, CDAP-2607, CDAP-2610
+  <https://issues.cask.co/browse/CDAP-2601>`__).
+  
+- Improved the error messages returned when there are problems creating Application 
+  Templates in the CDAP UI
+  (`CDAP-2597 <https://issues.cask.co/browse/CDAP-2597>`__).
+  
+**CDAP SDK VM**
+
+- Added the Apache Flume agent flume-ng to the CDAP SDK VM
+  (`CDAP-2612 <https://issues.cask.co/browse/CDAP-2612>`__).
+
+- Added the ability to copy and paste to the CDAP SDK VM
+  (`CDAP-2611 <https://issues.cask.co/browse/CDAP-2611>`__).
+
+- Pre-downloaded the example dependencies into the CDAP SDK VM to speed building of the 
+  CDAP examples
+  (`CDAP-2613 <https://issues.cask.co/browse/CDAP-2613>`__).
+
+
+Bug Fixes
+---------
+
+**General**
+
+- Fixed a problem with the HBase store and flows with multiple queues, where one queue name
+  is a prefix of another queue name
+  (`CDAP-1996 <https://issues.cask.co/browse/CDAP-1996>`__).
+  
+- Fixed a problem with namespaces with underscores in the name crashing the Hadoop HBase 
+  region servers
+  (`CDAP-2110 <https://issues.cask.co/browse/CDAP-2110>`__).
+  
+- Removed the requirement to specify the JDBC driver class property twice in the adaptor
+  configuration for Database Sources and Sinks
+  (`CDAP-2453 <https://issues.cask.co/browse/CDAP-2453>`__).
+
+- Fixed a problem in CDAP Distributed where the status of running program always returns 
+  as "STOPPED" when the CDAP Master is restarted
+  (`CDAP-2489 <https://issues.cask.co/browse/CDAP-2489>`__).
+  
+- Fixed a problem with invalid RunRecords for Spark and MapReduce programs that are run as 
+  part of a Workflow (`CDAP-2490 <https://issues.cask.co/browse/CDAP-2490>`__).
+  
+- Fixed a problem with the CDAP Master not being HA (highly available) when a leadership 
+  change happens
+  (`CDAP-2495 <https://issues.cask.co/browse/CDAP-2495>`__).
+  
+- Fixed a problem with upgrading of queues with the UpgradeTool
+  (`CDAP-2502 <https://issues.cask.co/browse/CDAP-2502>`__).
+  
+- Fixed a problem with ObjectMappedTables not deleting missing fields when updating a row
+  (`CDAP-2523, CDAP-2524 <https://issues.cask.co/browse/CDAP-2523>`__).
+  
+- Fixed a problem with a stream not being created properly when deploying an application
+  after the default namespace was deleted
+  (`CDAP-2537 <https://issues.cask.co/browse/CDAP-2537>`__).
+  
+- Fixed a problem with the Applicaton Template Kafka Source not using the persisted offset
+  when the Adapter is restarted
+  (`CDAP-2547 <https://issues.cask.co/browse/CDAP-2547>`__).
+  
+- A problem with CDAP using its own transaction snapshot codec, leading to huge snapshot
+  files and OutOfMemory exceptions, and transaction snapshots that can't be read using
+  Tephra's tools, has been resolved by replacing the codec with Tephra's SnapshotCodecV3
+  (`CDAP-2563, CDAP-2946, TEPHRA-101 <https://issues.cask.co/browse/CDAP-2563>`__).
+  
+- Fixed a problem with CDAP Master not being resilient in the handling of Zookeeper 
+  exceptions
+  (`CDAP-2569 <https://issues.cask.co/browse/CDAP-2569>`__).
+  
+- Fixed a problem with RunRecords not being cleaned up correctly after certain exceptions
+  (`CDAP-2584 <https://issues.cask.co/browse/CDAP-2584>`__).
+  
+- Fixed a problem with the CDAP Maven archetype having an incorrect CDAP version in it
+  (`CDAP-2634 <https://issues.cask.co/browse/CDAP-2634>`__).
+  
+- Fixed a problem with the description of the TwitterSource not describing its output
+  (`CDAP-2648 <https://issues.cask.co/browse/CDAP-2648>`__).
+  
+- Fixed a problem with the Twitter Source not handling missing fields correctly and as a
+  consequence producing tweets (with errors) that were then not stored on disk
+  (`CDAP-2653 <https://issues.cask.co/browse/CDAP-2653>`__).
+  
+- Fixed a problem with the TwitterSource not calculating the time of tweet correctly
+  (`CDAP-2656 <https://issues.cask.co/browse/CDAP-2656>`__).
+  
+- Fixed a problem with the JMS Real-time Source failing to load required plugin sources
+  (`CDAP-2661 <https://issues.cask.co/browse/CDAP-2661>`__).
+
+- Fixed a problem with executing Hive queries on a distributed CDAP due to a failure to 
+  load Grok classes
+  (`CDAP-2678 <https://issues.cask.co/browse/CDAP-2678>`__).
+  
+- Fixed a problem with CDAP Program jars not being cleaned up from the temporary directory
+  (`CDAP-2698 <https://issues.cask.co/browse/CDAP-2698>`__).
+  
+- Fixed a problem with ProjectionTransforms not handling input data fields with null 
+  values correctly
+  (`CDAP-2719 <https://issues.cask.co/browse/CDAP-2719>`__).
+
+- Fixed a problem with not using CDAP RunIDs in the in-memory version of the CDAP SDK
+  (`CDAP-2769 <https://issues.cask.co/browse/CDAP-2769>`__).
+
+**CDAP CLI**
+
+- Fixed a problem with the CDAP CLI not printing an error if it is unable to connect to a 
+  CDAP instance
+  (`CDAP-2529 <https://issues.cask.co/browse/CDAP-2529>`__).
+  
+- Fixed a problem with extra whitespace in commands entered into the CDAP CLI causing errors
+  (`CDAP-2538 <https://issues.cask.co/browse/CDAP-2538>`__).
+  
+**CDAP SDK Standalone**
+
+- Updated the messages displayed when starting the CDAP Standalone SDK as to components 
+  and the JVM required (`CDAP-2445 <https://issues.cask.co/browse/CDAP-2445>`__).
+  
+- Fixed a problem with the creation of the default namespace upon starting the CDAP SDK
+  (`CDAP-2587 <https://issues.cask.co/browse/CDAP-2587>`__).
+  
+**CDAP SDK VM**
+
+- Fixed a problem with using the default namespace on the CDAP SDK Virtual Machine Image
+  (`CDAP-2500 <https://issues.cask.co/browse/CDAP-2500>`__).
+
+- Fixed a problem with the VirtualBox VM retaining a MAC address obtained from the build host
+  (`CDAP-2640 <https://issues.cask.co/browse/CDAP-2640>`__).
+  
+**CDAP UI**
+
+- Fixed a problem with incorrect flow metrics showing in the CDAP UI
+  (`CDAP-2494 <https://issues.cask.co/browse/CDAP-2494>`__).
+  
+- Fixed a problem in the CDAP UI with the properties in the Projection Transform being 
+  displayed inconsistently
+  (`CDAP-2525 <https://issues.cask.co/browse/CDAP-2525>`__).
+  
+- Fixed a problem in the CDAP UI not automatically updating the number of flowlet instances
+  (`CDAP-2534 <https://issues.cask.co/browse/CDAP-2534>`__).
+  
+- Fixed a problem in the CDAP UI with a window resize preventing clicking of the Adapter 
+  Template drop down menu
+  (`CDAP-2573 <https://issues.cask.co/browse/CDAP-2573>`__).
+  
+- Fixed a problem with the CDAP UI not performing validation of mandatory parameters 
+  before the creation of an adapter
+  (`CDAP-2575 <https://issues.cask.co/browse/CDAP-2575>`__).
+  
+- Fixed a problem with an incorrect version of CDAP being shown in the CDAP UI
+  (`CDAP-2586 <https://issues.cask.co/browse/CDAP-2586>`__).
+
+- Reduced the number of clicks required to navigate and perform actions within the CDAP UI
+  (`CDAP-2622, CDAP-2625 <https://issues.cask.co/browse/CDAP-2622>`__).
+  
+- Fixed a problem with an additional forward-slash character in the URL causing a "page 
+  not found error" in the CDAP UI
+  (`CDAP-2624 <https://issues.cask.co/browse/CDAP-2624>`__).
+  
+- Fixed a problem with the error dropdown of the CDAP UI not scrolling when it has a 
+  large number of errors
+  (`CDAP-2633 <https://issues.cask.co/browse/CDAP-2633>`__).
+  
+- Fixed a problem in the CDAP UI with the Twitter Source's consumer key secret not being 
+  treated as a password field
+  (`CDAP-2649 <https://issues.cask.co/browse/CDAP-2649>`__).
+  
+- Fixed a problem with the CDAP UI attempting to create an adapter without a name
+  (`CDAP-2652 <https://issues.cask.co/browse/CDAP-2652>`__).
+  
+- Fixed a problem with the CDAP UI not being able to find the ETL plugin templates on
+  distributed CDAP
+  (`CDAP-2655 <https://issues.cask.co/browse/CDAP-2655>`__).
+  
+- Fixed a problem with the CDAP UI's System Dashboard chart having a y-axis starting at "-200"
+  (`CDAP-2699 <https://issues.cask.co/browse/CDAP-2699>`__).
+
+- Fixed a problem with the rendering of stack trace logs in the CDAP UI
+  (`CDAP-2745 <https://issues.cask.co/browse/CDAP-2745>`__).
+  
+- Fixed a problem with the CDAP UI not working with secure CDAP instances, either clusters 
+  or standalone
+  (`CDAP-2770 <https://issues.cask.co/browse/CDAP-2770>`__).
+  
+- Fixed a problem with the coloring of completed runs of Workflow DAGs in the CDAP UI
+  (`CDAP-2781 <https://issues.cask.co/browse/CDAP-2781>`__).
+  
+**Documentation**
+
+- Fixed errors with the documentation examples of the ETL Plugins
+  (`CDAP-2503 <https://issues.cask.co/browse/CDAP-2503>`__).
+  
+- Documented the licenses of all shipped CDAP UI components
+  (`CDAP-2582 <https://issues.cask.co/browse/CDAP-2582>`__).
+
+- Corrected issues with the building of Javadocs used on the website and removed Javadocs
+  previously included in the SDK
+  (`CDAP-2730 <https://issues.cask.co/browse/CDAP-2730>`__).
+  
+- Added a recommended version (v.12.0) of Node.js to the documentation
+  (`CDAP-2762 <https://issues.cask.co/browse/CDAP-2762>`__).
+  
+
+API Changes
+-----------
+
+
+Deprecated and Removed Features
+-------------------------------
+
+
+.. _known-issues-301:
+
+Known Issues
+------------
+
+- The application in the `cdap-kafka-ingest-guide 
+  <https://github.com/cdap-guides/cdap-kafka-ingest-guide/tree/release/cdap-3.0-compatible>`__ 
+  does not run on Ubuntu 14.x and CDAP 3.0.x
+  (`CDAP-2632, CDAP-2749 <https://issues.cask.co/browse/CDAP-2632>`__).
+
+- Metrics for :ref:`TimePartitionedFileSets <datasets-timepartitioned-fileset>` can show 
+  zero values even if there is data present
+  (`CDAP-2721 <https://issues.cask.co/browse/CDAP-2721>`__).
+
+- See also the *Known Issues* of `version 3.0.0 <#known-issues-300>`_\ .
+
+
+
 `Release 3.0.0 <http://docs.cask.co/cdap/3.0.0/index.html>`__
 =============================================================
 
