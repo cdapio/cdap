@@ -16,6 +16,8 @@
 
 package co.cask.cdap.template.etl.batch;
 
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.template.etl.api.PipelineConfigurable;
@@ -37,12 +39,18 @@ import co.cask.cdap.template.test.sink.MetaKVTableSink;
 import co.cask.cdap.template.test.source.MetaKVTableSource;
 import co.cask.cdap.test.TestBase;
 import com.google.gson.Gson;
+import org.apache.avro.file.DataFileStream;
+import org.apache.avro.generic.GenericDatumReader;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.io.DatumReader;
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
+import org.apache.twill.filesystem.Location;
 import org.hsqldb.jdbc.JDBCDriver;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Base test class that sets up plugins and the batch template.
@@ -69,5 +77,30 @@ public class BaseETLBatchTest extends TestBase {
     deployTemplate(NAMESPACE, TEMPLATE_ID, ETLBatchTemplate.class,
       PipelineConfigurable.class.getPackage().getName(),
       BatchSource.class.getPackage().getName());
+  }
+
+  protected List<GenericRecord> readOutput(TimePartitionedFileSet fileSet, Schema schema) throws IOException {
+    org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(schema.toString());
+    DatumReader<GenericRecord> datumReader = new GenericDatumReader<>(avroSchema);
+    List<GenericRecord> records = com.google.common.collect.Lists.newArrayList();
+    for (Location dayLoc : fileSet.getEmbeddedFileSet().getBaseLocation().list()) {
+      // this level should be the day (ex: 2015-01-19)
+      for (Location timeLoc : dayLoc.list()) {
+        // this level should be the time (ex: 21-23.1234567890000)
+        for (Location file : timeLoc.list()) {
+          // this level should be the actual mapred output
+          String locName = file.getName();
+
+          if (locName.endsWith(".avro")) {
+            DataFileStream<GenericRecord> fileStream =
+              new DataFileStream<>(file.getInputStream(), datumReader);
+            while (fileStream.hasNext()) {
+              records.add(fileStream.next());
+            }
+          }
+        }
+      }
+    }
+    return records;
   }
 }

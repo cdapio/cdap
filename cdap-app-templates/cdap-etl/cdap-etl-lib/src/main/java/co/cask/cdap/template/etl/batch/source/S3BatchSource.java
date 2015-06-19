@@ -61,7 +61,6 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
 
   private static KeyValueTable table;
   private static Date prevMinute;
-  private static String currentTime;
 
   private static final String REGEX_DESCRIPTION = "Regex to filter out filenames in the path. " +
     "To use the TimeFilter, input \"timefilter\". The TimeFilter assumes that it " +
@@ -76,7 +75,6 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
     "terminate the path name with a \'/\'";
   private static final String TABLE_DESCRIPTION = "Name of the Table that keeps track of the last time files " +
     "were read in.";
-
 
   //length of 'YYYY-MM-dd-HH-mm"
   private static final int DATE_LENGTH = 16;
@@ -110,7 +108,6 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
     cal.set(Calendar.SECOND, 0);
     cal.set(Calendar.MILLISECOND, 0);
     prevMinute = cal.getTime();
-    currentTime = new SimpleDateFormat("yyyy-MM-dd-HH-mm").format(prevMinute);
 
     Job job = context.getHadoopJob();
     job.getConfiguration().set("fs.s3n.awsAccessKeyId", config.accessID);
@@ -138,8 +135,8 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
 
   @Override
   public void onRunFinish(boolean succeeded, BatchSourceContext context) {
-    if (succeeded && table != null && config.fileRegex != null && config.fileRegex.equals("timefilter")) {
-      table.write("lastTimeRead", currentTime);
+    if (succeeded && table != null && "timefilter".equals(config.fileRegex)) {
+      table.write("lastTimeRead", new SimpleDateFormat("yyyy-MM-dd-HH-mm").format(prevMinute));
     }
   }
 
@@ -159,48 +156,39 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
         return true;
       }
 
-      if (useTimeFilter) {
-        //use stateful time filter
-        if (table != null) {
-          String lastRead = Bytes.toString(table.read("lastTimeRead"));
-          SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
-          Date dateLastRead;
-          try {
-            dateLastRead = sdf.parse(lastRead);
-          } catch (Exception e) {
-            dateLastRead = new Date();
-            dateLastRead.setTime(0);
-          }
-
-          Date fileDate;
-          try {
-            fileDate = sdf.parse(path.getName().substring(0, DATE_LENGTH));
-          } catch (ParseException pe) {
-            //this should never happen
-            LOG.warn("Couldn't parse file: " + path.getName());
-            fileDate = prevMinute;
-          }
-
-          if (fileDate.compareTo(dateLastRead) > 0 && fileDate.compareTo(prevMinute) <= 0) {
-            return true;
-          }
-          return false;
-        } else {
-          //use hourly time filter
-          Date prevHour = new Date();
-          prevHour.setTime(System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1));
-          String currentTime = new SimpleDateFormat("yyyy-MM-dd-HH").format(prevHour);
-
-          if (filename.contains(currentTime)) {
-            return true;
-          }
-          return false;
-        }
+      //filter by file name using regex from configuration
+      if (!useTimeFilter) {
+        Matcher matcher = regex.matcher(filename);
+        return matcher.matches();
       }
 
-      //filter by file name using regex from configuration
-      Matcher matcher = regex.matcher(filename);
-      return matcher.matches();
+      //use hourly time filter
+      if (table == null) {
+        Date prevHour = new Date(System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1));
+        String currentTime = new SimpleDateFormat("yyyy-MM-dd-HH").format(prevHour);
+        return filename.contains(currentTime);
+      }
+
+      //use stateful time filter
+      String lastRead = Bytes.toString(table.read("lastTimeRead"));
+      SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
+      Date dateLastRead;
+      try {
+        dateLastRead = sdf.parse(lastRead);
+      } catch (Exception e) {
+        dateLastRead = new Date();
+        dateLastRead.setTime(0);
+      }
+
+      Date fileDate;
+      try {
+        fileDate = sdf.parse(path.getName().substring(0, DATE_LENGTH));
+      } catch (ParseException pe) {
+        //this should never happen
+        LOG.warn("Couldn't parse file: " + path.getName());
+        fileDate = prevMinute;
+      }
+      return fileDate.compareTo(dateLastRead) > 0 && fileDate.compareTo(prevMinute) <= 0;
     }
 
     public void setConf(Configuration conf) {
@@ -255,8 +243,9 @@ public class S3BatchSource extends BatchSource<LongWritable, Text, StructuredRec
     @Description(TABLE_DESCRIPTION)
     private String timeTable;
 
-    public S3BatchConfig(String name, String accessID, String accessKey, String path, String regex,
-                         String timeTable) {
+
+    public S3BatchConfig(String name, String accessID, String accessKey, String path, @Nullable String regex,
+                         @Nullable String timeTable) {
       this.name = name;
       this.accessID = accessID;
       this.accessKey = accessKey;

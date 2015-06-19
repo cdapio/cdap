@@ -37,12 +37,13 @@ import com.google.common.collect.Lists;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileSystemDummy;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.s3native.S3NInMemoryFileSystem;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -199,7 +200,10 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
     writeData.flush();
     writeData.close();
 
-    FileSystemDummy.addFileSystemForTesting(URI.create("s3n://test/"), conf, fs);
+    Method method = FileSystem.class.getDeclaredMethod("addFileSystemForTesting",
+                                                       new Class[] {URI.class, Configuration.class, FileSystem.class});
+    method.setAccessible(true);
+    method.invoke(FileSystem.class, URI.create("s3n://test/"), conf, fs);
     ETLStage source = new ETLStage("S3", ImmutableMap.<String, String>builder()
       .put(Properties.S3.NAME, "S3Test")
       .put(Properties.S3.ACCESS_ID, "-")
@@ -222,7 +226,7 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
 
     DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset("TPFSsink");
     TimePartitionedFileSet fileSet = fileSetManager.get();
-    List<GenericRecord> records = ETLStreamConversionTest.readOutput(fileSet, defaultSchema);
+    List<GenericRecord> records = readOutput(fileSet, defaultSchema);
     Assert.assertEquals(1, records.size());
     Assert.assertEquals(records.get(0).get("body").toString(), testData);
   }
