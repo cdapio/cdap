@@ -4,9 +4,9 @@
 
 .. _namespaces:
 
-============================================
+==========
 Namespaces
-============================================
+==========
 
 Overview
 ========
@@ -64,7 +64,7 @@ the entity ID, since an entity cannot exist independently of a namespace.
 
 
 Using Namespaces
-==============================
+================
 The best practices with using namespaces would be to create desired namespaces and use
 them for all operations. Otherwise, CDAP will use the ``default`` namespace for any operations
 undertaken.
@@ -83,6 +83,15 @@ present, and is recommended for:
 It is the namespace used when no other namespace is specified. However, for most usecases
 beyond the proof-of-concept stage, we recommend that you create appropriate namespaces and
 operate CDAP within them.
+
+Namespaces can be deleted. When a namespace is deleted, all components (applications,
+streams, flows, datasets, MapReduce programs, metrics, etc.) are first deleted, and then
+the namespace itself is removed. In the case of the ``default`` namespace, the name is
+retained, as the ``default`` namespace is always available in CDAP. 
+
+As this is an unrecoverable operation, extreme caution must be used when deleting
+namespaces. It can only be done if all programs of the namespace have been stopped, and if
+the ``cdap-site.xml`` parameter ``enable.unrecoverable.reset`` has been enabled.
 
 
 .. rubric::  Examples of Using Namespaces
