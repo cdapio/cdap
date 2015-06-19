@@ -143,6 +143,7 @@ public class TimePartitionedFileSetDatasetAvroSource extends
   @Override
   public void transform(KeyValue<AvroKey<GenericRecord>, NullWritable> input,
                         Emitter<StructuredRecord> emitter) throws Exception {
+    System.err.println("DEBUGGING - " + input.getKey().datum().getSchema().toString());
     emitter.emit(recordTransformer.transform(input.getKey().datum()));
   }
 

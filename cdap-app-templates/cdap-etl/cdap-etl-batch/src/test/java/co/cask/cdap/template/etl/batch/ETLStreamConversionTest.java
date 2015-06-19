@@ -65,6 +65,13 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
     Schema.Field.of("num", Schema.of(Schema.Type.INT)),
     Schema.Field.of("price", Schema.of(Schema.Type.DOUBLE)));
 
+  private static final Schema EVENT_SCHEMA_1 = Schema.recordOf(
+    "streamEvent",
+    Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
+    Schema.Field.of("ticker", Schema.of(Schema.Type.STRING)),
+    Schema.Field.of("num", Schema.of(Schema.Type.INT)),
+    Schema.Field.of("price", Schema.of(Schema.Type.DOUBLE)));
+
   @Test
   public void testStreamConversionTPFSParquetSink() throws Exception {
     String sinkType = "TPFSParquet";
@@ -96,22 +103,22 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
     DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset(filesetName);
     TimePartitionedFileSet fileSet = fileSetManager.get();
 
-    List<GenericRecord> records = readOutput(fileSet, EVENT_SCHEMA);
+    List<GenericRecord> records = readOutput(fileSet, EVENT_SCHEMA_1);
     Assert.assertEquals(1, records.size());
 
     ETLStage source = new ETLStage("TPFSAvro",
                                    ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
-                                                   EVENT_SCHEMA.toString(),
+                                                   EVENT_SCHEMA_1.toString(),
                                                    Properties.TimePartitionedFileSetDataset.TPFS_NAME, filesetName,
                                                    Properties.TimePartitionedFileSetDataset.DELAY, "0d",
                                                    Properties.TimePartitionedFileSetDataset.DURATION, "10m"));
     ETLStage sink = new ETLStage("TPFSAvro",
                                  ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
-                                                 EVENT_SCHEMA.toString(),
+                                                 EVENT_SCHEMA_1.toString(),
                                                  Properties.TimePartitionedFileSetDataset.TPFS_NAME,
                                                  filesetName + "_op"));
 
-    ETLStage transform = new ETLStage("Projection", ImmutableMap.<String, String>of());
+    ETLStage transform = new ETLStage("Projection", ImmutableMap.of("drop", "headers"));
     ETLBatchConfig etlBatchConfig = new ETLBatchConfig("* * * * *", source, sink, Lists.newArrayList(transform));
 
     AdapterConfig newAdapterConfig = new AdapterConfig("description", TEMPLATE_ID.getId(),
@@ -126,7 +133,7 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
     DataSetManager<TimePartitionedFileSet> newFileSetManager = getDataset(filesetName + "_op");
     TimePartitionedFileSet newFileSet = newFileSetManager.get();
 
-    List<GenericRecord> newRecords = readOutput(newFileSet, EVENT_SCHEMA);
+    List<GenericRecord> newRecords = readOutput(newFileSet, EVENT_SCHEMA_1);
     Assert.assertEquals(1, newRecords.size());
 
     clear();
