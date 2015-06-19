@@ -270,6 +270,78 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
     Assert.assertEquals(clobData, Bytes.toString(row2.get("CLOB_COL"), 0, clobData.length()));
   }
 
+  @Test
+  @Category(SlowTests.class)
+  public void testBadName() throws Exception {
+    String importQuery = "SELECT ID, NAME, SCORE, GRADUATED, TINY, SMALL, BIG, FLOAT_COL, REAL_COL, NUMERIC_COL, " +
+      "DECIMAL_COL, BIT_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, BLOB_COL, CLOB_COL FROM my_table " +
+      "WHERE ID < 3";
+    String countQuery = "SELECT COUNT(ID) from my_table WHERE id < 3";
+
+    ETLStage sink = new ETLStage("Table", ImmutableMap.of(
+      "name", "outputTable",
+      Properties.Table.PROPERTY_SCHEMA, schema.toString(),
+      Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "ID"));
+
+    boolean badSourceTableNameFailed = false;
+    try {
+      ETLStage sourceBadName = new ETLStage("Database", ImmutableMap.<String, String>builder()
+                                              .put(Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl())
+                                              .put(Properties.DB.TABLE_NAME, "dummy")
+                                              .put(Properties.DB.IMPORT_QUERY, importQuery)
+                                              .put(Properties.DB.COUNT_QUERY, countQuery)
+                                              .put(Properties.DB.JDBC_PLUGIN_NAME, "hypersql")
+                                              .build()
+                                           );
+      ETLBatchConfig etlConfigBadSourceName = new ETLBatchConfig("* * * * *", sourceBadName,
+                                                           sink, Lists.<ETLStage>newArrayList());
+      AdapterConfig adapterConfigBadName = new AdapterConfig("", TEMPLATE_ID.getId(),
+                                                             GSON.toJsonTree(etlConfigBadSourceName));
+      Id.Adapter adapterIdBadSourceName = Id.Adapter.from(NAMESPACE, "dbSourceTest");
+      AdapterManager managerBadSourceName = createAdapter(adapterIdBadSourceName, adapterConfigBadName);
+      managerBadSourceName.start();
+      managerBadSourceName.waitForOneRunToFinish(5, TimeUnit.MINUTES);
+      managerBadSourceName.stop();
+
+    } catch (Exception e){
+      badSourceTableNameFailed = true;
+    }
+    Assert.assertTrue(badSourceTableNameFailed);
+
+    String cols = "ID, NAME, SCORE, GRADUATED, TINY, SMALL, BIG, FLOAT_COL, REAL_COL, NUMERIC_COL, DECIMAL_COL, " +
+      "BIT_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, BLOB_COL, CLOB_COL";
+    ETLStage source = new ETLStage("Table",
+                                   ImmutableMap.of(
+                                     Properties.BatchReadableWritable.NAME, "inputTable",
+                                     Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "ID",
+                                     Properties.Table.PROPERTY_SCHEMA, schema.toString()));
+
+    boolean badSinkTableNameFailed = false;
+    try {
+      ETLStage sinkBadName = new ETLStage("Database",
+                                          ImmutableMap.of(Properties.DB.CONNECTION_STRING,
+                                                          hsqlDBServer.getConnectionUrl(),
+                                                          Properties.DB.TABLE_NAME, "bad_sink_name",
+                                                          Properties.DB.COLUMNS, cols,
+                                                          Properties.DB.JDBC_PLUGIN_NAME, "hypersql"
+                                          ));
+      List<ETLStage> transforms = Lists.newArrayList();
+      ETLBatchConfig etlConfigBadSinkName = new ETLBatchConfig("* * * * *", source, sinkBadName, transforms);
+      Id.Adapter adapterIdBadSinkName = Id.Adapter.from(NAMESPACE, "dbSinkTestBadName");
+      AdapterConfig adapterConfigBadSinkName = new AdapterConfig("", TEMPLATE_ID.getId(),
+                                                                 GSON.toJsonTree(etlConfigBadSinkName));
+      AdapterManager managerBadSinkName = createAdapter(adapterIdBadSinkName, adapterConfigBadSinkName);
+
+      createInputData();
+      managerBadSinkName.start();
+      managerBadSinkName.waitForOneRunToFinish(5, TimeUnit.MINUTES);
+      managerBadSinkName.stop();
+    } catch (Exception e) {
+      badSinkTableNameFailed = true;
+    }
+    Assert.assertTrue(badSinkTableNameFailed);
+  }
+
   // Test is ignored - Currently DBOutputFormat does a statement.executeBatch which seems to fail in HSQLDB.
   // Need to investigate alternatives to HSQLDB.
   @Ignore

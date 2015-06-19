@@ -31,6 +31,7 @@ import co.cask.cdap.template.etl.common.DBConfig;
 import co.cask.cdap.template.etl.common.DBRecord;
 import co.cask.cdap.template.etl.common.DBUtils;
 import co.cask.cdap.template.etl.common.ETLDBInputFormat;
+import co.cask.cdap.template.etl.common.JDBCDriverShim;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
@@ -39,7 +40,12 @@ import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
  * Batch source to read from a Database table
@@ -81,6 +87,8 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
                                                                                 jdbcPluginId,
                                                                                 PluginProperties.builder().build());
     Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
+    Preconditions.checkArgument(tableNameExists(jdbcDriverClass), "Table name %s does not exist in the database",
+                                dbSourceConfig.tableName);
   }
 
   @Override
@@ -133,5 +141,46 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
 
     @Description(COUNT_QUERY_DESCRIPTION)
     String countQuery;
+  }
+
+  private boolean tableNameExists(Class<? extends Driver> jdbcDriverClass) {
+    try {
+      try {
+        ensureJDBCDriverIsAvailable(jdbcDriverClass);
+      } catch (Exception e) {
+        Preconditions.checkArgument(false, "Driver must be able to connect");
+      }
+
+      Connection connection;
+      if (dbSourceConfig.user == null) {
+        connection = DriverManager.getConnection(dbSourceConfig.connectionString);
+      } else {
+        connection = DriverManager.getConnection(dbSourceConfig.connectionString,
+                                                 dbSourceConfig.user, dbSourceConfig.password);
+      }
+
+      DatabaseMetaData metadata = connection.getMetaData();
+      ResultSet rs = metadata.getTables(null, null, dbSourceConfig.tableName.toUpperCase(), null);
+
+      return rs.next();
+    } catch (java.sql.SQLException e) {
+      return false;
+    }
+  }
+
+  /*
+   *Throws InstantiationException or IllegalAccessException if it can't get access to the jdbcDriverClass
+   * In either case, the connection to the driver failed
+   */
+  private void ensureJDBCDriverIsAvailable(Class<? extends Driver> jdbcDriverClass) throws Exception {
+    try {
+      DriverManager.getDriver(dbSourceConfig.connectionString);
+    } catch (SQLException e) {
+      // Driver not found. We will try to register it with the DriverManager.
+      LOG.debug("Plugin Type: {} and Plugin Name: {}; Driver Class: {} not found. Registering JDBC driver via shim {} ",
+                dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName, jdbcDriverClass.getName(),
+                JDBCDriverShim.class.getName());
+      DriverManager.registerDriver(new JDBCDriverShim((Driver) jdbcDriverClass.newInstance()));
+    }
   }
 }

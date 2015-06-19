@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -91,6 +92,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
                                                                                 getJDBCPluginId(),
                                                                                 PluginProperties.builder().build());
     Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
+    Preconditions.checkArgument(tableNameExists(jdbcDriverClass), "Invalid table name %s", dbSinkConfig.tableName);
   }
 
   @Override
@@ -179,6 +181,47 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
       driverShim = new JDBCDriverShim(driverClass.newInstance());
       DBUtils.deregisterAllDrivers(driverClass);
       DriverManager.registerDriver(driverShim);
+    }
+  }
+
+  private boolean tableNameExists(Class<Object> jdbcDriverClass) {
+    try {
+      try {
+        ensureJDBCDriverIsAvailable(jdbcDriverClass);
+      } catch (Exception e) {
+        Preconditions.checkArgument(false, "Driver must be able to connect");
+      }
+
+      Connection connection;
+      if (dbSinkConfig.user == null) {
+        connection = DriverManager.getConnection(dbSinkConfig.connectionString);
+      } else {
+        connection = DriverManager.getConnection(dbSinkConfig.connectionString,
+                                                 dbSinkConfig.user, dbSinkConfig.password);
+      }
+
+      DatabaseMetaData metadata = connection.getMetaData();
+      ResultSet rs = metadata.getTables(null, null, dbSinkConfig.tableName.toUpperCase(), null);
+
+      return rs.next();
+    } catch (java.sql.SQLException e) {
+      return false;
+    }
+  }
+
+    /*
+   *Throws InstantiationException or IllegalAccessException if it can't get access to the jdbcDriverClass
+   * In either case, the connection to the driver failed
+   */
+  private void ensureJDBCDriverIsAvailable(Class<Object> jdbcDriverClass) throws Exception{
+    try {
+      DriverManager.getDriver(dbSinkConfig.connectionString);
+    } catch (SQLException e) {
+      // Driver not found. We will try to register it with the DriverManager.
+      LOG.debug("Plugin Type: {} and Plugin Name: {}; Driver Class: {} not found. Registering JDBC driver via shim {} ",
+                dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName, jdbcDriverClass.getName(),
+                JDBCDriverShim.class.getName());
+      DriverManager.registerDriver(new JDBCDriverShim((Driver) jdbcDriverClass.newInstance()));
     }
   }
 
