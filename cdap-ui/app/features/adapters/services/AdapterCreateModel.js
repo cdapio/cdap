@@ -41,7 +41,7 @@ angular.module(PKG.name + '.feature.adapters')
       this.instance = 1;
     };
 
-    Model.prototype.setMetadata = function (metadata) {
+    Model.prototype.setMetadata = function setMetadata(metadata) {
       // FIXME: There is a timing issue when editing a draft.
       this.metadata.type = metadata.type;
       this.metadata.name = metadata.name;
