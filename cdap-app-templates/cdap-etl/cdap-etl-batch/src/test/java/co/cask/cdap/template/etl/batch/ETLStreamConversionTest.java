@@ -65,6 +65,8 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
     Schema.Field.of("num", Schema.of(Schema.Type.INT)),
     Schema.Field.of("price", Schema.of(Schema.Type.DOUBLE)));
 
+  // The new event scheme is being used over the old schema because Maps when parsed take ordering of keys into account.
+  // Once CDAP-2813 is resolved, we can switch to using EVENT_SCHEMA
   private static final Schema EVENT_SCHEMA_1 = Schema.recordOf(
     "streamEvent",
     Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
@@ -113,11 +115,11 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
     AdapterConfig newAdapterConfig = new AdapterConfig("description", TEMPLATE_ID.getId(),
                                                        GSON.toJsonTree(etlBatchConfig));
     Id.Adapter newAdapterId = Id.Adapter.from(NAMESPACE, "sconversion1");
-    AdapterManager newManager = createAdapter(newAdapterId, newAdapterConfig);
+    AdapterManager tpfsAdapterManager = createAdapter(newAdapterId, newAdapterConfig);
 
-    newManager.start();
-    newManager.waitForOneRunToFinish(4, TimeUnit.MINUTES);
-    newManager.stop();
+    tpfsAdapterManager.start();
+    tpfsAdapterManager.waitForOneRunToFinish(4, TimeUnit.MINUTES);
+    tpfsAdapterManager.stop();
 
     DataSetManager<TimePartitionedFileSet> newFileSetManager = getDataset(newFilesetName);
     TimePartitionedFileSet newFileSet = newFileSetManager.get();
@@ -181,6 +183,9 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
                                                  Properties.TimePartitionedFileSetDataset.TPFS_NAME,
                                                  newFilesetName));
 
+    // The header field has been dropped because it contains maps. This map when parsed by the Avro Source which follows
+    // leads to an exception because the "values" field precedes the "keys" and the parser thinks that "keys" is not
+    // present. Once CDAP-2813 is resolved, we can stop dropping headers.
     ETLStage transform = new ETLStage("Projection", ImmutableMap.of("drop", "headers"));
     return new ETLBatchConfig("* * * * *", source, sink, Lists.newArrayList(transform));
   }

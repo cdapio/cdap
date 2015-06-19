@@ -23,7 +23,7 @@ import org.apache.avro.generic.GenericRecord;
 import java.util.Map;
 
 /**
- *
+ * Creates StructuredRecords from GenericRecords , with caching for schemas.
  */
 public class AvroToStructuredTransformer {
   private final Map<Integer, Schema> schemaCache = Maps.newHashMap();

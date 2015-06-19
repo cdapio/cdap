@@ -20,7 +20,6 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
@@ -32,7 +31,6 @@ import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.template.etl.common.AvroToStructuredTransformer;
 import co.cask.cdap.template.etl.common.ETLUtils;
-import co.cask.cdap.template.etl.common.Properties;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
@@ -42,7 +40,6 @@ import org.apache.avro.mapreduce.AvroJob;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.avro.reflect.Nullable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
 
@@ -57,13 +54,19 @@ import java.util.Map;
 public class TimePartitionedFileSetDatasetAvroSource extends
   BatchSource<AvroKey<GenericRecord>, NullWritable, StructuredRecord> {
 
-  private static final String SCHEMA_DESC = "The avro schema of the record being written to the Sink as a JSON Object";
+  private static final String SCHEMA_DESC = "The avro schema of the record being read from the Source as a JSON Object";
   private static final String TPFS_NAME_DESC = "Name of the Time Partitioned FileSet Dataset to which the records " +
-    "have to be written. If it doesn't exist, it will be created";
+    "have to be read from.";
   private static final String BASE_PATH_DESC = "Base path for the time partitioned fileset. Defaults to the " +
     "name of the dataset";
-  private static final String DURATION_DESC = "";
-  private static final String DELAY_DESC = "";
+  private static final String DURATION_DESC = "Size of the time window to read with each run of the pipeline. " +
+    "The format is expected to be a number followed by a 's', 'm', 'h', or 'd' specifying the time unit, with 's' " +
+    "for seconds, 'm' for minutes, 'h' for hours, and 'd' for days. For example, a value of '5m' means each run of " +
+    "the pipeline will read 5 minutes of events from the stream.";
+  private static final String DELAY_DESC = "Optional delay for reading stream events. The value must be " +
+    "of the same format as the duration value. For example, a duration of '5m' and a delay of '10m' means each run " +
+    "of the pipeline will read events from 15 minutes before its logical start time to 10 minutes before its " +
+    "logical start time. The default value is 0.";
 
   private final AvroToStructuredTransformer recordTransformer = new AvroToStructuredTransformer();
 
