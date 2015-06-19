@@ -26,8 +26,10 @@ angular.module(PKG.name + '.feature.admin')
               content: 'Stream ' + $scope.streamId + ' created successfully'
             });
           }, 100);
+          $scope.isSaving = false;
           $modalInstance.close(res);
         }, function (err) {
+          $scope.isSaving = false;
           $scope.error = err.data;
         });
     };
