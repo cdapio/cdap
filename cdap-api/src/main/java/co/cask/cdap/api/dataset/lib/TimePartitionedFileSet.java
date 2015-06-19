@@ -59,12 +59,14 @@ public interface TimePartitionedFileSet extends PartitionedFileSet {
   /**
    * Adds a new metadata entry for a particular partition.
    * Note that existing entries can not be updated.
+   * @throws IllegalArgumentException in case an attempt is made to update existing entries.
    */
   void addMetadata(long time, String metadataKey, String metadataValue);
 
   /**
    * Adds a set of new metadata entries for a particular partition
    * Note that existing entries can not be updated.
+   * * @throws IllegalArgumentException in case an attempt is made to update existing entries.
    */
   void addMetadata(long time, Map<String, String> metadata);
 

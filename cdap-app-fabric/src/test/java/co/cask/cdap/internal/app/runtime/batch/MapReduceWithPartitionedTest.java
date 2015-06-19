@@ -19,7 +19,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
-import co.cask.cdap.api.dataset.lib.PartitionDetail;
+import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
@@ -169,9 +169,9 @@ public class MapReduceWithPartitionedTest {
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
-          PartitionDetail partitionDetail = tpfs.getPartitionByTime(time);
-          Assert.assertNotNull(partitionDetail);
-          String path = partitionDetail.getRelativePath();
+          Partition partition = tpfs.getPartitionByTime(time);
+          Assert.assertNotNull(partition);
+          String path = partition.getRelativePath();
           Assert.assertNotNull(path);
           Assert.assertTrue(path.contains("2015-01-15/11-15"));
         }
@@ -199,9 +199,9 @@ public class MapReduceWithPartitionedTest {
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
-          PartitionDetail partitionDetail = tpfs.getPartitionByTime(time5);
-          Assert.assertNotNull(partitionDetail);
-          String path = partitionDetail.getRelativePath();
+          Partition partition = tpfs.getPartitionByTime(time5);
+          Assert.assertNotNull(partition);
+          String path = partition.getRelativePath();
           Assert.assertNotNull(path);
           Assert.assertTrue(path.contains("2015-01-15/11-20"));
         }
@@ -282,9 +282,9 @@ public class MapReduceWithPartitionedTest {
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
-          PartitionDetail partitionDetail = dataset.getPartition(keyX);
-          Assert.assertNotNull(partitionDetail);
-          String path = partitionDetail.getRelativePath();
+          Partition partition = dataset.getPartition(keyX);
+          Assert.assertNotNull(partition);
+          String path = partition.getRelativePath();
           Assert.assertTrue(path.contains("x"));
           Assert.assertTrue(path.contains("150000"));
         }
@@ -316,9 +316,9 @@ public class MapReduceWithPartitionedTest {
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
-          PartitionDetail partitionDetail = dataset.getPartition(keyY);
-          Assert.assertNotNull(partitionDetail);
-          String path = partitionDetail.getRelativePath();
+          Partition partition = dataset.getPartition(keyY);
+          Assert.assertNotNull(partition);
+          String path = partition.getRelativePath();
           Assert.assertNotNull(path);
           Assert.assertTrue(path.contains("y"));
           Assert.assertTrue(path.contains("200000"));

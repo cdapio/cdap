@@ -56,13 +56,15 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
 
   /**
    * Adds a new metadata entry for a particular partition.
-   * Note that existing entries can not be updated; {@link IllegalArgumentException} will be thrown in that case.
+   * Note that existing entries can not be updated.
+   * @throws IllegalArgumentException in case an attempt is made to update existing entries.
    */
   void addMetadata(PartitionKey key, String metadataKey, String metadataValue);
 
   /**
    * Adds a set of new metadata entries for a particular partition
-   * Note that existing entries can not be updated; {@link IllegalArgumentException} will be thrown in that case.
+   * Note that existing entries can not be updated.
+   * @throws IllegalArgumentException in case an attempt is made to update existing entries.
    */
   void addMetadata(PartitionKey key, Map<String, String> metadata);
 
