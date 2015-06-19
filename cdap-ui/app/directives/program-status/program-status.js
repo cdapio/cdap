@@ -6,6 +6,7 @@ angular.module(PKG.name + '.commons')
       scope: {
         type: '@',
         runid: '@',
+        pollInterval: '@',
         runs: '='
       },
       templateUrl: 'program-status/program-status.html',
@@ -23,7 +24,8 @@ angular.module(PKG.name + '.commons')
           }
 
           pollPromise = dataSrc.poll({
-            _cdapNsPath: path
+            _cdapNsPath: path,
+            interval: $scope.pollInterval || 10000
           }, function (res) {
             var startMs = res.start * 1000;
             $scope.start = new Date(startMs);
