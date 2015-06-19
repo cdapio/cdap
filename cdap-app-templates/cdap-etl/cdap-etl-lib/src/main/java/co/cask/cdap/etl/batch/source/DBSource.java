@@ -22,20 +22,18 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.plugin.PluginConfig;
-import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
-import co.cask.cdap.etl.common.DBConfig;
-import co.cask.cdap.etl.common.DBRecord;
-import co.cask.cdap.etl.common.DBUtils;
-import co.cask.cdap.etl.common.ETLDBInputFormat;
 import co.cask.cdap.etl.common.FieldCase;
-import co.cask.cdap.etl.common.Properties;
 import co.cask.cdap.etl.common.StructuredRecordUtils;
-import com.google.common.base.Preconditions;
+import co.cask.cdap.etl.common.db.DBConfig;
+import co.cask.cdap.etl.common.db.DBManager;
+import co.cask.cdap.etl.common.db.DBRecord;
+import co.cask.cdap.etl.common.db.DBUtils;
+import co.cask.cdap.etl.common.db.ETLDBInputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -44,7 +42,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Driver;
-import javax.annotation.Nullable;
 
 /**
  * Batch source to read from a Database table
@@ -64,37 +61,19 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
     "import from the specified table. Examples: SELECT COUNT(*) from <my_table> where <my_column> 1, " +
     "SELECT COUNT(my_column) from my_table. NOTE: Please include the same WHERE clauses in this query as the ones " +
     "used in the import query to reflect an accurate number of records to import.";
-  private static final String COLUMN_CASE_DESCRIPTION = "Sets the case of the column names returned from the query. " +
-    "Possible options are upper or lower. By default or for any other input, the column names are not modified and " +
-    "the names returned from the database are used as-is. Note that setting this property provides predictability " +
-    "of column name cases across different databases but might result in column name conflicts if multiple column " +
-    "names are the same when the case is ignored.";
 
   private final DBSourceConfig dbSourceConfig;
+  private final DBManager dbManager;
   private Class<? extends Driver> driverClass;
 
   public DBSource(DBSourceConfig dbSourceConfig) {
     this.dbSourceConfig = dbSourceConfig;
+    this.dbManager = new DBManager(dbSourceConfig);
   }
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    Preconditions.checkArgument(!(dbSourceConfig.user == null && dbSourceConfig.password != null),
-                                "dbUser is null. Please provide both user name and password if the database requires " +
-                                  "authentication. If not, please remove dbPassword and retry.");
-    Preconditions.checkArgument(!(dbSourceConfig.user != null && dbSourceConfig.password == null),
-                                "dbPassword is null. Please provide both user name and password if the database " +
-                                  "requires authentication. If not, please remove dbUser and retry.");
-    String jdbcPluginId = String.format("%s.%s.%s", "source", dbSourceConfig.jdbcPluginType,
-                                        dbSourceConfig.jdbcPluginName);
-    Class<? extends Driver> jdbcDriverClass = pipelineConfigurer.usePluginClass(dbSourceConfig.jdbcPluginType,
-                                                                                dbSourceConfig.jdbcPluginName,
-                                                                                jdbcPluginId,
-                                                                                PluginProperties.builder().build());
-    Preconditions.checkArgument(
-      jdbcDriverClass != null, "Unable to load JDBC Driver class for plugin name '%s'. Please make sure that the " +
-        "plugin '%s' of type '%s' containing the driver has been installed correctly.", dbSourceConfig.jdbcPluginName,
-      dbSourceConfig.jdbcPluginName, dbSourceConfig.jdbcPluginType);
+    dbManager.validateJDBCPluginPipeline(pipelineConfigurer, getJDBCPluginId());
   }
 
   @Override
@@ -133,6 +112,7 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
   @Override
   public void destroy() {
     DBUtils.cleanup(driverClass);
+    dbManager.destroy();
   }
 
   private String getJDBCPluginId() {
@@ -148,10 +128,5 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
 
     @Description(COUNT_QUERY_DESCRIPTION)
     String countQuery;
-
-    @Nullable
-    @Name(Properties.DB.COLUMN_NAME_CASE)
-    @Description(COLUMN_CASE_DESCRIPTION)
-    String columnNameCase;
   }
 }

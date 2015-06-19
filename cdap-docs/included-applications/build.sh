@@ -28,7 +28,7 @@ function download_includes() {
 
   # Batchsinks
   test_an_include 033951c7c752d4e5432038eb964af4d6 "${cdap_etl}/batch/sink/BatchCubeSink.java"
-  test_an_include 7a43b2678e3340696a0de25233d48d2d "${cdap_etl}/batch/sink/DBSink.java"
+  test_an_include 2f530a1f6681762cf506a5ede9275171 "${cdap_etl}/batch/sink/DBSink.java"
   test_an_include 2746d991cfad8271977c3f648464acd2 "${cdap_etl}/batch/sink/KVTableSink.java"
   test_an_include 68c51d9aa208014e07c7fdbccc0a9edd "${cdap_etl}/batch/sink/S3AvroBatchSink.java"
   test_an_include 91cd228bfa26459e5f0d8bee7e8876d3 "${cdap_etl}/batch/sink/S3BatchSink.java"
@@ -41,7 +41,7 @@ function download_includes() {
   test_an_include 95ae9c116aa257efd5e3bb6cacaa4033 "${cdap_etl}/batch/sink/TimePartitionedFileSetDatasetParquetSink.java"
 
   # Batchsources
-  test_an_include 794758bc0afbc404fa33143177afbb81 "${cdap_etl}/batch/source/DBSource.java"
+  test_an_include 014b7cb22cacc1fe1066ea14ed32b945 "${cdap_etl}/batch/source/DBSource.java"
   test_an_include f85320e0da353c790434a770aba6d040 "${cdap_etl}/batch/source/FileBatchSource.java"
   test_an_include a3e5de66820f096813a6d58fdba86b52 "${cdap_etl}/batch/source/KVTableSource.java"
   test_an_include 551c7f46347de3ea3bbc3ec45337487b "${cdap_etl}/batch/source/S3BatchSource.java"

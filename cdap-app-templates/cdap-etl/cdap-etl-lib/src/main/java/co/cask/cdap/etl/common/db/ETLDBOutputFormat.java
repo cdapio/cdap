@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package co.cask.cdap.etl.common.db;
 
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;

@@ -37,7 +37,7 @@ import co.cask.cdap.etl.batch.source.KVTableSource;
 import co.cask.cdap.etl.batch.source.StreamBatchSource;
 import co.cask.cdap.etl.batch.source.TableSource;
 import co.cask.cdap.etl.batch.source.TimePartitionedFileSetDatasetAvroSource;
-import co.cask.cdap.etl.common.DBRecord;
+import co.cask.cdap.etl.common.db.DBRecord;
 import co.cask.cdap.etl.test.sink.MetaKVTableSink;
 import co.cask.cdap.etl.test.source.MetaKVTableSource;
 import co.cask.cdap.etl.transform.ProjectionTransform;

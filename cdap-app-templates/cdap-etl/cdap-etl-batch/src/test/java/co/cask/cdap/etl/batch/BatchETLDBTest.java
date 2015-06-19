@@ -38,7 +38,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.hsqldb.Server;
-import org.hsqldb.server.ServerAcl;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -49,7 +48,6 @@ import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.Date;
@@ -69,7 +67,7 @@ import java.util.concurrent.TimeUnit;
 import javax.sql.rowset.serial.SerialBlob;
 
 /**
- * Test for ETL using databases
+ * Test for ETL using databases.
  */
 public class BatchETLDBTest extends BaseETLBatchTest {
   private static final long currentTs = System.currentTimeMillis();
@@ -86,6 +84,7 @@ public class BatchETLDBTest extends BaseETLBatchTest {
     hsqlDBServer = new HSQLDBServer(hsqlDBDir, "testdb");
     hsqlDBServer.start();
     try (Connection conn = hsqlDBServer.getConnection()) {
+      createTestUser(conn);
       createTestTables(conn);
       prepareTestData(conn);
     }
@@ -118,9 +117,15 @@ public class BatchETLDBTest extends BaseETLBatchTest {
                              Schema.Field.of("CLOB_COL", nullableString));
   }
 
+  private static void createTestUser(Connection conn) throws SQLException {
+    try (Statement stmt = conn.createStatement()) {
+      stmt.execute("CREATE USER \"emptyPwdUser\" PASSWORD '' ADMIN");
+    }
+  }
+
   private static void createTestTables(Connection conn) throws SQLException {
     try (Statement stmt = conn.createStatement()) {
-      stmt.execute("CREATE TABLE my_table" +
+      stmt.execute("CREATE TABLE \"my_table\"" +
                      "(" +
                      "ID INT NOT NULL, " +
                      "NAME VARCHAR(40) NOT NULL, " +
@@ -142,15 +147,15 @@ public class BatchETLDBTest extends BaseETLBatchTest {
                      "BLOB_COL BLOB(100), " +
                      "CLOB_COL CLOB(100)" +
                      ")");
-      stmt.execute("CREATE TABLE my_dest_table AS (" +
-                     "SELECT * FROM my_table) WITH DATA");
+      stmt.execute("CREATE TABLE \"my_dest_table\" AS (" +
+                     "SELECT * FROM \"my_table\") WITH DATA");
     }
   }
 
   private static void prepareTestData(Connection conn) throws SQLException {
     try (
-      PreparedStatement pStmt =
-        conn.prepareStatement("INSERT INTO my_table VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      PreparedStatement pStmt = conn.prepareStatement(
+        "INSERT INTO \"my_table\" VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
     ) {
       for (int i = 1; i <= 5; i++) {
         String name = "user" + i;
@@ -187,16 +192,19 @@ public class BatchETLDBTest extends BaseETLBatchTest {
   @SuppressWarnings("ConstantConditions")
   public void testDBSource() throws Exception {
     String importQuery = "SELECT ID, NAME, SCORE, GRADUATED, TINY, SMALL, BIG, FLOAT_COL, REAL_COL, NUMERIC_COL, " +
-      "DECIMAL_COL, BIT_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, BLOB_COL, CLOB_COL FROM my_table " +
+      "DECIMAL_COL, BIT_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, BLOB_COL, CLOB_COL FROM \"my_table\"" +
       "WHERE ID < 3";
-    String countQuery = "SELECT COUNT(ID) from my_table WHERE id < 3";
-    ETLStage source = new ETLStage("Database", ImmutableMap.<String, String>builder()
-                                     .put(Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl())
-                                     .put(Properties.DB.IMPORT_QUERY, importQuery)
-                                     .put(Properties.DB.COUNT_QUERY, countQuery)
-                                     .put(Properties.DB.JDBC_PLUGIN_NAME, "hypersql")
-                                     .build()
-                                   );
+    String countQuery = "SELECT COUNT(ID) from \"my_table\" WHERE id < 3";
+    ETLStage source = new ETLStage(
+      "Database",
+      ImmutableMap.<String, String>builder()
+        .put(Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl())
+        .put(Properties.DB.TABLE_NAME, "my_table")
+        .put(Properties.DB.IMPORT_QUERY, importQuery)
+        .put(Properties.DB.COUNT_QUERY, countQuery)
+        .put(Properties.DB.JDBC_PLUGIN_NAME, "hypersql")
+        .build()
+    );
 
     ETLStage sink = new ETLStage("Table", ImmutableMap.of(
       "name", "outputTable",
@@ -284,10 +292,11 @@ public class BatchETLDBTest extends BaseETLBatchTest {
                                     Schema.Field.of("id", Schema.of(Schema.Type.INT)),
                                     Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
 
-    String importQuery = "SELECT ID, NAME FROM my_table WHERE ID < 3";
-    String countQuery = "SELECT COUNT(ID) from my_table WHERE id < 3";
+    String importQuery = "SELECT ID, NAME FROM \"my_table\" WHERE ID < 3";
+    String countQuery = "SELECT COUNT(ID) from \"my_table\" WHERE id < 3";
     ETLStage source = new ETLStage("Database", ImmutableMap.<String, String>builder()
       .put(Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl())
+      .put(Properties.DB.TABLE_NAME, "my_table")
       .put(Properties.DB.IMPORT_QUERY, importQuery)
       .put(Properties.DB.COUNT_QUERY, countQuery)
       .put(Properties.DB.JDBC_PLUGIN_NAME, "hypersql")
@@ -301,7 +310,7 @@ public class BatchETLDBTest extends BaseETLBatchTest {
       // smaller case since we have set the db data's column case to be lower
       Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "id"));
 
-    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, Lists.<ETLStage>newArrayList());
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, new ArrayList<ETLStage>());
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "dbSourceTest");
@@ -333,8 +342,8 @@ public class BatchETLDBTest extends BaseETLBatchTest {
   @Test
   @Category(SlowTests.class)
   public void testUserNamePasswordCombinations() throws Exception {
-    String importQuery = "SELECT * FROM my_table";
-    String countQuery = "SELECT COUNT(*) from my_table";
+    String importQuery = "SELECT * FROM \"my_table\"";
+    String countQuery = "SELECT COUNT(*) from \"my_table\"";
 
     ETLStage table = new ETLStage("Table", ImmutableMap.of(
       "name", "outputTable",
@@ -345,29 +354,43 @@ public class BatchETLDBTest extends BaseETLBatchTest {
 
     Map<String, String> baseSourceProps = ImmutableMap.of(
       Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl(),
+      Properties.DB.TABLE_NAME, "my_table",
       Properties.DB.JDBC_PLUGIN_NAME, "hypersql",
       Properties.DB.IMPORT_QUERY, importQuery,
       Properties.DB.COUNT_QUERY, countQuery);
 
     Map<String, String> baseSinkProps = ImmutableMap.of(
       Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl(),
+      Properties.DB.TABLE_NAME, "my_table",
       Properties.DB.JDBC_PLUGIN_NAME, "hypersql",
-      Properties.DB.TABLE_NAME, "table",
-      Properties.DB.COLUMNS, "*");
+      Properties.DB.COLUMNS, "*",
+      Properties.DB.COLUMN_NAME_CASE, "upper");
 
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "dbSourceTest");
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "dbTest");
+
+    // null user name, null password. Should succeed.
+    // as source
+    ETLStage database = new ETLStage("Database", baseSourceProps);
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", database, table, transforms);
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
+    deployApplication(appId, appRequest);
+    // as sink
+    database = new ETLStage("Database", baseSinkProps);
+    etlConfig = new ETLBatchConfig("* * * * *", table, database, transforms);
+    appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
+    deployApplication(appId, appRequest);
 
     // non null user name, null password. Should fail.
     // as source
     Map<String, String> noPassword = new HashMap<>(baseSourceProps);
-    noPassword.put(Properties.DB.USER, "user");
-    ETLStage database = new ETLStage("Database", noPassword);
-    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", database, table, transforms);
+    noPassword.put(Properties.DB.USER, "emptyPwdUser");
+    database = new ETLStage("Database", noPassword);
+    etlConfig = new ETLBatchConfig("* * * * *", database, table, transforms);
     assertDeploymentFailure(
       appId, etlConfig, "Deploying DB Source with non-null username but null password should have failed.");
     // as sink
     noPassword = new HashMap<>(baseSinkProps);
-    noPassword.put(Properties.DB.USER, "user");
+    noPassword.put(Properties.DB.USER, "emptyPwdUser");
     database = new ETLStage("Database", noPassword);
     etlConfig = new ETLBatchConfig("* * * * *", table, database, transforms);
     assertDeploymentFailure(
@@ -392,20 +415,80 @@ public class BatchETLDBTest extends BaseETLBatchTest {
     // non-null username, non-null, but empty password. Should succeed.
     // as source
     Map<String, String> emptyPassword = new HashMap<>(baseSourceProps);
-    emptyPassword.put(Properties.DB.USER, "user");
+    emptyPassword.put(Properties.DB.USER, "emptyPwdUser");
     emptyPassword.put(Properties.DB.PASSWORD, "");
     database = new ETLStage("Database", emptyPassword);
     etlConfig = new ETLBatchConfig("* * * * *", database, table, transforms);
-    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
+    appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
     deployApplication(appId, appRequest);
     // as sink
     emptyPassword = new HashMap<>(baseSinkProps);
-    emptyPassword.put(Properties.DB.USER, "user");
+    emptyPassword.put(Properties.DB.USER, "emptyPwdUser");
     emptyPassword.put(Properties.DB.PASSWORD, "");
     database = new ETLStage("Database", emptyPassword);
     etlConfig = new ETLBatchConfig("* * * * *", table, database, transforms);
     appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
     deployApplication(appId, appRequest);
+  }
+
+  @Test
+  @Category(SlowTests.class)
+  public void testNonExistentDBTable() throws Exception {
+    // source
+    String importQuery = "SELECT ID, NAME FROM dummy WHERE ID < 3";
+    String countQuery = "SELECT COUNT(ID) from dummy WHERE id < 3";
+    //TODO: Also test for bad connection:
+    ETLStage table = new ETLStage("Table", ImmutableMap.of(
+      Properties.BatchReadableWritable.NAME, "table",
+      Properties.Table.PROPERTY_SCHEMA, schema.toString(),
+      Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "ID"));
+    ETLStage sourceBadName = new ETLStage("Database", ImmutableMap.of(
+      Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl(),
+      Properties.DB.TABLE_NAME, "dummy",
+      Properties.DB.IMPORT_QUERY, importQuery,
+      Properties.DB.COUNT_QUERY, countQuery,
+      Properties.DB.JDBC_PLUGIN_NAME, "hypersql"
+    ));
+    List<ETLStage> transforms = new ArrayList<>();
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", sourceBadName, table, transforms);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "dbSourceTest");
+    assertDeploymentFailure(appId, etlConfig, "ETL Application with DB Source should have failed because of a " +
+      "non-existent source table.");
+
+    // Bad connection
+    String badConnection = String.format("jdbc:hsqldb:hsql://localhost/%sWRONG", hsqlDBServer.database);
+    ETLStage sourceBadConn = new ETLStage("Database", ImmutableMap.of(
+      Properties.DB.CONNECTION_STRING, badConnection,
+      Properties.DB.IMPORT_QUERY, importQuery,
+      Properties.DB.COUNT_QUERY, countQuery,
+      Properties.DB.JDBC_PLUGIN_NAME, "hypersql"
+    ));
+    etlConfig = new ETLBatchConfig("* * * * *", sourceBadConn, table, transforms);
+    assertDeploymentFailure(appId, etlConfig, "ETL Application with DB Source should have failed because of a " +
+      "non-existent source database.");
+
+    // sink
+    ETLStage sinkBadName = new ETLStage("Database", ImmutableMap.of(
+      Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl(),
+      Properties.DB.TABLE_NAME, "dummy",
+      Properties.DB.COLUMNS, "ID, NAME",
+      Properties.DB.JDBC_PLUGIN_NAME, "hypersql"
+    ));
+    etlConfig = new ETLBatchConfig("* * * * *", table, sinkBadName, transforms);
+    appId = Id.Application.from(Id.Namespace.DEFAULT, "dbSinkTestBadName");
+    assertDeploymentFailure(appId, etlConfig, "ETL Application with DB Sink should have failed because of a " +
+      "non-existent sink table.");
+
+    // Bad connection
+    ETLStage sinkBadConn = new ETLStage("Database", ImmutableMap.of(
+      Properties.DB.CONNECTION_STRING, badConnection,
+      Properties.DB.TABLE_NAME, "dummy",
+      Properties.DB.COLUMNS, "ID, NAME",
+      Properties.DB.JDBC_PLUGIN_NAME, "hypersql"
+    ));
+    etlConfig = new ETLBatchConfig("* * * * *", table, sinkBadConn, transforms);
+    assertDeploymentFailure(appId, etlConfig, "ETL Application with DB Sink should have failed because of a " +
+      "non-existent sink database.");
   }
 
   // Test is ignored - Currently DBOutputFormat does a statement.executeBatch which seems to fail in HSQLDB.
@@ -479,7 +562,8 @@ public class BatchETLDBTest extends BaseETLBatchTest {
       Connection conn = hsqlDBServer.getConnection();
       Statement stmt = conn.createStatement()
     ) {
-      stmt.execute("DROP TABLE my_table");
+      stmt.execute("DROP TABLE \"my_table\"");
+      stmt.execute("DROP USER \"emptyPwdUser\"");
     }
 
     hsqlDBServer.stop();
@@ -504,14 +588,14 @@ public class BatchETLDBTest extends BaseETLBatchTest {
     private final Server server;
     private final String hsqlDBDriver = "org.hsqldb.jdbcDriver";
 
-    HSQLDBServer(String location, String database) {
+    private HSQLDBServer(String location, String database) {
       this.locationUrl = String.format("%s/%s", location, database);
       this.database = database;
       this.connectionUrl = String.format("jdbc:hsqldb:hsql://localhost/%s", database);
       this.server = new Server();
     }
 
-    public int start() throws IOException, ServerAcl.AclFormatException {
+    public int start() {
       server.setDatabasePath(0, locationUrl);
       server.setDatabaseName(0, database);
       return server.start();
