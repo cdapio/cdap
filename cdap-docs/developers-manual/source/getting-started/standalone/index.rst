@@ -30,6 +30,8 @@ The CDAP SDK runs on Linux, MacOS and Windows, and has three requirements:
 - `Node.js <http://nodejs.org/dist/>`__ (|node-js-version|; required to run the CDAP UI; we recommend |recommended-node-js-version|)
 - `Apache Maven 3.0+ <http://maven.apache.org>`__ (required to build CDAP applications)
 
+.. _recommend-using-an-ide:
+
 We recommend using an IDE when building CDAP applications, such as either `IntelliJ
 <https://www.jetbrains.com/idea/>`__ or `Eclipse, <https://www.eclipse.org/>`__ as
 described in the section on :ref:`development environment setup. <dev-env>`
