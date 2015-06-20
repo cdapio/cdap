@@ -52,7 +52,7 @@ module.run(function ($location, $state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH
 });
 
 
-module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAuthPromise, $rootScope, $localStorage) {
+module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAuthPromise, $rootScope, $localStorage, $cookies) {
 
   /**
    * private method to sync the user everywhere
@@ -61,6 +61,16 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
     this.currentUser = u;
     $rootScope.currentUser = u;
   });
+
+  // Angular 1.4: Need to change use of $cookies with getters
+  if ($cookies['CDAP_Auth_Token'] && $cookies['CDAP_Auth_Username']) {
+    console.log('auth', $cookies['CDAP_Auth_Token']);
+    var user = new MyAuthUser({
+      username: $cookies['CDAP_Auth_Username'],
+      access_token: $cookies['CDAP_Auth_Token']
+    });
+    persist(user);
+  }
 
   /**
    * remembered
@@ -80,13 +90,19 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
    */
   this.login = function (cred) {
     return myAuthPromise(cred).then(
-      function(data) {
+      function success (data) {
         var user = new MyAuthUser(data);
         persist(user);
         $localStorage.remember = cred.remember && user.storable();
+
+        // Angular 1.4 will have breaking changes to this. Will have to set cookies using setters method
+        $cookies['CDAP_Auth_Token'] = user.token;
+        $cookies['CDAP_Auth_Username'] = user.username;
         $rootScope.$broadcast(MYAUTH_EVENT.loginSuccess);
+
       },
-      function() {
+      function failed () {
+        persist(null);
         $rootScope.$broadcast(MYAUTH_EVENT.loginFailed);
       }
     );
@@ -94,10 +110,14 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
 
   /**
    * logout
+   *
+   * Angular 1.4: need to change $cookies to use remove function
    */
   this.logout = function () {
     if (this.currentUser){
       persist(null);
+      delete $cookies['CDAP_Auth_Token'];
+      delete $cookies['CDAP_Auth_Username'];
       $rootScope.$broadcast(MYAUTH_EVENT.logoutSuccess);
     }
   };
@@ -107,13 +127,14 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
    * @return {Boolean}
    */
   this.isAuthenticated = function () {
+
     return !!this.currentUser;
   };
 
 });
 
 
-module.factory('myAuthPromise', function myAuthPromiseFactory (MY_CONFIG, $q, $http) {
+module.factory('myAuthPromise', function myAuthPromiseFactory (MY_CONFIG, $q, $http, $cookies) {
   return function myAuthPromise (credentials) {
     var deferred = $q.defer();
 
@@ -130,6 +151,8 @@ module.factory('myAuthPromise', function myAuthPromiseFactory (MY_CONFIG, $q, $h
         }));
       })
       .error(function (data) {
+        delete $cookies['CDAP_Auth_Token'];
+        delete $cookies['CDAP_Auth_Username'];
         deferred.reject(data);
       });
 

@@ -51,12 +51,14 @@ angular.module(PKG.name+'.feature.login')
   .run(function ($rootScope, $state, $alert, MYAUTH_EVENT, MY_CONFIG, myAlert) {
 
     $rootScope.$on(MYAUTH_EVENT.logoutSuccess, function () {
-      $alert({title:'Bye!', content:'You are now logged out.', type:'info'});
+      $rootScope.currentUser = null;
       $state.go('login');
     });
 
     $rootScope.$on(MYAUTH_EVENT.notAuthorized, function () {
-      myAlert({title:'Authentication error!', content:'You are not allowed to access the requested page.', type:'warning'});
+      // myAlert({title:'Authentication error!', content:'You are not allowed to access the requested page.', type:'warning'});
+      $rootScope.currentUser = null; // need to delete current user if login failed
+      $state.go('login');
     });
 
     if(MY_CONFIG.securityEnabled) {
