@@ -26,18 +26,23 @@ angular.module(PKG.name + '.feature.datasets')
             // Checking whether dataset is explorable
             myExploreApi.list(params)
               .$promise
-              .then(function (res) {
-                var datasetId = $stateParams.datasetId;
-                datasetId = datasetId.replace(/[\.\-]/g, '_');
+              .then(
+                function success(res) {
+                  var datasetId = $stateParams.datasetId;
+                  datasetId = datasetId.replace(/[\.\-]/g, '_');
 
-                var match = filterFilter(res, datasetId);
+                  var match = filterFilter(res, datasetId);
 
-                if (match.length === 0) {
+                  if (match.length === 0) {
+                    defer.resolve(false);
+                  } else {
+                    defer.resolve(true);
+                  }
+                },
+                function error(res) {
                   defer.resolve(false);
-                } else {
-                  defer.resolve(true);
                 }
-              });
+              );
             return defer.promise;
           }
         },
