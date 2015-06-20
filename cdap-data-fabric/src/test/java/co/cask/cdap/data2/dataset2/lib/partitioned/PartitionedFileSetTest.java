@@ -182,6 +182,18 @@ public class PartitionedFileSetTest {
           Assert.fail("Expected not to be able to update an existing metadata entry");
         } catch (DataSetException expected) {
         }
+
+        PartitionKey nonexistentPartitionKey = PartitionKey.builder()
+          .addIntField("i", 42)
+          .addLongField("l", 17L)
+          .addStringField("s", "nonexistent")
+          .build();
+
+        try {
+          dataset.addMetadata(nonexistentPartitionKey, "key2", "value3");
+          Assert.fail("Expected not to be able to add metadata for a nonexistent partition");
+        } catch (DataSetException expected) {
+        }
       }
     });
   }

@@ -174,7 +174,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   public void addMetadata(PartitionKey key, Map<String, String> metadata) {
     final byte[] rowKey = generateRowKey(key, partitioning);
     Row row = partitionsTable.get(rowKey);
-    if (row == null) {
+    if (row.isEmpty()) {
       throw new DataSetException(String.format("Dataset '%s' does not have a partition for key: %s", getName(), key));
     }
 
@@ -244,7 +244,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   public PartitionDetail getPartition(PartitionKey key) {
     byte[] rowKey = generateRowKey(key, partitioning);
     Row row = partitionsTable.get(rowKey);
-    if (row == null) {
+    if (row.isEmpty()) {
       return null;
     }
 
