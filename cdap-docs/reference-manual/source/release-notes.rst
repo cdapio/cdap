@@ -31,10 +31,6 @@ Cask Data Application Platform Release Notes
 New Features
 ------------
 
-- Added the CDAP Application Templates (``cdap-app-templates``) to the `CDAP Javadocs 
-  <javadocs/index.html>`__
-  (`CDAP-2643 <https://issues.cask.co/browse/CDAP-2643>`__).
-  
 - In the CDAP UI, mandatory parameters for Application Template creation are marked with
   asterisks, and if a user tries to create a template without one of those parameters, the
   missing parameter is highlighted
