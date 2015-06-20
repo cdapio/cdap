@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
+import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
@@ -123,58 +124,66 @@ public class PartitionedFileSetTest {
   @Test
   public void testPartitionMetadata() throws Exception {
     final PartitionedFileSet dataset = dsFrameworkUtil.getInstance(pfsInstance);
+    dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        PartitionKey partitionKey = PartitionKey.builder()
+          .addIntField("i", 42)
+          .addLongField("l", 17L)
+          .addStringField("s", "x")
+          .build();
 
-    PartitionKey partitionKey = PartitionKey.builder()
-      .addIntField("i", 42)
-      .addLongField("l", 17L)
-      .addStringField("s", "x")
-      .build();
+        ImmutableMap<String, String> metadata = ImmutableMap.of("key1", "value",
+                                                                "key2", "value2",
+                                                                "key3", "value2");
 
-    ImmutableMap<String, String> metadata = ImmutableMap.of("key1", "value",
-                                                            "key2", "value2",
-                                                            "key3", "value2");
+        PartitionOutput partitionOutput = dataset.getPartitionOutput(partitionKey);
+        partitionOutput.setMetadata(metadata);
+        partitionOutput.addPartition();
 
-    PartitionOutput partitionOutput = dataset.getPartitionOutput(partitionKey);
-    partitionOutput.setMetadata(metadata);
-    partitionOutput.addPartition();
-
-    PartitionDetail partitionDetail = dataset.getPartition(partitionKey);
-    Assert.assertNotNull(partitionDetail);
-    Assert.assertEquals(metadata, partitionDetail.getMetadata().asMap());
+        PartitionDetail partitionDetail = dataset.getPartition(partitionKey);
+        Assert.assertNotNull(partitionDetail);
+        Assert.assertEquals(metadata, partitionDetail.getMetadata().asMap());
+      }
+    });
   }
 
   @Test
   public void testUpdateMetadata() throws Exception {
     final PartitionedFileSet dataset = dsFrameworkUtil.getInstance(pfsInstance);
+    dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        PartitionKey partitionKey = PartitionKey.builder()
+          .addIntField("i", 42)
+          .addLongField("l", 17L)
+          .addStringField("s", "x")
+          .build();
 
-    PartitionKey partitionKey = PartitionKey.builder()
-      .addIntField("i", 42)
-      .addLongField("l", 17L)
-      .addStringField("s", "x")
-      .build();
+        PartitionOutput partitionOutput = dataset.getPartitionOutput(partitionKey);
+        ImmutableMap<String, String> originalEntries = ImmutableMap.of("key1", "value1");
+        partitionOutput.setMetadata(originalEntries);
+        partitionOutput.addPartition();
 
-    PartitionOutput partitionOutput = dataset.getPartitionOutput(partitionKey);
-    ImmutableMap<String, String> originalEntries = ImmutableMap.of("key1", "value1");
-    partitionOutput.setMetadata(originalEntries);
-    partitionOutput.addPartition();
+        ImmutableMap<String, String> updatedMetadata = ImmutableMap.of("key2", "value2");
+        dataset.addMetadata(partitionKey, updatedMetadata);
 
-    ImmutableMap<String, String> updatedMetadata = ImmutableMap.of("key2", "value2");
-    dataset.addMetadata(partitionKey, updatedMetadata);
+        PartitionDetail partitionDetail = dataset.getPartition(partitionKey);
+        Assert.assertNotNull(partitionDetail);
 
-    PartitionDetail partitionDetail = dataset.getPartition(partitionKey);
-    Assert.assertNotNull(partitionDetail);
+        HashMap<String, String> combinedEntries = Maps.newHashMap();
+        combinedEntries.putAll(originalEntries);
+        combinedEntries.putAll(updatedMetadata);
+        Assert.assertEquals(combinedEntries, partitionDetail.getMetadata().asMap());
 
-    HashMap<String, String> combinedEntries = Maps.newHashMap();
-    combinedEntries.putAll(originalEntries);
-    combinedEntries.putAll(updatedMetadata);
-    Assert.assertEquals(combinedEntries, partitionDetail.getMetadata().asMap());
-
-    // adding an entry, for a key that already exists will throw an Exception
-    try {
-      dataset.addMetadata(partitionKey, "key2", "value3");
-      Assert.fail("Expected not to be able to update an existing metadata entry");
-    } catch (IllegalArgumentException expected) {
-    }
+        // adding an entry, for a key that already exists will throw an Exception
+        try {
+          dataset.addMetadata(partitionKey, "key2", "value3");
+          Assert.fail("Expected not to be able to update an existing metadata entry");
+        } catch (DataSetException expected) {
+        }
+      }
+    });
   }
 
   @Test

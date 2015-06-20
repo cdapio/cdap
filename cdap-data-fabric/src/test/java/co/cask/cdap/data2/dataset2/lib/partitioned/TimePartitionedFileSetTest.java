@@ -80,20 +80,25 @@ public class TimePartitionedFileSetTest {
 
   @Test
   public void testPartitionMetadata() throws Exception {
-    // make sure the dataset has no partitions
     final TimePartitionedFileSet tpfs = dsFrameworkUtil.getInstance(TPFS_INSTANCE);
-    validateTimePartitions(tpfs, 0L, MAX, Collections.<Long, String>emptyMap());
+    dsFrameworkUtil.newTransactionExecutor((TransactionAware) tpfs).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // make sure the dataset has no partitions
+        validateTimePartitions(tpfs, 0L, MAX, Collections.<Long, String>emptyMap());
 
-    Date date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse("6/4/12 10:00 am");
-    final long time = date.getTime();
+        Date date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse("6/4/12 10:00 am");
+        final long time = date.getTime();
 
-    final ImmutableMap<String, String> metadata = ImmutableMap.of("key1", "value1",
-                                                                  "key2", "value3",
-                                                                  "key100", "value4");
-    tpfs.addPartition(time, "file", metadata);
-    TimePartitionDetail partitionByTime = tpfs.getPartitionByTime(time);
-    Assert.assertNotNull(partitionByTime);
-    Assert.assertEquals(metadata, partitionByTime.getMetadata().asMap());
+        final ImmutableMap<String, String> metadata = ImmutableMap.of("key1", "value1",
+                                                                      "key2", "value3",
+                                                                      "key100", "value4");
+        tpfs.addPartition(time, "file", metadata);
+        TimePartitionDetail partitionByTime = tpfs.getPartitionByTime(time);
+        Assert.assertNotNull(partitionByTime);
+        Assert.assertEquals(metadata, partitionByTime.getMetadata().asMap());
+      }
+    });
   }
 
   @Test
@@ -223,7 +228,6 @@ public class TimePartitionedFileSetTest {
 
     Date date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse("6/4/12 10:00 am");
     final long time = date.getTime();
-
     dsFrameworkUtil.newTransactionExecutor((TransactionAware) tpfs).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
