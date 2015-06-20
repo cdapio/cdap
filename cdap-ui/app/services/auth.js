@@ -64,6 +64,7 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
 
   // Angular 1.4: Need to change use of $cookies with getters
   if ($cookies['CDAP_Auth_Token'] && $cookies['CDAP_Auth_Username']) {
+    console.log('auth', $cookies['CDAP_Auth_Token']);
     var user = new MyAuthUser({
       username: $cookies['CDAP_Auth_Username'],
       access_token: $cookies['CDAP_Auth_Token']
@@ -89,7 +90,7 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
    */
   this.login = function (cred) {
     return myAuthPromise(cred).then(
-      function(data) {
+      function success (data) {
         var user = new MyAuthUser(data);
         persist(user);
         $localStorage.remember = cred.remember && user.storable();
@@ -100,7 +101,8 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
         $rootScope.$broadcast(MYAUTH_EVENT.loginSuccess);
 
       },
-      function() {
+      function failed () {
+        persist(null);
         $rootScope.$broadcast(MYAUTH_EVENT.loginFailed);
       }
     );
@@ -115,7 +117,7 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
     if (this.currentUser){
       persist(null);
       delete $cookies['CDAP_Auth_Token'];
-      delete $cookies['CDAP-Auth-Username'];
+      delete $cookies['CDAP_Auth_Username'];
       $rootScope.$broadcast(MYAUTH_EVENT.logoutSuccess);
     }
   };
@@ -132,7 +134,7 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
 });
 
 
-module.factory('myAuthPromise', function myAuthPromiseFactory (MY_CONFIG, $q, $http) {
+module.factory('myAuthPromise', function myAuthPromiseFactory (MY_CONFIG, $q, $http, $cookies) {
   return function myAuthPromise (credentials) {
     var deferred = $q.defer();
 
@@ -149,6 +151,8 @@ module.factory('myAuthPromise', function myAuthPromiseFactory (MY_CONFIG, $q, $h
         }));
       })
       .error(function (data) {
+        delete $cookies['CDAP_Auth_Token'];
+        delete $cookies['CDAP_Auth_Username'];
         deferred.reject(data);
       });
 
