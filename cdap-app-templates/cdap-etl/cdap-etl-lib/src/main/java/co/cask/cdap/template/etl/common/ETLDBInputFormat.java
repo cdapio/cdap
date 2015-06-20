@@ -26,23 +26,43 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
+import java.sql.SQLException;
+import javax.annotation.Nullable;
 
 /**
  * Class that extends {@link DBInputFormat} to load the database driver class correctly.
  */
 public class ETLDBInputFormat extends DBInputFormat {
   private static final Logger LOG = LoggerFactory.getLogger(ETLDBInputFormat.class);
+  private static Driver driver;
+  private static JDBCDriverShim driverShim;
 
   @Override
   public Connection getConnection() {
-    Configuration conf = getConf();
-    ClassLoader classLoader = conf.getClassLoader();
     if (this.connection == null) {
+      Configuration conf = getConf();
       try {
-        LOG.debug("Registering JDBC driver via shim - " + JDBCDriverShim.class.getName());
-        Class<?> driverClass = classLoader.loadClass(conf.get(DBConfiguration.DRIVER_CLASS_PROPERTY));
         String url = conf.get(DBConfiguration.URL_PROPERTY);
-        DriverManager.registerDriver(new JDBCDriverShim((Driver) driverClass.newInstance()));
+        try {
+          // throws SQLException if no suitable driver is found
+          DriverManager.getDriver(url);
+        } catch (SQLException e) {
+          if (driver == null) {
+            ClassLoader classLoader = conf.getClassLoader();
+            Class<? extends Driver> driverClass =
+              (Class<? extends Driver>) classLoader.loadClass(conf.get(DBConfiguration.DRIVER_CLASS_PROPERTY));
+            driver = driverClass.newInstance();
+
+            // De-register the default driver that gets registered when driver class is loaded.
+            DBUtils.deRegisterDriver(driverClass);
+
+            driverShim = new JDBCDriverShim(driver);
+            DriverManager.registerDriver(driverShim);
+            LOG.info("Registered JDBC driver via shim {}, hashcode  {}, class {}", driverShim, driverShim.hashCode(),
+                     driverShim.getClass().getName());
+            LOG.info("Actual driver {} {} {}", driver, driver.hashCode(), driver.getClass().getName());
+          }
+        }
         if (conf.get(DBConfiguration.USERNAME_PROPERTY) == null) {
           this.connection = DriverManager.getConnection(url);
         } else {
@@ -57,5 +77,22 @@ public class ETLDBInputFormat extends DBInputFormat {
       }
     }
     return this.connection;
+  }
+
+  public static void deregisterDrivers() {
+    deregisterDriver(driverShim);
+  }
+
+  private static void deregisterDriver(@Nullable Driver driver) {
+    if (driver == null) {
+      return;
+    }
+    try {
+      DriverManager.deregisterDriver(driver);
+      LOG.debug("Successfully deregistered driver {} {} {}", driver, driver.hashCode(), driver.getClass().getName());
+    } catch (Throwable e) {
+      LOG.warn("Error while deregistering driver {}", driver.getClass().getName(), e);
+      throw Throwables.propagate(e);
+    }
   }
 }

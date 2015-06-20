@@ -54,6 +54,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -218,7 +219,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     status.put(node.getNodeId(), node);
 
     final WorkflowAction action = initialize(actionSpec, classLoader, instantiator, token, node.getNodeId());
-    ExecutorService executor = Executors.newSingleThreadExecutor();
+    ExecutorService executor = Executors.newSingleThreadExecutor(
+      new ThreadFactoryBuilder().setNameFormat("workflow-executor-%d").build());
     try {
       // Run the action in new thread
       Future<?> future = executor.submit(new Runnable() {
@@ -247,7 +249,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private void executeFork(final ApplicationSpecification appSpec, WorkflowForkNode fork,
                            final InstantiatorFactory instantiator, final ClassLoader classLoader,
                            final WorkflowToken token) throws Exception {
-    ExecutorService executorService = Executors.newFixedThreadPool(fork.getBranches().size());
+    ExecutorService executorService =
+      Executors.newFixedThreadPool(fork.getBranches().size(),
+                                   new ThreadFactoryBuilder().setNameFormat("workflow-fork-executor-%d").build());
     CompletionService<Map.Entry<String, WorkflowToken>> completionService =
       new ExecutorCompletionService<Map.Entry<String, WorkflowToken>>(executorService);
 
