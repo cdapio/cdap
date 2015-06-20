@@ -25,7 +25,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.sql.Driver;
 import java.sql.DriverManager;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.List;
 
 /**
  * Utility methods for Database plugins shared by {@link DBSource} and {@link DBSink}
@@ -49,7 +49,7 @@ public final class DBUtils {
                      throws NoSuchFieldException, IllegalAccessException, ClassNotFoundException {
     Field field = DriverManager.class.getDeclaredField("registeredDrivers");
     field.setAccessible(true);
-    CopyOnWriteArrayList<?> list = (CopyOnWriteArrayList<?>) field.get(null);
+    List<?> list = (List<?>) field.get(null);
     for (Object driverInfo : list) {
       Class<?> driverInfoClass = DBUtils.class.getClassLoader().loadClass("java.sql.DriverInfo");
       Field driverField = driverInfoClass.getDeclaredField("driver");
