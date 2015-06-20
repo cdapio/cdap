@@ -113,9 +113,14 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       // cannot delete non-existing dataset instance
       Assert.assertEquals(HttpStatus.SC_NOT_FOUND, deleteInstance("non-existing-dataset"));
       Assert.assertEquals(1, getInstances().getResponseObject().size());
+
+      // verify creation of dataset instance with null properties
+      Assert.assertEquals(HttpStatus.SC_OK, createInstance("nullPropertiesTable", "datasetType2"));
+
     } finally {
       // delete dataset instance
       Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("dataset1"));
+      Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("nullPropertiesTable"));
       Assert.assertEquals(0, getInstances().getResponseObject().size());
 
       // delete dataset modules
@@ -246,9 +251,14 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
   private int createInstance(String instanceName, String typeName,
                              DatasetProperties props) throws IOException {
-    DatasetInstanceConfiguration creationProperties =
-      new DatasetInstanceConfiguration(typeName, props.getProperties());
+    DatasetInstanceConfiguration creationProperties = new DatasetInstanceConfiguration(typeName, props.getProperties());
+    HttpRequest request = HttpRequest.put(getUrl("/data/datasets/" + instanceName))
+      .withBody(new Gson().toJson(creationProperties)).build();
+    return HttpRequests.execute(request).getResponseCode();
+  }
 
+  private int createInstance(String instanceName, String typeName) throws IOException {
+    DatasetInstanceConfiguration creationProperties = new DatasetInstanceConfiguration(typeName, null);
     HttpRequest request = HttpRequest.put(getUrl("/data/datasets/" + instanceName))
       .withBody(new Gson().toJson(creationProperties)).build();
     return HttpRequests.execute(request).getResponseCode();
