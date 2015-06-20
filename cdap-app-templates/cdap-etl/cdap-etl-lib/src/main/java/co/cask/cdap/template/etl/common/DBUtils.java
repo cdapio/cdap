@@ -21,8 +21,11 @@ import co.cask.cdap.template.etl.batch.source.DBSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.sql.Driver;
+import java.sql.DriverManager;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Utility methods for Database plugins shared by {@link DBSource} and {@link DBSink}
@@ -37,6 +40,32 @@ public final class DBUtils {
    */
   public static void cleanup(Class<? extends Driver> driverClass) {
     shutDownMySQLAbandonedConnectionCleanupThread(driverClass.getClassLoader());
+  }
+
+  /**
+   * De-register all SQL drivers that are associated with the classloader
+   */
+  public static void deRegisterDriver(ClassLoader classLoader)
+                     throws NoSuchFieldException, IllegalAccessException, ClassNotFoundException {
+    Field field = DriverManager.class.getDeclaredField("registeredDrivers");
+    field.setAccessible(true);
+    CopyOnWriteArrayList<?> list = (CopyOnWriteArrayList<?>) field.get(null);
+    for (Object driverInfo : list) {
+      Class<?> driverInfoClass = DBUtils.class.getClassLoader().loadClass("java.sql.DriverInfo");
+      Field driverField = driverInfoClass.getDeclaredField("driver");
+      driverField.setAccessible(true);
+      Driver d = (Driver) driverField.get(driverInfo);
+      ClassLoader registeredDriverClassLoader = d.getClass().getClassLoader();
+      if (registeredDriverClassLoader == null) {
+        LOG.debug("Found null classloader for default driver {}. Ignoring since this may be using system classloader.",
+                 d.getClass().getName());
+        continue;
+      }
+      if (registeredDriverClassLoader.equals(classLoader)) {
+        LOG.debug("Removing default driver {} from registeredDrivers", d.getClass().getName());
+        list.remove(driverInfo);
+      }
+    }
   }
 
   /**

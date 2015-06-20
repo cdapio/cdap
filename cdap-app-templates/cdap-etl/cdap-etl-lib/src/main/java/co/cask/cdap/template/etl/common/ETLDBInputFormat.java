@@ -18,20 +18,15 @@ package co.cask.cdap.template.etl.common;
 
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
 import org.apache.hadoop.mapreduce.lib.db.DBInputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.concurrent.CopyOnWriteArrayList;
 import javax.annotation.Nullable;
 
 /**
@@ -57,25 +52,8 @@ public class ETLDBInputFormat extends DBInputFormat {
             Class<?> driverClass = classLoader.loadClass(conf.get(DBConfiguration.DRIVER_CLASS_PROPERTY));
             driver = (Driver) driverClass.newInstance();
 
-            Field field = DriverManager.class.getDeclaredField("registeredDrivers");
-            field.setAccessible(true);
-            CopyOnWriteArrayList<?> list = (CopyOnWriteArrayList<?>) field.get(null);
-            for (Object driverInfo : list) {
-              Class<?> driverInfoClass = classLoader.loadClass("java.sql.DriverInfo");
-              Field driverField = driverInfoClass.getDeclaredField("driver");
-              driverField.setAccessible(true);
-              Driver d = (Driver) driverField.get(driverInfo);
-              ClassLoader registeredDriverClassLoader = d.getClass().getClassLoader();
-              if (registeredDriverClassLoader == null) {
-                LOG.info("Found null classloader for driver {}. Ignoring since this may be using system classloader.",
-                         d.getClass().getName());
-                continue;
-              }
-              if (registeredDriverClassLoader.equals(driver.getClass().getClassLoader())) {
-                LOG.info("Removing driver {} from registeredDrivers", d.getClass().getName());
-                list.remove(driverInfo);
-              }
-            }
+            // De-register the default driver that gets registered when driver class is loaded.
+            DBUtils.deRegisterDriver(classLoader);
 
             driverShim = new JDBCDriverShim(driver);
             DriverManager.registerDriver(driverShim);
@@ -102,7 +80,6 @@ public class ETLDBInputFormat extends DBInputFormat {
 
   public static void deregisterDrivers() {
     deregisterDriver(driverShim);
-    deregisterDriver(driver);
   }
 
   private static void deregisterDriver(@Nullable Driver driver) {
@@ -111,9 +88,9 @@ public class ETLDBInputFormat extends DBInputFormat {
     }
     try {
       DriverManager.deregisterDriver(driver);
-      LOG.info("Successfully deregistered driver {} {} {}", driver, driver.hashCode(), driver.getClass().getName());
+      LOG.debug("Successfully deregistered driver {} {} {}", driver, driver.hashCode(), driver.getClass().getName());
     } catch (Throwable e) {
-      LOG.warn("Error while deregistering driver {}", driver.getClass().getName());
+      LOG.warn("Error while deregistering driver {}", driver.getClass().getName(), e);
       throw Throwables.propagate(e);
     }
   }
