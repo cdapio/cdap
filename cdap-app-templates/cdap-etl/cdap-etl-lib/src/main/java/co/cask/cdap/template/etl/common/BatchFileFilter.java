@@ -16,7 +16,7 @@
 
 package co.cask.cdap.template.etl.common;
 
-import co.cask.cdap.template.etl.batch.source.S3BatchSource;
+import co.cask.cdap.template.etl.batch.source.FileBatchSource;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
@@ -34,13 +34,13 @@ import java.util.regex.Pattern;
 /**
  * Filter class to filter out filenames in the input path.
  */
-public class S3FileFilter extends Configured implements PathFilter {
+public class BatchFileFilter extends Configured implements PathFilter {
   private boolean useTimeFilter;
   private Pattern regex;
   private String pathName;
   private String lastRead;
   private Date prevMinute;
-  private static final Logger LOG = LoggerFactory.getLogger(S3BatchSource.class);
+  private static final Logger LOG = LoggerFactory.getLogger(FileBatchSource.class);
   //length of 'YYYY-MM-dd-HH-mm"
   private static final int DATE_LENGTH = 16;
   private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm");

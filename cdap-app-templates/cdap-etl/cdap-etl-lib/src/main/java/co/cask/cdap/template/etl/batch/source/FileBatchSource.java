@@ -30,10 +30,9 @@ import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
-import co.cask.cdap.template.etl.common.S3FileFilter;
+import co.cask.cdap.template.etl.common.BatchFileFilter;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.slf4j.Logger;
@@ -46,12 +45,13 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * A {@link BatchSource} to use S3 as a Source.
+ * A {@link BatchSource} to use any distributed file system as a Source.
+ * Currently only supports S3.
  */
 @Plugin(type = "source")
 @Name("S3")
 @Description("Batch source for S3")
-public class S3BatchSource extends BatchSource<LongWritable, Writable, StructuredRecord> {
+public class FileBatchSource extends BatchSource<LongWritable, Object, StructuredRecord> {
 
   private KeyValueTable table;
   private Date prevMinute;
@@ -62,15 +62,18 @@ public class S3BatchSource extends BatchSource<LongWritable, Writable, Structure
     "reads in files from the previous hour if the timeTable field is left blank. So if it's currently " +
     "2015-06-16-15 (June 16th 2015, 3pm), it will read in files that contain 2015-06-16-14 in the filename. " +
     "If the field timeTable is present, then it will read files in that haven't been read yet.";
-  private static final String NAME_DESCRIPTION = "Name of the S3 source.";
   private static final String ACCESS_ID_DESCRIPTION = "AccessID of the S3 source.";
   private static final String ACCESS_KEY_DESCRIPTION = "AccessKey of the S3 source.";
   private static final String PATH_DESCRIPTION = "Path to file(s) to be read. If a directory is specified, " +
     "terminate the path name with a \'/\'";
   private static final String TABLE_DESCRIPTION = "Name of the Table that keeps track of the last time files " +
     "were read in.";
+  private static final String INPUT_FORMAT_CLASS_DESCRIPTION = "Name of the input format class. Defaults to " +
+    "textInputFormat";
+  private static final String FILE_SYSTEM_DESCRIPTION = "Distributed file system to read in from. Currently " +
+    "only supports S3.";
 
-  private static final Logger LOG = LoggerFactory.getLogger(S3BatchSource.class);
+  private static final Logger LOG = LoggerFactory.getLogger(FileBatchSource.class);
   private S3BatchConfig config;
 
   private static final Schema DEFAULT_SCHEMA = Schema.recordOf(
@@ -97,12 +100,17 @@ public class S3BatchSource extends BatchSource<LongWritable, Writable, Structure
     prevMinute = cal.getTime();
 
     Job job = context.getHadoopJob();
+    if (!config.fileSystem.equals("S3")) {
+      LOG.warn("File system other than S3 not currently supported, using S3");
+    }
     job.getConfiguration().set("fs.s3n.awsAccessKeyId", config.accessID);
     job.getConfiguration().set("fs.s3n.awsSecretAccessKey", config.accessKey);
+
     if (config.fileRegex != null) {
       job.getConfiguration().set("input.path.regex", config.fileRegex);
     }
     job.getConfiguration().set("input.path.name", config.path);
+
     if (config.timeTable != null) {
       table = context.getDataset(config.timeTable);
       String lastTimeRead = Bytes.toString(table.read("lastTimeRead"));
@@ -111,14 +119,22 @@ public class S3BatchSource extends BatchSource<LongWritable, Writable, Structure
       }
       job.getConfiguration().set("last.time.read", lastTimeRead);
     }
-    job.getConfiguration().set("cutoff.read.time", new SimpleDateFormat("yyyy-MM-dd-HH-mm").format(prevMinute));
 
-    FileInputFormat.setInputPathFilter(job, S3FileFilter.class);
+    job.getConfiguration().set("cutoff.read.time", new SimpleDateFormat("yyyy-MM-dd-HH-mm").format(prevMinute));
+    if (config.inputFormatClass != null) {
+      Class<?> classType = Class.forName(config.inputFormatClass);
+      if (classType.isAssignableFrom(FileInputFormat.class)) {
+        job.setInputFormatClass((Class<? extends FileInputFormat>) classType);
+      } else {
+        LOG.warn("invalid input format class, using default TextInputFormat");
+      }
+    }
+    FileInputFormat.setInputPathFilter(job, BatchFileFilter.class);
     FileInputFormat.addInputPath(job, new Path(config.path));
   }
 
   @Override
-  public void transform(KeyValue<LongWritable, Writable> input, Emitter<StructuredRecord> emitter) throws Exception {
+  public void transform(KeyValue<LongWritable, Object> input, Emitter<StructuredRecord> emitter) throws Exception {
     StructuredRecord output = StructuredRecord.builder(DEFAULT_SCHEMA)
       .set("ts", System.currentTimeMillis())
       .set("body", input.getValue().toString())
@@ -138,15 +154,17 @@ public class S3BatchSource extends BatchSource<LongWritable, Writable, Structure
    */
   public static class S3BatchConfig extends PluginConfig {
 
-    @Name("name")
-    @Description(NAME_DESCRIPTION)
-    private String name;
+    @Name("fileSystem")
+    @Description(FILE_SYSTEM_DESCRIPTION)
+    private String fileSystem;
 
     @Name("accessID")
+    @Nullable
     @Description(ACCESS_ID_DESCRIPTION)
     private String accessID;
 
     @Name("accessKey")
+    @Nullable
     @Description(ACCESS_KEY_DESCRIPTION)
     private String accessKey;
 
@@ -164,14 +182,20 @@ public class S3BatchSource extends BatchSource<LongWritable, Writable, Structure
     @Description(TABLE_DESCRIPTION)
     private String timeTable;
 
-    public S3BatchConfig(String name, String accessID, String accessKey, String path, @Nullable String regex,
-                         @Nullable String timeTable) {
-      this.name = name;
+    @Name("inputFormatClass")
+    @Nullable
+    @Description(INPUT_FORMAT_CLASS_DESCRIPTION)
+    private String inputFormatClass;
+
+    public S3BatchConfig(String fileSystem, @Nullable String accessID, @Nullable String accessKey, String path,
+                         @Nullable String regex, @Nullable String timeTable, @Nullable String inputFormatClass) {
+      this.fileSystem = fileSystem;
       this.accessID = accessID;
       this.accessKey = accessKey;
       this.path = path;
       this.fileRegex = regex;
       this.timeTable = timeTable;
+      this.inputFormatClass = inputFormatClass;
     }
   }
 }
