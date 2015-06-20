@@ -1,13 +1,13 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _http-restful-api-dataset:
 
-===========================================================
+========================
 Dataset HTTP RESTful API
-===========================================================
+========================
 
 .. highlight:: console
 
@@ -206,14 +206,15 @@ You can delete a Dataset by issuing an HTTP DELETE request to the URL::
    * - Description
      - Deletes the Dataset *mydataset* in the namespace *default*
 
+.. _http-restful-api-dataset-deleting-all:
 
 Deleting all Datasets
 ---------------------
 
-If the property ``enable.unrecoverable.reset`` in ``cdap-site.xml`` is set to ``true``, you can delete all Datasets
-by issuing an HTTP DELETE request to the URL::
+If the property ``enable.unrecoverable.reset`` in ``cdap-site.xml`` is set to ``true``, 
+you can delete all Datasets (in a namespace) by issuing an HTTP DELETE request to the URL::
 
-  DELETE <base-url>/namespaces/<namespace>/unrecoverable/data/datasets
+  DELETE <base-url>/unrecoverable/namespaces/<namespace>/datasets
 
 .. list-table::
    :widths: 20 80
@@ -233,12 +234,19 @@ by issuing an HTTP DELETE request to the URL::
      - Description
    * - ``200 OK``
      - All Datasets were successfully deleted
+   * - ``403 Forbidden``
+     - Property to enable unrecoverable methods is not enabled
+   * - ``409 Conflict``
+     - Programs are currently running in the namespace
 
+This command will only work if all programs in the namespace are not running.
 
 If the property ``enable.unrecoverable.reset`` in ``cdap-site.xml`` is not set to
 ``true``, this operation will return a Status Code ``403 Forbidden``. Note that this
 operation can only be performed if all programs are stopped. If there's at least one
-program that is running, this operation will return a Status Code ``400 Bad Request``.
+program that is running, this operation will return a Status Code ``409 Conflict``.
+
+This method must be exercised with extreme caution, as there is no recovery from it.
 
 Truncating a Dataset
 --------------------
