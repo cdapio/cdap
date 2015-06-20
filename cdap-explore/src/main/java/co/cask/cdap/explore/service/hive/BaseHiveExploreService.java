@@ -198,7 +198,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         .expireAfterWrite(cConf.getLong(Constants.Explore.INACTIVE_OPERATION_TIMEOUT_SECS), TimeUnit.SECONDS)
         .build();
 
-    this.cliService = new CLIService();
+    this.cliService = createCLIService();
 
     this.txClient = txClient;
     ContextManager.saveContext(datasetFramework, streamAdmin);
@@ -208,6 +208,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     LOG.info("Active handle timeout = {} secs", cConf.getLong(Constants.Explore.ACTIVE_OPERATION_TIMEOUT_SECS));
     LOG.info("Inactive handle timeout = {} secs", cConf.getLong(Constants.Explore.INACTIVE_OPERATION_TIMEOUT_SECS));
     LOG.info("Cleanup job schedule = {} secs", cleanupJobSchedule);
+  }
+
+  protected CLIService createCLIService() {
+    return new CLIService();
   }
 
   protected HiveConf getHiveConf() {
