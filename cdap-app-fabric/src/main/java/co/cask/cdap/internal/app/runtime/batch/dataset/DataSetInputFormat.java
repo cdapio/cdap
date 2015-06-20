@@ -79,7 +79,7 @@ public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE
     SplitReader<KEY, VALUE> splitReader = inputDataset.createSplitReader(inputSplit.getSplit());
 
     // the record reader now owns the context and will close it
-    return new DataSetRecordReader<>(splitReader, mrContext, dataSetName);
+    return new DataSetRecordReader<>(splitReader, mrContext);
   }
 
   private String getInputName(Configuration conf) {

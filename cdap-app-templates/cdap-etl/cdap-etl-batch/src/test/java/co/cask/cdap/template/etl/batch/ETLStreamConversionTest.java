@@ -59,13 +59,24 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
     Schema.Field.of("price", Schema.of(Schema.Type.DOUBLE)));
 
   @Test
-  public void testStreamConversion() throws Exception {
+  public void testStreamConversionTPFSParquetSink() throws Exception {
+    String sinkType = "TPFSParquet";
+    testSink(sinkType);
+  }
+
+  @Test
+  public void testStreamConversionTPFSAvroSink() throws Exception {
+    String sinkType = "TPFSAvro";
+    testSink(sinkType);
+  }
+
+  private void testSink(String sinkType) throws Exception {
     String filesetName = "converted_stream";
     StreamManager streamManager = getStreamManager("myStream");
     streamManager.createStream();
     streamManager.send(ImmutableMap.of("header1", "bar"), "AAPL|10|500.32");
 
-    ETLBatchConfig etlConfig = constructETLBatchConfig(filesetName);
+    ETLBatchConfig etlConfig = constructETLBatchConfig(filesetName, sinkType);
     AdapterConfig adapterConfig = new AdapterConfig("description", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
     Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "sconversion");
     AdapterManager manager = createAdapter(adapterId, adapterConfig);
@@ -74,15 +85,16 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
     manager.waitForOneRunToFinish(4, TimeUnit.MINUTES);
     manager.stop();
 
-    // get the output fileset, and read the avro files it output.
+    // get the output fileset, and read the parquet/avro files it output.
     DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset(filesetName);
     TimePartitionedFileSet fileSet = fileSetManager.get();
 
     List<GenericRecord> records = readOutput(fileSet, EVENT_SCHEMA);
     Assert.assertEquals(1, records.size());
+    clear();
   }
 
-  private ETLBatchConfig constructETLBatchConfig(String fileSetName) {
+  private ETLBatchConfig constructETLBatchConfig(String fileSetName, String sinkType) {
     ETLStage source = new ETLStage("Stream", ImmutableMap.<String, String>builder()
       .put(Properties.Stream.NAME, "myStream")
       .put(Properties.Stream.DURATION, "10m")
@@ -91,13 +103,11 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
       .put(Properties.Stream.SCHEMA, BODY_SCHEMA.toString())
       .put("format.setting.delimiter", "|")
       .build());
-    ETLStage sink = new ETLStage("TPFSAvro",
+    ETLStage sink = new ETLStage(sinkType,
                                  ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
                                                  EVENT_SCHEMA.toString(),
                                                  Properties.TimePartitionedFileSetDataset.TPFS_NAME, fileSetName));
     ETLStage transform = new ETLStage("Projection", ImmutableMap.<String, String>of());
     return new ETLBatchConfig("* * * * *", source, sink, Lists.newArrayList(transform));
   }
-
-
 }

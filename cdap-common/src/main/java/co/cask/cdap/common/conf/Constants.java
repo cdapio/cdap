@@ -497,6 +497,16 @@ public final class Constants {
         public static final String SERVICE_PROCESSED = "system.response.successful.count";
         public static final String SERVICE_EXCEPTIONS = "system.response.server.error.count";
       }
+
+      /**
+       * Dataset metrics
+       */
+      public static final class Dataset {
+        public static final String READ_COUNT = "dataset.store.reads";
+        public static final String OP_COUNT = "dataset.store.ops";
+        public static final String WRITE_COUNT = "dataset.store.writes";
+        public static final String WRITE_BYTES = "dataset.store.bytes";
+      }
     }
 
     /**

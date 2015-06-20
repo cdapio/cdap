@@ -27,6 +27,7 @@ import co.cask.cdap.template.etl.batch.sink.DBSink;
 import co.cask.cdap.template.etl.batch.sink.KVTableSink;
 import co.cask.cdap.template.etl.batch.sink.TableSink;
 import co.cask.cdap.template.etl.batch.sink.TimePartitionedFileSetDatasetAvroSink;
+import co.cask.cdap.template.etl.batch.sink.TimePartitionedFileSetDatasetParquetSink;
 import co.cask.cdap.template.etl.batch.source.DBSource;
 import co.cask.cdap.template.etl.batch.source.KVTableSource;
 import co.cask.cdap.template.etl.batch.source.StreamBatchSource;
@@ -47,9 +48,12 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
+import org.apache.hadoop.fs.Path;
 import org.apache.twill.filesystem.Location;
 import org.hsqldb.jdbc.JDBCDriver;
 import org.junit.BeforeClass;
+import parquet.avro.AvroParquetOutputFormat;
+import parquet.avro.AvroParquetReader;
 
 import java.io.IOException;
 import java.util.List;
@@ -68,7 +72,8 @@ public class BaseETLBatchTest extends TestBase {
       DBSource.class, KVTableSource.class, StreamBatchSource.class, TableSource.class, DBRecord.class);
     addTemplatePlugins(TEMPLATE_ID, "batch-sinks-1.0.0.jar",
       BatchCubeSink.class, DBSink.class, KVTableSink.class, TableSink.class,
-      TimePartitionedFileSetDatasetAvroSink.class, AvroKeyOutputFormat.class, AvroKey.class);
+      TimePartitionedFileSetDatasetAvroSink.class, AvroKeyOutputFormat.class, AvroKey.class,
+      TimePartitionedFileSetDatasetParquetSink.class, AvroParquetOutputFormat.class);
     addTemplatePlugins(TEMPLATE_ID, "test-sources-1.0.0.jar", MetaKVTableSource.class);
     addTemplatePlugins(TEMPLATE_ID, "test-sinks-1.0.0.jar", MetaKVTableSink.class);
     addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar",
@@ -98,6 +103,15 @@ public class BaseETLBatchTest extends TestBase {
               new DataFileStream<>(file.getInputStream(), datumReader);
             Iterables.addAll(records, fileStream);
             fileStream.close();
+          }
+          if (locName.endsWith(".parquet")) {
+            Path parquetFile = new Path(file.toString());
+            AvroParquetReader<GenericRecord> reader = new AvroParquetReader<GenericRecord>(parquetFile);
+            GenericRecord result = reader.read();
+            while (result != null) {
+              records.add(result);
+              result = reader.read();
+            }
           }
         }
       }

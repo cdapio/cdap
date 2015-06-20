@@ -16,6 +16,10 @@ angular.module(PKG.name + '.feature.adapters')
     };
 
     this.addSource = function (sourceName) {
+      // Don't add an already added source.
+      if (sourceName === createCtrl.model.source.name) {
+        return;
+      }
       var source = {
         name: sourceName
       };
@@ -36,6 +40,9 @@ angular.module(PKG.name + '.feature.adapters')
         .then(function(properties) {
           source.properties = properties;
           createCtrl.model.setSource(source);
+          // If there is an already existing tab for a source opened,
+          // close it as that source has been overwritten by another one.
+          createCtrl.deleteTab(source, 'source');
         });
     };
 
@@ -64,6 +71,10 @@ angular.module(PKG.name + '.feature.adapters')
     };
 
     this.addSink = function(sinkName) {
+      // Don't add an already added sink.
+      if (sinkName === createCtrl.model.sink.name) {
+        return;
+      }
       var sink = {
         name: sinkName
       };
@@ -79,6 +90,8 @@ angular.module(PKG.name + '.feature.adapters')
         .then(function(properties) {
           sink.properties = properties;
           createCtrl.model.setSink(sink);
+          // Same as line:43
+          createCtrl.deleteTab(sink, 'sink');
         });
     };
 
@@ -158,6 +171,8 @@ angular.module(PKG.name + '.feature.adapters')
           properties: {}
         });
       }
+      // Same as line:43
+      createCtrl.deleteTab(transform, 'transform');
     };
 
   });
