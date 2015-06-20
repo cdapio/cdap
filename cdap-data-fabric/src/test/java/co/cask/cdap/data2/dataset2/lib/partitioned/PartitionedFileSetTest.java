@@ -43,6 +43,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -203,7 +204,7 @@ public class PartitionedFileSetTest {
                 p.addPartition();
                 return new BasicPartitionDetail((PartitionedFileSetDataset) dataset,
                                                  p.getRelativePath(), p.getPartitionKey(),
-                                                 new PartitionMetadata(ImmutableMap.<String, String>of()));
+                                                 new PartitionMetadata(Collections.<String, String>emptyMap()));
               }
             });
           keys[s][i][l] = key;

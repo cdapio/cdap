@@ -19,6 +19,7 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
+import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.Dataset;
 
 import java.util.Map;
@@ -57,14 +58,14 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
   /**
    * Adds a new metadata entry for a particular partition.
    * Note that existing entries can not be updated.
-   * @throws IllegalArgumentException in case an attempt is made to update existing entries.
+   * @throws DataSetException in case an attempt is made to update existing entries.
    */
   void addMetadata(PartitionKey key, String metadataKey, String metadataValue);
 
   /**
    * Adds a set of new metadata entries for a particular partition
    * Note that existing entries can not be updated.
-   * @throws IllegalArgumentException in case an attempt is made to update existing entries.
+   * @throws DataSetException in case an attempt is made to update existing entries.
    */
   void addMetadata(PartitionKey key, Map<String, String> metadata);
 

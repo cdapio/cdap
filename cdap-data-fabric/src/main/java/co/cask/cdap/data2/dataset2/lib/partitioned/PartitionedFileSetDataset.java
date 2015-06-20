@@ -42,7 +42,6 @@ import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -55,6 +54,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -116,7 +116,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   @Override
   public void addPartition(PartitionKey key, String path) {
-    addPartition(key, path, ImmutableMap.<String, String>of());
+    addPartition(key, path, Collections.<String, String>emptyMap());
   }
 
   @Override
@@ -182,7 +182,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     for (Map.Entry<String, String> metadataEntry : metadata.entrySet()) {
       String metadataKey = metadataEntry.getKey();
       byte[] columnKey = columnKeyFromMetadataKey(metadataKey);
-      Preconditions.checkArgument(row.get(columnKey) == null, "Entry already exists for metadata key: {}", metadataKey);
+      if (row.get(columnKey) != null) {
+        throw new DataSetException(String.format("Entry already exists for metadata key: %s", metadataKey));
+      }
     }
 
     Put put = new Put(rowKey);
@@ -235,7 +237,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   @Override
   public PartitionOutput getPartitionOutput(PartitionKey key) {
-    return new BasicPartitionOutput(getOutputPath(partitioning, key), key);
+    return new BasicPartitionOutput(this, getOutputPath(partitioning, key), key);
   }
 
   @Override
@@ -259,6 +261,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     getPartitions(filter, new PartitionConsumer() {
       @Override
       public void consume(PartitionKey key, String path, @Nullable PartitionMetadata metadata) {
+        if (metadata == null) {
+          metadata = new PartitionMetadata(Collections.<String, String>emptyMap());
+        }
         partitionDetails.add(new BasicPartitionDetail(PartitionedFileSetDataset.this, path, key, metadata));
       }
     });
@@ -349,10 +354,6 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       sep = "/";
     }
     return builder.toString();
-  }
-
-  FileSet getFiles() {
-    return files;
   }
 
   /**
@@ -614,17 +615,18 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   /**
    * Simple Implementation of PartitionOutput.
    */
-  protected class BasicPartitionOutput extends BasicPartition implements PartitionOutput {
+  protected static class BasicPartitionOutput extends BasicPartition implements PartitionOutput {
     private Map<String, String> metadata;
 
-    protected BasicPartitionOutput(String relativePath, PartitionKey key) {
-      super(PartitionedFileSetDataset.this, relativePath, key);
+    protected BasicPartitionOutput(PartitionedFileSetDataset partitionedFileSetDataset, String relativePath,
+                                   PartitionKey key) {
+      super(partitionedFileSetDataset, relativePath, key);
       this.metadata = Maps.newHashMap();
     }
 
     @Override
     public void addPartition() {
-      PartitionedFileSetDataset.this.addPartition(key, getRelativePath(), metadata);
+      partitionedFileSetDataset.addPartition(key, getRelativePath(), metadata);
     }
 
     @Override

@@ -26,7 +26,7 @@ import org.apache.twill.filesystem.Location;
  */
 class BasicPartition implements Partition {
 
-  private final transient PartitionedFileSetDataset partitionedFileSetDataset;
+  protected final transient PartitionedFileSetDataset partitionedFileSetDataset;
   protected final String relativePath;
   protected final PartitionKey key;
 
@@ -38,7 +38,7 @@ class BasicPartition implements Partition {
 
   @Override
   public Location getLocation() {
-    return partitionedFileSetDataset.getFiles().getLocation(relativePath);
+    return partitionedFileSetDataset.getEmbeddedFileSet().getLocation(relativePath);
   }
 
   @Override
