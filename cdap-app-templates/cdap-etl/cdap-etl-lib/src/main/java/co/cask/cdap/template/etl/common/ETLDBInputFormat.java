@@ -49,11 +49,12 @@ public class ETLDBInputFormat extends DBInputFormat {
         } catch (SQLException e) {
           if (driver == null) {
             ClassLoader classLoader = conf.getClassLoader();
-            Class<?> driverClass = classLoader.loadClass(conf.get(DBConfiguration.DRIVER_CLASS_PROPERTY));
-            driver = (Driver) driverClass.newInstance();
+            Class<? extends Driver> driverClass =
+              (Class<? extends Driver>) classLoader.loadClass(conf.get(DBConfiguration.DRIVER_CLASS_PROPERTY));
+            driver = driverClass.newInstance();
 
             // De-register the default driver that gets registered when driver class is loaded.
-            DBUtils.deRegisterDriver(classLoader);
+            DBUtils.deRegisterDriver(driverClass);
 
             driverShim = new JDBCDriverShim(driver);
             DriverManager.registerDriver(driverShim);
