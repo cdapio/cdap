@@ -17,7 +17,12 @@
 package co.cask.cdap.api.dataset.lib;
 
 /**
- * Represents a partition of a partitioned file set for writing.
+ * Represents a partition of a partitioned file set, having metadata associated with it.
  */
-public interface TimePartitionOutput extends TimePartition, PartitionOutput {
+public interface PartitionDetail extends Partition {
+
+  /**
+   * Gets the metadata for the partition
+   */
+  PartitionMetadata getMetadata();
 }
