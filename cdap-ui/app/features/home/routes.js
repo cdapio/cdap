@@ -23,7 +23,7 @@ angular.module(PKG.name+'.feature.home')
       .state('home', {
         url: '/',
         templateUrl: '/assets/features/home/home.html',
-        onEnter: function(MY_CONFIG, myAuth, $state, myLoadingService, myAuth) {
+        onEnter: function(MY_CONFIG, myAuth, $state, myLoadingService, myAuth, $rootScope, MYAUTH_EVENT) {
           if (!MY_CONFIG.securityEnabled) {
             // Skip even the login view. Don't show login if security is disabled.
             myAuth.login({username:'admin'})
@@ -32,8 +32,8 @@ angular.module(PKG.name+'.feature.home')
                 $state.go('overview');
               });
           } else {
-            if (myAuth.isAuthenticated) {
-              $state.go('overview');
+            if (myAuth.isAuthenticated()) {
+              $rootScope.$broadcast(MYAUTH_EVENT.loginSuccess);
             } else {
               $state.go('login');
             }
