@@ -31,6 +31,7 @@ import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 /**
  * Class that extends {@link DBOutputFormat} to load the database driver class correctly.
@@ -42,6 +43,8 @@ import java.sql.PreparedStatement;
  */
 public class ETLDBOutputFormat<K extends DBWritable, V>  extends DBOutputFormat<K, V> {
   private static final Logger LOG = LoggerFactory.getLogger(ETLDBOutputFormat.class);
+  private Driver driver;
+  private JDBCDriverShim driverShim;
 
   @Override
   public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context) throws IOException {
@@ -57,21 +60,48 @@ public class ETLDBOutputFormat<K extends DBWritable, V>  extends DBOutputFormat<
     try {
       Connection connection = getConnection(conf);
       PreparedStatement statement = connection.prepareStatement(constructQuery(tableName, fieldNames));
-      return new DBRecordWriter(connection, statement);
+      return new DBRecordWriter(connection, statement) {
+        @Override
+        public void close(TaskAttemptContext context) throws IOException {
+          super.close(context);
+          try {
+            DriverManager.deregisterDriver(driverShim);
+          } catch (SQLException e) {
+            throw new IOException(e);
+          }
+        }
+      };
     } catch (Exception ex) {
       throw new IOException(ex.getMessage());
     }
   }
 
   private Connection getConnection(Configuration conf) {
-    ClassLoader classLoader = conf.getClassLoader();
     Connection connection;
     try {
-      Class<?> driverClass = classLoader.loadClass(conf.get(DBConfiguration.DRIVER_CLASS_PROPERTY));
       String url = conf.get(DBConfiguration.URL_PROPERTY);
+      try {
+        // throws SQLException if no suitable driver is found
+        DriverManager.getDriver(url);
+      } catch (SQLException e) {
+        if (driverShim == null) {
+          if (driver == null) {
+            ClassLoader classLoader = conf.getClassLoader();
+            @SuppressWarnings("unchecked")
+            Class<? extends Driver> driverClass =
+              (Class<? extends Driver>) classLoader.loadClass(conf.get(DBConfiguration.DRIVER_CLASS_PROPERTY));
+            driver = driverClass.newInstance();
 
-      LOG.debug("Registering JDBC driver via shim - " + JDBCDriverShim.class.getName());
-      DriverManager.registerDriver(new JDBCDriverShim((Driver) driverClass.newInstance()));
+            // De-register the default driver that gets registered when driver class is loaded.
+            DBUtils.deRegisterDriver(driverClass);
+          }
+
+          driverShim = new JDBCDriverShim(driver);
+          DriverManager.registerDriver(driverShim);
+          LOG.debug("Registered JDBC driver via shim {}. Actual Driver {}.", driverShim, driver);
+        }
+      }
+
       if (conf.get(DBConfiguration.USERNAME_PROPERTY) == null) {
         connection = DriverManager.getConnection(url);
       } else {
