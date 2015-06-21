@@ -4,12 +4,12 @@
 
 angular.module(PKG.name+'.feature.login').controller('LoginCtrl',
 function ($scope, myAuth, myAlert, $state, cfpLoadingBar, $timeout,
-   MYAUTH_EVENT, MY_CONFIG, caskFocusManager, myLoadingService) {
+   MYAUTH_EVENT, MY_CONFIG, caskFocusManager, myLoadingService, myAuth) {
 
   $scope.credentials = myAuth.remembered();
   $scope.submitting = false;
 
-  $scope.isAuthenticated = MY_CONFIG.securityEnabled;
+  $scope.isAuthenticated = MY_CONFIG.securityEnabled || myAuth.isAuthenticated();
 
   $scope.doLogin = function (c) {
     $scope.submitting = true;

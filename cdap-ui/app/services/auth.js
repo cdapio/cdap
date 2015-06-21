@@ -29,7 +29,7 @@ module.run(function ($location, $state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH
     var authorizedRoles = next.data && next.data.authorizedRoles;
     if (!authorizedRoles) { return; } // no role required, anyone can access
 
-    var user = myAuth.currentUser;
+    var user = myAuth.isAuthenticated();
     if (user) { // user is logged in
       if (authorizedRoles === MYAUTH_ROLE.all) { return; } // any logged-in user is welcome
       if (user.hasRole(authorizedRoles)) { return; } // user is legit
@@ -38,13 +38,17 @@ module.run(function ($location, $state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH
     // in all other cases, prevent going to this state
     event.preventDefault();
 
+    // FIXME: THIS IS FLAKY/WRONG. We need to change this.
     // and go to login instead
-    $state.go('login', {
-      next: angular.toJson({
-        path: $location.path(),
-        search: $location.search()
-      })
-    });
+    // $state.go('login', {
+    //   next: angular.toJson({
+    //     path: $location.path(),
+    //     search: $location.search()
+    //   })
+    // });
+
+    $state.go('login');
+
 
     $rootScope.$broadcast(user ? MYAUTH_EVENT.notAuthorized : MYAUTH_EVENT.notAuthenticated);
   });
@@ -52,7 +56,7 @@ module.run(function ($location, $state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH
 });
 
 
-module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAuthPromise, $rootScope, $localStorage) {
+module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAuthPromise, $rootScope, $localStorage, $cookies) {
 
   /**
    * private method to sync the user everywhere
@@ -80,13 +84,15 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
    */
   this.login = function (cred) {
     return myAuthPromise(cred).then(
-      function(data) {
+      function loginSuccess(data) {
         var user = new MyAuthUser(data);
         persist(user);
+        $cookies['CDAP_Auth_Token'] = user.token;
+        $cookies['CDAP_Auth_User'] = user.username;
         $localStorage.remember = cred.remember && user.storable();
         $rootScope.$broadcast(MYAUTH_EVENT.loginSuccess);
       },
-      function() {
+      function loginError() {
         $rootScope.$broadcast(MYAUTH_EVENT.loginFailed);
       }
     );
@@ -98,6 +104,8 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
   this.logout = function () {
     if (this.currentUser){
       persist(null);
+      delete $cookies['CDAP_Auth_Token'];
+      delete $cookies['CDAP_Auth_User'];
       $rootScope.$broadcast(MYAUTH_EVENT.logoutSuccess);
     }
   };
@@ -107,7 +115,18 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
    * @return {Boolean}
    */
   this.isAuthenticated = function () {
-    return !!this.currentUser;
+    if (this.currentUser) {
+      return !!this.currentUser;
+    }
+
+    if ($cookies['CDAP_Auth_Token'] && $cookies['CDAP_Auth_User']) {
+      var user = new MyAuthUser({
+        access_token: $cookies['CDAP_Auth_Token'],
+        username: $cookies['CDAP_Auth_User']
+      });
+      persist(user);
+      return !!this.currentUser;
+    }
   };
 
 });

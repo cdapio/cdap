@@ -24,7 +24,15 @@ angular.module(PKG.name + '.services')
       }
     }.bind(this),
     function error(err) {
-      EventPipe.emit('backendDown');
+      // Check for invalid token if security is enabled.
+      if (angular.isObject(err) && err.auth_uri) {
+        $timeout(function() {
+          EventPipe.emit('backendUp');
+          myAuth.logout();
+        });
+      } else {
+        EventPipe.emit('backendDown');
+      }
     }
     );
   });
