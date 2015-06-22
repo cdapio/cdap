@@ -19,21 +19,21 @@ angular.module(PKG.name + '.feature.spark')
           highlightTab: 'development'
         },
         resolve : {
-          rRuns: function(MyDataSource, $stateParams, $q) {
+          rRuns: function($stateParams, $q, mySparkApi) {
             var defer = $q.defer();
-            var dataSrc = new MyDataSource();
-            // Using _cdapPath here as $state.params is not updated with
-            // runid param when the request goes out
-            // (timing issue with re-direct from login state).
-            dataSrc.request({
-              _cdapPath: '/namespaces/' + $stateParams.namespace +
-                         '/apps/' + $stateParams.appId +
-                         '/spark/' + $stateParams.programId +
-                         '/runs'
-            })
-              .then(function(res) {
+
+            var params = {
+              namespace: $stateParams.namespace,
+              appId: $stateParams.appId,
+              sparkId: $stateParams.programId
+            };
+
+            mySparkApi.runs(params)
+              .$promise
+              .then(function (res) {
                 defer.resolve(res);
               });
+
             return defer.promise;
           }
 
