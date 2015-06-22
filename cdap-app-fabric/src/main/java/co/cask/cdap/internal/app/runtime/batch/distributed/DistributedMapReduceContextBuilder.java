@@ -16,10 +16,12 @@
 
 package co.cask.cdap.internal.app.runtime.batch.distributed;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
+import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -35,7 +37,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 
 /**
@@ -45,13 +47,13 @@ import org.apache.twill.zookeeper.ZKClientService;
 public class DistributedMapReduceContextBuilder extends AbstractMapReduceContextBuilder {
   private final CConfiguration cConf;
   private final Configuration hConf;
-  private final TaskAttemptContext taskContext;
   private ZKClientService zkClientService;
+  private KafkaClientService kafkaClientService;
+  private MetricsCollectionService metricsCollectionService;
 
-  public DistributedMapReduceContextBuilder(CConfiguration cConf, Configuration hConf, TaskAttemptContext taskContext) {
+  public DistributedMapReduceContextBuilder(CConfiguration cConf, Configuration hConf) {
     this.cConf = cConf;
     this.hConf = hConf;
-    this.taskContext = taskContext;
   }
 
   @Override
@@ -61,8 +63,9 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
       new LocationRuntimeModule().getDistributedModules(),
       new IOModule(),
       new ZKClientModule(),
+      new KafkaClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
-      new MetricsClientRuntimeModule().getMapReduceModules(taskContext),
+      new MetricsClientRuntimeModule().getDistributedModules(),
       new ExploreClientModule(),
       new DataSetsModules().getDistributedModules(),
       new AbstractModule() {
@@ -77,8 +80,13 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
     );
 
     zkClientService = injector.getInstance(ZKClientService.class);
-    zkClientService.start();
+    zkClientService.startAndWait();
 
+    kafkaClientService = injector.getInstance(KafkaClientService.class);
+    kafkaClientService.startAndWait();
+
+    metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    metricsCollectionService.startAndWait();
 
     // Initialize log appender in distributed mode.
     // In single node the log appender is initialized during process startup.
@@ -90,6 +98,8 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
 
   @Override
   protected void finish() {
+    metricsCollectionService.stop();
+    kafkaClientService.stop();
     zkClientService.stop();
   }
 }
