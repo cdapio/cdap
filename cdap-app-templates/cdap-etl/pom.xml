@@ -156,6 +156,7 @@
           </exclusion>
         </exclusions>
       </dependency>
+      <!-- use hadoop-aws when hadoop dependency is updated to 2.6.0 -->
       <dependency>
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-common</artifactId>

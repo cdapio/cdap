@@ -35,20 +35,22 @@ import java.util.regex.Pattern;
  * Filter class to filter out filenames in the input path.
  */
 public class BatchFileFilter extends Configured implements PathFilter {
-  private boolean useTimeFilter;
-  private Pattern regex;
-  private String pathName;
-  private String lastRead;
-  private Date prevMinute;
+
   private static final Logger LOG = LoggerFactory.getLogger(FileBatchSource.class);
   //length of 'YYYY-MM-dd-HH-mm"
   private static final int DATE_LENGTH = 16;
   private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
+  private boolean useTimeFilter;
+
+  private Pattern regex;
+  private String pathName;
+  private String lastRead;
+  private Date prevMinute;
 
   @Override
   public boolean accept(Path path) {
     String filename = path.toString();
-    //InputPathFilter will first check the directory if a directory is given
+    //The path filter will first check the directory if a directory is given
     if (filename.equals(pathName) || filename.equals(pathName + "/")) {
       return true;
     }
@@ -90,23 +92,23 @@ public class BatchFileFilter extends Configured implements PathFilter {
     if (conf == null) {
       return;
     }
-    pathName = conf.get("input.path.name", "/");
+    pathName = conf.get(FileBatchSource.INPUT_NAME_CONFIG, "/");
 
     //path is a directory so remove trailing '/'
     if (pathName.endsWith("/")) {
       pathName = pathName.substring(0, pathName.length() - 1);
     }
 
-    String input = conf.get("input.path.regex", ".*");
-    if (input.equals("timefilter")) {
+    String input = conf.get(FileBatchSource.INPUT_REGEX_CONFIG, ".*");
+    if (input.equals(FileBatchSource.USE_TIMEFILTER)) {
       useTimeFilter = true;
     } else {
       useTimeFilter = false;
       regex = Pattern.compile(input);
     }
-    lastRead = conf.get("last.time.read", "-1");
+    lastRead = conf.get(FileBatchSource.LAST_TIME_READ, "-1");
     try {
-      prevMinute = sdf.parse(conf.get("cutoff.read.time"));
+      prevMinute = sdf.parse(conf.get(FileBatchSource.CUTOFF_READ_TIME));
     } catch (ParseException pe) {
       prevMinute = new Date(System.currentTimeMillis());
     }

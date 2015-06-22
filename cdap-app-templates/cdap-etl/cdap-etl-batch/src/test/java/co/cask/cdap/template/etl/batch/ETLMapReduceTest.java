@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.template.etl.batch.config.ETLBatchConfig;
+import co.cask.cdap.template.etl.batch.source.FileBatchSource;
 import co.cask.cdap.template.etl.common.ETLStage;
 import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.template.test.sink.MetaKVTableSink;
@@ -52,7 +53,6 @@ import java.util.concurrent.TimeUnit;
  * Tests for {@link ETLBatchTemplate}.
  */
 public class ETLMapReduceTest extends BaseETLBatchTest {
-
   @Test
   public void testKVToKV() throws Exception {
     // kv table to kv table pipeline
@@ -183,11 +183,6 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
   public void testS3toTPFS() throws Exception {
     String testPath = "s3n://test/2015-06-17-00-00-00.txt";
     String testData = "Sample data for testing.";
-    Schema defaultSchema = Schema.recordOf(
-      "event",
-      Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
-      Schema.Field.of("body", Schema.of(Schema.Type.STRING))
-    );
 
     S3NInMemoryFileSystem fs = new S3NInMemoryFileSystem();
     Configuration conf = new Configuration();
@@ -204,16 +199,14 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
                                                        new Class[]{URI.class, Configuration.class, FileSystem.class});
     method.setAccessible(true);
     method.invoke(FileSystem.class, URI.create("s3n://test/"), conf, fs);
-    ETLStage source = new ETLStage("S3", ImmutableMap.<String, String>builder()
-      .put(Properties.S3.FILE_SYSTEM, "S3")
-      .put(Properties.S3.ACCESS_ID, "-")
-      .put(Properties.S3.ACCESS_KEY, "-")
-      .put(Properties.S3.PATH, testPath)
+    ETLStage source = new ETLStage("FileBatchSource", ImmutableMap.<String, String>builder()
+      .put(Properties.File.FILESYSTEM, "File")
+      .put(Properties.File.PATH, testPath)
       .build());
 
     ETLStage sink = new ETLStage("TPFSAvro",
                                  ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
-                                                 defaultSchema.toString(),
+                                                 FileBatchSource.DEFAULT_SCHEMA.toString(),
                                                  Properties.TimePartitionedFileSetDataset.TPFS_NAME, "TPFSsink"));
     ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, Lists.<ETLStage>newArrayList());
     AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
@@ -226,9 +219,49 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
 
     DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset("TPFSsink");
     TimePartitionedFileSet fileSet = fileSetManager.get();
-    List<GenericRecord> records = readOutput(fileSet, defaultSchema);
+    List<GenericRecord> records = readOutput(fileSet, FileBatchSource.DEFAULT_SCHEMA);
     Assert.assertEquals(1, records.size());
     Assert.assertEquals(testData, records.get(0).get("body").toString());
+    fileSet.close();
+  }
+
+  @Test
+  public void testFiletoTPFS() throws Exception {
+    String filePath = "file:///tmp/test/text.txt";
+    String testData = "String for testing purposes.";
+
+    Path textFile = new Path(filePath);
+    Configuration conf = new Configuration();
+    FileSystem fs = FileSystem.get(conf);
+    FSDataOutputStream writeData = fs.create(textFile);
+    writeData.write(testData.getBytes());
+    writeData.flush();
+    writeData.close();
+
+    ETLStage source = new ETLStage("FileBatchSource", ImmutableMap.<String, String>builder()
+      .put(Properties.File.FILESYSTEM, "Text")
+      .put(Properties.File.PATH, filePath)
+      .build());
+
+    ETLStage sink = new ETLStage("TPFSAvro",
+                                 ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
+                                                 FileBatchSource.DEFAULT_SCHEMA.toString(),
+                                                 Properties.TimePartitionedFileSetDataset.TPFS_NAME, "fileSink"));
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, Lists.<ETLStage>newArrayList());
+    AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
+    Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "testFileAdapter");
+    AdapterManager manager = createAdapter(adapterId, adapterConfig);
+
+    manager.start();
+    manager.waitForOneRunToFinish(2, TimeUnit.MINUTES);
+    manager.stop();
+
+    DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset("fileSink");
+    TimePartitionedFileSet fileSet = fileSetManager.get();
+    List<GenericRecord> records = readOutput(fileSet, FileBatchSource.DEFAULT_SCHEMA);
+    Assert.assertEquals(1, records.size());
+    Assert.assertEquals(testData, records.get(0).get("body").toString());
+    fileSet.close();
   }
 
 }

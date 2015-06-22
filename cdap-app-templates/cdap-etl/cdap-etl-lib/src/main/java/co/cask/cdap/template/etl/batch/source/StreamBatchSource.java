@@ -40,7 +40,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Writable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +55,7 @@ import javax.annotation.Nullable;
 @Plugin(type = "source")
 @Name("Stream")
 @Description("Batch source for a Stream")
-public class StreamBatchSource extends BatchSource<LongWritable, Writable, StructuredRecord> {
+public class StreamBatchSource extends BatchSource<LongWritable, Object, StructuredRecord> {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamBatchSource.class);
   private static final String FORMAT_SETTING_PREFIX = "format.setting.";
@@ -118,7 +117,7 @@ public class StreamBatchSource extends BatchSource<LongWritable, Writable, Struc
   }
 
   @Override
-  public void transform(KeyValue<LongWritable, Writable> input, Emitter<StructuredRecord> emitter) throws Exception {
+  public void transform(KeyValue<LongWritable, Object> input, Emitter<StructuredRecord> emitter) throws Exception {
     // if not format spec was given, the value is a StreamEvent
     if (Strings.isNullOrEmpty(streamBatchConfig.format)) {
       StreamEvent event = (StreamEvent) input.getValue();

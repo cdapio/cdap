@@ -31,6 +31,8 @@ import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.template.etl.common.BatchFileFilter;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -38,49 +40,63 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
  * A {@link BatchSource} to use any distributed file system as a Source.
- * Currently only supports S3.
  */
 @Plugin(type = "source")
-@Name("S3")
-@Description("Batch source for S3")
+@Name("FileBatchSource")
+@Description("Batch source for File Systems")
 public class FileBatchSource extends BatchSource<LongWritable, Object, StructuredRecord> {
 
-  private KeyValueTable table;
-  private Date prevMinute;
-
-  private static final String REGEX_DESCRIPTION = "Regex to filter out filenames in the path. " +
-    "To use the TimeFilter, input \"timefilter\". The TimeFilter assumes that it " +
-    "are reading in files with the S3 log naming convention of YYYY-MM-DD-HH-mm-SS-Tag. The TimeFilter " +
-    "reads in files from the previous hour if the timeTable field is left blank. So if it's currently " +
-    "2015-06-16-15 (June 16th 2015, 3pm), it will read in files that contain 2015-06-16-14 in the filename. " +
-    "If the field timeTable is present, then it will read files in that haven't been read yet.";
-  private static final String ACCESS_ID_DESCRIPTION = "AccessID of the S3 source.";
-  private static final String ACCESS_KEY_DESCRIPTION = "AccessKey of the S3 source.";
-  private static final String PATH_DESCRIPTION = "Path to file(s) to be read. If a directory is specified, " +
-    "terminate the path name with a \'/\'";
-  private static final String TABLE_DESCRIPTION = "Name of the Table that keeps track of the last time files " +
-    "were read in.";
-  private static final String INPUT_FORMAT_CLASS_DESCRIPTION = "Name of the input format class. Defaults to " +
-    "textInputFormat";
-  private static final String FILE_SYSTEM_DESCRIPTION = "Distributed file system to read in from. Currently " +
-    "only supports S3.";
-
-  private static final Logger LOG = LoggerFactory.getLogger(FileBatchSource.class);
-  private S3BatchConfig config;
-
-  private static final Schema DEFAULT_SCHEMA = Schema.recordOf(
+  public static final String INPUT_NAME_CONFIG = "input.path.name";
+  public static final String INPUT_REGEX_CONFIG = "input.path.regex";
+  public static final String LAST_TIME_READ = "last.time.read";
+  public static final String CUTOFF_READ_TIME = "cutoff.read.time";
+  public static final String USE_TIMEFILTER = "timefilter";
+  public static final Schema DEFAULT_SCHEMA = Schema.recordOf(
     "event",
     Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
     Schema.Field.of("body", Schema.of(Schema.Type.STRING))
   );
+
+  private static final String REGEX_DESCRIPTION = "Regex to filter out filenames in the path. " +
+    "To use the TimeFilter, input \"timefilter\". The TimeFilter assumes that it " +
+    "is reading in files with the File log naming convention of YYYY-MM-DD-HH-mm-SS-Tag. The TimeFilter " +
+    "reads in files from the previous hour if the timeTable field is left blank. So if it's currently " +
+    "2015-06-16-15 (June 16th 2015, 3pm), it will read in files that contain 2015-06-16-14 in the filename. " +
+    "If the field timeTable is present, then it will read files in that haven't been read yet.";
+  private static final String FILESYSTEM_PROPERTIES_DESCRIPTION = "JSON of the properties needed for the " +
+    "distributed file system. The formatting needs to be as follows:\n{\n\t\"<property name>\" : " +
+    "\"<property value>\", ...\n}. For example, the property names needed for S3 are \"fs.s3n.awsSecretAccessKey\" " +
+    "and \"fs.s3n.awsAccessKeyId\".";
+  private static final String PATH_DESCRIPTION = "Path to file(s) to be read. If a directory is specified, " +
+    "terminate the path name with a \'/\'";
+  private static final String TABLE_DESCRIPTION = "Name of the Table that keeps track of the last time files " +
+    "were read in.";
+  private static final String INPUT_FORMAT_CLASS_DESCRIPTION = "Name of the input format class, which must be a " +
+    "subclass of FileInputFormat. Defaults to TextInputFormat";
+  private static final String FILESYSTEM_DESCRIPTION = "Distributed file system to read in from.";
+  private static final Gson GSON = new Gson();
+  private static final Logger LOG = LoggerFactory.getLogger(FileBatchSource.class);
+  private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
+
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+
+  private final FileBatchConfig config;
+  private KeyValueTable table;
+  private Date prevMinute;
+
+  public FileBatchSource(FileBatchConfig config) {
+    this.config = config;
+  }
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
@@ -98,18 +114,19 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
     cal.set(Calendar.SECOND, 0);
     cal.set(Calendar.MILLISECOND, 0);
     prevMinute = cal.getTime();
-
+    System.out.print(FILESYSTEM_PROPERTIES_DESCRIPTION);
     Job job = context.getHadoopJob();
-    if (!config.fileSystem.equals("S3")) {
-      LOG.warn("File system other than S3 not currently supported, using S3");
+    if (config.fileSystemProperties != null) {
+      Map<String, String> properties = GSON.fromJson(config.fileSystemProperties, MAP_STRING_STRING_TYPE);
+      for (Map.Entry<String, String> entry : properties.entrySet()) {
+        job.getConfiguration().set(entry.getKey(), entry.getValue());
+      }
     }
-    job.getConfiguration().set("fs.s3n.awsAccessKeyId", config.accessID);
-    job.getConfiguration().set("fs.s3n.awsSecretAccessKey", config.accessKey);
 
     if (config.fileRegex != null) {
-      job.getConfiguration().set("input.path.regex", config.fileRegex);
+      job.getConfiguration().set(INPUT_REGEX_CONFIG, config.fileRegex);
     }
-    job.getConfiguration().set("input.path.name", config.path);
+    job.getConfiguration().set(INPUT_NAME_CONFIG, config.path);
 
     if (config.timeTable != null) {
       table = context.getDataset(config.timeTable);
@@ -117,17 +134,15 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
       if (lastTimeRead == null) {
         lastTimeRead = "0";
       }
-      job.getConfiguration().set("last.time.read", lastTimeRead);
+      job.getConfiguration().set(LAST_TIME_READ, lastTimeRead);
     }
 
-    job.getConfiguration().set("cutoff.read.time", new SimpleDateFormat("yyyy-MM-dd-HH-mm").format(prevMinute));
+    job.getConfiguration().set(CUTOFF_READ_TIME, DATE_FORMAT.format(prevMinute));
     if (config.inputFormatClass != null) {
-      Class<?> classType = Class.forName(config.inputFormatClass);
-      if (classType.isAssignableFrom(FileInputFormat.class)) {
-        job.setInputFormatClass((Class<? extends FileInputFormat>) classType);
-      } else {
-        LOG.warn("invalid input format class, using default TextInputFormat");
-      }
+      ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+      Class<? extends FileInputFormat> classType = (Class<? extends FileInputFormat>)
+        classLoader.loadClass(config.inputFormatClass);
+      job.setInputFormatClass(classType);
     }
     FileInputFormat.setInputPathFilter(job, BatchFileFilter.class);
     FileInputFormat.addInputPath(job, new Path(config.path));
@@ -144,29 +159,24 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
 
   @Override
   public void onRunFinish(boolean succeeded, BatchSourceContext context) {
-    if (succeeded && table != null && "timefilter".equals(config.fileRegex)) {
-      table.write("lastTimeRead", new SimpleDateFormat("yyyy-MM-dd-HH-mm").format(prevMinute));
+    if (succeeded && table != null && USE_TIMEFILTER.equals(config.fileRegex)) {
+      table.write("lastTimeRead", DATE_FORMAT.format(prevMinute));
     }
   }
 
   /**
-   * Config class that contains all the properties needed for the S3 source.
+   * Config class that contains all the properties needed for the file source.
    */
-  public static class S3BatchConfig extends PluginConfig {
+  public static class FileBatchConfig extends PluginConfig {
 
     @Name("fileSystem")
-    @Description(FILE_SYSTEM_DESCRIPTION)
+    @Description(FILESYSTEM_DESCRIPTION)
     private String fileSystem;
 
-    @Name("accessID")
+    @Name("fileSystemProperties")
     @Nullable
-    @Description(ACCESS_ID_DESCRIPTION)
-    private String accessID;
-
-    @Name("accessKey")
-    @Nullable
-    @Description(ACCESS_KEY_DESCRIPTION)
-    private String accessKey;
+    @Description(FILESYSTEM_PROPERTIES_DESCRIPTION)
+    private String fileSystemProperties;
 
     @Name("path")
     @Description(PATH_DESCRIPTION)
@@ -187,11 +197,10 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
     @Description(INPUT_FORMAT_CLASS_DESCRIPTION)
     private String inputFormatClass;
 
-    public S3BatchConfig(String fileSystem, @Nullable String accessID, @Nullable String accessKey, String path,
-                         @Nullable String regex, @Nullable String timeTable, @Nullable String inputFormatClass) {
+    public FileBatchConfig(String fileSystem, String path, @Nullable String regex, @Nullable String timeTable,
+                           @Nullable String inputFormatClass, @Nullable String fileSystemProperties) {
       this.fileSystem = fileSystem;
-      this.accessID = accessID;
-      this.accessKey = accessKey;
+      this.fileSystemProperties = fileSystemProperties;
       this.path = path;
       this.fileRegex = regex;
       this.timeTable = timeTable;

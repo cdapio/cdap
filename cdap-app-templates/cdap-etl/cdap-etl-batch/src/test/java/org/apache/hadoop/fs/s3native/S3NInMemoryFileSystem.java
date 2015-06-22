@@ -17,8 +17,8 @@
 package org.apache.hadoop.fs.s3native;
 
 /**
- * NOTE: DELETE THIS CLASS ONCE HADOOP DEPENDENCY IS UPDATED TO 2.6.0
- * Used for testing S3 without actually connection to an S3 instance.
+ * TODO: [CDAP-2824] - Delete this class when Hadoop dependency is updated to 2.6.0
+ * Used for testing File without actually connecting to an File instance.
  */
 public class S3NInMemoryFileSystem extends NativeS3FileSystem {
   public S3NInMemoryFileSystem() {
