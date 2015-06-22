@@ -284,6 +284,10 @@ Known Issues
   zero values even if there is data present
   (`CDAP-2721 <https://issues.cask.co/browse/CDAP-2721>`__).
   
+- In the CDAP UI: many buttons will remain in focus after being clicked, even if they
+  should not retain focus
+  (`CDAP-2785 <https://issues.cask.co/browse/CDAP-2785>`__).
+  
 - When the CDAP-Master dies, the CDAP UI does not repsond appropriately, and instead of 
   waiting for routing to the secondary master to begin, it loses its connection
   (`CDAP-2830 <https://issues.cask.co/browse/CDAP-2830>`__).
