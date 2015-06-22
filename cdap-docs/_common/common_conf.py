@@ -106,8 +106,8 @@ extensions = [
 
 intersphinx_mapping = {
   'introduction': ('../../introduction/',         os.path.abspath('../../introduction/build/html/objects.inv')),
-  'apptemplates': ('../../application-templates', os.path.abspath('../../application-templates/build/html/objects.inv')),
   'developers':   ('../../developers-manual/',    os.path.abspath('../../developers-manual/build/html/objects.inv')),
+  'apptemplates': ('../../application-templates', os.path.abspath('../../application-templates/build/html/objects.inv')),
   'admin':        ('../../admin-manual/',         os.path.abspath('../../admin-manual/build/html/objects.inv')),
   'integrations': ('../../integrations/',         os.path.abspath('../../integrations/build/html/objects.inv')),
   'examples':     ('../../examples-manual',       os.path.abspath('../../examples-manual/build/html/objects.inv')),
