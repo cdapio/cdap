@@ -33,6 +33,11 @@
   </properties>
 
   <dependencies>
+    <!-- to override hive-exec -->
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
     <!-- use a newer version of avro than the cdap platform
      in order to use mapreduce classes instead of mapred classes -->
     <dependency>

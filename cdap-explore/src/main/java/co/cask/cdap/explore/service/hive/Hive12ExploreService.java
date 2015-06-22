@@ -24,23 +24,31 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
+import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hive.service.cli.CLIService;
+import org.apache.hive.service.cli.FetchOrientation;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.OperationState;
 import org.apache.hive.service.cli.SessionHandle;
+import org.apache.hive.service.cli.thrift.TColumnValue;
+import org.apache.hive.service.cli.thrift.TRow;
+import org.apache.hive.service.cli.thrift.TRowSet;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * Hive 12 implementation of {@link co.cask.cdap.explore.service.ExploreService}.
@@ -62,6 +70,37 @@ public class Hive12ExploreService extends BaseHiveExploreService {
                               SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
     super(txClient, datasetFramework, cConf, hConf, hiveConf, previewsDir,
           streamAdmin, store, datasetInstantiatorFactory);
+  }
+
+  @Override
+  protected CLIService createCLIService() {
+    try {
+      return CLIService.class.getDeclaredConstructor().newInstance();
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to instantiate CLIService", e);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  protected List<QueryResult> doFetchNextResults(OperationHandle handle, FetchOrientation fetchOrientation,
+                                                 int size) throws Exception {
+    Class cliServiceClass = Class.forName("org.apache.hive.service.cli.CLIService");
+    Method fetchResultsMethod = cliServiceClass.getMethod("fetchResults");
+    Object rowSet = fetchResultsMethod.invoke(getCliService(), handle, fetchOrientation, size);
+
+    ImmutableList.Builder<QueryResult> rowsBuilder = ImmutableList.builder();
+    Class rowSetClass = Class.forName("org.apache.hive.service.cli.RowSet");
+    Method toTRowSetMethod = rowSetClass.getMethod("toTRowSet");
+    TRowSet tRowSet = (TRowSet) toTRowSetMethod.invoke(rowSet);
+    for (TRow tRow : tRowSet.getRows()) {
+      List<Object> cols = Lists.newArrayList();
+      for (TColumnValue tColumnValue : tRow.getColVals()) {
+        cols.add(tColumnToObject(tColumnValue));
+      }
+      rowsBuilder.add(new QueryResult(cols));
+    }
+    return rowsBuilder.build();
   }
 
   @Override
