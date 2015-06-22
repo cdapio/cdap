@@ -35,6 +35,7 @@ import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Charsets;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
@@ -45,6 +46,7 @@ import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.security.Credentials;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
@@ -155,6 +157,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
             .withDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass())
             .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
             .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())))
+            .withClassPaths(Splitter.on(',').trimResults()
+                              .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, "")))
             .withApplicationArguments(
               String.format("--%s", RunnableOptions.JAR), copiedProgram.getJarLocation().getName(),
               String.format("--%s", RunnableOptions.PROGRAM_OPTIONS), programOptions

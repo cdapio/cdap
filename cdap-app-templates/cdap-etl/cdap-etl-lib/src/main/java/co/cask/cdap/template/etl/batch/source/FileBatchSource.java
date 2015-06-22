@@ -33,6 +33,7 @@ import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.template.etl.common.BatchFileFilter;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -114,19 +115,20 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
     cal.set(Calendar.SECOND, 0);
     cal.set(Calendar.MILLISECOND, 0);
     prevMinute = cal.getTime();
-    System.out.print(FILESYSTEM_PROPERTIES_DESCRIPTION);
+
     Job job = context.getHadoopJob();
+    Configuration conf = job.getConfiguration();
     if (config.fileSystemProperties != null) {
       Map<String, String> properties = GSON.fromJson(config.fileSystemProperties, MAP_STRING_STRING_TYPE);
       for (Map.Entry<String, String> entry : properties.entrySet()) {
-        job.getConfiguration().set(entry.getKey(), entry.getValue());
+        conf.set(entry.getKey(), entry.getValue());
       }
     }
 
     if (config.fileRegex != null) {
-      job.getConfiguration().set(INPUT_REGEX_CONFIG, config.fileRegex);
+      conf.set(INPUT_REGEX_CONFIG, config.fileRegex);
     }
-    job.getConfiguration().set(INPUT_NAME_CONFIG, config.path);
+    conf.set(INPUT_NAME_CONFIG, config.path);
 
     if (config.timeTable != null) {
       table = context.getDataset(config.timeTable);
@@ -134,10 +136,10 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
       if (lastTimeRead == null) {
         lastTimeRead = "0";
       }
-      job.getConfiguration().set(LAST_TIME_READ, lastTimeRead);
+      conf.set(LAST_TIME_READ, lastTimeRead);
     }
 
-    job.getConfiguration().set(CUTOFF_READ_TIME, DATE_FORMAT.format(prevMinute));
+    conf.set(CUTOFF_READ_TIME, DATE_FORMAT.format(prevMinute));
     if (config.inputFormatClass != null) {
       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
       Class<? extends FileInputFormat> classType = (Class<? extends FileInputFormat>)

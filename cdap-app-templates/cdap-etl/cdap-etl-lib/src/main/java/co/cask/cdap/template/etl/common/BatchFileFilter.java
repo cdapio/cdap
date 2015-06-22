@@ -88,6 +88,7 @@ public class BatchFileFilter extends Configured implements PathFilter {
     return fileDate.compareTo(dateLastRead) > 0 && fileDate.compareTo(prevMinute) <= 0;
   }
 
+  @Override
   public void setConf(Configuration conf) {
     if (conf == null) {
       return;
