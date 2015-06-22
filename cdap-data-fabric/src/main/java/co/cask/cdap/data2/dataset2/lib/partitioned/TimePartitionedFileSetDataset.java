@@ -222,7 +222,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
   public void addLegacyPartition(long time, String path) {
     final byte[] rowKey = Bytes.toBytes(time);
     Row row = partitionsTable.get(rowKey);
-    if (row != null && !row.isEmpty()) {
+    if (!row.isEmpty()) {
       throw new DataSetException(String.format("Dataset '%s' already has a partition with time: %d.",
                                                getName(), time));
     }
@@ -241,7 +241,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     }
     final byte[] rowKey = Bytes.toBytes(time);
     Row row = partitionsTable.get(rowKey);
-    if (row == null) {
+    if (row.isEmpty()) {
       return null;
     }
     byte[] pathBytes = row.get(RELATIVE_PATH);

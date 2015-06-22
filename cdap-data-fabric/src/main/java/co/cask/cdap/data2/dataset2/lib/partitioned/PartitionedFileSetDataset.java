@@ -136,7 +136,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   protected void addPartition(PartitionKey key, String path, boolean explorable, Map<String, String> metadata) {
     byte[] rowKey = generateRowKey(key, partitioning);
     Row row = partitionsTable.get(rowKey);
-    if (row != null && !row.isEmpty()) {
+    if (!row.isEmpty()) {
       if (key.equals(partitionsAddedInSameTx.get(path))) {
         LOG.warn("Dataset {} already added a partition with key {} in this transaction. " +
                    "Partitions no longer need to be added in the onFinish() of MapReduce. Please check your app. ",
