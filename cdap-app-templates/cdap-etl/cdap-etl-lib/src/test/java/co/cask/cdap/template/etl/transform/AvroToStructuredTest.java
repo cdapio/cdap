@@ -25,6 +25,8 @@ import org.apache.avro.generic.GenericRecordBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.List;
+
 public class AvroToStructuredTest {
   @Test
   public void testAvroToStructuredConversionForNested() throws Exception {
@@ -75,6 +77,9 @@ public class AvroToStructuredTest {
     StructuredRecord innerResult = result.get("record");
     Assert.assertEquals(5, innerResult.get("int"));
     Assert.assertEquals(ImmutableList.of(1.0f, 2.0f), innerResult.get("array"));
+    List list = innerResult.get("array1");
+    StructuredRecord array1Result = (StructuredRecord) list.get(0);
+    Assert.assertEquals(0, array1Result.get("int"));
   }
 
   private org.apache.avro.Schema convertSchema(Schema cdapSchema) {
