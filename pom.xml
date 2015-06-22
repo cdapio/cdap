@@ -99,7 +99,6 @@
     <concurrent.trees.version>2.4.0</concurrent.trees.version>
     <cask.common.cli.version>0.7.1</cask.common.cli.version>
     <cask.common.version>0.7.1</cask.common.version>
-    <cdap.hive.version>0.13.0</cdap.hive.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
     <flume.version>1.2.0</flume.version>
     <geronimo.version>2.0.0</geronimo.version>
@@ -111,7 +110,7 @@
     <hbase94.version>0.94.6.1.continuuity</hbase94.version>
     <hbase96.version>0.96.2-hadoop2</hbase96.version>
     <hbase98.version>0.98.6.1-hadoop2</hbase98.version>
-    <hive.version>0.13.0</hive.version>
+    <hive.version>1.0.0</hive.version>
     <hsql.version>2.2.4</hsql.version>
     <http.component.version>4.2.5</http.component.version>
     <jetty.version>6.1.22</jetty.version>
@@ -1035,9 +1034,9 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>co.cask.cdap</groupId>
+        <groupId>org.apache.hive</groupId>
         <artifactId>hive-exec</artifactId>
-        <version>${cdap.hive.version}</version>
+        <version>${hive.version}</version>
         <exclusions>
           <exclusion>
             <groupId>com.google.guava</groupId>

@@ -31,7 +31,7 @@ import co.cask.cdap.explore.executor.NamespacedQueryExecutorHttpHandler;
 import co.cask.cdap.explore.executor.QueryExecutorHttpHandler;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
-import co.cask.cdap.explore.service.hive.Hive13ExploreService;
+import co.cask.cdap.explore.service.hive.Hive14ExploreService;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.http.HttpHandler;
@@ -54,7 +54,6 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.metastore.HiveMetaStore;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,8 +119,8 @@ public class ExploreRuntimeModule extends RuntimeModule {
 
     @Override
     protected void configure() {
-      // Current version of hive used in standalone is Hive 13
-      bind(ExploreService.class).annotatedWith(Names.named("explore.service.impl")).to(Hive13ExploreService.class);
+      // Current version of hive used in standalone is Hive 14
+      bind(ExploreService.class).annotatedWith(Names.named("explore.service.impl")).to(Hive14ExploreService.class);
       bind(ExploreService.class).toProvider(ExploreServiceProvider.class).in(Scopes.SINGLETON);
       expose(ExploreService.class);
       bind(boolean.class).annotatedWith(Names.named("explore.inmemory")).toInstance(isInMemory);
@@ -215,7 +214,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
         // the initialization of the metastore for the second test class will not have the default
         // databases created because the static boolean to check whether default should be created will
         // be deactivated by the first init.
-        HiveMetaStore.HMSHandler.resetDefaultDBFlag();
+//        HiveMetaStore.HMSHandler.resetDefaultDBFlag();
 
         return exploreService;
       }
