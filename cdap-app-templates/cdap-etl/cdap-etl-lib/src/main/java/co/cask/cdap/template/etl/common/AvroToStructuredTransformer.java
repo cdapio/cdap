@@ -1,4 +1,3 @@
-
 /*
  * Copyright © 2015 Cask Data, Inc.
  *
@@ -21,36 +20,37 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.generic.GenericRecordBuilder;
 
 import java.io.IOException;
 import java.util.Map;
 
 /**
- * Creates GenericRecords from StructuredRecords
+ * Create StructuredRecords from GenericRecords
  */
-public class StructuredToAvroTransformer extends RecordConverter<StructuredRecord, GenericRecord> {
+public class AvroToStructuredTransformer extends RecordConverter<GenericRecord, StructuredRecord> {
 
-  private final Map<Integer, Schema> schemaCache = Maps.newHashMap();
+  private final Map<Integer, co.cask.cdap.api.data.schema.Schema> schemaCache = Maps.newHashMap();
 
-  public GenericRecord transform(StructuredRecord structuredRecord) throws IOException {
-    co.cask.cdap.api.data.schema.Schema structuredRecordSchema = structuredRecord.getSchema();
+  @Override
+  public StructuredRecord transform(GenericRecord genericRecord) throws IOException {
+    Schema genericRecordSchema = genericRecord.getSchema();
 
-    int hashCode = structuredRecordSchema.hashCode();
-    Schema avroSchema;
+    int hashCode = genericRecordSchema.hashCode();
+    co.cask.cdap.api.data.schema.Schema structuredSchema;
 
     if (schemaCache.containsKey(hashCode)) {
-      avroSchema = schemaCache.get(hashCode);
+      structuredSchema = schemaCache.get(hashCode);
     } else {
-      avroSchema = new Schema.Parser().parse(structuredRecordSchema.toString());
-      schemaCache.put(hashCode, avroSchema);
+      structuredSchema = co.cask.cdap.api.data.schema.Schema.parseJson(genericRecordSchema.toString());
+      schemaCache.put(hashCode, structuredSchema);
     }
 
-    GenericRecordBuilder recordBuilder = new GenericRecordBuilder(avroSchema);
-    for (Schema.Field field : avroSchema.getFields()) {
+    StructuredRecord.Builder builder = StructuredRecord.builder(structuredSchema);
+    for (Schema.Field field : genericRecordSchema.getFields()) {
       String fieldName = field.name();
-      recordBuilder.set(fieldName, convertField(structuredRecord.get(fieldName), field.schema()));
+      builder.set(fieldName, convertField(genericRecord.get(fieldName), field.schema()));
     }
-    return recordBuilder.build();
+
+    return builder.build();
   }
 }
