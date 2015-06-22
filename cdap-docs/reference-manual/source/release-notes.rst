@@ -157,6 +157,9 @@ Bug Fixes
   values correctly
   (`CDAP-2719 <https://issues.cask.co/browse/CDAP-2719>`__).
 
+- Fixed a problem with the CDAP SDK running out of memory when MapReduce jobs are run repeatedly
+  (`CDAP-2743 <https://issues.cask.co/browse/CDAP-2743>`__).
+
 - Fixed a problem with not using CDAP RunIDs in the in-memory version of the CDAP SDK
   (`CDAP-2769 <https://issues.cask.co/browse/CDAP-2769>`__).
 
@@ -280,6 +283,16 @@ Known Issues
 - Metrics for :ref:`TimePartitionedFileSets <datasets-timepartitioned-fileset>` can show 
   zero values even if there is data present
   (`CDAP-2721 <https://issues.cask.co/browse/CDAP-2721>`__).
+  
+- When the CDAP-Master dies, the CDAP UI does not repsond appropriately, and instead of 
+  waiting for routing to the secondary master to begin, it loses its connection
+  (`CDAP-2830 <https://issues.cask.co/browse/CDAP-2830>`__).
+
+- A workflow that is scheduled by time will not be run between the failure of the primary
+  master and the time that the secondary takes over. This scheduled run will not be
+  triggered at all. There is no warnings or messages about the missed run of the
+  workflow. (`CDAP-2831 <https://issues.cask.co/browse/CDAP-2831>`__)
+
 
 - See also the *Known Issues* of `version 3.0.0 <#known-issues-300>`_\ .
 
