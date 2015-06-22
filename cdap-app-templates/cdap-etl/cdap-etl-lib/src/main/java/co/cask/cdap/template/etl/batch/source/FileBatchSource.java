@@ -133,7 +133,6 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
     if (config.timeTable != null) {
       table = context.getDataset(config.timeTable);
       String lastTimeRead = Bytes.toString(table.read("lastTimeRead"));
-      table.write("lastTimeRead", DATE_FORMAT.format(prevMinute));
       if (lastTimeRead == null) {
         lastTimeRead = "0";
       }
@@ -158,6 +157,13 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
       .set("body", input.getValue().toString())
       .build();
     emitter.emit(output);
+  }
+
+  @Override
+  public void onRunFinish(boolean succeeded, BatchSourceContext context) {
+    if (succeeded && table != null && USE_TIMEFILTER.equals(config.fileRegex)) {
+      table.write("lastTimeRead", DATE_FORMAT.format(prevMinute));
+    }
   }
 
   /**
