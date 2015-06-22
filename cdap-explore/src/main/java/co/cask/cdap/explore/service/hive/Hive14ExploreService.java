@@ -58,7 +58,7 @@ public class Hive14ExploreService extends BaseHiveExploreService {
   @Override
   protected CLIService createCLIService() {
     try {
-      return CLIService.class.getDeclaredConstructor(HiveServer2.class).newInstance(null);
+      return CLIService.class.getDeclaredConstructor(HiveServer2.class).newInstance(new Object[] { null });
     } catch (Exception e) {
       throw new RuntimeException("Failed to instantiate CLIService", e);
     }
