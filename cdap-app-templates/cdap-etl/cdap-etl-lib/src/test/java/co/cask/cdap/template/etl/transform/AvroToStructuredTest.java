@@ -67,7 +67,7 @@ public class AvroToStructuredTest {
              .set("double", 3.14159)
              .set("array", ImmutableList.of(1.0f, 2.0f))
              .set("array1", ImmutableList.of(inner, inner))
-               // uncomment this line once [CDAP - 2813 is fixed]. You might have to fix AvroToStructuredTransformer.java
+               // uncomment this line once [CDAP - 2813 is fixed]. You might have to fix AvroToStructuredTransformer
                // .set("map", ImmutableMap.of("key", "value"))
              .build())
       .build();
