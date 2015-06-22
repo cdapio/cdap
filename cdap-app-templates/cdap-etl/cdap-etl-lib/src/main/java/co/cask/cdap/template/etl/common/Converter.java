@@ -118,6 +118,7 @@ public abstract class Converter<INPUT, OUTPUT> {
       case NULL:
         return null;
       case STRING:
+        return field.toString();
       case BYTES:
       case INT:
       case LONG:
