@@ -39,11 +39,11 @@ import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroJob;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
-import org.apache.avro.reflect.Nullable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * A {@link BatchSource} to read Avro record from {@link TimePartitionedFileSet}
@@ -62,8 +62,8 @@ public class TimePartitionedFileSetDatasetAvroSource extends
   private static final String DURATION_DESC = "Size of the time window to read with each run of the pipeline. " +
     "The format is expected to be a number followed by a 's', 'm', 'h', or 'd' specifying the time unit, with 's' " +
     "for seconds, 'm' for minutes, 'h' for hours, and 'd' for days. For example, a value of '5m' means each run of " +
-    "the pipeline will read 5 minutes of events from the stream.";
-  private static final String DELAY_DESC = "Optional delay for reading stream events. The value must be " +
+    "the pipeline will read 5 minutes of events from the TPFS source.";
+  private static final String DELAY_DESC = "Optional delay for reading from TPFS source. The value must be " +
     "of the same format as the duration value. For example, a duration of '5m' and a delay of '10m' means each run " +
     "of the pipeline will read events from 15 minutes before its logical start time to 10 minutes before its " +
     "logical start time. The default value is 0.";
@@ -88,7 +88,7 @@ public class TimePartitionedFileSetDatasetAvroSource extends
     private String duration;
 
     @Description(DELAY_DESC)
-    @javax.annotation.Nullable
+    @Nullable
     private String delay;
 
     private void validate() {
