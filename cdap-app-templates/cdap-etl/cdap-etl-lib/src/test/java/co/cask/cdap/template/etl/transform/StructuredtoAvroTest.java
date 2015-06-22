@@ -2,10 +2,9 @@ package co.cask.cdap.template.etl.transform;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.template.etl.common.StructuredToAvroTransformer;
 import co.cask.cdap.template.etl.common.AvroToStructuredTransformer;
+import co.cask.cdap.template.etl.common.StructuredToAvroTransformer;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.junit.Assert;
@@ -44,11 +43,16 @@ public class StructuredtoAvroTest {
   @Test
   public void testAvroToStructuredConversionForNested() throws Exception {
     AvroToStructuredTransformer avroToStructuredTransformer = new AvroToStructuredTransformer();
+
+    Schema innerNestedSchema = Schema.recordOf("innerNested",
+                                               Schema.Field.of("int", Schema.of(Schema.Type.INT)));
     Schema innerSchema = Schema.recordOf(
       "inner",
       Schema.Field.of("int", Schema.of(Schema.Type.INT)),
       Schema.Field.of("double", Schema.of(Schema.Type.DOUBLE)),
-      Schema.Field.of("array", Schema.arrayOf(Schema.of(Schema.Type.FLOAT)))
+      Schema.Field.of("array", Schema.arrayOf(Schema.of(Schema.Type.FLOAT))),
+      Schema.Field.of("array1", Schema.arrayOf(innerNestedSchema))
+
       // uncomment this line once [CDAP - 2813 is fixed]. You might have to fix AvroToStructuredTransformer.java
       // Schema.Field.of("map", Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.STRING)))
     );
@@ -58,9 +62,15 @@ public class StructuredtoAvroTest {
       Schema.Field.of("int", Schema.of(Schema.Type.INT)),
       Schema.Field.of("record", innerSchema));
 
+
     org.apache.avro.Schema avroInnerSchema = convertSchema(innerSchema);
     org.apache.avro.Schema avroSchema = convertSchema(schema);
+    org.apache.avro.Schema avroInnerNestedSchema = convertSchema(innerNestedSchema);
 
+
+    GenericRecord inner = new GenericRecordBuilder(avroInnerNestedSchema)
+      .set("int", 0)
+      .build();
     GenericRecord record = new GenericRecordBuilder(avroSchema)
       .set("int", Integer.MAX_VALUE)
       .set("record",
@@ -68,8 +78,9 @@ public class StructuredtoAvroTest {
              .set("int", 5)
              .set("double", 3.14159)
              .set("array", ImmutableList.of(1.0f, 2.0f))
-             // uncomment this line once [CDAP - 2813 is fixed]. You might have to fix AvroToStructuredTransformer.java
-             // .set("map", ImmutableMap.of("key", "value"))
+             .set("array1", ImmutableList.of(inner, inner))
+               // uncomment this line once [CDAP - 2813 is fixed]. You might have to fix AvroToStructuredTransformer.java
+               // .set("map", ImmutableMap.of("key", "value"))
              .build())
       .build();
 
@@ -77,7 +88,7 @@ public class StructuredtoAvroTest {
     Assert.assertEquals(Integer.MAX_VALUE, result.get("int"));
     StructuredRecord innerResult = result.get("record");
     Assert.assertEquals(5, innerResult.get("int"));
-    Assert.assertEquals(ImmutableList.of(1.0f, 2.0f), (ImmutableList)innerResult.get("array"));
+    Assert.assertEquals(ImmutableList.of(1.0f, 2.0f), innerResult.get("array"));
   }
   private org.apache.avro.Schema convertSchema(Schema cdapSchema) {
     return new org.apache.avro.Schema.Parser().parse(cdapSchema.toString());

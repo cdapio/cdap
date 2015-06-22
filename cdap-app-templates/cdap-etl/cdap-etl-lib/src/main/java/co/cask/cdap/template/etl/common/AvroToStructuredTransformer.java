@@ -17,42 +17,16 @@
 package co.cask.cdap.template.etl.common;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import com.google.common.collect.Maps;
 import org.apache.avro.generic.GenericRecord;
-import java.util.Map;
+
+import java.io.IOException;
 
 /**
- * Creates StructuredRecords from GenericRecords , with caching for schemas.
+ * Creates StructuredRecords from GenericRecords.
  */
 public class AvroToStructuredTransformer {
-  private final Map<Integer, Schema> schemaCache = Maps.newHashMap();
-
-  public StructuredRecord transform(GenericRecord genericRecord) throws Exception {
-    org.apache.avro.Schema genericRecordSchema = genericRecord.getSchema();
-
-    int hashCode = genericRecordSchema.hashCode();
-    Schema structuredSchema;
-
-    if (schemaCache.containsKey(hashCode)) {
-      structuredSchema = schemaCache.get(hashCode);
-    } else {
-      structuredSchema = Schema.parseJson(genericRecordSchema.toString());
-      schemaCache.put(hashCode, structuredSchema);
-    }
-
-    StructuredRecord.Builder builder = StructuredRecord.builder(structuredSchema);
-    for (Schema.Field field: structuredSchema.getFields()) {
-      String fieldName = field.getName();
-      Object object = genericRecord.get(fieldName);
-      if (fieldName.equals("record")) {
-        StructuredRecord innerRecord = transform((GenericRecord) object);
-        builder.set(fieldName, innerRecord);
-      }
-      else {
-        builder.set(fieldName, object);
-      }
-    }
-    return builder.build();
+  public StructuredRecord transform(GenericRecord genericRecord) throws IOException {
+    AvroToStructured avroToStructured = new AvroToStructured();
+    return avroToStructured.convert(genericRecord);
   }
 }
