@@ -35,9 +35,7 @@ import java.util.Map;
  */
 public abstract class Converter<INPUT, OUTPUT> {
 
-  abstract OUTPUT convert(INPUT record) throws IOException;
-
-  abstract OUTPUT convertRecord(INPUT record) throws IOException;
+  abstract OUTPUT transform(INPUT record) throws IOException;
 
   protected Object getRecordField(Object record, String fieldName) {
     try {
@@ -108,7 +106,7 @@ public abstract class Converter<INPUT, OUTPUT> {
     Schema.Type fieldType = fieldSchema.getType();
     switch (fieldType) {
       case RECORD:
-        return convertRecord((INPUT) field);
+        return transform((INPUT) field);
       case ARRAY:
         return convertArray(field, fieldSchema.getElementType());
       case MAP:

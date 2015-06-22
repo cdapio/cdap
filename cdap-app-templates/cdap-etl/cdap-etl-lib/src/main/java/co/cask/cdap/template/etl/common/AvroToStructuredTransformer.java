@@ -17,16 +17,40 @@
 package co.cask.cdap.template.etl.common;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
+import com.google.common.collect.Maps;
+import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
- * Creates StructuredRecords from GenericRecords.
+ * Create StructuredRecords from GenericRecords
  */
-public class AvroToStructuredTransformer {
+public class AvroToStructuredTransformer extends Converter<GenericRecord, StructuredRecord> {
+
+  private final Map<Integer, co.cask.cdap.api.data.schema.Schema> schemaCache = Maps.newHashMap();
+
+  @Override
   public StructuredRecord transform(GenericRecord genericRecord) throws IOException {
-    AvroToStructured avroToStructured = new AvroToStructured();
-    return avroToStructured.convert(genericRecord);
+    Schema genericRecordSchema = genericRecord.getSchema();
+
+    int hashCode = genericRecordSchema.hashCode();
+    co.cask.cdap.api.data.schema.Schema structuredSchema;
+
+    if (schemaCache.containsKey(hashCode)) {
+      structuredSchema = schemaCache.get(hashCode);
+    } else {
+      structuredSchema = co.cask.cdap.api.data.schema.Schema.parseJson(genericRecordSchema.toString());
+      schemaCache.put(hashCode, structuredSchema);
+    }
+
+    StructuredRecord.Builder builder = StructuredRecord.builder(structuredSchema);
+    for (Schema.Field field : genericRecordSchema.getFields()) {
+      String fieldName = field.name();
+      builder.set(fieldName, convertField(genericRecord.get(fieldName), field.schema()));
+    }
+
+    return builder.build();
   }
 }
