@@ -45,6 +45,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
+import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
@@ -353,11 +354,12 @@ public class PluginRepository {
   private CloseableClassLoader createTemplateClassLoader(File templateJar) throws IOException {
     final File unpackDir = DirUtils.createTempDir(tmpDir);
     BundleJarUtil.unpackProgramJar(Files.newInputStreamSupplier(templateJar), unpackDir);
-    ProgramClassLoader programClassLoader = ProgramClassLoader.create(unpackDir, getClass().getClassLoader());
+    final ProgramClassLoader programClassLoader = ProgramClassLoader.create(unpackDir, getClass().getClassLoader());
     return new CloseableClassLoader(programClassLoader, new Closeable() {
       @Override
       public void close() {
         try {
+          Closeables.closeQuietly(programClassLoader);
           DirUtils.deleteDirectoryContents(unpackDir);
         } catch (IOException e) {
           LOG.warn("Failed to delete directory {}", unpackDir, e);

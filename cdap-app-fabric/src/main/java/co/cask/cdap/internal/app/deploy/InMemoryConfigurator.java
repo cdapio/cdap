@@ -89,9 +89,8 @@ public final class InMemoryConfigurator implements Configurator {
                                   "Main class attribute cannot be empty");
 
       File unpackedJarDir = Files.createTempDir();
-      try {
-        Object appMain = new Archive(BundleJarUtil.unpackProgramJar(archive, unpackedJarDir),
-                                                                  mainClassName).getMainClass().newInstance();
+      try (Archive archive = new Archive(BundleJarUtil.unpackProgramJar(this.archive, unpackedJarDir), mainClassName)) {
+        Object appMain = archive.getMainClass().newInstance();
         if (!(appMain instanceof Application)) {
           throw new IllegalStateException(String.format("Application main class is of invalid type: %s",
                                                         appMain.getClass().getName()));
