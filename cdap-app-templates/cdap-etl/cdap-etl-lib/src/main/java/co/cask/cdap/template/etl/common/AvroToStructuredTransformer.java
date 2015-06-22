@@ -55,11 +55,4 @@ public class AvroToStructuredTransformer {
     }
     return builder.build();
   }
-  /*
-  private StructuredRecord resolveRecord(Object object) {
-    GenericRecord genericRecord = (GenericRecord) object;
-    Schema schema = structuredRecord.getSchema();
-    S
-    return null;
-  }*/
 }
