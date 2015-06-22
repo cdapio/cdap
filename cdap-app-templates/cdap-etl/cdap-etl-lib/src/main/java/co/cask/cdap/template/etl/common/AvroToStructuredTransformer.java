@@ -17,35 +17,40 @@
 package co.cask.cdap.template.etl.common;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
 import com.google.common.collect.Maps;
+import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
+
+import java.io.IOException;
 import java.util.Map;
 
 /**
- * Creates StructuredRecords from GenericRecords , with caching for schemas.
+ * Create StructuredRecords from GenericRecords
  */
-public class AvroToStructuredTransformer {
-  private final Map<Integer, Schema> schemaCache = Maps.newHashMap();
+public class AvroToStructuredTransformer extends RecordConverter<GenericRecord, StructuredRecord> {
 
-  public StructuredRecord transform(GenericRecord genericRecord) throws Exception {
-    org.apache.avro.Schema genericRecordSchema = genericRecord.getSchema();
+  private final Map<Integer, co.cask.cdap.api.data.schema.Schema> schemaCache = Maps.newHashMap();
+
+  @Override
+  public StructuredRecord transform(GenericRecord genericRecord) throws IOException {
+    Schema genericRecordSchema = genericRecord.getSchema();
 
     int hashCode = genericRecordSchema.hashCode();
-    Schema structuredSchema;
+    co.cask.cdap.api.data.schema.Schema structuredSchema;
 
     if (schemaCache.containsKey(hashCode)) {
       structuredSchema = schemaCache.get(hashCode);
     } else {
-      structuredSchema = Schema.parseJson(genericRecordSchema.toString());
+      structuredSchema = co.cask.cdap.api.data.schema.Schema.parseJson(genericRecordSchema.toString());
       schemaCache.put(hashCode, structuredSchema);
     }
 
     StructuredRecord.Builder builder = StructuredRecord.builder(structuredSchema);
-    for (Schema.Field field: structuredSchema.getFields()) {
-      String fieldName = field.getName();
-      builder.set(fieldName, genericRecord.get(fieldName));
+    for (Schema.Field field : genericRecordSchema.getFields()) {
+      String fieldName = field.name();
+      builder.set(fieldName, convertField(genericRecord.get(fieldName), field.schema()));
     }
+
     return builder.build();
   }
 }

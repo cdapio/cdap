@@ -17,7 +17,7 @@
 package co.cask.cdap.examples.streamconversion;
 
 import co.cask.cdap.api.common.RuntimeArguments;
-import co.cask.cdap.api.dataset.lib.TimePartition;
+import co.cask.cdap.api.dataset.lib.TimePartitionDetail;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.test.ApplicationManager;
@@ -70,7 +70,7 @@ public class StreamConversionTest extends TestBase {
       public Long call() throws Exception {
         DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset("converted");
         TimePartitionedFileSet converted = fileSetManager.get();
-        Set<TimePartition> partitions = converted.getPartitionsByTime(startTime, System.currentTimeMillis());
+        Set<TimePartitionDetail> partitions = converted.getPartitionsByTime(startTime, System.currentTimeMillis());
         Assert.assertEquals(1, partitions.size());
         return partitions.iterator().next().getTime();
       }

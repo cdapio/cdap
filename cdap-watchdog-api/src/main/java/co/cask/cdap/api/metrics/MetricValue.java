@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.api.metrics;
 
+import com.google.common.base.Objects;
+
 /**
  * Carries the "raw" emitted metric data point: metric name, type, and value
  */
@@ -42,4 +44,12 @@ public class MetricValue {
     return value;
   }
 
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("name", name)
+      .add("type", type)
+      .add("value", value)
+      .toString();
+  }
 }

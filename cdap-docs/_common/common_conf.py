@@ -32,6 +32,7 @@ cdap_apps_version = "0.4.0"
 
 node_js_version = "v0.10.* through v0.12.*"
 
+recommended_node_js_version = "v0.12.0"
 
 import sys
 import os
@@ -185,6 +186,11 @@ if node_js_version:
     rst_epilog = rst_epilog + """
 .. |node-js-version| replace:: %(node_js_version)s
 """ % {'node_js_version': node_js_version}
+
+if recommended_node_js_version:
+    rst_epilog = rst_epilog + """
+.. |recommended-node-js-version| replace:: %(recommended_node_js_version)s
+""" % {'recommended_node_js_version': recommended_node_js_version}
 
 if version:
     rst_epilog = rst_epilog + """
@@ -344,6 +350,7 @@ html_theme_options = {
       "older": [ 
         ['2.8.0', '2.8.0', '2015-03-23'], 
         ['2.7.1', '2.7.1', '2015-02-05'], 
+        ['2.6.3', '2.6.3', '2015-05-15'], 
         ['2.6.2', '2.6.2', '2015-03-23'], 
         ['2.6.1', '2.6.1', '2015-01-29'], 
         ['2.6.0', '2.6.0', '2015-01-10'], 
@@ -367,17 +374,7 @@ def get_manual_titles_bash():
     for title in html_theme_options["manual_titles"]:
         manual_titles += "'%s'" % title
     manual_titles += SUFFIX
-    return manual_titles 
-
-def get_json_versions():
-    return "versionscallback(%s);" % html_theme_options["versions_data"]
-
-def print_json_versions():
-    print "versionscallback(%s);" % html_theme_options["versions_data"]
-
-def print_json_versions_file():
-    head, tail = os.path.split(html_theme_options["versions"])
-    print tail
+    return manual_titles
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['_themes','../../_common/_themes']
