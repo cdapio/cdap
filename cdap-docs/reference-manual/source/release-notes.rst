@@ -44,7 +44,7 @@ Improvements
 
 - Added a tool (`HBaseQueueDebugger 
   <https://github.com/caskdata/cdap/blob/release/3.0/cdap-master/src/main/java/co/cask/cdap/data/tools/HBaseQueueDebugger.java>`__)
-  that counts consumed and unconsumed entries in an HBase queue
+  that counts consumed and unconsumed entries in a flowlet queue
   (`CDAP-2105 <https://issues.cask.co/browse/CDAP-2105>`__).
 
 **CDAP UI**
