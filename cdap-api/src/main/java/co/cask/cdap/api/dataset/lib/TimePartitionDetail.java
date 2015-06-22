@@ -17,7 +17,7 @@
 package co.cask.cdap.api.dataset.lib;
 
 /**
- * Represents a partition of a partitioned file set for writing.
+ * Represents a partition of a time partitioned file set.
  */
-public interface TimePartitionOutput extends TimePartition, PartitionOutput {
+public interface TimePartitionDetail extends TimePartition, PartitionDetail {
 }

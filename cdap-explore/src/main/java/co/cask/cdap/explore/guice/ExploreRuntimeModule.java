@@ -231,8 +231,10 @@ public class ExploreRuntimeModule extends RuntimeModule {
         setupClasspath();
 
         // Set local tmp dir to an absolute location in the twill runnable otherwise Hive complains
+        String localScratchPath = System.getProperty("java.io.tmpdir") + File.separator +
+          "hive-" + System.getProperty("user.name");
         System.setProperty(HiveConf.ConfVars.LOCALSCRATCHDIR.toString(),
-                           new File(HiveConf.ConfVars.LOCALSCRATCHDIR.defaultVal).getAbsolutePath());
+                           new File(localScratchPath).getAbsolutePath());
         LOG.info("Setting {} to {}", HiveConf.ConfVars.LOCALSCRATCHDIR.toString(),
                  System.getProperty(HiveConf.ConfVars.LOCALSCRATCHDIR.toString()));
 
