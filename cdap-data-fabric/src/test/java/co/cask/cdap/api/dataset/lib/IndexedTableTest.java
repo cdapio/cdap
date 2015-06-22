@@ -310,6 +310,26 @@ public class IndexedTableTest {
         assertEmpty(scanner);
       }
     });
+
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // do a scan using idx value range [null (first row), idx3). Assert that we retrieve the values corresponding
+        // to idx1, idx2.
+        Scanner scanner = table.scanByIndex(idxCol, null, idx3);
+        Row next = scanner.next();
+        Assert.assertNotNull(next);
+        Assert.assertTrue(Bytes.equals(keyC, next.getRow()));
+        Assert.assertTrue(Bytes.equals(valC, next.get(valCol)));
+
+        next = scanner.next();
+        Assert.assertNotNull(next);
+        Assert.assertTrue(Bytes.equals(keyB, next.getRow()));
+        Assert.assertTrue(Bytes.equals(valB, next.get(valCol)));
+
+        assertEmpty(scanner);
+      }
+    });
   }
 
   @Test

@@ -178,18 +178,20 @@ public class IndexedTable extends AbstractDataset implements Table {
    * range, then a {@link co.cask.cdap.api.dataset.table.Scanner} with no results will be returned.
    *
    * @param column the column to use for the index lookup
-   * @param startValue the inclusive start of the range for which rows must fall within to be returned in the scan
+   * @param startValue the inclusive start of the range for which rows must fall within to be returned in the scan.
+   *                   {@code null} means start from first row of the table
    * @param endValue the exclusive end of the range for which rows must fall within to be returned in the scan
+   *                 {@code null} means end with the last row of the table
    * @return a Scanner returning rows from the data table, whose stored value for the given column is within the the
    * given range.
    * @throws java.lang.IllegalArgumentException if the given column is not configured for indexing.
    */
-  public Scanner scanByIndex(byte[] column, byte[] startValue, byte[] endValue) {
+  public Scanner scanByIndex(byte[] column, @Nullable byte[] startValue, @Nullable byte[] endValue) {
     assertIndexedColumn(column);
     // keyDelimiter is not used at the end of the rowKeys, because they are used for a range scan,
     // instead of a fixed-match lookup
-    byte[] startRow = Bytes.concat(column, keyDelimiter, startValue);
-    byte[] stopRow = Bytes.concat(column, keyDelimiter, endValue);
+    byte[] startRow = startValue == null ? null : Bytes.concat(column, keyDelimiter, startValue);
+    byte[] stopRow = endValue == null ? null : Bytes.concat(column, keyDelimiter, endValue);
     Scanner indexScan = index.scan(startRow, stopRow);
     return new IndexScanner(indexScan, null);
   }
