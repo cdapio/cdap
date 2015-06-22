@@ -29,12 +29,12 @@ import co.cask.cdap.common.exception.NamespaceCannotBeDeletedException;
 import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.test.internal.AppFabricTestHelper;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
@@ -81,8 +81,6 @@ public abstract class SchedulerTestBase {
   public static void init() throws Exception {
     injector = AppFabricTestHelper.getInjector(CCONF);
     PreferencesStore preferencesStore = injector.getInstance(PreferencesStore.class);
-    Map<String, String> properties = ImmutableMap.of(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED, "true");
-    preferencesStore.setProperties(Constants.DEFAULT_NAMESPACE_ID.getId(), APP_ID.getId(), properties);
     streamSizeScheduler = injector.getInstance(StreamSizeScheduler.class);
     store = injector.getInstance(Store.class);
     metricStore = injector.getInstance(MetricStore.class);

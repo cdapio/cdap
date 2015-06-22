@@ -1,41 +1,49 @@
-<div class="table-responsive">
-  <table class="table table-curved" ng-show="runs.length > 0" cask-sortable>
-    <thead>
-      <tr ng-class="{'sort-enabled': runs.length > 1}">
-        <th data-predicate="runid"> Run ID </th>
-        <th data-predicate="start" data-predicate-default="reverse"> Start Time </th>
-        <th data-predicate="end"> End Time </th>
-        <th data-predicate="duration"> Duration </th>
-        <th> Status </th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr ng-repeat="run in runs | orderBy:sortable.predicate:sortable.reverse">
-        <td>
-          <a ui-sref="flows.detail.runs.run({runid: run.runid})" ng-if="type === 'FLOWS'">{{run.runid}}</a>
-          <a ui-sref="mapreduce.detail.runs.run({runid: run.runid})" ng-if="type === 'MAPREDUCE'">{{run.runid}}</a>
-          <a ui-sref="workflows.detail.runs.run({runid: run.runid})" ng-if="type === 'WORKFLOWS'">{{run.runid}}</a>
-          <a ui-sref="spark.detail.runs.run({runid: run.runid})" ng-if="type === 'SPARK'">{{run.runid}}</a>
-          <a ui-sref="worker.detail.runs.run({runid: run.runid})" ng-if="type === 'WORKER'">{{run.runid}}</a>
-          <span ng-if="type === 'SERVICES' || type === 'ADAPTERS'">{{run.runid}}</span>
-        </td>
-        <td> {{ (run.start * 1000) | date: 'medium'}}</td>
-        <td>
-          <span ng-show="run.end">{{ (run.end * 1000) | date: 'medium'}}</span>
-          <span ng-hide="run.end"> &mdash; </span>
+<div ng-if="runs.length > 0">
+  <div class="table-responsive">
+    <table class="table table-curved" cask-sortable>
+      <thead>
+        <tr ng-class="{'sort-enabled': runs.length > 1}">
+          <th data-predicate="runid"> Run ID </th>
+          <th data-predicate="start" data-predicate-default="reverse"> Start Time </th>
+          <th data-predicate="end"> End Time </th>
+          <th data-predicate="duration"> Duration </th>
+          <th> Status </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="run in runs | orderBy:sortable.predicate:sortable.reverse | myPaginate:currentPage">
+          <td>
+            <a ui-sref="flows.detail.runs.run({runid: run.runid})" ng-if="type === 'FLOWS'">{{run.runid}}</a>
+            <a ui-sref="mapreduce.detail.runs.run({runid: run.runid})" ng-if="type === 'MAPREDUCE'">{{run.runid}}</a>
+            <a ui-sref="workflows.detail.runs.run({runid: run.runid})" ng-if="type === 'WORKFLOWS'">{{run.runid}}</a>
+            <a ui-sref="spark.detail.runs.run({runid: run.runid})" ng-if="type === 'SPARK'">{{run.runid}}</a>
+            <a ui-sref="worker.detail.runs.run({runid: run.runid})" ng-if="type === 'WORKER'">{{run.runid}}</a>
+            <a ui-sref="services.detail.runs.run({runid: run.runid})" ng-if="type === 'SERVICES'">{{run.runid}}</a>
+
+            <span ng-if="type === 'ADAPTERS'">{{run.runid}}</span>
           </td>
-        <td>
-          <span ng-show="run.end"> {{ (run.end - run.start) * 1000  | amDurationFormat}}</span>
-          <span ng-hide="run.end"> &mdash; </span>
-        </td>
-        <td> {{run.status}}</td>
-      </tr>
-    </tbody>
-  </table>
+          <td> {{ (run.start * 1000) | date: 'medium'}}</td>
+          <td>
+            <span ng-show="run.end">{{ (run.end * 1000) | date: 'medium'}}</span>
+            <span ng-hide="run.end"> &mdash; </span>
+            </td>
+          <td>
+            <span ng-show="run.end"> {{ (run.end - run.start) * 1000  | amDurationFormat}}</span>
+            <span ng-hide="run.end"> &mdash; </span>
+          </td>
+          <td> {{run.status}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Switch to ng-if when we refactor to use controller as syntax -->
+  <div class="text-center" ng-show="runs.length > 10">
+    <pagination total-items="runs.length" ng-model="currentPage"></pagination>
+  </div>
 </div>
 
-<div ng-hide="runs.length > 0">
-  <div class="well well-lg text-center">
-    <div> No History so far.</div>
-  </div>
+<div ng-if="runs.length === 0"
+     class="well well-lg text-center">
+  <h3> No history so far.</h3>
 </div>

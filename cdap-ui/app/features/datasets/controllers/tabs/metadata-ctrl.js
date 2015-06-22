@@ -1,15 +1,21 @@
 angular.module(PKG.name + '.feature.datasets')
-  .controller('CdapDatasetMetadataController',
-    function($scope, MyDataSource, $state) {
+  .controller('DatasetMetadataController',
+    function($scope, $state, myExploreApi) {
 
-      var dataSrc = new MyDataSource($scope);
+      var datasetId = $state.params.datasetId;
+      datasetId = datasetId.replace(/[\.\-]/g, '_');
 
-      dataSrc.request({
-        _cdapNsPath: '/data/explore/tables/dataset_' + $state.params.datasetId + '/info'
-      })
-      .then(function(res) {
-        $scope.metadata = res;
-      });
+      var params = {
+        namespace: $state.params.namespace,
+        table: 'dataset_' + datasetId,
+        scope: $scope
+      };
+      this.metadata = {};
+      myExploreApi.getInfo(params)
+        .$promise
+        .then(function (res) {
+          this.metadata = res;
+        }.bind(this));
 
     }
   );

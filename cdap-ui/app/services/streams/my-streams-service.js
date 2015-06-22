@@ -22,10 +22,7 @@ angular.module(PKG.name + '.services')
     };
 
   })
-  .controller('FlowStreamDetailController', function($scope, MyDataSource) {
-
-    var dataSrc = new MyDataSource($scope);
-
+  .controller('FlowStreamDetailController', function($scope, myStreamApi, $state) {
 
     $scope.doInject = function () {
       if(!$scope.userInput) {
@@ -33,15 +30,15 @@ angular.module(PKG.name + '.services')
         return;
       }
 
-      dataSrc.request({
-        _cdapNsPath: '/streams/' + $scope.streamId,
-        method: 'POST',
-        body: $scope.userInput,
-        json: false
-      });
+      var params = {
+        namespace: $state.params.namespace,
+        streamId: $scope.streamId,
+        scope: $scope
+      };
+      myStreamApi.sendEvent(params, $scope.userInput);
+
       $scope.userInput = null;
     };
-
 
     $scope.dismiss = function() {
       $scope.$dismiss();

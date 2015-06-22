@@ -17,19 +17,21 @@
 package co.cask.cdap.test.internal;
 
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.ScheduleManager;
 import co.cask.cdap.test.WorkflowManager;
+import com.google.common.base.Throwables;
 
 import java.util.List;
 
 /**
  * A default implementation of {@link FlowManager}.
  */
-public class DefaultWorkflowManager extends AbstractProgramManager implements WorkflowManager {
+public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManager> implements WorkflowManager {
   private final AppFabricClient appFabricClient;
 
   public DefaultWorkflowManager(Id.Program programId, AppFabricClient appFabricClient,
@@ -53,12 +55,20 @@ public class DefaultWorkflowManager extends AbstractProgramManager implements Wo
     return new ScheduleManager() {
       @Override
       public void suspend() {
-        appFabricClient.suspend(programId.getNamespaceId(), programId.getApplicationId(), schedName);
+        try {
+          appFabricClient.suspend(programId.getNamespaceId(), programId.getApplicationId(), schedName);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
       }
 
       @Override
       public void resume() {
-        appFabricClient.resume(programId.getNamespaceId(), programId.getApplicationId(), schedName);
+        try {
+          appFabricClient.resume(programId.getNamespaceId(), programId.getApplicationId(), schedName);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
       }
 
       @Override

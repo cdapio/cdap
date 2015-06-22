@@ -19,7 +19,7 @@ angular.module(PKG.name + '.feature.workflows')
             highlightTab: 'development'
           },
           ncyBreadcrumb: {
-            parent: 'apps.detail.overview',
+            parent: 'apps.detail.overview.status',
             label: 'Workflows',
             skip: true
           },
@@ -42,8 +42,7 @@ angular.module(PKG.name + '.feature.workflows')
               return defer.promise;
             }
           },
-          templateUrl: '/assets/features/workflows/templates/detail.html',
-          controller: 'WorkflowsDetailController'
+          templateUrl: '/assets/features/workflows/templates/detail.html'
         })
 
           .state('workflows.detail.runs', {
@@ -56,7 +55,8 @@ angular.module(PKG.name + '.feature.workflows')
               label: '{{$state.params.programId}}'
             },
             templateUrl: '/assets/features/workflows/templates/tabs/runs.html',
-            controller: 'WorkflowsRunsController'
+            controller: 'WorkflowsRunsController',
+            controllerAs: 'RunsController'
           })
             .state('workflows.detail.runs.run', {
               url: '/:runid',
@@ -67,7 +67,8 @@ angular.module(PKG.name + '.feature.workflows')
               ncyBreadcrumb: {
                 label: '{{$state.params.runid}}'
               },
-              templateUrl: '/assets/features/workflows/templates/tabs/runs/run-detail.html'
+              templateUrl: '/assets/features/workflows/templates/tabs/runs/run-detail.html',
+              controller: 'WorkflowsRunsDetailController'
             })
 
           .state('workflows.detail.history', {
@@ -77,10 +78,12 @@ angular.module(PKG.name + '.feature.workflows')
               highlightTab: 'development'
             },
             ncyBreadcrumb: {
-              label: '{{$state.params.programId}}'
+              parent: 'workflows.detail.runs',
+              label: 'History'
             },
-            templateUrl: '/assets/features/workflows/templates/tabs/history.html',
-            controller: 'WorkflowsRunsController'
+            template: '<my-program-history data-runs="RunsController.runs" data-type="WORKFLOWS"></my-program-history>',
+            controller: 'WorkflowsRunsController',
+            controllerAs: 'RunsController'
           })
 
           .state('workflows.detail.schedules', {
@@ -90,9 +93,11 @@ angular.module(PKG.name + '.feature.workflows')
               highlightTab: 'development'
             },
             ncyBreadcrumb: {
-              label: 'Schedules'
+              label: 'Schedules',
+              parent: 'workflows.detail.runs'
             },
             templateUrl: '/assets/features/workflows/templates/tabs/schedules.html',
-            controller: 'WorkflowsSchedulesController'
+            controller: 'WorkflowsSchedulesController',
+            controllerAs: 'SchedulesController'
           });
   });

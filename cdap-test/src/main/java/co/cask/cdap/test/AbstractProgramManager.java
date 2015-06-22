@@ -17,20 +17,36 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.proto.Id;
+import com.google.common.collect.ImmutableMap;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
  * Abstract implementation of {@link ProgramManager} that includes common functionality for all implementations.
+ * @param <T> The type of ProgramManager
  */
-public abstract class AbstractProgramManager implements ProgramManager {
+public abstract class AbstractProgramManager<T extends ProgramManager> implements ProgramManager<T> {
   protected final Id.Program programId;
   private final ApplicationManager applicationManager;
 
   public AbstractProgramManager(Id.Program programId, ApplicationManager applicationManager) {
     this.applicationManager = applicationManager;
     this.programId = programId;
+  }
+
+  @Override
+  public T start() {
+    return start(ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  public T start(Map<String, String> arguments) {
+    applicationManager.startProgram(programId, arguments);
+    // this cast is fine as long as the derived classes extend AbstractProgramManager with the
+    // template (<T>) declared as its own class
+    return (T) this;
   }
 
   @Override

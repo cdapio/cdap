@@ -1,0 +1,10 @@
+- You can either build the example (as described `below <#building-an-example-application>`__) 
+  or use the pre-built JAR file included in the CDAP SDK (as described under 
+  `Deploying an Application <deploying-an-application>`__).
+- Start CDAP.
+- Deploy the application, as described below in `Running CDAP Applications`_\ .
+- Once the application has been deployed, you can start its components, as described in
+  general in `starting an application <#starting-an-application>`__, and detailed at the 
+  start of `running the example <#running-the-example>`__.
+- Once all components are started, `run the example <#running-the-example>`__.
+- When finished, you can `stop and remove the application <#stopping-and-removing-the-application>`__.

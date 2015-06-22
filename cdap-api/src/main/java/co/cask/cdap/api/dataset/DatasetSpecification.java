@@ -220,8 +220,8 @@ public final class DatasetSpecification {
     return Objects.toStringHelper(this)
       .add("name", name)
       .add("type", type)
-      .add("properties", Joiner.on(",").withKeyValueSeparator("=").join(properties))
-      .add("datasetSpecs", Joiner.on(",").withKeyValueSeparator("=").join(datasetSpecs))
+      .add("properties", properties == null ? null : Joiner.on(",").withKeyValueSeparator("=").join(properties))
+      .add("datasetSpecs", datasetSpecs == null ? null : Joiner.on(",").withKeyValueSeparator("=").join(datasetSpecs))
       .toString();
   }
 

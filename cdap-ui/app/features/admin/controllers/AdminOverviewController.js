@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('AdminOverviewController', function ($scope, $state, myNamespace, MyDataSource, myLocalStorage, MY_CONFIG) {
+  .controller('AdminOverviewController', function ($scope, $state, myNamespace, MyDataSource, myLocalStorage, MY_CONFIG, myStreamApi, myDatasetApi) {
     var dataSrc = new MyDataSource($scope),
         PREFKEY = 'feature.admin.overview.welcomeIsHidden';
 
@@ -28,6 +28,7 @@ angular.module(PKG.name + '.feature.admin')
             .then(function (data) {
               namespace.datasetsCount = data.length;
             });
+
           getStreams(namespace)
             .then(function (streams) {
               namespace.streamsCount = streams.length;
@@ -42,14 +43,18 @@ angular.module(PKG.name + '.feature.admin')
     }
 
     function getDatasets (namespace) {
-      return dataSrc.request({
-        _cdapPath: '/namespaces/' + namespace.name + '/data/datasets'
-      });
+      var params = {
+        namespace: namespace.name,
+        scope: $scope
+      };
+      return myDatasetApi.list(params).$promise;
     }
 
     function getStreams (namespace) {
-      return dataSrc.request({
-        _cdapPath: '/namespaces/' + namespace.name + '/streams'
-      });
+      var params = {
+        namespace: namespace.name,
+        scope: $scope
+      };
+      return myStreamApi.list(params).$promise;
     }
   });

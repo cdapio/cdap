@@ -21,6 +21,7 @@ import co.cask.cdap.client.MetricsClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.ServiceManager;
@@ -32,19 +33,19 @@ import java.util.concurrent.TimeUnit;
 /**
  * Remote implementation of {@link ServiceManager}.
  */
-public class RemoteServiceManager extends AbstractProgramManager implements ServiceManager {
+public class RemoteServiceManager extends AbstractProgramManager<ServiceManager> implements ServiceManager {
   private final MetricsClient metricsClient;
   private final ProgramClient programClient;
   private final ServiceClient serviceClient;
 
-  public RemoteServiceManager(Id.Program programId, ClientConfig clientConfig,
+  public RemoteServiceManager(Id.Program programId, ClientConfig clientConfig, RESTClient restClient,
                               RemoteApplicationManager remoteApplicationManager) {
     super(programId, remoteApplicationManager);
     ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig).build();
     namespacedClientConfig.setNamespace(programId.getNamespace());
-    this.metricsClient = new MetricsClient(namespacedClientConfig);
-    this.programClient = new ProgramClient(namespacedClientConfig);
-    this.serviceClient = new ServiceClient(namespacedClientConfig);
+    this.metricsClient = new MetricsClient(namespacedClientConfig, restClient);
+    this.programClient = new ProgramClient(namespacedClientConfig, restClient);
+    this.serviceClient = new ServiceClient(namespacedClientConfig, restClient);
   }
 
   @Override

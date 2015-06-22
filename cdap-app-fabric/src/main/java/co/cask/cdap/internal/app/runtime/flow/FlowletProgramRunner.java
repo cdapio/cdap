@@ -33,7 +33,7 @@ import co.cask.cdap.api.flow.flowlet.InputContext;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
@@ -243,7 +243,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       List<ConsumerSupplier<?>> consumerSuppliers = queueConsumerSupplierBuilder.build();
 
       // Create the flowlet driver
-      AtomicReference<FlowletProgramController> controllerRef = new AtomicReference<FlowletProgramController>();
+      AtomicReference<FlowletProgramController> controllerRef = new AtomicReference<>();
       Service serviceHook = createServiceHook(flowletName, consumerSuppliers, controllerRef);
       FlowletRuntimeService driver = new FlowletRuntimeService(flowlet, flowletContext, processSpecs,
                                                              createCallback(flowlet, flowletDef.getFlowletSpec()),
@@ -455,15 +455,15 @@ public final class FlowletProgramRunner implements ProgramRunner {
           }
 
           // create a metric collector for this queue, and also one for each consumer flowlet
-          final MetricsCollector metrics = flowletContext.getProgramMetrics()
-            .childCollector(Constants.Metrics.Tag.FLOWLET_QUEUE, outputName);
-          final MetricsCollector producerMetrics = metrics.childCollector(
+          final MetricsContext metrics = flowletContext.getProgramMetrics()
+            .childContext(Constants.Metrics.Tag.FLOWLET_QUEUE, outputName);
+          final MetricsContext producerMetrics = metrics.childContext(
             Constants.Metrics.Tag.PRODUCER, flowletContext.getFlowletId());
-          final Iterable<MetricsCollector> consumerMetrics =
-            Iterables.transform(consumerFlowlets, new Function<String, MetricsCollector>() {
+          final Iterable<MetricsContext> consumerMetrics =
+            Iterables.transform(consumerFlowlets, new Function<String, MetricsContext>() {
               @Override
-              public MetricsCollector apply(String consumer) {
-                return producerMetrics.childCollector(
+              public MetricsContext apply(String consumer) {
+                return producerMetrics.childContext(
                   Constants.Metrics.Tag.CONSUMER, consumer);
               }});
 
@@ -472,7 +472,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
             @Override
             public void emitEnqueue(int count) {
               metrics.increment("process.events.out", count);
-              for (MetricsCollector collector : consumerMetrics) {
+              for (MetricsContext collector : consumerMetrics) {
                 collector.increment("queue.pending", count);
               }
             }
@@ -482,7 +482,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
             }
           });
           producerBuilder.add(producerSupplier);
-          return new DatumOutputEmitter<T>(producerSupplier, schema, datumWriterFactory.create(type, schema));
+          return new DatumOutputEmitter<>(producerSupplier, schema, datumWriterFactory.create(type, schema));
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
@@ -566,14 +566,14 @@ public final class FlowletProgramRunner implements ProgramRunner {
         if (!inputNames.isEmpty() && queueReaders.isEmpty()) {
           return null;
         }
-        return new ProcessSpecification<T>(new RoundRobinQueueReader<T>(queueReaders), method, tickAnnotation);
+        return new ProcessSpecification<>(new RoundRobinQueueReader<>(queueReaders), method, tickAnnotation);
       }
     };
   }
 
   private <T> Function<ByteBuffer, T> createInputDatumDecoder(final TypeToken<T> dataType, final Schema schema,
                                                               final SchemaCache schemaCache) {
-    final ReflectionDatumReader<T> datumReader = new ReflectionDatumReader<T>(schema, dataType);
+    final ReflectionDatumReader<T> datumReader = new ReflectionDatumReader<>(schema, dataType);
     final ByteBufferInputStream byteBufferInput = new ByteBufferInputStream(null);
     final BinaryDecoder decoder = new BinaryDecoder(byteBufferInput);
 
@@ -608,7 +608,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     final String eventsMetricsName = "process.events.in";
     final String queue = queueName.getSimpleName();
     final ImmutablePair<String, String> producerAndQueue = producerName == null ? null :
-      new ImmutablePair<String, String>(producerName, queue);
+      new ImmutablePair<>(producerName, queue);
     return new Function<S, T>() {
       @Override
       public T apply(S source) {

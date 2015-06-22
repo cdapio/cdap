@@ -1,47 +1,53 @@
 angular.module(PKG.name + '.feature.explore')
-  .controller('GlobalExploreController', function ($scope, MyDataSource, $state, myHelpers, EventPipe) {
+  .controller('GlobalExploreController', function ($scope, $state, EventPipe, myExploreApi) {
 
-    var dataSrc = new MyDataSource($scope);
+    this.activeTab = 0;
 
-    $scope.activeTab = 0;
+    this.activePanel = [0];
+    this.openGeneral = true;
+    this.openSchema = false;
+    this.openPartition = false;
 
-    $scope.activePanel = [0];
-    $scope.openGeneral = true;
-    $scope.openSchema = false;
-    $scope.openPartition = false;
+    this.dataList = []; // combined datasets and streams
 
-    $scope.dataList = []; // combined datasets and streams
+    var params = {
+      namespace: $state.params.namespace,
+      scope: $scope
+    };
 
-    dataSrc.request({
-      _cdapNsPath: '/data/explore/tables'
-    }).then(function(res) {
-      angular.forEach(res, function(v) {
-        var split = v.table.split('_');
-        v.type = split[0];
-        v.name = split[1];
-      });
+    myExploreApi.list(params)
+      .$promise
+      .then(function (res) {
+        angular.forEach(res, function(v) {
+          var split = v.table.split('_');
+          v.type = split[0];
+          split.splice(0,1); // removing the data type from the array
+          v.name = split.join('_');
+        });
 
-      $scope.dataList = res;
-      $scope.selectTable(res[0]);
-    });
+        this.dataList = res;
+        this.selectTable(res[0]);
+      }.bind(this));
 
     EventPipe.on('explore.newQuery', function() {
-      if ($scope.activePanel.indexOf(1) === -1) {
-        $scope.activePanel = [0,1];
+      if (this.activePanel.indexOf(1) === -1) {
+        this.activePanel = [0,1];
       }
-    });
+    }.bind(this));
 
-    $scope.selectTable = function (data) {
+    this.selectTable = function (data) {
       // Passing this info to sql-query directive
-      $scope.type = data.type;
-      $scope.name = data.name;
+      this.type = data.type;
+      this.name = data.name;
+
+      params.table = data.table;
 
       // Fetching info of the table
-      dataSrc.request({
-        _cdapNsPath: '/data/explore/tables/' + data.table + '/info'
-      }).then(function (res) {
-        $scope.selectedInfo = res;
-      });
+      myExploreApi.getInfo(params)
+        .$promise
+        .then(function (res) {
+          this.selectedInfo = res;
+        }.bind(this));
 
     };
 

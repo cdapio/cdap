@@ -18,6 +18,7 @@ package co.cask.cdap.test.remote;
 
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.WorkerManager;
@@ -27,15 +28,15 @@ import com.google.common.base.Throwables;
 /**
  * Remote implementation of {@link WorkerManager}
  */
-public class RemoteWorkerManager extends AbstractProgramManager implements WorkerManager {
+public class RemoteWorkerManager extends AbstractProgramManager<WorkerManager> implements WorkerManager {
   private final ProgramClient programClient;
 
-  public RemoteWorkerManager(Id.Program programId, ClientConfig clientConfig,
+  public RemoteWorkerManager(Id.Program programId, ClientConfig clientConfig, RESTClient restClient,
                              RemoteApplicationManager applicationManager) {
     super(programId, applicationManager);
     ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig).build();
     namespacedClientConfig.setNamespace(programId.getNamespace());
-    this.programClient = new ProgramClient(namespacedClientConfig);
+    this.programClient = new ProgramClient(namespacedClientConfig, restClient);
   }
 
   @Override

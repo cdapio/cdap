@@ -19,7 +19,6 @@ package co.cask.cdap.data2.util.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.proto.Id;
@@ -254,7 +253,7 @@ public abstract class HBaseTableUtil {
     final Hasher hasher = Hashing.md5().newHasher();
     final byte[] buffer = new byte[COPY_BUFFER_SIZE];
 
-    final Map<String, URL> dependentClasses = new HashMap<String, URL>();
+    final Map<String, URL> dependentClasses = new HashMap<>();
     for (Class<? extends Coprocessor> clz : classes) {
       Dependencies.findClassDependencies(clz.getClassLoader(), new Dependencies.ClassAcceptor() {
         @Override

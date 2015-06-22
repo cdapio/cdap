@@ -5,9 +5,9 @@ angular.module(PKG.name + '.feature.streams')
 
     var dataSrc = new MyDataSource($scope);
 
-    $scope.streamId = '';
+    this.streamId = '';
 
-    $scope.createStream = function() {
+    this.createStream = function() {
       dataSrc
         .request({
           _cdapNsPath: '/streams/' + $scope.streamId,
@@ -16,13 +16,12 @@ angular.module(PKG.name + '.feature.streams')
         .then(function(res) {
           $modalInstance.close(res);
         }, function(err) {
-          $scope.error = err;
-        });
+          this.error = err;
+        }.bind(this));
     };
 
-    $scope.closeModal = function() {
+    this.closeModal = function() {
       $modalInstance.close();
-
     };
 
   });

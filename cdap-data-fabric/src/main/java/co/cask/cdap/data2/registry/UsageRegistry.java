@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.registry;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -55,11 +56,14 @@ public class UsageRegistry {
       @Override
       public UsageDatasetIterable get() {
         try {
-          UsageDataset usageDataset = DatasetsUtil.getOrCreateDataset(datasetFramework,
-                                                                      USAGE_INSTANCE_ID,
-                                                                      UsageDataset.class.getSimpleName(),
-                                                                      DatasetProperties.EMPTY, null, null);
-          return new UsageDatasetIterable(usageDataset);
+          Object usageDataset = DatasetsUtil.getOrCreateDataset(datasetFramework, USAGE_INSTANCE_ID,
+                                                                UsageDataset.class.getSimpleName(),
+                                                                DatasetProperties.EMPTY, null, null);
+          // Backward compatible check for version <= 3.0.0
+          if (usageDataset instanceof UsageDataset) {
+            return new UsageDatasetIterable((UsageDataset) usageDataset);
+          }
+          return new UsageDatasetIterable(new UsageDataset((Table) usageDataset));
         } catch (Exception e) {
           LOG.error("Failed to access usage table", e);
           throw Throwables.propagate(e);

@@ -88,20 +88,11 @@ public final class ScheduleTaskRunner {
 
     // Schedule properties are overriden by resolved preferences
     userArgs.putAll(spec.getProperties());
-    userArgs.putAll(propertiesResolver.getUserProperties(programId, programType));
+    userArgs.putAll(propertiesResolver.getUserProperties(programId));
 
-    systemArgs.putAll(propertiesResolver.getSystemProperties(programId, programType));
+    systemArgs.putAll(propertiesResolver.getSystemProperties(programId));
     systemArgs.putAll(systemOverrides);
 
-    boolean runMultipleProgramInstances =
-      Boolean.parseBoolean(userArgs.get(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED));
-
-    if (!runMultipleProgramInstances) {
-      ProgramRuntimeService.RuntimeInfo existingInfo = lifecycleService.findRuntimeInfo(programId, programType);
-      if (existingInfo != null) {
-        throw new TaskExecutionException(UserMessages.getMessage(UserErrors.ALREADY_RUNNING), false);
-      }
-    }
     return execute(programId, programType, systemArgs, userArgs);
   }
 
@@ -114,7 +105,7 @@ public final class ScheduleTaskRunner {
                                       Map<String, String> userArgs) throws IOException, TaskExecutionException {
     ProgramRuntimeService.RuntimeInfo runtimeInfo;
     try {
-      runtimeInfo = lifecycleService.start(id, type, sysArgs, userArgs, false);
+      runtimeInfo = lifecycleService.start(id, sysArgs, userArgs, false);
     } catch (ProgramNotFoundException e) {
       throw new TaskExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), e, false);
     }

@@ -17,6 +17,7 @@ package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventData;
+import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.file.FileWriters;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
@@ -121,7 +122,7 @@ public final class ConcurrentStreamWriter implements Closeable {
    * @throws IllegalArgumentException If the stream doesn't exists
    */
   public void enqueue(Id.Stream streamId,
-                      Map<String, String> headers, ByteBuffer body) throws IOException {
+                      Map<String, String> headers, ByteBuffer body) throws IOException, NotFoundException {
     EventQueue eventQueue = getEventQueue(streamId);
     WriteRequest writeRequest = eventQueue.append(headers, body);
     persistUntilCompleted(streamId, eventQueue, writeRequest);
@@ -135,7 +136,8 @@ public final class ConcurrentStreamWriter implements Closeable {
    * @throws IOException if failed to write to stream
    * @throws IllegalArgumentException If the stream doesn't exists
    */
-  public void enqueue(Id.Stream streamId, Iterator<? extends StreamEventData> events) throws IOException {
+  public void enqueue(Id.Stream streamId,
+                      Iterator<? extends StreamEventData> events) throws IOException, NotFoundException {
     EventQueue eventQueue = getEventQueue(streamId);
     WriteRequest writeRequest = eventQueue.append(events);
     persistUntilCompleted(streamId, eventQueue, writeRequest);
@@ -153,7 +155,8 @@ public final class ConcurrentStreamWriter implements Closeable {
    * @throws IllegalArgumentException If the stream doesn't exists
    */
   public void asyncEnqueue(final Id.Stream streamId,
-                           Map<String, String> headers, ByteBuffer body, Executor executor) throws IOException {
+                           Map<String, String> headers, ByteBuffer body,
+                           Executor executor) throws IOException, NotFoundException {
     // Put the event to the queue first and then execute the write asynchronously
     final EventQueue eventQueue = getEventQueue(streamId);
     final WriteRequest writeRequest = eventQueue.append(headers, body);
@@ -182,7 +185,7 @@ public final class ConcurrentStreamWriter implements Closeable {
    */
   public void appendFile(Id.Stream streamId,
                          Location eventFile, Location indexFile, long eventCount,
-                         TimestampCloseable timestampCloseable) throws IOException {
+                         TimestampCloseable timestampCloseable) throws IOException, NotFoundException {
     EventQueue eventQueue = getEventQueue(streamId);
     StreamConfig config = streamAdmin.getConfig(streamId);
     while (!eventQueue.tryAppendFile(config, eventFile, indexFile, eventCount, timestampCloseable)) {
@@ -205,7 +208,7 @@ public final class ConcurrentStreamWriter implements Closeable {
     }
   }
 
-  private EventQueue getEventQueue(Id.Stream streamId) throws IOException {
+  private EventQueue getEventQueue(Id.Stream streamId) throws IOException, NotFoundException {
     EventQueue eventQueue = eventQueues.get(streamId);
     if (eventQueue != null) {
       return eventQueue;
@@ -220,7 +223,7 @@ public final class ConcurrentStreamWriter implements Closeable {
       }
 
       if (!streamAdmin.exists(streamId)) {
-        throw new IllegalArgumentException("Stream not exists");
+        throw new NotFoundException(streamId);
       }
       StreamUtils.ensureExists(streamAdmin, streamId);
 
@@ -233,9 +236,9 @@ public final class ConcurrentStreamWriter implements Closeable {
 
       return eventQueue;
 
+    } catch (NotFoundException | IOException e) {
+      throw e;
     } catch (Exception e) {
-      Throwables.propagateIfInstanceOf(e, IllegalArgumentException.class);
-      Throwables.propagateIfInstanceOf(e, IOException.class);
       throw new IOException(e);
     } finally {
       createLock.unlock();
@@ -374,7 +377,7 @@ public final class ConcurrentStreamWriter implements Closeable {
     EventQueue(Id.Stream streamId, StreamMetricsCollectorFactory.StreamMetricsCollector metricsCollector) {
       this.streamId = streamId;
       this.streamEvent = new MutableStreamEvent();
-      this.queue = new ConcurrentLinkedQueue<WriteRequest>();
+      this.queue = new ConcurrentLinkedQueue<>();
       this.writerFlag = new AtomicBoolean(false);
       this.metrics = new WriteRequest.Metrics();
       this.metricsCollector = metricsCollector;

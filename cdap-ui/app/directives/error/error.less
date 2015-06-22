@@ -1,3 +1,5 @@
+@import "../../styles/variables.less";
+
 my-error {
   .error-button {
     margin-top: 10px;
@@ -32,6 +34,12 @@ my-error {
       overflow-wrap: break-word;
       padding: 10px;
       margin: 10px 0 10px 10px;
+      max-height: 250px;
+      overflow-y: auto;
+
+      .badge {
+        background-color: @brand-danger;
+      }
     }
 
     .row {

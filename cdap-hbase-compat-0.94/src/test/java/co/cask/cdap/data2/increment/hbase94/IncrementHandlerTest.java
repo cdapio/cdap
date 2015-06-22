@@ -154,7 +154,7 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
      */
     @Override
     public void put(Put put) throws IOException {
-      region.batchMutate(new Pair[]{ new Pair<Mutation, Integer>(put, null) });
+      region.batchMutate(new Pair[]{ new Pair<>(put, null) });
     }
 
     @Override
@@ -172,7 +172,7 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
       }
       RegionScanner rs = region.getScanner(scan);
       try {
-        List<KeyValue> tmpResults = new ArrayList<KeyValue>();
+        List<KeyValue> tmpResults = new ArrayList<>();
         boolean hasMore = rs.next(tmpResults);
         for (KeyValue cell : tmpResults) {
           results.add(convertCell(cell));

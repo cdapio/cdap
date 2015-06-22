@@ -44,7 +44,7 @@ advantages of using CDAP include:
 1. **Integrated Framework:**
    CDAP provides an integrated platform that makes it easy to create all the functions of Big Data
    applications: collecting, processing, storing, and querying data. Data can be collected and stored in
-   both structured and unstructured forms, processed in real-time and in batch, and results can be made
+   both structured and unstructured forms, processed in real time and in batch, and results can be made
    available for retrieval, visualization, and further analysis.
 
 #. **Simple APIs:**
@@ -84,7 +84,7 @@ in your environment; we recommend the Oracle JDK.
 
 .. rubric:: What Version of Node.JS is Required by CDAP?
 
-The version of Node.js must be from |node-js-version|.
+The version of Node.js must be from |node-js-version|; we recommend |recommended-node-js-version|.
 
 
 Hadoop

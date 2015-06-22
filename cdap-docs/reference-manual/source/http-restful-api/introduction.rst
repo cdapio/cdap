@@ -17,7 +17,7 @@ Conventions
 ============
 
 In this API, *client* refers to an external application that is calling CDAP using the HTTP interface.
-*Application* refers to a user Application that has been deployed into CDAP.
+*application* refers to a user application that has been deployed into CDAP.
 
 .. rubric:: Base URL
 
@@ -61,7 +61,7 @@ Text that are variables that you are to replace is indicated by a series of angl
 
   PUT <base-url>/namespaces/<namespace>/streams/<new-stream-id>
 
-indicates that—in addition to the ``<base-url>``—text such as ``<namespace>`` and
+indicates that |---| in addition to the ``<base-url>`` |---| text such as ``<namespace>`` and
 ``<new-stream-id>`` are variables and that you are to replace them with your values,
 perhaps in this case *default* and *mystream*::
 

@@ -52,10 +52,10 @@ import javax.annotation.Nullable;
 public class TimePartitionedFileSetDatasetAvroSink extends
   BatchSink<StructuredRecord, AvroKey<GenericRecord>, NullWritable> {
 
-  private static final String SCHEMA_DESC = "The schema of the record";
+  private static final String SCHEMA_DESC = "The avro schema of the record being written to the Sink as a JSON Object";
   private static final String TPFS_NAME_DESC = "Name of the Time Partitioned FileSet Dataset to which the records " +
-    "have to be written";
-  private static final String BASE_PATH_DESC = "The base path for the time partitioned fileset. Defaults to the " +
+    "have to be written. If it doesn't exist, it will be created";
+  private static final String BASE_PATH_DESC = "Base path for the time partitioned fileset. Defaults to the " +
     "name of the dataset";
   private final StructuredToAvroTransformer recordTransformer = new StructuredToAvroTransformer();
 
@@ -111,7 +111,7 @@ public class TimePartitionedFileSetDatasetAvroSink extends
   @Override
   public void transform(StructuredRecord input,
                         Emitter<KeyValue<AvroKey<GenericRecord>, NullWritable>> emitter) throws Exception {
-    emitter.emit(new KeyValue<AvroKey<GenericRecord>, NullWritable>(
-      new AvroKey<GenericRecord>(recordTransformer.transform(input)), NullWritable.get()));
+    emitter.emit(new KeyValue<>(
+      new AvroKey<>(recordTransformer.transform(input)), NullWritable.get()));
   }
 }

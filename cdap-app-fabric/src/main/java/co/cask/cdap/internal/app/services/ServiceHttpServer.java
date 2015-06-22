@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
@@ -123,7 +123,7 @@ public class ServiceHttpServer extends AbstractIdleService {
 
     this.contextFactory = createHttpServiceContextFactory();
     this.handlerReferences = Maps.newConcurrentMap();
-    this.handlerReferenceQueue = new ReferenceQueue<Supplier<HandlerContextPair>>();
+    this.handlerReferenceQueue = new ReferenceQueue<>();
 
     constructNettyHttpService(runId, metricsCollectionService);
   }
@@ -297,7 +297,7 @@ public class ServiceHttpServer extends AbstractIdleService {
                                                   Iterable<HandlerDelegatorContext> delegatorContexts,
                                                   MetricsCollectionService metricsCollectionService) {
     // Create HttpHandlers which delegate to the HttpServiceHandlers
-    MetricsCollector collector =
+    MetricsContext collector =
       getMetricCollector(metricsCollectionService, program, runId.getId());
     HttpHandlerFactory factory = new HttpHandlerFactory(pathPrefix, collector);
     List<HttpHandler> nettyHttpHandlers = Lists.newArrayList();
@@ -312,7 +312,7 @@ public class ServiceHttpServer extends AbstractIdleService {
       .build();
   }
 
-  private static MetricsCollector getMetricCollector(MetricsCollectionService service, Program program, String runId) {
+  private static MetricsContext getMetricCollector(MetricsCollectionService service, Program program, String runId) {
     if (service == null) {
       return null;
     }
@@ -320,7 +320,7 @@ public class ServiceHttpServer extends AbstractIdleService {
     // todo: use proper service instance id. For now we have to emit smth for test framework's waitFor metric to work
     tags.put(Constants.Metrics.Tag.INSTANCE_ID, "0");
 
-    return service.getCollector(tags);
+    return service.getContext(tags);
   }
 
   /**
@@ -368,7 +368,7 @@ public class ServiceHttpServer extends AbstractIdleService {
                                     BasicHttpServiceContextFactory contextFactory) {
       this.handlerType = handlerType;
       this.instantiatorFactory = instantiatorFactory;
-      this.handlerThreadLocal = new ThreadLocal<Supplier<HandlerContextPair>>();
+      this.handlerThreadLocal = new ThreadLocal<>();
       this.spec = spec;
       this.contextFactory = contextFactory;
     }
@@ -411,7 +411,7 @@ public class ServiceHttpServer extends AbstractIdleService {
       // (in the handlerReferences map), it won't block GC of the supplier instance.
       // We can use the weak reference, which retrieved through polling the ReferenceQueue,
       // to get back the handler and call destroy() on it.
-      handlerReferences.put(new WeakReference<Supplier<HandlerContextPair>>(supplier, handlerReferenceQueue),
+      handlerReferences.put(new WeakReference<>(supplier, handlerReferenceQueue),
                             handlerContextPair);
       handlerThreadLocal.set(supplier);
       return handlerContextPair;

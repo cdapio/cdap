@@ -179,6 +179,7 @@ public class ProjectionTransform extends Transform<StructuredRecord, StructuredR
     if (inputSchema.isNullable()) {
       if (val == null) {
         builder.set(fieldName, null);
+        return;
       }
       inputType = inputSchema.getNonNullable().getType();
       outputType = outputSchema.getNonNullable().getType();

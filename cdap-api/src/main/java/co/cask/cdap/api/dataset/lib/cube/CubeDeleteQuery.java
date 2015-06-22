@@ -50,7 +50,7 @@ public class CubeDeleteQuery {
     this.endTs = endTs;
     this.resolution = resolution;
     this.measureNames = measureNames;
-    this.dimensionValues = Collections.unmodifiableMap(new HashMap<String, String>(dimensionValues));
+    this.dimensionValues = Collections.unmodifiableMap(new HashMap<>(dimensionValues));
   }
 
 

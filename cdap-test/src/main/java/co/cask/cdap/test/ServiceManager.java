@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Managing the running Service in an application.
  */
-public interface ServiceManager extends ProgramManager {
+public interface ServiceManager extends ProgramManager<ServiceManager> {
   /**
    * Changes the number of instances.
    *

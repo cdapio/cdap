@@ -2,6 +2,15 @@
 
 my-flow-graph {
 
+  .diagram-container {
+    border: 1px solid @table-border-color;
+    background-color: @table-bg;
+
+    .btn-group {
+      margin: 15px;
+    }
+  }
+
   text {
     font-weight: 300;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
@@ -79,6 +88,22 @@ my-flow-graph {
 
 my-workflow-graph {
 
+  .diagram-container {
+    border: 1px solid @table-border-color;
+    background-color: @table-bg;
+    border-radius: 4px;
+
+    .btn-group {
+      margin: 15px;
+    }
+  }
+
+  marker {
+    path {
+      fill: @cdap-darkness;
+    }
+  }
+
   text {
     font-weight: 300;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
@@ -105,6 +130,24 @@ my-workflow-graph {
     stroke: @cdap-darkness;
     stroke-width: 5px;
     cursor: pointer;
+
+    &.running {
+      stroke: @brand-success;
+    }
+
+    &.completed, &.failed {
+      + .label text {
+        fill: white;
+      }
+    }
+
+    &.completed {
+      fill: @brand-success;
+    }
+
+    &.failed {
+      fill: @brand-danger;
+    }
   }
 
   .end-svg, .start-svg {
@@ -119,8 +162,10 @@ my-workflow-graph {
   .end-svg { fill: @brand-danger; }
 
   .conditional-svg {
-    fill: @cdap-darkness;
+    fill: white;
     cursor: pointer;
+    stroke: @cdap-orange;
+    stroke-width: 5px;
   }
 
   .job-events {

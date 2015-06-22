@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceConfigurer;
 import co.cask.cdap.api.service.ServiceSpecification;
@@ -136,12 +136,12 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   }
 
   private <T extends HttpServiceHandler> HttpHandler createHttpHandler(T handler) {
-    MetricsCollector noOpsMetricsCollector =
-      new NoOpMetricsCollectionService().getCollector(new HashMap<String, String>());
-    HttpHandlerFactory factory = new HttpHandlerFactory("", noOpsMetricsCollector);
+    MetricsContext noOpsMetricsContext =
+      new NoOpMetricsCollectionService().getContext(new HashMap<String, String>());
+    HttpHandlerFactory factory = new HttpHandlerFactory("", noOpsMetricsContext);
     @SuppressWarnings("unchecked")
     TypeToken<T> type = (TypeToken<T>) TypeToken.of(handler.getClass());
-    return factory.createHttpHandler(type, new VerificationDelegateContext<T>(handler));
+    return factory.createHttpHandler(type, new VerificationDelegateContext<>(handler));
   }
 
   private static final class VerificationDelegateContext<T extends HttpServiceHandler> implements DelegatorContext<T> {

@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.exception.StreamNotFoundException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.StreamManager;
@@ -39,10 +40,10 @@ public class RemoteStreamManager implements StreamManager {
   private final StreamClient streamClient;
   private final String streamName;
 
-  public RemoteStreamManager(ClientConfig clientConfig, Id.Stream streamId) {
+  public RemoteStreamManager(ClientConfig clientConfig, RESTClient restClient, Id.Stream streamId) {
     ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig).build();
     namespacedClientConfig.setNamespace(streamId.getNamespace());
-    this.streamClient = new StreamClient(namespacedClientConfig);
+    this.streamClient = new StreamClient(namespacedClientConfig, restClient);
     this.streamName = streamId.getId();
   }
 
@@ -123,6 +124,11 @@ public class RemoteStreamManager implements StreamManager {
 
   @Override
   public List<StreamEvent> getEvents(long startTime, long endTime, int limit) throws IOException {
+    return getEvents(String.valueOf(startTime), String.valueOf(endTime), limit);
+  }
+
+  @Override
+  public List<StreamEvent> getEvents(String startTime, String endTime, int limit) throws IOException {
     List<StreamEvent> results = Lists.newArrayList();
     try {
       streamClient.getEvents(streamName, startTime, endTime, limit, results);

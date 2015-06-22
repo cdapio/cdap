@@ -1,0 +1,61 @@
+<div class="panel panel-default">
+  <div class="panel-heading clearfix">
+
+    <div class="row">
+      <div class="col-md-10 col-sm-9 col-xs-12">
+        <div class="panel-title adapter-name-label adapter-canvas-container">
+          <span class="icon-app"></span>
+          <span ng-if="AdapterCreateController.model.metadata.name.length">
+            {{AdapterCreateController.model.metadata.name}}
+          </span>
+        </div>
+      </div>
+
+      <div class="col-md-2 col-sm-3 col-xs-12">
+        <div class="btn-group btn-group-justified" role="group">
+          <div class="btn-group" role="group">
+            <button type="button"
+                    class="btn btn-default"
+                    ng-click="AdapterCreateController.saveAsDraft()">
+              Draft
+            </button>
+          </div>
+          <div class="btn-group" role="group">
+            <button type="button"
+                    class="btn btn-success"
+                    ng-click="AdapterCreateController.publish()">
+                Publish
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div class="panel-body">
+    <div class="row">
+      <div class="col-xs-12">
+        <tabset type="tabs slanted-tabs">
+          <tab ng-repeat="tab in AdapterCreateController.tabs" active="tab.active">
+            <tab-heading>
+              <span class="fa {{tab.icon}}"></span>
+              <span ng-if="tab.title.length > 10"
+                    tooltip="{{tab.title}}">{{tab.title |  myEllipsis: 10}}
+              </span>
+              <span ng-if="tab.title.length <= 10" >{{tab.title |  myEllipsis: 10}}</span>
+              <a href=""
+                 ng-if="tab.isCloseable !== false"
+                 ng-click="AdapterCreateController.closeTab($index)"
+              >
+                <i class="fa fa-times-circle"></i>
+              </a>
+            </tab-heading>
+            <div ng-init="transform = tab.transform; tabIndex = $index;"
+                  ng-include="tab.partial">
+            </div>
+          </tab>
+        </tabset>
+      </div>
+    </div>
+  </div>
+</div>

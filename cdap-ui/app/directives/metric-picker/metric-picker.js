@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .directive('myMetricPicker', function (MyDataSource, $stateParams, $log, myHelpers) {
+  .directive('myMetricPicker', function (MyDataSource, $stateParams, $log, MyMetricsQueryHelper) {
 
     var dSrc = new MyDataSource();
 
@@ -85,7 +85,7 @@ angular.module(PKG.name + '.commons')
 
             if(!output) { // should never happen, except on directive playground
               output = 'default';
-              $log.warn('metric-picker using default namespace as context!');
+              $log.warn('metric-picker using default namespace as context');
             }
 
           }
@@ -97,31 +97,24 @@ angular.module(PKG.name + '.commons')
           var context = getBaseContext(),
               bLen = context.length + 1;
 
-          context += '.' + scope.metric.context;
-
-          // The idea is to only search for further tags, once the current tag is completely written.
-          // Otherwise, the search will be made with an incomplete tags, and the return list will be empty.
-          var lastChar = context.slice(-1);
-          if (lastChar != '.') {
-            return;
+          if(scope.metric.context) {
+            context += '.' + scope.metric.context;
           }
-          var contextWithoutTrailingDot = context.substr(0, context.length - 1);
-          var parts = contextWithoutTrailingDot.split('.');
+          var parts = context.split('.');
           if (parts.length % 2 !== 0) {
             return;
           }
 
-          var tagQueryParams = myHelpers.tagsToParams(myHelpers.contextToTags(contextWithoutTrailingDot));
+          var tagQueryParams = MyMetricsQueryHelper.tagsToParams(MyMetricsQueryHelper.contextToTags(context));
           scope.available.contexts = [];
           dSrc.request(
             {
               method: 'POST',
-              _cdapPath: '/metrics/search?target=tag' +
-                '&' + tagQueryParams
+              _cdapPath: '/metrics/search?target=tag&' + tagQueryParams
             },
             function (res) {
               res = res.map(function(v) {
-                return context + myHelpers.tagToContext(v);
+                return context + '.' +  MyMetricsQueryHelper.tagToContext(v);
               });
               scope.available.contexts = res.map(function(d){
                 return {

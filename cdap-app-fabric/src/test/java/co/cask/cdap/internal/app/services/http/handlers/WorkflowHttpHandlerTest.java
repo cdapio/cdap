@@ -303,6 +303,11 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     verifyProgramRuns(programId, "completed");
 
     waitState(programId, "STOPPED");
+
+    suspendWorkflow(programId, runId, 404);
+
+    resumeWorkflow(programId, runId, 404);
+
   }
 
   @Category(XSlowTests.class)
@@ -328,12 +333,9 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
                                            concurrentWorkflowName);
 
 
-    Map<String, String> propMap = ImmutableMap.of(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED, "true",
-                                                           "concurrentWorkflowSchedule1.file",
-                                                           schedule1File.getAbsolutePath(),
-                                                           "concurrentWorkflowSchedule2.file",
-                                                           schedule2File.getAbsolutePath(),
-                                                           "done.file", simpleActionDoneFile.getAbsolutePath());
+    Map<String, String> propMap = ImmutableMap.of("concurrentWorkflowSchedule1.file", schedule1File.getAbsolutePath(),
+                                                  "concurrentWorkflowSchedule2.file", schedule2File.getAbsolutePath(),
+                                                  "done.file", simpleActionDoneFile.getAbsolutePath());
 
     PreferencesStore store = getInjector().getInstance(PreferencesStore.class);
     store.setProperties(defaultNamespace, appWithConcurrentWorkflow, ProgramType.WORKFLOW.getCategoryName(),
@@ -856,25 +858,69 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
   public void testWorkflowRuns() throws Exception {
     String appName = "WorkflowAppWithErrorRuns";
     String workflowName = "WorkflowWithErrorRuns";
-    String sampleSchedule = "SampleSchedule";
 
     HttpResponse response = deploy(WorkflowAppWithErrorRuns.class, Constants.Gateway.API_VERSION_3_TOKEN,
                                    TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, sampleSchedule));
-
     Id.Program programId = Id.Program.from(TEST_NAMESPACE2, appName, ProgramType.WORKFLOW, workflowName);
 
+    // Test the "KILLED" state of the Workflow.
+    File instance1File = new File(tmpFolder.newFolder() + "/instance1.file");
+    File instance2File = new File(tmpFolder.newFolder() + "/instance2.file");
+    File doneFile = new File(tmpFolder.newFolder() + "/done.file");
+
+    // Start the first Workflow run.
+    Map<String, String> propertyMap = ImmutableMap.of("simple.action.file", instance1File.getAbsolutePath(),
+                                                      "simple.action.donefile", doneFile.getAbsolutePath());
+    startProgram(programId, propertyMap);
+
+    // Start another Workflow run.
+    propertyMap = ImmutableMap.of("simple.action.file", instance2File.getAbsolutePath(),
+                                  "simple.action.donefile", doneFile.getAbsolutePath());
+    startProgram(programId, propertyMap);
+
+    // Wait till the execution of actions in both Workflow runs is started.
+    while (!(instance1File.exists() && instance2File.exists())) {
+      TimeUnit.MILLISECONDS.sleep(50);
+    }
+
+    // Verify that there are two runs of the Workflow currently running.
+    List<RunRecord> historyRuns = getProgramRuns(programId, "running");
+    Assert.assertTrue(historyRuns.size() == 2);
+
+    // Stop both Workflow runs.
+    String runId = historyRuns.get(0).getPid();
+    stopProgram(programId, 200, runId);
+    runId = historyRuns.get(1).getPid();
+    stopProgram(programId, 200, runId);
+
+    // Verify both runs should be marked "KILLED".
+    verifyProgramRuns(programId, "killed", 1);
+
+    // Test the "COMPLETE" state of the Workflow.
+    File instanceFile = new File(tmpFolder.newFolder() + "/instance.file");
+    propertyMap = ImmutableMap.of("simple.action.file", instanceFile.getAbsolutePath(),
+                                  "simple.action.donefile", doneFile.getAbsolutePath());
+    startProgram(programId, propertyMap);
+    while (!instanceFile.exists()) {
+      TimeUnit.MILLISECONDS.sleep(50);
+    }
+    // Verify that currently only one run of the Workflow should be running.
+    historyRuns = getProgramRuns(programId, "running");
+    Assert.assertTrue(historyRuns.size() == 1);
+
+    doneFile.createNewFile();
+
+    // Verify that Workflow should move to "COMPLETED" state.
     verifyProgramRuns(programId, "completed");
 
-    Map<String, String> propMap = ImmutableMap.of("ThrowError", "true");
-    PreferencesStore store = getInjector().getInstance(PreferencesStore.class);
-    store.setProperties(TEST_NAMESPACE2, appName, ProgramType.WORKFLOW.getCategoryName(), workflowName, propMap);
+    // Test the "FAILED" state of the program.
+    propertyMap = ImmutableMap.of("ThrowError", "true");
+    startProgram(programId, propertyMap);
 
+    // Verify that the Workflow should be marked as "FAILED".
     verifyProgramRuns(programId, "failed");
-
-    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName, sampleSchedule));
   }
 
   private String createConditionInput(String folderName, int numGoodRecords, int numBadRecords) throws IOException {

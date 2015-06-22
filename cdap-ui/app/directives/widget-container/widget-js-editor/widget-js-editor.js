@@ -14,30 +14,9 @@ angular.module(PKG.name + '.commons')
           workerPath: '/assets/bundle/ace-editor-worker-scripts',
           mode: 'javascript',
           useWrapMode: true,
-          newLineMode: 'unix',
-          onLoad: aceLoaded
+          newLineMode: 'unix'
         };
 
-        function aceLoaded(editor) {
-          togglePlaceHolder();
-
-          function togglePlaceHolder() {
-            var shouldShow = !editor.session.getValue().length;
-            var node = editor.renderer.emptyMessageNode;
-            if (!shouldShow && node) {
-                editor.renderer.scroller.removeChild(editor.renderer.emptyMessageNode);
-                editor.renderer.emptyMessageNode = null;
-            } else if (shouldShow && !node) {
-                node = editor.renderer.emptyMessageNode = document.createElement("div");
-                node.textContent = myHelpers.objectQuery($scope, 'config', 'properties', 'default');
-                node.className = "ace_invisible ace_emptyMessage";
-                node.style.padding = "0 5px";
-                editor.renderer.scroller.appendChild(node);
-            }
-          }
-
-          editor.on("input", togglePlaceHolder);
-        }
       }
     };
   });

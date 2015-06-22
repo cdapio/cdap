@@ -52,7 +52,6 @@ angular.module(PKG.name + '.feature.admin')
           _cdapPath: path
         }).then(function (res) {
           var arr = [];
-          console.log('res', res);
           angular.forEach(res, function(v, k) {
             arr.push({
               key: k,
@@ -98,7 +97,7 @@ angular.module(PKG.name + '.feature.admin')
         })
         .then(function() {
           $alert({
-            content: 'Your preferences have been successfully saved!',
+            content: 'Your preferences have been successfully saved',
             type: 'success'
           });
           $scope.loadProperties();

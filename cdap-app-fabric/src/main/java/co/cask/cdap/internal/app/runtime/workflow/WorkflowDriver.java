@@ -90,7 +90,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final WorkflowSpecification workflowSpec;
   private final long logicalStartTime;
   private final ProgramWorkflowRunnerFactory workflowProgramRunnerFactory;
-  private final Map<String, WorkflowActionNode> status = new ConcurrentHashMap<String, WorkflowActionNode>();
+  private final Map<String, WorkflowActionNode> status = new ConcurrentHashMap<>();
   private final LoggingContext loggingContext;
   private NettyHttpService httpService;
   private volatile Thread runningThread;
@@ -249,7 +249,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                            final WorkflowToken token) throws Exception {
     ExecutorService executorService = Executors.newFixedThreadPool(fork.getBranches().size());
     CompletionService<Map.Entry<String, WorkflowToken>> completionService =
-      new ExecutorCompletionService<Map.Entry<String, WorkflowToken>>(executorService);
+      new ExecutorCompletionService<>(executorService);
 
     try {
       for (final List<WorkflowNode> branch : fork.getBranches()) {

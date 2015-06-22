@@ -6,9 +6,9 @@
 .. _http-restful-api-namespace:
 .. _http-restful-api-v3-namespace:
 
-===========================================================
+==========================
 Namespace HTTP RESTful API
-===========================================================
+==========================
 
 .. highlight:: console
 
@@ -81,7 +81,7 @@ This will return a JSON String map that lists each namespace with its name and d
    {"name":"demo_namespace","description":"My Demo Namespace","config":{"scheduler.queue.name":"demo"}]
 
 Details of a Namespace
----------------------------------
+----------------------
 
 For detailed information on a specific namespace, use::
 
@@ -144,7 +144,7 @@ for when you `Create a Namespace`_.
    * - ``config``
      - Configuration properties, with a JSON map of name-value pairs. Currently, the only
        supported configuration property is ``scheduler.queue.name``: 
-       :ref:`Scheduler queue <resource-guarantees>` for CDAP Programs and Explore Queries in the namespace.
+       :ref:`Scheduler queue <resource-guarantees>` for CDAP programs and *Explore Queries* in the namespace.
     
 .. rubric:: HTTP Responses
 .. list-table::

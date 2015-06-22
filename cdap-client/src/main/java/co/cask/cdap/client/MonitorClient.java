@@ -138,6 +138,20 @@ public class MonitorClient {
   }
 
   /**
+   * @return true if all system services' status is 'OK'; false otherwise
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public boolean allSystemServicesOk() throws IOException, UnauthorizedException {
+    for (String status : getAllSystemServiceStatus().values()) {
+      if (!"OK".equals(status)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
    * Sets the number of instances the system service is running on.
    *
    * @param serviceName name of the system service

@@ -20,6 +20,7 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.ScheduleClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -33,17 +34,17 @@ import java.util.List;
 /**
  * Remote implementation of {@link WorkflowManager}.
  */
-public class RemoteWorkflowManager extends AbstractProgramManager implements WorkflowManager {
+public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManager> implements WorkflowManager {
   private final ScheduleClient scheduleClient;
   private final ProgramClient programClient;
 
-  public RemoteWorkflowManager(Id.Program programId, ClientConfig clientConfig,
+  public RemoteWorkflowManager(Id.Program programId, ClientConfig clientConfig, RESTClient restClient,
                                RemoteApplicationManager applicationManager) {
     super(programId, applicationManager);
     ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig).build();
     namespacedClientConfig.setNamespace(programId.getNamespace());
-    this.programClient = new ProgramClient(namespacedClientConfig);
-    this.scheduleClient = new ScheduleClient(namespacedClientConfig);
+    this.programClient = new ProgramClient(namespacedClientConfig, restClient);
+    this.scheduleClient = new ScheduleClient(namespacedClientConfig, restClient);
   }
 
   @Override

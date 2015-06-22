@@ -19,9 +19,6 @@ package co.cask.cdap.internal.app.deploy.pipeline.adapter;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.internal.app.runtime.adapter.ApplicationTemplateInfo;
 import co.cask.cdap.proto.AdapterConfig;
-import org.apache.twill.filesystem.Location;
-
-import java.io.File;
 
 /**
  * Contains information needed for deployment of adapters.

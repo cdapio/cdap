@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.test.internal.AppFabricTestHelper;
+import co.cask.cdap.internal.AppFabricTestHelper;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;

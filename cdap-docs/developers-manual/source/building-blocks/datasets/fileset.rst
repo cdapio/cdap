@@ -10,12 +10,12 @@ FileSet Dataset
 
 .. highlight:: java
 
-While realtime programs such as Flows normally require datasets with random access, batch-oriented
+While real-time programs such as flows normally require datasets with random access, batch-oriented
 programming paradigms such as MapReduce are more suitable for data that can be read and written sequentially.
 The most prominent form of such data is an HDFS file, and MapReduce is highly optimized for such files.
-CDAP's abstraction for files is the FileSet Dataset.
+CDAP's abstraction for files is the *FileSet* dataset.
 
-A FileSet represents a set of files on the file system that share certain properties:
+A *FileSet* represents a set of files on the file system that share certain properties:
 
 - The location in the file system. All files in a FileSet are located relative to a
   base path, which is created when the FileSet is created. Deleting the
@@ -31,12 +31,10 @@ A FileSet represents a set of files on the file system that share certain proper
   into the Hadoop configuration by the CDAP runtime system.
 
 These properties are configured at the time the FileSet is created. They apply to all
-files in the Dataset. Every time you use a FileSet in your application code, you can
-address either the entire Dataset or, by specifying its relative path as a runtime argument,
-an individual file in the Dataset. Specifying an individual file is only supported for
+files in the dataset. Every time you use a FileSet in your application code, you can
+address either the entire dataset or, by specifying its relative path as a runtime argument,
+an individual file in the dataset. Specifying an individual file is only supported for
 MapReduce programs.
-
-Support for FileSet datasets is experimental in CDAP 2.6.0.
 
 Creating a FileSet
 ==================
@@ -74,7 +72,7 @@ to use this as the input for a MapReduce program; similarly, for the output form
 Using a FileSet in MapReduce
 ============================
 
-Using a FileSet as input or output of a MapReduce program is the same as for any other Dataset::
+Using a FileSet as input or output of a MapReduce program is the same as for any other dataset::
 
   public class WordCount extends AbstractMapReduce {
 
@@ -86,7 +84,7 @@ Using a FileSet as input or output of a MapReduce program is the same as for any
     ...
 
 The MapReduce program only needs to specify the names of the input and output datasets.
-Whether they are FileSets or another type of Dataset is handled by the CDAP runtime system.
+Whether they are FileSets or another type of dataset is handled by the CDAP runtime system.
 
 However, you do need to tell CDAP the relative paths of the input and output files. Currently,
 this is only possible by specifying them as runtime arguments when the MapReduce program is started::
@@ -129,6 +127,12 @@ See the Apache™ Twill®
 `API documentation <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__
 for additional information about the ``Location`` abstraction.
 
+Exploring FileSets
+==================
+
+A file set can be explored with ad-hoc queries if you enable it at creation time;
+this is described under :ref:`fileset-exploration`.
+
 ==================
 PartitionedFileSet
 ==================
@@ -140,7 +144,7 @@ the month into each file name, and share that convention across all applications
 Yet that can become tedious to manage, especially if the naming convention should ever change |---| then all
 applications would have to be changed simultaneously for proper functioning.
 
-The PartitionedFileSet Dataset relieves applications from understanding file name conventions. Instead,
+The PartitionedFileSet dataset relieves applications from understanding file name conventions. Instead,
 it associates a partition key with every file; for example the year and month associated with that file.
 Because different files cannot have the same partition key, this allows applications to address the
 data uniquely through its partition keys, or more broadly through conditions over the partition keys.
@@ -169,8 +173,8 @@ configuration, similar to FileSets. However, the partitioning has to be given as
 
 This creates a new PartitionedFileSet named *results*. Similar to FileSets, it specifies ``TextInputFormat`` and
 ``TextOutputFormat.``; for the output format, we specify that the separator between fields is a comma.
-The difference to a FileSet is that this Dataset is partitioned by league and season. This means that every file
-added to this Dataset must have a partitioning key with a unique combination of league and season.
+The difference to a FileSet is that this dataset is partitioned by league and season. This means that every file
+added to this dataset must have a partitioning key with a unique combination of league and season.
 
 Reading and Writing PartitionedFileSets
 =======================================
@@ -328,7 +332,8 @@ format::
 
 You need to specify the SerDe, the input format, the output format, and any additional properties
 any of these may need as table properties. This is an experimental feature and only tested for
-Avro; see the :ref:`StreamConversion <examples-stream-conversion>` example for more details.
+Avro; see the :ref:`StreamConversion <examples-stream-conversion>` example and
+the :ref:`fileset-exploration` for more details.
 
 ======================
 TimePartitionedFileSet
@@ -387,3 +392,10 @@ the MapReduce through a RESTful call::
 
 Note that the values for these times are milliseconds since the Epoch; the two times in this example represent
 the midnight time of January 1st, 2015 and February 1st, 2015.
+
+Exploring TimePartitionedFileSets
+=================================
+
+A time-partitioned file set can be explored with ad-hoc queries if you enable it at creation time,
+similar to a FileSet, as described under :ref:`fileset-exploration`.
+

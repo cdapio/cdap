@@ -21,6 +21,6 @@ import co.cask.cdap.api.spark.Spark;
 /**
  * Instance for this class is for managing a running {@link Spark}.
  */
-public interface SparkManager extends ProgramManager {
+public interface SparkManager extends ProgramManager<SparkManager> {
 
 }

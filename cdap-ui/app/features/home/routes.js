@@ -1,5 +1,10 @@
 angular.module(PKG.name+'.feature.home')
-  .config(function ($stateProvider, $urlRouterProvider) {
+  .config(function ($stateProvider, $urlRouterProvider, $urlMatcherFactoryProvider) {
+
+    /**
+     * Ignores trailing slash
+     */
+    $urlMatcherFactoryProvider.strictMode(false);
 
     /**
      * Redirects and Otherwise
@@ -18,7 +23,7 @@ angular.module(PKG.name+'.feature.home')
       .state('home', {
         url: '/',
         templateUrl: '/assets/features/home/home.html',
-        onEnter: function(MY_CONFIG, myAuth, $state, myLoadingService) {
+        onEnter: function(MY_CONFIG, myAuth, $state, myLoadingService, myAuth) {
           if (!MY_CONFIG.securityEnabled) {
             // Skip even the login view. Don't show login if security is disabled.
             myAuth.login({username:'admin'})
@@ -26,6 +31,12 @@ angular.module(PKG.name+'.feature.home')
                 myLoadingService.showLoadingIcon();
                 $state.go('overview');
               });
+          } else {
+            if (myAuth.isAuthenticated) {
+              $state.go('overview');
+            } else {
+              $state.go('login');
+            }
           }
         }
       })
@@ -39,45 +50,7 @@ angular.module(PKG.name+'.feature.home')
             return myNamespace.getList();
           }
         },
-        controller: function ($state, rNsList, mySessionStorage, myLoadingService, myAlert, $filter) {
-          // check that $state.params.namespace is valid
-          var n = rNsList.filter(function (one) {
-            return one.name === $state.params.namespace;
-          });
-
-
-          var PREFKEY = 'feature.home.ns.latest';
-
-          if(!n.length) {
-            mySessionStorage.get(PREFKEY)
-              .then(function (latest) {
-
-                var def = $filter('filter')(rNsList, {name: 'default'}, true);
-
-                if (def.length === 0) {
-                  def = rNsList[0];
-                  myAlert({
-                    title: 'Cannot find default namespace',
-                    content: 'Reverting to ' + def.name + ' namespace.'
-                  });
-                } else {
-                  def = def[0];
-                }
-
-                var defaultNs = latest || def.name;
-                console.warn('invalid namespace, defaulting to', defaultNs);
-                $state.go(
-                  $state.current,
-                  { namespace: defaultNs },
-                  { reload: true }
-                );
-              });
-          }
-          else {
-            mySessionStorage.set(PREFKEY, $state.params.namespace);
-          }
-          myLoadingService.hideLoadingIcon();
-        }
+        controller: 'HomeController'
       })
 
       .state('404', {

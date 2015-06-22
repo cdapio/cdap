@@ -21,7 +21,7 @@ import co.cask.cdap.api.metrics.RuntimeMetrics;
 /**
  * Instance for this class is for managing a running {@link co.cask.cdap.api.flow.Flow Flow}.
  */
-public interface FlowManager extends ProgramManager {
+public interface FlowManager extends ProgramManager<FlowManager> {
 
   /**
    * Changes the number of flowlet instances.

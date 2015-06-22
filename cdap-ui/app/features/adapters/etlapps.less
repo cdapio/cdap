@@ -13,6 +13,9 @@ body.theme-cdap.state-adapters {
     outline: none;
   }
   .fa-plus-square { color: @cdap-header; }
+  .fa-info-circle {
+    color: @brand-primary;
+  }
   .control-label { color: @cdap-header; }
   .text-success { color: @brand-success; }
   .text-danger { color: @brand-danger; }
@@ -67,12 +70,27 @@ body.theme-cdap.state-adapters-create {
         }
       }
       .template {
+        cursor: pointer;
         &.plugin-added {
           background-color: @selected-plugin-bg;
+          &.plugin-invalid {
+            background-color: @brand-danger;
+          }
+          &:hover {
+            background-color: #5a84e4;
+            color: black;
+          }
         }
         &.transforms {
           .plugin-added {
             background-color: @selected-plugin-bg;
+            &.plugin-invalid {
+              background-color: @brand-danger;
+            }
+            &:hover {
+              background-color: #5a84e4;
+              color: black;
+            }
           }
           .fa-times {
             position: relative;
@@ -102,6 +120,28 @@ body.theme-cdap.state-adapters-create {
 
 }
 body.theme-cdap.state-adapters-create {
+
+  [create-adapter-container] {
+    white-space: nowrap;
+    h2 {
+      margin: 0;
+    }
+
+    .btn.btn-default {
+      width: 100%;
+    }
+
+    &.row {
+      margin-bottom: 5px;
+    }
+  }
+
+  .adapter-name-label {
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    text-overflow: ellipsis;
+  }
 
   .tab-pane .panel-default {
     .panel-heading > span.panel-title { line-height: 30px; }
@@ -150,6 +190,8 @@ body.theme-cdap.state-adapters-create {
             border: 0;
             border-bottom: 1px solid lightgray;
             background-color: transparent;
+            cursor: pointer;
+
             &:last-child { border: 1px solid transparent; }
 
             .description-overflow {
@@ -158,6 +200,13 @@ body.theme-cdap.state-adapters-create {
               text-overflow: ellipsis;
               color: darkgray;
               font-size: 11px;
+            }
+          }
+          li.list-group-item:hover {
+            background-color: #5a84e4;
+            .fa-info-circle { color: white; }
+            .description-overflow {
+              color: black;
             }
           }
         }
@@ -174,6 +223,11 @@ body.theme-cdap.state-adapters-create {
       cursor: pointer;
       .btn { border: 0; }
     }
+  }
+
+  .fa-asterisk {
+    font-size: 9px;
+    color: @brand-danger;
   }
 
   [plugin-property-edit-view] {

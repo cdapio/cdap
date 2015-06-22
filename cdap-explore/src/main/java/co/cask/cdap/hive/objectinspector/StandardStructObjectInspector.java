@@ -118,7 +118,7 @@ public class StandardStructObjectInspector extends
     assert (structFieldComments == null ||
             (structFieldNames.size() == structFieldComments.size()));
 
-    fields = new ArrayList<MyField>(structFieldNames.size());
+    fields = new ArrayList<>(structFieldNames.size());
     for (int i = 0; i < structFieldNames.size(); i++) {
       fields.add(new MyField(i, structFieldNames.get(i),
           structFieldObjectInspectors.get(i),
@@ -131,7 +131,7 @@ public class StandardStructObjectInspector extends
   }
 
   protected void init(List<StructField> fields) {
-    this.fields = new ArrayList<MyField>(fields.size());
+    this.fields = new ArrayList<>(fields.size());
     for (int i = 0; i < fields.size(); i++) {
       this.fields.add(new MyField(i, fields.get(i).getFieldName(), fields
           .get(i).getFieldObjectInspector()));
@@ -211,7 +211,7 @@ public class StandardStructObjectInspector extends
   // SettableStructObjectInspector
   @Override
   public Object create() {
-    ArrayList<Object> a = new ArrayList<Object>(fields.size());
+    ArrayList<Object> a = new ArrayList<>(fields.size());
     for (int i = 0; i < fields.size(); i++) {
       a.add(null);
     }

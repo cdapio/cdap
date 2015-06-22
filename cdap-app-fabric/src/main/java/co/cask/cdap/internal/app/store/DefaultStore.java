@@ -25,7 +25,6 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
@@ -137,7 +136,7 @@ public class DefaultStore implements Store {
 
   @Nullable
   @Override
-  public Program loadProgram(final Id.Program id, ProgramType type) throws IOException {
+  public Program loadProgram(final Id.Program id) throws IOException {
     ApplicationMeta appMeta = txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, ApplicationMeta>() {
       @Override
       public ApplicationMeta apply(AppMds mds) throws Exception {
@@ -149,7 +148,7 @@ public class DefaultStore implements Store {
       return null;
     }
 
-    Location programLocation = getProgramLocation(id, type);
+    Location programLocation = getProgramLocation(id);
     // I guess this can happen when app is being deployed at the moment... todo: should be prevented by framework
     Preconditions.checkArgument(appMeta.getLastUpdateTs() >= programLocation.lastModified(),
                                 "Newer program update time than the specification update time. " +
@@ -387,7 +386,7 @@ public class DefaultStore implements Store {
       public FlowSpecification apply(AppMds mds) throws Exception {
         ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
         ApplicationSpecification newAppSpec = updateFlowletInstancesInAppSpec(appSpec, id, flowletId, count);
-        replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.FLOW);
+        replaceAppSpecInProgramJar(id, newAppSpec);
 
         mds.apps.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);
         return appSpec.getFlows().get(id.getId());
@@ -430,7 +429,7 @@ public class DefaultStore implements Store {
                                                                        workerSpec.getResources(),
                                                                        instances);
         ApplicationSpecification newAppSpec = replaceWorkerInAppSpec(appSpec, id, newSpecification);
-        replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.WORKER);
+        replaceAppSpecInProgramJar(id, newAppSpec);
         mds.apps.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);
         return null;
       }
@@ -457,7 +456,7 @@ public class DefaultStore implements Store {
                                                serviceSpec.getResources(), instances);
 
         ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getId(), serviceSpec);
-        replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.SERVICE);
+        replaceAppSpecInProgramJar(id, newAppSpec);
 
         mds.apps.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);
         return null;
@@ -647,7 +646,7 @@ public class DefaultStore implements Store {
         FlowletDefinition newFlowletDef = new FlowletDefinition(flowletDef, oldValue, newValue);
         ApplicationSpecification newAppSpec = replaceInAppSpec(appSpec, flow, flowSpec, newFlowletDef, conns);
 
-        replaceAppSpecInProgramJar(flow, newAppSpec, ProgramType.FLOW);
+        replaceAppSpecInProgramJar(flow, newAppSpec);
 
         Id.Application app = flow.getApplication();
         mds.apps.updateAppSpec(app.getNamespaceId(), app.getId(), newAppSpec);
@@ -675,9 +674,7 @@ public class DefaultStore implements Store {
           scheduleName + "' already exists.");
         schedules.put(scheduleSpecification.getSchedule().getName(), scheduleSpecification);
         ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
-        // TODO: double check this ProgramType.valueOf()
-        replaceAppSpecInProgramJar(program, newAppSpec,
-                                   ProgramType.valueOf(scheduleSpecification.getProgram().getProgramType().name()));
+        replaceAppSpecInProgramJar(program, newAppSpec);
         mds.apps.updateAppSpec(program.getNamespaceId(), program.getApplicationId(), newAppSpec);
         return null;
       }
@@ -685,8 +682,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void deleteSchedule(final Id.Program program, final SchedulableProgramType programType,
-                             final String scheduleName) {
+  public void deleteSchedule(final Id.Program program, final String scheduleName) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
@@ -701,8 +697,7 @@ public class DefaultStore implements Store {
         }
 
         ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
-        // TODO: double check this ProgramType.valueOf()
-        replaceAppSpecInProgramJar(program, newAppSpec, ProgramType.valueOf(programType.name()));
+        replaceAppSpecInProgramJar(program, newAppSpec);
         mds.apps.updateAppSpec(program.getNamespaceId(), program.getApplicationId(), newAppSpec);
         return null;
       }
@@ -726,7 +721,7 @@ public class DefaultStore implements Store {
 
 
   @Override
-  public boolean programExists(final Id.Program id, final ProgramType type) {
+  public boolean programExists(final Id.Program id) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Boolean>() {
       @Override
       public Boolean apply(AppMds mds) throws Exception {
@@ -736,6 +731,7 @@ public class DefaultStore implements Store {
         }
         ProgramSpecification programSpecification = null;
         try {
+          ProgramType type = id.getType();
           if (type == ProgramType.FLOW) {
             programSpecification = getFlowSpecOrFail(id, appSpec);
           } else if (type == ProgramType.SERVICE) {
@@ -936,10 +932,10 @@ public class DefaultStore implements Store {
    * @return The {@link Location} of the given program.
    * @throws RuntimeException if program can't be found.
    */
-  private Location getProgramLocation(Id.Program id, ProgramType type) throws IOException {
+  private Location getProgramLocation(Id.Program id) throws IOException {
     String appFabricOutputDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
                                                   System.getProperty("java.io.tmpdir"));
-    return Programs.programLocation(namespacedLocationFactory, appFabricOutputDir, id, type);
+    return Programs.programLocation(namespacedLocationFactory, appFabricOutputDir, id);
   }
 
   private ApplicationSpecification getApplicationSpec(AppMds mds, Id.Application id) {
@@ -972,9 +968,9 @@ public class DefaultStore implements Store {
     }
   }
 
-  private void replaceAppSpecInProgramJar(Id.Program id, ApplicationSpecification appSpec, ProgramType type) {
+  private void replaceAppSpecInProgramJar(Id.Program id, ApplicationSpecification appSpec) {
     try {
-      Location programLocation = getProgramLocation(id, type);
+      Location programLocation = getProgramLocation(id);
       ArchiveBundler bundler = new ArchiveBundler(programLocation);
 
       Program program = Programs.create(programLocation);
@@ -982,7 +978,7 @@ public class DefaultStore implements Store {
 
       Location tmpProgramLocation = programLocation.getTempFile("");
       try {
-        ProgramBundle.create(id.getApplication(), bundler, tmpProgramLocation, id.getId(), className, type, appSpec);
+        ProgramBundle.create(id, bundler, tmpProgramLocation, className, appSpec);
 
         Location movedTo = tmpProgramLocation.renameTo(programLocation);
         if (movedTo == null) {

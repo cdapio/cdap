@@ -29,12 +29,14 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 
+import com.google.common.collect.Sets;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 
@@ -103,7 +105,8 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     Assert.assertEquals(0, runRecords.size());
 
     // Lets fix it
-    programLifecycleService.validateAndCorrectRunningRunRecords(ProgramType.FLOW);
+    Set<String> processedInvalidRunRecordIds = Sets.newHashSet();
+    programLifecycleService.validateAndCorrectRunningRunRecords(ProgramType.FLOW, processedInvalidRunRecordIds);
 
     // Verify there is one FAILED run record for the application
     runRecords = getProgramRuns(wordcountFlow1, ProgramRunStatus.FAILED.toString());

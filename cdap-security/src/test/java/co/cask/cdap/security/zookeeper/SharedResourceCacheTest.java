@@ -88,7 +88,7 @@ public class SharedResourceCacheTest {
     ZKClientService zkClient1 = injector1.getInstance(ZKClientService.class);
     zkClient1.startAndWait();
     SharedResourceCache<String> cache1 =
-      new SharedResourceCache<String>(zkClient1, new StringCodec(), parentZNode, acls);
+      new SharedResourceCache<>(zkClient1, new StringCodec(), parentZNode, acls);
     cache1.init();
 
     // add items to one and wait for them to show up in the second
@@ -99,7 +99,7 @@ public class SharedResourceCacheTest {
     ZKClientService zkClient2 = injector2.getInstance(ZKClientService.class);
     zkClient2.startAndWait();
     SharedResourceCache<String> cache2 =
-      new SharedResourceCache<String>(zkClient2, new StringCodec(), parentZNode, acls);
+      new SharedResourceCache<>(zkClient2, new StringCodec(), parentZNode, acls);
     cache2.init();
 
     waitForEntry(cache2, key1, value1, 10000);

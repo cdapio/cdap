@@ -132,7 +132,7 @@ public class ArgumentParser {
   private static Map<String, String> parseOptional(List<String> splitInput, String pattern) {
     ImmutableMap.Builder<String, String> args = ImmutableMap.builder();
 
-    List<String> copyInput = new ArrayList<String>(splitInput);
+    List<String> copyInput = new ArrayList<>(splitInput);
     List<String> splitPattern = Parser.parsePattern(pattern);
 
     while (!splitPattern.isEmpty()) {

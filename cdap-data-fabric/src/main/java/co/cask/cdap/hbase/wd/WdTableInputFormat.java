@@ -55,7 +55,7 @@ public class WdTableInputFormat extends TableInputFormat {
 
   @Override
   public List<InputSplit> getSplits(JobContext context) throws IOException {
-    List<InputSplit> allSplits = new ArrayList<InputSplit>();
+    List<InputSplit> allSplits = new ArrayList<>();
     Scan originalScan = getScan();
 
     Scan[] scans = rowKeyDistributor.getDistributedScans(originalScan);

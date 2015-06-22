@@ -1,46 +1,39 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsFlowletDetailController', function($state, $scope, MyDataSource, myHelpers) {
+  .controller('FlowsFlowletDetailController', function($state, $scope, myHelpers, myFlowsApi) {
 
-    var dataSrc = new MyDataSource($scope);
-    $scope.activeTab = 0;
-    var flowletid = $scope.$parent.activeFlowlet.name;
+    this.activeTab = 0;
+    var flowletid = $scope.FlowletsController.activeFlowlet.name;
 
-    // Initialize
-    dataSrc
-      .request({
-        _cdapNsPath: '/apps/' + $state.params.appId+  '/flows/' + $state.params.programId
-      })
+    var params = {
+      namespace: $state.params.namespace,
+      appId: $state.params.appId,
+      flowId: $state.params.programId,
+      scope: $scope
+    };
+
+    myFlowsApi.get(params)
+      .$promise
       .then(function (res) {
-        $scope.description = myHelpers.objectQuery(res, 'flowlets', flowletid, 'flowletSpec', 'description');
+        this.description = myHelpers.objectQuery(res, 'flowlets', flowletid, 'flowletSpec', 'description');
+      }.bind(this));
 
-      });
+    params.flowletId = flowletid;
 
-    dataSrc
-      .request({
-        _cdapNsPath: '/apps/' + $state.params.appId+  '/flows/' + $state.params.programId + '/flowlets/' + flowletid + '/instances'
-      })
+    myFlowsApi.getFlowletInstance(params)
+      .$promise
       .then(function (res){
-        $scope.provisionedInstances = res.instances;
-        $scope.instance = res.instances;
-      });
+        this.provisionedInstances = res.instances;
+        this.instance = res.instances;
+      }.bind(this));
 
-    dataSrc
-      .poll({
-        _cdapNsPath: '/apps/' + $state.params.appId+  '/flows/' + $state.params.programId + '/flowlets/' + flowletid + '/instances'
-      }, function(res) {
-        $scope.provisionedInstances = res.instances;
-      });
+    myFlowsApi.pollFlowletInstance(params)
+      .$promise
+      .then(function (res) {
+        this.provisionedInstances = res.instances;
+      }.bind(this));
 
-
-    $scope.setInstance = function () {
-      dataSrc
-        .request({
-          _cdapNsPath: '/apps/' + $state.params.appId+  '/flows/' + $state.params.programId + '/flowlets/' + flowletid + '/instances',
-          method: 'PUT',
-          body: {
-            'instances': $scope.instance
-          }
-        });
+    this.setInstance = function () {
+      myFlowsApi.setFlowletInstance(params, { 'instances': this.instance });
     };
 
   });

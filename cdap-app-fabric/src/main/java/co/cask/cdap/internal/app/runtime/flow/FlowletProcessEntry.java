@@ -46,11 +46,11 @@ final class FlowletProcessEntry<T> implements Comparable<FlowletProcessEntry> {
   private long currentBackOff = BACKOFF_MIN;
 
   static <T> FlowletProcessEntry<T> create(ProcessSpecification<T> processSpec) {
-    return new FlowletProcessEntry<T>(processSpec, null, processSpec.getInitialCallDelay());
+    return new FlowletProcessEntry<>(processSpec, null, processSpec.getInitialCallDelay());
   }
 
   static <T> FlowletProcessEntry<T> create(ProcessSpecification<T> processSpec, ProcessSpecification<T> retrySpec) {
-    return new FlowletProcessEntry<T>(processSpec, retrySpec, 0);
+    return new FlowletProcessEntry<>(processSpec, retrySpec, 0);
   }
 
   private FlowletProcessEntry(ProcessSpecification<T> processSpec, ProcessSpecification<T> retrySpec, long nextDeque) {
@@ -99,7 +99,7 @@ final class FlowletProcessEntry<T> implements Comparable<FlowletProcessEntry> {
   }
 
   public FlowletProcessEntry<T> resetRetry() {
-    return retrySpec == null ? this : new FlowletProcessEntry<T>(processSpec, null, processSpec.getCallDelay());
+    return retrySpec == null ? this : new FlowletProcessEntry<>(processSpec, null, processSpec.getCallDelay());
   }
 
   public boolean isTick() {

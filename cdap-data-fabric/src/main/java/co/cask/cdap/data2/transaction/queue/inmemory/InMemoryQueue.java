@@ -42,7 +42,7 @@ public class InMemoryQueue {
 
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryQueue.class);
 
-  private final ConcurrentNavigableMap<Key, Item> entries = new ConcurrentSkipListMap<Key, Item>();
+  private final ConcurrentNavigableMap<Key, Item> entries = new ConcurrentSkipListMap<>();
 
   public void clear() {
     entries.clear();

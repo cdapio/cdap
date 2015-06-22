@@ -27,8 +27,8 @@ angular.module(PKG.name + '.feature.adapters')
           params: {
             data: null
           },
+          controller: 'AdapterCreateController as AdapterCreateController',
           templateUrl: '/assets/features/adapters/templates/create.html',
-          controller: 'AdapterCreateController',
           ncyBreadcrumb: {
             skip: true
           }
@@ -56,11 +56,17 @@ angular.module(PKG.name + '.feature.adapters')
                   defer.resolve(res);
                 });
               return defer.promise;
+            },
+            rAdapterDetail: function(MyDataSource, $stateParams, $q) {
+              var dataSrc = new MyDataSource();
+              return dataSrc.request({
+                _cdapPath: '/namespaces/' + $stateParams.namespace + '/adapters/' + $stateParams.adapterId
+              });
             }
           },
           ncyBreadcrumb: {
             parent: 'adapters.list',
-            label: '{{$state.params.adapterId | caskCapitalizeFilter}}'
+            label: '{{$state.params.adapterId}}'
           },
           templateUrl: '/assets/features/adapters/templates/detail.html',
           controller: 'AdpaterDetailController'
@@ -71,7 +77,7 @@ angular.module(PKG.name + '.feature.adapters')
             controller: 'AdapterRunsController',
             ncyBreadcrumb: {
               parent: 'adapters.list',
-              label: '{{$state.params.adapterId | caskCapitalizeFilter}}'
+              label: '{{$state.params.adapterId}}'
             }
           })
             .state('adapters.detail.runs.run', {
@@ -91,7 +97,8 @@ angular.module(PKG.name + '.feature.adapters')
           templateUrl: 'data-list/data-list.html',
           controller: 'AdapterDatasetsController',
           ncyBreadcrumb: {
-            label: 'History'
+            label: 'Datasets',
+            parent: 'adapters.detail.runs'
           }
         })
         .state('adapters.detail.history', {
@@ -103,7 +110,8 @@ angular.module(PKG.name + '.feature.adapters')
           templateUrl: '/assets/features/adapters/templates/tabs/history.html',
           controller: 'AdapterRunsController',
           ncyBreadcrumb: {
-            label: 'History'
+            label: 'History',
+            parent: 'adapters.detail.runs'
           }
         });
   });

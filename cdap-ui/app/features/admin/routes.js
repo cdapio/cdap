@@ -55,8 +55,7 @@ angular.module(PKG.name + '.feature.admin')
                 templateUrl: '/assets/features/admin/templates/partials/service-detail-metadata.html'
               })
               .state('admin.system.services.detail.logs', {
-                url: '/logs?filter',
-                reloadOnSearch: false,
+                url: '/logs',
                 template: '<my-log-viewer data-model="logs"></my-log-viewer>',
                 controller: 'AdminServiceLogController'
               })
@@ -164,7 +163,8 @@ angular.module(PKG.name + '.feature.admin')
 
             .state('admin.namespace.detail.settings', {
               url: '/settings',
-              templateUrl: '/assets/features/admin/templates/namespace/settings.html'
+              templateUrl: '/assets/features/admin/templates/namespace/settings.html',
+              controller: 'AdminNamespaceSettingController'
             })
 
             .state('admin.namespace.detail.users', {

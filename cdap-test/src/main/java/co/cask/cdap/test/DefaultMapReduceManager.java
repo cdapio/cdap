@@ -21,7 +21,7 @@ import co.cask.cdap.proto.Id;
 /**
  * A default implementation of {@link MapReduceManager}.
  */
-public class DefaultMapReduceManager extends AbstractProgramManager implements MapReduceManager {
+public class DefaultMapReduceManager extends AbstractProgramManager<MapReduceManager> implements MapReduceManager {
 
   public DefaultMapReduceManager(Id.Program programId, ApplicationManager applicationManager) {
     super(programId, applicationManager);

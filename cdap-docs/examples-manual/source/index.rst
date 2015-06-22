@@ -14,7 +14,7 @@ CDAP Examples, How-To Guides, and Tutorials
 
 - |examples|_ Included with the :ref:`CDAP SDK, <getting-started-index>` they range from a
   simple introductory :ref:`Hello World <examples-hello-world>` to more elaborate examples
-  such as the :ref:`Purchase Application <examples-purchase>` that uses many of the CDAP
+  such as the :ref:`Purchase application <examples-purchase>` that uses many of the CDAP
   components.
 
 
@@ -22,7 +22,7 @@ CDAP Examples, How-To Guides, and Tutorials
 .. _guides: how-to-guides/index.html
 
 - |guides|_ Designed to be completed in 15-30 minutes, these guides provide quick, hands-on
-  instructions for building the “Hello World” of any development task with CDAP.
+  instructions for solving basic development tasks with CDAP.
 
 
 .. |tutorials| replace:: **Tutorials:**

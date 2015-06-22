@@ -275,14 +275,20 @@ These are the available commands:
    ``delete dataset instance <dataset-name>``,"Deletes a Dataset."
    ``delete dataset module <dataset-module>``,"Deletes a Dataset module."
    ``deploy dataset module <new-dataset-module> <module-jar-file> <module-jar-classname>``,"Deploys a Dataset module."
+   ``describe dataset instance <dataset-name>``,"Shows information about a Dataset."
    ``describe dataset module <dataset-module>``,"Shows information about a Dataset module."
    ``describe dataset type <dataset-type>``,"Shows information about a Dataset type."
    ``list dataset instances``,"Lists all Datasets."
    ``list dataset modules``,"Lists all Dataset modules."
    ``list dataset types``,"Lists all Dataset types."
+   ``set dataset instance properties <dataset-name> <dataset-properties>``,"Sets properties for a Dataset."
    ``truncate dataset instance <dataset-name>``,"Truncates a Dataset."
    **Explore**
    ``execute <query> [<timeout>]``,"Executes a Query with optional <timeout> in minutes (default is no timeout)."
+   **Metrics**
+   ``get metric value <metric-name> [<tags>] [start <start>] [end <end>]``,"Gets the value of a metric. Provide <tags> as a map in the format 'tag1=value1 tag2=value2'."
+   ``search metric names [<tags>]``,"Searches metric names. Provide <tags> as a map in the format 'tag1=value1 tag2=value2'."
+   ``search metric tags [<tags>]``,"Searches metric tags. Provide <tags> as a map in the format 'tag1=value1 tag2=value2'."
    **Ingest**
    ``load stream <stream-id> <local-file-path> [<content-type>]``,"Loads a file to a Stream. The contents of the file will become multiple events in the Stream, based on the content type (avro/binary, text/csv, text/plain, text/tsv). If <content-type> is not provided, it will be detected by the file extension. Supported file extensions: avro, csv, log, tsv, txt."
    ``send stream <stream-id> <stream-event>``,"Sends an event to a Stream."

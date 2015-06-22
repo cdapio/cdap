@@ -3,6 +3,15 @@
 
 body.theme-cdap.state-admin {
   main.container {
+
+    // This is required to steal the focus from an already clicked button on previous state.
+    .btn-default.active {
+      background-color: #fff;
+    }
+
+    .btn.btn-default:focus {
+      background-color: #fff;
+    }
     .search-bar { margin-bottom: 15px; }
     .clickable { cursor: pointer; }
     .sidebar {
@@ -157,5 +166,12 @@ body.state-admin-namespace-detail-data-streammetadata {
     .well {
       margin-left: 15px;
     }
+  }
+}
+
+body.state-admin-namespace-detail-settings {
+  textarea {
+    min-height: 100px;
+    resize: none;
   }
 }

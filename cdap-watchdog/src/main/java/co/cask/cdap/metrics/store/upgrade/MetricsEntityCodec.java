@@ -139,7 +139,7 @@ final class MetricsEntityCodec {
     Arrays.fill(result, entityParts.length * idSize, depth * idSize, (byte) (padding & 0xff));
     Arrays.fill(mask, entityParts.length * idSize, depth * idSize, (byte) 1);
 
-    return new ImmutablePair<byte[], byte[]>(result, mask);
+    return new ImmutablePair<>(result, mask);
   }
 
   public String decode(MetricsEntityType type, byte[] encoded) {

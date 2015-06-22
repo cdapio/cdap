@@ -1,18 +1,21 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('StreamPropertiesController', function($scope, MyDataSource, $stateParams, myHelpers, $alert) {
+  .controller('StreamPropertiesController', function($scope, $stateParams, myHelpers, $alert, myStreamApi, $state, EventPipe) {
 
-    var dataSrc = new MyDataSource($scope);
     $scope.avro = {};
 
-    var basePath = '/namespaces/' + $stateParams.nsadmin + '/streams/' + $stateParams.streamId;
     $scope.formatOptions = ['avro', 'clf', 'csv', 'grok', 'syslog', 'text', 'tsv', 'stream'];
 
+    var requestParams = {
+      namespace: $stateParams.nsadmin,
+      streamId: $stateParams.streamId,
+      scope: $scope
+    };
+
     $scope.reload = function () {
-      dataSrc
-        .request({
-          _cdapPath: basePath
-        })
-        .then(function(res) {
+
+      myStreamApi.get(requestParams)
+        .$promise
+        .then(function (res) {
           $scope.ttl = myHelpers.objectQuery(res, 'ttl');
           $scope.format = myHelpers.objectQuery(res, 'format', 'name');
           $scope.threshold = myHelpers.objectQuery(res, 'notification.threshold.mb');
@@ -51,7 +54,6 @@ angular.module(PKG.name + '.feature.admin')
               value: v
             });
           });
-
         });
     };
 
@@ -104,22 +106,18 @@ angular.module(PKG.name + '.feature.admin')
         "notification.threshold.mb": $scope.threshold
       };
 
-      dataSrc
-        .request({
-          _cdapPath: basePath + '/properties',
-          method: 'PUT',
-          body: params
-        })
+      myStreamApi.setProperties(requestParams, params)
+        .$promise
         .then(function() {
           $scope.reload();
 
           $alert({
             type: 'success',
             title: 'Success',
-            content: 'Stream properties have been successfully saved!'
+            content: 'Stream properties have been successfully saved'
           });
 
-        }, function(err) {
+        }, function (err) {
           $scope.error = err;
         });
     };
@@ -169,6 +167,34 @@ angular.module(PKG.name + '.feature.admin')
     $scope.removeSetting = function(setting) {
       var index = $scope.settings.indexOf(setting);
       $scope.settings.splice(index, 1);
+    };
+
+    $scope.deleteStream = function() {
+      EventPipe.emit('showLoadingIcon');
+      myStreamApi.delete(requestParams, {}, function success() {
+        EventPipe.emit('hideLoadingIcon.immediate');
+
+        $state.go('admin.namespace.detail.data', {}, {reload: true});
+        $alert({
+          type: 'success',
+          content: 'Successfully deleted stream'
+        });
+      }, function error() {
+        EventPipe.emit('hideLoadingIcon.immediate');
+      });
+
+    };
+
+    $scope.enter = function (event, last, source) {
+      if (last && event.keyCode === 13) {
+        if (source === 'settings') {
+          $scope.addSetting();
+        } else if (source === 'preference') {
+          $scope.addProperties();
+        }
+      } else {
+        return;
+      }
     };
 
   });

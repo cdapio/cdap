@@ -41,7 +41,7 @@ public final class ServiceSpecification implements ProgramSpecification {
     this.className = className;
     this.name = name;
     this.description = description;
-    this.handlers = Collections.unmodifiableMap(new HashMap<String, HttpServiceHandlerSpecification>(handlers));
+    this.handlers = Collections.unmodifiableMap(new HashMap<>(handlers));
     this.resources = resources;
     this.instances = instances;
   }

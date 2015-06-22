@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 
 public final class RoundRobinQueueReader<T> extends TimeTrackingQueueReader<T> {
 
-  private final InputDatum<T> nullInput = new NullInputDatum<T>();
+  private final InputDatum<T> nullInput = new NullInputDatum<>();
   private final Iterator<QueueReader<T>> readers;
 
   public RoundRobinQueueReader(Iterable<QueueReader<T>> readers) {

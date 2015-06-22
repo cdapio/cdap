@@ -20,7 +20,8 @@ angular.module(PKG.name+'.feature.apps')
       .state('apps.list', {
         url: '',
         templateUrl: '/assets/features/apps/templates/list.html',
-        controller: 'CdapAppListController',
+        controller: 'AppListController',
+        controllerAs: 'ListController',
         ncyBreadcrumb: {
           label: 'Applications',
           parent: 'overview'
@@ -34,18 +35,29 @@ angular.module(PKG.name+'.feature.apps')
       })
         .state('apps.detail.overview', {
           url: '/overview',
-          parent: 'apps.detail',
           templateUrl: '/assets/features/apps/templates/detail.html',
           ncyBreadcrumb: {
-            parent: 'apps.list',
-            label: '{{$state.params.appId}}'
+            skip: true
           }
         })
-          .state('apps.detail.overview.tab', {
-            url: '/:tab',
+          .state('apps.detail.overview.status', {
+            url: '/status',
             ncyBreadcrumb: {
-              skip: true
-            }
+              parent: 'apps.list',
+              label: '{{$state.params.appId}}'
+            },
+            controller: 'AppDetailStatusController',
+            controllerAs: 'StatusController',
+            templateUrl: '/assets/features/apps/templates/tabs/status.html'
+          })
+
+          .state('apps.detail.overview.datasets', {
+            url: '/datasets',
+            ncyBreadcrumb: {
+              label: 'Datasets',
+              parent: 'apps.detail.overview.status'
+            },
+            templateUrl: '/assets/features/apps/templates/tabs/datasets.html'
           });
 
   });

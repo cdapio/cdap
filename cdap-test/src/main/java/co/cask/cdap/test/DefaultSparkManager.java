@@ -21,7 +21,7 @@ import co.cask.cdap.proto.Id;
 /**
  * A default implementation of {@link SparkManager}.
  */
-public class DefaultSparkManager extends AbstractProgramManager implements SparkManager {
+public class DefaultSparkManager extends AbstractProgramManager<SparkManager> implements SparkManager {
   public DefaultSparkManager(Id.Program programId, ApplicationManager applicationManager) {
     super(programId, applicationManager);
   }

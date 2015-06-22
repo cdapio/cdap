@@ -1,12 +1,18 @@
 angular.module(PKG.name + '.feature.streams')
-  .controller('StreamsDetailStatusController', function($scope, $state, myHelpers, MyDataSource) {
+  .controller('StreamDetailStatusController', function($scope, $state, myHelpers, MyDataSource, myStreamApi) {
     var dataSrc = new MyDataSource($scope);
-    dataSrc.request({
-      _cdapNsPath: '/streams/' + $state.params.streamId
-    })
-      .then(function(stream) {
-        $scope.schema = stream.format.schema.fields;
-      });
+    this.storage = null;
+    this.events = null;
+    var params = {
+      namespace: $state.params.namespace,
+      streamId: $state.params.streamId,
+      scope: $scope
+    };
+    myStreamApi.get(params)
+      .$promise
+      .then(function (res) {
+        this.schema = res.format.schema.fields;
+      }.bind(this));
 
     [
       {
@@ -17,7 +23,7 @@ angular.module(PKG.name + '.feature.streams')
         name: 'system.collect.events',
         scopeProperty: 'events'
       }
-    ].forEach(fetchMetric);
+    ].forEach(fetchMetric.bind(this));
 
     function fetchMetric(metric) {
       var path = '/metrics/query?metric=' + metric.name +
@@ -29,7 +35,7 @@ angular.module(PKG.name + '.feature.streams')
         method: 'POST'
       }, function(metricData) {
           var data = myHelpers.objectQuery(metricData, 'series', 0, 'data', 0, 'value');
-          $scope[metric.scopeProperty] = data;
-        });
+          this[metric.scopeProperty] = data;
+      }.bind(this));
     }
   });

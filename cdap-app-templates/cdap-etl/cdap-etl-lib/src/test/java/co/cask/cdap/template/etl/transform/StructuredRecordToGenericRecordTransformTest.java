@@ -49,7 +49,7 @@ public class StructuredRecordToGenericRecordTransformTest {
 
     TransformContext transformContext = new MockTransformContext();
     transformer.initialize(transformContext);
-    MockEmitter<GenericRecord> emitter = new MockEmitter<GenericRecord>();
+    MockEmitter<GenericRecord> emitter = new MockEmitter<>();
     transformer.transform(structuredRecord, emitter);
     GenericRecord value = emitter.getEmitted().get(0);
     Assert.assertEquals("string1", value.get("field1"));

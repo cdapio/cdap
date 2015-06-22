@@ -14,7 +14,7 @@
       <tr ng-repeat="service in services | orderBy:sortable.predicate:sortable.reverse">
         <td>
           <span ng-class="{'status-green': service.status === 'OK', 'status-grey': service.status === 'NOTOK'}"></span>
-          <a ui-sref="admin.system.services.detail({serviceName:service.name})">
+          <a ui-sref="admin.system.services.detail.metadata({serviceName:service.name})">
             <strong>{{ ::service.name }}</strong>
           </a>
         </td>

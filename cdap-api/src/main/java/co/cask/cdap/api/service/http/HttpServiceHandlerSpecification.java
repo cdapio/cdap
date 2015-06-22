@@ -49,9 +49,9 @@ public final class HttpServiceHandlerSpecification implements PropertyProvider, 
     this.className = className;
     this.name = name;
     this.description = description;
-    this.properties = Collections.unmodifiableMap(new HashMap<String, String>(properties));
-    this.datasets = Collections.unmodifiableSet(new HashSet<String>(datasets));
-    this.endpoints = Collections.unmodifiableList(new ArrayList<ServiceHttpEndpoint>(endpoints));
+    this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
+    this.datasets = Collections.unmodifiableSet(new HashSet<>(datasets));
+    this.endpoints = Collections.unmodifiableList(new ArrayList<>(endpoints));
   }
 
   /**

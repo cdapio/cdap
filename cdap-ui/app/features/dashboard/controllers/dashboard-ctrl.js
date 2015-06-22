@@ -28,6 +28,28 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
 
 
   $scope.currentBoard = rDashboardsModel.current();
+
+  $scope.gridsterOpts = {
+    rowHeight: '280',
+    columns: 6,
+    minSizeX: 2,
+    mobileBreakPoint: 800,
+    swapping: true,
+    resizable: {
+      enabled: true,
+      start: function(event, uiWidget, $element) {}, // optional callback fired when resize is started,
+      resize: function(event, uiWidget, $element) {}, // optional callback fired when item is resized,
+      stop: function(event, uiWidget, $element) {
+        var resizedHeight = parseInt(uiWidget[0].style.height, 10),
+            resizedWidth = parseInt(uiWidget[0].style.width, 10);
+
+        $element.height = (resizedHeight < 300 ? 200: resizedHeight - 70);
+        // Probably need to revisit this if the user wants to view a chart in column
+        $element.width = (resizedWidth < 450? 370: resizedWidth - 32);
+      } // optional callback fired when item is finished resizing
+    }
+  };
+
   if (!$scope.currentBoard) {
     $scope.unknownBoard = true;
   }
@@ -94,33 +116,16 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
     $state.go($state.current, {tab: newIndex}, {reload: true});
   };
 
-  $scope.dragdrop = {
-    dragStart: function (drag) {
-      console.log('dragStart', drag.source, drag.dest);
-    },
-    dragEnd: function (drag) {
-      console.log('dragEnd', drag.source, drag.dest);
-      rDashboardsModel.current().persist();
-    }
-  };
-
-
   function applyOnWidgets(rDashboardsModel, func) {
     var currentColumns = rDashboardsModel.current().columns,
         i, j;
     for (i=0; i<currentColumns.length; i++) {
-      for (j=0; j<currentColumns[i].length; j++) {
-        func(currentColumns[i][j]);
-      }
+      func(currentColumns[i]);
     }
   }
 
   $scope.changeColumn = function (n) {
     rDashboardsModel.current().changeColumn(n);
-  };
-
-  $scope.toggleDragDrop = function() {
-    rDashboardsModel.current().toggleDragDrop();
   };
 
   $scope.currentColumn = function() {
@@ -151,8 +156,7 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
       widget.metric.startTime = Math.floor($scope.timeOptions.startMs / 1000);
       widget.metric.endTime = Math.floor($scope.timeOptions.endMs / 1000);
       widget.metric.resolution = 'auto';
-      widget.isLive = false;
-      widget.reconfigure();
+      widget.settings.isLive = false;
     });
   };
 
@@ -162,17 +166,15 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
       widget.metric.startTime = $scope.timeOptions.durationMs;
       widget.metric.endTime = 'now';
       widget.metric.resolution = 'auto';
-      widget.isLive = true;
-      widget.interval = $scope.timeOptions.refreshInterval.value * 1000;
-      widget.reconfigure();
+      widget.settings.isLive = true;
+      widget.settings.interval = $scope.timeOptions.refreshInterval.value * 1000;
     });
   };
 
   $scope.stopPolling = function() {
     $scope.liveDashboard = false;
     applyOnWidgets(rDashboardsModel, function (widget) {
-      widget.isLive = false;
-      widget.stopPolling();
+      widget.settings.isLive = false;
     });
   };
 });

@@ -21,14 +21,14 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.NamespaceCannotBeDeletedException;
 import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.CharMatcher;
+import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -53,8 +53,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   private final NamespaceAdmin namespaceAdmin;
 
   @Inject
-  public NamespaceHttpHandler(Authenticator authenticator, CConfiguration cConf, NamespaceAdmin namespaceAdmin) {
-    super(authenticator);
+  public NamespaceHttpHandler(CConfiguration cConf, NamespaceAdmin namespaceAdmin) {
     this.cConf = cConf;
     this.namespaceAdmin = namespaceAdmin;
   }
@@ -136,8 +135,15 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder().setName(namespace);
 
     // Handle optional params
-    if (metadata != null && metadata.getDescription() != null) {
+    if (metadata != null) {
+      if (metadata.getDescription() != null) {
         builder.setDescription(metadata.getDescription());
+      }
+
+      NamespaceConfig config = metadata.getConfig();
+      if (config != null && !Strings.isNullOrEmpty(config.getSchedulerQueueName())) {
+        builder.setSchedulerQueueName(config.getSchedulerQueueName());
+      }
     }
 
     try {

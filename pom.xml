@@ -84,6 +84,7 @@
   </distributionManagement>
 
   <properties>
+    <jee.version>7</jee.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <surefire.redirectTestOutputToFile>true</surefire.redirectTestOutputToFile>
 
@@ -1273,6 +1274,19 @@
           <groupId>org.apache.rat</groupId>
           <artifactId>apache-rat-plugin</artifactId>
           <version>0.10</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.apache.maven.doxia</groupId>
+              <artifactId>doxia-core</artifactId>
+              <version>1.6</version>
+              <exclusions>
+                <exclusion>
+                  <groupId>xerces</groupId>
+                  <artifactId>xercesImpl</artifactId>
+                </exclusion>
+              </exclusions>
+            </dependency>
+          </dependencies>
           <executions>
             <execution>
               <id>rat-check</id>
@@ -1498,14 +1512,18 @@
               <artifactId>maven-javadoc-plugin</artifactId>
               <version>2.9.1</version>
               <configuration>
-                <stylesheetfile>cdap-distributions/src/javadoc/stylesheet.css</stylesheetfile>
-                <links>
-                  <link>http://download.oracle.com/javase/6/docs/api/</link>
-                </links>
-                <doctitle>${project.name} ${project.version}</doctitle>
                 <bottom>
                   <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co" target="_blank">Cask Data, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a>.]]>
                 </bottom>
+                <doctitle>${project.name} ${project.version}</doctitle>
+                <links>
+                  <link>http://avro.apache.org/docs/current/api/java/</link>
+                  <link>http://docs.oracle.com/javaee/${jee.version}/api/</link>
+                  <link>http://hadoop.apache.org/docs/r${hadoop.version}/api/</link>
+                  <link>http://twill.incubator.apache.org/apidocs-${twill.version}/</link>
+                  <link>http://twitter4j.org/javadoc/</link>
+                </links>
+                <quiet>true</quiet>
               </configuration>
               <executions>
                 <execution>
@@ -2191,62 +2209,60 @@
 
   <!-- Site reporting section -->
   <reporting>
+    <excludeDefaults>true</excludeDefaults>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-project-info-reports-plugin</artifactId>
-        <version>2.7</version>
-        <reportSets>
-          <reportSet>
-            <reports/>
-          </reportSet>
-          <reportSet>
-            <id>site</id>
-            <reports>
-              <report>index</report>
-              <report>mailing-list</report>
-              <report>scm</report>
-              <report>issue-tracking</report>
-              <report>project-team</report>
-            </reports>
-          </reportSet>
-        </reportSets>
-      </plugin>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>2.9.1</version>
         <configuration>
           <stylesheetfile>cdap-distributions/src/javadoc/stylesheet.css</stylesheetfile>
-          <links>
-            <link>http://download.oracle.com/javase/6/docs/api/</link>
-          </links>
-          <doctitle>${project.name} ${project.version}</doctitle>
           <bottom>
             <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co" target="_blank">Cask Data, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a>.]]>
           </bottom>
+          <doctitle>${project.name} ${project.version}</doctitle>
+          <links>
+            <link>http://hadoop.apache.org/docs/r${hadoop.version}/api/</link>
+            <link>http://twill.incubator.apache.org/apidocs-${twill.version}/</link>
+          </links>
+          <quiet>true</quiet>
+          <groups>
+            <group>
+              <title>Core Packages</title>
+              <packages>co.cask.cdap.api:co.cask.cdap.api.*:co.cask.cdap.test</packages>
+            </group>
+            <group>
+              <title>Application Template Packages</title>
+              <packages>co.cask.cdap.template.*</packages>
+            </group>
+          </groups>
         </configuration>
         <reportSets>
-          <reportSet>
-            <reports>
-              <report>javadoc</report>
-            </reports>
-          </reportSet>
           <reportSet>
             <id>aggregate</id>
             <inherited>false</inherited>
             <reports>
               <report>aggregate</report>
             </reports>
+            <configuration>
+              <excludePackageNames>*.internal.*</excludePackageNames>
+              <sourceFileIncludes>
+                <include>**/api/**/*.java</include>
+                <include>co/cask/cdap/test/*.java</include>
+              </sourceFileIncludes>
+            </configuration>
+          </reportSet>
+          <reportSet>
+            <id>javadoc</id>
+            <inherited>true</inherited>
+            <reports>
+              <report>javadoc</report>
+            </reports>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
           </reportSet>
         </reportSets>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-report-plugin</artifactId>
-        <version>2.14.1</version>
       </plugin>
     </plugins>
   </reporting>

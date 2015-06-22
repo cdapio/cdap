@@ -16,13 +16,9 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.config.PreferencesStore;
-import com.google.common.base.Supplier;
 import com.google.inject.Inject;
-import org.quartz.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

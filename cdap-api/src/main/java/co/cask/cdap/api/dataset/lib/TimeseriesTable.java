@@ -209,7 +209,7 @@ public class TimeseriesTable extends TimeseriesDataset
     // we don't want splits to be empty
     timeIntervalPerSplit = timeIntervalPerSplit > 0 ? timeIntervalPerSplit : 1;
 
-    List<Split> splits = new ArrayList<Split>();
+    List<Split> splits = new ArrayList<>();
     long start;
     for (start = startTime; start + timeIntervalPerSplit <= endTime; start += timeIntervalPerSplit) {
       splits.add(new InputSplit(key, start, start + timeIntervalPerSplit, tags));

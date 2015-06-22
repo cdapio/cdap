@@ -215,7 +215,7 @@ public class AvroRecordFormatTest {
   private StreamEvent toStreamEvent(GenericRecord record, boolean writeSchema) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(out, null);
-    DatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>(record.getSchema());
+    DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(record.getSchema());
     writer.write(record, encoder);
     encoder.flush();
     out.close();

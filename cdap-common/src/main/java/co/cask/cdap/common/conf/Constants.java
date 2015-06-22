@@ -252,7 +252,7 @@ public final class Constants {
       //max-instances of dataset executor service
       public static final String MAX_INSTANCES = "dataset.executor.max.instances";
 
-      public static final String SERVICE_DESCRIPTION = "Service to perform Dataset operations.";
+      public static final String SERVICE_DESCRIPTION = "Service to perform dataset operations.";
     }
   }
 
@@ -497,6 +497,16 @@ public final class Constants {
         public static final String SERVICE_PROCESSED = "system.response.successful.count";
         public static final String SERVICE_EXCEPTIONS = "system.response.server.error.count";
       }
+
+      /**
+       * Dataset metrics
+       */
+      public static final class Dataset {
+        public static final String READ_COUNT = "dataset.store.reads";
+        public static final String OP_COUNT = "dataset.store.ops";
+        public static final String WRITE_COUNT = "dataset.store.writes";
+        public static final String WRITE_BYTES = "dataset.store.bytes";
+      }
     }
 
     /**
@@ -707,7 +717,7 @@ public final class Constants {
     public static final String INACTIVE_OPERATION_TIMEOUT_SECS = "explore.inactive.operation.timeout.secs";
     public static final String CLEANUP_JOB_SCHEDULE_SECS = "explore.cleanup.job.schedule.secs";
 
-    public static final String SERVICE_DESCRIPTION = "Service to run Ad-hoc queries.";
+    public static final String SERVICE_DESCRIPTION = "Service to run ad-hoc queries.";
 
     /**
      * Explore JDBC constants.

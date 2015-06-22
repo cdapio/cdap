@@ -35,7 +35,7 @@ public final class TimeSeries {
 
   public TimeSeries(String measureName, Map<String, String> dimensionValues, List<TimeValue> timeValues) {
     this.measureName = measureName;
-    this.dimensionValues = Collections.unmodifiableMap(new HashMap<String, String>(dimensionValues));
+    this.dimensionValues = Collections.unmodifiableMap(new HashMap<>(dimensionValues));
     this.timeValues = Collections.unmodifiableList(timeValues);
   }
 

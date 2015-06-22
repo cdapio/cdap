@@ -1,19 +1,24 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsRunDetailLogController', function($scope, MyDataSource, $state) {
+  .controller('FlowsRunDetailLogController', function($scope, $state, myFlowsApi) {
 
-    var dataSrc = new MyDataSource($scope),
-        basePath = '/apps/' + $state.params.appId +
-                   '/flows/' + $state.params.programId +
-                   '/runs/' + $scope.runs.selected.runid;
-
-    $scope.logs = [];
-    if (!$scope.runs.length) {
+    this.logs = [];
+    if (!$scope.RunsController.runs.length) {
       return;
     }
-    dataSrc.poll({
-      _cdapNsPath: basePath + '/logs/next?max=50'
-    }, function(res) {
-      $scope.logs = res;
-    });
 
-});
+    var params = {
+      namespace: $state.params.namespace,
+      appId: $state.params.appId,
+      flowId: $state.params.programId,
+      runId: $scope.RunsController.runs.selected.runid,
+      max: 50,
+      scope: $scope
+    };
+
+    myFlowsApi.logs(params)
+      .$promise
+      .then(function (res) {
+        this.logs = res;
+      }.bind(this));
+
+  });

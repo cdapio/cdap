@@ -19,6 +19,8 @@ package co.cask.cdap.cli.command.adapter;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.english.Article;
+import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
@@ -81,6 +83,7 @@ public class DescribeAdapterCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Lists all %s.", ElementType.ADAPTER.getTitleNamePlural());
+    return String.format("Shows information about %s.",
+                         Fragment.of(Article.A, ElementType.ADAPTER.getName()));
   }
 }

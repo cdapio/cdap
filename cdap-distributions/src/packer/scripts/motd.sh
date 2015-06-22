@@ -20,9 +20,8 @@ cat > /etc/$i << EOF
 			Welcome to the CDAP SDK VM
 
 This virtual machine uses a simple graphical interface. The menu can be accessed
-by right-clicking on the background. If you have a Mac, this is a two-finger tap
-on the trackpad. Included are the Eclipse IDE and IntelliJ IDE, Firefox, Git,
-Subversion and the CDAP SDK.
+by clicking the icon at the bottom left. Included are the Eclipse and IntelliJ
+IDEs, Chromium Browser, Git, Subversion and the CDAP Standalone SDK.
 
 The login and password to the machine is 'cdap' and the user has sudo privileges
 without a password.

@@ -5,22 +5,22 @@
 
 .. _http-restful-api-stream:
 
-===========================================================
+=======================
 Stream HTTP RESTful API
-===========================================================
+=======================
 
 .. highlight:: console
 
 This interface supports creation of a :ref:`Stream; <developers:streams>` sending, reading, and truncating events to
-and from a Stream; and setting the TTL property of a Stream.
+and from a stream; and setting the TTL property of a stream.
 
-Streams may have multiple consumers (for example, multiple Flows), each of which may be a
-group of different agents (for example, multiple instances of a Flowlet).
+Streams may have multiple consumers (for example, multiple flows), each of which may be a
+group of different agents (for example, multiple instances of a flowlet).
 
 
 Creating a Stream
 -----------------
-A Stream can be created with an HTTP PUT method to the URL::
+A stream can be created with an HTTP PUT method to the URL::
 
   PUT <base-url>/namespaces/<namespace>/streams/<new-stream-id>
 
@@ -33,7 +33,7 @@ A Stream can be created with an HTTP PUT method to the URL::
    * - ``<namespace>``
      - Namespace ID
    * - ``<new-stream-id>``
-     - Name of the Stream to be created
+     - Name of the stream to be created
 
 .. rubric:: HTTP Responses
 .. list-table::
@@ -43,7 +43,7 @@ A Stream can be created with an HTTP PUT method to the URL::
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The event either successfully created a Stream or the Stream already exists
+     - The event either successfully created a stream or the stream already exists
 
 .. rubric:: Example
 .. list-table::
@@ -53,21 +53,21 @@ A Stream can be created with an HTTP PUT method to the URL::
    * - HTTP Method
      - ``PUT <base-url>/namespaces/default/streams/mystream``
    * - Description
-     - Create a new Stream named *mystream* in the namespace *default* 
+     - Create a new stream named *mystream* in the namespace *default* 
 
 .. rubric:: Comments
 
 - The ``<new-stream-id>`` should only contain ASCII letters, digits and hyphens.
-- If the Stream already exists, no error is returned, and the existing Stream remains in place.
+- If the stream already exists, no error is returned, and the existing stream remains in place.
 
 Sending Events to a Stream
 --------------------------
-An event can be sent to a Stream by sending an HTTP POST method to the URL of the Stream::
+An event can be sent to a stream by sending an HTTP POST method to the URL of the stream::
 
   POST <base-url>/namespaces/<namespace>/streams/<stream-id>
 
 In cases where it is acceptable to have some events lost, events can be transmitted
-asynchronously to a Stream with higher throughput by sending an HTTP POST method to the
+asynchronously to a stream with higher throughput by sending an HTTP POST method to the
 ``async`` URL::
 
   POST <base-url>/namespaces/<namespace>/streams/<stream-id>/async
@@ -81,7 +81,7 @@ asynchronously to a Stream with higher throughput by sending an HTTP POST method
    * - ``<namespace>``
      - Namespace ID
    * - ``<stream-id>``
-     - Name of an existing Stream
+     - Name of an existing stream
 
 .. rubric:: HTTP Responses
 .. list-table::
@@ -95,7 +95,7 @@ asynchronously to a Stream with higher throughput by sending an HTTP POST method
    * - ``202 ACCEPTED``
      - The event was successfully received but may not be persisted; only the asynchronous endpoint will return this status code
    * - ``404 Not Found``
-     - The Stream does not exist
+     - The stream does not exist
 
 
 .. rubric:: Example
@@ -106,7 +106,7 @@ asynchronously to a Stream with higher throughput by sending an HTTP POST method
    * - HTTP Method
      - ``POST <base-url>/namespaces/default/streams/mystream``
    * - Description
-     - Send an event to the existing Stream named *mystream* in the namespace *default*
+     - Send an event to the existing stream named *mystream* in the namespace *default*
 
 .. rubric:: Comments
 
@@ -114,7 +114,7 @@ You can pass headers for the event as HTTP headers by prefixing them with the *s
 
   <stream-id>.<property>:<string value>
 
-After receiving the request, the HTTP handler transforms it into a Stream event:
+After receiving the request, the HTTP handler transforms it into a stream event:
 
 - The body of the event is an identical copy of the bytes found in the body of the HTTP post request.
 - If the request contains any headers prefixed with the *stream-id*,
@@ -123,7 +123,7 @@ After receiving the request, the HTTP handler transforms it into a Stream event:
 
 Sending Events to a Stream in Batch
 -----------------------------------
-Multiple events can be sent to a Stream in batch by sending an HTTP POST method to the URL of the Stream::
+Multiple events can be sent to a stream in batch by sending an HTTP POST method to the URL of the stream::
 
   POST <base-url>/namespaces/<namespace>/streams/<stream-id>/batch
 
@@ -153,7 +153,7 @@ types are supported:
    * - ``200 OK``
      - All events were successfully received and persisted
    * - ``404 Not Found``
-     - The Stream does not exist
+     - The stream does not exist
 
 .. rubric:: Example
 .. list-table::
@@ -172,7 +172,7 @@ types are supported:
         3,Bill,Jones,20
         
    * - Description
-     - Writes three comma-separated events to the Stream named *mystream* in the namespace *default*
+     - Writes three comma-separated events to the stream named *mystream* in the namespace *default*
 
 .. rubric:: Comments
 
@@ -186,7 +186,7 @@ in the request body.
 
 Reading Events from a Stream
 ----------------------------
-Reading events from an existing Stream is performed with an HTTP GET method to the URL::
+Reading events from an existing stream is performed with an HTTP GET method to the URL::
 
   GET <base-url>/namespaces/<namespace>/streams/<stream-id>/events?start=<startTime>&end=<endTime>&limit=<limit>
 
@@ -199,7 +199,7 @@ Reading events from an existing Stream is performed with an HTTP GET method to t
    * - ``<namespace>``
      - Namespace ID
    * - ``<stream-id>``
-     - Name of an existing Stream
+     - Name of an existing stream
    * - ``<startTime>``
      - Optional timestamp in milliseconds to start reading events from (inclusive); default is 0
    * - ``<endTime>``
@@ -217,11 +217,11 @@ Reading events from an existing Stream is performed with an HTTP GET method to t
    * - ``200 OK``
      - The event was successfully received and the result of the read was returned
    * - ``204 No Content``
-     - The Stream exists but there are no events that satisfy the request
+     - The stream exists but there are no events that satisfy the request
    * - ``404 Not Found``
-     - The Stream does not exist
+     - The stream does not exist
 
-The response body is a JSON array with the Stream event objects as array elements::
+The response body is a JSON array with the stream event objects as array elements::
 
    [ 
      {"timestamp" : ... , "headers": { ... }, "body" : ... }, 
@@ -235,9 +235,9 @@ The response body is a JSON array with the Stream event objects as array element
    * - Field
      - Description
    * - ``timestamp``
-     - Timestamp in milliseconds of the Stream event at ingestion time
+     - Timestamp in milliseconds of the stream event at ingestion time
    * - ``headers``
-     - A JSON map of all custom headers associated with the Stream event
+     - A JSON map of all custom headers associated with the stream event
    * - ``body``
      - A printable string representing the event body; non-printable bytes are hex escaped in the format ``\x[hex-digit][hex-digit]``, e.g. ``\x05``
 
@@ -249,15 +249,15 @@ The response body is a JSON array with the Stream event objects as array element
    * - HTTP Method
      - ``GET <base-url>/namespaces/default/streams/mystream/events?limit=1``
    * - Description
-     - Read the initial event from an existing Stream named *mystream* in the namespace *default*
+     - Read the initial event from an existing stream named *mystream* in the namespace *default*
    * - Response body
      - ``[ {"timestamp" : 1407806944181, "headers" : { }, "body" : "Hello World" } ]``
 
 Truncating a Stream
 -------------------
-Truncating means deleting all events that were ever written to the Stream.
+Truncating means deleting all events that were ever written to the stream.
 This is permanent and cannot be undone.
-A Stream can be truncated with an HTTP POST method to the URL::
+A stream can be truncated with an HTTP POST method to the URL::
 
   POST <base-url>/namespaces/<namespace>/streams/<stream-id>/truncate
 
@@ -270,7 +270,7 @@ A Stream can be truncated with an HTTP POST method to the URL::
    * - ``<namespace>``
      - Namespace ID
    * - ``<stream-id>``
-     - Name of an existing Stream
+     - Name of an existing stream
 
 .. rubric:: HTTP Responses
 .. list-table::
@@ -280,9 +280,9 @@ A Stream can be truncated with an HTTP POST method to the URL::
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The Stream was successfully truncated
+     - The stream was successfully truncated
    * - ``404 Not Found``
-     - The Stream ``<stream-id>`` does not exist
+     - The stream ``<stream-id>`` does not exist
 
 .. rubric:: Example
 .. list-table::
@@ -292,21 +292,65 @@ A Stream can be truncated with an HTTP POST method to the URL::
    * - HTTP Method
      - ``POST <base-url>/namespaces/default/streams/mystream/truncate``
    * - Description
-     - Delete all events in the Stream named *mystream* in the namespace *default*
+     - Delete all events in the stream named *mystream* in the namespace *default*
+
+Deleting a Stream
+-----------------
+Deleting a stream means both deleting all events that were ever written to the stream and
+the stream endpoint itself. This is permanent and cannot be undone. If another stream is
+created with the same name, it will not return any of the previous stream's events.
+
+A stream can be deleted with an HTTP DELETE method to the URL::
+
+  DELETE <base-url>/namespaces/<namespace>/streams/<stream-id>
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<stream-id>``
+     - Name of an existing stream
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The stream was successfully deleted
+   * - ``404 Not Found``
+     - The stream ``<stream-id>`` does not exist
+
+.. rubric:: Example
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``DELETE <base-url>/namespaces/default/streams/mystream``
+   * - Description
+     - Deletes the stream named *mystream* in the namespace *default* and all events in
+       the stream
 
 .. _http-restful-api-stream-setting-properties:
 
 Setting Stream Properties
 -------------------------
-There are a number of Stream properties that can be specified.
+There are a number of stream properties that can be specified.
 The Time-To-Live (TTL) property governs how long an event is valid for consumption since 
-it was written to the Stream.
-The default TTL for all Streams is infinite, meaning that events will never expire.
-The format property defines how Stream event bodies should be read for data exploration.
+it was written to the stream.
+The default TTL for all streams is infinite, meaning that events will never expire.
+The format property defines how stream event bodies should be read for data exploration.
 Different formats support different types of schemas. Schemas are used to determine
-the table schema used for running ad-hoc SQL-like queries on the Stream.
+the table schema used for running ad-hoc SQL-like queries on the stream.
 See :ref:`stream-exploration` for more information about formats and schemas.
-The notification threshold defines the increment of data that a Stream has to receive before
+The notification threshold defines the increment of data that a stream has to receive before
 publishing a notification.
 
 Stream properties can be changed with an HTTP PUT method to the URL::
@@ -322,7 +366,7 @@ Stream properties can be changed with an HTTP PUT method to the URL::
    * - ``<namespace>``
      - Namespace ID
    * - ``<stream-id>``
-     - Name of an existing Stream
+     - Name of an existing stream
 
 New properties are passed in the JSON request body.
 
@@ -339,13 +383,13 @@ New properties are passed in the JSON request body.
        ``avro``, ``csv`` (comma-separated), ``tsv`` (tab-separated), ``text``, ``clf``, 
        ``grok``, and ``syslog``.
    * - ``notification.threshold.mb``
-     - Increment of data, in MB, that a Stream has to receive before
+     - Increment of data, in MB, that a stream has to receive before
        publishing a notification.
 
 If a property is not given in the request body, no change will be made to the value.
 For example, setting format but not TTL will preserve the current value for TTL.
-Changing the schema attached to a Stream will drop the Hive table associated with
-the Stream and re-create it with the new schema.
+Changing the schema attached to a stream will drop the Hive table associated with
+the stream and re-create it with the new schema.
 
 .. rubric:: HTTP Responses
 .. list-table::
@@ -360,7 +404,7 @@ the Stream and re-create it with the new schema.
      - The TTL value is not a non-negative integer, the format was not known,
        the schema was malformed, or the schema is not supported by the format
    * - ``404 Not Found``
-     - The Stream does not exist
+     - The stream does not exist
 
 .. rubric:: Example
 .. list-table::
@@ -389,14 +433,14 @@ the Stream and re-create it with the new schema.
          }
      
    * - Description
-     - Change the TTL property of the Stream named *mystream* in the namespace *default* to 1 day,
+     - Change the TTL property of the stream named *mystream* in the namespace *default* to 1 day,
        and the format to CSV (comma separated values) with a three field schema
        that uses a space delimiter instead of a comma delimiter. 
 
 Streams used by an Application
 ------------------------------
 
-You can retrieve a list of Streams used by an Application by issuing a HTTP GET request to the URL::
+You can retrieve a list of streams used by an application by issuing a HTTP GET request to the URL::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/streams
 
@@ -424,7 +468,7 @@ You can retrieve a list of Streams used by an Application by issuing a HTTP GET 
 Streams used by a Program
 -------------------------
 
-You can retrieve a list of Streams used by a program by issuing a HTTP GET request to the URL::
+You can retrieve a list of streams used by a program by issuing a HTTP GET request to the URL::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/streams 
 
@@ -439,7 +483,7 @@ You can retrieve a list of Streams used by a program by issuing a HTTP GET reque
    * - ``<app-id>``
      - Application ID
    * - ``<program-type>``
-     - Program Type, one of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
+     - Program type, one of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
    * - ``<program-id>``
      - Program ID
 
@@ -456,7 +500,7 @@ You can retrieve a list of Streams used by a program by issuing a HTTP GET reque
 Streams used by an Adapter
 --------------------------
 
-You can retrieve a list of Streams used by an Adapter by issuing a HTTP GET request to the URL::
+You can retrieve a list of streams used by an adapter by issuing a HTTP GET request to the URL::
 
   GET <base-url>/namespaces/<namespace>/adapters/<adapter-id>/streams 
 
@@ -484,7 +528,7 @@ You can retrieve a list of Streams used by an Adapter by issuing a HTTP GET requ
 Programs using a Stream 
 -----------------------
 
-You can retrieve a list of programs that are using a Stream by issuing a HTTP GET request to the URL::
+You can retrieve a list of programs that are using a stream by issuing a HTTP GET request to the URL::
 
   GET <base-url>/namespaces/<namespace>/data/datasets/<dataset-id>/programs
 

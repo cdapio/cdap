@@ -24,6 +24,7 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.common.cli.Arguments;
 
 import java.io.PrintStream;
@@ -46,8 +47,10 @@ public class GetProgramLogsCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
     String appId = programIdParts[0];
-    long start = arguments.getLong(ArgumentName.START_TIME.toString(), 0);
-    long stop = arguments.getLong(ArgumentName.START_TIME.toString(), Long.MAX_VALUE);
+    String startString = arguments.get(ArgumentName.START_TIME.toString(), "0");
+    long start = TimeMathParser.parseTimeInSeconds(startString);
+    String stopString = arguments.get(ArgumentName.END_TIME.toString(), Long.toString(Integer.MAX_VALUE));
+    long stop = TimeMathParser.parseTimeInSeconds(stopString);
 
     String logs;
     if (elementType.getProgramType() != null) {

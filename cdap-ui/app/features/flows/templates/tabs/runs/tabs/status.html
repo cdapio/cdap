@@ -1,6 +1,6 @@
-<div ng-controller="FlowsRunDetailStatusController">
-  <my-flow-graph data-model="data"
-                 data-click="flowletClick"
+<div ng-controller="FlowsRunDetailStatusController as StatusController">
+  <my-flow-graph data-model="StatusController.data"
+                 data-click="StatusController.flowletClick"
                  parent="#c{{$state.params.runid}}"
                  id="c{{$state.params.runid}}">
   </my-flow-graph>

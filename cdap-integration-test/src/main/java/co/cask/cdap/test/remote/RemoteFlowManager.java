@@ -20,6 +20,7 @@ import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.client.MetricsClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.FlowManager;
@@ -29,17 +30,17 @@ import com.google.common.base.Throwables;
 /**
  * Remote implementation of {@link FlowManager}.
  */
-public class RemoteFlowManager extends AbstractProgramManager implements FlowManager {
+public class RemoteFlowManager extends AbstractProgramManager<FlowManager> implements FlowManager {
   private final ProgramClient programClient;
   private final MetricsClient metricsClient;
 
-  public RemoteFlowManager(Id.Program programId, ClientConfig clientConfig,
+  public RemoteFlowManager(Id.Program programId, ClientConfig clientConfig, RESTClient restClient,
                            RemoteApplicationManager applicationManager) {
     super(programId, applicationManager);
     ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig).build();
     namespacedClientConfig.setNamespace(programId.getNamespace());
-    this.programClient = new ProgramClient(namespacedClientConfig);
-    this.metricsClient = new MetricsClient(namespacedClientConfig);
+    this.programClient = new ProgramClient(namespacedClientConfig, restClient);
+    this.metricsClient = new MetricsClient(namespacedClientConfig, restClient);
   }
 
   @Override

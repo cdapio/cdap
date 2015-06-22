@@ -123,7 +123,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception
    */
   public void removeAll(Id.Namespace identifier) throws Exception {
-    List<ApplicationSpecification> allSpecs = new ArrayList<ApplicationSpecification>(
+    List<ApplicationSpecification> allSpecs = new ArrayList<>(
       store.getAllApplications(identifier));
 
     //Check if any program associated with this namespace is running
@@ -233,7 +233,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       ProgramType type = ProgramTypes.fromSpecification(spec);
       Id.Program programId = Id.Program.from(appId, type, spec.getName());
       try {
-        Location location = Programs.programLocation(namespacedLocationFactory, appFabricDir, programId, type);
+        Location location = Programs.programLocation(namespacedLocationFactory, appFabricDir, programId);
         location.delete();
       } catch (FileNotFoundException e) {
         LOG.warn("Program jar for program {} not found.", programId.toString(), e);
@@ -245,8 +245,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     try {
       Id.Program programId = Id.Program.from(appId.getNamespaceId(), appId.getId(),
                                              ProgramType.WEBAPP, ProgramType.WEBAPP.name().toLowerCase());
-      Location location = Programs.programLocation(namespacedLocationFactory, appFabricDir, programId,
-                                                   ProgramType.WEBAPP);
+      Location location = Programs.programLocation(namespacedLocationFactory, appFabricDir, programId);
       location.delete();
     } catch (FileNotFoundException e) {
       // expected exception when webapp is not present.

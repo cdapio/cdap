@@ -48,13 +48,13 @@ public final class Updates {
     }
 
     NavigableMap<byte[], NavigableMap<Long, byte[]>> returnMap =
-      new TreeMap<byte[], NavigableMap<Long, byte[]>>(Bytes.BYTES_COMPARATOR);
+      new TreeMap<>(Bytes.BYTES_COMPARATOR);
     // TODO: make this use a wrapper to represent the existing map as <Long, byte[]> instead of copying
     for (Map.Entry<byte[], NavigableMap<Long, Update>> entry : row.entrySet()) {
       for (Map.Entry<Long, Update> cellEntry : entry.getValue().entrySet()) {
         NavigableMap<Long, byte[]> currentCell = returnMap.get(entry.getKey());
         if (currentCell == null) {
-          currentCell = new TreeMap<Long, byte[]>(InMemoryTableService.VERSIONED_VALUE_MAP_COMPARATOR);
+          currentCell = new TreeMap<>(InMemoryTableService.VERSIONED_VALUE_MAP_COMPARATOR);
           returnMap.put(entry.getKey(), currentCell);
         }
         byte[] bytes = null;

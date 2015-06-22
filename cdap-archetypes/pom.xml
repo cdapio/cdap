@@ -52,7 +52,7 @@
               <configuration>
                 <excludes>
                   <exclude>**/resources/**/*.txt</exclude>
-                  <exclude>**/README.md</exclude>
+                  <exclude>**/README.rst</exclude>
                 </excludes>
               </configuration>
             </execution>

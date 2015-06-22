@@ -25,6 +25,6 @@ public final class ReflectionDatumReaderFactory implements DatumReaderFactory {
 
   @Override
   public <T> DatumReader<T> create(TypeToken<T> type, Schema schema) {
-    return new ReflectionDatumReader<T>(schema, type);
+    return new ReflectionDatumReader<>(schema, type);
   }
 }

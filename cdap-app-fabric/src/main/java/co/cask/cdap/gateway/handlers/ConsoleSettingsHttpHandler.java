@@ -21,7 +21,7 @@ import co.cask.cdap.common.http.SecurityRequestContext;
 import co.cask.cdap.config.Config;
 import co.cask.cdap.config.ConfigNotFoundException;
 import co.cask.cdap.config.ConsoleSettingsStore;
-import co.cask.cdap.gateway.auth.Authenticator;
+import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
@@ -44,7 +44,7 @@ import javax.ws.rs.Path;
  * Console Settings HTTP Handler.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/configuration/user")
-public class ConsoleSettingsHttpHandler extends AuthenticatedHttpHandler {
+public class ConsoleSettingsHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ConsoleSettingsHttpHandler.class);
   private static final JsonParser JSON_PARSER = new JsonParser();
 
@@ -54,8 +54,7 @@ public class ConsoleSettingsHttpHandler extends AuthenticatedHttpHandler {
   private final ConsoleSettingsStore store;
 
   @Inject
-  public ConsoleSettingsHttpHandler(Authenticator authenticator, ConsoleSettingsStore store) {
-    super(authenticator);
+  public ConsoleSettingsHttpHandler(ConsoleSettingsStore store) {
     this.store = store;
   }
 

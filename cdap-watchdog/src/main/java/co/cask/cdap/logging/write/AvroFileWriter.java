@@ -232,7 +232,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
      */
     void open() throws IOException {
       this.outputStream = new FSDataOutputStream(location.getOutputStream(), null);
-      this.dataFileWriter = new DataFileWriter<GenericRecord>(new GenericDatumWriter<GenericRecord>(schema));
+      this.dataFileWriter = new DataFileWriter<>(new GenericDatumWriter<GenericRecord>(schema));
       this.dataFileWriter.create(schema, this.outputStream);
       this.dataFileWriter.setSyncInterval(syncIntervalBytes);
       this.lastModifiedTs = System.currentTimeMillis();

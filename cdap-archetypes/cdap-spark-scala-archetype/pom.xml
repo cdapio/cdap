@@ -27,32 +27,4 @@
   <artifactId>cdap-spark-scala-archetype</artifactId>
   <packaging>jar</packaging>
   <name>CDAP Spark Scala Archetype</name>
-
-  <build>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.apache.rat</groupId>
-          <artifactId>apache-rat-plugin</artifactId>
-          <version>0.10</version>
-          <executions>
-            <execution>
-              <id>rat-check</id>
-              <phase>validate</phase>
-              <goals>
-                <goal>check</goal>
-              </goals>
-              <configuration>
-                <excludes>
-                  <exclude>**/resources/**/*.txt</exclude>
-                  <exclude>*.md</exclude>
-                </excludes>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-  </build>
-
 </project>

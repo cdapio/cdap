@@ -15,7 +15,7 @@ angular.module(PKG.name + '.feature.data')
       .state('data.list', {
         url: '',
         templateUrl: '/assets/features/data/list.html',
-        controller: 'CdapDataListController',
+        controller: 'CdapDataListController as dataCtrl',
         ncyBreadcrumb: {
           label: 'Data',
           parent: 'overview'

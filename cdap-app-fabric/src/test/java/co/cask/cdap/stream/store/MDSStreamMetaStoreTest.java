@@ -32,7 +32,6 @@ import co.cask.cdap.data.stream.service.MDSStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -63,7 +62,6 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
       new DataSetsModules().getStandaloneModules(),
       new DataFabricModules().getInMemoryModules(),
       new ExploreClientModule(),
-      new AuthModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
       new AbstractModule() {

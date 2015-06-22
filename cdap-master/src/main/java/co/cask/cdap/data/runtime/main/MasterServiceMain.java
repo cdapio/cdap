@@ -45,7 +45,6 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -60,6 +59,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -80,6 +80,9 @@ import org.apache.twill.common.Threads;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.twill.zookeeper.ZKOperations;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -169,6 +172,9 @@ public class MasterServiceMain extends DaemonMain {
     logAppenderInitializer.initialize();
 
     zkClient.startAndWait();
+    // Tries to create the ZK root node (which can be namespaced through the zk connection string)
+    Futures.getUnchecked(ZKOperations.ignoreError(zkClient.create("/", null, CreateMode.PERSISTENT),
+                                                  KeeperException.NodeExistsException.class, null));
     twillRunner.startAndWait();
     kafkaClient.startAndWait();
     metricsCollectionService.startAndWait();
@@ -282,7 +288,6 @@ public class MasterServiceMain extends DaemonMain {
       new LocationRuntimeModule().getDistributedModules(),
       new LoggingModules().getDistributedModules(),
       new IOModule(),
-      new AuthModule(),
       new KafkaClientModule(),
       new TwillModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),

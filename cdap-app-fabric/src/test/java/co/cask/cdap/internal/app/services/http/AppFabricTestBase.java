@@ -34,12 +34,12 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.gateway.handlers.UsageHandler;
 import co.cask.cdap.internal.app.services.AppFabricServer;
+import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
@@ -526,10 +526,18 @@ public abstract class AppFabricTestBase {
    * Tries to stop the given program and expect the call completed with the status.
    */
   protected void stopProgram(Id.Program program, int expectedStatusCode) throws Exception {
-    String path = String.format("apps/%s/%s/%s/stop",
-                                program.getApplicationId(),
-                                program.getType().getCategoryName(),
-                                program.getId());
+    stopProgram(program, expectedStatusCode, null);
+  }
+
+  protected void stopProgram(Id.Program program, int expectedStatusCode, String runId) throws Exception {
+    String path;
+    if (runId == null) {
+      path = String.format("apps/%s/%s/%s/stop", program.getApplicationId(), program.getType().getCategoryName(),
+                           program.getId());
+    } else {
+      path = String.format("apps/%s/%s/%s/runs/%s/stop", program.getApplicationId(),
+                           program.getType().getCategoryName(), program.getId(), runId);
+    }
     HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespaceId()));
     Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
   }

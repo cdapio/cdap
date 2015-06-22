@@ -20,6 +20,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
+import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.stream.MultiLiveStreamFileReader;
@@ -30,9 +31,8 @@ import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data.stream.TimeRangeReadFilter;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.gateway.auth.Authenticator;
-import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.proto.Id;
+import co.cask.http.AbstractHttpHandler;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -66,7 +66,7 @@ import javax.ws.rs.QueryParam;
  * A HTTP handler for handling getting stream events.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/streams")
-public final class StreamFetchHandler extends AuthenticatedHttpHandler {
+public final class StreamFetchHandler extends AbstractHttpHandler {
 
   private static final Gson GSON = StreamEventTypeAdapter.register(new GsonBuilder()).create();
   private static final int MAX_EVENTS_PER_READ = 100;
@@ -77,10 +77,7 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
   private final StreamMetaStore streamMetaStore;
 
   @Inject
-  public StreamFetchHandler(CConfiguration cConf, Authenticator authenticator,
-                            StreamAdmin streamAdmin, StreamMetaStore streamMetaStore) {
-
-    super(authenticator);
+  public StreamFetchHandler(CConfiguration cConf, StreamAdmin streamAdmin, StreamMetaStore streamMetaStore) {
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
@@ -107,9 +104,11 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
   public void fetch(HttpRequest request, HttpResponder responder,
                     @PathParam("namespace-id") String namespaceId,
                     @PathParam("stream") String stream,
-                    @QueryParam("start") long startTime,
-                    @QueryParam("end") @DefaultValue("9223372036854775807") long endTime,
+                    @QueryParam("start") @DefaultValue("0") String start,
+                    @QueryParam("end") @DefaultValue("9223372036854775807") String end,
                     @QueryParam("limit") @DefaultValue("2147483647") int limit) throws Exception {
+    long startTime = TimeMathParser.parseTime(start, TimeUnit.MILLISECONDS);
+    long endTime = TimeMathParser.parseTime(end, TimeUnit.MILLISECONDS);
 
     Id.Stream streamId = Id.Stream.from(namespaceId, stream);
     if (!verifyGetEventsRequest(streamId, startTime, endTime, limit, responder)) {

@@ -1,19 +1,24 @@
 angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsRunsStatusController', function($state, $scope, MyDataSource, $filter, $alert) {
-    var dataSrc = new MyDataSource($scope),
-        filterFilter = $filter('filter'),
-        basePath = '/apps/' + $state.params.appId + '/workflows/' + $state.params.programId;
+  .controller('WorkflowsRunsStatusController', function($state, $scope, myWorkFlowApi, $filter, $alert, GraphHelpers, MyDataSource, myMapreduceApi) {
+    var filterFilter = $filter('filter'),
+        params = {
+          appId: $state.params.appId,
+          workflowId: $state.params.programId,
+          scope: $scope
+        };
+
     if ($state.params.runid) {
-      var match = filterFilter($scope.runs, {runid: $state.params.runid});
+      var match = filterFilter($scope.RunsController.runs, {runid: $state.params.runid});
       if (match.length) {
-        $scope.runs.selected = match[0];
+        $scope.RunsController.runs.selected = match[0];
       }
     }
 
-    $scope.data = {};
-    dataSrc.request({
-      _cdapNsPath: basePath
-    })
+    var vm = this;
+
+    vm.data = {};
+    myWorkFlowApi.get(params)
+      .$promise
       .then(function(res) {
         var edges = [],
             nodes = [],
@@ -39,8 +44,8 @@ angular.module(PKG.name + '.feature.workflows')
           }
         });
 
-        expandNodes(nodesFromBackend, nodes);
-        convertNodesToEdges(angular.copy(nodes), edges);
+        GraphHelpers.expandNodes(nodesFromBackend, nodes);
+        GraphHelpers.convertNodesToEdges(angular.copy(nodes), edges);
 
         nodes = nodes.map(function(item) {
           return angular.extend({
@@ -49,29 +54,101 @@ angular.module(PKG.name + '.feature.workflows')
           }, item);
         });
 
-        $scope.data = {
+        vm.data = {
           nodes: nodes,
           edges: edges,
-          metrics: {}
+          metrics: {},
+          current: {},
         };
 
         var programs = [];
         angular.forEach(res.nodes, function(value) {
           programs.push(value.program);
         });
-        $scope.actions = programs;
+        vm.actions = programs;
+
+        pollNodes();
+
       });
 
 
-    $scope.workflowProgramClick = function (instance) {
-      if (['START', 'END'].indexOf(instance.type) > -1) {
+    // Need to make sure that the list of nodes is already generated
+    function pollNodes() {
+      // Still using MyDataSource because the poll needs to be stopped
+      var dataSrc = new MyDataSource($scope);
+
+      var path = '/apps/' + $state.params.appId
+        + '/workflows/' + $state.params.programId
+        + '/runs/' + $scope.RunsController.runs.selected.runid;
+
+      if ($scope.RunsController.runs.length > 0) {
+
+        dataSrc.poll({
+          _cdapNsPath: path,
+          interval: 1000
+        })
+        .then(function (response) {
+
+          var pastNodes = Object.keys(response.properties);
+          $scope.RunsController.runs.selected.properties = response.properties;
+
+          var activeNodes = filterFilter(vm.data.nodes , function(node) {
+            return pastNodes.indexOf(node.nodeId) !== -1;
+          });
+          angular.forEach(activeNodes, function(n) {
+            var runid = response.properties[n.nodeId];
+
+            if (n.program.programType === 'MAPREDUCE') {
+              var mapreduceParams = {
+                namespace: $state.params.namespace,
+                appId: $state.params.appId,
+                mapreduceId: n.program.programName,
+                runId: runid,
+                scope: $scope
+              };
+              myMapreduceApi.runDetail(mapreduceParams)
+                .$promise
+                .then(function (result) {
+                  vm.data.current[n.name] = result.status;
+                });
+              } else if (n.program.programType === 'SPARK') {
+
+                // TODO: Change to data-modelling once available for Spark
+                var sparkPath = '/apps/' + $state.params.appId + '/spark/' + n.program.programName + '/runs/' + runid;
+
+                dataSrc.request({
+                  _cdapNsPath: sparkPath
+                })
+                .then(function (result) {
+                  vm.data.current[n.name] = result.status;
+                });
+              }
+
+          });
+
+          if (response.status === 'COMPLETED' || response.status === 'FAILED') {
+            dataSrc.stopPoll(response.__pollId__);
+          }
+
+        });
+      }
+    }
+
+
+    vm.workflowProgramClick = function (instance) {
+      if (['START', 'END'].indexOf(instance.type) > -1 ) {
         return;
       }
-      if ($scope.runs.length) {
-        if (instance.program.programType === 'MAPREDUCE') {
+      if ($scope.RunsController.runs.length) {
+        if (instance.program.programType === 'MAPREDUCE' && $scope.RunsController.runs.selected.properties[instance.nodeId]) {
           $state.go('mapreduce.detail.runs.run', {
             programId: instance.program.programName,
-            runid: $scope.runs.selected.properties[instance.nodeId]
+            runid: $scope.RunsController.runs.selected.properties[instance.nodeId]
+          });
+        } else if (instance.program.programType === 'SPARK' && $scope.RunsController.runs.selected.properties[instance.nodeId]) {
+          $state.go('spark.detail.runs.run', {
+            programId: instance.program.programName,
+            runid: $scope.RunsController.runs.selected.properties[instance.nodeId]
           });
         }
       } else {
@@ -82,143 +159,15 @@ angular.module(PKG.name + '.feature.workflows')
       }
     };
 
-    $scope.stop = function() {
+    vm.stop = function() {
       $alert({
         type: 'info',
         content: 'Stopping a workflow at run level is not possible yet. Will be fixed soon.'
       });
       return;
-      $scope.status = 'STOPPING';
-      dataSrc.request({
-        _cdapNsPath: basePath + '/stop',
-        method: 'POST'
-      });
+      // TODO: There is support from backend. We should implement this in UI
+      // this.status = 'STOPPING';
+      // myWorkFlowApi.stop(params);
     };
-
-    $scope.goToDetailActionView = function(programId, programType) {
-      // As of 2.7 only a mapreduce job is scheduled in a workflow.
-      if (programType === 'MAPREDUCE') {
-        $state.go('mapreduce.detail', {
-          programId: programId
-        });
-      }
-    };
-
 
   });
-
-/**
-  * Purpose: convertNodesToEdgess a list of nodes to a list of connections
-  * @param  [Array] of nodes
-  * @return [Array] of connections (edges)
-  * Should handle Action + Fork + Condition Nodes.
-*/
-function convertNodesToEdges(nodes, connections) {
-  var staticNodeTypes = [
-   'ACTION', // from backend hence no 'NODE'
-   'JOINNODE',
-   'FORKNODE',
-   'CONDITIONNODE',
-   'CONDITIONEND'
- ];
-  for (var i=0; i < nodes.length -1; i++) {
-
-    if (staticNodeTypes.indexOf(nodes[i].nodeType) >-1 &&
-        staticNodeTypes.indexOf(nodes[i+1].nodeType) > -1
-      ) {
-        if (nodes[i].nodeId === nodes[i+1].nodeId) {
-          continue; // Don't connect the fork and join nodes of the same fork
-        }
-      connections.push({
-        sourceName: nodes[i].program.programName + nodes[i].nodeId,
-        targetName: nodes[i+1].program.programName + nodes[i+1].nodeId,
-        sourceType: nodes[i].nodeType
-      });
-    } else if (nodes[i].nodeType === 'FORK' || nodes[i].nodeType === 'CONDITION') {
-      flatten(nodes[i-1], nodes[i], nodes[i+1], connections);
-    }
-  }
-}
-
-/**
-  * Purpose: Flatten a source-fork-target combo to a list of connections
-  * @param  [Array] of nodes
-  * @param  [Array] of nodes
-  * @param  [Array] of nodes
-  * @return [Array] of connections
-
-*/
-function flatten(source, fork, target, connections) {
-  var branches = fork.branches,
-      temp = [];
-
-  for (var i =0; i<branches.length; i++) {
-    temp = branches[i];
-    if(source) {
-      temp.unshift(source);
-    }
-    if(target) {
-      temp.push(target);
-    }
-    convertNodesToEdges(temp, connections);
-  }
-}
-
-/**
-  Purpose: Expand a fork and convertNodesToEdges branched nodes to a list of connections
-  * @param  [Array] of nodes
-  * @return [Array] of connections
-
-  * {nodeId}: will be used when constructing edges.
-
-*/
-function expandNodes(nodes, expandedNodes) {
-  var i, j, nodeId;
-  for(i=0; i<nodes.length; i++) {
-    if (nodes[i].nodeType === 'ACTION') {
-      nodes[i].label = nodes[i].program.programName;
-      expandedNodes.push(nodes[i]);
-    } else if (nodes[i].nodeType === 'FORK') {
-      for (j=0; j<nodes[i].branches.length; j++) {
-        expandedNodes.push({
-          label: 'FORK',
-          nodeType: 'FORKNODE',
-          nodeId: 'FORK' + i,
-          program: {
-            programName: 'FORKNODE'
-          }
-        });
-        expandNodes(nodes[i].branches[j], expandedNodes);
-        expandedNodes.push({
-          label: 'JOIN',
-          nodeType: 'JOINNODE',
-          nodeId: 'FORK' + i,
-          program: {
-            programName: 'JOINNODE'
-          }
-        });
-      }
-    } else if (nodes[i].nodeType === 'CONDITION') {
-      nodes[i].branches = [nodes[i].ifBranch, nodes[i].elseBranch];
-      for (j=0; j<nodes[i].branches.length; j++) {
-        expandedNodes.push({
-          label: 'IF',
-          nodeType: 'CONDITIONNODE',
-          nodeId: 'IF' + i,
-          program: {
-            programName: nodes[i].predicateClassName
-          }
-        });
-        expandNodes(nodes[i].branches[j], expandedNodes);
-        expandedNodes.push({
-          label: 'ENDIF',
-          nodeType: 'CONDITIONEND',
-          nodeId: 'IF' + i,
-          program: {
-            programName: 'CONDITIONEND'
-          }
-        });
-      }
-    }
-  }
-}

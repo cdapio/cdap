@@ -1,16 +1,23 @@
 angular.module(PKG.name + '.feature.mapreduce')
-  .controller('MapreduceRunDetailLogsController', function($scope, MyDataSource, $state) {
-    var dataSrc = new MyDataSource($scope),
-      basePath = '/apps/' + $state.params.appId + '/mapreduce/' + $state.params.programId + '/runs/' + $scope.current;
+  .controller('MapreduceRunDetailLogsController', function ($scope, $state, myMapreduceApi) {
 
-    $scope.logs = [];
-    if (!$scope.runs.length) {
+    this.logs = [];
+    if (!$scope.RunsController.runs.length) {
       return;
     }
 
-    dataSrc.poll({
-      _cdapNsPath: basePath + '/logs/next?maxSize=50'
-    }, function(res) {
-      $scope.logs = res;
-    });
+    var params = {
+      namespace: $state.params.namespace,
+      appId: $state.params.appId,
+      mapreduceId: $state.params.programId,
+      runId: $scope.RunsController.runs.selected.runid,
+      max: 50,
+      scope: $scope
+    };
+
+    myMapreduceApi.logs(params)
+      .$promise
+      .then(function (res) {
+        this.logs = res;
+      }.bind(this));
   });

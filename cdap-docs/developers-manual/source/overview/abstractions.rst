@@ -2,13 +2,13 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014 Cask Data, Inc.
 
-============================================
+=================
 CDAP Abstractions
-============================================
+=================
 
 CDAP abstractions provide portability by decoupling your data and applications from the underlying infrastructure.
 CDAP lets you abstract your data and applications by injecting abstraction layers over various components
-of the Hadoop ecosystem. To access and manipulate data, you use CDAP's Datasets rather than actual
+of the Hadoop ecosystem. To access and manipulate data, you use CDAP's datasets rather than actual
 storage engines such as HDFS or HBase. Similarly, you write your applications using CDAP's developer interface
 and run them inside application containers. These containers are a logical abstraction that can be realized
 differently in several runtime environments, such as in-memory, standalone, or distributed cluster.
@@ -25,7 +25,7 @@ infrastructure in grey.
 Data Abstraction
 ----------------
 
-In CDAP applications, you interact with data through Datasets. Datasets provide abstraction through:
+In CDAP applications, you interact with data through *datasets*. Datasets provide abstraction through:
 
 - Abstraction of the actual representation of data in storage. You can write your code or queries without
   having to know where and how your data is stored—be it in HBase, LevelDB or a relational database.
@@ -33,7 +33,7 @@ In CDAP applications, you interact with data through Datasets. Datasets provide 
 - Consistency of your data under highly concurrent access using Cask's 
   `Tephra™ transaction system <https://github.com/caskdata/tephra/>`__.
 - Injection of datasets into different programming paradigms and runtimes. As soon as your data is in a
-  dataset, you can immediately use it: in real-time programs; in batch processing applications such as Map/Reduce
+  dataset, you can immediately use it: in real-time programs; in batch processing applications such as MapReduce
   and Spark; in ad-hoc SQL queries.
 
 Application Abstraction

@@ -47,7 +47,7 @@ public class WordSplitter extends AbstractFlowlet {
       .decode(event.getBody()).toString();
 
     String[] words = inputString.split("\\s+");
-    List<String> wordList = new ArrayList<String>(words.length);
+    List<String> wordList = new ArrayList<>(words.length);
 
     long sumOfLengths = 0;
     long wordCount = 0;

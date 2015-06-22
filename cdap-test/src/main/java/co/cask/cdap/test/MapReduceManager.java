@@ -21,6 +21,6 @@ import co.cask.cdap.api.mapreduce.MapReduce;
 /**
  * Instance for this class is for managing a running {@link MapReduce}.
  */
-public interface MapReduceManager extends ProgramManager {
+public interface MapReduceManager extends ProgramManager<MapReduceManager> {
 
 }

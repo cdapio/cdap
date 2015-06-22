@@ -25,6 +25,7 @@ import co.cask.cdap.template.etl.batch.sink.DBSink;
 import co.cask.cdap.template.etl.batch.sink.KVTableSink;
 import co.cask.cdap.template.etl.batch.sink.TableSink;
 import co.cask.cdap.template.etl.batch.sink.TimePartitionedFileSetDatasetAvroSink;
+import co.cask.cdap.template.etl.batch.sink.TimePartitionedFileSetDatasetParquetSink;
 import co.cask.cdap.template.etl.batch.source.DBSource;
 import co.cask.cdap.template.etl.batch.source.KVTableSource;
 import co.cask.cdap.template.etl.batch.source.StreamBatchSource;
@@ -41,6 +42,7 @@ import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.hsqldb.jdbc.JDBCDriver;
 import org.junit.BeforeClass;
+import parquet.avro.AvroParquetOutputFormat;
 
 import java.io.IOException;
 
@@ -58,7 +60,8 @@ public class BaseETLBatchTest extends TestBase {
       DBSource.class, KVTableSource.class, StreamBatchSource.class, TableSource.class, DBRecord.class);
     addTemplatePlugins(TEMPLATE_ID, "batch-sinks-1.0.0.jar",
       BatchCubeSink.class, DBSink.class, KVTableSink.class, TableSink.class,
-      TimePartitionedFileSetDatasetAvroSink.class, AvroKeyOutputFormat.class, AvroKey.class);
+      TimePartitionedFileSetDatasetAvroSink.class, AvroKeyOutputFormat.class, AvroKey.class,
+      TimePartitionedFileSetDatasetParquetSink.class, AvroParquetOutputFormat.class);
     addTemplatePlugins(TEMPLATE_ID, "test-sources-1.0.0.jar", MetaKVTableSource.class);
     addTemplatePlugins(TEMPLATE_ID, "test-sinks-1.0.0.jar", MetaKVTableSink.class);
     addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar",

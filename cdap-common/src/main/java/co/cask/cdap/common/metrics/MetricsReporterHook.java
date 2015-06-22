@@ -17,7 +17,7 @@
 package co.cask.cdap.common.metrics;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.http.AbstractHandlerHook;
 import co.cask.http.HandlerInfo;
@@ -44,7 +44,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
 
   private final String serviceName;
 
-  private final LoadingCache<Map<String, String>, MetricsCollector> collectorCache;
+  private final LoadingCache<Map<String, String>, MetricsContext> collectorCache;
 
   public MetricsReporterHook(final MetricsCollectionService metricsCollectionService, String serviceName) {
     this.metricsCollectionService = metricsCollectionService;
@@ -53,10 +53,10 @@ public class MetricsReporterHook extends AbstractHandlerHook {
     if (metricsCollectionService != null) {
       this.collectorCache = CacheBuilder.newBuilder()
         .expireAfterAccess(1, TimeUnit.HOURS)
-        .build(new CacheLoader<Map<String, String>, MetricsCollector>() {
+        .build(new CacheLoader<Map<String, String>, MetricsContext>() {
           @Override
-          public MetricsCollector load(Map<String, String> key) throws Exception {
-            return metricsCollectionService.getCollector(key);
+          public MetricsContext load(Map<String, String> key) throws Exception {
+            return metricsCollectionService.getContext(key);
           }
         });
     } else {
@@ -68,7 +68,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
   public boolean preCall(HttpRequest request, HttpResponder responder, HandlerInfo handlerInfo) {
     if (metricsCollectionService != null) {
       try {
-        MetricsCollector collector = collectorCache.get(createContext(handlerInfo));
+        MetricsContext collector = collectorCache.get(createContext(handlerInfo));
         collector.increment("request.received", 1);
       } catch (Throwable e) {
         LOG.error("Got exception while getting collector", e);
@@ -81,7 +81,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
   public void postCall(HttpRequest request, HttpResponseStatus status, HandlerInfo handlerInfo) {
     if (metricsCollectionService != null) {
       try {
-        MetricsCollector collector = collectorCache.get(createContext(handlerInfo));
+        MetricsContext collector = collectorCache.get(createContext(handlerInfo));
         String name;
         int code = status.getCode();
         if (code < 100) {

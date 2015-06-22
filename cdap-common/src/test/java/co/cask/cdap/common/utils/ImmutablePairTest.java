@@ -25,11 +25,11 @@ import org.junit.Test;
 public class ImmutablePairTest {
 
   static final class Fixture {
-    static ImmutablePair<Integer, Integer> a = new ImmutablePair<Integer, Integer>(1, 2);
-    static ImmutablePair<Integer, String>  b = new ImmutablePair<Integer, String>(1, "woot");
-    static ImmutablePair<String, String>   c = new ImmutablePair<String, String>("me", "you");
-    static ImmutablePair<Integer, Integer> d = new ImmutablePair<Integer, Integer>(1, 2);
-    static ImmutablePair<Integer, Integer> e = new ImmutablePair<Integer, Integer>(1, 2);
+    static ImmutablePair<Integer, Integer> a = new ImmutablePair<>(1, 2);
+    static ImmutablePair<Integer, String>  b = new ImmutablePair<>(1, "woot");
+    static ImmutablePair<String, String>   c = new ImmutablePair<>("me", "you");
+    static ImmutablePair<Integer, Integer> d = new ImmutablePair<>(1, 2);
+    static ImmutablePair<Integer, Integer> e = new ImmutablePair<>(1, 2);
   }
 
   @Test
@@ -82,8 +82,8 @@ public class ImmutablePairTest {
 
   @Test
   public void testEqualsTypeSafe() {
-    ImmutablePair<Integer, Boolean> pair1 = new ImmutablePair<Integer, Boolean>(1, true);
-    ImmutablePair<String, byte[]> pair2 = new ImmutablePair<String, byte[]>("1", "true".getBytes());
+    ImmutablePair<Integer, Boolean> pair1 = new ImmutablePair<>(1, true);
+    ImmutablePair<String, byte[]> pair2 = new ImmutablePair<>("1", "true".getBytes());
     Assert.assertFalse(pair1.equals(pair2));
     Assert.assertFalse(pair2.equals(pair1));
     Assert.assertFalse(pair1.equals(new Integer(10)));

@@ -1,38 +1,38 @@
 angular.module(PKG.name + '.feature.streams')
-  .controller('CdapStreamExploreController',
-    function($scope, MyDataSource, $state, EventPipe) {
+  .controller('StreamExploreController', function($scope, $state, EventPipe, myStreamApi) {
 
-      var dataSrc = new MyDataSource($scope);
+    this.activePanel = [0];
+    this.name = $state.params.streamId;
 
-      $scope.activePanel = [0];
-      $scope.name = $state.params.streamId;
+    EventPipe.on('explore.newQuery', function() {
+      this.activePanel = [0,1,2];
+    }.bind(this));
 
-      EventPipe.on('explore.newQuery', function() {
-        $scope.activePanel = [0,1,2];
-      });
+    var now = Date.now();
 
-      var now = Date.now();
+    this.eventSearch = {
+      startMs: now-(60*60*1000*2), // two hours ago
+      endMs: now,
+      limit: 10,
+      results: []
+    };
 
-      $scope.eventSearch = {
-        startMs: now-(60*60*1000*2), // two hours ago
-        endMs: now,
-        limit: 10,
-        results: []
+    this.doEventSearch = function () {
+      var params = {
+        namespace: $state.params.namespace,
+        streamId: $state.params.streamId,
+        scope: $scope,
+        start: this.eventSearch.startMs,
+        end: this.eventSearch.endMs,
+        limit: this.eventSearch.limit
       };
+      myStreamApi.eventSearch(params)
+        .$promise
+        .then(function (res) {
+          this.eventSearch.results = res;
+        }.bind(this));
+    };
 
-      $scope.doEventSearch = function () {
-        dataSrc
-          .request({
-            _cdapNsPath: '/streams/' + $state.params.streamId +
-              '/events?start=' + $scope.eventSearch.startMs +
-              '&end=' + $scope.eventSearch.endMs +
-              '&limit=' + $scope.eventSearch.limit
-          }, function (result) {
-            $scope.eventSearch.results = result;
-          });
-      };
+    this.doEventSearch();
 
-      $scope.doEventSearch();
-
-    }
-  );
+  });
