@@ -16,43 +16,25 @@
 
 package co.cask.cdap.template.etl.common;
 
-import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.format.UnexpectedFormatException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericRecord;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Structured to Avro Conversions and vice versa
+ * Converts an object with a schema into another type of object with the same schema.
+ * For example, child implementations could convert a StructuredRecord to a GenericRecord and vice versa
+ * as can be seen in AvroToStructuredTransformer and StructuredToAvroTransformer
  * @param <INPUT>
  * @param <OUTPUT>
  */
-public abstract class Converter<INPUT, OUTPUT> {
+public abstract class RecordConverter<INPUT, OUTPUT> {
 
   abstract OUTPUT transform(INPUT record) throws IOException;
-
-  protected Object getRecordField(Object record, String fieldName) {
-    try {
-      if (record instanceof StructuredRecord) {
-        return ((StructuredRecord) record).get(fieldName);
-      }
-      if (record instanceof GenericRecord) {
-        return ((GenericRecord) record).get(fieldName);
-      }
-      Class recordClass = record.getClass();
-      Field field = recordClass.getDeclaredField(fieldName);
-      field.setAccessible(true);
-      return field.get(record);
-    } catch (Exception e) {
-      throw new UnexpectedFormatException(e);
-    }
-  }
 
   private Object convertUnion(Object value, List<Schema> schemas) {
     boolean isNullable = false;

@@ -27,7 +27,7 @@ import java.util.Map;
 /**
  * Create StructuredRecords from GenericRecords
  */
-public class AvroToStructuredTransformer extends Converter<GenericRecord, StructuredRecord> {
+public class AvroToStructuredTransformer extends RecordConverter<GenericRecord, StructuredRecord> {
 
   private final Map<Integer, co.cask.cdap.api.data.schema.Schema> schemaCache = Maps.newHashMap();
 

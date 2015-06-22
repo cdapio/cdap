@@ -29,7 +29,7 @@ import java.util.Map;
 /**
  * Creates GenericRecords from StructuredRecords
  */
-public class StructuredToAvroTransformer extends Converter<StructuredRecord, GenericRecord> {
+public class StructuredToAvroTransformer extends RecordConverter<StructuredRecord, GenericRecord> {
 
   private final Map<Integer, Schema> schemaCache = Maps.newHashMap();
 
