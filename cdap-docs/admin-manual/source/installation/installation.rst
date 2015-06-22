@@ -111,7 +111,7 @@ You'll need this software installed:
 Java Runtime
 ++++++++++++
 The latest `JDK or JRE version 1.7.xx <http://www.java.com/en/download/manual.jsp>`__
-for Linux and Solaris must be installed in your environment; we recommend the Oracle JDK.
+for Linux, Windows, or Mac OS X must be installed in your environment; we recommend the Oracle JDK.
 
 To check the Java version installed, run the command::
 
@@ -130,7 +130,7 @@ Node.js Runtime
 You can download the appropriate version of Node.js from `nodejs.org <http://nodejs.org>`__:
 
 #. The version of Node.js must be from |node-js-version|; we recommend |recommended-node-js-version|.
-#. Download the appropriate Linux or Solaris binary ``.tar.gz`` from
+#. Download the appropriate binary ``.tar.gz`` from
    `nodejs.org/download/ <http://nodejs.org/dist/>`__.
 
 #. Extract somewhere such as ``/opt/node-[version]/``
@@ -237,7 +237,7 @@ provide packages for *Ubuntu 12* and *CentOS 6*.
 
 Available packaging types:
 
-- RPM: YUM repo
+- RPM: Yum repo
 - Debian: APT repo
 - Tar: For specialized installations only
 
