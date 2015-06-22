@@ -93,7 +93,7 @@ public class ETLDBOutputFormat<K extends DBWritable, V>  extends DBOutputFormat<
             driver = driverClass.newInstance();
 
             // De-register the default driver that gets registered when driver class is loaded.
-            DBUtils.deRegisterDriver(driverClass);
+            DBUtils.deregisterAllDrivers(driverClass);
           }
 
           driverShim = new JDBCDriverShim(driver);

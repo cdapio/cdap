@@ -59,7 +59,7 @@ public class ETLDBInputFormat extends DBInputFormat {
               driver = driverClass.newInstance();
 
               // De-register the default driver that gets registered when driver class is loaded.
-              DBUtils.deRegisterDriver(driverClass);
+              DBUtils.deregisterAllDrivers(driverClass);
             }
             driverShim = new JDBCDriverShim(driver);
             DriverManager.registerDriver(driverShim);

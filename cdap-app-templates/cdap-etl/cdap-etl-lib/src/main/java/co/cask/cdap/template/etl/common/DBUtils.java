@@ -45,7 +45,7 @@ public final class DBUtils {
   /**
    * De-register all SQL drivers that are associated with the class
    */
-  public static void deRegisterDriver(Class<? extends Driver> driverClass)
+  public static void deregisterAllDrivers(Class<? extends Driver> driverClass)
     throws NoSuchFieldException, IllegalAccessException, ClassNotFoundException {
     Field field = DriverManager.class.getDeclaredField("registeredDrivers");
     field.setAccessible(true);
@@ -55,12 +55,18 @@ public final class DBUtils {
       Field driverField = driverInfoClass.getDeclaredField("driver");
       driverField.setAccessible(true);
       Driver d = (Driver) driverField.get(driverInfo);
+      if (d == null) {
+        LOG.debug("Found null driver object in drivers list. Ignoring.");
+        continue;
+      }
+      LOG.debug("Removing non-null driver object from drivers list.");
       ClassLoader registeredDriverClassLoader = d.getClass().getClassLoader();
       if (registeredDriverClassLoader == null) {
         LOG.debug("Found null classloader for default driver {}. Ignoring since this may be using system classloader.",
                   d.getClass().getName());
         continue;
       }
+      // Remove all objects in this list that were created using the classloader of the caller.
       if (d.getClass().getClassLoader().equals(driverClass.getClassLoader())) {
         LOG.debug("Removing default driver {} from registeredDrivers", d.getClass().getName());
         list.remove(driverInfo);

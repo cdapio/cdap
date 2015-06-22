@@ -177,6 +177,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
                 dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName, driverClass.getName(),
                 JDBCDriverShim.class.getName());
       driverShim = new JDBCDriverShim(driverClass.newInstance());
+      DBUtils.deregisterAllDrivers(driverClass);
       DriverManager.registerDriver(driverShim);
     }
   }
