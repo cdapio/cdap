@@ -255,17 +255,12 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     if (service == null) {
       return null;
     }
+
     Map<String, String> tags = Maps.newHashMap();
-    // NOTE: Currently we report metrics thru mapreduce counters and emit them in mapreduce program runner. It "knows"
-    //       all the details about program, run, etc. so no need to pollute counters with it. Also counter name has
-    //       strict limits by default (64 bytes), we simply can't risk overflowing it.
+    tags.putAll(getMetricsContext(program, runId));
     if (type != null) {
-      // in a task: put only task info
       tags.put(Constants.Metrics.Tag.MR_TASK_TYPE, type.getId());
       tags.put(Constants.Metrics.Tag.INSTANCE_ID, taskId);
-    } else {
-      // in a runner (container that submits the job): put program info
-      tags.putAll(getMetricsContext(program, runId));
     }
 
     if (adapterSpec != null) {
