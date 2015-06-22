@@ -34,11 +34,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Longs;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -59,8 +58,8 @@ import javax.annotation.Nullable;
  * </p>
  *
  * <p>The indexed values need not be unique.  When reading the data back by index value, a {@link Scanner} will be
- * returned, allowing the client to iterate through all matching rows. Only exact matches on indexed values
- * are currently supported.
+ * returned, allowing the client to iterate through all matching rows. Exact matches as well as range lookups on
+ * indexed values are supported.
  * </p>
  *
  * <p>Index entries are created by storing additional rows in a second table.  These index rows are keyed by
@@ -93,7 +92,6 @@ import javax.annotation.Nullable;
  * @see co.cask.cdap.api.dataset.lib.IndexedTableDefinition#INDEX_COLUMNS_CONF_KEY
  */
 public class IndexedTable extends AbstractDataset implements Table {
-  private static final Logger LOG = LoggerFactory.getLogger(IndexedTable.class);
 
   /**
    * Column key used to store the existence of a row in the secondary index.
@@ -120,9 +118,7 @@ public class IndexedTable extends AbstractDataset implements Table {
     this.table = table;
     this.index = index;
     this.indexedColumns = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
-    for (byte[] col : columnsToIndex) {
-      this.indexedColumns.add(col);
-    }
+    Collections.addAll(this.indexedColumns, columnsToIndex);
   }
 
   /**
@@ -170,13 +166,38 @@ public class IndexedTable extends AbstractDataset implements Table {
    * @throws java.lang.IllegalArgumentException if the given column is not configured for indexing.
    */
   public Scanner readByIndex(byte[] column, byte[] value) {
-    if (!indexedColumns.contains(column)) {
-      throw new IllegalArgumentException("Column " + Bytes.toStringBinary(column) + " is not configured for indexing");
-    }
+    assertIndexedColumn(column);
     byte[] rowKeyPrefix = Bytes.concat(column, keyDelimiter, value, keyDelimiter);
     byte[] stopRow = Bytes.stopKeyForPrefix(rowKeyPrefix);
     Scanner indexScan = index.scan(rowKeyPrefix, stopRow);
     return new IndexScanner(indexScan, rowKeyPrefix);
+  }
+
+  /**
+   * Reads table rows within the given secondary index key range. If no rows are indexed, falling within the given
+   * range, then a {@link co.cask.cdap.api.dataset.table.Scanner} with no results will be returned.
+   *
+   * @param column the column to use for the index lookup
+   * @param startValue the inclusive start of the range for which rows must fall within to be returned in the scan
+   * @param endValue the exclusive end of the range for which rows must fall within to be returned in the scan
+   * @return a Scanner returning rows from the data table, whose stored value for the given column is within the the
+   * given range.
+   * @throws java.lang.IllegalArgumentException if the given column is not configured for indexing.
+   */
+  public Scanner scanByIndex(byte[] column, byte[] startValue, byte[] endValue) {
+    assertIndexedColumn(column);
+    // keyDelimiter is not used at the end of the rowKeys, because they are used for a range scan,
+    // instead of a fixed-match lookup
+    byte[] startRow = Bytes.concat(column, keyDelimiter, startValue);
+    byte[] stopRow = Bytes.concat(column, keyDelimiter, endValue);
+    Scanner indexScan = index.scan(startRow, stopRow);
+    return new IndexScanner(indexScan, null);
+  }
+
+  private void assertIndexedColumn(byte[] column) {
+    if (!indexedColumns.contains(column)) {
+      throw new IllegalArgumentException("Column " + Bytes.toStringBinary(column) + " is not configured for indexing");
+    }
   }
 
   /**
@@ -519,7 +540,9 @@ public class IndexedTable extends AbstractDataset implements Table {
     private final Scanner baseScanner;
     private final byte[] rowKeyPrefix;
 
-    public IndexScanner(Scanner baseScanner, byte[] rowKeyPrefix) {
+    // If rowKeyPrefix is null, that means don't check equality with the rows returned by the index because we are doing
+    // a range scan instead of an exact match lookup.
+    public IndexScanner(Scanner baseScanner, @Nullable byte[] rowKeyPrefix) {
       this.baseScanner = baseScanner;
       this.rowKeyPrefix = rowKeyPrefix;
     }
@@ -528,22 +551,20 @@ public class IndexedTable extends AbstractDataset implements Table {
     @Override
     public Row next() {
       // TODO: retrieve results in batches to minimize RPC overhead (requires multi-get support in table)
-      Row dataRow = null;
       // keep going until we hit a non-null, non-empty data row, or we exhaust the index
-      while (dataRow == null) {
-        Row indexRow = baseScanner.next();
-        if (indexRow == null) {
-          // end of index
-          return null;
-        }
+      Row indexRow;
+      while ((indexRow = baseScanner.next()) != null) {
         byte[] rowkey = indexRow.get(IDX_COL);
         // verify that datarow matches the expected row key to avoid issues with column name or value
         // containing the delimiter used
-        if (rowkey != null && Bytes.equals(indexRow.getRow(), Bytes.add(rowKeyPrefix, rowkey))) {
-          dataRow = table.get(rowkey);
+        if (rowkey != null) {
+          if (rowKeyPrefix == null || Bytes.equals(indexRow.getRow(), Bytes.add(rowKeyPrefix, rowkey))) {
+            return table.get(rowkey);
+          }
         }
       }
-      return dataRow;
+      // end of index
+      return null;
     }
 
     @Override

@@ -31,6 +31,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -57,15 +58,21 @@ public class IndexedTableTest {
   static byte[] keyAA = { 'a', 'a' };
   static byte[] keyB = { 'b' };
   static byte[] keyC = { 'c' };
+  static byte[] keyD = { 'd' };
+  static byte[] keyE = { 'e' };
   static byte[] valA = { 'a' };
   static byte[] valAA = { 'a', 'a' };
   static byte[] valAB = { 'a', 'b' };
   static byte[] valB = { 'b' };
   static byte[] valBB = { 'b', 'b' };
   static byte[] valC = { 'c' };
+  static byte[] valD = { 'd' };
+  static byte[] valE = { 'e' };
   static byte[] idx1 = { '1' };
   static byte[] idx2 = { '2' };
   static byte[] idx3 = { '3' };
+  static byte[] idx4 = { '4' };
+  static byte[] idx5 = { '5' };
 
   static String idxColString = Bytes.toString(idxCol);
   static byte[][] colIdxVal = { idxCol, valCol };
@@ -130,8 +137,7 @@ public class IndexedTableTest {
         row = readFirst(table.readByIndex(idxCol, idx2));
         TableAssert.assertColumns(row, colIdxVal, new byte[][]{idx2, valB});
         // test read over empty index (idx 3)
-        row = readFirst(table.readByIndex(idxCol, idx3));
-        Assert.assertNull(row);
+        assertEmpty(table.readByIndex(idxCol, idx3));
       }
     });
 
@@ -255,10 +261,53 @@ public class IndexedTableTest {
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        Assert.assertNull(readFirst(table.readByIndex(idxCol, idx1)));
+        assertEmpty(table.readByIndex(idxCol, idx1));
         // read by idx 3 > c
         Row row = readFirst(table.readByIndex(idxCol, idx3));
         TableAssert.assertColumns(row, new byte[][]{idxCol, valCol}, new byte[][]{idx3, valC});
+      }
+    });
+  }
+
+  @Test
+  @Ignore
+  public void testIndexedRangeLookups() throws Exception {
+    TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(table);
+
+    // start a new transaction
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // perform 5 puts, using idx values 1,2,3,4,5
+        table.put(new Put(keyE).add(idxCol, idx4).add(valCol, valE));
+        table.put(new Put(keyC).add(idxCol, idx1).add(valCol, valC));
+        table.put(new Put(keyD).add(idxCol, idx5).add(valCol, valA));
+        table.put(new Put(keyB).add(idxCol, idx2).add(valCol, valB));
+        table.put(new Put(keyA).add(idxCol, idx3).add(valCol, valD));
+      }
+    });
+
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // do a scan using idx value range [idx2, idx5). Assert that we retrieve idx2, idx3, idx4.
+        Scanner scanner = table.scanByIndex(idxCol, idx2, idx5);
+        Row next = scanner.next();
+        Assert.assertNotNull(next);
+        Assert.assertTrue(Bytes.equals(keyB, next.getRow()));
+        Assert.assertTrue(Bytes.equals(valB, next.get(valCol)));
+
+        next = scanner.next();
+        Assert.assertNotNull(next);
+        Assert.assertTrue(Bytes.equals(keyA, next.getRow()));
+        Assert.assertTrue(Bytes.equals(valD, next.get(valCol)));
+
+        next = scanner.next();
+        Assert.assertNotNull(next);
+        Assert.assertTrue(Bytes.equals(keyE, next.getRow()));
+        Assert.assertTrue(Bytes.equals(valE, next.get(valCol)));
+
+        assertEmpty(scanner);
       }
     });
   }
@@ -680,12 +729,10 @@ public class IndexedTableTest {
   }
 
   private Row readFirst(Scanner scanner) {
-    Row row = null;
     try {
-      row = scanner.next();
+      return scanner.next();
     } finally {
       scanner.close();
     }
-    return row;
   }
 }
