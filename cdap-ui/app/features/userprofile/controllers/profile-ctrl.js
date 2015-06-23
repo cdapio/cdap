@@ -12,6 +12,7 @@ angular.module(PKG.name + '.feature.userprofile')
         method: 'POST',
         url: '/accessToken',
         data: {
+          profile_view: true,
           username: credentials.username,
           password: credentials.password
         }

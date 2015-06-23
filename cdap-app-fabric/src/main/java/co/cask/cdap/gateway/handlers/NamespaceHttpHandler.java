@@ -158,13 +158,9 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  /**
-   * DO NOT DOCUMENT THIS API
-   */
   @DELETE
   @Path("/unrecoverable/namespaces/{namespace-id}")
   public void delete(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespace) {
-    // NOTE: DO NOT DOCUMENT
     if (!cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
       return;
@@ -183,9 +179,6 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  /**
-   * DO NOT DOCUMENT THIS API
-   */
   @DELETE
   @Path("/unrecoverable/namespaces/{namespace-id}/datasets")
   public void deleteDatasets(HttpRequest request, HttpResponder responder,
