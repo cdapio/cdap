@@ -14,23 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.common;
 
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when a dataset module cannot be deleted.
+ * Thrown when a stream is not found
  */
-public class DatasetModuleCannotBeDeletedException extends CannotBeDeletedException {
+public class ServiceNotFoundException extends NotFoundException {
 
-  private final Id.DatasetModule id;
+  private final Id.Service id;
 
-  public DatasetModuleCannotBeDeletedException(Id.DatasetModule id) {
+
+  public ServiceNotFoundException(Id.Service id) {
     super(id);
     this.id = id;
   }
 
-  public Id.DatasetModule getId() {
+  public Id.Service getId() {
     return id;
   }
 }

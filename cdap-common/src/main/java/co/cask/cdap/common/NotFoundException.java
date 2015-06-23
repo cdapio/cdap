@@ -14,23 +14,31 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.common;
 
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when a dataset was not found.
+ * Thrown when an element is not found
  */
-public class DatasetNotFoundException extends NotFoundException {
+public class NotFoundException extends Exception {
 
-  private final Id.DatasetInstance dataset;
+  private final Object object;
 
-  public DatasetNotFoundException(Id.DatasetInstance dataset) {
-    super(dataset);
-    this.dataset = dataset;
+  public NotFoundException(Object object, String objectString) {
+    super(String.format("'%s' was not found", objectString));
+    this.object = object;
   }
 
-  public Id.DatasetInstance getId() {
-    return dataset;
+  public NotFoundException(Object object) {
+    this(object, object.toString());
+  }
+
+  public NotFoundException(Id id) {
+    this(id, id.getIdRep());
+  }
+
+  public Object getObject() {
+    return object;
   }
 }

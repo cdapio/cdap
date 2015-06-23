@@ -14,24 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.common;
 
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when an element already exists.
+ * Thrown when a stream is not found
  */
-public class AlreadyExistsException extends ConflictException {
+public class StreamNotFoundException extends NotFoundException {
 
-  private final Id objectId;
+  private final Id.Stream id;
 
-  public AlreadyExistsException(Id id) {
-    super(String.format("'%s' already exists", id.getIdRep()));
-    this.objectId = id;
+  public StreamNotFoundException(Id.Stream id) {
+    super(id);
+    this.id = id;
   }
 
-  public Id getObjectId() {
-    return objectId;
+  public Id.Stream getId() {
+    return id;
   }
-
 }

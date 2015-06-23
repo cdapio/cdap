@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.adapter;
 
-import co.cask.cdap.common.exception.ConflictException;
+import co.cask.cdap.common.ConflictException;
 
 /**
  * Thrown when an invalid adapter action occurs. For instance, if an adapter 'stop' is requested, but the adapter is

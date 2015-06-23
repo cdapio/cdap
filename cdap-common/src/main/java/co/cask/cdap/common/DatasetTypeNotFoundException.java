@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,26 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.common;
 
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when an ApplicationTemplate is not found
+ * Thrown when a dataset type is not found
  */
-public class ApplicationTemplateNotFoundException extends NotFoundException {
+public class DatasetTypeNotFoundException extends NotFoundException {
 
-  private final Id.ApplicationTemplate template;
+  private final Id.DatasetType id;
 
-  public ApplicationTemplateNotFoundException(Id.ApplicationTemplate template) {
-    super(template);
-    this.template = template;
+  public DatasetTypeNotFoundException(Id.DatasetType id) {
+    super(id);
+    this.id = id;
   }
 
-  /**
-   * @return the template that was not found
-   */
-  public Id.ApplicationTemplate getTemplate() {
-    return template;
+  public Id.DatasetType getId() {
+    return id;
   }
 }

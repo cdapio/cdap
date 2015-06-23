@@ -14,31 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.common;
 
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when an element is not found
+ * Thrown when a query was not found by its handle.
  */
-public class NotFoundException extends Exception {
+public class QueryNotFoundException extends NotFoundException {
 
-  private final Object object;
+  private final Id.QueryHandle id;
 
-  public NotFoundException(Object object, String objectString) {
-    super(String.format("'%s' was not found", objectString));
-    this.object = object;
+  // TODO: namespace?
+  public QueryNotFoundException(Id.QueryHandle id) {
+    super(id);
+    this.id = id;
   }
 
-  public NotFoundException(Object object) {
-    this(object, object.toString());
-  }
-
-  public NotFoundException(Id id) {
-    this(id, id.getIdRep());
-  }
-
-  public Object getObject() {
-    return object;
+  public Id.QueryHandle getId() {
+    return id;
   }
 }

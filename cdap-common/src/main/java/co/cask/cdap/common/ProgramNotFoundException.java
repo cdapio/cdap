@@ -14,22 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.common;
+
+import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when the user tried to execute some service operation, but the service was not enabled.
+ * Thrown when a program is not found
  */
+public class ProgramNotFoundException extends NotFoundException {
 
-public class ServiceNotEnabledException extends Exception {
+  private final Id.Program id;
 
-  private final String serviceName;
-
-  public ServiceNotEnabledException(String serviceName) {
-    super("Service '" + serviceName + "' was not enabled");
-    this.serviceName = serviceName;
+  public ProgramNotFoundException(Id.Program id) {
+    super(id);
+    this.id = id;
   }
 
-  public String getServiceName() {
-    return serviceName;
+  public Id.Program getId() {
+    return id;
   }
 }

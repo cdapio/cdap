@@ -17,12 +17,12 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.CannotBeDeletedException;
+import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.AlreadyExistsException;
-import co.cask.cdap.common.exception.BadRequestException;
-import co.cask.cdap.common.exception.CannotBeDeletedException;
-import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import org.junit.Assert;

@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.common.exception.ConflictException;
+import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.proto.Id;
 
 /**

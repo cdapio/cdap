@@ -14,23 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
-
-import co.cask.cdap.proto.Id;
+package co.cask.cdap.common;
 
 /**
- * Thrown when the user tries to create a schedule that already exists.
+ * Thrown when the user tried to execute some service operation, but the service was not enabled.
  */
-public class ScheduleAlreadyExistsException extends AlreadyExistsException {
 
-  private final Id.Schedule schedule;
+public class ServiceNotEnabledException extends Exception {
 
-  public ScheduleAlreadyExistsException(Id.Schedule schedule) {
-    super(schedule);
-    this.schedule = schedule;
+  private final String serviceName;
+
+  public ServiceNotEnabledException(String serviceName) {
+    super("Service '" + serviceName + "' was not enabled");
+    this.serviceName = serviceName;
   }
 
-  public Id.Schedule getSchedule() {
-    return schedule;
+  public String getServiceName() {
+    return serviceName;
   }
 }

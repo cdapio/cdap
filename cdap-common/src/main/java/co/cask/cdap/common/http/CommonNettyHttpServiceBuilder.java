@@ -15,9 +15,9 @@
  */
 package co.cask.cdap.common.http;
 
+import co.cask.cdap.common.HttpExceptionHandler;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.HttpExceptionHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Function;
 import org.jboss.netty.channel.ChannelPipeline;

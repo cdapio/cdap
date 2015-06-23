@@ -14,28 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.common;
 
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when a namespace cannot be created due to errors.
+ * Thrown when a schedule is not found.
  */
-public class NamespaceCannotBeCreatedException extends CannotBeCreatedException {
+public class ScheduleNotFoundException extends NotFoundException {
 
-  private final Id.Namespace namespaceId;
-
-  public NamespaceCannotBeCreatedException(Id.Namespace namespaceId, String reason) {
-    super(namespaceId, reason);
-    this.namespaceId = namespaceId;
-  }
-
-  public NamespaceCannotBeCreatedException(Id.Namespace namespaceId, Throwable cause) {
-    super(namespaceId, cause);
-    this.namespaceId = namespaceId;
-  }
-
-  public Id.Namespace getNamespaceId() {
-    return namespaceId;
+  public ScheduleNotFoundException(Id.Schedule schedule) {
+    super(schedule);
   }
 }

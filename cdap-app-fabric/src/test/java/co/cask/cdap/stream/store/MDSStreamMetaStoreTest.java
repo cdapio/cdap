@@ -18,9 +18,9 @@ package co.cask.cdap.stream.store;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.exception.AlreadyExistsException;
-import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
