@@ -89,7 +89,8 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
                                        FileSet fileSet, Table partitionTable,
                                        DatasetSpecification spec, Map<String, String> arguments,
                                        Provider<ExploreFacade> exploreFacadeProvider) {
-    super(datasetContext, name, PARTITIONING, fileSet, partitionTable, spec, arguments, exploreFacadeProvider);
+    super(datasetContext, name, PARTITIONING, fileSet, partitionTable, spec, arguments,
+          exploreFacadeProvider);
 
     isLegacyDataset = arguments.containsKey(ARGUMENT_LEGACY_DATASET) ||
       PartitionedFileSetProperties.getPartitioning(spec.getProperties()) == null;
@@ -158,7 +159,8 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
         public void consume(byte[] row, String path) {
           // legacy partitions had no metadata
           partitions.add(new BasicTimePartitionDetail(TimePartitionedFileSetDataset.this, path, Bytes.toLong(row),
-                                                      new PartitionMetadata(Collections.<String, String>emptyMap())));
+                                                      new PartitionMetadata(Collections.<String, String>emptyMap(),
+                                                                            0L)));
         }
       });
     }

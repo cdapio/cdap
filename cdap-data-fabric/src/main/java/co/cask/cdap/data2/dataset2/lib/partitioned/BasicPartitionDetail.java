@@ -43,16 +43,19 @@ class BasicPartitionDetail extends BasicPartition implements PartitionDetail {
     if (this == o) {
       return true;
     }
-    if (o == null || !(o instanceof BasicPartitionDetail)) {
+    if (o == null || getClass() != o.getClass()) {
       return false;
     }
+
     BasicPartitionDetail that = (BasicPartitionDetail) o;
-    return key.equals(that.key) && relativePath.equals(that.relativePath) && metadata.equals(that.metadata);
+
+    return Objects.equal(this.metadata, that.metadata) &&
+      Objects.equal(this.relativePath, that.relativePath) &&
+      Objects.equal(this.key, that.key);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(key, relativePath, metadata);
+    return Objects.hashCode(metadata, relativePath, key);
   }
-
 }

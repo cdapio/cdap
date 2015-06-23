@@ -27,9 +27,11 @@ import javax.annotation.Nullable;
  */
 public class PartitionMetadata implements Iterable<Map.Entry<String, String>> {
   private final Map<String, String> metadata;
+  private final Long creationTime;
 
-  public PartitionMetadata(Map<String, String> metadata) {
+  public PartitionMetadata(Map<String, String> metadata, long creationTime) {
     this.metadata = Collections.unmodifiableMap(new HashMap<>(metadata));
+    this.creationTime = creationTime;
   }
 
   /**
@@ -49,6 +51,10 @@ public class PartitionMetadata implements Iterable<Map.Entry<String, String>> {
     return metadata;
   }
 
+  public long getCreationTime() {
+    return creationTime;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -60,12 +66,12 @@ public class PartitionMetadata implements Iterable<Map.Entry<String, String>> {
 
     PartitionMetadata that = (PartitionMetadata) o;
 
-    return this.metadata.equals(that.metadata);
+    return this.metadata.equals(that.metadata) && this.creationTime.equals(that.creationTime);
   }
 
   @Override
   public int hashCode() {
-    return metadata.hashCode();
+    return metadata.hashCode() + 31 * creationTime.hashCode();
   }
 
   @Override

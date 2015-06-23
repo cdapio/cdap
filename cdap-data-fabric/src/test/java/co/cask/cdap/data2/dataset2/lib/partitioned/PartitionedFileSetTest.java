@@ -20,7 +20,6 @@ import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionMetadata;
 import co.cask.cdap.api.dataset.lib.PartitionOutput;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
@@ -44,8 +43,8 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -57,18 +56,25 @@ public class PartitionedFileSetTest {
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
-  static final Logger LOG = org.slf4j.LoggerFactory.getLogger(PartitionedFileSetTest.class);
+  private static final Logger LOG = org.slf4j.LoggerFactory.getLogger(PartitionedFileSetTest.class);
 
-  static final Partitioning PARTITIONING_1 = Partitioning.builder()
+  private static final Partitioning PARTITIONING_1 = Partitioning.builder()
     .addStringField("s")
     .addIntField("i")
     .addLongField("l")
     .build();
-  static final Partitioning PARTITIONING_2 = Partitioning.builder()
+  private static final Partitioning PARTITIONING_2 = Partitioning.builder()
     .addStringField("s")
     .addIntField("i")
     .addLongField("l")
     .addStringField("x")
+    .build();
+
+  // key can be in any order... partitioning dictates the order of fields in row key
+  private static final PartitionKey PARTITION_KEY = PartitionKey.builder()
+    .addIntField("i", 42)
+    .addLongField("l", 17L)
+    .addStringField("s", "x")
     .build();
 
   private static final Id.DatasetInstance pfsInstance =
@@ -98,32 +104,41 @@ public class PartitionedFileSetTest {
 
   @Test
   public void testEncodeDecode() {
-    // key can be in any order... partitioning dictates the order of fields in row key
-    PartitionKey key = PartitionKey.builder()
-      .addIntField("i", 42)
-      .addLongField("l", 17L)
-      .addStringField("s", "x")
-      .build();
-    byte[] rowKey = PartitionedFileSetDataset.generateRowKey(key, PARTITIONING_1);
+    byte[] rowKey = PartitionedFileSetDataset.generateRowKey(PARTITION_KEY, PARTITIONING_1);
     PartitionKey decoded = PartitionedFileSetDataset.parseRowKey(rowKey, PARTITIONING_1);
-    Assert.assertEquals(key, decoded);
+    Assert.assertEquals(PARTITION_KEY, decoded);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testDecodeIncomplete() {
-    // key can be in any order... partitioning dictates the order of fields in row key
-    PartitionKey key = PartitionKey.builder()
-      .addIntField("i", 42)
-      .addLongField("l", 17L)
-      .addStringField("s", "x")
-      .build();
-    byte[] rowKey = PartitionedFileSetDataset.generateRowKey(key, PARTITIONING_1);
+    byte[] rowKey = PartitionedFileSetDataset.generateRowKey(PARTITION_KEY, PARTITIONING_1);
     PartitionedFileSetDataset.parseRowKey(rowKey, PARTITIONING_2);
+  }
+
+  @Test
+  public void testPartitionCreationTime() throws Exception {
+    final PartitionedFileSet dataset = dsFrameworkUtil.getInstance(pfsInstance);
+
+    dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        PartitionOutput partitionOutput = dataset.getPartitionOutput(PARTITION_KEY);
+        long beforeTime = System.currentTimeMillis();
+        partitionOutput.addPartition();
+        long afterTime = System.currentTimeMillis();
+
+        PartitionDetail partitionDetail = dataset.getPartition(PARTITION_KEY);
+        Assert.assertNotNull(partitionDetail);
+        long creationTime = partitionDetail.getMetadata().getCreationTime();
+        Assert.assertTrue(creationTime >= beforeTime && creationTime <= afterTime);
+      }
+    });
   }
 
   @Test
   public void testPartitionMetadata() throws Exception {
     final PartitionedFileSet dataset = dsFrameworkUtil.getInstance(pfsInstance);
+
     dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
@@ -154,21 +169,15 @@ public class PartitionedFileSetTest {
     dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        PartitionKey partitionKey = PartitionKey.builder()
-          .addIntField("i", 42)
-          .addLongField("l", 17L)
-          .addStringField("s", "x")
-          .build();
-
-        PartitionOutput partitionOutput = dataset.getPartitionOutput(partitionKey);
+        PartitionOutput partitionOutput = dataset.getPartitionOutput(PARTITION_KEY);
         ImmutableMap<String, String> originalEntries = ImmutableMap.of("key1", "value1");
         partitionOutput.setMetadata(originalEntries);
         partitionOutput.addPartition();
 
         ImmutableMap<String, String> updatedMetadata = ImmutableMap.of("key2", "value2");
-        dataset.addMetadata(partitionKey, updatedMetadata);
+        dataset.addMetadata(PARTITION_KEY, updatedMetadata);
 
-        PartitionDetail partitionDetail = dataset.getPartition(partitionKey);
+        PartitionDetail partitionDetail = dataset.getPartition(PARTITION_KEY);
         Assert.assertNotNull(partitionDetail);
 
         HashMap<String, String> combinedEntries = Maps.newHashMap();
@@ -178,7 +187,7 @@ public class PartitionedFileSetTest {
 
         // adding an entry, for a key that already exists will throw an Exception
         try {
-          dataset.addMetadata(partitionKey, "key2", "value3");
+          dataset.addMetadata(PARTITION_KEY, "key2", "value3");
           Assert.fail("Expected not to be able to update an existing metadata entry");
         } catch (DataSetException expected) {
         }
@@ -190,6 +199,7 @@ public class PartitionedFileSetTest {
           .build();
 
         try {
+          // adding an entry, for a key that already exists will throw an Exception
           dataset.addMetadata(nonexistentPartitionKey, "key2", "value3");
           Assert.fail("Expected not to be able to add metadata for a nonexistent partition");
         } catch (DataSetException expected) {
@@ -206,7 +216,7 @@ public class PartitionedFileSetTest {
 
     final PartitionKey[][][] keys = new PartitionKey[4][4][4];
     final String[][][] paths = new String[4][4][4];
-    final Set<PartitionDetail> allPartitionDetails = Sets.newHashSet();
+    final Set<BasicPartition> allPartitionDetails = Sets.newHashSet();
 
     // add a bunch of partitions
     for (int s = 0; s < 4; s++) {
@@ -217,20 +227,19 @@ public class PartitionedFileSetTest {
             .addField("i", i * 100)
             .addField("l", 15L - 10 * l)
             .build();
-          PartitionDetail partitionDetail = dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset)
-            .execute(new Callable<PartitionDetail>() {
+          BasicPartition basicPartition = dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset)
+            .execute(new Callable<BasicPartition>() {
               @Override
-              public PartitionDetail call() throws Exception {
+              public BasicPartition call() throws Exception {
                 PartitionOutput p = dataset.getPartitionOutput(key);
                 p.addPartition();
-                return new BasicPartitionDetail((PartitionedFileSetDataset) dataset,
-                                                 p.getRelativePath(), p.getPartitionKey(),
-                                                 new PartitionMetadata(Collections.<String, String>emptyMap()));
+                return new BasicPartition((PartitionedFileSetDataset) dataset,
+                                          p.getRelativePath(), p.getPartitionKey());
               }
             });
           keys[s][i][l] = key;
-          paths[s][i][l] = partitionDetail.getRelativePath();
-          allPartitionDetails.add(partitionDetail);
+          paths[s][i][l] = basicPartition.getRelativePath();
+          allPartitionDetails.add(basicPartition);
         }
       }
     }
@@ -285,9 +294,9 @@ public class PartitionedFileSetTest {
       }, key);
 
       // test all filters
-      PartitionDetail toRemove = Iterables.tryFind(allPartitionDetails, new Predicate<PartitionDetail>() {
+      BasicPartition toRemove = Iterables.tryFind(allPartitionDetails, new Predicate<BasicPartition>() {
         @Override
-        public boolean apply(PartitionDetail partition) {
+        public boolean apply(BasicPartition partition) {
           return key.equals(partition.getPartitionKey());
         }
       }).get();
@@ -298,7 +307,7 @@ public class PartitionedFileSetTest {
   }
 
   private void testAllFilters(PartitionedFileSet dataset,
-                              Set<PartitionDetail> allPartitionDetails,
+                              Set<BasicPartition> allPartitionDetails,
                               List<PartitionFilter> filters) throws Exception {
     for (PartitionFilter filter : filters) {
       try {
@@ -310,14 +319,14 @@ public class PartitionedFileSetTest {
   }
 
   private boolean testFilter(final PartitionedFileSet dataset,
-                             Set<PartitionDetail> allPartitionDetails,
+                             Set<BasicPartition> allPartitionDetails,
                              final PartitionFilter filter) throws Exception {
 
     // determine the keys and paths that match the filter
-    final Set<PartitionDetail> matching = filter == null ? allPartitionDetails :
-      Sets.filter(allPartitionDetails, new Predicate<PartitionDetail>() {
+    final Set<BasicPartition> matching = filter == null ? allPartitionDetails :
+      Sets.filter(allPartitionDetails, new Predicate<BasicPartition>() {
         @Override
-        public boolean apply(PartitionDetail partition) {
+        public boolean apply(BasicPartition partition) {
           return filter.match(partition.getPartitionKey());
         }
       });
@@ -325,7 +334,14 @@ public class PartitionedFileSetTest {
     dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        Assert.assertEquals(matching, dataset.getPartitions(filter));
+        Set<PartitionDetail> retrievedPartitionDetails = dataset.getPartitions(filter);
+        HashSet<BasicPartition> retrievedBasicPartitions = Sets.newHashSet();
+        for (PartitionDetail retrievedPartition : retrievedPartitionDetails) {
+          retrievedBasicPartitions.add(new BasicPartition((PartitionedFileSetDataset) dataset,
+                                                          retrievedPartition.getRelativePath(),
+                                                          retrievedPartition.getPartitionKey()));
+        }
+        Assert.assertEquals(matching, retrievedBasicPartitions);
       }
     });
 
