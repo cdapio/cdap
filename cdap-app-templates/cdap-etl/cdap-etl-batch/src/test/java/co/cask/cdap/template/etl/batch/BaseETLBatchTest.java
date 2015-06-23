@@ -87,7 +87,7 @@ public class BaseETLBatchTest extends TestBase {
       BatchSource.class.getPackage().getName());
   }
 
-  protected List<GenericRecord> readOutput(TimePartitionedFileSet fileSet, Schema schema) throws IOException, IOException {
+  protected List<GenericRecord> readOutput(TimePartitionedFileSet fileSet, Schema schema) throws IOException {
     org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(schema.toString());
     DatumReader<GenericRecord> datumReader = new GenericDatumReader<>(avroSchema);
     List<GenericRecord> records = Lists.newArrayList();
