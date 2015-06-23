@@ -11,6 +11,8 @@
 {% set title = _('Search') %}
 {% set script_files = script_files + ['_static/searchtools.js'] %}
 {% block extrahead %}
+{# Hide extra navigation on search result page #}
+  <link rel="stylesheet" href="{{ pathto('_static/hide-nav.css', 1) }}" type="text/css" />
   <script type="text/javascript">
     jQuery(function() { Search.loadIndex("{{ pathto('searchindex.js', 1) }}"); });
   </script>
