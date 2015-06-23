@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: CDAP Docker Image
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 ============================================
 Docker Image
@@ -9,7 +9,7 @@ Docker Image
 
 .. highlight:: console
 
-A Docker image with CDAP pre-installed is available on the Docker Hub for download.
+A Docker image with CDAP SDK pre-installed is available on the Docker Hub for download.
 
 To use the **Docker image**:
 
@@ -19,7 +19,7 @@ To use the **Docker image**:
   started correctly.
   
   If you are not running on Linux, you need to start the Docker Virtual Machine (VM) before you
-  can use containers. For example, on MacOS, use:: 
+  can use containers. For example, on Mac OS, use::
   
     $ boot2docker start
     $ boot2docker ip
@@ -40,14 +40,14 @@ To use the **Docker image**:
 
 - Once Docker has started, pull down the *CDAP Docker Image* from the Docker hub using::
 
-    $ docker pull caskdata/cdap-standalone
+    $ docker pull caskdata/cdap-standalone:\ |literal-release|
     
 - Start the *Docker CDAP Virtual Machine* with::
 
-    $ docker run -t -i -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone
+    $ docker run -t -i -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone:\ |literal-release|
     
 - CDAP will start automatically once the CDAP Virtual Machine starts. CDAP’s Software
-  Directory is under ``/Software/cdap-sdk-``\ |literal-release|\ .
+  Directory is under ``/opt/cdap/sdk``.
   
 - Once CDAP starts, it will instruct you to connect to the CDAP UI with a web browser
   at ``http://<virtual-hostname>:9999``, such as ``http://6f0162922c37:9999``. Replace
