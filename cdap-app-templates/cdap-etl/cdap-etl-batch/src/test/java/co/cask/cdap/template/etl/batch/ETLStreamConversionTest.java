@@ -67,7 +67,7 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
 
   // The new event scheme is being used over the old schema because Maps when parsed take ordering of keys into account.
   // Once CDAP-2813 is resolved, we can switch to using EVENT_SCHEMA
-  private static final Schema EVENT_SCHEMA_1 = Schema.recordOf(
+  private static final Schema EVENT_SCHEMA_WITHOUT_HEADER = Schema.recordOf(
     "streamEvent",
     Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
     Schema.Field.of("ticker", Schema.of(Schema.Type.STRING)),
@@ -106,7 +106,7 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
     DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset(filesetName);
     TimePartitionedFileSet fileSet = fileSetManager.get();
 
-    List<GenericRecord> records = readOutput(fileSet, EVENT_SCHEMA_1);
+    List<GenericRecord> records = readOutput(fileSet, EVENT_SCHEMA_WITHOUT_HEADER);
     Assert.assertEquals(1, records.size());
 
     String newFilesetName = filesetName + "_op";
@@ -124,9 +124,8 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
     DataSetManager<TimePartitionedFileSet> newFileSetManager = getDataset(newFilesetName);
     TimePartitionedFileSet newFileSet = newFileSetManager.get();
 
-    List<GenericRecord> newRecords = readOutput(newFileSet, EVENT_SCHEMA_1);
+    List<GenericRecord> newRecords = readOutput(newFileSet, EVENT_SCHEMA_WITHOUT_HEADER);
     Assert.assertEquals(1, newRecords.size());
-
   }
 
   private void testSink(String sinkType) throws Exception {
@@ -148,7 +147,7 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
     DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset(filesetName);
     TimePartitionedFileSet fileSet = fileSetManager.get();
 
-    List<GenericRecord> records = readOutput(fileSet, EVENT_SCHEMA_1);
+    List<GenericRecord> records = readOutput(fileSet, EVENT_SCHEMA_WITHOUT_HEADER);
     Assert.assertEquals(1, records.size());
 
   }
@@ -173,13 +172,13 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
   private ETLBatchConfig constructTPFSETLConfig(String filesetName, String newFilesetName) {
     ETLStage source = new ETLStage("TPFSAvro",
                                    ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
-                                                   EVENT_SCHEMA_1.toString(),
+                                                   EVENT_SCHEMA_WITHOUT_HEADER.toString(),
                                                    Properties.TimePartitionedFileSetDataset.TPFS_NAME, filesetName,
                                                    Properties.TimePartitionedFileSetDataset.DELAY, "0d",
                                                    Properties.TimePartitionedFileSetDataset.DURATION, "10m"));
     ETLStage sink = new ETLStage("TPFSAvro",
                                  ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
-                                                 EVENT_SCHEMA_1.toString(),
+                                                 EVENT_SCHEMA_WITHOUT_HEADER.toString(),
                                                  Properties.TimePartitionedFileSetDataset.TPFS_NAME,
                                                  newFilesetName));
 
