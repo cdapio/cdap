@@ -201,7 +201,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
       }
 
       DatabaseMetaData metadata = connection.getMetaData();
-      ResultSet rs = metadata.getTables(null, null, dbSinkConfig.tableName.toUpperCase(), null);
+      ResultSet rs = metadata.getTables(null, null, dbSinkConfig.tableName, null);
 
       return rs.next();
     } catch (java.sql.SQLException e) {
@@ -213,7 +213,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
    *Throws InstantiationException or IllegalAccessException if it can't get access to the jdbcDriverClass
    * In either case, the connection to the driver failed
    */
-  private void ensureJDBCDriverIsAvailable(Class<Object> jdbcDriverClass) throws Exception{
+  private void ensureJDBCDriverIsAvailable(Class<Object> jdbcDriverClass) throws Exception {
     try {
       DriverManager.getDriver(dbSinkConfig.connectionString);
     } catch (SQLException e) {

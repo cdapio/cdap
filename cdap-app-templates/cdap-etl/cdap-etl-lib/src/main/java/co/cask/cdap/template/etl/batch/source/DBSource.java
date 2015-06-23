@@ -160,10 +160,11 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
       }
 
       DatabaseMetaData metadata = connection.getMetaData();
-      ResultSet rs = metadata.getTables(null, null, dbSourceConfig.tableName.toUpperCase(), null);
+      ResultSet rs = metadata.getTables(null, null, dbSourceConfig.tableName, null);
 
       return rs.next();
     } catch (java.sql.SQLException e) {
+      LOG.error("SQL exception thrown when trying to connect to Driver Manager", e);
       return false;
     }
   }
