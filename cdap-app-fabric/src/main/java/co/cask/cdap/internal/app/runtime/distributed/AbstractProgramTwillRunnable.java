@@ -58,6 +58,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -323,6 +324,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   @Override
   public void destroy() {
     LOG.info("Releasing resources: {}", name);
+    if (program != null) {
+      Closeables.closeQuietly(program);
+    }
     Futures.getUnchecked(
       Services.chainStop(resourceReporter, streamCoordinatorClient,
                          metricsCollectionService, kafkaClientService, zkClientService));
