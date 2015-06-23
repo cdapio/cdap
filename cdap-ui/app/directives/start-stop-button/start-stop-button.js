@@ -5,12 +5,14 @@ angular.module(PKG.name + '.commons')
       scope: {
         type: '@',
         isStoppable: '@',
+        isRestartable: '@',
         preferencesHandler: '&',
         runtimeHandler: '&'
       },
       templateUrl: 'start-stop-button/start-stop-button.html',
       controller: function($scope, $state, MyDataSource, myRuntimeService, myProgramPreferencesService) {
         $scope.isStoppable = ($scope.isStoppable === 'true');
+        $scope.isRestartable = ($scope.isRestartable === 'true');
 
         $scope.runtimeArgs = [];
         var path = '/apps/' + $state.params.appId +

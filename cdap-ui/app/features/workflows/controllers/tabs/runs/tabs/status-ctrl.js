@@ -5,18 +5,22 @@ angular.module(PKG.name + '.feature.workflows')
           appId: $state.params.appId,
           workflowId: $state.params.programId,
           scope: $scope
-        };
+        },
+        runparams,
+        match;
 
     if ($state.params.runid) {
-      var match = filterFilter($scope.RunsController.runs, {runid: $state.params.runid});
+      match = filterFilter($scope.RunsController.runs, {runid: $state.params.runid});
       if (match.length) {
         $scope.RunsController.runs.selected = match[0];
       }
     }
 
     var vm = this;
+    vm.runStatus = null;
 
     vm.data = {};
+
     myWorkFlowApi.get(params)
       .$promise
       .then(function(res) {
@@ -77,60 +81,63 @@ angular.module(PKG.name + '.feature.workflows')
       // Still using MyDataSource because the poll needs to be stopped
       var dataSrc = new MyDataSource($scope);
 
-      var path = '/apps/' + $state.params.appId
-        + '/workflows/' + $state.params.programId
-        + '/runs/' + $scope.RunsController.runs.selected.runid;
-
       if ($scope.RunsController.runs.length > 0) {
 
-        dataSrc.poll({
-          _cdapNsPath: path,
-          interval: 1000
-        })
-        .then(function (response) {
+        runparams = angular.extend(
+          {
+            runId: $scope.RunsController.runs.selected.runid
+          },
+          params
+        );
 
-          var pastNodes = Object.keys(response.properties);
-          $scope.RunsController.runs.selected.properties = response.properties;
+        myWorkFlowApi
+          .pollRunDetail(runparams)
+          .$promise
+          .then(function (response) {
+            vm.runStatus = response.status;
 
-          var activeNodes = filterFilter(vm.data.nodes , function(node) {
-            return pastNodes.indexOf(node.nodeId) !== -1;
+            var pastNodes = Object.keys(response.properties);
+            $scope.RunsController.runs.selected.properties = response.properties;
+
+            var activeNodes = filterFilter(vm.data.nodes , function(node) {
+              return pastNodes.indexOf(node.nodeId) !== -1;
+            });
+            angular.forEach(activeNodes, function(n) {
+              var runid = response.properties[n.nodeId];
+
+              if (n.program.programType === 'MAPREDUCE') {
+                var mapreduceParams = {
+                  namespace: $state.params.namespace,
+                  appId: $state.params.appId,
+                  mapreduceId: n.program.programName,
+                  runId: runid,
+                  scope: $scope
+                };
+                myMapreduceApi.runDetail(mapreduceParams)
+                  .$promise
+                  .then(function (result) {
+                    vm.data.current[n.name] = result.status;
+                  });
+                } else if (n.program.programType === 'SPARK') {
+
+                  // TODO: Change to data-modelling once available for Spark
+                  var sparkPath = '/apps/' + $state.params.appId + '/spark/' + n.program.programName + '/runs/' + runid;
+
+                  dataSrc.request({
+                    _cdapNsPath: sparkPath
+                  })
+                  .then(function (result) {
+                    vm.data.current[n.name] = result.status;
+                  });
+                }
+
+            });
+
+            if (['STOPPED', 'KILLED', 'COMPLETED'].indexOf(vm.runStatus) !== -1) {
+              myWorkFlowApi.stopPollRunDetail(runparams);
+            }
+
           });
-          angular.forEach(activeNodes, function(n) {
-            var runid = response.properties[n.nodeId];
-
-            if (n.program.programType === 'MAPREDUCE') {
-              var mapreduceParams = {
-                namespace: $state.params.namespace,
-                appId: $state.params.appId,
-                mapreduceId: n.program.programName,
-                runId: runid,
-                scope: $scope
-              };
-              myMapreduceApi.runDetail(mapreduceParams)
-                .$promise
-                .then(function (result) {
-                  vm.data.current[n.name] = result.status;
-                });
-              } else if (n.program.programType === 'SPARK') {
-
-                // TODO: Change to data-modelling once available for Spark
-                var sparkPath = '/apps/' + $state.params.appId + '/spark/' + n.program.programName + '/runs/' + runid;
-
-                dataSrc.request({
-                  _cdapNsPath: sparkPath
-                })
-                .then(function (result) {
-                  vm.data.current[n.name] = result.status;
-                });
-              }
-
-          });
-
-          if (response.status === 'COMPLETED' || response.status === 'FAILED') {
-            dataSrc.stopPoll(response.__pollId__);
-          }
-
-        });
       }
     }
 
@@ -160,14 +167,19 @@ angular.module(PKG.name + '.feature.workflows')
     };
 
     vm.stop = function() {
-      $alert({
-        type: 'info',
-        content: 'Stopping a workflow at run level is not possible yet. Will be fixed soon.'
-      });
-      return;
-      // TODO: There is support from backend. We should implement this in UI
-      // this.status = 'STOPPING';
-      // myWorkFlowApi.stop(params);
+      vm.runStatus = 'STOPPING';
+      myWorkFlowApi
+        .stopRun(runparams, {});
+    };
+    vm.suspend = function() {
+      vm.runStatus = 'SUSPENDING';
+      myWorkFlowApi
+        .suspendRun(runparams, {});
+    };
+    vm.resume = function() {
+      vm.runStatus = 'RESUMING';
+      myWorkFlowApi
+        .resumeRun(runparams, {});
     };
 
   });
