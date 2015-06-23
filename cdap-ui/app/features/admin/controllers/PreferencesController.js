@@ -1,66 +1,81 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('PreferencesController', function ($scope, $filter, MyDataSource, $alert, $state, rSource) {
-    var dataSrc = new MyDataSource($scope);
+  .controller('PreferencesController', function ($scope, $filter, MyDataSource, $alert, $state, rSource, myPreferenceApi) {
     var filterFilter = $filter('filter');
 
-    var path = '';
-    var parentPath = ''; // to fetch resolved preferences of parent
+    $scope.parentPreferences = [];
+    $scope.preferences = [];
+
+    /*
+      Start Data Modelling Implementation
+    */
+    var promise,
+      params,
+      parentPromise,
+      parentParams,
+      setPreference;
 
     if (rSource === 'SYSTEM') {
-      path = '/preferences';
-
       $scope.heading = 'System Preferences';
+
+      params = {
+        scope: $scope
+      };
+      promise = myPreferenceApi.getSystemPreference;
+      setPreference = myPreferenceApi.setSystemPreference;
+
     } else if (rSource === 'NAMESPACE') {
-      path = '/namespaces/' + $state.params.nsadmin + '/preferences';
-      parentPath = '/preferences';
+      $scope.heading = 'Namespace Preferences: ' + $state.params.nsadmin;
       $scope.messages = 'Specify new or override system configurations that will be accessible in all applications & datasets within this namespace.';
 
-      $scope.heading = 'Namespace Preferences: ' + $state.params.nsadmin;
+      parentParams = {
+        scope: $scope,
+        resolved: true
+      };
+      parentPromise = myPreferenceApi.getSystemPreference;
+
+      params = {
+        namespace: $state.params.nsadmin,
+        scope: $scope
+      };
+      promise = myPreferenceApi.getNamespacePreference;
+      setPreference = myPreferenceApi.setNamespacePreference;
+
     } else if (rSource === 'APPLICATION') {
-      path = '/namespaces/' + $state.params.nsadmin + '/apps/' + $state.params.appId + '/preferences';
-      parentPath = '/namespaces/' + $state.params.nsadmin + '/preferences?resolved=true';
+      $scope.heading = 'Application Preferences: ' + $state.params.appId;
       $scope.messages = 'Specify new or override namespace configurations that will be accessible in all programs within this application.';
 
-      $scope.heading = 'Application Preferences: ' + $state.params.appId;
+      parentParams = {
+        namespace: $state.params.nsadmin,
+        scope: $scope,
+        resolved: true
+      };
+      parentPromise = myPreferenceApi.getNamespacePreference;
+
+      params = {
+        namespace: $state.params.nsadmin,
+        appId: $state.params.appId,
+        scope: $scope
+      };
+      promise = myPreferenceApi.getAppPreference;
+      setPreference = myPreferenceApi.setAppPreference;
+
     }
 
     $scope.preferences = [];
 
     $scope.loadProperties = function () {
       if (rSource !== 'SYSTEM') {
-        dataSrc
-          .request({
-            _cdapPath: parentPath
-          })
+        parentPromise(parentParams)
+          .$promise
           .then(function (res) {
-
-            var arr = [];
-
-            angular.forEach(res, function(v, k) {
-              arr.push({
-                key: k,
-                value: v
-              });
-            });
-
-            $scope.parentPreferences = arr;
+            $scope.parentPreferences = formatObj(res);
           });
       }
 
-      dataSrc
-        .request({
-          _cdapPath: path
-        }).then(function (res) {
-          var arr = [];
-          angular.forEach(res, function(v, k) {
-            arr.push({
-              key: k,
-              value: v
-            });
-          });
-
-
-          $scope.preferences = arr;
+      promise(params)
+        .$promise
+        .then(function (res) {
+          $scope.preferences = formatObj(res);
         });
     };
 
@@ -89,13 +104,8 @@ angular.module(PKG.name + '.feature.admin')
         }
       });
 
-      dataSrc
-        .request({
-          _cdapPath: path,
-          method: 'PUT',
-          body: obj
-        })
-        .then(function() {
+      setPreference(params, obj,
+        function () {
           $alert({
             content: 'Your preferences have been successfully saved',
             type: 'success'
@@ -104,19 +114,25 @@ angular.module(PKG.name + '.feature.admin')
         });
     };
 
-    $scope.deletePreferences = function() {
-      dataSrc
-        .request({
-          _cdapPath: path,
-          method: 'DELETE'
-        })
-        .then(function() {
-          $scope.loadProperties();
-          $alert({
-            content: 'Your preferences have been deleted',
-            type: 'success'
-          });
-        });
+    $scope.enter = function (event, last) {
+      if (last && event.keyCode === 13) {
+        $scope.addPreference();
+      } else {
+        return;
+      }
     };
+
+    function formatObj(input) {
+      var arr = [];
+
+      angular.forEach(JSON.parse(angular.toJson(input)), function(v, k) {
+        arr.push({
+          key: k,
+          value: v
+        });
+      });
+
+      return arr;
+    }
 
   });
