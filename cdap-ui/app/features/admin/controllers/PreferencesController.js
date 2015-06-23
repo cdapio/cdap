@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('PreferencesController', function ($scope, $filter, MyDataSource, $alert, $state, rSource, myPreferenceApi) {
+  .controller('PreferencesController', function ($scope, $filter, $alert, $state, rSource, myPreferenceApi) {
     var filterFilter = $filter('filter');
 
     $scope.parentPreferences = [];
