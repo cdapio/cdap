@@ -20,13 +20,18 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
+import co.cask.cdap.api.dataset.table.Delete;
 import co.cask.cdap.api.dataset.table.Get;
+import co.cask.cdap.api.dataset.table.Increment;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.TableAssert;
 import co.cask.cdap.proto.Id;
@@ -38,6 +43,7 @@ import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.junit.After;
@@ -47,6 +53,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Base test for Table.
@@ -91,6 +98,8 @@ public abstract class TableTest<T extends Table> {
                                 ConflictDetection conflictLevel) throws Exception;
   protected abstract DatasetAdmin getTableAdmin(DatasetContext datasetContext, String name,
                                                 DatasetProperties props) throws Exception;
+
+  protected abstract boolean isReadlessIncrementSupported();
 
   protected T getTable(DatasetContext datasetContext, String name) throws Exception {
     return getTable(datasetContext, name, ConflictDetection.ROW);
@@ -1612,6 +1621,79 @@ public abstract class TableTest<T extends Table> {
 
     // drop table
     admin.drop();
+  }
+
+  @Test
+  public void testMetrics() throws Exception {
+    final String tableName = "survive";
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, tableName);
+    admin.create();
+    Table table = getTable(CONTEXT1, tableName);
+    final Map<String, Long> metrics = Maps.newHashMap();
+    ((MeteredDataset) table).setMetricsCollector(new MetricsCollector() {
+      @Override
+      public void increment(String metricName, long value) {
+        Long old = metrics.get(metricName);
+        metrics.put(metricName, old == null ? value : old + value);
+      }
+
+      @Override
+      public void gauge(String metricName, long value) {
+        metrics.put(metricName, value);
+      }
+    });
+
+    // Note that we don't need to finish tx for metrics to be reported
+    Transaction tx0 = txClient.startShort();
+    ((TransactionAware) table).startTx(tx0);
+
+    int writes = 0;
+    int reads = 0;
+
+    table.put(new Put(R1, C1, V1));
+    verifyDatasetMetrics(metrics, ++writes, reads);
+
+    table.compareAndSwap(R1, C1, V1, V2);
+    verifyDatasetMetrics(metrics, ++writes, ++reads);
+
+    // note: will not write anything as expected value will not match
+    table.compareAndSwap(R1, C1, V1, V2);
+    verifyDatasetMetrics(metrics, writes, ++reads);
+
+    table.increment(new Increment(R2, C2, 1L));
+    if (isReadlessIncrementSupported()) {
+      verifyDatasetMetrics(metrics, ++writes, reads);
+    } else {
+      verifyDatasetMetrics(metrics, ++writes, ++reads);
+    }
+
+    table.incrementAndGet(new Increment(R2, C2, 1L));
+    verifyDatasetMetrics(metrics, ++writes, ++reads);
+
+    table.get(new Get(R1, C1, V1));
+    verifyDatasetMetrics(metrics, writes, ++reads);
+
+    Scanner scanner = table.scan(new Scan(null, null));
+    while (scanner.next() != null) {
+      verifyDatasetMetrics(metrics, writes, ++reads);
+    }
+
+    table.delete(new Delete(R1, C1, V1));
+    verifyDatasetMetrics(metrics, ++writes, reads);
+
+    // drop table
+    admin.drop();
+  }
+
+  private void verifyDatasetMetrics(Map<String, Long> metrics, long writes, long reads) {
+    Assert.assertEquals(writes, getLong(metrics, Constants.Metrics.Name.Dataset.WRITE_COUNT));
+    Assert.assertEquals(reads, getLong(metrics, Constants.Metrics.Name.Dataset.READ_COUNT));
+    Assert.assertEquals(writes + reads, getLong(metrics, Constants.Metrics.Name.Dataset.OP_COUNT));
+  }
+
+  private long getLong(Map<String, Long> map, String key) {
+    Long value = map.get(key);
+    return value == null ? 0 : value;
   }
 
   static long[] la(long... elems) {

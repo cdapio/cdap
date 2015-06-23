@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,23 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api.metrics;
+package co.cask.cdap.api.dataset.lib;
 
 /**
- * Collects metrics.
+ * Represents a partition of a time partitioned file set.
  */
-public interface MetricsCollector {
-  /**
-   * Increment a metric value at the current time.
-   * @param metricName Name of the metric.
-   * @param value value of the metric.
-   */
-  void increment(String metricName, long value);
-
-  /**
-   * Gauge a metric value at the current time.
-   * @param metricName Name of the metric.
-   * @param value value of the metric.
-   */
-  void gauge(String metricName, long value);
+public interface TimePartitionDetail extends TimePartition, PartitionDetail {
 }

@@ -32,10 +32,11 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Charsets;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
@@ -45,6 +46,7 @@ import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.security.Credentials;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
@@ -106,10 +108,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
 
   @Override
   public final ProgramController run(final Program program, final ProgramOptions options) {
-    final Program copiedProgram;
-    final File programDir;    // Temp directory for unpacking the program
     final String schedulerQueueName = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
-
     final File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                                          cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     try {
@@ -125,8 +124,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       // Twill will manage the cleanup of those files in HDFS.
       localizeFiles.put("hConf.xml", saveHConf(hConf, File.createTempFile("hConf", ".xml", tempDir)));
       localizeFiles.put("cConf.xml", saveCConf(cConf, File.createTempFile("cConf", ".xml", tempDir)));
-      programDir = DirUtils.createTempDir(tempDir);
-      copiedProgram = copyProgramJar(program, tempDir, programDir);
+      File programDir = DirUtils.createTempDir(tempDir);
+      final Program copiedProgram = copyProgramJar(program, tempDir, programDir);
 
       final URI logbackURI = getLogBackURI(copiedProgram, programDir, tempDir);
       final String programOptions = GSON.toJson(options);
@@ -155,11 +154,13 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
             .withDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass())
             .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
             .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())))
+            .withClassPaths(Splitter.on(',').trimResults()
+                              .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, "")))
             .withApplicationArguments(
               String.format("--%s", RunnableOptions.JAR), copiedProgram.getJarLocation().getName(),
               String.format("--%s", RunnableOptions.PROGRAM_OPTIONS), programOptions
             ).start();
-          return addCleanupListener(twillController, program.getId(), tempDir);
+          return addCleanupListener(twillController, program, tempDir);
         }
       });
     } catch (IOException e) {
@@ -291,7 +292,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
    * @return The same TwillController instance.
    */
   private TwillController addCleanupListener(TwillController controller,
-                                             final Id.Program programId, final File tempDir) {
+                                             final Program program, final File tempDir) {
 
     final AtomicBoolean deleted = new AtomicBoolean(false);
     controller.addListener(new ServiceListenerAdapter() {
@@ -314,7 +315,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
         if (!deleted.compareAndSet(false, true)) {
           return;
         }
-        LOG.debug("Cleanup tmp files for {}: {}", programId, tempDir);
+        LOG.debug("Cleanup tmp files for {}: {}", program.getId(), tempDir);
+        Closeables.closeQuietly(program);
         deleteDirectory(tempDir);
       }
     }, Threads.SAME_THREAD_EXECUTOR);

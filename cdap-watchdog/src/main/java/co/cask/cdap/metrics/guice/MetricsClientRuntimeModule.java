@@ -21,7 +21,6 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.metrics.collect.AggregatedMetricsCollectionService;
 import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
-import co.cask.cdap.metrics.collect.MapReduceCounterCollectionService;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
@@ -29,7 +28,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.util.Iterator;
 
@@ -69,17 +67,6 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
   @Override
   public Module getDistributedModules() {
     return new DistributedMetricsClientModule();
-  }
-
-  public Module getMapReduceModules(final TaskAttemptContext taskContext) {
-    return new PrivateModule() {
-      @Override
-      protected void configure() {
-        bind(TaskAttemptContext.class).toInstance(taskContext);
-        bind(MetricsCollectionService.class).to(MapReduceCounterCollectionService.class).in(Scopes.SINGLETON);
-        expose(MetricsCollectionService.class);
-      }
-    };
   }
 
   /**

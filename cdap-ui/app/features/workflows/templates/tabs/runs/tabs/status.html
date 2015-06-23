@@ -1,3 +1,52 @@
 <div ng-controller="WorkflowsRunsStatusController as StatusController">
-  <my-workflow-graph data-model="StatusController.data" data-click="StatusController.workflowProgramClick"></my-workflow-graph>
+  <div class="text-right">
+    <div class="btn-group">
+      
+      <div class="btn btn-default btn-danger"
+           ng-disabled="StatusController.runStatus !== 'RUNNING'"
+           ng-click="StatusController.stop()"
+           >
+        <span ng-if="StatusController.runStatus !== 'STOPPING'">
+          <span class="fa fa-stop"></span>
+          <span>Stop run</span>
+        </span>
+        <span ng-if="StatusController.runStatus === 'STOPPING'">
+          <span class="fa fa-refresh fa-spin"></span>
+          <span>Stopping run</span>
+        </span>
+      </div>
+
+      <div class="btn btn-default btn-warning"
+           ng-if="['SUSPENDED', 'RESUMING'].indexOf(StatusController.runStatus) === -1"
+           ng-disabled="['COMPLETED', 'KILLED', 'STOPPING', 'SUSPENDING'].indexOf(StatusController.runStatus) !== -1 || RunsController.runs.length === 0"
+           ng-click="StatusController.suspend()">
+        <span ng-if="StatusController.runStatus !== 'SUSPENDING'">
+          <span class="fa fa-pause"></span>
+          <span>Suspend run</span>
+        </span>
+        <span ng-if="StatusController.runStatus === 'SUSPENDING'">
+          <span class="fa fa-refresh fa-spin"></span>
+          <span>Suspending run</span>
+        </span>
+      </div>
+
+      <div class="btn btn-default btn-warning"
+           ng-disabled="StatusController.runStatus === 'RESUMING'"
+           ng-if="StatusController.runStatus === 'SUSPENDED' || StatusController.runStatus === 'RESUMING'"
+           ng-click="StatusController.resume()">
+        <span ng-if="StatusController.runStatus !== 'RESUMING'">
+          <span class="fa fa-play"></span>
+          <span>Resume Run</span>
+        </span>
+        <span ng-if="StatusController.runStatus === 'RESUMING'">
+          <span class="fa fa-refresh fa-spin"></span>
+          <span>Resuming Run</span>
+        </span>
+      </div>
+
+    </div>
+  </div>
+
+  <my-workflow-graph data-model="StatusController.data"
+                     data-click="StatusController.workflowProgramClick"></my-workflow-graph>
 </div>

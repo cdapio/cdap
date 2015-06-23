@@ -33,8 +33,7 @@ angular.module(PKG.name+'.services')
 
    */
 
-  .factory('MyDataSource', function ($log, $rootScope, caskWindowManager, mySocket,
-    MYSOCKET_EVENT, $q, $filter, myCdapUrl, MyPromise, MyAuthUser) {
+  .factory('MyDataSource', function ($log, $rootScope, caskWindowManager, mySocket, MYSOCKET_EVENT, $q, $filter, myCdapUrl, MyPromise, myHelpers) {
 
     var instances = {}; // keyed by scopeid
 
@@ -204,11 +203,10 @@ angular.module(PKG.name+'.services')
       var id = generateUUID();
       var generatedResource = {};
       var promise = new MyPromise(function(resolve, reject) {
-
         generatedResource = {
           json: resource.json,
           id: id,
-          interval: resource.interval,
+          interval: resource.interval || myHelpers.objectQuery(resource, 'options', 'interval') ,
           body: resource.body,
           method: resource.method || 'GET'
         };
@@ -249,13 +247,24 @@ angular.module(PKG.name+'.services')
      */
     DataSource.prototype.stopPoll = function(resourceId) {
       var filterFilter = $filter('filter');
-      var id = resourceId;
+      // Duck Typing for angular's $resource.
+      var defer = $q.defer();
+      var id;
+      if (angular.isObject(resourceId)) {
+        id = resourceId.params.pollId;
+      } else {
+        id = resourceId;
+      }
       var match = filterFilter(this.bindings, { 'resource': {id: id} });
 
       if (match.length) {
         _pollStop(match[0].resource);
         this.bindings.splice(this.bindings.indexOf(match[0]), 1);
+        defer.resolve({});
+      } else {
+        defer.reject({});
       }
+      return defer.promise;
     };
 
     /**

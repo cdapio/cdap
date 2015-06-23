@@ -36,6 +36,9 @@ import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
+import com.google.common.io.Closeables;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
@@ -74,7 +77,9 @@ public class PluginInstantiator implements Closeable {
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.tmpDir = DirUtils.createTempDir(tmpDir);
-    this.classLoaders = CacheBuilder.newBuilder().build(new ClassLoaderCacheLoader());
+    this.classLoaders = CacheBuilder.newBuilder()
+                                    .removalListener(new ClassLoaderRemovalListener())
+                                    .build(new ClassLoaderCacheLoader());
     this.pluginParentClassLoader = PluginClassLoader.createParent(new File(pluginDir, "lib"), templateClassLoader);
   }
 
@@ -194,6 +199,9 @@ public class PluginInstantiator implements Closeable {
   public void close() throws IOException {
     // Cleanup the ClassLoader cache and the temporary directoy for the expanded plugin jar.
     classLoaders.invalidateAll();
+    if (pluginParentClassLoader instanceof Closeable) {
+      Closeables.closeQuietly((Closeable) pluginParentClassLoader);
+    }
     try {
       DirUtils.deleteDirectoryContents(tmpDir);
     } catch (IOException e) {
@@ -214,6 +222,20 @@ public class PluginInstantiator implements Closeable {
       BundleJarUtil.unpackProgramJar(Locations.toLocation(pluginJar), unpackedDir);
 
       return new PluginClassLoader(unpackedDir, pluginParentClassLoader);
+    }
+  }
+
+  /**
+   * A RemovalListener for closing plugin ClassLoader.
+   */
+  private static final class ClassLoaderRemovalListener implements RemovalListener<PluginInfo, ClassLoader> {
+
+    @Override
+    public void onRemoval(RemovalNotification<PluginInfo, ClassLoader> notification) {
+      ClassLoader cl = notification.getValue();
+      if (cl instanceof Closeable) {
+        Closeables.closeQuietly((Closeable) cl);
+      }
     }
   }
 

@@ -25,7 +25,7 @@ angular.module(PKG.name + '.feature.flows')
 
         this.datasets = obj;
 
-        pollDatasets();
+        pollDatasets.bind(this)();
 
       }.bind(this));
 

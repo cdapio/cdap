@@ -9,10 +9,12 @@ angular.module(PKG.name + '.feature.adapters')
         isCloseable: false,
         partial: '/assets/features/adapters/templates/create/tabs/default.html'
       }
-    ];
+    ],
+      alertpromise;
 
     this.tabs = defaultTabs.slice();
 
+    // Close the tab when user clicks on the 'x' button in the tab.
     this.closeTab = function(index) {
       var tab = this.tabs[index];
       var type = tab.type;
@@ -23,6 +25,22 @@ angular.module(PKG.name + '.feature.adapters')
       }
       this.tabs.splice(index, 1);
     };
+
+    // Delete an already opened tab. This is done when a plugin
+    // is being deleted(transform) or being overwritten (source/sink)by another one.
+    this.deleteTab = function (plugin, pluginType) {
+      var tab = this.tabs.filter(function(tab) {
+        if (pluginType === 'transform' && plugin.$$hashKey === tab.transformid) {
+          return tab;
+        }
+        if (pluginType !== 'transform' && pluginType === tab.type) {
+          return tab;
+        }
+      });
+      if (tab.length) {
+        this.tabs.splice(this.tabs.indexOf(tab[0]), 1);
+      }
+    }
 
     AdapterApiFactory.fetchTemplates()
       .$promise
@@ -88,7 +106,7 @@ angular.module(PKG.name + '.feature.adapters')
             EventPipe.emit('hideLoadingIcon.immediate');
             $alert({
               type: 'success',
-              content: 'Adapter Template created successfully!'
+              content: 'Adapter Template created successfully'
             });
           }, function(err) {
             // Loading icon shown in model
@@ -96,9 +114,16 @@ angular.module(PKG.name + '.feature.adapters')
             var errorObj = {
               type: 'danger',
               title: 'Error Creating Adapter',
+              scope: $scope,
               content: (angular.isArray(err.messages)? formatErrorMessages(err.messages): err.messages.data)
             };
-            $alert(errorObj);
+            if (!alertpromise) {
+              alertpromise = $alert(errorObj);
+              var e = $scope.$on('alert.hide',function(){
+                alertpromise = null;
+                e(); // un-register from listening to the hide event of a closed alert.
+              });
+            }
           });
 
           // TODO: Should move it to a template.
@@ -125,7 +150,7 @@ angular.module(PKG.name + '.feature.adapters')
               EventPipe.emit('hideLoadingIcon.immediate');
               $alert({
                 type: 'success',
-                content: 'The Adapter Template ' + this.model.metadata.name + ' has been saved as draft!'
+                content: 'The Adapter Template ' + this.model.metadata.name + ' has been saved as draft'
               });
               $state.go('^.list');
             }.bind(this),

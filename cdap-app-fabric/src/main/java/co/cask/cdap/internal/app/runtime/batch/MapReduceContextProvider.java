@@ -94,12 +94,12 @@ public final class MapReduceContextProvider {
     }
 
     if (isLocal(taskContext.getConfiguration())) {
-      contextBuilder = new InMemoryMapReduceContextBuilder(conf, taskContext);
+      contextBuilder = new InMemoryMapReduceContextBuilder(conf);
     } else {
       // mrFramework = "yarn" or "classic"
       // if the jobContext is not a TaskAttemptContext, mrFramework should not be yarn.
       contextBuilder = new DistributedMapReduceContextBuilder(
-        conf, HBaseConfiguration.create(taskContext.getConfiguration()), taskContext);
+        conf, HBaseConfiguration.create(taskContext.getConfiguration()));
     }
     return contextBuilder;
   }

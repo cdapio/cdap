@@ -129,6 +129,7 @@
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
     <servlet.api.version>3.0.1</servlet.api.version>
+    <snappy.version>1.1.1.7</snappy.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
     <tephra.version>0.4.2</tephra.version>
@@ -260,6 +261,11 @@
         <groupId>org.jboss.resteasy</groupId>
         <artifactId>resteasy-guice</artifactId>
         <version>${resteasy.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.xerial.snappy</groupId>
+        <artifactId>snappy-java</artifactId>
+        <version>${snappy.version}</version>
       </dependency>
       <dependency>
         <groupId>jline</groupId>

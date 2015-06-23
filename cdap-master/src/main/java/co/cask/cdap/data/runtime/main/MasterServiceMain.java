@@ -180,10 +180,6 @@ public class MasterServiceMain extends DaemonMain {
     metricsCollectionService.startAndWait();
     serviceStore.startAndWait();
     leaderElection.startAndWait();
-
-    // Tries to create the ZK root node (which can be namespaced through the zk connection string)
-    Futures.getUnchecked(ZKOperations.ignoreError(zkClient.create("/", null, CreateMode.PERSISTENT),
-                                                  KeeperException.NodeExistsException.class, null));
   }
 
   @Override
