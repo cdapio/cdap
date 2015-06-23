@@ -99,7 +99,6 @@
     <concurrent.trees.version>2.4.0</concurrent.trees.version>
     <cask.common.cli.version>0.5.0</cask.common.cli.version>
     <cask.common.version>0.6.1</cask.common.version>
-    <cdap.hive.version>0.14.0</cdap.hive.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
     <flume.version>1.2.0</flume.version>
     <geronimo.version>2.0.0</geronimo.version>
@@ -1031,7 +1030,7 @@
       <dependency>
         <groupId>org.apache.hive</groupId>
         <artifactId>hive-exec</artifactId>
-        <version>${cdap.hive.version}</version>
+        <version>${hive.version}</version>
         <exclusions>
           <exclusion>
             <groupId>com.google.guava</groupId>
