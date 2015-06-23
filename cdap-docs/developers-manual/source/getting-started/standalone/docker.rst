@@ -41,17 +41,13 @@ To use the **Docker image**:
 - Once Docker has started, pull down the *CDAP Docker Image* from the Docker hub using::
 
 .. container:: highlight
-
   .. parsed-literal::
-
     |$| docker pull caskdata/cdap-standalone:|literal-release|
 
 - Start the *Docker CDAP Virtual Machine* with::
 
 .. container:: highlight
-
   .. parsed-literal::
-
     |$| docker run -t -i -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone:|literal-release|
 
 - CDAP will start automatically once the CDAP Virtual Machine starts. CDAP’s Software
