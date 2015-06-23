@@ -20,8 +20,18 @@
                ng-model="model.name"
                class="form-control"
                required
-
         >
+        <div class="alert alert-danger alert-dismissible"
+             ng-show="error"
+             role="alert">
+          <button type="button"
+                  class="close"
+                  ng-click="error=null"
+                  aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <p><i class="fa fa-exclamation-circle"></i>  {{error}}</p>
+        </div>
       </div>
     </div>
 
@@ -35,45 +45,18 @@
         ></textarea>
       </div>
     </div>
-
-  <!--   <div class="form-group">
-      <label  class="col-sm-2 control-label" for="namespaceProperties">Properties</label>
-      <div class="col-sm-2">
-        <input type="text"
-               id="namespaceProperties"
-               ng-model="model.properties"
-               class="form-control"
-               placeholder="Key"
-        >
-      </div>
-      <div class="col-sm-2">
-        <input type="text"
-               id="namespaceProperties"
-               ng-model="model.properties"
-               class="form-control"
-               placeholder="Value"
-        >
-      </div>
-      <div class="col-sm-1">
-        <a type="button"
-               id="addKeyValue"
-               class="btn btn-default"
-        >+</a>
-      </div>
-    </div> -->
-
-<!--     <div class="form-group">
-      <div class="col-sm-offset-2 col-sm-10">
-        <a ui-sref="admin.overview" class="btn btn-default">Cancel</a>
-        <button ng-disabled="namespaceCreateForm.$invalid" type="submit" class="btn btn-primary">Create</button>
-      </div>
-    </div> -->
-
   </form>
 </div>
 <div class="modal-footer">
   <div class="form-group">
     <a ui-sref="admin.overview" class="btn btn-default" ng-click="closeModal()">Cancel</a>
-    <a ng-disabled="namespaceCreateForm.$invalid" class="btn btn-primary" ng-click="submitHandler()">Create</a>
+    <a ng-disabled="isSaving == true"
+       class="btn btn-success"
+       ng-click="submitHandler()">
+      <div ng-if="isSaving == true" >
+       <span class="fa fa-spin fa-refresh"></span>
+      </div>
+      <span>Create</span>
+    </a>
   </div>
 </div>
