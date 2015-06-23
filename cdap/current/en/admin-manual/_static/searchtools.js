@@ -10,7 +10,12 @@
  */
  
 var manuals = {
-"introduction":"Introduction to CDAP","developers-manual":"Developers’ Manual","application-templates":"Application Templates","admin-manual":"Administration Manual","integrations":"Integrations","examples-manual":"Examples, Guides, and Tutorials","reference-manual":"Reference Manual", };
+  "introduction":"Introduction to CDAP","developers-manual":"Developers’ Manual","application-templates":"Application Templates","admin-manual":"Administration Manual","integrations":"Integrations","examples-manual":"Examples, Guides, and Tutorials","reference-manual":"Reference Manual" 
+};
+
+var manualsArray = new Array(
+  "introduction","developers-manual","application-templates","admin-manual","integrations","examples-manual","reference-manual" 
+);
 
 
 /**
@@ -385,21 +390,41 @@ var Search = {
         results[i][4] = Scorer.score(results[i]);
     }
 
-    // now sort the results by score (in opposite order of appearance, since the
-    // display function below uses pop() to retrieve items) and then
-    // alphabetically
+    // Sort the results first by the manual, then by score, then alphabetical
+    // In opposite order of appearance, since the
+    // display function below uses pop() to retrieve items
+    
     results.sort(function(a, b) {
-      var left = a[4];
-      var right = b[4];
-      if (left > right) {
-        return 1;
-      } else if (left < right) {
+
+      function manualID(item){
+        var manual = (item[0].split('/'));
+        if (manual.length == 0) {
+          return -1;
+        } else {
+          return $.inArray( manual[0], manualsArray );
+        }
+      }
+      var manual_left = manualID(a);
+      var manual_right = manualID(b);
+      
+      if (manual_left > manual_right) {
         return -1;
+      } else if (manual_left < manual_right) {
+        return 1;
       } else {
-        // same score: sort alphabetically
-        left = a[1].toLowerCase();
-        right = b[1].toLowerCase();
-        return (left > right) ? -1 : ((left < right) ? 1 : 0);
+        // same manual; sort by score
+        var left = a[4];
+        var right = b[4];
+        if (left > right) {
+          return 1;
+        } else if (left < right) {
+          return -1;
+        } else {
+          // same score: sort alphabetically
+          left = a[1].toLowerCase();
+          right = b[1].toLowerCase();
+          return (left > right) ? -1 : ((left < right) ? 1 : 0);
+        }
       }
     });
 
@@ -408,6 +433,7 @@ var Search = {
     //console.info('search results:', Search.lastresults);
 
     // print the results
+    var currentManual = "";
     var resultCount = results.length;
     function displayNextItem() {
       // results left, load the summary and display it
@@ -427,12 +453,20 @@ var Search = {
             highlightstring + item[2]).html(item[1]));
         } else {
           // normal html builders
+          // Print Manual title if a new manual
+          var manual = (item[0].split('/')); //.split('-');
+          if ( manual.length > 1) {
+            manual = manual[0];
+          } else {
+            manual = "";
+          }
+          if ( manual != currentManual ) {
+            Search.output.append("<p></p><b>" + manuals[manual] + "</b>");
+            currentManual = manual;
+          }
           listItem.append($('<a/>').attr('href',
             item[0] + DOCUMENTATION_OPTIONS.FILE_SUFFIX +
             highlightstring + item[2]).html(item[1]));
-          var manual = (item[0].split('/')); //.split('-');
-          if ( manual.length > 1)
-            listItem.append(" <i>" + manuals[manual[0]] + "</i>");
         }
         if (item[3]) {
           listItem.append($('<span> (' + item[3] + ')</span>'));
@@ -468,10 +502,10 @@ var Search = {
         if (!resultCount)
           Search.status.text(_('Your search did not match any documents. Please make sure that all words are spelled correctly and that you\'ve selected enough categories.'));
         else
-          if (resultCount==1)
-            Search.status.text(_('Search finished, found one page matching the search query:'));
+          if (resultCount == 1)
+            Search.status.text(_('Search finished; found one page matching the search query:'));
           else
-            Search.status.text(_('Search finished, found %s pages matching the search query:').replace('%s', resultCount));
+            Search.status.text(_('Search finished; found %s pages matching the search query, organized by manual, then sorted by score:').replace('%s', resultCount));
         Search.status.fadeIn(500);
       }
     }
