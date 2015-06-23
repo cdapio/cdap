@@ -36,7 +36,7 @@ of the application are tied together by the class ``SparkPageRankApp``:
 
 .. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
    :language: java
-   :lines: 41-76
+   :lines: 40-76
 
 The ``ranks`` ObjectStore Data Storage
 --------------------------------------

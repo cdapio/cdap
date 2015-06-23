@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
@@ -105,7 +105,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
     return txContext;
   }
 
-  private static MetricsCollector getMetricCollector(MetricsCollectionService service,
+  private static MetricsContext getMetricCollector(MetricsCollectionService service,
                                                      Program program, String handlerName,
                                                      String runId, int instanceId) {
     if (service == null) {
@@ -114,6 +114,6 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
     Map<String, String> tags = Maps.newHashMap(getMetricsContext(program, runId));
     tags.put(Constants.Metrics.Tag.HANDLER, handlerName);
     tags.put(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId));
-    return service.getCollector(tags);
+    return service.getContext(tags);
   }
 }

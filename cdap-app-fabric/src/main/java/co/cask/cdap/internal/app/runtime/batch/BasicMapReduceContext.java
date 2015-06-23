@@ -27,7 +27,7 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
@@ -248,31 +248,26 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   }
 
   @Nullable
-  private static MetricsCollector getMetricCollector(Program program, String runId, String taskId,
+  private static MetricsContext getMetricCollector(Program program, String runId, String taskId,
                                                      @Nullable MetricsCollectionService service,
                                                      @Nullable MapReduceMetrics.TaskType type,
                                                      @Nullable AdapterDefinition adapterSpec) {
     if (service == null) {
       return null;
     }
+
     Map<String, String> tags = Maps.newHashMap();
-    // NOTE: Currently we report metrics thru mapreduce counters and emit them in mapreduce program runner. It "knows"
-    //       all the details about program, run, etc. so no need to pollute counters with it. Also counter name has
-    //       strict limits by default (64 bytes), we simply can't risk overflowing it.
+    tags.putAll(getMetricsContext(program, runId));
     if (type != null) {
-      // in a task: put only task info
       tags.put(Constants.Metrics.Tag.MR_TASK_TYPE, type.getId());
       tags.put(Constants.Metrics.Tag.INSTANCE_ID, taskId);
-    } else {
-      // in a runner (container that submits the job): put program info
-      tags.putAll(getMetricsContext(program, runId));
     }
 
     if (adapterSpec != null) {
       tags.put(Constants.Metrics.Tag.ADAPTER, adapterSpec.getName());
     }
 
-    return service.getCollector(tags);
+    return service.getContext(tags);
   }
 
   @Override

@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.runtime.spark.metrics;
 
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.common.conf.Constants;
 
@@ -32,28 +32,28 @@ import java.io.ObjectOutput;
 public final class SparkUserMetrics implements Metrics, Externalizable {
   private static final long serialVersionUID = -5913108632034346101L;
 
-  private static MetricsCollector metricsCollector;
+  private static MetricsContext metricsContext;
 
   /** For serde purposes only */
   public SparkUserMetrics() {
   }
 
-  public static void setMetricsCollector(MetricsCollector collector) {
-    SparkUserMetrics.metricsCollector = collector.childCollector(Constants.Metrics.Tag.SCOPE, "user");
+  public static void setMetricsContext(MetricsContext collector) {
+    SparkUserMetrics.metricsContext = collector.childContext(Constants.Metrics.Tag.SCOPE, "user");
   }
 
   @Override
   public void count(String metricName, int delta) {
-    metricsCollector.increment(metricName, delta);
+    metricsContext.increment(metricName, delta);
   }
 
   @Override
   public void gauge(String metricName, long value) {
-    metricsCollector.gauge(metricName, value);
+    metricsContext.gauge(metricName, value);
   }
 
   /**
-   * Since MetricsCollector (only member) is a static member there is nothing to serialize.
+   * Since MetricsContext (only member) is a static member there is nothing to serialize.
    * For supporting Spark in Distributed mode, this needs to be revisited.
    */
   @Override
@@ -62,7 +62,7 @@ public final class SparkUserMetrics implements Metrics, Externalizable {
   }
 
   /**
-   * Since MetricsCollector (only member) is a static field there is nothing to serialize.
+   * Since MetricsContext (only member) is a static field there is nothing to serialize.
    * For supporting Spark in Distributed mode, this needs to be revisited.
    */
   @Override

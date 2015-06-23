@@ -118,30 +118,34 @@ WEB="web"
 GOOGLE_ANALYTICS_GITHUB="UA-55081520-2"
 GITHUB="github"
 
+# BUILD.rst
+BUILD_RST="BUILD.rst"
+BUILD_RST_HASH="0d41d293a6e11c0461bf3ff3be03c242"
+
 
 function usage() {
   cd $PROJECT_PATH
   PROJECT_PATH=`pwd`
   echo "Build script for '${PROJECT_CAPS}' docs"
   echo "Usage: ${SCRIPT} < option > [source test_includes]"
-  echo ""
+  echo
   echo "  Options (select one)"
   echo "    build          Clean build of javadocs and HTML docs, copy javadocs and PDFs into place, zip results"
   echo "    build-github   Clean build and zip for placing on GitHub"
   echo "    build-web      Clean build and zip for placing on docs.cask.co webserver"
-  echo ""
+  echo
   echo "    docs           Clean build of docs"
   echo "    javadocs       Clean build of javadocs ($API module only) for SDK and website"
   echo "    javadocs-full  Clean build of javadocs for all modules"
   echo "    license-pdfs   Clean build of License Dependency PDFs"
-  echo ""
+  echo
   echo "    check-includes Check if included files have changed from source"
   echo "    depends        Build Site listing dependencies"
   echo "    sdk            Build SDK"
   echo "  with"
   echo "    source         Path to $PROJECT source for javadocs, if not $PROJECT_PATH"
   echo "    test_includes  local, remote or neither (default: remote); must specify source if used"
-  echo " "
+  echo
 }
 
 function clean() {
@@ -169,7 +173,8 @@ function build_docs_google() {
 function build_javadocs_full() {
   cd ${PROJECT_PATH}
   set_mvn_environment
-  echo "Currently not implemented"
+  check_build_for_changes
+  echo "build_javadocs_full: Currently not implemented"
   return
   # MAVEN_OPTS="-Xmx512m" mvn clean site -DskipTests
 }
@@ -177,6 +182,7 @@ function build_javadocs_full() {
 function build_javadocs_api() {
   cd ${PROJECT_PATH}
   set_mvn_environment
+  check_build_for_changes
   MAVEN_OPTS="-Xmx1024m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && mvn clean site -DskipTests -P templates -DisOffline=false
 }
 
@@ -319,7 +325,9 @@ function test_an_include() {
 function build_standalone() {
   cd ${PROJECT_PATH}
   set_mvn_environment
-  MAVEN_OPTS="-Xmx1024m" mvn clean package -DskipTests -P examples,templates -pl cdap-examples,cdap-app-templates/cdap-etl -am -amd && MAVEN_OPTS="-Xmx1024m" mvn package -pl cdap-standalone -am -DskipTests -P dist,release
+  check_build_for_changes
+  mvn clean
+  MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn package -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-examples -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
 }
 
 function build_sdk() {
@@ -330,6 +338,11 @@ function build_dependencies() {
   cd $PROJECT_PATH
   set_mvn_environment
   mvn clean package site -am -Pjavadocs -DskipTests
+}
+
+function check_build_for_changes() {
+  BUILD_RST_PATH="${PROJECT_PATH}/${BUILD_RST}"
+  test_an_include ${BUILD_RST_HASH} ${BUILD_RST_PATH}
 }
 
 function version() {
@@ -361,13 +374,13 @@ function version() {
       GIT_BRANCH_TYPE="develop-feature"
     fi
   fi
-  cd $current_directory
+  cd ${current_directory}
   IFS="${OIFS}"
 }
 
 function display_version() {
   version
-  echo ""
+  echo
   echo "PROJECT_PATH: ${PROJECT_PATH}"
   echo "PROJECT_VERSION: ${PROJECT_VERSION}"
   echo "PROJECT_LONG_VERSION: ${PROJECT_LONG_VERSION}"
@@ -410,14 +423,14 @@ function display_any_messages() {
   if [[ "x${MESSAGES}" != "x" || -s ${SPHINX_MESSAGES} ]]; then
     local m="Warning Messages for \"${MANUAL}\":"
     if [ "x${MESSAGES}" != "x" ]; then
-      echo ""
+      echo 
       echo_red_bold "${m}"
-      echo ""
+      echo 
       echo -e "${MESSAGES}"
     fi
     if [ -s ${SPHINX_MESSAGES} ]; then
       m="Sphinx ${m}"
-      echo ""
+      echo
       echo_red_bold "${m}"
       echo ${m} >> ${TMP_MESSAGES_FILE}
       cat ${SPHINX_MESSAGES} | while read line
@@ -431,9 +444,9 @@ function display_any_messages() {
 
 function display_messages_file() {
   if [[ "x${TMP_MESSAGES_FILE}" != "x" && -a ${TMP_MESSAGES_FILE} ]]; then
-    echo ""
+    echo 
     echo "Warning Messages: ${TMP_MESSAGES_FILE}"
-    echo ""
+    echo 
     echo >> ${TMP_MESSAGES_FILE}
     cat ${TMP_MESSAGES_FILE} | while read line
     do

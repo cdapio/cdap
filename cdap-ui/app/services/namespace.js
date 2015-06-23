@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.services')
-  .service('myNamespace', function myNamespace($q, MyDataSource, EventPipe, $http) {
+  .service('myNamespace', function myNamespace($q, MyDataSource, EventPipe, $http, $rootScope, myAuth, MYAUTH_EVENT) {
 
     this.namespaceList = [];
 
@@ -53,26 +53,5 @@ angular.module(PKG.name + '.services')
       });
       return ns[0].name || name;
     };
-
-    function startPolling() {
-
-      _.debounce(function() {
-        $http.get('http://' + window.location.host + '/backendstatus', {ignoreLoadingBar: true})
-                .success(success).error(error);
-              }, 2000)();
-
-    }
-
-    function success() {
-      EventPipe.emit('backendUp');
-      startPolling();
-    }
-
-    function error() {
-      EventPipe.emit('backendDown');
-      startPolling();
-    }
-
-    startPolling();
 
   });

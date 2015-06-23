@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime;
 
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.app.runtime.ProgramResourceReporter;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -43,27 +43,27 @@ public abstract class AbstractResourceReporter extends AbstractScheduledService 
   protected static final String METRIC_MEMORY_USAGE = "resources.used.memory";
   protected static final String METRIC_VIRTUAL_CORE_USAGE = "resources.used.vcores";
 
-  protected final MetricsCollector metricsCollector;
+  protected final MetricsContext metricsContext;
 
-  private final LoadingCache<Map<String, String>, MetricsCollector> programMetricsCollectors;
+  private final LoadingCache<Map<String, String>, MetricsContext> programMetricsCollectors;
 
   private final int reportInterval;
 
   private volatile ScheduledExecutorService executor;
 
-  protected AbstractResourceReporter(MetricsCollector metricsCollector) {
-    this(metricsCollector, DEFAULT_REPORT_INTERVAL);
+  protected AbstractResourceReporter(MetricsContext metricsContext) {
+    this(metricsContext, DEFAULT_REPORT_INTERVAL);
   }
 
-  protected AbstractResourceReporter(final MetricsCollector metricsCollector, int interval) {
-    this.metricsCollector = metricsCollector;
+  protected AbstractResourceReporter(final MetricsContext metricsContext, int interval) {
+    this.metricsContext = metricsContext;
     this.reportInterval = interval;
     this.programMetricsCollectors = CacheBuilder.newBuilder()
       .expireAfterAccess(1, TimeUnit.HOURS)
-      .build(new CacheLoader<Map<String, String>, MetricsCollector>() {
+      .build(new CacheLoader<Map<String, String>, MetricsContext>() {
         @Override
-        public MetricsCollector load(Map<String, String> key) throws Exception {
-          return metricsCollector.childCollector(key);
+        public MetricsContext load(Map<String, String> key) throws Exception {
+          return metricsContext.childContext(key);
         }
       });
   }
@@ -91,13 +91,13 @@ public abstract class AbstractResourceReporter extends AbstractScheduledService 
 
   protected void sendMetrics(Map<String, String> context, int containers, int memory, int vcores) {
     LOG.trace("Reporting resources: (containers, memory, vcores) = ({}, {}, {})", containers, memory, vcores);
-    MetricsCollector metricsCollector = programMetricsCollectors.getUnchecked(context);
-    metricsCollector.gauge(METRIC_CONTAINERS, containers);
-    metricsCollector.gauge(METRIC_MEMORY_USAGE, memory);
-    metricsCollector.gauge(METRIC_VIRTUAL_CORE_USAGE, vcores);
+    MetricsContext metricsContext = programMetricsCollectors.getUnchecked(context);
+    metricsContext.gauge(METRIC_CONTAINERS, containers);
+    metricsContext.gauge(METRIC_MEMORY_USAGE, memory);
+    metricsContext.gauge(METRIC_VIRTUAL_CORE_USAGE, vcores);
   }
 
-  protected MetricsCollector getCollector() {
-    return metricsCollector;
+  protected MetricsContext getCollector() {
+    return metricsContext;
   }
 }

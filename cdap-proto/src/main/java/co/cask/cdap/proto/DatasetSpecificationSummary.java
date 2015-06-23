@@ -66,6 +66,16 @@ public class DatasetSpecificationSummary {
   }
 
   @Override
+  public String toString() {
+    final StringBuilder sb = new StringBuilder("DatasetSpecificationSummary{");
+    sb.append("name='").append(name).append('\'');
+    sb.append(", type='").append(type).append('\'');
+    sb.append(", properties=").append(properties);
+    sb.append('}');
+    return sb.toString();
+  }
+
+  @Override
   public int hashCode() {
     return Objects.hashCode(name, type, properties);
   }

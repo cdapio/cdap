@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.spark.metrics;
 
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.internal.app.runtime.spark.SparkProgramWrapper;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link ScheduledReporter} reports which reports Metrics collected by the {@link SparkMetricsSink} to
- * {@link MetricsCollector}.
+ * {@link MetricsContext}.
  */
 class SparkMetricsReporter extends ScheduledReporter {
 

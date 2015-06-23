@@ -1,3 +1,4 @@
+
 /*
  * Copyright © 2015 Cask Data, Inc.
  *
@@ -22,16 +23,17 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 
+import java.io.IOException;
 import java.util.Map;
 
 /**
- * Creates GenericRecords from StructuredRecords, with caching for schemas. The assumption is that most of the
- * records it transforms have the same schema.
+ * Creates GenericRecords from StructuredRecords
  */
-public class StructuredToAvroTransformer {
+public class StructuredToAvroTransformer extends RecordConverter<StructuredRecord, GenericRecord> {
+
   private final Map<Integer, Schema> schemaCache = Maps.newHashMap();
 
-  public GenericRecord transform(StructuredRecord structuredRecord) throws Exception {
+  public GenericRecord transform(StructuredRecord structuredRecord) throws IOException {
     co.cask.cdap.api.data.schema.Schema structuredRecordSchema = structuredRecord.getSchema();
 
     int hashCode = structuredRecordSchema.hashCode();
@@ -47,7 +49,7 @@ public class StructuredToAvroTransformer {
     GenericRecordBuilder recordBuilder = new GenericRecordBuilder(avroSchema);
     for (Schema.Field field : avroSchema.getFields()) {
       String fieldName = field.name();
-      recordBuilder.set(fieldName, structuredRecord.get(fieldName));
+      recordBuilder.set(fieldName, convertField(structuredRecord.get(fieldName), field.schema()));
     }
     return recordBuilder.build();
   }

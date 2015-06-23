@@ -28,7 +28,7 @@ angular.module(PKG.name + '.commons')
 
     $scope.doSearch = function () {
       myAlert({
-        title: 'Sorry!',
+        title: 'Sorry',
         content: 'Search is not yet implemented.',
         type: 'danger'
       });

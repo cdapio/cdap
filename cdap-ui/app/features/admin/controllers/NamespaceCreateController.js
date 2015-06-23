@@ -17,8 +17,8 @@ angular.module(PKG.name + '.feature.admin')
         .then(function() {
           $modalInstance.close();
           $alert({
-            title: 'Success!',
-            content: 'Namespace Created!',
+            title: 'Success',
+            content: 'Namespace Created',
             type: 'success'
           });
 

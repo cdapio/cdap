@@ -18,10 +18,10 @@ package co.cask.cdap.data2.dataset2.lib.partitioned;
 
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.dataset.lib.Partition;
+import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.TimePartition;
+import co.cask.cdap.api.dataset.lib.TimePartitionDetail;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
@@ -76,6 +76,29 @@ public class TimePartitionedFileSetTest {
   @After
   public void after() throws Exception {
     dsFrameworkUtil.deleteInstance(TPFS_INSTANCE);
+  }
+
+  @Test
+  public void testPartitionMetadata() throws Exception {
+    final TimePartitionedFileSet tpfs = dsFrameworkUtil.getInstance(TPFS_INSTANCE);
+    dsFrameworkUtil.newTransactionExecutor((TransactionAware) tpfs).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // make sure the dataset has no partitions
+        validateTimePartitions(tpfs, 0L, MAX, Collections.<Long, String>emptyMap());
+
+        Date date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse("6/4/12 10:00 am");
+        final long time = date.getTime();
+
+        final ImmutableMap<String, String> metadata = ImmutableMap.of("key1", "value1",
+                                                                      "key2", "value3",
+                                                                      "key100", "value4");
+        tpfs.addPartition(time, "file", metadata);
+        TimePartitionDetail partitionByTime = tpfs.getPartitionByTime(time);
+        Assert.assertNotNull(partitionByTime);
+        Assert.assertEquals(metadata, partitionByTime.getMetadata().asMap());
+      }
+    });
   }
 
   @Test
@@ -431,7 +454,7 @@ public class TimePartitionedFileSetTest {
       @Override
       public void apply() throws Exception {
         // querying with partition filter does not see legacy partitions
-        Assert.assertEquals(Collections.<Partition>emptySet(), dataset.getPartitions(null));
+        Assert.assertEquals(Collections.<PartitionDetail>emptySet(), dataset.getPartitions(null));
         // querying with time range sees legacy partitions
         validateTimePartitions(dataset, 0, MAX, ImmutableMap.of(time,             "8:42",
                                                                 time +     HOUR,  "9:42",
@@ -566,9 +589,9 @@ public class TimePartitionedFileSetTest {
   }
 
   private void validateTimePartition(TimePartitionedFileSet dataset, long time, String path) {
-    Partition partition = dataset.getPartitionByTime(time);
-    Assert.assertEquals(path == null, partition == null);
-    Assert.assertTrue(path == null || partition == null || path.equals(partition.getRelativePath()));
+    PartitionDetail partitionDetail = dataset.getPartitionByTime(time);
+    Assert.assertEquals(path == null, partitionDetail == null);
+    Assert.assertTrue(path == null || partitionDetail == null || path.equals(partitionDetail.getRelativePath()));
     Assert.assertEquals(path, dataset.getPartition(time));
   }
 
@@ -582,9 +605,9 @@ public class TimePartitionedFileSetTest {
     Map<Long, String> timeToPaths = dataset.getPartitions(startTime, endTime);
     Assert.assertEquals(expected, timeToPaths);
     // validate getPartitionsByTime()
-    Set<TimePartition> partitions = dataset.getPartitionsByTime(startTime, endTime);
+    Set<TimePartitionDetail> partitions = dataset.getPartitionsByTime(startTime, endTime);
     Assert.assertEquals(expected.size(), partitions.size());
-    for (TimePartition partition : partitions) {
+    for (TimePartitionDetail partition : partitions) {
       Assert.assertEquals(expected.get(partition.getTime()), partition.getRelativePath());
     }
   }
@@ -679,10 +702,10 @@ public class TimePartitionedFileSetTest {
     return ImmutableSet.copyOf(paths);
   }
 
-  private static Set<String> paths(Iterable<Partition> partitions) {
+  private static Set<String> paths(Iterable<PartitionDetail> partitions) {
     Set<String> set = Sets.newHashSet();
-    for (Partition partition : partitions) {
-      set.add(partition.getRelativePath());
+    for (PartitionDetail partitionDetail : partitions) {
+      set.add(partitionDetail.getRelativePath());
     }
     return set;
   }

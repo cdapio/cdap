@@ -264,24 +264,25 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
     // Now lets correct the invalid RunRecords
     for (RunRecord rr : invalidRunRecords) {
+      String runId = rr.getPid();
+      Id.Program targetProgramId = retrieveProgramIdForRunRecord(programType, runId);
+      if (targetProgramId == null) {
+        // wrong program type
+        continue;
+      }
+
       boolean shouldCorrect = shouldCorrectForWorkflowChildren(rr, processedInvalidRunRecordIds);
       if (!shouldCorrect) {
         continue;
       }
 
-      String runId = rr.getPid();
-      Id.Program targetProgramId = retrieveProgramIdForRunRecord(programType, runId);
+      LOG.warn("Fixing RunRecord {} in program {} of type {} with RUNNING status but the program is not running",
+               runId, targetProgramId, programType.getPrettyName());
 
-      // Check if such program exist for the RunRecord
-      if (targetProgramId != null) {
-        LOG.warn("Fixing RunRecord {} in program {} of type {} with RUNNING status but the program is not running",
-                 runId, targetProgramId, programType.getPrettyName());
+      store.compareAndSetStatus(targetProgramId, runId, ProgramController.State.ALIVE.getRunStatus(),
+                                ProgramController.State.ERROR.getRunStatus());
 
-        store.compareAndSetStatus(targetProgramId, runId, ProgramController.State.ALIVE.getRunStatus(),
-                                  ProgramController.State.ERROR.getRunStatus());
-
-        processedInvalidRunRecordIds.add(runId);
-      }
+      processedInvalidRunRecordIds.add(runId);
     }
   }
 
@@ -456,6 +457,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
         RunRecordsCorrectorRunnable.LOG.debug("End correcting invalid run records.");
       } catch (Throwable t) {
         // Ignore any exception thrown since this behaves like daemon thread.
+        LOG.debug("Exception thrown when running run id cleaner.", t);
       }
     }
   }

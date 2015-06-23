@@ -22,7 +22,7 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.templates.AdapterContext;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.app.program.Program;
@@ -65,7 +65,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final Map<String, String> runtimeArguments;
   private final Map<String, Dataset> datasets;
 
-  private final MetricsCollector programMetrics;
+  private final MetricsContext programMetrics;
 
   private final DatasetInstantiator dsInstantiator;
   private final DiscoveryServiceClient discoveryServiceClient;
@@ -77,9 +77,9 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
    * Constructs a context without application template adapter support.
    */
   protected AbstractContext(Program program, RunId runId, Arguments arguments,
-                            Set<String> datasets, MetricsCollector metricsCollector,
+                            Set<String> datasets, MetricsContext metricsContext,
                             DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient) {
-    this(program, runId, arguments, datasets, metricsCollector, dsFramework, discoveryServiceClient, null, null);
+    this(program, runId, arguments, datasets, metricsContext, dsFramework, discoveryServiceClient, null, null);
   }
 
   /**
@@ -87,7 +87,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
    * both the {@code adapterSpec} and {@code pluginInstantiator} must not be null.
    */
   protected AbstractContext(Program program, RunId runId, Arguments arguments,
-                            Set<String> datasets, MetricsCollector metricsCollector,
+                            Set<String> datasets, MetricsContext metricsContext,
                             DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
                             @Nullable AdapterDefinition adapterSpec,
                             @Nullable PluginInstantiator pluginInstantiator) {
@@ -97,7 +97,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.runtimeArguments = ImmutableMap.copyOf(arguments.asMap());
     this.discoveryServiceClient = discoveryServiceClient;
 
-    this.programMetrics = metricsCollector;
+    this.programMetrics = metricsContext;
     this.dsInstantiator = new DatasetInstantiator(program.getId().getNamespace(), dsFramework,
                                                   program.getClassLoader(), getOwners(), programMetrics);
 
@@ -138,7 +138,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                          getNamespaceId(), getApplicationId(), getProgramName(), runId);
   }
 
-  public MetricsCollector getProgramMetrics() {
+  public MetricsContext getProgramMetrics() {
     return programMetrics;
   }
 

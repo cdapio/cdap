@@ -38,7 +38,6 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -49,11 +48,9 @@ import java.net.InetSocketAddress;
  */
 public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBuilder {
   private final CConfiguration cConf;
-  private final TaskAttemptContext taskContext;
 
-  public InMemoryMapReduceContextBuilder(CConfiguration cConf, TaskAttemptContext taskContext) {
+  public InMemoryMapReduceContextBuilder(CConfiguration cConf) {
     this.cConf = cConf;
-    this.taskContext = taskContext;
   }
 
   @Override
@@ -97,7 +94,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new DataFabricModules().getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
-      new MetricsClientRuntimeModule().getMapReduceModules(taskContext),
+      new MetricsClientRuntimeModule().getStandaloneModules(),
       new LoggingModules().getStandaloneModules(),
       new ExploreClientModule(),
       new StreamAdminModules().getStandaloneModules(),

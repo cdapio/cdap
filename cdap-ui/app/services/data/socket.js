@@ -13,7 +13,7 @@ angular.module(PKG.name+'.services')
 .provider('mySocket', function () {
 
   this.prefix = '/_sock';
-  
+
   this.$get = function (MYSOCKET_EVENT, $rootScope, SockJS, $log, myCdapUrl, EventPipe) {
 
     var self = this,

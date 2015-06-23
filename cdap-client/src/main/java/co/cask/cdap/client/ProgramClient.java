@@ -550,7 +550,7 @@ public class ProgramClient {
   /**
    * Gets the runtime args of a program.
    *
-   * @param appId ID of the application tat the program belongs to
+   * @param appId ID of the application that the program belongs to
    * @param programType type of the program
    * @param programId ID of the program
    * @return runtime args of the program
@@ -577,7 +577,7 @@ public class ProgramClient {
   /**
    * Sets the runtime args of a program.
    *
-   * @param appId ID of the application tat the program belongs to
+   * @param appId ID of the application that the program belongs to
    * @param programType type of the program
    * @param programId ID of the program
    * @param runtimeArgs args of the program

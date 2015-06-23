@@ -14,8 +14,8 @@ angular.module(PKG.name + '.services')
       function success() {
         $alert({
           type: 'success',
-          title: 'Upload success!',
-          content: 'The application has been uploaded successfully!'
+          title: 'Upload success',
+          content: 'The application has been uploaded successfully'
         });
         $state.reload();
       }
@@ -24,7 +24,7 @@ angular.module(PKG.name + '.services')
       function error(err) {
         myAlert({
           type: 'danger',
-          title: 'Upload failed!',
+          title: 'Upload failed',
           content: err || ''
         });
       }

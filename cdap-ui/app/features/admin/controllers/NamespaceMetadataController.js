@@ -14,7 +14,7 @@ function ($scope, $state, myAlert, MyDataSource, myNamespace) {
 
   $scope.doSave = function () {
     myAlert({
-      title: 'it doesn\'t work yet!',
+      title: 'it doesn\'t work yet',
       content: 'there is no content yet',
       type: 'warning'
     });

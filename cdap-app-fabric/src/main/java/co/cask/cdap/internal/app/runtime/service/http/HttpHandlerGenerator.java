@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
@@ -215,19 +215,19 @@ final class HttpHandlerGenerator {
    * Generates the constructor. The constructor generated has signature {@code (DelegatorContext)}.
    */
   private void generateConstructor(TypeToken<? extends HttpServiceHandler> delegateType, ClassWriter classWriter) {
-    Method constructor = Methods.getMethod(void.class, "<init>", DelegatorContext.class, MetricsCollector.class);
+    Method constructor = Methods.getMethod(void.class, "<init>", DelegatorContext.class, MetricsContext.class);
     String signature = Signatures.getMethodSignature(constructor, getContextType(delegateType),
-                                                     TypeToken.of(MetricsCollector.class));
+                                                     TypeToken.of(MetricsContext.class));
 
-    // Constructor(DelegatorContext, MetricsCollector)
+    // Constructor(DelegatorContext, MetricsContext)
     GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PUBLIC, constructor, signature, null, classWriter);
 
-    // super(context, metricsCollector);
+    // super(context, metricsContext);
     mg.loadThis();
     mg.loadArg(0);
     mg.loadArg(1);
     mg.invokeConstructor(Type.getType(AbstractHttpHandlerDelegator.class),
-                         Methods.getMethod(void.class, "<init>", DelegatorContext.class, MetricsCollector.class));
+                         Methods.getMethod(void.class, "<init>", DelegatorContext.class, MetricsContext.class));
     mg.returnValue();
     mg.endMethod();
   }

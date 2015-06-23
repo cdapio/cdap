@@ -104,7 +104,7 @@ public final class StreamFetchHandler extends AbstractHttpHandler {
   public void fetch(HttpRequest request, HttpResponder responder,
                     @PathParam("namespace-id") String namespaceId,
                     @PathParam("stream") String stream,
-                    @QueryParam("start") String start,
+                    @QueryParam("start") @DefaultValue("0") String start,
                     @QueryParam("end") @DefaultValue("9223372036854775807") String end,
                     @QueryParam("limit") @DefaultValue("2147483647") int limit) throws Exception {
     long startTime = TimeMathParser.parseTime(start, TimeUnit.MILLISECONDS);

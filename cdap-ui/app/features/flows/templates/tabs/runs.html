@@ -5,12 +5,12 @@
           dropdown is-open="dropdown.isopen">
       <button type="button"
               class="btn btn-default dropdown-toggle"
-              dropdown-toggle ng-disabled="runs.length === 0">
-        {{ runs.selected.runid }}
+              dropdown-toggle ng-disabled="RunsController.runs.length === 0">
+        {{ RunsController.runs.selected.runid }}
         <span class="caret"></span>
       </button>
       <ul class="dropdown-menu" role="menu">
-        <li ng-repeat="run in runs">
+        <li ng-repeat="run in RunsController.runs">
           <a ui-sref="flows.detail.runs.run({runid: run.runid})">{{ run.runid }}</a>
         </li>
       </ul>
