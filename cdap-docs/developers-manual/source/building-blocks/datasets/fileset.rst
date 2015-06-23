@@ -335,6 +335,8 @@ any of these may need as table properties. This is an experimental feature and o
 Avro; see the :ref:`StreamConversion <examples-stream-conversion>` example and
 the :ref:`fileset-exploration` for more details.
 
+.. _datasets-timepartitioned-fileset:
+
 ======================
 TimePartitionedFileSet
 ======================
