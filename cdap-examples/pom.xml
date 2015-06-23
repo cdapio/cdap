@@ -53,7 +53,6 @@
 
   <properties>
     <power.pack.version>[2.0.0,)</power.pack.version>
-    <maven.javadoc.skip>true</maven.javadoc.skip>
   </properties>
 
   <build>
