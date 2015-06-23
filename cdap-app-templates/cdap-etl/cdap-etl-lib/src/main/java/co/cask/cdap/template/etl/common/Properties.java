@@ -37,6 +37,18 @@ public final class Properties {
   }
 
   /**
+   * Class to hold properties for S3BatchSource
+   */
+  public static class File {
+    public static final String FILESYSTEM = "fileSystem";
+    public static final String FILESYSTEM_PROPERTIES = "fileSystemProperties";
+    public static final String PATH = "path";
+    public static final String FILE_REGEX = "fileRegex";
+    public static final String TIME_TABLE = "timeTable";
+    public static final String INPUT_FORMAT_CLASS = "inputFormatClass";
+  }
+
+  /**
    * Properties for the StreamBatchSource as well as the real-time StreamSink
    */
   public static class Stream {
