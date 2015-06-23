@@ -94,6 +94,7 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
   private final FileBatchConfig config;
   private KeyValueTable table;
   private Date prevMinute;
+  private String previousTimeRead;
 
   public FileBatchSource(FileBatchConfig config) {
     this.config = config;
@@ -132,10 +133,12 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
 
     if (config.timeTable != null) {
       table = context.getDataset(config.timeTable);
-      String lastTimeRead = Bytes.toString(table.read("lastTimeRead"));
+      String lastTimeRead = Bytes.toString(table.read(LAST_TIME_READ));
       if (lastTimeRead == null) {
         lastTimeRead = "0";
       }
+      previousTimeRead = lastTimeRead;
+      table.write(LAST_TIME_READ, DATE_FORMAT.format(prevMinute));
       conf.set(LAST_TIME_READ, lastTimeRead);
     }
 
@@ -161,8 +164,8 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
 
   @Override
   public void onRunFinish(boolean succeeded, BatchSourceContext context) {
-    if (succeeded && table != null && USE_TIMEFILTER.equals(config.fileRegex)) {
-      table.write("lastTimeRead", DATE_FORMAT.format(prevMinute));
+    if (!succeeded && table != null && USE_TIMEFILTER.equals(config.fileRegex)) {
+      table.write(LAST_TIME_READ, previousTimeRead);
     }
   }
 

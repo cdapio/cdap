@@ -1,0 +1,41 @@
+{
+  "id": "FileBatchSource",
+  "groups" : {
+    "position": [ "group1" ],
+    "group1": {
+      "display" : "File Batch Source",
+      "position" : [ "fileSystem", "fileSystemProperties", "path", "fileRegex", "timeTable", "inputFormatClass"],
+      "fields" : {
+        "fileSystem" : {
+          "widget": "textbox",
+          "label": "File System"
+        },
+
+        "fileSystemProperties" : {
+          "widget": "json-editor",
+          "label": "File System Properties"
+        },
+
+        "path" : {
+          "widget": "textbox",
+          "label": "Path"
+        },
+
+        "fileRegex" : {
+          "widget": "textbox",
+          "label": "File Regex"
+        },
+
+        "timeTable" : {
+          "widget": "textbox",
+          "label": "Time Table"
+        },
+
+        "inputFormatClass" : {
+          "widget": "textbox",
+          "label": "Input Format Class"
+        }
+      }
+    }
+  }
+}
