@@ -117,7 +117,6 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
 
   @Override
   public void destroy() {
-    ETLDBInputFormat.deregisterDrivers();
     DBUtils.cleanup(driverClass);
   }
 

@@ -30,6 +30,7 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.io.URLConnections;
 import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
@@ -166,6 +167,13 @@ public class MasterServiceMain extends DaemonMain {
 
   @Override
   public void start() {
+    try {
+      // Workaround for release of file descriptors opened by URLClassLoader - https://issues.cask.co/browse/CDAP-2841
+      URLConnections.setDefaultUseCaches(false);
+    } catch (IOException e) {
+      LOG.error("Could not disable caching of URLJarFiles. This may lead to 'too many open files` exception.", e);
+    }
+
     createSystemHBaseNamespace();
     updateConfigurationTable();
 

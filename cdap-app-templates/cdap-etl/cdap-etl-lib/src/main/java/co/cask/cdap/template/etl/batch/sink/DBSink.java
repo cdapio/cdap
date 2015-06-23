@@ -68,6 +68,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
   private final DBSinkConfig dbSinkConfig;
   private ResultSetMetaData resultSetMetadata;
   private Class<? extends Driver> driverClass;
+  private JDBCDriverShim driverShim;
 
   public DBSink(DBSinkConfig dbSinkConfig) {
     this.dbSinkConfig = dbSinkConfig;
@@ -121,8 +122,8 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
   @Override
   public void initialize(BatchSinkContext context) throws Exception {
     super.initialize(context);
-    setResultSetMetadata(context);
     driverClass = context.loadPluginClass(getJDBCPluginId());
+    setResultSetMetadata();
   }
 
   @Override
@@ -132,11 +133,17 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
 
   @Override
   public void destroy() {
+    try {
+      DriverManager.deregisterDriver(driverShim);
+    } catch (SQLException e) {
+      LOG.warn("Error while deregistering JDBC drivers in ETLDBOutputFormat.", e);
+      throw Throwables.propagate(e);
+    }
     DBUtils.cleanup(driverClass);
   }
 
-  private void setResultSetMetadata(BatchSinkContext context) throws Exception {
-    ensureJDBCDriverIsAvailable(context);
+  private void setResultSetMetadata() throws Exception {
+    ensureJDBCDriverIsAvailable();
     Connection connection;
     if (dbSinkConfig.user == null) {
       connection = DriverManager.getConnection(dbSinkConfig.connectionString);
@@ -161,18 +168,17 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
    *
    * @throws Exception if the driver is not available
    */
-  private void ensureJDBCDriverIsAvailable(BatchSinkContext context) throws Exception {
+  private void ensureJDBCDriverIsAvailable() throws Exception {
     try {
       DriverManager.getDriver(dbSinkConfig.connectionString);
     } catch (SQLException e) {
-      // Load the plugin class to make sure it is available.
-      Class<?> driverClass = context.loadPluginClass(getJDBCPluginId());
-
       // Driver not found. We will try to register it with the DriverManager.
       LOG.debug("Plugin Type: {} and Plugin Name: {}; Driver Class: {} not found. Registering JDBC driver via shim {} ",
                 dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName, driverClass.getName(),
                 JDBCDriverShim.class.getName());
-      DriverManager.registerDriver(new JDBCDriverShim((Driver) driverClass.newInstance()));
+      driverShim = new JDBCDriverShim(driverClass.newInstance());
+      DBUtils.deregisterAllDrivers(driverClass);
+      DriverManager.registerDriver(driverShim);
     }
   }
 
