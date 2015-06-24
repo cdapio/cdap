@@ -35,7 +35,6 @@ import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
-import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -102,10 +101,10 @@ class DatasetServiceClient {
     }
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Cannot retrieve dataset instance %s info, details: %s",
-                                                         instanceName, getDetails(response)));
+                                                         instanceName, response));
     }
 
-    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), DatasetMeta.class);
+    return GSON.fromJson(response.getResponseBodyAsString(), DatasetMeta.class);
   }
 
   @Nullable
@@ -117,20 +116,20 @@ class DatasetServiceClient {
     HttpResponse response = doGet("datasets");
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
-                                                         getDetails(response)));
+                                                         response));
     }
 
-    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), SUMMARY_LIST_TYPE);
+    return GSON.fromJson(response.getResponseBodyAsString(), SUMMARY_LIST_TYPE);
   }
 
   public Collection<DatasetModuleMeta> getAllModules() throws DatasetManagementException {
     HttpResponse response = doGet("modules");
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
-                                                         getDetails(response)));
+                                                         response));
     }
 
-    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), MODULE_META_LIST_TYPE);
+    return GSON.fromJson(response.getResponseBodyAsString(), MODULE_META_LIST_TYPE);
   }
 
   public DatasetTypeMeta getType(String typeName) throws DatasetManagementException {
@@ -140,9 +139,9 @@ class DatasetServiceClient {
     }
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Cannot retrieve dataset type %s info, details: %s",
-                                                         typeName, getDetails(response)));
+                                                         typeName, response));
     }
-    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), DatasetTypeMeta.class);
+    return GSON.fromJson(response.getResponseBodyAsString(), DatasetTypeMeta.class);
   }
 
   public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props)
@@ -154,11 +153,11 @@ class DatasetServiceClient {
 
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
-                                                         datasetInstanceName, getDetails(response)));
+                                                         datasetInstanceName, response));
     }
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
-                                                          datasetInstanceName, getDetails(response)));
+                                                          datasetInstanceName, response));
     }
   }
 
@@ -170,11 +169,11 @@ class DatasetServiceClient {
 
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
-                                                        datasetInstanceName, getDetails(response)));
+                                                        datasetInstanceName, response));
     }
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
-                                                         datasetInstanceName, getDetails(response)));
+                                                         datasetInstanceName, response));
     }
   }
 
@@ -182,11 +181,11 @@ class DatasetServiceClient {
     HttpResponse response = doDelete("datasets/" + datasetInstanceName);
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to delete instance %s due to conflict, details: %s",
-                                                        datasetInstanceName, getDetails(response)));
+                                                        datasetInstanceName, response));
     }
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to delete instance %s, details: %s",
-                                                         datasetInstanceName, getDetails(response)));
+                                                         datasetInstanceName, response));
     }
   }
 
@@ -199,11 +198,10 @@ class DatasetServiceClient {
 
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new ModuleConflictException(String.format("Failed to add module %s due to conflict, details: %s",
-                                                      moduleName, getDetails(response)));
+                                                      moduleName, response));
     }
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to add module %s, details: %s",
-                                                         moduleName, getDetails(response)));
+      throw new DatasetManagementException(String.format("Failed to add module %s, details: %s", moduleName, response));
     }
   }
 
@@ -213,11 +211,11 @@ class DatasetServiceClient {
 
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new ModuleConflictException(String.format("Failed to delete module %s due to conflict, details: %s",
-                                                      moduleName, getDetails(response)));
+                                                      moduleName, response));
     }
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to delete module %s, details: %s",
-                                                         moduleName, getDetails(response)));
+                                                         moduleName, response));
     }
   }
 
@@ -225,24 +223,21 @@ class DatasetServiceClient {
     HttpResponse response = doDelete("modules");
 
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to delete modules, details: %s",
-                                                         getDetails(response)));
+      throw new DatasetManagementException(String.format("Failed to delete modules, details: %s", response));
     }
   }
 
   public void createNamespace() throws DatasetManagementException {
     HttpResponse response = doPut("admin/create", GSON.toJson(namespaceId));
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to create namespace, details: %s",
-                                                         getDetails(response)));
+      throw new DatasetManagementException(String.format("Failed to create namespace, details: %s", response));
     }
   }
 
   public void deleteNamespace() throws DatasetManagementException {
     HttpResponse response = doDelete("admin/delete");
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to delete namespace, details: %s",
-                                                         getDetails(response)));
+      throw new DatasetManagementException(String.format("Failed to delete namespace, details: %s", response));
     }
   }
 
@@ -314,14 +309,6 @@ class DatasetServiceClient {
 
   private HttpResponse doRequest(HttpMethod method, String url) throws DatasetManagementException {
     return doRequest(method, url, null, (InputSupplier<? extends InputStream>) null);
-  }
-
-  private String getDetails(HttpResponse response) throws DatasetManagementException {
-    return String.format("Response code: %s, message:'%s', body: '%s'",
-                         response.getResponseCode(), response.getResponseMessage(),
-                         response.getResponseBody() == null ?
-                           "null" : new String(response.getResponseBody(), Charsets.UTF_8));
-
   }
 
   private String resolve(String resource) throws DatasetManagementException {
