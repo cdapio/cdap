@@ -12,7 +12,7 @@
           <tbody>
             <td ng-if="StatusController.storage"> {{StatusController.storage | bytes}} </td>
             <td ng-if="StatusController.storage == null"> &mdash; </td>
-            <td ng-if="StatusController.events"> {{StatusController.events}} </td>
+            <td ng-if="StatusController.events"> {{StatusController.events | number}} </td>
             <td ng-if="StatusController.events == null"> &mdash; </td>
           </tbody>
         </table>
