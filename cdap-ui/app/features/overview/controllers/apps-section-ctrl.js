@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.overview')
-  .controller('AppsSectionCtrl', function(myAppUploader, myStreamApi, myDatasetApi, myAppUploader, MyDataSource, MyOrderings, $scope, $state) {
+  .controller('AppsSectionCtrl', function(myAppUploader, myStreamApi, myDatasetApi, MyDataSource, MyOrderings, $scope, $state) {
     var dataSrc = new MyDataSource($scope);
     this.MyOrderings = MyOrderings;
     this.apps = [];
