@@ -35,27 +35,29 @@ function get_current_version() {
       rel="$(basename $release)"
       if [[ "${rel}" =~ ^[0-9].* ]]; then
         CURRENT="${rel%%/}"
-        return
+        return 0
       fi
     done
+  return 1
 }
 
 function write_version() {
   local rel="${1%%/}"
-  echo "- \`Version ${rel} <http://docs.cdap.io/cdap/${rel}>\`__" >> ${README_FILE_PATH}
+  echo "- \`Version ${rel} <http://docs.cdap.io/cdap/${rel}>\`__" >&1
 }
 
-
-echo "${READ_ME_BASE}" > ${README_FILE_PATH}
 
 cd ${CDAP_PATH}
 
 get_current_version
+if [ $? -ne 0 ] ; then echo "Failed to get current version" && exit 1 ; fi
+
+echo "${READ_ME_BASE}" > ${README_FILE_PATH}
 
 echo >> ${README_FILE_PATH}
 echo "\`Latest version: ${CURRENT} <http://docs.cdap.io/cdap/current>\`__" >> ${README_FILE_PATH}
 echo >> ${README_FILE_PATH}
-write_version ${CURRENT}
+write_version ${CURRENT} 1>> ${README_FILE_PATH}
 
 echo >> ${README_FILE_PATH}
 echo "Earlier versions:" >> ${README_FILE_PATH}
@@ -66,6 +68,8 @@ do
   rel="$(basename $release)"
   rel="${rel%%/}"
   if [[ "$rel" != "${CURRENT}" && "$rel" != "current" ]]; then
-    write_version ${rel}
+    write_version ${rel} 1>> ${README_FILE_PATH}
   fi
 done
+
+exit 0
