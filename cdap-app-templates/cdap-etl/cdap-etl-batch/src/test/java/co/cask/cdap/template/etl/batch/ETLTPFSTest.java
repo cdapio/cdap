@@ -50,14 +50,14 @@ import java.util.concurrent.TimeUnit;
 public class ETLTPFSTest extends BaseETLBatchTest {
 
   private static final Gson GSON = new Gson();
-  private static Schema EVENT_SCHEMA_WITHOUT_HEADER;
+  private static Schema EventSchemaWithoutHeader;
   @Test
   public void testAvroSourceConversionToAvroSink() throws Exception {
 
     Schema schema = Schema.recordOf(
       "record",
       Schema.Field.of("int", Schema.of(Schema.Type.INT)));
-    EVENT_SCHEMA_WITHOUT_HEADER = schema;
+    EventSchemaWithoutHeader = schema;
 
     org.apache.avro.Schema avroSchema = convertSchema(schema);
 
@@ -114,7 +114,7 @@ public class ETLTPFSTest extends BaseETLBatchTest {
     DataSetManager<TimePartitionedFileSet> newFileSetManager = getDataset(newFilesetName);
     TimePartitionedFileSet newFileSet = newFileSetManager.get();
 
-    List<GenericRecord> newRecords = readOutput(newFileSet, EVENT_SCHEMA_WITHOUT_HEADER);
+    List<GenericRecord> newRecords = readOutput(newFileSet, EventSchemaWithoutHeader);
     Assert.assertEquals(1, newRecords.size());
   }
 
@@ -125,13 +125,13 @@ public class ETLTPFSTest extends BaseETLBatchTest {
   private ETLBatchConfig constructTPFSETLConfig(String filesetName, String newFilesetName) {
     ETLStage source = new ETLStage("TPFSAvro",
                                    ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
-                                                   EVENT_SCHEMA_WITHOUT_HEADER.toString(),
+                                                   EventSchemaWithoutHeader.toString(),
                                                    Properties.TimePartitionedFileSetDataset.TPFS_NAME, filesetName,
                                                    Properties.TimePartitionedFileSetDataset.DELAY, "0d",
                                                    Properties.TimePartitionedFileSetDataset.DURATION, "10m"));
     ETLStage sink = new ETLStage("TPFSAvro",
                                  ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
-                                                 EVENT_SCHEMA_WITHOUT_HEADER.toString(),
+                                                 EventSchemaWithoutHeader.toString(),
                                                  Properties.TimePartitionedFileSetDataset.TPFS_NAME,
                                                  newFilesetName));
 
