@@ -40,11 +40,8 @@ import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.Driver;
 import java.sql.DriverManager;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
@@ -67,6 +64,7 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
 
   private final DBSourceConfig dbSourceConfig;
   private Class<? extends Driver> driverClass;
+  private JDBCDriverShim driverShim;
 
   public DBSource(DBSourceConfig dbSourceConfig) {
     this.dbSourceConfig = dbSourceConfig;
@@ -82,12 +80,12 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
                                   "authentication. If not, please remove dbUser and retry.");
     String jdbcPluginId = String.format("%s.%s.%s", "source", dbSourceConfig.jdbcPluginType,
                                         dbSourceConfig.jdbcPluginName);
-    Class<? extends Driver> jdbcDriverClass = pipelineConfigurer.usePluginClass(dbSourceConfig.jdbcPluginType,
+    driverClass = pipelineConfigurer.usePluginClass(dbSourceConfig.jdbcPluginType,
                                                                                 dbSourceConfig.jdbcPluginName,
                                                                                 jdbcPluginId,
                                                                                 PluginProperties.builder().build());
-    Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
-    Preconditions.checkArgument(ensureValidConnection(jdbcDriverClass), "Not able to make a connection");
+    Preconditions.checkArgument(driverClass != null, "JDBC Driver class must be found.");
+    Preconditions.checkArgument(ensureValidConnection(), "Not able to make a connection");
   }
 
   @Override
@@ -131,10 +129,10 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
     return String.format("%s.%s.%s", "source", dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName);
   }
 
-  private boolean ensureValidConnection(Class<? extends Driver> jdbcDriverClass) {
+  private boolean ensureValidConnection() {
     try {
       try {
-        ensureJDBCDriverIsAvailable(jdbcDriverClass);
+        ensureJDBCDriverIsAvailable();
       } catch (Exception e) {
         Preconditions.checkArgument(false, "Driver must be able to connect");
       }
@@ -156,15 +154,19 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
    *Throws InstantiationException or IllegalAccessException if it can't get access to the jdbcDriverClass
    * In either case, the connection to the driver failed
    */
-  private void ensureJDBCDriverIsAvailable(Class<? extends Driver> jdbcDriverClass) throws Exception {
+  private void ensureJDBCDriverIsAvailable() throws Exception {
     try {
       DriverManager.getDriver(dbSourceConfig.connectionString);
     } catch (SQLException e) {
       // Driver not found. We will try to register it with the DriverManager.
       LOG.debug("Plugin Type: {} and Plugin Name: {}; Driver Class: {} not found. Registering JDBC driver via shim {} ",
-                dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName, jdbcDriverClass.getName(),
+                dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName, driverClass.getName(),
                 JDBCDriverShim.class.getName());
-      DriverManager.registerDriver(new JDBCDriverShim((Driver) jdbcDriverClass.newInstance()));
+      if (driverShim == null) {
+        driverShim = new JDBCDriverShim(driverClass.newInstance());
+      }
+      DBUtils.deregisterAllDrivers(driverClass);
+      DriverManager.registerDriver(driverShim);
     }
   }
 
