@@ -30,17 +30,10 @@ import co.cask.cdap.test.StreamManager;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
-import org.apache.avro.file.DataFileStream;
-import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.io.DatumReader;
-import org.apache.hadoop.fs.Path;
-import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Test;
-import parquet.avro.AvroParquetReader;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 

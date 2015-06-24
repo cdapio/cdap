@@ -135,9 +135,6 @@ public class ETLTPFSTest extends BaseETLBatchTest {
                                                  Properties.TimePartitionedFileSetDataset.TPFS_NAME,
                                                  newFilesetName));
 
-    // The header field has been dropped because it contains maps. This map when parsed by the Avro Source which follows
-    // leads to an exception because the "values" field precedes the "keys" and the parser thinks that "keys" is not
-    // present. Once CDAP-2813 is resolved, we can stop dropping headers.
     ETLStage transform = new ETLStage("Projection", ImmutableMap.<String, String>of());
     return new ETLBatchConfig("* * * * *", source, sink, Lists.newArrayList(transform));
   }
