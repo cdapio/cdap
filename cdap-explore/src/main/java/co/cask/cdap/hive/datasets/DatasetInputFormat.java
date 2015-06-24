@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.batch.RecordScanner;
 import co.cask.cdap.api.data.batch.Split;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.io.ObjectWritable;
@@ -49,23 +50,25 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
 
   @Override
   public InputSplit[] getSplits(JobConf jobConf, int numSplits) throws IOException {
-
-    RecordScannable recordScannable = DatasetAccessor.getRecordScannable(jobConf);
-
-    try {
-      Job job = new Job(jobConf);
-      JobContext jobContext = ShimLoader.getHadoopShims().newJobContext(job);
-      Path[] tablePaths = FileInputFormat.getInputPaths(jobContext);
-
-      List<Split> dsSplits = recordScannable.getSplits();
-
-      InputSplit[] inputSplits = new InputSplit[dsSplits.size()];
-      for (int i = 0; i < dsSplits.size(); i++) {
-        inputSplits[i] = new DatasetInputSplit(dsSplits.get(i), tablePaths[0]);
+    try (DatasetAccessor datasetAccessor = new DatasetAccessor(jobConf)) {
+      try {
+        datasetAccessor.initialize();
+      } catch (Exception e) {
+        throw new IOException("Could not get dataset", e);
       }
-      return inputSplits;
-    } finally {
-      recordScannable.close();
+      try (RecordScannable recordScannable = datasetAccessor.getDataset()) {
+        Job job = new Job(jobConf);
+        JobContext jobContext = ShimLoader.getHadoopShims().newJobContext(job);
+        Path[] tablePaths = FileInputFormat.getInputPaths(jobContext);
+
+        List<Split> dsSplits = recordScannable.getSplits();
+
+        InputSplit[] inputSplits = new InputSplit[dsSplits.size()];
+        for (int i = 0; i < dsSplits.size(); i++) {
+          inputSplits[i] = new DatasetInputSplit(dsSplits.get(i), tablePaths[0]);
+        }
+        return inputSplits;
+      }
     }
   }
 
@@ -73,92 +76,12 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
   public RecordReader<Void, ObjectWritable> getRecordReader(final InputSplit split, JobConf jobConf, Reporter reporter)
     throws IOException {
 
-    final RecordScannable recordScannable = DatasetAccessor.getRecordScannable(jobConf);
-
     if (!(split instanceof DatasetInputSplit)) {
       throw new IOException("Invalid type for InputSplit: " + split.getClass().getName());
     }
     final DatasetInputSplit datasetInputSplit = (DatasetInputSplit) split;
 
-    final RecordScanner recordScanner = recordScannable.createSplitRecordScanner(
-        new Split() {
-          @Override
-          public long getLength() {
-            try {
-              return split.getLength();
-            } catch (IOException e) {
-              throw new RuntimeException(e);
-            }
-          }
-        }
-    );
-
-    return new RecordReader<Void, ObjectWritable>() {
-      private final AtomicBoolean initialized = new AtomicBoolean(false);
-
-      private void initialize() throws IOException {
-        try {
-          recordScanner.initialize(datasetInputSplit.getDataSetSplit());
-        } catch (InterruptedException ie) {
-          Thread.currentThread().interrupt();
-          throw new IOException("Interrupted while initializing reader", ie);
-        }
-        initialized.set(true);
-      }
-
-      @Override
-      public boolean next(Void key, ObjectWritable value) throws IOException {
-        if (!initialized.get()) {
-          initialize();
-        }
-
-        try {
-          boolean retVal = recordScanner.nextRecord();
-          if (retVal) {
-            value.set(recordScanner.getCurrentRecord());
-          }
-          return retVal;
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          throw new IOException(e);
-        }
-      }
-
-      @Override
-      public Void createKey() {
-        return null;
-      }
-
-      @Override
-      public ObjectWritable createValue() {
-        return new ObjectWritable();
-      }
-
-      @Override
-      public long getPos() throws IOException {
-        // Not required.
-        return 0;
-      }
-
-      @Override
-      public void close() throws IOException {
-        try {
-          recordScanner.close();
-        } finally {
-          recordScannable.close();
-        }
-      }
-
-      @Override
-      public float getProgress() throws IOException {
-        try {
-          return recordScanner.getProgress();
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          throw new IOException(e);
-        }
-      }
-    };
+    return new DatasetRecordReader(jobConf, datasetInputSplit);
   }
 
   /**
@@ -219,6 +142,96 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
         dataSetSplit = GSON.fromJson(Text.readString(in), (Class<? extends Split>) splitClass);
       } catch (ClassNotFoundException e) {
         throw Throwables.propagate(e);
+      }
+    }
+  }
+
+  private class DatasetRecordReader implements RecordReader<Void, ObjectWritable> {
+    private final AtomicBoolean initialized;
+    private final DatasetAccessor datasetAccessor;
+    private final DatasetInputSplit datasetInputSplit;
+    private RecordScannable recordScannable;
+    private RecordScanner recordScanner;
+
+    public DatasetRecordReader(Configuration conf, DatasetInputSplit datasetInputSplit) throws IOException {
+      this.initialized = new AtomicBoolean(false);
+      this.datasetAccessor = new DatasetAccessor(conf);
+      this.datasetInputSplit = datasetInputSplit;
+    }
+
+    private void initialize() throws IOException {
+      try {
+        datasetAccessor.initialize();
+        recordScannable = datasetAccessor.getDataset();
+        recordScanner = recordScannable.createSplitRecordScanner(
+          new Split() {
+            @Override
+            public long getLength() {
+              return datasetInputSplit.getLength();
+            }
+          }
+        );
+        recordScanner.initialize(datasetInputSplit.getDataSetSplit());
+        initialized.set(true);
+      } catch (InterruptedException ie) {
+        Thread.currentThread().interrupt();
+        throw new IOException("Interrupted while initializing reader", ie);
+      } catch (Exception e) {
+        throw new IOException("Unable to get dataset", e);
+      }
+    }
+
+    @Override
+    public boolean next(Void key, ObjectWritable value) throws IOException {
+      if (!initialized.get()) {
+        initialize();
+      }
+
+      try {
+        boolean retVal = recordScanner.nextRecord();
+        if (retVal) {
+          value.set(recordScanner.getCurrentRecord());
+        }
+        return retVal;
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IOException(e);
+      }
+    }
+
+    @Override
+    public Void createKey() {
+      return null;
+    }
+
+    @Override
+    public ObjectWritable createValue() {
+      return new ObjectWritable();
+    }
+
+    @Override
+    public long getPos() throws IOException {
+      // Not required.
+      return 0;
+    }
+
+    @Override
+    public void close() throws IOException {
+      try {
+        recordScanner.close();
+      } finally {
+        recordScannable.close();
+        datasetAccessor.close();
+      }
+    }
+
+    @Override
+    public float getProgress() throws IOException {
+      try {
+        return recordScanner.getProgress();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IOException(e);
       }
     }
   }

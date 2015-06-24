@@ -32,7 +32,8 @@ import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.DatasetNotFoundException;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.lib.table.ObjectMappedTableModule;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.table.CreateStatementBuilder;
@@ -65,12 +66,13 @@ public class ExploreTableManager {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreTableManager.class);
 
   private final ExploreService exploreService;
-  private final DatasetFramework datasetFramework;
+  private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
 
   @Inject
-  public ExploreTableManager(ExploreService exploreService, DatasetFramework datasetFramework) {
+  public ExploreTableManager(ExploreService exploreService,
+                             SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
     this.exploreService = exploreService;
-    this.datasetFramework = datasetFramework;
+    this.datasetInstantiatorFactory = datasetInstantiatorFactory;
   }
 
   /**
@@ -162,24 +164,32 @@ public class ExploreTableManager {
       return createFromSchemaProperty(spec, datasetID, serdeProperties);
     }
 
-    Dataset dataset = ExploreServiceUtils.instantiateDataset(datasetFramework, datasetID);
-
-    // To be enabled for explore, a dataset must either be RecordScannable/Writable,
-    // or it must be a FileSet or a PartitionedFileSet with explore enabled in it properties.
-    if (dataset instanceof Table) {
-      return createFromSchemaProperty(spec, datasetID, serdeProperties);
-    } else if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
-      LOG.debug("Enabling explore for dataset instance {}", datasetName);
-      createStatement = new CreateStatementBuilder(datasetName, getDatasetTableName(datasetID))
-        .setSchema(hiveSchemaFor(dataset))
-        .setTableComment("CDAP Dataset")
-        .buildWithStorageHandler(Constants.Explore.DATASET_STORAGE_HANDLER_CLASS, serdeProperties);
-    } else if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
-      Map<String, String> properties = spec.getProperties();
-      if (FileSetProperties.isExploreEnabled(properties)) {
-        LOG.debug("Enabling explore for dataset instance {}", datasetName);
-        createStatement = generateFileSetCreateStatement(datasetID, dataset, properties);
+    try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
+      Dataset dataset = datasetInstantiator.getDataset(datasetID);
+      if (dataset == null) {
+        throw new DatasetNotFoundException(datasetID);
       }
+
+      // To be enabled for explore, a dataset must either be RecordScannable/Writable,
+      // or it must be a FileSet or a PartitionedFileSet with explore enabled in it properties.
+      if (dataset instanceof Table) {
+        return createFromSchemaProperty(spec, datasetID, serdeProperties);
+      } else if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
+        LOG.debug("Enabling explore for dataset instance {}", datasetName);
+        createStatement = new CreateStatementBuilder(datasetName, getDatasetTableName(datasetID))
+          .setSchema(hiveSchemaFor(dataset))
+          .setTableComment("CDAP Dataset")
+          .buildWithStorageHandler(Constants.Explore.DATASET_STORAGE_HANDLER_CLASS, serdeProperties);
+      } else if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
+        Map<String, String> properties = spec.getProperties();
+        if (FileSetProperties.isExploreEnabled(properties)) {
+          LOG.debug("Enabling explore for dataset instance {}", datasetName);
+          createStatement = generateFileSetCreateStatement(datasetID, dataset, properties);
+        }
+      }
+    } catch (IOException e) {
+      LOG.error("Exception instantiating dataset {}.", datasetID, e);
+      throw new ExploreException("Exception while trying to instantiate dataset " + datasetID);
     }
 
     if (createStatement != null) {
@@ -246,15 +256,23 @@ public class ExploreTableManager {
       return exploreService.execute(datasetID.getNamespace(), deleteStatement);
     }
 
-    Dataset dataset = ExploreServiceUtils.instantiateDataset(datasetFramework, datasetID);
-
-    if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
-      deleteStatement = generateDeleteStatement(tableName);
-    } else if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
-      Map<String, String> properties = spec.getProperties();
-      if (FileSetProperties.isExploreEnabled(properties)) {
-        deleteStatement = generateDeleteStatement(tableName);
+    try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
+      Dataset dataset = datasetInstantiator.getDataset(datasetID);
+      if (dataset == null) {
+        throw new DatasetNotFoundException(datasetID);
       }
+
+      if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
+        deleteStatement = generateDeleteStatement(tableName);
+      } else if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
+        Map<String, String> properties = spec.getProperties();
+        if (FileSetProperties.isExploreEnabled(properties)) {
+          deleteStatement = generateDeleteStatement(tableName);
+        }
+      }
+    } catch (IOException e) {
+      LOG.error("Exception creating dataset classLoaderProvider for dataset {}.", datasetID, e);
+      throw new ExploreException("Exception instantiating dataset " + datasetID);
     }
 
     if (deleteStatement != null) {
