@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsRunsStatusController', function($state, $scope, myWorkFlowApi, $filter, $alert, GraphHelpers, MyDataSource, myMapreduceApi) {
+  .controller('WorkflowsRunsStatusController', function($state, $scope, myWorkFlowApi, $filter, $alert, GraphHelpers, myMapreduceApi, mySparkApi) {
     var filterFilter = $filter('filter'),
         params = {
           appId: $state.params.appId,
@@ -78,8 +78,6 @@ angular.module(PKG.name + '.feature.workflows')
 
     // Need to make sure that the list of nodes is already generated
     function pollNodes() {
-      // Still using MyDataSource because the poll needs to be stopped
-      var dataSrc = new MyDataSource($scope);
 
       if ($scope.RunsController.runs.length > 0) {
 
@@ -118,18 +116,22 @@ angular.module(PKG.name + '.feature.workflows')
                   .then(function (result) {
                     vm.data.current[n.name] = result.status;
                   });
-                } else if (n.program.programType === 'SPARK') {
+              } else if (n.program.programType === 'SPARK') {
 
-                  // TODO: Change to data-modelling once available for Spark
-                  var sparkPath = '/apps/' + $state.params.appId + '/spark/' + n.program.programName + '/runs/' + runid;
+                var sparkParams = {
+                  namespace: $state.params.namespace,
+                  appId: $state.params.appId,
+                  sparkId: n.program.programName,
+                  runId: runid,
+                  scope: $scope
+                };
 
-                  dataSrc.request({
-                    _cdapNsPath: sparkPath
-                  })
+                mySparkApi.runDetail(sparkParams)
+                  .$promise
                   .then(function (result) {
                     vm.data.current[n.name] = result.status;
                   });
-                }
+              }
 
             });
 
@@ -138,9 +140,9 @@ angular.module(PKG.name + '.feature.workflows')
             }
 
           });
+
       }
     }
-
 
     vm.workflowProgramClick = function (instance) {
       if (['START', 'END'].indexOf(instance.type) > -1 ) {
