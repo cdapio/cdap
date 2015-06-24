@@ -26,3 +26,5 @@ apt-get update
 
 # Update system
 apt-get dist-upgrade -y
+
+exit 0

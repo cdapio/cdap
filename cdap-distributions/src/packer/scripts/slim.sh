@@ -25,3 +25,5 @@ apt-get install -y slim
 echo 'sessiondir /usr/share/xsessions/' >> /etc/slim.conf
 echo 'default_user cdap' >> /etc/slim.conf
 echo 'auto_login yes' >> /etc/slim.conf
+
+exit 0

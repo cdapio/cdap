@@ -23,3 +23,5 @@ apt-get purge -y chef
 
 # Remove directory
 rm -rf /var/chef
+
+exit 0
