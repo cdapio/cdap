@@ -1,17 +1,19 @@
 angular.module(PKG.name + '.feature.spark')
-  .controller('SparkRunDetailLogController', function($scope, MyDataSource, $state) {
+  .controller('SparkRunDetailLogController', function($scope, $state, mySparkApi) {
 
-    var dataSrc = new MyDataSource($scope),
-        basePath = '/apps/' + $state.params.appId +
-                   '/spark/' + $state.params.programId +
-                   '/runs/' + $scope.runs.selected.runid;
+    var params = {
+      namespace: $state.params.namespace,
+      appId: $state.params.appId,
+      sparkId: $state.params.programId,
+      runId: $scope.runs.selected.runid,
+      max: 50,
+      scope: $scope
+    };
 
-    $scope.logs = [];
-
-    dataSrc.poll({
-      _cdapNsPath: basePath + '/logs/next?max=50'
-    }, function(res) {
-      $scope.logs = res;
-    });
+    mySparkApi.logs(params)
+      .$promise
+      .then(function (res) {
+        $scope.logs = res;
+      });
 
 });
