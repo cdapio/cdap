@@ -1,10 +1,15 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdapterDatasetsController', function($scope, MyDataSource, $state) {
-    var dataSrc = new MyDataSource($scope);
+  .controller('AdapterDatasetsController', function($scope, $state, myAdapterApi) {
     $scope.dataList = [];
-    dataSrc.request({
-      _cdapNsPath: '/adapters/' + $state.params.adapterId + '/datasets'
-    })
+
+    var params = {
+      namespace: $state.params.namespace,
+      app: $state.params.adapterId,
+      scope: $scope
+    };
+
+    myAdapterApi.datasets(params)
+      .$promise
       .then(function(res) {
         angular.forEach(res, function(dataset) {
           dataset.name = dataset.instanceId;
@@ -13,9 +18,8 @@ angular.module(PKG.name + '.feature.adapters')
         $scope.dataList = $scope.dataList.concat(res);
       });
 
-    dataSrc.request({
-      _cdapNsPath: '/adapters/' + $state.params.adapterId + '/streams'
-    })
+    myAdapterApi.streams(params)
+      .$promise
       .then(function(res) {
         angular.forEach(res, function(stream) {
           stream.name = stream.streamName;

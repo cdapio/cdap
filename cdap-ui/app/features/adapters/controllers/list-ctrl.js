@@ -1,10 +1,15 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdapterListController', function($scope, MyDataSource, mySettings, $state, $alert, $timeout) {
+  .controller('AdapterListController', function($scope, MyDataSource, mySettings, $state, $alert, $timeout, myAdapterApi) {
     var dataSrc = new MyDataSource($scope);
     $scope.adapters  = [];
-    dataSrc.request({
-      _cdapNsPath: '/adapters'
-    })
+
+    var params = {
+      namespace: $state.params.namespace,
+      scope: $scope
+    };
+
+    myAdapterApi.list(params)
+      .$promise
       .then(function(res) {
         if (!res.length) {
           return;
@@ -32,18 +37,24 @@ angular.module(PKG.name + '.feature.adapters')
       });
 
     function pollStatus(app) {
-      dataSrc.poll({
-        _cdapNsPath: '/adapters/' + app.name + '/status'
-      }, function(res) {
-        app.status = res.status;
-      });
+      var statusParams = angular.extend({
+        app: app.name
+      }, params);
+
+      myAdapterApi.pollStatus(statusParams)
+        .$promise
+        .then(function (res) {
+          app.status = res.status;
+        });
     }
 
     $scope.deleteAdapter = function (appName) {
-      dataSrc.request({
-        _cdapNsPath: '/adapters/' + appName,
-        method: 'DELETE'
-      })
+      var deleteParams = angular.extend({
+        app: appName
+      }, params);
+
+      myAdapterApi.delete(deleteParams)
+        .$promise
         .then(function() {
           $alert({
             type: 'success',
@@ -53,7 +64,7 @@ angular.module(PKG.name + '.feature.adapters')
             $state.go($state.current, $state.params, {reload: true});
           });
         }, function(err){
-          console.info("Adapter Delete Failed", err);
+          console.info('Adapter Delete Failed', err);
         });
     };
 

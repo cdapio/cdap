@@ -41,27 +41,30 @@ angular.module(PKG.name + '.feature.adapters')
             highlightTab: 'development'
           },
           resolve : {
-            rRuns: function(MyDataSource, $stateParams, $q) {
+            rRuns: function($stateParams, $q, myAdapterApi) {
               var defer = $q.defer();
-              var dataSrc = new MyDataSource();
               // Using _cdapPath here as $state.params is not updated with
               // runid param when the request goes out
               // (timing issue with re-direct from login state).
-              dataSrc.request({
-                _cdapPath: '/namespaces/' + $stateParams.namespace +
-                           '/adapters/' + $stateParams.adapterId +
-                           '/runs'
-              })
+              var params = {
+                namespace: $stateParams.namespace,
+                app: $stateParams.adapterId
+              };
+
+              myAdapterApi.runs(params)
+                .$promise
                 .then(function(res) {
                   defer.resolve(res);
                 });
               return defer.promise;
             },
-            rAdapterDetail: function(MyDataSource, $stateParams, $q) {
-              var dataSrc = new MyDataSource();
-              return dataSrc.request({
-                _cdapPath: '/namespaces/' + $stateParams.namespace + '/adapters/' + $stateParams.adapterId
-              });
+            rAdapterDetail: function($stateParams, $q, myAdapterApi) {
+              var params = {
+                namespace: $stateParams.namespace,
+                app: $stateParams.adapterId
+              };
+
+              return myAdapterApi.get(params).$promise;
             }
           },
           ncyBreadcrumb: {

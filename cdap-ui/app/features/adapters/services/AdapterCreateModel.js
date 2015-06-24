@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .factory('AdapterCreateModel', function(AdapterApiFactory, $state, $timeout, $q, mySettings, EventPipe) {
+  .factory('AdapterCreateModel', function(myAdapterApi, $state, $timeout, $q, mySettings, EventPipe) {
     var defaultSource = {
       name: 'Add a source',
       properties: {},
@@ -207,7 +207,7 @@ angular.module(PKG.name + '.feature.adapters')
         // default value should be * * * * *
         data.config.schedule = this.schedule.cron;
       }
-      return AdapterApiFactory.save(
+      return myAdapterApi.save(
         {
           namespace: $state.params.namespace,
           adapter: this.metadata.name
