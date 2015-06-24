@@ -186,7 +186,6 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
     String countQuery = "SELECT COUNT(ID) from my_table WHERE id < 3";
     ETLStage source = new ETLStage("Database", ImmutableMap.<String, String>builder()
                                      .put(Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl())
-                                     .put(Properties.DB.TABLE_NAME, "MY_TABLE")
                                      .put(Properties.DB.IMPORT_QUERY, importQuery)
                                      .put(Properties.DB.COUNT_QUERY, countQuery)
                                      .put(Properties.DB.JDBC_PLUGIN_NAME, "hypersql")
@@ -268,11 +267,12 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
     Assert.assertEquals("user2", Bytes.toString(row2.get("BLOB_COL"), 0, 5));
     Assert.assertEquals(clobData, Bytes.toString(row1.get("CLOB_COL"), 0, clobData.length()));
     Assert.assertEquals(clobData, Bytes.toString(row2.get("CLOB_COL"), 0, clobData.length()));
+
   }
 
   @Test
   @Category(SlowTests.class)
-  public void testBadName() throws Exception {
+  public void testBadNameBadConn() throws Exception {
     String importQuery = "SELECT ID, NAME, SCORE, GRADUATED, TINY, SMALL, BIG, FLOAT_COL, REAL_COL, NUMERIC_COL, " +
       "DECIMAL_COL, BIT_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, BLOB_COL, CLOB_COL FROM my_table " +
       "WHERE ID < 3";
@@ -283,30 +283,31 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
       Properties.Table.PROPERTY_SCHEMA, schema.toString(),
       Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "ID"));
 
-    boolean badSourceTableNameFailed = false;
-    try {
-      ETLStage sourceBadName = new ETLStage("Database", ImmutableMap.<String, String>builder()
-                                              .put(Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl())
-                                              .put(Properties.DB.TABLE_NAME, "dummy")
-                                              .put(Properties.DB.IMPORT_QUERY, importQuery)
-                                              .put(Properties.DB.COUNT_QUERY, countQuery)
-                                              .put(Properties.DB.JDBC_PLUGIN_NAME, "hypersql")
-                                              .build()
-                                           );
-      ETLBatchConfig etlConfigBadSourceName = new ETLBatchConfig("* * * * *", sourceBadName,
-                                                           sink, Lists.<ETLStage>newArrayList());
-      AdapterConfig adapterConfigBadName = new AdapterConfig("", TEMPLATE_ID.getId(),
-                                                             GSON.toJsonTree(etlConfigBadSourceName));
-      Id.Adapter adapterIdBadSourceName = Id.Adapter.from(NAMESPACE, "dbSourceTest");
-      AdapterManager managerBadSourceName = createAdapter(adapterIdBadSourceName, adapterConfigBadName);
-      managerBadSourceName.start();
-      managerBadSourceName.waitForOneRunToFinish(5, TimeUnit.MINUTES);
-      managerBadSourceName.stop();
+    boolean badConn = false;
 
+    try {
+      ETLStage sourceBadConn = new ETLStage("Database", ImmutableMap.<String, String>builder()
+        .put(Properties.DB.CONNECTION_STRING, String.format("jdbc:hsqldb:hsql://localhost/%sWRONG",
+                                                            hsqlDBServer.database))
+        .put(Properties.DB.IMPORT_QUERY, importQuery)
+        .put(Properties.DB.COUNT_QUERY, countQuery)
+        .put(Properties.DB.JDBC_PLUGIN_NAME, "hypersql")
+        .build()
+      );
+
+      ETLBatchConfig etlConfigBadConn = new ETLBatchConfig("* * * * *", sourceBadConn, sink,
+                                                           Lists.<ETLStage>newArrayList());
+      AdapterConfig adapterConfigBadConn= new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfigBadConn));
+      Id.Adapter adapterIdBadConn = Id.Adapter.from(NAMESPACE, "dbSourceTest");
+      AdapterManager managerBadConn = createAdapter(adapterIdBadConn, adapterConfigBadConn);
+
+      managerBadConn.start();
+      managerBadConn.waitForOneRunToFinish(5, TimeUnit.MINUTES);
+      managerBadConn.stop();
     } catch (Exception e) {
-      badSourceTableNameFailed = true;
+      badConn = true;
     }
-    Assert.assertTrue(badSourceTableNameFailed);
+    Assert.assertTrue(badConn);
 
     String cols = "ID, NAME, SCORE, GRADUATED, TINY, SMALL, BIG, FLOAT_COL, REAL_COL, NUMERIC_COL, DECIMAL_COL, " +
       "BIT_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, BLOB_COL, CLOB_COL";

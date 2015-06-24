@@ -87,15 +87,14 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
                                                                                 jdbcPluginId,
                                                                                 PluginProperties.builder().build());
     Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
-    Preconditions.checkArgument(tableNameExists(jdbcDriverClass), "Table name %s does not exist in the database",
-                                dbSourceConfig.tableName);
+    Preconditions.checkArgument(ensureValidConnection(jdbcDriverClass), "Not able to make a connection");
   }
 
   @Override
   public void prepareRun(BatchSourceContext context) {
-    LOG.debug("tableName = {}; pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; " +
+    LOG.debug("pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; " +
                 "countQuery = {}",
-              dbSourceConfig.tableName, dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName,
+              dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName,
               dbSourceConfig.connectionString, dbSourceConfig.importQuery, dbSourceConfig.countQuery);
 
     Job job = context.getHadoopJob();
@@ -132,18 +131,7 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
     return String.format("%s.%s.%s", "source", dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName);
   }
 
-  /**
-   * {@link PluginConfig} for {@link DBSource}
-   */
-  public static class DBSourceConfig extends DBConfig {
-    @Description(IMPORT_QUERY_DESCRIPTION)
-    String importQuery;
-
-    @Description(COUNT_QUERY_DESCRIPTION)
-    String countQuery;
-  }
-
-  private boolean tableNameExists(Class<? extends Driver> jdbcDriverClass) {
+  private boolean ensureValidConnection(Class<? extends Driver> jdbcDriverClass) {
     try {
       try {
         ensureJDBCDriverIsAvailable(jdbcDriverClass);
@@ -151,20 +139,15 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
         Preconditions.checkArgument(false, "Driver must be able to connect");
       }
 
-      Connection connection;
       if (dbSourceConfig.user == null) {
-        connection = DriverManager.getConnection(dbSourceConfig.connectionString);
+        DriverManager.getConnection(dbSourceConfig.connectionString);
       } else {
-        connection = DriverManager.getConnection(dbSourceConfig.connectionString,
+        DriverManager.getConnection(dbSourceConfig.connectionString,
                                                  dbSourceConfig.user, dbSourceConfig.password);
       }
-
-      DatabaseMetaData metadata = connection.getMetaData();
-      ResultSet rs = metadata.getTables(null, null, dbSourceConfig.tableName, null);
-
-      return rs.next();
-    } catch (java.sql.SQLException e) {
-      LOG.error("SQL exception thrown when trying to connect to Driver Manager", e);
+      return true;
+    } catch (SQLException e) {
+      LOG.error("SQL Exception thrown when trying to connect to driver", e);
       return false;
     }
   }
@@ -183,5 +166,16 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
                 JDBCDriverShim.class.getName());
       DriverManager.registerDriver(new JDBCDriverShim((Driver) jdbcDriverClass.newInstance()));
     }
+  }
+
+  /**
+   * {@link PluginConfig} for {@link DBSource}
+   */
+  public static class DBSourceConfig extends DBConfig {
+    @Description(IMPORT_QUERY_DESCRIPTION)
+    String importQuery;
+
+    @Description(COUNT_QUERY_DESCRIPTION)
+    String countQuery;
   }
 }

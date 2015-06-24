@@ -231,5 +231,8 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
   public static class DBSinkConfig extends DBConfig {
     @Description(COLUMNS_DESCRIPTION)
     String columns;
+
+    @Description("Table name to export to.")
+    public String tableName;
   }
 }
