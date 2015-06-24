@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.adapter;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.templates.plugins.PluginClass;
@@ -256,7 +257,7 @@ public class PluginInstantiator implements Closeable {
     @Override
     public void visit(Object instance, TypeToken<?> inspectType,
                       TypeToken<?> declareType, Field field) throws Exception {
-      if (PluginConfig.class.equals(declareType.getRawType())) {
+      if (Config.class.equals(declareType.getRawType())) {
         if (field.getName().equals("properties")) {
           field.set(instance, properties);
         }

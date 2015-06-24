@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.api.app;
+package co.cask.cdap.api;
 
-import co.cask.cdap.api.Config;
+import co.cask.cdap.api.app.Application;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
 
 /**
- * Defines a CDAP Application.
- *
- * @param <T> {@link Config} class that represents the configuration of the Application.
- *
+ * Configuration class of an configurable entity, such as {@link Application}.
  */
-public interface Application<T extends Config> {
+public class Config {
+
+  private PluginProperties properties;
+
   /**
-   * Configures the Application.
-   *
-   * @param configurer Collects the Application configuration
-   * @param context Used to access the environment, application configuration, and application (deployment) arguments
+   * Returns the {@link PluginProperties}.
    */
-  void configure(ApplicationConfigurer configurer, ApplicationContext<T> context);
+  public final PluginProperties getProperties() {
+    return properties;
+  }
 }

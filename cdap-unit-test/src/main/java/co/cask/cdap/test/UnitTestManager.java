@@ -18,7 +18,6 @@ package co.cask.cdap.test;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
@@ -26,6 +25,7 @@ import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
+import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -134,7 +134,7 @@ public class UnitTestManager implements TestManager {
     try {
       Application app = applicationClz.newInstance();
       DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
-      app.configure(configurer, new ApplicationContext());
+      app.configure(configurer, new DefaultApplicationContext());
       ApplicationSpecification appSpec = configurer.createSpecification();
 
       Location deployedJar = appFabricClient.deployApplication(namespace, appSpec.getName(),
