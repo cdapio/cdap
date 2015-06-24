@@ -8,9 +8,9 @@ angular.module(PKG.name + '.feature.admin')
     /*
       Start Data Modelling Implementation
     */
-    var promise,
+    var getPreference,
       params,
-      parentPromise,
+      parentPreference,
       parentParams,
       setPreference;
 
@@ -20,7 +20,7 @@ angular.module(PKG.name + '.feature.admin')
       params = {
         scope: $scope
       };
-      promise = myPreferenceApi.getSystemPreference;
+      getPreference = myPreferenceApi.getSystemPreference;
       setPreference = myPreferenceApi.setSystemPreference;
 
     } else if (rSource === 'NAMESPACE') {
@@ -31,13 +31,13 @@ angular.module(PKG.name + '.feature.admin')
         scope: $scope,
         resolved: true
       };
-      parentPromise = myPreferenceApi.getSystemPreference;
+      parentPreference = myPreferenceApi.getSystemPreference;
 
       params = {
         namespace: $state.params.nsadmin,
         scope: $scope
       };
-      promise = myPreferenceApi.getNamespacePreference;
+      getPreference = myPreferenceApi.getNamespacePreference;
       setPreference = myPreferenceApi.setNamespacePreference;
 
     } else if (rSource === 'APPLICATION') {
@@ -49,14 +49,14 @@ angular.module(PKG.name + '.feature.admin')
         scope: $scope,
         resolved: true
       };
-      parentPromise = myPreferenceApi.getNamespacePreference;
+      parentPreference = myPreferenceApi.getNamespacePreference;
 
       params = {
         namespace: $state.params.nsadmin,
         appId: $state.params.appId,
         scope: $scope
       };
-      promise = myPreferenceApi.getAppPreference;
+      getPreference = myPreferenceApi.getAppPreference;
       setPreference = myPreferenceApi.setAppPreference;
 
     }
@@ -65,14 +65,14 @@ angular.module(PKG.name + '.feature.admin')
 
     $scope.loadProperties = function () {
       if (rSource !== 'SYSTEM') {
-        parentPromise(parentParams)
+        parentPreference(parentParams)
           .$promise
           .then(function (res) {
             $scope.parentPreferences = formatObj(res);
           });
       }
 
-      promise(params)
+      getPreference(params)
         .$promise
         .then(function (res) {
           $scope.preferences = formatObj(res);
