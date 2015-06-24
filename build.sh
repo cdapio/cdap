@@ -16,13 +16,10 @@
   
 # Builds README.rst file for GitHub pages
 
-SCRIPT=`basename ${0}`
-SCRIPT_PATH=`pwd`
-RETURN=$(printf '\n')
-CDAP="cdap"
-CDAP_PATH="${SCRIPT_PATH}/${CDAP}"
-README_FILE="README.rst"
-README_FILE_PATH="${SCRIPT_PATH}/${README_FILE}"
+SCRIPT_PATH=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+CDAP_PATH="${SCRIPT_PATH}/cdap"
+README_FILE_PATH="${SCRIPT_PATH}/README.rst"
 
 READ_ME_BASE=`cat <<EOF
 =================
@@ -32,15 +29,12 @@ CDAP GitHub Pages
 Cask Data Application Platform (CDAP) Documentation
 EOF`
 
-READ_ME_EARLIER=`cat <<EOF
-Earlier versions:
-EOF`
-
 function get_current_version() {
-  for release in $(ls -d */ | sort --reverse)
+  for release in $(ls -d ${CDAP_PATH}/*/ | sort --reverse )
     do
-      if [[ "${release}" =~ ^[0-9].* ]]; then
-        CURRENT="${release%%/}"
+      rel="$(basename $release)"
+      if [[ "${rel}" =~ ^[0-9].* ]]; then
+        CURRENT="${rel%%/}"
         return
       fi
     done
@@ -57,18 +51,20 @@ echo "${READ_ME_BASE}" > ${README_FILE_PATH}
 cd ${CDAP_PATH}
 
 get_current_version
-echo "${RETURN}" >> ${README_FILE_PATH}
+
+echo >> ${README_FILE_PATH}
 echo "\`Latest version: ${CURRENT} <http://docs.cdap.io/cdap/current>\`__" >> ${README_FILE_PATH}
-echo "${RETURN}" >> ${README_FILE_PATH}
+echo >> ${README_FILE_PATH}
 write_version ${CURRENT}
-echo "${RETURN}" >> ${README_FILE_PATH}
 
-echo "${READ_ME_EARLIER}" >> ${README_FILE_PATH}
-echo "${RETURN}" >> ${README_FILE_PATH}
+echo >> ${README_FILE_PATH}
+echo "Earlier versions:" >> ${README_FILE_PATH}
+echo >> ${README_FILE_PATH}
 
-for release in $(ls -d */ | sort --reverse)
+for release in $(ls -d ${CDAP_PATH}/*/ | sort --reverse )
 do
-  rel="${release%%/}"
+  rel="$(basename $release)"
+  rel="${rel%%/}"
   if [[ "$rel" != "${CURRENT}" && "$rel" != "current" ]]; then
     write_version ${rel}
   fi
