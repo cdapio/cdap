@@ -31,7 +31,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -270,66 +269,160 @@ public class IndexedTableTest {
   }
 
   @Test
-  @Ignore
   public void testIndexedRangeLookups() throws Exception {
-    TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(table);
+    Id.DatasetInstance indexRangedLookupDs =
+      Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "rangeLookup");
+    dsFrameworkUtil.createInstance("indexedTable", indexRangedLookupDs, DatasetProperties.builder()
+      .add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY, idxColString)
+      .build());
+    final IndexedTable iTable = dsFrameworkUtil.getInstance(indexRangedLookupDs);
+    TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(iTable);
 
-    // start a new transaction
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        // perform 5 puts, using idx values 1,2,3,4,5
-        table.put(new Put(keyE).add(idxCol, idx4).add(valCol, valE));
-        table.put(new Put(keyC).add(idxCol, idx1).add(valCol, valC));
-        table.put(new Put(keyD).add(idxCol, idx5).add(valCol, valA));
-        table.put(new Put(keyB).add(idxCol, idx2).add(valCol, valB));
-        table.put(new Put(keyA).add(idxCol, idx3).add(valCol, valD));
-      }
-    });
+    try {
+      // start a new transaction
+      txnl.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          // perform 5 puts, using idx values 1,2,3,4,5
+          iTable.put(new Put(keyE).add(idxCol, idx4).add(valCol, valE));
+          iTable.put(new Put(keyC).add(idxCol, idx1).add(valCol, valC));
+          iTable.put(new Put(keyD).add(idxCol, idx5).add(valCol, valA));
+          iTable.put(new Put(keyB).add(idxCol, idx2).add(valCol, valB));
+          iTable.put(new Put(keyA).add(idxCol, idx3).add(valCol, valD));
+        }
+      });
 
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        // do a scan using idx value range [idx2, idx5). Assert that we retrieve idx2, idx3, idx4.
-        Scanner scanner = table.scanByIndex(idxCol, idx2, idx5);
-        Row next = scanner.next();
-        Assert.assertNotNull(next);
-        Assert.assertTrue(Bytes.equals(keyB, next.getRow()));
-        Assert.assertTrue(Bytes.equals(valB, next.get(valCol)));
+      txnl.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          // do a scan using idx value range [idx2, idx5). Assert that we retrieve idx2, idx3, idx4.
+          Scanner scanner = iTable.scanByIndex(idxCol, idx2, idx5);
+          Row next = scanner.next();
+          Assert.assertNotNull(next);
+          Assert.assertTrue(Bytes.equals(keyB, next.getRow()));
+          Assert.assertTrue(Bytes.equals(valB, next.get(valCol)));
 
-        next = scanner.next();
-        Assert.assertNotNull(next);
-        Assert.assertTrue(Bytes.equals(keyA, next.getRow()));
-        Assert.assertTrue(Bytes.equals(valD, next.get(valCol)));
+          next = scanner.next();
+          Assert.assertNotNull(next);
+          Assert.assertTrue(Bytes.equals(keyA, next.getRow()));
+          Assert.assertTrue(Bytes.equals(valD, next.get(valCol)));
 
-        next = scanner.next();
-        Assert.assertNotNull(next);
-        Assert.assertTrue(Bytes.equals(keyE, next.getRow()));
-        Assert.assertTrue(Bytes.equals(valE, next.get(valCol)));
+          next = scanner.next();
+          Assert.assertNotNull(next);
+          Assert.assertTrue(Bytes.equals(keyE, next.getRow()));
+          Assert.assertTrue(Bytes.equals(valE, next.get(valCol)));
 
-        assertEmpty(scanner);
-      }
-    });
+          assertEmpty(scanner);
+        }
+      });
 
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        // do a scan using idx value range [null (first row), idx3). Assert that we retrieve the values corresponding
-        // to idx1, idx2.
-        Scanner scanner = table.scanByIndex(idxCol, null, idx3);
-        Row next = scanner.next();
-        Assert.assertNotNull(next);
-        Assert.assertTrue(Bytes.equals(keyC, next.getRow()));
-        Assert.assertTrue(Bytes.equals(valC, next.get(valCol)));
+      txnl.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          // do a scan using idx value range [null (first row), idx3). Assert that we retrieve the values corresponding
+          // to idx1, idx2.
+          Scanner scanner = iTable.scanByIndex(idxCol, null, idx3);
+          Row next = scanner.next();
+          Assert.assertNotNull(next);
+          Assert.assertTrue(Bytes.equals(keyC, next.getRow()));
+          Assert.assertTrue(Bytes.equals(valC, next.get(valCol)));
 
-        next = scanner.next();
-        Assert.assertNotNull(next);
-        Assert.assertTrue(Bytes.equals(keyB, next.getRow()));
-        Assert.assertTrue(Bytes.equals(valB, next.get(valCol)));
+          next = scanner.next();
+          Assert.assertNotNull(next);
+          Assert.assertTrue(Bytes.equals(keyB, next.getRow()));
+          Assert.assertTrue(Bytes.equals(valB, next.get(valCol)));
 
-        assertEmpty(scanner);
-      }
-    });
+          assertEmpty(scanner);
+        }
+      });
+    } finally {
+      dsFrameworkUtil.deleteInstance(indexRangedLookupDs);
+    }
+  }
+
+  @Test
+  public void testIndexKeyDelimiterAmbiguity() throws Exception {
+    final byte[] a = { 'a' };
+    final byte[] ab = { 'a', 0, 'b' };
+    final byte[] abc = { 'a', 0, 'b', 0, 'c' };
+    final byte[] bc = { 'b', 0, 'c' };
+    final byte[] bcd = { 'b', 0, 'c', 'd' };
+    final byte[] c = { 'c' };
+    final byte[] d = { 'd' };
+    final byte[] w = { 'w' };
+    final byte[] x = { 'x' };
+    final byte[] y = { 'y' };
+    final byte[] z = { 'z' };
+    Id.DatasetInstance delimTabInstance = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "delimtab");
+    dsFrameworkUtil.createInstance("indexedTable", delimTabInstance, DatasetProperties.builder()
+      .add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY, Bytes.toString(a) + "," + Bytes.toString(ab))
+      .build());
+    final IndexedTable iTable = dsFrameworkUtil.getInstance(delimTabInstance);
+    try {
+      TransactionExecutor tx = dsFrameworkUtil.newTransactionExecutor(iTable);
+      tx.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          iTable.put(x, a, bc);
+          iTable.put(y, ab, c);
+          iTable.put(w, a, bcd);
+          iTable.put(z, abc, d);
+        }
+      });
+
+      tx.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          // ensure that readByIndex filters teh false positive rows in index
+          Scanner scanner = iTable.readByIndex(a, bc);
+          try {
+            Row row = scanner.next();
+            Assert.assertNotNull(row);
+            Assert.assertArrayEquals(x, row.getRow());
+            Assert.assertArrayEquals(bc, row.get(a));
+            assertEmpty(scanner);
+          } finally {
+            scanner.close();
+          }
+
+          scanner = iTable.readByIndex(ab, c);
+          try {
+            Row row = scanner.next();
+            Assert.assertNotNull(row);
+            Assert.assertArrayEquals(y, row.getRow());
+            Assert.assertArrayEquals(c, row.get(ab));
+            assertEmpty(scanner);
+          } finally {
+            scanner.close();
+          }
+
+          // ensure that scanByIndex filters the false positive rows in index
+          scanner = iTable.scanByIndex(a, bcd, null);
+          try {
+            Row row = scanner.next();
+            Assert.assertNotNull(row);
+            Assert.assertArrayEquals(w, row.getRow());
+            Assert.assertArrayEquals(bcd, row.get(a));
+            assertEmpty(scanner);
+          } finally {
+            scanner.close();
+          }
+
+          scanner = iTable.scanByIndex(a, null, bcd);
+          try {
+            Row row = scanner.next();
+            Assert.assertNotNull(row);
+            Assert.assertArrayEquals(x, row.getRow());
+            Assert.assertArrayEquals(bc, row.get(a));
+            assertEmpty(scanner);
+          } finally {
+            scanner.close();
+          }
+        }
+      });
+    } finally {
+      dsFrameworkUtil.deleteInstance(delimTabInstance);
+    }
   }
 
   @Test
