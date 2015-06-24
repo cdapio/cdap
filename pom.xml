@@ -110,7 +110,7 @@
     <hbase94.version>0.94.6.1.continuuity</hbase94.version>
     <hbase96.version>0.96.2-hadoop2</hbase96.version>
     <hbase98.version>0.98.6.1-hadoop2</hbase98.version>
-    <hive.version>0.14.0</hive.version>
+    <hive.version>1.0.0</hive.version>
     <hsql.version>2.2.4</hsql.version>
     <http.component.version>4.2.5</http.component.version>
     <jetty.version>6.1.22</jetty.version>
