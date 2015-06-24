@@ -20,6 +20,7 @@ import co.cask.cdap.api.app.Application;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import com.google.common.base.Objects;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 
@@ -27,11 +28,11 @@ import java.io.IOException;
  * Represents the archive that is uploaded by the user using the deployment
  * service.
  */
-public final class Archive {
+public final class Archive implements Closeable {
   /**
    * Class loader for holding.
    */
-  private final ClassLoader classLoader;
+  private final ProgramClassLoader classLoader;
   private final String mainClassName;
 
   public Archive(File unpackedJarFolder, String mainClassName) throws IOException {
@@ -44,5 +45,10 @@ public final class Archive {
   @SuppressWarnings("unchecked")
   public Class<Application> getMainClass() throws ClassNotFoundException {
     return (Class<Application>) classLoader.loadClass(mainClassName);
+  }
+
+  @Override
+  public void close() throws IOException {
+    classLoader.close();
   }
 }

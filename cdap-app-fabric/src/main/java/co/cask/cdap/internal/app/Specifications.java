@@ -17,9 +17,9 @@
 package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
+import co.cask.cdap.app.DefaultApplicationContext;
 
 /**
  * Util for building app spec for tests.
@@ -29,7 +29,7 @@ public final class Specifications {
 
   public static ApplicationSpecification from(Application app) {
     DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(app);
-    app.configure(appConfigurer, new ApplicationContext());
+    app.configure(appConfigurer, new DefaultApplicationContext());
     return appConfigurer.createSpecification();
   }
 }

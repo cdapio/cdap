@@ -16,16 +16,20 @@
 
 package co.cask.cdap.api.app;
 
+import co.cask.cdap.api.Config;
+
 /**
  * Defines a CDAP Application.
  *
+ * @param <T> {@link Config} class that represents the configuration of the Application.
+ *
  */
-public interface Application {
+public interface Application<T extends Config> {
   /**
    * Configures the Application.
    *
    * @param configurer Collects the Application configuration
    * @param context Used to access the environment, application configuration, and application (deployment) arguments
    */
-  void configure(ApplicationConfigurer configurer, ApplicationContext context);
+  void configure(ApplicationConfigurer configurer, ApplicationContext<T> context);
 }

@@ -20,10 +20,12 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.filesystem.Location;
 
+import java.io.Closeable;
+
 /**
  * Abstraction of a executable program.
  */
-public interface Program {
+public interface Program extends Closeable {
 
   /**
    * Returns the name of the main class in the program.

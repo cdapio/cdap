@@ -71,6 +71,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   protected static final byte[] RELATIVE_PATH = { 'p' };
   protected static final byte[] FIELD_PREFIX = { 'f', '.' };
   protected static final byte[] METADATA_PREFIX = { 'm', '.' };
+  protected static final byte[] CREATION_TIME = { 'c' };
 
   protected final FileSet files;
   protected final Table partitionsTable;
@@ -136,7 +137,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   protected void addPartition(PartitionKey key, String path, boolean explorable, Map<String, String> metadata) {
     byte[] rowKey = generateRowKey(key, partitioning);
     Row row = partitionsTable.get(rowKey);
-    if (row != null && !row.isEmpty()) {
+    if (!row.isEmpty()) {
       if (key.equals(partitionsAddedInSameTx.get(path))) {
         LOG.warn("Dataset {} already added a partition with key {} in this transaction. " +
                    "Partitions no longer need to be added in the onFinish() of MapReduce. Please check your app. ",
@@ -149,6 +150,8 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     LOG.debug("Adding partition with key {} and path {} to dataset {}", key, path, getName());
     Put put = new Put(rowKey);
     put.add(RELATIVE_PATH, Bytes.toBytes(path));
+    byte[] nowInMillis = Bytes.toBytes(System.currentTimeMillis());
+    put.add(CREATION_TIME, nowInMillis);
     for (Map.Entry<String, ? extends Comparable> entry : key.getFields().entrySet()) {
       put.add(Bytes.add(FIELD_PREFIX, Bytes.toBytes(entry.getKey())), // "f.<field name>"
               Bytes.toBytes(entry.getValue().toString()));            // "<string rep. of value>"
@@ -158,6 +161,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
     partitionsTable.put(put);
     partitionsAddedInSameTx.put(path, key);
+
 
     if (explorable) {
       addPartitionToExplore(key, path);
@@ -252,6 +256,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     if (pathBytes == null) {
       return null;
     }
+
     return new BasicPartitionDetail(this, Bytes.toString(pathBytes), key, metadataFromRow(row));
   }
 
@@ -262,9 +267,10 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       @Override
       public void consume(PartitionKey key, String path, @Nullable PartitionMetadata metadata) {
         if (metadata == null) {
-          metadata = new PartitionMetadata(Collections.<String, String>emptyMap());
+          metadata = new PartitionMetadata(Collections.<String, String>emptyMap(), 0L);
         }
-        partitionDetails.add(new BasicPartitionDetail(PartitionedFileSetDataset.this, path, key, metadata));
+        partitionDetails.add(new BasicPartitionDetail(PartitionedFileSetDataset.this, path, key, metadata
+        ));
       }
     });
     return partitionDetails;
@@ -331,7 +337,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
         metadata.put(metadataKey, Bytes.toString(entry.getValue()));
       }
     }
-    return new PartitionMetadata(metadata);
+
+    byte[] creationTimeBytes = row.get(CREATION_TIME);
+    return new PartitionMetadata(metadata, Bytes.toLong(creationTimeBytes));
   }
 
   private String metadataKeyFromColumnKey(byte[] columnKey) {
