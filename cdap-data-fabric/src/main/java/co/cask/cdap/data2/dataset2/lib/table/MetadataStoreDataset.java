@@ -63,7 +63,7 @@ public class MetadataStoreDataset extends AbstractDataset {
   @Nullable
   public <T> T get(MDSKey id, Type typeOfT) {
     Row row = table.get(id.getKey());
-    if (row == null || row.isEmpty()) {
+    if (row.isEmpty()) {
       return null;
     }
 
