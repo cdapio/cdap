@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceStreamPropertiesController', function($scope, $stateParams, myHelpers, $alert, myStreamApi, $state, EventPipe) {
+  .controller('NamespaceStreamMetadataController', function($scope, $stateParams, myHelpers, $alert, myStreamApi, $state, EventPipe) {
 
     $scope.avro = {};
 

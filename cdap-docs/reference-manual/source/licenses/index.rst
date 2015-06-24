@@ -12,6 +12,7 @@ Trademarks, Licenses, and Dependencies
     <cdap-enterprise-dependencies>
     <cdap-level-1-dependencies>
     <cdap-standalone-dependencies>
+    <cdap-ui-dependencies>
 
 Trademarks, Logos, and Trade Dress
 ----------------------------------
@@ -60,6 +61,36 @@ Hortonworks is a registered trademark of `Hortonworks, Inc. <http://hortonworks.
 
 `Node.js <http://www.nodejs.org>`__ is a registered trademark of `Joyent, Inc. <http://joyent.com>`__
 
+The library `d3 <https://github.com/mbostock/d3>`__ is included in CDAP in binary format,
+with `this license <https://github.com/mbostock/d3/blob/master/LICENSE>`__:
+
+  Copyright (c) 2010-\ |current_year|, Michael Bostock
+  All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+  * Redistributions of source code must retain the above copyright notice, this
+    list of conditions and the following disclaimer.
+
+  * Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+
+  * The name Michael Bostock may not be used to endorse or promote products
+    derived from this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+  DISCLAIMED. IN NO EVENT SHALL MICHAEL BOSTOCK BE LIABLE FOR ANY DIRECT,
+  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 
 CDAP Product License
 --------------------
@@ -90,3 +121,5 @@ CDAP Dependent Packages, Licenses and License URLs
   (`PDF <cdap-level-1-dependencies.pdf>`__)
 - `CDAP Distributed Dependencies <cdap-enterprise-dependencies.html>`_
   (`PDF <cdap-enterprise-dependencies.pdf>`__)
+- `CDAP UI Dependencies <cdap-ui-dependencies.html>`_
+  (`PDF <cdap-ui-dependencies.pdf>`__)

@@ -201,14 +201,12 @@ public class IndexedTable extends AbstractDataset implements Table {
 
     // first read the existing indexed values to find which have changed and need to be updated
     Row existingRow = table.get(dataRow, colsToIndex.toArray(new byte[colsToIndex.size()][]));
-    if (existingRow != null) {
-      for (Map.Entry<byte[], byte[]> entry : existingRow.getColumns().entrySet()) {
-        if (!Arrays.equals(entry.getValue(), putColumns.get(entry.getKey()))) {
-          index.delete(createIndexKey(dataRow, entry.getKey(), entry.getValue()), IDX_COL);
-        } else {
-          // value already indexed
-          colsToIndex.remove(entry.getKey());
-        }
+    for (Map.Entry<byte[], byte[]> entry : existingRow.getColumns().entrySet()) {
+      if (!Arrays.equals(entry.getValue(), putColumns.get(entry.getKey()))) {
+        index.delete(createIndexKey(dataRow, entry.getKey(), entry.getValue()), IDX_COL);
+      } else {
+        // value already indexed
+        colsToIndex.remove(entry.getKey());
       }
     }
 
@@ -259,7 +257,7 @@ public class IndexedTable extends AbstractDataset implements Table {
   @Override
   public void delete(byte[] row) {
     Row existingRow = table.get(row);
-    if (existingRow == null) {
+    if (existingRow.isEmpty()) {
       // no row to delete
       return;
     }
@@ -279,7 +277,7 @@ public class IndexedTable extends AbstractDataset implements Table {
   @Override
   public void delete(byte[] row, byte[][] columns) {
     Row existingRow = table.get(row, columns);
-    if (existingRow == null) {
+    if (existingRow.isEmpty()) {
       // no row to delete
       return;
     }
@@ -381,18 +379,16 @@ public class IndexedTable extends AbstractDataset implements Table {
 
     for (int i = 0; i < columns.length; i++) {
       long existingValue = 0L;
-      if (existingRow != null) {
-        byte[] existingBytes = existingRow.get(columns[i]);
-        if (existingBytes != null) {
-          if (existingBytes.length != Bytes.SIZEOF_LONG) {
-            throw new NumberFormatException("Attempted to increment a value that is not convertible to long," +
-                                              " row: " + Bytes.toStringBinary(row) +
-                                              " column: " + Bytes.toStringBinary(columns[i]));
-          }
-          existingValue = Bytes.toLong(existingBytes);
-          if (indexedColumns.contains(columns[i])) {
-            index.delete(createIndexKey(row, columns[i], existingBytes), IDX_COL);
-          }
+      byte[] existingBytes = existingRow.get(columns[i]);
+      if (existingBytes != null) {
+        if (existingBytes.length != Bytes.SIZEOF_LONG) {
+          throw new NumberFormatException("Attempted to increment a value that is not convertible to long," +
+                                            " row: " + Bytes.toStringBinary(row) +
+                                            " column: " + Bytes.toStringBinary(columns[i]));
+        }
+        existingValue = Bytes.toLong(existingBytes);
+        if (indexedColumns.contains(columns[i])) {
+          index.delete(createIndexKey(row, columns[i], existingBytes), IDX_COL);
         }
       }
       updatedValues[i] = Bytes.toBytes(existingValue + amounts[i]);

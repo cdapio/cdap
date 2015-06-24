@@ -190,9 +190,10 @@ angular.module(PKG.name + '.feature.admin')
               })
               .state('admin.namespace.detail.data.streammetadata', {
                 url: '/streams/:streamId',
-                controller: 'NamespaceStreamPropertiesController',
+                controller: 'NamespaceStreamMetadataController',
                 templateUrl: '/assets/features/admin/templates/namespace/stream-metadata.html'
               })
+
               .state('admin.namespace.detail.data.streamcreate', {
                 url:'/streams/create',
                 onEnter: function($bootstrapModal, $state) {
@@ -209,6 +210,12 @@ angular.module(PKG.name + '.feature.admin')
                 onExit: function($modalStack) {
                   $modalStack.dismissAll();
                 }
+              })
+
+              .state('admin.namespace.detail.data.streammetadata', {
+                url: '/streams/detail/:streamId',
+                controller: 'NamespaceStreamMetadataController',
+                templateUrl: '/assets/features/admin/templates/namespace/stream-metadata.html'
               })
 
             .state('admin.namespace.detail.apps', {

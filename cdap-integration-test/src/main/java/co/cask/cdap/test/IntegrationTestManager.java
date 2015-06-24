@@ -17,13 +17,13 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.app.DefaultAppConfigurer;
+import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.NamespaceClient;
@@ -109,7 +109,7 @@ public class IntegrationTestManager implements TestManager {
       // Extracts application id from the application class
       Application application = applicationClz.newInstance();
       DefaultAppConfigurer configurer = new DefaultAppConfigurer(application);
-      application.configure(configurer, new ApplicationContext());
+      application.configure(configurer, new DefaultApplicationContext());
       String applicationId = configurer.createSpecification().getName();
       return new RemoteApplicationManager(Id.Application.from(namespace, applicationId), clientConfig, restClient);
     } catch (Exception e) {

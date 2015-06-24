@@ -142,7 +142,8 @@ master_doc = 'table-of-contents'
 
 # General information about the project.
 project = u'Cask Data Application Platform'
-copyright = u'2014-%s Cask Data, Inc.' % datetime.now().year
+current_year = datetime.now().year
+copyright = u'2014-%s Cask Data, Inc.' % current_year
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -227,6 +228,11 @@ if release:
     rst_epilog = rst_epilog + """
 .. |literal-release| replace:: ``%(release)s``
 """ % {'release': release}
+
+if current_year:
+    rst_epilog = rst_epilog + """
+.. |current_year| replace:: %(current_year)s
+""" % {'current_year': current_year}
 
 if copyright:
     rst_epilog = rst_epilog + """

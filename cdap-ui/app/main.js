@@ -137,10 +137,13 @@ angular
   })
 
   .config(function($httpProvider) {
-    $httpProvider.interceptors.push(function($rootScope) {
+    $httpProvider.interceptors.push(function($rootScope, myHelpers) {
       return {
         'request': function(config) {
-          if ($rootScope.currentUser) {
+          if (
+              $rootScope.currentUser
+              && !myHelpers.objectQuery(config, 'data', 'profile_view')
+             ) {
             angular.extend(config, {
               user: $rootScope.currentUser || null,
               headers: {
