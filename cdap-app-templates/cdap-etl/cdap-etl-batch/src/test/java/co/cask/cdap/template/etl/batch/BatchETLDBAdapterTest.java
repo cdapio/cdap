@@ -297,7 +297,8 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
 
       ETLBatchConfig etlConfigBadConn = new ETLBatchConfig("* * * * *", sourceBadConn, sink,
                                                            Lists.<ETLStage>newArrayList());
-      AdapterConfig adapterConfigBadConn= new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfigBadConn));
+      AdapterConfig adapterConfigBadConn = new AdapterConfig("", TEMPLATE_ID.getId(),
+                                                             GSON.toJsonTree(etlConfigBadConn));
       Id.Adapter adapterIdBadConn = Id.Adapter.from(NAMESPACE, "dbSourceTest");
       AdapterManager managerBadConn = createAdapter(adapterIdBadConn, adapterConfigBadConn);
 
