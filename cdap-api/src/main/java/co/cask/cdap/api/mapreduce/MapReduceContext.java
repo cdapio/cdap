@@ -130,7 +130,6 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
   /**
    * @return the {@link WorkflowToken} associated with the current {@link Workflow},
    * if the {@link MapReduce} program is executed as a part of the Workflow.
-   *
    */
   @Nullable
   WorkflowToken getWorkflowToken();

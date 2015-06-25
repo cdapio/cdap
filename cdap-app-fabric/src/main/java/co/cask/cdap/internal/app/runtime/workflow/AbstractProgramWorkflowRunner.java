@@ -56,11 +56,9 @@ import java.util.concurrent.ExecutionException;
  */
 public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRunner {
   private static final Gson GSON = new Gson();
-
   private final Arguments userArguments;
   private final Arguments systemArguments;
   private final String nodeId;
-
   protected final WorkflowSpecification workflowSpec;
   protected final ProgramRunnerFactory programRunnerFactory;
   protected final Program workflowProgram;

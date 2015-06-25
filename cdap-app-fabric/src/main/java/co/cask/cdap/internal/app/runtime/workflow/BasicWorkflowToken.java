@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.workflow.NodeValueEntry;
 import co.cask.cdap.api.workflow.WorkflowToken;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -33,9 +32,7 @@ import javax.annotation.Nullable;
  */
 public class BasicWorkflowToken implements WorkflowToken {
   private Map<String, Map<String, Long>> mapReduceCounters;
-
   private Map<String, List<NodeValueEntry>> tokenValueMap = Maps.newHashMap();
-
   private String nodeName;
 
   void setCurrentNode(String nodeName) {
@@ -78,7 +75,9 @@ public class BasicWorkflowToken implements WorkflowToken {
 
   @Override
   public void put(String key, String value) {
-    Preconditions.checkNotNull(nodeName, "Node name cannot be null.");
+    if (nodeName == null) {
+      throw new IllegalStateException("Node name cannot be null.");
+    }
     List<NodeValueEntry> nodeValueList = tokenValueMap.get(key);
     if (nodeValueList == null) {
       nodeValueList = Lists.newArrayList();

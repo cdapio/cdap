@@ -132,6 +132,7 @@ public final class MapReduceContextConfig {
     }
   }
 
+  @Nullable
   public WorkflowToken getWorkflowToken() {
     String tokenJson = hConf.get(HCONF_ATTR_WORKFLOW_TOKEN);
     if (tokenJson == null) {
