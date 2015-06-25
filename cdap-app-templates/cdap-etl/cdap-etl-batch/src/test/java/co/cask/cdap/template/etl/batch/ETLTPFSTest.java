@@ -85,8 +85,9 @@ public class ETLTPFSTest extends BaseETLBatchTest {
     TransactionAware txTpfs = (TransactionAware) tpfs;
     txTpfs.startTx(tx1);
 
-    fileSetManager.get().addPartition(System.currentTimeMillis(), "directory", ImmutableMap.of("key1", "value1"));
-    Location location = fileSetManager.get().getPartitionByTime(System.currentTimeMillis()).getLocation();
+    long timeInMillis = System.currentTimeMillis();
+    fileSetManager.get().addPartition(timeInMillis, "directory", ImmutableMap.of("key1", "value1"));
+    Location location = fileSetManager.get().getPartitionByTime(timeInMillis).getLocation();
     location = location.append("file.avro");
     FSDataOutputStream outputStream = new FSDataOutputStream(location.getOutputStream(), null);
     DataFileWriter dataFileWriter = new DataFileWriter<>(new GenericDatumWriter<GenericRecord>(avroSchema));
@@ -116,6 +117,7 @@ public class ETLTPFSTest extends BaseETLBatchTest {
 
     List<GenericRecord> newRecords = readOutput(newFileSet, EventSchemaWithoutHeader);
     Assert.assertEquals(1, newRecords.size());
+    Assert.assertEquals(Integer.MAX_VALUE, newRecords.get(0).get("int"));
   }
 
   private org.apache.avro.Schema convertSchema(Schema cdapSchema) {
