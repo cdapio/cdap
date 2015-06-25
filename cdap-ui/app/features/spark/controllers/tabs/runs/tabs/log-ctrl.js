@@ -5,15 +5,19 @@ angular.module(PKG.name + '.feature.spark')
       namespace: $state.params.namespace,
       appId: $state.params.appId,
       sparkId: $state.params.programId,
-      runId: $scope.runs.selected.runid,
+      runId: $scope.RunsController.runs.selected.runid,
       max: 50,
       scope: $scope
     };
 
+    if (!$scope.RunsController.runs.length) {
+      return;
+    }
+
     mySparkApi.logs(params)
       .$promise
       .then(function (res) {
-        $scope.logs = res;
-      });
+        this.logs = res;
+      }.bind(this));
 
 });
