@@ -69,15 +69,15 @@ public interface WorkflowToken {
   /**
    * Get the {@link Map} of key-values that were added to the {@link WorkflowToken}
    * by specific node. This method also accepts the optional prefix parameter. When
-   * supplied, the map returned would be filtered by the keys prefixed by input prefix.
+   * supplied, the returned map would be filtered by the keys prefixed by the input prefix.
    * @param nodeName the unique name of the node
-   * @param prefix optional prefix to filtered the keys
+   * @param prefix optional prefix to filter the keys
    * @return the map of key-values that were added by the specified node
    */
   Map<String, String> getAllFromNode(String nodeName, @Nullable String prefix);
 
   /**
-   * Get the value set for the specified key by specified node.
+   * Get the value set for the specified key by the specified node.
    * @param key the key to be searched
    * @param nodeName the name of the node
    * @return the value set for the key by nodeName

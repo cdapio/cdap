@@ -98,10 +98,10 @@ public class ConditionalWorkflowApp extends AbstractApplication {
           // If number of good records are greater than the number of bad records then only
           // return true to execute the true branch associated with this Condition node
           if (customCounters.get("GoodRecord") > customCounters.get("BadRecord")) {
-            input.getToken().put("branch", "true");
+            input.getToken().put("conditionResult", "true");
             return true;
           }
-          input.getToken().put("branch", "false");
+          input.getToken().put("conditionResult", "false");
         }
       }
       return false;
@@ -176,15 +176,18 @@ public class ConditionalWorkflowApp extends AbstractApplication {
 
     @Override
     public void run() {
-      LOG.info("Running SimpleAction: " + getContext().getSpecification().getName());
+      String actionName = getContext().getSpecification().getName();
+      LOG.info("Running SimpleAction: {}", actionName);
+
+      WorkflowToken token = getContext().getToken();
+
       // Put something in the token
-      getContext().getToken().put("action_type", "CustomAction");
+      token.put("action_type", "CustomAction");
+
       try {
-        File file = new File(getContext().getRuntimeArguments().get(getContext().getSpecification().getName() +
-                                                                      ".simple.action.file"));
+        File file = new File(getContext().getRuntimeArguments().get(actionName + ".simple.action.file"));
         file.createNewFile();
-        File doneFile = new File(getContext().getRuntimeArguments().get(getContext().getSpecification().getName() +
-                                                                          ".simple.action.donefile"));
+        File doneFile = new File(getContext().getRuntimeArguments().get(actionName + ".simple.action.donefile"));
         while (!doneFile.exists()) {
           TimeUnit.MILLISECONDS.sleep(50);
         }
@@ -209,11 +212,10 @@ public class ConditionalWorkflowApp extends AbstractApplication {
     private final String flattenReduceOutputRecordsCounterName =
       "mr.counters.org.apache.hadoop.mapreduce.TaskCounter.REDUCE_OUTPUT_RECORDS";
 
-    @SuppressWarnings("unchecked")
     @Override
     public void run() {
       WorkflowToken workflowToken = getContext().getToken();
-      boolean trueBranchExecuted = Boolean.parseBoolean(workflowToken.get("branch"));
+      boolean trueBranchExecuted = Boolean.parseBoolean(workflowToken.get("conditionResult"));
       if (trueBranchExecuted) {
         // Previous condition returned true
         List<NodeValueEntry> nodeValueEntries = workflowToken.getAll("action_type");
@@ -236,7 +238,6 @@ public class ConditionalWorkflowApp extends AbstractApplication {
       }
     }
 
-    @SuppressWarnings("null")
     private void validateMapReduceCounters(WorkflowToken workflowToken, String programName) {
       Map<String, Map<String, Long>> mapReduceCounters = workflowToken.getMapReduceCounters();
       Preconditions.checkNotNull(mapReduceCounters);
