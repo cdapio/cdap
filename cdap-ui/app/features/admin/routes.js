@@ -188,11 +188,6 @@ angular.module(PKG.name + '.feature.admin')
                 controller: 'NamespaceDatasetMetadataController',
                 templateUrl: '/assets/features/admin/templates/namespace/dataset-metadata.html'
               })
-              .state('admin.namespace.detail.data.streammetadata', {
-                url: '/streams/:streamId',
-                controller: 'NamespaceStreamMetadataController',
-                templateUrl: '/assets/features/admin/templates/namespace/stream-metadata.html'
-              })
 
               .state('admin.namespace.detail.data.streamcreate', {
                 url:'/streams/create',
