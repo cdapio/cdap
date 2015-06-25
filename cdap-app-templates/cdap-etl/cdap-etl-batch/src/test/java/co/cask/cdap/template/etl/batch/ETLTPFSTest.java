@@ -53,12 +53,11 @@ public class ETLTPFSTest extends BaseETLBatchTest {
   @Test
   public void testAvroSourceConversionToAvroSink() throws Exception {
 
-    Schema schema = Schema.recordOf(
+    Schema eventSchema = Schema.recordOf(
       "record",
       Schema.Field.of("int", Schema.of(Schema.Type.INT)));
-    Schema eventSchema = schema;
 
-    org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(schema.toString());
+    org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(eventSchema.toString());
 
     GenericRecord record = new GenericRecordBuilder(avroSchema)
       .set("int", Integer.MAX_VALUE)
