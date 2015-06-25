@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsSchedulesController', function($scope, myWorkFlowApi, $state) {
+  .controller('WorkflowsSchedulesController', function($scope, myWorkFlowApi, $state, myAlert) {
     var params = {
       appId: $state.params.appId,
       workflowId: $state.params.programId,
@@ -51,19 +51,37 @@ angular.module(PKG.name + '.feature.workflows')
       }.bind(this));
 
     this.suspendSchedule = function (obj) {
+      obj.status = 'SUSPENDING';
+
       myWorkFlowApi.scheduleSuspend({
         appId: $state.params.appId,
         scheduleId: obj.schedule.name,
         scope: $scope
-      }, {});
+      }, {},
+      function success() {},
+      function error(err) {
+        myAlert({
+          title: 'Cannot Suspend Schedule',
+          content: err
+        });
+      });
     };
 
     this.resumeSchedule = function (obj) {
+      obj.status = 'RESUMING';
+
       myWorkFlowApi.scheduleResume({
         appId: $state.params.appId,
         scheduleId: obj.schedule.name,
         scope: $scope
-      }, {});
+      }, {},
+      function success() {},
+      function error(err) {
+        myAlert({
+          title: 'Cannot Resume Schedule',
+          content: err
+        });
+      });
     };
 
   });
