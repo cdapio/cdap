@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.api.templates.plugins.PluginClass;
+import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 import java.util.Objects;
@@ -28,7 +29,7 @@ public class ArtifactMeta {
   private final List<PluginClass> plugins;
 
   public ArtifactMeta(List<PluginClass> plugins) {
-    this.plugins = plugins;
+    this.plugins = ImmutableList.copyOf(plugins);
   }
 
   public List<PluginClass> getPlugins() {

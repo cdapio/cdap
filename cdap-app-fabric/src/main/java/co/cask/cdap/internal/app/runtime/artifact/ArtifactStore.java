@@ -119,17 +119,18 @@ public class ArtifactStore {
   public void write(Id.Artifact artifactId, ArtifactMeta artifactMeta, InputStream archiveContents)
     throws WriteConflictException, ArtifactAlreadyExistsException, IOException {
 
-    ArtifactMeta meta = readMeta(artifactId);
-    if (meta != null) {
-      throw new ArtifactAlreadyExistsException(artifactId);
-    }
-
     Location fileDirectory =
       locationFactory.get(artifactId.getNamespace(), ARTIFACTS_PATH).append(artifactId.getName());
     Locations.mkdirsIfNotExists(fileDirectory);
     Location lock = fileDirectory.append(artifactId.getVersion() + ".lock");
     if (!lock.createNew()) {
       throw new WriteConflictException(artifactId);
+    }
+
+    ArtifactMeta meta = readMeta(artifactId);
+    if (meta != null) {
+      lock.delete();
+      throw new ArtifactAlreadyExistsException(artifactId);
     }
 
     Location file = fileDirectory.append(artifactId.getVersion());

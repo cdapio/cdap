@@ -87,7 +87,11 @@ public class ArtifactStoreTest {
 
     String artifactContents = "abc123";
     // this should work
-    artifactStore.write(artifactId, artifactMeta, new ByteArrayInputStream(Bytes.toBytes(artifactContents)));
+    try {
+      artifactStore.write(artifactId, artifactMeta, new ByteArrayInputStream(Bytes.toBytes(artifactContents)));
+    } catch (ArtifactAlreadyExistsException e) {
+      Assert.fail();
+    }
     // this should throw an exception, since artifacts are immutable
     artifactStore.write(artifactId, artifactMeta, new ByteArrayInputStream(Bytes.toBytes(artifactContents)));
   }
@@ -346,7 +350,7 @@ public class ArtifactStoreTest {
   public void testConcurrentAdd() throws Exception {
     // start up a bunch of threads that will try and write the same artifact at the same time
     // only one of them should be able to write it
-    int numThreads = 10;
+    int numThreads = 20;
     final Id.Artifact artifactId = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "abc", "1.0.0");
     final List<String> successfulWriters = Collections.synchronizedList(Lists.<String>newArrayList());
 
