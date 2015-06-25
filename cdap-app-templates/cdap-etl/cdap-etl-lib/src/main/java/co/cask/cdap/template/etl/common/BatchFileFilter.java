@@ -17,6 +17,8 @@
 package co.cask.cdap.template.etl.common;
 
 import co.cask.cdap.template.etl.batch.source.FileBatchSource;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
@@ -24,15 +26,28 @@ import org.apache.hadoop.fs.PathFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Type;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Filter class to filter out filenames in the input path.
+ *
+ * The stateful time filter works as follows. A list of times are kept in the table in FileBatchSource. The list always
+ * denotes ranges of times where files have not been read in yet. The list is read in prepareRun and then converted to
+ * a string and passed in as dateRangesToRead, which is described below. The files are assumed to succeed so that files
+ * will not be read in multiple times. Thus, a singleton element is written into the table as the list denoting that
+ * the only files that haven't been read in are after that element. If the read fails, then dateRangesToRead with
+ * prevMinute appended to the end is inserted to the beginning of whatever the list is now in the table. This is done
+ * because these were exactly the time ranges that we wanted to read from (which failed, so we should reinsert them
+ * to try again). If the read succeeds then we don't do anything since we assumed that the read would succeed
+ * initially.
  */
 public class BatchFileFilter extends Configured implements PathFilter {
 
@@ -40,12 +55,21 @@ public class BatchFileFilter extends Configured implements PathFilter {
   //length of 'YYYY-MM-dd-HH-mm"
   private static final int DATE_LENGTH = 16;
   private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
+  private static final Gson GSON = new Gson();
+  private static final Type ARRAYLIST_DATE_TYPE  = new TypeToken<ArrayList<Date>>() { }.getType();
   private boolean useTimeFilter;
-
   private Pattern regex;
   private String pathName;
   private String lastRead;
   private Date prevMinute;
+
+  /*
+   * dateRangesToRead is an odd length List of Dates. The non terminal elements are tuples of Dates that
+   * denote ranges of time that are acceptable for the file to have been created during. The start times are inclusive
+   * and the end times are exclusive. The range of time between the terminal element and prevMinute is the final
+   * acceptable range for the file to have been created during.
+   */
+  private List<Date> dateRangesToRead;
 
   @Override
   public boolean accept(Path path) {
@@ -69,23 +93,15 @@ public class BatchFileFilter extends Configured implements PathFilter {
     }
 
     //use stateful time filter
-    Date dateLastRead;
-    try {
-      dateLastRead = sdf.parse(lastRead);
-    } catch (Exception e) {
-      dateLastRead = new Date();
-      dateLastRead.setTime(0);
-    }
-
     Date fileDate;
     try {
       fileDate = sdf.parse(path.getName().substring(0, DATE_LENGTH));
     } catch (ParseException pe) {
       //this should never happen
       LOG.warn("Couldn't parse file: " + path.getName());
-      fileDate = prevMinute;
+      return false;
     }
-    return fileDate.compareTo(dateLastRead) > 0 && fileDate.compareTo(prevMinute) <= 0;
+    return isWithinRange(fileDate);
   }
 
   @Override
@@ -108,11 +124,35 @@ public class BatchFileFilter extends Configured implements PathFilter {
       regex = Pattern.compile(input);
     }
     lastRead = conf.get(FileBatchSource.LAST_TIME_READ, "-1");
+
+    if (!lastRead.equals("-1")) {
+      dateRangesToRead = GSON.fromJson(lastRead, ARRAYLIST_DATE_TYPE);
+    }
+
     try {
       prevMinute = sdf.parse(conf.get(FileBatchSource.CUTOFF_READ_TIME));
     } catch (ParseException pe) {
       prevMinute = new Date(System.currentTimeMillis());
     }
   }
-}
 
+  /**
+   * Determines if a file should be read in
+   *
+   * Iterates through the list dateRangesToRead and returns true if the filedate falls between one of the tuples, or
+   * if the filedate is between the terminal element and prevMinute.
+   *
+   * @param fileDate when the file was created
+   * @return true if the file is to be read, false otherwise
+   */
+  private boolean isWithinRange(Date fileDate) {
+    for (int i = 0; i < dateRangesToRead.size() / 2; i++) {
+      if (fileDate.compareTo(dateRangesToRead.get(2 * i)) >= 0 &&
+        fileDate.compareTo(dateRangesToRead.get(2 * i + 1)) < 0) {
+        return true;
+      }
+    }
+    return fileDate.compareTo(dateRangesToRead.get(dateRangesToRead.size() - 1)) >= 0
+      && fileDate.compareTo(prevMinute) < 0;
+  }
+}
