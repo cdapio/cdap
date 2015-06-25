@@ -48,7 +48,7 @@ angular.module(PKG.name + '.feature.adapters')
               // (timing issue with re-direct from login state).
               var params = {
                 namespace: $stateParams.namespace,
-                app: $stateParams.adapterId
+                adapter: $stateParams.adapterId
               };
 
               myAdapterApi.runs(params)
@@ -61,7 +61,7 @@ angular.module(PKG.name + '.feature.adapters')
             rAdapterDetail: function($stateParams, $q, myAdapterApi) {
               var params = {
                 namespace: $stateParams.namespace,
-                app: $stateParams.adapterId
+                adapter: $stateParams.adapterId
               };
 
               return myAdapterApi.get(params).$promise;

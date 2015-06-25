@@ -4,7 +4,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     var params = {
       namespace: $state.params.namespace,
-      app: $state.params.adapterId,
+      adapter: $state.params.adapterId,
       scope: $scope
     };
 
