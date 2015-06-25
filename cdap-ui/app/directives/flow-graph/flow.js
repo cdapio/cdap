@@ -5,6 +5,7 @@ var baseDirective = {
   templateUrl: 'flow-graph/flow.html',
   scope: {
     model: '=',
+    clickContext: '=',
     click: '&'
   },
   controller: 'myFlowController'
@@ -181,7 +182,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
           scope.$apply(function(scope) {
             var fn = scope.click();
             if ('undefined' !== typeof fn) {
-              fn(nodeId);
+              fn.call(scope.clickContext, nodeId);
             }
           });
         }
@@ -413,7 +414,7 @@ module.directive('myWorkflowGraph', function ($filter, $location) {
         scope.$apply(function(scope) {
           var fn = scope.click();
           if ('undefined' !== typeof fn) {
-            fn(instance);
+            fn.call(scope.clickContext, instance);
           }
         });
       };
