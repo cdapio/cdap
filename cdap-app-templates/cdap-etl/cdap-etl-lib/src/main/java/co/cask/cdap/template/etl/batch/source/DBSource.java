@@ -33,7 +33,6 @@ import co.cask.cdap.template.etl.common.DBUtils;
 import co.cask.cdap.template.etl.common.ETLDBInputFormat;
 import co.cask.cdap.template.etl.common.JDBCDriverShim;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -87,7 +86,11 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
                                                                                 jdbcPluginId,
                                                                                 PluginProperties.builder().build());
     Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
-    ensureValidConnection(jdbcDriverClass);
+    try {
+      ensureValidConnection(jdbcDriverClass);
+    } finally {
+      DBUtils.cleanup(jdbcDriverClass);
+    }
   }
 
   @Override
@@ -142,8 +145,6 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
       assert(connection.isValid(0));
     } catch (SQLException e) {
       throw new IllegalArgumentException("SQL Exception thrown when trying to connect to driver", e);
-    } finally {
-      DBUtils.cleanup(jdbcDriverClass);
     }
   }
 

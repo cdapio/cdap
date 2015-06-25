@@ -92,7 +92,11 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
                                                                                 getJDBCPluginId(),
                                                                                 PluginProperties.builder().build());
     Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
-    Preconditions.checkArgument(tableExists(jdbcDriverClass), "Invalid table name %s", dbSinkConfig.tableName);
+    try {
+      Preconditions.checkArgument(tableExists(jdbcDriverClass), "Invalid table name %s", dbSinkConfig.tableName);
+    } finally {
+      DBUtils.cleanup(jdbcDriverClass);
+    }
   }
 
   @Override
@@ -146,13 +150,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
 
   private void setResultSetMetadata() throws Exception {
     ensureJDBCDriverIsAvailable(driverClass);
-    Connection connection;
-    if (dbSinkConfig.user == null) {
-      connection = DriverManager.getConnection(dbSinkConfig.connectionString);
-    } else {
-      connection = DriverManager.getConnection(dbSinkConfig.connectionString, dbSinkConfig.user, dbSinkConfig.password);
-    }
-    try {
+    try (Connection connection = createConnection()) {
       try (Statement statement = connection.createStatement();
            // Using LIMIT even though its not SQL standard since DBInputFormat already depends on it
            ResultSet rs = statement.executeQuery(String.format("SELECT %s from %s LIMIT 1",
@@ -160,8 +158,6 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
       ) {
         resultSetMetadata = rs.getMetaData();
       }
-    } finally {
-      connection.close();
     }
   }
 
@@ -198,8 +194,6 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
       return rs.next();
     } catch (java.sql.SQLException e) {
       throw new IllegalArgumentException("SQL Exception thrown when trying to connect to driver", e);
-    } finally {
-      DBUtils.cleanup(jdbcDriverClass);
     }
   }
 
