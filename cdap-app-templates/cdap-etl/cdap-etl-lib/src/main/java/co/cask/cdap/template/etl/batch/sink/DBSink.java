@@ -190,15 +190,14 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     try {
       ensureJDBCDriverIsAvailable(jdbcDriverClass);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new IllegalArgumentException("JDBCDriver is not available", e);
     }
     try (Connection connection = createConnection();
          ResultSet rs = connection.getMetaData().getTables(null, null, dbSinkConfig.tableName, null)
     ) {
       return rs.next();
     } catch (java.sql.SQLException e) {
-      LOG.error("SQL Exception thrown when trying to connect to driver", e);
-      throw Throwables.propagate(e);
+      throw new IllegalArgumentException("SQL Exception thrown when trying to connect to driver", e);
     } finally {
       DBUtils.cleanup(jdbcDriverClass);
     }
