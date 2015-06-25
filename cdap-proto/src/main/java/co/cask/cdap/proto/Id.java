@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.proto.artifact.ArtifactVersion;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
@@ -1260,9 +1261,9 @@ public abstract class Id {
   public static class Artifact extends NamespacedId {
     private final Namespace namespace;
     private final String name;
-    private final String version;
+    private final ArtifactVersion version;
 
-    public Artifact(Namespace namespace, String name, String version) {
+    public Artifact(Namespace namespace, String name, ArtifactVersion version) {
       // TODO: enforce name, version characters
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
       Preconditions.checkNotNull(name, "Name cannot be null.");
@@ -1280,7 +1281,7 @@ public abstract class Id {
       return name;
     }
 
-    public String getVersion() {
+    public ArtifactVersion getVersion() {
       return version;
     }
 
@@ -1292,7 +1293,7 @@ public abstract class Id {
 
     @Override
     public String getId() {
-      return String.format("%s-%s", name, version);
+      return String.format("%s-%s", name, version.getVersion());
     }
 
     @Override
@@ -1326,7 +1327,7 @@ public abstract class Id {
     }
 
     public static Artifact from(Namespace namespace, String name, String version) {
-      return new Artifact(namespace, name, version);
+      return new Artifact(namespace, name, new ArtifactVersion(version));
     }
   }
 

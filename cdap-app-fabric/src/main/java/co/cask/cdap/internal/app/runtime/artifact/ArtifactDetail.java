@@ -16,19 +16,24 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.proto.Id;
-
 /**
- * Thrown when an artifact does not exist.
+ * Details about an artifact, including info about the artifact itself and metadata about the contents of the artifact.
  */
-public class ArtifactNotExistsException extends NotFoundException {
+public class ArtifactDetail {
+  private final ArtifactInfo info;
+  private final ArtifactMeta meta;
 
-  public ArtifactNotExistsException(Id.Namespace namespace, String name) {
-    super("artifact", namespace.getId() + ":" + name);
+  public ArtifactDetail(ArtifactInfo info, ArtifactMeta meta) {
+    this.info = info;
+    this.meta = meta;
   }
 
-  public ArtifactNotExistsException(Id.Artifact artifactId) {
-    super("artifact", artifactId.toString());
+  public ArtifactInfo getInfo() {
+    return info;
   }
+
+  public ArtifactMeta getMeta() {
+    return meta;
+  }
+
 }

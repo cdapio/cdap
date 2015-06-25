@@ -17,20 +17,19 @@
 package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Objects;
 import org.apache.twill.filesystem.Location;
 
 /**
- * Information about an artifact.
+ * Information about the artifact itself, but nothing about the contents of the artifact.
  */
 public class ArtifactInfo {
   private final Id.Artifact id;
   private final Location location;
-  private final ArtifactMeta meta;
 
-  public ArtifactInfo(Id.Artifact id, Location location, ArtifactMeta meta) {
+  public ArtifactInfo(Id.Artifact id, Location location) {
     this.id = id;
     this.location = location;
-    this.meta = meta;
   }
 
   public Id.Artifact getId() {
@@ -41,7 +40,22 @@ public class ArtifactInfo {
     return location;
   }
 
-  public ArtifactMeta getMeta() {
-    return meta;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ArtifactInfo that = (ArtifactInfo) o;
+
+    return Objects.equal(id, that.id) && Objects.equal(location, that.location);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(id, location);
   }
 }

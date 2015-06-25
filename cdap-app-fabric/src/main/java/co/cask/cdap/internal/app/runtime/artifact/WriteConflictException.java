@@ -26,6 +26,7 @@ import co.cask.cdap.proto.Id;
 public class WriteConflictException extends ConflictException {
 
   public WriteConflictException(Id.Artifact artifactId) {
-    super(String.format("Archive %s already exists.", artifactId));
+    super(String.format("Write conflict while writing artifact %s.", artifactId));
   }
+
 }

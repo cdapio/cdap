@@ -27,6 +27,8 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.lang.reflect.Type;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  * Codec for {@link Location}. We write {@link java.net.URI} for location.
@@ -49,6 +51,11 @@ public final class LocationCodec implements JsonSerializer<Location>, JsonDeseri
   public Location deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) {
     JsonObject jsonObj = json.getAsJsonObject();
     String uri = jsonObj.get("uri").getAsString();
-    return lf.create(uri);
+    try {
+      return lf.create(new URI(uri));
+    } catch (URISyntaxException e) {
+      // should never happen
+      throw new IllegalStateException("Invalid uri " + uri + " found. Cannot deserialize location.", e);
+    }
   }
 }
