@@ -45,7 +45,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -65,11 +64,12 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
 
   private static final String COLUMNS_DESCRIPTION = "Comma-separated list of columns to export to in the specified " +
     "table.";
+  private static final String TABLE_NAME_DESCRIPTION = "Table name to export to.";
 
   private final DBSinkConfig dbSinkConfig;
   private ResultSetMetaData resultSetMetadata;
-  private Class<? extends Driver> driverClass;
   private JDBCDriverShim driverShim;
+  private Class<? extends Driver> driverClass;
 
   public DBSink(DBSinkConfig dbSinkConfig) {
     this.dbSinkConfig = dbSinkConfig;
@@ -92,7 +92,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
                                                                                 getJDBCPluginId(),
                                                                                 PluginProperties.builder().build());
     Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
-    Preconditions.checkArgument(tableNameExists(), "Invalid table name %s", dbSinkConfig.tableName);
+    Preconditions.checkArgument(tableExists(jdbcDriverClass), "Invalid table name %s", dbSinkConfig.tableName);
   }
 
   @Override
@@ -105,7 +105,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     Configuration hConf = job.getConfiguration();
 
     // Load the plugin class to make sure it is available.
-    Class<? extends Driver> driverClass = context.loadPluginClass(getJDBCPluginId());
+    driverClass = context.loadPluginClass(getJDBCPluginId());
     if (dbSinkConfig.user == null && dbSinkConfig.password == null) {
       DBConfiguration.configureDB(hConf, driverClass.getName(), dbSinkConfig.connectionString);
     } else {
@@ -145,7 +145,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
   }
 
   private void setResultSetMetadata() throws Exception {
-    ensureJDBCDriverIsAvailable();
+    ensureJDBCDriverIsAvailable(driverClass);
     Connection connection;
     if (dbSinkConfig.user == null) {
       connection = DriverManager.getConnection(dbSinkConfig.connectionString);
@@ -170,45 +170,44 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
    *
    * @throws Exception if the driver is not available
    */
-  private void ensureJDBCDriverIsAvailable() throws Exception {
+  private void ensureJDBCDriverIsAvailable(Class<? extends Driver> jdbcDriverClass) throws Exception {
     try {
       DriverManager.getDriver(dbSinkConfig.connectionString);
     } catch (SQLException e) {
       // Driver not found. We will try to register it with the DriverManager.
       LOG.debug("Plugin Type: {} and Plugin Name: {}; Driver Class: {} not found. Registering JDBC driver via shim {} ",
-                dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName, driverClass.getName(),
+                dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName, jdbcDriverClass.getName(),
                 JDBCDriverShim.class.getName());
       if (driverShim == null) {
-        driverShim = new JDBCDriverShim(driverClass.newInstance());
+        driverShim = new JDBCDriverShim(jdbcDriverClass.newInstance());
       }
-      DBUtils.deregisterAllDrivers(driverClass);
+      DBUtils.deregisterAllDrivers(jdbcDriverClass);
       DriverManager.registerDriver(driverShim);
     }
   }
 
-  private boolean tableNameExists() {
+  private boolean tableExists(Class<? extends Driver> jdbcDriverClass) {
     try {
-      try {
-        ensureJDBCDriverIsAvailable();
-      } catch (Exception e) {
-        Preconditions.checkArgument(false, "Driver must be able to connect");
-      }
-
-      Connection connection;
-      if (dbSinkConfig.user == null) {
-        connection = DriverManager.getConnection(dbSinkConfig.connectionString);
-      } else {
-        connection = DriverManager.getConnection(dbSinkConfig.connectionString,
-                                                 dbSinkConfig.user, dbSinkConfig.password);
-      }
-
-      DatabaseMetaData metadata = connection.getMetaData();
-      ResultSet rs = metadata.getTables(null, null, dbSinkConfig.tableName, null);
-
+      ensureJDBCDriverIsAvailable(jdbcDriverClass);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+    try (Connection connection = createConnection();
+         ResultSet rs = connection.getMetaData().getTables(null, null, dbSinkConfig.tableName, null)
+    ) {
       return rs.next();
     } catch (java.sql.SQLException e) {
-      return false;
+      LOG.error("SQL Exception thrown when trying to connect to driver", e);
+      throw Throwables.propagate(e);
+    } finally {
+      DBUtils.cleanup(jdbcDriverClass);
     }
+  }
+
+  private Connection createConnection() throws java.sql.SQLException {
+    return dbSinkConfig.user == null ?
+      DriverManager.getConnection(dbSinkConfig.connectionString) :
+      DriverManager.getConnection(dbSinkConfig.connectionString, dbSinkConfig.user, dbSinkConfig.password);
   }
 
   /**
@@ -218,7 +217,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     @Description(COLUMNS_DESCRIPTION)
     String columns;
 
-    @Description("Table name to export to.")
+    @Description(TABLE_NAME_DESCRIPTION)
     public String tableName;
   }
 }

@@ -267,12 +267,11 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
     Assert.assertEquals("user2", Bytes.toString(row2.get("BLOB_COL"), 0, 5));
     Assert.assertEquals(clobData, Bytes.toString(row1.get("CLOB_COL"), 0, clobData.length()));
     Assert.assertEquals(clobData, Bytes.toString(row2.get("CLOB_COL"), 0, clobData.length()));
-
   }
 
-  @Test
+  @Test(expected = Exception.class)
   @Category(SlowTests.class)
-  public void testBadNameBadConn() throws Exception {
+  public void testBadConnSource() throws Exception {
     String importQuery = "SELECT ID, NAME, SCORE, GRADUATED, TINY, SMALL, BIG, FLOAT_COL, REAL_COL, NUMERIC_COL, " +
       "DECIMAL_COL, BIT_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, BLOB_COL, CLOB_COL FROM my_table " +
       "WHERE ID < 3";
@@ -283,32 +282,31 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
       Properties.Table.PROPERTY_SCHEMA, schema.toString(),
       Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "ID"));
 
-    boolean badConn = false;
+    ETLStage sourceBadConn = new ETLStage("Database", ImmutableMap.<String, String>builder()
+      .put(Properties.DB.CONNECTION_STRING, String.format("jdbc:hsqldb:hsql://localhost/%sWRONG",
+                                                          hsqlDBServer.database))
+      .put(Properties.DB.IMPORT_QUERY, importQuery)
+      .put(Properties.DB.COUNT_QUERY, countQuery)
+      .put(Properties.DB.JDBC_PLUGIN_NAME, "hypersql")
+      .build()
+    );
 
-    try {
-      ETLStage sourceBadConn = new ETLStage("Database", ImmutableMap.<String, String>builder()
-        .put(Properties.DB.CONNECTION_STRING, String.format("jdbc:hsqldb:hsql://localhost/%sWRONG",
-                                                            hsqlDBServer.database))
-        .put(Properties.DB.IMPORT_QUERY, importQuery)
-        .put(Properties.DB.COUNT_QUERY, countQuery)
-        .put(Properties.DB.JDBC_PLUGIN_NAME, "hypersql")
-        .build()
-      );
+    ETLBatchConfig etlConfigBadConn = new ETLBatchConfig("* * * * *", sourceBadConn, sink,
+                                                         Lists.<ETLStage>newArrayList());
+    AdapterConfig adapterConfigBadConn = new AdapterConfig("", TEMPLATE_ID.getId(),
+                                                           GSON.toJsonTree(etlConfigBadConn));
+    Id.Adapter adapterIdBadConn = Id.Adapter.from(NAMESPACE, "testBadConnSource");
+    AdapterManager managerBadConn = createAdapter(adapterIdBadConn, adapterConfigBadConn);
 
-      ETLBatchConfig etlConfigBadConn = new ETLBatchConfig("* * * * *", sourceBadConn, sink,
-                                                           Lists.<ETLStage>newArrayList());
-      AdapterConfig adapterConfigBadConn = new AdapterConfig("", TEMPLATE_ID.getId(),
-                                                             GSON.toJsonTree(etlConfigBadConn));
-      Id.Adapter adapterIdBadConn = Id.Adapter.from(NAMESPACE, "dbSourceTest");
-      AdapterManager managerBadConn = createAdapter(adapterIdBadConn, adapterConfigBadConn);
+    managerBadConn.start();
+    managerBadConn.waitForOneRunToFinish(5, TimeUnit.MINUTES);
+    managerBadConn.stop();
+  }
 
-      managerBadConn.start();
-      managerBadConn.waitForOneRunToFinish(5, TimeUnit.MINUTES);
-      managerBadConn.stop();
-    } catch (Exception e) {
-      badConn = true;
-    }
-    Assert.assertTrue(badConn);
+  @Test(expected = Exception.class)
+  @Category(SlowTests.class)
+  public void testBadNameSink() throws Exception {
+
 
     String cols = "ID, NAME, SCORE, GRADUATED, TINY, SMALL, BIG, FLOAT_COL, REAL_COL, NUMERIC_COL, DECIMAL_COL, " +
       "BIT_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, BLOB_COL, CLOB_COL";
@@ -318,30 +316,24 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
                                      Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "ID",
                                      Properties.Table.PROPERTY_SCHEMA, schema.toString()));
 
-    boolean badSinkTableNameFailed = false;
-    try {
-      ETLStage sinkBadName = new ETLStage("Database",
-                                          ImmutableMap.of(Properties.DB.CONNECTION_STRING,
-                                                          hsqlDBServer.getConnectionUrl(),
-                                                          Properties.DB.TABLE_NAME, "bad_sink_name",
-                                                          Properties.DB.COLUMNS, cols,
-                                                          Properties.DB.JDBC_PLUGIN_NAME, "hypersql"
-                                          ));
-      List<ETLStage> transforms = Lists.newArrayList();
-      ETLBatchConfig etlConfigBadSinkName = new ETLBatchConfig("* * * * *", source, sinkBadName, transforms);
-      Id.Adapter adapterIdBadSinkName = Id.Adapter.from(NAMESPACE, "dbSinkTestBadName");
-      AdapterConfig adapterConfigBadSinkName = new AdapterConfig("", TEMPLATE_ID.getId(),
-                                                                 GSON.toJsonTree(etlConfigBadSinkName));
-      AdapterManager managerBadSinkName = createAdapter(adapterIdBadSinkName, adapterConfigBadSinkName);
+    ETLStage sinkBadName = new ETLStage("Database",
+                                        ImmutableMap.of(Properties.DB.CONNECTION_STRING,
+                                                        hsqlDBServer.getConnectionUrl(),
+                                                        Properties.DB.TABLE_NAME, "bad_sink_name",
+                                                        Properties.DB.COLUMNS, cols,
+                                                        Properties.DB.JDBC_PLUGIN_NAME, "hypersql"
+                                        ));
+    List<ETLStage> transforms = Lists.newArrayList();
+    ETLBatchConfig etlConfigBadSinkName = new ETLBatchConfig("* * * * *", source, sinkBadName, transforms);
+    Id.Adapter adapterIdBadSinkName = Id.Adapter.from(NAMESPACE, "dbSinkTestBadName");
+    AdapterConfig adapterConfigBadSinkName = new AdapterConfig("", TEMPLATE_ID.getId(),
+                                                               GSON.toJsonTree(etlConfigBadSinkName));
+    AdapterManager managerBadSinkName = createAdapter(adapterIdBadSinkName, adapterConfigBadSinkName);
 
-      createInputData();
-      managerBadSinkName.start();
-      managerBadSinkName.waitForOneRunToFinish(5, TimeUnit.MINUTES);
-      managerBadSinkName.stop();
-    } catch (Exception e) {
-      badSinkTableNameFailed = true;
-    }
-    Assert.assertTrue(badSinkTableNameFailed);
+    createInputData();
+    managerBadSinkName.start();
+    managerBadSinkName.waitForOneRunToFinish(5, TimeUnit.MINUTES);
+    managerBadSinkName.stop();
   }
 
   // Test is ignored - Currently DBOutputFormat does a statement.executeBatch which seems to fail in HSQLDB.
