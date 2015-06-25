@@ -598,5 +598,9 @@ public class ConfigurableTestBase {
   protected final StreamManager getStreamManager(Id.Namespace namespace, String streamName) throws Exception {
     return getTestManager().getStreamManager(Id.Stream.from(namespace, streamName));
   }
+
+  protected TransactionManager getTxService() {
+    return txService;
+  }
 }
 

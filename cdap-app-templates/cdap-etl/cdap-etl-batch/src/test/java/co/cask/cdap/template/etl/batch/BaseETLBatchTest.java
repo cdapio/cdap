@@ -32,6 +32,7 @@ import co.cask.cdap.template.etl.batch.source.DBSource;
 import co.cask.cdap.template.etl.batch.source.KVTableSource;
 import co.cask.cdap.template.etl.batch.source.StreamBatchSource;
 import co.cask.cdap.template.etl.batch.source.TableSource;
+import co.cask.cdap.template.etl.batch.source.TimePartitionedFileSetDatasetAvroSource;
 import co.cask.cdap.template.etl.common.DBRecord;
 import co.cask.cdap.template.etl.transform.ProjectionTransform;
 import co.cask.cdap.template.etl.transform.ScriptFilterTransform;
@@ -68,9 +69,9 @@ public class BaseETLBatchTest extends TestBase {
 
   @BeforeClass
   public static void setupTest() throws IOException {
-    addTemplatePlugins(TEMPLATE_ID, "batch-sources-1.0.0.jar",
-      DBSource.class, KVTableSource.class, StreamBatchSource.class, TableSource.class, DBRecord.class);
-    addTemplatePlugins(TEMPLATE_ID, "batch-sinks-1.0.0.jar",
+    addTemplatePlugins(TEMPLATE_ID, "batch-plugins-1.0.0.jar",
+      DBSource.class, KVTableSource.class, StreamBatchSource.class, TableSource.class, DBRecord.class,
+      TimePartitionedFileSetDatasetAvroSource.class,
       BatchCubeSink.class, DBSink.class, KVTableSink.class, TableSink.class,
       TimePartitionedFileSetDatasetAvroSink.class, AvroKeyOutputFormat.class, AvroKey.class,
       TimePartitionedFileSetDatasetParquetSink.class, AvroParquetOutputFormat.class);
