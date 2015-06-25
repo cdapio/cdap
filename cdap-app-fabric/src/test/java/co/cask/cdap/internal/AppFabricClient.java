@@ -291,8 +291,13 @@ public class AppFabricClient {
     }
   }
 
-  public Location deployApplication(Id.Namespace namespace, String appName,
-                                    Class<?> applicationClz, File...bundleEmbeddedJars) throws Exception {
+  public Location deployApplication(Id.Namespace namespace, String appName, Class<?> applicationClz,
+                                    File ...bundleEmbeddedJars) throws Exception {
+    return deployApplication(namespace, appName, applicationClz, null, bundleEmbeddedJars);
+  }
+
+  public Location deployApplication(Id.Namespace namespace, String appName, Class<?> applicationClz,
+                                    String config, File...bundleEmbeddedJars) throws Exception {
 
     Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
 
@@ -304,8 +309,12 @@ public class AppFabricClient {
                                                         String.format("/v3/namespaces/%s/apps", namespace.getId()));
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", archiveName);
+    if (config != null) {
+      request.setHeader("X-App-Config", config);
+    }
     MockResponder mockResponder = new MockResponder();
-    BodyConsumer bodyConsumer = appLifecycleHttpHandler.deploy(request, mockResponder, namespace.getId(), archiveName);
+    BodyConsumer bodyConsumer = appLifecycleHttpHandler.deploy(request, mockResponder, namespace.getId(), archiveName,
+                                                               config);
     Preconditions.checkNotNull(bodyConsumer, "BodyConsumer from deploy call should not be null");
 
     try (BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024)) {
