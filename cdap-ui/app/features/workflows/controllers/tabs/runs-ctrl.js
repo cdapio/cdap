@@ -1,6 +1,7 @@
-angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsRunsController', function($scope, $state, $filter, rRuns) {
-    var fFilter = $filter('filter');
+
+class WorkflowsRunsController {
+  constructor($scope, $state, $filter, rRuns) {
+    let fFilter = $filter('filter');
     this.runs = rRuns;
 
     if ($state.params.runid) {
@@ -18,7 +19,7 @@ angular.module(PKG.name + '.feature.workflows')
 
     $scope.$watch(angular.bind(this, function() {
       return this.runs.selected.runid;
-    }), function() {
+    }), () => {
       console.info("asdasd");
       if ($state.params.runid) {
        return;
@@ -27,20 +28,28 @@ angular.module(PKG.name + '.feature.workflows')
           this.runs.selected = angular.copy(rRuns[0]);
         }
       }
-    }.bind(this));
+    });
 
-    this.tabs = [{
-      title: 'Status',
-      template: '/assets/features/workflows/templates/tabs/runs/tabs/status.html'
-    },
-    {
-      title: 'Logs',
-      template: '/assets/features/workflows/templates/tabs/runs/tabs/log.html'
-    }];
+    this.tabs = [
+      {
+        title: 'Status',
+        template: '/assets/features/workflows/templates/tabs/runs/tabs/status.html'
+      },
+      {
+        title: 'Logs',
+        template: '/assets/features/workflows/templates/tabs/runs/tabs/log.html'
+      }
+    ];
 
     this.activeTab = this.tabs[0];
+  }
 
-    this.selectTab = function(tab) {
-      this.activeTab = tab;
-    };
-  });
+  selectTab(tab) {
+    this.activeTab = tab;
+  }
+}
+
+WorkflowsRunsController.$inject = ['$scope', '$state', '$filter', 'rRuns'];
+
+angular.module(PKG.name + '.feature.workflows')
+  .controller('WorkflowsRunsController', WorkflowsRunsController);

@@ -118,9 +118,33 @@ angular.module(PKG.name + '.services')
       }
     }
 
+    function addStartAndEnd(nodes) {
+      // Add Start and End nodes as semantically workflow needs to have it.
+      nodes.unshift({
+        type: 'START',
+        nodeType: 'ACTION',
+        nodeId: '',
+        program: {
+          programName: 'Start'
+        }
+      });
+
+      nodes.push({
+        label: 'end',
+        type: 'END',
+        nodeType: 'ACTION',
+        nodeId: '',
+        program: {
+          programName: 'End'
+        }
+      });
+      return nodes;
+    }
+
     return {
       convertNodesToEdges: convertNodesToEdges,
-      expandNodes: expandNodes
+      expandNodes: expandNodes,
+      addStartAndEnd: addStartAndEnd
     };
 
   });

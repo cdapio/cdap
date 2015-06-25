@@ -1,6 +1,7 @@
-angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsSchedulesController', function($scope, myWorkFlowApi, $state, myAlert) {
-    var params = {
+'use strict';
+class ScheduleController {
+  constructor($scope, myWorkFlowApi, $state, myAlert) {
+    let params = {
       appId: $state.params.appId,
       workflowId: $state.params.programId,
       scope: $scope
@@ -8,80 +9,79 @@ angular.module(PKG.name + '.feature.workflows')
 
     myWorkFlowApi.schedules(params)
       .$promise
-      .then(function(res) {
+      .then( (res) => {
         this.schedules = res;
 
-        angular.forEach(this.schedules, function(v) {
-          if (v.scheduleType === 'TIME') {
-            var parse = v.schedule.cronExpression.split(' ');
-            v.time = {};
-            v.time.min = parse[0];
-            v.time.hour = parse[1];
-            v.time.day = parse[2];
-            v.time.month = parse[3];
-            v.time.week = parse[4];
+        angular.forEach(this.schedules, schedule => {
+          if (schedule.scheduleType === 'TIME') {
+            var parse = schedule.schedule.cronExpression.split(' ');
+            schedule.time = {};
+            schedule.time.min = parse[0];
+            schedule.time.hour = parse[1];
+            schedule.time.day = parse[2];
+            schedule.time.month = parse[3];
+            schedule.time.week = parse[4];
 
             myWorkFlowApi.schedulesPreviousRunTime(params)
               .$promise
-              .then(function(timeResult) {
+              .then( timeResult => {
                 if (timeResult[0]) {
-                  v.lastrun = timeResult[0].time;
+                  schedule.lastrun = timeResult[0].time;
                 } else {
-                  v.lastrun = 'NA';
+                  schedule.lastrun = 'NA';
                 }
               });
           } else {
-            v.lastrun = 'NA';
+            schedule.lastrun = 'NA';
           }
-          v.isOpen = false;
+          schedule.isOpen = false;
           myWorkFlowApi.pollScheduleStatus({
             appId: $state.params.appId,
-            scheduleId: v.schedule.name,
+            scheduleId: schedule.schedule.name,
             scope: $scope
           })
             .$promise
-            .then(function(response) {
-              v.status = response.status;
+            .then( response => {
+              schedule.status = response.status;
             });
         });
 
         if (this.schedules.length > 0) {
           this.schedules[0].isOpen = true;
         }
-      }.bind(this));
-
-    this.suspendSchedule = function (obj) {
-      obj.status = 'SUSPENDING';
-
-      myWorkFlowApi.scheduleSuspend({
-        appId: $state.params.appId,
-        scheduleId: obj.schedule.name,
-        scope: $scope
-      }, {},
-      function success() {},
-      function error(err) {
-        myAlert({
-          title: 'Cannot Suspend Schedule',
-          content: err
-        });
       });
-    };
+  }
 
-    this.resumeSchedule = function (obj) {
-      obj.status = 'RESUMING';
-
-      myWorkFlowApi.scheduleResume({
-        appId: $state.params.appId,
-        scheduleId: obj.schedule.name,
-        scope: $scope
-      }, {},
-      function success() {},
-      function error(err) {
-        myAlert({
-          title: 'Cannot Resume Schedule',
-          content: err
-        });
+  suspendSchedule(obj) {
+    myWorkFlowApi.scheduleSuspend({
+      appId: $state.params.appId,
+      scheduleId: obj.schedule.name,
+      scope: $scope
+    }, {},
+    function success() {},
+    function error(err) {
+      myAlert({
+        title: 'Cannot Suspend Schedule',
+        content: err
       });
-    };
+    });
+  }
 
-  });
+  resumeSchedule(obj) {
+    myWorkFlowApi.scheduleResume({
+      appId: $state.params.appId,
+      scheduleId: obj.schedule.name,
+      scope: $scope
+    }, {},
+    function success() {},
+    function error(err) {
+      myAlert({
+        title: 'Cannot Resume Schedule',
+        content: err
+      });
+    });
+  }
+}
+ScheduleController.$inject = ['$scope', 'myWorkFlowApi', '$state']
+angular.module(PKG.name + '.feature.workflows')
+  .controller('WorkflowsSchedulesController', ScheduleController);
