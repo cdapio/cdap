@@ -1,4 +1,4 @@
-
+'use strict';
 class WorkflowsRunsController {
   constructor($scope, $state, $filter, rRuns) {
     let fFilter = $filter('filter');
@@ -7,7 +7,7 @@ class WorkflowsRunsController {
     if ($state.params.runid) {
       var match = fFilter(rRuns, {runid: $state.params.runid});
       if (match.length) {
-        this.runs.selected = angulr.copy(match[0]);
+        this.runs.selected = angular.copy(match[0]);
       }
     } else if (rRuns.length) {
       this.runs.selected = angular.copy(rRuns[0]);
@@ -17,18 +17,18 @@ class WorkflowsRunsController {
       };
     }
 
-    $scope.$watch(angular.bind(this, function() {
-      return this.runs.selected.runid;
-    }), () => {
-      console.info("asdasd");
-      if ($state.params.runid) {
-       return;
-      } else {
-        if (rRuns.length) {
-          this.runs.selected = angular.copy(rRuns[0]);
+    $scope.$watch(
+      angular.bind(this, () => this.runs.selected.runid ),
+      () => {
+        if ($state.params.runid) {
+         return;
+        } else {
+          if (rRuns.length) {
+            this.runs.selected = angular.copy(rRuns[0]);
+          }
         }
       }
-    });
+    );
 
     this.tabs = [
       {

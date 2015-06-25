@@ -1,3 +1,4 @@
+'use strict';
 class WorkFlowsRunDetailLogController {
   constructor($scope, myWorkFlowApi, $state) {
     let params = {
@@ -13,9 +14,7 @@ class WorkFlowsRunDetailLogController {
     }
     myWorkFlowApi.logs(params)
       .$promise
-      .then( res => {
-        this.logs = res;
-      });
+      .then( res => this.logs = res );
   }
 }
 

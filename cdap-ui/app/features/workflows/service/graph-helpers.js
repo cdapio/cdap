@@ -1,3 +1,4 @@
+'use strict';
 angular.module(PKG.name + '.services')
   .factory('GraphHelpers', function() {
 
