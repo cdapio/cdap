@@ -8,14 +8,7 @@ angular.module(PKG.name + '.feature.workflows')
         },
         runparams,
         match;
-
-    if ($state.params.runid) {
-      match = filterFilter($scope.RunsController.runs, {runid: $state.params.runid});
-      if (match.length) {
-        $scope.RunsController.runs.selected = match[0];
-      }
-    }
-
+        
     var vm = this;
     vm.runStatus = null;
 

@@ -1,13 +1,5 @@
 angular.module(PKG.name + '.feature.services')
-  .controller('ServicesRunsDetailStatusController', function($state, $scope, $filter, myServiceApi) {
-    var filterFilter = $filter('filter');
-
-    if ($state.params.runid) {
-      var match = filterFilter($scope.RunsController.runs, {runid: $state.params.runid});
-      if (match.length) {
-        $scope.RunsController.runs.selected = match[0];
-      }
-    }
+  .controller('ServicesRunsDetailStatusController', function($state, $scope, myServiceApi) {
 
     var path = '/apps/' +
           $state.params.appId + '/services/' +
