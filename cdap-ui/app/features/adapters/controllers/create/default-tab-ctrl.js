@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('DefaultCanvasController', function($scope, AdapterApiFactory, $q, $filter) {
+  .controller('DefaultCanvasController', function($scope, myAdapterApi, $q, $filter) {
     var createCtrl = $scope.AdapterCreateController;
     var filterFilter = $filter('filter'),
         capitalizeFilter = $filter('caskCapitalizeFilter'),
@@ -23,7 +23,7 @@ angular.module(PKG.name + '.feature.adapters')
       var source = {
         name: sourceName
       };
-      AdapterApiFactory
+      myAdapterApi
         .fetchSourceProperties(
           {
             scope: $scope,
@@ -50,7 +50,7 @@ angular.module(PKG.name + '.feature.adapters')
       var transform = {
         name: transformName
       };
-      AdapterApiFactory
+      myAdapterApi
         .fetchTransformProperties(
           {
             scope: $scope,
@@ -78,7 +78,7 @@ angular.module(PKG.name + '.feature.adapters')
       var sink = {
         name: sinkName
       };
-      AdapterApiFactory
+      myAdapterApi
         .fetchSinkProperties(
           {scope: $scope, adapterType: createCtrl.model.metadata.type, sink: sinkName})
         .$promise

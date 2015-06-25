@@ -91,7 +91,7 @@ public class ETLStreamConversionTest extends BaseETLBatchTest {
 
     List<GenericRecord> records = readOutput(fileSet, EVENT_SCHEMA);
     Assert.assertEquals(1, records.size());
-    clear();
+
   }
 
   private ETLBatchConfig constructETLBatchConfig(String fileSetName, String sinkType) {

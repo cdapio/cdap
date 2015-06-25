@@ -4,6 +4,11 @@ angular.module(PKG.name + '.feature.flows')
         match;
     match = filterFilter($scope.RunsController.runs, {runid: $state.params.runid});
     // If there is no match then there is something wrong with the runid in the URL.
-    $scope.RunsController.runs.selected = match[0];
+    $scope.RunsController.runs.selected.runid = match[0].runid;
+
+    $scope.$on('$destroy', function() {
+      $scope.RunsController.runs.selected.runid = null;
+    });
+
 
   });
