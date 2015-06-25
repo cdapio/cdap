@@ -70,6 +70,8 @@ public final class Properties {
     public static final String TPFS_NAME = "name";
     public static final String SCHEMA = "schema";
     public static final String BASE_PATH = "basePath";
+    public static final String DURATION = "duration";
+    public static final String DELAY = "delay";
   }
 
   /**
