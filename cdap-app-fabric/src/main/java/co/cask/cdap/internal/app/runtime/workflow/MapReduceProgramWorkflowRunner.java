@@ -40,6 +40,8 @@ import java.util.Map;
  */
 final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner {
 
+  private static final String MAPREDUCE_COUNTER_PREFIX = "mr.counters";
+
   MapReduceProgramWorkflowRunner(WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
                                  Program workflowProgram, ProgramOptions workflowProgramOptions, WorkflowToken token,
                                  String nodeId) {
@@ -85,15 +87,30 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
     }
   }
 
+  private String getFlattenCounterName(String groupName, String counterName) {
+    return MAPREDUCE_COUNTER_PREFIX + "." + groupName + "." + counterName;
+  }
+
   private void updateWorkflowToken(MapReduceContext context) throws Exception {
     Map<String, Map<String, Long>> mapReduceCounters = Maps.newHashMap();
+    WorkflowToken workflowTokenFromContext = context.getWorkflowToken();
+
+    if (workflowTokenFromContext == null) {
+      throw new IllegalStateException("WorkflowToken cannot be null when the " +
+                                        "MapReduce program is started by Workflow.");
+    }
+
     Counters counters = ((Job) context.getHadoopJob()).getCounters();
     for (CounterGroup group : counters) {
       mapReduceCounters.put(group.getName(), new HashMap<String, Long>());
       for (Counter counter : group) {
         mapReduceCounters.get(group.getName()).put(counter.getName(), counter.getValue());
+        workflowTokenFromContext.put(getFlattenCounterName(group.getName(), counter.getName()),
+                                     String.valueOf(counter.getValue()));
       }
     }
-    ((BasicWorkflowToken) token).setMapReduceCounters(mapReduceCounters);
+
+    ((BasicWorkflowToken) workflowTokenFromContext).setMapReduceCounters(mapReduceCounters);
+    ((BasicWorkflowToken) token).mergeToken((BasicWorkflowToken) workflowTokenFromContext);
   }
 }

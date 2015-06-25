@@ -28,6 +28,7 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
@@ -60,6 +61,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final LoggingContext loggingContext;
   private final long logicalStartTime;
   private final String workflowBatch;
+  private final WorkflowToken workflowToken;
   private final Metrics userMetrics;
   private final MetricsCollectionService metricsCollectionService;
 
@@ -80,6 +82,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                MapReduceSpecification spec,
                                long logicalStartTime,
                                String workflowBatch,
+                               WorkflowToken workflowToken,
                                DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService,
                                DatasetFramework dsFramework,
@@ -90,6 +93,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
           dsFramework, discoveryServiceClient, adapterSpec, pluginInstantiator);
     this.logicalStartTime = logicalStartTime;
     this.workflowBatch = workflowBatch;
+    this.workflowToken = workflowToken;
     this.metricsCollectionService = metricsCollectionService;
 
     if (metricsCollectionService != null) {
@@ -134,6 +138,15 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
    */
   public String getWorkflowBatch() {
     return workflowBatch;
+  }
+
+  /**
+   * Returns the WorkflowToken if the MapReduce program is executed as a part of the Workflow.
+   */
+  @Override
+  @Nullable
+  public WorkflowToken getWorkflowToken() {
+    return workflowToken;
   }
 
   public void setJob(Job job) {

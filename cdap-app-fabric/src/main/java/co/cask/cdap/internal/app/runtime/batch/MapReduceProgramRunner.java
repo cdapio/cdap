@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
@@ -41,6 +42,7 @@ import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
@@ -137,6 +139,13 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 : System.currentTimeMillis();
 
     String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
+
+    WorkflowToken workflowToken = null;
+    if (arguments.hasOption(ProgramOptionConstants.WORKFLOW_TOKEN)) {
+      workflowToken = GSON.fromJson(arguments.getOption(ProgramOptionConstants.WORKFLOW_TOKEN),
+                                    BasicWorkflowToken.class);
+    }
+
     final AdapterDefinition adapterSpec = getAdapterSpecification(arguments);
 
     MapReduce mapReduce;
@@ -151,8 +160,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
     try {
       final DynamicMapReduceContext context =
         new DynamicMapReduceContext(program, null, runId, null, options.getUserArguments(), spec,
-                                    logicalStartTime, workflowBatch, discoveryServiceClient, metricsCollectionService,
-                                    txSystemClient, datasetFramework, adapterSpec, pluginInstantiator);
+                                    logicalStartTime, workflowBatch, workflowToken, discoveryServiceClient,
+                                    metricsCollectionService, txSystemClient, datasetFramework, adapterSpec,
+                                    pluginInstantiator);
 
 
       Reflections.visit(mapReduce, TypeToken.of(mapReduce.getClass()),

@@ -27,8 +27,11 @@ import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.templates.AdapterContext;
+import co.cask.cdap.api.workflow.Workflow;
+import co.cask.cdap.api.workflow.WorkflowToken;
 
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * MapReduce job execution context.
@@ -123,4 +126,12 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
    * @param resources Resources that each reducer should use.
    */
   void setReducerResources(Resources resources);
+
+  /**
+   * @return the {@link WorkflowToken} associated with the current {@link Workflow},
+   * if the {@link MapReduce} program is executed as a part of the Workflow.
+   *
+   */
+  @Nullable
+  WorkflowToken getWorkflowToken();
 }

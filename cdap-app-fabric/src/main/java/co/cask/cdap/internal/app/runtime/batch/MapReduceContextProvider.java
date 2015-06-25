@@ -75,6 +75,7 @@ public final class MapReduceContextProvider {
                taskContext.getTaskAttemptID().getTaskID().toString(),
                contextConfig.getLogicalStartTime(),
                contextConfig.getWorkflowBatch(),
+               contextConfig.getWorkflowToken(),
                contextConfig.getArguments(),
                contextConfig.getTx(),
                createProgram(contextConfig),
