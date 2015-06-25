@@ -186,8 +186,8 @@ gulp.task('js:app', function() {
        header: '\n(function (PKG){ /* ${filename} */\n',
        footer: '\n})('+PKG+');\n'
     }))
-    .pipe(plug.concat('app.js'))
     .pipe(plug.babel())
+    .pipe(plug.concat('app.js'))
     .pipe(plug.sourcemaps.write("."))
     .pipe(gulp.dest('./dist/assets/bundle'));
 });
