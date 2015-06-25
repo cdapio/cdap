@@ -94,6 +94,8 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
     try {
       Preconditions.checkArgument(tableExists(jdbcDriverClass), "Invalid table name %s", dbSinkConfig.tableName);
+    } catch (Exception e) {
+      throw new IllegalArgumentException(e);
     } finally {
       DBUtils.cleanup(jdbcDriverClass);
     }
@@ -182,18 +184,11 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     }
   }
 
-  private boolean tableExists(Class<? extends Driver> jdbcDriverClass) {
-    try {
-      ensureJDBCDriverIsAvailable(jdbcDriverClass);
-    } catch (Exception e) {
-      throw new IllegalArgumentException("JDBCDriver is not available", e);
-    }
+  private boolean tableExists(Class<? extends Driver> jdbcDriverClass) throws Exception {
+    ensureJDBCDriverIsAvailable(jdbcDriverClass);
     try (Connection connection = createConnection();
-         ResultSet rs = connection.getMetaData().getTables(null, null, dbSinkConfig.tableName, null)
-    ) {
+         ResultSet rs = connection.getMetaData().getTables(null, null, dbSinkConfig.tableName, null)) {
       return rs.next();
-    } catch (java.sql.SQLException e) {
-      throw new IllegalArgumentException("SQL Exception thrown when trying to connect to driver", e);
     }
   }
 

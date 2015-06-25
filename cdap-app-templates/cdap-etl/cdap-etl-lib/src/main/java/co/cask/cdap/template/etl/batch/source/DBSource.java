@@ -88,6 +88,8 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
     Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
     try {
       ensureValidConnection(jdbcDriverClass);
+    } catch (Exception e) {
+      throw new IllegalArgumentException(e);
     } finally {
       DBUtils.cleanup(jdbcDriverClass);
     }
@@ -134,17 +136,10 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
     return String.format("%s.%s.%s", "source", dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName);
   }
 
-  private void ensureValidConnection(Class<? extends Driver> jdbcDriverClass) {
-    try {
-      ensureJDBCDriverIsAvailable(jdbcDriverClass);
-    } catch (Exception e) {
-      throw new IllegalArgumentException("could not ensure JDBCDriver is available", e);
-    }
-    try (Connection connection = createConnection()
-    ) {
+  private void ensureValidConnection(Class<? extends Driver> jdbcDriverClass) throws Exception {
+    ensureJDBCDriverIsAvailable(jdbcDriverClass);
+    try (Connection connection = createConnection()) {
       assert(connection.isValid(0));
-    } catch (SQLException e) {
-      throw new IllegalArgumentException("SQL Exception thrown when trying to connect to driver", e);
     }
   }
 

@@ -269,7 +269,7 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
     Assert.assertEquals(clobData, Bytes.toString(row2.get("CLOB_COL"), 0, clobData.length()));
   }
 
-  @Test(expected = Exception.class)
+  @Test
   @Category(SlowTests.class)
   public void testBadConnSource() throws Exception {
     String importQuery = "SELECT ID, NAME, SCORE, GRADUATED, TINY, SMALL, BIG, FLOAT_COL, REAL_COL, NUMERIC_COL, " +
@@ -298,16 +298,19 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
     Id.Adapter adapterIdBadConn = Id.Adapter.from(NAMESPACE, "testBadConnSource");
     AdapterManager managerBadConn = createAdapter(adapterIdBadConn, adapterConfigBadConn);
 
-    managerBadConn.start();
-    managerBadConn.waitForOneRunToFinish(5, TimeUnit.MINUTES);
-    managerBadConn.stop();
+    try {
+      managerBadConn.start();
+      managerBadConn.waitForOneRunToFinish(5, TimeUnit.MINUTES);
+      managerBadConn.stop();
+      assert(false);
+    } catch (Exception e) {
+      assert(e.getMessage().indexOf("AdapterNotFound")!= -1);
+    }
   }
 
-  @Test(expected = Exception.class)
+  @Test
   @Category(SlowTests.class)
   public void testBadNameSink() throws Exception {
-
-
     String cols = "ID, NAME, SCORE, GRADUATED, TINY, SMALL, BIG, FLOAT_COL, REAL_COL, NUMERIC_COL, DECIMAL_COL, " +
       "BIT_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, BLOB_COL, CLOB_COL";
     ETLStage source = new ETLStage("Table",
@@ -330,10 +333,14 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
                                                                GSON.toJsonTree(etlConfigBadSinkName));
     AdapterManager managerBadSinkName = createAdapter(adapterIdBadSinkName, adapterConfigBadSinkName);
 
-    createInputData();
-    managerBadSinkName.start();
-    managerBadSinkName.waitForOneRunToFinish(5, TimeUnit.MINUTES);
-    managerBadSinkName.stop();
+    try {
+      managerBadSinkName.start();
+      managerBadSinkName.waitForOneRunToFinish(5, TimeUnit.MINUTES);
+      managerBadSinkName.stop();
+      assert(false);
+    } catch (Exception e) {
+      assert(e.getMessage().indexOf("AdapterNotFound")!= -1);
+    }
   }
 
   // Test is ignored - Currently DBOutputFormat does a statement.executeBatch which seems to fail in HSQLDB.
@@ -361,7 +368,7 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
     AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
     AdapterManager manager = createAdapter(adapterId, adapterConfig);
 
-    createInputData();
+//    createInputData();
     manager.start();
     manager.waitForOneRunToFinish(5, TimeUnit.MINUTES);
     manager.stop();
