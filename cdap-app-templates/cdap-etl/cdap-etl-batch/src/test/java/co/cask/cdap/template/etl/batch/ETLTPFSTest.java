@@ -50,16 +50,16 @@ import java.util.concurrent.TimeUnit;
 public class ETLTPFSTest extends BaseETLBatchTest {
 
   private static final Gson GSON = new Gson();
-  private static Schema EventSchemaWithoutHeader;
+  private static Schema EventSchema;
   @Test
   public void testAvroSourceConversionToAvroSink() throws Exception {
 
     Schema schema = Schema.recordOf(
       "record",
       Schema.Field.of("int", Schema.of(Schema.Type.INT)));
-    EventSchemaWithoutHeader = schema;
+    EventSchema = schema;
 
-    org.apache.avro.Schema avroSchema = convertSchema(schema);
+    org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(schema.toString());
 
     GenericRecord record = new GenericRecordBuilder(avroSchema)
       .set("int", Integer.MAX_VALUE)
@@ -115,25 +115,21 @@ public class ETLTPFSTest extends BaseETLBatchTest {
     DataSetManager<TimePartitionedFileSet> newFileSetManager = getDataset(newFilesetName);
     TimePartitionedFileSet newFileSet = newFileSetManager.get();
 
-    List<GenericRecord> newRecords = readOutput(newFileSet, EventSchemaWithoutHeader);
+    List<GenericRecord> newRecords = readOutput(newFileSet, EventSchema);
     Assert.assertEquals(1, newRecords.size());
     Assert.assertEquals(Integer.MAX_VALUE, newRecords.get(0).get("int"));
-  }
-
-  private org.apache.avro.Schema convertSchema(Schema cdapSchema) {
-    return new org.apache.avro.Schema.Parser().parse(cdapSchema.toString());
   }
 
   private ETLBatchConfig constructTPFSETLConfig(String filesetName, String newFilesetName) {
     ETLStage source = new ETLStage("TPFSAvro",
                                    ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
-                                                   EventSchemaWithoutHeader.toString(),
+                                                   EventSchema.toString(),
                                                    Properties.TimePartitionedFileSetDataset.TPFS_NAME, filesetName,
                                                    Properties.TimePartitionedFileSetDataset.DELAY, "0d",
                                                    Properties.TimePartitionedFileSetDataset.DURATION, "10m"));
     ETLStage sink = new ETLStage("TPFSAvro",
                                  ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
-                                                 EventSchemaWithoutHeader.toString(),
+                                                 EventSchema.toString(),
                                                  Properties.TimePartitionedFileSetDataset.TPFS_NAME,
                                                  newFilesetName));
 
