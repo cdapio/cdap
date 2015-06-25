@@ -36,6 +36,13 @@ angular.module(PKG.name + '.feature.streams')
       }, function(metricData) {
           var data = myHelpers.objectQuery(metricData, 'series', 0, 'data', 0, 'value');
           this[metric.scopeProperty] = data;
+
+          /**
+          * FIX ME: JavaScript largest possible number: 9007199254740992
+          * The backend stores number as 64 bit long. Max: 9,223,372,036,854,775,807
+          * JavaScript is missing 3 digits. Beyond the JS number, it will round-of the value
+          **/
+
       }.bind(this));
     }
   });
