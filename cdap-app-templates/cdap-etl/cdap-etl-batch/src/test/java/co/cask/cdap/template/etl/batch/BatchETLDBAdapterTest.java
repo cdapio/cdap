@@ -304,7 +304,7 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
       managerBadConn.stop();
       assert(false);
     } catch (Exception e) {
-      assert(e.getMessage().indexOf("AdapterNotFound")!= -1);
+      assert(e.getMessage().contains("AdapterNotFound"));
     }
   }
 
@@ -339,7 +339,7 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
       managerBadSinkName.stop();
       assert(false);
     } catch (Exception e) {
-      assert(e.getMessage().indexOf("AdapterNotFound")!= -1);
+      assert(e.getMessage().contains("AdapterNotFound"));
     }
   }
 
