@@ -58,7 +58,7 @@ angular.module(PKG.name + '.feature.spark')
         }
       })
         .state('spark.detail.runs.run', {
-          url: '/:runid',
+          url: '/:runid?sourceId&sourceRunId&destinationType',
           templateUrl: '/assets/features/spark/templates/tabs/runs/run-detail.html',
           controller: 'SparkRunDetailController',
           ncyBreadcrumb: {

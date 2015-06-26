@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.mapreduce')
-  .controller('MapreduceRunsController', function($scope, $state, $rootScope, rRuns, $filter) {
+  .controller('MapreduceRunsController', function($scope, $state, $rootScope, rRuns, $filter, $location) {
     var fFilter = $filter('filter'),
         match;
     this.runs = rRuns;
@@ -18,16 +18,16 @@ angular.module(PKG.name + '.feature.mapreduce')
     }
 
     $scope.$watch(angular.bind(this, function() {
-      return this.runs.selected.runid
+      return this.runs.selected.runid;
     }), function() {
-     if ($state.params.runid) {
-       return;
-     } else {
+      if ($state.params.runid) {
+        return;
+      } else {
         if (rRuns.length) {
           this.runs.selected = angular.copy(rRuns[0]);
         }
-     }
-   }.bind(this));
+      }
+    }.bind(this));
 
     this.tabs = [{
       title: 'Status',

@@ -134,15 +134,21 @@ class WorkflowsRunsStatusController {
     if (this.runsCtrl.runs.length) {
       let stateParams = {
         programId: instance.program.programName,
-        runid: this.runsCtrl.runs.selected.properties[instance.nodeId]
+        runid: this.runsCtrl.runs.selected.properties[instance.nodeId],
+        sourceId: $state.params.programId,
+        sourceRunId: $scope.RunsController.runs.selected.runid
       };
       if (instance.program.programType === 'MAPREDUCE' &&
          this.runsCtrl.runs.selected.properties[instance.nodeId]
         ) {
+        stateParams.destinationType = 'Mapreduce'
         this.$state.go('mapreduce.detail.runs.run', stateParams);
+
       } else if (instance.program.programType === 'SPARK' &&
                 this.runsCtrl.runs.selected.properties[instance.nodeId]
                ) {
+
+        stateParams.destinationType = 'Spark'
         this.$state.go('spark.detail.runs.run', stateParams);
       }
     } else {
