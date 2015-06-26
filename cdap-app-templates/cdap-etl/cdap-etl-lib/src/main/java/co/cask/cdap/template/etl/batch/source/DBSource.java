@@ -157,8 +157,8 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
                 JDBCDriverShim.class.getName());
       if (driverShim == null) {
         driverShim = new JDBCDriverShim(jdbcDriverClass.newInstance());
+        DBUtils.deregisterAllDrivers(jdbcDriverClass);
       }
-      DBUtils.deregisterAllDrivers(jdbcDriverClass);
       DriverManager.registerDriver(driverShim);
     }
   }
