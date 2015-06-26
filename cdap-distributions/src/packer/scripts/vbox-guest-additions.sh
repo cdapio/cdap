@@ -19,11 +19,13 @@
 #
 
 # Mount ISO
-mount -o ro,loop /root/VBoxGuestAdditions.iso /mnt
+mount -o ro,loop /root/VBoxGuestAdditions.iso /mnt || echo "Cannot mount VirtualBox Guest Additions ISO" && exit 1
 
 # Run installer
-/mnt/VBoxLinuxAdditions.run
+/mnt/VBoxLinuxAdditions.run || echo "Failed installing VirtualBox Guest Additions" && exit 1
 
 # Unmount and remove ISO
 umount /mnt
 rm -f /root/VBoxGuestAdditions.iso
+
+exit 0

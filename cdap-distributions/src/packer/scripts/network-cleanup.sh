@@ -16,3 +16,5 @@
 
 # Remove UDEV persistent network rules
 rm -f /etc/udev/rules.d/70-persistent-net.rules
+
+exit 0

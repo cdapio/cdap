@@ -29,3 +29,5 @@ echo "root:`apg -a 1 -m 14 -n 1`" | chpasswd
 
 # Remove apg
 apt-get purge -y apg
+
+exit 0
