@@ -171,7 +171,8 @@ public class KafkaSourceTest {
       brokerList = "localhost:" + kafkaPort;
     }
 
-    KafkaSource.KafkaPluginConfig config = new KafkaSource.KafkaPluginConfig(zk, brokerList, partitions, topic, null);
+    KafkaSource.KafkaPluginConfig config = new KafkaSource.KafkaPluginConfig(zk, brokerList, partitions,
+                                                                             topic, null, null, null);
 
     kafkaSource = new KafkaSource(config);
 

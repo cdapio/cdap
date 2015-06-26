@@ -19,6 +19,7 @@ package co.cask.cdap.template.etl.realtime.source;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
@@ -56,6 +57,8 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
   public static final String KAFKA_ZOOKEEPER = "kafka.zookeeper";
   public static final String KAFKA_BROKERS = "kafka.brokers";
   public static final String KAFKA_DEFAULT_OFFSET = "kafka.default.offset";
+  public static final String KAFKA_SCHEMA = "kafka.schema";
+  public static final String KAFKA_FORMAT = "kafka.format";
 
   private static final Schema SCHEMA = Schema.recordOf("Kafka Message",
                                                        Schema.Field.of(MESSAGE, Schema.of(Schema.Type.BYTES)),
@@ -153,12 +156,24 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
     @Nullable
     private final Long defaultOffset;
 
-    public KafkaPluginConfig(String zkConnect, String brokers, Integer partitions, String topic, Long defaultOffset) {
+    @Name(KAFKA_SCHEMA)
+    @Description("The schema for the topic. Default value is SCHEMA")
+    private final Schema schema;
+
+    @Name(KAFKA_FORMAT)
+    @Description("The format for the message")
+    @Nullable
+    private final String format;
+
+    public KafkaPluginConfig(String zkConnect, String brokers, Integer partitions, String topic,
+                             Long defaultOffset, @Nullable Schema schema, @Nullable String format) {
       this.zkConnect = zkConnect;
       this.kafkaBrokers = brokers;
       this.partitions = partitions;
       this.topic = topic;
       this.defaultOffset = defaultOffset;
+      this.schema = schema != null ? schema : SCHEMA;
+      this.format = format;
     }
 
     // Accessors

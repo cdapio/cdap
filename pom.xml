@@ -1231,6 +1231,11 @@
         <artifactId>twitter4j-stream</artifactId>
         <version>${twitter4j.version}</version>
       </dependency>
+      <dependency>
+        <groupId>co.cask.cdap</groupId>
+        <artifactId>cdap-kafka-flow-compat-0.8</artifactId>
+        <version>0.1.0</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
