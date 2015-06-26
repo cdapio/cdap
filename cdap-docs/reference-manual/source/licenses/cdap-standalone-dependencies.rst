@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
-    :version: 3.0.0
+    :version: 3.0.1
 
 =================================================
 Cask Data Application Platform |version|
@@ -24,8 +24,8 @@ Cask Data Application Platform Standalone Dependencies
    "antlr.antlr-2.7.7.jar","2.7.7","\-","ANTLR 3 License (BSD License)","http://www.antlr2.org/license.html"
    "aopalliance.aopalliance-1.0.jar","1.0","\-","Public Domain","http://aopalliance.sourceforge.net/"
    "c3p0.c3p0-0.9.1.1.jar","0.9.1.1","\-","EPL, LGPLv2",""
-   "ch.qos.logback.logback-classic-1.0.9.jar","1.0.9","\-","LGPL and EPL","http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html"
-   "ch.qos.logback.logback-core-1.0.9.jar","1.0.9","\-","LGPL and EPL","http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html"
+   "ch.qos.logback.logback-classic-1.0.9.jar","1.0.9","\-","EPL","http://www.eclipse.org/legal/epl-v10.html"
+   "ch.qos.logback.logback-core-1.0.9.jar","1.0.9","\-","EPL","http://www.eclipse.org/legal/epl-v10.html"
    "com.clearspring.analytics.stream-2.7.0.jar","2.7.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.codahale.metrics.metrics-core-3.0.0.jar","3.0.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.codahale.metrics.metrics-graphite-3.0.0.jar","3.0.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -82,15 +82,15 @@ Cask Data Application Platform Standalone Dependencies
    "io.netty.netty-all-4.0.23.Final.jar","4.0.23","Final","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.thekraken.grok-0.1.0.jar","0.1.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "it.unimi.dsi.fastutil-6.5.6.jar","6.5.6","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "javax.activation.activation-1.1.jar","1.1","\-","Common Development And Distribution License (CCDL)","http://opensource.org/licenses/CDDL-1.0"
-   "javax.annotation.jsr250-api-1.0.jar","1.0","\-","CCDL 1.0","https://glassfish.java.net/public/CDDLv1.0.html"
+   "javax.activation.activation-1.1.jar","1.1","\-","Common Development And Distribution License (CDDL)","http://opensource.org/licenses/CDDL-1.0"
+   "javax.annotation.jsr250-api-1.0.jar","1.0","\-","CDDL 1.0","https://glassfish.java.net/public/CDDLv1.0.html"
    "javax.inject.javax.inject-1.jar","1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "javax.jdo.jdo-api-3.0.1.jar","3.0.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "javax.mail.mail-1.4.1.jar","1.4.1","\-","CCDL 1.0","https://glassfish.java.net/public/CDDLv1.0.html"
-   "javax.servlet.javax.servlet-api-3.0.1.jar","3.0.1","\-","CCDL 1.0","https://glassfish.dev.java.net/public/CDDL+GPL.html"
-   "javax.transaction.jta-1.1.jar","1.1","\-","CCDL 1.0","http://opensource.org/licenses/cddl1.php"
+   "javax.mail.mail-1.4.1.jar","1.4.1","\-","CDDL 1.0","https://glassfish.java.net/public/CDDLv1.0.html"
+   "javax.servlet.javax.servlet-api-3.0.1.jar","3.0.1","\-","CDDL 1.0","https://glassfish.dev.java.net/public/CDDL+GPL.html"
+   "javax.transaction.jta-1.1.jar","1.1","\-","CDDL 1.0","http://opensource.org/licenses/cddl1.php"
    "javax.ws.rs.javax.ws.rs-api-2.0.jar","2.0","\-","Best of CDDL and GPL 2.0","http://glassfish.java.net/public/CDDL+GPL_1_1.html"
-   "javax.xml.bind.jaxb-api-2.1.jar","2.1","\-","Best of CDDL 1.1 and GPL 2.0",""
+   "javax.xml.bind.jaxb-api-2.1.jar","2.1","\-","Best of CDDL 1.1 and GPL 2.0","https://glassfish.java.net/nonav/public/CDDL+GPL.html"
    "jline.jline-2.12.jar","2.12","\-","The BSD License","http://www.opensource.org/licenses/bsd-license.php"
    "joda-time.joda-time-2.1.jar","2.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "log4j.log4j-1.2.16.jar","1.2.16","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -186,9 +186,9 @@ Cask Data Application Platform Standalone Dependencies
    "org.eclipse.jetty.jetty-webapp-8.1.15.v20140411.jar","8.1.15","v20140411","Eclipse Public License Version 1.0 + AL, V2","http://www.eclipse.org/legal/epl-v10.html"
    "org.eclipse.jetty.jetty-xml-8.1.15.v20140411.jar","8.1.15","v20140411","Eclipse Public License Version 1.0 + AL, V2","http://www.eclipse.org/legal/epl-v10.html"
    "org.eclipse.jetty.orbit.javax.activation-1.1.0.v201105071233.jar","1.1.0","v201105071233","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.eclipse.jetty.orbit.javax.mail.glassfish-1.4.1.v201005082020.jar","1.4.1","v201005082020","CCDL 1.0","https://glassfish.dev.java.net/public/CDDL+GPL.html"
+   "org.eclipse.jetty.orbit.javax.mail.glassfish-1.4.1.v201005082020.jar","1.4.1","v201005082020","CDDL 1.0","https://glassfish.dev.java.net/public/CDDL+GPL.html"
    "org.eclipse.jetty.orbit.javax.security.auth.message-1.0.0.v201108011116.jar","1.0.0","v201108011116","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.eclipse.jetty.orbit.javax.servlet-3.0.0.v201112011016.jar","3.0.0","v201112011016","CCDL 1.0","https://glassfish.dev.java.net/public/CDDL+GPL.html"
+   "org.eclipse.jetty.orbit.javax.servlet-3.0.0.v201112011016.jar","3.0.0","v201112011016","CDDL 1.0","https://glassfish.dev.java.net/public/CDDL+GPL.html"
    "org.eclipse.jetty.orbit.javax.transaction-1.1.1.v201105210645.jar","1.1.1","v201105210645","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.iq80.leveldb.leveldb-0.6.jar","0.6","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.iq80.leveldb.leveldb-api-0.6.jar","0.6","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -229,5 +229,5 @@ Cask Data Application Platform Standalone Dependencies
    "org.uncommons.maths.uncommons-maths-1.2.2a.jar","1.2.2","a","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.xerial.snappy.snappy-java-1.0.5.jar","1.0.5","\-","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "oro.oro-2.0.8.jar","2.0.8","\-","Apache License, Version 1.1","http://www.apache.org/licenses/LICENSE-1.1"
-   "stax.stax-api-1.0.1.jar","1.0.1","\-","GPL and CCDL","http://www.gnu.org/licenses/gpl.txt"
+   "stax.stax-api-1.0.1.jar","1.0.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "xmlenc.xmlenc-0.52.jar","0.52","\-","BSD 2","http://opensource.org/licenses/bsd-license.php"
