@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.guides.kafka;
+package co.cask.cdap.guides.kafka; 
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;

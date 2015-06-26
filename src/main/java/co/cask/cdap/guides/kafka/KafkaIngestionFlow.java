@@ -37,10 +37,10 @@ public class KafkaIngestionFlow implements Flow {
       .setName(Constants.FLOW_NAME)
       .setDescription("Subscribes to Kafka messages")
       .withFlowlets()
-      .add(Constants.KAFKA_FLOWLET, new KafkaConsumerFlowlet())
-      .add(Constants.COUNTER_FLOWLET, new KafkaMessageCounterFlowlet())
+        .add(Constants.KAFKA_FLOWLET, new KafkaConsumerFlowlet())
+        .add(Constants.COUNTER_FLOWLET, new KafkaMessageCounterFlowlet())
       .connect()
-      .from(Constants.KAFKA_FLOWLET).to(Constants.COUNTER_FLOWLET)
+        .from(Constants.KAFKA_FLOWLET).to(Constants.COUNTER_FLOWLET)
       .build();
   }
 }
