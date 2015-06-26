@@ -90,7 +90,6 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
   private static final String FILESYSTEM_DESCRIPTION = "Distributed file system to read in from.";
   private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(FileBatchSource.class);
-  private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
   private static final Type ARRAYLIST_DATE_TYPE  = new TypeToken<ArrayList<Date>>() { }.getType();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
@@ -112,6 +111,9 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
 
   @Override
   public void prepareRun(BatchSourceContext context) throws Exception {
+    //SimpleDateFormat needs to be local because it is not threadsafe
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
+
     //calculate date one minute ago, rounded down to the nearest minute
     prevMinute = new Date(context.getLogicalStartTime() - TimeUnit.MINUTES.toMillis(1));
     Calendar cal = Calendar.getInstance();
@@ -149,7 +151,7 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
       conf.set(LAST_TIME_READ, datesToRead);
     }
 
-    conf.set(CUTOFF_READ_TIME, DATE_FORMAT.format(prevMinute));
+    conf.set(CUTOFF_READ_TIME, dateFormat.format(prevMinute));
     if (config.inputFormatClass != null) {
       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
       Class<? extends FileInputFormat> classType = (Class<? extends FileInputFormat>)
