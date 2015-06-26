@@ -26,7 +26,7 @@ import javax.annotation.Nullable;
 public interface WorkflowToken {
 
   /**
-   * Put the specified key-value entry in the {@link WorkflowToken}.
+   * Put the specified key-value entry into the {@link WorkflowToken}.
    * The token may store additional information about the context in which
    * this key is being set, for example, the unique name of the workflow node.
    * @param key   the key representing the entry
@@ -35,57 +35,12 @@ public interface WorkflowToken {
   void put(String key, String value);
 
   /**
-   * Same key can be added to the WorkflowToken by multiple nodes.
-   * This method returns the {@link List} of {@link NodeValueEntry}, where
-   * each entry represents the unique node name and the value that it set
-   * for the specified key.
-   * <p>
-   * The list maintains the order in which the values were
-   * inserted in the WorkflowToken for a specific key except in the case of fork
-   * and join. In case of fork in the Workflow, copies of the WorkflowToken are made
-   * and passed it along the each branch. At the join, all copies of the
-   * WorkflowToken are merged together. While merging, the values from the branch
-   * that was completed first will be added first to the WorkflowToken.
-   * <p>
-   *
-   * Example: Consider that the following values were added to the Workflow
-   * for the key "myKey". Numbers associated with the values represent
-   * unique node names -
-   *
-   * <p>
-   *   <pre>
-   *
-   *                3   4
-   *            |-->D-->E--|
-   * A-->B-->C-->           >-->H-->I
-   * 0   1   2  |-->F-->G--|    7   8
-   *                5   6
-   *
-   *  </pre>
-   * </p>
-   *
-   * Assume that the branch containing node 5 finishes the execution first.
-   *
-   * Now the method invocation getValues("myKey") will return the list
-   * in which the keys will be ordered as 0-1-2-5-6-3-4-7-8.
-   *
+   * Get the most recent value for the specified key.
    * @param key the key to be searched
-   * @return the list of {@link NodeValueEntry} from node name to the value that node
-   * added for the input key
+   * @return the value for the key
    */
-  List<NodeValueEntry> getAll(String key);
-
-  /**
-   * Get the {@link Map} of key-values that were added to the {@link WorkflowToken}
-   * by specific node.
-   * <p>
-   * This method also accepts the optional prefix parameter. When
-   * supplied, the returned map would be filtered by the keys prefixed by the input prefix.
-   * @param nodeName the unique name of the node
-   * @param prefix optional prefix to filter the keys
-   * @return the map of key-values that were added by the specified node
-   */
-  Map<String, String> getAllFromNode(String nodeName, @Nullable String prefix);
+  @Nullable
+  String get(String key);
 
   /**
    * Get the value set for the specified key by the specified node.
@@ -97,17 +52,45 @@ public interface WorkflowToken {
   String get(String key, String nodeName);
 
   /**
-   * Get the most recent value for the specified key.
+   * Same key can be added to the WorkflowToken by multiple nodes.
+   * This method returns the {@link List} of {@link NodeValueEntry}, where
+   * each entry represents the unique node name and the value that it set
+   * for the specified key.
+   * <p>
+   * The list maintains the order in which the values were
+   * inserted in the WorkflowToken for a specific key except in the case of fork
+   * and join. In case of fork in the Workflow, copies of the WorkflowToken are made
+   * and passed along each branch. At the join, all copies of the
+   * WorkflowToken are merged together. While merging, the order in which the values were
+   * inserted for a specific key is guaranteed within the same branch, but not across
+   * different branches.
    * @param key the key to be searched
-   * @return the value for the key
+   * @return the list of {@link NodeValueEntry} from node name to the value that node
+   * added for the input key
    */
-  @Nullable
-  String get(String key);
+  List<NodeValueEntry> getAll(String key);
+
+  /**
+   * Get the {@link Map} of key-values that were added to the {@link WorkflowToken}
+   * by specific node.
+   * <p>
+   * This method also accepts the optional prefix parameter. When
+   * supplied, the returned map is filtered by the keys prefixed by the input prefix.
+   * Prefix is matched along the "." boundries.
+   * <p>
+   * Example: Prefix "a.b" will match with the key "a.b" or any key starting
+   * with the "a.b.", however it will not match with the key "a.bc". MapReduce counters
+   * from the particular node can be retrieved using prefix "mr.counters".
+   * @param nodeName the unique name of the node
+   * @param prefix optional prefix to filter the keys
+   * @return the map of key-values that were added by the specified node
+   */
+  Map<String, String> getAllFromNode(String nodeName, @Nullable String prefix);
 
   /**
    * This method is deprecated as of release 3.1. Instead to get the
    * MapReduce counters from the WorkflowToken, use the flatten key prefixed
-   * by 'mr.counters.'.
+   * by 'mr.counters'.
    * <p>
    * Example:
    * <p>

@@ -126,6 +126,7 @@ public class ConditionalWorkflowApp extends AbstractApplication {
       FileOutputFormat.setOutputPath(job, new Path(outputPath));
       // Put something in the token
       context.getWorkflowToken().put("action_type", "MapReduce");
+      context.getWorkflowToken().put("start_time", String.valueOf(System.currentTimeMillis()));
     }
   }
 
@@ -159,6 +160,7 @@ public class ConditionalWorkflowApp extends AbstractApplication {
       WordCount.configureJob((Job) context.getHadoopJob(), inputPath, outputPath);
       // Put something in the token
       context.getWorkflowToken().put("action_type", "MapReduce");
+      context.getWorkflowToken().put("start_time", String.valueOf(System.currentTimeMillis()));
     }
 
     @Override
@@ -290,6 +292,8 @@ public class ConditionalWorkflowApp extends AbstractApplication {
       Preconditions.checkArgument(mapOutputRecords == prefixedMapOutputRecords);
       Preconditions.checkArgument(reduceInputRecords == prefixedReduceInputRecords);
       Preconditions.checkArgument(reduceOutputRecords == prefixedReduceOutputRecords);
+
+      Preconditions.checkArgument(1 == workflowToken.getAllFromNode(programName, "start_time").size());
     }
   }
 }

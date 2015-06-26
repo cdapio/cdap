@@ -100,7 +100,7 @@ public class BasicWorkflowToken implements WorkflowToken {
     for (Map.Entry<String, List<NodeValueEntry>> entry : tokenValueMap.entrySet()) {
 
       if (prefix != null) {
-        if (!entry.getKey().startsWith(prefix)) {
+        if (!entry.getKey().equals(prefix) && !entry.getKey().startsWith(prefix + ".")) {
           continue;
         }
       }
