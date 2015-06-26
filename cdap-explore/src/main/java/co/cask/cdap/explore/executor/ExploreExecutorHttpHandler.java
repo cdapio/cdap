@@ -24,13 +24,13 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.DatasetNotFoundException;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.service.ExploreException;
-import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.explore.service.ExploreTableManager;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
@@ -67,14 +67,17 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   private final ExploreTableManager exploreTableManager;
   private final DatasetFramework datasetFramework;
   private final StreamAdmin streamAdmin;
+  private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
 
   @Inject
   public ExploreExecutorHttpHandler(ExploreTableManager exploreTableManager,
                                     DatasetFramework datasetFramework,
-                                    StreamAdmin streamAdmin) {
+                                    StreamAdmin streamAdmin,
+                                    SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
     this.exploreTableManager = exploreTableManager;
     this.datasetFramework = datasetFramework;
     this.streamAdmin = streamAdmin;
+    this.datasetInstantiatorFactory = datasetInstantiatorFactory;
   }
 
   @POST
@@ -216,15 +219,16 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                            @PathParam("namespace-id") String namespaceId, @PathParam("dataset") String datasetName) {
     Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, datasetName);
     Dataset dataset;
-    try {
-      dataset = ExploreServiceUtils.instantiateDataset(datasetFramework, datasetInstanceId);
-    } catch (DatasetNotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetInstanceId);
-      return;
-    } catch (ClassNotFoundException e) {
-      JsonObject json = new JsonObject();
-      json.addProperty("handle", QueryHandle.NO_OP.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json);
+    try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
+      dataset = datasetInstantiator.getDataset(datasetInstanceId);
+
+      if (dataset == null) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetInstanceId);
+        return;
+      }
+    } catch (IOException e) {
+      LOG.error("Exception instantiating dataset {}.", datasetInstanceId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Exception instantiating dataset " + datasetName);
       return;
     }
 
@@ -274,15 +278,17 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                             @PathParam("dataset") String datasetName) {
     Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, datasetName);
     Dataset dataset;
-    try {
-      dataset = ExploreServiceUtils.instantiateDataset(datasetFramework, datasetInstanceId);
-    } catch (DatasetNotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetInstanceId);
-      return;
-    } catch (ClassNotFoundException e) {
-      JsonObject json = new JsonObject();
-      json.addProperty("handle", QueryHandle.NO_OP.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json);
+    try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
+
+      dataset = datasetInstantiator.getDataset(datasetInstanceId);
+      if (dataset == null) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetInstanceId);
+        return;
+      }
+    } catch (IOException e) {
+      LOG.error("Exception instantiating dataset {}.", datasetInstanceId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+        "Exception instantiating dataset " + datasetInstanceId);
       return;
     }
 

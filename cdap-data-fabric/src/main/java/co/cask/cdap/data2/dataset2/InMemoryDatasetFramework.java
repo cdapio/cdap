@@ -27,6 +27,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
@@ -377,6 +378,28 @@ public class InMemoryDatasetFramework implements DatasetFramework {
                                           Map<String, String> arguments,
                                           @Nullable ClassLoader classLoader) throws IOException {
     return getDataset(datasetInstanceId, arguments, classLoader, null);
+  }
+
+  @Nullable
+  @Override
+  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
+                                          @Nullable Map<String, String> arguments,
+                                          DatasetClassLoaderProvider classLoaderProvider,
+                                          @Nullable Iterable<? extends Id> owners) throws IOException {
+    readLock.lock();
+    try {
+      DatasetSpecification spec = instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
+      if (spec == null) {
+        return null;
+      }
+      LinkedHashSet<String> availableModuleClasses = getAvailableModuleClasses(datasetInstanceId.getNamespace());
+      DatasetDefinition def =
+        createRegistry(availableModuleClasses, classLoaderProvider.getParent()).get(spec.getType());
+      return (T) (def.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()),
+        spec, arguments, classLoaderProvider.getParent()));
+    } finally {
+      readLock.unlock();
+    }
   }
 
   @Override

@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.data2.datafabric.dataset.DatasetType;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
+import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
@@ -52,7 +53,7 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
                                      DatasetProperties props)
     throws Exception {
 
-    DatasetType type = client.getDatasetType(typeMeta, null);
+    DatasetType type = client.getDatasetType(typeMeta, new ConstantClassLoaderProvider());
 
     if (type == null) {
       throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
@@ -69,7 +70,7 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
   @Override
   public void drop(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta,
                    DatasetSpecification spec) throws Exception {
-    DatasetType type = client.getDatasetType(typeMeta, null);
+    DatasetType type = client.getDatasetType(typeMeta, new ConstantClassLoaderProvider());
 
     if (type == null) {
       throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
