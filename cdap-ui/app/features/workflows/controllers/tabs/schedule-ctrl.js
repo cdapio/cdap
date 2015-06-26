@@ -61,7 +61,7 @@ class ScheduleController {
     this.myWorkFlowApi.scheduleSuspend({
       appId: this.$state.params.appId,
       scheduleId: obj.schedule.name,
-      scope: $scope
+      scope: this.$scope
     }, {},
     function success() {},
     function error(err) {
@@ -76,7 +76,7 @@ class ScheduleController {
     this.myWorkFlowApi.scheduleResume({
       appId: this.$state.params.appId,
       scheduleId: obj.schedule.name,
-      scope: $scope
+      scope: this.$scope
     }, {},
     function success() {},
     function error(err) {
