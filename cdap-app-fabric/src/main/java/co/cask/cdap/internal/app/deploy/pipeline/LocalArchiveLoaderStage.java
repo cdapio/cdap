@@ -98,7 +98,7 @@ public class LocalArchiveLoaderStage extends AbstractStage<DeploymentInfo> {
     }
 
     InMemoryConfigurator inMemoryConfigurator =
-      new InMemoryConfigurator(new LocalLocationFactory().create(input.toURI()));
+      new InMemoryConfigurator(new LocalLocationFactory().create(input.toURI()), deploymentInfo.getConfigString());
     ListenableFuture<ConfigResponse> result = inMemoryConfigurator.config();
     ConfigResponse response = result.get(120, TimeUnit.SECONDS);
     if (response.getExitCode() != 0) {

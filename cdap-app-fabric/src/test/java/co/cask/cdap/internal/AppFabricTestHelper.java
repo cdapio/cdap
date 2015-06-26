@@ -37,7 +37,6 @@ import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
@@ -122,14 +121,23 @@ public class AppFabricTestHelper {
    *
    */
   public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
-                                       String appName) throws Exception {
+                                       String appName, String config) throws Exception {
     AppFabricClient appFabricClient = getInjector().getInstance(AppFabricClient.class);
-    Location deployedJar = appFabricClient.deployApplication(namespace, appName, applicationClz);
+    Location deployedJar = appFabricClient.deployApplication(namespace, appName, applicationClz, config);
     deployedJar.delete(true);
   }
 
+  public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz, String appName)
+    throws Exception {
+    deployApplication(namespace, applicationClz, appName, null);
+  }
+
   public static void deployApplication(Class<?> applicationClz, String appName) throws Exception {
-    deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, appName);
+    deployApplication(applicationClz, appName, null);
+  }
+
+  public static void deployApplication(Class<?> applicationClz, String appName, String config) throws Exception {
+    deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, appName, config);
   }
 
   public static ApplicationWithPrograms deployApplicationWithManager(Class<?> appClass,
@@ -137,7 +145,7 @@ public class AppFabricTestHelper {
     throws Exception {
     Location deployedJar = createAppJar(appClass);
     Location destination = new LocalLocationFactory().create(tempFolder.toURI()).append(deployedJar.getName());
-    DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination);
+    DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination, null);
     try {
       ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.NAMESPACE, null, info).get();
       // Transform program to get loadable, as the one created in deploy pipeline is not loadable.
