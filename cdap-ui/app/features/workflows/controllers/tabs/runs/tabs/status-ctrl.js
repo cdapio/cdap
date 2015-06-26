@@ -1,6 +1,7 @@
 'use strict';
 // FIXME: Needs to be re-thought.
 var runparams = {},
+    alertpromise,
     params;
 
 class WorkflowsRunsStatusController {
@@ -127,14 +128,14 @@ class WorkflowsRunsStatusController {
   }
 
   workflowProgramClick(instance) {
-    let stateParams = {
-      programId: instance.program.programName,
-      runid: this.runsCtrl.runs.selected.properties[instance.nodeId]
-    };
     if (['START', 'END'].indexOf(instance.type) > -1 ) {
       return;
     }
     if (this.runsCtrl.runs.length) {
+      let stateParams = {
+        programId: instance.program.programName,
+        runid: this.runsCtrl.runs.selected.properties[instance.nodeId]
+      };
       if (instance.program.programType === 'MAPREDUCE' &&
          this.runsCtrl.runs.selected.properties[instance.nodeId]
         ) {
@@ -145,10 +146,18 @@ class WorkflowsRunsStatusController {
         this.$state.go('spark.detail.runs.run', stateParams);
       }
     } else {
-      $alert({
+      var errorObj = {
         type: 'info',
-        content: 'No runs for the workflow: '+ this.$state.params.programId +' yet.'
-      });
+        scope: this.$scope,
+        content: `No runs for the workflow: ${this.$state.params.programId} yet.`
+      }, e;
+      if (!alertpromise) {
+        alertpromise = this.$alert(errorObj);
+        e = this.$scope.$on('alert.hide',() => {
+          alertpromise = null;
+          e(); // un-register from listening to the hide event of a closed alert.
+        });
+      }
     }
   };
 
@@ -173,5 +182,5 @@ class WorkflowsRunsStatusController {
 }
 
 WorkflowsRunsStatusController.$inject = ['$state', '$scope', 'myWorkFlowApi', '$filter', '$alert', 'GraphHelpers', 'MyDataSource', 'myMapreduceApi'];
-angular.module(PKG.name + '.feature.workflows')
+angular.module(`${PKG.name}.feature.workflows`)
   .controller('WorkflowsRunsStatusController', WorkflowsRunsStatusController);
