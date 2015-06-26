@@ -50,7 +50,8 @@ public class BasicWorkflowToken implements WorkflowToken {
     for (Map.Entry<String, List<NodeValueEntry>> entry : otherTokenValueMap.entrySet()) {
       if (!tokenValueMap.containsKey(entry.getKey())) {
         // Key is newly added to the other WorkflowToken
-        tokenValueMap.put(entry.getKey(), Lists.<NodeValueEntry>newArrayList());
+        tokenValueMap.put(entry.getKey(), entry.getValue());
+        continue;
       }
 
       // Iterate over the list of NodeValueEntry corresponding to the current key.
