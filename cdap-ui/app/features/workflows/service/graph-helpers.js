@@ -1,5 +1,5 @@
 'use strict';
-angular.module(PKG.name + '.services')
+angular.module(`${PKG.name}.services`)
   .factory('GraphHelpers', function() {
 
     /**
@@ -143,9 +143,9 @@ angular.module(PKG.name + '.services')
     }
 
     return {
-      convertNodesToEdges: convertNodesToEdges,
-      expandNodes: expandNodes,
-      addStartAndEnd: addStartAndEnd
+      convertNodesToEdges,
+      expandNodes,
+      addStartAndEnd
     };
 
   });

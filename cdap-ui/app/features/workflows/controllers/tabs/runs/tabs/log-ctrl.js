@@ -19,5 +19,5 @@ class WorkFlowsRunDetailLogController {
 }
 
 WorkFlowsRunDetailLogController.$inject = ['$scope', 'myWorkFlowApi', '$state'];
-angular.module(PKG.name + '.feature.workflows')
+angular.module(`${PKG.name}.feature.workflows`)
   .controller('WorkFlowsRunDetailLogController', WorkFlowsRunDetailLogController);

@@ -88,5 +88,5 @@ class ScheduleController {
   }
 }
 ScheduleController.$inject = ['$scope', 'myWorkFlowApi', '$state']
-angular.module(PKG.name + '.feature.workflows')
+angular.module(`${PKG.name}.feature.workflows`)
   .controller('WorkflowsSchedulesController', ScheduleController);
