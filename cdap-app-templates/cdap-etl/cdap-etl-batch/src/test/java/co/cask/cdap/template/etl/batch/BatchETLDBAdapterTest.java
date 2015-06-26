@@ -368,7 +368,7 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
     AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
     AdapterManager manager = createAdapter(adapterId, adapterConfig);
 
-//    createInputData();
+    createInputData();
     manager.start();
     manager.waitForOneRunToFinish(5, TimeUnit.MINUTES);
     manager.stop();

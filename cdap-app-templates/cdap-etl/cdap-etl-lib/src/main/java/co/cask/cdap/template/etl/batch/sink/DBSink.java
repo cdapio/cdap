@@ -87,17 +87,17 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     Preconditions.checkArgument(!(dbSinkConfig.user != null && dbSinkConfig.password == null),
                                 "dbPassword is null. Please provide both user name and password if database requires" +
                                   "authentication. If not, please remove dbUser and retry.");
-    Class<? extends Driver> jdbcDriverClass = pipelineConfigurer.usePluginClass(dbSinkConfig.jdbcPluginType,
+    driverClass = pipelineConfigurer.usePluginClass(dbSinkConfig.jdbcPluginType,
                                                                                 dbSinkConfig.jdbcPluginName,
                                                                                 getJDBCPluginId(),
                                                                                 PluginProperties.builder().build());
-    Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
+    Preconditions.checkArgument(driverClass != null, "JDBC Driver class must be found.");
     try {
-      Preconditions.checkArgument(tableExists(jdbcDriverClass), "Invalid table name %s", dbSinkConfig.tableName);
+      validateDBConnection();
     } catch (Exception e) {
       throw new IllegalArgumentException(e);
     } finally {
-      DBUtils.cleanup(jdbcDriverClass);
+      destroy();
     }
   }
 
@@ -151,7 +151,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
   }
 
   private void setResultSetMetadata() throws Exception {
-    ensureJDBCDriverIsAvailable(driverClass);
+    ensureJDBCDriverIsAvailable();
     try (Connection connection = createConnection()) {
       try (Statement statement = connection.createStatement();
            // Using LIMIT even though its not SQL standard since DBInputFormat already depends on it
@@ -168,24 +168,32 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
    *
    * @throws Exception if the driver is not available
    */
-  private void ensureJDBCDriverIsAvailable(Class<? extends Driver> jdbcDriverClass) throws Exception {
+  private void ensureJDBCDriverIsAvailable() throws Exception {
     try {
       DriverManager.getDriver(dbSinkConfig.connectionString);
     } catch (SQLException e) {
       // Driver not found. We will try to register it with the DriverManager.
       LOG.debug("Plugin Type: {} and Plugin Name: {}; Driver Class: {} not found. Registering JDBC driver via shim {} ",
-                dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName, jdbcDriverClass.getName(),
+                dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName, driverClass.getName(),
                 JDBCDriverShim.class.getName());
       if (driverShim == null) {
-        driverShim = new JDBCDriverShim(jdbcDriverClass.newInstance());
+        driverShim = new JDBCDriverShim(driverClass.newInstance());
       }
-      DBUtils.deregisterAllDrivers(jdbcDriverClass);
+
+      // When JDBC Driver class is loaded, the driver class automatically registers itself with DriverManager.
+      // However, this driver is not usable due to different classloader used in plugins.
+      // Hence de-register this driver class, and any other driver classes registered by this classloader.
+      DBUtils.deregisterAllDrivers(driverClass);
       DriverManager.registerDriver(driverShim);
     }
   }
 
-  private boolean tableExists(Class<? extends Driver> jdbcDriverClass) throws Exception {
-    ensureJDBCDriverIsAvailable(jdbcDriverClass);
+  private void validateDBConnection() throws Exception {
+    ensureJDBCDriverIsAvailable();
+    Preconditions.checkArgument(tableExists(), "Invalid table name %s", dbSinkConfig.tableName);
+  }
+
+  private boolean tableExists() throws SQLException {
     try (Connection connection = createConnection();
          ResultSet rs = connection.getMetaData().getTables(null, null, dbSinkConfig.tableName, null)) {
       return rs.next();
