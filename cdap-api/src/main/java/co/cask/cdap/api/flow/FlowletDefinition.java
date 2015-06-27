@@ -18,9 +18,11 @@ package co.cask.cdap.api.flow;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.internal.flow.DefaultFlowletConfigurer;
 import co.cask.cdap.internal.flowlet.DefaultFlowletSpecification;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.internal.lang.Reflections;
@@ -55,8 +57,17 @@ public final class FlowletDefinition {
   private Map<String, Set<Schema>> inputs;
   private Map<String, Set<Schema>> outputs;
 
-  FlowletDefinition(String flowletName, Flowlet flowlet, int instances) {
+  public FlowletDefinition(String flowletName, Flowlet flowlet, int instances) {
     FlowletSpecification flowletSpec = flowlet.configure();
+    if (flowlet instanceof AbstractFlowlet && flowletSpec == null) {
+      DefaultFlowletConfigurer flowletConfigurer = new DefaultFlowletConfigurer(flowlet);
+      AbstractFlowlet abstractFlowlet = (AbstractFlowlet) flowlet;
+      abstractFlowlet.configure(flowletConfigurer);
+      flowletSpec = flowletConfigurer.createSpecification();
+    } else {
+      flowletSpec = FlowletSpecification.Builder.with().setName(
+        flowlet.getClass().getSimpleName()).setDescription("").build();
+    }
 
     this.instances = instances;
 

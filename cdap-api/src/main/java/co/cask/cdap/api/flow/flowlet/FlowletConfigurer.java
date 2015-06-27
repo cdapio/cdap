@@ -16,14 +16,55 @@
 
 package co.cask.cdap.api.flow.flowlet;
 
+import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.dataset.Dataset;
+
+import java.util.Map;
+
 /**
- * Interface for configuring {@link Flowlet}.
+ * Configurer for configuring {@link Flowlet}.
  */
 public interface FlowletConfigurer {
 
+  /**
+   * Sets the name of the {@link Flowlet}.
+   *
+   * @param name name of the flowlet
+   */
   void setName(String name);
 
+  /**
+   * Sets the description of the {@link Flowlet}.
+   *
+   * @param description description of the flowlet
+   */
   void setDescription(String description);
 
-  void
+  /**
+   * Sets the resource requirements for the {@link Flowlet}.
+   *
+   * @param resources {@link Resources}
+   */
+  void setResources(Resources resources);
+
+  /**
+   * Sets the failure policy for the {@link Flowlet}.
+   *
+   * @param failurePolicy {@link FailurePolicy}
+   */
+  void setFailurePolicy(FailurePolicy failurePolicy);
+
+  /**
+   * Sets a set of properties that will be available through {@link FlowletSpecification} at runtime.
+   *
+   * @param properties properties
+   */
+  void setProperties(Map<String, String> properties);
+
+  /**
+   * Adds the names of {@link Dataset}s used by the flowlet.
+   *
+   * @param datasets dataset names
+   */
+  void useDatasets(Iterable<String> datasets);
 }
