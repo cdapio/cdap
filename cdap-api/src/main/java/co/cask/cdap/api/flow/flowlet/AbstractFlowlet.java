@@ -149,7 +149,8 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
   @Deprecated
   @Override
   public FlowletSpecification configure() {
-    return null;
+    return FlowletSpecification.Builder.with().setName(getName())
+      .setDescription(getDescription()).build();
   }
 
   @Override

@@ -64,9 +64,6 @@ public final class FlowletDefinition {
       AbstractFlowlet abstractFlowlet = (AbstractFlowlet) flowlet;
       abstractFlowlet.configure(flowletConfigurer);
       flowletSpec = flowletConfigurer.createSpecification();
-    } else {
-      flowletSpec = FlowletSpecification.Builder.with().setName(
-        flowlet.getClass().getSimpleName()).setDescription("").build();
     }
 
     this.instances = instances;
