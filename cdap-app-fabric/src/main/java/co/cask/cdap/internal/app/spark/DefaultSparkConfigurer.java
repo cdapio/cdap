@@ -19,8 +19,11 @@ package co.cask.cdap.internal.app.spark;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkConfigurer;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.reflect.TypeToken;
 
 import java.util.Collections;
 import java.util.Map;
@@ -30,14 +33,14 @@ import java.util.Map;
  */
 public final class DefaultSparkConfigurer implements SparkConfigurer {
 
-  private final String className;
+  private final Spark spark;
   private String name;
   private String description;
   private String mainClassName;
   private Map<String, String> properties;
 
   public DefaultSparkConfigurer(Spark spark) {
-    this.className = spark.getClass().getName();
+    this.spark = spark;
     this.name = spark.getClass().getSimpleName();
     this.description = "";
     this.properties = Collections.emptyMap();
@@ -65,6 +68,8 @@ public final class DefaultSparkConfigurer implements SparkConfigurer {
   }
 
   public SparkSpecification createSpecification() {
-    return new SparkSpecification(className, name, description, mainClassName, properties);
+    // Grab all @Property fields
+    Reflections.visit(spark, TypeToken.of(spark.getClass()), new PropertyFieldExtractor(properties));
+    return new SparkSpecification(spark.getClass().getName(), name, description, mainClassName, properties);
   }
 }

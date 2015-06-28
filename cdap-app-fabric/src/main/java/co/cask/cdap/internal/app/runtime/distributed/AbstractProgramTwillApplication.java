@@ -41,6 +41,14 @@ public abstract class AbstractProgramTwillApplication implements TwillApplicatio
   private final Map<String, File> localizeFiles;
   private final EventHandler eventHandler;
 
+  /**
+   * Constructor.
+   *
+   * @param program represents the program to be launched in Twill
+   * @param localizeFiles set of files to be localized to the Twill container
+   * @param eventHandler An {@link EventHandler} for the Twill application which will be set to the
+   *                     Twill application specification
+   */
   protected AbstractProgramTwillApplication(Program program,
                                             Map<String, File> localizeFiles, EventHandler eventHandler) {
     this.program = program;

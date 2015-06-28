@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.spark;
-
-import co.cask.cdap.api.annotation.Beta;
-
 /**
- * Defines an interface for User's Spark job written in Java
+ * This package contains ClassLoader implementation for overriding class loading behavior in Spark 1.2.
  */
-@Beta
-public interface JavaSparkProgram extends SparkProgram {
-
-}
+package org.apache.spark.executor;

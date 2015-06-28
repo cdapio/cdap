@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.api.spark;
+package co.cask.cdap.internal.app.runtime.spark.dataset;
 
-import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.data.batch.BatchWritable;
+
+import java.io.Closeable;
 
 /**
- * Defines an interface for User's Spark job written in Java
+ * A {@link BatchWritable} that is also {@link Closeable}.
+ *
+ * @param <K> The key type.
+ * @param <V> The value type.
  */
-@Beta
-public interface JavaSparkProgram extends SparkProgram {
-
+public interface CloseableBatchWritable<K, V> extends BatchWritable<K, V>, Closeable {
 }

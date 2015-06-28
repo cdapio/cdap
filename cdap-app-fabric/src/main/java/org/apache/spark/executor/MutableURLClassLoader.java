@@ -14,21 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.spark
+package org.apache.spark.executor;
 
-import org.apache.spark.scheduler.{JobSucceeded, SparkListener, SparkListenerJobEnd}
+import java.net.URL;
 
 /**
- * Listens to events on running Spark Programs. Currently this listener only perform operations
- * on SparkListener.onJobEnd.
+ * Replaces the interface defined in Spark 1.2. We need this because CDAP has dependency on Spark 1.3, hence doesn't
+ * have this interface for the {@link ExecutorURLClassLoader} to implements for Spark 1.2 compatibility.
  */
-class SparkProgramListener extends SparkListener {
+public interface MutableURLClassLoader {
 
-  override def onJobEnd(jobEnd: SparkListenerJobEnd) {
+  /**
+   * Add a URL.
+   */
+  void addURL(URL url);
 
-    jobEnd.jobResult match {
-      case JobSucceeded => SparkProgramWrapper.setSparkProgramSuccessful(true)
-      case _ => SparkProgramWrapper.setSparkProgramSuccessful(false)
-    }
-  }
+  /**
+   * Gets all URLs from this class loader.
+   */
+  URL[] getURLs();
 }
