@@ -26,15 +26,18 @@ import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
+import com.google.common.io.Closeables;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import javax.annotation.Nullable;
 
 /**
  * Creates a {@link ClassLoader} for a {@link DatasetModuleMeta} by unpacking the dataset jar and creating a
@@ -44,33 +47,26 @@ import javax.annotation.Nullable;
  */
 public class DirectoryClassLoaderProvider implements DatasetClassLoaderProvider {
   private static final Logger LOG = LoggerFactory.getLogger(DirectoryClassLoaderProvider.class);
-  private final ClassLoader parentClassLoader;
-  private final LoadingCache<URI, ClassLoader> classLoaders;
+  private final LoadingCache<CacheKey, ClassLoader> classLoaders;
   private final LocationFactory locationFactory;
   private final File tmpDir;
 
   public DirectoryClassLoaderProvider(CConfiguration cConf,
-                                      @Nullable ClassLoader parentClassLoader,
                                       LocationFactory locationFactory) {
-    this.parentClassLoader = parentClassLoader == null ?
-      Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader()) :
-      parentClassLoader;
     this.locationFactory = locationFactory;
-    this.classLoaders = CacheBuilder.newBuilder().build(new ClassLoaderCacheLoader());
+    this.classLoaders = CacheBuilder.newBuilder()
+      .removalListener(new ClassLoaderRemovalListener())
+      .build(new ClassLoaderCacheLoader());
     File baseDir =
       new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.tmpDir = DirUtils.createTempDir(baseDir);
   }
 
   @Override
-  public ClassLoader get(DatasetModuleMeta moduleMeta) throws IOException {
+  public ClassLoader get(DatasetModuleMeta moduleMeta, ClassLoader parentClassLoader) throws IOException {
     URI jarLocation = moduleMeta.getJarLocation();
-    return jarLocation == null ? parentClassLoader : classLoaders.getUnchecked(jarLocation);
-  }
-
-  @Override
-  public ClassLoader getParent() {
-    return parentClassLoader;
+    return jarLocation == null ?
+      parentClassLoader : classLoaders.getUnchecked(new CacheKey(jarLocation, parentClassLoader));
   }
 
   @Override
@@ -84,23 +80,63 @@ public class DirectoryClassLoaderProvider implements DatasetClassLoaderProvider 
       LOG.warn("Failed to delete directory {}", tmpDir);
     }
   }
+  
+  private static final class ClassLoaderRemovalListener implements RemovalListener<CacheKey, ClassLoader> {
+    @Override
+    public void onRemoval(RemovalNotification<CacheKey, ClassLoader> notification) {
+      ClassLoader cl = notification.getValue();
+      if (cl instanceof Closeable) {
+        Closeables.closeQuietly((Closeable) cl);
+      }
+    }
+  }
+
+  private final class CacheKey {
+    private final URI uri;
+    private final ClassLoader parentClassLoader;
+
+    public CacheKey(URI uri, ClassLoader parentClassLoader) {
+      this.uri = uri;
+      this.parentClassLoader = parentClassLoader;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      CacheKey that = (CacheKey) o;
+
+      return Objects.equal(this.uri, that.uri);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(uri);
+    }
+  }
 
   /**
    * A CacheLoader that will copy the jar to a temporary location, unpack it, and create a DirectoryClassLoader.
    */
-  private final class ClassLoaderCacheLoader extends CacheLoader<URI, ClassLoader> {
+  private final class ClassLoaderCacheLoader extends CacheLoader<CacheKey, ClassLoader> {
 
     @Override
-    public ClassLoader load(URI jarURI) throws Exception {
-      if (jarURI == null) {
-        return parentClassLoader;
+    public ClassLoader load(CacheKey key) throws Exception {
+      if (key.uri == null) {
+        return key.parentClassLoader;
       }
-      Location jarLocation = locationFactory.create(jarURI);
+      Location jarLocation = locationFactory.create(key.uri);
       File unpackedDir = DirUtils.createTempDir(tmpDir);
       BundleJarUtil.unpackProgramJar(jarLocation, unpackedDir);
-      LOG.trace("unpacking dataset jar from {} to {}.", jarURI.toString(), unpackedDir.getAbsolutePath());
+      LOG.trace("unpacking dataset jar from {} to {}.", key.uri.toString(), unpackedDir.getAbsolutePath());
 
-      return new DirectoryClassLoader(unpackedDir, parentClassLoader);
+      return new DirectoryClassLoader(unpackedDir, key.parentClassLoader);
     }
   }
 }

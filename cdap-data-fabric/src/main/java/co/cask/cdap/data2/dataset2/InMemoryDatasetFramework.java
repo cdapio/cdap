@@ -384,6 +384,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   @Override
   public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
                                           @Nullable Map<String, String> arguments,
+                                          @Nullable ClassLoader parentClassLoader,
                                           DatasetClassLoaderProvider classLoaderProvider,
                                           @Nullable Iterable<? extends Id> owners) throws IOException {
     readLock.lock();
@@ -394,9 +395,9 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       }
       LinkedHashSet<String> availableModuleClasses = getAvailableModuleClasses(datasetInstanceId.getNamespace());
       DatasetDefinition def =
-        createRegistry(availableModuleClasses, classLoaderProvider.getParent()).get(spec.getType());
+        createRegistry(availableModuleClasses, parentClassLoader).get(spec.getType());
       return (T) (def.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()),
-        spec, arguments, classLoaderProvider.getParent()));
+        spec, arguments, parentClassLoader));
     } finally {
       readLock.unlock();
     }

@@ -103,8 +103,8 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
 
     LOG.info("Creating dataset instance {}.{}, type meta: {}, props: {}", namespaceId, name, typeMeta, props);
     try (DatasetClassLoaderProvider classLoaderProvider =
-           new DirectoryClassLoaderProvider(cConf, null, locationFactory)) {
-      DatasetType type = dsFramework.getDatasetType(typeMeta, classLoaderProvider);
+           new DirectoryClassLoaderProvider(cConf, locationFactory)) {
+      DatasetType type = dsFramework.getDatasetType(typeMeta, null, classLoaderProvider);
 
       if (type == null) {
         String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);
@@ -136,8 +136,8 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
 
     LOG.info("Dropping dataset with spec: {}, type meta: {}", spec, typeMeta);
     try (DatasetClassLoaderProvider classLoaderProvider =
-           new DirectoryClassLoaderProvider(cConf, null, locationFactory)) {
-      DatasetType type = dsFramework.getDatasetType(typeMeta, classLoaderProvider);
+           new DirectoryClassLoaderProvider(cConf, locationFactory)) {
+      DatasetType type = dsFramework.getDatasetType(typeMeta, null, classLoaderProvider);
 
       if (type == null) {
         String msg = String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta);

@@ -23,6 +23,7 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Objects;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -41,13 +42,18 @@ public class SystemDatasetInstantiator implements Closeable {
   // provides classloaders to use for different dataset modules
   private final DatasetClassLoaderProvider classLoaderProvider;
   private final Iterable<? extends Id> owners;
+  private final ClassLoader parentClassLoader;
 
   SystemDatasetInstantiator(DatasetFramework datasetFramework,
+                            @Nullable ClassLoader parentClassLoader,
                             DatasetClassLoaderProvider classLoaderProvider,
                             @Nullable Iterable<? extends Id> owners) {
     this.owners = owners;
     this.classLoaderProvider = classLoaderProvider;
     this.datasetFramework = datasetFramework;
+    this.parentClassLoader = parentClassLoader == null ?
+      Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader()) :
+      parentClassLoader;
   }
 
   public <T extends Dataset> T getDataset(Id.DatasetInstance datasetId)
@@ -65,7 +71,7 @@ public class SystemDatasetInstantiator implements Closeable {
         throw new DatasetInstantiationException("Trying to access dataset that does not exist: " + datasetId);
       }
 
-      dataset = datasetFramework.getDataset(datasetId, arguments, classLoaderProvider, owners);
+      dataset = datasetFramework.getDataset(datasetId, arguments, parentClassLoader, classLoaderProvider, owners);
       if (dataset == null) {
         throw new DatasetInstantiationException("Failed to access dataset: " + datasetId);
       }

@@ -30,16 +30,9 @@ public interface DatasetClassLoaderProvider extends Closeable {
    * Get the classloader for a specific dataset module.
    *
    * @param moduleMeta the metadata for the dataset module to get a classloader for
+   * @param parentClassLoader the class loader to use as the parent
    * @return classloader for the given dataset module
    * @throws IOException
    */
-  ClassLoader get(DatasetModuleMeta moduleMeta) throws IOException;
-
-  /**
-   * Get the parent classloader for module classloaders
-   *
-   * @return the parent classloader for module classloaders
-   * @throws IOException
-   */
-  ClassLoader getParent();
+  ClassLoader get(DatasetModuleMeta moduleMeta, ClassLoader parentClassLoader) throws IOException;
 }

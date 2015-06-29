@@ -223,12 +223,14 @@ public interface DatasetFramework {
     throws DatasetManagementException, IOException;
 
   /**
-   * Gets dataset to be used to perform data operations.
+   * Gets dataset to be used to perform data operations. This one is used when the classloader(s) for a dataset may
+   * create some resources that need to be cleaned up on close.
    *
    * @param <T> dataset type to be returned
    * @param datasetInstanceId dataset instance id
    * @param arguments runtime arguments for the dataset instance
-   * @param classLoaderProvider providers to get classloaders for different dataset modules
+   * @param classLoader parent classLoader to be used to load classes or {@code null} to use system classLoader
+   * @param classLoaderProvider provider to get classloaders for different dataset modules
    * @param owners owners of the dataset
    * @return instance of dataset or {@code null} if dataset instance of this name doesn't exist.
    * @throws DatasetManagementException when there's trouble getting dataset meta info
@@ -236,6 +238,7 @@ public interface DatasetFramework {
    */
   @Nullable
   <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
+                                   @Nullable ClassLoader classLoader,
                                    DatasetClassLoaderProvider classLoaderProvider,
                                    @Nullable Iterable<? extends Id> owners)
     throws DatasetManagementException, IOException;

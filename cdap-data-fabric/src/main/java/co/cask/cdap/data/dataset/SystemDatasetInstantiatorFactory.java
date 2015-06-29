@@ -49,8 +49,8 @@ public class SystemDatasetInstantiatorFactory {
   }
 
   public SystemDatasetInstantiator create(@Nullable ClassLoader parentClassLoader) {
-    return new SystemDatasetInstantiator(datasetFramework,
-      new DirectoryClassLoaderProvider(cConf, parentClassLoader, locationFactory),
+    return new SystemDatasetInstantiator(datasetFramework, parentClassLoader,
+      new DirectoryClassLoaderProvider(cConf, locationFactory),
       null);
   }
 

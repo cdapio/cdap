@@ -53,7 +53,7 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
                                      DatasetProperties props)
     throws Exception {
 
-    DatasetType type = client.getDatasetType(typeMeta, new ConstantClassLoaderProvider());
+    DatasetType type = client.getDatasetType(typeMeta, null, new ConstantClassLoaderProvider());
 
     if (type == null) {
       throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
@@ -70,7 +70,7 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
   @Override
   public void drop(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta,
                    DatasetSpecification spec) throws Exception {
-    DatasetType type = client.getDatasetType(typeMeta, new ConstantClassLoaderProvider());
+    DatasetType type = client.getDatasetType(typeMeta, null, new ConstantClassLoaderProvider());
 
     if (type == null) {
       throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);

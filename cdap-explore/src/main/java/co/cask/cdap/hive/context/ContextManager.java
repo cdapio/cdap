@@ -138,10 +138,6 @@ public class ContextManager {
       this(datasetFramework, streamAdmin, null, datasetInstantiatorFactory);
     }
 
-    public StreamAdmin getStreamAdmin() {
-      return streamAdmin;
-    }
-
     public StreamConfig getStreamConfig(Id.Stream streamId) throws IOException {
       return streamAdmin.getConfig(streamId);
     }

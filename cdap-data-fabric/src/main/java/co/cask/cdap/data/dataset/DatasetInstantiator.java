@@ -62,8 +62,8 @@ public class DatasetInstantiator implements DatasetContext {
     this.namespace = namespace;
     this.metricsContext = metricsContext;
     this.txAware = Sets.newIdentityHashSet();
-    this.datasetInstantiator =
-      new SystemDatasetInstantiator(datasetFramework, new ConstantClassLoaderProvider(classLoader), owners);
+    this.datasetInstantiator = new SystemDatasetInstantiator(
+      datasetFramework, classLoader, new ConstantClassLoaderProvider(classLoader), owners);
   }
 
   @Override

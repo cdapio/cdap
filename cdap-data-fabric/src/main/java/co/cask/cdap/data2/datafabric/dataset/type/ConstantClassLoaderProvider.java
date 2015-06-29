@@ -42,12 +42,7 @@ public class ConstantClassLoaderProvider implements DatasetClassLoaderProvider {
   }
 
   @Override
-  public ClassLoader get(DatasetModuleMeta moduleMeta) throws IOException {
-    return classLoader;
-  }
-
-  @Override
-  public ClassLoader getParent() {
+  public ClassLoader get(DatasetModuleMeta moduleMeta, ClassLoader parentClassLoader) throws IOException {
     return classLoader;
   }
 
