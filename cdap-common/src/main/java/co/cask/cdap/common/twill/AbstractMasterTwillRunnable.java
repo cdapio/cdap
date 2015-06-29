@@ -110,6 +110,7 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
       service.addListener(createServiceListener(service.getClass().getName(), completionFuture),
           Threads.SAME_THREAD_EXECUTOR);
     }
+
     Services.chainStart(services.get(0), services.subList(1, services.size()).toArray(new Service[0]));
     LOG.info("Runnable started {}", name);
 
@@ -132,11 +133,6 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
 
   private Service.Listener createServiceListener(final String name, final SettableFuture<String> future) {
     return new ServiceListenerAdapter() {
-      @Override
-      public void starting() {
-        super.starting();
-      }
-
       @Override
       public void terminated(Service.State from) {
         LOG.info("Service " + name + " terminated");

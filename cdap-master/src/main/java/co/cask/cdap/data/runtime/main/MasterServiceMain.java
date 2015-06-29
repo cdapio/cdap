@@ -392,9 +392,8 @@ public class MasterServiceMain extends DaemonMain {
           TwillController twillController = controller.get();
           if (twillController != null) {
             try {
-              twillController.terminate().get();
-            } catch (InterruptedException e) {
-              LOG.error("Twill controller termination interrupted while stopping master ", e);
+              twillController.terminate();
+              twillController.awaitTerminated();
             } catch (ExecutionException e) {
               LOG.error("Exception while stopping master ", e);
             }
@@ -545,6 +544,7 @@ public class MasterServiceMain extends DaemonMain {
         if (result != null) {
           LOG.warn("Stopping one extra instance of {}", Constants.Service.MASTER_SERVICES);
           try {
+            controller.terminate();
             controller.awaitTerminated();
           } catch (ExecutionException e) {
             LOG.warn("Exception while Stopping one extra instance of {} - {}", Constants.Service.MASTER_SERVICES, e);
@@ -605,9 +605,6 @@ public class MasterServiceMain extends DaemonMain {
           // TokenSecureStoreUpdater.update() ignores parameters
           preparer.addSecureStore(secureStoreUpdater.update(null, null));
         }
-
-        preparer.withClassPaths(Splitter.on(',').trimResults()
-                                  .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, "")));
 
         // Add explore dependencies
         if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {

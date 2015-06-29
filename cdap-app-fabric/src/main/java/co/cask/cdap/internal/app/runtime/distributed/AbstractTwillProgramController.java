@@ -62,6 +62,7 @@ abstract class AbstractTwillProgramController extends AbstractProgramController 
         started();
       }
     }, Threads.SAME_THREAD_EXECUTOR);
+
     twillController.onTerminated(new Runnable() {
       @Override
       public void run() {
@@ -91,35 +92,7 @@ abstract class AbstractTwillProgramController extends AbstractProgramController 
   @Override
   protected final void doStop() throws Exception {
     stopRequested = true;
+    twillController.terminate();
     twillController.awaitTerminated();
   }
-
-/*  private TwillController.Listener createTwillListener() {
-    return new ServiceListenerAdapter() {
-
-      @Override
-      public void running() {
-        LOG.info("Twill program running: {} {}", programName, twillController.getRunId());
-        started();
-      }
-
-      @Override
-      public void terminated(Service.State from) {
-        LOG.info("Twill program terminated: {} {}", programName, twillController.getRunId());
-        if (stopRequested) {
-          // Service was killed
-          stop();
-        } else {
-          // Service completed by itself. Simply signal the state change of this controller.
-          complete();
-        }
-      }
-
-      @Override
-      public void failed(Service.State from, Throwable failure) {
-        LOG.info("Twill program failed: {} {}", programName, twillController.getRunId());
-        error(failure);
-      }
-    };
-  }*/
 }
