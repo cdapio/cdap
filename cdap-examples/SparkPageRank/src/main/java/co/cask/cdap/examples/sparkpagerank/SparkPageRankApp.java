@@ -187,9 +187,9 @@ public class SparkPageRankApp extends AbstractApplication {
     @Path(TOTAL_PAGES_PATH + "/{pr}")
     @GET
     public void centers(HttpServiceRequest request, HttpServiceResponder responder,
-                        @PathParam("pr") String pageRank) {
+                        @PathParam("pr") Integer pageRank) {
 
-      Integer totalPages = store.read(Bytes.toBytes(Integer.parseInt(pageRank)));
+      Integer totalPages = store.read(Bytes.toBytes(pageRank));
       if (totalPages == null) {
         responder.sendString(HttpURLConnection.HTTP_NO_CONTENT,
                              String.format("No pages found with pr: %s", pageRank), Charsets.UTF_8);
