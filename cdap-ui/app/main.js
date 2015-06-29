@@ -53,7 +53,6 @@ angular
       'mgcrea.ngStrap.select',
       'mgcrea.ngStrap.collapse',
       'mgcrea.ngStrap.button',
-      'mgcrea.ngStrap.tab',
 
       // 'mgcrea.ngStrap.modal',
       'ui.bootstrap.modal',
@@ -63,7 +62,6 @@ angular
 
       'ncy-angular-breadcrumb',
       'angularMoment',
-      'ui.select',
       'ui.ace',
       'gridster'
 
