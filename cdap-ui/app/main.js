@@ -52,7 +52,6 @@ angular
       'mgcrea.ngStrap.typeahead',
       'mgcrea.ngStrap.select',
       'mgcrea.ngStrap.collapse',
-      'mgcrea.ngStrap.button',
 
       // 'mgcrea.ngStrap.modal',
       'ui.bootstrap.modal',

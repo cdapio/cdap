@@ -74,7 +74,6 @@ gulp.task('js:lib', function() {
       './bower_components/angular-ui-router/release/angular-ui-router.js',
 
       './bower_components/angular-strap/dist/modules/dimensions.js',
-      './bower_components/angular-strap/dist/modules/button.js',
       './bower_components/angular-strap/dist/modules/tooltip.js',
       './bower_components/angular-strap/dist/modules/tooltip.tpl.js',
       './bower_components/angular-strap/dist/modules/dropdown.js',
