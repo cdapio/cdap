@@ -6,12 +6,12 @@ angular.module(PKG.name+'.commons')
     scope: {
       params: '='
     },
-    controller: function($rootScope, $location, $scope) {
+    controller: function($location, $scope) {
       var listener = $scope.$on('$stateChangeSuccess', function () {
         $location.search('sourceId', null);
         $location.search('sourceRunId', null);
 
-        listener();
+        listener(); // removing listener, to make sure that this event only gets triggered once
       });
     }
   };

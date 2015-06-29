@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.mapreduce')
-  .controller('MapreduceRunsController', function($scope, $state, $rootScope, rRuns, $filter, $location) {
+  .controller('MapreduceRunsController', function($scope, $state, $rootScope, rRuns, $filter) {
     var fFilter = $filter('filter'),
         match;
     this.runs = rRuns;
