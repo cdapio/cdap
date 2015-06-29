@@ -5,7 +5,7 @@ var runparams = {},
     params;
 
 class WorkflowsRunsStatusController {
-  constructor($state, $scope, myWorkFlowApi, $filter, $alert, GraphHelpers, MyDataSource, myMapreduceApi) {
+  constructor($state, $scope, myWorkFlowApi, $filter, $alert, GraphHelpers, MyDataSource, myMapreduceApi, mySparkApi) {
     this.dataSrc = new MyDataSource($scope);
     this.$state = $state;
     this.$scope = $scope;
@@ -13,6 +13,7 @@ class WorkflowsRunsStatusController {
     this.$alert = $alert;
     this.GraphHelpers = GraphHelpers;
     this.myMapreduceApi = myMapreduceApi;
+    this.mySparkApi = mySparkApi;
     this.$filter = $filter;
     this.runsCtrl = $scope.RunsController;
 
@@ -106,16 +107,16 @@ class WorkflowsRunsStatusController {
           } else if (node.program.programType === 'SPARK') {
 
             var sparkParams = {
-              namespace: $state.params.namespace,
-              appId: $state.params.appId,
-              sparkId: n.program.programName,
+              namespace: this.$state.params.namespace,
+              appId: this.$state.params.appId,
+              sparkId: node.program.programName,
               runId: runid,
-              scope: $scope
+              scope: this.$scope
             };
 
-            mySparkApi.runDetail(sparkParams)
+            this.mySparkApi.runDetail(sparkParams)
               .$promise
-              .then( (result) => this.data.current[n.name] = result.status );
+              .then( (result) => this.data.current[node.name] = result.status );
           }
         });
 
@@ -134,15 +135,21 @@ class WorkflowsRunsStatusController {
     if (this.runsCtrl.runs.length) {
       let stateParams = {
         programId: instance.program.programName,
-        runid: this.runsCtrl.runs.selected.properties[instance.nodeId]
+        runid: this.runsCtrl.runs.selected.properties[instance.nodeId],
+        sourceId: this.$state.params.programId,
+        sourceRunId: this.$scope.RunsController.runs.selected.runid
       };
       if (instance.program.programType === 'MAPREDUCE' &&
          this.runsCtrl.runs.selected.properties[instance.nodeId]
         ) {
+        stateParams.destinationType = 'Mapreduce'
         this.$state.go('mapreduce.detail.runs.run', stateParams);
+
       } else if (instance.program.programType === 'SPARK' &&
                 this.runsCtrl.runs.selected.properties[instance.nodeId]
                ) {
+
+        stateParams.destinationType = 'Spark'
         this.$state.go('spark.detail.runs.run', stateParams);
       }
     } else {
@@ -181,6 +188,6 @@ class WorkflowsRunsStatusController {
 
 }
 
-WorkflowsRunsStatusController.$inject = ['$state', '$scope', 'myWorkFlowApi', '$filter', '$alert', 'GraphHelpers', 'MyDataSource', 'myMapreduceApi'];
+WorkflowsRunsStatusController.$inject = ['$state', '$scope', 'myWorkFlowApi', '$filter', '$alert', 'GraphHelpers', 'MyDataSource', 'myMapreduceApi', 'mySparkApi'];
 angular.module(`${PKG.name}.feature.workflows`)
   .controller('WorkflowsRunsStatusController', WorkflowsRunsStatusController);

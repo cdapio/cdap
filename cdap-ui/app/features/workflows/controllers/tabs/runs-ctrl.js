@@ -21,7 +21,7 @@ class WorkflowsRunsController {
       angular.bind(this, () => this.runs.selected.runid ),
       () => {
         if ($state.params.runid) {
-         return;
+          return;
         } else {
           if (rRuns.length) {
             this.runs.selected = angular.copy(rRuns[0]);
