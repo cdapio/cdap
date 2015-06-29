@@ -77,16 +77,14 @@ public class CreateSchedulesStage extends AbstractStage<ApplicationWithPrograms>
       ProgramType programType = ProgramType.valueOfSchedulableType(newScheduleSpec.getProgram().getProgramType());
       scheduler.updateSchedule(Id.Program.from(input.getId(), programType,
                                                newScheduleSpec.getProgram().getProgramName()),
-                               newScheduleSpec.getProgram().getProgramType(),
-                               newScheduleSpec.getSchedule());
+                               newScheduleSpec);
     }
 
     for (Map.Entry<String, ScheduleSpecification> entry : mapDiff.entriesOnlyOnRight().entrySet()) {
       ScheduleSpecification scheduleSpec = entry.getValue();
       ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
       scheduler.schedule(Id.Program.from(input.getId(), programType, scheduleSpec.getProgram().getProgramName()),
-                         scheduleSpec.getProgram().getProgramType(),
-                         scheduleSpec.getSchedule());
+                         scheduleSpec, false);
     }
 
     // Note: the mapDiff also has a entriesInCommon method returning all entries in left and right maps

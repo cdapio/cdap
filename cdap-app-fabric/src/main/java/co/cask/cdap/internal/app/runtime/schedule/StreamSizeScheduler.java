@@ -214,24 +214,21 @@ public class StreamSizeScheduler implements Scheduler {
   }
 
   @Override
-  public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
-    throws SchedulerException {
-    schedule(program, programType, schedule, ImmutableMap.<String, String>of());
+  public void schedule(Id.Program program, ScheduleSpecification scheduleSpec) throws SchedulerException {
+    schedule(program, scheduleSpec, ImmutableMap.<String, String>of());
   }
 
   @Override
-  public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
-                       Map<String, String> properties) throws SchedulerException {
-    Preconditions.checkArgument(schedule instanceof StreamSizeSchedule,
-                                "Schedule should be of type StreamSizeSchedule");
-    StreamSizeSchedule streamSizeSchedule = (StreamSizeSchedule) schedule;
-    StreamSubscriber streamSubscriber = streamSubscriberForSchedule(program, streamSizeSchedule);
+  public void schedule(Id.Program program, ScheduleSpecification scheduleSpec,
+                       boolean updateMds) throws SchedulerException {
+    throw new UnsupportedOperationException("MDS operations are not supported in StreamSizeScheduler.");
+  }
 
-    // Add the scheduleTask to the StreamSubscriber
-    streamSubscriber.createScheduleTask(program, programType, streamSizeSchedule, properties);
-    scheduleSubscribers.put(AbstractSchedulerService.scheduleIdFor(program, programType,
-                                                                   streamSizeSchedule.getName()),
-                            streamSubscriber);
+  @Override
+  public void schedule(Id.Program program, ScheduleSpecification scheduleSpec,
+                       Map<String, String> properties) throws SchedulerException {
+    schedule(program, scheduleSpec.getProgram().getProgramType(), ImmutableList.of(scheduleSpec.getSchedule()),
+             properties);
   }
 
   /**
@@ -276,8 +273,16 @@ public class StreamSizeScheduler implements Scheduler {
   @Override
   public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules,
                        Map<String, String> properties) throws SchedulerException {
-    for (Schedule s : schedules) {
-      schedule(program, programType, s, properties);
+    for (Schedule schedule : schedules) {
+      Preconditions.checkArgument(schedule instanceof StreamSizeSchedule,
+                                  "Schedule should be of type StreamSizeSchedule");
+      StreamSizeSchedule streamSizeSchedule = (StreamSizeSchedule) schedule;
+      StreamSubscriber streamSubscriber = streamSubscriberForSchedule(program, streamSizeSchedule);
+
+      // Add the scheduleTask to the StreamSubscriber
+      streamSubscriber.createScheduleTask(program, programType, streamSizeSchedule, properties);
+      String scheduleId = AbstractSchedulerService.scheduleIdFor(program, programType, streamSizeSchedule.getName());
+      scheduleSubscribers.put(scheduleId, streamSubscriber);
     }
   }
 
@@ -326,21 +331,24 @@ public class StreamSizeScheduler implements Scheduler {
   }
 
   @Override
-  public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
+  public void updateSchedule(Id.Program program, ScheduleSpecification scheduleSpec)
     throws NotFoundException, SchedulerException {
-    updateSchedule(program, programType, schedule, ImmutableMap.<String, String>of());
+    updateSchedule(program, scheduleSpec, ImmutableMap.<String, String>of());
   }
 
   @Override
-  public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
+  public void updateSchedule(Id.Program program, ScheduleSpecification scheduleSpec,
                              Map<String, String> properties) throws NotFoundException, SchedulerException {
-    Preconditions.checkArgument(schedule instanceof StreamSizeSchedule,
+    Preconditions.checkArgument(scheduleSpec.getSchedule() instanceof StreamSizeSchedule,
                                 "Schedule should be of type StreamSizeSchedule");
-    StreamSizeSchedule streamSizeSchedule = (StreamSizeSchedule) schedule;
-    StreamSubscriber subscriber = scheduleSubscribers.get(AbstractSchedulerService.scheduleIdFor(program, programType,
-                                                                                                 schedule.getName()));
+    StreamSizeSchedule streamSizeSchedule = (StreamSizeSchedule) scheduleSpec.getSchedule();
+    SchedulableProgramType programType = scheduleSpec.getProgram().getProgramType();
+    String scheduleId = AbstractSchedulerService.scheduleIdFor(program, programType,
+                                                               scheduleSpec.getSchedule().getName());
+    StreamSubscriber subscriber = scheduleSubscribers.get(scheduleId);
     if (subscriber == null) {
-      throw new ScheduleNotFoundException(Id.Schedule.from(program.getApplication(), schedule.getName()));
+      throw new ScheduleNotFoundException(Id.Schedule.from(program.getApplication(),
+                                                           scheduleSpec.getSchedule().getName()));
     }
 
     if (!streamSizeSchedule.getStreamName().equals(subscriber.getStreamId().getId())) {
@@ -348,9 +356,9 @@ public class StreamSizeScheduler implements Scheduler {
 
       // It can happen that the schedule was deleted while being updated. In which case, we propagate the
       // not found exception
-      deleteSchedule(program, programType, schedule.getName());
+      deleteSchedule(program, programType, scheduleSpec.getSchedule().getName());
 
-      schedule(program, programType, schedule, properties);
+      schedule(program, scheduleSpec, properties);
     } else {
       // The subscriber will take care of updating the data trigger
       subscriber.updateScheduleTask(program, programType, streamSizeSchedule);
