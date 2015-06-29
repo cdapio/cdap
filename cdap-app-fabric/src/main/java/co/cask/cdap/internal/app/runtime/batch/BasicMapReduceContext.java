@@ -60,7 +60,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final MapReduceSpecification spec;
   private final LoggingContext loggingContext;
   private final long logicalStartTime;
-  private final String workflowBatch;
+  private final String programNameInWorkflow;
   private final WorkflowToken workflowToken;
   private final Metrics userMetrics;
   private final MetricsCollectionService metricsCollectionService;
@@ -81,7 +81,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                Set<String> datasets,
                                MapReduceSpecification spec,
                                long logicalStartTime,
-                               @Nullable String workflowBatch,
+                               @Nullable String programNameInWorkflow,
                                @Nullable WorkflowToken workflowToken,
                                DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService,
@@ -92,7 +92,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
           getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type, adapterSpec),
           dsFramework, discoveryServiceClient, adapterSpec, pluginInstantiator);
     this.logicalStartTime = logicalStartTime;
-    this.workflowBatch = workflowBatch;
+    this.programNameInWorkflow = programNameInWorkflow;
     this.workflowToken = workflowToken;
     this.metricsCollectionService = metricsCollectionService;
 
@@ -136,8 +136,8 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   /**
    * Returns the name of the Batch job when running inside workflow. Otherwise, return null.
    */
-  public String getWorkflowBatch() {
-    return workflowBatch;
+  public String getProgramNameInWorkflow() {
+    return programNameInWorkflow;
   }
 
   /**

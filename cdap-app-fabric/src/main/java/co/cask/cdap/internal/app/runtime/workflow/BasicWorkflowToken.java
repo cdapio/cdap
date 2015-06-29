@@ -35,6 +35,25 @@ public class BasicWorkflowToken implements WorkflowToken {
   private final Map<String, List<NodeValueEntry>> tokenValueMap = Maps.newHashMap();
   private String nodeName;
 
+  public BasicWorkflowToken() {
+  }
+
+  public BasicWorkflowToken(Map<String, List<NodeValueEntry>> tokenValueMap, String nodeName,
+                            @Nullable Map<String, Map<String, Long>> mapReduceCounters) {
+
+    for (Map.Entry<String, List<NodeValueEntry>> entry : tokenValueMap.entrySet()) {
+      List<NodeValueEntry> nodeValueList = Lists.newArrayList();
+      nodeValueList.addAll(entry.getValue());
+      this.tokenValueMap.put(entry.getKey(), nodeValueList);
+    }
+
+    this.nodeName = nodeName;
+
+    if (mapReduceCounters != null) {
+      this.mapReduceCounters = copyHadoopCounters(mapReduceCounters);
+    }
+  }
+
   void setCurrentNode(String nodeName) {
     this.nodeName = nodeName;
   }
@@ -83,6 +102,16 @@ public class BasicWorkflowToken implements WorkflowToken {
       nodeValueList = Lists.newArrayList();
       tokenValueMap.put(key, nodeValueList);
     }
+
+    // Check if the current node already added the key to the token.
+    // In that case replace that entry with the new one
+    for (int i = 0; i < nodeValueList.size(); i++) {
+      if (nodeValueList.get(i).getNodeName().equals(nodeName)) {
+        nodeValueList.set(i, new NodeValueEntry(nodeName, value));
+        return;
+      }
+    }
+
     nodeValueList.add(new NodeValueEntry(nodeName, value));
   }
 
@@ -95,20 +124,15 @@ public class BasicWorkflowToken implements WorkflowToken {
   }
 
   @Override
-  public Map<String, String> getAllFromNode(String nodeName, @Nullable String prefix) {
+  public Map<String, String> getAllFromNode(String nodeName) {
     Map<String, String> tokenValuesFromNode = Maps.newHashMap();
     for (Map.Entry<String, List<NodeValueEntry>> entry : tokenValueMap.entrySet()) {
-
-      if (prefix != null) {
-        if (!entry.getKey().equals(prefix) && !entry.getKey().startsWith(prefix + ".")) {
-          continue;
-        }
-      }
 
       List<NodeValueEntry> nodeValueEntryList = entry.getValue();
       for (NodeValueEntry nodeValueEntry : nodeValueEntryList) {
         if (nodeValueEntry.getNodeName().equals(nodeName)) {
           tokenValuesFromNode.put(entry.getKey(), nodeValueEntry.getValue());
+          break;
         }
       }
     }
@@ -118,11 +142,11 @@ public class BasicWorkflowToken implements WorkflowToken {
   @Nullable
   @Override
   public String get(String key, String nodeName) {
-    if (!containsKey(key)) {
+    List<NodeValueEntry> nodeValueList = tokenValueMap.get(key);
+    if (nodeValueList == null) {
       return null;
     }
 
-    List<NodeValueEntry> nodeValueList = tokenValueMap.get(key);
     for (NodeValueEntry nodeValue : nodeValueList) {
       if (nodeValue.getNodeName().equals(nodeName)) {
         return nodeValue.getValue();
@@ -134,10 +158,11 @@ public class BasicWorkflowToken implements WorkflowToken {
   @Nullable
   @Override
   public String get(String key) {
-    if (!containsKey(key)) {
+    List<NodeValueEntry> nodeValueList = tokenValueMap.get(key);
+    if (nodeValueList == null) {
       return null;
     }
-    List<NodeValueEntry> nodeValueList = tokenValueMap.get(key);
+
     if (nodeValueList.isEmpty()) {
       // List of NodeValueEntry cannot be empty if the key is added in the WorkflowToken as
       // when we add key, we also add single NodeValueEntry.
@@ -167,14 +192,7 @@ public class BasicWorkflowToken implements WorkflowToken {
    * @return copied WorkflowToken
    */
   public WorkflowToken deepCopy() {
-    BasicWorkflowToken copiedToken = new BasicWorkflowToken();
-    if (getMapReduceCounters() != null) {
-      copiedToken.setMapReduceCounters(copyHadoopCounters(getMapReduceCounters()));
-    }
-
-    copiedToken.setTokenValueMap(tokenValueMap);
-    copiedToken.setCurrentNode(nodeName);
-    return copiedToken;
+    return new BasicWorkflowToken(tokenValueMap, nodeName, mapReduceCounters);
   }
 
   private Map<String, Map<String, Long>> copyHadoopCounters(Map<String, Map<String, Long>> input) {
@@ -183,14 +201,5 @@ public class BasicWorkflowToken implements WorkflowToken {
       builder.put(entry.getKey(), ImmutableMap.copyOf(entry.getValue()));
     }
     return builder.build();
-  }
-
-  private void setTokenValueMap(Map<String, List<NodeValueEntry>> otherTokenValueMap) {
-    tokenValueMap.clear();
-    for (Map.Entry<String, List<NodeValueEntry>> entry : otherTokenValueMap.entrySet()) {
-      List<NodeValueEntry> nodeValueList = Lists.newArrayList();
-      nodeValueList.addAll(entry.getValue());
-      tokenValueMap.put(entry.getKey(), nodeValueList);
-    }
   }
 }

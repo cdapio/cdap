@@ -35,7 +35,7 @@ public final class ProgramOptionConstants {
 
   public static final String RETRY_COUNT = "retryCount";
 
-  public static final String WORKFLOW_BATCH = "workflowBatch";
+  public static final String PROGRAM_NAME_IN_WORKFLOW = "programNameInWorkflow";
 
   public static final String WORKFLOW_TOKEN = "workflowToken";
 

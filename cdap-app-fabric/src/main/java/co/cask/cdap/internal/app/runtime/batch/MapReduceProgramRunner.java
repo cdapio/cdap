@@ -138,7 +138,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                                    .getOption(ProgramOptionConstants.LOGICAL_START_TIME))
                                 : System.currentTimeMillis();
 
-    String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
+    String programNameInWorkflow = arguments.getOption(ProgramOptionConstants.PROGRAM_NAME_IN_WORKFLOW);
 
     WorkflowToken workflowToken = null;
     if (arguments.hasOption(ProgramOptionConstants.WORKFLOW_TOKEN)) {
@@ -160,7 +160,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     try {
       final DynamicMapReduceContext context =
         new DynamicMapReduceContext(program, null, runId, null, options.getUserArguments(), spec,
-                                    logicalStartTime, workflowBatch, workflowToken, discoveryServiceClient,
+                                    logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
                                     metricsCollectionService, txSystemClient, datasetFramework, adapterSpec,
                                     pluginInstantiator);
 

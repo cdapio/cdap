@@ -56,7 +56,7 @@ public final class MapReduceContextConfig {
 
   private static final String HCONF_ATTR_RUN_ID = "hconf.program.run.id";
   private static final String HCONF_ATTR_LOGICAL_START_TIME = "hconf.program.logical.start.time";
-  private static final String HCONF_ATTR_WORKFLOW_BATCH = "hconf.program.workflow.batch";
+  private static final String HCONF_ATTR_PROGRAM_NAME_IN_WORKFLOW = "hconf.program.name.in.workflow";
   private static final String HCONF_ATTR_WORKFLOW_TOKEN = "hconf.program.workflow.token";
   private static final String HCONF_ATTR_ADAPTER_SPEC = "hconf.program.adapter.spec";
   private static final String HCONF_ATTR_ARGS = "hconf.program.args";
@@ -79,7 +79,7 @@ public final class MapReduceContextConfig {
   public void set(BasicMapReduceContext context, CConfiguration conf, Transaction tx, URI programJarURI) {
     setRunId(context.getRunId().getId());
     setLogicalStartTime(context.getLogicalStartTime());
-    setWorkflowBatch(context.getWorkflowBatch());
+    setProgramNameInWorkflow(context.getProgramNameInWorkflow());
     setWorkflowToken(context.getWorkflowToken());
     setAdapterSpec(context.getAdapterSpecification());
     setArguments(context.getRuntimeArguments());
@@ -116,14 +116,14 @@ public final class MapReduceContextConfig {
     return hConf.getLong(HCONF_ATTR_LOGICAL_START_TIME, System.currentTimeMillis());
   }
 
-  private void setWorkflowBatch(@Nullable String workflowBatch) {
-    if (workflowBatch != null) {
-      hConf.set(HCONF_ATTR_WORKFLOW_BATCH, workflowBatch);
+  private void setProgramNameInWorkflow(@Nullable String programNameInWorkflow) {
+    if (programNameInWorkflow != null) {
+      hConf.set(HCONF_ATTR_PROGRAM_NAME_IN_WORKFLOW, programNameInWorkflow);
     }
   }
 
-  public String getWorkflowBatch() {
-    return hConf.get(HCONF_ATTR_WORKFLOW_BATCH);
+  public String getProgramNameInWorkflow() {
+    return hConf.get(HCONF_ATTR_PROGRAM_NAME_IN_WORKFLOW);
   }
 
   private void setWorkflowToken(@Nullable WorkflowToken workflowToken) {

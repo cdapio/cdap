@@ -74,7 +74,7 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
                                  RunId runId, String taskId,
                                  Arguments runtimeArguments,
                                  MapReduceSpecification spec,
-                                 long logicalStartTime, @Nullable String workflowBatch,
+                                 long logicalStartTime, @Nullable String programNameInWorkflow,
                                  @Nullable WorkflowToken workflowToken,
                                  DiscoveryServiceClient discoveryServiceClient,
                                  MetricsCollectionService metricsCollectionService,
@@ -83,7 +83,7 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
                                  @Nullable AdapterDefinition adapterSpec,
                                  @Nullable PluginInstantiator pluginInstantiator) {
     super(program, type, runId, taskId, runtimeArguments, Collections.<String>emptySet(), spec,
-          logicalStartTime, workflowBatch, workflowToken, discoveryServiceClient, metricsCollectionService,
+          logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient, metricsCollectionService,
           dsFramework, adapterSpec, pluginInstantiator);
     this.datasetsCache = CacheBuilder.newBuilder()
       .removalListener(new RemovalListener<Long, Map<DatasetCacheKey, Dataset>>() {

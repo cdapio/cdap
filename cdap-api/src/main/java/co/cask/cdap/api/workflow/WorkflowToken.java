@@ -73,50 +73,13 @@ public interface WorkflowToken {
   /**
    * Get the {@link Map} of key-values that were added to the {@link WorkflowToken}
    * by specific node.
-   * <p>
-   * This method also accepts the optional prefix parameter. When
-   * supplied, the returned map is filtered by the keys prefixed by the input prefix.
-   * Prefix is matched along the "." boundries.
-   * <p>
-   * Example: Prefix "a.b" will match with the key "a.b" or any key starting
-   * with the "a.b.", however it will not match with the key "a.bc". MapReduce counters
-   * from the particular node can be retrieved using prefix "mr.counters".
    * @param nodeName the unique name of the node
-   * @param prefix optional prefix to filter the keys
    * @return the map of key-values that were added by the specified node
    */
-  Map<String, String> getAllFromNode(String nodeName, @Nullable String prefix);
+  Map<String, String> getAllFromNode(String nodeName);
 
   /**
-   * This method is deprecated as of release 3.1. Instead to get the
-   * MapReduce counters from the WorkflowToken, use the flatten key prefixed
-   * by 'mr.counters'.
-   * <p>
-   * Example:
-   * <p>
-   * <ul>
-   * <li>
-   *  To get the most recent value of counter with group name
-   * 'org.apache.hadoop.mapreduce.TaskCounter' and counter name 'MAP_INPUT_RECORDS'
-   *  <pre>
-   *    <code>
-   *      String flattenCounterKey = "mr.counters.org.apache.hadoop.mapreduce.TaskCounter.MAP_INPUT_RECORDS";
-   *      workflowToken.getValue(flattenCounterKey);
-   *    </code>
-   *  </pre>
-   * </li>
-   *
-   * <li> To get the value of counter with group name 'org.apache.hadoop.mapreduce.TaskCounter'
-   * and counter name 'MAP_INPUT_RECORDS' as set by MapReduce program with unique name 'PurchaseHistoryBuilder'
-   *  <pre>
-   *    <code>
-   *      String flattenCounterKey = "mr.counters.org.apache.hadoop.mapreduce.TaskCounter.MAP_INPUT_RECORDS";
-   *      workflowToken.getValue(flattenCounterKey, "PurchaseHistoryBuilder");
-   *    </code>
-   *  </pre>
-   * </li>
-   * </ul>
-   * <p>
+   * This method is deprecated as of release 3.1.
    * Get the Hadoop counters from the previous MapReduce program in the Workflow.
    * The method returns null if the counters are not set.
    * @return the Hadoop MapReduce counters set by the previous MapReduce program

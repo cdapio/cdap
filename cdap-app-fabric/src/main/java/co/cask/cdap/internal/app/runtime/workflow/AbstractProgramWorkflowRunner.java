@@ -100,7 +100,7 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
     systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_RUN_ID,
                            systemArguments.getOption(ProgramOptionConstants.RUN_ID));
     systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_NODE_ID, nodeId);
-    systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_BATCH, name);
+    systemArgumentsMap.put(ProgramOptionConstants.PROGRAM_NAME_IN_WORKFLOW, name);
     systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(token));
 
     final ProgramOptions options = new SimpleProgramOptions(
