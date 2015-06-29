@@ -17,9 +17,8 @@ package co.cask.cdap.internal.specification;
 
 import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.internal.lang.FieldVisitor;
-import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
-import com.google.gson.internal.Primitives;
+import com.google.gson.Gson;
 
 import java.lang.reflect.Field;
 import java.util.Map;
@@ -30,6 +29,7 @@ import java.util.Map;
  */
 public final class PropertyFieldExtractor extends FieldVisitor {
 
+  private static final Gson GSON = new Gson();
   private final Map<String, String> properties;
 
   /**
@@ -49,7 +49,7 @@ public final class PropertyFieldExtractor extends FieldVisitor {
         return;
       }
 
-      String value = getStringValue(instance, field);
+      String value = getSerializedString(instance, field);
       if (value != null) {
         properties.put(key, value);
       }
@@ -58,17 +58,10 @@ public final class PropertyFieldExtractor extends FieldVisitor {
 
   /**
    * Gets the value of the field in the given instance as String.
-   * Currently only allows primitive types, boxed types, String and Enum.
+   * Currently only allows primitive types, boxed types, String, POJO and Enum.
    */
-  private String getStringValue(Object instance, Field field) throws IllegalAccessException {
+  private String getSerializedString(Object instance, Field field) throws IllegalAccessException {
     Class<?> fieldType = field.getType();
-
-    // Only support primitive type, boxed type, String and Enum
-    Preconditions.checkArgument(
-      fieldType.isPrimitive() || Primitives.isWrapperType(fieldType) ||
-        String.class.equals(fieldType) || fieldType.isEnum(),
-      "Unsupported property type %s of field %s in class %s.",
-      fieldType.getName(), field.getName(), field.getDeclaringClass().getName());
 
     if (!field.isAccessible()) {
       field.setAccessible(true);
@@ -79,6 +72,6 @@ public final class PropertyFieldExtractor extends FieldVisitor {
     }
 
     // Key name is "className.fieldName".
-    return fieldType.isEnum() ? ((Enum<?>) value).name() : value.toString();
+    return fieldType.isEnum() ? ((Enum<?>) value).name() : GSON.toJson(value);
   }
 }

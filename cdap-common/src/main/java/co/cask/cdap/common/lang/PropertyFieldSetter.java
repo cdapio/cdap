@@ -17,11 +17,10 @@ package co.cask.cdap.common.lang;
 
 import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.internal.lang.FieldVisitor;
-import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 /**
@@ -49,7 +48,7 @@ public final class PropertyFieldSetter extends FieldVisitor {
 
   /**
    * Sets the value of the field in the given instance by converting the value from String to the field type.
-   * Currently only allows primitive types, boxed types, String and Enum.
+   * Currently only allows primitive types, boxed types, String, POJO and Enum.
    */
   @SuppressWarnings("unchecked")
   private void setValue(Object instance, Field field, String value) throws IllegalAccessException {
@@ -59,11 +58,6 @@ public final class PropertyFieldSetter extends FieldVisitor {
 
     Class<?> fieldType = field.getType();
 
-    // Currently only String, primitive (or boxed type) and Enum type are supported.
-    if (String.class.equals(fieldType)) {
-      field.set(instance, value);
-      return;
-    }
     if (fieldType.isEnum()) {
       field.set(instance, Enum.valueOf((Class<? extends Enum>) fieldType, value));
       return;
@@ -73,15 +67,6 @@ public final class PropertyFieldSetter extends FieldVisitor {
       fieldType = com.google.common.primitives.Primitives.wrap(fieldType);
     }
 
-    try {
-      // All box type has the valueOf(String) method.
-      field.set(instance, fieldType.getMethod("valueOf", String.class).invoke(null, value));
-    } catch (NoSuchMethodException e) {
-      // Should never happen, as boxed type always have the valueOf(String) method.
-      throw Throwables.propagate(e);
-    } catch (InvocationTargetException e) {
-      // Also should never happen, as calling method on Java bootstrap classes should always succeed.
-      throw Throwables.propagate(e);
-    }
+    field.set(instance, new Gson().fromJson(value, fieldType));
   }
 }
