@@ -88,6 +88,17 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
   Set<PartitionDetail> getPartitions(@Nullable PartitionFilter filter);
 
   /**
+   * Incrementally consumes partitions. This method can be used to retrieve partitions that have been created since the
+   * last call to this method. Note that it is the client's responsibility to maintain state of the partitions processed
+   * in the iterator returned in the PartitionConsumerResult.
+   *
+   * @param partitionConsumerState the state from which to start consuming from
+   * @return {@link PartitionConsumerResult} which holds the state of consumption as well as an iterator to the consumed
+   * {@link Partition}s
+   */
+  PartitionConsumerResult consumePartitions(PartitionConsumerState partitionConsumerState);
+
+  /**
    * Return a partition output for a specific partition key, in preparation for creating a new partition.
    * Obtain the location to write from the PartitionOutput, then call the {@link PartitionOutput#addPartition}
    * to add the partition to this dataset.

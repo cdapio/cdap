@@ -19,10 +19,10 @@ package co.cask.cdap.data2.dataset2.lib.partitioned;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetAdmin;
 
 /**
@@ -33,10 +33,10 @@ public class PartitionedFileSetModule implements DatasetModule {
   public void register(DatasetDefinitionRegistry registry) {
 
     DatasetDefinition<FileSet, FileSetAdmin> fileSetDef = registry.get("fileSet");
-    DatasetDefinition<Table, ? extends DatasetAdmin> tableDef = registry.get("table");
+    DatasetDefinition<IndexedTable, ? extends DatasetAdmin> indexedTableDef = registry.get("indexedTable");
 
     // file dataset
-    registry.add(new PartitionedFileSetDefinition(PartitionedFileSet.class.getName(), fileSetDef, tableDef));
-    registry.add(new PartitionedFileSetDefinition("partitionedFileSet", fileSetDef, tableDef));
+    registry.add(new PartitionedFileSetDefinition(PartitionedFileSet.class.getName(), fileSetDef, indexedTableDef));
+    registry.add(new PartitionedFileSetDefinition("partitionedFileSet", fileSetDef, indexedTableDef));
   }
 }

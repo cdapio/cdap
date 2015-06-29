@@ -22,12 +22,12 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
+import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
-import co.cask.cdap.api.dataset.table.Table;
 import com.google.common.collect.Maps;
 
 import java.io.IOException;
@@ -41,7 +41,7 @@ public class TimePartitionedFileSetDefinition extends PartitionedFileSetDefiniti
 
   public TimePartitionedFileSetDefinition(String name,
                                           DatasetDefinition<? extends FileSet, ?> filesetDef,
-                                          DatasetDefinition<? extends Table, ?> tableDef) {
+                                          DatasetDefinition<? extends IndexedTable, ?> tableDef) {
     super(name, filesetDef, tableDef);
   }
 
@@ -65,10 +65,10 @@ public class TimePartitionedFileSetDefinition extends PartitionedFileSetDefiniti
     // make any necessary updates to the arguments
     arguments = updateArgumentsIfNeeded(arguments);
 
-    FileSet fileset = filesetDef.getDataset(datasetContext, spec.getSpecification(FILESET_NAME), arguments,
-                                            classLoader);
-    Table table = tableDef.getDataset(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME), arguments,
-                                      classLoader);
+    FileSet fileset = filesetDef.getDataset(datasetContext, spec.getSpecification(FILESET_NAME),
+                                            arguments, classLoader);
+    IndexedTable table = indexedTableDef.getDataset(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME),
+                                                    arguments, classLoader);
 
     return new TimePartitionedFileSetDataset(datasetContext, spec.getName(), fileset, table, spec, arguments,
                                              getExploreProvider());

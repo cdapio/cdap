@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
@@ -31,12 +32,16 @@ import co.cask.cdap.proto.Id;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionManager;
+import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import co.cask.tephra.inmemory.MinimalTxSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 
@@ -50,6 +55,7 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
   private CConfiguration cConf;
   private TemporaryFolder tmpFolder;
   private DatasetFramework framework;
+  private TransactionManager txManager;
 
   public CConfiguration getConfiguration() {
     return cConf;
@@ -62,6 +68,11 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
     File localDataDir = tmpFolder.newFolder();
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
+
+    Configuration txConf = HBaseConfiguration.create();
+    CConfigurationUtil.copyTxProperties(cConf, txConf);
+    txManager = new TransactionManager(txConf);
+    txManager.startAndWait();
 
     final Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
@@ -84,6 +95,9 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
 
   @Override
   protected void after() {
+    if (txManager != null) {
+      txManager.stopAndWait();
+    }
     if (tmpFolder != null) {
       tmpFolder.delete();
     }
@@ -128,5 +142,14 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
   public TransactionExecutor newTransactionExecutor(TransactionAware...tables) {
     Preconditions.checkArgument(tables != null);
     return new DefaultTransactionExecutor(new MinimalTxSystemClient(), tables);
+  }
+
+  public TransactionExecutor newInMemoryTransactionExecutor(TransactionAware...tables) {
+    Preconditions.checkArgument(tables != null);
+    return new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager), tables);
+  }
+
+  public TransactionManager getTxManager() {
+    return txManager;
   }
 }

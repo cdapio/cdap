@@ -25,7 +25,10 @@ import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.lib.Partition;
+import co.cask.cdap.api.dataset.lib.PartitionConsumerResult;
+import co.cask.cdap.api.dataset.lib.PartitionConsumerState;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
@@ -38,12 +41,12 @@ import co.cask.cdap.api.dataset.lib.Partitioning.FieldType;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -56,8 +59,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -72,10 +77,11 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   protected static final byte[] RELATIVE_PATH = { 'p' };
   protected static final byte[] FIELD_PREFIX = { 'f', '.' };
   protected static final byte[] METADATA_PREFIX = { 'm', '.' };
-  protected static final byte[] CREATION_TIME = { 'c' };
+  protected static final byte[] CREATION_TIME_COL = { 'c' };
+  protected static final byte[] WRITE_PTR_COL = { 'w' };
 
   protected final FileSet files;
-  protected final Table partitionsTable;
+  protected final IndexedTable partitionsTable;
   protected final DatasetSpecification spec;
   protected final boolean isExternal;
   protected final Map<String, String> runtimeArguments;
@@ -91,9 +97,10 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   // by adding the partition in the onSuccess() of this dataset, map/reduce programs do not need to do that in
   // their onFinish() any longer. But existing map/reduce programs may still do that, and would now fail.
   private final Map<String, PartitionKey> partitionsAddedInSameTx = Maps.newHashMap();
+  private Transaction tx;
 
   public PartitionedFileSetDataset(DatasetContext datasetContext, String name,
-                                   Partitioning partitioning, FileSet fileSet, Table partitionTable,
+                                   Partitioning partitioning, FileSet fileSet, IndexedTable partitionTable,
                                    DatasetSpecification spec, Map<String, String> arguments,
                                    Provider<ExploreFacade> exploreFacadeProvider) {
     super(name, partitionTable);
@@ -111,6 +118,19 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   public void startTx(Transaction tx) {
     partitionsAddedInSameTx.clear();
     super.startTx(tx);
+    this.tx = tx;
+  }
+
+  @Override
+  public boolean commitTx() throws Exception {
+    this.tx = null;
+    return super.commitTx();
+  }
+
+  @Override
+  public boolean rollbackTx() throws Exception {
+    this.tx = null;
+    return super.rollbackTx();
   }
 
   @Override
@@ -154,13 +174,15 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     Put put = new Put(rowKey);
     put.add(RELATIVE_PATH, Bytes.toBytes(path));
     byte[] nowInMillis = Bytes.toBytes(System.currentTimeMillis());
-    put.add(CREATION_TIME, nowInMillis);
+    put.add(CREATION_TIME_COL, nowInMillis);
     for (Map.Entry<String, ? extends Comparable> entry : key.getFields().entrySet()) {
       put.add(Bytes.add(FIELD_PREFIX, Bytes.toBytes(entry.getKey())), // "f.<field name>"
               Bytes.toBytes(entry.getValue().toString()));            // "<string rep. of value>"
     }
 
     addMetadataToPut(metadata, put);
+    // index each row by its transaction's write pointer
+    put.add(WRITE_PTR_COL, tx.getWritePointer());
 
     partitionsTable.put(put);
     partitionsAddedInSameTx.put(path, key);
@@ -169,6 +191,85 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     if (explorable) {
       addPartitionToExplore(key, path);
       // TODO: make DDL operations transactional [CDAP-1393]
+    }
+  }
+
+  @Override
+  public PartitionConsumerResult consumePartitions(PartitionConsumerState partitionConsumerState) {
+    List<Long> previousInProgress = partitionConsumerState.getVersionsToCheck();
+    Set<Long> noLongerInProgress = setDiff(previousInProgress, tx.getInProgress());
+
+    List<Iterator<Partition>> partitionIterators = Lists.newArrayList();
+    for (Long txId : noLongerInProgress) {
+      Scanner scanner = partitionsTable.readByIndex(WRITE_PTR_COL, Bytes.toBytes(txId));
+      partitionIterators.add(new PartitionIterator(scanner));
+    }
+
+    // exclusive scan end
+    long scanUpTo = Math.min(tx.getWritePointer(), tx.getReadPointer() + 1);
+    // no read your own writes (partitions)
+    Scanner scanner = partitionsTable.scanByIndex(WRITE_PTR_COL,
+                                                  Bytes.toBytes(partitionConsumerState.getStartVersion()),
+                                                  Bytes.toBytes(scanUpTo));
+    partitionIterators.add(new PartitionIterator(scanner));
+
+    List<Long> inProgressBeforeScanEnd = Lists.newArrayList();
+    for (long txId : tx.getInProgress()) {
+      if (txId >= scanUpTo) {
+        break;
+      }
+      inProgressBeforeScanEnd.add(txId);
+    }
+    return new PartitionConsumerResult(new PartitionConsumerState(scanUpTo, inProgressBeforeScanEnd),
+                                       Iterators.concat(partitionIterators.iterator()));
+  }
+
+  // returns the set of Longs that are in oldLongs, but not in newLongs (oldLongs - newLongs)
+  private Set<Long> setDiff(List<Long> oldLongs, long[] newLongs) {
+    Set<Long> oldLongsSet = Sets.newHashSet(oldLongs);
+    for (long newLong : newLongs) {
+      oldLongsSet.remove(newLong);
+    }
+    return oldLongsSet;
+  }
+
+  private final class PartitionIterator implements Iterator<Partition> {
+    private final Scanner scanner;
+    private Partition partition;
+
+    public PartitionIterator(Scanner scanner) {
+      this.scanner = scanner;
+      this.partition = getNextPartition();
+    }
+
+    @Override
+    public boolean hasNext() {
+      return partition != null;
+    }
+
+    @Override
+    public Partition next() {
+      if (partition == null) {
+        throw new NoSuchElementException();
+      }
+      Partition partitionToReturn = partition;
+      partition = getNextPartition();
+      return partitionToReturn;
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException();
+    }
+
+    private Partition getNextPartition() {
+      Row row = scanner.next();
+      if (row == null) {
+        return null;
+      }
+      PartitionKey key = parseRowKey(row.getRow(), partitioning);
+      String relativePath = Bytes.toString(row.get(RELATIVE_PATH));
+      return new BasicPartitionDetail(PartitionedFileSetDataset.this, relativePath, key, metadataFromRow(row));
     }
   }
 
@@ -358,7 +459,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       }
     }
 
-    byte[] creationTimeBytes = row.get(CREATION_TIME);
+    byte[] creationTimeBytes = row.get(CREATION_TIME_COL);
     return new PartitionMetadata(metadata, Bytes.toLong(creationTimeBytes));
   }
 
