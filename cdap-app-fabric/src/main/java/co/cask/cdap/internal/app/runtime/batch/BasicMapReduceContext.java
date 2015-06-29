@@ -136,6 +136,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   /**
    * Returns the name of the Batch job when running inside workflow. Otherwise, return null.
    */
+  @Nullable
   public String getProgramNameInWorkflow() {
     return programNameInWorkflow;
   }
