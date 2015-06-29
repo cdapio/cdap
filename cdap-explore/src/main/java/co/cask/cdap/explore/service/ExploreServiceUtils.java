@@ -21,12 +21,14 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.DatasetNotFoundException;
+import co.cask.cdap.data.format.RecordFormats;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.explore.service.hive.Hive12ExploreService;
 import co.cask.cdap.explore.service.hive.Hive13ExploreService;
+import co.cask.cdap.explore.service.hive.Hive14ExploreService;
 import co.cask.cdap.explore.service.hive.HiveCDH4ExploreService;
 import co.cask.cdap.explore.service.hive.HiveCDH5ExploreService;
 import co.cask.cdap.proto.Id;
@@ -42,6 +44,7 @@ import com.google.common.io.Files;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.VersionInfo;
+import org.apache.hive.common.util.HiveVersionInfo;
 import org.apache.twill.internal.utils.Dependencies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +53,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -73,7 +75,8 @@ public class ExploreServiceUtils {
     HIVE_CDH5(Pattern.compile("^.*cdh5\\..*$"), HiveCDH5ExploreService.class),
 
     HIVE_12(null, Hive12ExploreService.class),
-    HIVE_13(null, Hive13ExploreService.class);
+    HIVE_13(null, Hive13ExploreService.class),
+    HIVE_14(null, Hive14ExploreService.class);
 
     private final Pattern hadoopVersionPattern;
     private final Class<? extends ExploreService> hiveExploreServiceClass;
@@ -169,54 +172,40 @@ public class ExploreServiceUtils {
 
   /**
    * Check that Hive is in the class path - with a right version.
-   *
-   * @param hiveClassLoader class loader to use to load hive classes.
-   *                        If null, the class loader of this class is used.
    */
   public static HiveSupport checkHiveSupport(ClassLoader hiveClassLoader) {
+    // First try to figure which hive support is relevant based on Hadoop distribution name
+    String hadoopVersion = VersionInfo.getVersion();
+    LOG.info("Hadoop version is: {}", hadoopVersion);
+    for (HiveSupport hiveSupport : HiveSupport.values()) {
+      if (hiveSupport.getHadoopVersionPattern() != null &&
+        hiveSupport.getHadoopVersionPattern().matcher(hadoopVersion).matches()) {
+        return hiveSupport;
+      }
+    }
+
+    ClassLoader usingCL = hiveClassLoader;
+    if (usingCL == null) {
+      usingCL = ExploreServiceUtils.class.getClassLoader();
+    }
+
     try {
-      ClassLoader usingCL = hiveClassLoader;
-      if (usingCL == null) {
-        usingCL = ExploreServiceUtils.class.getClassLoader();
-      }
-
-      // First try to figure which hive support is relevant based on Hadoop distribution name
-      String hadoopVersion = VersionInfo.getVersion();
-      LOG.info("Hadoop version is: {}", hadoopVersion);
-      for (HiveSupport hiveSupport : HiveSupport.values()) {
-        if (hiveSupport.getHadoopVersionPattern() != null &&
-          hiveSupport.getHadoopVersionPattern().matcher(hadoopVersion).matches()) {
-          return hiveSupport;
-        }
-      }
-
-      // In Hive 12, CLIService.getOperationStatus returns OperationState.
-      // In Hive 13, CLIService.getOperationStatus returns OperationStatus.
-      Class cliServiceClass = usingCL.loadClass("org.apache.hive.service.cli.CLIService");
-      Class operationHandleCl = usingCL.loadClass("org.apache.hive.service.cli.OperationHandle");
-      @SuppressWarnings("unchecked")
-      Method getStatusMethod = cliServiceClass.getDeclaredMethod("getOperationStatus", operationHandleCl);
-
-      // Rowset is an interface in Hive 13, but a class in Hive 12
-      Class rowSetClass = usingCL.loadClass("org.apache.hive.service.cli.RowSet");
-
-      if (rowSetClass.isInterface()
-        && getStatusMethod.getReturnType() == usingCL.loadClass("org.apache.hive.service.cli.OperationStatus")) {
-        return HiveSupport.HIVE_13;
-      } else if (!rowSetClass.isInterface()
-        && getStatusMethod.getReturnType() == usingCL.loadClass("org.apache.hive.service.cli.OperationState")) {
+      Class<?> hiveVersionInfoClass = usingCL.loadClass("org.apache.hive.common.util.HiveVersionInfo");
+      String hiveVersion = (String) hiveVersionInfoClass.getDeclaredMethod("getVersion").invoke(null);
+      if (hiveVersion.startsWith("0.12.")) {
         return HiveSupport.HIVE_12;
+      } else if (hiveVersion.startsWith("0.13.")) {
+        return HiveSupport.HIVE_13;
+      } else if (hiveVersion.startsWith("0.14.")) {
+        return HiveSupport.HIVE_14;
       }
-      throw new RuntimeException("Hive distribution not supported. Set the configuration '" +
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+
+    throw new RuntimeException("Hive distribution not supported. Set the configuration '" +
                                  Constants.Explore.EXPLORE_ENABLED +
                                  "' to false to start up without Explore.");
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Throwable e) {
-      throw new RuntimeException("Hive jars not present in classpath. Set the configuration '" +
-                                 Constants.Explore.EXPLORE_ENABLED +
-                                 "' to false to start up without Explore.", e);
-    }
   }
 
   /**
@@ -277,7 +266,7 @@ public class ExploreServiceUtils {
     // LinkedHashSet maintains insertion order while removing duplicate entries.
     Set<File> orderedDependencies = new LinkedHashSet<>();
     orderedDependencies.addAll(hBaseTableDeps);
-    orderedDependencies.addAll(traceDependencies(DatasetService.class.getCanonicalName(),
+    orderedDependencies.addAll(traceDependencies(DatasetService.class.getName(),
                                                  bootstrapClassPaths, usingCL));
     orderedDependencies.addAll(traceDependencies("co.cask.cdap.hive.datasets.DatasetStorageHandler",
                                                  bootstrapClassPaths, usingCL));
@@ -288,6 +277,8 @@ public class ExploreServiceUtils {
     orderedDependencies.addAll(traceDependencies("org.apache.hive.service.cli.CLIService",
                                                  bootstrapClassPaths, usingCL));
     orderedDependencies.addAll(traceDependencies("org.apache.hadoop.mapred.YarnClientProtocolProvider",
+                                                 bootstrapClassPaths, usingCL));
+    orderedDependencies.addAll(traceDependencies(RecordFormats.class.getName(),
                                                  bootstrapClassPaths, usingCL));
 
     // Needed for - at least - CDH 4.4 integration

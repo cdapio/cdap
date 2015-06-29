@@ -258,20 +258,19 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
     if (checkProgramsRunning(namespaceId)) {
       throw new NamespaceCannotBeDeletedException(namespaceId,
-                                                  "Some programs are currently running in namespace " + namespaceId);
+                                                  String.format("Some programs are currently running in namespace " +
+                                                                  "'%s', please stop them before deleting datasets " +
+                                                                  "in the namespace.",
+                                                                namespaceId));
     }
 
-    LOG.info("Deleting data in namespace '{}'.", namespaceId);
     try {
       dsFramework.deleteAllInstances(namespaceId);
-    } catch (DatasetManagementException e) {
-      LOG.warn("Error while deleting data in namespace {}", namespaceId, e);
-      throw new NamespaceCannotBeDeletedException(namespaceId, e);
-    } catch (IOException e) {
-      LOG.warn("Error while deleting data in namespace {}", namespaceId, e);
+    } catch (DatasetManagementException | IOException e) {
+      LOG.warn("Error while deleting datasets in namespace {}", namespaceId, e);
       throw new NamespaceCannotBeDeletedException(namespaceId, e);
     }
-    LOG.info("Deleted data in namespace '{}'.", namespaceId);
+    LOG.debug("Deleted datasets in namespace '{}'.", namespaceId);
   }
 
   public synchronized void updateProperties(Id.Namespace namespaceId, NamespaceMeta namespaceMeta)

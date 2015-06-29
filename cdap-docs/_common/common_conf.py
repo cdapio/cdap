@@ -32,6 +32,7 @@ cdap_apps_version = "0.4.0"
 
 node_js_version = "v0.10.* through v0.12.*"
 
+recommended_node_js_version = "v0.12.0"
 
 import sys
 import os
@@ -141,7 +142,8 @@ master_doc = 'table-of-contents'
 
 # General information about the project.
 project = u'Cask Data Application Platform'
-copyright = u'2014-%s Cask Data, Inc.' % datetime.now().year
+current_year = datetime.now().year
+copyright = u'2014-%s Cask Data, Inc.' % current_year
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -186,6 +188,11 @@ if node_js_version:
 .. |node-js-version| replace:: %(node_js_version)s
 """ % {'node_js_version': node_js_version}
 
+if recommended_node_js_version:
+    rst_epilog = rst_epilog + """
+.. |recommended-node-js-version| replace:: %(recommended_node_js_version)s
+""" % {'recommended_node_js_version': recommended_node_js_version}
+
 if version:
     rst_epilog = rst_epilog + """
 .. |bold-version| replace:: **%(version)s**
@@ -221,6 +228,11 @@ if release:
     rst_epilog = rst_epilog + """
 .. |literal-release| replace:: ``%(release)s``
 """ % {'release': release}
+
+if current_year:
+    rst_epilog = rst_epilog + """
+.. |current_year| replace:: %(current_year)s
+""" % {'current_year': current_year}
 
 if copyright:
     rst_epilog = rst_epilog + """
@@ -344,6 +356,7 @@ html_theme_options = {
       "older": [ 
         ['2.8.0', '2.8.0', '2015-03-23'], 
         ['2.7.1', '2.7.1', '2015-02-05'], 
+        ['2.6.3', '2.6.3', '2015-05-15'], 
         ['2.6.2', '2.6.2', '2015-03-23'], 
         ['2.6.1', '2.6.1', '2015-01-29'], 
         ['2.6.0', '2.6.0', '2015-01-10'], 
@@ -367,17 +380,7 @@ def get_manual_titles_bash():
     for title in html_theme_options["manual_titles"]:
         manual_titles += "'%s'" % title
     manual_titles += SUFFIX
-    return manual_titles 
-
-def get_json_versions():
-    return "versionscallback(%s);" % html_theme_options["versions_data"]
-
-def print_json_versions():
-    print "versionscallback(%s);" % html_theme_options["versions_data"]
-
-def print_json_versions_file():
-    head, tail = os.path.split(html_theme_options["versions"])
-    print tail
+    return manual_titles
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['_themes','../../_common/_themes']

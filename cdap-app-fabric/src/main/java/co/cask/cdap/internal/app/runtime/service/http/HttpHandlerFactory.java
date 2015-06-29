@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.internal.asm.ByteCodeClassLoader;
 import co.cask.cdap.internal.asm.ClassDefinition;
@@ -41,14 +41,14 @@ public final class HttpHandlerFactory {
   private static final Logger LOG = LoggerFactory.getLogger(HttpHandlerFactory.class);
 
   private final LoadingCache<TypeToken<? extends HttpServiceHandler>, Class<?>> handlerClasses;
-  private final MetricsCollector metricsCollector;
+  private final MetricsContext metricsContext;
 
   /**
    * Creates an instance that could generate {@link HttpHandler} that always binds to service Path that starts with
    * the given prefix.
    */
-  public HttpHandlerFactory(final String pathPrefix, final MetricsCollector metricsCollector) {
-    this.metricsCollector = metricsCollector;
+  public HttpHandlerFactory(final String pathPrefix, final MetricsContext metricsContext) {
+    this.metricsContext = metricsContext;
     handlerClasses = CacheBuilder.newBuilder().build(
       new CacheLoader<TypeToken<? extends HttpServiceHandler>, Class<?>>() {
       @Override
@@ -80,8 +80,8 @@ public final class HttpHandlerFactory {
 
     try {
       Constructor<? extends HttpHandler> constuctor = handlerClass.getConstructor(DelegatorContext.class,
-                                                                                  MetricsCollector.class);
-      return constuctor.newInstance(context, metricsCollector);
+                                                                                  MetricsContext.class);
+      return constuctor.newInstance(context, metricsContext);
     } catch (Exception e) {
       LOG.error("Failed to instantiate generated HttpHandler {}", handlerClass, e);
       throw Throwables.propagate(e);

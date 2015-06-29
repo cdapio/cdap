@@ -21,6 +21,10 @@ Once downloaded, unzip it to a directory on your machine:
   .. parsed-literal::
     |$| unzip cdap-sdk-|release|.zip
 
+.. include:: index.rst  
+  :start-after: .. _system-requirements:
+  :end-before: .. _recommend-using-an-ide:
+
 .. include:: ../dev-env.rst  
    :start-line: 7
 

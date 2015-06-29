@@ -24,6 +24,7 @@ import co.cask.cdap.common.exception.BadRequestException;
 import co.cask.cdap.common.exception.StreamNotFoundException;
 import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
+import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamDetail;
@@ -55,6 +56,7 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.net.ssl.HttpsURLConnection;
 import javax.ws.rs.core.HttpHeaders;
@@ -274,7 +276,8 @@ public class StreamClient {
   public List<StreamDetail> list() throws IOException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3("streams");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<StreamDetail>>() { }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<StreamDetail>>() {
+    }).getResponseObject();
   }
 
   /**
@@ -290,8 +293,8 @@ public class StreamClient {
    * @throws IOException If fails to read from stream
    * @throws StreamNotFoundException If the given stream does not exists
    */
-  public <T extends Collection<? super StreamEvent>> T getEvents(String streamId, long startTime,
-                                                                 long endTime, int limit, final T results)
+  public <T extends Collection<? super StreamEvent>> T getEvents(String streamId, String startTime,
+                                                                 String endTime, int limit, final T results)
     throws IOException, StreamNotFoundException, UnauthorizedException {
     getEvents(streamId, startTime, endTime, limit, new Function<StreamEvent, Boolean>() {
       @Override
@@ -310,14 +313,36 @@ public class StreamClient {
    * @param startTime Timestamp in milliseconds to start reading event from (inclusive)
    * @param endTime Timestamp in milliseconds for the last event to read (exclusive)
    * @param limit Maximum number of events to read
+   * @param results Collection for storing the resulting stream events
+   * @param <T> Type of the collection for storing results
+   * @return The same collection object as passed in the {@code results} parameter
+   * @throws IOException If fails to read from stream
+   * @throws StreamNotFoundException If the given stream does not exists
+   */
+  public <T extends Collection<? super StreamEvent>> T getEvents(String streamId, long startTime,
+                                                                 long endTime, int limit, final T results)
+    throws IOException, StreamNotFoundException, UnauthorizedException {
+    return getEvents(streamId, String.valueOf(startTime), String.valueOf(endTime), limit, results);
+  }
+
+  /**
+   * Reads events from a stream
+   *
+   * @param streamId ID of the stream
+   * @param start Timestamp in milliseconds or now-xs format to start reading event from (inclusive)
+   * @param end Timestamp in milliseconds or now-xs format for the last event to read (exclusive)
+   * @param limit Maximum number of events to read
    * @param callback Callback to invoke for each stream event read. If the callback function returns {@code false}
    *                 upon invocation, it will stops the reading
    * @throws IOException If fails to read from stream
    * @throws StreamNotFoundException If the given stream does not exists
    */
-  public void getEvents(String streamId, long startTime, long endTime, int limit,
+  public void getEvents(String streamId, String start, String end, int limit,
                         Function<? super StreamEvent, Boolean> callback)
     throws IOException, StreamNotFoundException, UnauthorizedException {
+
+    long startTime = TimeMathParser.parseTime(start, TimeUnit.MILLISECONDS);
+    long endTime = TimeMathParser.parseTime(end, TimeUnit.MILLISECONDS);
 
     Id.Stream stream = Id.Stream.from(config.getNamespace(), streamId);
     URL url = config.resolveNamespacedURLV3(String.format("streams/%s/events?start=%d&end=%d&limit=%d",
@@ -362,6 +387,25 @@ public class StreamClient {
     } finally {
       urlConn.disconnect();
     }
+  }
+
+  /**
+   * Reads events from a stream
+   *
+   * @param streamId ID of the stream
+   * @param startTime Timestamp in milliseconds to start reading event from (inclusive)
+   * @param endTime Timestamp in milliseconds for the last event to read (exclusive)
+   * @param limit Maximum number of events to read
+   * @param callback Callback to invoke for each stream event read. If the callback function returns {@code false}
+   *                  upon invocation, it will stops the reading
+   * @throws IOException If fails to read from stream
+   * @throws StreamNotFoundException If the given stream does not exists
+   */
+  public void getEvents(String streamId, long startTime, long endTime, int limit,
+                        Function<? super StreamEvent, Boolean> callback)
+    throws IOException, StreamNotFoundException, UnauthorizedException {
+
+    getEvents(streamId, String.valueOf(startTime), String.valueOf(endTime), limit, callback);
   }
 
   /**

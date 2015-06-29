@@ -1,4 +1,5 @@
-angular.module(PKG.name + '.services')
+'use strict';
+angular.module(`${PKG.name}.services`)
   .factory('GraphHelpers', function() {
 
     /**
@@ -26,7 +27,8 @@ angular.module(PKG.name + '.services')
           connections.push({
             sourceName: nodes[i].program.programName + nodes[i].nodeId,
             targetName: nodes[i+1].program.programName + nodes[i+1].nodeId,
-            sourceType: nodes[i].nodeType
+            sourceType: nodes[i].nodeType,
+            targetType: nodes[i+1].nodeType
           });
         } else if (nodes[i].nodeType === 'FORK' || nodes[i].nodeType === 'CONDITION') {
           flatten(nodes[i-1], nodes[i], nodes[i+1], connections);
@@ -117,9 +119,33 @@ angular.module(PKG.name + '.services')
       }
     }
 
+    function addStartAndEnd(nodes) {
+      // Add Start and End nodes as semantically workflow needs to have it.
+      nodes.unshift({
+        type: 'START',
+        nodeType: 'ACTION',
+        nodeId: '',
+        program: {
+          programName: 'Start'
+        }
+      });
+
+      nodes.push({
+        label: 'end',
+        type: 'END',
+        nodeType: 'ACTION',
+        nodeId: '',
+        program: {
+          programName: 'End'
+        }
+      });
+      return nodes;
+    }
+
     return {
-      convertNodesToEdges: convertNodesToEdges,
-      expandNodes: expandNodes
+      convertNodesToEdges,
+      expandNodes,
+      addStartAndEnd
     };
 
   });

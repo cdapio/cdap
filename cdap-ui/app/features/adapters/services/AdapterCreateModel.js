@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .factory('AdapterCreateModel', function(AdapterApiFactory, $state, $timeout, $q, mySettings) {
+  .factory('AdapterCreateModel', function(myAdapterApi, $state, $timeout, $q, mySettings, EventPipe) {
     var defaultSource = {
       name: 'Add a source',
       properties: {},
@@ -41,7 +41,7 @@ angular.module(PKG.name + '.feature.adapters')
       this.instance = 1;
     };
 
-    Model.prototype.setMetadata = function (metadata) {
+    Model.prototype.setMetadata = function setMetadata(metadata) {
       // FIXME: There is a timing issue when editing a draft.
       this.metadata.type = metadata.type;
       this.metadata.name = metadata.name;
@@ -88,6 +88,7 @@ angular.module(PKG.name + '.feature.adapters')
         });
         return defer.promise;
       }
+      EventPipe.emit('showLoadingIcon', 'Saving adapter as draft');
       var adapterDrafts = {};
       this.adapterDrafts[this.metadata.name] = {
         config: {
@@ -108,6 +109,7 @@ angular.module(PKG.name + '.feature.adapters')
 
       var validation = this.basicValidation();
       if (!validation.messages.length) {
+        EventPipe.emit('showLoadingIcon', 'Creating Adapter');
         return formatAndSave.bind(this)();
       } else {
         defer.reject({
@@ -205,7 +207,7 @@ angular.module(PKG.name + '.feature.adapters')
         // default value should be * * * * *
         data.config.schedule = this.schedule.cron;
       }
-      return AdapterApiFactory.save(
+      return myAdapterApi.save(
         {
           namespace: $state.params.namespace,
           adapter: this.metadata.name

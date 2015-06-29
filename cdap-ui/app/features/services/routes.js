@@ -11,36 +11,25 @@ angular.module(PKG.name + '.feature.services')
         },
         template: '<ui-view/>'
       })
-      .state('services.list', {
-        url: '/list',
-        templateUrl: '/assets/features/services/templates/list.html',
-        controller: 'ServicesListController',
-        ncyBreadcrumb: {
-          parent: 'apps.detail.overview.status',
-          label: 'Services'
-        }
-      })
       .state('services.detail', {
         url: '/:programId',
-        controller: 'ServicesDetailController',
         templateUrl: '/assets/features/services/templates/detail.html',
         resolve : {
-          rRuns: function(MyDataSource, $stateParams, $q) {
-            var defer = $q.defer(),
-                dataSrc = new MyDataSource();
+          rRuns: function($stateParams, $q, myServiceApi) {
+            var defer = $q.defer();
 
-            dataSrc.request({
-              _cdapPath: '/namespaces/' + $stateParams.namespace +
-                          '/apps/' + $stateParams.appId +
-                          '/services/' + $stateParams.programId +
-                          '/runs'
-            })
-            .then(function (res) {
-              defer.resolve(res);
-            });
+            var params = {
+              namespace: $stateParams.namespace,
+              appId: $stateParams.appId,
+              serviceId: $stateParams.programId
+            };
+            myServiceApi.runs(params)
+              .$promise
+              .then(function (res) {
+                defer.resolve(res);
+              });
 
             return defer.promise;
-
           }
         },
         ncyBreadcrumb: {
@@ -53,6 +42,7 @@ angular.module(PKG.name + '.feature.services')
           url: '/runs',
           templateUrl: '/assets/features/services/templates/tabs/runs.html',
           controller: 'ServicesRunsController',
+          controllerAs: 'RunsController',
           ncyBreadcrumb: {
             label: '{{$state.params.programId}}'
           }
@@ -81,34 +71,22 @@ angular.module(PKG.name + '.feature.services')
           })
 
 
-        .state('services.detail.data', {
+        .state('services.detail.datasets', {
           url: '/data',
           templateUrl: '/assets/features/services/templates/tabs/data.html',
           ncyBreadcrumb: {
-            skip: true
-          }
-        })
-        .state('services.detail.metadata', {
-          url: '/metadata',
-          templateUrl: '/assets/features/services/templates/tabs/metadata.html',
-          ncyBreadcrumb: {
-            skip: true
+            parent: 'services.detail.runs',
+            label: 'Datasets'
           }
         })
         .state('services.detail.history', {
           url: '/history',
           templateUrl: '/assets/features/services/templates/tabs/history.html',
+          controller: 'ServicesRunsController',
+          controllerAs: 'RunsController',
           ncyBreadcrumb: {
-            parent: 'apps.detail.overview.status',
-            label: '{{$state.params.programId}} / History'
-          }
-        })
-
-        .state('services.detail.resources', {
-          url: '/resource',
-          templateUrl: '/assets/features/services/templates/tabs/resources.html',
-          ncyBreadcrumb: {
-            skip: true
+            parent: 'services.detail.runs',
+            label: 'History'
           }
         });
   });

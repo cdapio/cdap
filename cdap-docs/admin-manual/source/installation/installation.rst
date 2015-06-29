@@ -111,7 +111,7 @@ You'll need this software installed:
 Java Runtime
 ++++++++++++
 The latest `JDK or JRE version 1.7.xx <http://www.java.com/en/download/manual.jsp>`__
-for Linux and Solaris must be installed in your environment; we recommend the Oracle JDK.
+for Linux, Windows, or Mac OS X must be installed in your environment; we recommend the Oracle JDK.
 
 To check the Java version installed, run the command::
 
@@ -127,10 +127,10 @@ Once you have installed the JDK, you'll need to set the JAVA_HOME environment va
 
 Node.js Runtime
 +++++++++++++++
-You can download the appropriate version of Node.js (from |node-js-version|) from `nodejs.org <http://nodejs.org>`__:
+You can download the appropriate version of Node.js from `nodejs.org <http://nodejs.org>`__:
 
-#. The version of Node.js must be from |node-js-version|.
-#. Download the appropriate Linux or Solaris binary ``.tar.gz`` from
+#. The version of Node.js must be from |node-js-version|; we recommend |recommended-node-js-version|.
+#. Download the appropriate binary ``.tar.gz`` from
    `nodejs.org/download/ <http://nodejs.org/dist/>`__.
 
 #. Extract somewhere such as ``/opt/node-[version]/``
@@ -237,7 +237,7 @@ provide packages for *Ubuntu 12* and *CentOS 6*.
 
 Available packaging types:
 
-- RPM: YUM repo
+- RPM: Yum repo
 - Debian: APT repo
 - Tar: For specialized installations only
 
@@ -278,9 +278,11 @@ Update your Yum cache::
 
   $ sudo yum makecache
 
+.. end_install-rpm-using-yum
+
 Debian using APT
 ................
-Download the Cask Apt repo definition file:
+Download the Cask APT repo definition file:
 
 .. container:: highlight
 
@@ -302,6 +304,8 @@ Add the Cask Public GPG Key to your repository:
 Update your APT-cache::
 
   $ sudo apt-get update
+
+.. end_install-debian-using-apt
 
 Installation
 ------------
@@ -605,11 +609,25 @@ recompiled and re-deployed.)
 
 .. highlight:: console
 
-1. Stop all Flows, Services, and other Programs in all your applications.
+1. Stop all flows, services, and other programs in all your applications.
 
 #. Stop all CDAP processes::
 
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
+
+#. Update the CDAP file definition lists by running either of these methods:
+ 
+   - Using Yum:
+
+     .. include:: installation.rst 
+        :start-after: Download the Cask Yum repo definition file:
+        :end-before:  .. end_install-rpm-using-yum
+
+   - Using APT:
+
+     .. include:: installation.rst 
+        :start-after: Download the Cask APT repo definition file:
+        :end-before:  .. end_install-debian-using-apt
 
 #. Update the CDAP packages by running either of these methods:
 
@@ -631,7 +649,7 @@ recompiled and re-deployed.)
    Please see :ref:`Configuration <install-configuration>`.
 
 #. If you are upgrading a secure Hadoop cluster, you should authenticate with ``kinit``
-   before the next step (upgrade tool)::
+   before the next step (running the upgrade tool)::
 
      $ kinit -kt <keytab> <principle>
 
@@ -643,7 +661,7 @@ recompiled and re-deployed.)
 
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
      
-#. Run the Flow Queue pending metrics corrector::
+#. Run the flow queue pending metrics corrector::
 
      $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.flow.FlowQueuePendingCorrector
 

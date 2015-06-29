@@ -17,7 +17,7 @@ package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.MetricValues;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableMap;
@@ -74,11 +74,6 @@ public class AggregatedMetricsCollectionServiceTest {
       protected Scheduler scheduler() {
         return Scheduler.newFixedRateSchedule(5, 1, TimeUnit.SECONDS);
       }
-
-      @Override
-      protected boolean isPublishMetaMetrics() {
-        return false;
-      }
     };
 
     service.startAndWait();
@@ -92,10 +87,10 @@ public class AggregatedMetricsCollectionServiceTest {
     try {
       // The first section tests with empty tags.
       // Publish couple metrics with empty tags, they should be aggregated.
-      service.getCollector(EMPTY_TAGS).increment(METRIC, Integer.MAX_VALUE);
-      service.getCollector(EMPTY_TAGS).increment(METRIC, 2);
-      service.getCollector(EMPTY_TAGS).increment(METRIC, 3);
-      service.getCollector(EMPTY_TAGS).increment(METRIC, 4);
+      service.getContext(EMPTY_TAGS).increment(METRIC, Integer.MAX_VALUE);
+      service.getContext(EMPTY_TAGS).increment(METRIC, 2);
+      service.getContext(EMPTY_TAGS).increment(METRIC, 3);
+      service.getContext(EMPTY_TAGS).increment(METRIC, 4);
 
       MetricValues record = published.poll(10, TimeUnit.SECONDS);
       Assert.assertNotNull(record);
@@ -106,13 +101,13 @@ public class AggregatedMetricsCollectionServiceTest {
       Assert.assertNull(published.poll(3, TimeUnit.SECONDS));
 
       // Publish a metric and wait for it so that we know there is around 1 second to publish more metrics to test.
-      service.getCollector(EMPTY_TAGS).increment(METRIC, 1);
+      service.getContext(EMPTY_TAGS).increment(METRIC, 1);
       Assert.assertNotNull(published.poll(3, TimeUnit.SECONDS));
 
       //update the metrics multiple times with gauge.
-      service.getCollector(EMPTY_TAGS).gauge(METRIC, 1);
-      service.getCollector(EMPTY_TAGS).gauge(METRIC, 2);
-      service.getCollector(EMPTY_TAGS).gauge(METRIC, 3);
+      service.getContext(EMPTY_TAGS).gauge(METRIC, 1);
+      service.getContext(EMPTY_TAGS).gauge(METRIC, 2);
+      service.getContext(EMPTY_TAGS).gauge(METRIC, 3);
 
       // gauge just updates the value, so polling should return the most recent value written
       record = published.poll(3, TimeUnit.SECONDS);
@@ -120,9 +115,9 @@ public class AggregatedMetricsCollectionServiceTest {
       Assert.assertEquals(3, getMetricValue(record.getMetrics(), METRIC));
 
       // define collectors for non-empty tags
-      MetricsCollector baseCollector = service.getCollector(baseTags);
-      MetricsCollector flowletInstanceCollector = baseCollector.childCollector(Constants.Metrics.Tag.FLOWLET, FLOWLET)
-        .childCollector(Constants.Metrics.Tag.INSTANCE_ID, INSTANCE);
+      MetricsContext baseCollector = service.getContext(baseTags);
+      MetricsContext flowletInstanceCollector = baseCollector.childContext(Constants.Metrics.Tag.FLOWLET, FLOWLET)
+        .childContext(Constants.Metrics.Tag.INSTANCE_ID, INSTANCE);
 
       // increment metrics for various collectors
       baseCollector.increment(METRIC, Integer.MAX_VALUE);

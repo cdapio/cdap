@@ -118,7 +118,7 @@ angular
               promise = myDataSrc.request(config);
               break;
             case 'POLL-STOP':
-              promise = myDataSrc.pollStop(config);
+              promise = myDataSrc.stopPoll(config);
               break;
           }
           return promise;
@@ -137,18 +137,21 @@ angular
   })
 
   .config(function($httpProvider) {
-    $httpProvider.interceptors.push(function($rootScope) {
+    $httpProvider.interceptors.push(function($rootScope, myHelpers) {
       return {
         'request': function(config) {
-          if ($rootScope.currentUser) {
-            angular.extend({
+          if (
+              $rootScope.currentUser
+              && !myHelpers.objectQuery(config, 'data', 'profile_view')
+             ) {
+            angular.extend(config, {
               user: $rootScope.currentUser || null,
               headers: {
                 // Accessing stuff from $rootScope is bad. This is done as to resolve circular dependency.
                 // $http <- myAuthPromise <- myAuth <- $http <- $templateFactory <- $view <- $state
-                authorization: ($rootScope.currentUser.token ? 'Bearer ' + $rootScope.currentUser.token: null)
+                Authorization: ($rootScope.currentUser.token ? 'Bearer ' + $rootScope.currentUser.token: null)
               }
-            }, config);
+            });
           }
           return config;
         }
@@ -217,16 +220,25 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyDataSource) {
+  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyDataSource, MY_CONFIG, MYAUTH_EVENT) {
 
     var activeThemeClass = caskTheme.getClassName();
     var dataSource = new MyDataSource($scope);
-    dataSource.request({
-      _cdapPath: '/version'
-    })
-      .then(function(res) {
-        $scope.version = res.version;
-      });
+    if (MY_CONFIG.securityEnabled) {
+      $rootScope.$on(MYAUTH_EVENT.loginSuccess, getVersion);
+    } else {
+      getVersion();
+    }
+
+    function getVersion() {
+      dataSource.request({
+        _cdapPath: '/version'
+      })
+        .then(function(res) {
+          $scope.version = res.version;
+        });
+    }
+
     $scope.$on(CASK_THEME_EVENT.changed, function (event, newClassName) {
       if(!event.defaultPrevented) {
         $scope.bodyClass = $scope.bodyClass.replace(activeThemeClass, newClassName);

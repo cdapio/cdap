@@ -8,14 +8,14 @@
 Spark Programs *(Beta, Standalone CDAP only)*
 =============================================
 
-**Apache Spark** is used for in-memory cluster computing. It lets you load large sets of
+*Apache Spark* is used for in-memory cluster computing. It lets you load large sets of
 data into memory and query them repeatedly. This makes it suitable for both iterative and
-interactive programs. Similar to MapReduce, Spark can access **Datasets** as both input
-and output. Spark programs in CDAP can be written in either Java or Scala.
+interactive programs. Similar to MapReduce, Spark can access **datasets** as both input
+and output. *Spark programs* in CDAP can be written in either Java or Scala.
 
 In the current release, Spark (version 1.0 or higher) is supported only in the Standalone CDAP. 
 
-To process data using Spark, specify ``addSpark()`` in your Application specification::
+To process data using Spark, specify ``addSpark()`` in your application specification::
 
   public void configure() {
     ...
@@ -40,7 +40,7 @@ implementation of three methods:
         .build();
     }
 
-The configure method is similar to the one found in Flows and
+The configure method is similar to the one found in flows and
 MapReduce programs. It defines the name, description, and the class containing the main method of a Spark program.
 
 The ``beforeSubmit()`` method is invoked at runtime, before the
@@ -66,7 +66,7 @@ implementation for this method that does nothing::
 
 CDAP SparkContext
 -----------------
-CDAP provides its own ``SparkContext`` which is needed to access **Datasets**.
+CDAP provides its own ``SparkContext`` which is needed to access **datasets**.
 
 CDAP Spark programs must implement either ``JavaSparkProgram`` or ``ScalaSparkProgram``,
 depending upon the language (Java or Scala) in which the program is written. You can also access the Spark's
@@ -94,16 +94,16 @@ depending upon the language (Java or Scala) in which the program is written. You
 
 Spark and Datasets
 ------------------
-Spark programs in CDAP can directly access **Dataset** similar to the way a MapReduce can. 
+Spark programs in CDAP can directly access **dataset** similar to the way a MapReduce can. 
 These programs can create Spark's Resilient Distributed Dataset (RDD) by
-reading a Dataset and can also write RDD to a Dataset.
+reading a dataset and can also write RDD to a dataset.
 
-In order to access a Dataset in Spark, both the key and value classes have to be serializable.
+In order to access a dataset in Spark, both the key and value classes have to be serializable.
 Otherwise, Spark will fail to read or write them.
-For example, the Table Dataset has a value type of Row, which is not serializable.
+For example, the Table dataset has a value type of Row, which is not serializable.
 An ``ObjectStore`` dataset can be used, provided its classes are serializable.
 
-- Creating an RDD from Dataset
+- Creating an RDD from dataset
 
   - Java:
 
@@ -121,7 +121,7 @@ An ``ObjectStore`` dataset can be used, provided its classes are serializable.
                                                                                    classOf[Array[Byte]],
                                                                                    classOf[Purchase]);
 
-- Writing an RDD to Dataset
+- Writing an RDD to dataset
 
   - Java:
 
@@ -136,10 +136,10 @@ An ``ObjectStore`` dataset can be used, provided its classes are serializable.
     sparkContext.writeToDataset(purchaseRDD, "purchases", classOf[Array[Byte]], classOf[Purchase])
 
 Spark and Streams
-------------------
-Spark programs in CDAP can directly access **Streams** similar to the way a MapReduce can.
-These programs can create Spark's Resilient Distributed Dataset (RDD) by reading a Stream.
-You can read from a Stream using:
+-----------------
+Spark programs in CDAP can directly access **streams** similar to the way a MapReduce can.
+These programs can create Spark's Resilient Distributed Dataset (RDD) by reading a stream.
+You can read from a stream using:
 
 - Java::
 
@@ -151,11 +151,11 @@ You can read from a Stream using:
     val ratingsDataset: NewHadoopRDD[Array[Byte], Text] = sc.readFromStream("ratingsStream",
                                                                              classOf[Text])
 
-It’s possible to read parts of a Stream by specifying start and end timestamps using::
+It’s possible to read parts of a stream by specifying start and end timestamps using::
 
     sc.readFromStream(streamName, vClass, startTime, endTime);
 
-You can read custom objects from a Stream by providing a decoderType extended from
+You can read custom objects from a stream by providing a decoderType extended from
 `StreamEventDecoder <../../reference-manual/javadocs/co/cask/cdap/api/stream/StreamEventDecoder.html>`__::
 
     sc.readFromStream(streamName, vClass, startTime, endTime, decoderType);
@@ -190,7 +190,7 @@ Here is an example of service discovery in a Spark program::
             Closeables.closeQuietly(reader);
           }
         } catch (Exception e) {
-          LOG.warn("Failed to read the Stream for service {}",
+          LOG.warn("Failed to read the stream for service {}",
                                                               SparkPageRankApp.GOOGLE_PR_SERVICE, e);
           throw Throwables.propagate(e);
         }
@@ -202,7 +202,7 @@ Spark Metrics
 Spark programs in CDAP emit metrics, similar to a MapReduce program.
 CDAP collect system metrics emitted by Spark and display them in the **CDAP UI**.
 This helps in monitoring the progress and resources used by a Spark program.
-You can also emit custom user metrics from the worker nodes of your Spark Program::
+You can also emit custom user metrics from the worker nodes of your Spark program::
 
     final Metrics sparkMetrics = sc.getMetrics();
     JavaPairRDD<byte[], Integer> ranksRaw = ranks.mapToPair(new PairFunction<Tuple2<String, Double>,
@@ -217,11 +217,11 @@ You can also emit custom user metrics from the worker nodes of your Spark Progra
     
 Spark in Workflows
 ------------------
-Spark programs in CDAP can also be added to a :ref:`Workflow <workflows>`, similar to a :ref:`MapReduce <mapreduce>`.
+Spark programs in CDAP can also be added to a :ref:`workflow <workflows>`, similar to a :ref:`MapReduce <mapreduce>`.
 
 .. rubric::  Examples of Using Spark Programs
 
-- For an example of **a Spark Program,** see the :ref:`Spark K-Means <examples-spark-k-means>`
+- For an example of **a Spark program,** see the :ref:`Spark K-Means <examples-spark-k-means>`
   and :ref:`Spark Page Rank <examples-spark-page-rank>` examples.
 
 - For a longer example, the how-to guide :ref:`cdap-spark-guide` gives another demonstration.

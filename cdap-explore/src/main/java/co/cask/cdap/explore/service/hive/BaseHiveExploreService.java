@@ -18,7 +18,7 @@ package co.cask.cdap.explore.service.hive;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.Partition;
+import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
@@ -198,7 +198,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         .expireAfterWrite(cConf.getLong(Constants.Explore.INACTIVE_OPERATION_TIMEOUT_SECS), TimeUnit.SECONDS)
         .build();
 
-    this.cliService = new CLIService();
+    this.cliService = createCLIService();
 
     this.txClient = txClient;
     ContextManager.saveContext(datasetFramework, streamAdmin);
@@ -208,6 +208,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     LOG.info("Active handle timeout = {} secs", cConf.getLong(Constants.Explore.ACTIVE_OPERATION_TIMEOUT_SECS));
     LOG.info("Inactive handle timeout = {} secs", cConf.getLong(Constants.Explore.INACTIVE_OPERATION_TIMEOUT_SECS));
     LOG.info("Cleanup job schedule = {} secs", cleanupJobSchedule);
+  }
+
+  protected CLIService createCLIService() {
+    return new CLIService();
   }
 
   protected HiveConf getHiveConf() {
@@ -1049,9 +1053,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     // if this is a time partitioned file set, we need to add all partitions
     if (dataset instanceof TimePartitionedFileSet) {
       TimePartitionedFileSet tpfs = (TimePartitionedFileSet) dataset;
-      Set<Partition> partitions = tpfs.getPartitions(null);
-      if (!partitions.isEmpty()) {
-        QueryHandle handle = exploreTableManager.addPartitions(datasetID, partitions);
+      Set<PartitionDetail> partitionDetails = tpfs.getPartitions(null);
+      if (!partitionDetails.isEmpty()) {
+        QueryHandle handle = exploreTableManager.addPartitions(datasetID, partitionDetails);
         QueryStatus status = waitForCompletion(handle);
         // if add partitions failed, stop
         if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {

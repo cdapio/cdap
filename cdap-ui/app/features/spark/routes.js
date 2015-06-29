@@ -19,21 +19,21 @@ angular.module(PKG.name + '.feature.spark')
           highlightTab: 'development'
         },
         resolve : {
-          rRuns: function(MyDataSource, $stateParams, $q) {
+          rRuns: function($stateParams, $q, mySparkApi) {
             var defer = $q.defer();
-            var dataSrc = new MyDataSource();
-            // Using _cdapPath here as $state.params is not updated with
-            // runid param when the request goes out
-            // (timing issue with re-direct from login state).
-            dataSrc.request({
-              _cdapPath: '/namespaces/' + $stateParams.namespace +
-                         '/apps/' + $stateParams.appId +
-                         '/spark/' + $stateParams.programId +
-                         '/runs'
-            })
-              .then(function(res) {
+
+            var params = {
+              namespace: $stateParams.namespace,
+              appId: $stateParams.appId,
+              sparkId: $stateParams.programId
+            };
+
+            mySparkApi.runs(params)
+              .$promise
+              .then(function (res) {
                 defer.resolve(res);
               });
+
             return defer.promise;
           }
 
@@ -44,19 +44,21 @@ angular.module(PKG.name + '.feature.spark')
           skip: true
         },
         templateUrl: '/assets/features/spark/templates/detail.html',
-        controller: 'SparkDetailController'
+        controller: 'SparkDetailController',
+        controllerAs: 'DetailController'
       })
 
       .state('spark.detail.runs', {
         url: '/runs',
         templateUrl: '/assets/features/spark/templates/tabs/runs.html',
         controller: 'SparkRunsController',
+        controllerAs: 'RunsController',
         ncyBreadcrumb: {
           label: '{{$state.params.programId}}'
         }
       })
         .state('spark.detail.runs.run', {
-          url: '/:runid',
+          url: '/:runid?sourceId&sourceRunId&destinationType',
           templateUrl: '/assets/features/spark/templates/tabs/runs/run-detail.html',
           controller: 'SparkRunDetailController',
           ncyBreadcrumb: {
@@ -73,8 +75,10 @@ angular.module(PKG.name + '.feature.spark')
         },
         templateUrl: '/assets/features/spark/templates/tabs/history.html',
         controller: 'SparkRunsController',
+        controllerAs: 'RunsController',
         ncyBreadcrumb: {
-          label: 'History'
+          label: 'History',
+          parent: 'spark.detail.runs'
         }
       });
 

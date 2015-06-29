@@ -4,13 +4,13 @@
 
 .. _namespaces:
 
-============================================
+==========
 Namespaces
-============================================
+==========
 
 Overview
 ========
-A namespace is a physical grouping of application, data and its metadata in CDAP. Conceptually,
+A *Namespace* is a physical grouping of application, data and its metadata in CDAP. Conceptually,
 namespaces can be thought of as a partitioning of a CDAP instance. Any application or data
 (referred to here as an “entity”) can exist independently in multiple namespaces at the
 same time. The data and metadata of an entity is stored independent of another instance of
@@ -32,7 +32,7 @@ is part of the :ref:`HTTP RESTful API v3 <http-restful-api-v3>`.
 Namespace Components
 ====================
 
-A Namespace has a namespace identifier (the namespace 'name') and a description.
+A namespace has a namespace identifier (the namespace 'name') and a description.
 
 Namespace IDs are composed from a limited set of characters; they are restricted to
 letters (a-z, A-Z), digits (0-9), and underscores (_). There is no size limit
@@ -58,13 +58,13 @@ feature in a future release.
 
 
 Identifying Entities in a Namespace
-====================================
+===================================
 The ID of an entity in a namespace is composed of a combination of the namespace ID plus
 the entity ID, since an entity cannot exist independently of a namespace.
 
 
 Using Namespaces
-==============================
+================
 The best practices with using namespaces would be to create desired namespaces and use
 them for all operations. Otherwise, CDAP will use the ``default`` namespace for any operations
 undertaken.
@@ -83,6 +83,15 @@ present, and is recommended for:
 It is the namespace used when no other namespace is specified. However, for most usecases
 beyond the proof-of-concept stage, we recommend that you create appropriate namespaces and
 operate CDAP within them.
+
+Namespaces can be deleted. When a namespace is deleted, all components (applications,
+streams, flows, datasets, MapReduce programs, metrics, etc.) are first deleted, and then
+the namespace itself is removed. In the case of the ``default`` namespace, the name is
+retained, as the ``default`` namespace is always available in CDAP. 
+
+As this is an unrecoverable operation, extreme caution must be used when deleting
+namespaces. It can only be done if all programs of the namespace have been stopped, and if
+the ``cdap-site.xml`` parameter ``enable.unrecoverable.reset`` has been enabled.
 
 
 .. rubric::  Examples of Using Namespaces

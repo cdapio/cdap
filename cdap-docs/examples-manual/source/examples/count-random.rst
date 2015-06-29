@@ -94,7 +94,7 @@ Once the application is deployed:
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh start flow CountRandom.CountRandom 
-    Successfully started Flow 'CountRandom' of application 'CountRandom' with stored runtime arguments '{}'
+    Successfully started flow 'CountRandom' of application 'CountRandom' with stored runtime arguments '{}'
 
 Once you start the flow, the *source* flowlet will continuously generate data. You can see
 this by observing the counters for each flowlet in the flow visualization. Even though you
@@ -114,7 +114,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh stop flow CountRandom.CountRandom
-    Successfully stopped Flow 'CountRandom' of application 'CountRandom'
+    Successfully stopped flow 'CountRandom' of application 'CountRandom'
 
 **Removing the Application**
 

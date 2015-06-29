@@ -16,8 +16,9 @@
 
 __tmpdir=/tmp/cdap-examples.$$
 mkdir -p ${__tmpdir}
-cd ${__tmpdir}
-git clone https://github.com/caskdata/cdap.git
-chown -R cdap cdap
-su - cdap -c "cd ${__tmpdir}/cdap && MAVEN_OPTS='-Xmx512m -XX:MaxPermSize=128m' mvn package -DskipTests -pl cdap-examples -am -amd -P examples"
+cp -a /opt/cdap/sdk/examples ${__tmpdir}
+chown -R cdap ${__tmpdir}
+su - cdap -c "cd ${__tmpdir}/examples && MAVEN_OPTS='-Xmx512m -XX:MaxPermSize=128m' mvn package -DskipTests" || exit 1
 rm -rf ${__tmpdir}
+
+exit 0

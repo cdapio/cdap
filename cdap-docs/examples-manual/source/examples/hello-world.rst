@@ -22,7 +22,7 @@ This application uses one stream, one dataset, one flow and one service to imple
 
 
 The ``HelloWorld`` Application
--------------------------------
+------------------------------
 
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
    :language: java
@@ -98,10 +98,10 @@ Once the application is deployed:
 
     $ cdap-cli.sh start flow HelloWorld.WhoFlow
   
-    Successfully started Flow 'WhoFlow' of application 'HelloWorld' with stored runtime arguments '{}'
+    Successfully started flow 'WhoFlow' of application 'HelloWorld' with stored runtime arguments '{}'
 
 Starting the Service
-------------------------------
+--------------------
 
 Once the application is deployed:
 
@@ -112,7 +112,7 @@ Once the application is deployed:
 
     $ cdap-cli.sh start service HelloWorld.Greeting
     
-    Successfully started Service 'Greeting' of application 'HelloWorld' with stored runtime arguments '{}'
+    Successfully started service 'Greeting' of application 'HelloWorld' with stored runtime arguments '{}'
 
 Injecting a Name
 ----------------
@@ -120,7 +120,7 @@ Injecting a Name
 .. |who-flow| replace:: *WhoFlow*
 .. _who-flow: http://localhost:9999/ns/default/apps/HelloWorld/programs/flows/WhoFlow/runs
 
-In the Application's detail page, click on |who-flow|_. This takes you to
+In the application's detail page, click on |who-flow|_. This takes you to
 the flow details page. (If you haven't already started the flow, click on the *Start*
 button in the right-side, below the green arrow.) The flow's *status* will read *RUNNING*
 when it is ready to receive events.
@@ -142,7 +142,7 @@ and send *Jane Doe* a number of times.
 Using the Service
 -----------------
 
-Go back to the Application's detail page, and click on the *Greeting* service. (If you
+Go back to the application's detail page, and click on the *Greeting* service. (If you
 haven't already started the service, click on the *Start* button on the right-side.) The
 service's label will read *Running* when it is ready to receive events.
 
@@ -210,7 +210,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh stop service HelloWorld.Greeting
-    Successfully stopped Service 'Greeting' of application 'HelloWorld'
+    Successfully stopped service 'Greeting' of application 'HelloWorld'
 
 **Removing the Application**
 

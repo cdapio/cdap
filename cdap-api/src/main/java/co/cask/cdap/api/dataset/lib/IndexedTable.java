@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -59,13 +60,14 @@ import javax.annotation.Nullable;
  * </p>
  *
  * <p>The indexed values need not be unique.  When reading the data back by index value, a {@link Scanner} will be
- * returned, allowing the client to iterate through all matching rows. Only exact matches on indexed values
- * are currently supported.
+ * returned, allowing the client to iterate through all matching rows. Exact matches as well as range lookups on
+ * indexed values are supported.
  * </p>
  *
  * <p>Index entries are created by storing additional rows in a second table.  These index rows are keyed by
- * column name, column value, and original row key, each field separated by a single null byte delimiter.  Values
- * containing the null byte are allowed, but may be read and filtered out when reading from the index.
+ * column name, column value, and original row key, each field separated by a single null byte delimiter.  It is not
+ * recommended that the name of an index column contains the null byte (this can cause a degradation in performance
+ * of index reads).
  * </p>
  *
  * <p>The columns to index can be configured in the {@link co.cask.cdap.api.dataset.DatasetProperties} used
@@ -99,13 +101,15 @@ public class IndexedTable extends AbstractDataset implements Table {
    * Column key used to store the existence of a row in the secondary index.
    */
   private static final byte[] IDX_COL = {'r'};
+  private static final byte DELIMITER_BYTE = 0;
+  private static final byte[] KEY_DELIMITER = new byte[] { DELIMITER_BYTE };
 
+  private final boolean hasColumnWithDelimiter;
   // the two underlying tables
   private Table table, index;
   // the secondary index column
   private SortedSet<byte[]> indexedColumns;
 
-  private byte[] keyDelimiter = new byte[] {0};
 
   /**
    * Configuration time constructor.
@@ -120,9 +124,34 @@ public class IndexedTable extends AbstractDataset implements Table {
     this.table = table;
     this.index = index;
     this.indexedColumns = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
-    for (byte[] col : columnsToIndex) {
-      this.indexedColumns.add(col);
+    this.hasColumnWithDelimiter = hasDelimiterByte(columnsToIndex);
+    Collections.addAll(this.indexedColumns, columnsToIndex);
+  }
+
+  /**
+   * Checks if a set of columns contains the DELIMITER_BYTE.
+   * This is needed because only when a column has a null byte in it do we need to check for false positive in the scan
+   * on the index by checking against the column's value in the data table.
+   * For instance, a false positive can arise with an index on the following two rows:
+   * <ul>
+   *  <li>Row #1: column name: a\0b, column value: c</li>
+   *  <li>Row #2: column name: a, column value: b\0c</li>
+   * </ul>
+   * Because of how the rows are constructed in the index table, both will be prefixed (and therefore looked up by)
+   * the row key prefix a\0b\0c.
+   *
+   * @param columns the set of columns being checked
+   * @return true if any of the columns contain the DELIMITER_BYTE
+   */
+  private boolean hasDelimiterByte(byte[][] columns) {
+    for (byte[] column : columns) {
+      for (byte b : column) {
+        if (b == DELIMITER_BYTE) {
+          return true;
+        }
+      }
     }
+    return false;
   }
 
   /**
@@ -170,13 +199,42 @@ public class IndexedTable extends AbstractDataset implements Table {
    * @throws java.lang.IllegalArgumentException if the given column is not configured for indexing.
    */
   public Scanner readByIndex(byte[] column, byte[] value) {
+    assertIndexedColumn(column);
+    byte[] rowKeyPrefix = Bytes.concat(column, KEY_DELIMITER, value, KEY_DELIMITER);
+    byte[] stopRow = Bytes.stopKeyForPrefix(rowKeyPrefix);
+    Scanner indexScan = index.scan(rowKeyPrefix, stopRow);
+    return new IndexScanner(indexScan, column, value);
+  }
+
+  /**
+   * Reads table rows within the given secondary index key range. If no rows are indexed, falling within the given
+   * range, then a {@link co.cask.cdap.api.dataset.table.Scanner} with no results will be returned.
+   *
+   * @param column the column to use for the index lookup
+   * @param startValue the inclusive start of the range for which rows must fall within to be returned in the scan.
+   *                   {@code null} means start from first row of the table
+   * @param endValue the exclusive end of the range for which rows must fall within to be returned in the scan
+   *                 {@code null} means end with the last row of the table
+   * @return a Scanner returning rows from the data table, whose stored value for the given column is within the the
+   *         given range.
+   * @throws java.lang.IllegalArgumentException if the given column is not configured for indexing.
+   */
+  public Scanner scanByIndex(byte[] column, @Nullable byte[] startValue, @Nullable byte[] endValue) {
+    assertIndexedColumn(column);
+    // KEY_DELIMITER is not used at the end of the rowKeys, because they are used for a range scan,
+    // instead of a fixed-match lookup
+    byte[] startRow = startValue == null ? Bytes.concat(column, KEY_DELIMITER) :
+      Bytes.concat(column, KEY_DELIMITER, startValue);
+    byte[] stopRow = endValue == null ? Bytes.stopKeyForPrefix(Bytes.concat(column, KEY_DELIMITER)) :
+      Bytes.concat(column, KEY_DELIMITER, endValue);
+    Scanner indexScan = index.scan(startRow, stopRow);
+    return new IndexRangeScanner(indexScan, column, startValue, endValue);
+  }
+
+  private void assertIndexedColumn(byte[] column) {
     if (!indexedColumns.contains(column)) {
       throw new IllegalArgumentException("Column " + Bytes.toStringBinary(column) + " is not configured for indexing");
     }
-    byte[] rowKeyPrefix = Bytes.concat(column, keyDelimiter, value, keyDelimiter);
-    byte[] stopRow = Bytes.stopKeyForPrefix(rowKeyPrefix);
-    Scanner indexScan = index.scan(rowKeyPrefix, stopRow);
-    return new IndexScanner(indexScan, rowKeyPrefix);
   }
 
   /**
@@ -201,14 +259,12 @@ public class IndexedTable extends AbstractDataset implements Table {
 
     // first read the existing indexed values to find which have changed and need to be updated
     Row existingRow = table.get(dataRow, colsToIndex.toArray(new byte[colsToIndex.size()][]));
-    if (existingRow != null) {
-      for (Map.Entry<byte[], byte[]> entry : existingRow.getColumns().entrySet()) {
-        if (!Arrays.equals(entry.getValue(), putColumns.get(entry.getKey()))) {
-          index.delete(createIndexKey(dataRow, entry.getKey(), entry.getValue()), IDX_COL);
-        } else {
-          // value already indexed
-          colsToIndex.remove(entry.getKey());
-        }
+    for (Map.Entry<byte[], byte[]> entry : existingRow.getColumns().entrySet()) {
+      if (!Arrays.equals(entry.getValue(), putColumns.get(entry.getKey()))) {
+        index.delete(createIndexKey(dataRow, entry.getKey(), entry.getValue()), IDX_COL);
+      } else {
+        // value already indexed
+        colsToIndex.remove(entry.getKey());
       }
     }
 
@@ -222,7 +278,7 @@ public class IndexedTable extends AbstractDataset implements Table {
   }
 
   private byte[] createIndexKey(byte[] row, byte[] column, byte[] value) {
-    return Bytes.concat(column, keyDelimiter, value, keyDelimiter, row);
+    return Bytes.concat(column, KEY_DELIMITER, value, KEY_DELIMITER, row);
   }
 
   @Override
@@ -259,7 +315,7 @@ public class IndexedTable extends AbstractDataset implements Table {
   @Override
   public void delete(byte[] row) {
     Row existingRow = table.get(row);
-    if (existingRow == null) {
+    if (existingRow.isEmpty()) {
       // no row to delete
       return;
     }
@@ -279,7 +335,7 @@ public class IndexedTable extends AbstractDataset implements Table {
   @Override
   public void delete(byte[] row, byte[][] columns) {
     Row existingRow = table.get(row, columns);
-    if (existingRow == null) {
+    if (existingRow.isEmpty()) {
       // no row to delete
       return;
     }
@@ -381,18 +437,16 @@ public class IndexedTable extends AbstractDataset implements Table {
 
     for (int i = 0; i < columns.length; i++) {
       long existingValue = 0L;
-      if (existingRow != null) {
-        byte[] existingBytes = existingRow.get(columns[i]);
-        if (existingBytes != null) {
-          if (existingBytes.length != Bytes.SIZEOF_LONG) {
-            throw new NumberFormatException("Attempted to increment a value that is not convertible to long," +
-                                              " row: " + Bytes.toStringBinary(row) +
-                                              " column: " + Bytes.toStringBinary(columns[i]));
-          }
-          existingValue = Bytes.toLong(existingBytes);
-          if (indexedColumns.contains(columns[i])) {
-            index.delete(createIndexKey(row, columns[i], existingBytes), IDX_COL);
-          }
+      byte[] existingBytes = existingRow.get(columns[i]);
+      if (existingBytes != null) {
+        if (existingBytes.length != Bytes.SIZEOF_LONG) {
+          throw new NumberFormatException("Attempted to increment a value that is not convertible to long," +
+                                            " row: " + Bytes.toStringBinary(row) +
+                                            " column: " + Bytes.toStringBinary(columns[i]));
+        }
+        existingValue = Bytes.toLong(existingBytes);
+        if (indexedColumns.contains(columns[i])) {
+          index.delete(createIndexKey(row, columns[i], existingBytes), IDX_COL);
         }
       }
       updatedValues[i] = Bytes.toBytes(existingValue + amounts[i]);
@@ -518,41 +572,91 @@ public class IndexedTable extends AbstractDataset implements Table {
     put(put);
   }
 
-  private class IndexScanner implements Scanner {
+  private abstract class AbstractIndexScanner implements Scanner {
     // scanner over index table
     private final Scanner baseScanner;
-    private final byte[] rowKeyPrefix;
+    private final byte[] column;
 
-    public IndexScanner(Scanner baseScanner, byte[] rowKeyPrefix) {
+    public AbstractIndexScanner(Scanner baseScanner, byte[] column) {
       this.baseScanner = baseScanner;
-      this.rowKeyPrefix = rowKeyPrefix;
+      this.column = column;
     }
+
+    /**
+     * checks if a particular column value matches a criteria defined by the implementing class
+     *
+     * @param columnValue the column to check for a match
+     * @return false to indicate to skip the corresponding row
+     */
+    protected abstract boolean matches(byte[] columnValue);
 
     @Nullable
     @Override
     public Row next() {
       // TODO: retrieve results in batches to minimize RPC overhead (requires multi-get support in table)
-      Row dataRow = null;
       // keep going until we hit a non-null, non-empty data row, or we exhaust the index
-      while (dataRow == null) {
-        Row indexRow = baseScanner.next();
-        if (indexRow == null) {
-          // end of index
-          return null;
-        }
+      for (Row indexRow = baseScanner.next(); indexRow != null; indexRow = baseScanner.next()) {
         byte[] rowkey = indexRow.get(IDX_COL);
-        // verify that datarow matches the expected row key to avoid issues with column name or value
-        // containing the delimiter used
-        if (rowkey != null && Bytes.equals(indexRow.getRow(), Bytes.add(rowKeyPrefix, rowkey))) {
-          dataRow = table.get(rowkey);
+        if (rowkey == null) {
+          LOG.warn("Row of Indexed table '{}' is missing index column. Row key: {}", getName(), indexRow.getRow());
+          continue;
+        }
+        byte[] columnValue = Arrays.copyOfRange(indexRow.getRow(),
+                                                column.length + 1,
+                                                indexRow.getRow().length - rowkey.length - 1);
+        // Verify that datarow matches the expected row key to avoid issues with column name or value
+        // containing the delimiter used. This is a sufficient check, as long as columns don't contain the null byte.
+        if (matches(columnValue)) {
+          Row row = table.get(rowkey);
+          // If a column has null byte (the key delimiter) in it, then we need to check against the data row's column
+          // to be sure this row isn't a false positive in the scan.
+          // For reference, take a look at IndexedTableTest#testIndexKeyDelimiterAmbiguity
+          if (hasColumnWithDelimiter && !Bytes.equals(row.get(column), columnValue)) {
+            continue;
+          }
+          return row;
         }
       }
-      return dataRow;
+      // end of index
+      return null;
     }
 
     @Override
     public void close() {
       baseScanner.close();
+    }
+  }
+
+  // scanner that matches column values based upon exact match
+  private class IndexScanner extends AbstractIndexScanner {
+    private final byte[] value;
+
+    public IndexScanner(Scanner baseScanner, byte[] column, byte[] value) {
+      super(baseScanner, column);
+      this.value = value;
+    }
+
+    @Override
+    protected boolean matches(byte[] columnValue) {
+      return Bytes.equals(columnValue, value);
+    }
+  }
+
+  // scanner that matches column values based upon range
+  private class IndexRangeScanner extends AbstractIndexScanner {
+    private final byte[] start;
+    private final byte[] end;
+
+    public IndexRangeScanner(Scanner baseScanner, byte[] column, @Nullable byte[] start, @Nullable byte[] end) {
+      super(baseScanner, column);
+      this.start = start;
+      this.end = end;
+    }
+
+    @Override
+    protected boolean matches(byte[] columnValue) {
+      return (start == null || Bytes.compareTo(columnValue, start) >= 0)
+        && (end == null || Bytes.compareTo(columnValue, end) < 0);
     }
   }
 }

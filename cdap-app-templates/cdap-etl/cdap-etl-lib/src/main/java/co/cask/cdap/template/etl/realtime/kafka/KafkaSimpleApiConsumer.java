@@ -424,7 +424,7 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
    * Helper method to create new {@link KafkaConsumerInfo} for map of topic partitions.
    *
    * @param config
-   * @return
+   * @return KafkaConsumerInfo mapped to TopicPartitions
    */
   private Map<TopicPartition, KafkaConsumerInfo<OFFSET>> createConsumerInfos(Map<TopicPartition, Integer> config) {
     ImmutableMap.Builder<TopicPartition, KafkaConsumerInfo<OFFSET>> consumers = ImmutableMap.builder();

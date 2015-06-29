@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
@@ -37,11 +37,11 @@ public abstract class AbstractHttpHandlerDelegator<T extends HttpServiceHandler>
                                                                                             DelegatorContext<T> {
 
   private final DelegatorContext<T> context;
-  private MetricsCollector metricsCollector;
+  private MetricsContext metricsContext;
 
-  protected AbstractHttpHandlerDelegator(DelegatorContext<T> context, MetricsCollector metricsCollector) {
+  protected AbstractHttpHandlerDelegator(DelegatorContext<T> context, MetricsContext metricsContext) {
     this.context = context;
-    this.metricsCollector = metricsCollector;
+    this.metricsContext = metricsContext;
   }
 
   @Override
@@ -73,10 +73,10 @@ public abstract class AbstractHttpHandlerDelegator<T extends HttpServiceHandler>
   }
 
   protected final DelayedHttpServiceResponder wrapResponder(HttpResponder responder) {
-    MetricsCollector collector = this.metricsCollector;
+    MetricsContext collector = this.metricsContext;
     if (context.getServiceContext() != null && context.getServiceContext().getSpecification() != null) {
-      collector = metricsCollector.childCollector(Constants.Metrics.Tag.HANDLER,
-                                                  context.getServiceContext().getSpecification().getName());
+      collector = metricsContext.childContext(Constants.Metrics.Tag.HANDLER,
+                                              context.getServiceContext().getSpecification().getName());
     }
     return new DelayedHttpServiceResponder(responder, collector);
   }

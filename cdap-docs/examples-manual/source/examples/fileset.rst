@@ -147,7 +147,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh stop service FileSetExample.FileSetService   
-    Successfully stopped Service 'FileSetService' of application 'FileSetExample'
+    Successfully stopped service 'FileSetService' of application 'FileSetExample'
 
 **Removing the Application**
 

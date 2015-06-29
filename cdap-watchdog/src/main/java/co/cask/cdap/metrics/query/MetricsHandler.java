@@ -259,10 +259,10 @@ public class MetricsHandler extends AbstractHttpHandler {
   private void setTimeRangeInQueryRequest(MetricQueryRequest request, Map<String, List<String>> queryTimeParams) {
     Long start =
       queryTimeParams.containsKey(PARAM_START_TIME) ?
-        TimeMathParser.parseTime(queryTimeParams.get(PARAM_START_TIME).get(0)) : null;
+        TimeMathParser.parseTimeInSeconds(queryTimeParams.get(PARAM_START_TIME).get(0)) : null;
     Long end =
       queryTimeParams.containsKey(PARAM_END_TIME) ?
-        TimeMathParser.parseTime(queryTimeParams.get(PARAM_END_TIME).get(0)) : null;
+        TimeMathParser.parseTimeInSeconds(queryTimeParams.get(PARAM_END_TIME).get(0)) : null;
     Integer count = null;
 
     boolean aggregate =
@@ -352,7 +352,7 @@ public class MetricsHandler extends AbstractHttpHandler {
       endTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     }
 
-    return decorate(queryResult, timeRange.getStart(), endTime);
+    return decorate(queryResult, timeRange.getStart(), endTime, timeRange.getResolutionInSeconds());
   }
 
   private Map<String, AggregationFunction> toMetrics(List<String> metrics) {
@@ -471,7 +471,8 @@ public class MetricsHandler extends AbstractHttpHandler {
     return Lists.newArrayList(Iterables.filter(metricNames, Predicates.notNull()));
   }
 
-  private MetricQueryResult decorate(Collection<MetricTimeSeries> series, long startTs, long endTs) {
+  private MetricQueryResult decorate(Collection<MetricTimeSeries> series, long startTs, long endTs,
+                                     int resolution) {
     MetricQueryResult.TimeSeries[] serieses = new MetricQueryResult.TimeSeries[series.size()];
     int i = 0;
     for (MetricTimeSeries timeSeries : series) {
@@ -479,7 +480,7 @@ public class MetricsHandler extends AbstractHttpHandler {
       serieses[i++] = new MetricQueryResult.TimeSeries(timeSeries.getMetricName(),
                                                        tagNamesToHuman(timeSeries.getTagValues()), timeValues);
     }
-    return new MetricQueryResult(startTs, endTs, serieses);
+    return new MetricQueryResult(startTs, endTs, serieses, resolution);
   }
 
   private Map<String, String> tagNamesToHuman(Map<String, String> tagValues) {

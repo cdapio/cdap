@@ -25,7 +25,6 @@ public final class Properties {
    * Class to hold properties for DBSource and DBSink
    */
   public static class DB {
-    public static final String DRIVER_CLASS = "driverClass";
     public static final String CONNECTION_STRING = "connectionString";
     public static final String TABLE_NAME = "tableName";
     public static final String USER = "user";
@@ -35,6 +34,18 @@ public final class Properties {
     public static final String JDBC_PLUGIN_TYPE = "jdbcPluginType";
     public static final String IMPORT_QUERY = "importQuery";
     public static final String COUNT_QUERY = "countQuery";
+  }
+
+  /**
+   * Class to hold properties for S3BatchSource
+   */
+  public static class File {
+    public static final String FILESYSTEM = "fileSystem";
+    public static final String FILESYSTEM_PROPERTIES = "fileSystemProperties";
+    public static final String PATH = "path";
+    public static final String FILE_REGEX = "fileRegex";
+    public static final String TIME_TABLE = "timeTable";
+    public static final String INPUT_FORMAT_CLASS = "inputFormatClass";
   }
 
   /**
@@ -59,6 +70,8 @@ public final class Properties {
     public static final String TPFS_NAME = "name";
     public static final String SCHEMA = "schema";
     public static final String BASE_PATH = "basePath";
+    public static final String DURATION = "duration";
+    public static final String DELAY = "delay";
   }
 
   /**

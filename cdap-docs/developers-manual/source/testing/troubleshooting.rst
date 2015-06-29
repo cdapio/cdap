@@ -15,11 +15,11 @@ A collection of tips and hints on solving problems encountered during developmen
 
 **Question:**
 
-  I am trying to read a sequence file in a Flowlet from HDFS with a custom type in value.
+  I am trying to read a sequence file in a flowlet from HDFS with a custom type in value.
   The same code works when I run it in a Java app with proper classpaths but while using
-  the same reader code in a Flowlet, getting a ``"custom object not found"`` error. I
+  the same reader code in a flowlet, getting a ``"custom object not found"`` error. I
   checked in the fat jar which is uploaded to CDAP by ``jar -tvf`` and the custom object
-  occurs in the fat jar. But I am seeing the following error in the Flowlet::
+  occurs in the fat jar. But I am seeing the following error in the flowlet::
 
     Caused by: java.lang.ClassNotFoundException: Class com.example.MyObject not found
     at org.apache.hadoop.conf.Configuration.getClassByName(Configuration.java:1953)

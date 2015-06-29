@@ -19,24 +19,25 @@ angular.module(PKG.name + '.feature.mapreduce')
           highlightTab: 'development'
         },
         templateUrl: '/assets/features/mapreduce/templates/detail.html',
-        controller: 'MapreduceDetailController',
         ncyBreadcrumb: {
           parent: 'apps.detail.overview.status',
           label: 'Mapreduce',
           skip: true
         },
         resolve: {
-          rRuns: function(MyDataSource, $stateParams, $q) {
+          rRuns: function($stateParams, $q, myMapreduceApi) {
             var defer = $q.defer();
 
-            var dataSrc = new MyDataSource();
-
-            dataSrc.request({
-              _cdapPath: '/namespaces/' + $stateParams.namespace + '/apps/' + $stateParams.appId + '/mapreduce/' + $stateParams.programId + '/runs'
-            })
-            .then(function (res) {
-              defer.resolve(res);
-            });
+            var params = {
+              namespace: $stateParams.namespace,
+              appId: $stateParams.appId,
+              mapreduceId: $stateParams.programId
+            };
+            myMapreduceApi.runs(params)
+              .$promise
+              .then(function (res) {
+                defer.resolve(res);
+              });
 
             return defer.promise;
           }
@@ -46,32 +47,34 @@ angular.module(PKG.name + '.feature.mapreduce')
           url: '/runs',
           templateUrl: '/assets/features/mapreduce/templates/tabs/runs.html',
           controller: 'MapreduceRunsController',
+          controllerAs: 'RunsController',
           ncyBreadcrumb: {
             label: '{{$state.params.programId}}'
           }
         })
           .state('mapreduce.detail.runs.run', {
-            url: '/:runid',
+            url: '/:runid?sourceId&sourceRunId&destinationType',
             templateUrl: '/assets/features/mapreduce/templates/tabs/runs/run-detail.html',
             controller: 'MapreduceRunsDetailController',
             ncyBreadcrumb: {
               label: '{{ $state.params.runid }}'
             }
           })
-        .state('mapreduce.detail.data', {
+        .state('mapreduce.detail.datasets', {
           url: '/data',
-          templateUrl: '/assets/features/mapreduce/templates/tabs/data.html',
+          template: '<my-data-list data-level="program" data-program="mapreduce"></my-data-list>',
           ncyBreadcrumb: {
-            parent: 'apps.detail.overview.status',
-            label: 'Data'
+            parent: 'mapreduce.detail.runs',
+            label: 'Datasets'
           }
         })
         .state('mapreduce.detail.history', {
           url: '/history',
-          templateUrl: '/assets/features/mapreduce/templates/tabs/history.html',
+          template: '<my-program-history data-runs="RunsController.runs" data-type="MAPREDUCE"></my-program-history>',
           controller: 'MapreduceRunsController',
+          controllerAs: 'RunsController',
           ncyBreadcrumb: {
-            parent: 'apps.detail.overview.status',
+            parent: 'mapreduce.detail.runs',
             label: 'History'
           }
         });

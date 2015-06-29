@@ -4,13 +4,9 @@ angular.module(PKG.name + '.feature.spark')
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId + '/spark/' + $state.params.programId;
 
-    if ($state.params.runid) {
-      var match = filterFilter($scope.runs, {runid: $state.params.runid});
-      if (match.length) {
-        $scope.runs.selected = match[0];
-      }
-    }
-    $scope.data = {
+    var vm = this;
+
+    vm.data = {
       'blockRemainingMemory': 0,
       'blockMaxMemory': 0,
       'blockUsedMemory': 0,
@@ -22,37 +18,34 @@ angular.module(PKG.name + '.feature.spark')
       'schedulerWaitingStages': 0
     };
 
-    $scope.runningTooltip = {
-      "title": 'Running'
+    vm.runningTooltip = {
+      'title': 'Running'
     };
 
-    $scope.waitingTooltip = {
-      "title": 'Waiting'
+    vm.waitingTooltip = {
+      'title': 'Waiting'
     };
 
-    $scope.failedTooltip = {
-      "title": 'Failed'
+    vm.failedTooltip = {
+      'title': 'Failed'
     };
 
-    $scope.$watch('runs.selected.runid', function (newVal) {
-      if(newVal) {
-        pollMetrics(newVal);
-      }
-    });
 
-    // This controller is NOT shared between the accordions.
+    pollMetrics($scope.RunsController.runs.selected.runid);
 
-    $scope.getStagePercentage = function (type) {
-      var total = ($scope.data.schedulerRunningStages
-        + $scope.data.schedulerFailedStages
-        + $scope.data.schedulerWaitingStages);
+    // this controller is NOT shared between the accordions.
+
+    vm.getStagePercentage = function (type) {
+      var total = (vm.data.schedulerRunningStages
+        + vm.data.schedulerFailedStages
+        + vm.data.schedulerWaitingStages);
       switch(type) {
         case 'running':
-          return $scope.data.schedulerRunningStages * 100 / total;
+          return vm.data.schedulerRunningStages * 100 / total;
         case 'waiting':
-          return $scope.data.schedulerWaitingStages * 100 / total;
+          return vm.data.schedulerWaitingStages * 100 / total;
         case 'failed':
-          return $scope.data.schedulerFailedStages * 100 / total;
+          return vm.data.schedulerFailedStages * 100 / total;
       }
     };
 
@@ -79,9 +72,10 @@ angular.module(PKG.name + '.feature.spark')
       angular.forEach(metricPaths, function (name, path) {
         dataSrc.poll({
           _cdapPath: path,
-          method: 'POST'
+          method: 'POST',
+          interval: 1000
         }, function(res) {
-          $scope.data[name] = myHelpers.objectQuery(res, 'series', 0, 'data', 0, 'value') || 0;
+          vm.data[name] = myHelpers.objectQuery(res, 'series', 0, 'data', 0, 'value') || 0;
         });
       });
 

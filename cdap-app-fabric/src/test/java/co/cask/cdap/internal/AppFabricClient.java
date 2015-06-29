@@ -125,7 +125,7 @@ public class AppFabricClient {
   }
 
   public void startProgram(String namespaceId, String appId,
-                           String flowId, ProgramType type, Map<String, String> args) {
+                           String flowId, ProgramType type, Map<String, String> args) throws Exception {
 
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/%s/%s/start",
@@ -140,7 +140,7 @@ public class AppFabricClient {
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Start " + type + " failed");
   }
 
-  public void stopProgram(String namespaceId, String appId, String flowId, ProgramType type) {
+  public void stopProgram(String namespaceId, String appId, String flowId, ProgramType type) throws Exception {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/%s/%s/stop",
                                getNamespacePath(namespaceId), appId, type.getCategoryName(), flowId);
@@ -251,7 +251,7 @@ public class AppFabricClient {
     return responder.decodeResponseContent(RUN_RECORDS_TYPE);
   }
 
-  public void suspend(String namespaceId, String appId, String scheduleName) {
+  public void suspend(String namespaceId, String appId, String scheduleName) throws Exception {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/schedules/%s/suspend", getNamespacePath(namespaceId), appId, scheduleName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
@@ -260,7 +260,7 @@ public class AppFabricClient {
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Suspend workflow schedules failed");
   }
 
-  public void resume(String namespaceId, String appId, String schedName) {
+  public void resume(String namespaceId, String appId, String schedName) throws Exception {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/schedules/%s/resume", getNamespacePath(namespaceId), appId, schedName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
@@ -291,8 +291,13 @@ public class AppFabricClient {
     }
   }
 
-  public Location deployApplication(Id.Namespace namespace, String appName,
-                                    Class<?> applicationClz, File...bundleEmbeddedJars) throws Exception {
+  public Location deployApplication(Id.Namespace namespace, String appName, Class<?> applicationClz,
+                                    File ...bundleEmbeddedJars) throws Exception {
+    return deployApplication(namespace, appName, applicationClz, null, bundleEmbeddedJars);
+  }
+
+  public Location deployApplication(Id.Namespace namespace, String appName, Class<?> applicationClz,
+                                    String config, File...bundleEmbeddedJars) throws Exception {
 
     Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
 
@@ -304,8 +309,12 @@ public class AppFabricClient {
                                                         String.format("/v3/namespaces/%s/apps", namespace.getId()));
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", archiveName);
+    if (config != null) {
+      request.setHeader("X-App-Config", config);
+    }
     MockResponder mockResponder = new MockResponder();
-    BodyConsumer bodyConsumer = appLifecycleHttpHandler.deploy(request, mockResponder, namespace.getId(), archiveName);
+    BodyConsumer bodyConsumer = appLifecycleHttpHandler.deploy(request, mockResponder, namespace.getId(), archiveName,
+                                                               config);
     Preconditions.checkNotNull(bodyConsumer, "BodyConsumer from deploy call should not be null");
 
     try (BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024)) {

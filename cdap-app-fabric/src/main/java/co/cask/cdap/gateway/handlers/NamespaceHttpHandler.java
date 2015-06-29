@@ -158,15 +158,14 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  /**
-   * DO NOT DOCUMENT THIS API
-   */
   @DELETE
   @Path("/unrecoverable/namespaces/{namespace-id}")
   public void delete(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespace) {
-    // NOTE: DO NOT DOCUMENT
     if (!cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN,
+                           String.format("Namespace '%s' cannot be deleted because '%s' is not enabled. " +
+                                           "Please enable it and restart CDAP Master.",
+                                         namespace, Constants.Dangerous.UNRECOVERABLE_RESET));
       return;
     }
     Id.Namespace namespaceId = Id.Namespace.from(namespace);
@@ -183,15 +182,15 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  /**
-   * DO NOT DOCUMENT THIS API
-   */
   @DELETE
   @Path("/unrecoverable/namespaces/{namespace-id}/datasets")
   public void deleteDatasets(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespace) {
     if (!cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN,
+                           String.format("All datasets in namespace %s cannot be deleted because '%s' is not enabled." +
+                                           " Please enable it and restart CDAP Master.",
+                                         namespace, Constants.Dangerous.UNRECOVERABLE_RESET));
       return;
     }
     Id.Namespace namespaceId = Id.Namespace.from(namespace);
@@ -201,7 +200,8 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (NotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found.", namespace));
     } catch (NamespaceCannotBeDeletedException e) {
-      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+      responder.sendString(HttpResponseStatus.CONFLICT, String.format("Datasets in namespace %s cannot be deleted. " +
+                                                                       "Reason: %s", namespace, e.getReason()));
     } catch (Exception e) {
       LOG.error("Internal error while deleting namespace.", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());

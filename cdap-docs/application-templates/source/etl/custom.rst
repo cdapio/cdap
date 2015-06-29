@@ -10,7 +10,7 @@ Creating Custom ETL Plugins
 
 Overview
 ========
-This section is intended for developers writing custom ETL Plugins.
+This section is intended for developers writing custom ETL plugins.
 Users of these should refer to the :ref:`Application Templates
 <apptemplates-index>`.
 
@@ -18,11 +18,11 @@ Users of these should refer to the :ref:`Application Templates
 Creating Custom ETL Plugins
 ===========================
 
-CDAP provides for the creation of custom ETL Plugins for batch/realtime sources/sinks and
-transformations to extend the existing ``ETLBatch`` and ``ETLRealtime`` Application Templates.
+CDAP provides for the creation of custom ETL plugins for batch/real-time sources/sinks and
+transformations to extend the existing ``ETLBatch`` and ``ETLRealtime`` application templates.
 
-To make a custom plugin available to one of the Application Templates (and thus available
-to any Adapter created from one of the Templates), the plugin should be packaged as a bundle jar
+To make a custom plugin available to one of the application templates (and thus available
+to any adapter created from one of the templates), the plugin should be packaged as a bundle jar
 and then placed in the appropriate directory. 
 
 .. _advanced-custom-app-template-installation-directory:
@@ -36,16 +36,16 @@ Installation Directory
   can be provided to CDAP by setting the property ``app.template.dir`` in
   ``cdap-site.xml``. The default path is: ``/opt/cdap/master/templates/plugins/<template-type>``
 
-where ``template-type`` is one of the ETL App Template types (``ETLBatch`` or ``ETLRealtime``)
+where ``template-type`` is one of the ETL application template types (``ETLBatch`` or ``ETLRealtime``)
 
 The CDAP Standalone should be restarted for this change to take effect in Standalone mode,
-and ``cdap-master`` Services should be restarted in the Distributed mode.
+and ``cdap-master`` services should be restarted in the Distributed mode.
 
 
 Plugin Types and Maven Archetypes
 =================================
 
-In ETL Templates, there are three plugin types:
+In ETL templates, there are three plugin types:
 
 - Source
 - Sink
@@ -55,20 +55,20 @@ There are five different Maven archetypes available for starting a plugin projec
 
 - Batch Source
 - Batch Sink
-- Realtime Source
-- Realtime Sink
+- Real-time Source
+- Real-time Sink
 - Transformation
 
 Available Annotations
 ---------------------
-These annotations may be used with the Plugin classes:
+These annotations may be used with the plugin classes:
 
-- ``@Plugin``: The class to be exposed as a Plugin needs to be annotated with the ``@Plugin``
+- ``@Plugin``: The class to be exposed as a plugin needs to be annotated with the ``@Plugin``
   annotation and the type of the plugin should be specified (*source*, *sink*, *transformation*).
   By default, the plugin type will be ‘plugin’.
 
-- ``@Name``: Annotation used to name the Plugin as well as the properties in the
-  Configuration class of the Plugin.
+- ``@Name``: Annotation used to name the plugin as well as the properties in the
+  Configuration class of the plugin.
 
 - ``@Description``: Annotation used to add a description.
 
@@ -78,8 +78,8 @@ These annotations may be used with the Plugin classes:
 
 Creating a Batch Source Plugin
 ------------------------------
-A Batch Source Plugin can be created from a Maven archetype. This command will create a
-project for the Plugin from the archetype:
+A batch source plugin can be created from a Maven archetype. This command will create a
+project for the plugin from the archetype:
 
 .. container:: highlight
 
@@ -90,18 +90,18 @@ project for the Plugin from the archetype:
           -DarchetypeArtifactId=cdap-etl-batch-source-archetype \\
           -DarchetypeVersion=\ |release|
 
-In order to implement a Batch Source (to be used in the ETL Batch Template), you extend
+In order to implement a Batch Source (to be used in the ETL Batch template), you extend
 the BatchSource class. You need to define the types of the KEY and VALUE that the Batch
 Source will receive and the type of object that the Batch Source will emit to the
-subsequent stage (which could be either a TransformStage or a BatchSink). After defining
+subsequent stage (which could be either a Transform or a BatchSink). After defining
 the types, only one method is required to be implemented:
 
-  ``prepareJob()``
+  ``prepareRun()``
 
 Methods
 .......
 
-- ``prepareJob()``: Used to configure the Hadoop Job configuration (for example, set the
+- ``prepareRun()``: Used to configure the Hadoop Job configuration (for example, set the
   ``InputFormatClass``).
 - ``configurePipeline()``: Used to create any Streams or Datasets that are required by this 
   Batch Source.
@@ -118,7 +118,7 @@ Example::
   public class MyBatchSource extends BatchSource<LongWritable, String, String> {
 
     @Override
-    public void prepareJob(BatchSourceContext context) {
+    public void prepareRun(BatchSourceContext context) {
       Job job = context.getHadoopJob();
       job.setInputFormatClass(...);
       // Other Hadoop job configuration related to Input
@@ -128,7 +128,7 @@ Example::
 
 Creating a Batch Sink Plugin
 ----------------------------
-A Batch Sink Plugin can be created from this Maven archetype:
+A batch sink plugin can be created from this Maven archetype:
 
 .. container:: highlight
 
@@ -142,16 +142,16 @@ A Batch Sink Plugin can be created from this Maven archetype:
 In order to implement a Batch Sink (to be used in the ETL Batch template), you extend the
 BatchSink class. Similar to a BatchSource, you need to define the types of the KEY and
 VALUE that the BatchSink will write in the Batch job and the type of object that it will
-accept from the previous stage (which could be either a ``TransformStage`` or a ``BatchSource``). 
+accept from the previous stage (which could be either a ``Transform`` or a ``BatchSource``).
 
 After defining the types, only one method is required to be implemented:
 
-  ``prepareJob()`` 
+  ``prepareRun()``
 
 Methods
 .......
 
-- ``prepareJob()``: Used to configure the Hadoop Job configuration (for ex, set ``OutputFormatClass``).
+- ``prepareRun()``: Used to configure the Hadoop Job configuration (for ex, set ``OutputFormatClass``).
 - ``configurePipeline()``: Used to create any datasets that are required by this Batch Sink.
 - ``initialize()``: Initialize the Batch Sink runtime. Guaranteed to be executed before
   any call to the plugin’s ``transform`` method.
@@ -165,20 +165,20 @@ Example::
   @Plugin(type = "sink")
   @Name("MyBatchSink")
   @Description("Demo Sink")
-  public class MyBatchSource extends BatchSink<String, String, NullWritable> {
+  public class MyBatchSink extends BatchSink<String, String, NullWritable> {
 
     @Override
-    public void prepareJob(BatchSourceContext context) {
+    public void prepareRun(BatchSinkContext context) {
       Job job = context.getHadoopJob();
       job.setOutputFormatClass(...);
-      // OtherHadoop job configuration related to Output
+      // Other Hadoop job configuration related to Output
     }
   }
 
 
-Creating a Realtime Source Plugin
----------------------------------
-A Realtime Source Plugin can be created from this Maven archetype:
+Creating a Real-Time Source Plugin
+----------------------------------
+A real-time source plugin can be created from this Maven archetype:
 
 .. container:: highlight
 
@@ -196,10 +196,10 @@ The only method that needs to be implemented is:
 Methods 
 .......
 
-- ``initialize()``: Initialize the Realtime Source runtime. Guaranteed to be executed
+- ``initialize()``: Initialize the real-time source runtime. Guaranteed to be executed
   before any call to the poll method. Usually used to setup the connection to external
   sources.
-- ``poll()``: Poll method will be invoked during the run of the Adapter and in each call,
+- ``poll()``: Poll method will be invoked during the run of the adapter and in each call,
   the source is expected to emit zero or more objects for the next stage to process. 
 - ``destroy()``: Cleanup method executed during the shutdown of the Source. Could be used
   to tear down any external connections made during the initialize method.
@@ -207,11 +207,11 @@ Methods
 Example::
 
   /**
-   * Realtime Source to poll data from external sources.
+   * Real-Time Source to poll data from external sources.
    */
   @Plugin(type = "source")
   @Name("Source")
-  @Description("Realtime Source")
+  @Description("Real-Time Source")
   public class Source extends RealtimeSource<StructuredRecord> {
 
     private final SourceConfig config;
@@ -244,7 +244,6 @@ Example::
     @Override
     public void initialize(RealtimeContext context) throws Exception {
       super.initialize(context);
-      // No-op
       // Get Config param and use to initialize
       // String param = config.param
       // Perform init operations, external operations etc.
@@ -265,9 +264,9 @@ Example::
   }
 
 
-Creating a Realtime Sink Plugin
--------------------------------
-A Realtime Sink Plugin can be created from this Maven archetype:
+Creating a Real-Time Sink Plugin
+--------------------------------
+A real-time sink plugin can be created from this Maven archetype:
 
 .. container:: highlight
 
@@ -284,7 +283,7 @@ The only method that needs to be implemented is:
 
 Methods
 
-- ``initialize()``: Initialize the Realtime Sink runtime. Guaranteed to be executed before
+- ``initialize()``: Initialize the real-time sink runtime. Guaranteed to be executed before
   any call to the ``write`` method. 
 - ``write()``: The write method will be invoked for a set of objects that needs to be
   persisted. A ``DataWriter`` object can be used to write data to CDAP Streams and/or Datasets.
@@ -296,7 +295,7 @@ Example::
 
   @Plugin(type = "sink")
   @Name("Demo")
-  @Description("Demo Realtime Sink")
+  @Description("Demo Real-Time Sink")
   public class DemoSink extends RealtimeSink<String> {
 
     @Override
@@ -313,7 +312,7 @@ Example::
 
 Creating a Transformation Plugin
 --------------------------------
-In ETL Templates, a transformation operation is applied on one object at a time,
+In ETL templates, a transformation operation is applied on one object at a time,
 converting it into one or more transformed outputs. A Transformation plugin can be created
 using this Maven archetype:
 
@@ -335,12 +334,12 @@ Methods
 .......
 
 - ``initialize()``: Used to perform any initialization step that might be required during
-  the runtime of the ``TransformStage``. It is guaranteed that this method will be invoked
+  the runtime of the ``Transform``. It is guaranteed that this method will be invoked
   before the ``transform`` method.
 - ``transform()``: Transform method contains the logic that will be applied on each
   incoming data object. An emitter can be used to pass the results to the subsequent stage
-  (which could be either another ``TransformStage`` or a ``Sink``).
-- ``destroy()``: Used to perform any cleanup before the Adapter shuts down.
+  (which could be either another ``Transform`` or a ``Sink``).
+- ``destroy()``: Used to perform any cleanup before the adapter shuts down.
 
 Below is an example of a ``DuplicateTransform`` that emits copies of the incoming record
 based on the value in the record. In addition, a user metric indicating the number of
@@ -352,7 +351,7 @@ copies in each transform is emitted. The user metrics can be queried by using th
   @Name("Duplicator")
   @Description("Transformation Example that makes copies")
 
-  public class DuplicateTransform extends TransformStage<StructuredRecord, StructuredRecord> {
+  public class DuplicateTransform extends Transform<StructuredRecord, StructuredRecord> {
   
   private final Config config;
 
@@ -382,21 +381,21 @@ copies in each transform is emitted. The user metrics can be queried by using th
 Test Framework for Adapters
 ===========================
 
-To unit test an Adapter, you can include ``cdap-test`` in your ``pom.xml`` and extend
+To unit test an adapter, you can include ``cdap-test`` in your ``pom.xml`` and extend
 ``TestBase``. This will give you access to the ``addTemplatePlugins``, ``deployTemplate``,
-and ``createAdapter`` methods.  Generally, you will first add Plugins, deploy a Template, and
-then create an Adapter using the template. See these methods’ corresponding Javadocs for
+and ``createAdapter`` methods.  Generally, you will first add plugins, deploy a template, and
+then create an adapter using the template. See these methods’ corresponding Javadocs for
 additional information.
 
 Creating an adapter will give you an ``AdapterManager`` which can be used to start and stop an
-Adapter, as well as wait for runs to finish. Other than that, you can use normal ``TestBase``
+adapter, as well as wait for runs to finish. Other than that, you can use normal ``TestBase``
 methods to obtain Streams or Datasets and verify that they have the correct data.
 
 
-Source State in Realtime Source
-===============================
+Source State in Real-Time Source
+================================
 
-Realtime Adapters are executed in Workers. During failure, there is the possibility that
+Real-time adapters are executed in workers. During failure, there is the possibility that
 the data that is emitted from the Source will not be processed by subsequent stages. In
 order to avoid such data loss, SourceState can be used to persist the information about
 the external source (for example, offset) if supported by the Source. 
@@ -412,7 +411,7 @@ of failures.
 
   @Plugin(type = "source")
   @Name("Demo")
-  @Description("Demo Realtime Source")
+  @Description("Demo Real-Time Source")
   public class DemoSource extends RealtimeSource<String> {
     private static final Logger LOG = LoggerFactory.getLogger(TestSource.class);
     private static final String COUNT = "count";
@@ -447,7 +446,7 @@ of failures.
 Plugin Packaging
 ================
 
-A Plugin is packaged as a JAR file, which contains the plugin class and its dependencies
+A plugin is packaged as a JAR file, which contains the plugin class and its dependencies
 inside. CDAP uses the "Export-Package" attribute in the JAR file manifest to determine
 which classes are *visible*. A *visible* class is one that can be used by another class
 that is not from the plugin JAR itself. This means the Java package which the plugin class
@@ -463,5 +462,5 @@ If you are developing plugins for ``ETLBatch``, be aware that for classes inside
 JAR that you have added to the Hadoop Job configuration directly (for example, your custom
 ``InputFormat`` class), you will need to add the Java packages of those classes to the
 "Export-Package" as well. This is to ensure those classes are visible to the Hadoop
-MapReduce framework during the Adapter execution. Otherwise, the execution will typically
+MapReduce framework during the adapter execution. Otherwise, the execution will typically
 fail with a ``ClassNotFoundException``.

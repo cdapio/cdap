@@ -1,13 +1,13 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. _http-restful-api-dataset:
 
-===========================================================
+========================
 Dataset HTTP RESTful API
-===========================================================
+========================
 
 .. highlight:: console
 
@@ -200,14 +200,15 @@ You can delete a dataset by issuing an HTTP DELETE request to the URL::
    * - Description
      - Deletes the dataset *mydataset* in the namespace *default*
 
+.. _http-restful-api-dataset-deleting-all:
 
 Deleting all Datasets
 ---------------------
 
-If the property ``enable.unrecoverable.reset`` in ``cdap-site.xml`` is set to ``true``, you can delete all datasets
-by issuing an HTTP DELETE request to the URL::
+If the property ``enable.unrecoverable.reset`` in ``cdap-site.xml`` is set to ``true``, 
+you can delete all Datasets (in a namespace) by issuing an HTTP DELETE request to the URL::
 
-  DELETE <base-url>/namespaces/<namespace>/unrecoverable/data/datasets
+  DELETE <base-url>/unrecoverable/namespaces/<namespace>/datasets
 
 .. list-table::
    :widths: 20 80
@@ -226,13 +227,20 @@ by issuing an HTTP DELETE request to the URL::
    * - Status Codes
      - Description
    * - ``200 OK``
-     - All datasets were successfully deleted
+     - All Datasets were successfully deleted
+   * - ``403 Forbidden``
+     - Property to enable unrecoverable methods is not enabled
+   * - ``409 Conflict``
+     - Programs are currently running in the namespace
 
+This command will only work if all programs in the namespace are not running.
 
 If the property ``enable.unrecoverable.reset`` in ``cdap-site.xml`` is not set to
 ``true``, this operation will return a Status Code ``403 Forbidden``. Note that this
 operation can only be performed if all programs are stopped. If there's at least one
-program that is running, this operation will return a Status Code ``400 Bad Request``.
+program that is running, this operation will return a Status Code ``409 Conflict``.
+
+This method must be exercised with extreme caution, as there is no recovery from it.
 
 Truncating a Dataset
 --------------------
@@ -267,7 +275,7 @@ This will clear the existing data from the dataset. This cannot be undone.
 Datasets used by an Application
 -------------------------------
 
-You can retrieve a list of datasets used by an Application by issuing a HTTP GET request to the URL::
+You can retrieve a list of datasets used by an application by issuing a HTTP GET request to the URL::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/datasets
 
@@ -310,7 +318,7 @@ You can retrieve a list of datasets used by a program by issuing a HTTP GET requ
    * - ``<app-id>``
      - Application ID
    * - ``<program-type>``
-     - Program Type, one of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
+     - Program type, one of ``flows``, ``mapreduce``, ``services``, ``spark``, or ``workflows``
    * - ``<program-id>``
      - Program ID
 
@@ -327,7 +335,7 @@ You can retrieve a list of datasets used by a program by issuing a HTTP GET requ
 Datasets used by an Adapter
 ---------------------------
 
-You can retrieve a list of datasets used by an Adapter by issuing a HTTP GET request to the URL::
+You can retrieve a list of datasets used by an adapter by issuing a HTTP GET request to the URL::
 
   GET <base-url>/namespaces/<namespace>/adapters/<adapter-id>/datasets
 

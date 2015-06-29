@@ -1,7 +1,6 @@
 angular.module(PKG.name + '.feature.adapters')
   // TODO: We should use rAdapterDetail here since this data is already resolved at adapter.detail state
-  .controller('AdapterRunDetailStatusController', function($scope, MyDataSource, $state) {
-    var dataSrc = new MyDataSource($scope);
+  .controller('AdapterRunDetailStatusController', function($scope, $state, myAdapterApi) {
 
     $scope.transforms = [{
       name: '',
@@ -19,9 +18,14 @@ angular.module(PKG.name + '.feature.adapters')
       type: ''
     };
 
-    dataSrc.request({
-      _cdapNsPath: '/adapters/' + $state.params.adapterId
-    })
+    var params = {
+      namespace: $state.params.namespace,
+      adapter: $state.params.adapterId,
+      scope: $scope
+    };
+
+    myAdapterApi.get(params)
+      .$promise
       .then(function(res) {
         $scope.source = res.config.source;
         $scope.sink = res.config.sink;

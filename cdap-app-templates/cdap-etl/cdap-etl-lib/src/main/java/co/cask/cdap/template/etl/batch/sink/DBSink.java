@@ -29,6 +29,7 @@ import co.cask.cdap.template.etl.api.batch.BatchSink;
 import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.template.etl.common.DBConfig;
 import co.cask.cdap.template.etl.common.DBRecord;
+import co.cask.cdap.template.etl.common.DBUtils;
 import co.cask.cdap.template.etl.common.ETLDBOutputFormat;
 import co.cask.cdap.template.etl.common.JDBCDriverShim;
 import com.google.common.base.Preconditions;
@@ -53,7 +54,7 @@ import java.sql.Statement;
 import java.util.List;
 
 /**
- * Sink that can be configured to export data to a database table
+ * Sink that can be configured to export data to a database table.
  */
 @Plugin(type = "sink")
 @Name("Database")
@@ -66,10 +67,15 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
 
   private final DBSinkConfig dbSinkConfig;
   private ResultSetMetaData resultSetMetadata;
-  private Configuration conf;
+  private Class<? extends Driver> driverClass;
+  private JDBCDriverShim driverShim;
 
   public DBSink(DBSinkConfig dbSinkConfig) {
     this.dbSinkConfig = dbSinkConfig;
+  }
+
+  private String getJDBCPluginId() {
+    return String.format("%s.%s.%s", "sink", dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName);
   }
 
   @Override
@@ -80,28 +86,28 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     Preconditions.checkArgument(!(dbSinkConfig.user != null && dbSinkConfig.password == null),
                                 "dbPassword is null. Please provide both user name and password if database requires" +
                                   "authentication. If not, please remove dbUser and retry.");
-    String jdbcPluginId = String.format("%s.%s.%s", "sink", dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName);
-    Class<Object> jdbcDriverClass = pipelineConfigurer.usePluginClass(dbSinkConfig.jdbcPluginType,
-                                                                      dbSinkConfig.jdbcPluginName,
-                                                                      jdbcPluginId,
-                                                                      PluginProperties.builder().build());
+    Class<? extends Driver> jdbcDriverClass = pipelineConfigurer.usePluginClass(dbSinkConfig.jdbcPluginType,
+                                                                                dbSinkConfig.jdbcPluginName,
+                                                                                getJDBCPluginId(),
+                                                                                PluginProperties.builder().build());
     Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
   }
 
   @Override
   public void prepareRun(BatchSinkContext context) {
-    LOG.debug("tableName = {}; driverClass = {}; connectionString = {}; importQuery = {}; columns = {}",
-              dbSinkConfig.tableName, dbSinkConfig.driverClass, dbSinkConfig.connectionString, dbSinkConfig.columns);
+    LOG.debug("tableName = {}; pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; columns = {}",
+              dbSinkConfig.tableName, dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName,
+              dbSinkConfig.connectionString, dbSinkConfig.columns);
 
     Job job = context.getHadoopJob();
-    conf = job.getConfiguration();
-    String jdbcPluginId = String.format("%s.%s.%s", "sink", dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName);
+    Configuration hConf = job.getConfiguration();
+
     // Load the plugin class to make sure it is available.
-    context.loadPluginClass(jdbcPluginId);
+    Class<? extends Driver> driverClass = context.loadPluginClass(getJDBCPluginId());
     if (dbSinkConfig.user == null && dbSinkConfig.password == null) {
-      DBConfiguration.configureDB(conf, dbSinkConfig.driverClass, dbSinkConfig.connectionString);
+      DBConfiguration.configureDB(hConf, driverClass.getName(), dbSinkConfig.connectionString);
     } else {
-      DBConfiguration.configureDB(conf, dbSinkConfig.driverClass, dbSinkConfig.connectionString,
+      DBConfiguration.configureDB(hConf, driverClass.getName(), dbSinkConfig.connectionString,
                                   dbSinkConfig.user, dbSinkConfig.password);
     }
     List<String> fields = Lists.newArrayList(Splitter.on(",").omitEmptyStrings().split(dbSinkConfig.columns));
@@ -116,12 +122,24 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
   @Override
   public void initialize(BatchSinkContext context) throws Exception {
     super.initialize(context);
+    driverClass = context.loadPluginClass(getJDBCPluginId());
     setResultSetMetadata();
   }
 
   @Override
   public void transform(StructuredRecord input, Emitter<KeyValue<DBRecord, NullWritable>> emitter) throws Exception {
     emitter.emit(new KeyValue<DBRecord, NullWritable>(new DBRecord(input, resultSetMetadata), null));
+  }
+
+  @Override
+  public void destroy() {
+    try {
+      DriverManager.deregisterDriver(driverShim);
+    } catch (SQLException e) {
+      LOG.warn("Error while deregistering JDBC drivers in ETLDBOutputFormat.", e);
+      throw Throwables.propagate(e);
+    }
+    DBUtils.cleanup(driverClass);
   }
 
   private void setResultSetMetadata() throws Exception {
@@ -133,11 +151,10 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
       connection = DriverManager.getConnection(dbSinkConfig.connectionString, dbSinkConfig.user, dbSinkConfig.password);
     }
     try {
-      // Using LIMIT in the following query even though its not SQL standard since DBInputFormat already depends on it
-      try (
-        Statement statement = connection.createStatement();
-        ResultSet rs = statement.executeQuery(String.format("SELECT %s from %s LIMIT 1",
-                                                            dbSinkConfig.columns, dbSinkConfig.tableName))
+      try (Statement statement = connection.createStatement();
+           // Using LIMIT even though its not SQL standard since DBInputFormat already depends on it
+           ResultSet rs = statement.executeQuery(String.format("SELECT %s from %s LIMIT 1",
+                                                               dbSinkConfig.columns, dbSinkConfig.tableName))
       ) {
         resultSetMetadata = rs.getMetaData();
       }
@@ -156,11 +173,12 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
       DriverManager.getDriver(dbSinkConfig.connectionString);
     } catch (SQLException e) {
       // Driver not found. We will try to register it with the DriverManager.
-      LOG.debug("Driver {} not found. Registering JDBC driver via shim {} ",
-                dbSinkConfig.driverClass, JDBCDriverShim.class.getName());
-      ClassLoader classLoader = conf.getClassLoader();
-      Class<?> driverClass = classLoader.loadClass(dbSinkConfig.driverClass);
-      DriverManager.registerDriver(new JDBCDriverShim((Driver) driverClass.newInstance()));
+      LOG.debug("Plugin Type: {} and Plugin Name: {}; Driver Class: {} not found. Registering JDBC driver via shim {} ",
+                dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName, driverClass.getName(),
+                JDBCDriverShim.class.getName());
+      driverShim = new JDBCDriverShim(driverClass.newInstance());
+      DBUtils.deregisterAllDrivers(driverClass);
+      DriverManager.registerDriver(driverShim);
     }
   }
 

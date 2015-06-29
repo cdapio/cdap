@@ -22,4 +22,6 @@
 dd if=/dev/zero of=/deleteme bs=1M
 
 # Remove file to free space
-rm -f /deleteme
+rm -f /deleteme || echo "Unable to delete zero-filled /deleteme" && exit 1
+
+exit 0

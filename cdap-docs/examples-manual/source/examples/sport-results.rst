@@ -14,7 +14,7 @@ A Cask Data Application Platform (CDAP) example demonstrating partitioned file s
 Overview
 ========
 
-This Application demonstrates the use of the PartitionedFileSet dataset:
+This application demonstrates the use of the PartitionedFileSet dataset:
 
 - Game results are stored in the PartitionedFileSet ``results``. It is partitioned by league and season,
   and each partition is a CSV (comma-separated values) file containing the results in one league for a season;
@@ -25,13 +25,13 @@ This Application demonstrates the use of the PartitionedFileSet dataset:
   seasons, and writes these totals to the partitioned file set ``totals`` that is partitioned by league.
 - Both the original game results and the aggregated totals can be explored using ad-hoc SQL queries.
 
-Let's look at some of these components, and then run the Application and see the results.
+Let's look at some of these components, and then run the application and see the results.
 
 The SportResults Application
 ----------------------------
 
 As in the other :ref:`examples <examples-index>`, the components
-of the Application are tied together by the class ``SportResults``:
+of the application are tied together by the class ``SportResults``:
 
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/SportResults.java
     :language: java
@@ -99,7 +99,7 @@ the ``totals`` PartitionedFileSet. The ``beforeSubmit()`` method prepares the Ma
 
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/ScoreCounter.java
     :language: java
-    :lines: 58-84
+    :lines: 57-83
     :dedent: 2
 
 It is worth mentioning that nothing else in ``ScoreCounter`` is specifically programmed to use file partitions.
@@ -136,7 +136,7 @@ Once the application is deployed:
 
     $ cdap-cli.sh start service SportResults.UploadService
     
-    Successfully started Service 'UploadService' of application 'SportResults' with stored runtime arguments '{}'
+    Successfully started service 'UploadService' of application 'SportResults' with stored runtime arguments '{}'
 
 Uploading Game Results
 ----------------------

@@ -301,9 +301,8 @@ Page layout container styles
 */
 .contentContainer, .sourceContainer, .classUseContainer, .serializedFormContainer, .constantValuesContainer {
     clear:both;
-    padding:0px 20px;
+    padding:0px 20px 20px 20px;
     position:relative;
-    padding-top:0 px;
 }
 .indexContainer {
     margin:10px;
@@ -423,13 +422,18 @@ Table styles
     position:relative;
     text-align:left;
     background-repeat:no-repeat;
-    color:#FFFFFF;
+    color:#2c4557;
     font-weight:bold;
     clear:none;
     overflow:hidden;
     padding:0px;
     margin:0px;
 }
+
+.overviewSummary caption {
+    margin:0px 0px 10px -10px;
+}
+
 caption a:link, caption a:hover, caption a:active, caption a:visited {
     color:#FFFFFF;
 }

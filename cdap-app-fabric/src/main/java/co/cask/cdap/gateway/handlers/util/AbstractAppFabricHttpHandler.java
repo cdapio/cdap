@@ -72,6 +72,8 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
    */
   public static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
 
+  public static final String APP_CONFIG_HEADER = "X-App-Config";
+
   /**
    * Class to represent status of programs.
    */

@@ -46,7 +46,9 @@ import javax.sql.rowset.serial.SerialBlob;
 /**
  * Writable class for DB Source/Sink
  *
- * {@see DBWritable}, {@see DBInputFormat}, {@see DBOutputFormat}
+ * @see org.apache.hadoop.mapreduce.lib.db.DBInputFormat DBInputFormat
+ * @see org.apache.hadoop.mapreduce.lib.db.DBOutputFormat DBOutputFormat
+ * @see org.apache.hadoop.mapreduce.lib.db.DBWritable DBWritable
  */
 public class DBRecord implements Writable, DBWritable {
 
@@ -118,8 +120,7 @@ public class DBRecord implements Writable, DBWritable {
   public void write(DataOutput out) throws IOException {
     Schema recordSchema = record.getSchema();
     List<Schema.Field> schemaFields = recordSchema.getFields();
-    for (int i = 0; i < schemaFields.size(); i++) {
-      Schema.Field field = schemaFields.get(i);
+    for (Schema.Field field : schemaFields) {
       String fieldName = field.getName();
       Schema.Type fieldType = field.getSchema().getType();
       Object fieldValue = record.get(fieldName);
@@ -244,7 +245,7 @@ public class DBRecord implements Writable, DBWritable {
           return toReturn;
         case Types.CLOB:
           String s;
-          StringBuffer sbf = new StringBuffer();
+          StringBuilder sbf = new StringBuilder();
           Clob clob = (Clob) original;
           try {
             try (BufferedReader br = new BufferedReader(clob.getCharacterStream(1, (int) clob.length()))) {

@@ -55,8 +55,7 @@ angular.module(PKG.name + '.feature.admin')
                 templateUrl: '/assets/features/admin/templates/partials/service-detail-metadata.html'
               })
               .state('admin.system.services.detail.logs', {
-                url: '/logs?filter',
-                reloadOnSearch: false,
+                url: '/logs',
                 template: '<my-log-viewer data-model="logs"></my-log-viewer>',
                 controller: 'AdminServiceLogController'
               })
@@ -189,11 +188,7 @@ angular.module(PKG.name + '.feature.admin')
                 controller: 'AdminNamespaceDatasetMetadataController',
                 templateUrl: '/assets/features/admin/templates/namespace/dataset-metadata.html'
               })
-              .state('admin.namespace.detail.data.streammetadata', {
-                url: '/streams/:streamId',
-                controller: 'StreamPropertiesController',
-                templateUrl: '/assets/features/admin/templates/namespace/stream-metadata.html'
-              })
+
               .state('admin.namespace.detail.data.streamcreate', {
                 url:'/streams/create',
                 onEnter: function($bootstrapModal, $state) {
@@ -210,6 +205,12 @@ angular.module(PKG.name + '.feature.admin')
                 onExit: function($modalStack) {
                   $modalStack.dismissAll();
                 }
+              })
+
+              .state('admin.namespace.detail.data.streammetadata', {
+                url: '/streams/detail/:streamId',
+                controller: 'StreamPropertiesController',
+                templateUrl: '/assets/features/admin/templates/namespace/stream-metadata.html'
               })
 
             .state('admin.namespace.detail.apps', {

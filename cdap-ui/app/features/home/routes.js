@@ -23,7 +23,7 @@ angular.module(PKG.name+'.feature.home')
       .state('home', {
         url: '/',
         templateUrl: '/assets/features/home/home.html',
-        onEnter: function(MY_CONFIG, myAuth, $state, myLoadingService) {
+        onEnter: function(MY_CONFIG, myAuth, $state, myLoadingService, $rootScope, MYAUTH_EVENT) {
           if (!MY_CONFIG.securityEnabled) {
             // Skip even the login view. Don't show login if security is disabled.
             myAuth.login({username:'admin'})
@@ -31,6 +31,12 @@ angular.module(PKG.name+'.feature.home')
                 myLoadingService.showLoadingIcon();
                 $state.go('overview');
               });
+          } else {
+            if (myAuth.isAuthenticated()) {
+              $rootScope.$broadcast(MYAUTH_EVENT.loginSuccess);
+            } else {
+              $state.go('login');
+            }
           }
         }
       })
@@ -44,43 +50,7 @@ angular.module(PKG.name+'.feature.home')
             return myNamespace.getList();
           }
         },
-        controller: function ($state, rNsList, mySessionStorage, myLoadingService, myAlert, $filter, EventPipe) {
-          // check that $state.params.namespace is valid
-          var n = rNsList.filter(function (one) {
-            return one.name === $state.params.namespace;
-          });
-
-          function checkNamespace (ns) {
-            var def = $filter('filter')(rNsList, { name: ns }, true);
-            return def.length > 0 ? true : false;
-          }
-
-          var PREFKEY = 'feature.home.ns.latest';
-
-          if(!n.length) {
-            mySessionStorage.get(PREFKEY)
-              .then(function (latest) {
-
-                if (latest && checkNamespace(latest)) {
-                  $state.go($state.current, {namespace: latest}, {reload: true});
-                  return;
-                }
-                //check for default
-                if (checkNamespace('default')){
-                  $state.go($state.current, {namespace: 'default'}, {reload: true});
-                  return;
-                }
-
-                // evoke backend is down
-                EventPipe.emit('backendDown');
-
-              });
-          }
-          else {
-            mySessionStorage.set(PREFKEY, $state.params.namespace);
-          }
-          myLoadingService.hideLoadingIcon();
-        }
+        controller: 'HomeController'
       })
 
       .state('404', {

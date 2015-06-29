@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.streams')
-  .controller('CdapStreamMetadataController',
+  .controller('StreamMetadataController',
     function($scope, $state, myExploreApi) {
 
       var params = {
@@ -7,12 +7,13 @@ angular.module(PKG.name + '.feature.streams')
         table: 'stream_' + $state.params.streamId,
         scope: $scope
       };
-
+      this.metadata = {};
+      
       myExploreApi.getInfo(params)
         .$promise
         .then(function (res) {
-          $scope.metadata = res;
-        });
+          this.metadata = res;
+        }.bind(this));
 
     }
   );

@@ -1,17 +1,12 @@
 <br />
-<div class="status" ng-controller="CdapAppDetailStatusController">
-  <!-- <div class="btn-group pull-right">
-    <button class="btn btn-default" type="button" ng-bind="programs.runningCount + ' Running'" disabled></button>
-    <button class="btn btn-default" type="button" ng-bind="programs.failedCount + ' Failed'" disabled></button>
-    <button class="btn btn-default" type="button" ng-bind="programs.deployedCount + ' Deployed'" disabled></button>
-  </div> -->
+<div class="status">
   <div class="row">
     <div class="col-xs-12">
       <h2> Programs </h2>
       <div class="table-responsive">
         <table class="table table-curved" cask-sortable>
           <thead>
-            <tr ng-class="{'sort-enabled': programs.length>0}">
+            <tr ng-class="{'sort-enabled': StatusController.programs.length>0}">
               <th data-predicate="name"> Name </th>
               <th data-predicate="status"> Status </th>
               <th data-predicate="description"> Description </th>
@@ -19,28 +14,19 @@
             </tr>
           </thead>
           <tbody>
-            <tr ng-repeat="program in programs | orderBy:sortable.predicate:sortable.reverse">
+            <tr ng-repeat="program in StatusController.programs | orderBy:sortable.predicate:sortable.reverse">
               <td>
                 <!-- RUNNING is green, SUSPENDED is yellow. All else is grey. -->
                 <span ng-class="{'status-green': program.status === 'RUNNING', 'status-yellow': program.status === 'SUSPENDED', 'status-grey': program.status !== 'RUNNING' && program.status !== 'SUSPENDED'}"> </span>
-                <a ng-if="program.type === 'Flow'" ui-sref="flows.detail.runs({programId: program.name})">
-                  <strong> {{program.name}} </strong>
-                </a>
-                <a ng-if="program.type === 'Workflow'" ui-sref="workflows.detail.runs({programId: program.name})">
-                  <strong> {{program.name}} </strong>
-                </a>
-                <a ng-if="program.type === 'Service'" ui-sref="services.detail.runs({programId: program.name})">
-                  <strong> {{program.name}} </strong>
-                </a>
-                <a ng-if="program.type === 'Mapreduce'" ui-sref="mapreduce.detail.runs({programId: program.name})">
-                  <strong> {{program.name}} </strong>
-                </a>
-                <a ng-if="program.type === 'Spark'" ui-sref="spark.detail.runs({programId: program.name})">
-                  <strong> {{program.name}} </strong>
-                </a>
-                <a ng-if="program.type === 'Worker'" ui-sref="worker.detail.runs({programId: program.name})">
-                  <strong> {{program.name}} </strong>
-                </a>
+
+                <my-program-link
+                  type="program.type"
+                  namespace="$state.params.namespace"
+                  app="$state.params.appId"
+                  program="program.name"
+                  bold="true">
+                </my-program-link>
+
               </td>
               <td ng-bind="program.status"></td>
               <td ng-bind="program.description"></td>

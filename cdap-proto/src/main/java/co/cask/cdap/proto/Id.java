@@ -1253,4 +1253,81 @@ public abstract class Id {
       return new DatasetInstance(Namespace.from(namespaceId), instanceId);
     }
   }
+
+  /**
+   * Artifact Id identifies an artifact by its namespace, name, and version.
+   */
+  public static class Artifact extends NamespacedId {
+    private final Namespace namespace;
+    private final String name;
+    private final String version;
+
+    public Artifact(Namespace namespace, String name, String version) {
+      // TODO: enforce name, version characters
+      Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
+      Preconditions.checkNotNull(name, "Name cannot be null.");
+      Preconditions.checkNotNull(version, "Version cannot be null.");
+      this.namespace = namespace;
+      this.name = name;
+      this.version = version;
+    }
+
+    public Namespace getNamespace() {
+      return namespace;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public String getVersion() {
+      return version;
+    }
+
+    @Nullable
+    @Override
+    protected Id getParent() {
+      return null;
+    }
+
+    @Override
+    public String getId() {
+      return String.format("%s-%s", name, version);
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("namespace", namespace)
+        .add("name", name)
+        .add("version", version)
+        .toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Artifact that = (Artifact) o;
+
+      return Objects.equal(namespace, that.namespace) &&
+        Objects.equal(name, that.name)
+        && Objects.equal(version, that.version);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(namespace, name, version);
+    }
+
+    public static Artifact from(Namespace namespace, String name, String version) {
+      return new Artifact(namespace, name, version);
+    }
+  }
+
 }

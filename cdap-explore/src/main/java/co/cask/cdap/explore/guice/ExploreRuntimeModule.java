@@ -19,6 +19,7 @@ package co.cask.cdap.explore.guice;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
+import co.cask.cdap.data.format.RecordFormats;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.executor.ExploreExecutorHttpHandler;
@@ -230,8 +231,10 @@ public class ExploreRuntimeModule extends RuntimeModule {
         setupClasspath();
 
         // Set local tmp dir to an absolute location in the twill runnable otherwise Hive complains
+        String localScratchPath = System.getProperty("java.io.tmpdir") + File.separator +
+          "hive-" + System.getProperty("user.name");
         System.setProperty(HiveConf.ConfVars.LOCALSCRATCHDIR.toString(),
-                           new File(HiveConf.ConfVars.LOCALSCRATCHDIR.defaultVal).getAbsolutePath());
+                           new File(localScratchPath).getAbsolutePath());
         LOG.info("Setting {} to {}", HiveConf.ConfVars.LOCALSCRATCHDIR.toString(),
                  System.getProperty(HiveConf.ConfVars.LOCALSCRATCHDIR.toString()));
 
@@ -269,9 +272,11 @@ public class ExploreRuntimeModule extends RuntimeModule {
     // LinkedHashSet maintains insertion order while removing duplicate entries.
     Set<File> orderedDependencies = new LinkedHashSet<>();
     orderedDependencies.addAll(hBaseTableDeps);
-    orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(RemoteDatasetFramework.class.getCanonicalName(),
+    orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(RemoteDatasetFramework.class.getName(),
                                                                      bootstrapClassPaths, null));
-    orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(DatasetStorageHandler.class.getCanonicalName(),
+    orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(DatasetStorageHandler.class.getName(),
+                                                                     bootstrapClassPaths, null));
+    orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(RecordFormats.class.getName(),
                                                                      bootstrapClassPaths, null));
 
     // Note: the class path entries need to be prefixed with "file://" for the jars to work when

@@ -6,14 +6,14 @@
 
 .. _supported-characters:
 
-============================================
+====================
 Supported Characters
-============================================
+====================
 
-The Cask Data Application Platform (CDAP) has naming conventions for different elements of CDAP.
+The Cask Data Application Platform (CDAP) has naming conventions for different components of CDAP.
 
 Streams
-----------------
+-------
 
 Stream names can have these characters:
 
@@ -23,7 +23,7 @@ Stream names can have these characters:
 
 
 Datasets
-----------
+--------
 
 Dataset names can have these characters:
 
@@ -39,19 +39,19 @@ Hive Limitation and Conversion
 `Hive 0.12 <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL>`__
 only supports alphanumeric characters (``a-z A-Z 0-9``) and underscores (``_``). 
 
-As a consequence, any hyphens in Stream names and any hyphens or periods in Dataset names
+As a consequence, any hyphens in stream names and any hyphens or periods in dataset names
 will be converted to underscores while creating Hive tables. 
 
 Examples: 
 
-- The Streams
+- The streams
 
     - ``my-ingest``
     - ``my_ingest``
   
   will both be converted to ``stream_my_ingest``
 
-- The Datasets
+- The datasets
 
     - ``my-dataset``
     - ``my_dataset``

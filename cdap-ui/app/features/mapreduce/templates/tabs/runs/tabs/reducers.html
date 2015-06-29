@@ -1,8 +1,8 @@
-<div class="mapreduce-components">
+<div class="mapreduce-components" ng-controller="MapreduceStatusController as StatusController">
   <div class="table-responsive">
     <table class="table table-curved" cask-sortable>
       <thead>
-        <tr ng-class="{'sort-enabled': info.mapTasks.length>0}">
+        <tr ng-class="{'sort-enabled': StatusController.info.mapTasks.length>0}">
           <th data-predicate="taskId">ID</th>
           <th data-predicate="state">Status</th>
           <th data-predicate="progress">% Complete</th>
@@ -13,7 +13,7 @@
       </thead>
 
       <tbody>
-        <tr ng-repeat="reduce in info.reduceTasks | orderBy:sortable.predicate:sortable.reverse">
+        <tr ng-repeat="reduce in StatusController.info.reduceTasks | orderBy:sortable.predicate:sortable.reverse">
           <td>{{ ::reduce.taskId }}</td>
           <td ng-if="reduce.state">{{ reduce.state }}</td>
           <td ng-if="!reduce.state">NA</td>
@@ -26,7 +26,7 @@
           <td>{{ reduce.counters.REDUCE_OUTPUT_RECORDS | myNumber: 0}}</td>
         </tr>
 
-        <tr class="text-center" ng-if="!info.reduceTasks.length">
+        <tr class="text-center" ng-if="!StatusController.info.reduceTasks.length">
           <td colspan='8'> Not Available </td>
         </tr>
       </tbody>

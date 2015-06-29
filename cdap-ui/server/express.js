@@ -144,19 +144,16 @@ function makeApp (authAddress, cdapConfig) {
               cdapConfig['router.server.port'] +
               '/v3/namespaces';
 
-      request({
+      req.pipe(
+        request({
           method: 'GET',
           url: link,
           rejectUnauthorized: false,
           requestCert: true,
-          agent: false
-        }, function(err) {
-          if (!err) {
-            res.status(200).send();
-          } else {
-            res.status(404).send();
-          }
-      });
+          agent: false,
+          headers: req.headers
+        })
+      ).pipe(res);
     }
   ]);
 

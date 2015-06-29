@@ -4,28 +4,28 @@
 
 .. _mapreduce:
 
-============================================
+==================
 MapReduce Programs
-============================================
+==================
 
-A **MapReduce** program is used to process data in batch. MapReduce can be
+A *MapReduce* program is used to process data in batch. MapReduce can be
 written as in a conventional Hadoop system. Additionally, CDAP
-**Datasets** can be accessed from MapReduce as both input and
+**datasets** can be accessed from MapReduce as both input and
 output.
 
 To process data using MapReduce, either specify ``addMapReduce()`` in your
-Application specification::
+application specification::
 
   public void configure() {
     ...
     addMapReduce(new WordCountJob());
     
-or specify ``addWorkflow()`` in your Application and specify your MapReduce in the
-:ref:`Workflow <workflows>` definition::
+or specify ``addWorkflow()`` in your application and specify your MapReduce in the
+:ref:`workflow <workflows>` definition::
 
   public void configure() {
     ...
-    // Run a MapReduce on the acquired data using a Workflow
+    // Run a MapReduce on the acquired data using a workflow
     addWorkflow(new PurchaseHistoryWorkflow());
     
 You must implement the ``MapReduce`` interface, which requires the
@@ -47,16 +47,16 @@ implementation of three methods:
       setOutputDataset("history");
     }
 
-The configure method is similar to the one found in Flows and
-Applications. It defines the name and description of the MapReduce.
-You can also specify Datasets to be used as input or output and
-resources (memory and virtual cores) used by the Mappers and Reducers.
+The configure method is similar to the one found in flows and
+applications. It defines the name and description of the MapReduce.
+You can also specify datasets to be used as input or output and
+resources (memory and virtual cores) used by the mappers and reducers.
 
 The ``beforeSubmit()`` method is invoked at runtime, before the
 MapReduce is executed. Through a passed instance of the
 ``MapReduceContext`` you have access to the actual Hadoop job
 configuration, as though you were running the MapReduce directly on
-Hadoop. For example, you can specify the Mapper and Reducer classes as
+Hadoop. For example, you can specify the mapper and reducer classes as
 well as the intermediate data format::
 
   @Override
@@ -130,14 +130,14 @@ MapReduce and Datasets
 
 .. rubric: Reading and Writing to Datasets from a MapReduce program
 
-Both CDAP ``Mapper`` and ``Reducer`` can directly read
-or write to a Dataset, similar to the way a Flowlet or Service can.
+Both a CDAP ``mapper`` and ``reducer`` can directly read
+or write to a dataset, similar to the way a flowlet or service can.
 
-To access a Dataset directly in Mapper or Reducer, you need (1) a
+To access a dataset directly in mapper or reducer, you need (1) a
 declaration and (2) an injection:
 
-#. Declare the Dataset in the MapReduce’s configure() method.
-   For example, to have access to a Dataset named *catalog*::
+#. Declare the dataset in the MapReduce’s configure() method.
+   For example, to have access to a dataset named *catalog*::
 
      public class MyMapReduceJob implements MapReduce {
        @Override
@@ -146,7 +146,7 @@ declaration and (2) an injection:
          useDatasets(Arrays.asList("catalog"))
          ...
 
-#. Inject the Dataset into the mapper or reducer that uses it::
+#. Inject the dataset into the mapper or reducer that uses it::
 
      public static class CatalogJoinMapper extends Mapper<byte[], Purchase, ...> {
        @UseDataSet("catalog")
@@ -163,7 +163,7 @@ declaration and (2) an injection:
 
 .. rubric: Datasets as MapReduce Input or Output
 
-Additionally, a MapReduce program can interact with a Dataset by using it as an input or an
+Additionally, a MapReduce program can interact with a dataset by using it as an input or an
 output, as described in :ref:`datasets-mapreduce-programs`.
 
 
@@ -175,6 +175,4 @@ output, as described in :ref:`datasets-mapreduce-programs`.
 - For a longer example, the how-to guide :ref:`cdap-mapreduce-guide` also
   demonstrates the use of MapReduce.
 
-- The :ref:`Tutorial <tutorials>` 
-  `WISE: Web Analytics <http://docs.cask.co/tutorial/current/en/tutorial2.html>`__ 
-  uses MapReduce.
+- The :ref:`Tutorial <tutorials>` :ref:`WISE: Web Analytics <cdap-tutorial-wise>` uses MapReduce.

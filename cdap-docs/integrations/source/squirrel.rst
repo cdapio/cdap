@@ -39,8 +39,8 @@ Here's how to add the :ref:`CDAP JDBC driver <cdap-jdbc>` inside *SquirrelSQL*.
 
 #. Click on ``OK``. ``CDAP Standalone`` is now added to the list of aliases.
 #. A popup asks you to connect to your newly-added alias. Click on ``Connect``, and *SquirrelSQL* will retrieve
-   information about your running CDAP Datasets.
-#. To execute a SQL query on your CDAP Datasets, go to the ``SQL`` tab, enter a query in the center field, and click
+   information about your running CDAP datasets.
+#. To execute a SQL query on your CDAP datasets, go to the ``SQL`` tab, enter a query in the center field, and click
    on the "running man" icon on top of the tab. Your results will show in the bottom half of the *SquirrelSQL* main view.
 
    .. image:: _images/jdbc/squirrel_sql_query.png

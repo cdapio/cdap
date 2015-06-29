@@ -23,7 +23,7 @@ import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
@@ -294,7 +294,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
 
     metricsCollectionService.startAndWait();
 
-    MetricsCollector collector = metricsCollectionService.getCollector(tags);
+    MetricsContext collector = metricsCollectionService.getContext(tags);
     collector.gauge("queue.pending", correctQueuePendingValue);
     System.out.printf("Adjusted system.queue.pending metric from %d to %d (tags %s)\n",
                       queuePending, correctQueuePendingValue, GSON.toJson(tags));

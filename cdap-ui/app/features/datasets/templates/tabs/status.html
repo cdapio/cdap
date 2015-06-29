@@ -1,5 +1,5 @@
 <div class="container">
-  <div ng-if="explorable">
+  <div ng-if="StatusController.explorable">
     <div class="row">
       <div class="col-xs-8 h2">
         <h2><span> Schema </span></h2>
@@ -13,16 +13,16 @@
           </thead>
           <tbody>
             <td>
-              <em ng-if="storage"> {{storage | bytes}} </em>
-              <em ng-if="!storage"> 0b </em>
+              <em ng-if="StatusController.storage"> {{StatusController.storage | bytes}} </em>
+              <em ng-if="!StatusController.storage"> 0b </em>
             </td>
             <td>
-              <em ng-if="writes"> {{writes | bytes}}/s </em>
-              <em ng-if="!writes"> 0b/s </em>
+              <em ng-if="StatusController.writes"> {{StatusController.writes | bytes}}/s </em>
+              <em ng-if="!StatusController.writes"> 0b/s </em>
             </td>
             <td>
-              <em ng-if="reads"> {{reads | bytes}}/s </em>
-              <em ng-if="!reads"> 0b/s </em>
+              <em ng-if="StatusController.reads"> {{StatusController.reads | bytes}}/s </em>
+              <em ng-if="!StatusController.reads"> 0b/s </em>
             </td>
           </tbody>
         </table>
@@ -31,22 +31,22 @@
     <div class="row">
       <div class="col-xs-12">
         <div class="table responsive">
-          <table class="table table-curved" cask-sortable ng-show="schema.length > 0">
+          <table class="table table-curved" cask-sortable ng-show="StatusController.schema.length > 0">
             <thead>
-              <tr ng-class="{'sort-enabled': schema.length > 1}">
+              <tr ng-class="{'sort-enabled': StatusController.schema.length > 1}">
                 <th data-predicate="name"> Name </th>
                 <th data-predicate="type"> Type </th>
               </tr>
             </thead>
             <tbody>
-              <tr ng-repeat="field in schema | orderBy:sortable.predicate:sortable.reverse">
+              <tr ng-repeat="field in StatusController.schema | orderBy:sortable.predicate:sortable.reverse">
                 <td ng-bind="field.name"> </td>
                 <td ng-bind="field.type"> </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div ng-show="schema.length == 0" class="well well-lg text-center">
+        <div ng-show="StatusController.schema.length == 0" class="well well-lg text-center">
           <span> No Schema defined for this Dataset </span>
         </div>
       </div>
@@ -54,7 +54,7 @@
 
   </div>
 
-  <div ng-if="explorable === false">
+  <div ng-if="StatusController.explorable === false">
     <div ng-include="'/assets/features/datasets/templates/tabs/programs.html'"></div>
   </div>
 

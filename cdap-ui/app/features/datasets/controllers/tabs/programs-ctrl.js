@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.datasets')
-  .controller('CdapDatasetDetailProgramsController', function($scope, $state, myDatasetApi) {
+  .controller('DatasetDetailProgramsController', function($scope, $state, myDatasetApi) {
     var params = {
       namespace: $state.params.namespace,
       datasetId: $state.params.datasetId,
@@ -8,6 +8,6 @@ angular.module(PKG.name + '.feature.datasets')
     myDatasetApi.programsList(params)
       .$promise
       .then(function(res) {
-        $scope.programs = res;
-      });
+        this.programs = res;
+      }.bind(this));
   });

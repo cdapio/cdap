@@ -17,14 +17,16 @@ package co.cask.cdap.metrics.process;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricType;
+import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.MetricValues;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.internal.io.DatumReader;
 import co.cask.common.io.ByteBufferInputStream;
-import com.google.common.base.Function;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterators;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import org.apache.twill.kafka.client.FetchedMessage;
 import org.apache.twill.kafka.client.KafkaConsumer;
 import org.slf4j.Logger;
@@ -33,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link KafkaConsumer.MessageCallback} that decodes message into {@link co.cask.cdap.api.metrics.MetricValues}
@@ -41,6 +44,9 @@ import java.util.List;
 public final class MetricsMessageCallback implements KafkaConsumer.MessageCallback {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsMessageCallback.class);
+  private static final ImmutableMap<String, String> METRICS_PROCESSOR_CONTEXT =
+    ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+                    Constants.Metrics.Tag.COMPONENT, "metrics.processor");
 
   private final DatumReader<MetricValues> recordReader;
   private final Schema recordSchema;
@@ -59,18 +65,17 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
   public void onReceived(Iterator<FetchedMessage> messages) {
     // Decode the metrics records.
     final ByteBufferInputStream is = new ByteBufferInputStream(null);
-    List<MetricValues> records = ImmutableList.copyOf(
-      Iterators.filter(Iterators.transform(messages, new Function<FetchedMessage, MetricValues>() {
-      @Override
-      public MetricValues apply(FetchedMessage input) {
-        try {
-          return recordReader.read(new BinaryDecoder(is.reset(input.getPayload())), recordSchema);
-        } catch (IOException e) {
-          LOG.info("Failed to decode message to MetricValue. Skipped. {}", e.getMessage());
-          return null;
-        }
+    List<MetricValues> records = Lists.newArrayList();
+
+    while (messages.hasNext()) {
+      FetchedMessage input = messages.next();
+      try {
+        MetricValues metricValues = recordReader.read(new BinaryDecoder(is.reset(input.getPayload())), recordSchema);
+        records.add(metricValues);
+      } catch (IOException e) {
+        LOG.info("Failed to decode message to MetricValue. Skipped. {}", e.getMessage());
       }
-    }), Predicates.notNull()));
+    }
 
     if (records.isEmpty()) {
       LOG.info("No records to process.");
@@ -78,6 +83,7 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
     }
 
     try {
+      addProcessingStats(records);
       metricStore.add(records);
     } catch (Exception e) {
       String msg = "Failed to add metrics data to a store";
@@ -91,6 +97,19 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
       LOG.info("{} metrics records processed", recordProcessed);
       LOG.info("Last record time: {}", records.get(records.size() - 1).getTimestamp());
     }
+  }
+
+  private void addProcessingStats(List<MetricValues> records) {
+    if (records.isEmpty()) {
+      return;
+    }
+    int count = records.size();
+    long now = System.currentTimeMillis();
+    long delay = now - TimeUnit.SECONDS.toMillis(records.get(records.size() - 1).getTimestamp());
+    records.add(
+      new MetricValues(METRICS_PROCESSOR_CONTEXT, TimeUnit.MILLISECONDS.toSeconds(now),
+                       ImmutableList.of(new MetricValue("metrics.process.count", MetricType.COUNTER, count),
+                                        new MetricValue("metrics.process.delay.ms", MetricType.GAUGE, delay))));
   }
 
   @Override

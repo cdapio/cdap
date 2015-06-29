@@ -57,7 +57,7 @@ and executes a query over a CDAP dataset ``mydataset``::
   // Connect to CDAP instance
   Connection connection = DriverManager.getConnection(connectionUrl);
 
-  // Execute a query over CDAP Datasets and retrieve the results
+  // Execute a query over CDAP datasets and retrieve the results
   ResultSet resultSet = connection.prepareStatement("select * from dataset_mydataset").executeQuery();
   ...
 

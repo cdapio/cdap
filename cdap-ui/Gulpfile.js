@@ -172,18 +172,23 @@ gulp.task('js:app', function() {
     name: pkg.name,
     v: pkg.version
   });
+
   return gulp.src([
       './app/main.js',
+      '!./app/lib/c3.js',
       './app/features/*/module.js',
       './app/**/*.js',
       '!./app/**/*-test.js'
     ])
     .pipe(plug.ngAnnotate())
+    .pipe(plug.sourcemaps.init())
     .pipe(plug.wrapper({
        header: '\n(function (PKG){ /* ${filename} */\n',
        footer: '\n})('+PKG+');\n'
     }))
+    .pipe(plug.babel())
     .pipe(plug.concat('app.js'))
+    .pipe(plug.sourcemaps.write("."))
     .pipe(gulp.dest('./dist/assets/bundle'));
 });
 

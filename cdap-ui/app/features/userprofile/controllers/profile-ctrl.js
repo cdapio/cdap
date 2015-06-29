@@ -12,6 +12,7 @@ angular.module(PKG.name + '.feature.userprofile')
         method: 'POST',
         url: '/accessToken',
         data: {
+          profile_view: true,
           username: credentials.username,
           password: credentials.password
         }
@@ -23,7 +24,7 @@ angular.module(PKG.name + '.feature.userprofile')
         })
         .error(function() {
           myAlert({
-            title: 'User Authentication Error!',
+            title: 'User Authentication Error',
             content: 'Either Username or Password is wrong. Please try again',
             type: 'danger'
           });

@@ -30,6 +30,7 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.io.URLConnections;
 import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
@@ -60,6 +61,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -80,6 +82,9 @@ import org.apache.twill.common.Threads;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.twill.zookeeper.ZKOperations;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -163,6 +168,13 @@ public class MasterServiceMain extends DaemonMain {
 
   @Override
   public void start() {
+    try {
+      // Workaround for release of file descriptors opened by URLClassLoader - https://issues.cask.co/browse/CDAP-2841
+      URLConnections.setDefaultUseCaches(false);
+    } catch (IOException e) {
+      LOG.error("Could not disable caching of URLJarFiles. This may lead to 'too many open files` exception.", e);
+    }
+
     createSystemHBaseNamespace();
     updateConfigurationTable();
 
@@ -171,6 +183,10 @@ public class MasterServiceMain extends DaemonMain {
 
     zkClient.startAndWait();
     twillRunner.start();
+
+    // Tries to create the ZK root node (which can be namespaced through the zk connection string)
+    Futures.getUnchecked(ZKOperations.ignoreError(zkClient.create("/", null, CreateMode.PERSISTENT),
+                                                  KeeperException.NodeExistsException.class, null));
     kafkaClient.startAndWait();
     metricsCollectionService.startAndWait();
     serviceStore.startAndWait();

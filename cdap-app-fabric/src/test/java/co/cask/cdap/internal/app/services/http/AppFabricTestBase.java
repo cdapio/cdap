@@ -526,10 +526,18 @@ public abstract class AppFabricTestBase {
    * Tries to stop the given program and expect the call completed with the status.
    */
   protected void stopProgram(Id.Program program, int expectedStatusCode) throws Exception {
-    String path = String.format("apps/%s/%s/%s/stop",
-                                program.getApplicationId(),
-                                program.getType().getCategoryName(),
-                                program.getId());
+    stopProgram(program, expectedStatusCode, null);
+  }
+
+  protected void stopProgram(Id.Program program, int expectedStatusCode, String runId) throws Exception {
+    String path;
+    if (runId == null) {
+      path = String.format("apps/%s/%s/%s/stop", program.getApplicationId(), program.getType().getCategoryName(),
+                           program.getId());
+    } else {
+      path = String.format("apps/%s/%s/%s/runs/%s/stop", program.getApplicationId(),
+                           program.getType().getCategoryName(), program.getId(), runId);
+    }
     HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespaceId()));
     Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
   }

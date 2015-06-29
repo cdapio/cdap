@@ -19,9 +19,8 @@ import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.metrics.iterator.MetricsCollectorIterator;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -51,7 +50,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
   private static final Logger LOG = LoggerFactory.getLogger(AggregatedMetricsCollectionService.class);
   private static final long CACHE_EXPIRE_MINUTES = 1;
 
-  private final LoadingCache<Map<String, String>, MetricsCollector> collectors;
+  private final LoadingCache<Map<String, String>, MetricsContext> collectors;
   private final LoadingCache<Map<String, String>, LoadingCache<String, AggregatedMetricsEmitter>> emitters;
 
   private ScheduledExecutorService executorService;
@@ -92,41 +91,24 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
    */
   protected abstract void publish(Iterator<MetricValues> metrics) throws Exception;
 
-  /**
-   * @return true if we want to publish metrics about
-   *              the received metrics in {@link #publish(java.util.Iterator)}.
-   */
-  protected boolean isPublishMetaMetrics() {
-    return true;
-  }
-
   @Override
   protected final void runOneIteration() throws Exception {
     final long timestamp = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     LOG.trace("Start log collection for timestamp {}", timestamp);
 
-    final MetricsCollectorIterator metricsItor = new MetricsCollectorIterator(getMetrics(timestamp));
-    publishMetrics(timestamp, metricsItor);
+    publishMetrics(timestamp, getMetrics(timestamp));
   }
 
-  private void publishMetrics(long timestamp, MetricsCollectorIterator metricsItor) {
+  private void publishMetrics(long timestamp, Iterator<MetricValues> metrics) {
     try {
-      publish(metricsItor);
+      publish(metrics);
     } catch (Throwable t) {
       LOG.error("Failed in publishing metrics for timestamp {}.", timestamp, t);
     }
 
-    if (isPublishMetaMetrics()) {
-      try {
-        publish(metricsItor.getMetaMetrics());
-      } catch (Throwable t) {
-        LOG.error("Failed in publishing meta metrics for timestamp {}.", timestamp, t);
-      }
-    }
-
     // Consume the whole iterator if it is not yet consumed inside publish. This is to make sure metrics are reset.
-    while (metricsItor.hasNext()) {
-      metricsItor.next();
+    while (metrics.hasNext()) {
+      metrics.next();
     }
     LOG.trace("Completed log collection for timestamp {}", timestamp);
   }
@@ -146,7 +128,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
   }
 
   @Override
-  public final MetricsCollector getCollector(final Map<String, String> tags) {
+  public final MetricsContext getContext(final Map<String, String> tags) {
     return collectors.getUnchecked(tags);
   }
 
@@ -196,20 +178,20 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
     };
   }
 
-  private CacheLoader<Map<String, String>, MetricsCollector> createCollectorLoader() {
-    return new CacheLoader<Map<String, String>, MetricsCollector>() {
+  private CacheLoader<Map<String, String>, MetricsContext> createCollectorLoader() {
+    return new CacheLoader<Map<String, String>, MetricsContext>() {
       @Override
-      public MetricsCollector load(final Map<String, String> collectorKey) throws Exception {
-        return new MetricsCollectorImpl(collectorKey);
+      public MetricsContext load(final Map<String, String> collectorKey) throws Exception {
+        return new MetricsContextImpl(collectorKey);
       }
     };
   }
 
-  private final class MetricsCollectorImpl implements MetricsCollector {
+  private final class MetricsContextImpl implements MetricsContext {
 
     private final Map<String, String> tags;
 
-    private MetricsCollectorImpl(final Map<String, String> tags) {
+    private MetricsContextImpl(final Map<String, String> tags) {
       this.tags = tags;
     }
 
@@ -224,14 +206,14 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
     }
 
     @Override
-    public MetricsCollector childCollector(String tagName, String tagValue) {
+    public MetricsContext childContext(String tagName, String tagValue) {
       ImmutableMap<String, String> allTags = ImmutableMap.<String, String>builder()
         .putAll(tags).put(tagName, tagValue).build();
       return collectors.getUnchecked(allTags);
     }
 
     @Override
-    public MetricsCollector childCollector(Map<String, String> tags) {
+    public MetricsContext childContext(Map<String, String> tags) {
       if (tags.isEmpty()) {
         return this;
       }

@@ -21,7 +21,7 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.proto.Id;
@@ -35,16 +35,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * The data set instantiator creates instances of data sets at runtime. It
- * must be called from the execution context to get operational instances
- * of data sets. Given a list of data set specs and a data fabric runtime it
- * can construct an instance of a data set and inject the data fabric runtime
- * into its base tables (and other built-in data sets).
- *
- * The instantiation and injection uses Java reflection a lot. This may look
- * unclean, but it helps us keep the DataSet API clean and simple: no need
- * to pass in data fabric runtime; no exposure of developers to the raw
- * data fabric; and developers only interact with Datasets.
+ * The data set instantiator creates instances of data sets at runtime.
  */
 public class DatasetInstantiator implements DatasetContext {
 
@@ -55,7 +46,7 @@ public class DatasetInstantiator implements DatasetContext {
   // in this collection we have only datasets initialized with getDataset() which is OK for now...
   private final Map<TransactionAware, String> txAwareToMetricNames = Maps.newIdentityHashMap();
 
-  private final MetricsCollector metricsCollector;
+  private final MetricsContext metricsContext;
   private final Id.Namespace namespace;
   private final Iterable<? extends Id> owners;
 
@@ -71,11 +62,11 @@ public class DatasetInstantiator implements DatasetContext {
                              DatasetFramework datasetFramework,
                              ClassLoader classLoader,
                              @Nullable Iterable<? extends Id> owners,
-                             @Nullable MetricsCollector metricsCollector) {
+                             @Nullable MetricsContext metricsContext) {
     this.namespace = namespace;
     this.owners = owners;
     this.classLoader = classLoader;
-    this.metricsCollector = metricsCollector;
+    this.metricsContext = metricsContext;
     this.datasetFramework = datasetFramework;
   }
 
@@ -111,17 +102,16 @@ public class DatasetInstantiator implements DatasetContext {
       txAwareToMetricNames.put((TransactionAware) dataset, name);
     }
 
-    if (dataset instanceof MeteredDataset) {
-      ((MeteredDataset) dataset).setMetricsCollector(new MetricsCollectorImpl(name, metricsCollector));
+    if (dataset instanceof MeteredDataset && metricsContext != null) {
+      ((MeteredDataset) dataset).setMetricsCollector(getMetricsContext(metricsContext, name));
     }
 
     return dataset;
   }
 
   /**
-   * Returns an immutable life Iterable of {@link co.cask.tephra.TransactionAware} objects.
+   * Returns an immutable life Iterable of {@link TransactionAware} objects.
    */
-  // NOTE: this is needed for now to minimize destruction of early integration of txds2
   public Iterable<TransactionAware> getTransactionAware() {
     return Iterables.unmodifiableIterable(txAware);
   }
@@ -134,38 +124,7 @@ public class DatasetInstantiator implements DatasetContext {
     txAware.remove(transactionAware);
   }
 
-  private static final class MetricsCollectorImpl implements MeteredDataset.MetricsCollector {
-    private final MetricsCollector metricsCollector;
-
-    private MetricsCollectorImpl(String datasetName,
-                                 @Nullable
-                                 MetricsCollector metricsCollector) {
-      this.metricsCollector = metricsCollector == null ? null :
-        metricsCollector.childCollector(Constants.Metrics.Tag.DATASET, datasetName);
-    }
-
-    @Override
-    public void recordRead(int opsCount, int dataSize) {
-      if (metricsCollector != null) {
-        // todo: here we report duplicate metrics - need to change UI/docs and report once
-        metricsCollector.increment("store.reads", 1);
-        metricsCollector.increment("store.ops", 1);
-        metricsCollector.increment("dataset.store.reads", 1);
-        metricsCollector.increment("dataset.store.ops", 1);
-      }
-    }
-
-    @Override
-    public void recordWrite(int opsCount, int dataSize) {
-      // todo: here we report duplicate metrics - need to change UI/docs and report once
-      if (metricsCollector != null) {
-        metricsCollector.increment("store.writes", 1);
-        metricsCollector.increment("store.bytes", dataSize);
-        metricsCollector.increment("store.ops", 1);
-        metricsCollector.increment("dataset.store.writes", 1);
-        metricsCollector.increment("dataset.store.bytes", dataSize);
-        metricsCollector.increment("dataset.store.ops", 1);
-      }
-    }
+  private static MetricsContext getMetricsContext(MetricsContext metricsContext, String datasetName) {
+    return metricsContext.childContext(Constants.Metrics.Tag.DATASET, datasetName);
   }
 }

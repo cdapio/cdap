@@ -16,7 +16,7 @@
 
 package co.cask.cdap.examples.sportresults;
 
-import co.cask.cdap.api.dataset.lib.Partition;
+import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.test.ApplicationManager;
@@ -76,9 +76,10 @@ public class SportResultsTest extends TestBase {
     // validate the output by reading directly from the file set
     DataSetManager<PartitionedFileSet> dataSetManager = getDataset("totals");
     PartitionedFileSet totals = dataSetManager.get();
-    Partition partition = totals.getPartition(PartitionKey.builder().addStringField("league", "fantasy").build());
-    Assert.assertNotNull(partition);
-    Location location = partition.getLocation();
+    PartitionDetail partitionDetail =
+      totals.getPartition(PartitionKey.builder().addStringField("league", "fantasy").build());
+    Assert.assertNotNull(partitionDetail);
+    Location location = partitionDetail.getLocation();
 
     // find the part file that has the actual results
     Assert.assertTrue(location.isDirectory());
@@ -121,6 +122,7 @@ public class SportResultsTest extends TestBase {
     Assert.assertFalse(results.next());
   }
 
+  // write a file to the file set using the service
   private void uploadResults(URL url, String league, int season, String content) throws Exception {
     HttpURLConnection connection = (HttpURLConnection)
       new URL(url, String.format("leagues/%s/seasons/%d", league, season)).openConnection();
@@ -133,9 +135,4 @@ public class SportResultsTest extends TestBase {
       connection.disconnect();
     }
   }
-
-  // write a file to the file set using the service
-
-
-
 }

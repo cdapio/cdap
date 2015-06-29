@@ -72,6 +72,8 @@ function usage() {
   echo "    docs-web       Clean build of HTML docs and Javadocs, zipped for placing on docs.cask.co webserver"
   echo ""
   echo "    javadocs       Build Javadocs"
+  echo "    json           Build JSON file (json-versions.js)"
+  echo "    print-json     Prints what would be the JSON file (json-versions.js)"
   echo "    licenses       Clean build of License Dependency PDFs"
   echo "    sdk            Build SDK"
   echo "    version        Print the version information"
@@ -93,13 +95,15 @@ function run_command() {
     docs-github-part )  build_docs_github ${ARG_2} ${ARG_3};;
     docs-github )       build_docs_github ${ARG_2} ${ARG_3};;
     docs-web-part )     build_docs_web ${ARG_2} ${ARG_3};;
-    docs-web )          build_docs_web ${ARG_2} ${ARG_3};;
-    javadocs )          build_javadocs;;
-    licenses )          build_license_depends;;
-    sdk )               build_sdk;;
-    version )           print_version;;
-    test )              test;;
-    * )                 usage;;
+    docs-web )          build_docs_web ${ARG_2} ${ARG_3}; exit 0;;
+    javadocs )          build_javadocs; exit 0;;
+    json )              build_json; exit 0;;
+    licenses )          build_license_depends; exit 0;;
+    print-json )        print_json; exit 0;;
+    sdk )               build_sdk; exit 0;;
+    version )           print_version; exit 0;;
+    test )              test; exit 0;;
+    * )                 usage; exit 0;;
   esac
 }
 
@@ -232,6 +236,29 @@ function build_docs_javadocs() {
   build_docs_inner_level "build"
 }
 
+
+function build_json() {
+  version
+  if [ -d ${SCRIPT_PATH}/${BUILD}/${SOURCE} ]; then
+    cd ${SCRIPT_PATH}/${BUILD}/${SOURCE}
+    JSON_FILE=`python -c 'import conf; conf.print_json_versions_file();'`
+    local json_file_path=${SCRIPT_PATH}/${BUILD}/${PROJECT_VERSION}/${JSON_FILE}
+    python -c 'import conf; conf.print_json_versions();' > ${json_file_path}
+  else
+    echo "Could not find '${SCRIPT_PATH}/${BUILD}/${SOURCE}'; can not build JSON file"
+  fi
+}
+
+function print_json() {
+  version
+  if [ -d ${SCRIPT_PATH}/${BUILD}/${SOURCE} ]; then
+    cd ${SCRIPT_PATH}/${BUILD}/${SOURCE}
+    python -c 'import conf; conf.pretty_print_json_versions();'
+  else
+    echo "Could not find '${SCRIPT_PATH}/${BUILD}/${SOURCE}'; can not print JSON file"
+  fi
+}
+
 function build_docs() {
   _build_docs "docs" ${GOOGLE_ANALYTICS_WEB} ${WEB} ${TRUE}
   return $?
@@ -299,10 +326,7 @@ function zip_extras() {
     return
   fi
   # Add JSON file
-  cd ${SCRIPT_PATH}/${BUILD}/${SOURCE}
-  JSON_FILE=`python -c 'import conf; conf.print_json_versions_file();'`
-  local json_file_path=${SCRIPT_PATH}/${BUILD}/${PROJECT_VERSION}/${JSON_FILE}
-  echo `python -c 'import conf; conf.print_json_versions();'` > ${json_file_path}
+  build_json
   # Add .htaccess file (404 file)
   cd ${SCRIPT_PATH}
   rewrite ${COMMON_SOURCE}/${HTACCESS} ${BUILD}/${PROJECT_VERSION}/.${HTACCESS} "<version>" "${PROJECT_VERSION}"

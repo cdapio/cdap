@@ -6,9 +6,9 @@
 
 .. _introduction-to-cdap:
 
-==================================================
+====================
 Introduction to CDAP
-==================================================
+====================
 
 Simple Access to Powerful Technology
 ====================================
@@ -107,12 +107,12 @@ Installation
 
 Data Ingestion
 ==============
-- Data is ingested into CDAP using :ref:`Streams <streams>`
+- Data is ingested into CDAP using :ref:`streams <streams>`
 - Streams are abstractions over HDFS with an HTTP endpoint
-- Data in a Stream are ordered and time-partitioned
-- CDAP supports easy exploration and processing in both realtime and batch
+- Data in a stream are ordered and time-partitioned
+- CDAP supports easy exploration and processing in both real time and batch
 - Ingest using RESTful, Flume, language-specific APIs, or Tools
-- The abstraction of Streams lets you disconnect how you ingest from how you process
+- The abstraction of streams lets you disconnect how you ingest from how you process
 
 
 .. container:: table-block
@@ -121,7 +121,7 @@ Data Ingestion
      :widths: 99 1
      :stub-columns: 1
 
-     * - Create a Stream
+     * - Create a stream
        - 
        
   .. list-table::
@@ -148,7 +148,7 @@ Data Ingestion
      :widths: 80 20
      :stub-columns: 1
 
-     * - Send data to the Stream
+     * - Send data to the stream
        - 
        
   .. list-table::
@@ -220,7 +220,7 @@ Data Exploration
      :widths: 80 20
      :stub-columns: 1
      
-     * - Retrieve first two events from the Stream
+     * - Retrieve first two events from the stream
        - 
        
   .. list-table::
@@ -269,7 +269,7 @@ Data Exploration: Attaching A Schema
      :widths: 80 20
      :stub-columns: 1
      
-     * - Apply a *Combined log format* schema to data in the Stream
+     * - Apply a *Combined log format* schema to data in the stream
        - 
        
   .. list-table::
@@ -337,7 +337,7 @@ Data Exploration: Attaching A Schema
      :widths: 80 20
      :stub-columns: 1
      
-     * - Retrieve first two events from the Stream, in new format
+     * - Retrieve first two events from the stream, in new format
        - 
        
   .. list-table::
@@ -382,7 +382,7 @@ Data Exploration: Attaching A Schema
      :widths: 80 20
      :stub-columns: 1
      
-     * - Retrieve basic Stream statistics
+     * - Retrieve basic stream statistics
        - 
        
   .. list-table::
@@ -487,14 +487,14 @@ Data Exploration: Attaching A Schema
           column: stream_logeventstream.user_agent, type: STRING
           Unique elements: 4
 
-          Analyzing 1000 Stream events in the time range [0, 9223372036854775807]...
+          Analyzing 1000 stream events in the time range [0, 9223372036854775807]...
 
 
 Advanced Data Exploration
 =========================
-- CDAP has the ability to join multiple Streams using SQL
-- Data in a Stream can be ingested in realtime or batch
-- CDAP supports joining with other Streams using Hive SQL
+- CDAP has the ability to join multiple streams using SQL
+- Data in a stream can be ingested in real time or batch
+- CDAP supports joining with other streams using Hive SQL
 
 
 .. container:: table-block
@@ -503,7 +503,7 @@ Advanced Data Exploration
      :widths: 80 20
      :stub-columns: 1
      
-     * - Create an additional Stream
+     * - Create an additional stream
        - 
        
   .. list-table::
@@ -529,7 +529,7 @@ Advanced Data Exploration
      :widths: 80 20
      :stub-columns: 1
      
-     * - Ingest CSV-formatted "IP-to-geo location" data into Stream
+     * - Ingest CSV-formatted "IP-to-geo location" data into stream
        - 
        
   .. list-table::
@@ -557,7 +557,7 @@ Advanced Data Exploration
      :widths: 80 20
      :stub-columns: 1
      
-     * - Send individual event to Stream
+     * - Send individual event to stream
        - 
        
   .. list-table::
@@ -583,7 +583,7 @@ Advanced Data Exploration
      :widths: 80 20
      :stub-columns: 1
      
-     * - Retrieve events from the Stream
+     * - Retrieve events from the stream
        - 
        
   .. list-table::
@@ -636,7 +636,7 @@ Advanced Data Exploration
      :widths: 80 20
      :stub-columns: 1
      
-     * - Having reviewed data, set a new format for the Stream
+     * - Having reviewed data, set a new format for the stream
        - 
        
   .. list-table::
@@ -662,7 +662,7 @@ Advanced Data Exploration
      :widths: 80 20
      :stub-columns: 1
      
-     * - Retrieve events from the Stream, in new format
+     * - Retrieve events from the stream, in new format
        - 
        
   .. list-table::
@@ -716,7 +716,7 @@ Advanced Data Exploration
      :widths: 80 20
      :stub-columns: 1
      
-     * - Join data in the two Streams and retrieve selected events
+     * - Join data in the two streams and retrieve selected events
        - 
        
   .. list-table::
@@ -789,8 +789,8 @@ Transforming Your Data
 - CDAP Application Templates are applications that are reusable through configuration
 - Build your own Application Templates, using simple APIs
 - CDAP includes built-in ETL (Extract, Transform, Load) Application Templates
-- ETL Application Templates provide pre-defined transformations to be applied on Streams or other datasets
-- In this example, we will use the ETLBatch Application Template to convert data in a Stream to
+- ETL Application Templates provide pre-defined transformations to be applied on streams or other datasets
+- In this example, we will use the ETLBatch Application Template to convert data in a stream to
   Avro formatted files in a ``TimePartitionedFileSet`` that can be queried using either Hive or Impala
 
 .. container:: table-block
@@ -799,7 +799,7 @@ Transforming Your Data
      :widths: 80 20
      :stub-columns: 1
      
-     * - Create a Stream-conversion Adapter using the ETLBatch Application Template
+     * - Create a stream-conversion adapter using the ETLBatch Application Template
        - 
        
   .. list-table::
@@ -818,7 +818,7 @@ Transforming Your Data
        - Write a configuration file, saving it to ``example/resources/adapter-config.json``::
 
           {
-              "description": "Periodically reads Stream data and writes it to a TimePartitionedFileSet",
+              "description": "Periodically reads stream data and writes it to a TimePartitionedFileSet",
               "template": "ETLBatch",
               "config": {
                   "schedule": "*/5 * * * *",
@@ -899,11 +899,11 @@ Transforming Your Data
           | name                | description         | template | config              | properties                              |
           +======================================================================================================================+
           | logEventStreamConve | Periodically reads  | ETLBatch | {"schedule":"*/5 *  | schedule={"schedule":{"name":"logEventS |
-          | rter                | Stream data and wri |          | * * *","source":{"n | treamConverter.etl.batch.adapter.logEve |
+          | rter                | stream data and wri |          | * * *","source":{"n | treamConverter.etl.batch.adapter.logEve |
           |                     | tes it to a TimePar |          | ame":"Stream","prop | ntStreamConverter.schedule","descriptio |
           |                     | titionedFileSet     |          | erties":{"name":"lo | n":"Schedule for logEventStreamConverte |
           |                     |                     |          | gEventStream","dura | r Adapter"},"program":{"programName":"E |
-          |                     |                     |          | tion":"5m","format" | TLWorkflow","programType":"WORKFLOW"}," |
+          |                     |                     |          | tion":"5m","format" | TLworkflow","programType":"WORKFLOW"}," |
           |                     |                     |          | :"clf"}},"transform | properties":{"transformIds":"[\"Project |
           |                     |                     |          | s":[{"name":"Projec | ion:0\"]","name":"logEventStreamConvert |
           |                     |                     |          | tion","properties": | er","sinkId":"sink:TPFSAvro","config":" |
@@ -973,7 +973,7 @@ Transforming Your Data
      :widths: 80 20
      :stub-columns: 1
      
-     * - Load data into the Stream; it will automatically be converted  
+     * - Load data into the stream; it will automatically be converted  
        - 
        
   .. list-table::
@@ -1001,7 +1001,7 @@ Transforming Your Data
      :widths: 80 20
      :stub-columns: 1
      
-     * - List available Datasets
+     * - List available datasets
        - 
        
   .. list-table::
@@ -1032,7 +1032,7 @@ Transforming Your Data
      :widths: 80 20
      :stub-columns: 1
      
-     * - Describe the converted Dataset
+     * - Describe the converted dataset
        - 
        
   .. list-table::
@@ -1120,14 +1120,14 @@ Transforming Your Data
 Building Real World Applications
 ================================
 - Build Data Applications using simple-to-use CDAP APIs
-- Compose complex applications consisting of Workflow, MapReduce, Realtime DAGs (Tigon) and Services
+- Compose complex applications consisting of workflow, MapReduce, real-time DAGs (Tigon) and services
 - Build using a collection of pre-defined data pattern libraries
 - Deploy and manage complex data applications such as Web Applications
 
 **Let's see how we would build a real-world application using CDAP:**
 
 - *Wise App* performs Web analytics on access logs
-- *WiseFlow* parses and computes pageview count per IP in realtime
+- *WiseFlow* parses and computes pageview count per IP in real time
 - A MapReduce computes bounce counts: percentage of pages that *don’t* go to another page before exiting
 - Service to expose the data 
 - Unified platform for different processing paradigms
@@ -1138,7 +1138,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Deploy a pre-built CDAP Application: Wise App
+     * - Deploy a pre-built CDAP application: Wise App
        - 
        
   .. list-table::
@@ -1197,10 +1197,10 @@ Building Real World Applications
           +=====================================================================+
           | type      | id                    | description                     |
           +=====================================================================+
-          | Flow      | WiseFlow              | Wise Flow                       |
+          | Flow      | WiseFlow              | Wise flow                       |
           | MapReduce | BounceCountsMapReduce | Bounce Counts MapReduce Program |
           | Service   | WiseService           |                                 |
-          | Workflow  | WiseWorkflow          | Wise Workflow                   |
+          | workflow  | Wiseworkflow          | Wise workflow                   |
           +=====================================================================+
 
 .. container:: table-block
@@ -1209,7 +1209,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Start the Application's Flow (for processing events)
+     * - Start the application's flow (for processing events)
        - 
        
   .. list-table::
@@ -1229,7 +1229,7 @@ Building Real World Applications
      * -  
        - ::
 
-          Successfully started Flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}
+          Successfully started flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}
 
 .. container:: table-block
 
@@ -1237,7 +1237,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Check the status of the Flow
+     * - Check the status of the flow
        - 
        
   .. list-table::
@@ -1265,7 +1265,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Ingest access log data into the Wise App Stream
+     * - Ingest access log data into the Wise App stream
        - 
        
   .. list-table::
@@ -1343,7 +1343,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Start the Wise Application Workflow to process ingested data
+     * - Start the Wise application workflow to process ingested data
        - 
        
   .. list-table::
@@ -1356,12 +1356,12 @@ Building Real World Applications
          - ``oozie job -start <arguments>``
          
      * - Using CDAP
-       - ``> start workflow Wise.WiseWorkflow``
+       - ``> start workflow Wise.Wiseworkflow``
           
      * -  
        - ::
 
-          Successfully started Workflow 'WiseWorkflow' of application 'Wise' with stored runtime arguments '{}'
+          Successfully started workflow 'Wiseworkflow' of application 'Wise' with stored runtime arguments '{}'
 
 
 .. container:: table-block
@@ -1370,7 +1370,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Check the status of the Workflow 
+     * - Check the status of the workflow 
        - 
        
   .. list-table::
@@ -1383,7 +1383,7 @@ Building Real World Applications
          - ``oozie job -info <jobid>``
          
      * - Using CDAP
-       - ``> get workflow status Wise.WiseWorkflow``
+       - ``> get workflow status Wise.Wiseworkflow``
           
      * -  
        - ::
@@ -1416,7 +1416,7 @@ Building Real World Applications
      * -  
        - ::
 
-          Successfully started Service 'WiseService' of application 'Wise' with stored runtime arguments '{}'
+          Successfully started service 'WiseService' of application 'Wise' with stored runtime arguments '{}'
 
 .. container:: table-block
 
@@ -1424,7 +1424,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Check the status of the Service
+     * - Check the status of the service
        - 
        
   .. list-table::
@@ -1455,7 +1455,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Discover the Wise Service's available endpoints for retrieving results
+     * - Discover the WiseService's available endpoints for retrieving results
        - 
        
   .. list-table::
@@ -1526,7 +1526,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - List the Dataset instances
+     * - List the dataset instances
        - 
        
   .. list-table::
@@ -1613,7 +1613,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Stop the Wise Service
+     * - Stop the WiseService
        - 
        
   .. list-table::
@@ -1625,7 +1625,7 @@ Building Real World Applications
        - - Find the yarn application ID from the following command
          - ``yarn application -list | grep "Wise.WiseService"``
          - Stop the application by running the following command
-         - ``yarn application -kill <Application ID>``
+         - ``yarn application -kill <application ID>``
          
      * - Using CDAP
        - ``> stop service Wise.WiseService``
@@ -1633,7 +1633,7 @@ Building Real World Applications
      * -  
        - ::
        
-          Successfully stopped Service 'WiseService' of application 'Wise'
+          Successfully stopped service 'WiseService' of application 'Wise'
 
 .. container:: table-block
 
@@ -1641,7 +1641,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Stop the Wise Flow
+     * - Stop the Wise flow
        - 
        
   .. list-table::
@@ -1653,7 +1653,7 @@ Building Real World Applications
        - - Find the yarn application ID from the following command
          - ``yarn application -list | grep "Wise.WiseFlow"``
          - Stop the application by running the following command
-         - ``yarn application -kill <Application ID>``
+         - ``yarn application -kill <application ID>``
          
      * - Using CDAP
        - ``> stop flow Wise.WiseFlow``
@@ -1661,7 +1661,7 @@ Building Real World Applications
      * -  
        - ::
        
-          Successfully stopped Flow 'WiseFlow' of application 'Wise'
+          Successfully stopped flow 'WiseFlow' of application 'Wise'
 
 .. container:: table-block
 
@@ -1669,7 +1669,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Delete the Application from the Server
+     * - Delete the application from the Server
        - 
        
   .. list-table::

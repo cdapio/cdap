@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.adapter;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.templates.plugins.PluginClass;
@@ -36,6 +37,9 @@ import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
+import com.google.common.io.Closeables;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
@@ -46,6 +50,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.concurrent.ExecutionException;
@@ -73,7 +78,9 @@ public class PluginInstantiator implements Closeable {
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.tmpDir = DirUtils.createTempDir(tmpDir);
-    this.classLoaders = CacheBuilder.newBuilder().build(new ClassLoaderCacheLoader());
+    this.classLoaders = CacheBuilder.newBuilder()
+                                    .removalListener(new ClassLoaderRemovalListener())
+                                    .build(new ClassLoaderCacheLoader());
     this.pluginParentClassLoader = PluginClassLoader.createParent(new File(pluginDir, "lib"), templateClassLoader);
   }
 
@@ -150,9 +157,9 @@ public class PluginInstantiator implements Closeable {
       // Create the plugin instance
       return newInstance(pluginType, field, configFieldType, config);
     } catch (NoSuchFieldException e) {
-      throw new IllegalArgumentException("Config field not found in plugin class: " + pluginClass);
+      throw new InvalidPluginConfigException("Config field not found in plugin class: " + pluginClass, e);
     } catch (IllegalAccessException e) {
-      throw new IllegalArgumentException("Failed to set plugin config field: " + pluginClass);
+      throw new InvalidPluginConfigException("Failed to set plugin config field: " + pluginClass, e);
     }
   }
 
@@ -193,6 +200,9 @@ public class PluginInstantiator implements Closeable {
   public void close() throws IOException {
     // Cleanup the ClassLoader cache and the temporary directoy for the expanded plugin jar.
     classLoaders.invalidateAll();
+    if (pluginParentClassLoader instanceof Closeable) {
+      Closeables.closeQuietly((Closeable) pluginParentClassLoader);
+    }
     try {
       DirUtils.deleteDirectoryContents(tmpDir);
     } catch (IOException e) {
@@ -217,6 +227,20 @@ public class PluginInstantiator implements Closeable {
   }
 
   /**
+   * A RemovalListener for closing plugin ClassLoader.
+   */
+  private static final class ClassLoaderRemovalListener implements RemovalListener<PluginInfo, ClassLoader> {
+
+    @Override
+    public void onRemoval(RemovalNotification<PluginInfo, ClassLoader> notification) {
+      ClassLoader cl = notification.getValue();
+      if (cl instanceof Closeable) {
+        Closeables.closeQuietly((Closeable) cl);
+      }
+    }
+  }
+
+  /**
    * A {@link FieldVisitor} for setting values into {@link PluginConfig} object based on {@link PluginProperties}.
    */
   private static final class ConfigFieldSetter extends FieldVisitor {
@@ -233,7 +257,7 @@ public class PluginInstantiator implements Closeable {
     @Override
     public void visit(Object instance, TypeToken<?> inspectType,
                       TypeToken<?> declareType, Field field) throws Exception {
-      if (PluginConfig.class.equals(declareType.getRawType())) {
+      if (Config.class.equals(declareType.getRawType())) {
         if (field.getName().equals("properties")) {
           field.set(instance, properties);
         }
@@ -270,7 +294,16 @@ public class PluginInstantiator implements Closeable {
 
       if (Primitives.isWrapperType(rawType)) {
         Method valueOf = rawType.getMethod("valueOf", String.class);
-        return valueOf.invoke(null, value);
+        try {
+          return valueOf.invoke(null, value);
+        } catch (InvocationTargetException e) {
+          if (e.getCause() instanceof NumberFormatException) {
+            // if exception is due to wrong value for integer/double conversion
+            throw new InvalidPluginConfigException(String.format("valueOf operation on %s failed", value),
+                                                   e.getCause());
+          }
+          throw e;
+        }
       }
 
       throw new UnsupportedTypeException("Only primitive and String types are supported");

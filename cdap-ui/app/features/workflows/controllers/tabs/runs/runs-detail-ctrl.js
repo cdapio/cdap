@@ -1,31 +1,13 @@
-angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsRunsDetailController', function($scope, MyDataSource, $state, $filter) {
-    var dataSrc = new MyDataSource($scope),
-        filterFilter = $filter('filter');
-    if ($state.params.runid) {
-      var match = filterFilter($scope.runs, {runid: $state.params.runid});
-      if (match.length) {
-        $scope.runs.selected = match[0];
-      }
-    }
+'use strict';
+class WorkflowsRunsDetailController {
+  constructor($scope, $state, $filter) {
+    let filterFilter = $filter('filter');
+    let match = filterFilter($scope.RunsController.runs, {runid: $state.params.runid});
+    $scope.RunsController.runs.selected.runid = match[0].runid;
 
-    $scope.tabs = [{
-      title: 'Status',
-      template: '/assets/features/workflows/templates/tabs/runs/tabs/status.html'
-    },
-    {
-      title: 'Logs',
-      template: '/assets/features/workflows/templates/tabs/runs/tabs/log.html'
-    }];
-
-    $scope.activeTab = $scope.tabs[0];
-
-    $scope.$on('$destroy', function(event) {
-      event.currentScope.runs.selected = null;
-    });
-
-    $scope.selectTab = function(tab) {
-      $scope.activeTab = tab;
-    };
-
-  });
+    $scope.$on('$destroy', () => { $scope.RunsController.runs.selected.runid = null} );
+  }
+}
+WorkflowsRunsDetailController.$inject = ['$scope', '$state', '$filter'];
+angular.module(`${PKG.name}.feature.workflows`)
+  .controller('WorkflowsRunsDetailController', WorkflowsRunsDetailController);

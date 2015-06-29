@@ -4,9 +4,9 @@
 
 .. _datasets-index:
 
-============================================
+========
 Datasets
-============================================
+========
 
 .. toctree::
    :maxdepth: 1
@@ -22,41 +22,41 @@ Datasets
 
 .. highlight:: java
 
-**Datasets** store and retrieve data. Datasets are your means of reading
+*Datasets* store and retrieve data. Datasets are your means of reading
 from and writing to the CDAP’s storage capabilities. Instead of
-forcing you to manipulate data with low-level APIs, Datasets provide
+forcing you to manipulate data with low-level APIs, datasets provide
 higher-level abstractions and generic, reusable implementations of
 common data patterns.
 
-The core Datasets of CDAP are Tables and FileSets:
+The core datasets of CDAP are *Tables* and *FileSets*:
 
-- Unlike relational database systems, CDAP **tables** are not organized into rows with a fixed schema.
+- Unlike relational database systems, CDAP *Tables* are not organized into rows with a fixed schema.
   They are optimized for efficient storage of semi-structured data, data with unknown or variable
   schema, or sparse data.
   
-- CDAP **file sets** provide an abstraction over the raw file system, and associate properties such as
+- CDAP *File sets* provide an abstraction over the raw file system, and associate properties such as
   the format or the schema with the files they contain. In addition, partitioned file sets
   allow addressing files by their partition meta data, removing the need for applications to
   be aware of actual file system locations.
 
-Other Datasets are built on top of tables and file sets. A Dataset can implement
-specific semantics around a core Dataset, such as a key/value Table or a
-counter Table. A Dataset can also combine multiple Datasets to create a
+Other datasets are built on top of tables and file sets. A dataset can implement
+specific semantics around a core dataset, such as a key/value Table or a
+counter Table. A dataset can also combine multiple datasets to create a
 complex data pattern. For example, an indexed Table can be implemented
 by using one Table for the data and a second Table for the index of that data.
 
-A number of useful Datasets |---| we refer to them as system Datasets |---| are
+A number of useful datasets |---| we refer to them as system datasets |---| are
 included with CDAP, including key/value tables, indexed tables and
 time series. You can implement your own data patterns as custom
-Datasets, on top of any combination of core and system Datasets.
+datasets, on top of any combination of core and system datasets.
 
 .. rubric:: Creating a Dataset
 
-You can create a Dataset in CDAP using either the :ref:`http-restful-api-dataset`, the
-:ref:`Command Line Interface<cli>`, or in an :ref:`Application specification. <applications>`
+You can create a dataset in CDAP using either the :ref:`http-restful-api-dataset`, the
+:ref:`Command Line Interface<cli>`, or in an :ref:`application specification. <applications>`
 
-You tell Applications to create a Dataset if it does not already
-exist by declaring the Dataset details in the Application specification.
+You tell applications to create a dataset if it does not already
+exist by declaring the dataset details in the application specification.
 For example, to create a DataSet named *myCounters* of type 
 `KeyValueTable <../../../reference-manual/javadocs/co/cask/cdap/api/dataset/lib/KeyValueTable.html>`__, write::
 
@@ -64,8 +64,8 @@ For example, to create a DataSet named *myCounters* of type
       createDataset("myCounters", KeyValueTable.class);
       ...
 
-To use the Dataset in a Program, instruct the runtime
-system to inject an instance of the Dataset with the ``@UseDataSet``
+To use the dataset in a program, instruct the runtime
+system to inject an instance of the dataset with the ``@UseDataSet``
 annotation::
 
   class MyFlowlet extends AbstractFlowlet {
@@ -76,22 +76,22 @@ annotation::
       counters.increment(key.getBytes(), 1L);
     }
 
-The runtime system reads the Dataset specification for the key/value
+The runtime system reads the dataset specification for the key/value
 table *myCounters* from the metadata store and injects an
-instance of the Dataset class into the Application.
+instance of the dataset class into the application.
 
-You can also implement custom Datasets by implementing the ``Dataset``
-interface or by extending existing Dataset types. See the
-:ref:`Purchase Example<examples-purchase>` for an implementation of a Custom Dataset.
-For more details, refer to :ref:`Custom Datasets. <custom-datasets>`
+You can also implement custom datasets by implementing the ``Dataset``
+interface or by extending existing dataset types. See the
+:ref:`Purchase Example<examples-purchase>` for an implementation of a custom dataset.
+For more details, refer to :ref:`custom datasets. <custom-datasets>`
 
 .. rubric::  Dataset Time-To-Live (TTL)
 
-Datasets, like :ref:`Streams <streams>`, can have a Time-To-Live (TTL) property that
-governs how long data will be persisted in a specific Dataset. TTL is configured as the
+Datasets, like :ref:`streams <streams>`, can have a Time-To-Live (TTL) property that
+governs how long data will be persisted in a specific dataset. TTL is configured as the
 maximum age (in milliseconds) that data should be retained.
 
-When you create a Dataset, you can configure its TTL as part of the creation::
+When you create a dataset, you can configure its TTL as part of the creation::
 
   public void configure() {
       createDataset("myCounters", Table.class, 
@@ -100,32 +100,32 @@ When you create a Dataset, you can configure its TTL as part of the creation::
       ...
   }
 
-The default TTL for all Datasets is infinite, meaning that data will never expire. The TTL
-property of an existing Dataset can be changed using the :ref:`http-restful-api-dataset`.
+The default TTL for all datasets is infinite, meaning that data will never expire. The TTL
+property of an existing dataset can be changed using the :ref:`http-restful-api-dataset`.
 
 .. rubric:: Types of Datasets
 
-A Dataset abstraction is defined by a Java class that implements the ``DatasetDefinition`` interface.
-The implementation of a Dataset typically relies on one or more underlying (embedded) Datasets.
-For example, the ``IndexedTable`` Dataset can be implemented by two underlying Table Datasets –
+A dataset abstraction is defined by a Java class that implements the ``DatasetDefinition`` interface.
+The implementation of a dataset typically relies on one or more underlying (embedded) datasets.
+For example, the ``IndexedTable`` dataset can be implemented by two underlying Table datasets |---|
 one holding the data and one holding the index.
 
-We distinguish three categories of Datasets: *core*, *system*, and *custom* Datasets:
+We distinguish three categories of datasets: *core*, *system*, and *custom* datasets:
 
-- The |core|_ Datasets of the CDAP are Table and FileSet. Their implementations may use internal
+- The |core|_ datasets of the CDAP are Table and FileSet. Their implementations may use internal
   CDAP classes hidden from developers.
 
-- A |system|_ Dataset is bundled with the CDAP and is built around
-  one or more underlying core or system Datasets to implement a specific data pattern.
+- A |system|_ dataset is bundled with the CDAP and is built around
+  one or more underlying core or system datasets to implement a specific data pattern.
 
-- A |custom|_ Dataset is implemented by you and can have arbitrary code and methods.
-  It is typically built around one or more Tables, FileSets (or other Datasets)
+- A |custom|_ dataset is implemented by you and can have arbitrary code and methods.
+  It is typically built around one or more Tables, FileSets (or other datasets)
   to implement a specific data pattern.
 
-Each Dataset is associated with exactly one Dataset implementation to
-manipulate it. Every Dataset has a unique name and metadata that defines its behavior.
+Each dataset is associated with exactly one dataset implementation to
+manipulate it. Every dataset has a unique name and metadata that defines its behavior.
 For example, every ``IndexedTable`` has a name and indexes a particular column of its primary table:
-the name of that column is a metadata property of each Dataset of this type.
+the name of that column is a metadata property of each dataset of this type.
 
 .. |core| replace:: **core**
 .. _core: index.html#core-datasets
@@ -141,8 +141,8 @@ the name of that column is a metadata property of each Dataset of this type.
 
 .. rubric:: Core Datasets
 
-**Tables** and **FileSets** are the core Datasets,
-and all other Datasets are built using combinations of Tables and FileSets.
+**Tables** and **FileSets** are the core datasets,
+and all other datasets are built using combinations of Tables and FileSets.
 
 While these Tables have rows and columns similar to relational database tables, there are key differences:
 
@@ -192,7 +192,7 @@ such as the format and schema, while abstracting from the actual underlying file
   ranges.
 
   Time-partitioned FileSets are typically written in batch: into large files, every *N* minutes or
-  hours...while a timeseries table is typically written in realtime, one data point at a
+  hours...while a timeseries table is typically written in real-time, one data point at a
   time.
  
 - A ``CubeDataset`` is a multidimensional dataset, optimized for data warehousing and OLAP
@@ -229,7 +229,7 @@ Datasets are included in just about every CDAP :ref:`application <apps-and-packs
 - For an example of a **PartitionedFileSet,** see the :ref:`Sport Results <examples-sport-results>`
   example.
 
-- For an example of a **TimePartitionedFileSet,** see the :ref:`Stream Conversion 
+- For an example of a **TimePartitionedFileSet,** see the :ref:`StreamConversion 
   <examples-stream-conversion>` example.
 
 - For examples of **key-value Table datasets,** see the

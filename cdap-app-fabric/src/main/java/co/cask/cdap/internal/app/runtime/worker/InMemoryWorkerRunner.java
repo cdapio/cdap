@@ -24,50 +24,26 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.AbstractInMemoryProgramRunner;
-import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.ProgramType;
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 /**
  * For running {@link Worker}. Only used in in-memory/standalone mode.
  */
 public class InMemoryWorkerRunner extends AbstractInMemoryProgramRunner {
-  private static final Logger LOG = LoggerFactory.getLogger(InMemoryWorkerRunner.class);
   private static final Gson GSON = new Gson();
 
   @Inject
-  InMemoryWorkerRunner(ProgramRunnerFactory programRunnerFactory) {
-    super(programRunnerFactory);
-  }
-
-  @Override
-  protected ProgramOptions createComponentOptions(String name, int instanceId, int instances, RunId runId,
-                                                  ProgramOptions options) {
-    Map<String, String> systemOptions = Maps.newHashMap();
-    systemOptions.putAll(options.getArguments().asMap());
-    systemOptions.put(ProgramOptionConstants.INSTANCE_ID, Integer.toString(instanceId));
-    systemOptions.put(ProgramOptionConstants.INSTANCES, Integer.toString(instances));
-    systemOptions.put(ProgramOptionConstants.RUN_ID, runId.getId());
-    return new SimpleProgramOptions(name, new BasicArguments(systemOptions), options.getUserArguments());
+  InMemoryWorkerRunner(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory) {
+    super(cConf, programRunnerFactory);
   }
 
   @Override
@@ -96,34 +72,10 @@ public class InMemoryWorkerRunner extends AbstractInMemoryProgramRunner {
 
     //RunId for worker
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
-    Table<String, Integer, ProgramController> components = startWorkers(program, runId, options, newWorkerSpec);
+    Table<String, Integer, ProgramController> components = startPrograms(program, runId, options,
+                                                                         ProgramRunnerFactory.Type.WORKER_COMPONENT,
+                                                                         newWorkerSpec.getInstances());
     return new InMemoryProgramController(components, runId, program, workerSpec, options,
                                          ProgramRunnerFactory.Type.WORKER_COMPONENT);
-  }
-
-  private Table<String, Integer, ProgramController> startWorkers(Program program, RunId runId, ProgramOptions options,
-                                                                 WorkerSpecification spec) {
-    Table<String, Integer, ProgramController> components = HashBasedTable.create();
-    try {
-      startComponent(program, program.getName(), spec.getInstances(), runId, options, components,
-                     ProgramRunnerFactory.Type.WORKER_COMPONENT);
-    } catch (Throwable t) {
-      LOG.error("Failed to start all worker instances", t);
-      try {
-        // Need to stop all started components
-        Futures.successfulAsList(Iterables.transform(components.values(),
-                                                     new Function<ProgramController, ListenableFuture<?>>() {
-                                                       @Override
-                                                       public ListenableFuture<?> apply(ProgramController controller) {
-                                                         return controller.stop();
-                                                       }
-                                                     })).get();
-        throw Throwables.propagate(t);
-      } catch (Exception e) {
-        LOG.error("Failed to stop all workers upon startup failure.", e);
-        throw Throwables.propagate(e);
-      }
-    }
-    return components;
   }
 }

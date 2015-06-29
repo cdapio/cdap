@@ -16,12 +16,21 @@
 
 package co.cask.cdap.api.app;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Beta;
 
 /**
  * Provides access to the environment, application configuration, and application (deployment) arguments.
+ *
+ * @param <T> {@link Config} config class that represents the configuration of the Application.
  */
 @Beta
-public class ApplicationContext {
+public interface ApplicationContext<T extends Config> {
 
+  /**
+   * Get the configuration object.
+   *
+   * @return application configuration provided during application creation
+   */
+  T getConfig();
 }
