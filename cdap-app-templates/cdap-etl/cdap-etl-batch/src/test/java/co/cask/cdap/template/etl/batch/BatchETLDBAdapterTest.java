@@ -302,9 +302,9 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
       managerBadConn.start();
       managerBadConn.waitForOneRunToFinish(5, TimeUnit.MINUTES);
       managerBadConn.stop();
-      assert(false);
+      Assert.fail();
     } catch (Exception e) {
-      assert(e.getMessage().contains("AdapterNotFound"));
+      Assert.assertTrue(e.getMessage().contains("AdapterNotFound"));
     }
   }
 
@@ -337,9 +337,9 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
       managerBadSinkName.start();
       managerBadSinkName.waitForOneRunToFinish(5, TimeUnit.MINUTES);
       managerBadSinkName.stop();
-      assert(false);
+      Assert.fail();
     } catch (Exception e) {
-      assert(e.getMessage().contains("AdapterNotFound"));
+      Assert.assertTrue(e.getMessage().contains("AdapterNotFound"));
     }
   }
 
