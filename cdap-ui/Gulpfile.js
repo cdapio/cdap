@@ -18,7 +18,6 @@ gulp.task('css:lib', ['fonts'], function() {
       './bower_components/font-awesome/css/font-awesome.min.css',
       './bower_components/epoch/epoch.min.css',
       './bower_components/ng-sortable/dist/ng-sortable.min.css',
-      './bower_components/angular-ui-select/dist/select.min.css',
       './bower_components/c3/c3.min.css',
       './bower_components/angular-gridster/dist/angular-gridster.min.css'
     ].concat(mainBowerFiles({
@@ -75,9 +74,6 @@ gulp.task('js:lib', function() {
       './bower_components/angular-ui-router/release/angular-ui-router.js',
 
       './bower_components/angular-strap/dist/modules/dimensions.js',
-      './bower_components/angular-strap/dist/modules/button.js',
-      './bower_components/angular-strap/dist/modules/tab.js',
-      './bower_components/angular-strap/dist/modules/tab.tpl.js',
       './bower_components/angular-strap/dist/modules/tooltip.js',
       './bower_components/angular-strap/dist/modules/tooltip.tpl.js',
       './bower_components/angular-strap/dist/modules/dropdown.js',
@@ -125,7 +121,6 @@ gulp.task('js:lib', function() {
       './bower_components/angular-bootstrap/ui-bootstrap-tpls.js',
 
       './bower_components/node-uuid/uuid.js',
-      './bower_components/angular-ui-select/dist/select.js',
       './bower_components/angular-cookies/angular-cookies.min.js',
       // './bower_components/c3/c3.js',
       './app/lib/c3.js',

@@ -79,7 +79,8 @@ angular.module(PKG.name+'.feature.dashboard')
   .controller('C3WidgetTimeseriesCtrl', function ($scope, myHelpers, $timeout) {
     $scope.chartSize = { height: 200 };
     var widget = myHelpers.objectQuery($scope, 'gridsterItem', '$element', 0),
-        widgetHeight;
+        widgetHeight,
+        widgetWidth;
     if (widget) {
       widgetHeight = parseInt(widget.style.height, 10);
       widgetWidth = parseInt(widget.style.width, 10);
