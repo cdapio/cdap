@@ -70,7 +70,7 @@ Standalone and Distributed CDAP
 
 - Build Cloudera Manager parcel::
 
-    mvn package -DskipTests -P dist,tgz && ./cdap-distributions/bin/build_parcel.sh
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn package -DskipTests -P templates,dist,tgz && ./cdap-distributions/bin/build_parcel.sh
 
 - Show dependency tree::
 
