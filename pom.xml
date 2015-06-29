@@ -108,7 +108,6 @@
     <guava.version>13.0.1</guava.version>
     <guice.version>3.0</guice.version>
     <hadoop.version>2.3.0</hadoop.version>
-    <hbase94.version>0.94.6.1.continuuity</hbase94.version>
     <hbase96.version>0.96.2-hadoop2</hbase96.version>
     <hbase98.version>0.98.6.1-hadoop2</hbase98.version>
     <hive.version>0.13.0</hive.version>
@@ -186,17 +185,6 @@
       <dependency>
         <groupId>co.cask.tephra</groupId>
         <artifactId>tephra-core</artifactId>
-        <version>${tephra.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>co.cask.tephra</groupId>
-        <artifactId>tephra-hbase-compat-0.94</artifactId>
         <version>${tephra.version}</version>
         <exclusions>
           <exclusion>
@@ -691,85 +679,6 @@
       </dependency>
       <dependency>
         <groupId>org.apache.hbase</groupId>
-        <artifactId>hbase</artifactId>
-        <version>${hbase94.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.thrift</groupId>
-            <artifactId>libthrift</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty-util</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jsp-2.1</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jsp-api-2.1</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>servlet-api-2.5</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.jruby</groupId>
-            <artifactId>jruby-complete</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>tomcat</groupId>
-            <artifactId>jasper-compiler</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>tomcat</groupId>
-            <artifactId>jasper-runtime</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-core</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-json</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-server</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.avro</groupId>
-            <artifactId>avro</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.avro</groupId>
-            <artifactId>avro-ipc</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-common</artifactId>
         <version>${hbase96.version}</version>
       </dependency>
@@ -1092,63 +1001,6 @@
           <exclusion>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hbase</groupId>
-        <artifactId>hbase</artifactId>
-        <classifier>tests</classifier>
-        <version>${hbase94.version}</version>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty-util</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jsp-2.1</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jsp-api-2.1</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>servlet-api-2.5</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.jruby</groupId>
-            <artifactId>jruby-complete</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>tomcat</groupId>
-            <artifactId>jasper-compiler</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>tomcat</groupId>
-            <artifactId>jasper-runtime</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-core</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-json</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-server</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -2186,7 +2038,6 @@
         <module>cdap-watchdog-api</module>
         <module>cdap-kafka</module>
         <module>cdap-data-fabric</module>
-        <module>cdap-hbase-compat-0.94</module>
         <module>cdap-hbase-compat-0.96</module>
         <module>cdap-hbase-compat-0.98</module>
         <module>cdap-watchdog</module>

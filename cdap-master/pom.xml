@@ -122,6 +122,18 @@
       <groupId>org.apache.twill</groupId>
       <artifactId>twill-core</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-protocol</artifactId>
+    </dependency>
     <!-- for tools -->
     <dependency>
       <groupId>commons-cli</groupId>
@@ -133,7 +145,7 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-hbase-compat-0.94</artifactId>
+      <artifactId>cdap-hbase-compat-0.96</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
@@ -143,7 +155,7 @@
     <profile>
       <id>dist</id>
       <properties>
-        <package.depends>--depends cdap --depends cdap-hbase-compat-0.94 --depends cdap-hbase-compat-0.96 --depends cdap-hbase-compat-0.98</package.depends>
+        <package.depends>--depends cdap --depends cdap-hbase-compat-0.96 --depends cdap-hbase-compat-0.98</package.depends>
       </properties>
       <build>
         <plugins>
