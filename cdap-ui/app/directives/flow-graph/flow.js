@@ -5,6 +5,7 @@ var baseDirective = {
   templateUrl: 'flow-graph/flow.html',
   scope: {
     model: '=',
+    clickContext: '=',
     click: '&'
   },
   controller: 'myFlowController'
@@ -32,10 +33,10 @@ module.controller('myFlowController', function($scope) {
 
 });
 
-module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamService) {
+module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamService, $location) {
   return angular.extend({
     link: function (scope, elem, attr) {
-      scope.render = genericRender.bind(null, scope, $filter);
+      scope.render = genericRender.bind(null, scope, $filter, $location);
       scope.parentSelector = attr.parent;
 
       /**
@@ -181,7 +182,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
           scope.$apply(function(scope) {
             var fn = scope.click();
             if ('undefined' !== typeof fn) {
-              fn(nodeId);
+              fn.call(scope.clickContext, nodeId);
             }
           });
         }
@@ -193,6 +194,10 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
             return '<strong>' + nodeId + '</strong>';
           })
           .show();
+      };
+
+      scope.arrowheadRule = function(edge) {
+        return false;
       };
 
       /**
@@ -251,10 +256,11 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
   }, baseDirective);
 });
 
-module.directive('myWorkflowGraph', function ($filter) {
+module.directive('myWorkflowGraph', function ($filter, $location) {
   return angular.extend({
     link: function (scope) {
-      scope.render = genericRender.bind(null, scope, $filter);
+      scope.render = genericRender.bind(null, scope, $filter, $location);
+
       var defaultRadius = 50;
       scope.getShapes = function() {
         var shapes = {};
@@ -354,6 +360,24 @@ module.directive('myWorkflowGraph', function ($filter) {
           return shapeSvg;
         };
 
+        shapes.forkjoin = function(parent, bbox, node) {
+
+          parent.select('.label')
+            .attr('style', 'display: none;');
+
+          var shapeSvg = parent.insert('circle', ':first-child')
+            .attr('x', -bbox.width / 2)
+            .attr('y', -bbox.height / 2)
+            .attr('r', 0);
+
+
+          node.intersect = function(p) {
+            return dagreD3.intersect.circle(node, 1, p);
+          };
+
+          return shapeSvg;
+        };
+
         return shapes;
       };
 
@@ -365,10 +389,10 @@ module.directive('myWorkflowGraph', function ($filter) {
             shapeName = 'job';
             break;
           case 'FORKNODE':
-            shapeName = 'circle';
+            shapeName = 'forkjoin';
             break;
           case 'JOINNODE':
-            shapeName = 'circle';
+            shapeName = 'forkjoin';
             break;
           case 'START':
             shapeName = 'start';
@@ -390,7 +414,7 @@ module.directive('myWorkflowGraph', function ($filter) {
         scope.$apply(function(scope) {
           var fn = scope.click();
           if ('undefined' !== typeof fn) {
-            fn(instance);
+            fn.call(scope.clickContext, instance);
           }
         });
       };
@@ -405,11 +429,19 @@ module.directive('myWorkflowGraph', function ($filter) {
         }
 
       };
+
+      scope.arrowheadRule = function(edge) {
+        if (edge.targetType === 'JOINNODE' || edge.targetType === 'FORKNODE') {
+          return false;
+        } else {
+          return true;
+        }
+      };
     }
   }, baseDirective);
 });
 
-function genericRender(scope) {
+function genericRender(scope, filter, location) {
   var nodes = scope.model.nodes;
   var edges = scope.model.edges;
 
@@ -427,7 +459,7 @@ function genericRender(scope) {
 
   // First set nodes and edges.
   angular.forEach(nodes, function (node) {
-    var nodeLabel = "";
+    var nodeLabel = '';
     if (node.label && node.label.length) {
       nodeLabel = node.label.length > 8? node.label.substr(0,5) + '...': node.label;
     } else {
@@ -439,10 +471,15 @@ function genericRender(scope) {
   });
 
   angular.forEach(edges, function (edge) {
-    g.setEdge(edge.sourceName, edge.targetName);
+    if (scope.arrowheadRule(edge)) {
+      g.setEdge(edge.sourceName, edge.targetName);
+    } else {
+      g.setEdge(edge.sourceName, edge.targetName, { arrowhead: 'undirected' });
+    }
   });
 
   angular.extend(renderer.shapes(), scope.getShapes());
+
   var selector = '';
   // Making the query to be more specific instead of doing
   // it under the entire DOM. This allows us to draw the diagram
@@ -459,31 +496,80 @@ function genericRender(scope) {
     .offset([-10, 0]);
   svg.call(tip);
 
-  // Set up zoom support
-  var zoom = d3.behavior.zoom().scaleExtent([0.1, 2]);
+  // initializing value
+  scope.translateX = 0;
+  scope.translateY = 0;
+  scope.currentScale = 1.1;
+
+
+  // only being used to center and fit diagram
+  var zoom = d3.behavior.zoom();
   zoom.on('zoom', function() {
-    var t = zoom.translate(),
-        tx = t[0],
-        ty = t[1];
-    var scale = d3.event.scale;
-    scale = Math.min(2, scale);
-
-    tx = Math.max(tx, (-g.graph().width+100)*scale );
-    tx = Math.min(tx, svg.width() - 100);
-
-    ty = Math.max(ty, -g.graph().height*scale);
-    ty = Math.min(ty, (g.graph().height));
-
-    var arr = [tx, ty];
-
-    zoom.translate(arr);
-    svgGroup.attr('transform', 'translate(' + arr + ') ' +
-                                'scale(' + d3.event.scale + ')');
+    svgGroup.attr('transform', 'translate(' + d3.event.translate + ')' + ' scale(' + scope.currentScale + ')');
   });
-  svg.call(zoom);
+
+  var drag = d3.behavior.drag();
+  drag.on('drag', function () {
+    d3.event.sourceEvent.stopPropagation();
+    scope.translateX = scope.translateX + d3.event.dx;
+    scope.translateY = scope.translateY + d3.event.dy;
+
+    if (scope.translateX > svg.width()) {
+      scope.translateX = svg.width();
+    }
+    if (scope.translateX < -(g.graph().width * scope.currentScale)) {
+      scope.translateX = -(g.graph().width * scope.currentScale);
+    }
+
+    if (scope.translateY > svg.height()) {
+      scope.translateY = svg.height();
+    }
+    if (scope.translateY < -(g.graph().height * scope.currentScale)) {
+      scope.translateY = -(g.graph().height * scope.currentScale);
+    }
+
+    var arr = [scope.translateX, scope.translateY];
+
+    svgGroup.attr('transform', 'translate(' + arr + ')' + ' scale(' + scope.currentScale + ')');
+  });
+  svg.call(drag);
+
+  scope.zoomIn = function() {
+    scope.currentScale += 0.1;
+
+    if (scope.currentScale > 2.5) {
+      scope.currentScale = 2.5;
+    }
+
+    scope.translateX = scope.translateX - (scope.translateX * 0.1);
+    scope.translateY = scope.translateY - (scope.translateY * 0.1);
+
+    var arr = [scope.translateX, scope.translateY];
+    svgGroup.attr('transform', 'translate(' + arr + ')' + ' scale(' + scope.currentScale + ')');
+  };
+
+  scope.zoomOut = function() {
+    scope.currentScale -= 0.1;
+
+    if (scope.currentScale < 0.1) {
+      scope.currentScale = 0.1;
+    }
+
+    var arr = [scope.translateX, scope.translateY];
+    svgGroup.attr('transform', 'translate(' + arr + ')' + ' scale(' + scope.currentScale + ')');
+  };
 
   // Run the renderer. This is what draws the final graph.
   renderer(d3.select(selector + ' g'), g);
+
+  /**
+   * We need to specify the full URL for the arrowhead.
+   * http://stackoverflow.com/questions/19742805/angular-and-svg-filters
+   */
+  var paths = svgGroup.selectAll('g.edgePath > path.path');
+  angular.forEach(paths[0], function(p) {
+    p.attributes['marker-end'].nodeValue = 'url(' + location.absUrl() + p.attributes['marker-end'].nodeValue.substr(4);
+  });
 
   /**
    * Handles showing tooltip on mouseover of node name.
@@ -508,20 +594,29 @@ function genericRender(scope) {
     .on('mouseout', scope.handleHideTip);
 
   scope.$on('$destroy', scope.handleHideTip);
-  // Center svg.
-  var initialScale = 1.1;
-  var svgWidth = svg.node().getBoundingClientRect().width;
-  if (svgWidth - g.graph().width <= 0) {
-    zoom.translate([0,0])
-        .scale(svg.width()/g.graph().width)
-        .event(svg);
-    svg.attr('height', g.graph().height * initialScale + 40);
-  } else {
+
+  scope.centerImage = function() {
+    // Center svg.
+    var initialScale = 1.1;
+    var svgWidth = svg.node().getBoundingClientRect().width;
+    if (svgWidth - g.graph().width <= 0) {
+      scope.currentScale = svg.width()/g.graph().width;
+      scope.translateX = 0;
+      scope.translateY = 0;
+
+    } else {
+      scope.translateX = (svgWidth - g.graph().width * initialScale) / 2;
+      scope.translateY = 20;
+      scope.currentScale = initialScale;
+    }
+
     zoom
-      .translate([(svgWidth - g.graph().width * initialScale) / 2, 20])
-      .scale(initialScale)
+      .translate([scope.translateX, scope.translateY])
+      .scale(scope.currentScale)
       .event(svg);
     svg.attr('height', g.graph().height * initialScale + 40);
+  };
 
-  }
+  scope.centerImage();
+
 }

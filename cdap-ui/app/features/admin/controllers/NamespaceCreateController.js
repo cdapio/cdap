@@ -4,8 +4,15 @@ angular.module(PKG.name + '.feature.admin')
       name: '',
       description: ''
     };
+    $scope.isSaving = false;
+
     var myDataSrc = new MyDataSource($scope);
-    $scope.submitHandler = _.once(function() {
+    $scope.submitHandler = function() {
+      if ($scope.isSaving) {
+        return;
+      }
+
+      $scope.isSaving = true;
       myDataSrc.request({
         method: 'PUT',
         _cdapPath: '/namespaces/' + $scope.model.name,
@@ -14,19 +21,26 @@ angular.module(PKG.name + '.feature.admin')
           description: $scope.model.description
         }
       })
-        .then(function() {
-          $modalInstance.close();
-          $alert({
-            title: 'Success!',
-            content: 'Namespace Created!',
-            type: 'success'
-          });
+        .then(
+          function success() {
+            $scope.isSaving = false;
+            $modalInstance.close();
+            $alert({
+              title: 'Success!',
+              content: 'Namespace Created!',
+              type: 'success'
+            });
 
-          myNamespace.getList(true).then(function() {
-            EventPipe.emit('namespace.update');
-          });
-        });
-    });
+            myNamespace.getList(true).then(function() {
+              EventPipe.emit('namespace.update');
+            });
+          },
+          function error(err) {
+            $scope.isSaving = false;
+            $scope.error = err.data;
+          }
+        );
+    };
     $scope.closeModal = function() {
       $modalInstance.close();
 

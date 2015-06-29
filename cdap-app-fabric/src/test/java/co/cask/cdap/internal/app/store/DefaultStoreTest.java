@@ -30,7 +30,6 @@ import co.cask.cdap.api.annotation.Output;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
@@ -49,6 +48,7 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
+import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.app.RunIds;
@@ -511,7 +511,7 @@ public class DefaultStoreTest {
     AppFabricTestHelper.deployApplication(AppWithServices.class);
     AbstractApplication app = new AppWithServices();
     DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(app);
-    app.configure(appConfigurer, new ApplicationContext());
+    app.configure(appConfigurer, new DefaultApplicationContext());
 
     ApplicationSpecification appSpec = appConfigurer.createSpecification();
     Id.Application appId = new Id.Application(new Id.Namespace(DefaultId.NAMESPACE.getId()), appSpec.getName());

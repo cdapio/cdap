@@ -17,7 +17,7 @@
 package co.cask.cdap.examples.sportresults;
 
 import co.cask.cdap.api.annotation.UseDataSet;
-import co.cask.cdap.api.dataset.lib.Partition;
+import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionOutput;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
@@ -66,20 +66,20 @@ public class UploadService extends AbstractService {
                      @PathParam("league") String league, @PathParam("season") int season) {
 
 
-      Partition partition = results.getPartition(PartitionKey.builder()
+      PartitionDetail partitionDetail = results.getPartition(PartitionKey.builder()
                                                    .addStringField("league", league)
                                                    .addIntField("season", season)
                                                    .build());
-      if (partition == null) {
+      if (partitionDetail == null) {
         responder.sendString(404, "Partition not found.", Charsets.UTF_8);
         return;
       }
       ByteBuffer content;
       try {
-        Location location = partition.getLocation().append("file");
+        Location location = partitionDetail.getLocation().append("file");
         content = ByteBuffer.wrap(ByteStreams.toByteArray(location.getInputStream()));
       } catch (IOException e) {
-        responder.sendError(400, String.format("Unable to read path '%s'", partition.getRelativePath()));
+        responder.sendError(400, String.format("Unable to read path '%s'", partitionDetail.getRelativePath()));
         return;
       }
       responder.send(200, content, "text/plain", ImmutableMultimap.<String, String>of());

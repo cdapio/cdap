@@ -85,7 +85,7 @@ angular.module(PKG.name + '.commons')
 
             if(!output) { // should never happen, except on directive playground
               output = 'default';
-              $log.warn('metric-picker using default namespace as context!');
+              $log.warn('metric-picker using default namespace as context');
             }
 
           }

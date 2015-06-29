@@ -10,10 +10,14 @@
     <form ng-show="preferences.length > 0">
       <div class="form-group row">
         <div class="col-xs-12">
-          <div ng-repeat="preference in preferences" class="h4">
+          <div ng-repeat="preference in preferences" class="h4" ng-keypress="enter($event, $last)">
             <div class="row">
               <div class="col-sm-4">
-                <input type="text" class="pref-key form-control" ng-model="preference.key" placeholder="key"/>
+                <input type="text"
+                  class="pref-key form-control"
+                  ng-model="preference.key"
+                  placeholder="key"
+                  my-focus-watch="$last" />
               </div>
               <div class="col-sm-7">
                 <input type="text" class="form-control" ng-model="preference.value" placeholder="value"/>

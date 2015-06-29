@@ -21,6 +21,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.filesystem.Location;
 
+import java.io.IOException;
+
 /**
  * A delegation of {@link Program} interface.
  */
@@ -80,5 +82,10 @@ public abstract class ForwardingProgram implements Program {
   @Override
   public ClassLoader getClassLoader() {
     return delegate.getClassLoader();
+  }
+
+  @Override
+  public void close() throws IOException {
+    delegate.close();
   }
 }

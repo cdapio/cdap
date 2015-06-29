@@ -27,6 +27,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.io.URLConnections;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -67,7 +68,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.List;
 
 /**
@@ -155,6 +155,9 @@ public class StandaloneMain {
    * Start the service.
    */
   public void startUp() throws Exception {
+    // Workaround for release of file descriptors opened by URLClassLoader - https://issues.cask.co/browse/CDAP-2841
+    URLConnections.setDefaultUseCaches(false);
+
     cleanupTempDir();
 
     // Start all the services.

@@ -18,6 +18,7 @@ package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionAwares;
@@ -59,7 +60,7 @@ public abstract class AbstractDataset implements Dataset, MeteredDataset, Transa
   // metering stuff
 
   @Override
-  public void setMetricsCollector(MeteredDataset.MetricsCollector metricsCollector) {
+  public void setMetricsCollector(MetricsCollector metricsCollector) {
     for (Dataset dataset : underlying) {
       if (dataset instanceof MeteredDataset) {
         ((MeteredDataset) dataset).setMetricsCollector(metricsCollector);

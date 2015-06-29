@@ -47,7 +47,6 @@ import java.util.Map;
 public class ScoreCounter extends AbstractMapReduce {
 
   private static final Logger LOG = LoggerFactory.getLogger(ScoreCounter.class);
-  private static final Gson GSON = new Gson();
 
   @Override
   public void configure() {

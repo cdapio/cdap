@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto;
 
+import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 /**
@@ -35,7 +36,7 @@ public final class DatasetInstanceConfiguration {
   }
 
   public Map<String, String> getProperties() {
-    return properties;
+    return properties == null ? ImmutableMap.<String, String>of() : properties;
   }
 
 }

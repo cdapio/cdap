@@ -9,7 +9,7 @@ function ($scope, myAuth, myAlert, $state, cfpLoadingBar, $timeout,
   $scope.credentials = myAuth.remembered();
   $scope.submitting = false;
 
-  $scope.isAuthenticated = MY_CONFIG.securityEnabled;
+  $scope.isAuthenticated = MY_CONFIG.securityEnabled || myAuth.isAuthenticated();
 
   $scope.doLogin = function (c) {
     $scope.submitting = true;

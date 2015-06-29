@@ -4,7 +4,7 @@
     "position": [ "group1" ],
     "group1": {
        "display" : "Time Partitioned Fileset - AVRO",
-       "position" : [ "name", "basePath", "schema"],
+       "position" : [ "name", "basePath",  "duration", "delay", "schema"],
        "fields" : {
           "name" : {
              "widget": "textbox",
@@ -15,6 +15,16 @@
              "widget": "textbox",
              "label": "Dataset Base Path"
           },
+
+         "duration" : {
+           "widget": "textbox",
+           "label" : "Duration"
+         },
+
+         "delay" : {
+           "widget": "textbox",
+           "label" : "Delay"
+         },
 
           "schema" : {
              "widget": "schema",

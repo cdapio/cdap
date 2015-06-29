@@ -25,7 +25,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.dataset.lib.Partition;
+import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.Partitioning;
@@ -291,25 +291,25 @@ public class ExploreTableManager {
    * Adds multiple partitions to the Hive table for the given dataset.
    *
    * @param datasetID the ID of the dataset to add partitions to
-   * @param partitions a map of partition key to partition path
+   * @param partitionDetails a map of partition key to partition path
    * @return the query handle for adding partitions to the dataset
    * @throws ExploreException if there was an exception adding the partition
    * @throws SQLException if there was a problem with the add partition statement
    */
   public QueryHandle addPartitions(Id.DatasetInstance datasetID,
-                                   Set<Partition> partitions) throws ExploreException, SQLException {
-    if (partitions.isEmpty()) {
+                                   Set<PartitionDetail> partitionDetails) throws ExploreException, SQLException {
+    if (partitionDetails.isEmpty()) {
       return QueryHandle.NO_OP;
     }
     StringBuilder statement = new StringBuilder()
       .append("ALTER TABLE ")
       .append(getDatasetTableName(datasetID))
       .append(" ADD");
-    for (Partition partition : partitions) {
+    for (PartitionDetail partitionDetail : partitionDetails) {
       statement.append(" PARTITION")
-        .append(generateHivePartitionKey(partition.getPartitionKey()))
+        .append(generateHivePartitionKey(partitionDetail.getPartitionKey()))
         .append(" LOCATION '")
-        .append(partition.getRelativePath())
+        .append(partitionDetail.getRelativePath())
         .append("'");
     }
 
@@ -375,9 +375,13 @@ public class ExploreTableManager {
 
     String format = FileSetProperties.getExploreFormat(properties);
     if (format != null) {
+      if ("parquet".equals(format)) {
+        return createStatementBuilder.setSchema(FileSetProperties.getExploreSchema(properties))
+          .buildWithFileFormat("parquet");
+      }
       // for text and csv, we know what to do
       Preconditions.checkArgument("text".equals(format) || "csv".equals(format),
-                                  "Only text and csv are supported as native formats");
+        "Only text and csv are supported as native formats");
       String schema = FileSetProperties.getExploreSchema(properties);
       Preconditions.checkNotNull(schema, "for native formats, explore schema must be given in dataset properties");
       String delimiter = null;

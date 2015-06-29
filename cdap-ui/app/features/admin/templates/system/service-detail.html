@@ -5,21 +5,18 @@
         <h3>{{$state.params.serviceName}}</h3>
     </div>
     <div class="col-xs-6 text-right h3">
-        <div class="btn-group" ng-model="tabs.activeTab" bs-radio-group>
-            <label class="btn btn-default" role="tab">
-                <input type="radio" class="btn btn-default" value="0" />
-                Status
-            </label>
-            <label class="btn btn-default" role="tab">
-                <input type="radio" class="btn btn-default" value="1" />
-                Logs
-            </label>
+
+      <div class="text-right">
+        <div class="btn-group">
+
+          <a class="btn btn-default" ui-sref="admin.system.services.detail.metadata" ui-sref-active="active"> Metadata</a>
+          <a  class="btn btn-default" ui-sref="admin.system.services.detail.logs" ui-sref-active="active"> Logs</a>
+
         </div>
+      </div>
     </div>
 </div>
 
 <br />
 
 <ui-view role="tabpanel"></ui-view>
-
-

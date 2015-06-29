@@ -1,4 +1,4 @@
-angular.module(PKG.name + '.feature.workflows')
+angular.module(`${PKG.name}.feature.workflows`)
   .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
     $stateProvider
       .state('workflows', {
@@ -31,10 +31,7 @@ angular.module(PKG.name + '.feature.workflows')
               // runid param when the request goes out
               // (timing issue with re-direct from login state).
               dataSrc.request({
-                _cdapPath: '/namespaces/' + $stateParams.namespace +
-                           '/apps/' + $stateParams.appId +
-                           '/workflows/' + $stateParams.programId +
-                           '/runs'
+                _cdapPath: `/namespaces/${$stateParams.namespace}/apps/${$stateParams.appId}/workflows/${$stateParams.programId}/runs`
               })
                 .then(function(res) {
                   defer.resolve(res);

@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
@@ -26,6 +25,7 @@ import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
+import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
@@ -105,7 +105,7 @@ public class ScheduleSpecificationCodecTest {
       }
     };
     DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
-    app.configure(configurer, new ApplicationContext());
+    app.configure(configurer, new DefaultApplicationContext());
     ApplicationSpecification specification = configurer.createSpecification();
 
     ApplicationSpecificationAdapter gsonAdapater =

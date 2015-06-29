@@ -56,8 +56,8 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterDefinition;
-import com.clearspring.analytics.util.Preconditions;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -634,7 +634,7 @@ public class AdapterService extends AbstractIdleService {
       DeploymentInfo deploymentInfo = new DeploymentInfo(
         applicationTemplateInfo.getFile(),
         getTemplateTempLoc(namespace, applicationTemplateInfo),
-        ApplicationDeployScope.SYSTEM);
+        ApplicationDeployScope.SYSTEM, null);
       ApplicationWithPrograms appWithPrograms =
         manager.deploy(namespace, applicationTemplateInfo.getName(), deploymentInfo).get();
       return appWithPrograms.getSpecification();
@@ -697,7 +697,8 @@ public class AdapterService extends AbstractIdleService {
     }
 
     // instantiate the template application and call configure() on it to determine it's specification
-    InMemoryConfigurator configurator = new InMemoryConfigurator(new LocalLocationFactory().create(jarFile.toURI()));
+    InMemoryConfigurator configurator = new InMemoryConfigurator(new LocalLocationFactory().create(jarFile.toURI()),
+                                                                 null);
     ListenableFuture<ConfigResponse> result = configurator.config();
     ConfigResponse response = result.get(2, TimeUnit.MINUTES);
     InputSupplier<? extends Reader> configSupplier = response.get();

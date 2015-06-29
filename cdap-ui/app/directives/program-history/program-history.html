@@ -7,11 +7,11 @@
           <th data-predicate="start" data-predicate-default="reverse"> Start Time </th>
           <th data-predicate="end"> End Time </th>
           <th data-predicate="duration"> Duration </th>
-          <th> Status </th>
+          <th data-predicate="status"> Status </th>
         </tr>
       </thead>
       <tbody>
-        <tr ng-repeat="run in runs | orderBy:sortable.predicate:sortable.reverse | myPaginate:currentPage">
+        <tr ng-repeat="run in runs | myPaginate:currentPage | orderBy:sortable.predicate:sortable.reverse ">
           <td>
             <a ui-sref="flows.detail.runs.run({runid: run.runid})" ng-if="type === 'FLOWS'">{{run.runid}}</a>
             <a ui-sref="mapreduce.detail.runs.run({runid: run.runid})" ng-if="type === 'MAPREDUCE'">{{run.runid}}</a>

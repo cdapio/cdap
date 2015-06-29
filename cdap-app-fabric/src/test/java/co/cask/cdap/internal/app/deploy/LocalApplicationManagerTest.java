@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.deploy;
 
+import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.ToyApp;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.AppFabricTestHelper;
@@ -25,6 +26,7 @@ import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.ProgramType;
+import com.google.gson.Gson;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -47,6 +49,7 @@ import java.util.jar.Manifest;
 public class LocalApplicationManagerTest {
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
+  public static final Gson GSON = new Gson();
 
   private static LocationFactory lf;
 
@@ -73,7 +76,7 @@ public class LocalApplicationManagerTest {
     }
 
     Location destination = new LocalLocationFactory().create(new File(TMP_FOLDER.newFolder(), "deploy.jar").toURI());
-    DeploymentInfo info = new DeploymentInfo(deployFile, destination);
+    DeploymentInfo info = new DeploymentInfo(deployFile, destination, null);
 
     AppFabricTestHelper.getLocalManager().deploy(DefaultId.NAMESPACE, null, info).get();
   }
@@ -85,12 +88,32 @@ public class LocalApplicationManagerTest {
   public void testGoodPipeline() throws Exception {
     Location deployedJar = AppJarHelper.createDeploymentJar(lf, ToyApp.class);
     Location destination = new LocalLocationFactory().create(new File(TMP_FOLDER.newFolder(), "deploy.jar").toURI());
-    DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination);
+    DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination, null);
 
     ApplicationWithPrograms input = AppFabricTestHelper.getLocalManager().deploy(DefaultId.NAMESPACE,
                                                                                  null, info).get();
 
     Assert.assertEquals(input.getPrograms().iterator().next().getType(), ProgramType.FLOW);
     Assert.assertEquals(input.getPrograms().iterator().next().getName(), "ToyFlow");
+  }
+
+  @Test
+  public void testValidConfigPipeline() throws Exception {
+    Location deployedJar = AppJarHelper.createDeploymentJar(lf, ConfigTestApp.class);
+    Location destination = new LocalLocationFactory().create(new File(TMP_FOLDER.newFolder(), "deploy.jar").toURI());
+
+    ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myStream", "myTable");
+    DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination, GSON.toJson(config));
+
+    AppFabricTestHelper.getLocalManager().deploy(DefaultId.NAMESPACE, "MyApp", info).get();
+  }
+
+  @Test(expected = ExecutionException.class)
+  public void testInvalidConfigPipeline() throws Exception {
+    Location deployedJar = AppJarHelper.createDeploymentJar(lf, ConfigTestApp.class);
+    Location destination = new LocalLocationFactory().create(new File(TMP_FOLDER.newFolder(), "deploy.jar").toURI());
+
+    DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination, GSON.toJson("invalid"));
+    AppFabricTestHelper.getLocalManager().deploy(DefaultId.NAMESPACE, "BadApp", info).get();
   }
 }

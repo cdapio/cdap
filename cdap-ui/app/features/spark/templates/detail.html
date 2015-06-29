@@ -1,11 +1,12 @@
-<div ncy-breadcrumb></div>
+<div ncy-breadcrumb ng-if="!$state.params.sourceId"></div>
+<my-breadcrumb params="$state.params" ng-if="$state.params.sourceId"></my-breadcrumb>
 
 <div class="row" program-heading>
   <div class="col-sm-6">
     <h2 class="programTitle">
       <span ng-bind="$state.params.programId"></span>
     </h2>
-    <small ng-if="isEnterprise" class="badge text-info">
+    <small ng-if="DetailController.isEnterprise" class="badge text-info">
       <span class="fa fa-exclamation-triangle"> </span>
       <span> Spark programs are not supported in distributed yet.</span>
     </small>

@@ -1,9 +1,10 @@
 angular.module(PKG.name + '.services')
-  .service('myNamespace', function myNamespace($q, MyDataSource, EventPipe, $http) {
+  .service('myNamespace', function myNamespace($q, MyDataSource, EventPipe, $http, $rootScope, myAuth, MYAUTH_EVENT, myHelpers, $state) {
 
     this.namespaceList = [];
 
     var data = new MyDataSource(),
+        prom,
         queryInProgress = null;
 
 
@@ -14,8 +15,8 @@ angular.module(PKG.name + '.services')
 
       if (!queryInProgress) {
 
-        queryInProgress = $q.defer();
-
+        prom = $q.defer();
+        queryInProgress = true;
         data.request(
           {
             _cdapPath: '/namespaces',
@@ -32,19 +33,34 @@ angular.module(PKG.name + '.services')
                 }
 
                 this.namespaceList = res;
-                queryInProgress.resolve(res);
+                prom.resolve(res);
                 queryInProgress = null;
               }).bind(this),
               function (err) {
-                queryInProgress.reject(err);
+                prom.reject(err);
                 queryInProgress = null;
-                EventPipe.emit('backendDown', 'Problem accessing namespace');
+                /*
+                  If security is enabled, we authenticate and validate token
+                   in 'home' state. However when we are in a nested state
+                   under namespace say, /ns/default/apps/PurchaseHistory/...
+                   the authentication and token validation is not done and we fetch the
+                   list of namespaces in 'ns' state in resolve with invalid token.
+
+                   This leads to a 'invalid_token' error but we don't properly re-direct
+                   to login. Hence this check.
+                */
+                if (myHelpers.objectQuery(err, 'data', 'auth_uri')) {
+                  $rootScope.$broadcast(MYAUTH_EVENT.sessionTimeout);
+                  $state.go('login');
+                } else {
+                  EventPipe.emit('backendDown', 'Problem accessing namespace');
+                }
               }
         );
 
       }
 
-      return queryInProgress.promise;
+      return prom.promise;
     };
 
     this.getDisplayName = function(name) {
@@ -53,26 +69,5 @@ angular.module(PKG.name + '.services')
       });
       return ns[0].name || name;
     };
-
-    function startPolling() {
-
-      _.debounce(function() {
-        $http.get('http://' + window.location.host + '/backendstatus', {ignoreLoadingBar: true})
-                .success(success).error(error);
-              }, 2000)();
-
-    }
-
-    function success() {
-      EventPipe.emit('backendUp');
-      startPolling();
-    }
-
-    function error() {
-      EventPipe.emit('backendDown');
-      startPolling();
-    }
-
-    startPolling();
 
   });

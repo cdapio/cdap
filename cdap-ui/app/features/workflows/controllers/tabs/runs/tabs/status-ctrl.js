@@ -1,51 +1,46 @@
-angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkflowsRunsStatusController', function($state, $scope, myWorkFlowApi, $filter, $alert, GraphHelpers, MyDataSource, myMapreduceApi) {
-    var filterFilter = $filter('filter'),
-        params = {
-          appId: $state.params.appId,
-          workflowId: $state.params.programId,
-          scope: $scope
-        };
+'use strict';
+// FIXME: Needs to be re-thought.
+var runparams = {},
+    alertpromise,
+    params;
 
-    if ($state.params.runid) {
-      var match = filterFilter($scope.RunsController.runs, {runid: $state.params.runid});
-      if (match.length) {
-        $scope.RunsController.runs.selected = match[0];
-      }
-    }
+class WorkflowsRunsStatusController {
+  constructor($state, $scope, myWorkFlowApi, $filter, $alert, GraphHelpers, MyDataSource, myMapreduceApi, mySparkApi) {
+    this.dataSrc = new MyDataSource($scope);
+    this.$state = $state;
+    this.$scope = $scope;
+    this.myWorkFlowApi = myWorkFlowApi;
+    this.$alert = $alert;
+    this.GraphHelpers = GraphHelpers;
+    this.myMapreduceApi = myMapreduceApi;
+    this.mySparkApi = mySparkApi;
+    this.$filter = $filter;
+    this.runsCtrl = $scope.RunsController;
 
+    let filterFilter = this.$filter('filter'),
+        match;
+
+    params = {
+      appId: this.$state.params.appId,
+      workflowId: this.$state.params.programId,
+      scope: this.$scope
+    };
+
+    this.runStatus = null;
     this.data = {};
-    myWorkFlowApi.get(params)
+
+    this.myWorkFlowApi.get(params)
       .$promise
-      .then(function(res) {
+      .then( res => {
         var edges = [],
             nodes = [],
             nodesFromBackend = angular.copy(res.nodes);
 
-        // Add Start and End nodes as semantically workflow needs to have it.
-        nodesFromBackend.unshift({
-          type: 'START',
-          nodeType: 'ACTION',
-          nodeId: '',
-          program: {
-            programName: 'Start'
-          }
-        });
+        this.GraphHelpers.addStartAndEnd(nodesFromBackend);
+        this.GraphHelpers.expandNodes(nodesFromBackend, nodes);
+        this.GraphHelpers.convertNodesToEdges(angular.copy(nodes), edges);
 
-        nodesFromBackend.push({
-          label: 'end',
-          type: 'END',
-          nodeType: 'ACTION',
-          nodeId: '',
-          program: {
-            programName: 'End'
-          }
-        });
-
-        GraphHelpers.expandNodes(nodesFromBackend, nodes);
-        GraphHelpers.convertNodesToEdges(angular.copy(nodes), edges);
-
-        nodes = nodes.map(function(item) {
+        nodes = nodes.map( item => {
           return angular.extend({
             name: item.program.programName + item.nodeId,
             type: item.nodeType
@@ -53,96 +48,146 @@ angular.module(PKG.name + '.feature.workflows')
         });
 
         this.data = {
-          nodes: nodes,
-          edges: edges,
+          nodes,
+          edges,
           metrics: {},
           current: {},
         };
 
         var programs = [];
-        angular.forEach(res.nodes, function(value) {
-          programs.push(value.program);
-        });
+        angular.forEach(res.nodes, value => programs.push(value.program));
+
         this.actions = programs;
-      }.bind(this));
 
-    // Still using MyDataSource because the poll needs to be stopped
-    var dataSrc = new MyDataSource($scope);
+        // This needs to be rethought.
+        this.pollNodes();
 
-    var path = '/apps/' + $state.params.appId
-      + '/workflows/' + $state.params.programId
-      + '/runs/' + $scope.RunsController.runs.selected.runid;
+      });
+  }
 
-    if ($scope.RunsController.runs.length > 0) {
+  // Need to make sure that the list of nodes is already generated
+  pollNodes() {
 
-      dataSrc.poll({
-        _cdapNsPath: path,
-        interval: 1000
-      })
-      .then(function (response) {
+    if (this.runsCtrl.runs.length === 0) {
+      return;
+    }
+    runparams = angular.extend(
+      {
+        runId: this.runsCtrl.runs.selected.runid
+      },
+      params
+    );
+
+    this.myWorkFlowApi
+      .pollRunDetail(runparams)
+      .$promise
+      .then( response => {
+        this.runStatus = response.status;
 
         var pastNodes = Object.keys(response.properties);
-        $scope.RunsController.runs.selected.properties = response.properties;
+        this.runsCtrl.runs.selected.properties = response.properties;
 
-        var activeNodes = filterFilter(this.data.nodes , function(node) {
-          return pastNodes.indexOf(node.nodeId) !== -1;
+        var activeNodes = this.$filter('filter')(this.data.nodes , node => pastNodes.indexOf(node.nodeId) !== -1);
+
+        angular.forEach(activeNodes, node => {
+          var runid = response.properties[node.nodeId];
+          var mapreduceParams;
+
+          if (node.program.programType === 'MAPREDUCE') {
+            mapreduceParams = {
+              namespace: this.$state.params.namespace,
+              appId: this.$state.params.appId,
+              mapreduceId: node.program.programName,
+              runId: runid,
+              scope: this.$scope
+            };
+            this.myMapreduceApi.runDetail(mapreduceParams)
+              .$promise
+              .then( result => this.data.current[node.name] = result.status);
+          } else if (node.program.programType === 'SPARK') {
+
+            var sparkParams = {
+              namespace: this.$state.params.namespace,
+              appId: this.$state.params.appId,
+              sparkId: node.program.programName,
+              runId: runid,
+              scope: this.$scope
+            };
+
+            this.mySparkApi.runDetail(sparkParams)
+              .$promise
+              .then( (result) => this.data.current[node.name] = result.status );
+          }
         });
 
-        angular.forEach(activeNodes, function(n) {
-          var runid = response.properties[n.nodeId];
-
-          var mapreduceParams = {
-            namespace: $state.params.namespace,
-            appId: $state.params.appId,
-            mapreduceId: n.program.programName,
-            runId: runid,
-            scope: $scope
-          };
-          myMapreduceApi.runDetail(mapreduceParams)
-            .$promise
-            .then(function (result) {
-              this.data.current[n.name] = result.status;
-            }.bind(this));
-        }.bind(this));
-
-        return response;
-      }.bind(this))
-      .then(function (response) {
-        if (response.status === 'COMPLETED' || response.status === 'FAILED') {
-          dataSrc.stopPoll(response.__pollId__);
+        if (['STOPPED', 'KILLED', 'COMPLETED'].indexOf(this.runStatus) !== -1) {
+          this.myWorkFlowApi.stopPollRunDetail(runparams);
         }
+
       });
-    }
 
+  }
 
-    this.workflowProgramClick = function (instance) {
-      if (['START', 'END'].indexOf(instance.type) > -1 ) {
-        return;
-      }
-      if ($scope.RunsController.runs.length) {
-        if (instance.program.programType === 'MAPREDUCE' && $scope.RunsController.runs.selected.properties[instance.nodeId]) {
-          $state.go('mapreduce.detail.runs.run', {
-            programId: instance.program.programName,
-            runid: $scope.RunsController.runs.selected.properties[instance.nodeId]
-          });
-        }
-      } else {
-        $alert({
-          type: 'info',
-          content: 'No runs for the workflow: '+ $state.params.programId +' yet.'
-        });
-      }
-    };
-
-    this.stop = function() {
-      $alert({
-        type: 'info',
-        content: 'Stopping a workflow at run level is not possible yet. Will be fixed soon.'
-      });
+  workflowProgramClick(instance) {
+    if (['START', 'END'].indexOf(instance.type) > -1 ) {
       return;
-      // TODO: There is support from backend. We should implement this in UI
-      // this.status = 'STOPPING';
-      // myWorkFlowApi.stop(params);
-    };
+    }
+    if (this.runsCtrl.runs.length) {
+      let stateParams = {
+        programId: instance.program.programName,
+        runid: this.runsCtrl.runs.selected.properties[instance.nodeId],
+        sourceId: this.$state.params.programId,
+        sourceRunId: this.$scope.RunsController.runs.selected.runid
+      };
+      if (instance.program.programType === 'MAPREDUCE' &&
+         this.runsCtrl.runs.selected.properties[instance.nodeId]
+        ) {
+        stateParams.destinationType = 'Mapreduce'
+        this.$state.go('mapreduce.detail.runs.run', stateParams);
 
-  });
+      } else if (instance.program.programType === 'SPARK' &&
+                this.runsCtrl.runs.selected.properties[instance.nodeId]
+               ) {
+
+        stateParams.destinationType = 'Spark'
+        this.$state.go('spark.detail.runs.run', stateParams);
+      }
+    } else {
+      var errorObj = {
+        type: 'info',
+        scope: this.$scope,
+        content: `No runs for the workflow: ${this.$state.params.programId} yet.`
+      }, e;
+      if (!alertpromise) {
+        alertpromise = this.$alert(errorObj);
+        e = this.$scope.$on('alert.hide',() => {
+          alertpromise = null;
+          e(); // un-register from listening to the hide event of a closed alert.
+        });
+      }
+    }
+  };
+
+  stop() {
+    this.runStatus = 'STOPPING';
+    this.myWorkFlowApi
+     .stopRun(runparams, {});
+  };
+
+  suspend() {
+    this.runStatus = 'SUSPENDING';
+    this.myWorkFlowApi
+     .suspendRun(runparams, {});
+  };
+
+  resume() {
+    this.runStatus = 'RESUMING';
+    this.myWorkFlowApi
+     .resumeRun(runparams, {});
+  };
+
+}
+
+WorkflowsRunsStatusController.$inject = ['$state', '$scope', 'myWorkFlowApi', '$filter', '$alert', 'GraphHelpers', 'MyDataSource', 'myMapreduceApi', 'mySparkApi'];
+angular.module(`${PKG.name}.feature.workflows`)
+  .controller('WorkflowsRunsStatusController', WorkflowsRunsStatusController);

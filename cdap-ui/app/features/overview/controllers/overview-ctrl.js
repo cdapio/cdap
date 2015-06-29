@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.overview').controller('OverviewCtrl',
-function ($scope, $state, myLocalStorage, MY_CONFIG, Widget, MyMetricsQueryHelper, myHelpers, MyChartHelpers, MyDataSource) {
+function ($scope, $state, myLocalStorage, MY_CONFIG, Widget, MyMetricsQueryHelper, MyChartHelpers, MyDataSource, ServiceStatusFactory) {
 
   var dataSrc = new MyDataSource($scope);
   if(!$state.params.namespace) {
@@ -29,24 +29,8 @@ function ($scope, $state, myLocalStorage, MY_CONFIG, Widget, MyMetricsQueryHelpe
   };
 
   this.isEnterprise = MY_CONFIG.isEnterprise;
-  this.systemStatus = '#C9C9D1';
-  dataSrc.poll({
-    _cdapPath: '/system/services/status',
-    interval: 10000
-  }, function(res) {
-    var serviceStatuses = Object.keys(res).map(function(value) {
-      return res[value];
-    });
-    if (serviceStatuses.indexOf('NOTOK') > -1) {
-      this.systemStatus = 'yellow';
-    }
-    if (serviceStatuses.indexOf('OK') === -1) {
-      this.systemStatus = 'red';
-    }
-    if (serviceStatuses.indexOf('NOTOK') === -1) {
-      this.systemStatus = 'green';
-    }
-  }.bind(this));
+  // this.systemStatus = '#C9C9D1';
+  this.systemStatus = ServiceStatusFactory.systemStatus;
 
   this.wdgts = [];
   // type field is overridden by what is rendered in view because we do not use widget.getPartial()

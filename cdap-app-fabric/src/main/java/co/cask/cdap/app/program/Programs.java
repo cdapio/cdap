@@ -35,7 +35,7 @@ public final class Programs {
   }
 
   public static Program createWithUnpack(Location location, File destinationUnpackedJarDir) throws IOException {
-    return Programs.createWithUnpack(location, destinationUnpackedJarDir, getClassLoader());
+    return createWithUnpack(location, destinationUnpackedJarDir, getClassLoader());
   }
 
   /**

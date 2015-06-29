@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.metrics;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Collection;
@@ -58,4 +60,12 @@ public class MetricValues {
     return timestamp;
   }
 
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("metrics", Joiner.on(",").withKeyValueSeparator(":").join(tags))
+      .add("metrics", Joiner.on(",").join(metrics))
+      .add("timestamp", timestamp)
+      .toString();
+  }
 }

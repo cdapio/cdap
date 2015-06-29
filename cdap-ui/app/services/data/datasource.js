@@ -33,8 +33,7 @@ angular.module(PKG.name+'.services')
 
    */
 
-  .factory('MyDataSource', function ($log, $rootScope, caskWindowManager, mySocket,
-    MYSOCKET_EVENT, $q, $filter, myCdapUrl, MyPromise) {
+  .factory('MyDataSource', function ($log, $rootScope, caskWindowManager, mySocket, MYSOCKET_EVENT, $q, $filter, myCdapUrl, MyPromise, myHelpers) {
 
     var instances = {}; // keyed by scopeid
 
@@ -69,6 +68,14 @@ angular.module(PKG.name+'.services')
         }
       }
 
+      // FIXME: There is a circular dependency and that is why
+      // myAuth.isAuthenticated is not used. There should be a better way to do this.
+      if ($rootScope.currentUser && $rootScope.currentUser.token) {
+        re.headers = {
+          Authorization: 'Bearer '+ $rootScope.currentUser.token
+        };
+      }
+
       mySocket.send({
         action: 'poll-start',
         resource: re
@@ -89,6 +96,11 @@ angular.module(PKG.name+'.services')
           id: resource.id,
           json: resource.json,
           method: resource.method
+        };
+      }
+      if ($rootScope.currentUser && $rootScope.currentUser.token) {
+        re.headers = {
+          Authorization: 'Bearer '+ $rootScope.currentUser.token
         };
       }
 
@@ -191,11 +203,10 @@ angular.module(PKG.name+'.services')
       var id = generateUUID();
       var generatedResource = {};
       var promise = new MyPromise(function(resolve, reject) {
-
         generatedResource = {
           json: resource.json,
           id: id,
-          interval: resource.interval,
+          interval: resource.interval || myHelpers.objectQuery(resource, 'options', 'interval') ,
           body: resource.body,
           method: resource.method || 'GET'
         };
@@ -236,13 +247,24 @@ angular.module(PKG.name+'.services')
      */
     DataSource.prototype.stopPoll = function(resourceId) {
       var filterFilter = $filter('filter');
-      var id = resourceId;
+      // Duck Typing for angular's $resource.
+      var defer = $q.defer();
+      var id;
+      if (angular.isObject(resourceId)) {
+        id = resourceId.params.pollId;
+      } else {
+        id = resourceId;
+      }
       var match = filterFilter(this.bindings, { 'resource': {id: id} });
 
       if (match.length) {
         _pollStop(match[0].resource);
         this.bindings.splice(this.bindings.indexOf(match[0]), 1);
+        defer.resolve({});
+      } else {
+        defer.reject({});
       }
+      return defer.promise;
     };
 
     /**
@@ -293,6 +315,11 @@ angular.module(PKG.name+'.services')
 
         if (resource.data) {
           generatedResource.body = resource.data;
+        }
+        if ($rootScope.currentUser && $rootScope.currentUser.token) {
+          generatedResource.headers = {
+            Authorization: 'Bearer '+ $rootScope.currentUser.token
+          };
         }
 
         if (!resource.url) {

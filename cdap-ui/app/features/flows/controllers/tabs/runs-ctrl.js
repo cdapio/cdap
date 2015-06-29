@@ -6,28 +6,30 @@ angular.module(PKG.name + '.feature.flows')
    if ($state.params.runid) {
      var match = fFilter(rRuns, {runid: $state.params.runid});
      if (match.length) {
-       this.runs.selected = match[0];
+       this.runs.selected = angular.copy(match[0]);
      } else {
        // Wrong runid. 404.
        $state.go('404');
        return;
      }
    } else if (rRuns.length) {
-     this.runs.selected = rRuns[0];
+     this.runs.selected = angular.copy(rRuns[0]);
    } else {
      this.runs.selected = {
-       runid: 'No Runs!'
+       runid: 'No Runs'
      };
    }
 
-   $scope.$watch('runs.selected.runid', function() {
-     if ($state.params.runid) {
-       return;
-     } else {
-       if (rRuns.length) {
-         this.runs.selected = rRuns[0];
-       }
-     }
+    $scope.$watch(angular.bind(this, function() {
+     return this.runs.selected.runid;
+    }), function() {
+      if ($state.params.runid) {
+        return;
+      } else {
+        if (rRuns.length) {
+          this.runs.selected = angular.copy(rRuns[0]);
+        }
+      }
    }.bind(this));
 
    this.tabs = [

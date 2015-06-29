@@ -2,12 +2,11 @@
 
 <br/>
 
-
 <div class="row">
-  <div class="col-xs-6 text-left">
+  <div class="col-xs-7 col-md-6 text-left">
     <h2> All Applications </h2>
   </div>
-  <div class="col-xs-6 h2 text-right">
+  <div class="col-xs-5 col-md-2 h2 text-right">
     <div class="btn-group dropdown-right" dropdown>
       <button type="button"
               class="btn btn-default dropdown-toggle"
@@ -26,7 +25,21 @@
       </ul>
     </div>
   </div>
+  <div class="col-md-4 h2 text-right">
+    <div class="input-group pull-right">
+      <input type="text" class="form-control" ng-model="ListController.searchText" placeholder="search...">
+      <div class="input-group-addon">
+        <i class="fa fa-search"></i>
+      </div>
+    </div>
+  </div>
 </div>
+<div ng-if="ListController.apps.length === 0">
+  <div class="well well-lg text-center">
+    <h3>You haven't deployed any apps.</h3>
+  </div>
+</div>
+
 <div ng-if="ListController.apps.length === 0">
   <div class="well well-lg text-center">
     <h3>You haven't deployed any apps.</h3>
@@ -43,7 +56,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr ng-repeat="app in ListController.apps | orderBy:sortable.predicate:sortable.reverse">
+      <tr ng-repeat="app in ListController.filtered = (ListController.apps | filter: ListController.searchText ) | myPaginate:ListController.currentPage | orderBy:sortable.predicate:sortable.reverse">
         <td >
           <a ui-sref="apps.detail.overview.status({ appId: app.id })" ng-click="MyOrderings.appClicked(app.id)">
             <strong> {{ ::app.name }} </strong>
@@ -54,4 +67,8 @@
       </tr>
     </tbody>
   </table>
+</div>
+
+<div class="text-center" ng-if="ListController.filtered.length > 10">
+  <pagination total-items="ListController.filtered.length" ng-model="ListController.currentPage"></pagination>
 </div>

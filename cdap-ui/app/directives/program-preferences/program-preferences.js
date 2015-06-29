@@ -1,56 +1,26 @@
 angular.module(PKG.name+'.commons')
-
-  .controller('ProgramPreferencesController', function($scope, $state, MyDataSource) {
-    var dataSrc = new MyDataSource($scope);
-
-    var parentPath = '/namespaces/' + $state.params.namespace
-      + '/apps/' + $state.params.appId + '/preferences?resolved=true';
-
-    var path = '/namespaces/' + $state.params.namespace
-      + '/apps/' + $state.params.appId + '/'
-      + $scope.type + '/' + $state.params.programId
-      + '/preferences';
+  .controller('ProgramPreferencesController', function($scope, $state, myPreferenceApi) {
 
     $scope.heading = $state.params.programId + ' Preferences';
-
     $scope.preferences = [];
 
-    $scope.loadProperties = function () {
-      dataSrc
-        .request({
-          _cdapPath: parentPath
-        })
-        .then(function (res) {
-
-          var arr = [];
-
-          angular.forEach(res, function(v, k) {
-            arr.push({
-              key: k,
-              value: v
-            });
-          });
-
-          $scope.systemPreferences = arr;
-        });
-
-      dataSrc
-        .request({
-          _cdapPath: path
-        }).then(function (res) {
-          var arr = [];
-
-          angular.forEach(res, function(v, k) {
-            arr.push({
-              key: k,
-              value: v
-            });
-          });
-
-          $scope.preferences = arr;
-        });
+    var params = {
+      namespace: $state.params.namespace,
+      appId: $state.params.appId,
+      programType: $scope.type,
+      programId: $state.params.programId,
+      scope: $scope
     };
 
+    $scope.loadProperties = function () {
+      loadParentPreference();
+
+      myPreferenceApi.getProgramPreference(params)
+        .$promise
+        .then(function (res) {
+          $scope.preferences = formatObj(res);
+        });
+    };
     $scope.loadProperties();
 
     $scope.addPreference = function() {
@@ -61,7 +31,6 @@ angular.module(PKG.name+'.commons')
     };
 
     $scope.removePreference = function(preference) {
-
       $scope.preferences.splice($scope.preferences.indexOf(preference), 1);
     };
 
@@ -74,19 +43,50 @@ angular.module(PKG.name+'.commons')
         }
       });
 
-      dataSrc
-        .request({
-          _cdapPath: path,
-          method: 'PUT',
-          body: obj
-        })
-        .then(function() {
+      myPreferenceApi.setProgramPreference(params, obj,
+        function () {
           $scope.loadProperties();
           $scope.$close(obj);
         });
     };
 
-  })
+    $scope.enter = function (event, last) {
+      if (last && event.keyCode === 13) {
+        $scope.addPreference();
+      } else {
+        return;
+      }
+    };
+
+    function loadParentPreference() {
+      var parentParams = {
+        namespace: $state.params.namespace,
+        appId: $state.params.appId,
+        scope: $scope,
+        resolved: true
+      };
+
+      myPreferenceApi.getAppPreference(parentParams)
+        .$promise
+        .then(function (res) {
+          $scope.systemPreferences = formatObj(res);
+        });
+    }
+
+    function formatObj(input) {
+      var arr = [];
+
+      angular.forEach(JSON.parse(angular.toJson(input)), function(v, k) {
+        arr.push({
+          key: k,
+          value: v
+        });
+      });
+
+      return arr;
+    }
+
+  }) // end of controller
 
   .directive('myProgramPreferences', function() {
     return {
