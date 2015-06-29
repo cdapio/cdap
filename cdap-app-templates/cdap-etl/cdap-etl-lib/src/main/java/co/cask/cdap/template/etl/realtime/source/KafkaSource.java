@@ -104,18 +104,40 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
   }
 
   /**
-   * Convert {@code Apache Kafka} ByetBuffer from message into CDAP {@link StructuredRecord} instance.
+   * Convert {@code Apache Kafka} ByteBuffer from message into CDAP {@link StructuredRecord} instance.
    * @param key the String key of the Kafka message
    * @param payload the ByteBuffer of the Kafka message.
    * @return instance of {@link StructuredRecord} representing the message.
    */
   public StructuredRecord byteBufferToStructuredRecord(@Nullable String key, ByteBuffer payload) {
-    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(SCHEMA);
+//    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(SCHEMA);
+//    if (key != null) {
+//      recordBuilder.set(KEY, key);
+//    }
+//    recordBuilder.set(MESSAGE, payload);
+//    return recordBuilder.build();
+    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(getDefaultTextSchema());
     if (key != null) {
       recordBuilder.set(KEY, key);
     }
-    recordBuilder.set(MESSAGE, payload);
+    String msgAsString = Bytes.toString(payload);
+    recordBuilder.set("message", msgAsString);
     return recordBuilder.build();
+  }
+
+//  public StructuredRecord textStructuredRecord(@Nullable String key, ByteBuffer payload) {
+//    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(getDefaultTextSchema());
+//    if (key != null) {
+//      recordBuilder.set(KEY, key);
+//    }
+//    String msgAsString = Bytes.toString(payload);
+//    recordBuilder.set("message", msgAsString);
+//    return recordBuilder.build();
+//  }
+
+  protected Schema getDefaultTextSchema() {
+    return Schema.recordOf("stringBody", Schema.Field.of("message", Schema.of(Schema.Type.STRING)),
+                           Schema.Field.of(KEY, Schema.nullableOf(Schema.of(Schema.Type.STRING))));
   }
 
   /**
