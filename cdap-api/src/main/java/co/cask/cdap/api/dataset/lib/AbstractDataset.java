@@ -76,6 +76,11 @@ public abstract class AbstractDataset implements Dataset, MeteredDataset, Transa
   }
 
   @Override
+  public void updateTx(Transaction tx) {
+    txAwares.updateTx(tx);
+  }
+
+  @Override
   public Collection<byte[]> getTxChanges() {
     return txAwares.getTxChanges();
   }

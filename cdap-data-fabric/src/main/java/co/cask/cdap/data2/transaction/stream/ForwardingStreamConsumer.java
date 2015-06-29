@@ -63,6 +63,11 @@ public abstract class ForwardingStreamConsumer implements StreamConsumer {
   }
 
   @Override
+  public void updateTx(Transaction tx) {
+    delegate.updateTx(tx);
+  }
+
+  @Override
   public Collection<byte[]> getTxChanges() {
     return delegate.getTxChanges();
   }

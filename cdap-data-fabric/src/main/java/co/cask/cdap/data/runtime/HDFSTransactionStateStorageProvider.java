@@ -16,6 +16,8 @@
 
 package co.cask.cdap.data.runtime;
 
+import co.cask.tephra.metrics.MetricsCollector;
+import co.cask.tephra.metrics.TxMetricsCollector;
 import co.cask.tephra.persist.HDFSTransactionStateStorage;
 import co.cask.tephra.snapshot.SnapshotCodecProvider;
 import com.google.inject.Inject;
@@ -29,15 +31,18 @@ import org.apache.hadoop.conf.Configuration;
 public class HDFSTransactionStateStorageProvider implements Provider<HDFSTransactionStateStorage> {
   private final Configuration hConf;
   private final SnapshotCodecProvider codecProvider;
+  private final TxMetricsCollector metrics;
 
   @Inject
-  public HDFSTransactionStateStorageProvider(Configuration hConf, SnapshotCodecProvider codecProvider) {
+  public HDFSTransactionStateStorageProvider(Configuration hConf, SnapshotCodecProvider codecProvider,
+                                             TxMetricsCollector metrics) {
     this.hConf = hConf;
     this.codecProvider = codecProvider;
+    this.metrics = metrics;
   }
 
   @Override
   public HDFSTransactionStateStorage get() {
-    return new HDFSTransactionStateStorage(hConf, codecProvider);
+    return new HDFSTransactionStateStorage(hConf, codecProvider, metrics);
   }
 }

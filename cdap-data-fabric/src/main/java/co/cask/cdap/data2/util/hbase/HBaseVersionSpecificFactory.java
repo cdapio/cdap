@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.util.hbase;
 
+import co.cask.tephra.util.HBaseVersion;
 import com.google.inject.Provider;
 import com.google.inject.ProvisionException;
 import org.apache.twill.internal.utils.Instances;

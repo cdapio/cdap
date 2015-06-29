@@ -39,7 +39,22 @@ public class TransactionManagerMetricsCollector extends TxMetricsCollector {
   // todo: change TxMetricsCollector in Tephra
   @Override
   public void gauge(String metricName, int value, String...tags) {
+    metricsContext.gauge(metricName, value);
+  }
+
+  @Override
+  public void histogram(String metricName, int value) {
+    // TODO: change when CDAP metrics supports histograms
     metricsContext.increment(metricName, value);
   }
 
+  @Override
+  public void rate(String metricName) {
+    metricsContext.increment(metricName, 1L);
+  }
+
+  @Override
+  public void rate(String metricName, int count) {
+    metricsContext.increment(metricName, count);
+  }
 }
