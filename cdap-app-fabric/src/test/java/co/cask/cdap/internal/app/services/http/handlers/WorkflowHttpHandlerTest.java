@@ -623,10 +623,10 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertNotNull(anotherSparkRunRecordProperties.get("workflowrunid"));
     Assert.assertEquals(workflowHistoryRuns.get(0).getPid(), anotherSparkRunRecordProperties.get("workflowrunid"));
 
-    Assert.assertEquals(workflowRunRecordProperties.get("0"), oneMRHistoryRuns.get(0).getPid());
-    Assert.assertEquals(workflowRunRecordProperties.get("1"), oneSparkHistoryRuns.get(0).getPid());
-    Assert.assertEquals(workflowRunRecordProperties.get("2"), anotherMRHistoryRuns.get(0).getPid());
-    Assert.assertEquals(workflowRunRecordProperties.get("3"), anotherSparkHistoryRuns.get(0).getPid());
+    Assert.assertEquals(workflowRunRecordProperties.get("OneMR"), oneMRHistoryRuns.get(0).getPid());
+    Assert.assertEquals(workflowRunRecordProperties.get("OneSpark"), oneSparkHistoryRuns.get(0).getPid());
+    Assert.assertEquals(workflowRunRecordProperties.get("AnotherMR"), anotherMRHistoryRuns.get(0).getPid());
+    Assert.assertEquals(workflowRunRecordProperties.get("AnotherSpark"), anotherSparkHistoryRuns.get(0).getPid());
   }
 
   @Test
