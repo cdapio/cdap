@@ -38,19 +38,17 @@ public class BasicWorkflowToken implements WorkflowToken {
   public BasicWorkflowToken() {
   }
 
-  public BasicWorkflowToken(Map<String, List<NodeValueEntry>> tokenValueMap, String nodeName,
-                            @Nullable Map<String, Map<String, Long>> mapReduceCounters) {
-
-    for (Map.Entry<String, List<NodeValueEntry>> entry : tokenValueMap.entrySet()) {
+  public BasicWorkflowToken(BasicWorkflowToken other) {
+    for (Map.Entry<String, List<NodeValueEntry>> entry : other.tokenValueMap.entrySet()) {
       List<NodeValueEntry> nodeValueList = Lists.newArrayList();
       nodeValueList.addAll(entry.getValue());
       this.tokenValueMap.put(entry.getKey(), nodeValueList);
     }
 
-    this.nodeName = nodeName;
+    this.nodeName = other.nodeName;
 
-    if (mapReduceCounters != null) {
-      this.mapReduceCounters = copyHadoopCounters(mapReduceCounters);
+    if (other.mapReduceCounters != null) {
+      this.mapReduceCounters = copyHadoopCounters(other.mapReduceCounters);
     }
   }
 
@@ -192,7 +190,7 @@ public class BasicWorkflowToken implements WorkflowToken {
    * @return copied WorkflowToken
    */
   public WorkflowToken deepCopy() {
-    return new BasicWorkflowToken(tokenValueMap, nodeName, mapReduceCounters);
+    return new BasicWorkflowToken(this);
   }
 
   private Map<String, Map<String, Long>> copyHadoopCounters(Map<String, Map<String, Long>> input) {
