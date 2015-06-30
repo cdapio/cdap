@@ -86,7 +86,7 @@ angular.module(PKG.name+'.feature.login')
         message: 'Your current session has timed out. Please login again.'
       });
       myAuth.logout();
-    })
+    });
 
     if(MY_CONFIG.securityEnabled) {
       angular.forEach([

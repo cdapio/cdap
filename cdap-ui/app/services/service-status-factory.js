@@ -5,7 +5,7 @@ angular.module(PKG.name + '.services')
     // Apart from invalid token there should be no scenario
     // when we should stop this poll.
     var dataSrc = new MyDataSource();
-    var pollPromise = dataSrc.poll({
+    dataSrc.poll({
       _cdapPath: '/system/services/status',
       interval: 10000
     },

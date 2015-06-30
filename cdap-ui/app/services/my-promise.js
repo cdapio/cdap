@@ -61,13 +61,17 @@ angular.module(PKG.name + '.services')
         try {
           var then = getThen(result);
           if (then) {
-            doResolve(then.bind(result), resolve, reject)
-            return
+            doResolve(then.bind(result), resolve, reject);
+            return;
           }
           fulfill(result);
-        } catch (e) {
-          (console.error)? console.error(ex): console.log(ex);
-          reject(e);
+        } catch (ex) {
+          if (console.error) {
+            console.error(ex);
+          } else {
+            console.log(ex);
+          }
+          reject(ex);
         }
       }
 
@@ -94,7 +98,7 @@ angular.module(PKG.name + '.services')
           onFulfilled: onFulfilled,
           onRejected: onRejected
         });
-      }
+      };
 
 
       this.then = function (onFulfilled, onRejected) {
@@ -106,7 +110,11 @@ angular.module(PKG.name + '.services')
               try {
                 return resolve(onFulfilled(result));
               } catch (ex) {
-                (console.error)? console.error(ex): console.log(ex);
+                if (console.error) {
+                  console.error(ex);
+                } else {
+                  console.log(ex);
+                }
                 return reject(ex);
               }
             } else {
@@ -117,16 +125,24 @@ angular.module(PKG.name + '.services')
               try {
                 return resolve(onRejected(error));
               } catch (ex) {
-                (console.error)? console.error(ex): console.log(ex);
+                if (console.error) {
+                  console.error(ex);
+                } else {
+                  console.log(ex);
+                }
                 return reject(ex);
               }
             } else {
-              (console.error)? console.error(error): console.log(error);
+              if (console.error) {
+                console.error(error);
+              } else {
+                console.log(error);
+              }
               return reject(error);
             }
           });
         }, isObserve);
-      }
+      };
 
       doResolve(fn, resolve, reject);
 
@@ -156,22 +172,32 @@ angular.module(PKG.name + '.services')
         try {
           fn(function (value) {
             if (!isObserve) {
-              if (done) return
-              done = true
+              if (done) {
+                return;
+              }
+              done = true;
             }
-            onFulfilled(value)
+            onFulfilled(value);
           }, function (reason) {
             if (!isObserve) {
-              if (done) return
-              done = true
+              if (done) {
+                return;
+              }
+              done = true;
             }
-            onRejected(reason)
-          })
+            onRejected(reason);
+          });
         } catch (ex) {
-          (console.error)? console.error(ex): console.log(ex);
-          if (done) return
-          done = true
-          onRejected(ex)
+          if (console.error) {
+            console.error(ex);
+          } else {
+            console.log(ex);
+          }
+          if (done) {
+            return;
+          }
+          done = true;
+          onRejected(ex);
         }
       }
 

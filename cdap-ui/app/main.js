@@ -138,8 +138,7 @@ angular
       return {
         'request': function(config) {
           if (
-              $rootScope.currentUser
-              && !myHelpers.objectQuery(config, 'data', 'profile_view')
+              $rootScope.currentUser && !myHelpers.objectQuery(config, 'data', 'profile_view')
              ) {
             angular.extend(config, {
               user: $rootScope.currentUser || null,
@@ -152,7 +151,7 @@ angular
           }
           return config;
         }
-      }
+      };
     });
   })
 

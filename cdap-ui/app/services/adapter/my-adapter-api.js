@@ -1,7 +1,6 @@
 angular.module(PKG.name + '.services')
-  .factory('myAdapterApi', function($resource, myHelpers, myCdapUrl) {
-    var url = myCdapUrl.constructUrl,
-        templatePath = '/templates',
+  .factory('myAdapterApi', function($resource, myHelpers) {
+    var templatePath = '/templates',
         adapterPath = '/namespaces/:namespace/adapters/:adapter',
         sourcePath = '/templates/:adapterType/extensions/source',
         sinkPath = '/templates/:adapterType/extensions/sink',

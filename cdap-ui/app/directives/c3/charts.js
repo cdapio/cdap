@@ -21,6 +21,7 @@ ngC3.factory('c3', function ($window) {
 ngC3.controller('c3Controller', function ($scope, c3, $filter, $timeout, MyChartHelpers, MyMetricsQueryHelper, MyDataSource) {
   // We need to bind because the init function is called directly from the directives below
   // and so the function arguments would not otherwise be available to the initC3 and render functions.
+  /* jshint shadow:true */
   var c3 = c3,
       $filter = $filter,
       queryId = 'qid',

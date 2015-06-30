@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowletDetailInputController', function($state, $scope, MyDataSource, MyMetricsQueryHelper, myFlowsApi, myAlert) {
+  .controller('FlowletDetailInputController', function($state, $scope, MyDataSource, MyMetricsQueryHelper, myFlowsApi) {
 
     var dataSrc = new MyDataSource($scope);
     var flowletid = $scope.FlowletsController.activeFlowlet.name;
@@ -54,13 +54,14 @@ angular.module(PKG.name + '.feature.flows')
     }
 
     function formatInitialTimeseries(aggregate, initial, input) {
-      var v = [];
+      var v = [],
+          i;
 
       if (initial.series[0]) {
         var response = initial.series[0].data;
 
         response[response.length - 1].value = aggregate - response[response.length - 1].value;
-        for (var i = response.length - 2; i >= 0; i--) {
+        for (i = response.length - 2; i >= 0; i--) {
           response[i].value = response[i+1].value - response[i].value;
           v.unshift({
             time: response[i].time,
@@ -69,7 +70,7 @@ angular.module(PKG.name + '.feature.flows')
         }
       } else {
         // when there is no data
-        for (var i = 60; i > 0; i--) {
+        for (i = 60; i > 0; i--) {
           v.push({
             time: Math.floor((new Date()).getTime()/1000 - (i)),
             y: 0
@@ -132,8 +133,7 @@ angular.module(PKG.name + '.feature.flows')
           producer: input.name
         };
 
-        var path = '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(flowletTags)
-                          + '&metric=system.queue.pending';
+        var path = '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(flowletTags) + '&metric=system.queue.pending';
 
         var aggregate = 0;
         // Get Aggregate

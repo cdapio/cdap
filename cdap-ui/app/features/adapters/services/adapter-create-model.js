@@ -89,7 +89,6 @@ angular.module(PKG.name + '.feature.adapters')
         return defer.promise;
       }
       EventPipe.emit('showLoadingIcon', 'Saving adapter as draft');
-      var adapterDrafts = {};
       this.adapterDrafts[this.metadata.name] = {
         config: {
           metadata: this.metadata,
@@ -142,7 +141,7 @@ angular.module(PKG.name + '.feature.adapters')
         });
       }
       return errObj;
-    }
+    };
 
     Model.prototype.checkForValidRequiredField = function checkForValidRequiredField(plugin) {
       var i;
@@ -179,6 +178,7 @@ angular.module(PKG.name + '.feature.adapters')
           sink = angular.copy(this.sink),
           trans = angular.copy(this.transforms),
           transforms = [];
+      var i;
 
       angular.forEach(source.properties, pruneProperties.bind(this, source));
       angular.forEach(sink.properties, pruneProperties.bind(this, sink));
@@ -216,7 +216,7 @@ angular.module(PKG.name + '.feature.adapters')
       )
         .$promise
         .then(
-          function success(res) {
+          function success() {
             delete this.adapterDrafts[this.metadata.name];
             return mySettings.set('adapterdrafts', this.adapterDrafts);
           }.bind(this),

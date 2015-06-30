@@ -13,7 +13,7 @@ angular.module(PKG.name + '.feature.worker')
    } else {
      $scope.runs.selected = {
        runid: 'No Runs'
-     }
+     };
    }
 
    $scope.$watch('runs.selected.runid', function() {
@@ -22,7 +22,7 @@ angular.module(PKG.name + '.feature.worker')
      } else {
        $scope.runs.selected = rRuns[0];
      }
-   })
+   });
 
    $scope.tabs = [
    {

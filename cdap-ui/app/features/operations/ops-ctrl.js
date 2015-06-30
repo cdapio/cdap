@@ -5,7 +5,7 @@
 angular.module(PKG.name+'.feature.dashboard')
 /* ------------------------------------------------------ */
   .controller('OpsCdapCtrl',
-  function ($scope, opshelper, $rootScope) {
+  function ($scope, opshelper) {
     var panels = [
    // Format:
    // [ Widget Title, context, [metricNames], line-type (options are in addwdgt-ctrl.js ]
@@ -86,8 +86,6 @@ angular.module(PKG.name+'.feature.dashboard')
       swapping: true,
       resizable: {
         enabled: true,
-        start: function(event, uiWidget, $element) {}, // optional callback fired when resize is started,
-        resize: function(event, uiWidget, $element) {}, // optional callback fired when item is resized,
         stop: function(event, uiWidget, $element) {
           var resizedHeight = parseInt(uiWidget[0].style.height, 10),
               resizedWidth = parseInt(uiWidget[0].style.width, 10);
@@ -150,7 +148,7 @@ angular.module(PKG.name+'.feature.dashboard')
 
 /* ------------------------------------------------------ */
 
-  .factory('opshelper', function (Widget, $timeout) {
+  .factory('opshelper', function (Widget) {
     function createWidget(title, context, metricNames, type) {
       return new Widget({
         title: title,
@@ -177,7 +175,7 @@ angular.module(PKG.name+'.feature.dashboard')
         widgets.push(widget);
       });
       // Note: title is not currently used in the view
-      return {title : "System metrics", columns : widgets};
+      return {title : 'System metrics', columns : widgets};
     }
 
     return {

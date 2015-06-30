@@ -37,8 +37,6 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
     swapping: true,
     resizable: {
       enabled: true,
-      start: function(event, uiWidget, $element) {}, // optional callback fired when resize is started,
-      resize: function(event, uiWidget, $element) {}, // optional callback fired when item is resized,
       stop: function(event, uiWidget, $element) {
         var resizedHeight = parseInt(uiWidget[0].style.height, 10),
             resizedWidth = parseInt(uiWidget[0].style.width, 10);
@@ -118,7 +116,7 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
 
   function applyOnWidgets(rDashboardsModel, func) {
     var currentColumns = rDashboardsModel.current().columns,
-        i, j;
+        i;
     for (i=0; i<currentColumns.length; i++) {
       func(currentColumns[i]);
     }
