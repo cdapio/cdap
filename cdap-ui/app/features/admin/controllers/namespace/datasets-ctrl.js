@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('AdminDatasetsController', function ($scope, $stateParams, myStreamApi, myDatasetApi) {
+  .controller('NamespaceDatasetsController', function ($scope, $stateParams, myStreamApi, myDatasetApi) {
 
     $scope.dataList = [];
     $scope.currentPage = 1;

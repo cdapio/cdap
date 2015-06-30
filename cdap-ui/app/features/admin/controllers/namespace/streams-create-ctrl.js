@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('StreamsCreateController', function($scope, $modalInstance, caskFocusManager, $stateParams, myStreamApi, $alert, $timeout) {
+  .controller('NamespaceStreamsCreateController', function($scope, $modalInstance, caskFocusManager, $stateParams, myStreamApi, $alert, $timeout) {
 
     caskFocusManager.focus('streamId');
 

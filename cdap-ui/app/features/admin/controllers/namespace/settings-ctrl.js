@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('AdminNamespaceSettingController', function ($scope, MyDataSource, $state, $alert, $timeout, myNamespace, EventPipe) {
+  .controller('NamespaceSettingsController', function ($scope, MyDataSource, $state, $alert, $timeout, myNamespace, EventPipe) {
 
     var dataSrc = new MyDataSource($scope);
     $scope.loading = false;

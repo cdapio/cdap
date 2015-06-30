@@ -1,4 +1,4 @@
-angular.module(PKG.name + '.feature.admin').controller('AdminNamespaceAppMetadataController',
+angular.module(PKG.name + '.feature.admin').controller('NamespaceAppMetadataController',
 function ($scope, $state, $alert, $timeout, MyDataSource) {
 
   var data = new MyDataSource($scope);

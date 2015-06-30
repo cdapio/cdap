@@ -1,4 +1,4 @@
-angular.module(PKG.name + '.feature.admin').controller('AdminServicesController',
+angular.module(PKG.name + '.feature.admin').controller('SystemServicesController',
 function ($scope, MyDataSource) {
 
   $scope.services = [];

@@ -1,4 +1,4 @@
-angular.module(PKG.name + '.feature.admin').controller('AdminServiceLogController',
+angular.module(PKG.name + '.feature.admin').controller('SystemServiceLogController',
 function ($scope, $state, MyDataSource) {
 
     var myDataSrc = new MyDataSource($scope);

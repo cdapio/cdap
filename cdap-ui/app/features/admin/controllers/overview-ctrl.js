@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('AdminOverviewController', function ($scope, $state, myNamespace, MyDataSource, myLocalStorage, MY_CONFIG, myStreamApi, myDatasetApi) {
+  .controller('OverviewController', function ($scope, $state, myNamespace, MyDataSource, myLocalStorage, MY_CONFIG, myStreamApi, myDatasetApi) {
     var dataSrc = new MyDataSource($scope),
         PREFKEY = 'feature.admin.overview.welcomeIsHidden';
 

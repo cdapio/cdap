@@ -1,4 +1,4 @@
-angular.module(PKG.name + '.feature.admin').controller('AdminNamespaceDatasetMetadataController',
+angular.module(PKG.name + '.feature.admin').controller('NamespaceDatasetMetadataController',
 function ($scope, $state, $alert, $filter, myDatasetApi, myExploreApi, EventPipe) {
 
   var params = {

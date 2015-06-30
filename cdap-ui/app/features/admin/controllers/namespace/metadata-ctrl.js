@@ -1,4 +1,4 @@
-angular.module(PKG.name + '.feature.admin').controller('AdminNamespaceMetadataController',
+angular.module(PKG.name + '.feature.admin').controller('NamespaceMetadataController',
 function ($scope, $state, myAlert, MyDataSource, myNamespace) {
 
   $scope.nsname = myNamespace.getDisplayName($state.params.nsadmin);

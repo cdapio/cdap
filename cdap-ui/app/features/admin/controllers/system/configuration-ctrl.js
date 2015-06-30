@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('ConfigurationController', function ($scope, MyDataSource) {
+  .controller('SystemConfigurationController', function ($scope, MyDataSource) {
     var dataSrc = new MyDataSource($scope);
 
     $scope.config = [];

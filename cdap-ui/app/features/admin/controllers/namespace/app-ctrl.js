@@ -1,4 +1,4 @@
-angular.module(PKG.name + '.feature.admin').controller('AdminNamespaceAppController',
+angular.module(PKG.name + '.feature.admin').controller('NamespaceAppController',
 function ($scope, $state, myAppUploader, MyDataSource, myNamespace) {
 
   $scope.apps = [];
