@@ -22,11 +22,11 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
 import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
+import co.cask.cdap.template.etl.batch.DriverHelpers;
 import co.cask.cdap.template.etl.common.DBConfig;
 import co.cask.cdap.template.etl.common.DBRecord;
 import co.cask.cdap.template.etl.common.DBUtils;
@@ -68,8 +68,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
 
   private final DBSinkConfig dbSinkConfig;
   private ResultSetMetaData resultSetMetadata;
-  private JDBCDriverShim driverShim;
-  private Class<? extends Driver> driverClass;
+  private DriverHelpers driverHelpers;
 
   public DBSink(DBSinkConfig dbSinkConfig) {
     this.dbSinkConfig = dbSinkConfig;
@@ -81,17 +80,8 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    Preconditions.checkArgument(!(dbSinkConfig.user == null && dbSinkConfig.password != null),
-                                "dbUser is null. Please provide both user name and password if database requires " +
-                                  "authentication. If not, please remove dbPassword and retry.");
-    Preconditions.checkArgument(!(dbSinkConfig.user != null && dbSinkConfig.password == null),
-                                "dbPassword is null. Please provide both user name and password if database requires" +
-                                  "authentication. If not, please remove dbUser and retry.");
-    driverClass = pipelineConfigurer.usePluginClass(dbSinkConfig.jdbcPluginType,
-                                                                                dbSinkConfig.jdbcPluginName,
-                                                                                getJDBCPluginId(),
-                                                                                PluginProperties.builder().build());
-    Preconditions.checkArgument(driverClass != null, "JDBC Driver class must be found.");
+    driverHelpers = new DriverHelpers(null, null);
+    DBUtils.checkCredentials(pipelineConfigurer, dbSinkConfig);
     try {
       validateDBConnection();
     } catch (Exception e) {

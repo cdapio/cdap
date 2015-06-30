@@ -22,17 +22,16 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.template.etl.batch.DriverHelpers;
 import co.cask.cdap.template.etl.common.DBConfig;
 import co.cask.cdap.template.etl.common.DBRecord;
 import co.cask.cdap.template.etl.common.DBUtils;
 import co.cask.cdap.template.etl.common.ETLDBInputFormat;
 import co.cask.cdap.template.etl.common.JDBCDriverShim;
-import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -64,8 +63,7 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
     "used in the import query to reflect an accurate number of records to import.";
 
   private final DBSourceConfig dbSourceConfig;
-  private JDBCDriverShim driverShim;
-  private Class<? extends Driver> driverClass;
+  private DriverHelpers driverHelpers;
 
   public DBSource(DBSourceConfig dbSourceConfig) {
     this.dbSourceConfig = dbSourceConfig;
@@ -73,19 +71,8 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    Preconditions.checkArgument(!(dbSourceConfig.user == null && dbSourceConfig.password != null),
-                                "dbUser is null. Please provide both user name and password if database requires " +
-                                  "authentication. If not, please remove dbPassword and retry.");
-    Preconditions.checkArgument(!(dbSourceConfig.user != null && dbSourceConfig.password == null),
-                                "dbPassword is null. Please provide both user name and password if database requires" +
-                                  "authentication. If not, please remove dbUser and retry.");
-    String jdbcPluginId = String.format("%s.%s.%s", "source", dbSourceConfig.jdbcPluginType,
-                                        dbSourceConfig.jdbcPluginName);
-    driverClass = pipelineConfigurer.usePluginClass(dbSourceConfig.jdbcPluginType,
-                                                                                dbSourceConfig.jdbcPluginName,
-                                                                                jdbcPluginId,
-                                                                                PluginProperties.builder().build());
-    Preconditions.checkArgument(driverClass != null, "JDBC Driver class must be found.");
+    driverHelpers = new DriverHelpers(null, null);
+    DBUtils.checkCredentials(pipelineConfigurer, dbSourceConfig);
     try {
       ensureValidConnection();
     } catch (Exception e) {

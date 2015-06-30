@@ -16,8 +16,12 @@
 
 package co.cask.cdap.template.etl.common;
 
+import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.template.etl.api.PipelineConfigurer;
+import co.cask.cdap.template.etl.batch.DriverHelpers;
 import co.cask.cdap.template.etl.batch.sink.DBSink;
 import co.cask.cdap.template.etl.batch.source.DBSource;
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +29,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.sql.Driver;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -92,6 +97,42 @@ public final class DBUtils {
     } catch (Throwable e) {
       // cleanup failed, ignoring silently
       LOG.warn("Failed to shutdown MySQL connection cleanup thread. Ignoring.");
+    }
+  }
+
+  public static void checkCredentials(PipelineConfigurer pipelineConfigurer, DBConfig dbConfig,
+                                      DriverHelpers driverHelpers) {
+    Preconditions.checkArgument(!(dbConfig.user == null && dbConfig.password != null),
+                                "dbUser is null. Please provide both user name and password if database requires " +
+                                  "authentication. If not, please remove dbPassword and retry.");
+    Preconditions.checkArgument(!(dbConfig.user != null && dbConfig.password == null),
+                                "dbPassword is null. Please provide both user name and password if database requires" +
+                                  "authentication. If not, please remove dbUser and retry.");
+    driverHelpers.driverClass = pipelineConfigurer.usePluginClass(dbConfig.jdbcPluginType,
+                                                             dbConfig.jdbcPluginName,
+                                                             getJDBCPluginID(dbConfig),
+                                                             PluginProperties.builder().build());
+    Preconditions.checkArgument(driverHelpers.driverClass != null, "JDBC Driver class must be found.");
+  }
+
+  public static String getJDBCPluginID(DBConfig dbConfig) {
+    return String.format("%s.%s.%s", "source", dbConfig.jdbcPluginType, dbConfig.jdbcPluginName);
+  }
+
+  private void ensureJDBCDriverIsAvailable(DBConfig dbConfig, Logger log,
+                                           DriverHelpers driverHelpers) throws Exception {
+    try {
+      DriverManager.getDriver(dbConfig.connectionString);
+    } catch (SQLException e) {
+      // Driver not found. We will try to register it with the DriverManager.
+      log.debug("Plugin Type: {} and Plugin Name: {}; Driver Class: {} not found. Registering JDBC driver via shim {} ",
+                dbConfig.jdbcPluginType, dbConfig.jdbcPluginName, driverHelpers.driverClass.getName(),
+                JDBCDriverShim.class.getName());
+      if (driverHelpers.driverShim == null) {
+        driverHelpers.driverShim = new JDBCDriverShim(driverHelpers.driverClass.newInstance());
+        DBUtils.deregisterAllDrivers(driverHelpers.driverClass);
+      }
+      DriverManager.registerDriver(driverHelpers.driverShim);
     }
   }
 
