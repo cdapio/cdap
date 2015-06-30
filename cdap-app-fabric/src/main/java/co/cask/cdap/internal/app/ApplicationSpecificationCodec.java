@@ -50,6 +50,9 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     if (src.getVersion() != null) {
       jsonObj.add("version", new JsonPrimitive(src.getVersion()));
     }
+    if (src.getConfiguration() != null) {
+      jsonObj.add("configuration", new JsonPrimitive(src.getConfiguration()));
+    }
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
     jsonObj.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
     jsonObj.add("datasetModules", serializeMap(src.getDatasetModules(), context, String.class));
@@ -77,6 +80,10 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
       version = jsonObj.get("version").getAsString();
     }
     String description = jsonObj.get("description").getAsString();
+    String configuration = null;
+    if (jsonObj.has("configuration")) {
+      configuration = jsonObj.get("configuration").getAsString();
+    }
 
     Map<String, StreamSpecification> streams = deserializeMap(jsonObj.get("streams"),
                                                               context, StreamSpecification.class);
@@ -102,7 +109,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     Map<String, WorkerSpecification> workers = deserializeMap(jsonObj.get("workers"), context,
                                                               WorkerSpecification.class);
 
-    return new DefaultApplicationSpecification(name, version, description, streams,
+    return new DefaultApplicationSpecification(name, version, description, configuration, streams,
                                                datasetModules, datasetInstances,
                                                flows, mapReduces, sparks,
                                                workflows, services, schedules, workers);
