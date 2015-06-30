@@ -86,8 +86,8 @@ public abstract class RowKeyDistributorTestBase {
     hConf.set(JobConf.MAPRED_MAP_TASK_JAVA_OPTS, "-Djava.awt.headless=true");
     hConf.set(JobConf.MAPRED_REDUCE_TASK_JAVA_OPTS, "-Djava.awt.headless=true");
 
-    testingUtility.startMiniCluster(1, 1);
-    testingUtility.startMiniMapReduceCluster(1);
+    testingUtility.startMiniCluster();
+    testingUtility.startMiniMapReduceCluster();
     hTable = testingUtility.createTable(TABLE, CF);
   }
 

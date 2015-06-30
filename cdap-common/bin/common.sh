@@ -90,9 +90,6 @@ set_hbase()
   # only set HBase version if previous call succeeded (may fail for components that don't use HBase)
   if [ $retvalue == 0 ]; then
     case "$HBASE_VERSION" in
-      0.94*)
-        hbasecompat="$CDAP_HOME/hbase-compat-0.94/lib/*"
-        ;;
       0.96*)
         hbasecompat="$CDAP_HOME/hbase-compat-0.96/lib/*"
         ;;
