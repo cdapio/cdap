@@ -67,18 +67,18 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
 
   public DBSource(DBSourceConfig dbSourceConfig) {
     this.dbSourceConfig = dbSourceConfig;
+    driverHelpers = new DriverHelpers(null, null);
   }
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    driverHelpers = new DriverHelpers(null, null);
-    DBUtils.checkCredentials(pipelineConfigurer, dbSourceConfig);
+    DBUtils.checkCredentials(pipelineConfigurer, dbSourceConfig, driverHelpers);
     try {
       ensureValidConnection();
     } catch (Exception e) {
       throw new IllegalArgumentException(e);
     } finally {
-      destroy();
+      DBUtils.destroy(driverHelpers);
     }
   }
 
@@ -88,25 +88,19 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
                 "countQuery = {}",
               dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName,
               dbSourceConfig.connectionString, dbSourceConfig.importQuery, dbSourceConfig.countQuery);
-
-    Job job = context.getHadoopJob();
-    Configuration hConf = job.getConfiguration();
-    // Load the plugin class to make sure it is available.
-    Class<? extends Driver> driverClass = context.loadPluginClass(getJDBCPluginId());
-    if (dbSourceConfig.user == null && dbSourceConfig.password == null) {
-      DBConfiguration.configureDB(hConf, driverClass.getName(), dbSourceConfig.connectionString);
-    } else {
-      DBConfiguration.configureDB(hConf, driverClass.getName(), dbSourceConfig.connectionString,
-                                  dbSourceConfig.user, dbSourceConfig.password);
+    try {
+      Job job = DBUtils.prepareRunGetJob(context, dbSourceConfig, driverHelpers);
+      ETLDBInputFormat.setInput(job, DBRecord.class, dbSourceConfig.importQuery, dbSourceConfig.countQuery);
+      job.setInputFormatClass(ETLDBInputFormat.class);
+    } finally {
+      DBUtils.destroy(driverHelpers);
     }
-    ETLDBInputFormat.setInput(job, DBRecord.class, dbSourceConfig.importQuery, dbSourceConfig.countQuery);
-    job.setInputFormatClass(ETLDBInputFormat.class);
   }
 
   @Override
   public void initialize(BatchSourceContext context) throws Exception {
     super.initialize(context);
-    driverClass = context.loadPluginClass(getJDBCPluginId());
+    driverHelpers.driverClass = context.loadPluginClass(DBUtils.getJDBCPluginID(dbSourceConfig));
   }
 
   @Override
@@ -116,44 +110,14 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
 
   @Override
   public void destroy() {
-    DBUtils.cleanup(driverClass);
-  }
-
-  private String getJDBCPluginId() {
-    return String.format("%s.%s.%s", "source", dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName);
+    DBUtils.destroy(driverHelpers);
   }
 
   private void ensureValidConnection() throws Exception {
-    ensureJDBCDriverIsAvailable();
-    try (Connection connection = createConnection()) {
+    DBUtils.ensureJDBCDriverIsAvailable(dbSourceConfig, driverHelpers);
+    try (Connection connection = DBUtils.createConnection(dbSourceConfig)) {
       assert(connection.isValid(0));
     }
-  }
-
-  /*
-   * Throws InstantiationException or IllegalAccessException if it can't get access to the jdbcDriverClass
-   * In either case, the connection to the driver failed
-   */
-  private void ensureJDBCDriverIsAvailable() throws Exception {
-    try {
-      DriverManager.getDriver(dbSourceConfig.connectionString);
-    } catch (SQLException e) {
-      // Driver not found. We will try to register it with the DriverManager.
-      LOG.debug("Plugin Type: {} and Plugin Name: {}; Driver Class: {} not found. Registering JDBC driver via shim {} ",
-                dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName, driverClass.getName(),
-                JDBCDriverShim.class.getName());
-      if (driverShim == null) {
-        driverShim = new JDBCDriverShim(driverClass.newInstance());
-        DBUtils.deregisterAllDrivers(driverClass);
-      }
-      DriverManager.registerDriver(driverShim);
-    }
-  }
-
-  private Connection createConnection() throws java.sql.SQLException {
-    return dbSourceConfig.user == null ?
-      DriverManager.getConnection(dbSourceConfig.connectionString) :
-      DriverManager.getConnection(dbSourceConfig.connectionString, dbSourceConfig.user, dbSourceConfig.password);
   }
 
   /**
