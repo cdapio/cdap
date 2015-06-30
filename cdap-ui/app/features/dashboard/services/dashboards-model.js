@@ -56,7 +56,6 @@ function (Widget, MyDataSource, mySettings, $q, MyChartHelpers) {
    * @param  {object} w the widget object
    */
   Dashboard.prototype.removeWidget = function (widget) {
-    var that = this;
     this.columns = this.columns.filter(function(p) {
       return widget !== p;
     });
@@ -190,7 +189,7 @@ function (Widget, MyDataSource, mySettings, $q, MyChartHelpers) {
 
         deferred.resolve(self);
       }, function(err) {
-        console.log("Dashboard delete failed for some reason");
+        console.log('Dashboard delete failed for some reason');
         console.log(err);
         deferred.resolve(self);
       });
@@ -258,7 +257,7 @@ function (Widget, MyDataSource, mySettings, $q, MyChartHelpers) {
   /**
    * add a new dashboard tab
    */
-  Model.prototype.add = function (properties, colCount) {
+  Model.prototype.add = function (properties) {
     var d = new Dashboard(properties);
 
     this.data.push(d);

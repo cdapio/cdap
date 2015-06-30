@@ -1,6 +1,6 @@
-'use strict';
 angular.module(`${PKG.name}.services`)
   .factory('GraphHelpers', function() {
+    'use strict';
 
     /**
       * Purpose: convertNodesToEdgess a list of nodes to a list of connections
@@ -69,7 +69,7 @@ angular.module(`${PKG.name}.services`)
 
     */
     function expandNodes(nodes, expandedNodes) {
-      var i, j, nodeId;
+      var i, j;
       for(i=0; i<nodes.length; i++) {
         if (nodes[i].nodeType === 'ACTION') {
           nodes[i].label = nodes[i].program.programName;

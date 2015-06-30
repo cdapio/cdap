@@ -1,9 +1,6 @@
 angular.module(PKG.name + '.feature.spark')
-  .controller('SparkRunsDetailStatusController', function($state, $scope, MyDataSource, myHelpers, $timeout, $filter) {
-    var filterFilter = $filter('filter');
-    var dataSrc = new MyDataSource($scope),
-        basePath = '/apps/' + $state.params.appId + '/spark/' + $state.params.programId;
-
+  .controller('SparkRunsDetailStatusController', function($state, $scope, MyDataSource, myHelpers) {
+    var dataSrc = new MyDataSource($scope);
     var vm = this;
 
     vm.data = {
@@ -36,9 +33,7 @@ angular.module(PKG.name + '.feature.spark')
     // this controller is NOT shared between the accordions.
 
     vm.getStagePercentage = function (type) {
-      var total = (vm.data.schedulerRunningStages
-        + vm.data.schedulerFailedStages
-        + vm.data.schedulerWaitingStages);
+      var total = (vm.data.schedulerRunningStages + vm.data.schedulerFailedStages + vm.data.schedulerWaitingStages);
       switch(type) {
         case 'running':
           return vm.data.schedulerRunningStages * 100 / total;

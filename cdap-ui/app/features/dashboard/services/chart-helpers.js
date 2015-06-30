@@ -30,7 +30,7 @@ angular.module(PKG.name + '.feature.dashboard')
       }
       // this.data = tmpData;
       return tmpData;
-    };
+    }
 
     // Compute resolution since back-end doesn't provide us the resolution when 'auto' is used
     function resolutionFromAuto(startTime, endTime) {
@@ -41,7 +41,8 @@ angular.module(PKG.name + '.feature.dashboard')
         return '1m';
       }
       return '1h';
-    };
+    }
+
     function skipAmtFromResolution(resolution) {
       switch(resolution) {
         case '1h':
@@ -54,7 +55,8 @@ angular.module(PKG.name + '.feature.dashboard')
             // backend defaults to '1s'
             return 1;
       }
-    };
+    }
+
     function zeroFill(resolution, result) {
         // interpolating (filling with zeros) the data since backend returns only metrics at specific time periods
         // instead of for the whole range. We have to interpolate the rest with 0s to draw the graph.
@@ -70,7 +72,7 @@ angular.module(PKG.name + '.feature.dashboard')
           tempMap[j] = 0;
         }
         return tempMap;
-    };
+    }
 
     function c3ifyData (newVal, metrics, alias) {
       var metricMap,
@@ -94,15 +96,15 @@ angular.module(PKG.name + '.feature.dashboard')
 
         // columns will be in the format: [ [metric1Name, v1, v2, v3, v4], [metric2Name, v1, v2, v3, v4], ... xCoords ]
         columns = [];
-        for (i = 0; i < newVal.length; i++) {
-          metricMap = newVal[i];
+        newVal.forEach(function (value) {
+          metricMap = value;
           values = Object.keys(metricMap).map(function(key) {
             return metricMap[key];
           });
           values.unshift(metricNames[i]);
           columns.push(values);
-        }
-
+        });
+        
         // x coordinates are expected in the format: ['x', ts1, ts2, ts3...]
         xCoords = Object.keys(newVal[0]);
         xCoords.unshift('x');
@@ -154,7 +156,7 @@ angular.module(PKG.name + '.feature.dashboard')
       zeroFill: zeroFill,
       c3ifyData: c3ifyData,
       convertDashboardToNewWidgets: convertDashboardToNewWidgets
-    }
+    };
 
 
   });

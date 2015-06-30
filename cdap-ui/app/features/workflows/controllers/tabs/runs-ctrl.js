@@ -1,4 +1,3 @@
-'use strict';
 class WorkflowsRunsController {
   constructor($scope, $state, $filter, rRuns) {
     let fFilter = $filter('filter');

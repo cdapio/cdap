@@ -10,7 +10,7 @@ angular.module(PKG.name + '.feature.dashboard')
         parts = [];
       }
       if (parts.length % 2 !== 0) {
-        throw "Metrics context has uneven number of parts: " + context;
+        throw 'Metrics context has uneven number of parts: ' + context;
       }
       tags = {};
       for (i = 0; i < parts.length; i+=2) {
@@ -46,10 +46,11 @@ angular.module(PKG.name + '.feature.dashboard')
 
     function roundUpToNearest(val, nearest) {
       return Math.ceil(val / nearest) * nearest;
-    };
+    }
+
     function roundDownToNearest(val, nearest) {
       return Math.floor(val / nearest) * nearest;
-    };
+    }
 
     function aggregate(inputMetrics, by) {
       // Given an object in the format: { ts1: value, ts2: value, ts3: value, ts4: value },
@@ -70,7 +71,7 @@ angular.module(PKG.name + '.feature.dashboard')
       if (roundedDown < timeValues.length) {
         var finalKey = timeValues[roundedDown];
         aggregated[finalKey] = 0;
-        for (var i = roundedDown; i < timeValues.length; i++) {
+        for (i = roundedDown; i < timeValues.length; i++) {
           aggregated[finalKey] += inputMetrics[timeValues[i]];
         }
       }

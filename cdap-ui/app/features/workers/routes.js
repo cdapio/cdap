@@ -77,6 +77,6 @@ angular.module(PKG.name + '.feature.worker')
           label: 'History',
           parent: 'worker.detail.runs'
         }
-      })
+      });
 
   });
