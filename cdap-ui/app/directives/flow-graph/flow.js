@@ -196,7 +196,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
           .show();
       };
 
-      scope.arrowheadRule = function(edge) {
+      scope.arrowheadRule = function() {
         return false;
       };
 
@@ -233,14 +233,13 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
           .x(function(d){return d.x;})
           .y(function(d){return d.y;})
           // Must use basis interpolation for curve.
-          .interpolate("basis-closed");
+          .interpolate('basis-closed');
 
-        svgParent.insert("svg:path")
-          .attr("d", line(pathinfo))
+        svgParent.insert('svg:path')
+          .attr('d', line(pathinfo))
           .attr('class', classNamesStr)
-          .attr("transform", function() {
-            return "translate("
-              + (- circleRadius + leafBuffer) + ", 0) rotate(-180)";
+          .attr('transform', function() {
+            return 'translate(' + (- circleRadius + leafBuffer) + ', 0) rotate(-180)';
           });
       }
 
@@ -248,7 +247,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
        * Calcualtes where event count should be placed relative to leaf shape and centers it.
        */
       function calculateLeafBuffer(parent, nodeOptions) {
-        var w = parent.select(".leaf-shape").node().getBBox().width;
+        var w = parent.select('.leaf-shape').node().getBBox().width;
         return - nodeOptions.circleRadius - w / 2 + leafBuffer / 2;
       }
 
