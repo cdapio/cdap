@@ -333,6 +333,23 @@ public class ArtifactStore {
   public void write(final Id.Artifact artifactId, final ArtifactMeta artifactMeta, final InputStream artifactContents)
     throws WriteConflictException, ArtifactAlreadyExistsException, IOException {
 
+    // if we're not a snapshot version, check that the artifact doesn't exist already.
+    final ArtifactCell artifactCell = new ArtifactCell(artifactId);
+    if (!artifactId.getVersion().isSnapshot()) {
+      byte[] existingMeta = metaTable.executeUnchecked(
+        new TransactionExecutor.Function<DatasetContext<Table>, byte[]>() {
+          @Override
+          public byte[] apply(DatasetContext<Table> context) throws Exception {
+            Table table = context.get();
+            return table.get(artifactCell.rowkey, artifactCell.column);
+          }
+        });
+
+      if (existingMeta != null) {
+        throw new ArtifactAlreadyExistsException(artifactId);
+      }
+    }
+
     Location fileDirectory =
       locationFactory.get(artifactId.getNamespace(), ARTIFACTS_PATH).append(artifactId.getName());
     Locations.mkdirsIfNotExists(fileDirectory);
@@ -349,7 +366,8 @@ public class ArtifactStore {
         public Boolean apply(DatasetContext<Table> context) throws Exception {
           Table table = context.get();
 
-          ArtifactCell artifactCell = new ArtifactCell(artifactId);
+          // we have to check that the metadata doesn't exist again since somebody else may have written
+          // the artifact while we were copying the artifact to the filesystem.
           byte[] existingMetaBytes = table.get(artifactCell.rowkey, artifactCell.column);
           boolean isSnapshot = artifactId.getVersion().isSnapshot();
           if (existingMetaBytes != null && !isSnapshot) {
