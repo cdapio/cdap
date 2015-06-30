@@ -280,7 +280,9 @@ angular.module(PKG.name+'.services')
         resource: resource,
         id: id,
         callback: function (result) {
-          cb && cb.apply(this, arguments);
+          if (cb) {
+            cb.apply(this, arguments);
+          }
           deferred.resolve(result);
         },
         errorCallback: function(err) {
@@ -356,7 +358,9 @@ angular.module(PKG.name+'.services')
 
 // Lifted from $http as a helper method to parse '@params' in the url for $resource.
 function buildUrl(url, params) {
-  if (!params) return url;
+  if (!params) {
+    return url;
+  }
   var parts = [];
 
   function forEachSorted(obj, iterator, context) {
@@ -378,23 +382,26 @@ function buildUrl(url, params) {
   }
 
   forEachSorted(params, function(value, key) {
-    if (value === null || angular.isUndefined(value)) return;
-    if (!angular.isArray(value)) value = [value];
+    if (value === null || angular.isUndefined(value)) {
+      return;
+    }
+    if (!angular.isArray(value)) {
+      value = [value];
+    }
 
     angular.forEach(value, function(v) {
       if (angular.isObject(v)) {
         if (angular.isDate(v)) {
           v = v.toISOString();
         } else {
-          v = toJson(v);
+          v = angular.toJson(v);
         }
       }
-      parts.push(encodeUriQuery(key) + '=' +
-                 encodeUriQuery(v));
+      parts.push(encodeUriQuery(key) + '=' + encodeUriQuery(v));
     });
   });
   if (parts.length > 0) {
-    url += ((url.indexOf('?') == -1) ? '?' : '&') + parts.join('&');
+    url += ((url.indexOf('?') === -1) ? '?' : '&') + parts.join('&');
   }
   return url;
 }
