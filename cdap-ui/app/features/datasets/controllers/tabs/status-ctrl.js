@@ -26,7 +26,7 @@ angular.module(PKG.name + '.feature.datasets')
           name: 'system.dataset.store.writes',
           scopeProperty: 'writes'
         }
-      ].forEach(pollMetric);
+      ].forEach(pollMetric.bind(this));
 
 
       function pollMetric(metric) {

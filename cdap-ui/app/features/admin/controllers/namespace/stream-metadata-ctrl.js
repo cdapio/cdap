@@ -103,7 +103,7 @@ angular.module(PKG.name + '.feature.admin')
       var params = {
         ttl: $scope.ttl,
         format: obj,
-        "notification.threshold.mb": $scope.threshold
+        'notification.threshold.mb': $scope.threshold
       };
 
       myStreamApi.setProperties(requestParams, params)

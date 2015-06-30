@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .directive('myAceEditor', function($window, myHelpers) {
+  .directive('myAceEditor', function($window) {
     return {
       restrict: 'EA',
       scope: {

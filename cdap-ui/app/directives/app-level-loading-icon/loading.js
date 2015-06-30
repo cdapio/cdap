@@ -15,7 +15,9 @@ angular.module(PKG.name + '.commons')
 
         EventPipe.on('backendDown', function(message) {
           if (!isBackendDown) {
-            modal && modal.close();
+            if (modal) {
+              modal.close();
+            }
             isBackendDown = true;
             if (!message) {
               $scope.message = 'Service(s) are offline';
@@ -46,7 +48,9 @@ angular.module(PKG.name + '.commons')
           // Just making it smooth instead of being too 'speedy'
           $timeout(function() {
             if (!isBackendDown) {
-              modal && !modal.$state && modal.close();
+              if (modal && !modal.$state) {
+                modal.close();
+              }
               modal = null;
             }
           }, 2000);

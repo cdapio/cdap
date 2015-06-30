@@ -18,5 +18,7 @@ __tmpdir=/tmp/cdap-examples.$$
 mkdir -p ${__tmpdir}
 cp -a /opt/cdap/sdk/examples ${__tmpdir}
 chown -R cdap ${__tmpdir}
-su - cdap -c "cd ${__tmpdir}/examples && MAVEN_OPTS='-Xmx512m -XX:MaxPermSize=128m' mvn package -DskipTests"
+su - cdap -c "cd ${__tmpdir}/examples && MAVEN_OPTS='-Xmx512m -XX:MaxPermSize=128m' mvn package -DskipTests" || exit 1
 rm -rf ${__tmpdir}
+
+exit 0

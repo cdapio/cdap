@@ -1,7 +1,7 @@
 <div ng-controller="WorkflowsRunsStatusController as StatusController">
   <div class="text-right">
     <div class="btn-group">
-      
+
       <div class="btn btn-default btn-danger"
            ng-disabled="StatusController.runStatus !== 'RUNNING'"
            ng-click="StatusController.stop()"
@@ -48,5 +48,6 @@
   </div>
 
   <my-workflow-graph data-model="StatusController.data"
+                     data-click-context="StatusController"
                      data-click="StatusController.workflowProgramClick"></my-workflow-graph>
 </div>

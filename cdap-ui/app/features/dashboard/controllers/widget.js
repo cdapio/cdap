@@ -79,7 +79,8 @@ angular.module(PKG.name+'.feature.dashboard')
   .controller('C3WidgetTimeseriesCtrl', function ($scope, myHelpers, $timeout) {
     $scope.chartSize = { height: 200 };
     var widget = myHelpers.objectQuery($scope, 'gridsterItem', '$element', 0),
-        widgetHeight;
+        widgetHeight,
+        widgetWidth;
     if (widget) {
       widgetHeight = parseInt(widget.style.height, 10);
       widgetWidth = parseInt(widget.style.width, 10);
@@ -89,7 +90,7 @@ angular.module(PKG.name+'.feature.dashboard')
       $scope.wdgt.width = widgetWidth - 32;
     }
 
-    $scope.$on('gridster-resized', function(event, sizes) {
+    $scope.$on('gridster-resized', function() {
       $timeout(function() {
         $scope.chartSize.height = parseInt($scope.gridsterItem.$element[0].style.height, 10) - 70;
         $scope.chartSize.width = parseInt($scope.gridsterItem.$element[0].style.width, 10) - 32;

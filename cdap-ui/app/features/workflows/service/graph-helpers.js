@@ -1,5 +1,6 @@
-angular.module(PKG.name + '.services')
+angular.module(`${PKG.name}.services`)
   .factory('GraphHelpers', function() {
+    'use strict';
 
     /**
       * Purpose: convertNodesToEdgess a list of nodes to a list of connections
@@ -68,7 +69,7 @@ angular.module(PKG.name + '.services')
 
     */
     function expandNodes(nodes, expandedNodes) {
-      var i, j, nodeId;
+      var i, j;
       for(i=0; i<nodes.length; i++) {
         if (nodes[i].nodeType === 'ACTION') {
           nodes[i].label = nodes[i].program.programName;
@@ -118,9 +119,33 @@ angular.module(PKG.name + '.services')
       }
     }
 
+    function addStartAndEnd(nodes) {
+      // Add Start and End nodes as semantically workflow needs to have it.
+      nodes.unshift({
+        type: 'START',
+        nodeType: 'ACTION',
+        nodeId: '',
+        program: {
+          programName: 'Start'
+        }
+      });
+
+      nodes.push({
+        label: 'end',
+        type: 'END',
+        nodeType: 'ACTION',
+        nodeId: '',
+        program: {
+          programName: 'End'
+        }
+      });
+      return nodes;
+    }
+
     return {
-      convertNodesToEdges: convertNodesToEdges,
-      expandNodes: expandNodes
+      convertNodesToEdges,
+      expandNodes,
+      addStartAndEnd
     };
 
   });

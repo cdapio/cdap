@@ -39,8 +39,7 @@ angular.module(PKG.name + '.feature.flows')
         };
         dataSrc
           .poll({
-            _cdapPath: '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(datasetTags)
-                      + '&metric=system.dataset.store.reads',
+            _cdapPath: '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(datasetTags) + '&metric=system.dataset.store.reads',
             method: 'POST'
           }, function(res) {
             if (res.series[0]) {
@@ -50,8 +49,7 @@ angular.module(PKG.name + '.feature.flows')
 
         dataSrc
           .poll({
-            _cdapPath: '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(datasetTags)
-                      + '&metric=system.dataset.store.writes',
+            _cdapPath: '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(datasetTags) + '&metric=system.dataset.store.writes',
             method: 'POST'
           }, function(res) {
             if (res.series[0]) {

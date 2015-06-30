@@ -23,7 +23,7 @@ var POLL_INTERVAL = 10*1000;
  * @param {Object} SockJS connection
  */
 function Aggregator (conn) {
-  // make "new" optional
+  // make 'new' optional
   if ( !(this instanceof Aggregator) ) {
     return new Aggregator(conn);
   }
@@ -60,7 +60,7 @@ Aggregator.prototype.startPolling = function (resource) {
   log.debug('Scheduling (' + resource.id + ',' + resource.url + ',' + resource.interval + ')');
   this.polledResources[resource.id] = resource;
   doPoll.bind(this, resource)();
-}
+};
 
 /**
  * This method is called regularly by 'doPoll' to register the next interval
@@ -98,12 +98,15 @@ Aggregator.prototype.stopPolling = function (resource) {
  * the flag. This is called when the websocket is closing the connection.
  */
 Aggregator.prototype.stopPollingAll = function() {
-  for (var id in this.polledResources) {
-    var resource = this.polledResources[id];
-    clearTimeout(resource.timerId);
-    resource.stop = true;
+  var id, resource;
+  for (id in this.polledResources) {
+    if (this.polledResources.hasOwnProperty(id)) {
+      resource = this.polledResources[id];
+      clearTimeout(resource.timerId);
+      resource.stop = true;
+    }
   }
-}
+};
 
 /**
  * Pushes the adapter configuration for templates and plugins to the
@@ -129,7 +132,7 @@ Aggregator.prototype.pushConfiguration = function(resource) {
      config = JSON.parse(fs.readFileSync(file, 'utf8'));
      statusCode = 200;
    } catch (e2) {
-     log.debug("Unable to find template %s, plugin %s", templateid, pluginid);
+     log.debug('Unable to find template %s, plugin %s', templateid, pluginid);
    }
   }
   this.connection.write(JSON.stringify({
@@ -137,7 +140,7 @@ Aggregator.prototype.pushConfiguration = function(resource) {
     statusCode: statusCode,
     response: config
   }));
-}
+};
 
 /**
  * Removes the resource id from the websocket connection local resource pool.
@@ -175,7 +178,7 @@ function doPoll (resource) {
  */
 function stripResource(key, value) {
   // note that 'stop' is not the stop timestamp, but rather a stop flag/signal (unlike the startTs)
-  if (key==="timerId" || key==='startTs' || key==='stop') {
+  if (key==='timerId' || key==='startTs' || key==='stop') {
     return undefined;
   }
   return value;
@@ -197,8 +200,7 @@ function emitResponse (resource, error, response, body) {
 
   if(error) {
     log.debug('[' + timeDiff + 'ms] Error (' + resource.id + ',' + resource.url + ')');
-    log.trace('[' + timeDiff + 'ms] Error (' + resource.id + ','
-       + resource.url + ') body : (' + error.toString() + ')');
+    log.trace('[' + timeDiff + 'ms] Error (' + resource.id + ',' + resource.url + ') body : (' + error.toString() + ')');
     this.connection.write(JSON.stringify({
       resource: resource,
       error: error,
@@ -207,8 +209,7 @@ function emitResponse (resource, error, response, body) {
 
   } else {
     log.debug('[' + timeDiff + 'ms] Success (' + resource.id + ',' + resource.url + ')');
-    log.trace('[' + timeDiff + 'ms] Success (' + resource.id + ','
-       + resource.url + ') body : (' + JSON.stringify(body) + ')');
+    log.trace('[' + timeDiff + 'ms] Success (' + resource.id + ',' + resource.url + ') body : (' + JSON.stringify(body) + ')');
     this.connection.write(JSON.stringify({
       resource: resource,
       statusCode: response.statusCode,

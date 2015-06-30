@@ -48,7 +48,7 @@ public class SparkContextProvider {
       context = getBuilder(conf)
         .build(contextConfig.getRunId(),
                contextConfig.getLogicalStartTime(),
-               contextConfig.getWorkflowBatch(),
+               contextConfig.getProgramNameInWorkflow(),
                contextConfig.getArguments(),
                contextConfig.getTx(),
                hConf.getClassLoader(),

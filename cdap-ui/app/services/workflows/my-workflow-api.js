@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.services')
-  .factory('myWorkFlowApi', function($state, myCdapUrl, $resource, myAuth, MY_CONFIG) {
+  .factory('myWorkFlowApi', function($state, myCdapUrl, $resource) {
 
     var url = myCdapUrl.constructUrl,
         schedulepath = '/apps/:appId/schedules/:scheduleId',
