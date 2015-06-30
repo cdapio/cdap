@@ -178,11 +178,12 @@ angular.module(PKG.name + '.feature.adapters')
           sink = angular.copy(this.sink),
           trans = angular.copy(this.transforms),
           transforms = [];
+      var i;
 
       angular.forEach(source.properties, pruneProperties.bind(this, source));
       angular.forEach(sink.properties, pruneProperties.bind(this, sink));
 
-      for (let i=0; i<trans.length; i++) {
+      for (i=0; i<trans.length; i++) {
         angular.forEach(trans[i].properties, pruneProperties.bind(this, trans[i]));
         if (!trans[i].placeHolder) {
           delete trans[i]._backendProperties;

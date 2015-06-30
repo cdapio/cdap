@@ -75,8 +75,7 @@ angular.module(PKG.name + '.feature.dashboard')
     }
 
     function c3ifyData (newVal, metrics, alias) {
-      var metricMap,
-          columns,
+      var columns,
           streams,
           metricNames,
           metricAlias,
@@ -97,14 +96,13 @@ angular.module(PKG.name + '.feature.dashboard')
         // columns will be in the format: [ [metric1Name, v1, v2, v3, v4], [metric2Name, v1, v2, v3, v4], ... xCoords ]
         columns = [];
         newVal.forEach(function (value) {
-          metricMap = value;
-          values = Object.keys(metricMap).map(function(key) {
-            return metricMap[key];
+          values = Object.keys(value).map(function(key) {
+            return value[key];
           });
           values.unshift(metricNames[i]);
           columns.push(values);
         });
-        
+
         // x coordinates are expected in the format: ['x', ts1, ts2, ts3...]
         xCoords = Object.keys(newVal[0]);
         xCoords.unshift('x');

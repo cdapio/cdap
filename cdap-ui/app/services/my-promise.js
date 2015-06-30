@@ -69,7 +69,7 @@ angular.module(PKG.name + '.services')
           if (console.error) {
             console.error(ex);
           } else {
-             console.log(ex);
+            console.log(ex);
           }
           reject(ex);
         }
@@ -113,7 +113,7 @@ angular.module(PKG.name + '.services')
                 if (console.error) {
                   console.error(ex);
                 } else {
-                   console.log(ex);
+                  console.log(ex);
                 }
                 return reject(ex);
               }
@@ -128,7 +128,7 @@ angular.module(PKG.name + '.services')
                 if (console.error) {
                   console.error(ex);
                 } else {
-                   console.log(ex);
+                  console.log(ex);
                 }
                 return reject(ex);
               }
@@ -136,7 +136,7 @@ angular.module(PKG.name + '.services')
               if (console.error) {
                 console.error(error);
               } else {
-                 console.log(error);
+                console.log(error);
               }
               return reject(error);
             }
@@ -191,7 +191,7 @@ angular.module(PKG.name + '.services')
           if (console.error) {
             console.error(ex);
           } else {
-             console.log(ex);
+            console.log(ex);
           }
           if (done) {
             return;
