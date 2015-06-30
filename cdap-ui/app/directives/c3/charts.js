@@ -64,85 +64,100 @@ ngC3.controller('c3Controller', function ($scope, c3, $filter, $timeout, MyChart
     }, true);
 
     if ($scope.metrics) {
-      $scope.togglePolling();
+      // $scope.togglePolling();
+      $scope.drawChart();
     }
-
-    $scope.$watch('chartSettings', $scope.reconfigure, true);
-    $scope.$watch('chartMetric', $scope.reconfigure, true);
+    $scope.$watch('chartMetric', $scope.drawChart, true);
+    $scope.$watch('chartSettings', $scope.drawChart, true);
+    // $scope.$watch('chartSettings', $scope.reconfigure, true);
+    // $scope.$watch('chartMetric', $scope.reconfigure, true);
   };
 
-  $scope.drawChart = function (res) {
-    var myData;
-    var processedData = MyChartHelpers.processData(
-      res,
-      queryId,
-      $scope.metrics.names,
-      $scope.metrics.resolution,
-      $scope.chartSettings.aggregate
-    );
-    processedData = MyChartHelpers.c3ifyData(processedData, $scope.metrics, $scope.alias);
-    myData = { x: 'x', columns: processedData.columns, keys: {x: 'x'} };
-
-    if ($scope.options.stack) {
-      myData.groups = [processedData.metricNames];
-    }
-
-    // Save the data for when it gets resized.
-    $scope.options.data = myData;
-    $timeout(function() {
-      render();
-    });
-  };
-
-  $scope.reconfigure = function (newVal, oldVal) {
-    if (newVal === oldVal) {
+  $scope.drawChart = function () {
+    if (!$scope.chartMetric) {
       return;
     }
-    $scope.togglePolling();
+
+    $scope.options.data = $scope.chartMetric;
+    render();
+    // $timeout(function () {
+    //   render();
+    // });
+
   };
 
-  $scope.togglePolling = function() {
-    $scope.stopPolling();
-    if ($scope.chartSettings.isLive) {
-      $scope.startPolling();
-    } else {
-      $scope.fetchData()
-            .then($scope.drawChart);
-    }
-  };
+  // $scope.drawChart = function (res) {
+  //   var myData;
+  //   var processedData = MyChartHelpers.processData(
+  //     res,
+  //     queryId,
+  //     $scope.metrics.names,
+  //     $scope.metrics.resolution,
+  //     $scope.chartSettings.aggregate
+  //   );
+  //   processedData = MyChartHelpers.c3ifyData(processedData, $scope.metrics, $scope.alias);
+  //   myData = { x: 'x', columns: processedData.columns, keys: {x: 'x'} };
 
-  $scope.stopPolling = function() {
-    if ($scope.pollId) {
-      dataSrc.stopPoll($scope.pollId);
-      $scope.pollId = null;
-    }
-  };
+  //   if ($scope.options.stack) {
+  //     myData.groups = [processedData.metricNames];
+  //   }
 
-  $scope.startPolling = function() {
-    var promise = dataSrc.poll({
-      _cdapPath: '/metrics/query',
-      method: 'POST',
-      body: MyMetricsQueryHelper.constructQuery(
-        queryId,
-        MyMetricsQueryHelper.contextToTags($scope.metrics.context),
-        $scope.metrics
-      ),
-      interval: $scope.chartSettings.interval
-    }, $scope.drawChart);
-    $scope.pollId = promise.__pollId__;
-  };
+  //   // Save the data for when it gets resized.
+  //   $scope.options.data = myData;
+  //   $timeout(function() {
+  //     render();
+  //   });
+  // };
 
-  $scope.fetchData = function () {
-    return dataSrc.request({
-      _cdapPath: '/metrics/query',
-      method: 'POST',
-      body: MyMetricsQueryHelper.constructQuery(
-        queryId,
-        MyMetricsQueryHelper.contextToTags($scope.metrics.context),
-        $scope.metrics
-      )
-    });
-  };
+  // $scope.reconfigure = function (newVal, oldVal) {
+  //   if (newVal === oldVal) {
+  //     return;
+  //   }
+  //   $scope.togglePolling();
+  // };
+
+  // $scope.togglePolling = function() {
+  //   $scope.stopPolling();
+  //   if ($scope.chartSettings.isLive) {
+  //     $scope.startPolling();
+  //   } else {
+  //     $scope.fetchData()
+  //           .then($scope.drawChart);
+  //   }
+  // };
+
+  // $scope.stopPolling = function() {
+  //   if ($scope.pollId) {
+  //     dataSrc.stopPoll($scope.pollId);
+  //     $scope.pollId = null;
+  //   }
+  // };
+
+  // $scope.startPolling = function() {
+  //   var promise = dataSrc.poll({
+  //     _cdapPath: '/metrics/query',
+  //     method: 'POST',
+  //     body: MyMetricsQueryHelper.constructQuery(
+  //       queryId,
+  //       MyMetricsQueryHelper.contextToTags($scope.metrics.context),
+  //       $scope.metrics
+  //     ),
+  //     interval: $scope.chartSettings.interval
+  //   }, $scope.drawChart);
+  //   $scope.pollId = promise.__pollId__;
+  // };
+
+  // $scope.fetchData = function () {
+  //   return dataSrc.request({
+  //     _cdapPath: '/metrics/query',
+  //     method: 'POST',
+  //     body: MyMetricsQueryHelper.constructQuery(
+  //       queryId,
+  //       MyMetricsQueryHelper.contextToTags($scope.metrics.context),
+  //       $scope.metrics
+  //     )
+  //   });
+  // };
 
   function render() {
     var data = $scope.options.data,
@@ -152,6 +167,7 @@ ngC3.controller('c3Controller', function ($scope, c3, $filter, $timeout, MyChart
         xTick = {};
 
     data.type = $scope.type;
+    console.log('options', $scope.options.data);
 
     // Mainly needed for pie chart values to be shown upon tooltip, but also useful for other types.
     myTooltip = { format: { value: d3.format(',') } };
