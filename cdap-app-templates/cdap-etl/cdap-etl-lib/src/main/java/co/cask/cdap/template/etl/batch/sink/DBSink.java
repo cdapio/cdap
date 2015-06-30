@@ -26,27 +26,21 @@ import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
 import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
-import co.cask.cdap.template.etl.batch.DriverHelpers;
 import co.cask.cdap.template.etl.common.DBConfig;
+import co.cask.cdap.template.etl.common.DBHelper;
 import co.cask.cdap.template.etl.common.DBRecord;
-import co.cask.cdap.template.etl.common.DBUtils;
 import co.cask.cdap.template.etl.common.ETLDBOutputFormat;
-import co.cask.cdap.template.etl.common.JDBCDriverShim;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapred.lib.db.DBConfiguration;
 import org.apache.hadoop.mapreduce.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.Driver;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -66,24 +60,24 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     "table.";
   private static final String TABLE_NAME_DESCRIPTION = "Table name to export to.";
 
+  private final DBHelper dbHelper;
   private final DBSinkConfig dbSinkConfig;
   private ResultSetMetaData resultSetMetadata;
-  private DriverHelpers driverHelpers;
 
   public DBSink(DBSinkConfig dbSinkConfig) {
     this.dbSinkConfig = dbSinkConfig;
-    driverHelpers = new DriverHelpers(null, null);
+    dbHelper = new DBHelper(dbSinkConfig);
   }
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    DBUtils.checkCredentials(pipelineConfigurer, dbSinkConfig, driverHelpers);
+    dbHelper.checkCredentials(pipelineConfigurer);
     try {
       validateDBConnection();
     } catch (Exception e) {
       throw new IllegalArgumentException(e);
     } finally {
-      DBUtils.destroy(driverHelpers);
+      dbHelper.destroy();
     }
   }
 
@@ -93,23 +87,24 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
               dbSinkConfig.tableName, dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName,
               dbSinkConfig.connectionString, dbSinkConfig.columns);
     try {
-      Job job = DBUtils.prepareRunGetJob(context, dbSinkConfig, driverHelpers);
+      Job job = dbHelper.prepareRunGetJob(context);
       List<String> fields = Lists.newArrayList(Splitter.on(",").omitEmptyStrings().split(dbSinkConfig.columns));
       try {
-        ETLDBOutputFormat.setOutput(job, dbSinkConfig.tableName, fields.toArray(new String[fields.size()]));
+        ETLDBOutputFormat.setOutput(job, dbSinkConfig.tableName,
+                                    fields.toArray(new String[fields.size()]));
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }
       job.setOutputFormatClass(ETLDBOutputFormat.class);
     } finally {
-      DBUtils.destroy(driverHelpers);
+      dbHelper.destroy();
     }
   }
 
   @Override
   public void initialize(BatchSinkContext context) throws Exception {
     super.initialize(context);
-    driverHelpers.driverClass = context.loadPluginClass(DBUtils.getJDBCPluginID(dbSinkConfig));
+    dbHelper.driverClass = context.loadPluginClass(dbHelper.getJDBCPluginID());
     setResultSetMetadata();
   }
 
@@ -120,12 +115,12 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
 
   @Override
   public void destroy() {
-    DBUtils.destroy(driverHelpers);
+    dbHelper.destroy();
   }
 
   private void setResultSetMetadata() throws Exception {
-    ensureJDBCDriverIsAvailable();
-    try (Connection connection = DBUtils.createConnection(dbSinkConfig)) {
+    dbHelper.ensureJDBCDriverIsAvailable();
+    try (Connection connection = dbHelper.createConnection()) {
       try (Statement statement = connection.createStatement();
            // Using LIMIT even though its not SQL standard since DBInputFormat already depends on it
            ResultSet rs = statement.executeQuery(String.format("SELECT %s from %s LIMIT 1",
@@ -136,39 +131,16 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     }
   }
 
-  /**
-   * Ensures that the JDBC driver is available for {@link DriverManager}
-   *
-   * @throws Exception if the driver is not available
-   */
-  private void ensureJDBCDriverIsAvailable() throws Exception {
-    try {
-      DriverManager.getDriver(dbSinkConfig.connectionString);
-    } catch (SQLException e) {
-      // Driver not found. We will try to register it with the DriverManager.
-      LOG.debug("Plugin Type: {} and Plugin Name: {}; Driver Class: {} not found. Registering JDBC driver via shim {} ",
-                dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName, driverHelpers.driverClass.getName(),
-                JDBCDriverShim.class.getName());
-      if (driverHelpers.driverShim == null) {
-        driverHelpers.driverShim = new JDBCDriverShim(driverHelpers.driverClass.newInstance());
-      }
-
-      // When JDBC Driver class is loaded, the driver class automatically registers itself with DriverManager.
-      // However, this driver is not usable due to different classloader used in plugins.
-      // Hence de-register this driver class, and any other driver classes registered by this classloader.
-      DBUtils.deregisterAllDrivers(driverHelpers.driverClass);
-      DriverManager.registerDriver(driverHelpers.driverShim);
-    }
-  }
 
   private void validateDBConnection() throws Exception {
-    ensureJDBCDriverIsAvailable();
+    dbHelper.ensureJDBCDriverIsAvailable();
     Preconditions.checkArgument(tableExists(), "Invalid table name %s", dbSinkConfig.tableName);
   }
 
   private boolean tableExists() throws SQLException {
-    try (Connection connection = DBUtils.createConnection(dbSinkConfig);
-         ResultSet rs = connection.getMetaData().getTables(null, null, dbSinkConfig.tableName, null)) {
+    try (Connection connection = dbHelper.createConnection();
+         ResultSet rs = connection.getMetaData()
+           .getTables(null, null, dbSinkConfig.tableName, null)) {
       return rs.next();
     }
   }

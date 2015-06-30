@@ -26,23 +26,16 @@ import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
-import co.cask.cdap.template.etl.batch.DriverHelpers;
 import co.cask.cdap.template.etl.common.DBConfig;
+import co.cask.cdap.template.etl.common.DBHelper;
 import co.cask.cdap.template.etl.common.DBRecord;
-import co.cask.cdap.template.etl.common.DBUtils;
 import co.cask.cdap.template.etl.common.ETLDBInputFormat;
-import co.cask.cdap.template.etl.common.JDBCDriverShim;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
-import java.sql.Driver;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 
 /**
  * Batch source to read from a Database table
@@ -61,24 +54,23 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
     "import from the specified table. Examples: SELECT COUNT(*) from <my_table> where <my_column> 1, " +
     "SELECT COUNT(my_column) from my_table). NOTE: Please include the same WHERE clauses in this query as the ones " +
     "used in the import query to reflect an accurate number of records to import.";
-
   private final DBSourceConfig dbSourceConfig;
-  private DriverHelpers driverHelpers;
+  private final DBHelper dbHelper;
 
   public DBSource(DBSourceConfig dbSourceConfig) {
     this.dbSourceConfig = dbSourceConfig;
-    driverHelpers = new DriverHelpers(null, null);
+    this.dbHelper = new DBHelper(dbSourceConfig);
   }
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    DBUtils.checkCredentials(pipelineConfigurer, dbSourceConfig, driverHelpers);
+    dbHelper.checkCredentials(pipelineConfigurer);
     try {
       ensureValidConnection();
     } catch (Exception e) {
       throw new IllegalArgumentException(e);
     } finally {
-      DBUtils.destroy(driverHelpers);
+      dbHelper.destroy();
     }
   }
 
@@ -89,18 +81,18 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
               dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName,
               dbSourceConfig.connectionString, dbSourceConfig.importQuery, dbSourceConfig.countQuery);
     try {
-      Job job = DBUtils.prepareRunGetJob(context, dbSourceConfig, driverHelpers);
+      Job job = dbHelper.prepareRunGetJob(context);
       ETLDBInputFormat.setInput(job, DBRecord.class, dbSourceConfig.importQuery, dbSourceConfig.countQuery);
       job.setInputFormatClass(ETLDBInputFormat.class);
     } finally {
-      DBUtils.destroy(driverHelpers);
+      dbHelper.destroy();
     }
   }
 
   @Override
   public void initialize(BatchSourceContext context) throws Exception {
     super.initialize(context);
-    driverHelpers.driverClass = context.loadPluginClass(DBUtils.getJDBCPluginID(dbSourceConfig));
+    dbHelper.driverClass = context.loadPluginClass(dbHelper.getJDBCPluginID());
   }
 
   @Override
@@ -110,12 +102,12 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
 
   @Override
   public void destroy() {
-    DBUtils.destroy(driverHelpers);
+    dbHelper.destroy();
   }
 
   private void ensureValidConnection() throws Exception {
-    DBUtils.ensureJDBCDriverIsAvailable(dbSourceConfig, driverHelpers);
-    try (Connection connection = DBUtils.createConnection(dbSourceConfig)) {
+    dbHelper.ensureJDBCDriverIsAvailable();
+    try (Connection connection = dbHelper.createConnection()) {
       assert(connection.isValid(0));
     }
   }

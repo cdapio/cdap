@@ -16,26 +16,15 @@
 
 package co.cask.cdap.template.etl.common;
 
-import co.cask.cdap.api.templates.plugins.PluginProperties;
-import co.cask.cdap.template.etl.api.PipelineConfigurer;
-import co.cask.cdap.template.etl.api.batch.BatchContext;
-import co.cask.cdap.template.etl.batch.DriverHelpers;
 import co.cask.cdap.template.etl.batch.sink.DBSink;
 import co.cask.cdap.template.etl.batch.source.DBSource;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -43,85 +32,6 @@ import java.util.List;
  */
 public final class DBUtils {
   private static final Logger LOG = LoggerFactory.getLogger(DBUtils.class);
-
-  public static void checkCredentials(PipelineConfigurer pipelineConfigurer, DBConfig dbConfig,
-                                      DriverHelpers driverHelpers) {
-    Preconditions.checkArgument(!(dbConfig.user == null && dbConfig.password != null),
-                                "dbUser is null. Please provide both user name and password if database requires " +
-                                  "authentication. If not, please remove dbPassword and retry.");
-    Preconditions.checkArgument(!(dbConfig.user != null && dbConfig.password == null),
-                                "dbPassword is null. Please provide both user name and password if database requires" +
-                                  "authentication. If not, please remove dbUser and retry.");
-    driverHelpers.driverClass = pipelineConfigurer.usePluginClass(dbConfig.jdbcPluginType,
-                                                             dbConfig.jdbcPluginName,
-                                                             getJDBCPluginID(dbConfig),
-                                                             PluginProperties.builder().build());
-    Preconditions.checkArgument(driverHelpers.driverClass != null, "JDBC Driver class must be found.");
-  }
-
-  public static String getJDBCPluginID(DBConfig dbConfig) {
-    return String.format("%s.%s.%s", "source", dbConfig.jdbcPluginType, dbConfig.jdbcPluginName);
-  }
-
-  public static Connection createConnection(DBConfig dbConfig) throws java.sql.SQLException {
-    return dbConfig.user == null ?
-      DriverManager.getConnection(dbConfig.connectionString) :
-      DriverManager.getConnection(dbConfig.connectionString, dbConfig.user, dbConfig.password);
-  }
-
-  /*
-   * Throws InstantiationException or IllegalAccessException if it can't get access to the jdbcDriverClass
-   * In either case, the connection to the driver failed
-   */
-
-  public static void ensureJDBCDriverIsAvailable(DBConfig dbConfig, DriverHelpers driverHelpers) throws Exception {
-    try {
-      DriverManager.getDriver(dbConfig.connectionString);
-    } catch (SQLException e) {
-      // Driver not found. We will try to register it with the DriverManager.
-
-      // driverClass should have been initialized in configurePipeline, so this error should never be reached
-      assert driverHelpers.driverClass != null;
-
-      LOG.debug("Plugin Type: {} and Plugin Name: {}; Driver Class: {} not found. " +
-                  "Registering JDBC driver via shim {} ",
-                dbConfig.jdbcPluginType, dbConfig.jdbcPluginName, driverHelpers.driverClass.getName(),
-                JDBCDriverShim.class.getName());
-      if (driverHelpers.driverShim == null) {
-        driverHelpers.driverShim = new JDBCDriverShim(driverHelpers.driverClass.newInstance());
-
-        // When JDBC Driver class is loaded, the driver class automatically registers itself with DriverManager. 
-        // However, this driver is not usable due to different classloader used in plugins. 
-        // Hence de-register this driver class, and any other driver classes registered by this classloader.
-        deregisterAllDrivers(driverHelpers.driverClass);
-      }
-      DriverManager.registerDriver(driverHelpers.driverShim);
-    }
-  }
-
-  public static Job prepareRunGetJob(BatchContext context, DBConfig dbConfig, DriverHelpers driverHelpers) {
-    Job job = context.getHadoopJob();
-    Configuration hConf = job.getConfiguration();
-    // Load the plugin class to make sure it is available.
-    driverHelpers.driverClass = context.loadPluginClass(getJDBCPluginID(dbConfig));
-    if (dbConfig.user == null && dbConfig.password == null) {
-      DBConfiguration.configureDB(hConf, driverHelpers.driverClass.getName(), dbConfig.connectionString);
-    } else {
-      DBConfiguration.configureDB(hConf, driverHelpers.driverClass.getName(), dbConfig.connectionString,
-                                  dbConfig.user, dbConfig.password);
-    }
-    return job;
-  }
-
-  public static void destroy(DriverHelpers driverHelpers) {
-      try {
-        DriverManager.deregisterDriver(driverHelpers.driverShim);
-      } catch (SQLException e) {
-        LOG.warn("Error while deregistering JDBC drivers in ETLDBOutputFormat.", e);
-        throw Throwables.propagate(e);
-      }
-    cleanup(driverHelpers.driverClass);
-  }
 
   /**
    * Performs any Database related cleanup
