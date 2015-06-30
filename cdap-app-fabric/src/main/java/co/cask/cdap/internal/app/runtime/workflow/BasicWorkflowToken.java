@@ -16,9 +16,14 @@
 
 package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.workflow.NodeValueEntry;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -27,11 +32,153 @@ import javax.annotation.Nullable;
  */
 public class BasicWorkflowToken implements WorkflowToken {
   private Map<String, Map<String, Long>> mapReduceCounters;
+  private final Map<String, List<NodeValueEntry>> tokenValueMap = Maps.newHashMap();
+  private String nodeName;
 
+  public BasicWorkflowToken() {
+  }
+
+  public BasicWorkflowToken(BasicWorkflowToken other) {
+    for (Map.Entry<String, List<NodeValueEntry>> entry : other.tokenValueMap.entrySet()) {
+      List<NodeValueEntry> nodeValueList = Lists.newArrayList();
+      nodeValueList.addAll(entry.getValue());
+      this.tokenValueMap.put(entry.getKey(), nodeValueList);
+    }
+
+    this.nodeName = other.nodeName;
+
+    if (other.mapReduceCounters != null) {
+      this.mapReduceCounters = copyHadoopCounters(other.mapReduceCounters);
+    }
+  }
+
+  void setCurrentNode(String nodeName) {
+    this.nodeName = nodeName;
+  }
+
+  /**
+   * Merge the other WorkflowToken passed to the method as a parameter
+   * with the WorkflowToken on which the method is invoked.
+   * @param other the other WorkflowToken to be merged
+   */
+  void mergeToken(BasicWorkflowToken other) {
+    Map<String, List<NodeValueEntry>> otherTokenValueMap = other.tokenValueMap;
+
+    for (Map.Entry<String, List<NodeValueEntry>> entry : otherTokenValueMap.entrySet()) {
+      if (!tokenValueMap.containsKey(entry.getKey())) {
+        // Key is newly added to the other WorkflowToken
+        tokenValueMap.put(entry.getKey(), Lists.<NodeValueEntry>newArrayList());
+      }
+
+      // Iterate over the list of NodeValueEntry corresponding to the current key.
+      // Only add those NodeValueEntry to the merged token which already do not exist.
+      for (NodeValueEntry otherNodeValueEntry : otherTokenValueMap.get(entry.getKey())) {
+        boolean otherNodeValueEntryExist = false;
+        for (NodeValueEntry thisNodeValueEntry : tokenValueMap.get(entry.getKey())) {
+          if (thisNodeValueEntry.equals(otherNodeValueEntry)) {
+            otherNodeValueEntryExist = true;
+            break;
+          }
+        }
+        if (!otherNodeValueEntryExist) {
+          tokenValueMap.get(entry.getKey()).add(otherNodeValueEntry);
+        }
+      }
+    }
+    if (other.getMapReduceCounters() != null) {
+      setMapReduceCounters(other.getMapReduceCounters());
+    }
+  }
+
+  @Override
+  public void put(String key, String value) {
+    if (nodeName == null) {
+      throw new IllegalStateException("Node name cannot be null.");
+    }
+    List<NodeValueEntry> nodeValueList = tokenValueMap.get(key);
+    if (nodeValueList == null) {
+      nodeValueList = Lists.newArrayList();
+      tokenValueMap.put(key, nodeValueList);
+    }
+
+    // Check if the current node already added the key to the token.
+    // In that case replace that entry with the new one
+    for (int i = 0; i < nodeValueList.size(); i++) {
+      if (nodeValueList.get(i).getNodeName().equals(nodeName)) {
+        nodeValueList.set(i, new NodeValueEntry(nodeName, value));
+        return;
+      }
+    }
+
+    nodeValueList.add(new NodeValueEntry(nodeName, value));
+  }
+
+  @Override
+  public List<NodeValueEntry> getAll(String key) {
+    if (containsKey(key)) {
+      return ImmutableList.copyOf(tokenValueMap.get(key));
+    }
+    return ImmutableList.of();
+  }
+
+  @Override
+  public Map<String, String> getAllFromNode(String nodeName) {
+    Map<String, String> tokenValuesFromNode = Maps.newHashMap();
+    for (Map.Entry<String, List<NodeValueEntry>> entry : tokenValueMap.entrySet()) {
+
+      List<NodeValueEntry> nodeValueEntryList = entry.getValue();
+      for (NodeValueEntry nodeValueEntry : nodeValueEntryList) {
+        if (nodeValueEntry.getNodeName().equals(nodeName)) {
+          tokenValuesFromNode.put(entry.getKey(), nodeValueEntry.getValue());
+          break;
+        }
+      }
+    }
+    return tokenValuesFromNode;
+  }
+
+  @Nullable
+  @Override
+  public String get(String key, String nodeName) {
+    List<NodeValueEntry> nodeValueList = tokenValueMap.get(key);
+    if (nodeValueList == null) {
+      return null;
+    }
+
+    for (NodeValueEntry nodeValue : nodeValueList) {
+      if (nodeValue.getNodeName().equals(nodeName)) {
+        return nodeValue.getValue();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String get(String key) {
+    List<NodeValueEntry> nodeValueList = tokenValueMap.get(key);
+    if (nodeValueList == null) {
+      return null;
+    }
+
+    if (nodeValueList.isEmpty()) {
+      // List of NodeValueEntry cannot be empty if the key is added in the WorkflowToken as
+      // when we add key, we also add single NodeValueEntry.
+      throw new IllegalStateException(String.format("List of NodeValueEntry for the key %s cannot be empty", key));
+    }
+    return nodeValueList.get(nodeValueList.size() - 1).getValue();
+  }
+
+  @Deprecated
   @Nullable
   @Override
   public Map<String, Map<String, Long>> getMapReduceCounters() {
     return mapReduceCounters;
+  }
+
+  @Override
+  public boolean containsKey(String key) {
+    return tokenValueMap.containsKey(key);
   }
 
   public void setMapReduceCounters(Map<String, Map<String, Long>> mapReduceCounters) {
@@ -39,15 +186,11 @@ public class BasicWorkflowToken implements WorkflowToken {
   }
 
   /**
-   * Make a deep copy of the WorkflowToken. Currently only copies the MapReduce counters.
+   * Make a deep copy of the {@link WorkflowToken}.
    * @return copied WorkflowToken
    */
   public WorkflowToken deepCopy() {
-    BasicWorkflowToken copiedToken = new BasicWorkflowToken();
-    if (getMapReduceCounters() != null) {
-      copiedToken.setMapReduceCounters(copyHadoopCounters(getMapReduceCounters()));
-    }
-    return copiedToken;
+    return new BasicWorkflowToken(this);
   }
 
   private Map<String, Map<String, Long>> copyHadoopCounters(Map<String, Map<String, Long>> input) {

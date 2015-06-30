@@ -24,6 +24,7 @@ import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
@@ -73,7 +74,8 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
                                  RunId runId, String taskId,
                                  Arguments runtimeArguments,
                                  MapReduceSpecification spec,
-                                 long logicalStartTime, String workflowBatch,
+                                 long logicalStartTime, @Nullable String programNameInWorkflow,
+                                 @Nullable WorkflowToken workflowToken,
                                  DiscoveryServiceClient discoveryServiceClient,
                                  MetricsCollectionService metricsCollectionService,
                                  TransactionSystemClient txClient,
@@ -81,7 +83,7 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
                                  @Nullable AdapterDefinition adapterSpec,
                                  @Nullable PluginInstantiator pluginInstantiator) {
     super(program, type, runId, taskId, runtimeArguments, Collections.<String>emptySet(), spec,
-          logicalStartTime, workflowBatch, discoveryServiceClient, metricsCollectionService,
+          logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient, metricsCollectionService,
           dsFramework, adapterSpec, pluginInstantiator);
     this.datasetsCache = CacheBuilder.newBuilder()
       .removalListener(new RemovalListener<Long, Map<DatasetCacheKey, Dataset>>() {

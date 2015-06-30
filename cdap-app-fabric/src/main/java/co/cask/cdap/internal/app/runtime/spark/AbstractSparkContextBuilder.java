@@ -53,15 +53,16 @@ public abstract class AbstractSparkContextBuilder {
    *
    * @param runId            program run id
    * @param logicalStartTime The logical start time of the job.
-   * @param workflowBatch    Tells whether the batch job is started by workflow.
+   * @param programNameInWorkflow    Tells whether the batch job is started by workflow.
    * @param runtimeArguments the runtime arguments
    * @param tx               transaction to use
    * @param classLoader      classloader to use
    * @param programLocation  program location
    * @return instance of {@link BasicMapReduceContext}
    */
-  public BasicSparkContext build(String runId, long logicalStartTime, String workflowBatch, Arguments runtimeArguments,
-                                 Transaction tx, ClassLoader classLoader, URI programLocation) {
+  public BasicSparkContext build(String runId, long logicalStartTime, String programNameInWorkflow,
+                                 Arguments runtimeArguments, Transaction tx, ClassLoader classLoader,
+                                 URI programLocation) {
     Injector injector = prepare();
 
     // Initializing Program
@@ -90,7 +91,7 @@ public abstract class AbstractSparkContextBuilder {
     SparkSpecification sparkSpec = program.getApplicationSpecification().getSpark().get(program.getName());
     BasicSparkContext context =
       new BasicSparkContext(program, RunIds.fromString(runId), runtimeArguments, appSpec.getDatasets().keySet(),
-                            sparkSpec, logicalStartTime, workflowBatch, metricsCollectionService,
+                            sparkSpec, logicalStartTime, programNameInWorkflow, metricsCollectionService,
                             datasetFramework, discoveryServiceClient, streamAdmin);
 
     // propagating tx to all txAware guys

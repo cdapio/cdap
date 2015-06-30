@@ -50,7 +50,7 @@ public class SparkContextConfig {
 
   private static final String HCONF_ATTR_RUN_ID = "hconf.program.run.id";
   private static final String HCONF_ATTR_LOGICAL_START_TIME = "hconf.program.logical.start.time";
-  private static final String HCONF_ATTR_WORKFLOW_BATCH = "hconf.program.workflow.batch";
+  private static final String HCONF_ATTR_PROGRAM_NAME_IN_WORKFLOW = "hconf.program.name.in.workflow";
   private static final String HCONF_ATTR_ARGS = "hconf.program.args";
   private static final String HCONF_ATTR_PROGRAM_JAR_NAME = "hconf.program.jar.name";
   private static final String HCONF_ATTR_CCONF = "hconf.cconf";
@@ -75,7 +75,7 @@ public class SparkContextConfig {
     setRunId(context.getRunId().getId());
     setLogicalStartTime(context.getLogicalStartTime());
     //TODO: Change this once we start supporting Spark in Workflow
-    setWorkflowBatch("Not Supported");
+    setProgramNameInWorkflow("Not Supported");
     setArguments(context.getRuntimeArguments());
     setProgramJarName(programJarCopy.getName());
     setProgramLocation(programJarCopy.toURI());
@@ -120,14 +120,14 @@ public class SparkContextConfig {
     return hConf.getLong(HCONF_ATTR_LOGICAL_START_TIME, System.currentTimeMillis());
   }
 
-  private static void setWorkflowBatch(String workflowBatch) {
-    if (workflowBatch != null) {
-      hConf.set(HCONF_ATTR_WORKFLOW_BATCH, workflowBatch);
+  private static void setProgramNameInWorkflow(String programNameInWorkflow) {
+    if (programNameInWorkflow != null) {
+      hConf.set(HCONF_ATTR_PROGRAM_NAME_IN_WORKFLOW, programNameInWorkflow);
     }
   }
 
-  public String getWorkflowBatch() {
-    return hConf.get(HCONF_ATTR_WORKFLOW_BATCH);
+  public String getProgramNameInWorkflow() {
+    return hConf.get(HCONF_ATTR_PROGRAM_NAME_IN_WORKFLOW);
   }
 
   public List<Split> getInputSelection() {
