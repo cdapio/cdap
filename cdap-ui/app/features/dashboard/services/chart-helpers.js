@@ -58,28 +58,27 @@ angular.module(PKG.name + '.feature.dashboard')
     }
 
     function zeroFill(resolution, result) {
-        // interpolating (filling with zeros) the data since backend returns only metrics at specific time periods
-        // instead of for the whole range. We have to interpolate the rest with 0s to draw the graph.
-        if (resolution === 'auto') {
-          resolution = resolutionFromAuto(result.startTime, result.endTime);
-        }
-        var skipAmt = skipAmtFromResolution(resolution);
+      // interpolating (filling with zeros) the data since backend returns only metrics at specific time periods
+      // instead of for the whole range. We have to interpolate the rest with 0s to draw the graph.
+      if (resolution === 'auto') {
+        resolution = resolutionFromAuto(result.startTime, result.endTime);
+      }
+      var skipAmt = skipAmtFromResolution(resolution);
 
-        var startTime = MyMetricsQueryHelper.roundUpToNearest(result.startTime, skipAmt);
-        var endTime = MyMetricsQueryHelper.roundDownToNearest(result.endTime, skipAmt);
-        var tempMap = {};
-        for (var j = startTime; j <= endTime; j += skipAmt) {
-          tempMap[j] = 0;
-        }
-        return tempMap;
+      var startTime = MyMetricsQueryHelper.roundUpToNearest(result.startTime, skipAmt);
+      var endTime = MyMetricsQueryHelper.roundDownToNearest(result.endTime, skipAmt);
+      var tempMap = {};
+      for (var j = startTime; j <= endTime; j += skipAmt) {
+        tempMap[j] = 0;
+      }
+      return tempMap;
     }
 
     function c3ifyData (newVal, metrics, alias) {
       var columns,
-          streams,
+          totals,
           metricNames,
           metricAlias,
-          i,
           values,
           xCoords;
       if(angular.isObject(newVal) && newVal.length) {
@@ -95,11 +94,11 @@ angular.module(PKG.name + '.feature.dashboard')
 
         // columns will be in the format: [ [metric1Name, v1, v2, v3, v4], [metric2Name, v1, v2, v3, v4], ... xCoords ]
         columns = [];
-        newVal.forEach(function (value) {
+        newVal.forEach(function (value, index) {
           values = Object.keys(value).map(function(key) {
             return value[key];
           });
-          values.unshift(metricNames[i]);
+          values.unshift(metricNames[index]);
           columns.push(values);
         });
 
@@ -108,19 +107,27 @@ angular.module(PKG.name + '.feature.dashboard')
         xCoords.unshift('x');
         columns.push(xCoords);
 
-        streams = [];
+        totals = [];
         columns.forEach(function(column) {
           if (!column.length || column[0] === 'x') {
             return;
           }
-          streams.push(column[column.length - 1]);
+
+          totals.push(column.reduce(function(prev, current, index) {
+            if (index === 1) {
+              return current;
+            }
+
+            return prev + current;
+          }));
+
         });
         // DO NOT change the format of this data without ensuring that whoever needs it is also changed!
         // Some examples: c3 charts, table widget.
-        // $scope.chartData = {columns: columns, streams: streams, metricNames: metricNames, xCoords: xCoords};
+        // $scope.chartData = {columns: columns, totals: totals, metricNames: metricNames, xCoords: xCoords};
         return {
           columns: columns,
-          streams: streams,
+          totals: totals,
           metricNames: metricNames,
           xCoords: xCoords
         };

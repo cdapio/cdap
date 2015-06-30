@@ -77,15 +77,15 @@
         <div ng-controller="C3WidgetTimeseriesCtrl" ng-repeat="wdgt in OverviewCtrl.wdgts" class="health-widget">
           <br ng-hide="$first">
           <c3-spline
-            chart-metric="wdgt.metric"
+            chart-metric="wdgt.formattedData"
             chart-metric-alias="wdgt.metricAlias"
             chart-settings="wdgt.settings"
             chart-size="chartSize"
             ></c3-spline>
           <div class="health-metrics">
-            <span class="warn"> {{wdgt.chartData.streams[1]}} </span>
+            <span class="warn"> {{wdgt.chartData.totals[1]}} </span>
             <p class="text-center">{{wdgt.title}}</p>
-            <span class="error"> {{wdgt.chartData.streams[0]}} </span>
+            <span class="error"> {{wdgt.chartData.totals[0]}} </span>
           </div>
         </div>
     </div>
