@@ -35,6 +35,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -69,17 +70,15 @@ public final class FileSetDataset implements FileSet {
    */
   public FileSetDataset(DatasetContext datasetContext, CConfiguration cConf,
                         DatasetSpecification spec,
+                        LocationFactory absoluteLocationFactory,
                         NamespacedLocationFactory namespacedLocationFactory,
                         @Nonnull Map<String, String> runtimeArguments) throws IOException {
 
     Preconditions.checkNotNull(datasetContext, "Dataset context must not be null");
     Preconditions.checkNotNull(runtimeArguments, "Runtime arguments must not be null");
 
-    String namespaceId = datasetContext.getNamespaceId();
-    String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
-    String basePath = determineBasePath(spec);
-    Location namespaceHomeLocation = namespacedLocationFactory.get(Id.Namespace.from(namespaceId));
-    this.baseLocation = namespaceHomeLocation.append(dataDir).append(basePath);
+    this.baseLocation = determineBaseLocation(datasetContext, cConf, spec,
+                                              absoluteLocationFactory, namespacedLocationFactory);
     this.properties = spec.getProperties();
     this.runtimeArguments = runtimeArguments;
     this.inputFormatClassName = FileSetProperties.getInputFormat(properties);
@@ -89,16 +88,29 @@ public final class FileSetDataset implements FileSet {
   }
 
   /**
-   * If the properties do not contain a base path, generate one from the dataset name.
+   * Generate the base location of the file set.
+   * <ul>
+   *   <li>If the properties do not contain a base path, generate one from the dataset name;</li>
+   *   <li>If the base path is absolute, return a location relative to the root of the file system;</li>
+   *   <li>Otherwise return a location relative to the data directory of the namespace.</li>
+   * </ul>
    * This is package visible, because FileSetAdmin needs it, too.
    * TODO: Ideally, this should be done in configure(), but currently it cannot because of CDAP-1721
    */
-  static String determineBasePath(DatasetSpecification spec) {
+  static Location determineBaseLocation(DatasetContext datasetContext, CConfiguration cConf,
+                                        DatasetSpecification spec, LocationFactory rootLocationFactory,
+                                        NamespacedLocationFactory namespacedLocationFactory) throws IOException {
     String basePath = FileSetProperties.getBasePath(spec.getProperties());
     if (basePath == null) {
       basePath = spec.getName().replace('.', '/');
     }
-    return basePath;
+    if (basePath.startsWith("/")) {
+      return rootLocationFactory.create(basePath);
+    } else {
+      Id.Namespace namespaceId = Id.Namespace.from(datasetContext.getNamespaceId());
+      String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
+      return namespacedLocationFactory.get(namespaceId).append(dataDir).append(basePath);
+    }
   }
 
   private Location determineOutputLocation() {

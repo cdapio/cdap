@@ -82,7 +82,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     // create a time partitioned file set
     datasetFramework.addInstance("fileSet", datasetInstanceId, FileSetProperties.builder()
       // properties for file set
-      .setBasePath("/myPath")
+      .setBasePath("myPath")
         // properties for partitioned hive table
       .setEnableExploreOnCreate(true)
       .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
@@ -143,7 +143,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                          .addIntField("num")
                          .build())
         // properties for file set
-      .setBasePath("/parted")
+      .setBasePath("parted")
         // properties for partitioned hive table
       .setEnableExploreOnCreate(true)
       .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
@@ -261,7 +261,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
       PartitionedFileSetProperties.builder()
         .setPartitioning(Partitioning.builder().addIntField("number").build())
           // properties for file set
-        .setBasePath("/" + name)
+        .setBasePath(name)
           // properties for partitioned hive table
         .setEnableExploreOnCreate(true)
         .setExploreSchema("key STRING, value INT")
@@ -322,7 +322,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     // create a time partitioned file set
     datasetFramework.addInstance("timePartitionedFileSet", datasetInstanceId, FileSetProperties.builder()
       // properties for file set
-      .setBasePath("/somePath")
+      .setBasePath("somePath")
         // properties for partitioned hive table
       .setEnableExploreOnCreate(true)
       .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
@@ -415,7 +415,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
 
     datasetFramework.addInstance("timePartitionedFileSet", datasetInstanceId, FileSetProperties.builder()
       // properties for file set
-      .setBasePath("/somePath")
+      .setBasePath("somePath")
         // properties for partitioned hive table
       .setEnableExploreOnCreate(true)
       .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
@@ -439,7 +439,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     // create a time partitioned file set
     datasetFramework.addInstance("timePartitionedFileSet", datasetInstanceId, FileSetProperties.builder()
       // properties for file set
-      .setBasePath("/somePath")
+      .setBasePath("somePath")
         // properties for partitioned hive table
       .setEnableExploreOnCreate(true)
       .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")

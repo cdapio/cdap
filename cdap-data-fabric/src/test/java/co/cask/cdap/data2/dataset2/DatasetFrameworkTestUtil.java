@@ -47,8 +47,13 @@ import java.util.Map;
 public final class DatasetFrameworkTestUtil extends ExternalResource {
   public static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
 
+  private Injector injector;
   private TemporaryFolder tmpFolder;
   private DatasetFramework framework;
+
+  public Injector getInjector() {
+    return injector;
+  }
 
   @Override
   protected void before() throws Throwable {
@@ -58,7 +63,7 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
 
-    final Injector injector = Guice.createInjector(
+    injector = Guice.createInjector(
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
