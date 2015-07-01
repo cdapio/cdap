@@ -44,6 +44,7 @@ import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.utils.Dependencies;
 import org.slf4j.Logger;
@@ -255,7 +256,7 @@ public abstract class HBaseTableUtil {
 
     final Map<String, URL> dependentClasses = new HashMap<>();
     for (Class<? extends Coprocessor> clz : classes) {
-      Dependencies.findClassDependencies(clz.getClassLoader(), new Dependencies.ClassAcceptor() {
+      Dependencies.findClassDependencies(clz.getClassLoader(), new ClassAcceptor() {
         @Override
         public boolean accept(String className, final URL classUrl, URL classPathUrl) {
           // Assuming the endpoint and protocol class doesn't have dependencies
