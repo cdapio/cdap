@@ -38,7 +38,7 @@ angular.module(PKG.name+'.feature.dashboard')
       .state('dashboard.user', {
         url: '/user/:tab',
         templateUrl: '/assets/features/dashboard/templates/userdashboard.html',
-        controller: 'DashboardCtrl',
+        controller: 'DashboardViewCtrl',
         resolve: {
           tab: function($stateParams) {
             return $stateParams.tab;

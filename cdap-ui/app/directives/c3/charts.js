@@ -64,13 +64,10 @@ ngC3.controller('c3Controller', function ($scope, c3, $filter, $timeout, MyChart
     }, true);
 
     if ($scope.metrics) {
-      // $scope.togglePolling();
       drawChart();
     }
     $scope.$watch('chartMetric', drawChart, true);
-    $scope.$watch('chartSettings', drawChart, true);
-    // $scope.$watch('chartSettings', $scope.reconfigure, true);
-    // $scope.$watch('chartMetric', $scope.reconfigure, true);
+
   };
 
   function drawChart() {
@@ -93,7 +90,6 @@ ngC3.controller('c3Controller', function ($scope, c3, $filter, $timeout, MyChart
         xTick = {};
 
     data.type = $scope.type;
-    console.log('options', $scope.options.data);
 
     // Mainly needed for pie chart values to be shown upon tooltip, but also useful for other types.
     myTooltip = { format: { value: d3.format(',') } };

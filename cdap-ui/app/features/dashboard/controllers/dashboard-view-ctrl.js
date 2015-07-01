@@ -7,8 +7,6 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, Dashbo
 
 
   $scope.unknownBoard = false;
-  $scope.isEnterprise = MY_CONFIG.isEnterprise;
-  $scope.dashboards = rDashboardsModel.data || [];
   $scope.liveDashboard = false;
 
   // Available refresh rates.
@@ -24,8 +22,6 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, Dashbo
   $scope.timeOptions = { startMs : now - 60 * 1000,
                          endMs   : now,
                          refreshInterval: $scope.refreshIntervals[1] };
-  $scope.dashboards.activeIndex = parseInt($state.params.tab, 10) || 0;
-
 
   $scope.currentBoard = rDashboardsModel.current();
 
@@ -52,79 +48,10 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, Dashbo
     $scope.unknownBoard = true;
   }
 
-  // DashboardHelper.startPollDashboard($scope.currentBoard);
 
-  // $scope.$on('$destroy', function() {
-  //   DashboardHelper.stopPollDashboard($scope.currentBoard);
-  // });
-
-  console.log('instantiate', $scope.currentBoard);
-
-  $scope.$on('$destroy', function () {
-    console.log('destroy', $scope.currentBoard);
+  $scope.$on('$destroy', function() {
+    DashboardHelper.stopPollDashboard($scope.currentBoard);
   });
-
-  /**
-   * show a dropdown when clicking on the tab of active dashboard
-   * @TODO make a directive instead
-   */
-  $scope.activeTabClick = function (event, index) {
-    if (index !== $scope.dashboards.activeIndex || !$state.includes('dashboard.user')) {
-      return;
-    }
-    var toggle = angular.element(event.target);
-    if(!toggle.hasClass('dropdown-toggle')) {
-      toggle = toggle.parent();
-    }
-
-    var scope = $scope.$new(),
-        dd = $dropdown(toggle, {
-          template: 'assets/features/dashboard/templates/partials/tab-dd.html',
-          animation: 'am-flip-x',
-          trigger: 'manual',
-          prefixEvent: 'dashboard-tab-dd',
-          scope: scope
-        });
-
-    dd.$promise.then(function(){
-      dd.show();
-    });
-
-    scope.$on('dashboard-tab-dd.hide', function () {
-      dd.destroy();
-    });
-
-  };
-
-  $scope.addWidget = function () {
-    if (!rDashboardsModel.current().canAddWidget()) {
-      $alert({
-        content: 'Can not add more than ' + rDashboardsModel.current().WIDGET_LIMIT + ' widgets.',
-        type: 'warning'
-      });
-      return;
-    }
-    $state.go('dashboard.user.addwdgt', {tab: $state.params.tab}, {reload: false});
-  };
-
-  $scope.addDashboard = _.throttle(function (title) {
-    rDashboardsModel.add({title: title}).then(function() {
-      var tabDest = rDashboardsModel.data.length - 1;
-      $state.go('dashboard.user', {tab: tabDest}, {reload: true});
-    });
-  }, 2000, {'trailing': false});
-
-  $scope.removeDashboard = function () {
-    rDashboardsModel.remove($scope.dashboards.activeIndex)
-      .then(function() {
-        $state.go('dashboard.standard.cdap', {}, {reload: true});
-      });
-  };
-
-  $scope.reorderDashboard = function (reverse) {
-    var newIndex = rDashboardsModel.reorder(reverse);
-    $state.go($state.current, {tab: newIndex}, {reload: true});
-  };
 
   function applyOnWidgets(rDashboardsModel, func) {
     var currentColumns = rDashboardsModel.current().columns,
@@ -133,14 +60,6 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, Dashbo
       func(currentColumns[i]);
     }
   }
-
-  $scope.changeColumn = function (n) {
-    rDashboardsModel.current().changeColumn(n);
-  };
-
-  $scope.currentColumn = function() {
-    return rDashboardsModel.current().numColumn;
-  };
 
   $scope.activateTab = function(idx) {
     $scope.currentTab = idx;
@@ -162,13 +81,18 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, Dashbo
       return;
     }
     $scope.liveDashboard = false;
+    DashboardHelper.stopPollDashboard($scope.currentBoard);
+
     applyOnWidgets(rDashboardsModel, function (widget) {
       widget.metric.startTime = Math.floor($scope.timeOptions.startMs / 1000);
       widget.metric.endTime = Math.floor($scope.timeOptions.endMs / 1000);
       widget.metric.resolution = 'auto';
       widget.settings.isLive = false;
     });
+
+    DashboardHelper.fetchDataDashboard($scope.currentBoard);
   };
+  $scope.updateWithTimeRange(); // getting initial value for graph
 
   $scope.updateWithFrequency = function() {
     $scope.liveDashboard = true;
@@ -179,6 +103,8 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, Dashbo
       widget.settings.isLive = true;
       widget.settings.interval = $scope.timeOptions.refreshInterval.value * 1000;
     });
+
+    DashboardHelper.startPollDashboard($scope.currentBoard);
   };
 
   $scope.stopPolling = function() {
@@ -186,5 +112,7 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, Dashbo
     applyOnWidgets(rDashboardsModel, function (widget) {
       widget.settings.isLive = false;
     });
+
+    DashboardHelper.stopPollDashboard($scope.currentBoard);
   };
 });

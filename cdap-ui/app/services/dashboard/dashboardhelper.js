@@ -6,29 +6,15 @@ angular.module(PKG.name + '.services')
       dataSrc.poll({
         _cdapPath: '/metrics/query',
         method: 'POST',
+        interval: widget.settings.interval,
         body: MyMetricsQueryHelper.constructQuery(
           'qid',
           MyMetricsQueryHelper.contextToTags(widget.metric.context),
           widget.metric
         )
       }, function (res) {
-        var processedData = MyChartHelpers.processData(
-          res,
-          'qid',
-          widget.metric.names,
-          widget.metric.resolution,
-          widget.settings.aggregate
-        );
 
-        processedData = MyChartHelpers.c3ifyData(processedData, widget.metric, widget.metricAlias);
-        var data = {
-          x: 'x',
-          columns: processedData.columns,
-          keys: {
-            x: 'x'
-          }
-        };
-        widget.formattedData = data;
+        widget.formattedData = __formatData(res, widget);
 
         widget.pollId = res.__pollId__;
       });
@@ -46,17 +32,63 @@ angular.module(PKG.name + '.services')
       });
     }
 
-    function stopPollingDashboard (dashboard) {
+    function stopPollDashboard (dashboard) {
       angular.forEach(dashboard.columns, function (widget) {
         stopPolling(widget);
       });
+    }
+
+    function fetchData (widget) {
+      dataSrc.request({
+        _cdapPath: '/metrics/query',
+        method: 'POST',
+        body: MyMetricsQueryHelper.constructQuery(
+          'qid',
+          MyMetricsQueryHelper.contextToTags(widget.metric.context),
+          widget.metric
+        )
+      })
+      .then(function (res) {
+        widget.formattedData = __formatData(res, widget);
+
+        widget.pollId = res.__pollId__;
+      });
+    }
+
+    function fetchDataDashboard (dashboard) {
+      angular.forEach(dashboard.columns, function (widget) {
+        fetchData(widget);
+      });
+    }
+
+    function __formatData (res, widget) {
+      var processedData = MyChartHelpers.processData(
+        res,
+        'qid',
+        widget.metric.names,
+        widget.metric.resolution,
+        widget.settings.aggregate
+      );
+
+      processedData = MyChartHelpers.c3ifyData(processedData, widget.metric, widget.metricAlias);
+      var data = {
+        x: 'x',
+        columns: processedData.columns,
+        keys: {
+          x: 'x'
+        }
+      };
+
+      return data;
     }
 
     return {
       startPolling: startPolling,
       stopPolling: stopPolling,
       startPollDashboard: startPollDashboard,
-      stopPollingDashboard: stopPollingDashboard
+      stopPollDashboard: stopPollDashboard,
+      fetchData: fetchData,
+      fetchDataDashboard: fetchDataDashboard
     };
 
   });
