@@ -110,7 +110,7 @@ public final class FileSetDataset implements FileSet {
       Location baseLocation = rootLocationFactory.create(basePath);
       if (baseLocation.toURI().getPath().startsWith(topLevelPath)) {
         throw new DataSetException("Invalid base path '" + basePath + "' for dataset '" + spec.getName() + "'. " +
-                                     "It must not be inside the CDAP base path '" + topLevelPath + "'." );
+                                     "It must not be inside the CDAP base path '" + topLevelPath + "'.");
       }
       return baseLocation;
     } else {
