@@ -36,8 +36,7 @@ angular.module(PKG.name + '.feature.flows')
           // OUTPUT METRICS
           dataSrc
             .poll({
-              _cdapPath: '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(flowletTags)
-                            + '&metric=system.process.events.out&start=now-60s&count=60',
+              _cdapPath: '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(flowletTags) + '&metric=system.process.events.out&start=now-60s&count=60',
               method: 'POST'
             }, function(res) {
               updateOutput.bind(this)(res);
@@ -46,8 +45,7 @@ angular.module(PKG.name + '.feature.flows')
           // Total
           dataSrc
             .poll({
-              _cdapPath: '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(flowletTags)
-                            + '&metric=system.process.events.out',
+              _cdapPath: '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(flowletTags) + '&metric=system.process.events.out',
               method: 'POST'
             }, function(res) {
               if (res.series[0]) {

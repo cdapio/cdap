@@ -1,6 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdapterListController', function($scope, MyDataSource, mySettings, $state, $alert, $timeout, myAdapterApi, myAlert) {
-    var dataSrc = new MyDataSource($scope);
+  .controller('AdapterListController', function($scope, mySettings, $state, $alert, $timeout, myAdapterApi, myAlert) {
     $scope.adapters  = [];
 
     var params = {

@@ -37,6 +37,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.gson.Gson;
 import org.apache.twill.common.Threads;
 
 import java.util.Map;
@@ -54,13 +55,14 @@ import java.util.concurrent.ExecutionException;
  * The {@link RuntimeContext} is blocked until completion of the associated program.
  */
 public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRunner {
+  private static final Gson GSON = new Gson();
+  private final Arguments userArguments;
+  private final Arguments systemArguments;
+  private final String nodeId;
   protected final WorkflowSpecification workflowSpec;
   protected final ProgramRunnerFactory programRunnerFactory;
   protected final Program workflowProgram;
   protected final WorkflowToken token;
-  private final Arguments userArguments;
-  private final Arguments systemArguments;
-  private final String nodeId;
 
   public AbstractProgramWorkflowRunner(Program workflowProgram, ProgramOptions workflowProgramOptions,
                                        ProgramRunnerFactory programRunnerFactory, WorkflowSpecification workflowSpec,
@@ -98,7 +100,8 @@ public abstract class AbstractProgramWorkflowRunner implements ProgramWorkflowRu
     systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_RUN_ID,
                            systemArguments.getOption(ProgramOptionConstants.RUN_ID));
     systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_NODE_ID, nodeId);
-    systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_BATCH, name);
+    systemArgumentsMap.put(ProgramOptionConstants.PROGRAM_NAME_IN_WORKFLOW, name);
+    systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(token));
 
     final ProgramOptions options = new SimpleProgramOptions(
       program.getName(),

@@ -1,5 +1,6 @@
 angular.module(PKG.name + '.feature.home')
   .controller('HomeController', function ($state, rNsList, mySessionStorage, myLoadingService, $filter, EventPipe, StatusFactory) {
+    StatusFactory.startPolling();
     // Needed to inject StatusFactory here for angular to instantiate the service and start polling.
     // check that $state.params.namespace is valid
     var n = rNsList.filter(function (one) {

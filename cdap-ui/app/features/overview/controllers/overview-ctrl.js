@@ -71,8 +71,7 @@ function ($scope, $state, myLocalStorage, MY_CONFIG, Widget, MyMetricsQueryHelpe
         'system.services.log.error': 'System Errors',
         'system.services.log.warn' : 'System Warnings'
       }
-    })
-  ,
+    }),
     new Widget({
       title: 'Applications',
       type: 'c3-line',

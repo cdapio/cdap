@@ -39,3 +39,5 @@ Logs for the SDK are found at /opt/cdap/sdk/logs, data is stored at
 
 EOF
 done
+
+exit 0

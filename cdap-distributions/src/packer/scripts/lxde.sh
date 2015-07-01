@@ -22,7 +22,7 @@
 apt-get install -y lxde
 
 # Symlink idea
-ln -sf /opt/idea* /opt/idea
+ln -sf /opt/idea* /opt/idea || echo "Unable to symlink IDEA" && exit 1
 # Copy icons
 cp -f /opt/idea/bin/idea.png /usr/share/pixmaps
 cp -f /usr/local/eclipse/icon.xpm /usr/share/pixmaps/eclipse.xpm
@@ -94,3 +94,5 @@ sed -i \
 
 # Fix permissions
 chown -R cdap:cdap ~cdap
+
+exit 0

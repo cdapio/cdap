@@ -1,7 +1,5 @@
 angular.module(PKG.name + '.feature.datasets')
   .controller('DatasetsDetailController', function($scope, $state, MyDataSource, $alert, $filter, myDatasetApi, explorableDatasets) {
-    var filterFilter = $filter('filter');
-
     var params = {
       namespace: $state.params.namespace,
       scope: $scope

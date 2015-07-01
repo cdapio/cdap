@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .directive('myInstanceControl', function (myAlert) {
+  .directive('myInstanceControl', function () {
 
     return {
       restrict: 'E',

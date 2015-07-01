@@ -13,7 +13,7 @@ angular.module(PKG.name + '.feature.adapters')
       });
       defer.resolve(obj);
       return defer.promise;
-    };
+    }
 
     this.addSource = function (sourceName) {
       // Don't add an already added source.

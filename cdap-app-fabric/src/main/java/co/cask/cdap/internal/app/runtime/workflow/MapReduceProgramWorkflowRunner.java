@@ -87,6 +87,13 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
 
   private void updateWorkflowToken(MapReduceContext context) throws Exception {
     Map<String, Map<String, Long>> mapReduceCounters = Maps.newHashMap();
+    WorkflowToken workflowTokenFromContext = context.getWorkflowToken();
+
+    if (workflowTokenFromContext == null) {
+      throw new IllegalStateException("WorkflowToken cannot be null when the " +
+                                        "MapReduce program is started by Workflow.");
+    }
+
     Counters counters = ((Job) context.getHadoopJob()).getCounters();
     for (CounterGroup group : counters) {
       mapReduceCounters.put(group.getName(), new HashMap<String, Long>());
@@ -94,6 +101,8 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
         mapReduceCounters.get(group.getName()).put(counter.getName(), counter.getValue());
       }
     }
-    ((BasicWorkflowToken) token).setMapReduceCounters(mapReduceCounters);
+
+    ((BasicWorkflowToken) workflowTokenFromContext).setMapReduceCounters(mapReduceCounters);
+    ((BasicWorkflowToken) token).mergeToken((BasicWorkflowToken) workflowTokenFromContext);
   }
 }

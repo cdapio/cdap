@@ -43,8 +43,7 @@ angular.module(PKG.name + '.feature.worker')
           label: 'Workers',
           skip: true
         },
-        templateUrl: '/assets/features/workers/templates/detail.html',
-        controller: 'WorkersDetailController'
+        templateUrl: '/assets/features/workers/templates/detail.html'
       })
 
       .state('worker.detail.runs', {
@@ -77,6 +76,6 @@ angular.module(PKG.name + '.feature.worker')
           label: 'History',
           parent: 'worker.detail.runs'
         }
-      })
+      });
 
   });

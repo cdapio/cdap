@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.deploy;
 
+import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.ConfigResponse;
@@ -24,6 +25,7 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.test.AppJarHelper;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.gson.Gson;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -52,7 +54,7 @@ public class ConfiguratorTest {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, WordCountApp.class);
 
     // Create a configurator that is testable. Provide it a application.
-    Configurator configurator = new InMemoryConfigurator(appJar);
+    Configurator configurator = new InMemoryConfigurator(appJar, "");
 
     // Extract response from the configurator.
     ListenableFuture<ConfigResponse> result = configurator.config();
@@ -65,6 +67,39 @@ public class ConfiguratorTest {
     Assert.assertNotNull(specification);
     Assert.assertTrue(specification.getName().equals("WordCountApp")); // Simple checks.
     Assert.assertTrue(specification.getFlows().size() == 1); // # of flows.
+  }
+
+  @Test
+  public void testAppWithConfig() throws Exception {
+    LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, ConfigTestApp.class);
+
+    ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myStream", "myTable");
+    Configurator configuratorWithConfig = new InMemoryConfigurator(appJar, new Gson().toJson(config));
+
+    ListenableFuture<ConfigResponse> result = configuratorWithConfig.config();
+    ConfigResponse response = result.get(10, TimeUnit.SECONDS);
+    Assert.assertNotNull(response);
+
+    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
+    ApplicationSpecification specification = adapter.fromJson(response.get());
+    Assert.assertNotNull(specification);
+    Assert.assertTrue(specification.getStreams().size() == 1);
+    Assert.assertTrue(specification.getStreams().containsKey("myStream"));
+    Assert.assertTrue(specification.getDatasets().size() == 1);
+    Assert.assertTrue(specification.getDatasets().containsKey("myTable"));
+
+    Configurator configuratorWithoutConfig = new InMemoryConfigurator(appJar, null);
+    result = configuratorWithoutConfig.config();
+    response = result.get(10, TimeUnit.SECONDS);
+    Assert.assertNotNull(response);
+
+    specification = adapter.fromJson(response.get());
+    Assert.assertNotNull(specification);
+    Assert.assertTrue(specification.getStreams().size() == 1);
+    Assert.assertTrue(specification.getStreams().containsKey(ConfigTestApp.DEFAULT_STREAM));
+    Assert.assertTrue(specification.getDatasets().size() == 1);
+    Assert.assertTrue(specification.getDatasets().containsKey(ConfigTestApp.DEFAULT_TABLE));
   }
 
 }
