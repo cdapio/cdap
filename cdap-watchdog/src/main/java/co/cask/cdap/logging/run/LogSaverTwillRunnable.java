@@ -48,7 +48,7 @@ import org.apache.hadoop.util.ShutdownHookManager;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnableSpecification;
-import org.apache.twill.common.Services;
+import org.apache.twill.internal.Services;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;

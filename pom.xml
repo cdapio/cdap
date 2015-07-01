@@ -58,6 +58,10 @@
 
   <repositories>
     <repository>
+      <id>apache.snapshots</id>
+      <url>https://repository.apache.org/content/repositories/snapshots</url>
+    </repository>
+    <repository>
       <id>sonatype</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
     </repository>
@@ -131,9 +135,9 @@
     <snappy.version>1.1.1.7</snappy.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <tephra.version>0.4.2</tephra.version>
+    <tephra.version>0.4.3-SNAPSHOT</tephra.version>
     <thrift.version>0.9.0</thrift.version>
-    <twill.version>0.5.0-incubating</twill.version>
+    <twill.version>0.6.0-incubating-SNAPSHOT</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
     <spark.version>1.2.0</spark.version>

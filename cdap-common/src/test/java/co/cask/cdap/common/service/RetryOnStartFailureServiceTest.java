@@ -19,8 +19,8 @@ package co.cask.cdap.common.service;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
-import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Threads;
+import org.apache.twill.internal.ServiceListenerAdapter;
 import org.junit.Assert;
 import org.junit.Test;
 

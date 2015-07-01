@@ -307,7 +307,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
   protected void startUp() throws Exception {
     kafkaClientService.startAndWait();
     zkClientService.startAndWait();
-    twillRunnerService.startAndWait();
+    twillRunnerService.start();
     programRuntimeService.startAndWait();
     queueDebugger.startAndWait();
   }
@@ -315,8 +315,8 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     queueDebugger.stopAndWait();
-    programRuntimeService.startAndWait();
-    twillRunnerService.startAndWait();
+    programRuntimeService.stopAndWait();
+    twillRunnerService.stop();
     zkClientService.stopAndWait();
     kafkaClientService.stopAndWait();
   }
