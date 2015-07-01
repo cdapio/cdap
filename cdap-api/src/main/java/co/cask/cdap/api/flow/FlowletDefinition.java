@@ -58,12 +58,15 @@ public final class FlowletDefinition {
   private Map<String, Set<Schema>> outputs;
 
   public FlowletDefinition(String flowletName, Flowlet flowlet, int instances) {
-    FlowletSpecification flowletSpec = flowlet.configure();
-    if (flowlet instanceof AbstractFlowlet && flowletSpec == null) {
+    FlowletSpecification flowletSpec;
+    //TODO: CDAP-2943 Remove deprecated methods in Flow/Flowlet and move the configure methods.
+    if (flowlet instanceof AbstractFlowlet) {
       DefaultFlowletConfigurer flowletConfigurer = new DefaultFlowletConfigurer(flowlet);
       AbstractFlowlet abstractFlowlet = (AbstractFlowlet) flowlet;
       abstractFlowlet.configure(flowletConfigurer);
       flowletSpec = flowletConfigurer.createSpecification();
+    } else {
+      flowletSpec = flowlet.configure();
     }
 
     this.instances = instances;

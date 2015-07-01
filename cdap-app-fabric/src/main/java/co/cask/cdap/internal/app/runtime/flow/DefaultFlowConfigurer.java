@@ -37,12 +37,14 @@ import java.util.Map;
  */
 public class DefaultFlowConfigurer implements FlowConfigurer {
 
+  private String className;
   private String name;
   private String description;
   private Map<String, FlowletDefinition> flowlets;
   private List<FlowletConnection> connections;
 
   public DefaultFlowConfigurer(Flow flow) {
+    this.className = flow.getClass().getName();
     this.name = flow.getClass().getSimpleName();
     this.description = "";
     this.flowlets = Maps.newHashMap();
@@ -133,6 +135,6 @@ public class DefaultFlowConfigurer implements FlowConfigurer {
   }
 
   public FlowSpecification createSpecification() {
-    return new DefaultFlowSpecification(name, description, flowlets, connections);
+    return new DefaultFlowSpecification(className, name, description, flowlets, connections);
   }
 }

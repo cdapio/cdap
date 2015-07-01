@@ -29,7 +29,7 @@ public class AbstractFlow implements Flow {
 
   @Deprecated
   @Override
-  public FlowSpecification configure() {
+  public final FlowSpecification configure() {
     return null;
   }
 

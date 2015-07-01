@@ -42,16 +42,15 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
   private FlowletConfigurer configurer;
   private FlowletContext flowletContext;
 
-  public final void configure(FlowletConfigurer configurer) {
+  public void configure(FlowletConfigurer configurer) {
     this.configurer = configurer;
-    configureFlowlet();
-  }
-
-  /**
-   * Configures the flowlet.
-   */
-  protected void configureFlowlet() {
-
+    FlowletSpecification specification = configure();
+    configurer.setName(specification.getName());
+    configurer.setDescription(specification.getDescription());
+    configurer.setFailurePolicy(specification.getFailurePolicy());
+    configurer.setProperties(specification.getProperties());
+    configurer.setResources(specification.getResources());
+    configurer.useDatasets(specification.getDataSets());
   }
 
   /**
@@ -131,6 +130,7 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
   /**
    * Default constructor that uses {@link #getClass()}.{@link Class#getSimpleName() getSimpleName} as the
    * flowlet name.
+   * @deprecated not required if you are using {@link AbstractFlowlet#configure} method.
    */
   @Deprecated
   protected AbstractFlowlet() {
@@ -140,6 +140,7 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
   /**
    * Constructor that uses the specified name as the flowlet name.
    * @param name Name of the flowlet
+   * @deprecated Use {@link AbstractFlowlet#setName} instead.
    */
   @Deprecated
   protected AbstractFlowlet(String name) {
@@ -184,6 +185,7 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
 
   /**
    * @return {@link Class#getSimpleName() Simple classname} of this {@link Flowlet}
+   * @deprecated Use {@link AbstractFlowlet#setName} instead.
    */
   @Deprecated
   protected String getName() {
@@ -192,6 +194,7 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
 
   /**
    * @return A descriptive message about this {@link Flowlet}.
+   * @deprecated Use {@link AbstractFlowlet#setDescription}
    */
   @Deprecated
   protected String getDescription() {

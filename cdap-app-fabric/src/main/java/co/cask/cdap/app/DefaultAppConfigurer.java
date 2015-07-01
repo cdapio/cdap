@@ -135,13 +135,13 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   public void addFlow(Flow flow) {
     Preconditions.checkArgument(flow != null, "Flow cannot be null.");
     DefaultFlowConfigurer configurer = new DefaultFlowConfigurer(flow);
-    FlowSpecification spec;
-    if (flow.configure() == null && flow instanceof AbstractFlow) {
+    FlowSpecification spec = flow.configure();
+    if (spec == null && flow instanceof AbstractFlow) {
       AbstractFlow abstractFlow = (AbstractFlow) flow;
       abstractFlow.configure(configurer);
       spec = configurer.createSpecification();
     } else {
-      spec = new DefaultFlowSpecification(flow.getClass().getName(), flow.configure());
+      spec = new DefaultFlowSpecification(flow.getClass().getName(), spec);
     }
     flows.put(spec.getName(), spec);
   }
