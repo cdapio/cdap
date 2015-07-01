@@ -20,15 +20,16 @@ import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when an artifact does not exist.
+ * Thrown when a plugin does not exist.
  */
-public class ArtifactNotExistsException extends NotFoundException {
+public class PluginNotExistsException extends NotFoundException {
 
-  public ArtifactNotExistsException(Id.Namespace namespace, String name) {
-    super("artifact", namespace.getId() + ":" + name);
+  public PluginNotExistsException(Id.Namespace namespace, String type, String name) {
+    super("plugin", String.format("%s:%s:%s", namespace.getId(), type, name));
   }
 
-  public ArtifactNotExistsException(Id.Artifact artifactId) {
-    super("artifact", artifactId.toString());
+  public PluginNotExistsException(Id.Artifact artifactId, String type, String name) {
+    super("plugin", String.format("%s:%s:%s:%s:%s",
+      artifactId.getNamespace().getId(), type, name, artifactId.getName(), artifactId.getVersion()));
   }
 }

@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.artifact;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
@@ -31,25 +32,31 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.tx.DatasetContext;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
+import co.cask.cdap.internal.filesystem.LocationCodec;
 import co.cask.cdap.proto.Id;
+import co.cask.tephra.TransactionConflictException;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
+import co.cask.tephra.TransactionFailureException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This class manages artifacts as well as metadata for each artifact. Artifacts and their metadata cannot be changed
@@ -74,8 +81,6 @@ import java.util.Map;
  * {artifact-version}:{artifact-name} as the column, and AppClass as the value
  */
 public class ArtifactStore {
-  private static final Logger LOG = LoggerFactory.getLogger(ArtifactStore.class);
-  private static final Gson GSON = new Gson();
   private static final String ARTIFACTS_PATH = "artifacts";
   private static final String ARTIFACT_PREFIX = "r:";
   private static final String PLUGIN_PREFIX = "p:";
@@ -84,18 +89,25 @@ public class ArtifactStore {
 
   private final NamespacedLocationFactory locationFactory;
   private final Transactional<DatasetContext<Table>, Table> metaTable;
+  private final Gson gson;
 
   @Inject
-  ArtifactStore(final DatasetFramework datasetFramework, NamespacedLocationFactory locationFactory,
+  ArtifactStore(final DatasetFramework datasetFramework,
+                NamespacedLocationFactory namespacedLocationFactory,
+                LocationFactory locationFactory,
                 TransactionExecutorFactory txExecutorFactory) {
-    this.locationFactory = locationFactory;
+    this.locationFactory = namespacedLocationFactory;
+    this.gson = new GsonBuilder()
+      .registerTypeAdapter(Location.class, new LocationCodec(locationFactory))
+      .create();
     this.metaTable = Transactional.of(txExecutorFactory, new Supplier<DatasetContext<Table>>() {
       @Override
       public DatasetContext<Table> get() {
         try {
           return DatasetContext.of((Table) DatasetsUtil.getOrCreateDataset(
             datasetFramework, META_ID, Table.class.getName(),
-            DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null));
+            DatasetProperties.builder().add(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.COLUMN.name()).build(),
+            DatasetDefinition.NO_ARGUMENTS, null));
         } catch (Exception e) {
           // there's nothing much we can do here
           throw Throwables.propagate(e);
@@ -105,79 +117,24 @@ public class ArtifactStore {
   }
 
   /**
-   * Write the artifact and its metadata to the store. Once added, artifacts cannot be changed.
-   * TODO: add support for snapshot versions, which can be changed
-   *
-   * @param artifactId the id of the artifact to add
-   * @param artifactMeta the metadata for the artifact
-   * @param archiveContents the contents of the artifact
-   * @throws WriteConflictException if the artifact is already currently being written
-   * @throws ArtifactAlreadyExistsException if a non-snapshot version of the artifact already exists
-   * @throws IOException if there was an exception persisting the artifact contents to the filesystem,
-   *                     of persisting the artifact metadata to the metastore
-   */
-  public void write(Id.Artifact artifactId, ArtifactMeta artifactMeta, InputStream archiveContents)
-    throws WriteConflictException, ArtifactAlreadyExistsException, IOException {
-
-    Location fileDirectory =
-      locationFactory.get(artifactId.getNamespace(), ARTIFACTS_PATH).append(artifactId.getName());
-    Locations.mkdirsIfNotExists(fileDirectory);
-    Location lock = fileDirectory.append(artifactId.getVersion() + ".lock");
-    if (!lock.createNew()) {
-      throw new WriteConflictException(artifactId);
-    }
-
-    ArtifactMeta meta = readMeta(artifactId);
-    if (meta != null) {
-      lock.delete();
-      throw new ArtifactAlreadyExistsException(artifactId);
-    }
-
-    Location file = fileDirectory.append(artifactId.getVersion());
-    if (file.exists()) {
-      // this really shouldn't happen often.
-      // it's possible if there was a previous attempt to add this file,
-      // the file was added, but the metadata was not successfully written and the file
-      // was the not able to get cleaned up after the failed metadata write.
-      // in either case, should be ok to just delete it.
-      file.delete();
-    }
-
-    // write the file contents
-    try {
-      ByteStreams.copy(archiveContents, file.getOutputStream());
-      try {
-        writeMeta(artifactId, artifactMeta);
-      } catch (Exception e) {
-        LOG.error("Exception while writing metadata for artifact " + artifactId, e);
-        // delete file to clean up after ourselves
-        file.delete();
-        throw new IOException(e);
-      }
-    } finally {
-      lock.delete();
-    }
-  }
-
-  /**
    * Get information about all artifacts in the given namespace. If there are no artifacts in the namespace,
    * this will return an empty list. Note that existence of the namespace is not checked.
    *
    * @param namespace the namespace to get artifact information about
-   * @return list of artifact info about every artifact in the given namespace
+   * @return unmodifiable list of artifact info about every artifact in the given namespace
    * @throws IOException if there was an exception reading the artifact information from the metastore
    */
-  public List<ArtifactInfo> getArtifacts(final Id.Namespace namespace) throws IOException {
-    return metaTable.executeUnchecked(new TransactionExecutor.Function<DatasetContext<Table>, List<ArtifactInfo>>() {
+  public List<ArtifactDetail> getArtifacts(final Id.Namespace namespace) throws IOException {
+    return metaTable.executeUnchecked(new TransactionExecutor.Function<DatasetContext<Table>, List<ArtifactDetail>>() {
       @Override
-      public List<ArtifactInfo> apply(DatasetContext<Table> context) throws Exception {
-        List<ArtifactInfo> archives = Lists.newArrayList();
+      public List<ArtifactDetail> apply(DatasetContext<Table> context) throws Exception {
+        List<ArtifactDetail> archives = Lists.newArrayList();
         Scanner scanner = context.get().scan(scanArtifacts(namespace));
         Row row;
         while ((row = scanner.next()) != null) {
           addArchivesToList(archives, row);
         }
-        return archives;
+        return Collections.unmodifiableList(archives);
       }
     });
   }
@@ -187,27 +144,31 @@ public class ArtifactStore {
    *
    * @param namespace the namespace to get artifacts from
    * @param artifactName the name of the artifact to get
-   * @return a list of information about all versions of the given artifact
+   * @return unmodifiable list of information about all versions of the given artifact
    * @throws ArtifactNotExistsException if no version of the given artifact exists
    * @throws IOException if there was an exception reading the artifact information from the metastore
    */
-  public List<ArtifactInfo> getArtifacts(final Id.Namespace namespace, final String artifactName)
+  public List<ArtifactDetail> getArtifacts(final Id.Namespace namespace, final String artifactName)
     throws ArtifactNotExistsException, IOException {
 
-    return metaTable.executeUnchecked(new TransactionExecutor.Function<DatasetContext<Table>, List<ArtifactInfo>>() {
-      @Override
-      public List<ArtifactInfo> apply(DatasetContext<Table> context) throws Exception {
-        List<ArtifactInfo> archives = Lists.newArrayList();
+    List<ArtifactDetail> artifacts = metaTable.executeUnchecked(
+      new TransactionExecutor.Function<DatasetContext<Table>, List<ArtifactDetail>>() {
+        @Override
+        public List<ArtifactDetail> apply(DatasetContext<Table> context) throws Exception {
+          List<ArtifactDetail> archives = Lists.newArrayList();
 
-        ArtifactKey artifactKey = new ArtifactKey(namespace, artifactName);
-        Row row = context.get().get(artifactKey.getRowKey());
-        if (row == null) {
-          throw new ArtifactNotExistsException(namespace, artifactName);
+          ArtifactKey artifactKey = new ArtifactKey(namespace, artifactName);
+          Row row = context.get().get(artifactKey.getRowKey());
+          if (!row.isEmpty()) {
+            addArchivesToList(archives, row);
+          }
+          return archives;
         }
-        addArchivesToList(archives, row);
-        return archives;
-      }
-    });
+      });
+    if (artifacts.isEmpty()) {
+      throw new ArtifactNotExistsException(namespace, artifactName);
+    }
+    return Collections.unmodifiableList(artifacts);
   }
 
   /**
@@ -218,12 +179,21 @@ public class ArtifactStore {
    * @throws ArtifactNotExistsException if the given artifact does not exist
    * @throws IOException if there was an exception reading the artifact information from the metastore
    */
-  public ArtifactInfo getArtifact(Id.Artifact artifactId) throws ArtifactNotExistsException, IOException {
-    ArtifactMeta meta = readMeta(artifactId);
-    if (meta == null) {
+  public ArtifactDetail getArtifact(final Id.Artifact artifactId) throws ArtifactNotExistsException, IOException {
+    ArtifactData data = metaTable.executeUnchecked(
+      new TransactionExecutor.Function<DatasetContext<Table>, ArtifactData>() {
+        @Override
+        public ArtifactData apply(DatasetContext<Table> context) throws Exception {
+          ArtifactCell artifactCell = new ArtifactCell(artifactId);
+          byte[] value = context.get().get(artifactCell.rowkey, artifactCell.column);
+          return value == null ? null : gson.fromJson(Bytes.toString(value), ArtifactData.class);
+        }
+      });
+
+    if (data == null) {
       throw new ArtifactNotExistsException(artifactId);
     }
-    return new ArtifactInfo(artifactId, getLocation(artifactId), meta);
+    return new ArtifactDetail(new ArtifactInfo(artifactId, data.location), data.meta);
   }
 
   /**
@@ -231,23 +201,23 @@ public class ArtifactStore {
    * in that artifact.
    *
    * @param namespace the namespace to look for plugins in
-   * @return a map of artifact id to plugin classes in the artifact for all plugin classes in the namespace.
+   * @return unmodifiable map of artifact info to plugin classes in the namespace.
    *         The map will never be null. If there are no plugin classes, an empty map will be returned.
    * @throws IOException if there was an exception reading metadata from the metastore
    */
-  public Map<Id.Artifact, List<PluginClass>> getPluginClasses(final Id.Namespace namespace) throws IOException {
+  public Map<ArtifactInfo, List<PluginClass>> getPluginClasses(final Id.Namespace namespace) throws IOException {
     return metaTable.executeUnchecked(
-      new TransactionExecutor.Function<DatasetContext<Table>, Map<Id.Artifact, List<PluginClass>>>() {
+      new TransactionExecutor.Function<DatasetContext<Table>, Map<ArtifactInfo, List<PluginClass>>>() {
         @Override
-        public Map<Id.Artifact, List<PluginClass>> apply(DatasetContext<Table> context) throws Exception {
-          Map<Id.Artifact, List<PluginClass>> result = Maps.newHashMap();
+        public Map<ArtifactInfo, List<PluginClass>> apply(DatasetContext<Table> context) throws Exception {
+          Map<ArtifactInfo, List<PluginClass>> result = Maps.newHashMap();
 
           Scanner scanner = context.get().scan(scanPlugins(namespace));
           Row row;
           while ((row = scanner.next()) != null) {
             addPluginsToMap(result, row);
           }
-          return result;
+          return Collections.unmodifiableMap(result);
         }
       });
   }
@@ -258,17 +228,17 @@ public class ArtifactStore {
    *
    * @param namespace the namespace to look for plugins in
    * @param type the type of plugin to look for
-   * @return a map of artifact id to plugin classes in the artifact for all plugin classes in the namespace.
+   * @return a map of artifact info to plugin classes for all plugin classes of the given type in the namespace.
    *         The map will never be null. If there are no plugin classes, an empty map will be returned.
    * @throws IOException if there was an exception reading metadata from the metastore
    */
-  public Map<Id.Artifact, List<PluginClass>> getPluginClasses(final Id.Namespace namespace,
-                                                              final String type) throws IOException {
+  public Map<ArtifactInfo, List<PluginClass>> getPluginClasses(final Id.Namespace namespace,
+                                                               final String type) throws IOException {
     return metaTable.executeUnchecked(
-      new TransactionExecutor.Function<DatasetContext<Table>, Map<Id.Artifact, List<PluginClass>>>() {
+      new TransactionExecutor.Function<DatasetContext<Table>, Map<ArtifactInfo, List<PluginClass>>>() {
         @Override
-        public Map<Id.Artifact, List<PluginClass>> apply(DatasetContext<Table> context) throws Exception {
-          Map<Id.Artifact, List<PluginClass>> result = Maps.newHashMap();
+        public Map<ArtifactInfo, List<PluginClass>> apply(DatasetContext<Table> context) throws Exception {
+          Map<ArtifactInfo, List<PluginClass>> result = Maps.newHashMap();
 
           Scanner scanner = context.get().scan(scanPlugins(namespace, type));
           Row row;
@@ -287,26 +257,144 @@ public class ArtifactStore {
    * @param namespace the namespace to look for plugins in
    * @param type the type of plugin to look for
    * @param name the name of the plugin to look for
-   * @return a map of artifact id to plugin classes in the artifact for all plugin classes in the namespace.
-   *         The map will never be null. If there are no plugin classes, an empty map will be returned.
+   * @return a map of artifact info to plugin classes of the given type and name in the namespace.
+   *         The map will never be null, and will never be empty.
+   * @throws PluginNotExistsException if no plugin with the given type and name exists in the namespace
    * @throws IOException if there was an exception reading metadata from the metastore
    */
-  public Map<Id.Artifact, List<PluginClass>> getPluginClasses(final Id.Namespace namespace, final String type,
-                                                              final String name) throws IOException {
-    return metaTable.executeUnchecked(
-      new TransactionExecutor.Function<DatasetContext<Table>, Map<Id.Artifact, List<PluginClass>>>() {
+  public Map<ArtifactInfo, List<PluginClass>> getPluginClasses(
+    final Id.Namespace namespace, final String type, final String name) throws IOException, PluginNotExistsException {
+
+    Map<ArtifactInfo, List<PluginClass>> plugins = metaTable.executeUnchecked(
+      new TransactionExecutor.Function<DatasetContext<Table>, Map<ArtifactInfo, List<PluginClass>>>() {
         @Override
-        public Map<Id.Artifact, List<PluginClass>> apply(DatasetContext<Table> context) throws Exception {
-          Map<Id.Artifact, List<PluginClass>> result = Maps.newHashMap();
+        public Map<ArtifactInfo, List<PluginClass>> apply(DatasetContext<Table> context) throws Exception {
+          Map<ArtifactInfo, List<PluginClass>> result = Maps.newHashMap();
 
           PluginKey pluginKey = new PluginKey(namespace, type, name);
           Row row = context.get().get(pluginKey.getRowKey());
-          if (row != null) {
+          if (!row.isEmpty()) {
             addPluginsToMap(result, row);
           }
           return result;
         }
       });
+    if (plugins.isEmpty()) {
+      throw new PluginNotExistsException(namespace, type, name);
+    }
+    return plugins;
+  }
+
+  /**
+   * Get the plugin class for a specific plugin type, name, and belonging to a specific artifact.
+   * Results are returned as a map from artifact to plugins in that artifact.
+   *
+   * @param artifactId the id of the artifact the plugin is from
+   * @param type the type of plugin to look for
+   * @param name the name of the plugin to look for
+   * @return a map entry containing the artifact info and plugin class details. Never null
+   * @throws PluginNotExistsException if no such plugin exists
+   * @throws IOException if there was an exception reading metadata from the metastore
+   */
+  public Map.Entry<ArtifactInfo, PluginClass> getPluginClass(
+    final Id.Artifact artifactId, final String type, final String name) throws IOException, PluginNotExistsException {
+    Map.Entry<ArtifactInfo, PluginClass> plugin = metaTable.executeUnchecked(
+      new TransactionExecutor.Function<DatasetContext<Table>, Map.Entry<ArtifactInfo, PluginClass>>() {
+        @Override
+        public Map.Entry<ArtifactInfo, PluginClass> apply(DatasetContext<Table> context) throws Exception {
+          PluginKey pluginKey = new PluginKey(artifactId.getNamespace(), type, name);
+          ArtifactColumn column = new ArtifactColumn(artifactId.getVersion().getVersion(), artifactId.getName());
+          byte[] value = context.get().get(pluginKey.getRowKey(), column.getColumn());
+          if (value == null) {
+            return null;
+          }
+          PluginData pluginData = gson.fromJson(Bytes.toString(value), PluginData.class);
+          return Maps.immutableEntry(new ArtifactInfo(artifactId, pluginData.artifactLocation), pluginData.pluginClass);
+        }
+      });
+    if (plugin == null) {
+      throw new PluginNotExistsException(artifactId, type, name);
+    }
+    return plugin;
+  }
+
+  /**
+   * Write the artifact and its metadata to the store. Once added, artifacts cannot be changed unless they are
+   * snapshot versions.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param artifactMeta the metadata for the artifact
+   * @param artifactContents the contents of the artifact
+   * @throws WriteConflictException if the artifact is already currently being written
+   * @throws ArtifactAlreadyExistsException if a non-snapshot version of the artifact already exists
+   * @throws IOException if there was an exception persisting the artifact contents to the filesystem,
+   *                     of persisting the artifact metadata to the metastore
+   */
+  public void write(final Id.Artifact artifactId, final ArtifactMeta artifactMeta, final InputStream artifactContents)
+    throws WriteConflictException, ArtifactAlreadyExistsException, IOException {
+
+    // if we're not a snapshot version, check that the artifact doesn't exist already.
+    final ArtifactCell artifactCell = new ArtifactCell(artifactId);
+    if (!artifactId.getVersion().isSnapshot()) {
+      byte[] existingMeta = metaTable.executeUnchecked(
+        new TransactionExecutor.Function<DatasetContext<Table>, byte[]>() {
+          @Override
+          public byte[] apply(DatasetContext<Table> context) throws Exception {
+            Table table = context.get();
+            return table.get(artifactCell.rowkey, artifactCell.column);
+          }
+        });
+
+      if (existingMeta != null) {
+        throw new ArtifactAlreadyExistsException(artifactId);
+      }
+    }
+
+    Location fileDirectory =
+      locationFactory.get(artifactId.getNamespace(), ARTIFACTS_PATH).append(artifactId.getName());
+    Locations.mkdirsIfNotExists(fileDirectory);
+
+    // write the file contents
+    final Location destination = fileDirectory.append(artifactId.getVersion().getVersion()).getTempFile(".jar");
+    ByteStreams.copy(artifactContents, destination.getOutputStream());
+
+    // now try and write the metadata for the artifact
+    try {
+      boolean written = metaTable.execute(new TransactionExecutor.Function<DatasetContext<Table>, Boolean>() {
+
+        @Override
+        public Boolean apply(DatasetContext<Table> context) throws Exception {
+          Table table = context.get();
+
+          // we have to check that the metadata doesn't exist again since somebody else may have written
+          // the artifact while we were copying the artifact to the filesystem.
+          byte[] existingMetaBytes = table.get(artifactCell.rowkey, artifactCell.column);
+          boolean isSnapshot = artifactId.getVersion().isSnapshot();
+          if (existingMetaBytes != null && !isSnapshot) {
+            // non-snapshot artifacts are immutable. If there is existing metadata, stop here.
+            return false;
+          }
+
+          // write artifact metadata
+          ArtifactData data = new ArtifactData(destination, artifactMeta);
+          writeMeta(table, artifactId, data);
+          if (existingMetaBytes != null) {
+            cleanupOldSnapshot(table, artifactId, existingMetaBytes, data);
+          }
+          return true;
+        }
+      });
+
+      if (!written) {
+        throw new ArtifactAlreadyExistsException(artifactId);
+      }
+    } catch (TransactionConflictException e) {
+      destination.delete();
+      throw new WriteConflictException(artifactId);
+    } catch (TransactionFailureException | InterruptedException e) {
+      destination.delete();
+      throw new IOException(e);
+    }
   }
 
   /**
@@ -319,16 +407,16 @@ public class ArtifactStore {
   @VisibleForTesting
   void clear(Id.Namespace namespace) throws IOException {
     locationFactory.get(namespace, ARTIFACTS_PATH).delete();
-    for (final ArtifactInfo artifactInfo : getArtifacts(namespace)) {
+    for (final ArtifactDetail artifactDetail : getArtifacts(namespace)) {
 
       metaTable.executeUnchecked(new TransactionExecutor.Function<DatasetContext<Table>, Void>() {
         @Override
         public Void apply(DatasetContext<Table> context) throws Exception {
-          final Id.Artifact artifactId = artifactInfo.getId();
+          final Id.Artifact artifactId = artifactDetail.getInfo().getId();
           ArtifactKey artifactKey = new ArtifactKey(artifactId.getNamespace(), artifactId.getName());
           context.get().delete(artifactKey.getRowKey());
 
-          for (PluginClass pluginClass : artifactInfo.getMeta().getPlugins()) {
+          for (PluginClass pluginClass : artifactDetail.getMeta().getPlugins()) {
             PluginKey pluginKey =
               new PluginKey(artifactId.getNamespace(), pluginClass.getType(), pluginClass.getName());
             context.get().delete(pluginKey.getRowKey());
@@ -339,82 +427,78 @@ public class ArtifactStore {
     }
   }
 
+  // write a new artifact snapshot and clean up the old snapshot data
+  private void writeMeta(Table table, Id.Artifact artifactId, ArtifactData data) throws IOException {
+    ArtifactCell artifactCell = new ArtifactCell(artifactId);
+    table.put(artifactCell.rowkey, artifactCell.column, Bytes.toBytes(gson.toJson(data)));
 
-  private void writeMeta(final Id.Artifact artifactId, final ArtifactMeta artifactMeta) throws IOException {
-    metaTable.executeUnchecked(new TransactionExecutor.Function<DatasetContext<Table>, Object>() {
+    // column for plugin meta and app meta. {artifact-name}:{artifact-version}
+    // does not need to contain namespace because namespace is in the rowkey
+    ArtifactColumn artifactColumn =
+      new ArtifactColumn(artifactId.getVersion().getVersion(), artifactId.getName());
 
-      @Override
-      public Void apply(DatasetContext<Table> context) throws Exception {
-        Table table = context.get();
+    // write pluginClass metadata
+    for (PluginClass pluginClass : data.meta.getPlugins()) {
+      // p:{namespace}:{type}:{name}
+      PluginKey pluginKey =
+        new PluginKey(artifactId.getNamespace(), pluginClass.getType(), pluginClass.getName());
+      byte[] pluginDataBytes = Bytes.toBytes(gson.toJson(new PluginData(pluginClass, data.location)));
+      table.put(pluginKey.getRowKey(), artifactColumn.getColumn(), pluginDataBytes);
+    }
 
-        // write artifact metadata
-        ArtifactCell artifactCell = new ArtifactCell(artifactId);
-        byte[] artifactMetaBytes = Bytes.toBytes(GSON.toJson(artifactMeta));
-        table.put(artifactCell.rowkey, artifactCell.column, artifactMetaBytes);
-
-        // column for plugin meta and app meta. {artifact-name}:{artifact-version}
-        // does not need to contain namespace because namespace is in the rowkey
-        ArtifactColumn artifactColumn = new ArtifactColumn(artifactId.getVersion(), artifactId.getName());
-
-        // write pluginClass metadata
-        for (PluginClass pluginClass : artifactMeta.getPlugins()) {
-          // p:{namespace}:{type}:{name}
-          PluginKey pluginKey = new PluginKey(artifactId.getNamespace(), pluginClass.getType(), pluginClass.getName());
-          byte[] pluginClassBytes = Bytes.toBytes(GSON.toJson(pluginClass));
-          table.put(pluginKey.getRowKey(), artifactColumn.getColumn(), pluginClassBytes);
-        }
-
-        // TODO: write appClass metadata
-        return null;
-      }
-    });
+    // TODO: write appClass metadata
   }
 
-  private Location getLocation(Id.Artifact artifactId) throws IOException {
-    return locationFactory.get(artifactId.getNamespace(), ARTIFACTS_PATH)
-      .append(artifactId.getName())
-      .append(artifactId.getVersion());
+  // if we are overwriting a previous snapshot, need to clean up the old snapshot data
+  // this means cleaning up the old jar, and performing a diff of the metadata to remove plugins
+  // that used to be in the old jar but are not in the current jar
+  private void cleanupOldSnapshot(Table table, Id.Artifact artifactId,
+                                  byte[] oldData, ArtifactData newData) throws IOException {
+    ArtifactData oldMeta = gson.fromJson(Bytes.toString(oldData), ArtifactData.class);
+
+    // delete old plugins that were removed
+    Set<PluginClass> oldPlugins = Sets.newHashSet(oldMeta.meta.getPlugins());
+    Set<PluginClass> currentPlugins = Sets.newHashSet(newData.meta.getPlugins());
+    Set<PluginClass> pluginsToRemove = Sets.difference(oldPlugins, currentPlugins);
+    ArtifactColumn artifactColumn = new ArtifactColumn(artifactId.getVersion().getVersion(), artifactId.getName());
+    for (PluginClass pluginClass : pluginsToRemove) {
+      PluginKey pluginKey = new PluginKey(artifactId.getNamespace(), pluginClass.getType(), pluginClass.getName());
+      table.delete(pluginKey.getRowKey(), artifactColumn.getColumn());
+    }
+
+    // delete the old jar file
+    oldMeta.location.delete();
   }
 
-  private ArtifactMeta readMeta(final Id.Artifact artifactId) throws IOException {
-    return metaTable.executeUnchecked(new TransactionExecutor.Function<DatasetContext<Table>, ArtifactMeta>() {
-      @Override
-      public ArtifactMeta apply(DatasetContext<Table> context) throws Exception {
-        byte[] rowkey = new ArtifactKey(artifactId.getNamespace(), artifactId.getName()).getRowKey();
-        byte[] column = Bytes.toBytes(artifactId.getVersion());
-        byte[] value = context.get().get(rowkey, column);
-        return value == null ? null : GSON.fromJson(Bytes.toString(value), ArtifactMeta.class);
-      }
-    });
-  }
-
-  private void addArchivesToList(List<ArtifactInfo> archives, Row row) throws IOException {
+  private void addArchivesToList(List<ArtifactDetail> archives, Row row) throws IOException {
     ArtifactKey artifactKey = ArtifactKey.parse(row.getRow());
 
     for (Map.Entry<byte[], byte[]> columnVal : row.getColumns().entrySet()) {
       String version = Bytes.toString(columnVal.getKey());
-      ArtifactMeta meta = GSON.fromJson(Bytes.toString(columnVal.getValue()), ArtifactMeta.class);
+      ArtifactData data = gson.fromJson(Bytes.toString(columnVal.getValue()), ArtifactData.class);
       Id.Artifact artifactId = Id.Artifact.from(artifactKey.namespace, artifactKey.name, version);
-      archives.add(new ArtifactInfo(artifactId, getLocation(artifactId), meta));
+      archives.add(new ArtifactDetail(new ArtifactInfo(artifactId, data.location), data.meta));
     }
   }
 
   // given a row representing plugin metadata, add all plugins in the row to the given map
-  private void addPluginsToMap(Map<Id.Artifact, List<PluginClass>> map, Row row) throws IOException {
+  private void addPluginsToMap(Map<ArtifactInfo, List<PluginClass>> map, Row row) throws IOException {
     // plugin key contains namespace, plugin type, and plugin name
     PluginKey pluginKey = PluginKey.parse(row.getRow());
 
     // column is the artifact name and version, value is the serialized PluginClass
     for (Map.Entry<byte[], byte[]> column : row.getColumns().entrySet()) {
       ArtifactColumn artifactColumn = ArtifactColumn.parse(column.getKey());
+      PluginData pluginData = gson.fromJson(Bytes.toString(column.getValue()), PluginData.class);
+
       Id.Artifact artifactId =
         Id.Artifact.from(pluginKey.namespace, artifactColumn.name, artifactColumn.version);
+      ArtifactInfo artifactInfo = new ArtifactInfo(artifactId, pluginData.artifactLocation);
 
-      if (!map.containsKey(artifactId)) {
-        map.put(artifactId, Lists.<PluginClass>newArrayList());
+      if (!map.containsKey(artifactInfo)) {
+        map.put(artifactInfo, Lists.<PluginClass>newArrayList());
       }
-      PluginClass pluginClass = GSON.fromJson(Bytes.toString(column.getValue()), PluginClass.class);
-      map.get(artifactId).add(pluginClass);
+      map.get(artifactInfo).add(pluginData.pluginClass);
     }
   }
 
@@ -510,7 +594,29 @@ public class ArtifactStore {
 
     private ArtifactCell(Id.Artifact artifactId) {
       rowkey = new ArtifactKey(artifactId.getNamespace(), artifactId.getName()).getRowKey();
-      column = Bytes.toBytes(artifactId.getVersion());
+      column = Bytes.toBytes(artifactId.getVersion().getVersion());
+    }
+  }
+
+  // Data that will be stored for an artifact. Same as ArtifactDetail, expected without the id since that is redundant.
+  private static class ArtifactData {
+    private final Location location;
+    private final ArtifactMeta meta;
+
+    public ArtifactData(Location location, ArtifactMeta meta) {
+      this.location = location;
+      this.meta = meta;
+    }
+  }
+
+  // Data that will be stored for a plugin.
+  private static class PluginData {
+    private final PluginClass pluginClass;
+    private final Location artifactLocation;
+
+    public PluginData(PluginClass pluginClass, Location artifactLocation) {
+      this.pluginClass = pluginClass;
+      this.artifactLocation = artifactLocation;
     }
   }
 }
