@@ -97,13 +97,10 @@ angular.module(PKG.name+'.feature.dashboard')
     };
 
     angular.forEach($scope.currentBoard.columns, function (widget) {
-      console.log('TEST', index);
       opshelper.startPolling(widget);
     });
 
     $scope.$on('$destroy', function() {
-      console.log('DESTROY');
-
       angular.forEach($scope.currentBoard.columns, function (widget) {
         opshelper.stopPolling(widget);
       });
@@ -111,53 +108,53 @@ angular.module(PKG.name+'.feature.dashboard')
 
   })
 
-  // .controller('OpsAppsCtrl',
-  // function ($scope, $state, myHelpers, MyDataSource) {
+  .controller('OpsAppsCtrl',
+  function ($scope, $state, myHelpers, MyDataSource) {
 
-  //   var dataSrc = new MyDataSource($scope);
+    var dataSrc = new MyDataSource($scope);
 
-  //   $scope.apps = [];
+    $scope.apps = [];
 
-  //   dataSrc
-  //     .request({
-  //       _cdapNsPath: '/apps'
-  //     },
-  //     function (apps) {
-  //       $scope.apps = apps;
+    dataSrc
+      .request({
+        _cdapNsPath: '/apps'
+      },
+      function (apps) {
+        $scope.apps = apps;
 
-  //       var m = ['vcores', 'containers', 'memory'];
+        var m = ['vcores', 'containers', 'memory'];
 
-  //       for (var i = 0; i < m.length; i++) {
+        for (var i = 0; i < m.length; i++) {
 
-  //         dataSrc
-  //           .poll({
-  //             _cdapPath: '/metrics/query' +
-  //               '?tag=namespace:system' +
-  //               '&metric=system.resources.used.' +
-  //               m[i] + '&groupBy=app',
-  //             method: 'POST'
-  //           }, setMetric);
-  //       }
+          dataSrc
+            .poll({
+              _cdapPath: '/metrics/query' +
+                '?tag=namespace:system' +
+                '&metric=system.resources.used.' +
+                m[i] + '&groupBy=app',
+              method: 'POST'
+            }, setMetric);
+        }
 
-  //     });
+      });
 
-  //   function setMetric(r) {
+    function setMetric(r) {
 
-  //     angular.forEach($scope.apps, function (app) {
-  //       angular.forEach(r.series, function (s) {
-  //         if(app.id === s.grouping.app) {
-  //           myHelpers.deepSet(
-  //             app,
-  //             'metric.' + s.metricName.split('.').pop(),
-  //             s.data[0].value
-  //           );
-  //         }
-  //       });
-  //     });
+      angular.forEach($scope.apps, function (app) {
+        angular.forEach(r.series, function (s) {
+          if(app.id === s.grouping.app) {
+            myHelpers.deepSet(
+              app,
+              'metric.' + s.metricName.split('.').pop(),
+              s.data[0].value
+            );
+          }
+        });
+      });
 
-  //   }
+    }
 
-  // })
+  })
 
 /* ------------------------------------------------------ */
 
