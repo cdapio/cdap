@@ -22,6 +22,7 @@ import co.cask.cdap.api.worker.WorkerConfigurer;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
+import co.cask.cdap.templates.DefaultAdapterConfigurer;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -35,7 +36,7 @@ import java.util.Set;
 /**
  * Default implementation of the {@link WorkerConfigurer}.
  */
-public class DefaultWorkerConfigurer implements WorkerConfigurer {
+public class DefaultWorkerConfigurer extends DefaultAdapterConfigurer implements WorkerConfigurer {
 
   private final String className;
   private final Map<String, String> propertyFields;
