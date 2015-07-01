@@ -93,62 +93,77 @@ angular.module(PKG.name+'.feature.dashboard')
           $element.height = (resizedHeight < 300 ? 200: resizedHeight - 70);
           $element.width = (resizedWidth < 450? 370: resizedWidth - 32);
         } // optional callback fired when item is finished resizing
-     }
+      }
     };
 
+    angular.forEach($scope.currentBoard.columns, function (widget) {
+      console.log('TEST', index);
+      opshelper.startPolling(widget);
+    });
+
+    $scope.$on('$destroy', function() {
+      console.log('DESTROY');
+
+      angular.forEach($scope.currentBoard.columns, function (widget) {
+        opshelper.stopPolling(widget);
+      });
+    });
+
   })
 
-  .controller('OpsAppsCtrl',
-  function ($scope, $state, myHelpers, MyDataSource) {
+  // .controller('OpsAppsCtrl',
+  // function ($scope, $state, myHelpers, MyDataSource) {
 
-    var dataSrc = new MyDataSource($scope);
+  //   var dataSrc = new MyDataSource($scope);
 
-    $scope.apps = [];
+  //   $scope.apps = [];
 
-    dataSrc
-      .request({
-        _cdapNsPath: '/apps'
-      },
-      function (apps) {
-        $scope.apps = apps;
+  //   dataSrc
+  //     .request({
+  //       _cdapNsPath: '/apps'
+  //     },
+  //     function (apps) {
+  //       $scope.apps = apps;
 
-        var m = ['vcores', 'containers', 'memory'];
+  //       var m = ['vcores', 'containers', 'memory'];
 
-        for (var i = 0; i < m.length; i++) {
+  //       for (var i = 0; i < m.length; i++) {
 
-          dataSrc
-            .poll({
-              _cdapPath: '/metrics/query' +
-                '?tag=namespace:system' +
-                '&metric=system.resources.used.' +
-                m[i] + '&groupBy=app',
-              method: 'POST'
-            }, setMetric);
-        }
+  //         dataSrc
+  //           .poll({
+  //             _cdapPath: '/metrics/query' +
+  //               '?tag=namespace:system' +
+  //               '&metric=system.resources.used.' +
+  //               m[i] + '&groupBy=app',
+  //             method: 'POST'
+  //           }, setMetric);
+  //       }
 
-      });
+  //     });
 
-    function setMetric(r) {
+  //   function setMetric(r) {
 
-      angular.forEach($scope.apps, function (app) {
-        angular.forEach(r.series, function (s) {
-          if(app.id === s.grouping.app) {
-            myHelpers.deepSet(
-              app,
-              'metric.' + s.metricName.split('.').pop(),
-              s.data[0].value
-            );
-          }
-        });
-      });
+  //     angular.forEach($scope.apps, function (app) {
+  //       angular.forEach(r.series, function (s) {
+  //         if(app.id === s.grouping.app) {
+  //           myHelpers.deepSet(
+  //             app,
+  //             'metric.' + s.metricName.split('.').pop(),
+  //             s.data[0].value
+  //           );
+  //         }
+  //       });
+  //     });
 
-    }
+  //   }
 
-  })
+  // })
 
 /* ------------------------------------------------------ */
 
-  .factory('opshelper', function (Widget) {
+  .factory('opshelper', function (Widget, MyDataSource, MyMetricsQueryHelper, MyChartHelpers) {
+    var dataSrc = new MyDataSource();
+
     function createWidget(title, context, metricNames, type) {
       return new Widget({
         title: title,
@@ -178,8 +193,46 @@ angular.module(PKG.name+'.feature.dashboard')
       return {title : 'System metrics', columns : widgets};
     }
 
+    function startPolling (widget) {
+      dataSrc.poll({
+        _cdapPath: '/metrics/query',
+        method: 'POST',
+        body: MyMetricsQueryHelper.constructQuery(
+          'qid',
+          MyMetricsQueryHelper.contextToTags(widget.metric.context),
+          widget.metric
+        )
+      }, function (res) {
+        var processedData = MyChartHelpers.processData(
+          res,
+          'qid',
+          widget.metric.names,
+          widget.metric.resolution,
+          widget.settings.aggregate
+        );
+
+        processedData = MyChartHelpers.c3ifyData(processedData, widget.metric, widget.metricAlias);
+        var data = {
+          x: 'x',
+          columns: processedData.columns,
+          keys: {
+            x: 'x'
+          }
+        };
+        widget.formattedData = data;
+
+        widget.pollId = res.__pollId__;
+      });
+    }
+
+    function stopPolling (widget) {
+      dataSrc.stopPoll(widget.pollId);
+    }
+
     return {
-      createBoardFromPanels: createBoardFromPanels
+      createBoardFromPanels: createBoardFromPanels,
+      startPolling: startPolling,
+      stopPolling: stopPolling
     };
   })
 

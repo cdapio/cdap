@@ -106,7 +106,6 @@ angular.module(PKG.name + '.feature.flows')
       };
 
       input.max = Math.max.apply(Math, format.slice(1));
-      console.log('max', input.max);
 
     }
 
