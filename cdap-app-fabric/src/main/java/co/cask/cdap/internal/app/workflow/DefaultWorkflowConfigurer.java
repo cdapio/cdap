@@ -18,10 +18,9 @@ package co.cask.cdap.internal.app.workflow;
 
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowAction;
-import co.cask.cdap.api.workflow.WorkflowActionNode;
+import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowConditionConfigurer;
 import co.cask.cdap.api.workflow.WorkflowConditionNode;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
@@ -30,6 +29,8 @@ import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
@@ -72,17 +73,36 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
 
   @Override
   public void addMapReduce(String mapReduce) {
-    nodes.add(WorkflowNodeCreator.createWorkflowActionNode(mapReduce, SchedulableProgramType.MAPREDUCE));
+    nodes.add(WorkflowNodeCreator.createWorkflowActionNode(mapReduce, mapReduce, SchedulableProgramType.MAPREDUCE));
+  }
+
+  @Override
+  public void addMapReduce(String uniqueName, String mapReduce) {
+    nodes.add(WorkflowNodeCreator.createWorkflowActionNode(uniqueName, mapReduce, SchedulableProgramType.MAPREDUCE));
   }
 
   @Override
   public void addSpark(String spark) {
-    nodes.add(WorkflowNodeCreator.createWorkflowActionNode(spark, SchedulableProgramType.SPARK));
+    nodes.add(WorkflowNodeCreator.createWorkflowActionNode(spark, spark, SchedulableProgramType.SPARK));
+  }
+
+  @Override
+  public void addSpark(String uniqueName, String spark) {
+    nodes.add(WorkflowNodeCreator.createWorkflowActionNode(uniqueName, spark, SchedulableProgramType.SPARK));
   }
 
   @Override
   public void addAction(WorkflowAction action) {
-    nodes.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action));
+    Preconditions.checkArgument(action != null, "WorkflowAction is null.");
+    WorkflowActionSpecification spec = new DefaultWorkflowActionSpecification(action);
+    nodes.add(WorkflowNodeCreator.createWorkflowCustomActionNode(spec.getName(), spec));
+  }
+
+  @Override
+  public void addAction(String uniqueName, WorkflowAction action) {
+    Preconditions.checkArgument(action != null, "WorkflowAction is null.");
+    WorkflowActionSpecification spec = new DefaultWorkflowActionSpecification(action);
+    nodes.add(WorkflowNodeCreator.createWorkflowCustomActionNode(uniqueName, spec));
   }
 
   @Override
@@ -92,7 +112,14 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
 
   @Override
   public WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<WorkflowContext> predicate) {
-    return new DefaultWorkflowConditionConfigurer<>(this, predicate.getClass().getName());
+    return new DefaultWorkflowConditionConfigurer<>(predicate.getClass().getSimpleName(), this,
+                                                    predicate.getClass().getName());
+  }
+
+  @Override
+  public WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(String uniqueName,
+                                                                             Predicate<WorkflowContext> predicate) {
+    return new DefaultWorkflowConditionConfigurer<>(uniqueName, this, predicate.getClass().getName());
   }
 
   public WorkflowSpecification createSpecification() {
@@ -112,8 +139,7 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
     WorkflowNode nodeWithId = null;
     switch (node.getType()) {
       case ACTION:
-        nodeWithId = createActionNodeWithId(node);
-        break;
+        return node;
       case FORK:
         nodeWithId = createForkNodeWithId(node);
         break;
@@ -124,18 +150,6 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
         break;
     }
     return nodeWithId;
-  }
-
-  private WorkflowNode createActionNodeWithId(WorkflowNode node) {
-    WorkflowActionNode actionNode = (WorkflowActionNode) node;
-    ScheduleProgramInfo program = actionNode.getProgram();
-    if (program.getProgramType() == SchedulableProgramType.CUSTOM_ACTION) {
-      // TODO [CDAP-2710] This method will not required when we assign nodeId to the unique node name
-      return new WorkflowActionNode(actionNode.getProgram().getProgramName(), actionNode.getActionSpecification());
-    } else {
-      // TODO [CDAP-2710] This method will not required when we assign nodeId to the unique node name
-      return new WorkflowActionNode(actionNode.getProgram().getProgramName(), program);
-    }
   }
 
   private WorkflowNode createForkNodeWithId(WorkflowNode node) {
@@ -150,7 +164,7 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
   }
 
   private WorkflowNode createConditionNodeWithId(WorkflowNode node) {
-    String conditionNodeId = Integer.toString(nodeIdentifier++);
+    String conditionNodeId = node.getNodeId();
     WorkflowConditionNode conditionNode = (WorkflowConditionNode) node;
     List<WorkflowNode> ifbranch = Lists.newArrayList();
     List<WorkflowNode> elsebranch = Lists.newArrayList();
@@ -166,8 +180,8 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
   }
 
   @Override
-  public void addWorkflowConditionNode(String predicateClassName, List<WorkflowNode> ifBranch,
+  public void addWorkflowConditionNode(String uniqueName, String predicateClassName, List<WorkflowNode> ifBranch,
                                        List<WorkflowNode> elseBranch) {
-    nodes.add(new WorkflowConditionNode(null, predicateClassName, ifBranch, elseBranch));
+    nodes.add(new WorkflowConditionNode(uniqueName, predicateClassName, ifBranch, elseBranch));
   }
 }

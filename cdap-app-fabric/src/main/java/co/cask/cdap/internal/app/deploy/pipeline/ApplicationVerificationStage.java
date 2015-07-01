@@ -50,10 +50,12 @@ import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This {@link co.cask.cdap.pipeline.Stage} is responsible for verifying
@@ -186,24 +188,22 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
   }
 
   private void verifyWorkflowSpecifications(ApplicationSpecification appSpec, WorkflowSpecification workflowSpec) {
-    List<WorkflowNode> nodes = workflowSpec.getNodes();
-    for (WorkflowNode node : nodes) {
-      verifyWorkflowNode(appSpec, workflowSpec, node);
-    }
+    Set<String> nodeNames = Sets.newHashSet();
+    verifyWorkflowNodeList(appSpec, workflowSpec, workflowSpec.getNodes(), nodeNames);
   }
 
   private void verifyWorkflowNode(ApplicationSpecification appSpec, WorkflowSpecification workflowSpec,
-                                  WorkflowNode node) {
+                                  WorkflowNode node, Set<String> nodeNames) {
     WorkflowNodeType nodeType = node.getType();
     switch (nodeType) {
       case ACTION:
         verifyWorkflowAction(appSpec, node);
         break;
       case FORK:
-        verifyWorkflowFork(appSpec, workflowSpec, node);
+        verifyWorkflowFork(appSpec, workflowSpec, node, nodeNames);
         break;
       case CONDITION:
-        verifyWorkflowCondition(appSpec, workflowSpec, node);
+        verifyWorkflowCondition(appSpec, workflowSpec, node, nodeNames);
         break;
       default:
         break;
@@ -211,27 +211,31 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
   }
 
   private void verifyWorkflowFork(ApplicationSpecification appSpec, WorkflowSpecification workflowSpec,
-                                  WorkflowNode node) {
+                                  WorkflowNode node, Set<String> nodeNames) {
     WorkflowForkNode forkNode = (WorkflowForkNode) node;
     Preconditions.checkNotNull(forkNode.getBranches(), String.format("Fork is added in the Workflow '%s' without" +
                                                                        " any branches", workflowSpec.getName()));
 
     for (List<WorkflowNode> branch : forkNode.getBranches()) {
-      verifyWorkflowBranch(appSpec, workflowSpec, branch);
+      verifyWorkflowNodeList(appSpec, workflowSpec, branch, nodeNames);
     }
   }
 
   private void verifyWorkflowCondition(ApplicationSpecification appSpec, WorkflowSpecification workflowSpec,
-                                       WorkflowNode node) {
+                                       WorkflowNode node, Set<String> nodeNames) {
     WorkflowConditionNode condition = (WorkflowConditionNode) node;
-    verifyWorkflowBranch(appSpec, workflowSpec, condition.getIfBranch());
-    verifyWorkflowBranch(appSpec, workflowSpec, condition.getElseBranch());
+    verifyWorkflowNodeList(appSpec, workflowSpec, condition.getIfBranch(), nodeNames);
+    verifyWorkflowNodeList(appSpec, workflowSpec, condition.getElseBranch(), nodeNames);
   }
 
-  private void verifyWorkflowBranch(ApplicationSpecification appSpec, WorkflowSpecification workflowSpec,
-                                    List<WorkflowNode> branch) {
-    for (WorkflowNode n : branch) {
-      verifyWorkflowNode(appSpec, workflowSpec, n);
+  private void verifyWorkflowNodeList(ApplicationSpecification appSpec, WorkflowSpecification workflowSpec,
+                                    List<WorkflowNode> nodeList, Set<String> nodeNames) {
+    for (WorkflowNode n : nodeList) {
+      if (nodeNames.contains(n.getNodeId())) {
+        throw new RuntimeException(String.format("Node with the name '%s' added multiple times.", n.getNodeId()));
+      }
+      nodeNames.add(n.getNodeId());
+      verifyWorkflowNode(appSpec, workflowSpec, n, nodeNames);
     }
   }
 

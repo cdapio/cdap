@@ -27,10 +27,11 @@ import java.util.List;
 public interface WorkflowConditionAdder {
   /**
    * Adds a {@link WorkflowConditionNode} to the Workflow.
+   * @param uniqueName the uniqueName associated with the {@link WorkflowNode}
    * @param predicateClassName the name of the predicate class associated with this {@link WorkflowConditionNode}
    * @param ifBranch the branch that is executed when the predicate evaluates to the true
    * @param elseBranch the branch that is executed when the predicate evaluates to the false
    */
-  void addWorkflowConditionNode(String predicateClassName, List<WorkflowNode> ifBranch,
+  void addWorkflowConditionNode(String uniqueName, String predicateClassName, List<WorkflowNode> ifBranch,
                                 List<WorkflowNode> elseBranch);
 }
