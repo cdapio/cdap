@@ -28,9 +28,9 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnableSpecification;
-import org.apache.twill.common.ServiceListenerAdapter;
-import org.apache.twill.common.Services;
 import org.apache.twill.common.Threads;
+import org.apache.twill.internal.ServiceListenerAdapter;
+import org.apache.twill.internal.Services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -40,7 +40,6 @@ import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
-import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
@@ -53,7 +52,6 @@ import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.logging.PrinterLogHandler;
-import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Threads;
 import org.apache.twill.yarn.YarnSecureStore;
 import org.slf4j.Logger;
@@ -295,31 +293,17 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
                                              final Program program, final File tempDir) {
 
     final AtomicBoolean deleted = new AtomicBoolean(false);
-    controller.addListener(new ServiceListenerAdapter() {
-      @Override
-      public void running() {
-        cleanup();
-      }
+    Runnable cleanup = new Runnable() {
 
-      @Override
-      public void terminated(Service.State from) {
-        cleanup();
-      }
-
-      @Override
-      public void failed(Service.State from, Throwable failure) {
-        cleanup();
-      }
-
-      private void cleanup() {
-        if (!deleted.compareAndSet(false, true)) {
-          return;
-        }
-        LOG.debug("Cleanup tmp files for {}: {}", program.getId(), tempDir);
-        Closeables.closeQuietly(program);
-        deleteDirectory(tempDir);
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
+      public void run() {
+          if (!deleted.compareAndSet(false, true)) {
+            return;
+          }
+          LOG.debug("Cleanup tmp files for {}: {}", program.getId(), tempDir);
+          deleteDirectory(tempDir);
+    }};
+    controller.onRunning(cleanup, Threads.SAME_THREAD_EXECUTOR);
+    controller.onTerminated(cleanup, Threads.SAME_THREAD_EXECUTOR);
     return controller;
   }
 }
