@@ -26,7 +26,8 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.utils.ApplicationBundler;
-import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
+import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
+import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -72,12 +73,9 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
   private final LoadingCache<Id.Namespace, DatasetServiceClient> clientCache;
   private final DatasetDefinitionRegistryFactory registryFactory;
-  private final DatasetTypeClassLoaderFactory typeLoader;
-
   @Inject
   public RemoteDatasetFramework(final DiscoveryServiceClient discoveryClient,
-                                DatasetDefinitionRegistryFactory registryFactory,
-                                DatasetTypeClassLoaderFactory typeLoader) {
+                                DatasetDefinitionRegistryFactory registryFactory) {
     this.clientCache = CacheBuilder.newBuilder().build(new CacheLoader<Id.Namespace, DatasetServiceClient>() {
       @Override
       public DatasetServiceClient load(Id.Namespace namespace) throws Exception {
@@ -85,7 +83,6 @@ public class RemoteDatasetFramework implements DatasetFramework {
       }
     });
     this.registryFactory = registryFactory;
-    this.typeLoader = typeLoader;
   }
 
   @Override
@@ -186,7 +183,8 @@ public class RemoteDatasetFramework implements DatasetFramework {
       return null;
     }
 
-    DatasetType type = getDatasetType(instanceInfo.getType(), classLoader);
+    DatasetType type =
+      getDatasetType(instanceInfo.getType(), classLoader, new ConstantClassLoaderProvider(classLoader));
     return (T) type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), instanceInfo.getSpec());
   }
 
@@ -196,15 +194,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
     @Nullable ClassLoader classLoader,
     @Nullable Iterable<? extends Id> owners) throws DatasetManagementException, IOException {
 
-    DatasetMeta instanceInfo = clientCache.getUnchecked(datasetInstanceId.getNamespace())
-      .getInstance(datasetInstanceId.getId(), owners);
-    if (instanceInfo == null) {
-      return null;
-    }
-
-    DatasetType type = getDatasetType(instanceInfo.getType(), classLoader);
-    return (T) type.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()),
-                               instanceInfo.getSpec(), arguments);
+    return getDataset(datasetInstanceId, arguments, classLoader, new ConstantClassLoaderProvider(classLoader), owners);
   }
 
   @Override
@@ -213,6 +203,25 @@ public class RemoteDatasetFramework implements DatasetFramework {
     @Nullable ClassLoader classLoader) throws DatasetManagementException, IOException {
 
     return getDataset(datasetInstanceId, arguments, classLoader, null);
+  }
+
+  @Nullable
+  @Override
+  public <T extends Dataset> T getDataset(
+    Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
+    ClassLoader classLoader,
+    DatasetClassLoaderProvider classLoaderProvider,
+    @Nullable Iterable<? extends Id> owners) throws DatasetManagementException, IOException {
+
+    DatasetMeta instanceInfo = clientCache.getUnchecked(datasetInstanceId.getNamespace())
+      .getInstance(datasetInstanceId.getId(), owners);
+    if (instanceInfo == null) {
+      return null;
+    }
+
+    DatasetType type = getDatasetType(instanceInfo.getType(), classLoader, classLoaderProvider);
+    return (T) type.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()),
+      instanceInfo.getSpec(), arguments);
   }
 
   @Override
@@ -294,10 +303,24 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   // can be used directly if DatasetTypeMeta is known, like in create dataset by dataset ops executor service
-  public <T extends DatasetType> T getDatasetType(DatasetTypeMeta implementationInfo,
-                                                  ClassLoader classLoader)
-    throws DatasetManagementException {
 
+  /**
+   * Return an instance of the {@link DatasetType} corresponding to given dataset modules. Uses the given
+   * classloader as a parent for all dataset modules, and the given classloader provider to get classloaders for
+   * each dataset module in given the dataset type meta. Order of dataset modules in the given
+   * {@link DatasetTypeMeta} is important. The classloader for the first dataset module is used as the parent of
+   * the second dataset module and so on until the last dataset module. The classloader for the last dataset module
+   * is then used as the classloader for the returned {@link DatasetType}.
+   *
+   * @param implementationInfo the dataset type metadata to instantiate the type from
+   * @param classLoader the parent classloader to use for dataset modules
+   * @param classLoaderProvider the classloader provider to get classloaders for each dataset module
+   * @param <T> the type of DatasetType
+   * @return an instance of the DatasetType
+   */
+  public <T extends DatasetType> T getDatasetType(DatasetTypeMeta implementationInfo,
+                                                  ClassLoader classLoader,
+                                                  DatasetClassLoaderProvider classLoaderProvider) {
 
     if (classLoader == null) {
       classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader());
@@ -308,7 +331,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
     for (DatasetModuleMeta moduleMeta : modulesToLoad) {
       // adding dataset module jar to classloader
       try {
-        classLoader = typeLoader.create(moduleMeta, classLoader);
+        classLoader = classLoaderProvider.get(moduleMeta, classLoader);
       } catch (IOException e) {
         LOG.error("Was not able to init classloader for module {} while trying to load type {}",
                   moduleMeta, implementationInfo, e);
@@ -340,6 +363,10 @@ public class RemoteDatasetFramework implements DatasetFramework {
       }
     }
 
+    // contract of DatasetTypeMeta is that the last module returned by getModules() is the one
+    // that announces the dataset's type. The classloader for the returned DatasetType must be the classloader
+    // for that last module.
     return (T) new DatasetType(registry.get(implementationInfo.getName()), classLoader);
   }
+
 }
