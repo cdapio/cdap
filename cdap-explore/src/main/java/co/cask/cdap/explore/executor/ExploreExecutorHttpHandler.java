@@ -52,6 +52,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.sql.SQLException;
 import java.util.Map;
+import javax.annotation.Nullable;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -227,6 +228,13 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
     } catch (IOException e) {
+      String classNotFoundMessage = isClassNotFoundException(e);
+      if (classNotFoundMessage != null) {
+        JsonObject json = new JsonObject();
+        json.addProperty("handle", QueryHandle.NO_OP.getHandle());
+        responder.sendJson(HttpResponseStatus.OK, json);
+        return;
+      }
       LOG.error("Exception instantiating dataset {}.", datasetInstanceId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Exception instantiating dataset " + datasetName);
       return;
@@ -286,6 +294,13 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
     } catch (IOException e) {
+      String classNotFoundMessage = isClassNotFoundException(e);
+      if (classNotFoundMessage != null) {
+        JsonObject json = new JsonObject();
+        json.addProperty("handle", QueryHandle.NO_OP.getHandle());
+        responder.sendJson(HttpResponseStatus.OK, json);
+        return;
+      }
       LOG.error("Exception instantiating dataset {}.", datasetInstanceId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
         "Exception instantiating dataset " + datasetInstanceId);
@@ -300,7 +315,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       Partitioning partitioning = ((PartitionedFileSet) dataset).getPartitioning();
 
       Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
-      Map<String, String> properties = GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
+      Map<String, String> properties = GSON.fromJson(reader, new TypeToken<Map<String, String>>() {
+      }.getType());
 
       PartitionKey partitionKey;
       try {
@@ -322,5 +338,17 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       LOG.error("Got exception:", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
+  }
+
+  // returns the cause of the class not found exception if it is one. Otherwise returns null.
+  @Nullable
+  private static String isClassNotFoundException(Throwable e) {
+    if (e instanceof ClassNotFoundException) {
+      return e.getMessage();
+    }
+    if (e.getCause() != null) {
+      return isClassNotFoundException(e.getCause());
+    }
+    return null;
   }
 }

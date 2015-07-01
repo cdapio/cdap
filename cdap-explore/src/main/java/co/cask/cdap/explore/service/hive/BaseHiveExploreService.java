@@ -991,6 +991,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     return result;
   }
 
+  // this upgrade code is for upgrading CDAP v2.6 to v2.8 and above.
   @Override
   public void upgrade() throws Exception {
     // all old CDAP tables used to be in the default database

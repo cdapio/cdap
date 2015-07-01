@@ -303,10 +303,24 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   // can be used directly if DatasetTypeMeta is known, like in create dataset by dataset ops executor service
+
+  /**
+   * Return an instance of the {@link DatasetType} corresponding to given dataset modules. Uses the given
+   * classloader as a parent for all dataset modules, and the given classloader provider to get classloaders for
+   * each dataset module in given the dataset type meta. Order of dataset modules in the given
+   * {@link DatasetTypeMeta} is important. The classloader for the first dataset module is used as the parent of
+   * the second dataset module and so on until the last dataset module. The classloader for the last dataset module
+   * is then used as the classloader for the returned {@link DatasetType}.
+   *
+   * @param implementationInfo the dataset type metadata to instantiate the type from
+   * @param classLoader the parent classloader to use for dataset modules
+   * @param classLoaderProvider the classloader provider to get classloaders for each dataset module
+   * @param <T> the type of DatasetType
+   * @return an instance of the DatasetType
+   */
   public <T extends DatasetType> T getDatasetType(DatasetTypeMeta implementationInfo,
                                                   ClassLoader classLoader,
-                                                  DatasetClassLoaderProvider classLoaderProvider)
-    throws DatasetManagementException {
+                                                  DatasetClassLoaderProvider classLoaderProvider) {
 
     if (classLoader == null) {
       classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader());
@@ -326,7 +340,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
       Class<?> moduleClass;
 
-      // try program class loader then cdap class loader0
+      // try program class loader then cdap class loader
       try {
         moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);
       } catch (ClassNotFoundException e) {

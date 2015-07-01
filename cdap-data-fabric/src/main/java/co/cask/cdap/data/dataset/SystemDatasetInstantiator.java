@@ -67,13 +67,10 @@ public class SystemDatasetInstantiator implements Closeable {
 
     T dataset;
     try {
-      if (!datasetFramework.hasInstance(datasetId)) {
-        throw new DatasetInstantiationException("Trying to access dataset that does not exist: " + datasetId);
-      }
 
       dataset = datasetFramework.getDataset(datasetId, arguments, parentClassLoader, classLoaderProvider, owners);
       if (dataset == null) {
-        throw new DatasetInstantiationException("Failed to access dataset: " + datasetId);
+        throw new DatasetInstantiationException("Trying to access dataset that does not exist: " + datasetId);
       }
 
     } catch (Exception e) {
