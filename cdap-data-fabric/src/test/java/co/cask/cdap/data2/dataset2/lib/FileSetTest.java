@@ -156,7 +156,7 @@ public class FileSetTest {
 
   @Test(expected = DataSetException.class)
   public void testAbsolutePathInsideCDAPDouble() throws IOException, DatasetManagementException {
-    // test that it rejects also paths that have // in them 
+    // test that it rejects also paths that have // in them
     String absolutePath = dsFrameworkUtil.getConfiguration()
       .get(Constants.CFG_LOCAL_DATA_DIR).replace("/", "//").concat("/hello");
     dsFrameworkUtil.createInstance("fileSet",
