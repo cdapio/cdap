@@ -25,6 +25,8 @@ import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.api.templates.AdapterSpecification;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
@@ -43,6 +45,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -246,6 +249,27 @@ public class HttpHandlerGeneratorTest {
 
     @Override
     public URL getServiceURL(String serviceId) {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public AdapterSpecification getAdapterSpecification() {
+      return null;
+    }
+
+    @Override
+    public PluginProperties getPluginProperties(String pluginId) {
+      return null;
+    }
+
+    @Override
+    public <T> Class<T> loadPluginClass(String pluginId) {
+      return null;
+    }
+
+    @Override
+    public <T> T newPluginInstance(String pluginId) throws InstantiationException {
       return null;
     }
   }

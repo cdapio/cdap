@@ -17,13 +17,14 @@
 package co.cask.cdap.api.mapreduce;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.templates.AdapterPluginRegistry;
 
 import java.util.Map;
 
 /**
  * Configurer for configuring {@link MapReduce}.
  */
-public interface MapReduceConfigurer {
+public interface MapReduceConfigurer extends AdapterPluginRegistry {
 
   /**
    * Sets the name of the {@link MapReduce}.

@@ -19,11 +19,12 @@ package co.cask.cdap.api.flow.flowlet;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.templates.AdapterContext;
 
 /**
  * This interface represents the Flowlet context.
  */
-public interface FlowletContext extends RuntimeContext, DatasetContext, ServiceDiscoverer {
+public interface FlowletContext extends RuntimeContext, DatasetContext, ServiceDiscoverer, AdapterContext {
   /**
    * @return Number of instances of this flowlet.
    */

@@ -18,13 +18,14 @@ package co.cask.cdap.api.worker;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.templates.AdapterPluginRegistry;
 
 import java.util.Map;
 
 /**
  * Interface for configuring {@link Worker}.
  */
-public interface WorkerConfigurer {
+public interface WorkerConfigurer extends AdapterPluginRegistry {
 
   /**
    * Sets the name of the {@link Worker}.
