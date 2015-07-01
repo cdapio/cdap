@@ -16,9 +16,11 @@
 
 package co.cask.cdap.data2.dataset2.lib;
 
+import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -56,6 +58,8 @@ public class FileSetTest {
     Id.DatasetInstance.from(OTHER_NAMESPACE, "testFileSet");
   private static final Id.DatasetInstance testFileSetInstance3 =
     Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "absoluteFileSet");
+  private static final Id.DatasetInstance testFileSetInstance4 =
+    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "lookAlikeFileSet");
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -77,9 +81,16 @@ public class FileSetTest {
 
   @AfterClass
   public static void afterClass() throws Exception {
-    dsFrameworkUtil.deleteInstance(testFileSetInstance1);
-    dsFrameworkUtil.deleteInstance(testFileSetInstance2);
-    dsFrameworkUtil.deleteInstance(testFileSetInstance3);
+    deleteInstance(testFileSetInstance1);
+    deleteInstance(testFileSetInstance2);
+    deleteInstance(testFileSetInstance3);
+    deleteInstance(testFileSetInstance4);
+  }
+
+  static void deleteInstance(Id.DatasetInstance id) throws Exception {
+    if (dsFrameworkUtil.getInstance(id) != null) {
+      dsFrameworkUtil.deleteInstance(id);
+    }
   }
 
   @Test
@@ -133,5 +144,30 @@ public class FileSetTest {
 
     // validate that the file was created
     Assert.assertTrue(new File(absolutePath + "/out").isFile());
+  }
+
+  @Test(expected = DataSetException.class)
+  public void testAbsolutePathInsideCDAP() throws IOException, DatasetManagementException {
+    String absolutePath = dsFrameworkUtil.getConfiguration().get(Constants.CFG_LOCAL_DATA_DIR).concat("/hello");
+    dsFrameworkUtil.createInstance("fileSet",
+                                   Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "badFileSet"),
+                                   FileSetProperties.builder().setBasePath(absolutePath).build());
+  }
+
+  @Test(expected = DataSetException.class)
+  public void testAbsolutePathInsideCDAPDouble() throws IOException, DatasetManagementException {
+    // test that it rejects also paths that have // in them 
+    String absolutePath = dsFrameworkUtil.getConfiguration()
+      .get(Constants.CFG_LOCAL_DATA_DIR).replace("/", "//").concat("/hello");
+    dsFrameworkUtil.createInstance("fileSet",
+                                   Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "badFileSet"),
+                                   FileSetProperties.builder().setBasePath(absolutePath).build());
+  }
+
+  @Test
+  public void testAbsolutePathLooksLikeCDAP() throws IOException, DatasetManagementException {
+    String absolutePath = dsFrameworkUtil.getConfiguration().get(Constants.CFG_LOCAL_DATA_DIR).concat("-hello");
+    dsFrameworkUtil.createInstance("fileSet", testFileSetInstance4,
+                                   FileSetProperties.builder().setBasePath(absolutePath).build());
   }
 }

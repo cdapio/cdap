@@ -105,7 +105,14 @@ public final class FileSetDataset implements FileSet {
       basePath = spec.getName().replace('.', '/');
     }
     if (basePath.startsWith("/")) {
-      return rootLocationFactory.create(basePath);
+      String topLevelPath = namespacedLocationFactory.getBaseLocation().toURI().getPath();
+      topLevelPath = topLevelPath.endsWith("/") ? topLevelPath : topLevelPath + "/";
+      Location baseLocation = rootLocationFactory.create(basePath);
+      if (baseLocation.toURI().getPath().startsWith(topLevelPath)) {
+        throw new DataSetException("Invalid base path '" + basePath + "' for dataset '" + spec.getName() + "'. " +
+                                     "It must not be inside the CDAP base path '" + topLevelPath + "'." );
+      }
+      return baseLocation;
     } else {
       Id.Namespace namespaceId = Id.Namespace.from(datasetContext.getNamespaceId());
       String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
