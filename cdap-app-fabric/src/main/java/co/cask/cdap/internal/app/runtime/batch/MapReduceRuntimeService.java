@@ -37,7 +37,6 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.common.utils.ApplicationBundler;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamUtils;
@@ -79,6 +78,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.ApplicationBundler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

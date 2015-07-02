@@ -42,10 +42,10 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
-import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
