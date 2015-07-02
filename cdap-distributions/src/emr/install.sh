@@ -18,18 +18,18 @@
 # Install CDAP under hadoop user for EMR
 #
 
+die() { echo "ERROR: ${*}"; exit 1; };
+
 # Fetch repo file for YUM
 curl http://repository.cask.co/centos/6/x86_64/cdap/3.0/cask.repo > /etc/yum.repos.d/cdap-3.0.repo
 rpm --import http://repository.cask.co/centos/6/x86_64/cdap/3.0/pubkey.gpg
 # Enable EPEL packages (req'd for nodejs)
-sed -i -e '0,/enabled=0/s//enabled=1/' /etc/yum.repos.d/epel.repo
+sed -i -e '0,/enabled=0/s//enabled=1/' /etc/yum.repos.d/epel.repo || die "Unable to enable EPEL"
 yum makecache
 # Install dependencies
-yum install --downloadonly chkconfig -y
-rpm --install --force /var/cache/yum/x86_64/latest/amzn-main/packages/chkconfig-*
-yum install gyp http-parser-devel redhat-rpm-config icu -y
-yum install nodejs nodejs-devel npm -y
-yum install -y cdap-{gateway,kafka,master,ui}
+yum install --downloadonly chkconfig -y || die "Cannot download chkconfig package"
+rpm --install --force /var/cache/yum/x86_64/latest/amzn-main/packages/chkconfig-* || die "Unable to install chkconfig"
+yum install gyp http-parser-devel redhat-rpm-config icu nodejs nodejs-devel npm cdap-{gateway,kafka,master,ui} -y || die "Failed installing packages"
 # Update permissions and symlink logs
 mkdir -p /mnt/var/log/cdap /mnt/cdap/kafka-logs
 chown -R hadoop:hadoop /var/cdap/run /var/run/cdap /var/tmp/cdap /mnt/var/log/cdap /mnt/cdap/kafka-logs
@@ -51,13 +51,14 @@ sed \
   -e 's/10000/11015/' \
   /etc/cdap/conf/cdap-site.xml.example > /etc/cdap/conf/cdap-site.xml
 # Create HDFS directory
-su - hadoop -c "hadoop fs -mkdir -p /cdap"
+su - hadoop -c "hadoop fs -mkdir -p /cdap" || die "Cannot create /cdap in HDFS"
 # Start services
 for i in \
   /opt/cdap/gateway/bin/svc-router \
   /opt/cdap/kafka/bin/svc-kafka-server \
   /opt/cdap/master/bin/svc-master \
   /opt/cdap/ui/bin/svc-ui
-  do
-  su - hadoop -c "$i start"
-  done
+do
+  su - hadoop -c "$i start" || die "Failed to start $i"
+done
+exit 0
