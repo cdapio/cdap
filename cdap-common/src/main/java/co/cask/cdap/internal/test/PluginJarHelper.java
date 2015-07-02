@@ -17,11 +17,11 @@
 package co.cask.cdap.internal.test;
 
 import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.utils.ApplicationBundler;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.ApplicationBundler;
 
 import java.io.IOException;
 import java.util.jar.Attributes;

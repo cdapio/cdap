@@ -17,6 +17,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
+import com.google.common.util.concurrent.Futures;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.common.Threads;
@@ -92,7 +93,6 @@ abstract class AbstractTwillProgramController extends AbstractProgramController 
   @Override
   protected final void doStop() throws Exception {
     stopRequested = true;
-    twillController.terminate();
-    twillController.awaitTerminated();
+    Futures.getUnchecked(twillController.terminate());
   }
 }

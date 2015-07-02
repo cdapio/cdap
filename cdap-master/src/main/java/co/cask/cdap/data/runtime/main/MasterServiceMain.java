@@ -391,12 +391,7 @@ public class MasterServiceMain extends DaemonMain {
           LOG.info("Stopping master twill application");
           TwillController twillController = controller.get();
           if (twillController != null) {
-            try {
-              twillController.terminate();
-              twillController.awaitTerminated();
-            } catch (ExecutionException e) {
-              LOG.error("Exception while stopping master ", e);
-            }
+            Futures.getUnchecked(twillController.terminate());
           }
         }
         // Stop local services last since DatasetService is running locally

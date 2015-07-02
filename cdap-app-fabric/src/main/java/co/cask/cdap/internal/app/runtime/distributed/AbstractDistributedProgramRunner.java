@@ -296,12 +296,12 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     Runnable cleanup = new Runnable() {
 
       public void run() {
-          if (!deleted.compareAndSet(false, true)) {
-            return;
-          }
-          LOG.debug("Cleanup tmp files for {}: {}", program.getId(), tempDir);
-          deleteDirectory(tempDir);
-    }};
+        if (!deleted.compareAndSet(false, true)) {
+          return;
+        }
+        LOG.debug("Cleanup tmp files for {}: {}", program.getId(), tempDir);
+        deleteDirectory(tempDir);
+      }};
     controller.onRunning(cleanup, Threads.SAME_THREAD_EXECUTOR);
     controller.onTerminated(cleanup, Threads.SAME_THREAD_EXECUTOR);
     return controller;
