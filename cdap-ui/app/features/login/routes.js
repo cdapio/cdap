@@ -28,7 +28,7 @@ angular.module(PKG.name+'.feature.login')
         }
       });
   })
-  .run(function ($rootScope, $state, $alert, $location, MYAUTH_EVENT, myNamespace, $q, myHelpers, EventPipe) {
+  .run(function ($rootScope, $state, $alert, $location, MYAUTH_EVENT, myNamespace, $q, myHelpers) {
 
     $rootScope.$on(MYAUTH_EVENT.loginSuccess, function onLoginSuccess() {
       // General case: User logs in and we emit login success event.
