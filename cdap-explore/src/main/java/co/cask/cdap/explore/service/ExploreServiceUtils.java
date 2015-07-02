@@ -39,6 +39,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.VersionInfo;
 import org.apache.hive.common.util.HiveVersionInfo;
+import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.internal.utils.Dependencies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -306,7 +307,7 @@ public class ExploreServiceUtils {
 
     Dependencies.findClassDependencies(
       usingCL,
-      new Dependencies.ClassAcceptor() {
+      new ClassAcceptor() {
         @Override
         public boolean accept(String className, URL classUrl, URL classPathUrl) {
           if (bootstrapClassPaths.contains(classPathUrl.getFile())) {
