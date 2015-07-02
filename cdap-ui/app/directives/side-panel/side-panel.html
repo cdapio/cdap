@@ -1,0 +1,30 @@
+<div class="side-panel">
+  <div class="panel-container am-slide-top"
+       data-animation="am-slide-top"
+       ng-if="MySidePanel.showPlugin">
+
+    <div class="plugin-container">
+      <div ng-repeat="plugin in MySidePanel.plugins"
+           class="list-group-item"
+           ng-click="MySidePanel.addPlugin(plugin, plugin.type)">
+        <strong class="fa fa-plug"></strong>
+        <strong>{{plugin.name}}</strong>
+        <i><small>{{plugin.description}}</small></i>
+      </div>
+    </div>
+
+    <div class="btn btn-danger btn-sm"
+         ng-click="MySidePanel.hidePluginContainer()">
+      <span class="fa fa-close"></span>
+      <span>Close</span>
+    </div>
+
+  </div>
+  <div ng-repeat="item in MySidePanel.items"
+       class="panel-item"
+       ng-click="MySidePanel.openPlugins(item)"
+       tooltip-placement="right"
+       tooltip="{{item}}">
+    <span class="icon-ETL{{item}}s"></span>
+  </div>
+</div>
