@@ -35,6 +35,7 @@ import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
+import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -53,6 +54,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -605,6 +607,13 @@ public class MasterServiceMain extends DaemonMain {
           // TokenSecureStoreUpdater.update() ignores parameters
           preparer.addSecureStore(secureStoreUpdater.update(null, null));
         }
+
+        // add hadoop classpath to application classpath and exclude hadoop classes from bundle jar.
+        String yarnAppClassPath = hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+                                            Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
+
+        preparer.withApplicationClassPaths(Splitter.on(",").trimResults().split(yarnAppClassPath))
+          .withBundlerClassAcceptor(new HadoopClassExcluder());
 
         // Add explore dependencies
         if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
