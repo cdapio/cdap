@@ -1,0 +1,68 @@
+@import "../../styles/variables.less";
+
+my-side-panel {
+  .side-panel {
+    position: fixed;
+    left: 10px;
+    top: 85px;
+    z-index: 10000;
+    width: 40px;
+    background-color: white;
+    transition: width 0.5s;
+    transition-duration: 0.5s;
+
+    .btn.btn-info.btn-block {
+      border-radius: 0;
+      text-align: right;
+    }
+
+    &.expanded {
+      width: 100px;
+
+      .btn.btn-info.btn-block {
+        text-align: left;
+      }
+
+      .item {
+        .item-body, .item-heading {
+          .name, .description {
+            display: inline-block;
+            vertical-align: top;
+            max-width: 60px;
+            overflow-x: hidden;
+            text-overflow: ellipsis;
+          }
+        }
+      }
+    }
+
+    .item {
+      border-bottom: 1px solid #DDDDDD;
+      color: #686C78;
+      cursor: pointer;
+
+      .item-heading {
+        padding: 5px;
+        .name, .description {
+          display: none;
+        }
+      }
+
+      .item-body {
+        padding: 5px;
+        background-color: #9A9EAA;
+
+        .plugin-item {
+          background-color: white;
+          margin: 5px 0;
+          padding: 5px 5px;
+          font-size: 10px;
+          border-radius: 4px;
+        }
+        .name, .description {
+          display: none;
+        }
+      }
+    }
+  }
+}
