@@ -88,6 +88,15 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, spec2Summary(instanceService.list(Id.Namespace.from(namespaceId))));
   }
 
+  /**
+   * Gets the {@link DatasetMeta} for a dataset instance.
+   *
+   * @param namespaceId namespace of the dataset instance
+   * @param name name of the dataset instance
+   * @param owners a list of owners of the dataset instance, in the form @{code <type>::<id>}
+   *               (e.g. "program::namespace:default/application:PurchaseHistory/program:flow:PurchaseFlow")
+   * @throws NotFoundException if the dataset instance was not found
+   */
   @GET
   @Path("/data/datasets/{name}")
   public void get(HttpRequest request, HttpResponder responder,
@@ -102,7 +111,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Creates a new Dataset instance.
+   * Creates a new dataset instance.
+   *
+   * @param namespaceId namespace of the new dataset instance
+   * @param name name of the new dataset instance
    */
   @PUT
   @Path("/data/datasets/{name}")
@@ -118,8 +130,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Updates an existing Dataset specification properties  {@link DatasetInstanceConfiguration}
-   * is constructed based on request and the Dataset instance is updated.
+   * Updates an existing dataset specification properties.
+   *
+   * @param namespaceId namespace of the dataset instance
+   * @param name name of the dataset instance
+   * @throws Exception
    */
   @PUT
   @Path("/data/datasets/{name}/properties")
@@ -134,6 +149,13 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
+  /**
+   * Deletes a dataset instance, which also deletes the data associated with it.
+   *
+   * @param namespaceId namespace of the dataset instance
+   * @param name name of the dataset instance
+   * @throws Exception
+   */
   @DELETE
   @Path("/data/datasets/{name}")
   public void drop(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
@@ -144,12 +166,20 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
+  /**
+   * Executes an admin operation on a dataset instance.
+   *
+   * @param namespaceId namespace of the dataset instance
+   * @param name name of the dataset instance
+   * @param method the admin operation to execute (e.g. "exists", "truncate", "upgrade")
+   * @throws Exception
+   */
   @POST
   @Path("/data/datasets/{name}/admin/{method}")
   public void executeAdmin(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                           @PathParam("name") String instanceName,
+                           @PathParam("name") String name,
                            @PathParam("method") String method) throws Exception {
-    Id.DatasetInstance instance = Id.DatasetInstance.from(namespaceId, instanceName);
+    Id.DatasetInstance instance = Id.DatasetInstance.from(namespaceId, name);
     try {
       DatasetAdminOpResponse response = instanceService.executeAdmin(instance, method);
       responder.sendJson(HttpResponseStatus.OK, response);
@@ -158,10 +188,17 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     }
   }
 
+  /**
+   * Executes a data operation on a dataset instance. Not yet implemented.
+   *
+   * @param namespaceId namespace of the dataset instance
+   * @param name name of the dataset instance
+   * @param method the data operation to execute
+   */
   @POST
   @Path("/data/datasets/{name}/data/{method}")
   public void executeDataOp(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                            @PathParam("name") String instanceName, @PathParam("method") String method) {
+                            @PathParam("name") String name, @PathParam("method") String method) {
     // todo: execute data operation
     responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
   }
