@@ -166,6 +166,15 @@ public abstract class DatasetServiceTestBase {
       new MDSDatasetsRegistry(txSystemClient, new InMemoryDatasetFramework(registryFactory, modules, cConf));
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
+    DatasetInstanceService instanceService = new DatasetInstanceService(
+      new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory,
+                             // we don't need any default modules in this test
+                             Collections.<String, DatasetModule>emptyMap()),
+      new DatasetInstanceManager(mdsDatasetsRegistry),
+      new InMemoryDatasetOpExecutor(dsFramework),
+      exploreFacade,
+      cConf,
+      new UsageRegistry(txExecutorFactory, dsFramework));
     service = new DatasetService(cConf,
                                  namespacedLocationFactory,
                                  discoveryService,
@@ -173,15 +182,14 @@ public abstract class DatasetServiceTestBase {
                                  new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory,
                                                         // we don't need any default modules in this test
                                                         Collections.<String, DatasetModule>emptyMap()),
-                                 new DatasetInstanceManager(mdsDatasetsRegistry),
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(dsFramework),
                                  mdsDatasetsRegistry,
-                                 exploreFacade,
                                  new HashSet<DatasetMetricsReporter>(),
+                                 instanceService,
                                  new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
-                                                                        exploreFacade),
-                                 new UsageRegistry(txExecutorFactory, dsFramework));
+                                                                        exploreFacade)
+    );
 
     // Start dataset service, wait for it to be discoverable
     service.start();
