@@ -50,13 +50,12 @@ import javax.annotation.Nullable;
  */
 public final class FileSetDataset implements FileSet {
 
-  private final Map<String, String> properties;
+  private final DatasetSpecification spec;
   private final Map<String, String> runtimeArguments;
-
+  private final boolean isExternal;
   private final Location baseLocation;
   private final List<Location> inputLocations;
   private final Location outputLocation;
-
   private final String inputFormatClassName;
   private final String outputFormatClassName;
 
@@ -77,14 +76,15 @@ public final class FileSetDataset implements FileSet {
     Preconditions.checkNotNull(datasetContext, "Dataset context must not be null");
     Preconditions.checkNotNull(runtimeArguments, "Runtime arguments must not be null");
 
+    this.spec = spec;
+    this.runtimeArguments = runtimeArguments;
+    this.isExternal = FileSetProperties.isDataExternal(spec.getProperties());
     this.baseLocation = determineBaseLocation(datasetContext, cConf, spec,
                                               absoluteLocationFactory, namespacedLocationFactory);
-    this.properties = spec.getProperties();
-    this.runtimeArguments = runtimeArguments;
-    this.inputFormatClassName = FileSetProperties.getInputFormat(properties);
-    this.outputFormatClassName = FileSetProperties.getOutputFormat(properties);
     this.outputLocation = determineOutputLocation();
     this.inputLocations = determineInputLocations();
+    this.inputFormatClassName = FileSetProperties.getInputFormat(spec.getProperties());
+    this.outputFormatClassName = FileSetProperties.getOutputFormat(spec.getProperties());
   }
 
   /**
@@ -149,21 +149,28 @@ public final class FileSetDataset implements FileSet {
 
   @Override
   public Location getBaseLocation() {
+    // TODO: if the file set is external, we could return a ReadOnlyLocation that prevents writing
     return baseLocation;
   }
 
   @Override
   public List<Location> getInputLocations() {
+    // TODO: if the file set is external, we could return a ReadOnlyLocation that prevents writing
     return Lists.newLinkedList(inputLocations);
   }
 
   @Override
   public Location getOutputLocation() {
+    if (isExternal) {
+      throw new UnsupportedOperationException(
+        "Output is not supported for external file set '" + spec.getName() + "'");
+    }
     return outputLocation;
   }
 
   @Override
   public Location getLocation(String relativePath) {
+    // TODO: if the file set is external, we could return a ReadOnlyLocation that prevents writing
     return createLocation(relativePath);
   }
 
@@ -191,7 +198,7 @@ public final class FileSetDataset implements FileSet {
       }
     }));
     Map<String, String> config = Maps.newHashMap();
-    config.putAll(FileSetProperties.getInputProperties(properties));
+    config.putAll(FileSetProperties.getInputProperties(spec.getProperties()));
     config.putAll(FileSetProperties.getInputProperties(runtimeArguments));
     config.put("mapred.input.dir", inputs);
     return ImmutableMap.copyOf(config);
@@ -199,13 +206,21 @@ public final class FileSetDataset implements FileSet {
 
   @Override
   public String getOutputFormatClassName() {
+    if (isExternal) {
+      throw new UnsupportedOperationException(
+        "Output is not supported for external file set '" + spec.getName() + "'");
+    }
     return outputFormatClassName;
   }
 
   @Override
   public Map<String, String> getOutputFormatConfiguration() {
+    if (isExternal) {
+      throw new UnsupportedOperationException(
+        "Output is not supported for external file set '" + spec.getName() + "'");
+    }
     Map<String, String> config = Maps.newHashMap();
-    config.putAll(FileSetProperties.getOutputProperties(properties));
+    config.putAll(FileSetProperties.getOutputProperties(spec.getProperties()));
     config.putAll(FileSetProperties.getOutputProperties(runtimeArguments));
     config.put(FileOutputFormat.OUTDIR, getFileSystemPath(outputLocation));
     return ImmutableMap.copyOf(config);

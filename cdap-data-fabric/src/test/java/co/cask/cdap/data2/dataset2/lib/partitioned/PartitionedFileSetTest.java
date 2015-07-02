@@ -35,14 +35,19 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.twill.filesystem.Location;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -53,6 +58,9 @@ import java.util.concurrent.Callable;
  * Test partitioned file sets without map/reduce and without explore.
  */
 public class PartitionedFileSetTest {
+
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
@@ -79,6 +87,9 @@ public class PartitionedFileSetTest {
 
   private static final Id.DatasetInstance pfsInstance =
     Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "pfs");
+  private static final Id.DatasetInstance pfsExternalInstance =
+    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "ext");
+  private static Location pfsBaseLocation;
 
   @Before
   public void before() throws Exception {
@@ -86,11 +97,20 @@ public class PartitionedFileSetTest {
       .setPartitioning(PARTITIONING_1)
       .setBasePath("testDir")
       .build());
+    pfsBaseLocation = ((PartitionedFileSet) dsFrameworkUtil.getInstance(pfsInstance))
+      .getEmbeddedFileSet().getBaseLocation();
+    Assert.assertTrue(pfsBaseLocation.exists());
   }
 
   @After
   public void after() throws Exception {
-    dsFrameworkUtil.deleteInstance(pfsInstance);
+    if (dsFrameworkUtil.getInstance(pfsInstance) != null) {
+      dsFrameworkUtil.deleteInstance(pfsInstance);
+    }
+    if (dsFrameworkUtil.getInstance(pfsExternalInstance) != null) {
+      dsFrameworkUtil.deleteInstance(pfsExternalInstance);
+    }
+    Assert.assertFalse(pfsBaseLocation.exists());
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -206,6 +226,65 @@ public class PartitionedFileSetTest {
         }
       }
     });
+  }
+
+  @Test
+  public void testAddRemoveGetPartition() throws Exception {
+    PartitionedFileSet pfs = dsFrameworkUtil.getInstance(pfsInstance);
+    PartitionOutput output = pfs.getPartitionOutput(PARTITION_KEY);
+    Location outputLocation = output.getLocation();
+    OutputStream out = outputLocation.getOutputStream();
+    out.close();
+    output.addPartition();
+    Assert.assertTrue(outputLocation.exists());
+    Assert.assertNotNull(pfs.getPartition(PARTITION_KEY));
+    Assert.assertTrue(pfs.getPartition(PARTITION_KEY).getLocation().exists());
+    pfs.dropPartition(PARTITION_KEY);
+    Assert.assertFalse(outputLocation.exists());
+    Assert.assertNull(pfs.getPartition(PARTITION_KEY));
+    pfs.dropPartition(PARTITION_KEY);
+  }
+
+  @Test
+  public void testAddRemoveGetPartitionExternal() throws Exception {
+    File absolutePath = tmpFolder.newFolder();
+    absolutePath.mkdirs();
+
+    dsFrameworkUtil.createInstance("partitionedFileSet", pfsExternalInstance, PartitionedFileSetProperties.builder()
+      .setPartitioning(PARTITIONING_1)
+      .setBasePath(absolutePath.getPath())
+      .setDataExternal(true)
+      .build());
+    PartitionedFileSet pfs = dsFrameworkUtil.getInstance(pfsExternalInstance);
+    Location baseLocation = pfs.getEmbeddedFileSet().getBaseLocation();
+    Assert.assertTrue(pfsBaseLocation.exists());
+
+    // attempt to write a new partition - should fail
+    try {
+      PartitionOutput output = pfs.getPartitionOutput(PARTITION_KEY);
+      Assert.fail("External partitioned file set should not allow writing files");
+    } catch (UnsupportedOperationException e) {
+      // expected
+    }
+
+    // create an external file and addit as a partition
+    File someFile = new File(absolutePath, "some.file");
+    OutputStream out = new FileOutputStream(someFile);
+    out.close();
+    Assert.assertTrue(someFile.exists());
+    pfs.addPartition(PARTITION_KEY, "some.file");
+    Assert.assertNotNull(pfs.getPartition(PARTITION_KEY));
+    Assert.assertTrue(pfs.getPartition(PARTITION_KEY).getLocation().exists());
+
+    // now drop the partition and validate the file is still there
+    pfs.dropPartition(PARTITION_KEY);
+    Assert.assertNull(pfs.getPartition(PARTITION_KEY));
+    Assert.assertTrue(someFile.exists());
+
+    // drop the dataset and validate that the base dir still exists
+    dsFrameworkUtil.deleteInstance(pfsExternalInstance);
+    Assert.assertTrue(pfsBaseLocation.exists());
+    Assert.assertTrue(absolutePath.isDirectory());
   }
 
   @Test
