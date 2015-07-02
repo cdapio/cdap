@@ -6,10 +6,17 @@ angular.module(PKG.name + '.commons')
       Connector : [ "Flowchart" ],
       ConnectionsDetachable: true
     };
+
     var commonSettings = {
-      endpoint:"Rectangle",
-      paintStyle:{ width:10, height:10, fillStyle:'#666' },
-      connectorOverlays: [ [ "Arrow", { location:1, width: 10, height: 10 } ] ]
+      endpoint:"Dot",
+      paintStyle: {
+          strokeStyle: "white",
+          fillStyle: "#666",
+          radius: 7,
+          lineWidth: 3
+      },
+      connectorOverlays: [ [ "Arrow", { location:1, width: 10, height: 10 } ] ],
+      anchors: [ 'Perimeter', {shape: 'Circle'}]
     };
     var sourceSettings = angular.extend({
       isSource: true,
@@ -20,11 +27,31 @@ angular.module(PKG.name + '.commons')
       anchor: 'Left'
     }, commonSettings);
 
+    function getIcon(plugin) {
+      var iconMap = {
+        'script': 'fa-code',
+        'twitter': 'fa-twitter',
+        'cube': 'fa-cubes',
+        'data': 'fa-database',
+        'database': 'fa-database',
+        'table': 'fa-table',
+        'kafka': 'icon-kafka',
+        'stream': 'icon-plugin-stream',
+        'avro': 'icon-avro',
+        'jms': 'icon-jms'
+      };
+
+      var pluginName = plugin.toLowerCase();
+      var icon = iconMap[pluginName] ? iconMap[pluginName]: 'fa-plug';
+      return icon;
+    }
+
     this.addPlugin = function addPlugin(config, type) {
       var id = 'plugin' + Date.now();
       this.plugins.push(angular.extend({
         type: type,
         id: id,
+        icon: getIcon(config.name)
       }, config));
       $timeout(function() {
         switch(type) {
@@ -41,6 +68,10 @@ angular.module(PKG.name + '.commons')
         }
         instance.draggable(id);
       });
+    };
+
+    this.removePlugin = function(index) {
+      this.plugins.splice(index, 1);
     };
 
     MyPlumbService.registerCallBack(this.addPlugin.bind(this));

@@ -6,7 +6,7 @@ angular.module(PKG.name + '.commons')
         panelGroups: '=',
         panelConfig: '='
       },
-      templateUrl: 'side-panel/side-panel.html',
+      templateUrl: 'group-side-panel/group-side-panel.html',
       controller: 'MySidePanel',
       controllerAs: 'MySidePanel'
     };
