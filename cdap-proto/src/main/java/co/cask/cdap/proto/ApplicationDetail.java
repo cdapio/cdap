@@ -25,6 +25,7 @@ public class ApplicationDetail {
   private final String name;
   private final String version;
   private final String description;
+  private final String configuration;
   private final List<StreamDetail> streams;
   private final List<DatasetDetail> datasets;
   private final List<ProgramRecord> programs;
@@ -32,12 +33,14 @@ public class ApplicationDetail {
   public ApplicationDetail(String name,
                            String version,
                            String description,
+                           String configuration,
                            List<StreamDetail> streams,
                            List<DatasetDetail> datasets,
                            List<ProgramRecord> programs) {
     this.name = name;
     this.version = version;
     this.description = description;
+    this.configuration = configuration;
     this.streams = streams;
     this.datasets = datasets;
     this.programs = programs;
@@ -53,6 +56,10 @@ public class ApplicationDetail {
 
   public String getDescription() {
     return description;
+  }
+
+  public String getConfiguration() {
+    return configuration;
   }
 
   public List<StreamDetail> getStreams() {

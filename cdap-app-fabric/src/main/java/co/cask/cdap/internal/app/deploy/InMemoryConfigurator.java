@@ -130,7 +130,7 @@ public final class InMemoryConfigurator implements Configurator {
   private static String getSpecJson(Application app, final String bundleVersion, final String configString)
     throws IllegalAccessException, InstantiationException {
     // Now, we call configure, which returns application specification.
-    DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
+    DefaultAppConfigurer configurer = new DefaultAppConfigurer(app, configString);
 
     Config appConfig;
     TypeToken typeToken = TypeToken.of(app.getClass());

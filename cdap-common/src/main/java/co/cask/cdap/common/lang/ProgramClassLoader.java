@@ -17,12 +17,9 @@
 package co.cask.cdap.common.lang;
 
 import co.cask.cdap.proto.ProgramType;
-import com.google.common.base.Predicates;
-import com.google.common.collect.ImmutableSet;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -53,21 +50,7 @@ public class ProgramClassLoader extends DirectoryClassLoader {
    */
   public static ProgramClassLoader create(File unpackedJarDir, ClassLoader parentClassLoader,
                                           @Nullable ProgramType programType) throws IOException {
-    Set<String> visibleResources = ProgramResources.getVisibleResources(programType);
-    ImmutableSet.Builder<String> visiblePackages = ImmutableSet.builder();
-    for (String resource : visibleResources) {
-      if (resource.endsWith(".class")) {
-        int idx = resource.lastIndexOf('/');
-        // Ignore empty package
-        if (idx > 0) {
-          visiblePackages.add(resource.substring(0, idx));
-        }
-      }
-    }
-
-    ClassLoader filteredParent = new FilterClassLoader(Predicates.in(visibleResources),
-                                                       Predicates.in(visiblePackages.build()),
-                                                       parentClassLoader);
+    ClassLoader filteredParent = FilterClassLoader.create(programType, parentClassLoader);
     return new ProgramClassLoader(unpackedJarDir, filteredParent);
   }
 

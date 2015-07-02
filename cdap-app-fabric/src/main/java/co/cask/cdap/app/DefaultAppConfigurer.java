@@ -60,6 +60,7 @@ import java.util.Map;
 public class DefaultAppConfigurer implements ApplicationConfigurer {
   private String name;
   private String description;
+  private String configuration;
   private final Map<String, StreamSpecification> streams = Maps.newHashMap();
   private final Map<String, String> dataSetModules = Maps.newHashMap();
   private final Map<String, DatasetCreationSpec> dataSetInstances = Maps.newHashMap();
@@ -75,6 +76,11 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   public DefaultAppConfigurer(Application app) {
     this.name = app.getClass().getSimpleName();
     this.description = "";
+  }
+
+  public DefaultAppConfigurer(Application app, String configuration) {
+    this(app);
+    this.configuration = configuration;
   }
 
   @Override
@@ -209,7 +215,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   public ApplicationSpecification createSpecification(String version) {
-    return new DefaultApplicationSpecification(name, version, description, streams,
+    return new DefaultApplicationSpecification(name, version, description, configuration, streams,
                                                dataSetModules, dataSetInstances,
                                                flows, mapReduces, sparks, workflows, services,
                                                schedules, workers);

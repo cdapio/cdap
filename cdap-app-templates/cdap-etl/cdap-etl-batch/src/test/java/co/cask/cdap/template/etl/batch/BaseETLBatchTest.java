@@ -34,6 +34,7 @@ import co.cask.cdap.template.etl.batch.source.StreamBatchSource;
 import co.cask.cdap.template.etl.batch.source.TableSource;
 import co.cask.cdap.template.etl.batch.source.TimePartitionedFileSetDatasetAvroSource;
 import co.cask.cdap.template.etl.common.DBRecord;
+import co.cask.cdap.template.etl.common.ETLConfig;
 import co.cask.cdap.template.etl.transform.ProjectionTransform;
 import co.cask.cdap.template.etl.transform.ScriptFilterTransform;
 import co.cask.cdap.template.etl.transform.StructuredRecordToGenericRecordTransform;
@@ -84,7 +85,8 @@ public class BaseETLBatchTest extends TestBase {
       JDBCDriver.class.getName());
     deployTemplate(NAMESPACE, TEMPLATE_ID, ETLBatchTemplate.class,
       PipelineConfigurable.class.getPackage().getName(),
-      BatchSource.class.getPackage().getName());
+      BatchSource.class.getPackage().getName(),
+      ETLConfig.class.getPackage().getName());
   }
 
   protected List<GenericRecord> readOutput(TimePartitionedFileSet fileSet, Schema schema) throws IOException {

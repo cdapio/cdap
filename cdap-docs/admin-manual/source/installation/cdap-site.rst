@@ -24,8 +24,11 @@ see the :ref:`configuration-security` section.
      - Default Value
      - Description
    * - ``app.template.dir``
-     - ``/opt/cdap/master/plugins``
+     - ``/opt/cdap/master/templates``
      - Directory where all archives for application templates are stored
+   * - ``app.template.plugin.dir``
+     - ``${app.template.dir}/plugins``
+     - Directory where template plugins are stored
    * - ``app.bind.address``
      - ``127.0.0.1``
      - App-Fabric server host address

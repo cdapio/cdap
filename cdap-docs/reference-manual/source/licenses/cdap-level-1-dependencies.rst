@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
-    :version: 3.0.0
+    :version: 3.0.1
 
 =================================================
 Cask Data Application Platform |version|
@@ -21,8 +21,8 @@ Cask Data Application Platform Level 1 Dependencies
    :header: "Package","Artifact","License","License URL"
    :widths: 20, 20, 20, 40
 
-   "ch.qos.logback","logback-classic","LGPL and EPL","http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html"
-   "ch.qos.logback","logback-core","LGPL and EPL","http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html"
+   "ch.qos.logback","logback-classic","EPL","http://www.eclipse.org/legal/epl-v10.html"
+   "ch.qos.logback","logback-core","EPL","http://www.eclipse.org/legal/epl-v10.html"
    "com.google.code.findbugs","jsr305","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.code.gson","gson","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.guava","guava","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -36,7 +36,7 @@ Cask Data Application Platform Level 1 Dependencies
    "commons-lang","commons-lang","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.netty","netty","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.thekraken","grok","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "javax.servlet","javax.servlet-api","CCDL 1.0","https://glassfish.dev.java.net/public/CDDL+GPL.html"
+   "javax.servlet","javax.servlet-api","CDDL 1.0","https://glassfish.dev.java.net/public/CDDL+GPL.html"
    "javax.ws.rs","javax.ws.rs-api","Best of CDDL and GPL 2.0","http://glassfish.java.net/public/CDDL+GPL_1_1.html"
    "jline","jline","The BSD License","http://www.opensource.org/licenses/bsd-license.php"
    "junit","junit","Common Public License Version 1.0","http://www.opensource.org/licenses/cpl1.0.txt"
