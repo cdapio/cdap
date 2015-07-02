@@ -3,7 +3,7 @@ angular.module(PKG.name + '.services')
     var dataSrc = new MyDataSource();
 
     function startPolling (widget) {
-      dataSrc.poll({
+      widget.pollId = dataSrc.poll({
         _cdapPath: '/metrics/query',
         method: 'POST',
         interval: widget.settings.interval,
@@ -14,10 +14,8 @@ angular.module(PKG.name + '.services')
         )
       }, function (res) {
 
-        widget.formattedData = __formatData(res, widget);
-
-        widget.pollId = res.__pollId__;
-      });
+        widget.formattedData = formatData(res, widget);
+      }).__pollId__;
     }
 
 
@@ -49,9 +47,7 @@ angular.module(PKG.name + '.services')
         )
       })
       .then(function (res) {
-        widget.formattedData = __formatData(res, widget);
-
-        widget.pollId = res.__pollId__;
+        widget.formattedData = formatData(res, widget);
       });
     }
 
@@ -61,7 +57,7 @@ angular.module(PKG.name + '.services')
       });
     }
 
-    function __formatData (res, widget) {
+    function formatData (res, widget) {
       var processedData = MyChartHelpers.processData(
         res,
         'qid',

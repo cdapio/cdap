@@ -191,7 +191,7 @@ angular.module(PKG.name+'.feature.dashboard')
     }
 
     function startPolling (widget) {
-      dataSrc.poll({
+      widget.pollId = dataSrc.poll({
         _cdapPath: '/metrics/query',
         method: 'POST',
         body: MyMetricsQueryHelper.constructQuery(
@@ -218,8 +218,7 @@ angular.module(PKG.name+'.feature.dashboard')
         };
         widget.formattedData = data;
 
-        widget.pollId = res.__pollId__;
-      });
+      }).__pollId__;
     }
 
     function stopPolling (widget) {

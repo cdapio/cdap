@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').controller('DashboardCtrl',
-function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, DashboardHelper) {
+function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
 
 
   $scope.unknownBoard = false;

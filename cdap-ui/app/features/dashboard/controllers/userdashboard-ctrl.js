@@ -2,7 +2,7 @@
  * DashboardCtrl
  */
 
-angular.module(PKG.name+'.feature.dashboard').controller('DashboardViewCtrl',
+angular.module(PKG.name+'.feature.dashboard').controller('UserDashboardCtrl',
 function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, DashboardHelper) {
 
 
