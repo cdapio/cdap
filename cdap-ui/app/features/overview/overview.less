@@ -98,11 +98,7 @@ body.state-overview {
         right: 10px;
         z-index: 10;
       }
-      p { color: @cdap-bluegray; }
-      h2 {
-        font-weight: 500;
-        padding-bottom: 20px;
-      }
+      h2 { padding-bottom: 20px; }
       h3 { margin: 5px auto; }
       .col-xs-12.col-sm-3:first-child > div { padding-left: 30px; }
       .panel-heading { padding: 0; }
@@ -117,9 +113,8 @@ body.state-overview {
       &.system-health {
         color: @cdap-bluegray;
         padding: 10px;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
-        h2 {
-          font-size: 24px;
+        border: 1px solid #d1d4dc;
+        h3 {
           padding-left: 30px;
           position: relative;
           top: 5px;
@@ -147,7 +142,6 @@ body.state-overview {
         .c3-tooltip-container { text-align: left; }
       }
       &.data-apps {
-        h3 { font-weight: 600; }
         .col-xs-12.col-sm-3 {
           p {
             font-weight: bold;
@@ -205,6 +199,5 @@ body.state-overview {
       }
     }
   }
-
 
 }
