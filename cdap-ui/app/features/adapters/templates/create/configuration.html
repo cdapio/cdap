@@ -2,10 +2,12 @@
   <div class="panel-heading" ng-click="configurationTabOpen = !configurationTabOpen">
     <div class="panel-title">
       <div class="clearfix">
-        <span class="pull-left" ng-if="AdapterCreateController.model.metadata.type === 'ETLRealtime'">Configuration</span>
-        <span class="pull-left" ng-if="AdapterCreateController.model.metadata.type === 'ETLBatch'">Schedule: Cron Expression</span>
-        <i class="fa fa-fw pull-right"
-            ng-class="{'fa-chevron-down': configurationTabOpen, 'fa-chevron-right': !configurationTabOpen}"></i>
+        <div class="pull-left">
+          <span class="fa fa-fw"
+                ng-class="{'fa-chevron-down': configurationTabOpen, 'fa-chevron-right': !configurationTabOpen}"></span>
+          <span ng-if="AdapterCreateController.model.metadata.type === 'ETLRealtime'">Configuration</span>
+          <span ng-if="AdapterCreateController.model.metadata.type === 'ETLBatch'">Schedule: Cron Expression</span>
+        </div>
       </div>
     </div>
   </div>
