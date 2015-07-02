@@ -73,7 +73,7 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
 
   @Override
   public void addMapReduce(String mapReduce) {
-    nodes.add(WorkflowNodeCreator.createWorkflowActionNode(mapReduce, mapReduce, SchedulableProgramType.MAPREDUCE));
+    addMapReduce(mapReduce, mapReduce);
   }
 
   @Override
@@ -83,7 +83,7 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
 
   @Override
   public void addSpark(String spark) {
-    nodes.add(WorkflowNodeCreator.createWorkflowActionNode(spark, spark, SchedulableProgramType.SPARK));
+    addSpark(spark, spark);
   }
 
   @Override
@@ -112,8 +112,7 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
 
   @Override
   public WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<WorkflowContext> predicate) {
-    return new DefaultWorkflowConditionConfigurer<>(predicate.getClass().getSimpleName(), this,
-                                                    predicate.getClass().getName());
+    return condition(predicate.getClass().getSimpleName(), predicate);
   }
 
   @Override

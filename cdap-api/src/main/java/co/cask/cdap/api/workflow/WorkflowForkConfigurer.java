@@ -127,7 +127,7 @@ public interface WorkflowForkConfigurer<T> {
    * @return the configurer for the condition
    */
   WorkflowConditionConfigurer<? extends WorkflowForkConfigurer<T>> condition(String uniqueName,
-                                                                      Predicate<WorkflowContext> condition);
+                                                                             Predicate<WorkflowContext> condition);
 
   /**
    * Adds a branch to the {@link WorkflowForkNode}

@@ -56,9 +56,7 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
 
   @Override
   public WorkflowConditionConfigurer<T> addMapReduce(String mapReduce) {
-    currentBranch.add(WorkflowNodeCreator.createWorkflowActionNode(mapReduce, mapReduce,
-                                                                   SchedulableProgramType.MAPREDUCE));
-    return this;
+    return addMapReduce(mapReduce, mapReduce);
   }
 
   @Override
@@ -70,8 +68,7 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
 
   @Override
   public WorkflowConditionConfigurer<T> addSpark(String spark) {
-    currentBranch.add(WorkflowNodeCreator.createWorkflowActionNode(spark, spark, SchedulableProgramType.SPARK));
-    return this;
+    return addSpark(spark, spark);
   }
 
   @Override
@@ -105,15 +102,13 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   @SuppressWarnings("unchecked")
   public WorkflowConditionConfigurer<? extends WorkflowConditionConfigurer<T>> condition(
     Predicate<WorkflowContext> predicate) {
-    String predicateClassName = predicate.getClass().getName();
-    return new DefaultWorkflowConditionConfigurer<>(predicate.getClass().getSimpleName(), this, predicateClassName);
+    return condition(predicate.getClass().getSimpleName(), predicate);
   }
 
   @Override
   public WorkflowConditionConfigurer<? extends WorkflowConditionConfigurer<T>> condition(
     String uniqueName, Predicate<WorkflowContext> predicate) {
-    String predicateClassName = predicate.getClass().getName();
-    return new DefaultWorkflowConditionConfigurer<>(uniqueName, this, predicateClassName);
+    return new DefaultWorkflowConditionConfigurer<>(uniqueName, this, predicate.getClass().getName());
   }
 
   @Override

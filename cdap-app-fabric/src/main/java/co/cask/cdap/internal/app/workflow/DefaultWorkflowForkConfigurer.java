@@ -51,9 +51,7 @@ public class DefaultWorkflowForkConfigurer<T extends WorkflowForkJoiner & Workfl
 
   @Override
   public WorkflowForkConfigurer<T> addMapReduce(String mapReduce) {
-    currentBranch.add(WorkflowNodeCreator.createWorkflowActionNode(mapReduce, mapReduce,
-                                                                   SchedulableProgramType.MAPREDUCE));
-    return this;
+    return addMapReduce(mapReduce, mapReduce);
   }
 
   @Override
@@ -65,8 +63,7 @@ public class DefaultWorkflowForkConfigurer<T extends WorkflowForkJoiner & Workfl
 
   @Override
   public WorkflowForkConfigurer<T> addSpark(String spark) {
-    currentBranch.add(WorkflowNodeCreator.createWorkflowActionNode(spark, spark, SchedulableProgramType.SPARK));
-    return this;
+    return addSpark(spark, spark);
   }
 
   @Override
@@ -100,15 +97,13 @@ public class DefaultWorkflowForkConfigurer<T extends WorkflowForkJoiner & Workfl
   @Override
   public WorkflowConditionConfigurer<? extends WorkflowForkConfigurer<T>> condition(
     Predicate<WorkflowContext> predicate) {
-    String predicateClassName = predicate.getClass().getName();
-    return new DefaultWorkflowConditionConfigurer<>(predicate.getClass().getSimpleName(), this, predicateClassName);
+    return condition(predicate.getClass().getSimpleName(), predicate);
   }
 
   @Override
   public WorkflowConditionConfigurer<? extends WorkflowForkConfigurer<T>> condition(
     String uniqueName, Predicate<WorkflowContext> predicate) {
-    String predicateClassName = predicate.getClass().getName();
-    return new DefaultWorkflowConditionConfigurer<>(uniqueName, this, predicateClassName);
+    return new DefaultWorkflowConditionConfigurer<>(uniqueName, this, predicate.getClass().getName());
   }
 
   @Override

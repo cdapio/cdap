@@ -95,7 +95,7 @@ public abstract class AbstractWorkflow implements Workflow {
 
   /**
    * Adds a custom action to the {@link Workflow}.
-   * @param uniqueName the unique name to be assigned to the {@link WorkflowNode} who represents the action
+   * @param uniqueName the unique name to be assigned to the {@link WorkflowNode} that represents the action
    * @param action     the action to be added
    */
   protected final void addAction(String uniqueName, WorkflowAction action) {
@@ -112,7 +112,7 @@ public abstract class AbstractWorkflow implements Workflow {
 
   /**
    * Adds a MapReduce program to the {@link Workflow}.
-   * @param uniqueName the unique name to be assigned to the {@link WorkflowNode} who represents the MapReduce program
+   * @param uniqueName the unique name to be assigned to the {@link WorkflowNode} that represents the MapReduce program
    * @param mapReduce the name of MapReduce program to be added
    */
   protected final void addMapReduce(String uniqueName, String mapReduce) {
@@ -129,7 +129,7 @@ public abstract class AbstractWorkflow implements Workflow {
 
   /**
    * Adds a Spark program to the {@link Workflow}.
-   * @param uniqueName the unique name to be assigned to the {@link WorkflowNode} who represents the Spark program
+   * @param uniqueName the unique name to be assigned to the {@link WorkflowNode} that represents the Spark program
    * @param spark      the name of the Spark program to be added
    */
   protected final void addSpark(String uniqueName, String spark) {
@@ -156,7 +156,7 @@ public abstract class AbstractWorkflow implements Workflow {
 
   /**
    * Adds a condition to the {@link Workflow}.
-   * @param uniqueName the unique name to be assigned to the {@link WorkflowNode} who represents the condition
+   * @param uniqueName the unique name to be assigned to the {@link WorkflowNode} that represents the condition
    * @param predicate the {@link Predicate} to be evaluated to determine which branch to take
    * @return the {@link WorkflowConditionConfigurer} to configure the branches in the condition
    */
