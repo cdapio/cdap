@@ -66,5 +66,10 @@
        }
     }
 
+  },
+  "implicit": {
+    "schema": {
+      "message": "string"
+    }
   }
 }

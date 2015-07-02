@@ -1,0 +1,120 @@
+@import "../../styles/variables.less";
+my-plumb {
+  display: block;
+  overflow: auto;
+
+  .my-js-plumb {
+    position: relative;
+    width: inherit;
+    overflow: auto;
+    height: inherit;
+    background-image: url('../img/grid.png');
+    border: 0.5px solid #c5c7d3;
+    margin-top: -1px;
+
+    &.disabled {
+      background-image: none;
+      border: 1px solid #dddddd;
+      background-color: #f6f6f6;
+      border-radius: 4px;
+    }
+
+    .box {
+      background-repeat: no-repeat;
+      position: absolute;
+      text-align: center;
+      cursor: move;
+      left: 100px;
+      top: 250px;
+      color: white;
+      padding: 20px 10px 10px;
+      overflow: hidden;
+
+      div.icon {
+        font-size: 300%;
+      }
+      .icon.fa, .fa.fa-close {
+        cursor: pointer;
+      }
+      .fa.fa-close {
+        font-size: 11px;
+      }
+      .plugin-name {
+        font-size: 13px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 10px;
+      }
+
+      &.source {
+        background-image: url('@{img-path}/ico_source.png');
+        height: 117px;
+        width: 92px;
+        left: 30vw;
+      }
+
+      &.transform {
+        background-image: url('@{img-path}/ico_transform.png');
+        height: 117px;
+        width: 102px;
+        left: 50vw;
+      }
+
+      &.sink {
+        background-image: url('@{img-path}/ico_sink.png');
+        height: 117px;
+        width: 92px;
+        left: 70vw;
+      }
+
+
+      .label-as-badge {
+        border-radius: 50%;
+      }
+
+      .error-node-notification {
+        position: absolute;
+        top: 3px;
+        right: 5px;
+
+        .badge-danger {
+          background-color: @brand-danger;
+
+          > i {
+            margin-left: 0;
+            color: white;
+          }
+        }
+      }
+    }
+
+    .error-container {
+      position: fixed;
+      bottom: 50px;
+      left: 0;
+      right: 0;
+      width: 75%;
+      margin: 0 auto;
+
+      .error-close-icon {
+        cursor: pointer;
+      }
+
+      &.well {
+        background-color: @brand-danger;
+        border-radius: 8px;
+        color: white;
+      }
+    }
+    #plumb-container {
+      height: 100%;
+      width: inherit;
+    }
+  }
+}
+
+.tooltip .tooltip-inner {
+  ul {
+    padding-left: 20px;
+  }
+}
