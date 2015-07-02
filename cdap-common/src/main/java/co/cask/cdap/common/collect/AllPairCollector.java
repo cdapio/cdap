@@ -16,10 +16,12 @@
 
 package co.cask.cdap.common.collect;
 
-import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,24 +32,26 @@ import java.util.Map;
  */
 public class AllPairCollector<KEY, VALUE> implements PairCollector<KEY, VALUE> {
 
-  private final Multimap<KEY, VALUE> elements = HashMultimap.create();
+  private final List<Map.Entry<KEY, VALUE>> elements = new ArrayList<>();
 
   @Override
   public boolean addElement(Map.Entry<KEY, VALUE> entry) {
-    elements.put(entry.getKey(), entry.getValue());
+    elements.add(Maps.immutableEntry(entry.getKey(), entry.getValue()));
     return true;
   }
 
   @Override
   public <T extends Multimap<? super KEY, ? super VALUE>> T finishMultimap(T map) {
-    map.putAll(elements);
+    for (Map.Entry<KEY, VALUE> entry : elements) {
+      map.put(entry.getKey(), entry.getValue());
+    }
     elements.clear();
     return map;
   }
 
   @Override
   public <T extends Collection<? super Map.Entry<KEY, VALUE>>> T finish(T collection) {
-    collection.addAll(elements.entries());
+    collection.addAll(elements);
     elements.clear();
     return collection;
   }
