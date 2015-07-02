@@ -17,6 +17,11 @@
 package co.cask.cdap.internal.app.worker;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.app.ApplicationConfigurer;
+import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerConfigurer;
 import co.cask.cdap.api.worker.WorkerSpecification;
@@ -39,6 +44,7 @@ public class DefaultWorkerConfigurer implements WorkerConfigurer {
 
   private final String className;
   private final Map<String, String> propertyFields;
+  private final ApplicationConfigurer appConfigurer;
 
   private String name;
   private String description;
@@ -47,7 +53,7 @@ public class DefaultWorkerConfigurer implements WorkerConfigurer {
   private Map<String, String> properties;
   private Set<String> datasets;
 
-  public DefaultWorkerConfigurer(Worker worker) {
+  public DefaultWorkerConfigurer(Worker worker, ApplicationConfigurer appConfigurer) {
     this.name = worker.getClass().getSimpleName();
     this.className = worker.getClass().getName();
     this.propertyFields = Maps.newHashMap();
@@ -56,6 +62,7 @@ public class DefaultWorkerConfigurer implements WorkerConfigurer {
     this.instances = 1;
     this.properties = ImmutableMap.of();
     this.datasets = Sets.newHashSet();
+    this.appConfigurer = appConfigurer;
 
     // Grab all @Property fields
     Reflections.visit(worker, TypeToken.of(worker.getClass()), new PropertyFieldExtractor(propertyFields));
@@ -69,6 +76,31 @@ public class DefaultWorkerConfigurer implements WorkerConfigurer {
   @Override
   public void setDescription(String description) {
     this.description = description;
+  }
+
+  @Override
+  public void addStream(Stream stream) {
+    appConfigurer.addStream(stream);
+  }
+
+  @Override
+  public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
+    appConfigurer.addDatasetModule(moduleName, moduleClass);
+  }
+
+  @Override
+  public void addDatasetType(Class<? extends Dataset> datasetClass) {
+    appConfigurer.addDatasetType(datasetClass);
+  }
+
+  @Override
+  public void createDataset(String datasetName, String typeName, DatasetProperties properties) {
+    appConfigurer.createDataset(datasetName, typeName, properties);
+  }
+
+  @Override
+  public void createDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props) {
+    appConfigurer.createDataset(datasetName, datasetClass, props);
   }
 
   @Override

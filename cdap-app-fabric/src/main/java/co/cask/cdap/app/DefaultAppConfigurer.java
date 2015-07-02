@@ -145,7 +145,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   @Override
   public void addMapReduce(MapReduce mapReduce) {
     Preconditions.checkArgument(mapReduce != null, "MapReduce cannot be null.");
-    DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce);
+    DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce, this);
     mapReduce.configure(configurer);
 
     MapReduceSpecification spec = configurer.createSpecification();
@@ -182,7 +182,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   @Override
   public void addWorker(Worker worker) {
     Preconditions.checkArgument(worker != null, "Worker cannot be null.");
-    DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker);
+    DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker, this);
     worker.configure(configurer);
     WorkerSpecification spec = configurer.createSpecification();
     workers.put(spec.getName(), spec);
