@@ -1,0 +1,26 @@
+.my-js-plumb {
+  position: relative;
+  width: 100%;
+  background-color: white;
+  overflow: auto;
+  margin-top: 53px;
+  margin-bottom: 25px;
+  height: 600px;
+
+  .box {
+    position: absolute;
+    border: 1px solid black;
+    height: 100px;
+    width: 100px;
+    line-height: 100px;
+    text-align: center;
+    cursor: move;
+    left: 100px;
+    top: 250px;
+    display: inline-block;
+
+    &.sink {
+      left: 400px;
+    }
+  }
+}
