@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.templates;
+package co.cask.cdap.internal.plugins;
 
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginInfo;
@@ -28,7 +28,7 @@ public final class AdapterPlugin {
   private final PluginClass pluginClass;
   private final PluginProperties properties;
 
-  AdapterPlugin(PluginInfo pluginInfo, PluginClass pluginClass, PluginProperties properties) {
+  public AdapterPlugin(PluginInfo pluginInfo, PluginClass pluginClass, PluginProperties properties) {
     this.pluginInfo = pluginInfo;
     this.pluginClass = pluginClass;
     this.properties = properties;

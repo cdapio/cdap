@@ -39,6 +39,7 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.adapter.PluginRepository;
+import co.cask.cdap.internal.plugins.AdapterPlugin;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.AdapterConfig;

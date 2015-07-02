@@ -22,6 +22,7 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.templates.AdapterSpecification;
 import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.plugins.AdapterPlugin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Objects;

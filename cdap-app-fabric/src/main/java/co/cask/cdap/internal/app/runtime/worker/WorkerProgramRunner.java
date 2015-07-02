@@ -102,7 +102,7 @@ public class WorkerProgramRunner implements ProgramRunner {
     WorkerSpecification newWorkerSpec = new WorkerSpecification(workerSpec.getClassName(), workerSpec.getName(),
                                                                 workerSpec.getDescription(), workerSpec.getProperties(),
                                                                 workerSpec.getDatasets(), newResources,
-                                                                Integer.valueOf(instances));
+                                                                Integer.valueOf(instances), workerSpec.getPlugins());
 
     AdapterDefinition adapterSpec = getAdapterSpecification(options.getArguments());
 
