@@ -22,24 +22,20 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.template.etl.common.DBConfig;
+import co.cask.cdap.template.etl.common.DBHelper;
 import co.cask.cdap.template.etl.common.DBRecord;
-import co.cask.cdap.template.etl.common.DBUtils;
 import co.cask.cdap.template.etl.common.ETLDBInputFormat;
-import com.google.common.base.Preconditions;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Driver;
+import java.sql.Connection;
 
 /**
  * Batch source to read from a Database table
@@ -58,56 +54,45 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
     "import from the specified table. Examples: SELECT COUNT(*) from <my_table> where <my_column> 1, " +
     "SELECT COUNT(my_column) from my_table). NOTE: Please include the same WHERE clauses in this query as the ones " +
     "used in the import query to reflect an accurate number of records to import.";
-
   private final DBSourceConfig dbSourceConfig;
-  private Class<? extends Driver> driverClass;
+  private final DBHelper dbHelper;
 
   public DBSource(DBSourceConfig dbSourceConfig) {
     this.dbSourceConfig = dbSourceConfig;
+    this.dbHelper = new DBHelper(dbSourceConfig);
   }
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    Preconditions.checkArgument(!(dbSourceConfig.user == null && dbSourceConfig.password != null),
-                                "dbUser is null. Please provide both user name and password if database requires " +
-                                  "authentication. If not, please remove dbPassword and retry.");
-    Preconditions.checkArgument(!(dbSourceConfig.user != null && dbSourceConfig.password == null),
-                                "dbPassword is null. Please provide both user name and password if database requires" +
-                                  "authentication. If not, please remove dbUser and retry.");
-    String jdbcPluginId = String.format("%s.%s.%s", "source", dbSourceConfig.jdbcPluginType,
-                                        dbSourceConfig.jdbcPluginName);
-    Class<? extends Driver> jdbcDriverClass = pipelineConfigurer.usePluginClass(dbSourceConfig.jdbcPluginType,
-                                                                                dbSourceConfig.jdbcPluginName,
-                                                                                jdbcPluginId,
-                                                                                PluginProperties.builder().build());
-    Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
+    dbHelper.checkCredentials(pipelineConfigurer);
+    try {
+      ensureValidConnection();
+    } catch (Exception e) {
+      throw new IllegalArgumentException(e);
+    } finally {
+      dbHelper.destroy();
+    }
   }
 
   @Override
   public void prepareRun(BatchSourceContext context) {
-    LOG.debug("tableName = {}; pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; " +
+    LOG.debug("pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; " +
                 "countQuery = {}",
-              dbSourceConfig.tableName, dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName,
+              dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName,
               dbSourceConfig.connectionString, dbSourceConfig.importQuery, dbSourceConfig.countQuery);
-
-    Job job = context.getHadoopJob();
-    Configuration hConf = job.getConfiguration();
-    // Load the plugin class to make sure it is available.
-    Class<? extends Driver> driverClass = context.loadPluginClass(getJDBCPluginId());
-    if (dbSourceConfig.user == null && dbSourceConfig.password == null) {
-      DBConfiguration.configureDB(hConf, driverClass.getName(), dbSourceConfig.connectionString);
-    } else {
-      DBConfiguration.configureDB(hConf, driverClass.getName(), dbSourceConfig.connectionString,
-                                  dbSourceConfig.user, dbSourceConfig.password);
+    try {
+      Job job = dbHelper.prepareRunGetJob(context);
+      ETLDBInputFormat.setInput(job, DBRecord.class, dbSourceConfig.importQuery, dbSourceConfig.countQuery);
+      job.setInputFormatClass(ETLDBInputFormat.class);
+    } finally {
+      dbHelper.destroy();
     }
-    ETLDBInputFormat.setInput(job, DBRecord.class, dbSourceConfig.importQuery, dbSourceConfig.countQuery);
-    job.setInputFormatClass(ETLDBInputFormat.class);
   }
 
   @Override
   public void initialize(BatchSourceContext context) throws Exception {
     super.initialize(context);
-    driverClass = context.loadPluginClass(getJDBCPluginId());
+    dbHelper.driverClass = context.loadPluginClass(dbHelper.getJDBCPluginID());
   }
 
   @Override
@@ -117,11 +102,14 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
 
   @Override
   public void destroy() {
-    DBUtils.cleanup(driverClass);
+    dbHelper.destroy();
   }
 
-  private String getJDBCPluginId() {
-    return String.format("%s.%s.%s", "source", dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName);
+  private void ensureValidConnection() throws Exception {
+    dbHelper.ensureJDBCDriverIsAvailable();
+    try (Connection connection = dbHelper.createConnection()) {
+      assert(connection.isValid(0));
+    }
   }
 
   /**

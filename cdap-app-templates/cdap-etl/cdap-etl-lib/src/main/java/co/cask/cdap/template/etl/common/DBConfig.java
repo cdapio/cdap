@@ -19,6 +19,7 @@ package co.cask.cdap.template.etl.common;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 
+import java.sql.Driver;
 import javax.annotation.Nullable;
 
 /**
@@ -28,9 +29,6 @@ public class DBConfig extends PluginConfig {
 
   @Description("JDBC connection string including database name.")
   public String connectionString;
-
-  @Description("Table name to import/export from/to.")
-  public String tableName;
 
   @Description("User to use to connect to the specified database. Required for databases that " +
     "need authentication. Optional for databases that do not require authentication.")
