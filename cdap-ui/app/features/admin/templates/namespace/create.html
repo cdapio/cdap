@@ -9,18 +9,18 @@
   <form class="form-horizontal"
         role="form"
         name="namespaceCreateForm"
-        no-validate
-  >
-
+        no-validate>
     <div class="form-group">
-      <label class="col-xs-12 col-sm-2 control-label" for="namespaceDisplayName"> Name <span class="fa fa-asterisk"></span></label>
+      <label class="col-xs-12 col-sm-2 control-label" for="namespaceDisplayName">
+        <span>Name</span>
+        <span class="fa fa-asterisk"></span>
+      </label>
       <div class="col-xs-12 col-sm-10">
         <input type="text"
                id="namespaceDisplayName"
                ng-model="model.name"
                class="form-control"
-               required
-        >
+               required>
         <div class="alert alert-danger alert-dismissible"
              ng-show="error"
              role="alert">
@@ -41,8 +41,7 @@
         <textarea type="text"
                id="namespaceDescription"
                ng-model="model.description"
-               class="form-control"
-        ></textarea>
+               class="form-control"></textarea>
       </div>
     </div>
   </form>
