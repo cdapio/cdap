@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.services')
-  .service('myNamespace', function myNamespace($q, MyDataSource, EventPipe, $http, $rootScope, myAuth, MYAUTH_EVENT, myHelpers, $state) {
+  .service('myNamespace', function myNamespace($q, MyDataSource, EventPipe, $http, $rootScope, myAuth, MYAUTH_EVENT, myHelpers, $state, StatusFactory) {
 
     this.namespaceList = [];
 
@@ -53,7 +53,7 @@ angular.module(PKG.name + '.services')
                   $rootScope.$broadcast(MYAUTH_EVENT.sessionTimeout);
                   $state.go('login');
                 } else {
-                  EventPipe.emit('backendDown', 'Problem accessing namespace');
+                  EventPipe.emit('backendDown', 'Problem accessing namespace.', 'Please refresh the page.');
                 }
               }
         );
