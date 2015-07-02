@@ -47,7 +47,7 @@ public class StreamConversionApp extends AbstractApplication {
     // create the time-partitioned file set, configure it to work with MapReduce and with Explore
     createDataset("converted", TimePartitionedFileSet.class, FileSetProperties.builder()
       // properties for file set
-      .setBasePath("/converted")
+      .setBasePath("converted")
       .setInputFormat(AvroKeyInputFormat.class)
       .setOutputFormat(AvroKeyOutputFormat.class)
       .setOutputProperty("schema", SCHEMA_STRING)

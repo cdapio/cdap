@@ -85,7 +85,7 @@ public class ExploreUpgradeTest extends BaseHiveExploreServiceTest {
                                       Schema.Field.of("body", Schema.of(Schema.Type.STRING)),
                                       Schema.Field.of("ts", Schema.of(Schema.Type.LONG)));
       datasetFramework.addInstance(TimePartitionedFileSet.class.getName(), filesetID, FileSetProperties.builder()
-        .setBasePath("/my/path")
+        .setBasePath("my/path")
         .setEnableExploreOnCreate(true)
         .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
         .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
