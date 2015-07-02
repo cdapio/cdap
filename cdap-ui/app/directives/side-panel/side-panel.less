@@ -1,0 +1,54 @@
+@import "../../styles/variables.less";
+
+my-side-panel {
+  .side-panel {
+    position: fixed;
+    left: 0;
+    z-index: 10000;
+    top: 300px;
+
+    .panel-item {
+      text-align: center;
+      line-height: 100%;
+      background-color: @cdap-bluegray;
+      color: white;
+      padding: 10px;
+      cursor: pointer;
+
+      &:hover {
+        background-color: @cdap-orange;
+      }
+    }
+  }
+  .panel-container {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 200px;
+    box-shadow: 1px 1px 1px 1px black;
+    background-color: #6f7c9d;
+    opacity: 0.8;
+
+    .list-group-item {
+      cursor:pointer;
+      border: 0;
+      background: transparent;
+      color: white;
+
+      &:hover {
+        background-color: @cdap-orange;
+      }
+    }
+
+    .plugin-container {
+      overflow: auto;
+      height: 200px;
+    }
+
+    .btn.btn-danger.btn-sm {
+      position: fixed;
+      top: 200px;
+      left: 50vw;
+    }
+  }
+}
