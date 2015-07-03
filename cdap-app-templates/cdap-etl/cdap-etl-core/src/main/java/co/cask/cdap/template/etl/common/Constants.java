@@ -16,6 +16,8 @@
 
 package co.cask.cdap.template.etl.common;
 
+import java.nio.ByteBuffer;
+
 /**
  * Constants used in ETL Adapter.
  */

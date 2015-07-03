@@ -19,20 +19,27 @@ package co.cask.cdap.template.etl.realtime.source;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.format.RecordFormat;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.template.etl.api.Emitter;
+import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.template.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.template.etl.api.realtime.SourceState;
+import co.cask.cdap.template.etl.common.RecordFormats;
 import co.cask.cdap.template.etl.realtime.kafka.Kafka08SimpleApiConsumer;
 import co.cask.cdap.template.etl.realtime.kafka.KafkaSimpleApiConsumer;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -60,13 +67,13 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
   public static final String KAFKA_SCHEMA = "kafka.schema";
   public static final String KAFKA_FORMAT = "kafka.format";
 
+  private static final String FORMAT_SETTING_PREFIX = "format.setting.";
+
   private static final Schema SCHEMA = Schema.recordOf("Kafka Message",
                                                        Schema.Field.of(MESSAGE, Schema.of(Schema.Type.BYTES)),
                                                        Schema.Field.of(KEY, Schema.nullableOf(
                                                          Schema.of(Schema.Type.STRING))));
-
   private KafkaSimpleApiConsumer kafkaConsumer;
-
   private KafkaPluginConfig config;
 
   /**
@@ -77,12 +84,21 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
     this.config = config;
   }
 
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    config.validate();
+  }
+
   @Override
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
 
     kafkaConsumer = new Kafka08SimpleApiConsumer(this);
     kafkaConsumer.initialize(context);
+    if (config.format != null) {
+      FormatSpecification spec = config.getFormatSpec();
+      RecordFormat<ByteBuffer, StructuredRecord> format = RecordFormats.createInitializedFormat(spec);
+      format.initialize(spec);
+    }
   }
 
   @Nullable
@@ -107,37 +123,30 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
    * Convert {@code Apache Kafka} ByteBuffer from message into CDAP {@link StructuredRecord} instance.
    * @param key the String key of the Kafka message
    * @param payload the ByteBuffer of the Kafka message.
-   * @return instance of {@link StructuredRecord} representing the message.
+   * @return instance of {@link StructuredRecord} representing the message using the appropriate format.
    */
   public StructuredRecord byteBufferToStructuredRecord(@Nullable String key, ByteBuffer payload) {
-//    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(SCHEMA);
-//    if (key != null) {
-//      recordBuilder.set(KEY, key);
-//    }
-//    recordBuilder.set(MESSAGE, payload);
-//    return recordBuilder.build();
-    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(getDefaultTextSchema());
+    FormatSpecification spec = config.getFormatSpec();
+    if (config.format == null) {
+      return byteBufferToByteRecord(key, payload);
+    }
+    RecordFormat<ByteBuffer, StructuredRecord> format;
+    try {
+      format = RecordFormats.createInitializedFormat(spec);
+      return format.read(payload);
+    } catch (Exception e) {
+      LOG.error("Could not parse Kafka payload into schema. Using default structured record instead.");
+      return byteBufferToByteRecord(key, payload);
+    }
+  }
+
+  private StructuredRecord byteBufferToByteRecord(@Nullable String key, ByteBuffer payload) {
+    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(SCHEMA);
     if (key != null) {
       recordBuilder.set(KEY, key);
     }
-    String msgAsString = Bytes.toString(payload);
-    recordBuilder.set("message", msgAsString);
+    recordBuilder.set(MESSAGE, payload);
     return recordBuilder.build();
-  }
-
-//  public StructuredRecord textStructuredRecord(@Nullable String key, ByteBuffer payload) {
-//    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(getDefaultTextSchema());
-//    if (key != null) {
-//      recordBuilder.set(KEY, key);
-//    }
-//    String msgAsString = Bytes.toString(payload);
-//    recordBuilder.set("message", msgAsString);
-//    return recordBuilder.build();
-//  }
-
-  protected Schema getDefaultTextSchema() {
-    return Schema.recordOf("stringBody", Schema.Field.of("message", Schema.of(Schema.Type.STRING)),
-                           Schema.Field.of(KEY, Schema.nullableOf(Schema.of(Schema.Type.STRING))));
   }
 
   /**
@@ -179,22 +188,28 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
     private final Long defaultOffset;
 
     @Name(KAFKA_SCHEMA)
-    @Description("The schema for the topic. Default value is SCHEMA")
-    private final Schema schema;
+    @Description("Optional schema for the body of Kafka events. Schema is used " +
+      "in conjunction with format to parse Kafka payloads. Some formats like the avro format require schema, " +
+      "while others do not. The schema given is for the body of the Kafka event")
+    @Nullable
+    private final String schema;
 
     @Name(KAFKA_FORMAT)
-    @Description("The format for the message")
+    @Description("Optional format of the Kafka event. Any format supported by CDAP is also supported. " +
+      "For example, a value of 'csv' will attempt to parse Kafka payloads as comma separated values. " +
+      "If no format is given, Kafka message payloads will be treated as bytes, resulting in a two field schema: " +
+      "'key' of type string (which is nullable) and 'payload' of type bytes.")
     @Nullable
     private final String format;
 
     public KafkaPluginConfig(String zkConnect, String brokers, Integer partitions, String topic,
-                             Long defaultOffset, @Nullable Schema schema, @Nullable String format) {
+                             Long defaultOffset, @Nullable String format, @Nullable String schema) {
       this.zkConnect = zkConnect;
       this.kafkaBrokers = brokers;
       this.partitions = partitions;
       this.topic = topic;
       this.defaultOffset = defaultOffset;
-      this.schema = schema != null ? schema : SCHEMA;
+      this.schema = schema;
       this.format = format;
     }
 
@@ -221,6 +236,45 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
     @Nullable
     public Long getDefaultOffset() {
       return defaultOffset;
+    }
+
+    private void validate() {
+      // check the schema if there is one
+      if (!Strings.isNullOrEmpty(schema)) {
+        parseSchema();
+      }
+    }
+
+    private FormatSpecification getFormatSpec() {
+      FormatSpecification formatSpec = null;
+      if (!Strings.isNullOrEmpty(format)) {
+        // try to parse the schema if there is one
+        Schema schemaObj = parseSchema();
+
+        // strip format.settings. from any properties and use them in the format spec
+        ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+        if (getProperties() != null) {
+          for (Map.Entry<String, String> entry : getProperties().getProperties().entrySet()) {
+            if (entry.getKey().startsWith(FORMAT_SETTING_PREFIX)) {
+              String key = entry.getKey();
+              builder.put(key.substring(FORMAT_SETTING_PREFIX.length(), key.length()), entry.getValue());
+            }
+          }
+          formatSpec = new FormatSpecification(format, schemaObj, builder.build());
+        } else {
+          formatSpec = new FormatSpecification(format, schemaObj, null);
+        }
+      }
+      return formatSpec;
+    }
+
+    private Schema parseSchema() {
+      // try to parse the schema if there is one
+      try {
+        return Strings.isNullOrEmpty(schema) ? null : Schema.parseJson(schema);
+      } catch (IOException e) {
+        throw new IllegalArgumentException("Invalid schema: " + e.getMessage());
+      }
     }
   }
 }

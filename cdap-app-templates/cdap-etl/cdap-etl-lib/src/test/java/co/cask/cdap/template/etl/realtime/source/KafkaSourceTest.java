@@ -16,6 +16,7 @@
 
 package co.cask.cdap.template.etl.realtime.source;
 
+import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.realtime.SourceState;
@@ -162,7 +163,37 @@ public class KafkaSourceTest {
     verifyEmittedMessages(kafkaSource, msgCount, sourceState);
   }
 
-  private void initializeKafkaSource(String topic, int partitions, boolean preferZK)  throws Exception {
+  @Test
+  public void testStructuredRecord() throws Exception {
+    final String topic = "testKafkaStructuredRecord";
+    initializeKafkaSource(topic, PARTITIONS, false, Formats.TEXT);
+
+    // Publish 5 messages to Kafka, the source should consume them
+    int msgCount = 5;
+    Map<String, String> messages = Maps.newHashMap();
+    for (int i = 0; i < msgCount; i++) {
+      messages.put(Integer.toString(i), "Message " + i);
+    }
+    sendMessage(topic, messages);
+
+    TimeUnit.SECONDS.sleep(2);
+
+    MockEmitter emitter = new MockEmitter();
+    SourceState updatedSourceState = kafkaSource.poll(emitter, new SourceState());
+
+    System.out.println("Message sent out: " + msgCount);
+    System.out.println("Message being emitted by Kafka realtime source: " + emitter.getInternalSize());
+
+    Assert.assertTrue(updatedSourceState.getState() != null && !updatedSourceState.getState().isEmpty());
+    Assert.assertTrue(emitter.getInternalSize() == msgCount);
+    Assert.assertTrue(((String) emitter.entryList.get(0).get("body")).contains("Message"));
+  }
+
+  private void initializeKafkaSource(String topic, int partitions, boolean preferZK) throws Exception {
+    initializeKafkaSource(topic, partitions, preferZK, null);
+  }
+
+  private void initializeKafkaSource(String topic, int partitions, boolean preferZK, String format) throws Exception {
     String zk = null;
     String brokerList = null;
     if (!supportBrokerList() || preferZK) {
@@ -170,9 +201,8 @@ public class KafkaSourceTest {
     } else {
       brokerList = "localhost:" + kafkaPort;
     }
-
     KafkaSource.KafkaPluginConfig config = new KafkaSource.KafkaPluginConfig(zk, brokerList, partitions,
-                                                                             topic, null, null, null);
+                                                                             topic, null, format, null);
 
     kafkaSource = new KafkaSource(config);
 
