@@ -26,7 +26,6 @@ import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.tephra.TransactionSystemClient;
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
@@ -34,7 +33,6 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.OperationStatus;
-import org.apache.hive.service.cli.SessionHandle;
 
 import java.io.File;
 
@@ -46,7 +44,7 @@ import java.io.File;
  *   return type has changed</li>
  * </ol>
  */
-public class HiveCDH5ExploreService extends BaseHiveExploreService {
+public class HiveCDH5ExploreService extends Hive13ExploreService {
 
   @Inject
   protected HiveCDH5ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
@@ -64,11 +62,5 @@ public class HiveCDH5ExploreService extends BaseHiveExploreService {
     OperationStatus operationStatus = getCliService().getOperationStatus(handle);
     return new QueryStatus(QueryStatus.OpStatus.valueOf(operationStatus.getState().toString()),
                            handle.hasResultSet());
-  }
-
-  @Override
-  protected OperationHandle doExecute(SessionHandle sessionHandle, String statement)
-    throws HiveSQLException, ExploreException {
-    return getCliService().executeStatementAsync(sessionHandle, statement, ImmutableMap.<String, String>of());
   }
 }

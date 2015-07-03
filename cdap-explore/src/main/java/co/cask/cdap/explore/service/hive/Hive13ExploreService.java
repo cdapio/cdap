@@ -24,19 +24,27 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
+import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hive.service.cli.CLIService;
+import org.apache.hive.service.cli.FetchOrientation;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.OperationStatus;
+import org.apache.hive.service.cli.RowSet;
 import org.apache.hive.service.cli.SessionHandle;
 
 import java.io.File;
+import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * Hive 13 implementation of {@link co.cask.cdap.explore.service.ExploreService}.
@@ -54,6 +62,34 @@ public class Hive13ExploreService extends BaseHiveExploreService {
     // This config sets the time Hive CLI getOperationStatus method will wait for the status of
     // a running query.
     System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_LONG_POLLING_TIMEOUT.toString(), "50");
+  }
+
+  @Override
+  protected CLIService createCLIService() {
+    try {
+      return CLIService.class.getDeclaredConstructor().newInstance();
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to instantiate CLIService", e);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  protected List<QueryResult> doFetchNextResults(OperationHandle handle, FetchOrientation fetchOrientation,
+                                                 int size) throws Exception {
+    Class cliServiceClass = Class.forName("org.apache.hive.service.cli.CLIService");
+    Method fetchResultsMethod = cliServiceClass.getMethod("fetchResults");
+    RowSet rowSet = (RowSet) fetchResultsMethod.invoke(getCliService(), handle, fetchOrientation, size);
+
+    ImmutableList.Builder<QueryResult> rowsBuilder = ImmutableList.builder();
+    for (Object[] row : rowSet) {
+      List<Object> cols = Lists.newArrayList();
+      for (int i = 0; i < row.length; i++) {
+        cols.add(row[i]);
+      }
+      rowsBuilder.add(new QueryResult(cols));
+    }
+    return rowsBuilder.build();
   }
 
   @Override
