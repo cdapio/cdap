@@ -18,14 +18,12 @@ ngC3.factory('c3', function ($window) {
   return $window.c3;
 });
 
-ngC3.controller('c3Controller', function ($scope, c3, $filter, $timeout, MyChartHelpers, MyMetricsQueryHelper, MyDataSource) {
+ngC3.controller('c3Controller', function ($scope, c3, $filter, $timeout) {
   // We need to bind because the init function is called directly from the directives below
   // and so the function arguments would not otherwise be available to the initC3 and render functions.
   /* jshint shadow:true */
   var c3 = c3,
-      $filter = $filter,
-      queryId = 'qid',
-      dataSrc = new MyDataSource($scope);
+      $filter = $filter;
 
   $scope.metrics = $scope.chartMetric;
   $scope.alias = $scope.chartMetricAlias;
@@ -64,85 +62,23 @@ ngC3.controller('c3Controller', function ($scope, c3, $filter, $timeout, MyChart
     }, true);
 
     if ($scope.metrics) {
-      $scope.togglePolling();
+      drawChart();
     }
+    $scope.$watch('chartMetric', drawChart, true);
 
-    $scope.$watch('chartSettings', $scope.reconfigure, true);
-    $scope.$watch('chartMetric', $scope.reconfigure, true);
   };
 
-  $scope.drawChart = function (res) {
-    var myData;
-    var processedData = MyChartHelpers.processData(
-      res,
-      queryId,
-      $scope.metrics.names,
-      $scope.metrics.resolution,
-      $scope.chartSettings.aggregate
-    );
-    processedData = MyChartHelpers.c3ifyData(processedData, $scope.metrics, $scope.alias);
-    myData = { x: 'x', columns: processedData.columns, keys: {x: 'x'} };
-
-    if ($scope.options.stack) {
-      myData.groups = [processedData.metricNames];
-    }
-
-    // Save the data for when it gets resized.
-    $scope.options.data = myData;
-    $timeout(function() {
-      render();
-    });
-  };
-
-  $scope.reconfigure = function (newVal, oldVal) {
-    if (newVal === oldVal) {
+  function drawChart() {
+    if (!$scope.chartMetric) {
       return;
     }
-    $scope.togglePolling();
-  };
 
-  $scope.togglePolling = function() {
-    $scope.stopPolling();
-    if ($scope.chartSettings.isLive) {
-      $scope.startPolling();
-    } else {
-      $scope.fetchData()
-            .then($scope.drawChart);
-    }
-  };
-
-  $scope.stopPolling = function() {
-    if ($scope.pollId) {
-      dataSrc.stopPoll($scope.pollId);
-      $scope.pollId = null;
-    }
-  };
-
-  $scope.startPolling = function() {
-    var promise = dataSrc.poll({
-      _cdapPath: '/metrics/query',
-      method: 'POST',
-      body: MyMetricsQueryHelper.constructQuery(
-        queryId,
-        MyMetricsQueryHelper.contextToTags($scope.metrics.context),
-        $scope.metrics
-      ),
-      interval: $scope.chartSettings.interval
-    }, $scope.drawChart);
-    $scope.pollId = promise.__pollId__;
-  };
-
-  $scope.fetchData = function () {
-    return dataSrc.request({
-      _cdapPath: '/metrics/query',
-      method: 'POST',
-      body: MyMetricsQueryHelper.constructQuery(
-        queryId,
-        MyMetricsQueryHelper.contextToTags($scope.metrics.context),
-        $scope.metrics
-      )
+    $scope.options.data = $scope.chartMetric;
+    $timeout(function () {
+      render();
     });
-  };
+
+  }
 
   function render() {
     var data = $scope.options.data,

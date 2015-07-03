@@ -76,6 +76,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ApplicationBundler;
@@ -138,6 +139,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private Job job;
   private Transaction transaction;
   private Runnable cleanupTask;
+
+  // This needs to keep as a field.
+  // We need to hold a strong reference to the ClassLoader until the end of the MapReduce job.
   private ClassLoader classLoader;
   private volatile boolean stopRequested;
 
@@ -180,7 +184,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       job.getCredentials().addAll(credentials);
     }
 
-    // We need to hold a strong reference to the ClassLoader until the end of the MapReduce job.
     classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader());
     job.getConfiguration().setClassLoader(new WeakReferenceDelegatorClassLoader(classLoader));
     ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
@@ -699,12 +702,18 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                                                                             "org.apache.hadoop.hive"));
     Id.Program programId = context.getProgram().getId();
 
-    Location jobJar =
-      locationFactory.create(String.format("%s.%s.%s.%s.%s.jar",
-                                           ProgramType.MAPREDUCE.name().toLowerCase(),
-                                           programId.getNamespaceId(), programId.getApplicationId(),
-                                           programId.getId(), context.getRunId().getId()));
+    // Build the jobJar on local temp directory. On Job.submit(), the MapReduce framework will copy the file to HDFS
+    // and distribute it to task containers.
+    // It has to be local, otherwise it won't work on MapR.
+    File tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    tempDir.mkdirs();
+    String fileName = String.format("%s.%s.%s.%s.%s.jar",
+                                    ProgramType.MAPREDUCE.name().toLowerCase(),
+                                    programId.getNamespaceId(), programId.getApplicationId(),
+                                    programId.getId(), context.getRunId().getId());
 
+    Location jobJar = new LocalLocationFactory(tempDir).create(fileName);
     LOG.debug("Creating Job jar: {}", jobJar.toURI());
 
     Set<Class<?>> classes = Sets.newHashSet();

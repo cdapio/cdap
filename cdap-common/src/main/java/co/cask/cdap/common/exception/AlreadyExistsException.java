@@ -21,7 +21,7 @@ import co.cask.cdap.proto.Id;
 /**
  * Thrown when an element already exists.
  */
-public class AlreadyExistsException extends Exception {
+public class AlreadyExistsException extends ConflictException {
 
   private final Id objectId;
 

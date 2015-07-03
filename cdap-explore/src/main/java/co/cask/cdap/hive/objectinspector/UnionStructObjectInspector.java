@@ -30,11 +30,11 @@ import java.util.List;
  * UnionStructObjectInspector unions several struct data into a single struct.
  * Basically, the fields of these structs are put together sequentially into a
  * single struct.
- * 
+ *
  * The object that can be acceptable by this ObjectInspector is a List of
  * objects, each of which can be inspected by the ObjectInspector provided in
  * the ctor of UnionStructObjectInspector.
- * 
+ *
  * Always use the ObjectInspectorFactory to create new ObjectInspector objects,
  * instead of directly creating an instance of this class.
  */
@@ -45,6 +45,7 @@ public class UnionStructObjectInspector extends StructObjectInspector {
    *
    */
   public static class MyField implements StructField {
+
     public int structID;
     StructField structField;
 
@@ -59,6 +60,10 @@ public class UnionStructObjectInspector extends StructObjectInspector {
 
     public ObjectInspector getFieldObjectInspector() {
       return structField.getFieldObjectInspector();
+    }
+
+    public int getFieldID() {
+      return structID;
     }
 
     public String getFieldComment() {

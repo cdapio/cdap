@@ -24,21 +24,26 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
+import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hive.service.cli.CLIService;
+import org.apache.hive.service.cli.FetchOrientation;
+import org.apache.hive.service.cli.FetchType;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.OperationStatus;
+import org.apache.hive.service.cli.RowSet;
 import org.apache.hive.service.cli.SessionHandle;
-import org.apache.hive.service.server.HiveServer2;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * Hive 14 implementation of {@link co.cask.cdap.explore.service.ExploreService}.
@@ -59,12 +64,18 @@ public class Hive14ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  protected CLIService createCLIService() {
-    try {
-      return CLIService.class.getDeclaredConstructor(HiveServer2.class).newInstance(null);
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to instantiate CLIService", e);
+  protected List<QueryResult> doFetchNextResults(OperationHandle handle, FetchOrientation fetchOrientation,
+                                                 int size) throws Exception {
+    RowSet rowSet = getCliService().fetchResults(handle, fetchOrientation, size, FetchType.QUERY_OUTPUT);
+    ImmutableList.Builder<QueryResult> rowsBuilder = ImmutableList.builder();
+    for (Object[] row : rowSet) {
+      List<Object> cols = Lists.newArrayList();
+      for (Object aRow : row) {
+        cols.add(aRow);
+      }
+      rowsBuilder.add(new QueryResult(cols));
     }
+    return rowsBuilder.build();
   }
 
   @Override
