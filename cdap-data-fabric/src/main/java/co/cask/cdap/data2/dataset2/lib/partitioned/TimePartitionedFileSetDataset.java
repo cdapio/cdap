@@ -263,6 +263,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
   private void dropLegacyPartition(long time) {
     final byte[] rowKey = Bytes.toBytes(time);
     partitionsTable.delete(rowKey);
+    dropPartitionFromExplore(partitionKeyForTime(time));
   }
 
   /**

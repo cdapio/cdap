@@ -241,7 +241,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     // TODO: make DDL operations transactional [CDAP-1393]
   }
 
-  private void dropPartitionFromExplore(PartitionKey key) {
+  protected void dropPartitionFromExplore(PartitionKey key) {
     if (FileSetProperties.isExploreEnabled(spec.getProperties())) {
       ExploreFacade exploreFacade = exploreFacadeProvider.get();
       if (exploreFacade != null) {
