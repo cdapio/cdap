@@ -77,8 +77,8 @@ import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.session.SessionState;
-import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hive.service.auth.HiveAuthFactory;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.ColumnDescriptor;
@@ -216,7 +216,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   protected HiveConf getHiveConf() {
     HiveConf conf = new HiveConf();
     // Read delegation token if security is enabled.
-    if (ShimLoader.getHadoopShims().isSecurityEnabled()) {
+    if (UserGroupInformation.isSecurityEnabled()) {
       conf.set(HIVE_METASTORE_TOKEN_KEY, HiveAuthFactory.HS2_CLIENT_TOKEN);
 
       // mapreduce.job.credentials.binary is added by Hive only if Kerberos credentials are present and impersonation
@@ -224,7 +224,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       // Hence it will not be automatically added by Hive, instead we have to add it ourselves.
       // TODO: When Explore does secure impersonation this has to be the tokens of the user,
       // TODO: ... and not the tokens of the service itself.
-      String hadoopAuthToken = System.getenv(ShimLoader.getHadoopShims().getTokenFileLocEnvName());
+      String hadoopAuthToken = System.getenv(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
       if (hadoopAuthToken != null) {
         conf.set("mapreduce.job.credentials.binary", hadoopAuthToken);
       }
