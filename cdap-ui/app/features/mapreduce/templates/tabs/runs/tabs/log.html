@@ -1,5 +1,8 @@
 <div class="mapreduce-components">
   <div ng-controller="MapreduceRunDetailLogsController as LogsController">
-    <my-log-viewer data-model="LogsController.logs" data-scroll="LogsController.loadMoreLogs()"></my-log-viewer>
+    <my-log-viewer
+      data-model="LogsController.logs"
+      data-scroll="LogsController.loadMoreLogs()"
+      data-loading="LogsController.loading"></my-log-viewer>
   </div>
 </div>

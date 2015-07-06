@@ -1,3 +1,6 @@
 <div ng-controller="WorkFlowsRunDetailLogController as LogController">
-  <my-log-viewer data-model="LogController.logs" data-scroll="LogController.loadMoreLogs()"></my-log-viewer>
+  <my-log-viewer
+    data-model="LogController.logs"
+    data-scroll="LogController.loadMoreLogs()"
+    data-loading="LogController.loading"></my-log-viewer>
 </div>
