@@ -8,7 +8,8 @@ angular.module(PKG.name + '.commons')
       restrict: 'E',
 
       scope: {
-        model: '='
+        model: '=',
+        scroll: '&'
       },
 
       templateUrl: 'log-viewer/log-viewer.html',
