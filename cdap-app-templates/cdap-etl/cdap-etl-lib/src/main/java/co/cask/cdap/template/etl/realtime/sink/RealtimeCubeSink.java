@@ -35,6 +35,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -42,10 +43,8 @@ import javax.annotation.Nullable;
  * A {@link RealtimeSink} that writes data to a {@link Cube} dataset.
  * <p/>
  * This {@link RealtimeCubeSink} takes a {@link co.cask.cdap.api.data.format.StructuredRecord} in, maps it to a
- * {@link co.cask.cdap.api.dataset.lib.cube.CubeFact} using the mapping configuration
- * provided with the {@link co.cask.cdap.template.etl.common.Properties.Cube#MAPPING_CONFIG_PROPERTY} property,
- * and writes it to a {@link Cube} dataset identified by the 
- * {@link co.cask.cdap.template.etl.common.Properties.Cube#NAME} property.
+ * {@link co.cask.cdap.api.dataset.lib.cube.CubeFact}, and writes it to a {@link Cube} dataset identified by the
+ * {@link co.cask.cdap.template.etl.common.Properties.Cube#DATASET_NAME} property.
  * <p/>
  * If {@link Cube} dataset does not exist, it will be created using properties provided with this sink. See more
  * information on available {@link Cube} dataset configuration properties at
@@ -64,62 +63,90 @@ public class RealtimeCubeSink extends RealtimeSink<StructuredRecord> {
 
   private static final String NAME_PROPERTY_DESC = "Name of the Cube dataset. If the Cube does not already exist, " +
     "one will be created.";
-  private static final String PROPERTY_RESOLUTIONS_DESC = "Aggregation resolutions. See Cube dataset configuration " +
+  private static final String PROPERTY_RESOLUTIONS_DESC = "Aggregation resolutions to be used if new Cube dataset " +
+    "needs to be created. See Cube dataset configuration " +
     "details for more information : http://docs.cask.co/cdap/current/en/developers-manual/building-blocks/datasets/" +
     "cube.html#cube-configuration";
-  private static final String MAPPING_CONFIG_PROPERTY_DESC = "The StructuredRecord to CubeFact mapping " +
-    "configuration. More info on the format of this configuration can be found at http://docs.cask.co/cdap/current/" +
-    "en/reference-manual/javadocs/co/cask/cdap/template/etl/common/StructuredRecordToCubeFact.html";
-
-  private static final String CUSTOM_PROPERTIES_DESC = "Provide any custom properties (such as Aggregations) as a " +
-    "JSON Map. For example if aggregations are desired on fields - abc and xyz, the property should have the value : " +
-    "\"{\"dataset.cube.aggregation.agg1.dimensions\":\"abc\", \"dataset.cube.aggregation.agg2.dimensions\":\"xyz\"}";
+  private static final String DATASET_OTHER_PROPERTIES_DESC = "Provide any dataset properties to be used if new Cube " +
+    "dataset needs to be created as a JSON Map. For example if aggregations are desired on fields - abc and xyz, the " +
+    "property should have the value: " +
+    "\"{\"dataset.cube.aggregation.agg1.dimensions\":\"abc\", \"dataset.cube.aggregation.agg2.dimensions\":\"xyz\"}." +
+    " See Cube dataset configuration " +
+    "details for more information : http://docs.cask.co/cdap/current/en/developers-manual/building-blocks/datasets/" +
+    "cube.html#cube-configuration";
+  private static final String FACT_TS_FIELD_PROPERTY_DESC = "Name of the StructuredRecord's field that contains" +
+    " timestamp to be used in CubeFact. If not provided, the current time of the record processing will be used as " +
+    "CubeFact timestamp.";
+  private static final String FACT_TS_FORMAT_PROPERTY_DESC = "Format of the value of timstamp field, " +
+    "e.g. \"HH:mm:ss\" (used if " + Properties.Cube.FACT_TS_FIELD + " is provided).";
+  private static final String MEASUREMENTS_PROPERTY_DESC = "Measurements to be extracted from StructuredRecord to be" +
+    " used in CubeFact. Provide properties as a JSON Map. For example use 'price' field as a measurement of type" +
+    " gauge, and 'count' field as a measurement of type counter, the property should have the value: " +
+    "\"{\"cubeFact.measurement.price\":\"GAUGE\", \"cubeFact.measurement.count\":\"COUNTER\"}.";
 
   /**
-   * Config class for RealtimeCube
+   * Config class for RealtimeCubeSink
    */
-  public static class RealtimeCubeConfig extends PluginConfig {
+  public static class RealtimeCubeSinkConfig extends PluginConfig {
     @Description(NAME_PROPERTY_DESC)
     String name;
 
-    @Name(Properties.Cube.PROPERTY_RESOLUTIONS)
+    @Name(Properties.Cube.DATASET_RESOLUTIONS)
     @Description(PROPERTY_RESOLUTIONS_DESC)
-    String resProp;
-
-    @Name(Properties.Cube.MAPPING_CONFIG_PROPERTY)
-    @Description(MAPPING_CONFIG_PROPERTY_DESC)
-    String configAsString;
-
-    @Name(Properties.Cube.CUSTOM_PROPERTIES)
-    @Description(CUSTOM_PROPERTIES_DESC)
     @Nullable
-    String customProperties;
+    String resolutions;
 
-    public RealtimeCubeConfig(String name, String resProp, String configAsString) {
+    @Name(Properties.Cube.DATASET_OTHER)
+    @Description(DATASET_OTHER_PROPERTIES_DESC)
+    @Nullable
+    String datasetOther;
+
+    @Name(Properties.Cube.FACT_TS_FIELD)
+    @Description(FACT_TS_FIELD_PROPERTY_DESC)
+    @Nullable
+    String tsField;
+
+    @Name(Properties.Cube.FACT_TS_FORMAT)
+    @Description(FACT_TS_FORMAT_PROPERTY_DESC)
+    @Nullable
+    String tsFormat;
+
+    @Name(Properties.Cube.MEASUREMENTS)
+    @Description(MEASUREMENTS_PROPERTY_DESC)
+    @Nullable
+    String measurements;
+
+    public RealtimeCubeSinkConfig(String name, String resolutions, String datasetOther,
+                                  String tsField, String tsFormat, String measurements) {
       this.name = name;
-      this.resProp = resProp;
-      this.configAsString = configAsString;
+      this.resolutions = resolutions;
+      this.datasetOther = datasetOther;
+      this.tsField = tsField;
+      this.tsFormat = tsFormat;
+      this.measurements = measurements;
     }
   }
 
-  private final RealtimeCubeConfig realtimeCubeConfig;
+  private final RealtimeCubeSinkConfig config;
 
-  public RealtimeCubeSink(RealtimeCubeConfig realtimeCubeConfig) {
-    this.realtimeCubeConfig = realtimeCubeConfig;
+  public RealtimeCubeSink(RealtimeCubeSinkConfig config) {
+    this.config = config;
   }
 
   private StructuredRecordToCubeFact transform;
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    String datasetName = realtimeCubeConfig.name;
-    Map<String, String> properties = realtimeCubeConfig.getProperties().getProperties();
-    if (!Strings.isNullOrEmpty(realtimeCubeConfig.customProperties)) {
-      properties.remove(Properties.Cube.CUSTOM_PROPERTIES);
-      Map<String, String> customProperties = GSON.fromJson(realtimeCubeConfig.customProperties, STRING_MAP_TYPE);
-      properties.putAll(customProperties);
+    String datasetName = config.name;
+    Map<String, String> properties = new HashMap<>(config.getProperties().getProperties());
+    // todo: workaround for CDAP-2944: allows specifying custom props via JSON map in a property value
+    if (!Strings.isNullOrEmpty(config.datasetOther)) {
+      properties.remove(Properties.Cube.DATASET_OTHER);
+      Map<String, String> datasetOther = GSON.fromJson(config.datasetOther, STRING_MAP_TYPE);
+      properties.putAll(datasetOther);
     }
     Preconditions.checkArgument(datasetName != null && !datasetName.isEmpty(), "Dataset name must be given.");
+
     pipelineConfigurer.createDataset(datasetName, Cube.class.getName(), DatasetProperties.builder()
       .addAll(properties)
       .build());
@@ -127,7 +154,7 @@ public class RealtimeCubeSink extends RealtimeSink<StructuredRecord> {
 
   @Override
   public int write(Iterable<StructuredRecord> objects, DataWriter dataWriter) throws Exception {
-    Cube cube = dataWriter.getDataset(realtimeCubeConfig.name);
+    Cube cube = dataWriter.getDataset(config.name);
     int count = 0;
     for (StructuredRecord record : objects) {
       cube.add(transform.transform(record));
@@ -139,7 +166,7 @@ public class RealtimeCubeSink extends RealtimeSink<StructuredRecord> {
   @Override
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
-    Map<String, String> runtimeArguments = realtimeCubeConfig.getProperties().getProperties();
+    Map<String, String> runtimeArguments = config.getProperties().getProperties();
     transform = new StructuredRecordToCubeFact(runtimeArguments);
   }
 }
