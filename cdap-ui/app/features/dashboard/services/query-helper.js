@@ -9,6 +9,10 @@ angular.module(PKG.name + '.feature.dashboard')
         // For an empty context, we want no tags. Splitting it by '.' yields [""]
         parts = [];
       }
+      // FIXME: If user enters a random context and hits Add (during widget creation)
+      // and then tries to reopen the dashboard, this will error out and let the dashboard hang empty.
+      // We should either catch random context during widget creation or skip this error and show an
+      // empty widget with no chart/data.
       if (parts.length % 2 !== 0) {
         throw 'Metrics context has uneven number of parts: ' + context;
       }
