@@ -17,26 +17,18 @@
 package co.cask.cdap.template.etl.realtime;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.templates.AdapterSpecification;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurable;
-import co.cask.cdap.template.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.template.etl.api.realtime.RealtimeSource;
-import co.cask.cdap.template.etl.api.realtime.SourceState;
 import co.cask.cdap.template.etl.common.ETLStage;
 import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.template.etl.realtime.config.ETLRealtimeConfig;
-import co.cask.cdap.template.etl.realtime.kafka.KafkaConfig;
 import co.cask.cdap.template.etl.realtime.sink.RealtimeCubeSink;
 import co.cask.cdap.template.etl.realtime.sink.RealtimeTableSink;
 import co.cask.cdap.template.etl.realtime.sink.StreamSink;
@@ -58,7 +50,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
-import kafka.server.KafkaServerStartable;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
 import org.apache.twill.internal.kafka.client.ZKKafkaClientService;
 import org.apache.twill.internal.utils.Networks;
@@ -313,105 +304,6 @@ public class ETLWorkerTest extends TestBase {
         Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
       }
     } while (count++ < 20);
-  }
-
-  private static class MockEmitter implements Emitter<StructuredRecord> {
-    private final List<StructuredRecord> entryList = Lists.newArrayList();
-
-    @Override
-    public void emit(StructuredRecord value) {
-      entryList.add(value);
-    }
-
-    public int getInternalSize() {
-      return entryList.size();
-    }
-
-    public void reset() {
-      entryList.clear();
-    }
-  }
-
-  private void initializeKafkaSource(String topic, int partitions, String format) throws Exception {
-    String brokerList = null;
-    String zk = zkServer.getConnectionStr();
-
-    KafkaSource.KafkaPluginConfig config = new KafkaSource.KafkaPluginConfig(zk, brokerList, partitions,
-                                                                             topic, null, format, null);
-
-    kafkaSource = new KafkaSource(config);
-
-    kafkaSource.initialize(new MockRealtimeContext());
-  }
-
-  public class MockRealtimeContext implements RealtimeContext {
-    private final PluginProperties pluginProperties;
-
-    public MockRealtimeContext(Map<String, String> properties) {
-      this.pluginProperties = PluginProperties.builder().addAll(properties).build();
-    }
-
-    public MockRealtimeContext() {
-      this(Maps.<String, String>newHashMap());
-    }
-
-    @Override
-    public PluginProperties getPluginProperties() {
-      return pluginProperties;
-    }
-
-    @Override
-    public Metrics getMetrics() {
-      return new NoopMetrics();
-    }
-
-    @Override
-    public int getInstanceId() {
-      return 0;
-    }
-
-    @Override
-    public int getInstanceCount() {
-      return 1;
-    }
-
-    @Nullable
-    @Override
-    public AdapterSpecification getAdapterSpecification() {
-      return null;
-    }
-
-    @Override
-    public PluginProperties getPluginProperties(String pluginId) {
-      return null;
-    }
-
-    @Override
-    public <T> Class<T> loadPluginClass(String pluginId) {
-      return null;
-    }
-
-    @Override
-    public <T> T newPluginInstance(String pluginId) throws InstantiationException {
-      return null;
-    }
-
-    /**
-     * No op metrics implementation for tests.
-     */
-    private class NoopMetrics implements Metrics {
-      public final Metrics INSTANCE = new NoopMetrics();
-
-      @Override
-      public void count(String s, int i) {
-        // no-op
-      }
-
-      @Override
-      public void gauge(String s, long l) {
-        // no-op
-      }
-    }
   }
 }
 

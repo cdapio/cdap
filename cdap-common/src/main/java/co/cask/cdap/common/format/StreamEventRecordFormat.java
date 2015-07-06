@@ -14,18 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.template.etl.common;
+package co.cask.cdap.common.format;
 
 import co.cask.cdap.api.data.format.RecordFormat;
-import co.cask.cdap.template.etl.realtime.source.KafkaSource;
-
-import java.nio.ByteBuffer;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 
 /**
- * Format for a record contained in a {@link KafkaSource}.
+ * Format for a record contained in a {@link StreamEvent}.
+ * This is also the template used to interpret message payloads for Kafka Sources
  *
  * @param <T> type of object to read the byte buffer as.
  */
-public abstract class KafkaEventRecord<T> extends RecordFormat<ByteBuffer, T> {
+public abstract class StreamEventRecordFormat<T> extends RecordFormat<StreamEvent, T> {
 
 }

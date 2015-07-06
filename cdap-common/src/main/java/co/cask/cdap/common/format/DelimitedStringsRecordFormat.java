@@ -14,25 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.template.etl.common;
+package co.cask.cdap.common.format;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.format.UnexpectedFormatException;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Kafka event record format that interprets the message payload as string of delimited fields.
+ * Stream record format that interprets the body as string of delimited fields.
  *
  * <p>
  * The delimiter can be explicitly set through the "delimiter" setting, and the character set can also be set through
@@ -42,15 +42,15 @@ import java.util.Map;
  * In addition, the very last field can be an array of strings.
  * </p>
  */
-public class DelimitedStringsRecordFormat extends KafkaEventRecord<StructuredRecord> {
+public class DelimitedStringsRecordFormat extends StreamEventRecordFormat<StructuredRecord> {
   public static final String CHARSET = "charset";
   public static final String DELIMITER = "delimiter";
   private Charset charset = Charsets.UTF_8;
   private String delimiter = ",";
 
   @Override
-  public StructuredRecord read(ByteBuffer byteBuffer) throws UnexpectedFormatException {
-    String bodyAsStr = Bytes.toString(byteBuffer, charset);
+  public StructuredRecord read(StreamEvent event) throws UnexpectedFormatException {
+    String bodyAsStr = Bytes.toString(event.getBody(), charset);
     StructuredRecord.Builder builder = StructuredRecord.builder(schema);
     Iterator<String> bodyFields = Splitter.on(delimiter).split(bodyAsStr).iterator();
     for (Schema.Field field : schema.getFields()) {

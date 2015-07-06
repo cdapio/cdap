@@ -23,13 +23,14 @@ import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.RecordFormat;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.common.format.RecordFormats;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.template.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.template.etl.api.realtime.SourceState;
-import co.cask.cdap.template.etl.common.RecordFormats;
 import co.cask.cdap.template.etl.realtime.kafka.Kafka08SimpleApiConsumer;
 import co.cask.cdap.template.etl.realtime.kafka.KafkaSimpleApiConsumer;
 import com.google.common.base.Strings;
@@ -130,10 +131,11 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
     if (config.format == null) {
       return byteBufferToByteRecord(key, payload);
     }
-    RecordFormat<ByteBuffer, StructuredRecord> format;
+    RecordFormat<StreamEvent, StructuredRecord> format;
     try {
       format = RecordFormats.createInitializedFormat(spec);
-      return format.read(payload);
+      StreamEvent toStream = new StreamEvent(payload);
+      return format.read(toStream);
     } catch (Exception e) {
       LOG.error("Could not parse Kafka payload into schema. Using default structured record instead.");
       return byteBufferToByteRecord(key, payload);

@@ -91,7 +91,7 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Sets preferences of %s from a local config file (supported formats = JSON).",
+    return String.format("Sets preferences of %s from a local config file (supported ormats = JSON).",
                          Fragment.of(Article.A, type.getTitleName()));
   }
 }

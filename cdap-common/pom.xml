@@ -59,6 +59,17 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>io.thekraken</groupId>
+      <artifactId>grok</artifactId>
+      <version>${grok.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-log4j12</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
       <groupId>co.cask.http</groupId>
       <artifactId>netty-http</artifactId>
     </dependency>
