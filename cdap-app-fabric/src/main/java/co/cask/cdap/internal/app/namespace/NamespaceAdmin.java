@@ -16,11 +16,11 @@
 
 package co.cask.cdap.internal.app.namespace;
 
-import co.cask.cdap.common.exception.NamespaceAlreadyExistsException;
-import co.cask.cdap.common.exception.NamespaceCannotBeCreatedException;
-import co.cask.cdap.common.exception.NamespaceCannotBeDeletedException;
-import co.cask.cdap.common.exception.NamespaceNotFoundException;
-import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.NamespaceAlreadyExistsException;
+import co.cask.cdap.common.NamespaceCannotBeCreatedException;
+import co.cask.cdap.common.NamespaceCannotBeDeletedException;
+import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 
@@ -60,7 +60,7 @@ public interface NamespaceAdmin {
    *
    * @param metadata the {@link NamespaceMeta} for the new namespace to be created
    * @throws NamespaceAlreadyExistsException if the specified namespace already exists
-   * @throws co.cask.cdap.common.exception.NamespaceCannotBeCreatedException if the creation operation was unsuccessful
+   * @throws NamespaceCannotBeCreatedException if the creation operation was unsuccessful
    */
   void createNamespace(NamespaceMeta metadata)
     throws NamespaceAlreadyExistsException, NamespaceCannotBeCreatedException;

@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.adapter;
 
-import co.cask.cdap.common.exception.ConflictException;
+import co.cask.cdap.common.ConflictException;
 
 /**
  * Thrown when Adapter creation is requested, but an adapter already exists.

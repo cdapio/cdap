@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.common;
 
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when the user tried to add a dataset module, but a dataset module by that name already exists.
+ * Thrown when the user tries to create a schedule that already exists.
  */
-public class DatasetModuleAlreadyExistsException extends AlreadyExistsException {
+public class ScheduleAlreadyExistsException extends AlreadyExistsException {
 
-  private final Id.DatasetModule id;
+  private final Id.Schedule schedule;
 
-  public DatasetModuleAlreadyExistsException(Id.DatasetModule id) {
-    super(id);
-    this.id = id;
+  public ScheduleAlreadyExistsException(Id.Schedule schedule) {
+    super(schedule);
+    this.schedule = schedule;
   }
 
-  public Id.DatasetModule getId() {
-    return id;
+  public Id.Schedule getSchedule() {
+    return schedule;
   }
 }

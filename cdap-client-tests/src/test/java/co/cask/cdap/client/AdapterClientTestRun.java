@@ -18,10 +18,10 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.app.DummyWorkerTemplate;
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.common.AdapterNotFoundException;
+import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.AdapterNotFoundException;
-import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterDetail;
 import co.cask.cdap.proto.AdapterStatus;

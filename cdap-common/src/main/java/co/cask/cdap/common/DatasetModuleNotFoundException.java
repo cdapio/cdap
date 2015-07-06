@@ -14,10 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.common;
+
+import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when some operation is not implemented.
+ * Thrown when a dataset module could not be found.
  */
-public class NotImplementedException extends Exception {
+public class DatasetModuleNotFoundException extends NotFoundException {
+
+  private final Id.DatasetModule id;
+
+  public DatasetModuleNotFoundException(Id.DatasetModule id) {
+    super(id);
+    this.id = id;
+  }
+
+  public Id.DatasetModule getId() {
+    return id;
+  }
 }

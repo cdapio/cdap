@@ -16,9 +16,9 @@
 
 package co.cask.cdap.internal.app.namespace;
 
+import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.common.NamespaceCannotBeCreatedException;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.AlreadyExistsException;
-import co.cask.cdap.common.exception.NamespaceCannotBeCreatedException;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
 import com.google.common.base.Supplier;

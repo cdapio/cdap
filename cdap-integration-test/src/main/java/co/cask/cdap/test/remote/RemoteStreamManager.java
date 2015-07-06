@@ -21,7 +21,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.exception.StreamNotFoundException;
+import co.cask.cdap.common.StreamNotFoundException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.StreamManager;
 import com.google.common.base.Charsets;

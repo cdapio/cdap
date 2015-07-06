@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.common;
 
 import co.cask.cdap.common.http.SecurityRequestContext;
 import co.cask.http.ExceptionHandler;
