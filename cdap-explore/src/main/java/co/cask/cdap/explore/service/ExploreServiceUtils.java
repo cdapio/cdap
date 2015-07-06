@@ -17,7 +17,6 @@
 package co.cask.cdap.explore.service;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.DatasetNotFoundException;
 import co.cask.cdap.common.format.RecordFormats;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;

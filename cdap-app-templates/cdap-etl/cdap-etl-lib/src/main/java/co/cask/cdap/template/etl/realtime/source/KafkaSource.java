@@ -137,7 +137,7 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
       StreamEvent toStream = new StreamEvent(payload);
       return format.read(toStream);
     } catch (Exception e) {
-      LOG.error("Could not parse Kafka payload into schema. Using default structured record instead.");
+      LOG.debug("Could not parse Kafka payload into schema. Using default structured record instead.");
       return byteBufferToByteRecord(key, payload);
     }
   }
