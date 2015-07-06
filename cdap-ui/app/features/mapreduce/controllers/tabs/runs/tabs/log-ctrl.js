@@ -20,4 +20,18 @@ angular.module(PKG.name + '.feature.mapreduce')
       .then(function (res) {
         this.logs = res;
       }.bind(this));
+
+    this.loadMoreLogs = function () {
+      if (this.logs.length < params.max) {
+        return;
+      }
+
+      params.max += 50;
+
+      myMapreduceApi.logs(params)
+        .$promise
+        .then(function (res) {
+          this.logs = res;
+        }.bind(this));
+    };
   });

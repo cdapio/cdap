@@ -20,4 +20,17 @@ angular.module(PKG.name + '.feature.spark')
         this.logs = res;
       }.bind(this));
 
+    this.loadMoreLogs = function () {
+      if (this.logs.length < params.max) {
+        return;
+      }
+
+      params.max += 50;
+
+      mySparkApi.logs(params)
+        .$promise
+        .then(function (res) {
+          this.logs = res;
+        }.bind(this));
+    };
 });

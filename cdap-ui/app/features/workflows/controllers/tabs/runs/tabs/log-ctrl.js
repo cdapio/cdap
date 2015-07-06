@@ -1,6 +1,10 @@
+var params;
 class WorkFlowsRunDetailLogController {
+
   constructor($scope, myWorkFlowApi, $state) {
-    let params = {
+    this.myWorkFlowApi = myWorkFlowApi;
+
+    params = {
       appId: $state.params.appId,
       workflowId: $state.params.programId,
       runId: $scope.RunsController.runs.selected.runid,
@@ -11,7 +15,19 @@ class WorkFlowsRunDetailLogController {
     if (!$scope.RunsController.runs.length) {
       return;
     }
-    myWorkFlowApi.logs(params)
+    this.myWorkFlowApi.logs(params)
+      .$promise
+      .then( res => this.logs = res );
+  }
+
+  loadMoreLogs () {
+    if (this.logs.length < params.max) {
+      return;
+    }
+
+    params.max += 50;
+
+    this.myWorkFlowApi.logs(params)
       .$promise
       .then( res => this.logs = res );
   }

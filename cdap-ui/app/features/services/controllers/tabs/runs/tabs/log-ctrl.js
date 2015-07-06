@@ -18,4 +18,17 @@ angular.module(PKG.name + '.feature.services')
         this.logs = res;
       }.bind(this));
 
+    this.loadMoreLogs = function () {
+      if (this.logs.length < params.max) {
+        return;
+      }
+
+      params.max += 50;
+
+      myServiceApi.logs(params)
+        .$promise
+        .then(function (res) {
+          this.logs = res;
+        }.bind(this));
+    };
   });

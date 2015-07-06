@@ -15,7 +15,7 @@
   </div>
   <div class="col-xs-10">
 
-    <div class="terminal">
+    <div class="terminal" infinite-scroll="scroll()">
       <ul class="list-unstyled" ng-show="activeFilter.entries.length">
         <li ng-repeat="entry in activeFilter.entries | orderBy:'offset'">
           <pre ng-bind="entry.log"></pre>
