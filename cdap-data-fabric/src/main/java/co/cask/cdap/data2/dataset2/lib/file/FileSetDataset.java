@@ -149,13 +149,13 @@ public final class FileSetDataset implements FileSet {
 
   @Override
   public Location getBaseLocation() {
-    // TODO: if the file set is external, we could return a ReadOnlyLocation that prevents writing
+    // TODO: if the file set is external, we could return a ReadOnlyLocation that prevents writing [CDAP-2934]
     return baseLocation;
   }
 
   @Override
   public List<Location> getInputLocations() {
-    // TODO: if the file set is external, we could return a ReadOnlyLocation that prevents writing
+    // TODO: if the file set is external, we could return a ReadOnlyLocation that prevents writing [CDAP-2934]
     return Lists.newLinkedList(inputLocations);
   }
 
@@ -170,7 +170,7 @@ public final class FileSetDataset implements FileSet {
 
   @Override
   public Location getLocation(String relativePath) {
-    // TODO: if the file set is external, we could return a ReadOnlyLocation that prevents writing
+    // TODO: if the file set is external, we could return a ReadOnlyLocation that prevents writing [CDAP-2934]
     return createLocation(relativePath);
   }
 
