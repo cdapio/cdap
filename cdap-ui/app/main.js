@@ -272,5 +272,9 @@ angular
       );
     });
 
+    $rootScope.$on('$stateChangeError', function (event, state) {
+      $state.go('login');
+    });
+
     console.timeEnd(PKG.name);
   });

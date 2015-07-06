@@ -13,7 +13,7 @@ angular.module(PKG.name + '.commons')
           windowClass: 'custom-loading-modal'
         }, modal, isBackendDown = false;
 
-        EventPipe.on('backendDown', function(message) {
+        EventPipe.on('backendDown', function(message, subtitle) {
           if (!isBackendDown) {
             if (modal) {
               modal.close();
@@ -23,6 +23,7 @@ angular.module(PKG.name + '.commons')
               $scope.message = 'Service(s) are offline';
             } else {
               $scope.message = message;
+              $scope.subtitle = subtitle;
             }
             modal = $bootstrapModal.open(modalObj);
             modal.result.finally(function() {
