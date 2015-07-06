@@ -21,8 +21,8 @@
 die() { echo "ERROR: ${*}"; exit 1; };
 
 # Fetch repo file for YUM
-curl http://repository.cask.co/centos/6/x86_64/cdap/3.0/cask.repo > /etc/yum.repos.d/cdap-3.0.repo
-rpm --import http://repository.cask.co/centos/6/x86_64/cdap/3.0/pubkey.gpg
+curl http://repository.cask.co/centos/6/x86_64/cdap/3.0/cask.repo > /etc/yum.repos.d/cdap-3.0.repo || die "Cannot fetch repo"
+rpm --import http://repository.cask.co/centos/6/x86_64/cdap/3.0/pubkey.gpg || die "Cannot import GPG key from repo"
 # Enable EPEL packages (req'd for nodejs)
 sed -i -e '0,/enabled=0/s//enabled=1/' /etc/yum.repos.d/epel.repo || die "Unable to enable EPEL"
 yum makecache
