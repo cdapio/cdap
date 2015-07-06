@@ -150,7 +150,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Deletes a dataset instance, which also deletes the data associated with it.
+   * Deletes a dataset instance, which also deletes the data owned by it.
    *
    * @param namespaceId namespace of the dataset instance
    * @param name name of the dataset instance

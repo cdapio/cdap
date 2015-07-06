@@ -64,7 +64,6 @@ and
 `OutputFormat <https://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/OutputFormat.html>`_
 specifications.
 
-
 If you do not specify a base path, the dataset framework will generate a path based on the dataset name.
 This path|---|and any relative base path you specify|---|is relative to the data directory of the CDAP namespace
 in which the FileSet is created. You can also specify an absolute base path (one that begins with the letter ``/``).
@@ -72,6 +71,16 @@ This path is interpreted as an absolute path in the file system. Beware that if 
 same base path|---|be it two FileSets in the same namespace with the same relative base path, or be it in different
 namespaces with the same absolute base path|---|then these two FileSets will use the same directory and possibly
 obstruct each other's operations.
+
+You can configure a FileSet as "external". This means that the data (the actual files) in the FileSet are
+managed by an external process. This allows you to use FileSets with existing locations outside of CDAP. In this
+case the FileSet will not allow writing or deleting files: It treats the contents of the base path as read-only::
+
+      createDataset("lines", FileSet.class, FileSetProperties.builder()
+        .setBasePath("/existing/path")
+        .setDataExternal(true)
+        .setInputFormat(TextInputFormat.class)
+        ...
 
 If you do not specify an input format, you will not be able
 to use this as the input for a MapReduce program; similarly, for the output format.
@@ -183,6 +192,12 @@ This creates a new PartitionedFileSet named *results*. Similar to FileSets, it s
 ``TextOutputFormat.``; for the output format, we specify that the separator between fields is a comma.
 The difference to a FileSet is that this dataset is partitioned by league and season. This means that every file
 added to this dataset must have a partitioning key with a unique combination of league and season.
+
+Note that any of the properties that apply to FileSets can also be used for PartitionedFileSets (they apply to the
+embedded FileSet). If you configure a PartitionedFileSet as external using ``setDataExternal(true)``, then the
+embedded FileSet becomes read-only. You can still add partitions for locations that were written by an
+external process. But dropping a partition will only delete the partition's metadata, whereas the actual file
+remains intact. Similarly, if you drop or truncate an external PartitionedFileSet, its files will not be deleted.
 
 Reading and Writing PartitionedFileSets
 =======================================
