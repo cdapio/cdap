@@ -24,7 +24,7 @@
       <div ng-if="!activeFilter.entries.length && !loading">
         No logs to display
       </div>
-      <div class="text-center" ng-show="loading">
+      <div class="text-center" ng-if="loading">
         <span class="fa fa-refresh fa-spin"></span> Loading Logs
       </div>
     </div>
