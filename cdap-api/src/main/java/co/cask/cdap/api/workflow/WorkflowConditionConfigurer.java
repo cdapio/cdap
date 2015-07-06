@@ -43,7 +43,7 @@ public interface WorkflowConditionConfigurer<T> {
    * otherwise the Application deployment will fail.
    * @param uniqueName the uniqueName to be assigned to the {@link WorkflowNode}
    *                   which represents the MapReduce program
-   * @param mapReduce  the name of the MapReduce program to be added to the {@link Workflow}
+   * @param mapReduce the name of the MapReduce program to be added to the {@link Workflow}
    */
   WorkflowConditionConfigurer<T> addMapReduce(String uniqueName, String mapReduce);
 
@@ -67,7 +67,7 @@ public interface WorkflowConditionConfigurer<T> {
    * otherwise the Application deployment will fail.
    * @param uniqueName the uniqueName to be assigned to the {@link WorkflowNode}
    *                   which represents the Spark program
-   * @param spark      the name of the Spark program to be added to the {@link Workflow}
+   * @param spark the name of the Spark program to be added to the {@link Workflow}
    */
   WorkflowConditionConfigurer<T> addSpark(String uniqueName, String spark);
 
@@ -91,7 +91,7 @@ public interface WorkflowConditionConfigurer<T> {
    * otherwise the Application deployment will fail.
    * @param uniqueName the uniqueName to be assigned to the {@link WorkflowNode}
    *                   which represents the Spark program
-   * @param action     to be added to the {@link Workflow}
+   * @param action the action to be added to the {@link Workflow}
    * @return the configurer for the current condition
    */
   WorkflowConditionConfigurer<T> addAction(String uniqueName, WorkflowAction action);
@@ -119,7 +119,7 @@ public interface WorkflowConditionConfigurer<T> {
    * otherwise the Application deployment will fail.
    * @param uniqueName the uniqueName to be assigned to the {@link WorkflowNode}
    *                   which represents the condition
-   * @param condition  the {@link Predicate} to be evaluated for the condition
+   * @param condition the {@link Predicate} to be evaluated for the condition
    * @return the configurer for the condition
    */
   WorkflowConditionConfigurer<? extends WorkflowConditionConfigurer<T>> condition(String uniqueName,

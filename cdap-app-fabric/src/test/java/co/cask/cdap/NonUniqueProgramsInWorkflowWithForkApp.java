@@ -36,11 +36,14 @@ public class NonUniqueProgramsInWorkflowWithForkApp extends AbstractApplication 
   }
 
   /**
-   *
+   * No operation MapReduce program.
    */
   public static class NoOpMR extends AbstractMapReduce {
   }
 
+  /**
+   * Workflow program with two condition nodes added with the same predicate {@link MyTestPredicate}.
+   */
   public static class NonUniqueProgramsInWorkflowWithFork extends AbstractWorkflow {
 
     @Override
@@ -57,6 +60,9 @@ public class NonUniqueProgramsInWorkflowWithForkApp extends AbstractApplication 
     }
   }
 
+  /**
+   * Sample {@link Predicate} to test the unique names in the Workflow.
+   */
   public static final class MyTestPredicate implements Predicate<WorkflowContext> {
 
     @Override
@@ -65,6 +71,9 @@ public class NonUniqueProgramsInWorkflowWithForkApp extends AbstractApplication 
     }
   }
 
+  /**
+   * Sample action added to the Workflow.
+   */
   public static final class MyDummyAction extends AbstractWorkflowAction {
 
     @Override

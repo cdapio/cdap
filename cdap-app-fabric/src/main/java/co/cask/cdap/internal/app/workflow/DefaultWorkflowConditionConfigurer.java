@@ -45,10 +45,10 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   private List<WorkflowNode> currentBranch;
   private boolean addingToIfBranch = true;
   private final String predicateClassName;
-  private final String uniqueName;
+  private final String conditionUniqueName;
 
-  public DefaultWorkflowConditionConfigurer(String uniqueName, T parentConfigurer, String predicateClassName) {
-    this.uniqueName = uniqueName;
+  public DefaultWorkflowConditionConfigurer(String conditionUniqueName, T parentConfigurer, String predicateClassName) {
+    this.conditionUniqueName = conditionUniqueName;
     this.parentConfigurer = parentConfigurer;
     this.predicateClassName = predicateClassName;
     currentBranch = Lists.newArrayList();
@@ -126,7 +126,7 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
     } else {
       elseBranch.addAll(currentBranch);
     }
-    parentConfigurer.addWorkflowConditionNode(uniqueName, predicateClassName, ifBranch, elseBranch);
+    parentConfigurer.addWorkflowConditionNode(conditionUniqueName, predicateClassName, ifBranch, elseBranch);
     return parentConfigurer;
   }
 

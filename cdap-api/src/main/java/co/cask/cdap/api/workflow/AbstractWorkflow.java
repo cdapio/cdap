@@ -96,7 +96,7 @@ public abstract class AbstractWorkflow implements Workflow {
   /**
    * Adds a custom action to the {@link Workflow}.
    * @param uniqueName the unique name to be assigned to the {@link WorkflowNode} that represents the action
-   * @param action     the action to be added
+   * @param action the action to be added
    */
   protected final void addAction(String uniqueName, WorkflowAction action) {
     configurer.addAction(uniqueName, action);
@@ -130,7 +130,7 @@ public abstract class AbstractWorkflow implements Workflow {
   /**
    * Adds a Spark program to the {@link Workflow}.
    * @param uniqueName the unique name to be assigned to the {@link WorkflowNode} that represents the Spark program
-   * @param spark      the name of the Spark program to be added
+   * @param spark the name of the Spark program to be added
    */
   protected final void addSpark(String uniqueName, String spark) {
     configurer.addSpark(uniqueName, spark);
