@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.deploy;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
@@ -29,11 +30,14 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
+import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.gson.Gson;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +45,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.jar.Manifest;
+import javax.annotation.Nullable;
 
 /**
  * In Memory Configurator doesn't spawn a external process, but
@@ -50,19 +55,23 @@ import java.util.jar.Manifest;
  */
 public final class InMemoryConfigurator implements Configurator {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryConfigurator.class);
+  private static final Gson GSON = new Gson();
+
   /**
    * JAR file path.
    */
   private final Location archive;
+  private final String configString;
 
   /**
    * Constructor that accepts archive file as input to invoke configure.
    *
    * @param archive name of the archive file for which configure is invoked in-memory.
    */
-  public InMemoryConfigurator(Location archive) {
+  public InMemoryConfigurator(Location archive, @Nullable String configString) {
     Preconditions.checkNotNull(archive);
     this.archive = archive;
+    this.configString = configString;
   }
 
   /**
@@ -112,15 +121,29 @@ public final class InMemoryConfigurator implements Configurator {
     }
   }
 
-  private ConfigResponse createResponse(Application app, String bundleVersion) {
-    String specJson = getSpecJson(app, bundleVersion);
+  private ConfigResponse createResponse(Application app, String bundleVersion)
+    throws InstantiationException, IllegalAccessException {
+    String specJson = getSpecJson(app, bundleVersion, configString);
     return new DefaultConfigResponse(0, CharStreams.newReaderSupplier(specJson));
   }
 
-  private static String getSpecJson(Application app, final String bundleVersion) {
+  private static String getSpecJson(Application app, final String bundleVersion, final String configString)
+    throws IllegalAccessException, InstantiationException {
     // Now, we call configure, which returns application specification.
-    DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
-    app.configure(configurer, new DefaultApplicationContext());
+    DefaultAppConfigurer configurer = new DefaultAppConfigurer(app, configString);
+
+    Config appConfig;
+    TypeToken typeToken = TypeToken.of(app.getClass());
+    TypeToken<?> configToken = typeToken.resolveType(Application.class.getTypeParameters()[0]);
+    if (Strings.isNullOrEmpty(configString)) {
+      appConfig = (Config) configToken.getRawType().newInstance();
+    } else {
+      //TODO: CDAP-2869 Handle JsonSyntax Exception better and throw a more meaningful error. This will be done when we
+      //use PluginInstantiator methods instead of GSON deserialization
+      appConfig = GSON.fromJson(configString, configToken.getType());
+    }
+
+    app.configure(configurer, new DefaultApplicationContext(appConfig));
     ApplicationSpecification specification = configurer.createSpecification(bundleVersion);
 
     // Convert the specification to JSON.

@@ -16,18 +16,82 @@
 
 package co.cask.cdap.api.workflow;
 
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Interface to represent the data that is transferred from one node to the next node in the {@link Workflow}
+ * Interface to represent the data that is transferred from one node to the next nodes in the {@link Workflow}.
  */
 public interface WorkflowToken {
+
   /**
-   * Get the Hadoop counters from the previous MapReduce program in the Workflow. The method returns null
-   * if the counters are not set.
-   * @return the Hadoop MapReduce counters set by the previous MapReduce program
+   * Put the specified key-value entry into the {@link WorkflowToken}.
+   * The token may store additional information about the context in which
+   * this key is being set, for example, the unique name of the workflow node.
+   * @param key   the key representing the entry
+   * @param value the value for the key
+   */
+  void put(String key, String value);
+
+  /**
+   * Get the most recent value for the specified key.
+   * @param key the key to be searched
+   * @return the value for the key
    */
   @Nullable
+  String get(String key);
+
+  /**
+   * Get the value set for the specified key by the specified node.
+   * @param key the key to be searched
+   * @param nodeName the name of the node
+   * @return the value set for the key by nodeName
+   */
+  @Nullable
+  String get(String key, String nodeName);
+
+  /**
+   * Same key can be added to the WorkflowToken by multiple nodes.
+   * This method returns the {@link List} of {@link NodeValueEntry}, where
+   * each entry represents the unique node name and the value that it set
+   * for the specified key.
+   * <p>
+   * The list maintains the order in which the values were
+   * inserted in the WorkflowToken for a specific key except in the case of fork
+   * and join. In case of fork in the Workflow, copies of the WorkflowToken are made
+   * and passed along each branch. At the join, all copies of the
+   * WorkflowToken are merged together. While merging, the order in which the values were
+   * inserted for a specific key is guaranteed within the same branch, but not across
+   * different branches.
+   * @param key the key to be searched
+   * @return the list of {@link NodeValueEntry} from node name to the value that node
+   * added for the input key
+   */
+  List<NodeValueEntry> getAll(String key);
+
+  /**
+   * Get the {@link Map} of key-values that were added to the {@link WorkflowToken}
+   * by specific node.
+   * @param nodeName the unique name of the node
+   * @return the map of key-values that were added by the specified node
+   */
+  Map<String, String> getAllFromNode(String nodeName);
+
+  /**
+   * This method is deprecated as of release 3.1.
+   * Get the Hadoop counters from the previous MapReduce program in the Workflow.
+   * The method returns null if the counters are not set.
+   * @return the Hadoop MapReduce counters set by the previous MapReduce program
+   */
+  @Deprecated
+  @Nullable
   Map<String, Map<String, Long>> getMapReduceCounters();
+
+  /**
+   * Return true if the {@link WorkflowToken} contains the specified key.
+   * @param key the key to be tested for the presence in the {@link WorkflowToken}
+   * @return the result of the test
+   */
+  boolean containsKey(String key);
 }

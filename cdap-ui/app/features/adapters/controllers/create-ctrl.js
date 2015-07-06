@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdapterCreateController', function ($scope, AdapterCreateModel, AdapterApiFactory, $q, $alert, $state, $timeout, EventPipe) {
+  .controller('AdapterCreateController', function ($scope, AdapterCreateModel, myAdapterApi, $q, $alert, $state, $timeout, EventPipe) {
     this.model = new AdapterCreateModel();
 
     var defaultTabs = [
@@ -40,9 +40,9 @@ angular.module(PKG.name + '.feature.adapters')
       if (tab.length) {
         this.tabs.splice(this.tabs.indexOf(tab[0]), 1);
       }
-    }
+    };
 
-    AdapterApiFactory.fetchTemplates()
+    myAdapterApi.fetchTemplates()
       .$promise
       .then(function(res) {
         this.adapterTypes = res;
@@ -76,9 +76,9 @@ angular.module(PKG.name + '.feature.adapters')
     this.fetchDefaultPlugins = function fetchDefaultPlugins() {
       var params = {scope: $scope, adapterType: this.model.metadata.type};
       $q.all([
-        AdapterApiFactory.fetchSources(params).$promise,
-        AdapterApiFactory.fetchSinks(params).$promise,
-        AdapterApiFactory.fetchTransforms(params).$promise
+        myAdapterApi.fetchSources(params).$promise,
+        myAdapterApi.fetchSinks(params).$promise,
+        myAdapterApi.fetchTransforms(params).$promise
       ])
         .then(function(res) {
           function setIcons(plugin) {
@@ -132,7 +132,7 @@ angular.module(PKG.name + '.feature.adapters')
             var formattedMessage = '';
             messages.forEach(function(message) {
               formattedMessage += '<div>';
-              formattedMessage += '<strong>' + message.error + '</strong> '
+              formattedMessage += '<strong>' + message.error + '</strong> ';
               formattedMessage += '<span>' + message.message + '</span>';
               formattedMessage += '</div>';
             });

@@ -1,10 +1,14 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdapterListController', function($scope, MyDataSource, mySettings, $state, $alert, $timeout) {
-    var dataSrc = new MyDataSource($scope);
+  .controller('AdapterListController', function($scope, mySettings, $state, $alert, $timeout, myAdapterApi, myAlert) {
     $scope.adapters  = [];
-    dataSrc.request({
-      _cdapNsPath: '/adapters'
-    })
+
+    var params = {
+      namespace: $state.params.namespace,
+      scope: $scope
+    };
+
+    myAdapterApi.list(params)
+      .$promise
       .then(function(res) {
         if (!res.length) {
           return;
@@ -32,18 +36,24 @@ angular.module(PKG.name + '.feature.adapters')
       });
 
     function pollStatus(app) {
-      dataSrc.poll({
-        _cdapNsPath: '/adapters/' + app.name + '/status'
-      }, function(res) {
-        app.status = res.status;
-      });
+      var statusParams = angular.extend({
+        adapter: app.name
+      }, params);
+
+      myAdapterApi.pollStatus(statusParams)
+        .$promise
+        .then(function (res) {
+          app.status = res.status;
+        });
     }
 
     $scope.deleteAdapter = function (appName) {
-      dataSrc.request({
-        _cdapNsPath: '/adapters/' + appName,
-        method: 'DELETE'
-      })
+      var deleteParams = angular.extend({
+        adapter: appName
+      }, params);
+
+      myAdapterApi.delete(deleteParams)
+        .$promise
         .then(function() {
           $alert({
             type: 'success',
@@ -53,7 +63,10 @@ angular.module(PKG.name + '.feature.adapters')
             $state.go($state.current, $state.params, {reload: true});
           });
         }, function(err){
-          console.info("Adapter Delete Failed", err);
+          myAlert({
+            title: 'Adapter Delete Failed',
+            content: err
+          });
         });
     };
 
@@ -62,10 +75,13 @@ angular.module(PKG.name + '.feature.adapters')
         return app.name === appName;
       });
 
-      dataSrc.request({
-        _cdapNsPath: '/adapters/' + appName + '/' + action,
-        method: 'POST'
-      });
+      var actionParams = angular.extend({
+        adapter: appName,
+        action: action
+      }, params);
+
+      myAdapterApi.action(actionParams, {});
+
       if (action === 'start') {
         app[0].status = 'STARTING';
       } else {

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.services.http;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.templates.ApplicationTemplate;
@@ -68,6 +69,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
+import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
@@ -328,24 +330,35 @@ public abstract class AppFabricTestBase {
   }
 
   protected HttpResponse deploy(Class<?> application, @Nullable String appName) throws Exception {
-    return deploy(application, null, null, appName, null);
+    return deploy(application, null, null, appName, null, null);
+  }
+
+  protected HttpResponse deploy(Class<?> application, @Nullable String appName, @Nullable Config appConfig)
+    throws Exception {
+    return deploy(application, null, null, appName, null, appConfig);
   }
 
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace)
     throws Exception {
-    return deploy(application, apiVersion, namespace, null, null);
+    return deploy(application, apiVersion, namespace, null, null, null);
   }
 
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
                                 @Nullable String appName) throws Exception {
-    return deploy(application, apiVersion, namespace, appName, null);
+    return deploy(application, apiVersion, namespace, appName, null, null);
+  }
+
+  protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
+                                @Nullable String appName, @Nullable String appVersion) throws Exception {
+    return deploy(application, apiVersion, namespace, appName, appVersion, null);
   }
 
   /**
    * Deploys an application with (optionally) a defined app name and app version
    */
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
-                                       @Nullable String appName, @Nullable String appVersion) throws Exception {
+                                       @Nullable String appName, @Nullable String appVersion,
+                                       @Nullable Config appConfig) throws Exception {
     namespace = namespace == null ? Constants.DEFAULT_NAMESPACE : namespace;
     apiVersion = apiVersion == null ? Constants.Gateway.API_VERSION_3_TOKEN : apiVersion;
 
@@ -366,7 +379,7 @@ public abstract class AppFabricTestBase {
       if (classLoader == null) {
         classLoader = ClassLoader.getSystemClassLoader();
       }
-      Dependencies.findClassDependencies(classLoader, new Dependencies.ClassAcceptor() {
+      Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
         @Override
         public boolean accept(String className, URL classUrl, URL classPathUrl) {
           try {
@@ -403,6 +416,9 @@ public abstract class AppFabricTestBase {
     }
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
+    if (appConfig != null) {
+      request.setHeader("X-App-Config", GSON.toJson(appConfig));
+    }
     request.setEntity(new ByteArrayEntity(bos.toByteArray()));
     return execute(request);
   }

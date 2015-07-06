@@ -67,7 +67,7 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
 
   private final SparkSpecification sparkSpec;
   private final long logicalStartTime;
-  private final String workflowBatch;
+  private final String programNameInWorkflow;
   private final StreamAdmin streamAdmin;
   private final SparkLoggingContext loggingContext;
   private final SerializableServiceDiscoverer serializableServiceDiscoverer;
@@ -82,7 +82,7 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
   }
 
   public BasicSparkContext(Program program, RunId runId, Arguments runtimeArguments, Set<String> datasets,
-                           SparkSpecification sparkSpec, long logicalStartTime, String workflowBatch,
+                           SparkSpecification sparkSpec, long logicalStartTime, String programNameInWorkflow,
                            MetricsCollectionService metricsCollectionService,
                            DatasetFramework dsFramework,
                            DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin) {
@@ -90,7 +90,7 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
           getMetricCollector(metricsCollectionService, program, runId.getId()),
           dsFramework, discoveryServiceClient);
     this.logicalStartTime = logicalStartTime;
-    this.workflowBatch = workflowBatch;
+    this.programNameInWorkflow = programNameInWorkflow;
     this.streamAdmin = streamAdmin;
     SerializableServiceDiscoverer.setDiscoveryServiceClient(getDiscoveryServiceClient());
     this.serializableServiceDiscoverer = new SerializableServiceDiscoverer(getProgram());

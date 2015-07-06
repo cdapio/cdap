@@ -26,3 +26,5 @@ rm -rf /opt/cdap/conf /opt/cdap/sdk/data /opt/cdap/sdk/logs
 
 # Make cdap own /opt/cdap
 chown -R cdap:cdap /opt/cdap
+
+exit 0

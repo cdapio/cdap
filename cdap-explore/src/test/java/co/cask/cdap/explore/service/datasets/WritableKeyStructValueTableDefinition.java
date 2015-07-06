@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.service.datasets;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.RecordWritable;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
@@ -29,7 +30,6 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.Table;
 import com.google.common.base.Objects;
 import com.google.gson.Gson;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.lang.reflect.Type;

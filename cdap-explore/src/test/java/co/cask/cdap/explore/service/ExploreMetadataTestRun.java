@@ -246,11 +246,11 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                             new QueryResult(Lists.<Object>newArrayList(
                               "FLOAT", 6, 7, null, null, null, (short) 1, false,
                               (short) 3, false, false, false, null, (short) 0, (short) 0,
-                              null, null, 2)),
+                              null, null, 10)),
                             new QueryResult(Lists.<Object>newArrayList(
                               "DOUBLE", 8, 15, null, null, null, (short) 1, false,
                               (short) 3, false, false, false, null, (short) 0, (short) 0,
-                              null, null, 2)),
+                              null, null, 10)),
                             new QueryResult(Lists.<Object>newArrayList(
                               "STRING", 12, null, null, null, null, (short) 1, true,
                               (short) 3, true, false, false, null, (short) 0, (short) 0,
@@ -276,9 +276,9 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                               (short) 3, true, false, false, null, (short) 0, (short) 0,
                               null, null, null)),
                             new QueryResult(Lists.<Object>newArrayList(
-                              "DECIMAL", 3, null, null, null, null, (short) 1, false,
+                              "DECIMAL", 3, 38, null, null, null, (short) 1, false,
                               (short) 3, false, false, false, null, (short) 0, (short) 0,
-                              null, null, null)),
+                              null, null, 10)),
                             new QueryResult(Lists.<Object>newArrayList(
                               "ARRAY", 2003, null, null, null, null, (short) 1, false,
                               (short) 0, true, false, false, null, (short) 0, (short) 0,

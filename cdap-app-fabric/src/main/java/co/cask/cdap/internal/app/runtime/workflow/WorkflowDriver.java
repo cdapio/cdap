@@ -267,18 +267,13 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         });
       }
 
-      boolean assignedCounters = false;
       for (int i = 0; i < fork.getBranches().size(); i++) {
         try {
           Future<Map.Entry<String, WorkflowToken>> f = completionService.take();
           Map.Entry<String, WorkflowToken> retValue = f.get();
           String branchInfo = retValue.getKey();
           WorkflowToken branchToken = retValue.getValue();
-          if (!assignedCounters && branchToken.getMapReduceCounters() != null) {
-            // Simply assign the MapReduce counters from the first branch where they are available to the token
-            ((BasicWorkflowToken) token).setMapReduceCounters(branchToken.getMapReduceCounters());
-            assignedCounters = true;
-          }
+          ((BasicWorkflowToken) token).mergeToken((BasicWorkflowToken) branchToken);
           LOG.info("Execution of branch {} for fork {} completed", branchInfo, fork);
         } catch (Throwable t) {
           Throwable rootCause = Throwables.getRootCause(t);
@@ -303,6 +298,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private void executeNode(ApplicationSpecification appSpec, WorkflowNode node, InstantiatorFactory instantiator,
                            ClassLoader classLoader, WorkflowToken token) throws Exception {
     WorkflowNodeType nodeType = node.getType();
+    ((BasicWorkflowToken) token).setCurrentNode(node.getNodeId());
     switch (nodeType) {
       case ACTION:
         executeAction(appSpec, (WorkflowActionNode) node, instantiator, classLoader, token);

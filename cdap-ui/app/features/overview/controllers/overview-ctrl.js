@@ -71,8 +71,7 @@ function ($scope, $state, myLocalStorage, MY_CONFIG, Widget, MyMetricsQueryHelpe
         'system.services.log.error': 'System Errors',
         'system.services.log.warn' : 'System Warnings'
       }
-    })
-  ,
+    }),
     new Widget({
       title: 'Applications',
       type: 'c3-line',
@@ -91,9 +90,6 @@ function ($scope, $state, myLocalStorage, MY_CONFIG, Widget, MyMetricsQueryHelpe
     })
   );
 
-  // TODO: There should be a better way. Right now the 'sort-of' legend for
-  // #of warnings and errors are outside the charts. Thats the reason
-  // polling happens in two different places.
   angular.forEach(this.wdgts, function(widget) {
     dataSrc.poll({
       _cdapPath: '/metrics/query',
@@ -112,7 +108,17 @@ function ($scope, $state, myLocalStorage, MY_CONFIG, Widget, MyMetricsQueryHelpe
         widget.metric.resolution,
         widget.settings.aggregate
       );
+
       processedData = MyChartHelpers.c3ifyData(processedData, widget.metric, widget.metricAlias);
+
+      var data = {
+        x: 'x',
+        columns: processedData.columns,
+        keys: {
+          x: 'x'
+        }
+      };
+      widget.formattedData = data;
       widget.chartData = angular.copy(processedData);
     });
   });

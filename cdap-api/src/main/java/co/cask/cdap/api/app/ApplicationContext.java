@@ -30,7 +30,7 @@ public interface ApplicationContext<T extends Config> {
   /**
    * Get the configuration object.
    *
-   * @return configuration object
+   * @return application configuration provided during application creation
    */
   T getConfig();
 }

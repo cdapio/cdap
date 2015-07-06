@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.Program;
@@ -52,7 +53,8 @@ public abstract class AbstractMapReduceContextBuilder {
    *
    * @param runId program run id
    * @param logicalStartTime The logical start time of the job.
-   * @param workflowBatch Tells whether the batch job is started by workflow.
+   * @param programNameInWorkflow Tells whether the batch job is started by workflow.
+   * @param workflowToken WorkflowToken associated with the current run of the workflow
    * @param tx transaction to use
    * @param mrProgram program containing the MapReduce job
    * @param inputDataSetName name of the input dataset if specified for this mapreduce job, null otherwise
@@ -64,7 +66,8 @@ public abstract class AbstractMapReduceContextBuilder {
                                      String runId,
                                      String taskId,
                                      long logicalStartTime,
-                                     String workflowBatch,
+                                     String programNameInWorkflow,
+                                     @Nullable WorkflowToken workflowToken,
                                      Arguments runtimeArguments,
                                      Transaction tx,
                                      Program mrProgram,
@@ -79,9 +82,11 @@ public abstract class AbstractMapReduceContextBuilder {
     Program program = mrProgram;
 
     // See if it was launched from Workflow; if it was, change the Program.
-    if (workflowBatch != null) {
-      MapReduceSpecification mapReduceSpec = program.getApplicationSpecification().getMapReduce().get(workflowBatch);
-      Preconditions.checkArgument(mapReduceSpec != null, "Cannot find MapReduceSpecification for %s", workflowBatch);
+    if (programNameInWorkflow != null) {
+      MapReduceSpecification mapReduceSpec =
+        program.getApplicationSpecification().getMapReduce().get(programNameInWorkflow);
+      Preconditions.checkArgument(mapReduceSpec != null, "Cannot find MapReduceSpecification for %s",
+                                  programNameInWorkflow);
       program = new WorkflowMapReduceProgram(program, mapReduceSpec);
     }
 
@@ -109,8 +114,8 @@ public abstract class AbstractMapReduceContextBuilder {
     MapReduceSpecification spec = program.getApplicationSpecification().getMapReduce().get(program.getName());
     BasicMapReduceContext context =
       new BasicMapReduceContext(program, type, RunIds.fromString(runId), taskId, runtimeArguments, datasets, spec,
-                                logicalStartTime, workflowBatch, discoveryServiceClient, metricsCollectionService,
-                                datasetFramework, adapterSpec, pluginInstantiator);
+                                logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
+                                metricsCollectionService, datasetFramework, adapterSpec, pluginInstantiator);
 
     // propagating tx to all txAware guys
     // NOTE: tx will be committed by client code

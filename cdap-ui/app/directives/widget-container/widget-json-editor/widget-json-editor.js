@@ -12,7 +12,7 @@ angular.module(PKG.name + '.commons')
         try {
           $scope.internalModel = JSON.parse($scope.model);
         } catch(e) {
-          $scope.internalModel = "";
+          $scope.internalModel = '';
         }
 
         $scope.$watch('internalModel', function(newVal, oldVal) {

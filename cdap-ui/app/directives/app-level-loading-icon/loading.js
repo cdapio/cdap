@@ -13,14 +13,17 @@ angular.module(PKG.name + '.commons')
           windowClass: 'custom-loading-modal'
         }, modal, isBackendDown = false;
 
-        EventPipe.on('backendDown', function(message) {
+        EventPipe.on('backendDown', function(message, subtitle) {
           if (!isBackendDown) {
-            modal && modal.close();
+            if (modal) {
+              modal.close();
+            }
             isBackendDown = true;
             if (!message) {
               $scope.message = 'Service(s) are offline';
             } else {
               $scope.message = message;
+              $scope.subtitle = subtitle;
             }
             modal = $bootstrapModal.open(modalObj);
             modal.result.finally(function() {
@@ -46,7 +49,9 @@ angular.module(PKG.name + '.commons')
           // Just making it smooth instead of being too 'speedy'
           $timeout(function() {
             if (!isBackendDown) {
-              modal && !modal.$state && modal.close();
+              if (modal && !modal.$state) {
+                modal.close();
+              }
               modal = null;
             }
           }, 2000);

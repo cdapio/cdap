@@ -1,7 +1,6 @@
 angular.module(PKG.name + '.feature.flows')
   .controller('FlowsRunDetailStatusController', function($state, $scope, MyDataSource, myHelpers, FlowDiagramData, $timeout, MyMetricsQueryHelper, myFlowsApi) {
-    var dataSrc = new MyDataSource($scope),
-        basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
+    var dataSrc = new MyDataSource($scope);
 
     this.data = {};
 
@@ -40,7 +39,8 @@ angular.module(PKG.name + '.feature.flows')
         }
         dataSrc.poll({
           _cdapPath: (node.type === 'STREAM' ? generateStreamMetricsPath(node.name): generateFlowletMetricsPath(node.name)),
-          method: 'POST'
+          method: 'POST',
+          interval: 2000
         }, function (data) {
           this.data.metrics[node.name] = myHelpers.objectQuery(data, 'series' , 0, 'data', 0, 'value') || 0;
         }.bind(this));

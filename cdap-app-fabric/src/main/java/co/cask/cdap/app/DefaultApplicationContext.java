@@ -25,9 +25,18 @@ import co.cask.cdap.api.app.ApplicationContext;
  * @param <T> config class
  */
 public class DefaultApplicationContext<T extends Config> implements ApplicationContext<T> {
+  private final T appConfig;
+
+  public DefaultApplicationContext() {
+    this.appConfig = null;
+  }
+
+  public DefaultApplicationContext(T appConfig) {
+    this.appConfig = appConfig;
+  }
 
   @Override
   public T getConfig() {
-    throw new UnsupportedOperationException("Default Application Context has not been implemented.");
+    return appConfig;
   }
 }

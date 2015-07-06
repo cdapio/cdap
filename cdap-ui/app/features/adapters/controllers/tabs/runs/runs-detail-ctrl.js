@@ -1,7 +1,6 @@
 angular.module(PKG.name + '.feature.adapters')
   .controller('AdapterRunDetailController', function(MyDataSource, $filter, $state, $scope) {
-    var dataSrc = new MyDataSource($scope),
-        filterFilter = $filter('filter');
+    var filterFilter = $filter('filter');
 
     if ($state.params.runid) {
       var match = filterFilter($scope.runs, {runid: $state.params.runid});

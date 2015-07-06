@@ -52,8 +52,6 @@ angular
       'mgcrea.ngStrap.typeahead',
       'mgcrea.ngStrap.select',
       'mgcrea.ngStrap.collapse',
-      'mgcrea.ngStrap.button',
-      'mgcrea.ngStrap.tab',
 
       // 'mgcrea.ngStrap.modal',
       'ui.bootstrap.modal',
@@ -63,7 +61,6 @@ angular
 
       'ncy-angular-breadcrumb',
       'angularMoment',
-      'ui.select',
       'ui.ace',
       'gridster'
 
@@ -141,8 +138,7 @@ angular
       return {
         'request': function(config) {
           if (
-              $rootScope.currentUser
-              && !myHelpers.objectQuery(config, 'data', 'profile_view')
+              $rootScope.currentUser && !myHelpers.objectQuery(config, 'data', 'profile_view')
              ) {
             angular.extend(config, {
               user: $rootScope.currentUser || null,
@@ -155,7 +151,7 @@ angular
           }
           return config;
         }
-      }
+      };
     });
   })
 
@@ -274,6 +270,10 @@ angular
       $state.transitionTo($state.current, $state.$current.params,
         { reload: true, inherit: true, notify: true }
       );
+    });
+
+    $rootScope.$on('$stateChangeError', function (event, state) {
+      $state.go('login');
     });
 
     console.timeEnd(PKG.name);

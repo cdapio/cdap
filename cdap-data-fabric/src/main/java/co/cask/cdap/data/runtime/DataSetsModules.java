@@ -19,9 +19,6 @@ package co.cask.cdap.data.runtime;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
-import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
-import co.cask.cdap.data2.datafabric.dataset.type.DistributedDatasetTypeClassLoaderFactory;
-import co.cask.cdap.data2.datafabric.dataset.type.LocalDatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
@@ -58,8 +55,6 @@ public class DataSetsModules extends RuntimeModule {
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
-        bind(DatasetTypeClassLoaderFactory.class).to(LocalDatasetTypeClassLoaderFactory.class);
-        expose(DatasetTypeClassLoaderFactory.class);
         bind(DatasetFramework.class).to(RemoteDatasetFramework.class);
         expose(DatasetFramework.class);
       }
@@ -75,8 +70,6 @@ public class DataSetsModules extends RuntimeModule {
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
-        bind(DatasetTypeClassLoaderFactory.class).to(DistributedDatasetTypeClassLoaderFactory.class);
-        expose(DatasetTypeClassLoaderFactory.class);
         bind(DatasetFramework.class).to(RemoteDatasetFramework.class);
         expose(DatasetFramework.class);
       }

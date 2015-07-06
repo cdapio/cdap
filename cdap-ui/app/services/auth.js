@@ -49,7 +49,6 @@ module.run(function ($location, $state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH
 
     $state.go('login');
 
-
     $rootScope.$broadcast(user ? MYAUTH_EVENT.notAuthorized : MYAUTH_EVENT.notAuthenticated);
   });
 

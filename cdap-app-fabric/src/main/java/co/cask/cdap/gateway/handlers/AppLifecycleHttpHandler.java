@@ -128,9 +128,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
                              @PathParam("app-id") final String appId,
-                             @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
+                             @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName,
+                             @HeaderParam(APP_CONFIG_HEADER) String configString) {
     try {
-      return deployApplication(responder, namespaceId, appId, archiveName);
+      return deployApplication(responder, namespaceId, appId, archiveName, configString);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
       return null;
@@ -145,10 +146,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps")
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
-                             @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
+                             @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName,
+                             @HeaderParam(APP_CONFIG_HEADER) String configString) {
     // null means use name provided by app spec
     try {
-      return deployApplication(responder, namespaceId, null, archiveName);
+      return deployApplication(responder, namespaceId, null, archiveName, configString);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
@@ -232,7 +234,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private BodyConsumer deployApplication(final HttpResponder responder,
                                          final String namespaceId, final String appId,
-                                         final String archiveName) throws IOException {
+                                         final String archiveName, final String configString) throws IOException {
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     if (!namespaceAdmin.hasNamespace(namespace)) {
       LOG.warn("Namespace '{}' not found.", namespaceId);
@@ -249,7 +251,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.NOT_FOUND, msg);
       return null;
     }
-
 
     if (archiveName == null || archiveName.isEmpty()) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present",
@@ -277,7 +278,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       @Override
       protected void onFinish(HttpResponder responder, File uploadedFile) {
         try {
-          DeploymentInfo deploymentInfo = new DeploymentInfo(uploadedFile, archive);
+          DeploymentInfo deploymentInfo = new DeploymentInfo(uploadedFile, archive, configString);
           deploy(namespaceId, appId, deploymentInfo);
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
         } catch (Exception e) {
@@ -370,8 +371,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-
-
   private static ApplicationDetail makeAppDetail(ApplicationSpecification spec) {
     List<ProgramRecord> programs = Lists.newArrayList();
     for (ProgramSpecification programSpec : spec.getFlows().values()) {
@@ -409,6 +408,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       datasets.add(new DatasetDetail(datasetSpec.getInstanceName(), datasetSpec.getTypeName()));
     }
 
-    return new ApplicationDetail(spec.getName(), spec.getVersion(), spec.getDescription(), streams, datasets, programs);
+    return new ApplicationDetail(spec.getName(), spec.getVersion(), spec.getDescription(), spec.getConfiguration(),
+                                 streams, datasets, programs);
   }
 }

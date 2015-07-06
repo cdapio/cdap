@@ -1,1 +1,1 @@
-angular.module(PKG.name + '.feature.workflows', []);
+angular.module(`${PKG.name}.feature.workflows`, []);

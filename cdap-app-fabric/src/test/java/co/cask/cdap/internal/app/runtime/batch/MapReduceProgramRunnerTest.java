@@ -200,13 +200,13 @@ public class MapReduceProgramRunnerTest {
     Id.DatasetInstance rtOutput1 = Id.DatasetInstance.from(DefaultId.NAMESPACE, "rtOutput1");
     // create the datasets here because they are not created by the app
     dsFramework.addInstance("fileSet", rtInput1, FileSetProperties.builder()
-      .setBasePath("/rtInput1")
+      .setBasePath("rtInput1")
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
       .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
       .build());
     dsFramework.addInstance("fileSet", rtOutput1, FileSetProperties.builder()
-      .setBasePath("/rtOutput1")
+      .setBasePath("rtOutput1")
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
       .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
@@ -225,7 +225,7 @@ public class MapReduceProgramRunnerTest {
 
     // test reading and writing same dataset
     dsFramework.addInstance("fileSet", rtInput2, FileSetProperties.builder()
-      .setBasePath("/rtInput2")
+      .setBasePath("rtInput2")
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
       .setOutputProperty(TextOutputFormat.SEPERATOR, ":")

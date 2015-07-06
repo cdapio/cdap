@@ -11,12 +11,13 @@
     <tbody>
       <tr ng-repeat="output in OutputCtrl.outputs track by $index">
         <td class="table-graph">
-          <epoch-line
-            data-history="OutputCtrl.outputHistory"
-            data-stream="OutputCtrl.outputStream"
-            chart-height="100"
-            chart-axes="['left', 'bottom']"
-            ></epoch-line>
+
+            <c3-line
+              chart-metric="OutputCtrl.chartData"
+              chart-settings="OutputCtrl.chartSettings"
+              chart-size="{height: 150}"
+            ></c3-line>
+
         </td>
         <td>
           {{ OutputCtrl.total | myNumber: 0 }} tuples

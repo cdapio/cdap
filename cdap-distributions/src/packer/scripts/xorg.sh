@@ -31,3 +31,4 @@ for i in mouse synaptics wacom ; do
   apt-get purge -y xserver-xorg-input-$i
 done
 
+exit 0

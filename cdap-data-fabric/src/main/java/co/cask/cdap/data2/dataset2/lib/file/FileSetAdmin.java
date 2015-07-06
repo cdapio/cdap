@@ -20,10 +20,9 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.proto.Id;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 
@@ -35,13 +34,11 @@ public class FileSetAdmin implements DatasetAdmin {
   private final Location baseLocation;
 
   public FileSetAdmin(DatasetContext datasetContext, CConfiguration cConf,
+                      LocationFactory absoluteLocationFactory,
                       NamespacedLocationFactory namespacedLocationFactory,
                       DatasetSpecification spec) throws IOException {
-    String namespace = datasetContext.getNamespaceId();
-    String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
-    String fileSetBasePath = FileSetDataset.determineBasePath(spec);
-    this.baseLocation = namespacedLocationFactory.get(Id.Namespace.from(namespace)).append(dataDir)
-      .append(fileSetBasePath);
+    this.baseLocation = FileSetDataset.determineBaseLocation(datasetContext, cConf, spec,
+                                                             absoluteLocationFactory, namespacedLocationFactory);
   }
 
   @Override

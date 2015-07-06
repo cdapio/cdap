@@ -42,10 +42,10 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
-import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -104,7 +104,7 @@ public class SparkProgramRunner implements ProgramRunner {
     long logicalStartTime = arguments.hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
       ? Long.parseLong(arguments.getOption(ProgramOptionConstants.LOGICAL_START_TIME)) : System.currentTimeMillis();
 
-    String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
+    String programNameInWorkflow = arguments.getOption(ProgramOptionConstants.PROGRAM_NAME_IN_WORKFLOW);
 
     Spark spark;
     try {
@@ -116,7 +116,7 @@ public class SparkProgramRunner implements ProgramRunner {
 
     final BasicSparkContext context = new BasicSparkContext(program, runId, options.getUserArguments(),
                                                             appSpec.getDatasets().keySet(), spec,
-                                                            logicalStartTime, workflowBatch,
+                                                            logicalStartTime, programNameInWorkflow,
                                                             metricsCollectionService, datasetFramework,
                                                             discoveryServiceClient, streamAdmin);
 

@@ -41,43 +41,65 @@ public class DatasetOutputFormat implements OutputFormat<Void, Text> {
   @Override
   public RecordWriter<Void, Text> getRecordWriter(FileSystem ignored, final JobConf jobConf, String name,
                                                   Progressable progress) throws IOException {
-    final RecordWritable recordWritable = DatasetAccessor.getRecordWritable(jobConf);
-    final Type recordType = recordWritable.getRecordType();
+    DatasetAccessor datasetAccessor = new DatasetAccessor(jobConf);
+    try {
+      datasetAccessor.initialize();
+    } catch (Exception e) {
+      throw new IOException("Could not get dataset.", e);
+    }
 
-    return new RecordWriter<Void, Text>() {
-      @Override
-      public void write(Void key, Text value) throws IOException {
-        if (value == null) {
-          throw new IOException("Writable value is null.");
-        }
-        recordWritable.write(new Gson().fromJson(value.toString(), recordType));
-      }
-
-      @Override
-      public void close(Reporter reporter) throws IOException {
-        try {
-          if (recordWritable instanceof TransactionAware) {
-            try {
-              // Commit changes made to the dataset being written
-              // NOTE: because the transaction wrapping a Hive query is a long running one,
-              // we don't track changes and don't check conflicts - we can just commit the changes.
-              ((TransactionAware) recordWritable).commitTx();
-            } catch (Exception e) {
-              LOG.error("Could not commit changes for table {}", recordWritable);
-              throw new IOException(e);
-            }
-          }
-        } finally {
-          recordWritable.close();
-        }
-      }
-    };
+    return new DatasetRecordWriter(datasetAccessor);
   }
 
   @Override
-  public void checkOutputSpecs(FileSystem ignored, JobConf job) throws IOException {
+  public void checkOutputSpecs(FileSystem ignored, JobConf jobConf) throws IOException {
     // This is called prior to returning a RecordWriter. We make sure here that the
     // dataset we want to write to is RecordWritable.
-    DatasetAccessor.checkRecordWritable(job);
+    DatasetAccessor datasetAccessor = new DatasetAccessor(jobConf);
+    try {
+      datasetAccessor.initialize();
+    } catch (Exception e) {
+      throw new IOException("Could not get dataset.", e);
+    }
+  }
+
+  private class DatasetRecordWriter implements RecordWriter<Void, Text> {
+    private final DatasetAccessor datasetAccessor;
+    private final RecordWritable recordWritable;
+    private final Type recordType;
+
+    public DatasetRecordWriter(DatasetAccessor datasetAccessor) {
+      this.datasetAccessor = datasetAccessor;
+      this.recordWritable = datasetAccessor.getDataset();
+      this.recordType = recordWritable.getRecordType();
+    }
+
+    @Override
+    public void write(Void key, Text value) throws IOException {
+      if (value == null) {
+        throw new IOException("Writable value is null.");
+      }
+      recordWritable.write(new Gson().fromJson(value.toString(), recordType));
+    }
+
+    @Override
+    public void close(Reporter reporter) throws IOException {
+      try {
+        if (recordWritable instanceof TransactionAware) {
+          try {
+            // Commit changes made to the dataset being written
+            // NOTE: because the transaction wrapping a Hive query is a long running one,
+            // we don't track changes and don't check conflicts - we can just commit the changes.
+            ((TransactionAware) recordWritable).commitTx();
+          } catch (Exception e) {
+            LOG.error("Could not commit changes for table {}", recordWritable);
+            throw new IOException(e);
+          }
+        }
+      } finally {
+        recordWritable.close();
+        datasetAccessor.close();
+      }
+    }
   }
 }

@@ -44,19 +44,21 @@ angular.module(PKG.name + '.feature.spark')
           skip: true
         },
         templateUrl: '/assets/features/spark/templates/detail.html',
-        controller: 'SparkDetailController'
+        controller: 'SparkDetailController',
+        controllerAs: 'DetailController'
       })
 
       .state('spark.detail.runs', {
         url: '/runs',
         templateUrl: '/assets/features/spark/templates/tabs/runs.html',
         controller: 'SparkRunsController',
+        controllerAs: 'RunsController',
         ncyBreadcrumb: {
           label: '{{$state.params.programId}}'
         }
       })
         .state('spark.detail.runs.run', {
-          url: '/:runid',
+          url: '/:runid?sourceId&sourceRunId&destinationType',
           templateUrl: '/assets/features/spark/templates/tabs/runs/run-detail.html',
           controller: 'SparkRunDetailController',
           ncyBreadcrumb: {
@@ -73,6 +75,7 @@ angular.module(PKG.name + '.feature.spark')
         },
         templateUrl: '/assets/features/spark/templates/tabs/history.html',
         controller: 'SparkRunsController',
+        controllerAs: 'RunsController',
         ncyBreadcrumb: {
           label: 'History',
           parent: 'spark.detail.runs'

@@ -53,15 +53,21 @@
         </div>
         <div class="col-xs-2">
           <button class="btn btn-default"
-            ng-show="schedule.status === 'SCHEDULED'"
+            ng-if="schedule.status === 'SCHEDULED'"
             ng-click="SchedulesController.suspendSchedule(schedule)">
             <i class="fa fa-pause"></i>
           </button>
 
           <button class="btn btn-default"
-            ng-show="schedule.status === 'SUSPENDED'"
+            ng-if="schedule.status === 'SUSPENDED'"
             ng-click="SchedulesController.resumeSchedule(schedule)">
             <i class="fa fa-play"></i>
+          </button>
+
+          <button class="btn btn-default"
+           ng-if="['SUSPENDED', 'SCHEDULED'].indexOf(schedule.status) === -1"
+           disabled>
+            <i class="fa fa-refresh fa-spin"></i>
           </button>
         </div>
       </div>

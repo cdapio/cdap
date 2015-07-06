@@ -31,6 +31,7 @@ import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.template.etl.common.BatchFileFilter;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.conf.Configuration;
@@ -43,8 +44,10 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -87,14 +90,13 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
   private static final String FILESYSTEM_DESCRIPTION = "Distributed file system to read in from.";
   private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(FileBatchSource.class);
-  private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
-
+  private static final Type ARRAYLIST_DATE_TYPE  = new TypeToken<ArrayList<Date>>() { }.getType();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final FileBatchConfig config;
   private KeyValueTable table;
   private Date prevMinute;
-  private String previousTimeRead;
+  private String datesToRead;
 
   public FileBatchSource(FileBatchConfig config) {
     this.config = config;
@@ -109,6 +111,9 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
 
   @Override
   public void prepareRun(BatchSourceContext context) throws Exception {
+    //SimpleDateFormat needs to be local because it is not threadsafe
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
+
     //calculate date one minute ago, rounded down to the nearest minute
     prevMinute = new Date(context.getLogicalStartTime() - TimeUnit.MINUTES.toMillis(1));
     Calendar cal = Calendar.getInstance();
@@ -133,16 +138,20 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
 
     if (config.timeTable != null) {
       table = context.getDataset(config.timeTable);
-      String lastTimeRead = Bytes.toString(table.read(LAST_TIME_READ));
-      if (lastTimeRead == null) {
-        lastTimeRead = "0";
+      String datesToRead = Bytes.toString(table.read(LAST_TIME_READ));
+      if (datesToRead == null) {
+        List<Date> firstRun = Lists.newArrayList(new Date(0));
+        datesToRead = GSON.toJson(firstRun, ARRAYLIST_DATE_TYPE);
       }
-      previousTimeRead = lastTimeRead;
-      table.write(LAST_TIME_READ, DATE_FORMAT.format(prevMinute));
-      conf.set(LAST_TIME_READ, lastTimeRead);
+      List<Date> attempted = Lists.newArrayList(prevMinute);
+      String updatedDatesToRead = GSON.toJson(attempted, ARRAYLIST_DATE_TYPE);
+      if (!updatedDatesToRead.equals(datesToRead)) {
+        table.write(LAST_TIME_READ, updatedDatesToRead);
+      }
+      conf.set(LAST_TIME_READ, datesToRead);
     }
 
-    conf.set(CUTOFF_READ_TIME, DATE_FORMAT.format(prevMinute));
+    conf.set(CUTOFF_READ_TIME, dateFormat.format(prevMinute));
     if (config.inputFormatClass != null) {
       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
       Class<? extends FileInputFormat> classType = (Class<? extends FileInputFormat>)
@@ -165,7 +174,11 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
   @Override
   public void onRunFinish(boolean succeeded, BatchSourceContext context) {
     if (!succeeded && table != null && USE_TIMEFILTER.equals(config.fileRegex)) {
-      table.write(LAST_TIME_READ, previousTimeRead);
+      List<Date> existing = GSON.fromJson(Bytes.toString(table.read(LAST_TIME_READ)), ARRAYLIST_DATE_TYPE);
+      List<Date> failed = GSON.fromJson(datesToRead, ARRAYLIST_DATE_TYPE);
+      failed.add(prevMinute);
+      failed.addAll(existing);
+      table.write(LAST_TIME_READ, GSON.toJson(failed, ARRAYLIST_DATE_TYPE));
     }
   }
 
