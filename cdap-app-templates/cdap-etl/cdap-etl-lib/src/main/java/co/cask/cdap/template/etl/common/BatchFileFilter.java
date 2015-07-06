@@ -54,9 +54,9 @@ public class BatchFileFilter extends Configured implements PathFilter {
   private static final Logger LOG = LoggerFactory.getLogger(FileBatchSource.class);
   //length of 'YYYY-MM-dd-HH-mm"
   private static final int DATE_LENGTH = 16;
-  private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
   private static final Gson GSON = new Gson();
   private static final Type ARRAYLIST_DATE_TYPE  = new TypeToken<ArrayList<Date>>() { }.getType();
+  private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
   private boolean useTimeFilter;
   private Pattern regex;
   private String pathName;

@@ -190,6 +190,11 @@
       <artifactId>parquet-avro</artifactId>
       <version>1.6.0</version>
     </dependency>
+    <dependency>
+      <groupId>net.sf.uadetector</groupId>
+      <artifactId>uadetector-resources</artifactId>
+      <version>2014.04</version>
+    </dependency>
   </dependencies>
 
   <build>
