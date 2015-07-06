@@ -14,23 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.common;
 
 /**
- * Thrown when a user is not authorized to perform an operation.
+ * Thrown when there was a conflict.
  */
-public class UnauthorizedException extends Exception {
+public class ConflictException extends Exception {
 
-  public UnauthorizedException() {
+  public ConflictException() {
     super();
   }
 
-  public UnauthorizedException(String msg, Throwable throwable) {
-    super(msg, throwable);
-  }
-
-  public UnauthorizedException(String message) {
+  public ConflictException(String message) {
     super(message);
   }
 
+  public ConflictException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

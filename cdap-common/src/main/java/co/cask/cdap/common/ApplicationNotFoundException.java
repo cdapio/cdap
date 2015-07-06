@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.common;
 
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when a dataset type is not found
+ * Thrown when an application is not found.
  */
-public class DatasetTypeNotFoundException extends NotFoundException {
+public class ApplicationNotFoundException extends NotFoundException {
 
-  private final Id.DatasetType id;
+  private final Id.Application id;
 
-  public DatasetTypeNotFoundException(Id.DatasetType id) {
+  public ApplicationNotFoundException(Id.Application id) {
     super(id);
     this.id = id;
   }
 
-  public Id.DatasetType getId() {
+  public Id.Application getId() {
     return id;
   }
 }

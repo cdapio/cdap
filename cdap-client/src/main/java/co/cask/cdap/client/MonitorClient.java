@@ -18,10 +18,10 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.exception.BadRequestException;
-import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.common.exception.ServiceNotEnabledException;
-import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.ServiceNotEnabledException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.SystemServiceLiveInfo;

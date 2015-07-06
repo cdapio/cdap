@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.common;
 
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when a stream is not found
+ * Thrown when a namespace already exists.
  */
-public class StreamNotFoundException extends NotFoundException {
+public class NamespaceAlreadyExistsException extends AlreadyExistsException {
 
-  private final Id.Stream id;
+  private final Id.Namespace id;
 
-  public StreamNotFoundException(Id.Stream id) {
+  public NamespaceAlreadyExistsException(Id.Namespace id) {
     super(id);
     this.id = id;
   }
 
-  public Id.Stream getId() {
+  public Id.Namespace getId() {
     return id;
   }
 }

@@ -18,7 +18,7 @@ package co.cask.cdap.cli.completer.element;
 
 import co.cask.cdap.cli.completer.StringsCompleter;
 import co.cask.cdap.client.AdapterClient;
-import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.AdapterDetail;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;

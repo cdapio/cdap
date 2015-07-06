@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.common;
 
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when an application is not found.
+ * Thrown when the user tried to add a dataset module, but a dataset module by that name already exists.
  */
-public class ApplicationNotFoundException extends NotFoundException {
+public class DatasetModuleAlreadyExistsException extends AlreadyExistsException {
 
-  private final Id.Application id;
+  private final Id.DatasetModule id;
 
-  public ApplicationNotFoundException(Id.Application id) {
+  public DatasetModuleAlreadyExistsException(Id.DatasetModule id) {
     super(id);
     this.id = id;
   }
 
-  public Id.Application getId() {
+  public Id.DatasetModule getId() {
     return id;
   }
 }

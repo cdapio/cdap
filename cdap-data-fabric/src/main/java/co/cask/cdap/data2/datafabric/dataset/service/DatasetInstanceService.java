@@ -18,13 +18,13 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.common.DatasetAlreadyExistsException;
+import co.cask.cdap.common.DatasetNotFoundException;
+import co.cask.cdap.common.DatasetTypeNotFoundException;
+import co.cask.cdap.common.HandlerException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.DatasetAlreadyExistsException;
-import co.cask.cdap.common.exception.DatasetNotFoundException;
-import co.cask.cdap.common.exception.DatasetTypeNotFoundException;
-import co.cask.cdap.common.exception.HandlerException;
-import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;

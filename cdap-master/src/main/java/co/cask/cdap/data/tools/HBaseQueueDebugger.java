@@ -17,7 +17,7 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;

@@ -14,33 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.common;
 
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when a namespace cannot be deleted.
+ * Thrown when an adapter was not found.
  */
-public class NamespaceCannotBeDeletedException extends CannotBeDeletedException {
+public class AdapterNotFoundException extends NotFoundException {
 
-  private final Id.Namespace namespace;
+  private final Id.Adapter id;
 
-  public NamespaceCannotBeDeletedException(Id.Namespace id) {
+  public AdapterNotFoundException(Id.Adapter id) {
     super(id);
-    this.namespace = id;
+    this.id = id;
   }
 
-  public NamespaceCannotBeDeletedException(Id.Namespace id, String reason) {
-    super(id, reason);
-    this.namespace = id;
-  }
-
-  public NamespaceCannotBeDeletedException(Id.Namespace id, Throwable cause) {
-    super(id, cause);
-    this.namespace = id;
-  }
-
-  public Id.Namespace getNamespace() {
-    return namespace;
+  public Id.Adapter getId() {
+    return id;
   }
 }

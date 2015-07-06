@@ -26,6 +26,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
+import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -34,9 +35,9 @@ import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
@@ -148,12 +149,17 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           if (logbackURI != null) {
             twillPreparer.withResources(logbackURI);
           }
+
+          String yarnAppClassPath = hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+                                           Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
           TwillController twillController = twillPreparer
             .withDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass())
             .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
             .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())))
             .withClassPaths(Splitter.on(',').trimResults()
                               .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, "")))
+            .withApplicationClassPaths(Splitter.on(",").trimResults().split(yarnAppClassPath))
+            .withBundlerClassAcceptor(new HadoopClassExcluder())
             .withApplicationArguments(
               String.format("--%s", RunnableOptions.JAR), copiedProgram.getJarLocation().getName(),
               String.format("--%s", RunnableOptions.PROGRAM_OPTIONS), programOptions

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,23 +14,31 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.common;
 
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when a namespace is not found in CDAP.
+ * Thrown when an element is not found
  */
-public class NamespaceNotFoundException extends NotFoundException {
+public class NotFoundException extends Exception {
 
-  private final Id.Namespace namespace;
+  private final Object object;
 
-  public NamespaceNotFoundException(Id.Namespace id) {
-    super(id);
-    this.namespace = id;
+  public NotFoundException(Object object, String objectString) {
+    super(String.format("'%s' was not found", objectString));
+    this.object = object;
   }
 
-  public Id.Namespace getId() {
-    return namespace;
+  public NotFoundException(Object object) {
+    this(object, object.toString());
+  }
+
+  public NotFoundException(Id id) {
+    this(id, id.getIdRep());
+  }
+
+  public Object getObject() {
+    return object;
   }
 }

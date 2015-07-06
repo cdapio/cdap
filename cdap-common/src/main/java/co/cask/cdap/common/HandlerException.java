@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.common;
 
 import com.google.common.base.Charsets;
 import org.jboss.netty.buffer.ChannelBuffers;

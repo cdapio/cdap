@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,24 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+package co.cask.cdap.common.twill;
 
-package co.cask.cdap.common.exception;
+import org.apache.twill.api.ClassAcceptor;
 
-import co.cask.cdap.proto.Id;
+import java.net.URL;
 
 /**
- * Thrown when a dataset was not found.
+ * Exclude hadoop classes
  */
-public class DatasetNotFoundException extends NotFoundException {
+public class HadoopClassExcluder extends ClassAcceptor {
 
-  private final Id.DatasetInstance dataset;
-
-  public DatasetNotFoundException(Id.DatasetInstance dataset) {
-    super(dataset);
-    this.dataset = dataset;
-  }
-
-  public Id.DatasetInstance getId() {
-    return dataset;
+  @Override
+  public boolean accept(String className, URL classUrl, URL classPathUrl) {
+    // exclude hadoop but not hbase and hive packages
+    return !(className.startsWith("org.apache.hadoop")
+      && !className.startsWith("org.apache.hadoop.hbase") && !className.startsWith("org.apache.hadoop.hive"));
   }
 }

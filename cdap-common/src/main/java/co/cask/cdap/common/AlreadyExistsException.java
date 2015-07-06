@@ -14,35 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.common;
 
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when an element cannot be created.
+ * Thrown when an element already exists.
  */
-public class CannotBeCreatedException extends Exception {
+public class AlreadyExistsException extends ConflictException {
 
   private final Id objectId;
-  private final String reason;
 
-  public CannotBeCreatedException(Id objectId, String reason) {
-    super(String.format("'%s' cannot be created. Reason: %s", objectId.getIdRep(), reason));
-    this.objectId = objectId;
-    this.reason = reason;
-  }
-
-  public CannotBeCreatedException(Id objectId, Throwable cause) {
-    super(String.format("'%s' cannot be created. Reason: %s", objectId.getIdRep(), cause.getMessage()), cause);
-    this.objectId = objectId;
-    this.reason = cause.getMessage();
+  public AlreadyExistsException(Id id) {
+    super(String.format("'%s' already exists", id.getIdRep()));
+    this.objectId = id;
   }
 
   public Id getObjectId() {
     return objectId;
   }
 
-  public String getReason() {
-    return reason;
-  }
 }

@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.common;
 
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when a namespace already exists.
+ * Thrown when a namespace is not found in CDAP.
  */
-public class NamespaceAlreadyExistsException extends AlreadyExistsException {
+public class NamespaceNotFoundException extends NotFoundException {
 
-  private final Id.Namespace id;
+  private final Id.Namespace namespace;
 
-  public NamespaceAlreadyExistsException(Id.Namespace id) {
+  public NamespaceNotFoundException(Id.Namespace id) {
     super(id);
-    this.id = id;
+    this.namespace = id;
   }
 
   public Id.Namespace getId() {
-    return id;
+    return namespace;
   }
 }

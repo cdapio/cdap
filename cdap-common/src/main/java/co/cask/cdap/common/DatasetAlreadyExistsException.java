@@ -14,24 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
+package co.cask.cdap.common;
 
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when a query was not found by its handle.
+ * Thrown when the user tries to create a dataset, but a dataset already exists by that name.
  */
-public class QueryNotFoundException extends NotFoundException {
+public class DatasetAlreadyExistsException extends AlreadyExistsException {
 
-  private final Id.QueryHandle id;
+  private final Id.DatasetInstance id;
 
-  // TODO: namespace?
-  public QueryNotFoundException(Id.QueryHandle id) {
+  public DatasetAlreadyExistsException(Id.DatasetInstance id) {
     super(id);
     this.id = id;
   }
 
-  public Id.QueryHandle getId() {
+  public Id.DatasetInstance getId() {
     return id;
   }
 }
