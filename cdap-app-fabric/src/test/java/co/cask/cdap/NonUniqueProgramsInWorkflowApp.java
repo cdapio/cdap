@@ -32,11 +32,14 @@ public class NonUniqueProgramsInWorkflowApp extends AbstractApplication {
   }
 
   /**
-   *
+   * No operation MapReduce program.
    */
   public static class NoOpMR extends AbstractMapReduce {
   }
 
+  /**
+   * Workflow containing same MapReduce program multiple times.
+   */
   public static class NonUniqueProgramsInWorkflow extends AbstractWorkflow {
 
     @Override

@@ -229,7 +229,7 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
   }
 
   private void verifyWorkflowNodeList(ApplicationSpecification appSpec, WorkflowSpecification workflowSpec,
-                                    List<WorkflowNode> nodeList, Set<String> existingNodeNames) {
+                                      List<WorkflowNode> nodeList, Set<String> existingNodeNames) {
     for (WorkflowNode n : nodeList) {
       if (existingNodeNames.contains(n.getNodeId())) {
         throw new RuntimeException(String.format("Node with the name '%s' added multiple times.", n.getNodeId()));
