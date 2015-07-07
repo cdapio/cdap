@@ -4,7 +4,12 @@ angular.module(PKG.name + '.commons')
       restrict: 'E',
       scope: {
         panelGroups: '=',
-        panelConfig: '='
+        onGroupClick: '&',
+        onGroupClickContext: '=',
+
+        panel: '=',
+        onPanelItemClick: '&',
+        onPanelItemClickContext: '='
       },
       templateUrl: 'group-side-panel/group-side-panel.html',
       controller: 'MySidePanel',

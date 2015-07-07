@@ -10,28 +10,31 @@
         ng-click="MySidePanel.expanded = false">
     <span class="fa fa-angle-double-left"></span>
   </div>
-  <div class="item {{item}}"
-       ng-repeat="item in MySidePanel.items"
-       ng-class="{'text-left': MySidePanel.expanded === true}"
-       ng-click="MySidePanel.openPlugins(item)">
+
+  <div class="item"
+        ng-repeat="group in MySidePanel.groups"
+        ng-class="{'text-left': MySidePanel.expanded === true}"
+        ng-click="MySidePanel.openGroup(group)">
+
     <div class="item-heading"
-          ng-class="{'opened': MySidePanel.openedPluginType === item }">
-      <span class="icon-ETL{{item}}s"></span>
-      <span class="name">{{item | caskCapitalizeFilter}}</span>
+          ng-class="{'opened': MySidePanel.openedGroup === group.name }">
+        <span class="{{group.icon}}"></span>
+        <span class="name">{{group.name | caskCapitalizeFilter}}</span>
     </div>
 
     <div class="item-body"
-         ng-class="{'text-left': MySidePanel.expanded === true}"
-         ng-if="MySidePanel.openedPluginType === item">
-      <div ng-repeat="plugin in MySidePanel.plugins"
+          ng-class="{'text-left': MySidePanel.expanded === true}"
+          ng-if="MySidePanel.openedGroup === group.name">
+      <div ng-repeat="plugin in MySidePanel.panel.items"
             class="plugin-item"
             tooltip="{{plugin.name}}"
             tooltip-placement="right"
-            ng-click="MySidePanel.addPlugin($event, plugin, plugin.type)">
-      <strong class="fa {{plugin.icon}}"></strong>
-      <strong class="name">{{plugin.name}}</strong>
+            ng-click="MySidePanel.onItemClicked($event, plugin)">
+        <strong class="fa {{plugin.icon}}"></strong>
+        <strong class="name">{{plugin.name}}</strong>
       </div>
     </div>
+
   </div>
 
 </div>
