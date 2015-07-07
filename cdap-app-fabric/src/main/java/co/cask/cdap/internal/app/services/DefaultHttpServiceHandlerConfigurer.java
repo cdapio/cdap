@@ -16,6 +16,11 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.api.app.ApplicationConfigurer;
+import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.service.http.HttpServiceConfigurer;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
@@ -45,6 +50,7 @@ public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigure
   private Map<String, String> properties;
   private Set<String> datasets;
   private final List<ServiceHttpEndpoint> endpoints;
+  private final ApplicationConfigurer appConfigurer;
 
   /**
    * Instantiates the class with the given {@link HttpServiceHandler}.
@@ -52,13 +58,14 @@ public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigure
    *
    * @param handler the handler for the service
    */
-  public DefaultHttpServiceHandlerConfigurer(HttpServiceHandler handler) {
+  public DefaultHttpServiceHandlerConfigurer(HttpServiceHandler handler, ApplicationConfigurer appConfigurer) {
     this.propertyFields = Maps.newHashMap();
     this.className = handler.getClass().getName();
     this.name = handler.getClass().getSimpleName();
     this.properties = ImmutableMap.of();
     this.datasets = Sets.newHashSet();
     this.endpoints = Lists.newArrayList();
+    this.appConfigurer = appConfigurer;
 
     // Inspect the handler to grab all @UseDataset, @Property and endpoints.
     Reflections.visit(handler, TypeToken.of(handler.getClass()),
@@ -91,5 +98,30 @@ public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigure
     Map<String, String> properties = Maps.newHashMap(this.properties);
     properties.putAll(propertyFields);
     return new HttpServiceHandlerSpecification(className, name, "", properties, datasets, endpoints);
+  }
+
+  @Override
+  public void addStream(Stream stream) {
+    appConfigurer.addStream(stream);
+  }
+
+  @Override
+  public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
+    appConfigurer.addDatasetModule(moduleName, moduleClass);
+  }
+
+  @Override
+  public void addDatasetType(Class<? extends Dataset> datasetClass) {
+    appConfigurer.addDatasetType(datasetClass);
+  }
+
+  @Override
+  public void createDataset(String datasetName, String typeName, DatasetProperties properties) {
+    appConfigurer.createDataset(datasetName, typeName, properties);
+  }
+
+  @Override
+  public void createDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props) {
+    appConfigurer.createDataset(datasetName, datasetClass, props);
   }
 }

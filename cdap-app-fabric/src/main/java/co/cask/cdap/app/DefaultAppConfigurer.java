@@ -172,7 +172,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
 
   public void addService(Service service) {
     Preconditions.checkArgument(service != null, "Service cannot be null.");
-    DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service);
+    DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service, this);
     service.configure(configurer);
 
     ServiceSpecification spec = configurer.createSpecification();

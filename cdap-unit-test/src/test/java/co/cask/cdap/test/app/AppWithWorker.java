@@ -19,6 +19,7 @@ package co.cask.cdap.test.app;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.worker.WorkerContext;
@@ -41,12 +42,17 @@ public class AppWithWorker extends AbstractApplication {
   public void configure() {
     setName(NAME);
     addWorker(new TableWriter());
-    createDataset(DATASET, KeyValueTable.class);
   }
 
   private static class TableWriter extends AbstractWorker {
 
     private volatile boolean running;
+
+    @Override
+    protected void configure() {
+      super.configure();
+      getConfigurer().createDataset(DATASET, KeyValueTable.class, DatasetProperties.EMPTY);
+    }
 
     @Override
     public void initialize(WorkerContext context) throws Exception {
