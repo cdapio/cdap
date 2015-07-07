@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.foo')
-  .controller('PlumbController', function(myAdapterApi) {
+  .controller('PlumbController', function(myAdapterApi, MyPlumbService) {
     function getIcon(plugin) {
       var iconMap = {
         'script': 'fa-code',
@@ -18,32 +18,66 @@ angular.module(PKG.name + '.feature.foo')
       var icon = iconMap[pluginName] ? iconMap[pluginName]: 'fa-plug';
       return icon;
     }
-    this.panelConfig = {};
-    this.panelGroups = [];
-    myAdapterApi.fetchSources({
-      adapterType: 'ETLRealtime'
-    })
-      .$promise
-      .then(addToConfig.bind(this, 'source'));
-    myAdapterApi.fetchSinks({
-      adapterType: 'ETLRealtime'
-    })
-      .$promise
-      .then(addToConfig.bind(this, 'sink'));
-    myAdapterApi.fetchTransforms({
-      adapterType: 'ETLRealtime'
-    })
-      .$promise
-      .then(addToConfig.bind(this, 'transform'));
 
-    function addToConfig(type, res) {
-      this.panelGroups.push(type)
-      this.panelConfig[type] = res.map(function(extension) {
-        return {
-          name: extension.name,
-          description: extension.description,
-          icon: getIcon(extension.name.toLowerCase())
-        };
-      });
-    }
+    this.groups = [
+      {
+        name: 'source',
+        icon: 'icon-ETLsources'
+      },
+      {
+        name: 'transform',
+        icon: 'icon-ETLtransforms'
+      },
+      {
+        name: 'sink',
+        icon: 'icon-ETLsinks'
+      }
+    ];
+
+    this.panel= {
+      items: []
+    };
+
+    this.onGroupClicked = function(group) {
+      var prom;
+      switch(group.name) {
+        case 'source':
+          prom = myAdapterApi.fetchSources({
+            adapterType: 'ETLRealtime'
+          })
+            .$promise;
+          break;
+        case 'transform':
+          prom = myAdapterApi.fetchTransforms({
+            adapterType: 'ETLRealtime'
+          })
+            .$promise;
+          break;
+        case 'sink':
+          prom = myAdapterApi.fetchSinks({
+            adapterType: 'ETLRealtime'
+          })
+            .$promise;
+          break;
+      }
+      prom.then(function(res) {
+        this.panel.items = [];
+        res.forEach(function(plugin) {
+          this.panel.items.push(
+            angular.extend(
+              {
+                type: group.name,
+                icon: getIcon(plugin.name)
+              },
+              plugin
+            )
+          );
+        }.bind(this));
+      }.bind(this))
+    };
+
+    this.onPanelItemClicked = function(event, item) {
+      event.stopPropagation();
+      MyPlumbService.updateConfig(item, item.type);
+    };
   });
