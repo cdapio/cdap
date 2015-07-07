@@ -18,7 +18,7 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.ConfigEntry;
 import co.cask.cdap.proto.Version;
 import co.cask.common.http.HttpMethod;

@@ -17,8 +17,8 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.proto.ConfigEntry;
 import co.cask.cdap.proto.Version;
 import co.cask.cdap.test.XSlowTests;

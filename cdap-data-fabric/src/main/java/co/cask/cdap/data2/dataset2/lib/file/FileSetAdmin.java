@@ -19,11 +19,11 @@ package co.cask.cdap.data2.dataset2.lib.file;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.proto.Id;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 
@@ -32,16 +32,19 @@ import java.io.IOException;
  */
 public class FileSetAdmin implements DatasetAdmin {
 
+  private final String name;
+  private final boolean isExternal;
   private final Location baseLocation;
 
   public FileSetAdmin(DatasetContext datasetContext, CConfiguration cConf,
+                      LocationFactory absoluteLocationFactory,
                       NamespacedLocationFactory namespacedLocationFactory,
                       DatasetSpecification spec) throws IOException {
-    String namespace = datasetContext.getNamespaceId();
-    String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
-    String fileSetBasePath = FileSetDataset.determineBasePath(spec);
-    this.baseLocation = namespacedLocationFactory.get(Id.Namespace.from(namespace)).append(dataDir)
-      .append(fileSetBasePath);
+
+    this.name = spec.getName();
+    this.isExternal = FileSetProperties.isDataExternal(spec.getProperties());
+    this.baseLocation = FileSetDataset.determineBaseLocation(datasetContext, cConf, spec,
+                                                             absoluteLocationFactory, namespacedLocationFactory);
   }
 
   @Override
@@ -51,12 +54,19 @@ public class FileSetAdmin implements DatasetAdmin {
 
   @Override
   public void create() throws IOException {
-    baseLocation.mkdirs();
+    if (!isExternal) {
+      baseLocation.mkdirs();
+    } else if (!exists()) {
+        throw new IOException(String.format(
+          "Base location for external file set '%s' at %s does not exist", name, baseLocation));
+    }
   }
 
   @Override
   public void drop() throws IOException {
-    baseLocation.delete(true);
+    if (!isExternal) {
+      baseLocation.delete(true);
+    }
   }
 
   @Override

@@ -50,4 +50,11 @@ public interface NamespacedLocationFactory {
    * @return {@link Location} for the specified sub-path in the specified namespace
    */
   Location get(Id.Namespace namespaceId, @Nullable String subPath) throws IOException;
+
+  /**
+   * Returns the base {@link Location} for all CDAP data. This location contains all
+   * the namespace locations.
+   */
+  Location getBaseLocation() throws IOException;
+
 }

@@ -77,8 +77,8 @@ import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.session.SessionState;
-import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hive.service.auth.HiveAuthFactory;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.ColumnDescriptor;
@@ -90,8 +90,6 @@ import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.SessionHandle;
 import org.apache.hive.service.cli.TableSchema;
 import org.apache.hive.service.cli.thrift.TColumnValue;
-import org.apache.hive.service.cli.thrift.TRow;
-import org.apache.hive.service.cli.thrift.TRowSet;
 import org.apache.thrift.TException;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -105,8 +103,6 @@ import java.io.Reader;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
@@ -214,13 +210,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   protected CLIService createCLIService() {
-    return new CLIService();
+    return new CLIService(null);
   }
 
   protected HiveConf getHiveConf() {
     HiveConf conf = new HiveConf();
     // Read delegation token if security is enabled.
-    if (ShimLoader.getHadoopShims().isSecurityEnabled()) {
+    if (UserGroupInformation.isSecurityEnabled()) {
       conf.set(HIVE_METASTORE_TOKEN_KEY, HiveAuthFactory.HS2_CLIENT_TOKEN);
 
       // mapreduce.job.credentials.binary is added by Hive only if Kerberos credentials are present and impersonation
@@ -228,7 +224,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       // Hence it will not be automatically added by Hive, instead we have to add it ourselves.
       // TODO: When Explore does secure impersonation this has to be the tokens of the user,
       // TODO: ... and not the tokens of the service itself.
-      String hadoopAuthToken = System.getenv(ShimLoader.getHadoopShims().getTokenFileLocEnvName());
+      String hadoopAuthToken = System.getenv(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
       if (hadoopAuthToken != null) {
         conf.set("mapreduce.job.credentials.binary", hadoopAuthToken);
       }
@@ -778,6 +774,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
+  protected abstract List<QueryResult> doFetchNextResults(OperationHandle handle,
+                                                          FetchOrientation fetchOrientation,
+                                                          int size) throws Exception;
+
   @SuppressWarnings("unchecked")
   protected List<QueryResult> fetchNextResults(QueryHandle handle, int size)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
@@ -790,44 +790,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       LOG.trace("Getting results for handle {}", handle);
       OperationHandle operationHandle = getOperationHandle(handle);
       if (operationHandle.hasResultSet()) {
-        // Rowset is an interface in Hive 13, but a class in Hive 12, so we use reflection
-        // so that the compiler does not make assumption on the return type of fetchResults
-        Object rowSet = getCliService().fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
-
-        ImmutableList.Builder<QueryResult> rowsBuilder = ImmutableList.builder();
-        // if it's the interface
-        if (rowSet instanceof Iterable) {
-          for (Object[] row : (Iterable<Object[]>) rowSet) {
-            List<Object> cols = Lists.newArrayList();
-            for (int i = 0; i < row.length; i++) {
-              cols.add(row[i]);
-            }
-            rowsBuilder.add(new QueryResult(cols));
-          }
-        } else {
-          // otherwise do nasty thrift stuff
-          Class rowSetClass = Class.forName("org.apache.hive.service.cli.RowSet");
-          Method toTRowSetMethod = rowSetClass.getMethod("toTRowSet");
-          TRowSet tRowSet = (TRowSet) toTRowSetMethod.invoke(rowSet);
-          for (TRow tRow : tRowSet.getRows()) {
-            List<Object> cols = Lists.newArrayList();
-            for (TColumnValue tColumnValue : tRow.getColVals()) {
-              cols.add(tColumnToObject(tColumnValue));
-            }
-            rowsBuilder.add(new QueryResult(cols));
-          }
-        }
-        return rowsBuilder.build();
+        return doFetchNextResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
       } else {
         return Collections.emptyList();
       }
-    } catch (ClassNotFoundException e) {
-      throw Throwables.propagate(e);
-    } catch (NoSuchMethodException e) {
-      throw Throwables.propagate(e);
-    } catch (InvocationTargetException e) {
-      throw Throwables.propagate(e);
-    } catch (IllegalAccessException e) {
+    } catch (Exception e) {
       throw Throwables.propagate(e);
     } finally {
       nextLock.unlock();

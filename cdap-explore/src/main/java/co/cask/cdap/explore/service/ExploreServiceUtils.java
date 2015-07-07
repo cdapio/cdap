@@ -38,7 +38,7 @@ import com.google.common.io.Files;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.VersionInfo;
-import org.apache.hive.common.util.HiveVersionInfo;
+import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.internal.utils.Dependencies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,7 +69,9 @@ public class ExploreServiceUtils {
 
     HIVE_12(null, Hive12ExploreService.class),
     HIVE_13(null, Hive13ExploreService.class),
-    HIVE_14(null, Hive14ExploreService.class);
+    HIVE_14(null, Hive14ExploreService.class),
+    HIVE_1_0(null, Hive14ExploreService.class),
+    HIVE_1_1(null, Hive14ExploreService.class);
 
     private final Pattern hadoopVersionPattern;
     private final Class<? extends ExploreService> hiveExploreServiceClass;
@@ -189,8 +191,10 @@ public class ExploreServiceUtils {
         return HiveSupport.HIVE_12;
       } else if (hiveVersion.startsWith("0.13.")) {
         return HiveSupport.HIVE_13;
-      } else if (hiveVersion.startsWith("0.14.")) {
+      } else if (hiveVersion.startsWith("0.14.") || hiveVersion.startsWith("1.0.")) {
         return HiveSupport.HIVE_14;
+      } else if (hiveVersion.startsWith("1.1.")) {
+        return HiveSupport.HIVE_1_1;
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -306,7 +310,7 @@ public class ExploreServiceUtils {
 
     Dependencies.findClassDependencies(
       usingCL,
-      new Dependencies.ClassAcceptor() {
+      new ClassAcceptor() {
         @Override
         public boolean accept(String className, URL classUrl, URL classPathUrl) {
           if (bootstrapClassPaths.contains(classPathUrl.getFile())) {

@@ -26,6 +26,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
+import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -34,13 +35,12 @@ import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
-import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
@@ -53,7 +53,6 @@ import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.logging.PrinterLogHandler;
-import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Threads;
 import org.apache.twill.yarn.YarnSecureStore;
 import org.slf4j.Logger;
@@ -150,12 +149,17 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           if (logbackURI != null) {
             twillPreparer.withResources(logbackURI);
           }
+
+          String yarnAppClassPath = hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+                                           Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
           TwillController twillController = twillPreparer
             .withDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass())
             .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
             .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())))
             .withClassPaths(Splitter.on(',').trimResults()
                               .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, "")))
+            .withApplicationClassPaths(Splitter.on(",").trimResults().split(yarnAppClassPath))
+            .withBundlerClassAcceptor(new HadoopClassExcluder())
             .withApplicationArguments(
               String.format("--%s", RunnableOptions.JAR), copiedProgram.getJarLocation().getName(),
               String.format("--%s", RunnableOptions.PROGRAM_OPTIONS), programOptions
@@ -295,31 +299,17 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
                                              final Program program, final File tempDir) {
 
     final AtomicBoolean deleted = new AtomicBoolean(false);
-    controller.addListener(new ServiceListenerAdapter() {
-      @Override
-      public void running() {
-        cleanup();
-      }
+    Runnable cleanup = new Runnable() {
 
-      @Override
-      public void terminated(Service.State from) {
-        cleanup();
-      }
-
-      @Override
-      public void failed(Service.State from, Throwable failure) {
-        cleanup();
-      }
-
-      private void cleanup() {
+      public void run() {
         if (!deleted.compareAndSet(false, true)) {
           return;
         }
         LOG.debug("Cleanup tmp files for {}: {}", program.getId(), tempDir);
-        Closeables.closeQuietly(program);
         deleteDirectory(tempDir);
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
+      }};
+    controller.onRunning(cleanup, Threads.SAME_THREAD_EXECUTOR);
+    controller.onTerminated(cleanup, Threads.SAME_THREAD_EXECUTOR);
     return controller;
   }
 }

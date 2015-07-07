@@ -93,8 +93,18 @@ angular.module(PKG.name+'.feature.dashboard')
           $element.height = (resizedHeight < 300 ? 200: resizedHeight - 70);
           $element.width = (resizedWidth < 450? 370: resizedWidth - 32);
         } // optional callback fired when item is finished resizing
-     }
+      }
     };
+
+    angular.forEach($scope.currentBoard.columns, function (widget) {
+      opshelper.startPolling(widget);
+    });
+
+    $scope.$on('$destroy', function() {
+      angular.forEach($scope.currentBoard.columns, function (widget) {
+        opshelper.stopPolling(widget);
+      });
+    });
 
   })
 
@@ -148,7 +158,9 @@ angular.module(PKG.name+'.feature.dashboard')
 
 /* ------------------------------------------------------ */
 
-  .factory('opshelper', function (Widget) {
+  .factory('opshelper', function (Widget, MyDataSource, MyMetricsQueryHelper, MyChartHelpers) {
+    var dataSrc = new MyDataSource();
+
     function createWidget(title, context, metricNames, type) {
       return new Widget({
         title: title,
@@ -178,8 +190,45 @@ angular.module(PKG.name+'.feature.dashboard')
       return {title : 'System metrics', columns : widgets};
     }
 
+    function startPolling (widget) {
+      widget.pollId = dataSrc.poll({
+        _cdapPath: '/metrics/query',
+        method: 'POST',
+        body: MyMetricsQueryHelper.constructQuery(
+          'qid',
+          MyMetricsQueryHelper.contextToTags(widget.metric.context),
+          widget.metric
+        )
+      }, function (res) {
+        var processedData = MyChartHelpers.processData(
+          res,
+          'qid',
+          widget.metric.names,
+          widget.metric.resolution,
+          widget.settings.aggregate
+        );
+
+        processedData = MyChartHelpers.c3ifyData(processedData, widget.metric, widget.metricAlias);
+        var data = {
+          x: 'x',
+          columns: processedData.columns,
+          keys: {
+            x: 'x'
+          }
+        };
+        widget.formattedData = data;
+
+      }).__pollId__;
+    }
+
+    function stopPolling (widget) {
+      dataSrc.stopPoll(widget.pollId);
+    }
+
     return {
-      createBoardFromPanels: createBoardFromPanels
+      createBoardFromPanels: createBoardFromPanels,
+      startPolling: startPolling,
+      stopPolling: stopPolling
     };
   })
 

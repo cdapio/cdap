@@ -25,6 +25,7 @@ import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
+import co.cask.cdap.data2.datafabric.dataset.service.DatasetInstanceService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.LocalStorageProviderNamespaceAdmin;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
@@ -53,11 +54,11 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.twill.common.Services;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.internal.Services;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -120,20 +121,26 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework);
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
+    DatasetInstanceService instanceService = new DatasetInstanceService(
+      new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory, DEFAULT_MODULES),
+      new DatasetInstanceManager(mdsDatasetsRegistry),
+      new InMemoryDatasetOpExecutor(framework),
+      exploreFacade,
+      cConf,
+      new UsageRegistry(txExecutorFactory, framework));
     service = new DatasetService(cConf,
                                  namespacedLocationFactory,
                                  discoveryService,
                                  discoveryService,
                                  new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory, DEFAULT_MODULES),
-                                 new DatasetInstanceManager(mdsDatasetsRegistry),
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(framework),
                                  mdsDatasetsRegistry,
-                                 exploreFacade,
                                  new HashSet<DatasetMetricsReporter>(),
+                                 instanceService,
                                  new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
-                                                                        exploreFacade),
-                                 new UsageRegistry(txExecutorFactory, framework));
+                                                                        exploreFacade)
+    );
     // Start dataset service, wait for it to be discoverable
     service.start();
     final CountDownLatch startLatch = new CountDownLatch(1);

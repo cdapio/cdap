@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.internal.utils.Dependencies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -253,7 +254,7 @@ final class ProgramResources {
     final Set<String> bootstrapClassPaths = getBootstrapClassPaths();
     final Set<URL> classPathSeen = Sets.newHashSet();
 
-    Dependencies.findClassDependencies(classLoader, new Dependencies.ClassAcceptor() {
+    Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
       @Override
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
         // Ignore bootstrap classes

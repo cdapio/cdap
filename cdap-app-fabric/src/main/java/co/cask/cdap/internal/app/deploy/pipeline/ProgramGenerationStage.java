@@ -32,7 +32,6 @@ import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -137,29 +136,28 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
     // moves the <appfabricdir>/archive/<app-name>.jar to <appfabricdir>/<app-name>/archive/<app-name>.jar
     // Cannot do this before starting the deploy pipeline because appId could be null at that time.
     // However, it is guaranteed to be non-null from VerificationsStage onwards
-    Location newLocation = moveAppArchiveUnderAppDirectory(input.getLocation(), applicationName);
+    Location newArchiveLocation = appFabricDir.append(applicationName).append(Constants.ARCHIVE_DIR);
+    moveAppArchiveUnderAppDirectory(input.getLocation(), newArchiveLocation);
+    Location programLocation = newArchiveLocation.append(input.getLocation().getName());
     ApplicationDeployable updatedAppDeployable = new ApplicationDeployable(input.getId(), input.getSpecification(),
                                                                            input.getExistingAppSpec(),
                                                                            input.getApplicationDeployScope(),
-                                                                           newLocation);
+                                                                           programLocation);
 
     // Emits the received specification with programs.
     emit(new ApplicationWithPrograms(updatedAppDeployable, programs.build()));
   }
 
-  private Location moveAppArchiveUnderAppDirectory(Location origArchiveLocation, String appName) throws IOException {
-    // Move archive directory under application directory.
+  private void moveAppArchiveUnderAppDirectory(Location origArchiveLocation,
+                                               Location newArchiveLocation) throws IOException {
     Location oldArchiveDir = Locations.getParent(origArchiveLocation);
-    Preconditions.checkState(oldArchiveDir != null, "Application archive is not expected to be in the root directory.");
-    String archiveParentDirName = oldArchiveDir.getName();
-    Location appFabricOutputLocation = Locations.getParent(oldArchiveDir);
-    Preconditions.checkState(appFabricOutputLocation != null,
-                             "App Fabric output directory is not expected to be filesystem root");
-    Location applicationArchiveDir = appFabricOutputLocation.append(appName);
+    Location applicationArchiveDir = Locations.getParent(newArchiveLocation);
+
     // This directory should already be created by now.
     // However, it may not be present during unit tests that do not go through the create namespace -> deploy app path
     Locations.mkdirsIfNotExists(applicationArchiveDir);
-    Location newArchiveLocation = applicationArchiveDir.append(archiveParentDirName);
+
+    // TODO: Remove this with the artifacts manager, since artifact are immutable
     if (newArchiveLocation.exists()) {
       // this is from an older deployment
       newArchiveLocation.delete(true);
@@ -168,7 +166,6 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
       throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
                                           oldArchiveDir.toURI(), newArchiveLocation.toURI()));
     }
-    return newArchiveLocation.append(origArchiveLocation.getName());
   }
 
   private WebappSpecification createWebappSpec(final String name) {

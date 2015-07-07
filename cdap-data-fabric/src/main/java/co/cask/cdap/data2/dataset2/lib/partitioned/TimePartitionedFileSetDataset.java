@@ -169,6 +169,10 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
 
   @Override
   public TimePartitionOutput getPartitionOutput(long time) {
+    if (isExternal) {
+      throw new UnsupportedOperationException(
+        "Output is not supported for external time-partitioned file set '" + spec.getName() + "'");
+    }
     PartitionKey key = partitionKeyForTime(time);
     return new BasicTimePartitionOutput(this, getOutputPath(partitioning, key), key);
   }
@@ -259,6 +263,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
   private void dropLegacyPartition(long time) {
     final byte[] rowKey = Bytes.toBytes(time);
     partitionsTable.delete(rowKey);
+    dropPartitionFromExplore(partitionKeyForTime(time));
   }
 
   /**

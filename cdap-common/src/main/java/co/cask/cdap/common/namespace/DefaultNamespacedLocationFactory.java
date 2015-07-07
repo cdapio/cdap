@@ -69,4 +69,9 @@ public class DefaultNamespacedLocationFactory implements NamespacedLocationFacto
     }
     return namespaceLocation;
   }
+
+  @Override
+  public Location getBaseLocation() throws IOException {
+    return locationFactory.create("/");
+  }
 }

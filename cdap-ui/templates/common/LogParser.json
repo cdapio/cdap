@@ -1,0 +1,21 @@
+{
+  "id": "LogParser",
+  "groups" : {
+    "position": [ "group1" ],
+    "group1": {
+      "display" : "Log Parser Transform",
+      "position" : [ "logFormat", "inputName" ],
+      "fields" : {
+        "logFormat": {
+          "widget": "textbox",
+          "label": "Log Format"
+        },
+
+        "inputName": {
+          "widget": "textbox",
+          "label": "Input Name"
+        }
+      }
+    }
+  }
+}

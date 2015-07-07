@@ -16,11 +16,14 @@
 
 package co.cask.cdap.data2.dataset2.lib;
 
+import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.Maps;
@@ -30,13 +33,19 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
 
 public class FileSetTest {
+
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
@@ -47,6 +56,12 @@ public class FileSetTest {
     Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "testFileSet");
   private static final Id.DatasetInstance testFileSetInstance2 =
     Id.DatasetInstance.from(OTHER_NAMESPACE, "testFileSet");
+  private static final Id.DatasetInstance testFileSetInstance3 =
+    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "absoluteFileSet");
+  private static final Id.DatasetInstance testFileSetInstance4 =
+    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "lookAlikeFileSet");
+  private static final Id.DatasetInstance testFileSetInstance5 =
+    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "externalFileSet");
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -68,8 +83,17 @@ public class FileSetTest {
 
   @AfterClass
   public static void afterClass() throws Exception {
-    dsFrameworkUtil.deleteInstance(testFileSetInstance1);
-    dsFrameworkUtil.deleteInstance(testFileSetInstance2);
+    deleteInstance(testFileSetInstance1);
+    deleteInstance(testFileSetInstance2);
+    deleteInstance(testFileSetInstance3);
+    deleteInstance(testFileSetInstance4);
+    deleteInstance(testFileSetInstance5);
+  }
+
+  static void deleteInstance(Id.DatasetInstance id) throws Exception {
+    if (dsFrameworkUtil.getInstance(id) != null) {
+      dsFrameworkUtil.deleteInstance(id);
+    }
   }
 
   @Test
@@ -100,5 +124,106 @@ public class FileSetTest {
     in = fileSet2.getInputLocations().get(0).getInputStream();
     Assert.assertEquals(54, in.read());
     in.close();
+  }
+
+  @Test
+  public void testAbsolutePath() throws IOException, DatasetManagementException {
+    String absolutePath = tmpFolder.newFolder() + "/absolute/path";
+    dsFrameworkUtil.createInstance("fileSet", testFileSetInstance3, FileSetProperties.builder()
+      .setBasePath(absolutePath).build());
+    // validate that the base path for the file set was created
+    Assert.assertTrue(new File(absolutePath).isDirectory());
+
+    // instantiate the file set with an output path
+    Map<String, String> fileArgs = Maps.newHashMap();
+    FileSetArguments.setOutputPath(fileArgs, "out");
+    FileSet fileSet = dsFrameworkUtil.getInstance(testFileSetInstance3, fileArgs);
+
+    // write to the output path
+    Assert.assertEquals(absolutePath + "/out", fileSet.getOutputLocation().toURI().getPath());
+    OutputStream out = fileSet.getOutputLocation().getOutputStream();
+    out.write(42);
+    out.close();
+
+    // validate that the file was created
+    Assert.assertTrue(new File(absolutePath + "/out").isFile());
+  }
+
+  @Test(expected = DataSetException.class)
+  public void testAbsolutePathInsideCDAP() throws IOException, DatasetManagementException {
+    String absolutePath = dsFrameworkUtil.getConfiguration().get(Constants.CFG_LOCAL_DATA_DIR).concat("/hello");
+    dsFrameworkUtil.createInstance("fileSet",
+                                   Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "badFileSet"),
+                                   FileSetProperties.builder().setBasePath(absolutePath).build());
+  }
+
+  @Test(expected = DataSetException.class)
+  public void testAbsolutePathInsideCDAPDouble() throws IOException, DatasetManagementException {
+    // test that it rejects also paths that have // in them
+    String absolutePath = dsFrameworkUtil.getConfiguration()
+      .get(Constants.CFG_LOCAL_DATA_DIR).replace("/", "//").concat("/hello");
+    dsFrameworkUtil.createInstance("fileSet",
+                                   Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "badFileSet"),
+                                   FileSetProperties.builder().setBasePath(absolutePath).build());
+  }
+
+  @Test
+  public void testAbsolutePathLooksLikeCDAP() throws IOException, DatasetManagementException {
+    String absolutePath = dsFrameworkUtil.getConfiguration().get(Constants.CFG_LOCAL_DATA_DIR).concat("-hello");
+    dsFrameworkUtil.createInstance("fileSet", testFileSetInstance4,
+                                   FileSetProperties.builder().setBasePath(absolutePath).build());
+  }
+
+  @Test
+  public void testExternalAbsolutePath() throws IOException, DatasetManagementException {
+    // create an external dir and create a file in it
+    String absolutePath = tmpFolder.newFolder() + "/absolute/path";
+    File absoluteFile = new File(absolutePath);
+    absoluteFile.mkdirs();
+    File someFile = new File(absoluteFile, "some.file");
+    someFile.createNewFile();
+
+    // create an external dataset
+    dsFrameworkUtil.createInstance("fileSet", testFileSetInstance5,
+                                   FileSetProperties.builder()
+                                     .setBasePath(absolutePath)
+                                     .setDataExternal(true)
+                                     .build());
+
+    // instantiate the file set with an input and output path
+    Map<String, String> fileArgs = Maps.newHashMap();
+    FileSetArguments.setInputPath(fileArgs, "some.file");
+    FileSetArguments.setOutputPath(fileArgs, "out");
+    FileSet fileSet = dsFrameworkUtil.getInstance(testFileSetInstance5, fileArgs);
+    Assert.assertNotNull(fileSet);
+
+    // read the existing file
+    Location input = fileSet.getInputLocations().iterator().next();
+    InputStream in = input.getInputStream();
+    in.close();
+
+    // attempt to write an output file
+    try {
+      fileSet.getOutputLocation();
+      Assert.fail("Extrernal file set should not allow writing output.");
+    } catch (UnsupportedOperationException e) {
+      // expected
+    }
+
+    // delete the dataset and validate that the files are still there
+    dsFrameworkUtil.deleteInstance(testFileSetInstance5);
+    Assert.assertTrue(someFile.exists());
+  }
+
+  @Test(expected = IOException.class)
+  public void testExternalNonExistentPath() throws IOException, DatasetManagementException {
+    // create an external dir and create a file in it
+    String absolutePath = tmpFolder.newFolder() + "/not/there";
+    // attempt to create an external dataset - should fail
+    dsFrameworkUtil.createInstance("fileSet", testFileSetInstance5,
+                                   FileSetProperties.builder()
+                                     .setBasePath(absolutePath)
+                                     .setDataExternal(true)
+                                     .build());
   }
 }

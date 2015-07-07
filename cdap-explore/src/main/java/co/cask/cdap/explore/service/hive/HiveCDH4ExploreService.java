@@ -29,7 +29,6 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
@@ -37,7 +36,6 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.OperationState;
-import org.apache.hive.service.cli.SessionHandle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +60,7 @@ import java.util.concurrent.TimeUnit;
  *   #executeStatement(org.apache.hive.service.cli.SessionHandle, String, java.util.Map)}</li>
  * </ol>
  */
-public class HiveCDH4ExploreService extends BaseHiveExploreService {
+public class HiveCDH4ExploreService extends Hive13ExploreService {
   private static final Logger LOG = LoggerFactory.getLogger(HiveCDH4ExploreService.class);
 
   @Inject
@@ -102,12 +100,6 @@ public class HiveCDH4ExploreService extends BaseHiveExploreService {
     } catch (IllegalAccessException e) {
       throw Throwables.propagate(e);
     }
-  }
-
-  @Override
-  protected OperationHandle doExecute(SessionHandle sessionHandle, String statement)
-    throws HiveSQLException, ExploreException {
-    return getCliService().executeStatement(sessionHandle, statement, ImmutableMap.<String, String>of());
   }
 
   @Override

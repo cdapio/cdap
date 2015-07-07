@@ -19,8 +19,8 @@ package co.cask.cdap.internal.app.runtime;
 import co.cask.cdap.app.runtime.ProgramController;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
-import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Threads;
+import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

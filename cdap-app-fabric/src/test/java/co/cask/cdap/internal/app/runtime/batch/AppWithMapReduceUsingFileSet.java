@@ -51,7 +51,7 @@ public class AppWithMapReduceUsingFileSet extends AbstractApplication {
         .build());
       if (!outputDataset.equals(inputDataset)) {
         createDataset(outputDataset, "fileSet", FileSetProperties.builder()
-          .setBasePath("/foo/my-file-output")
+          .setBasePath("foo/my-file-output")
           .setInputFormat(TextInputFormat.class)
           .setOutputFormat(TextOutputFormat.class)
           .setOutputProperty(TextOutputFormat.SEPERATOR, ":")

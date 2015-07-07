@@ -61,7 +61,7 @@ public class AppWithPartitionedFileSet extends AbstractApplication {
                            .addLongField("time")
                            .build())
           // properties for file set
-        .setBasePath("/partitioned")
+        .setBasePath("partitioned")
         .setInputFormat(TextInputFormat.class)
         .setOutputFormat(TextOutputFormat.class)
         .setOutputProperty(TextOutputFormat.SEPERATOR, SEPARATOR)

@@ -16,10 +16,10 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.common.AdapterNotFoundException;
+import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.AdapterNotFoundException;
-import co.cask.cdap.common.exception.BadRequestException;
-import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterAlreadyExistsException;

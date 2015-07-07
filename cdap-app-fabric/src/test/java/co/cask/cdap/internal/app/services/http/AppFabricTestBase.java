@@ -69,6 +69,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
+import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
@@ -378,7 +379,7 @@ public abstract class AppFabricTestBase {
       if (classLoader == null) {
         classLoader = ClassLoader.getSystemClassLoader();
       }
-      Dependencies.findClassDependencies(classLoader, new Dependencies.ClassAcceptor() {
+      Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
         @Override
         public boolean accept(String className, URL classUrl, URL classPathUrl) {
           try {

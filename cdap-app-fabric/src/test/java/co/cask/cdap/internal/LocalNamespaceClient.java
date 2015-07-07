@@ -16,11 +16,11 @@
 
 package co.cask.cdap.internal;
 
-import co.cask.cdap.common.exception.NamespaceAlreadyExistsException;
-import co.cask.cdap.common.exception.NamespaceCannotBeCreatedException;
-import co.cask.cdap.common.exception.NamespaceCannotBeDeletedException;
-import co.cask.cdap.common.exception.NamespaceNotFoundException;
-import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.common.NamespaceAlreadyExistsException;
+import co.cask.cdap.common.NamespaceCannotBeCreatedException;
+import co.cask.cdap.common.NamespaceCannotBeDeletedException;
+import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
