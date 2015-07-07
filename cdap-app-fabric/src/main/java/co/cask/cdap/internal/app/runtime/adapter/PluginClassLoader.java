@@ -62,11 +62,15 @@ public class PluginClassLoader extends DirectoryClassLoader {
    * Creates the parent ClassLoader for the plugin ClassLoader. See javadoc of this class for details.
    */
   static ClassLoader createParent(File pluginLibDir, ClassLoader templateClassLoader) {
+    // Includes all jars in the plugins/template/lib directory
+    return new DirectoryClassLoader(pluginLibDir, createParent(templateClassLoader));
+  }
 
+  static ClassLoader createParent(ClassLoader templateClassLoader) {
     // Find the ProgramClassLoader from the template ClassLoader
     ClassLoader programClassLoader = templateClassLoader;
     while (programClassLoader != null && !(programClassLoader instanceof ProgramClassLoader)) {
-      programClassLoader = templateClassLoader.getParent();
+      programClassLoader = programClassLoader.getParent();
     }
     // This shouldn't happen
     Preconditions.checkArgument(programClassLoader != null, "Cannot find ProgramClassLoader");
@@ -81,10 +85,7 @@ public class PluginClassLoader extends DirectoryClassLoader {
     // In this way, parent ClassLoader of the plugin ClassLoader will load class from the parent of the
     // template program class loader (which is a filtered CDAP classloader),
     // followed by template export-packages, then by a plugin lib jars.
-    ClassLoader libParentClassLoader = new CombineClassLoader(programClassLoader.getParent(),
-                                                              ImmutableList.of(filteredTemplateClassLoader));
-    // Includes all jars in the plugins/template/lib directory
-    return new DirectoryClassLoader(pluginLibDir, libParentClassLoader);
+    return new CombineClassLoader(programClassLoader.getParent(), ImmutableList.of(filteredTemplateClassLoader));
   }
 
   PluginClassLoader(File directory, ClassLoader parent) {
