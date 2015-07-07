@@ -332,7 +332,7 @@ public class ArtifactStore {
   private boolean matches(PluginData pluginData, ArtifactVersion version) {
     ArtifactVersion lower = new ArtifactVersion(pluginData.parentVersionLower);
     ArtifactVersion upper = new ArtifactVersion(pluginData.parentVersionUpper);
-    return lower.compareTo(version) <= 0 && upper.compareTo(version) > 0;
+    return version.compareTo(lower) >= 0 && version.compareTo(upper) < 0;
   }
 
   /**
@@ -510,9 +510,11 @@ public class ArtifactStore {
     }
   }
 
+  // this method examines all plugins in the given row and checks if they extend the given parent artifact.
+  // if so, information about the plugin artifact and the plugin details are added to the given map.
   private void addPluginsToMap(Id.Artifact parentArtifactId, Map<ArtifactInfo, List<PluginClass>> map,
                                Row row) throws IOException {
-    // column is the artifact name and version, value is the serialized PluginClass
+    // column is the artifact namespace, name, and version. value is the serialized PluginData
     for (Map.Entry<byte[], byte[]> column : row.getColumns().entrySet()) {
       ArtifactColumn artifactColumn = ArtifactColumn.parse(column.getKey());
       PluginData pluginData = gson.fromJson(Bytes.toString(column.getValue()), PluginData.class);

@@ -27,7 +27,10 @@ import java.util.Set;
 
 /**
  * Metadata about an artifact, such as what plugins are contained in the artifact, and what other artifacts can use
- * the plugins in this artifact.
+ * the plugins in this artifact. For example, we could have an etl-batch-lib artifact that contains
+ * 20 different plugins that are meant to be used by the application contained in the etl-batch artifact.
+ * In this case, the artifact meta for etl-batch-lib would contain details about each of those 20 plugins, as well
+ * as information about which versions of the etl-batch artifact can use the plugins it contains.
  */
 public class ArtifactMeta {
   private final List<PluginClass> plugins;

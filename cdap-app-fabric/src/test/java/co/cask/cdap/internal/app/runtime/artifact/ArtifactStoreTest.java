@@ -456,7 +456,6 @@ public class ArtifactStoreTest {
       Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "parent", "2.0.0")
     );
     for (Id.Artifact badId : badIds) {
-      Map<ArtifactInfo, List<PluginClass>> result = artifactStore.getPluginClasses(badId);
       Assert.assertTrue(artifactStore.getPluginClasses(badId).isEmpty());
       Assert.assertTrue(artifactStore.getPluginClasses(badId, "atype").isEmpty());
       try {
