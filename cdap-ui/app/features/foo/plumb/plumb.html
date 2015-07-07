@@ -1,6 +1,13 @@
 <h3>Create Adapter</h3>
 
-<my-side-panel data-panel-config="PlumbController.panelConfig"
-               data-panel-groups="['source', 'transform', 'sink']">
+<my-side-panel
+  data-panel-groups="PlumbController.groups"
+  data-on-group-click-context="PlumbController"
+  data-on-group-click="PlumbController.onGroupClicked"
+
+  data-panel="PlumbController.panel"
+  data-on-panel-item-click-context="PlumbController"
+  data-on-panel-item-click="PlumbController.onPanelItemClicked">
 </my-side-panel>
+
 <my-plumb></my-plumb>
