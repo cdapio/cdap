@@ -110,6 +110,24 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  public void testNewFlowRuntimeArguments() throws Exception {
+    ApplicationManager applicationManager = deployApplication(FilterAppWithNewFlowAPI.class);
+    Map<String, String> args = Maps.newHashMap();
+    args.put("threshold", "10");
+    applicationManager.getFlowManager("FilterFlow").start(args);
+
+    StreamManager input = getStreamManager("input");
+    input.send("2");
+    input.send("21");
+
+    ServiceManager serviceManager = applicationManager.getServiceManager("CountService").start();
+    serviceManager.waitForStatus(true, 2, 1);
+
+    Assert.assertEquals("1", new Gson().fromJson(
+      callServiceGet(serviceManager.getServiceURL(), "result"), String.class));
+  }
+
+  @Test
   public void testServiceManager() throws Exception {
     ApplicationManager applicationManager = deployApplication(FilterApp.class);
     ServiceManager countService = applicationManager.getServiceManager("CountService");

@@ -36,7 +36,9 @@ public interface Flow extends Processor {
   /**
    * Configure the {@link Flow} by returning a {@link FlowSpecification}.
    *
-   * @return An instance of {@link FlowSpecification}.
+   * @return An instance of {@link FlowSpecification}
+   * @deprecated Use {@link AbstractFlow#configureFlow} instead
    */
+  @Deprecated
   FlowSpecification configure();
 }
