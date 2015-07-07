@@ -1,9 +1,12 @@
 angular.module(PKG.name + '.commons')
   .controller('MySidePanel', function ($scope) {
     this.groups = $scope.panelGroups;
+    this.placement = $scope.placement;
     this.panel = $scope.panel;
 
-    this.expanded = true;
+
+    this.isSubMenu = $scope.isSubMenu === 'true';
+    this.isExpanded = $scope.isExpanded === 'true';
 
     this.openGroup = function (group) {
       if (this.openedGroup === group.name && this.showGroupItems) {
@@ -19,11 +22,10 @@ angular.module(PKG.name + '.commons')
     };
 
     this.onItemClicked = function(event, item) {
-
-        var fn = $scope.onPanelItemClick();
-        if ('undefined' !== typeof fn) {
-          fn.call($scope.onPanelItemClickContext, event, item);
-        }
-
+      var fn = $scope.onPanelItemClick();
+      if ('undefined' !== typeof fn) {
+        fn.call($scope.onPanelItemClickContext, event, item);
+      }
     };
+    this.openGroup(this.groups[0]);
   });

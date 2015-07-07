@@ -3,13 +3,20 @@
 my-side-panel {
   .side-panel {
     position: fixed;
-    left: 10px;
     top: 85px;
     z-index: 10000;
     width: 40px;
     background-color: white;
     transition: width 0.5s;
     transition-duration: 0.5s;
+
+    &.left {
+      left: 10px;
+    }
+
+    &.right {
+      right: 10px;
+    }
 
     .btn.btn-info.btn-block {
       border-radius: 0;

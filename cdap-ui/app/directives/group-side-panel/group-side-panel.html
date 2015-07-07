@@ -1,19 +1,21 @@
 <div class="side-panel text-center"
-      ng-class="{'expanded': MySidePanel.expanded === true}">
-  <div ng-if="MySidePanel.expanded === false"
+      ng-class="{'expanded': MySidePanel.isExpanded === true, 'left': MySidePanel.placement === 'left', 'right': MySidePanel.placement === 'right'}">
+      
+  <div ng-if="MySidePanel.isExpanded == false"
         class="btn btn-info btn-block"
-        ng-click="MySidePanel.expanded = true">
+        ng-click="MySidePanel.isExpanded = true">
     <span class="fa fa-angle-double-right"></span>
   </div>
-  <div ng-if="MySidePanel.expanded === true"
+  <div ng-if="MySidePanel.isExpanded == true"
         class="btn btn-info btn-block"
-        ng-click="MySidePanel.expanded = false">
+        ng-click="MySidePanel.isExpanded = false">
     <span class="fa fa-angle-double-left"></span>
   </div>
 
+
   <div class="item"
         ng-repeat="group in MySidePanel.groups"
-        ng-class="{'text-left': MySidePanel.expanded === true}"
+        ng-class="{'text-left': MySidePanel.isExpanded === true}"
         ng-click="MySidePanel.openGroup(group)">
 
     <div class="item-heading"
@@ -23,8 +25,8 @@
     </div>
 
     <div class="item-body"
-          ng-class="{'text-left': MySidePanel.expanded === true}"
-          ng-if="MySidePanel.openedGroup === group.name">
+          ng-class="{'text-left': MySidePanel.isExpanded === true}"
+          ng-if="MySidePanel.isSubMenu === true && MySidePanel.openedGroup === group.name">
       <div ng-repeat="plugin in MySidePanel.panel.items"
             class="plugin-item"
             tooltip="{{plugin.name}}"
