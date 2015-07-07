@@ -19,7 +19,7 @@ angular.module(PKG.name + '.feature.foo')
       return icon;
     }
 
-    this.groups = [
+    this.pluginTypes = [
       {
         name: 'source',
         icon: 'icon-ETLsources'
@@ -34,36 +34,54 @@ angular.module(PKG.name + '.feature.foo')
       }
     ];
 
-    this.panel= {
+    this.canvasOperations = [
+      {
+        name: 'Publish',
+        icon: 'fa fa-play'
+      },
+      {
+        name: 'Zoom In',
+        icon: 'fa fa-search-plus'
+      },
+      {
+        name: 'Zoom Out',
+        icon: 'fa fa-search-minus'
+      },
+      {
+        name: 'Export',
+        icon: 'fa fa-download'
+      },
+      {
+        name: 'Import',
+        icon: 'fa fa-upload'
+      },
+      {
+        name: 'Settings',
+        icon: 'fa fa-cogs'
+      }
+    ];
+
+    this.plugins= {
       items: []
     };
 
-    this.onGroupClicked = function(group) {
+    this.onPluginTypesClicked = function(group) {
       var prom;
       switch(group.name) {
         case 'source':
-          prom = myAdapterApi.fetchSources({
-            adapterType: 'ETLRealtime'
-          })
-            .$promise;
+          prom = myAdapterApi.fetchSources({ adapterType: 'ETLRealtime' }).$promise;
           break;
         case 'transform':
-          prom = myAdapterApi.fetchTransforms({
-            adapterType: 'ETLRealtime'
-          })
-            .$promise;
+          prom = myAdapterApi.fetchTransforms({ adapterType: 'ETLRealtime' }).$promise;
           break;
         case 'sink':
-          prom = myAdapterApi.fetchSinks({
-            adapterType: 'ETLRealtime'
-          })
-            .$promise;
+          prom = myAdapterApi.fetchSinks({ adapterType: 'ETLRealtime' }).$promise;
           break;
       }
       prom.then(function(res) {
-        this.panel.items = [];
+        this.plugins.items = [];
         res.forEach(function(plugin) {
-          this.panel.items.push(
+          this.plugins.items.push(
             angular.extend(
               {
                 type: group.name,
@@ -76,8 +94,15 @@ angular.module(PKG.name + '.feature.foo')
       }.bind(this))
     };
 
-    this.onPanelItemClicked = function(event, item) {
+    this.onCanvasOperationsClicked = function(group) {
+      console.info('Clicked: ', group);
+    }
+
+    this.onPluginItemClicked = function(event, item) {
       event.stopPropagation();
       MyPlumbService.updateConfig(item, item.type);
     };
+
+
+
   });
