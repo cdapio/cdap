@@ -18,16 +18,20 @@ package co.cask.cdap.internal.workflow;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
- *
+ * The default implementation for a {@link WorkflowActionSpecification}.
  */
 public class DefaultWorkflowActionSpecification implements WorkflowActionSpecification {
 
@@ -35,30 +39,43 @@ public class DefaultWorkflowActionSpecification implements WorkflowActionSpecifi
   private final String name;
   private final String description;
   private final Map<String, String> properties;
+  private final Set<String> datasets;
 
-  public DefaultWorkflowActionSpecification(String name, String description, Map<String, String> properties) {
-    this(null, name, description, properties);
+  public DefaultWorkflowActionSpecification(String name, String description,
+                                            Map<String, String> properties, Set<String> datasets) {
+    this.className = null;
+    this.name = name;
+    this.description = description;
+    this.properties = ImmutableMap.copyOf(properties);
+    this.datasets = ImmutableSet.copyOf(datasets);
   }
 
   public DefaultWorkflowActionSpecification(WorkflowAction action) {
     WorkflowActionSpecification spec = action.configure();
 
     Map<String, String> properties = Maps.newHashMap(spec.getProperties());
+    Set<String> datasets = Sets.newHashSet();
     Reflections.visit(action, TypeToken.of(action.getClass()),
+                      new DataSetFieldExtractor(datasets),
                       new PropertyFieldExtractor(properties));
+
+    // Add datasets that are specified in overriding configure with useDataset method
+    datasets.addAll(spec.getDatasets());
 
     this.className = action.getClass().getName();
     this.name = spec.getName();
     this.description = spec.getDescription();
     this.properties = ImmutableMap.copyOf(properties);
+    this.datasets = ImmutableSet.copyOf(datasets);
   }
 
-  public DefaultWorkflowActionSpecification(String className, String name,
-                                            String description, Map<String, String> properties) {
+  public DefaultWorkflowActionSpecification(String className, String name, String description,
+                                            Map<String, String> properties, Set<String> datasets) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.properties = ImmutableMap.copyOf(properties);
+    this.datasets = ImmutableSet.copyOf(datasets);
   }
 
   @Override
@@ -92,6 +109,12 @@ public class DefaultWorkflowActionSpecification implements WorkflowActionSpecifi
       .add("name", name)
       .add("class", className)
       .add("options", properties)
+      .add("datasets", datasets)
       .toString();
+  }
+
+  @Override
+  public Set<String> getDatasets() {
+    return datasets;
   }
 }

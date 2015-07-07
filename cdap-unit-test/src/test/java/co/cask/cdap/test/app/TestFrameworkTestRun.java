@@ -144,6 +144,31 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals("world", Bytes.toString(outputTable.read("hello")));
   }
 
+  @Category(SlowTests.class)
+  @Test
+  public void testCustomActionDatasetAccess() throws Exception {
+    addDatasetInstance("keyValueTable", DatasetWithCustomActionApp.CUSTOM_TABLE).create();
+    addDatasetInstance("keyValueTable", DatasetWithCustomActionApp.CUSTOM_TABLE1).create();
+
+    ApplicationManager appManager = deployApplication(DatasetWithCustomActionApp.class);
+    ServiceManager serviceManager = appManager.getServiceManager(DatasetWithCustomActionApp.CUSTOM_SERVICE).start();
+    serviceManager.waitForStatus(true);
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(DatasetWithCustomActionApp.CUSTOM_WORKFLOW).start();
+    workflowManager.waitForFinish(2, TimeUnit.MINUTES);
+    appManager.stopAll();
+
+    DataSetManager<KeyValueTable> outTableManager = getDataset(DatasetWithCustomActionApp.CUSTOM_TABLE);
+    KeyValueTable outputTable = outTableManager.get();
+
+    DataSetManager<KeyValueTable> outTableManager1 = getDataset(DatasetWithCustomActionApp.CUSTOM_TABLE1);
+    KeyValueTable outputTable1 = outTableManager1.get();
+
+    Assert.assertEquals("world", Bytes.toString(outputTable.read("hello")));
+    Assert.assertEquals("service", Bytes.toString(outputTable.read("hi")));
+    Assert.assertEquals("another", Bytes.toString(outputTable1.read("test")));
+  }
+
   @Category(XSlowTests.class)
   @Test
   public void testDeployWorkflowApp() throws InterruptedException {

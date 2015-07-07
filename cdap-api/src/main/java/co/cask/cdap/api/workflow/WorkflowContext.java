@@ -16,13 +16,16 @@
 package co.cask.cdap.api.workflow;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.ServiceDiscoverer;
+import co.cask.cdap.api.data.DatasetContext;
 
 import java.util.Map;
 
 /**
  * Represents the runtime context of a {@link WorkflowAction}.
  */
-public interface WorkflowContext {
+public interface WorkflowContext extends RuntimeContext, ServiceDiscoverer, DatasetContext {
 
   WorkflowSpecification getWorkflowSpecification();
 
