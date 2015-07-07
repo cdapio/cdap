@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
+import co.cask.cdap.internal.artifact.ArtifactVersion;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.artifact.ArtifactVersion;
 
 import java.util.Objects;
 
