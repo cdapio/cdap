@@ -55,17 +55,27 @@ body {
         }
 
         > ul.navbar-nav {
-
+          @media (min-width: @screen-sm-min) { float: left; }
+          @media (min-width: @screen-lg-min) { float: none; }
           // Namespace dropdown
           &:first-child {
-            @media (min-width: @screen-sm-min) { float: left; }
+
+            @media (min-width: @screen-lg-min) {
+              position: absolute;
+              top: 75px;
+              left: 45%;
+              margin-left: 0;
+              text-align: center;
+              .border-radius(0 0 8px 8px);
+            }
             li.dropdown {
+              .border-radius(0 0 8px 8px);
               @media (max-width: @screen-md-max) {
+                a.dropdown-toggle {
+                  .caret { display: none; }
+                }
                 &.one {
-                  a.dropdown-toggle {
-                    cursor: default;
-                    .caret { display: none; }
-                  }
+                  a.dropdown-toggle { cursor: default; }
                   &.open {
                     ul.dropdown-menu { padding: 0; }
                   }
@@ -92,7 +102,13 @@ body {
                 width: 100%;
                 a.dropdown-toggle {
                   white-space: nowrap;
-                  span:first-child { padding-right: 5px; }
+                  padding-top: 12px;
+                  padding-bottom: 12px;
+                  .caret {
+                    border-width: 5px 5px 0 5px;
+                    display: block;
+                    margin: 0 auto;
+                  }
                   .tooltip.right { visibility: hidden; }
                 }
 
@@ -101,13 +117,9 @@ body {
                   z-index: 10;
                   a.dropdown-toggle {
                     margin: 7px;
-                    padding: 10px;
+                    padding: 6px;
                     overflow: auto;
                     .border-radius(4px);
-                    span {
-                      &:first-child { float: left; }
-                      &:last-child { display: none; }
-                    }
                   }
                 }
               }
@@ -116,28 +128,16 @@ body {
 
           // Settings dropdown
           &.navbar-right {
-            @media (min-width: @screen-sm-min) {
-              float: left;
-              padding-left: 20px;
-            }
-            @media (min-width: @screen-lg-min) {
-              float: none;
-              padding-left: 0;
-            }
+            @media (min-width: @screen-sm-min) { padding-left: 20px; }
+            @media (min-width: @screen-lg-min) { padding-left: 0; }
             li.dropdown {
               padding: 11px 5px;
               @media (max-width: @screen-xs-max) { padding-top: 0; }
               @media (min-width: @screen-sm-min) { padding-bottom: 0; }
-              @media (min-width: @screen-lg-min) {
-                padding-top: 11px;
-                padding-bottom: 11px;
-              }
+              @media (min-width: @screen-lg-min) { padding-bottom: 11px; }
 
               &.open {
-                span {
-                  &.fa-cog { padding: 0 5px; }
-                  &.caret { display: none; }
-                }
+                span.fa-cog { padding: 0 5px; }
               }
 
               a.dropdown-toggle {
@@ -190,7 +190,6 @@ body {
                   text-align: left;
                   .transition(all 0.2s ease-in);
                   &:hover, &:focus { background-color: transparent; }
-                  .caret { display: none; }
                 }
               }
             }
@@ -317,6 +316,9 @@ body {
 
             // Namespace dropdown
             &:first-child {
+              @media (min-width: @screen-lg-min) {
+                background-color: @ns-dropdown;
+              }
               li.dropdown {
                 @media (max-width: @screen-md-max) {
                   &.one {
@@ -326,11 +328,10 @@ body {
                   }
                 }
                 @media (min-width: @screen-lg-min) {
-                  li.dropdown {
-                    a.dropdown-toggle span { color: lightgray; }
-                    &.open {
-                      a.droptown-toggle span:first-child { color: @cdap-darkness; }
-                    }
+                  a.dropdown-toggle { color: white; }
+                  &.open {
+                    background-color: @ns-dropdown;
+                    a.dropdown-toggle { color: @cdap-bluegray; }
                   }
                 }
               }
@@ -338,21 +339,32 @@ body {
 
             // Settings dropdown
             &.navbar-right {
+              margin-right: 0;
               li.dropdown {
 
                 &.open {
                   span.fa-cog { color: @cdap-darkness; }
                 }
-
-                a.dropdown-toggle {
-                  @media (min-width: @screen-lg-min) {
-                    color: lightgray;
+                @media (max-width: @screen-md-max) {
+                  ul.dropdown-menu {
+                    li.nav-subsection { color: #9d9d9d; }
                   }
                 }
+                @media (min-width: @screen-lg-min) {
+                  &.open { background-color: @brand-primary; }
+                  a.dropdown-toggle { color: white; }
+                  ul.dropdown-menu {
+                    background-color: @brand-primary;
+                    li:not(:last-child) { border-bottom: 1px solid rgba(0,0,0,0.1); }
+                    a {
+                      color: white;
+                      &:hover, &:focus {
+                        background-color: white;
+                        color: @cdap-darkness;
 
-                ul.dropdown-menu {
-                  @media (max-width: @screen-md-max) {
-                    li.nav-subsection { color: #9d9d9d; }
+                        span { color: @cdap-darkness; }
+                      }
+                    }
                   }
                 }
               }
@@ -365,23 +377,9 @@ body {
               }
               @media (min-width: @screen-lg-min) {
                 &.open {
-                  background-color: @brand-primary;
                   a.dropdown-toggle {
                     background-color: @cdap-white;
                     color: @cdap-header;
-                  }
-                }
-                ul.dropdown-menu {
-                  background-color: @brand-primary;
-                  li:not(:last-child) { border-bottom: 1px solid rgba(0,0,0,0.1); }
-                  a {
-                    color: white;
-                    &:hover, &:focus {
-                      background-color: white;
-                      color: @cdap-darkness;
-
-                      span { color: @cdap-darkness; }
-                    }
                   }
                 }
               }
