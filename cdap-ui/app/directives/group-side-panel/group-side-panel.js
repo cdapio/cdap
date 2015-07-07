@@ -7,6 +7,10 @@ angular.module(PKG.name + '.commons')
         onGroupClick: '&',
         onGroupClickContext: '=',
 
+        isSubMenu: '@',
+        placement: '@',
+        isExpanded: '@',
+
         panel: '=',
         onPanelItemClick: '&',
         onPanelItemClickContext: '='
