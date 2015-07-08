@@ -23,6 +23,7 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.NodeValueEntry;
+import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.internal.app.runtime.batch.WordCount;
@@ -260,25 +261,32 @@ public class ConditionalWorkflowApp extends AbstractApplication {
     @Override
     public void run() {
       WorkflowToken workflowToken = getContext().getToken();
-      boolean trueBranchExecuted = Boolean.parseBoolean(workflowToken.get("conditionResult"));
+      boolean trueBranchExecuted = Boolean.parseBoolean(workflowToken.get("conditionResult").getAsString());
       if (trueBranchExecuted) {
         // Previous condition returned true
         List<NodeValueEntry> nodeValueEntries = workflowToken.getAll("action_type");
         Preconditions.checkArgument(5 == nodeValueEntries.size());
-        Preconditions.checkArgument(new NodeValueEntry("RecordVerifier", "MapReduce").equals(nodeValueEntries.get(0)));
+        Preconditions.checkArgument(new NodeValueEntry("RecordVerifier",
+                                                       new Value("MapReduce")).equals(nodeValueEntries.get(0)));
         Preconditions.checkArgument(new NodeValueEntry("ClassicWordCount",
-                                                       "MapReduce").equals(nodeValueEntries.get(2)));
-        Preconditions.checkArgument(workflowToken.get("action_type", "iffork_one").equals("CustomAction"));
-        Preconditions.checkArgument(workflowToken.get("action_type", "iffork_another").equals("CustomAction"));
+                                                       new Value("MapReduce")).equals(nodeValueEntries.get(2)));
+        Preconditions.checkArgument(workflowToken.get("action_type",
+                                                      "iffork_one").getAsString().equals("CustomAction"));
+        Preconditions.checkArgument(workflowToken.get("action_type",
+                                                      "iffork_another").getAsString().equals("CustomAction"));
         validateMapReduceCounters(workflowToken, "ClassicWordCount");
       } else {
         // Previous condition returned false
         List<NodeValueEntry> nodeValueEntries = workflowToken.getAll("action_type");
         Preconditions.checkArgument(5 == nodeValueEntries.size());
-        Preconditions.checkArgument(new NodeValueEntry("RecordVerifier", "MapReduce").equals(nodeValueEntries.get(0)));
-        Preconditions.checkArgument(workflowToken.get("action_type", "elsefork_one").equals("CustomAction"));
-        Preconditions.checkArgument(workflowToken.get("action_type", "elsefork_another").equals("CustomAction"));
-        Preconditions.checkArgument(workflowToken.get("action_type", "elsefork_third").equals("CustomAction"));
+        Preconditions.checkArgument(new NodeValueEntry("RecordVerifier",
+                                                       new Value("MapReduce")).equals(nodeValueEntries.get(0)));
+        Preconditions.checkArgument(workflowToken.get("action_type",
+                                                      "elsefork_one").getAsString().equals("CustomAction"));
+        Preconditions.checkArgument(workflowToken.get("action_type",
+                                                      "elsefork_another").getAsString().equals("CustomAction"));
+        Preconditions.checkArgument(workflowToken.get("action_type",
+                                                      "elsefork_third").getAsString().equals("CustomAction"));
         validateMapReduceCounters(workflowToken, "RecordVerifier");
       }
     }
@@ -293,27 +301,26 @@ public class ConditionalWorkflowApp extends AbstractApplication {
       long reduceInputRecords = taskCounters.get(reduceInputRecordsCounterName);
       long reduceOutputRecords = taskCounters.get(reduceOutputRecordsCounterName);
 
-      long flattenMapInputRecords = Long.parseLong(workflowToken.get(flattenMapInputRecordsCounterName));
-      long flattenMapOutputRecords = Long.parseLong(workflowToken.get(flattenMapOutputRecordsCounterName));
-      long flattenReduceInputRecords = Long.parseLong(workflowToken.get(flattenReduceInputRecordsCounterName));
-      long flattenReduceOutputRecords = Long.parseLong(workflowToken.get(flattenReduceOutputRecordsCounterName));
+      long flattenMapInputRecords = workflowToken.get(flattenMapInputRecordsCounterName).getAsLong();
+      long flattenMapOutputRecords = workflowToken.get(flattenMapOutputRecordsCounterName).getAsLong();
+      long flattenReduceInputRecords = workflowToken.get(flattenReduceInputRecordsCounterName).getAsLong();
+      long flattenReduceOutputRecords = workflowToken.get(flattenReduceOutputRecordsCounterName).getAsLong();
 
       Preconditions.checkArgument(mapInputRecords == flattenMapInputRecords);
       Preconditions.checkArgument(mapOutputRecords == flattenMapOutputRecords);
       Preconditions.checkArgument(reduceInputRecords == flattenReduceInputRecords);
       Preconditions.checkArgument(reduceOutputRecords == flattenReduceOutputRecords);
 
-      long nodeSpecificMapInputRecords = Long.parseLong(workflowToken.get(flattenMapInputRecordsCounterName,
-                                                                          programName));
+      long nodeSpecificMapInputRecords = workflowToken.get(flattenMapInputRecordsCounterName, programName).getAsLong();
 
-      long nodeSpecificMapOutputRecords = Long.parseLong(workflowToken.get(flattenMapOutputRecordsCounterName,
-                                                                           programName));
+      long nodeSpecificMapOutputRecords = workflowToken.get(flattenMapOutputRecordsCounterName,
+                                                            programName).getAsLong();
 
-      long nodeSpecificReduceInputRecords = Long.parseLong(workflowToken.get(flattenReduceInputRecordsCounterName,
-                                                                             programName));
+      long nodeSpecificReduceInputRecords = workflowToken.get(flattenReduceInputRecordsCounterName,
+                                                              programName).getAsLong();
 
-      long nodeSpecificReduceOutputRecords = Long.parseLong(
-        workflowToken.get(flattenReduceOutputRecordsCounterName, programName));
+      long nodeSpecificReduceOutputRecords = workflowToken.get(flattenReduceOutputRecordsCounterName,
+                                                               programName).getAsLong();
 
       Preconditions.checkArgument(mapInputRecords == nodeSpecificMapInputRecords);
       Preconditions.checkArgument(mapOutputRecords == nodeSpecificMapOutputRecords);

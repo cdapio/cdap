@@ -32,24 +32,25 @@ public interface WorkflowToken {
    * @param key   the key representing the entry
    * @param value the value for the key
    */
+  // TODO [CDAP-2895] put operation should throw certain exceptions
   void put(String key, String value);
 
   /**
    * Get the most recent value for the specified key.
    * @param key the key to be searched
-   * @return the value for the key
+   * @return the {@link Value} for the key
    */
   @Nullable
-  String get(String key);
+  Value get(String key);
 
   /**
    * Get the value set for the specified key by the specified node.
    * @param key the key to be searched
    * @param nodeName the name of the node
-   * @return the value set for the key by nodeName
+   * @return the {@link Value} set for the key by nodeName
    */
   @Nullable
-  String get(String key, String nodeName);
+  Value get(String key, String nodeName);
 
   /**
    * Same key can be added to the WorkflowToken by multiple nodes.
@@ -74,9 +75,9 @@ public interface WorkflowToken {
    * Get the {@link Map} of key-values that were added to the {@link WorkflowToken}
    * by specific node.
    * @param nodeName the unique name of the node
-   * @return the map of key-values that were added by the specified node
+   * @return the map of key to values that were added by the specified node
    */
-  Map<String, String> getAllFromNode(String nodeName);
+  Map<String, Value> getAllFromNode(String nodeName);
 
   /**
    * This method is deprecated as of release 3.1.

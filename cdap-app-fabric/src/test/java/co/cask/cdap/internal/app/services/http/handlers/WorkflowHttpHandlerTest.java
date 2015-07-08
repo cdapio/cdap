@@ -25,6 +25,7 @@ import co.cask.cdap.WorkflowAppWithErrorRuns;
 import co.cask.cdap.WorkflowAppWithFork;
 import co.cask.cdap.WorkflowAppWithScopedParameters;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.common.conf.Constants;
@@ -1074,5 +1075,18 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(2, workflowHistoryRuns.size());
     Assert.assertEquals(2, recordVerifierRuns.size());
     Assert.assertEquals(1, wordCountRuns.size());
+  }
+
+  @Test
+  public void someTest() throws Exception {
+    Value v1 = new Value("someValue");
+    Value v2 = new Value("someValue");
+    System.out.println("============" + v1);
+    System.out.println("============" + v2);
+    if (v1.equals(v2)) {
+      System.out.println("============EQUAL");
+    } else {
+      System.out.println("============NOT EQUAL");
+    }
   }
 }

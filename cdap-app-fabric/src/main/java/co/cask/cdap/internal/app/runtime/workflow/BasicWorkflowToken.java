@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.workflow.NodeValueEntry;
+import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -105,12 +106,12 @@ public class BasicWorkflowToken implements WorkflowToken {
     // In that case replace that entry with the new one
     for (int i = 0; i < nodeValueList.size(); i++) {
       if (nodeValueList.get(i).getNodeName().equals(nodeName)) {
-        nodeValueList.set(i, new NodeValueEntry(nodeName, value));
+        nodeValueList.set(i, new NodeValueEntry(nodeName, new Value(value)));
         return;
       }
     }
 
-    nodeValueList.add(new NodeValueEntry(nodeName, value));
+    nodeValueList.add(new NodeValueEntry(nodeName, new Value(value)));
   }
 
   @Override
@@ -122,8 +123,8 @@ public class BasicWorkflowToken implements WorkflowToken {
   }
 
   @Override
-  public Map<String, String> getAllFromNode(String nodeName) {
-    Map<String, String> tokenValuesFromNode = Maps.newHashMap();
+  public Map<String, Value> getAllFromNode(String nodeName) {
+    Map<String, Value> tokenValuesFromNode = Maps.newHashMap();
     for (Map.Entry<String, List<NodeValueEntry>> entry : tokenValueMap.entrySet()) {
 
       List<NodeValueEntry> nodeValueEntryList = entry.getValue();
@@ -139,7 +140,7 @@ public class BasicWorkflowToken implements WorkflowToken {
 
   @Nullable
   @Override
-  public String get(String key, String nodeName) {
+  public Value get(String key, String nodeName) {
     List<NodeValueEntry> nodeValueList = tokenValueMap.get(key);
     if (nodeValueList == null) {
       return null;
@@ -155,7 +156,7 @@ public class BasicWorkflowToken implements WorkflowToken {
 
   @Nullable
   @Override
-  public String get(String key) {
+  public Value get(String key) {
     List<NodeValueEntry> nodeValueList = tokenValueMap.get(key);
     if (nodeValueList == null) {
       return null;
