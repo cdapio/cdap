@@ -28,9 +28,11 @@
   <logger name="org.apache.zookeeper.server" level="ERROR"/>
   <logger name="org.apache.zookeeper" level="ERROR"/>
   <logger name="com.ning" level="WARN"/>
+  <logger name="org.apache.spark" level="WARN"/>
   <logger name="org.apache.hadoop" level="WARN"/>
   <logger name="org.apache.hive" level="WARN"/>
   <logger name="org.quartz.core" level="WARN"/>
+  <logger name="org.eclipse.jetty" level="WARN"/>
   <logger name="co.cask.cdap" level="INFO"/>
   <!-- Redirected stdout and stderr of Hive operations -->
   <logger name="Explore.stdout" level="INFO"/>

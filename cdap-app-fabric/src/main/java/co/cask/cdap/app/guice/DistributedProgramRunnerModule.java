@@ -22,6 +22,7 @@ import co.cask.cdap.internal.app.runtime.distributed.DistributedFlowProgramRunne
 import co.cask.cdap.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedProgramRuntimeService;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedServiceProgramRunner;
+import co.cask.cdap.internal.app.runtime.distributed.DistributedSparkProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedWebappProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedWorkerProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
@@ -51,6 +52,7 @@ final class DistributedProgramRunnerModule extends PrivateModule {
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WEBAPP).to(DistributedWebappProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SERVICE).to(DistributedServiceProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKER).to(DistributedWorkerProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SPARK).to(DistributedSparkProgramRunner.class);
 
     // Bind and expose ProgramRuntimeService
     bind(ProgramRuntimeService.class).to(DistributedProgramRuntimeService.class).in(Scopes.SINGLETON);

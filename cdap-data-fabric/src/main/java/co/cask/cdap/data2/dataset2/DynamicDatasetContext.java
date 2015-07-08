@@ -42,8 +42,7 @@ import javax.annotation.Nullable;
  * into a started {@link TransactionContext}. Datasets acquired from this context are distinct from any
  * Datasets instantiated outside this class.
  */
-public abstract class DynamicDatasetContext implements DatasetContext {
-  private static final Map<String, String> EMPTY_MAP = ImmutableMap.of();
+public class DynamicDatasetContext implements DatasetContext {
 
   private final TransactionContext context;
   private final Set<String> allowedDatasets;
@@ -54,8 +53,16 @@ public abstract class DynamicDatasetContext implements DatasetContext {
   private final Id.Namespace namespace;
   private final List<Id> owners;
 
+  /**
+   * Provides a {@link LoadingCache} for caching the dataset instance per thread.
+   * This method returns {@code null} by default.
+   *
+   * @return a {@link LoadingCache} or {@code null} to turn off caching.
+   */
   @Nullable
-  protected abstract LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache();
+  protected LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache() {
+    return null;
+  }
 
   /**
    * Get the runtime arguments for a specific dataset. All runtime arguments are retained. Additional arguments
@@ -74,7 +81,7 @@ public abstract class DynamicDatasetContext implements DatasetContext {
   public DynamicDatasetContext(Id.Namespace namespace,
                                TransactionContext context, DatasetFramework datasetFramework,
                                ClassLoader classLoader) {
-    this(namespace, context, datasetFramework, classLoader, EMPTY_MAP, null, null);
+    this(namespace, context, datasetFramework, classLoader, ImmutableMap.<String, String>of(), null, null);
   }
 
   /**
