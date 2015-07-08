@@ -19,13 +19,10 @@
 
 include_recipe 'cdap::default'
 
+# All released versions support HBase 0.96
 pkgs = ['cdap-hbase-compat-0.96']
-if node['cdap']['version'].to_f >= 2.6
-  pkgs += ['cdap-hbase-compat-0.98']
-end
-if node['cdap']['version'].to_f < 3.1
-  pkgs += ['cdap-hbase-compat-0.94']
-end
+pkgs += ['cdap-hbase-compat-0.98'] if node['cdap']['version'].to_f >= 2.6
+pkgs += ['cdap-hbase-compat-0.94'] if node['cdap']['version'].to_f < 3.1
 
 pkgs.each do |pkg|
   package pkg do
