@@ -23,6 +23,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -31,7 +32,6 @@ import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.twill.api.RunId;
@@ -44,23 +44,22 @@ import java.net.InetAddress;
  * A {@link ProgramRunner} that runs a {@link Workflow}.
  */
 public class WorkflowProgramRunner implements ProgramRunner {
-  private static final Gson GSON = new Gson();
-
   private final ProgramRunnerFactory programRunnerFactory;
   private final ServiceAnnouncer serviceAnnouncer;
   private final InetAddress hostname;
-
   private final MetricsCollectionService metricsCollectionService;
   private final DatasetFramework datasetFramework;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
+  private final Store store;
 
   @Inject
   public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory,
                                ServiceAnnouncer serviceAnnouncer,
                                @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                                MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
-                               DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient) {
+                               DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
+                               Store store) {
     this.programRunnerFactory = programRunnerFactory;
     this.serviceAnnouncer = serviceAnnouncer;
     this.hostname = hostname;
@@ -68,6 +67,7 @@ public class WorkflowProgramRunner implements ProgramRunner {
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
+    this.store = store;
   }
 
   @Override
@@ -85,7 +85,7 @@ public class WorkflowProgramRunner implements ProgramRunner {
 
     WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, programRunnerFactory,
                                                metricsCollectionService, datasetFramework,
-                                               discoveryServiceClient, txClient);
+                                               discoveryServiceClient, txClient, store);
 
     // Controller needs to be created before starting the driver so that the state change of the driver
     // service can be fully captured by the controller.

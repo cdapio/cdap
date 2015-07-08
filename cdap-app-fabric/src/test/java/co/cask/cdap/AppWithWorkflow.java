@@ -22,6 +22,8 @@ import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import co.cask.cdap.api.workflow.WorkflowContext;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,6 +68,16 @@ public class AppWithWorkflow extends AbstractApplication {
    */
   public static class DummyAction extends AbstractWorkflowAction {
     private static final Logger LOG = LoggerFactory.getLogger(DummyAction.class);
+    public static final String TOKEN_KEY = "tokenKey";
+    public static final String TOKEN_VALUE = "tokenValue";
+
+    @Override
+    public void initialize(WorkflowContext context) throws Exception {
+      super.initialize(context);
+      WorkflowToken workflowToken = context.getToken();
+      workflowToken.put(TOKEN_KEY, TOKEN_VALUE);
+    }
+
     @Override
     public void run() {
       LOG.info("Ran dummy action");
