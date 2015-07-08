@@ -85,15 +85,38 @@ public class TimePartitionedFileSetTest {
         validateTimePartitions(tpfs, 0L, MAX, Collections.<Long, String>emptyMap());
 
         Date date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse("6/4/12 10:00 am");
-        final long time = date.getTime();
+        long time = date.getTime();
 
-        final ImmutableMap<String, String> metadata = ImmutableMap.of("key1", "value1",
-                                                                      "key2", "value3",
-                                                                      "key100", "value4");
+        // keep track of all the metadata added
+        Map<String, String> allMetadata = Maps.newHashMap();
+
+        Map<String, String> metadata = ImmutableMap.of("key1", "value1",
+                                                       "key2", "value3",
+                                                       "key100", "value4");
         tpfs.addPartition(time, "file", metadata);
+        allMetadata.putAll(metadata);
         TimePartitionDetail partitionByTime = tpfs.getPartitionByTime(time);
         Assert.assertNotNull(partitionByTime);
         Assert.assertEquals(metadata, partitionByTime.getMetadata().asMap());
+
+        tpfs.addMetadata(time, "key3", "value4");
+        allMetadata.put("key3", "value4");
+
+        try {
+          // attempting to update an existing key throws a DatasetException
+          tpfs.addMetadata(time, "key3", "value5");
+          Assert.fail("Expected not to be able to update an existing metadata entry");
+        } catch (DataSetException expected) {
+        }
+
+        Map<String, String> newMetadata = ImmutableMap.of("key4", "value4",
+                                                          "key5", "value5");
+        tpfs.addMetadata(time, newMetadata);
+        allMetadata.putAll(newMetadata);
+
+        partitionByTime = tpfs.getPartitionByTime(time);
+        Assert.assertNotNull(partitionByTime);
+        Assert.assertEquals(allMetadata, partitionByTime.getMetadata().asMap());
       }
     });
   }
