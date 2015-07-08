@@ -70,7 +70,9 @@ angular.module(PKG.name + '.commons')
       });
     };
 
-    this.removePlugin = function(index) {
+    this.removePlugin = function(index, nodeId) {
+      instance.detachAllConnections(nodeId);
+      instance.remove(nodeId);
       this.plugins.splice(index, 1);
     };
 
