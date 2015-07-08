@@ -18,7 +18,6 @@ package co.cask.cdap.api.flow.flowlet;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -111,14 +110,14 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
   }
 
   /**
-   * @see ApplicationConfigurer#addStream(Stream)
+   * @see FlowletConfigurer#addStream(Stream)
    */
   protected final void addStream(Stream stream) {
     configurer.addStream(stream);
   }
 
   /**
-   * @see ApplicationConfigurer#addDatasetModule(String, Class)
+   * @see FlowletConfigurer#addDatasetModule(String, Class)
    */
   @Beta
   protected final void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
@@ -126,7 +125,7 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
   }
 
   /**
-   * @see ApplicationConfigurer#addDatasetType(Class)
+   * @see FlowletConfigurer#addDatasetType(Class)
    */
   @Beta
   protected final void addDatasetType(Class<? extends Dataset> datasetClass) {
@@ -134,9 +133,9 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
   }
 
   /**
-   * Calls {@link ApplicationConfigurer#createDataset(String, String, DatasetProperties)}, passing empty properties.
+   * Calls {@link FlowletConfigurer#createDataset(String, String, DatasetProperties)}, passing empty properties.
    *
-   * @see ApplicationConfigurer#createDataset(String, String, DatasetProperties)
+   * @see FlowletConfigurer#createDataset(String, String, DatasetProperties)
    */
   @Beta
   protected final void createDataset(String datasetName, String typeName) {
@@ -144,10 +143,10 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
   }
 
   /**
-   * Calls {@link ApplicationConfigurer#createDataset(String, String, DatasetProperties)}, passing the type name and
+   * Calls {@link FlowletConfigurer#createDataset(String, String, DatasetProperties)}, passing the type name and
    * properties.
    *
-   * @see ApplicationConfigurer#createDataset(String, String, co.cask.cdap.api.dataset.DatasetProperties)
+   * @see FlowletConfigurer#createDataset(String, String, co.cask.cdap.api.dataset.DatasetProperties)
    */
   @Beta
   protected final void createDataset(String datasetName, String typeName, DatasetProperties properties) {
@@ -155,24 +154,22 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
   }
 
   /**
-   * Calls {@link ApplicationConfigurer#createDataset(String, String, DatasetProperties)}, passing the dataset class
+   * Calls {@link FlowletConfigurer#createDataset(String, String, DatasetProperties)}, passing the dataset class
    * and properties.
    *
-   * @see ApplicationConfigurer#createDataset(String, Class, co.cask.cdap.api.dataset.DatasetProperties)
+   * @see FlowletConfigurer#createDataset(String, Class, co.cask.cdap.api.dataset.DatasetProperties)
    */
-  protected final void createDataset(String datasetName,
-                                     Class<? extends Dataset> datasetClass,
+  protected final void createDataset(String datasetName, Class<? extends Dataset> datasetClass,
                                      DatasetProperties properties) {
     configurer.createDataset(datasetName, datasetClass, properties);
   }
 
   /**
-   * Calls {@link ApplicationConfigurer#createDataset(String, Class, DatasetProperties)}, passing empty properties.
+   * Calls {@link FlowletConfigurer#createDataset(String, Class, DatasetProperties)}, passing empty properties.
    *
-   * @see ApplicationConfigurer#createDataset(String, Class, DatasetProperties)
+   * @see FlowletConfigurer#createDataset(String, Class, DatasetProperties)
    */
-  protected final void createDataset(String datasetName,
-                                     Class<? extends Dataset> datasetClass) {
+  protected final void createDataset(String datasetName, Class<? extends Dataset> datasetClass) {
     configurer.createDataset(datasetName, datasetClass, DatasetProperties.EMPTY);
   }
 

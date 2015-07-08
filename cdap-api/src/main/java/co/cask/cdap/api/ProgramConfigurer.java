@@ -16,8 +16,6 @@
 
 package co.cask.cdap.api;
 
-import co.cask.cdap.api.worker.WorkerSpecification;
-
 import java.util.Map;
 
 /**
@@ -40,9 +38,9 @@ public interface ProgramConfigurer {
   void setDescription(String description);
 
   /**
-   * Sets a set of properties that will be available through the {@link WorkerSpecification#getProperties()} at runtime.
+   * Sets a set of properties that will be available through the {@link ProgramSpecification's getProperties()}
+   * at runtime.
    * @param properties the properties to set
    */
   void setProperties(Map<String, String> properties);
-
 }
