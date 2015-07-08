@@ -23,27 +23,25 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.cube.Cube;
 import co.cask.cdap.api.dataset.lib.cube.CubeFact;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
 import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
+import co.cask.cdap.template.etl.common.CubeSinkConfig;
 import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.template.etl.common.StructuredRecordToCubeFact;
 import com.google.common.base.Strings;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * A {@link BatchSink} that writes data to a {@link Cube} dataset.
  * <p/>
- * This {@link BatchCubeSink} takes a {@link StructuredRecord} in, maps it to a {@link CubeFact} using the mapping
- * configuration provided with the {@link co.cask.cdap.template.etl.common.Properties.Cube#MAPPING_CONFIG_PROPERTY}
- * property, and writes it to the {@link Cube} dataset identified by the name property.
+ * This {@link BatchCubeSink} takes a {@link StructuredRecord} in, maps it to a {@link CubeFact},
+ * and writes it to the {@link Cube} dataset identified by the name property.
  * <p/>
  * If {@link Cube} dataset does not exist, it will be created using properties provided with this sink. See more
  * information on available {@link Cube} dataset configuration properties at
@@ -60,51 +58,10 @@ public class BatchCubeSink extends BatchWritableSink<StructuredRecord, byte[], C
   private static final Gson GSON = new Gson();
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
-  private static final String NAME_PROPERTY_DESC = "Name of the Cube dataset. If the Cube does not already exist, " +
-    "one will be created.";
-  private static final String PROPERTY_RESOLUTIONS_DESC = "Aggregation resolutions. See Cube dataset configuration " +
-    "details for more information : http://docs.cask.co/cdap/current/en/developers-manual/building-blocks/datasets/" +
-    "cube.html#cube-configuration";
-  private static final String MAPPING_CONFIG_PROPERTY_DESC = "The StructuredRecord to CubeFact mapping " +
-    "configuration. More info on the format of this configuration can be found at http://docs.cask.co/cdap/current/" +
-    "en/reference-manual/javadocs/co/cask/cdap/template/etl/common/StructuredRecordToCubeFact.html";
+  private final CubeSinkConfig config;
 
-  private static final String CUSTOM_PROPERTIES_DESC = "Provide any custom properties (such as Aggregations) as a " +
-    "JSON Map. For example if aggregations are desired on fields - abc and xyz, the property should have the value : " +
-    "\"{\"dataset.cube.aggregation.agg1.dimensions\":\"abc\", \"dataset.cube.aggregation.agg2.dimensions\":\"xyz\"}";
-
-  /**
-   * Config class for BatchCube
-   */
-  public static class BatchCubeConfig extends PluginConfig {
-    @Description(NAME_PROPERTY_DESC)
-    String name;
-
-    @Name(Properties.Cube.PROPERTY_RESOLUTIONS)
-    @Description(PROPERTY_RESOLUTIONS_DESC)
-    String resProp;
-
-    @Name(Properties.Cube.MAPPING_CONFIG_PROPERTY)
-    @Description(MAPPING_CONFIG_PROPERTY_DESC)
-    String configAsString;
-
-    @Name(Properties.Cube.CUSTOM_PROPERTIES)
-    @Description(CUSTOM_PROPERTIES_DESC)
-    @Nullable
-    String customProperties;
-
-    public BatchCubeConfig(String name, String resProp, String configAsString, String customProperties) {
-      this.name = name;
-      this.resProp = resProp;
-      this.configAsString = configAsString;
-      this.customProperties = customProperties;
-    }
-  }
-
-  private final BatchCubeConfig batchCubeConfig;
-
-  public BatchCubeSink(BatchCubeConfig realtimeCubeConfig) {
-    this.batchCubeConfig = realtimeCubeConfig;
+  public BatchCubeSink(CubeSinkConfig config) {
+    this.config = config;
   }
 
   private StructuredRecordToCubeFact transform;
@@ -117,15 +74,19 @@ public class BatchCubeSink extends BatchWritableSink<StructuredRecord, byte[], C
 
   @Override
   protected Map<String, String> getProperties() {
-    Map<String, String> properties = Maps.newHashMap(batchCubeConfig.getProperties().getProperties());
-    if (!Strings.isNullOrEmpty(batchCubeConfig.customProperties)) {
-      properties.remove(Properties.Cube.CUSTOM_PROPERTIES);
-      Map<String, String> customProperties = GSON.fromJson(batchCubeConfig.customProperties, STRING_MAP_TYPE);
+    Map<String, String> properties = new HashMap<>(config.getProperties().getProperties());
+    // todo: workaround for CDAP-2944: allows specifying custom props via JSON map in a property value
+    if (!Strings.isNullOrEmpty(config.getDatasetOther())) {
+      properties.remove(Properties.Cube.DATASET_OTHER);
+      Map<String, String> customProperties = GSON.fromJson(config.getDatasetOther(), STRING_MAP_TYPE);
       properties.putAll(customProperties);
     }
-
-    properties.put(Properties.BatchReadableWritable.NAME, batchCubeConfig.name);
+    properties.put(Properties.BatchReadableWritable.NAME, config.getName());
     properties.put(Properties.BatchReadableWritable.TYPE, Cube.class.getName());
+
+    // will invoke validation of properties for mapping to the CubeFact
+    new StructuredRecordToCubeFact(properties);
+
     return properties;
   }
 

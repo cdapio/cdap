@@ -58,6 +58,7 @@ public class RealtimeTableSink extends RealtimeSink<StructuredRecord> {
    * Config class for RealtimeTableSink
    */
   public static class TableConfig extends PluginConfig {
+    @Name(Properties.Table.NAME)
     @Description(NAME_DESC)
     private String name;
 
