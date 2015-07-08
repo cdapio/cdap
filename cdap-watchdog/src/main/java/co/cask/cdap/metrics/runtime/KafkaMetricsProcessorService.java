@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.metrics.runtime;
 
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.metrics.process.KafkaMetricsProcessorServiceFactory;
@@ -30,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.concurrent.Executor;
+import javax.annotation.Nullable;
 
 /**
  * Metrics processor service that processes events from Kafka.
@@ -41,6 +43,9 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
   private final MultiLeaderElection multiElection;
   private final SettableFuture<?> completion;
 
+  @Nullable
+  private MetricsContext metricsContext;
+
   @Inject
   public KafkaMetricsProcessorService(CConfiguration conf,
                                       ZKClientService zkClientService,
@@ -51,6 +56,10 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
       zkClientService, "metrics-processor", partitionSize,
       createPartitionChangeHandler(kafkaMetricsProcessorServiceFactory));
     this.completion = SettableFuture.create();
+  }
+
+  public void setMetricsContext(MetricsContext metricsContext) {
+    this.metricsContext = metricsContext;
   }
 
   @Override
@@ -108,6 +117,7 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
             service = null;
           } else {
             service = factory.create(partitions);
+            service.setMetricsContext(metricsContext);
             service.startAndWait();
           }
         } catch (Throwable t) {

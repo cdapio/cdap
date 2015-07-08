@@ -209,13 +209,19 @@ public class KafkaMetricsCollectionServiceTest {
     Assert.assertEquals(expected.rowKeySet().size(), metrics.size());
 
     for (String expectedContext : expected.rowKeySet()) {
-      MetricValues metric = metrics.get(expectedContext);
-      Assert.assertNotNull("Missing expected value for " + expectedContext, metric);
+      MetricValues metricValues = metrics.get(expectedContext);
+      Assert.assertNotNull("Missing expected value for " + expectedContext, metricValues);
 
-      // validate metrics and their values
-      for (MetricValue metricValue : metric.getMetrics()) {
-        Assert.assertNotNull(expected.contains(expectedContext, metricValue));
-        Assert.assertEquals((long) expected.get(expectedContext, metricValue.getName()), metricValue.getValue());
+      for (Map.Entry<String, Long> entry : expected.column(expectedContext).entrySet()) {
+        boolean found = false;
+        for (MetricValue metricValue : metricValues.getMetrics()) {
+          found = true;
+          if (entry.getKey().equals(metricValue.getName())) {
+            Assert.assertEquals(entry.getValue().longValue(), metricValue.getValue());
+          }
+          break;
+        }
+        Assert.assertTrue(found);
       }
     }
 

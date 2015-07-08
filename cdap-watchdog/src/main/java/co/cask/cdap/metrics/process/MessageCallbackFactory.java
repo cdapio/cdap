@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.metrics.process;
 
+import co.cask.cdap.api.metrics.MetricsContext;
 import org.apache.twill.kafka.client.KafkaConsumer;
 
 /**
@@ -23,5 +24,5 @@ import org.apache.twill.kafka.client.KafkaConsumer;
  */
 public interface MessageCallbackFactory {
 
-  KafkaConsumer.MessageCallback create(KafkaConsumerMetaTable metaTable);
+  KafkaConsumer.MessageCallback create(KafkaConsumerMetaTable metaTable, MetricsContext metricsContext);
 }

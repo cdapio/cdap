@@ -25,7 +25,8 @@ import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
 import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
 import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
-import co.cask.cdap.api.metrics.TimeSeriesInterpolator;
+import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.timeseries.Fact;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactScan;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactScanResult;
@@ -61,9 +62,12 @@ public class DefaultCube implements Cube {
   private static final DimensionValueComparator DIMENSION_VALUE_COMPARATOR = new DimensionValueComparator();
   // hard-limit on max records to scan
   private static final int MAX_RECORDS_TO_SCAN = 100 * 1000;
-  private final Map<Integer, FactTable> resolutionToFactTable;
 
+  private final Map<Integer, FactTable> resolutionToFactTable;
   private final Map<String, ? extends Aggregation> aggregations;
+
+  @Nullable
+  private MetricsCollector metrics;
 
   public DefaultCube(int[] resolutions, FactTableSupplier factTableSupplier,
                      Map<String, ? extends Aggregation> aggregations) {
@@ -82,12 +86,14 @@ public class DefaultCube implements Cube {
   @Override
   public void add(Collection<? extends CubeFact> facts) {
     List<Fact> toWrite = Lists.newArrayList();
+    int dimValuesCount = 0;
     for (CubeFact fact : facts) {
       for (Aggregation agg : aggregations.values()) {
         if (agg.accept(fact)) {
           List<DimensionValue> dimensionValues = Lists.newArrayList();
           for (String dimensionName : agg.getDimensionNames()) {
             dimensionValues.add(new DimensionValue(dimensionName, fact.getDimensionValues().get(dimensionName)));
+            dimValuesCount++;
           }
           toWrite.add(new Fact(fact.getTimestamp(), dimensionValues, fact.getMeasurements()));
         }
@@ -97,6 +103,12 @@ public class DefaultCube implements Cube {
     for (FactTable table : resolutionToFactTable.values()) {
       table.add(toWrite);
     }
+
+    incrementMetric("cube.cubeFact.add.request.count", 1);
+    incrementMetric("cube.cubeFact.added.count", facts.size());
+    incrementMetric("cube.tsFact.created.count", toWrite.size());
+    incrementMetric("cube.tsFact.created.dimValues.count", dimValuesCount);
+    incrementMetric("cube.tsFact.added.count", toWrite.size() * resolutionToFactTable.size());
   }
 
   @Override
@@ -137,27 +149,40 @@ public class DefaultCube implements Cube {
          function if needed.
     */
 
+    incrementMetric("cube.query.request.count", 1);
+
     if (!resolutionToFactTable.containsKey(query.getResolution())) {
+      incrementMetric("cube.query.request.failure.count", 1);
       throw new IllegalArgumentException("There's no data aggregated for specified resolution to satisfy the query: " +
                                            query.toString());
     }
 
     // 1) find aggregation to query
     Aggregation agg;
+    String aggName;
     if (query.getAggregation() != null) {
+      aggName = query.getAggregation();
       agg = aggregations.get(query.getAggregation());
       if (agg == null) {
+        incrementMetric("cube.query.request.failure.count", 1);
         throw new IllegalArgumentException(
           String.format("Specified aggregation %s is not found in cube aggregations: %s",
                         query.getAggregation(), aggregations.keySet().toString()));
       }
     } else {
-      agg = findAggregation(query);
-      if (agg == null) {
+      ImmutablePair<String, Aggregation> aggregation = findAggregation(query);
+      if (aggregation == null) {
+        incrementMetric("cube.query.request.failure.count", 1);
         throw new IllegalArgumentException("There's no data aggregated for specified dimensions " +
                                              "to satisfy the query: " + query.toString());
       }
+      agg = aggregation.getSecond();
+      aggName = aggregation.getFirst();
     }
+
+    // tell how many queries end up querying specific pre-aggregated views and resolutions
+    incrementMetric("cube.query.agg." + aggName + ".count", 1);
+    incrementMetric("cube.query.res." + query.getResolution() + ".count", 1);
 
     // 2) build a scan for a query
     List<DimensionValue> dimensionValues = Lists.newArrayList();
@@ -173,7 +198,14 @@ public class DefaultCube implements Cube {
     FactTable table = resolutionToFactTable.get(query.getResolution());
     FactScanner scanner = table.scan(scan);
     Table<Map<String, String>, String, Map<Long, Long>> resultMap = getTimeSeries(query, scanner);
-    return convertToQueryResult(query, resultMap);
+
+    incrementMetric("cube.query.request.success.count", 1);
+    incrementMetric("cube.query.result.size", resultMap.size());
+
+    Collection<TimeSeries> timeSeries = convertToQueryResult(query, resultMap);
+    incrementMetric("cube.query.result.timeseries.count", timeSeries.size());
+
+    return timeSeries;
   }
 
   @Override
@@ -195,6 +227,7 @@ public class DefaultCube implements Cube {
     }
   }
 
+  @Override
   public Collection<DimensionValue> findDimensionValues(CubeExploreQuery query) {
     LOG.trace("Searching for next-level context, query: {}", query);
 
@@ -223,9 +256,9 @@ public class DefaultCube implements Cube {
 
   @Override
   public Collection<String> findMeasureNames(CubeExploreQuery query) {
-    LOG.trace("Searching for metrics, query: {}", query);
+    LOG.trace("Searching for measures, query: {}", query);
 
-    // In each aggregation that matches given dimensions, try to find metric names
+    // In each aggregation that matches given dimensions, try to find measure names
     SortedSet<String> result = Sets.newTreeSet();
 
     // todo: the passed query should have map instead
@@ -245,17 +278,36 @@ public class DefaultCube implements Cube {
     return result;
   }
 
-  @Nullable
-  private Aggregation findAggregation(CubeQuery query) {
-    Aggregation currentBest = null;
+  /**
+   * Sets {@link MetricsCollector} for metrics reporting.
+   * @param metrics {@link MetricsCollector} to set.
+   */
+  public void setMetricsCollector(MetricsCollector metrics) {
+    this.metrics = metrics;
+    for (FactTable factTable : resolutionToFactTable.values()) {
+      factTable.setMetricsCollector(metrics);
+    }
+  }
 
-    for (Aggregation agg : aggregations.values()) {
+  private void incrementMetric(String metricName, long value) {
+    if (metrics != null) {
+      metrics.increment(metricName, value);
+    }
+  }
+
+  @Nullable
+  private ImmutablePair<String, Aggregation> findAggregation(CubeQuery query) {
+    ImmutablePair<String, Aggregation> currentBest = null;
+
+    for (Map.Entry<String, ? extends Aggregation> entry : aggregations.entrySet()) {
+      Aggregation agg = entry.getValue();
       if (agg.getDimensionNames().containsAll(query.getGroupByDimensions()) &&
         agg.getDimensionNames().containsAll(query.getDimensionValues().keySet())) {
 
         // todo: choose aggregation smarter than just by number of dimensions :)
-        if (currentBest == null || currentBest.getDimensionNames().size() > agg.getDimensionNames().size()) {
-          currentBest = agg;
+        if (currentBest == null ||
+            currentBest.getSecond().getDimensionNames().size() > agg.getDimensionNames().size()) {
+          currentBest = new ImmutablePair<>(entry.getKey(), agg);
         }
       }
     }
@@ -264,12 +316,13 @@ public class DefaultCube implements Cube {
   }
 
   private Table<Map<String, String>, String, Map<Long, Long>> getTimeSeries(CubeQuery query, FactScanner scanner) {
-    // {dimension values, metric} -> {time -> value}s
+    // {dimension values, measure} -> {time -> value}s
     Table<Map<String, String>, String, Map<Long, Long>> result = HashBasedTable.create();
 
     int count = 0;
     while (scanner.hasNext()) {
       FactScanResult next = scanner.next();
+      incrementMetric("cube.query.scan.records.count", 1);
 
       boolean skip = false;
       // using tree map, as we are using it as a key for a map
@@ -295,6 +348,7 @@ public class DefaultCube implements Cube {
       }
 
       if (skip) {
+        incrementMetric("cube.query.scan.skipped.count", 1);
         continue;
       }
 
@@ -339,12 +393,12 @@ public class DefaultCube implements Cube {
     List<TimeSeries> result = Lists.newArrayList();
     // iterating each groupValue dimensions
     for (Map.Entry<Map<String, String>, Map<String, Map<Long, Long>>> row : resultTable.rowMap().entrySet()) {
-      // iterating each metrics
-      for (Map.Entry<String, Map<Long, Long>> metricEntry : row.getValue().entrySet()) {
-        // generating time series for a grouping and a metric
+      // iterating each measure
+      for (Map.Entry<String, Map<Long, Long>> measureEntry : row.getValue().entrySet()) {
+        // generating time series for a grouping and a measure
         int count = 0;
         List<TimeValue> timeValues = Lists.newArrayList();
-        for (Map.Entry<Long, Long> timeValue : metricEntry.getValue().entrySet()) {
+        for (Map.Entry<Long, Long> timeValue : measureEntry.getValue().entrySet()) {
           timeValues.add(new TimeValue(timeValue.getKey(), timeValue.getValue()));
         }
         Collections.sort(timeValues);
@@ -358,7 +412,7 @@ public class DefaultCube implements Cube {
             break;
           }
         }
-        result.add(new TimeSeries(metricEntry.getKey(), row.getKey(), resultTimeValues));
+        result.add(new TimeSeries(measureEntry.getKey(), row.getKey(), resultTimeValues));
       }
     }
     return result;

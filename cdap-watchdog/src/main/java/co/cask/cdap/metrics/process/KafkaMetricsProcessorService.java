@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metrics.process;
 
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -31,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Process metrics by consuming metrics being published to kafka.
@@ -45,6 +47,9 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
   private final Set<Integer> partitions;
   private Cancellable unsubscribe;
   private final MetricDatasetFactory metricDatasetFactory;
+
+  @Nullable
+  private MetricsContext metricsContext;
 
   private volatile boolean stopping = false;
 
@@ -61,6 +66,10 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
     this.topicPrefix = topicPrefix;
     this.partitions = partitions;
     this.metricDatasetFactory = metricDatasetFactory;
+  }
+
+  public void setMetricsContext(MetricsContext metricsContext) {
+    this.metricsContext = metricsContext;
   }
 
   @Override
@@ -156,7 +165,7 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
       }
     }
 
-    unsubscribe = preparer.consume(callbackFactory.create(getMetaTable()));
+    unsubscribe = preparer.consume(callbackFactory.create(getMetaTable(), metricsContext));
     LOG.info("Consumer created for topic {}, partitions {}", topic, partitions);
     return true;
   }
