@@ -23,6 +23,7 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 
 import java.io.PrintStream;
@@ -49,9 +50,11 @@ public class StopProgramCommand extends AbstractAuthCommand {
     }
 
     String appId = programIdParts[0];
-    String programId = programIdParts[1];
+    String programName = programIdParts[1];
+    Id.Program programId = Id.Program.from(cliConfig.getCurrentNamespace(), appId,
+                                           elementType.getProgramType(), programName);
 
-    programClient.stop(appId, elementType.getProgramType(), programId);
+    programClient.stop(programId);
     output.printf("Successfully stopped %s '%s' of application '%s'\n", elementType.getTitleName(), programId, appId);
   }
 

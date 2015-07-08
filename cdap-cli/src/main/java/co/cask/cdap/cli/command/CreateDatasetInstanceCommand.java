@@ -25,6 +25,7 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -54,7 +55,7 @@ public class CreateDatasetInstanceCommand extends AbstractAuthCommand {
     Map<String, String> datasetProperties = ArgumentParser.parseMap(datasetPropertiesString);
     DatasetInstanceConfiguration datasetConfig = new DatasetInstanceConfiguration(datasetType, datasetProperties);
 
-    datasetClient.create(datasetName, datasetConfig);
+    datasetClient.create(Id.DatasetInstance.from(cliConfig.getCurrentNamespace(), datasetName), datasetConfig);
     output.printf("Successfully created dataset named '%s' with type '%s' and properties '%s'",
                   datasetName, datasetType, GSON.toJson(datasetProperties));
     output.println();

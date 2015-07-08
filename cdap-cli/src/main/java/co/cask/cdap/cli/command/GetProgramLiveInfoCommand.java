@@ -27,6 +27,7 @@ import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -55,9 +56,10 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
       throw new CommandInputError(this);
     }
     String appId = programIdParts[0];
-    String programId = programIdParts[1];
-
-    DistributedProgramLiveInfo liveInfo = programClient.getLiveInfo(appId, elementType.getProgramType(), programId);
+    String programName = programIdParts[1];
+    Id.Program program = Id.Program.from(cliConfig.getCurrentNamespace(), appId,
+                                         elementType.getProgramType(), programName);
+    DistributedProgramLiveInfo liveInfo = programClient.getLiveInfo(program);
 
     if (liveInfo == null) {
       output.println("No live info found");

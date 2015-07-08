@@ -29,6 +29,7 @@ import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ScheduleClient;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
@@ -85,8 +86,10 @@ public class ScheduleCommands extends CommandSet<Command> implements Categorized
       }
 
       String appId = programIdParts[0];
-      String scheduleId = programIdParts[1];
-      printStream.println(scheduleClient.getStatus(appId, scheduleId));
+      String scheduleName = programIdParts[1];
+      Id.Schedule scheduleId = Id.Schedule.from(cliConfig.getCurrentNamespace(), appId, scheduleName);
+
+      printStream.println(scheduleClient.getStatus(scheduleId));
     }
 
     @Override
@@ -121,9 +124,11 @@ public class ScheduleCommands extends CommandSet<Command> implements Categorized
       }
 
       String appId = programIdParts[0];
-      String scheduleId = programIdParts[1];
-      scheduleClient.suspend(appId, scheduleId);
-      printStream.printf("Successfully suspended schedule '%s' in app '%s'", scheduleId, appId);
+      String scheduleName = programIdParts[1];
+      Id.Schedule scheduleId = Id.Schedule.from(cliConfig.getCurrentNamespace(), appId, scheduleName);
+
+      scheduleClient.suspend(scheduleId);
+      printStream.printf("Successfully suspended schedule '%s'", scheduleId);
     }
 
     @Override
@@ -158,9 +163,11 @@ public class ScheduleCommands extends CommandSet<Command> implements Categorized
       }
 
       String appId = programIdParts[0];
-      String scheduleId = programIdParts[1];
-      scheduleClient.resume(appId, scheduleId);
-      printStream.printf("Successfully resumed schedule '%s' in app '%s'", scheduleId, appId);
+      String scheduleName = programIdParts[1];
+      Id.Schedule schedule = Id.Schedule.from(cliConfig.getCurrentNamespace(), appId, scheduleName);
+
+      scheduleClient.resume(schedule);
+      printStream.printf("Successfully resumed schedule '%s'", schedule);
     }
 
     @Override
@@ -195,8 +202,10 @@ public class ScheduleCommands extends CommandSet<Command> implements Categorized
       }
 
       final String appId = programIdParts[0];
-      String scheduleId = programIdParts[1];
-      List<ScheduleSpecification> list = scheduleClient.list(appId, scheduleId);
+      String workflowName = programIdParts[1];
+      Id.Workflow workflowId = Id.Workflow.from(cliConfig.getCurrentNamespace(), appId, workflowName);
+
+      List<ScheduleSpecification> list = scheduleClient.list(workflowId);
       Table table = Table.builder()
         .setHeader("application", "program", "program type", "name", "type", "description", "properties",
                    "runtime args")

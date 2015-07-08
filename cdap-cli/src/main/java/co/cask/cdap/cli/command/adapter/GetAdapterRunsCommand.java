@@ -25,6 +25,7 @@ import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.AdapterClient;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.common.cli.Arguments;
@@ -49,7 +50,8 @@ public class GetAdapterRunsCommand extends AbstractCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String adapterName = arguments.get(ArgumentName.ADAPTER.toString());
+    Id.Adapter adapter = Id.Adapter.from(cliConfig.getCurrentNamespace(),
+                                         arguments.get(ArgumentName.ADAPTER.toString()));
     ProgramRunStatus adapterStatus = ProgramRunStatus.valueOf(
       arguments.get(ArgumentName.RUN_STATUS.toString(), ProgramRunStatus.ALL.name()).toUpperCase());
     long now = System.currentTimeMillis();
@@ -58,7 +60,7 @@ public class GetAdapterRunsCommand extends AbstractCommand {
     String resultLimitStr = arguments.get(ArgumentName.LIMIT.toString(), "");
     Integer resultLimit = resultLimitStr.isEmpty() ? null : Integer.parseInt(resultLimitStr);
 
-    List<RunRecord> runs = adapterClient.getRuns(adapterName, adapterStatus, startTs, endTs, resultLimit);
+    List<RunRecord> runs = adapterClient.getRuns(adapter, adapterStatus, startTs, endTs, resultLimit);
 
     Table table = Table.builder()
       .setHeader("run id", "status", "start", "stop")

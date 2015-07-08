@@ -23,6 +23,7 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 
 import java.io.PrintStream;
@@ -45,7 +46,7 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
   @SuppressWarnings("deprecation")
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
-    String appId = programIdParts[0];
+    Id.Application appId = Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]);
 
     int instances;
     switch (elementType) {
@@ -54,22 +55,25 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
           throw new CommandInputError(this);
         }
         String flowId = programIdParts[1];
-        String flowletId = programIdParts[2];
-        instances = programClient.getFlowletInstances(appId, flowId, flowletId);
+        String flowletName = programIdParts[2];
+        Id.Flow.Flowlet flowlet = Id.Flow.Flowlet.from(appId, flowId, flowletName);
+        instances = programClient.getFlowletInstances(flowlet);
         break;
       case WORKER:
         if (programIdParts.length < 2)  {
           throw new CommandInputError(this);
         }
         String workerId = programIdParts[1];
-        instances = programClient.getWorkerInstances(appId, workerId);
+        Id.Worker worker = Id.Worker.from(appId, workerId);
+        instances = programClient.getWorkerInstances(worker);
         break;
       case SERVICE:
         if (programIdParts.length < 2) {
           throw new CommandInputError(this);
         }
-        String service = programIdParts[1];
-        instances = programClient.getServiceInstances(appId, service);
+        String serviceName = programIdParts[1];
+        Id.Service service = Id.Service.from(appId, serviceName);
+        instances = programClient.getServiceInstances(service);
         break;
       default:
         // TODO: remove this
