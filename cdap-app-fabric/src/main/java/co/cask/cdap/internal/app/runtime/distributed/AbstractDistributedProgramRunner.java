@@ -38,6 +38,8 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
@@ -65,6 +67,7 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -90,8 +93,44 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
   /**
    * An interface for launching TwillApplication. Used by sub-classes only.
    */
-  protected interface ApplicationLauncher {
-    TwillController launch(TwillApplication twillApplication);
+  protected abstract class ApplicationLauncher {
+
+    /**
+     * Starts the given application through Twill.
+     *
+     * @param twillApplication the application to start
+     *
+     * @return the {@link TwillController} for the application.
+     */
+    public TwillController launch(TwillApplication twillApplication) {
+      return launch(twillApplication, ImmutableList.<String>of());
+    }
+
+    /**
+     * Starts the given application through Twill with extra classpaths appended to the end of the classpath of
+     * the runnables inside the applications.
+     *
+     * @param twillApplication the application to start
+     * @param extraClassPaths to append
+     *
+     * @return the {@link TwillController} for the application.
+     * @see TwillPreparer#withClassPaths(Iterable)
+     */
+    public TwillController launch(TwillApplication twillApplication, String...extraClassPaths) {
+      return launch(twillApplication, Arrays.asList(extraClassPaths));
+    }
+
+    /**
+     * Starts the given application through Twill with extra classpaths appended to the end of the classpath of
+     * the runnables inside the applications.
+     *
+     * @param twillApplication the application to start
+     * @param extraClassPaths to append
+     *
+     * @return the {@link TwillController} for the application.
+     * @see TwillPreparer#withClassPaths(Iterable)
+     */
+    public abstract TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths);
   }
 
   protected AbstractDistributedProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf) {
@@ -134,7 +173,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       // The HDFS token should already obtained by Twill.
       return launch(copiedProgram, options, localizeFiles, new ApplicationLauncher() {
         @Override
-        public TwillController launch(TwillApplication twillApplication) {
+        public TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths) {
           TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
           if (options.isDebug()) {
             LOG.info("Starting {} with debugging enabled, programOptions: {}, and logback: {}",
@@ -156,8 +195,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
             .withDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass())
             .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
             .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())))
-            .withClassPaths(Splitter.on(',').trimResults()
-                              .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, "")))
+            .withClassPaths(Iterables.concat(extraClassPaths, Splitter.on(',').trimResults()
+                              .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, ""))))
             .withApplicationClassPaths(Splitter.on(",").trimResults().split(yarnAppClassPath))
             .withBundlerClassAcceptor(new HadoopClassExcluder())
             .withApplicationArguments(
