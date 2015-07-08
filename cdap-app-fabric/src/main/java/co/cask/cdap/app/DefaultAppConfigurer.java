@@ -140,7 +140,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   @Override
   public void addFlow(Flow flow) {
     Preconditions.checkArgument(flow != null, "Flow cannot be null.");
-    DefaultFlowConfigurer configurer = new DefaultFlowConfigurer(flow);
+    DefaultFlowConfigurer configurer = new DefaultFlowConfigurer(flow, this);
     FlowSpecification spec = flow.configure();
     if (spec == null && flow instanceof AbstractFlow) {
       AbstractFlow abstractFlow = (AbstractFlow) flow;
@@ -165,7 +165,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   @Override
   public void addSpark(Spark spark) {
     Preconditions.checkArgument(spark != null, "Spark cannot be null.");
-    DefaultSparkConfigurer configurer = new DefaultSparkConfigurer(spark);
+    DefaultSparkConfigurer configurer = new DefaultSparkConfigurer(spark, this);
     spark.configure(configurer);
     SparkSpecification spec = configurer.createSpecification();
     sparks.put(spec.getName(), spec);

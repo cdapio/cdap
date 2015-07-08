@@ -209,7 +209,7 @@ public interface FlowSpecification extends ProgramSpecification {
 
         Preconditions.checkArgument(flowlet != null, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
 
-        FlowletDefinition flowletDef = new FlowletDefinition(name, flowlet, instances);
+        FlowletDefinition flowletDef = new FlowletDefinition(name, flowlet, instances, null);
         String flowletName = flowletDef.getFlowletSpec().getName();
 
         Preconditions.checkArgument(instances > 0, String.format(UserMessages.getMessage(UserErrors.INVALID_INSTANCES),

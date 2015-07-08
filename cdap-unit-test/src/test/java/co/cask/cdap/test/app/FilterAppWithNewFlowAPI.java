@@ -54,7 +54,6 @@ public class FilterAppWithNewFlowAPI extends AbstractApplication {
     setName("FilterApp");
     setDescription("Application for filtering numbers. Test runtimeargs.");
     addStream(new Stream("input"));
-    createDataset("count", KeyValueTable.class);
     addFlow(new FilterFlow());
     addService(new BasicService("CountService", new CountHandler()));
   }
@@ -88,6 +87,7 @@ public class FilterAppWithNewFlowAPI extends AbstractApplication {
       setName("pass");
       setDescription("NoOp Flowlet that passes the event to the next flowlet");
       setFailurePolicy(FailurePolicy.IGNORE);
+      createDataset("count", KeyValueTable.class);
       useDatasets("count");
     }
 

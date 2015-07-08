@@ -17,6 +17,11 @@
 package co.cask.cdap.internal.flow;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.app.ApplicationConfigurer;
+import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.flowlet.FailurePolicy;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
@@ -41,6 +46,7 @@ public class DefaultFlowletConfigurer implements FlowletConfigurer {
 
   private final String className;
   private final Map<String, String> propertyFields;
+  private final ApplicationConfigurer appConfigurer;
 
   private String name;
   private String description;
@@ -49,9 +55,10 @@ public class DefaultFlowletConfigurer implements FlowletConfigurer {
   private Map<String, String> properties;
   private Set<String> datasets;
 
-  public DefaultFlowletConfigurer(Flowlet flowlet) {
+  public DefaultFlowletConfigurer(Flowlet flowlet, ApplicationConfigurer appConfigurer) {
     this.name = flowlet.getClass().getSimpleName();
     this.className = flowlet.getClass().getName();
+    this.appConfigurer = appConfigurer;
     this.failurePolicy = FailurePolicy.RETRY;
     this.propertyFields = Maps.newHashMap();
     this.description = "";
@@ -100,5 +107,30 @@ public class DefaultFlowletConfigurer implements FlowletConfigurer {
     properties.putAll(propertyFields);
     return new DefaultFlowletSpecification(this.className, this.name, this.description, this.failurePolicy,
                                            this.datasets, this.properties, this.resources);
+  }
+
+  @Override
+  public void addStream(Stream stream) {
+    appConfigurer.addStream(stream);
+  }
+
+  @Override
+  public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
+    appConfigurer.addDatasetModule(moduleName, moduleClass);
+  }
+
+  @Override
+  public void addDatasetType(Class<? extends Dataset> datasetClass) {
+    appConfigurer.addDatasetType(datasetClass);
+  }
+
+  @Override
+  public void createDataset(String datasetName, String typeName, DatasetProperties properties) {
+    appConfigurer.createDataset(datasetName, typeName, properties);
+  }
+
+  @Override
+  public void createDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props) {
+    appConfigurer.createDataset(datasetName, datasetClass, props);
   }
 }

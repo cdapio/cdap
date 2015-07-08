@@ -16,6 +16,11 @@
 
 package co.cask.cdap.internal.app.spark;
 
+import co.cask.cdap.api.app.ApplicationConfigurer;
+import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkConfigurer;
 import co.cask.cdap.api.spark.SparkSpecification;
@@ -34,13 +39,15 @@ import java.util.Map;
 public final class DefaultSparkConfigurer implements SparkConfigurer {
 
   private final Spark spark;
+  private final ApplicationConfigurer appConfigurer;
   private String name;
   private String description;
   private String mainClassName;
   private Map<String, String> properties;
 
-  public DefaultSparkConfigurer(Spark spark) {
+  public DefaultSparkConfigurer(Spark spark, ApplicationConfigurer appConfigurer) {
     this.spark = spark;
+    this.appConfigurer = appConfigurer;
     this.name = spark.getClass().getSimpleName();
     this.description = "";
     this.properties = Collections.emptyMap();
@@ -71,5 +78,30 @@ public final class DefaultSparkConfigurer implements SparkConfigurer {
     // Grab all @Property fields
     Reflections.visit(spark, TypeToken.of(spark.getClass()), new PropertyFieldExtractor(properties));
     return new SparkSpecification(spark.getClass().getName(), name, description, mainClassName, properties);
+  }
+
+  @Override
+  public void addStream(Stream stream) {
+    appConfigurer.addStream(stream);
+  }
+
+  @Override
+  public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
+    appConfigurer.addDatasetModule(moduleName, moduleClass);
+  }
+
+  @Override
+  public void addDatasetType(Class<? extends Dataset> datasetClass) {
+    appConfigurer.addDatasetType(datasetClass);
+  }
+
+  @Override
+  public void createDataset(String datasetName, String typeName, DatasetProperties properties) {
+    appConfigurer.createDataset(datasetName, typeName, properties);
+  }
+
+  @Override
+  public void createDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props) {
+    appConfigurer.createDataset(datasetName, datasetClass, props);
   }
 }
