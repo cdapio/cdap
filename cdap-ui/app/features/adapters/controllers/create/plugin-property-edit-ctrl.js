@@ -23,7 +23,7 @@ angular.module(PKG.name + '.feature.adapters')
     if (this.noproperty) {
       PluginConfigFactory.fetch(
         $scope,
-        $scope.AdapterCreateController.model.metadata.type,
+        $scope.type,
         $scope.plugin.name
       )
         .then(
