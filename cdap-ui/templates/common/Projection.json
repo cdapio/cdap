@@ -3,7 +3,7 @@
   "groups" : {
     "position": [ "group1" ],
     "group1": {
-       "display" : "Projection Configuraiton",
+       "display" : "Projection Configuration",
        "position" : [ "convert", "drop", "rename" ],
        "fields" : {
          "convert": {
