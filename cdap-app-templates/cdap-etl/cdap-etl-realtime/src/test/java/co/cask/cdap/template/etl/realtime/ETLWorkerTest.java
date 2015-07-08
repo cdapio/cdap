@@ -72,7 +72,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * Tests for {@link ETLRealtimeTemplate}.
@@ -307,5 +306,3 @@ public class ETLWorkerTest extends TestBase {
     } while (count++ < 20);
   }
 }
-
-

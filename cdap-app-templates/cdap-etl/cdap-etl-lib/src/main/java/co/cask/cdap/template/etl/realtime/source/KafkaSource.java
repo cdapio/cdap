@@ -86,7 +86,10 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
   }
 
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    config.validate();
+    // check the schema if there is one
+    if (!Strings.isNullOrEmpty(config.schema)) {
+      config.parseSchema();
+    }
   }
 
   @Override
@@ -129,20 +132,19 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
   public StructuredRecord byteBufferToStructuredRecord(@Nullable String key, ByteBuffer payload) {
     FormatSpecification spec = config.getFormatSpec();
     if (config.format == null) {
-      return byteBufferToByteRecord(key, payload);
+      return byteBufferToSchemalessByteRecord(key, payload);
     }
-    RecordFormat<StreamEvent, StructuredRecord> format;
     try {
-      format = RecordFormats.createInitializedFormat(spec);
+      RecordFormat<StreamEvent, StructuredRecord> format = RecordFormats.createInitializedFormat(spec);
       StreamEvent toStream = new StreamEvent(payload);
       return format.read(toStream);
     } catch (Exception e) {
       LOG.debug("Could not parse Kafka payload into schema. Using default structured record instead.");
-      return byteBufferToByteRecord(key, payload);
+      return byteBufferToSchemalessByteRecord(key, payload);
     }
   }
 
-  private StructuredRecord byteBufferToByteRecord(@Nullable String key, ByteBuffer payload) {
+  private StructuredRecord byteBufferToSchemalessByteRecord(@Nullable String key, ByteBuffer payload) {
     StructuredRecord.Builder recordBuilder = StructuredRecord.builder(SCHEMA);
     if (key != null) {
       recordBuilder.set(KEY, key);
@@ -240,13 +242,6 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
       return defaultOffset;
     }
 
-    private void validate() {
-      // check the schema if there is one
-      if (!Strings.isNullOrEmpty(schema)) {
-        parseSchema();
-      }
-    }
-
     private FormatSpecification getFormatSpec() {
       FormatSpecification formatSpec = null;
       if (!Strings.isNullOrEmpty(format)) {
@@ -271,7 +266,6 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
     }
 
     private Schema parseSchema() {
-      // try to parse the schema if there is one
       try {
         return Strings.isNullOrEmpty(schema) ? null : Schema.parseJson(schema);
       } catch (IOException e) {
