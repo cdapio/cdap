@@ -17,6 +17,7 @@
 package co.cask.cdap.api.spark;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.common.PropertyProvider;
 
 import java.util.Collections;
@@ -26,6 +27,7 @@ import javax.annotation.Nonnull;
 /**
  * A default specification for {@link Spark} programs
  */
+@Beta
 public final class SparkSpecification implements ProgramSpecification, PropertyProvider {
 
   private final String className;

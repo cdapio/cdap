@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,11 +23,15 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.GenericStreamEventData;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.stream.StreamEventDecoder;
+<<<<<<< HEAD
 import co.cask.cdap.common.format.TextRecordFormat;
+=======
+>>>>>>> fed365ca9b5edbdf37ca208424c7a38da0884bff
 import co.cask.cdap.data.stream.decoder.BytesStreamEventDecoder;
 import co.cask.cdap.data.stream.decoder.IdentityStreamEventDecoder;
 import co.cask.cdap.data.stream.decoder.StringStreamEventDecoder;
 import co.cask.cdap.data.stream.decoder.TextStreamEventDecoder;
+import co.cask.cdap.format.TextRecordFormat;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;

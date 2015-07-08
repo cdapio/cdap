@@ -103,7 +103,6 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
 
   public void createInstance(String type, Id.DatasetInstance datasetInstanceId, DatasetProperties properties)
     throws IOException, DatasetManagementException {
-
     framework.addInstance(type, datasetInstanceId, properties);
   }
 

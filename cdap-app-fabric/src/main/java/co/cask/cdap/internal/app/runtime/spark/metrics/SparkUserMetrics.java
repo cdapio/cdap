@@ -18,8 +18,8 @@ package co.cask.cdap.internal.app.runtime.spark.metrics;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.spark.Spark;
-import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.internal.app.runtime.spark.ExecutionSparkContext;
+import co.cask.cdap.internal.app.runtime.spark.SparkContextProvider;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -27,19 +27,21 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 /**
- * Metrics collector for {@link Spark} Programs.
+ * A {@link Externalizable} implementation of {@link Metrics} used in Spark program execution.
+ * It has no-op for serialize/deserialize operation. It uses {@link SparkContextProvider} to
+ * get the {@link ExecutionSparkContext} in the current execution context and
+ * uses the {@link MetricsContext} from the context object.
  */
 public final class SparkUserMetrics implements Metrics, Externalizable {
-  private static final long serialVersionUID = -5913108632034346101L;
 
-  private static MetricsContext metricsContext;
+  private final MetricsContext metricsContext;
 
-  /** For serde purposes only */
   public SparkUserMetrics() {
+    this(SparkContextProvider.getSparkContext().getMetricsContext());
   }
 
-  public static void setMetricsContext(MetricsContext collector) {
-    SparkUserMetrics.metricsContext = collector.childContext(Constants.Metrics.Tag.SCOPE, "user");
+  public SparkUserMetrics(MetricsContext metricsContext) {
+    this.metricsContext = metricsContext;
   }
 
   @Override
@@ -52,19 +54,11 @@ public final class SparkUserMetrics implements Metrics, Externalizable {
     metricsContext.gauge(metricName, value);
   }
 
-  /**
-   * Since MetricsContext (only member) is a static member there is nothing to serialize.
-   * For supporting Spark in Distributed mode, this needs to be revisited.
-   */
   @Override
   public void writeExternal(ObjectOutput out) throws IOException {
     //do nothing
   }
 
-  /**
-   * Since MetricsContext (only member) is a static field there is nothing to serialize.
-   * For supporting Spark in Distributed mode, this needs to be revisited.
-   */
   @Override
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
     //do nothing

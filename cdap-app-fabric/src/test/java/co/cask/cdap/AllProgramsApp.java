@@ -42,6 +42,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -172,8 +173,11 @@ public class AllProgramsApp extends AbstractApplication {
   public static class NoOpSparkProgram implements JavaSparkProgram {
     @Override
     public void run(SparkContext context) {
-      context.readFromStream(STREAM_NAME, String.class);
-      context.readFromDataset(DATASET_NAME, byte[].class, byte[].class);
+      JavaPairRDD<LongWritable, String> streamRDD = context.readFromStream(STREAM_NAME, String.class);
+      LOG.info("Stream events: {}", streamRDD.count());
+
+      JavaPairRDD<byte[], byte[]> datasetRDD = context.readFromDataset(DATASET_NAME, byte[].class, byte[].class);
+      LOG.info("Dataset pairs: {}", datasetRDD.count());
     }
   }
 
