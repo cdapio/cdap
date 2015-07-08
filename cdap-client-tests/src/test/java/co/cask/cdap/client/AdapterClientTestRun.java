@@ -86,6 +86,10 @@ public class AdapterClientTestRun extends ClientTestBase {
     adapterClient.waitForStatus(adapterName, AdapterStatus.STOPPED, 30, TimeUnit.SECONDS);
     adapterClient.start(adapterName);
     adapterClient.waitForStatus(adapterName, AdapterStatus.STARTED, 30, TimeUnit.SECONDS);
+
+    List<RunRecord> adapterRuns = adapterClient.getRuns(adapterName, ProgramRunStatus.COMPLETED,
+                                                        0, Long.MAX_VALUE, null);
+    Assert.assertEquals(0, adapterRuns.size());
     adapterClient.stop(adapterName);
     adapterClient.waitForStatus(adapterName, AdapterStatus.STOPPED, 30, TimeUnit.SECONDS);
 
