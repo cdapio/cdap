@@ -101,7 +101,16 @@ if node['hadoop'].key?('core_site') && node['hadoop']['core_site'].key?('hadoop.
   end
 end
 
+template '/etc/init.d/cdap-master' do
+  source 'cdap-service.erb'
+  mode 0755
+  owner 'root'
+  group 'root'
+  action :create
+  variables node['cdap']['master']
+end
+
 service 'cdap-master' do
   status_command 'service cdap-master status'
-  action :nothing
+  action node['cdap']['master']['init_actions']
 end

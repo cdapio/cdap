@@ -55,8 +55,17 @@ else
     end # End /etc/default/cdap-web-app
   end
 
+  template '/etc/init.d/cdap-web-app' do
+    source 'cdap-service.erb'
+    mode 0755
+    owner 'root'
+    group 'root'
+    action :create
+    variables node['cdap']['web_app']
+  end
+
   service 'cdap-web-app' do
     status_command 'service cdap-web-app status'
-    action :nothing
+    action node['cdap']['web_app']['init_actions']
   end
 end

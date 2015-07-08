@@ -28,13 +28,22 @@ describe 'cdap::web_app' do
         stub_command(/update-alternatives --display /).and_return(false)
       end.converge(described_recipe)
     end
+    pkg = 'cdap-web-app'
 
-    it 'installs cdap-web-app package' do
-      expect(chef_run).to install_package('cdap-web-app')
+    it "installs #{pkg} package" do
+      expect(chef_run).to install_package(pkg)
     end
 
-    it 'creates cdap-web-app service, but does not run it' do
-      expect(chef_run).not_to start_service('cdap-web-app')
+    %W(
+      /etc/init.d/#{pkg}
+    ).each do |file|
+      it "creates #{file} from template" do
+        expect(chef_run).to create_template(file)
+      end
+    end
+
+    it "creates #{pkg} service, but does not run it" do
+      expect(chef_run).not_to start_service(pkg)
     end
 
     it 'does not create /usr/bin/node link' do

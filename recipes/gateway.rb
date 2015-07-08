@@ -32,8 +32,18 @@ unless node['cdap']['version'].to_f >= 2.6
 end
 
 svcs.each do |svc|
+  attrib = svc.gsub('cdap-', '').gsub('-', '_')
+  template "/etc/init.d/#{svc}" do
+    source 'cdap-service.erb'
+    mode 0755
+    owner 'root'
+    group 'root'
+    action :create
+    variables node['cdap'][attrib]
+  end
+
   service svc do
     status_command "service #{svc} status"
-    action :nothing
+    action node['cdap'][attrib]['init_actions']
   end
 end
