@@ -30,8 +30,9 @@
   <dependencies>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-watchdog-api</artifactId>
+      <artifactId>cdap-api</artifactId>
       <version>${project.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>io.thekraken</groupId>
@@ -42,9 +43,15 @@
       <artifactId>junit</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-common</artifactId>
-      <scope>provided</scope>
+      <groupId>org.apache.avro</groupId>
+      <artifactId>avro</artifactId>
+      <version>${avro.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 
