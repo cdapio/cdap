@@ -35,7 +35,6 @@ public class AppWithMapReduce extends AbstractApplication {
   public void configure() {
     setName("AppWithMapReduce");
     setDescription("Application with MapReduce job");
-    createDataset("jobConfig", KeyValueTable.class);
     createDataset("beforeSubmit", KeyValueTable.class);
     createDataset("onFinish", KeyValueTable.class);
     createDataset("timeSeries", TimeseriesTable.class);
@@ -51,6 +50,12 @@ public class AppWithMapReduce extends AbstractApplication {
   public static final class ClassicWordCount extends AbstractMapReduce {
     @UseDataSet("jobConfig")
     private KeyValueTable table;
+
+    @Override
+    protected void configure() {
+      super.configure();
+      createDataset("jobConfig", KeyValueTable.class);
+    }
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
