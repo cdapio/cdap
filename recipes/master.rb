@@ -19,9 +19,12 @@
 
 include_recipe 'cdap::default'
 
-pkgs = %w(cdap-hbase-compat-0.94 cdap-hbase-compat-0.96)
-if node['cdap']['version'].to_f >= 2.6 || node['cdap']['version'].split('.')[2].to_i >= 9000
+pkgs = ['cdap-hbase-compat-0.96']
+if node['cdap']['version'].to_f >= 2.6
   pkgs += ['cdap-hbase-compat-0.98']
+end
+if node['cdap']['version'].to_f < 3.1
+  pkgs += ['cdap-hbase-compat-0.94']
 end
 
 pkgs.each do |pkg|
