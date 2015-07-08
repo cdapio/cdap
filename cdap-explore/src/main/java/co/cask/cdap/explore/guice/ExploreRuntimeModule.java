@@ -18,7 +18,6 @@ package co.cask.cdap.explore.guice;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.format.RecordFormats;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -32,6 +31,7 @@ import co.cask.cdap.explore.executor.QueryExecutorHttpHandler;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.explore.service.hive.Hive14ExploreService;
+import co.cask.cdap.format.RecordFormats;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.http.HttpHandler;

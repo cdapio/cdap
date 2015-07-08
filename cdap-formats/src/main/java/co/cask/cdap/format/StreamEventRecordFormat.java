@@ -14,14 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.common.format;
+package co.cask.cdap.format;
 
 import co.cask.cdap.api.data.format.RecordFormat;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 
 /**
  * Format for a record contained in a {@link StreamEvent}.
- * This is also the template used to interpret message payloads for Kafka Sources
  *
  * @param <T> type of object to read the byte buffer as.
  */

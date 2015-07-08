@@ -50,8 +50,6 @@ sed \
   -e 's/router.server.port/router.bind.port/' \
   -e 's/10000/11015/' \
   /etc/cdap/conf/cdap-site.xml.example > /etc/cdap/conf/cdap-site.xml
-# Create HDFS directory
-su - hadoop -c "hadoop fs -mkdir -p /cdap" || die "Cannot create /cdap in HDFS"
 # Start services
 for i in \
   /opt/cdap/gateway/bin/svc-router \

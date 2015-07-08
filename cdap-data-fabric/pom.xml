@@ -38,6 +38,11 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-formats</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-proto</artifactId>
       <version>${project.version}</version>
     </dependency>

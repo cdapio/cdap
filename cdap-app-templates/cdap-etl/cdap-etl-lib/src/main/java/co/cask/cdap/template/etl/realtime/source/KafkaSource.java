@@ -25,7 +25,7 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
-import co.cask.cdap.common.format.RecordFormats;
+import co.cask.cdap.format.RecordFormats;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.realtime.RealtimeContext;

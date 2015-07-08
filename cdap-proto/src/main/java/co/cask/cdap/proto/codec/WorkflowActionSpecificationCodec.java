@@ -26,6 +26,7 @@ import com.google.gson.JsonSerializationContext;
 
 import java.lang.reflect.Type;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -39,6 +40,7 @@ public final class WorkflowActionSpecificationCodec extends AbstractSpecificatio
     jsonObj.add("className", new JsonPrimitive(src.getClassName()));
     jsonObj.add("name", new JsonPrimitive(src.getName()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
+    jsonObj.add("datasets", serializeSet(src.getDatasets(), context, String.class));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
 
     return jsonObj;
@@ -52,8 +54,9 @@ public final class WorkflowActionSpecificationCodec extends AbstractSpecificatio
     String className = jsonObj.get("className").getAsString();
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
+    Set<String> datasets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
 
-    return new DefaultWorkflowActionSpecification(className, name, description, properties);
+    return new DefaultWorkflowActionSpecification(className, name, description, properties, datasets);
   }
 }

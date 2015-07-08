@@ -694,6 +694,10 @@
             <groupId>io.netty</groupId>
             <artifactId>netty</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -1476,7 +1480,7 @@
                     <overWriteReleases>false</overWriteReleases>
                     <overWriteSnapshots>false</overWriteSnapshots>
                     <overWriteIfNewer>true</overWriteIfNewer>
-                    <excludeGroupIds>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,org.datanucleus,asm,org.apache.spark</excludeGroupIds>
+                    <excludeGroupIds>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,org.datanucleus,asm,org.apache.spark,slf4j-log4j12</excludeGroupIds>
                     <excludeArtifactIds>hive-exec</excludeArtifactIds>
                     <prependGroupId>true</prependGroupId>
                     <silent>true</silent>
@@ -2042,6 +2046,7 @@
       <modules>
         <module>cdap-common-unit-test</module>
         <module>cdap-api</module>
+        <module>cdap-formats</module>
         <module>cdap-common</module>
         <module>cdap-watchdog-api</module>
         <module>cdap-kafka</module>

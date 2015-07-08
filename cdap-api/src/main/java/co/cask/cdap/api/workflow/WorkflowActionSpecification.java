@@ -16,19 +16,15 @@
 
 package co.cask.cdap.api.workflow;
 
-import co.cask.cdap.api.builder.Creator;
-import co.cask.cdap.api.builder.DescriptionSetter;
-import co.cask.cdap.api.builder.NameSetter;
-import co.cask.cdap.api.builder.OptionsSetter;
 import co.cask.cdap.api.common.PropertyProvider;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.internal.builder.BaseBuilder;
-import co.cask.cdap.internal.builder.SimpleDescriptionSetter;
-import co.cask.cdap.internal.builder.SimpleNameSetter;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Specification for a {@link WorkflowAction}.
@@ -51,38 +47,75 @@ public interface WorkflowActionSpecification extends PropertyProvider {
   String getDescription();
 
   /**
-   * Builder interface for the last stage of building a {@link WorkflowActionSpecification}.
+   * @return an immutable set of {@link Dataset} name that are used by the {@link WorkflowAction}
    */
-  interface SpecificationCreator extends Creator<WorkflowActionSpecification>,
-                                         OptionsSetter<Creator<WorkflowActionSpecification>> { }
+  Set<String> getDatasets();
 
   /**
    * Builder class for building the {@link WorkflowActionSpecification}.
    */
-  final class Builder extends BaseBuilder<WorkflowActionSpecification> implements SpecificationCreator {
+  static final class Builder {
+    private String name;
+    private String description;
+    private Map<String, String> options = Maps.newHashMap();
+    private final ImmutableSet.Builder<String> datasets = ImmutableSet.builder();
 
-    private final Map<String, MapReduceSpecification> mapReduces = Maps.newHashMap();
-    private final Map<String, String> options = Maps.newHashMap();
-
-    public static NameSetter<DescriptionSetter<SpecificationCreator>> with() {
-      Builder builder = new Builder();
-      return SimpleNameSetter.create(
-        getNameSetter(builder), SimpleDescriptionSetter.create(
-        getDescriptionSetter(builder), (SpecificationCreator) builder
-      ));
+    public static NameSetter with() {
+      return new Builder().new NameSetter();
     }
 
-    @Override
-    public Creator<WorkflowActionSpecification> withOptions(Map<String, String> options) {
-      this.options.putAll(options);
-      return this;
+    public final class NameSetter {
+      /**
+       * Sets the name of a action.
+       * @param name Name of the action.
+       * @return An instance of {@link DescriptionSetter}
+       */
+      public DescriptionSetter setName(String name) {
+        Preconditions.checkArgument(name != null, "Name cannot be null.");
+        Builder.this.name = name;
+        return new DescriptionSetter();
+      }
     }
 
-    @Override
-    public WorkflowActionSpecification build() {
-      return new DefaultWorkflowActionSpecification(name, description, options);
+    /**
+     * Class defining the description setter that is used as part of the builder.
+     */
+    public final class DescriptionSetter {
+      /**
+       * Sets the description of the action.
+       * @param description Description to be associated with action.
+       * @return An instance of what needs to be done after description {@link AfterDescription}
+       */
+      public AfterDescription setDescription(String description) {
+        Preconditions.checkArgument(description != null, "Description cannot be null.");
+        Builder.this.description = description;
+        return new AfterDescription();
+      }
     }
 
+    /**
+     * Class defining the action after defining the description for a action.
+     */
+    public final class AfterDescription {
+
+      public AfterDescription withOptions(Map<String, String> options) {
+        Builder.this.options.putAll(options);
+        return this;
+      }
+
+      public AfterDescription useDataset(String dataset, String...moreDatasets) {
+        Builder.this.datasets.add(dataset).add(moreDatasets);
+        return this;
+      }
+
+      public WorkflowActionSpecification build() {
+        return new DefaultWorkflowActionSpecification(name, description, options, datasets.build());
+      }
+    }
+
+    /**
+     * Private builder to maintain builder contract.
+     */
     private Builder() {
     }
   }

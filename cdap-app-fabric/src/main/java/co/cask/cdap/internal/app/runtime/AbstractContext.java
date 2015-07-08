@@ -169,6 +169,10 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     throw new DatasetInstantiationException(String.format("'%s' is not a known Dataset", name));
   }
 
+  public Map<String, Dataset> getDatasets() {
+    return datasets;
+  }
+
   public String getNamespaceId() {
     return program.getNamespaceId();
   }
