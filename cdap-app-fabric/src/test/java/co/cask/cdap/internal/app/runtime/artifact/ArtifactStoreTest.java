@@ -520,7 +520,6 @@ public class ArtifactStoreTest {
     // only one of them should be able to write it
     int numThreads = 20;
     final Id.Artifact artifactId = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "abc", "1.0.0-SNAPSHOT");
-    final List<String> successfulWriters = Collections.synchronizedList(Lists.<String>newArrayList());
 
     // use a barrier so they all try and write at the same time
     final CyclicBarrier barrier = new CyclicBarrier(numThreads);
@@ -537,7 +536,6 @@ public class ArtifactStoreTest {
               "plugin-type", "plugin" + writer, "", "classname", "cfg",
               ImmutableMap.<String, PluginPropertyField>of())));
             artifactStore.write(artifactId, meta, new ByteArrayInputStream(Bytes.toBytes(writer)));
-            successfulWriters.add(writer);
           } catch (InterruptedException | BrokenBarrierException | ArtifactAlreadyExistsException | IOException e) {
             // something went wrong, fail the test
             throw new RuntimeException(e);
@@ -552,14 +550,19 @@ public class ArtifactStoreTest {
 
     // wait for all writers to finish
     latch.await();
-    // get the last writer that was able to write
-    String winnerWriter = successfulWriters.get(successfulWriters.size() - 1);
-    // check that the contents weren't mixed between writers
+
+    // figure out which was the last writer by reading our data. all the writers should have been able to write,
+    // and they should have all overwritten each other in a consistent manner
     ArtifactDetail detail = artifactStore.getArtifact(artifactId);
+    // figure out the winning writer from the plugin name, which is 'plugin<writer>'
+    String pluginName = detail.getMeta().getPlugins().get(0).getName();
+    String winnerWriter = pluginName.substring("plugin".length());
+
     ArtifactMeta expectedMeta = new ArtifactMeta(ImmutableList.of(new PluginClass(
       "plugin-type", "plugin" + winnerWriter, "", "classname", "cfg",
       ImmutableMap.<String, PluginPropertyField>of())));
     assertEqual(artifactId, expectedMeta, winnerWriter, detail);
+    
     // check only 1 plugin remains and that its the correct one
     Map<ArtifactInfo, List<PluginClass>> pluginMap =
       artifactStore.getPluginClasses(artifactId.getNamespace(), "plugin-type");
