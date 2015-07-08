@@ -19,8 +19,7 @@
     <li class="dropdown" ng-class="{one:namespaces.length<2}">
       <a href="" class="dropdown-toggle">
         <span ng-bind="$state.params.namespace && getDisplayName($state.params.namespace) | myEllipsis: 10" ng-if="namespaces.length > 1"></span>
-        <span ng-bind="$state.params.namespace && getDisplayName($state.params.namespace) | myEllipsis: 10" tooltip="Only one namespace to display" tooltip-placement="right" ng-if="namespaces.length < 2"></span>
-        <span class="caret"></span>
+        <span ng-bind="$state.params.namespace && getDisplayName($state.params.namespace) | myEllipsis: 10" tooltip-append-to-body="true" tooltip="Only one namespace to display" tooltip-placement="right" ng-if="namespaces.length < 2"></span>
       </a>
     </li>
   </ul>
