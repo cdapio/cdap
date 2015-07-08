@@ -5,7 +5,7 @@
           id="{{plugin.id}}">
       <div class="icon fa {{plugin.icon}}"></div>
       <div class="plugin-name">{{plugin.name}}</div>
-      <div class="fa fa-close" ng-click="MyPlumbController.removePlugin($index)"></div>
+      <div class="fa fa-close" ng-click="MyPlumbController.removePlugin($index, plugin.id)"></div>
     </div>
   </div>
 </div>
