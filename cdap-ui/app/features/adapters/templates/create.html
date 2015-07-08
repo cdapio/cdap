@@ -1,21 +1,10 @@
+<h3 class="adapter-name">
+  {{AdapterCreateController.model.metadata.name}}
+  <small class="fa fa-pencil" ng-click="AdapterCreateController.showMetadataModal()"></small>
+</h3>
 
-<div>
-  <div class="row" create-adapter-container>
-    <div class="col-md-10 col-sm-9 col-xs-12">
-      <h2 class="adapter-name-label">
-        Create Adapter: {{AdapterCreateController.model.metadata.name}}
-      </h2>
-    </div>
-    <div class="col-md-2 col-sm-3 col-xs-12">
-      <a ui-sref="adapters.list" class="btn btn-default">
-        <span class="fa fa-list-ul"></span>
-        <span>All Adapters</span>
-      </a>
-    </div>
+<div ng-controller="CanvasController as PlumbController">
+  <div ng-include="'/assets/features/adapters/templates/create/canvas.html'">
+
   </div>
-
-  <div ng-include="'/assets/features/adapters/templates/create/metadata.html'"></div>
-  <div ng-include="'/assets/features/adapters/templates/create/configuration.html'"></div>
-  <div ng-include="'/assets/features/adapters/templates/create/canvas.html'"></div>
-
 </div>
