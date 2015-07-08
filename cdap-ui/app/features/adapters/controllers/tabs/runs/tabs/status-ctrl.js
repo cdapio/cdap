@@ -37,16 +37,22 @@ angular.module(PKG.name + '.feature.adapters')
 
         initializeProperties();
 
-        $scope.model = new AdapterCreateModel();
-
-        $scope.model.setSource($scope.source);
-        $scope.model.setSink($scope.sink);
-        $scope.model.setTransform($scope.transforms);
-
-
       });
 
     function initializeProperties() {
+      myAdapterApi
+        .fetchSourceProperties({
+          scope: $scope,
+          adapterType: template,
+          source: $scope.source.name
+        })
+        .$promise
+        .then(function(res) {
+          var pluginProperties = (res.length? res[0].properties: {});
+          $scope.source._backendProperties = pluginProperties;
+        });
+
+
       angular.forEach($scope.transforms, function(transform) {
         myAdapterApi
           .fetchTransformProperties({
@@ -60,11 +66,24 @@ angular.module(PKG.name + '.feature.adapters')
             transform._backendProperties = pluginProperties;
           });
       });
+
+
+      myAdapterApi
+        .fetchSinkProperties({
+          scope: $scope,
+          adapterType: template,
+          sink: $scope.sink.name
+        })
+        .$promise
+        .then(function(res) {
+          var pluginProperties = (res.length? res[0].properties : {});
+          $scope.sink._backendProperties = pluginProperties;
+        });
     }
 
-    $scope.openProperties = function (plugin, where) {
+    $scope.openProperties = function (plugin) {
         var modal = $bootstrapModal.open({
-          // animation: true,
+          animation: false,
           templateUrl: '/assets/features/adapters/templates/tabs/runs/tabs/properties/properties.html',
           controller: 'modalController',
           size: 'lg',
@@ -84,6 +103,4 @@ angular.module(PKG.name + '.feature.adapters')
   .controller('modalController', function ($scope, $modalInstance, AdapterModel, type){
     $scope.plugin = AdapterModel;
     $scope.type = type;
-
-
   });
