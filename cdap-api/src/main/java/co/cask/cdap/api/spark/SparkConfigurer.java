@@ -16,11 +16,14 @@
 
 package co.cask.cdap.api.spark;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.util.Map;
 
 /**
  * Configurer for configuring {@link Spark}.
  */
+@Beta
 public interface SparkConfigurer {
   /**
    * Sets the name of the {@link Spark}.

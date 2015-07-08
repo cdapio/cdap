@@ -166,13 +166,11 @@ public class SparkPageRankProgram implements JavaSparkProgram {
   }
 
   private int getIterationCount(SparkContext sc) {
-    String[] args = sc.getRuntimeArguments("args");
-    int iterationCount;
-    if (args != null && args.length > 0) {
-      iterationCount = Integer.valueOf(args[0]);
-    } else {
-      iterationCount = ITERATIONS_COUNT;
+    String args = sc.getRuntimeArguments().get("args");
+    if (args == null) {
+      return ITERATIONS_COUNT;
     }
-    return iterationCount;
+    String[] parts = args.split("\\s");
+    return (parts.length > 0) ? Integer.parseInt(parts[0]) : ITERATIONS_COUNT;
   }
 }

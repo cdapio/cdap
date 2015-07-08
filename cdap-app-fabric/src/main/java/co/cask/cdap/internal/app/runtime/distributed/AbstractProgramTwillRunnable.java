@@ -137,6 +137,13 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private LogAppenderInitializer logAppenderInitializer;
   private CountDownLatch runlatch;
 
+  /**
+   * Constructor.
+   *
+   * @param name Name of the TwillRunnable
+   * @param hConfName Name of the hConf file as in the container directory
+   * @param cConfName Name of the cConf file as in the container directory
+   */
   protected AbstractProgramTwillRunnable(String name, String hConfName, String cConfName) {
     this.name = name;
     this.hConfName = hConfName;

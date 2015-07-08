@@ -16,20 +16,20 @@
 
 package co.cask.cdap.internal.app.runtime.spark.dataset;
 
-import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputCommitter;
-import co.cask.cdap.internal.app.runtime.spark.BasicSparkContext;
 import co.cask.cdap.internal.app.runtime.spark.SparkContextProvider;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.Map;
 
 /**
  * An {@link OutputFormat} for writing into dataset.
@@ -39,25 +39,27 @@ import java.io.IOException;
  *                TODO: Refactor this OutputFormat and MapReduce OutputFormat
  */
 public final class SparkDatasetOutputFormat<KEY, VALUE> extends OutputFormat<KEY, VALUE> {
-  private static final Logger LOG = LoggerFactory.getLogger(SparkDatasetOutputFormat.class);
-  public static final String HCONF_ATTR_OUTPUT_DATASET = "output.dataset.name";
+
+  private static final Gson GSON = new Gson();
+  private static final Type ARGS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+
+  private static final String OUTPUT_DATASET_NAME = "output.spark.dataset.name";
+  private static final String OUTPUT_DATASET_ARGS = "output.spark.dataset.args";
+
+  /**
+   * Sets the configurations for the dataset name and configurations for the output format.
+   */
+  public static void setDataset(Configuration configuration, String dataset, Map<String, String> arguments) {
+    configuration.set(OUTPUT_DATASET_NAME, dataset);
+    configuration.set(OUTPUT_DATASET_ARGS, GSON.toJson(arguments, ARGS_TYPE));
+  }
 
   @Override
-  public RecordWriter<KEY, VALUE> getRecordWriter(final TaskAttemptContext context)
-    throws IOException, InterruptedException {
-    Configuration conf = context.getConfiguration();
-    SparkContextProvider contextProvider = new SparkContextProvider(context.getConfiguration());
-    BasicSparkContext sparkContext = contextProvider.get();
-    //TODO: Metrics collection needs to be started here once implemented
-    BatchWritable<KEY, VALUE> dataset = (BatchWritable<KEY, VALUE>) sparkContext.getDataset(getOutputDataSet(conf));
-
-    // the record writer now owns the context and will close it
-    return new DatasetRecordWriter<>(dataset, sparkContext);
+  public RecordWriter<KEY, VALUE> getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
+    CloseableBatchWritable<KEY, VALUE> batchWritable = getBatchWritable(context.getConfiguration());
+    return new DatasetRecordWriter<>(batchWritable);
   }
 
-  private String getOutputDataSet(Configuration conf) {
-    return conf.get(HCONF_ATTR_OUTPUT_DATASET);
-  }
 
   @Override
   public void checkOutputSpecs(final JobContext context) throws IOException, InterruptedException {
@@ -67,5 +69,11 @@ public final class SparkDatasetOutputFormat<KEY, VALUE> extends OutputFormat<KEY
   @Override
   public OutputCommitter getOutputCommitter(final TaskAttemptContext context) throws IOException, InterruptedException {
     return new DataSetOutputCommitter();
+  }
+
+
+  private <K, V> CloseableBatchWritable<K, V> getBatchWritable(Configuration configuration) {
+    Map<String, String> args = GSON.fromJson(configuration.get(OUTPUT_DATASET_ARGS), ARGS_TYPE);
+    return SparkContextProvider.getSparkContext().getBatchWritable(configuration.get(OUTPUT_DATASET_NAME), args);
   }
 }

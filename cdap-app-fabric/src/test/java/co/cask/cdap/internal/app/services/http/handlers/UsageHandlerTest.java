@@ -171,9 +171,8 @@ public class UsageHandlerTest extends AppFabricTestBase {
     deploy(AllProgramsApp.class);
 
     try {
+      // the program will run and stop by itself.
       startProgram(program);
-      waitState(program, "RUNNING");
-      stopProgram(program);
       waitState(program, "STOPPED");
 
       Assert.assertTrue(getAppStreamUsage(app).contains(stream));

@@ -65,6 +65,7 @@ public class ExploreServiceUtils {
    */
   public enum HiveSupport {
     HIVE_CDH4(Pattern.compile("^.*cdh4\\..*$"), HiveCDH4ExploreService.class),
+    HIVE_CDH5_4(Pattern.compile("^.*cdh5.4\\..*$"), Hive14ExploreService.class),
     HIVE_CDH5(Pattern.compile("^.*cdh5\\..*$"), HiveCDH5ExploreService.class),
 
     HIVE_12(null, Hive12ExploreService.class),
