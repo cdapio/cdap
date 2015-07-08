@@ -17,42 +17,30 @@
 package co.cask.cdap.internal.app.runtime.spark.dataset;
 
 import co.cask.cdap.api.data.batch.SplitReader;
-import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputSplit;
-import co.cask.cdap.internal.app.runtime.spark.BasicSparkContext;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
 final class DatasetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
-  private static final Logger LOG = LoggerFactory.getLogger(DatasetRecordReader.class);
-  private final SplitReader<KEY, VALUE> splitReader;
-  private final BasicSparkContext context;
-  private final String dataSetName;
-  //TODO: Needs support for metrics when implemented
 
-  public DatasetRecordReader(final SplitReader<KEY, VALUE> splitReader, BasicSparkContext context, String dataSetName) {
+  private final SplitReader<KEY, VALUE> splitReader;
+
+  public DatasetRecordReader(final SplitReader<KEY, VALUE> splitReader) {
     this.splitReader = splitReader;
-    this.context = context;
-    this.dataSetName = dataSetName;
   }
 
   @Override
-  public void initialize(final InputSplit split, final TaskAttemptContext context) throws IOException,
-    InterruptedException {
-    LoggingContextAccessor.setLoggingContext(this.context.getLoggingContext());
+  public void initialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
     DataSetInputSplit inputSplit = (DataSetInputSplit) split;
     splitReader.initialize(inputSplit.getSplit());
   }
 
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException {
-    boolean hasNext = splitReader.nextKeyValue();
-    return hasNext;
+    return splitReader.nextKeyValue();
   }
 
   @Override
@@ -72,10 +60,6 @@ final class DatasetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
 
   @Override
   public void close() throws IOException {
-    try {
-      splitReader.close();
-    } finally {
-      context.close();
-    }
+    splitReader.close();
   }
 }

@@ -42,7 +42,7 @@ public class FakeWorkflow implements Workflow {
   public static class FakeAction extends AbstractWorkflowAction {
     @Override
     public void run() {
-      File doneFile = new File("/tmp/fakeworkflow.done");
+      File doneFile = new File(getContext().getRuntimeArguments().get("done.file"));
       while (!doneFile.exists()) {
         try {
           TimeUnit.SECONDS.sleep(1);
