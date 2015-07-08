@@ -145,13 +145,13 @@ function download_includes() {
   test_an_include d9c7f594204f42adaac7ad866c11ed7a ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
   
   test_an_include f8e8f0fba3d26cc26f06325b7c55d715 ../../cdap-examples/SparkKMeans/src/main/java/co/cask/cdap/examples/sparkkmeans/SparkKMeansApp.java
-  test_an_include 97e355542831d767a297b52ff09f5674 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
+  test_an_include c914c4c17b0b85bc8541ef00a36bb062 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
 
   test_an_include afe12d26b79607a846d3eaa58958ea5f ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/SportResults.java
   test_an_include 2d85727db18c3261b60d4cb278846329 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
   test_an_include 1415af829b57768a159653c55c83ca09 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/ScoreCounter.java
   
-  test_an_include 2176f426a50b2d68817cd7da7b7faffb ../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionApp.java
+  test_an_include a33ca6df16ab5443d1d446f13d16348d ../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionApp.java
   test_an_include 8db18c84a0ee405d85014ebbcf2d383e ../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
   
   test_an_include 2260781c7cef2938aa36c946f3a34341 ../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java
