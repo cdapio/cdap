@@ -39,6 +39,7 @@ angular.module(PKG.name + '.feature.adapters')
 
       });
 
+    // Getting _backendProperties for Sink, Source, and Transforms
     function initializeProperties() {
       myAdapterApi
         .fetchSourceProperties({
@@ -82,25 +83,25 @@ angular.module(PKG.name + '.feature.adapters')
     }
 
     $scope.openProperties = function (plugin) {
-        var modal = $bootstrapModal.open({
-          animation: false,
-          templateUrl: '/assets/features/adapters/templates/tabs/runs/tabs/properties/properties.html',
-          controller: 'modalController',
-          size: 'lg',
-          resolve: {
-            AdapterModel: function () {
-              return plugin;
-            },
-            type: function () {
-              return template;
-            }
+      $bootstrapModal.open({
+        animation: false,
+        templateUrl: '/assets/features/adapters/templates/tabs/runs/tabs/properties/properties.html',
+        controller: 'modalController',
+        size: 'lg',
+        resolve: {
+          AdapterModel: function () {
+            return plugin;
+          },
+          type: function () {
+            return template;
           }
-        });
-
+        }
+      });
     };
 
-})
+  })
   .controller('modalController', function ($scope, $modalInstance, AdapterModel, type){
     $scope.plugin = AdapterModel;
     $scope.type = type;
+    $scope.isDisabled = true;
   });
