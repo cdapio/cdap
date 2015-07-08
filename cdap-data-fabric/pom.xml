@@ -38,6 +38,11 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-formats</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-proto</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -58,10 +63,6 @@
     <dependency>
       <groupId>co.cask.http</groupId>
       <artifactId>netty-http</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.thekraken</groupId>
-      <artifactId>grok</artifactId>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
