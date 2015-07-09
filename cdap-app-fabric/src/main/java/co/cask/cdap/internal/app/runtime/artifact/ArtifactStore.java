@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
@@ -34,6 +35,7 @@ import co.cask.cdap.data2.dataset2.tx.DatasetContext;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.internal.artifact.ArtifactVersion;
 import co.cask.cdap.internal.filesystem.LocationCodec;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionConflictException;
 import co.cask.tephra.TransactionExecutor;
@@ -134,6 +136,7 @@ public class ArtifactStore {
     this.locationFactory = namespacedLocationFactory;
     this.gson = new GsonBuilder()
       .registerTypeAdapter(Location.class, new LocationCodec(locationFactory))
+      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
       .create();
     this.metaTable = Transactional.of(txExecutorFactory, new Supplier<DatasetContext<Table>>() {
       @Override
@@ -490,7 +493,7 @@ public class ArtifactStore {
     ArtifactColumn artifactColumn = new ArtifactColumn(artifactId);
 
     // write pluginClass metadata
-    for (PluginClass pluginClass : data.meta.getPlugins()) {
+    for (PluginClass pluginClass : data.meta.getClasses().getPlugins()) {
       // write metadata for each artifact this plugin extends
       for (ArtifactRange artifactRange : data.meta.getUsableBy()) {
         // p:{namespace}:{type}:{name}
@@ -516,7 +519,7 @@ public class ArtifactStore {
     ArtifactData oldMeta = gson.fromJson(Bytes.toString(oldData), ArtifactData.class);
     ArtifactColumn artifactColumn = new ArtifactColumn(artifactId);
 
-    for (PluginClass pluginClass : oldMeta.meta.getPlugins()) {
+    for (PluginClass pluginClass : oldMeta.meta.getClasses().getPlugins()) {
       // write metadata for each artifact this plugin extends
       for (ArtifactRange artifactRange : oldMeta.meta.getUsableBy()) {
         // p:{namespace}:{type}:{name}

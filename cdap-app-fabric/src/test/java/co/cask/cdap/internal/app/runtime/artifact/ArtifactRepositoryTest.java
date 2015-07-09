@@ -35,6 +35,7 @@ import co.cask.cdap.internal.app.runtime.adapter.EmptyClass;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.artifact.ArtifactVersion;
 import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
@@ -88,7 +89,7 @@ public class ArtifactRepositoryTest {
   @Before
   public void setupData() throws Exception {
     artifactRepository.clear(Constants.DEFAULT_NAMESPACE_ID);
-    File appArtifactFile = createJar(PluginTestAppTemplate.class, new File(tmpDir, "PluginTest-1.0.0.jar"),
+    File appArtifactFile = createAppJar(PluginTestAppTemplate.class, new File(tmpDir, "PluginTest-1.0.0.jar"),
       createManifest(ManifestFields.EXPORT_PACKAGE,
         PluginTestRunnable.class.getPackage().getName()));
     artifactRepository.addArtifact(APP_ARTIFACT_ID, appArtifactFile, null);
@@ -109,7 +110,7 @@ public class ArtifactRepositoryTest {
   public void testPlugin() throws Exception {
     // Create the plugin jar. There should be two plugins there (TestPlugin and TestPlugin2).
     Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
-    File jarFile = createJar(TestPlugin.class, new File(tmpDir, "myPlugin-1.0.jar"), manifest);
+    File jarFile = createPluginJar(TestPlugin.class, new File(tmpDir, "myPlugin-1.0.jar"), manifest);
 
     // add the artifact
     Set<ArtifactRange> parents = ImmutableSet.of(
@@ -152,7 +153,7 @@ public class ArtifactRepositoryTest {
     // Create a plugin jar. It contains two plugins, TestPlugin and TestPlugin2 inside.
     Id.Artifact artifact1Id = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "myPlugin", "1.0");
     Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
-    File jarFile = createJar(TestPlugin.class, new File(tmpDir, "myPlugin-1.0.jar"), manifest);
+    File jarFile = createPluginJar(TestPlugin.class, new File(tmpDir, "myPlugin-1.0.jar"), manifest);
 
     // Build up the plugin repository.
     Set<ArtifactRange> parents = ImmutableSet.of(
@@ -169,7 +170,7 @@ public class ArtifactRepositoryTest {
 
     // Create another plugin jar with later version and update the repository
     Id.Artifact artifact2Id = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "myPlugin", "2.0");
-    jarFile = createJar(TestPlugin.class, new File(tmpDir, "myPlugin-2.0.jar"), manifest);
+    jarFile = createPluginJar(TestPlugin.class, new File(tmpDir, "myPlugin-2.0.jar"), manifest);
     artifactRepository.addArtifact(artifact2Id, jarFile, parents);
 
     // Should select the latest version
@@ -217,9 +218,17 @@ public class ArtifactRepositoryTest {
     return ProgramClassLoader.create(unpackDir, ArtifactRepositoryTest.class.getClassLoader());
   }
 
-  private static File createJar(Class<?> cls, File destFile, Manifest manifest) throws IOException {
+  private static File createAppJar(Class<?> cls, File destFile, Manifest manifest) throws IOException {
     Location deploymentJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
       cls, manifest);
+    DirUtils.mkdirs(destFile.getParentFile());
+    Files.copy(Locations.newInputSupplier(deploymentJar), destFile);
+    return destFile;
+  }
+
+  private static File createPluginJar(Class<?> cls, File destFile, Manifest manifest) throws IOException {
+    Location deploymentJar = PluginJarHelper.createPluginJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
+      manifest, cls);
     DirUtils.mkdirs(destFile.getParentFile());
     Files.copy(Locations.newInputSupplier(deploymentJar), destFile);
     return destFile;

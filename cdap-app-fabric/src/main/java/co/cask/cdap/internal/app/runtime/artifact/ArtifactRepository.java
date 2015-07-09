@@ -20,19 +20,12 @@ import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.lang.ProgramClassLoader;
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -47,18 +40,17 @@ import javax.annotation.Nullable;
  * metadata for the artifact.
  */
 public class ArtifactRepository {
-  private static final Logger LOG = LoggerFactory.getLogger(ArtifactRepository.class);
-
-  private final File tmpDir;
   private final ArtifactStore artifactStore;
+  private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
   private final ArtifactInspector artifactInspector;
 
   @Inject
   ArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore) {
-    this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.artifactStore = artifactStore;
-    this.artifactInspector = new ArtifactInspector(cConf);
+    File baseUnpackDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+      cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(baseUnpackDir);
+    this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory);
   }
 
   @VisibleForTesting
@@ -108,13 +100,14 @@ public class ArtifactRepository {
    * @throws ArtifactRangeNotFoundException if none of the parent artifacts could be found
    */
   public void addArtifact(Id.Artifact artifactId, File artifactFile, @Nullable Set<ArtifactRange> parentArtifacts)
-    throws IOException, ArtifactRangeNotFoundException, WriteConflictException, ArtifactAlreadyExistsException {
+    throws IOException, ArtifactRangeNotFoundException, WriteConflictException,
+    ArtifactAlreadyExistsException, InvalidArtifactException {
 
     CloseableClassLoader parentClassLoader;
     parentArtifacts = parentArtifacts == null ? ImmutableSet.<ArtifactRange>of() : parentArtifacts;
     if (parentArtifacts.isEmpty()) {
       // if this artifact doesn't extend another, use itself to create the parent classloader
-      parentClassLoader = createArtifactClassLoader(Locations.toLocation(artifactFile));
+      parentClassLoader = artifactClassLoaderFactory.createClassLoader(Locations.toLocation(artifactFile));
     } else {
       // otherwise, use any of the parent artifacts to create the parent classloader.
       Location parentLocation = null;
@@ -127,58 +120,15 @@ public class ArtifactRepository {
       if (parentLocation == null) {
         throw new ArtifactRangeNotFoundException(parentArtifacts);
       }
-      parentClassLoader = createArtifactClassLoader(parentLocation);
+      parentClassLoader = artifactClassLoaderFactory.createClassLoader(parentLocation);
     }
 
     try {
       ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
-      ArtifactMeta meta = new ArtifactMeta(artifactClasses.getPlugins(), parentArtifacts);
+      ArtifactMeta meta = new ArtifactMeta(artifactClasses, parentArtifacts);
       artifactStore.write(artifactId, meta, new FileInputStream(artifactFile));
     } finally {
       parentClassLoader.close();
-    }
-  }
-
-  /**
-   * Creates a ClassLoader for the given artifact.
-   *
-   * @param artifactLocation the location of the artifact to create a classloader from
-   * @return a {@link CloseableClassLoader} for the artifact
-   * @throws IOException if failed to expand the jar
-   */
-  private CloseableClassLoader createArtifactClassLoader(Location artifactLocation) throws IOException {
-    final File unpackDir = DirUtils.createTempDir(tmpDir);
-    BundleJarUtil.unpackProgramJar(artifactLocation, unpackDir);
-    final ProgramClassLoader programClassLoader = ProgramClassLoader.create(unpackDir, getClass().getClassLoader());
-    return new CloseableClassLoader(programClassLoader, new Closeable() {
-      @Override
-      public void close() {
-        try {
-          Closeables.closeQuietly(programClassLoader);
-          DirUtils.deleteDirectoryContents(unpackDir);
-        } catch (IOException e) {
-          LOG.warn("Failed to delete directory {}", unpackDir, e);
-        }
-      }
-    });
-  }
-
-  /**
-   * A {@link ClassLoader} that implements {@link Closeable} for resource cleanup. All classloading is done
-   * by the delegate {@link ClassLoader}.
-   */
-  private static final class CloseableClassLoader extends ClassLoader implements Closeable {
-
-    private final Closeable closeable;
-
-    public CloseableClassLoader(ClassLoader delegate, Closeable closeable) {
-      super(delegate);
-      this.closeable = closeable;
-    }
-
-    @Override
-    public void close() throws IOException {
-      closeable.close();
     }
   }
 }

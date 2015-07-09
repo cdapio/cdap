@@ -21,7 +21,9 @@ import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.AppFabricTestHelper;
+import co.cask.cdap.internal.app.runtime.artifact.app.InspectionApp;
 import co.cask.cdap.internal.artifact.ArtifactVersion;
+import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Charsets;
@@ -121,7 +123,11 @@ public class ArtifactStoreTest {
       new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of()),
       new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of())
     );
-    ArtifactMeta artifactMeta = new ArtifactMeta(plugins);
+    ApplicationClass appClass = new ApplicationClass(
+      InspectionApp.class.getName(), "",
+      new ReflectionSchemaGenerator().generate(InspectionApp.AConfig.class));
+    ArtifactMeta artifactMeta =
+      new ArtifactMeta(ArtifactClasses.builder().addPlugins(plugins).addApp(appClass).build());
 
     String artifactContents = "my artifact contents";
     artifactStore.write(artifactId, artifactMeta, new ByteArrayInputStream(Bytes.toBytes(artifactContents)));
@@ -133,7 +139,7 @@ public class ArtifactStoreTest {
   @Test(expected = ArtifactAlreadyExistsException.class)
   public void testImmutability() throws Exception {
     Id.Artifact artifactId = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "myplugins", "1.0.0");
-    ArtifactMeta artifactMeta = new ArtifactMeta(ImmutableList.<PluginClass>of());
+    ArtifactMeta artifactMeta = new ArtifactMeta(ArtifactClasses.builder().build());
 
     String artifactContents = "abc123";
     // this should work
@@ -156,11 +162,13 @@ public class ArtifactStoreTest {
     PluginClass plugin2 = new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg",
       ImmutableMap.<String, PluginPropertyField>of());
     Id.Artifact artifactId = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "myplugins", "1.0.0-SNAPSHOT");
-    ArtifactMeta artifactMeta = new ArtifactMeta(ImmutableList.of(plugin1, plugin2), ImmutableSet.of(parentArtifacts));
+    ArtifactMeta artifactMeta = new ArtifactMeta(
+      ArtifactClasses.builder().addPlugins(plugin1, plugin2).build(), ImmutableSet.of(parentArtifacts));
     artifactStore.write(artifactId, artifactMeta, new ByteArrayInputStream(Bytes.toBytes("abc123")));
 
     // update meta and jar contents
-    artifactMeta = new ArtifactMeta(ImmutableList.of(plugin2), ImmutableSet.of(parentArtifacts));
+    artifactMeta = new ArtifactMeta(
+      ArtifactClasses.builder().addPlugin(plugin2).build(), ImmutableSet.of(parentArtifacts));
     artifactStore.write(artifactId, artifactMeta, new ByteArrayInputStream(Bytes.toBytes("xyz321")));
 
     // check the metadata and contents got updated
@@ -187,14 +195,12 @@ public class ArtifactStoreTest {
     Id.Artifact artifact2 = Id.Artifact.from(namespace2, "myplugins", "1.0.0");
     String contents1 = "first contents";
     String contents2 = "second contents";
-    List<PluginClass> plugins1 = ImmutableList.of(
-      new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of())
-    );
-    List<PluginClass> plugins2 = ImmutableList.of(
-      new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of())
-    );
-    ArtifactMeta meta1 = new ArtifactMeta(plugins1);
-    ArtifactMeta meta2 = new ArtifactMeta(plugins2);
+    PluginClass plugin1 =
+      new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of());
+    PluginClass plugin2 =
+      new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of());
+    ArtifactMeta meta1 = new ArtifactMeta(ArtifactClasses.builder().addPlugin(plugin1).build());
+    ArtifactMeta meta2 = new ArtifactMeta(ArtifactClasses.builder().addPlugin(plugin2).build());
 
     artifactStore.write(artifact1, meta1, new ByteArrayInputStream(Bytes.toBytes(contents1)));
     artifactStore.write(artifact2, meta2, new ByteArrayInputStream(Bytes.toBytes(contents2)));
@@ -223,10 +229,9 @@ public class ArtifactStoreTest {
     // add 1 version of another artifact1
     Id.Artifact artifact1V1 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "artifact1", "1.0.0");
     String contents1V1 = "first contents v1";
-    List<PluginClass> plugins1V1 = ImmutableList.of(
-      new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of())
-    );
-    ArtifactMeta meta1V1 = new ArtifactMeta(plugins1V1);
+    PluginClass plugin1V1 =
+      new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of());
+    ArtifactMeta meta1V1 = new ArtifactMeta(ArtifactClasses.builder().addPlugin(plugin1V1).build());
     artifactStore.write(artifact1V1, meta1V1, new ByteArrayInputStream(Bytes.toBytes(contents1V1)));
 
     // add 2 versions of an artifact2
@@ -234,14 +239,12 @@ public class ArtifactStoreTest {
     Id.Artifact artifact2V2 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "artifact2", "0.1.1");
     String contents2V1 = "second contents v1";
     String contents2V2 = "second contents v2";
-    List<PluginClass> plugins2V1 = ImmutableList.of(
-      new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of())
-    );
-    List<PluginClass> plugins2V2 = ImmutableList.of(
-      new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of())
-    );
-    ArtifactMeta meta2V1 = new ArtifactMeta(plugins2V1);
-    ArtifactMeta meta2V2 = new ArtifactMeta(plugins2V2);
+    PluginClass plugin2V1 =
+      new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of());
+    PluginClass plugin2V2 =
+      new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of());
+    ArtifactMeta meta2V1 = new ArtifactMeta(ArtifactClasses.builder().addPlugin(plugin2V1).build());
+    ArtifactMeta meta2V2 = new ArtifactMeta(ArtifactClasses.builder().addPlugin(plugin2V2).build());
     artifactStore.write(artifact2V1, meta2V1, new ByteArrayInputStream(Bytes.toBytes(contents2V1)));
     artifactStore.write(artifact2V2, meta2V2, new ByteArrayInputStream(Bytes.toBytes(contents2V2)));
 
@@ -325,44 +328,51 @@ public class ArtifactStoreTest {
 
     // artifact artifactX-1.0.0 contains plugin A1
     Id.Artifact artifactXv100 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "artifactX", "1.0.0");
-    ArtifactMeta metaXv100 = new ArtifactMeta(ImmutableList.of(pluginA1), ImmutableSet.of(parentArtifacts));
+    ArtifactMeta metaXv100 = new ArtifactMeta(
+      ArtifactClasses.builder().addPlugin(pluginA1).build(), ImmutableSet.of(parentArtifacts));
     artifactStore.write(artifactXv100, metaXv100, new ByteArrayInputStream(contents));
     ArtifactDescriptor artifactXv100Info = artifactStore.getArtifact(artifactXv100).getDescriptor();
 
     // artifact artifactX-1.1.0 contains plugin A1
     Id.Artifact artifactXv110 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "artifactX", "1.1.0");
-    ArtifactMeta metaXv110 = new ArtifactMeta(ImmutableList.of(pluginA1), ImmutableSet.of(parentArtifacts));
+    ArtifactMeta metaXv110 = new ArtifactMeta(
+      ArtifactClasses.builder().addPlugin(pluginA1).build(), ImmutableSet.of(parentArtifacts));
     artifactStore.write(artifactXv110, metaXv110, new ByteArrayInputStream(contents));
     ArtifactDescriptor artifactXv110Info = artifactStore.getArtifact(artifactXv110).getDescriptor();
 
     // artifact artifactX-2.0.0 contains plugins A1 and A2
     Id.Artifact artifactXv200 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "artifactX", "2.0.0");
-    ArtifactMeta metaXv200 = new ArtifactMeta(ImmutableList.of(pluginA1, pluginA2), ImmutableSet.of(parentArtifacts));
+    ArtifactMeta metaXv200 = new ArtifactMeta(
+      ArtifactClasses.builder().addPlugins(pluginA1, pluginA2).build(), ImmutableSet.of(parentArtifacts));
     artifactStore.write(artifactXv200, metaXv200, new ByteArrayInputStream(contents));
     ArtifactDescriptor artifactXv200Info = artifactStore.getArtifact(artifactXv200).getDescriptor();
 
     // artifact artifactY-1.0.0 contains plugin B1
     Id.Artifact artifactYv100 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "artifactY", "1.0.0");
-    ArtifactMeta metaYv100 = new ArtifactMeta(ImmutableList.of(pluginB1), ImmutableSet.of(parentArtifacts));
+    ArtifactMeta metaYv100 = new ArtifactMeta(
+      ArtifactClasses.builder().addPlugin(pluginB1).build(), ImmutableSet.of(parentArtifacts));
     artifactStore.write(artifactYv100, metaYv100, new ByteArrayInputStream(contents));
     ArtifactDescriptor artifactYv100Info = artifactStore.getArtifact(artifactYv100).getDescriptor();
 
     // artifact artifactY-2.0.0 contains plugin B2
     Id.Artifact artifactYv200 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "artifactY", "2.0.0");
-    ArtifactMeta metaYv200 = new ArtifactMeta(ImmutableList.of(pluginB2), ImmutableSet.of(parentArtifacts));
+    ArtifactMeta metaYv200 = new ArtifactMeta(
+      ArtifactClasses.builder().addPlugin(pluginB2).build(), ImmutableSet.of(parentArtifacts));
     artifactStore.write(artifactYv200, metaYv200, new ByteArrayInputStream(contents));
     ArtifactDescriptor artifactYv200Info = artifactStore.getArtifact(artifactYv200).getDescriptor();
 
     // artifact artifactZ-1.0.0 contains plugins A1 and B1
     Id.Artifact artifactZv100 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "artifactZ", "1.0.0");
-    ArtifactMeta metaZv100 = new ArtifactMeta(ImmutableList.of(pluginA1, pluginB1), ImmutableSet.of(parentArtifacts));
+    ArtifactMeta metaZv100 = new ArtifactMeta(
+      ArtifactClasses.builder().addPlugins(pluginA1, pluginB1).build(), ImmutableSet.of(parentArtifacts));
     artifactStore.write(artifactZv100, metaZv100, new ByteArrayInputStream(contents));
     ArtifactDescriptor artifactZv100Info = artifactStore.getArtifact(artifactZv100).getDescriptor();
 
     // artifact artifactZ-2.0.0 contains plugins A1, A2, B1, and B2
     Id.Artifact artifactZv200 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "artifactZ", "2.0.0");
     ArtifactMeta metaZv200 = new ArtifactMeta(
-      ImmutableList.of(pluginA1, pluginA2, pluginB1, pluginB2), ImmutableSet.of(parentArtifacts));
+      ArtifactClasses.builder().addPlugins(pluginA1, pluginA2, pluginB1, pluginB2).build(),
+      ImmutableSet.of(parentArtifacts));
     artifactStore.write(artifactZv200, metaZv200, new ByteArrayInputStream(contents));
     ArtifactDescriptor artifactZv200Info = artifactStore.getArtifact(artifactZv200).getDescriptor();
 
@@ -439,13 +449,15 @@ public class ArtifactStoreTest {
       new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of()),
       new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of())
     );
-    ArtifactMeta meta1 = new ArtifactMeta(plugins, ImmutableSet.of(parentArtifacts));
+    ArtifactMeta meta1 = new ArtifactMeta(
+      ArtifactClasses.builder().addPlugins(plugins).build(), ImmutableSet.of(parentArtifacts));
     artifactStore.write(artifact1, meta1, new ByteArrayInputStream(Bytes.toBytes("something")));
     ArtifactDescriptor artifact1Info = artifactStore.getArtifact(artifact1).getDescriptor();
 
     // add a different artifact with the same plugins
     Id.Artifact artifact2 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "plugins2", "1.0.0");
-    ArtifactMeta meta2 = new ArtifactMeta(plugins, ImmutableSet.of(parentArtifacts));
+    ArtifactMeta meta2 = new ArtifactMeta(
+      ArtifactClasses.builder().addPlugins(plugins).build(), ImmutableSet.of(parentArtifacts));
     artifactStore.write(artifact2, meta2, new ByteArrayInputStream(Bytes.toBytes("something")));
     ArtifactDescriptor artifact2Info = artifactStore.getArtifact(artifact2).getDescriptor();
 
@@ -468,7 +480,7 @@ public class ArtifactStoreTest {
     List<PluginClass> plugins = ImmutableList.of(
       new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of())
     );
-    ArtifactMeta meta = new ArtifactMeta(plugins, parentArtifacts);
+    ArtifactMeta meta = new ArtifactMeta(ArtifactClasses.builder().addPlugins(plugins).build(), parentArtifacts);
     artifactStore.write(artifactId, meta, new ByteArrayInputStream(Bytes.toBytes("some contents")));
     ArtifactDescriptor artifactInfo = artifactStore.getArtifact(artifactId).getDescriptor();
 
@@ -529,9 +541,12 @@ public class ArtifactStoreTest {
         public void run() {
           try {
             barrier.await();
-            ArtifactMeta meta = new ArtifactMeta(ImmutableList.of(new PluginClass(
-              "plugin-type", "plugin" + writer, "", "classname", "cfg",
-              ImmutableMap.<String, PluginPropertyField>of())));
+            ArtifactMeta meta = new ArtifactMeta(
+              ArtifactClasses.builder()
+                .addPlugin(new PluginClass("plugin-type", "plugin" + writer, "", "classname", "cfg",
+                  ImmutableMap.<String, PluginPropertyField>of()))
+                .build()
+            );
             artifactStore.write(artifactId, meta, new ByteArrayInputStream(Bytes.toBytes(writer)));
             successfulWriters.add(writer);
           } catch (InterruptedException | BrokenBarrierException | IOException e) {
@@ -553,9 +568,12 @@ public class ArtifactStoreTest {
     String successfulWriter = successfulWriters.get(0);
     // check that the contents weren't mixed between writers
     ArtifactDetail info = artifactStore.getArtifact(artifactId);
-    ArtifactMeta expectedMeta = new ArtifactMeta(ImmutableList.of(new PluginClass(
-      "plugin-type", "plugin" + successfulWriter, "", "classname", "cfg",
-      ImmutableMap.<String, PluginPropertyField>of())));
+    ArtifactMeta expectedMeta = new ArtifactMeta(
+      ArtifactClasses.builder()
+        .addPlugin(new PluginClass("plugin-type", "plugin" + successfulWriter, "", "classname", "cfg",
+          ImmutableMap.<String, PluginPropertyField>of()))
+        .build()
+    );
     assertEqual(artifactId, expectedMeta, successfulWriter, info);
   }
 
@@ -582,9 +600,10 @@ public class ArtifactStoreTest {
           try {
             barrier.await();
             ArtifactMeta meta = new ArtifactMeta(
-              ImmutableList.of(new PluginClass(
-                "plugin-type", "plugin" + writer, "", "classname", "cfg",
-                ImmutableMap.<String, PluginPropertyField>of())),
+              ArtifactClasses.builder()
+                .addPlugin(new PluginClass("plugin-type", "plugin" + writer, "", "classname", "cfg",
+                  ImmutableMap.<String, PluginPropertyField>of()))
+                .build(),
               ImmutableSet.of(parentArtifacts)
             );
             artifactStore.write(artifactId, meta, new ByteArrayInputStream(Bytes.toBytes(writer)));
@@ -607,14 +626,16 @@ public class ArtifactStoreTest {
     // and they should have all overwritten each other in a consistent manner
     ArtifactDetail detail = artifactStore.getArtifact(artifactId);
     // figure out the winning writer from the plugin name, which is 'plugin<writer>'
-    String pluginName = detail.getMeta().getPlugins().get(0).getName();
+    String pluginName = detail.getMeta().getClasses().getPlugins().iterator().next().getName();
     String winnerWriter = pluginName.substring("plugin".length());
 
     ArtifactMeta expectedMeta = new ArtifactMeta(
-      ImmutableList.of(new PluginClass(
-        "plugin-type", "plugin" + winnerWriter, "", "classname", "cfg",
-        ImmutableMap.<String, PluginPropertyField>of())),
-      ImmutableSet.of(parentArtifacts));
+      ArtifactClasses.builder()
+        .addPlugin(new PluginClass("plugin-type", "plugin" + winnerWriter, "", "classname", "cfg",
+            ImmutableMap.<String, PluginPropertyField>of()))
+        .build(),
+      ImmutableSet.of(parentArtifacts)
+    );
     assertEqual(artifactId, expectedMeta, winnerWriter, detail);
 
     // check only 1 plugin remains and that its the correct one
