@@ -24,7 +24,7 @@ import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants; 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
