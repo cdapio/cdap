@@ -152,7 +152,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
   /**
    * Upgrades all file sets and all datasets that contain an embedded file set: If the properties contain
    * an absolute base path, convert that into a relative base path. This is because since 2.8, with the
-   * introduction of namespaces, absolute paths have incorrectly been treated the same as realtive paths,
+   * introduction of namespaces, absolute paths have incorrectly been treated the same as relative paths,
    * that is, relative to the namespace's data path. This was fixed in 3.1, but that means that existing
    * file set with absolute paths now do not point to their data anymore. Therefore the upgrade turns all
    * absolute paths into relative paths by removing the leading "/", which is equivalent under the new
