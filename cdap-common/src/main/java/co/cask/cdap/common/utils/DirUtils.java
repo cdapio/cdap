@@ -18,13 +18,13 @@ package co.cask.cdap.common.utils;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Queues;
 import com.google.common.io.Files;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -61,7 +61,10 @@ public final class DirUtils {
       throw new IOException("Not a directory: " + directory);
     }
 
-    Deque<File> stack = Queues.newArrayDeque();
+    // avoid using guava's Queues.newArrayDeque() since this is a utility class that can be used in all sorts of
+    // contexts, some of which may use clashing guava versions... For example, when explore launches a Hive query,
+    // it includes hive-exec.jar which bundles guava 11 in its jar...
+    Deque<File> stack = new ArrayDeque<>();
     stack.addAll(listFiles(directory));
 
     while (!stack.isEmpty()) {

@@ -73,6 +73,11 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-client</artifactId>
+      <scope>provided</scope>
+    </dependency>
     <!-- We want to re-use test apps -->
     <dependency>
       <groupId>co.cask.cdap</groupId>

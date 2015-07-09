@@ -1,4 +1,3 @@
-'use strict';
 class ScheduleController {
   constructor($scope, myWorkFlowApi, $state, myAlert) {
     this.myWorkFlowApi = myWorkFlowApi;
@@ -87,6 +86,6 @@ class ScheduleController {
     }.bind(this));
   }
 }
-ScheduleController.$inject = ['$scope', 'myWorkFlowApi', '$state']
+ScheduleController.$inject = ['$scope', 'myWorkFlowApi', '$state'];
 angular.module(`${PKG.name}.feature.workflows`)
   .controller('WorkflowsSchedulesController', ScheduleController);

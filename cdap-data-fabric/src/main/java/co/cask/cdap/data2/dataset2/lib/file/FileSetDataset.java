@@ -35,6 +35,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -49,13 +50,12 @@ import javax.annotation.Nullable;
  */
 public final class FileSetDataset implements FileSet {
 
-  private final Map<String, String> properties;
+  private final DatasetSpecification spec;
   private final Map<String, String> runtimeArguments;
-
+  private final boolean isExternal;
   private final Location baseLocation;
   private final List<Location> inputLocations;
   private final Location outputLocation;
-
   private final String inputFormatClassName;
   private final String outputFormatClassName;
 
@@ -69,36 +69,55 @@ public final class FileSetDataset implements FileSet {
    */
   public FileSetDataset(DatasetContext datasetContext, CConfiguration cConf,
                         DatasetSpecification spec,
+                        LocationFactory absoluteLocationFactory,
                         NamespacedLocationFactory namespacedLocationFactory,
                         @Nonnull Map<String, String> runtimeArguments) throws IOException {
 
     Preconditions.checkNotNull(datasetContext, "Dataset context must not be null");
     Preconditions.checkNotNull(runtimeArguments, "Runtime arguments must not be null");
 
-    String namespaceId = datasetContext.getNamespaceId();
-    String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
-    String basePath = determineBasePath(spec);
-    Location namespaceHomeLocation = namespacedLocationFactory.get(Id.Namespace.from(namespaceId));
-    this.baseLocation = namespaceHomeLocation.append(dataDir).append(basePath);
-    this.properties = spec.getProperties();
+    this.spec = spec;
     this.runtimeArguments = runtimeArguments;
-    this.inputFormatClassName = FileSetProperties.getInputFormat(properties);
-    this.outputFormatClassName = FileSetProperties.getOutputFormat(properties);
+    this.isExternal = FileSetProperties.isDataExternal(spec.getProperties());
+    this.baseLocation = determineBaseLocation(datasetContext, cConf, spec,
+                                              absoluteLocationFactory, namespacedLocationFactory);
     this.outputLocation = determineOutputLocation();
     this.inputLocations = determineInputLocations();
+    this.inputFormatClassName = FileSetProperties.getInputFormat(spec.getProperties());
+    this.outputFormatClassName = FileSetProperties.getOutputFormat(spec.getProperties());
   }
 
   /**
-   * If the properties do not contain a base path, generate one from the dataset name.
+   * Generate the base location of the file set.
+   * <ul>
+   *   <li>If the properties do not contain a base path, generate one from the dataset name;</li>
+   *   <li>If the base path is absolute, return a location relative to the root of the file system;</li>
+   *   <li>Otherwise return a location relative to the data directory of the namespace.</li>
+   * </ul>
    * This is package visible, because FileSetAdmin needs it, too.
    * TODO: Ideally, this should be done in configure(), but currently it cannot because of CDAP-1721
    */
-  static String determineBasePath(DatasetSpecification spec) {
+  static Location determineBaseLocation(DatasetContext datasetContext, CConfiguration cConf,
+                                        DatasetSpecification spec, LocationFactory rootLocationFactory,
+                                        NamespacedLocationFactory namespacedLocationFactory) throws IOException {
     String basePath = FileSetProperties.getBasePath(spec.getProperties());
     if (basePath == null) {
       basePath = spec.getName().replace('.', '/');
     }
-    return basePath;
+    if (basePath.startsWith("/")) {
+      String topLevelPath = namespacedLocationFactory.getBaseLocation().toURI().getPath();
+      topLevelPath = topLevelPath.endsWith("/") ? topLevelPath : topLevelPath + "/";
+      Location baseLocation = rootLocationFactory.create(basePath);
+      if (baseLocation.toURI().getPath().startsWith(topLevelPath)) {
+        throw new DataSetException("Invalid base path '" + basePath + "' for dataset '" + spec.getName() + "'. " +
+                                     "It must not be inside the CDAP base path '" + topLevelPath + "'.");
+      }
+      return baseLocation;
+    } else {
+      Id.Namespace namespaceId = Id.Namespace.from(datasetContext.getNamespaceId());
+      String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
+      return namespacedLocationFactory.get(namespaceId).append(dataDir).append(basePath);
+    }
   }
 
   private Location determineOutputLocation() {
@@ -130,21 +149,28 @@ public final class FileSetDataset implements FileSet {
 
   @Override
   public Location getBaseLocation() {
+    // TODO: if the file set is external, we could return a ReadOnlyLocation that prevents writing [CDAP-2934]
     return baseLocation;
   }
 
   @Override
   public List<Location> getInputLocations() {
+    // TODO: if the file set is external, we could return a ReadOnlyLocation that prevents writing [CDAP-2934]
     return Lists.newLinkedList(inputLocations);
   }
 
   @Override
   public Location getOutputLocation() {
+    if (isExternal) {
+      throw new UnsupportedOperationException(
+        "Output is not supported for external file set '" + spec.getName() + "'");
+    }
     return outputLocation;
   }
 
   @Override
   public Location getLocation(String relativePath) {
+    // TODO: if the file set is external, we could return a ReadOnlyLocation that prevents writing [CDAP-2934]
     return createLocation(relativePath);
   }
 
@@ -172,7 +198,7 @@ public final class FileSetDataset implements FileSet {
       }
     }));
     Map<String, String> config = Maps.newHashMap();
-    config.putAll(FileSetProperties.getInputProperties(properties));
+    config.putAll(FileSetProperties.getInputProperties(spec.getProperties()));
     config.putAll(FileSetProperties.getInputProperties(runtimeArguments));
     config.put("mapred.input.dir", inputs);
     return ImmutableMap.copyOf(config);
@@ -180,13 +206,21 @@ public final class FileSetDataset implements FileSet {
 
   @Override
   public String getOutputFormatClassName() {
+    if (isExternal) {
+      throw new UnsupportedOperationException(
+        "Output is not supported for external file set '" + spec.getName() + "'");
+    }
     return outputFormatClassName;
   }
 
   @Override
   public Map<String, String> getOutputFormatConfiguration() {
+    if (isExternal) {
+      throw new UnsupportedOperationException(
+        "Output is not supported for external file set '" + spec.getName() + "'");
+    }
     Map<String, String> config = Maps.newHashMap();
-    config.putAll(FileSetProperties.getOutputProperties(properties));
+    config.putAll(FileSetProperties.getOutputProperties(spec.getProperties()));
     config.putAll(FileSetProperties.getOutputProperties(runtimeArguments));
     config.put(FileOutputFormat.OUTDIR, getFileSystemPath(outputLocation));
     return ImmutableMap.copyOf(config);

@@ -31,7 +31,6 @@ import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -45,7 +44,6 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -61,7 +59,6 @@ public class TimePartitionedFileSetTest {
   static final DateFormat DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
   static final long MINUTE = TimeUnit.MINUTES.toMillis(1);
   static final long HOUR = TimeUnit.HOURS.toMillis(1);
-  static final long YEAR = TimeUnit.DAYS.toMillis(365);
   static final long MAX = Long.MAX_VALUE;
 
   private static final Id.DatasetInstance TPFS_INSTANCE =
@@ -427,287 +424,20 @@ public class TimePartitionedFileSetTest {
       /* */                                     "[year==2012, month==11, day==1, hour in [null...9]]" },
   };
 
-  // tests that 2.8+ tpfs code is compatible with a pre-2.8 created dataset instance
-  @Test
-  public void testBackwardCompatibility() throws Exception {
-
-    // this should give us an instance that thinks it may have pre-2.8 partitions
-    final TimePartitionedFileSet dataset = dsFrameworkUtil.getInstance(
-      TPFS_INSTANCE, ImmutableMap.of(TimePartitionedFileSetDataset.ARGUMENT_LEGACY_DATASET, "true"));
-    final long time = DATE_FORMAT.parse("10/17/2014 8:42 am").getTime();
-
-    // add some legacy partitions
-    Assert.assertTrue(dataset instanceof TimePartitionedFileSetDataset);
-    final TimePartitionedFileSetDataset legacyDataset = (TimePartitionedFileSetDataset) dataset;
-    TransactionAware txAware = (TransactionAware) dataset;
-
-    dsFrameworkUtil.newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        legacyDataset.addLegacyPartition(time, "8:42");
-        legacyDataset.addLegacyPartition(time + HOUR, "9:42");
-        legacyDataset.addLegacyPartition(time + 2 * HOUR, "10:42");
-      }
-    });
-
-    dsFrameworkUtil.newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        // querying with partition filter does not see legacy partitions
-        Assert.assertEquals(Collections.<PartitionDetail>emptySet(), dataset.getPartitions(null));
-        // querying with time range sees legacy partitions
-        validateTimePartitions(dataset, 0, MAX, ImmutableMap.of(time,             "8:42",
-                                                                time +     HOUR,  "9:42",
-                                                                time + 2 * HOUR, "10:42"));
-      }
-    });
-
-    // add some new partitions
-    dsFrameworkUtil.newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        dataset.addPartition(time + 3 * HOUR, "11:42");
-        dataset.addPartition(time + 4 * HOUR, "12:42");
-      }
-    });
-
-    dsFrameworkUtil.newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        // querying with partition filter does not see legacy partitions
-        Assert.assertEquals(pp("11:42", "12:42"), paths(dataset.getPartitions(null)));
-        // querying with time range sees legacy partitions
-        validateTimePartitions(dataset, 0, MAX, ImmutableMap.of(time,             "8:42",
-                                                                time +     HOUR,  "9:42",
-                                                                time + 2 * HOUR, "10:42",
-                                                                time + 3 * HOUR, "11:42",
-                                                                time + 4 * HOUR, "12:42"));
-      }
-    });
-
-    // attempt to add a partition with the time of an existing legacy partition
-    dsFrameworkUtil.newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        try {
-          dataset.addPartition(time + HOUR, "19:42");
-          Assert.fail("add partition should have failed");
-        } catch (DataSetException e) {
-          // expected
-        }
-      }
-    });
-
-    dsFrameworkUtil.newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        // querying with partition filter does not see legacy partitions
-        Assert.assertEquals(pp("11:42", "12:42"), paths(dataset.getPartitions(null)));
-        // querying with time range sees legacy partitions
-        validateTimePartitions(dataset, 0, MAX, ImmutableMap.of(time,             "8:42",
-                                                                time +     HOUR,  "9:42",
-                                                                time + 2 * HOUR, "10:42",
-                                                                time + 3 * HOUR, "11:42",
-                                                                time + 4 * HOUR, "12:42"));
-      }
-    });
-
-    dsFrameworkUtil.newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        // drop one legacy partition
-        dataset.dropPartition(time);
-      }
-    });
-
-    dsFrameworkUtil.newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        // querying with partition filter does not see legacy partitions
-        Assert.assertEquals(pp("11:42", "12:42"), paths(dataset.getPartitions(null)));
-        // querying with time range sees legacy partitions
-        validateTimePartitions(dataset, 0, MAX, ImmutableMap.of(time +     HOUR,  "9:42",
-                                                                time + 2 * HOUR, "10:42",
-                                                                time + 3 * HOUR, "11:42",
-                                                                time + 4 * HOUR, "12:42"));
-      }
-    });
-
-    // re-add a partition with the time of the dropped one
-    dsFrameworkUtil.newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        dataset.addPartition(time, "18:42");
-      }
-    });
-
-    dsFrameworkUtil.newTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        // querying with partition filter does not see legacy partitions
-        Assert.assertEquals(pp("18:42", "11:42", "12:42"), paths(dataset.getPartitions(null)));
-        // querying with time range sees legacy partitions
-        validateTimePartitions(dataset, 0, MAX, ImmutableMap.of(time,            "18:42",
-                                                                time +     HOUR,  "9:42",
-                                                                time + 2 * HOUR, "10:42",
-                                                                time + 3 * HOUR, "11:42",
-                                                                time + 4 * HOUR, "12:42"));
-      }
-    });
-
-    // list again with a dataset that does not take legacy partitions into account
-    final TimePartitionedFileSet tpfs = dsFrameworkUtil.getInstance(TPFS_INSTANCE);
-    final PartitionFilter filter2014 = PartitionFilter.builder().addValueCondition("year", 2014).build();
-
-    dsFrameworkUtil.newTransactionExecutor((TransactionAware) tpfs).execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        // querying with partition filter does not see legacy partitions
-        Assert.assertEquals(pp("18:42", "11:42", "12:42"), paths(tpfs.getPartitions(null)));
-        Assert.assertEquals(pp("18:42", "11:42", "12:42"), paths(tpfs.getPartitions(filter2014)));
-        // querying with time range sees legacy partitions
-        validateTimePartitions(tpfs, 0, time + YEAR, ImmutableMap.of(time,            "18:42",
-                                                                     time + 3 * HOUR, "11:42",
-                                                                     time + 4 * HOUR, "12:42"));
-      }
-    });
-
-    // get partitions for a sub range, with legacy support enabled
-    dsFrameworkUtil.newTransactionExecutor(txAware, (TransactionAware) tpfs).execute(
-      new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          validateTimePartitions(dataset,
-                                 time +     HOUR + 20 * MINUTE,
-                                 time + 3 * HOUR + 20 * MINUTE, ImmutableMap.of(time + 2 * HOUR, "10:42",
-                                                                                time + 3 * HOUR, "11:42"));
-          validateTimePartitions(tpfs,
-                                 time +     HOUR + 20 * MINUTE,
-                                 time + 3 * HOUR + 20 * MINUTE, ImmutableMap.of(time + 3 * HOUR, "11:42"));
-        }
-    });
-  }
-
   private void validateTimePartition(TimePartitionedFileSet dataset, long time, String path) {
     PartitionDetail partitionDetail = dataset.getPartitionByTime(time);
     Assert.assertEquals(path == null, partitionDetail == null);
     Assert.assertTrue(path == null || partitionDetail == null || path.equals(partitionDetail.getRelativePath()));
-    Assert.assertEquals(path, dataset.getPartition(time));
   }
 
   private void validateTimePartitions(TimePartitionedFileSet dataset,
     long startTime, long endTime, Map<Long, String> expected) {
-    // validate getPartitionPaths(). This is deprecated but we still want to test it
-    Collection<String> paths = dataset.getPartitionPaths(startTime, endTime);
-    Assert.assertEquals(expected.size(), paths.size());
-    Assert.assertEquals(ImmutableSet.copyOf(expected.values()), ImmutableSet.copyOf(paths));
-    // validate getPartitions(). This is deprecated but we still want to test it
-    Map<Long, String> timeToPaths = dataset.getPartitions(startTime, endTime);
-    Assert.assertEquals(expected, timeToPaths);
     // validate getPartitionsByTime()
     Set<TimePartitionDetail> partitions = dataset.getPartitionsByTime(startTime, endTime);
     Assert.assertEquals(expected.size(), partitions.size());
     for (TimePartitionDetail partition : partitions) {
       Assert.assertEquals(expected.get(partition.getTime()), partition.getRelativePath());
     }
-  }
-
-  // tests that 2.8+ tpfs can upgrade legacy partitions to new format
-  @Test
-  public void testUpgrade() throws Exception {
-
-    // this should give us one instance that thinks it may have pre-2.8 partitions, and one that does not
-    Map<String, String> legacyArgs = ImmutableMap.of(TimePartitionedFileSetDataset.ARGUMENT_LEGACY_DATASET, "true");
-    final TimePartitionedFileSet withCompat = dsFrameworkUtil.getInstance(TPFS_INSTANCE, legacyArgs);
-    final TimePartitionedFileSet withoutCompat = dsFrameworkUtil.getInstance(TPFS_INSTANCE);
-    TransactionAware[] txAwares = { (TransactionAware) withCompat, (TransactionAware) withCompat };
-
-    // add some legacy partitions
-    Assert.assertTrue(withCompat instanceof TimePartitionedFileSetDataset);
-    final TimePartitionedFileSetDataset legacyDataset = (TimePartitionedFileSetDataset) withCompat;
-    Assert.assertTrue(legacyDataset.isLegacyDataset());
-
-    final long time = DATE_FORMAT.parse("10/17/2014 8:42 am").getTime();
-    dsFrameworkUtil.newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        legacyDataset.addLegacyPartition(time, "8:42");
-        legacyDataset.addLegacyPartition(time + HOUR, "9:42");
-        legacyDataset.addLegacyPartition(time + 2 * HOUR, "10:42");
-      }
-    });
-
-    // add some new partitions
-    dsFrameworkUtil.newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        withCompat.addPartition(time + 3 * HOUR, "11:42");
-        withCompat.addPartition(time + 4 * HOUR, "12:42");
-      }
-    });
-
-    final Map<Long, String> expectAll = ImmutableMap.of(time,             "8:42",
-                                                        time +     HOUR,  "9:42",
-                                                        time + 2 * HOUR, "10:42",
-                                                        time + 3 * HOUR, "11:42",
-                                                        time + 4 * HOUR, "12:42");
-
-    // with compatibility on, we should see all partitions
-    dsFrameworkUtil.newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        validateTimePartitions(withCompat, 0, MAX, expectAll);
-      }
-    });
-
-    // with compatibility off, we should see only new partitions
-    final PartitionFilter filter2014 = PartitionFilter.builder().addValueCondition("year", 2014).build();
-
-    dsFrameworkUtil.newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        // querying with partition filter does not see legacy partitions
-        Assert.assertEquals(pp("11:42", "12:42"), paths(withoutCompat.getPartitions(null)));
-        Assert.assertEquals(pp("11:42", "12:42"), paths(withoutCompat.getPartitions(filter2014)));
-        validateTimePartitions(withoutCompat, 0, time + YEAR, ImmutableMap.of(time + 3 * HOUR, "11:42",
-                                                                              time + 4 * HOUR, "12:42"));
-      }
-    });
-
-    // migrate legacy partitions
-    long migratedTime = 0;
-    while (migratedTime >= 0) {
-      migratedTime = dsFrameworkUtil.newTransactionExecutor(txAwares).execute(
-        new TransactionExecutor.Function<Long, Long>() {
-          @Override
-          public Long apply(Long startTime) throws Exception {
-            return legacyDataset.upgradeLegacyEntries(startTime, 1L);
-          }},
-        migratedTime);
-    }
-
-    // now we should see all partitions with and without backwards compatibility
-    dsFrameworkUtil.newTransactionExecutor(txAwares).execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        Assert.assertEquals(pp("8:42", "9:42", "10:42", "11:42", "12:42"), paths(withCompat.getPartitions(null)));
-        Assert.assertEquals(pp("8:42", "9:42", "10:42", "11:42", "12:42"), paths(withoutCompat.getPartitions(null)));
-        validateTimePartitions(withCompat, 0, MAX, expectAll);
-        validateTimePartitions(withoutCompat, 0, MAX, expectAll);
-      }
-    });
-  }
-
-  private static Set<String> pp(String... paths) {
-    return ImmutableSet.copyOf(paths);
-  }
-
-  private static Set<String> paths(Iterable<PartitionDetail> partitions) {
-    Set<String> set = Sets.newHashSet();
-    for (PartitionDetail partitionDetail : partitions) {
-      set.add(partitionDetail.getRelativePath());
-    }
-    return set;
   }
 
   @Test

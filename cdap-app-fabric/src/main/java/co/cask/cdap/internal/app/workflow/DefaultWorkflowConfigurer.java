@@ -130,9 +130,11 @@ public class DefaultWorkflowConfigurer implements WorkflowConfigurer, WorkflowFo
     WorkflowActionNode actionNode = (WorkflowActionNode) node;
     ScheduleProgramInfo program = actionNode.getProgram();
     if (program.getProgramType() == SchedulableProgramType.CUSTOM_ACTION) {
-      return new WorkflowActionNode(Integer.toString(nodeIdentifier++), actionNode.getActionSpecification());
+      // TODO [CDAP-2710] This method will not required when we assign nodeId to the unique node name
+      return new WorkflowActionNode(actionNode.getProgram().getProgramName(), actionNode.getActionSpecification());
     } else {
-      return new WorkflowActionNode(Integer.toString(nodeIdentifier++), program);
+      // TODO [CDAP-2710] This method will not required when we assign nodeId to the unique node name
+      return new WorkflowActionNode(actionNode.getProgram().getProgramName(), program);
     }
   }
 

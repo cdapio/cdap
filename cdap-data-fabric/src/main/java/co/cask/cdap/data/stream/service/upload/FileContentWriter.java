@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data.stream.service.upload;
 
-import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.stream.StreamDataFileConstants;
 import co.cask.cdap.data.stream.StreamDataFileWriter;

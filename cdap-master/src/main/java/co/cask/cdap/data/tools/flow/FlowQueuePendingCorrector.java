@@ -32,9 +32,9 @@ import co.cask.cdap.app.queue.QueueSpecification;
 import co.cask.cdap.app.queue.QueueSpecificationGenerator;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
@@ -307,7 +307,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
   protected void startUp() throws Exception {
     kafkaClientService.startAndWait();
     zkClientService.startAndWait();
-    twillRunnerService.startAndWait();
+    twillRunnerService.start();
     programRuntimeService.startAndWait();
     queueDebugger.startAndWait();
   }
@@ -315,8 +315,8 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     queueDebugger.stopAndWait();
-    programRuntimeService.startAndWait();
-    twillRunnerService.startAndWait();
+    programRuntimeService.stopAndWait();
+    twillRunnerService.stop();
     zkClientService.stopAndWait();
     kafkaClientService.stopAndWait();
   }

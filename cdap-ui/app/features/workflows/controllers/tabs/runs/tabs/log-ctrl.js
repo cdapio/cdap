@@ -1,4 +1,3 @@
-'use strict';
 class WorkFlowsRunDetailLogController {
   constructor($scope, myWorkFlowApi, $state) {
     let params = {

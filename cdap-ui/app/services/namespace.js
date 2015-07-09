@@ -53,7 +53,7 @@ angular.module(PKG.name + '.services')
                   $rootScope.$broadcast(MYAUTH_EVENT.sessionTimeout);
                   $state.go('login');
                 } else {
-                  EventPipe.emit('backendDown', 'Problem accessing namespace');
+                  EventPipe.emit('backendDown', 'Problem accessing namespace.', 'Please refresh the page.');
                 }
               }
         );

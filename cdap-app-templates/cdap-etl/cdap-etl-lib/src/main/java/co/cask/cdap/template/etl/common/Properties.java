@@ -88,16 +88,23 @@ public final class Properties {
    * Properties for Cube
    */
   public static class Cube {
-    public static final String NAME = "name";
-    public static final String PROPERTY_RESOLUTIONS = co.cask.cdap.api.dataset.lib.cube.Cube.PROPERTY_RESOLUTIONS;
-    public static final String MAPPING_CONFIG_PROPERTY = "mapping.config";
-    public static final String CUSTOM_PROPERTIES = "custom.properties";
+    public static final String DATASET_NAME = "name";
+    public static final String DATASET_RESOLUTIONS =
+      co.cask.cdap.api.dataset.lib.cube.Cube.PROPERTY_RESOLUTIONS;
+    public static final String DATASET_OTHER = "dataset.cube.properties";
+
+    public static final String FACT_TS_FIELD = "cubeFact.timestamp.field";
+    public static final String FACT_TS_FORMAT = "cubeFact.timestamp.format";
+    public static final String MEASUREMENT_PREFIX = "cubeFact.measurement.";
+
+    public static final String MEASUREMENTS = "cubeFact.measurements";
   }
 
   /**
    * Properties for Tables
    */
   public static class Table {
+    public static final String NAME = "name";
     public static final String PROPERTY_SCHEMA = co.cask.cdap.api.dataset.table.Table.PROPERTY_SCHEMA;
     public static final String PROPERTY_SCHEMA_ROW_FIELD =
       co.cask.cdap.api.dataset.table.Table.PROPERTY_SCHEMA_ROW_FIELD;

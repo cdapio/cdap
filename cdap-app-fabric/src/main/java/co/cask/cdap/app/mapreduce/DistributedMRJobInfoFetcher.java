@@ -16,7 +16,7 @@
 
 package co.cask.cdap.app.mapreduce;
 
-import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MRJobInfo;
 import com.google.inject.Inject;

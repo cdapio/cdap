@@ -23,7 +23,6 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.format.RecordFormats;
 import co.cask.cdap.data.format.StreamEventRecordFormat;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.serde.ObjectDeserializer;
@@ -87,9 +86,7 @@ public class StreamSerDe implements SerDe {
     try {
       // Get the stream format from the stream config.
       ContextManager.Context context = ContextManager.getContext(conf);
-      // get the stream admin from the context, which will let us get stream information such as the path
-      StreamAdmin streamAdmin = context.getStreamAdmin();
-      StreamConfig streamConfig = streamAdmin.getConfig(streamId);
+      StreamConfig streamConfig = context.getStreamConfig(streamId);
       FormatSpecification formatSpec = streamConfig.getFormat();
       this.streamFormat = (StreamEventRecordFormat) RecordFormats.createInitializedFormat(formatSpec);
       Schema schema = formatSpec.getSchema();

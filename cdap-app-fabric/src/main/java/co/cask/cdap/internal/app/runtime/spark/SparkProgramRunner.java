@@ -29,11 +29,16 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.InstantiatorFactory;
-import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
+import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -42,10 +47,9 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
-import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,21 +67,18 @@ public class SparkProgramRunner implements ProgramRunner {
   private final CConfiguration cConf;
   private final MetricsCollectionService metricsCollectionService;
   private final TransactionSystemClient txSystemClient;
-  private final LocationFactory locationFactory;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final StreamAdmin streamAdmin;
   private final Store store;
 
   @Inject
-  public SparkProgramRunner(DatasetFramework datasetFramework, CConfiguration cConf,
-                            MetricsCollectionService metricsCollectionService, Configuration hConf,
-                            TransactionSystemClient txSystemClient, LocationFactory locationFactory,
+  public SparkProgramRunner(CConfiguration cConf, Configuration hConf, TransactionSystemClient txSystemClient,
+                            DatasetFramework datasetFramework, MetricsCollectionService metricsCollectionService,
                             DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin, Store store) {
     this.hConf = hConf;
     this.datasetFramework = datasetFramework;
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
-    this.locationFactory = locationFactory;
     this.txSystemClient = txSystemClient;
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamAdmin = streamAdmin;
@@ -104,29 +105,31 @@ public class SparkProgramRunner implements ProgramRunner {
     long logicalStartTime = arguments.hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
       ? Long.parseLong(arguments.getOption(ProgramOptionConstants.LOGICAL_START_TIME)) : System.currentTimeMillis();
 
-    String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
+    ClientSparkContext context = new ClientSparkContext(program, runId, logicalStartTime,
+                                                        options.getUserArguments().asMap(),
+                                                        new TransactionContext(txSystemClient), datasetFramework,
+                                                        discoveryServiceClient, metricsCollectionService);
 
     Spark spark;
     try {
       spark = new InstantiatorFactory(false).get(TypeToken.of(program.<Spark>getMainClass())).create();
+
+      // Fields injection
+      Reflections.visit(spark, TypeToken.of(spark.getClass()),
+                        new PropertyFieldSetter(spec.getProperties()),
+                        new DataSetFieldSetter(context),
+                        new MetricsFieldSetter(context.getMetrics()));
     } catch (Exception e) {
       LOG.error("Failed to instantiate Spark class for {}", spec.getClassName(), e);
       throw Throwables.propagate(e);
     }
 
-    final BasicSparkContext context = new BasicSparkContext(program, runId, options.getUserArguments(),
-                                                            appSpec.getDatasets().keySet(), spec,
-                                                            logicalStartTime, workflowBatch,
-                                                            metricsCollectionService, datasetFramework,
-                                                            discoveryServiceClient, streamAdmin);
+    Service sparkRuntimeService = new SparkRuntimeService(
+      cConf, hConf, spark, new SparkContextFactory(hConf, context, datasetFramework, streamAdmin),
+      program.getJarLocation(), txSystemClient
+    );
 
-    LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
-
-    Service sparkRuntimeService = new SparkRuntimeService(cConf, hConf, spark, spec, context,
-                                                          program.getJarLocation(), locationFactory,
-                                                          txSystemClient);
-
-    sparkRuntimeService.addListener(createRuntimeServiceListener(program, runId, arguments),
+    sparkRuntimeService.addListener(createRuntimeServiceListener(program.getId(), runId, arguments),
                                     Threads.SAME_THREAD_EXECUTOR);
     ProgramController controller = new SparkProgramController(sparkRuntimeService, context);
 
@@ -138,7 +141,8 @@ public class SparkProgramRunner implements ProgramRunner {
   /**
    * Creates a service listener to reactor on state changes on {@link SparkRuntimeService}.
    */
-  private Service.Listener createRuntimeServiceListener(final Program program, final RunId runId, Arguments arguments) {
+  private Service.Listener createRuntimeServiceListener(final Id.Program programId, final RunId runId,
+                                                        Arguments arguments) {
 
     final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
     final String workflowName = arguments.getOption(ProgramOptionConstants.WORKFLOW_NAME);
@@ -156,10 +160,10 @@ public class SparkProgramRunner implements ProgramRunner {
         }
 
         if (workflowName == null) {
-          store.setStart(program.getId(), runId.getId(), startTimeInSeconds, null, twillRunId);
+          store.setStart(programId, runId.getId(), startTimeInSeconds, null, twillRunId);
         } else {
           // Program started by Workflow
-          store.setWorkflowProgramStart(program.getId(), runId.getId(), workflowName, workflowRunId, workflowNodeId,
+          store.setWorkflowProgramStart(programId, runId.getId(), workflowName, workflowRunId, workflowNodeId,
                                         startTimeInSeconds, null, twillRunId);
         }
       }
@@ -168,18 +172,18 @@ public class SparkProgramRunner implements ProgramRunner {
       public void terminated(Service.State from) {
         if (from == Service.State.STOPPING) {
           // Service was killed
-          store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+          store.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                         ProgramController.State.KILLED.getRunStatus());
         } else {
           // Service completed by itself.
-          store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+          store.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                         ProgramController.State.COMPLETED.getRunStatus());
         }
       }
 
       @Override
       public void failed(Service.State from, Throwable failure) {
-        store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+        store.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                       ProgramController.State.ERROR.getRunStatus());
       }
     };

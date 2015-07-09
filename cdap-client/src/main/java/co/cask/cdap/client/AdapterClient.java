@@ -18,10 +18,10 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.exception.AdapterNotFoundException;
-import co.cask.cdap.common.exception.ApplicationTemplateNotFoundException;
-import co.cask.cdap.common.exception.BadRequestException;
-import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.common.AdapterNotFoundException;
+import co.cask.cdap.common.ApplicationTemplateNotFoundException;
+import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterDetail;

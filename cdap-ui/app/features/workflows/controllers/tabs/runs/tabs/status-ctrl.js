@@ -1,4 +1,3 @@
-'use strict';
 // FIXME: Needs to be re-thought.
 var runparams = {},
     alertpromise,
@@ -16,9 +15,6 @@ class WorkflowsRunsStatusController {
     this.mySparkApi = mySparkApi;
     this.$filter = $filter;
     this.runsCtrl = $scope.RunsController;
-
-    let filterFilter = this.$filter('filter'),
-        match;
 
     params = {
       appId: this.$state.params.appId,
@@ -142,14 +138,14 @@ class WorkflowsRunsStatusController {
       if (instance.program.programType === 'MAPREDUCE' &&
          this.runsCtrl.runs.selected.properties[instance.nodeId]
         ) {
-        stateParams.destinationType = 'Mapreduce'
+        stateParams.destinationType = 'Mapreduce';
         this.$state.go('mapreduce.detail.runs.run', stateParams);
 
       } else if (instance.program.programType === 'SPARK' &&
                 this.runsCtrl.runs.selected.properties[instance.nodeId]
                ) {
 
-        stateParams.destinationType = 'Spark'
+        stateParams.destinationType = 'Spark';
         this.$state.go('spark.detail.runs.run', stateParams);
       }
     } else {
@@ -166,25 +162,25 @@ class WorkflowsRunsStatusController {
         });
       }
     }
-  };
+  }
 
   stop() {
     this.runStatus = 'STOPPING';
     this.myWorkFlowApi
      .stopRun(runparams, {});
-  };
+  }
 
   suspend() {
     this.runStatus = 'SUSPENDING';
     this.myWorkFlowApi
      .suspendRun(runparams, {});
-  };
+  }
 
   resume() {
     this.runStatus = 'RESUMING';
     this.myWorkFlowApi
      .resumeRun(runparams, {});
-  };
+  }
 
 }
 

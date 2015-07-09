@@ -16,10 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.spark.dataset;
 
-import co.cask.cdap.api.data.batch.BatchWritable;
-import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.internal.app.runtime.spark.BasicSparkContext;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.slf4j.Logger;
@@ -28,16 +24,15 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 final class DatasetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
-  //TODO: Needs support for metrics
+
   private static final Logger LOG = LoggerFactory.getLogger(DatasetRecordWriter.class);
 
-  private final BatchWritable<KEY, VALUE> batchWritable;
-  private final BasicSparkContext sparkContext;
+  //TODO: Needs support for metrics
 
-  public DatasetRecordWriter(final BatchWritable<KEY, VALUE> batchWritable, BasicSparkContext sparkContext) {
+  private final CloseableBatchWritable<KEY, VALUE> batchWritable;
+
+  public DatasetRecordWriter(CloseableBatchWritable<KEY, VALUE> batchWritable) {
     this.batchWritable = batchWritable;
-    this.sparkContext = sparkContext;
-    LoggingContextAccessor.setLoggingContext(sparkContext.getLoggingContext());
   }
 
   @Override
@@ -47,13 +42,6 @@ final class DatasetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
 
   @Override
   public void close(final TaskAttemptContext context) throws IOException, InterruptedException {
-    try {
-      sparkContext.flushOperations();
-    } catch (Exception e) {
-      LOG.error("Failed to flush operations at the end of reducer of " + sparkContext.toString());
-      throw Throwables.propagate(e);
-    } finally {
-      sparkContext.close();
-    }
+    batchWritable.close();
   }
 }

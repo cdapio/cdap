@@ -25,10 +25,10 @@ import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.CannotBeDeletedException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.CannotBeDeletedException;
-import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
@@ -408,6 +408,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       datasets.add(new DatasetDetail(datasetSpec.getInstanceName(), datasetSpec.getTypeName()));
     }
 
-    return new ApplicationDetail(spec.getName(), spec.getVersion(), spec.getDescription(), streams, datasets, programs);
+    return new ApplicationDetail(spec.getName(), spec.getVersion(), spec.getDescription(), spec.getConfiguration(),
+                                 streams, datasets, programs);
   }
 }

@@ -16,9 +16,12 @@
 
 package co.cask.cdap.api.spark;
 
+import co.cask.cdap.api.annotation.Beta;
+
 /**
  * Defines an interface for the Spark job.
  */
+@Beta
 public interface Spark {
   /**
    * Configures a {@link Spark} job using the given {@link SparkConfigurer}.

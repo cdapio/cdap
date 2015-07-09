@@ -16,16 +16,20 @@
 
 package co.cask.cdap.common.lang;
 
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterators;
+import com.google.common.base.Predicates;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Set;
 
 /**
  * ClassLoader that filters out certain resources.
@@ -36,11 +40,36 @@ public final class FilterClassLoader extends ClassLoader {
   private final Predicate<String> packageAcceptor;
   private final ClassLoader bootstrapClassLoader;
 
+  public static FilterClassLoader create(ClassLoader parentClassLoader) {
+    return create(null, parentClassLoader);
+  }
+
+  public static FilterClassLoader create(ProgramType programType, ClassLoader parentClassLoader) {
+    Set<String> visibleResources = ProgramResources.getVisibleResources(programType);
+    ImmutableSet.Builder<String> visiblePackages = ImmutableSet.builder();
+    for (String resource : visibleResources) {
+      if (resource.endsWith(".class")) {
+        int idx = resource.lastIndexOf('/');
+        // Ignore empty package
+        if (idx > 0) {
+          visiblePackages.add(resource.substring(0, idx));
+        }
+      }
+    }
+    return new FilterClassLoader(Predicates.in(visibleResources),
+      Predicates.in(visiblePackages.build()), parentClassLoader);
+  }
+
+  public static FilterClassLoader create(Predicate<String> resourceAcceptor,
+                                         Predicate<String> packageAcceptor, ClassLoader parentClassLoader) {
+    return new FilterClassLoader(resourceAcceptor, packageAcceptor, parentClassLoader);
+  }
+
   /**
    * @param resourceAcceptor Filter for accepting resources
    * @param parentClassLoader Parent classloader
    */
-  public FilterClassLoader(Predicate<String> resourceAcceptor,
+  private FilterClassLoader(Predicate<String> resourceAcceptor,
                            Predicate<String> packageAcceptor, ClassLoader parentClassLoader) {
     super(parentClassLoader);
     this.resourceAcceptor = resourceAcceptor;
@@ -62,24 +91,6 @@ public final class FilterClassLoader extends ClassLoader {
   }
 
   @Override
-  public URL findResource(String name) {
-    if (isValidResource(name)) {
-      return super.findResource(name);
-    }
-
-    return null;
-  }
-
-  @Override
-  public Enumeration<URL> findResources(String name) throws IOException {
-    if (isValidResource(name)) {
-      return super.findResources(name);
-    }
-
-    return Iterators.asEnumeration(ImmutableList.<URL>of().iterator());
-  }
-
-  @Override
   protected Package[] getPackages() {
     List<Package> packages = Lists.newArrayList();
     for (Package pkg : super.getPackages()) {
@@ -97,7 +108,29 @@ public final class FilterClassLoader extends ClassLoader {
 
   @Override
   public URL getResource(String name) {
-    return super.getResource(name);
+    URL resource = bootstrapClassLoader.getResource(name);
+    if (resource != null) {
+      return resource;
+    }
+    return resourceAcceptor.apply(name) ? super.getResource(name) : null;
+  }
+
+  @Override
+  public Enumeration<URL> getResources(String name) throws IOException {
+    Enumeration<URL> resources = bootstrapClassLoader.getResources(name);
+    if (resources.hasMoreElements()) {
+      return resources;
+    }
+    return resourceAcceptor.apply(name) ? super.getResources(name) : Collections.<URL>emptyEnumeration();
+  }
+
+  @Override
+  public InputStream getResourceAsStream(String name) {
+    InputStream resourceStream = bootstrapClassLoader.getResourceAsStream(name);
+    if (resourceStream != null) {
+      return resourceStream;
+    }
+    return resourceAcceptor.apply(name) ? super.getResourceAsStream(name) : null;
   }
 
   private String classNameToResourceName(String className) {

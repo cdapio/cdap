@@ -40,7 +40,7 @@ angular.module(PKG.name + '.feature.adapters')
       if (tab.length) {
         this.tabs.splice(this.tabs.indexOf(tab[0]), 1);
       }
-    }
+    };
 
     myAdapterApi.fetchTemplates()
       .$promise
@@ -132,7 +132,7 @@ angular.module(PKG.name + '.feature.adapters')
             var formattedMessage = '';
             messages.forEach(function(message) {
               formattedMessage += '<div>';
-              formattedMessage += '<strong>' + message.error + '</strong> '
+              formattedMessage += '<strong>' + message.error + '</strong> ';
               formattedMessage += '<span>' + message.message + '</span>';
               formattedMessage += '</div>';
             });

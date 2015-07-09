@@ -140,7 +140,7 @@ public class ETLWorkerTest extends TestBase {
   public void testTableSink() throws Exception {
     ETLStage source = new ETLStage("Test", ImmutableMap.of(TestSource.PROPERTY_TYPE, TestSource.TABLE_TYPE));
     ETLStage sink = new ETLStage("Table",
-                                 ImmutableMap.of(Properties.BatchReadableWritable.NAME, "table1",
+                                 ImmutableMap.of(Properties.Table.NAME, "table1",
                                    Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "binary"));
     ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sink, Lists.<ETLStage>newArrayList());
     AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));

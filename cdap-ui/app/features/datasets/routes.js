@@ -39,7 +39,7 @@ angular.module(PKG.name + '.feature.datasets')
                     defer.resolve(true);
                   }
                 },
-                function error(res) {
+                function error() {
                   defer.resolve(false);
                 }
               );

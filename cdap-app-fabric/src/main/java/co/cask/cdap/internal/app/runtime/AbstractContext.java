@@ -62,6 +62,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
   private final Program program;
   private final RunId runId;
+  private final List<Id> owners;
   private final Map<String, String> runtimeArguments;
   private final Map<String, Dataset> datasets;
 
@@ -91,15 +92,17 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
                             @Nullable AdapterDefinition adapterSpec,
                             @Nullable PluginInstantiator pluginInstantiator) {
-    super(program);
+    super(program.getId());
     this.program = program;
     this.runId = runId;
     this.runtimeArguments = ImmutableMap.copyOf(arguments.asMap());
     this.discoveryServiceClient = discoveryServiceClient;
+    this.owners = createOwners(program.getId(), adapterSpec);
 
     this.programMetrics = metricsContext;
     this.dsInstantiator = new DatasetInstantiator(program.getId().getNamespace(), dsFramework,
-                                                  program.getClassLoader(), getOwners(), programMetrics);
+                                                  program.getClassLoader(), owners,
+                                                  programMetrics);
 
     // todo: this should be instantiated on demand, at run-time dynamically. Esp. bad to do that in ctor...
     // todo: initialized datasets should be managed by DatasetContext (ie. DatasetInstantiator): refactor further
@@ -108,13 +111,17 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.pluginInstantiator = pluginInstantiator;
   }
 
-  public List<Id> getOwners() {
+  private List<Id> createOwners(Id.Program programId, @Nullable AdapterDefinition adapterSpec) {
     ImmutableList.Builder<Id> result = ImmutableList.builder();
-    result.add(program.getId());
+    result.add(programId);
     if (adapterSpec != null) {
-      result.add(Id.Adapter.from(program.getId().getNamespace(), adapterSpec.getName()));
+      result.add(Id.Adapter.from(programId.getNamespace(), adapterSpec.getName()));
     }
     return result.build();
+  }
+
+  public List<Id> getOwners() {
+    return owners;
   }
 
   public abstract Metrics getMetrics();
@@ -167,6 +174,10 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     }
     // if execution gets here, then dataset was null
     throw new DatasetInstantiationException(String.format("'%s' is not a known Dataset", name));
+  }
+
+  public Map<String, Dataset> getDatasets() {
+    return datasets;
   }
 
   public String getNamespaceId() {

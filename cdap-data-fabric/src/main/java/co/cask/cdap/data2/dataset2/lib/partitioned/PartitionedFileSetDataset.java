@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
@@ -75,8 +76,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   protected final FileSet files;
   protected final Table partitionsTable;
-  protected final Map<String, String> runtimeArguments;
   protected final DatasetSpecification spec;
+  protected final boolean isExternal;
+  protected final Map<String, String> runtimeArguments;
   protected final Provider<ExploreFacade> exploreFacadeProvider;
   protected final Partitioning partitioning;
   protected boolean ignoreInvalidRowsSilently = false;
@@ -98,9 +100,10 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     this.files = fileSet;
     this.partitionsTable = partitionTable;
     this.spec = spec;
-    this.exploreFacadeProvider = exploreFacadeProvider;
+    this.isExternal = FileSetProperties.isDataExternal(spec.getProperties());
     this.runtimeArguments = arguments;
     this.partitioning = partitioning;
+    this.exploreFacadeProvider = exploreFacadeProvider;
     this.datasetInstanceId = Id.DatasetInstance.from(datasetContext.getNamespaceId(), name);
   }
 
@@ -220,12 +223,25 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   @Override
   public void dropPartition(PartitionKey key) {
     byte[] rowKey = generateRowKey(key, partitioning);
+    Partition partition = getPartition(key);
+    if (partition == null) {
+      // silently ignore non-existing partitions
+      return;
+    }
+    if (!isExternal) {
+      try {
+        partition.getLocation().delete();
+      } catch (IOException e) {
+        throw new DataSetException(String.format("Error deleting file(s) for partition %s at path %s: %s",
+                                                 key, partition.getLocation().toURI().getPath(), e.getMessage()), e);
+      }
+    }
     partitionsTable.delete(rowKey);
     dropPartitionFromExplore(key);
     // TODO: make DDL operations transactional [CDAP-1393]
   }
 
-  private void dropPartitionFromExplore(PartitionKey key) {
+  protected void dropPartitionFromExplore(PartitionKey key) {
     if (FileSetProperties.isExploreEnabled(spec.getProperties())) {
       ExploreFacade exploreFacade = exploreFacadeProvider.get();
       if (exploreFacade != null) {
@@ -241,6 +257,10 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   @Override
   public PartitionOutput getPartitionOutput(PartitionKey key) {
+    if (isExternal) {
+      throw new UnsupportedOperationException(
+        "Output is not supported for external partitioned file set '" + spec.getName() + "'");
+    }
     return new BasicPartitionOutput(this, getOutputPath(partitioning, key), key);
   }
 
@@ -408,6 +428,10 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   @Override
   public Map<String, String> getOutputFormatConfiguration() {
+    if (isExternal) {
+      throw new UnsupportedOperationException(
+        "Output is not supported for external partitioned file set '" + spec.getName() + "'");
+    }
     // we set the file set's output path in the definition's getDataset(), so there is no need to configure it again.
     // here we just want to validate that an output partition key was specified in the arguments.
     PartitionKey outputKey = PartitionedFileSetArguments.getOutputPartitionKey(runtimeArguments, getPartitioning());

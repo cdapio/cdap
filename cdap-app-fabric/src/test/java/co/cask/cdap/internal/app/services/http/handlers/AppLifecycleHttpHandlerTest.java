@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.services.http.handlers;
 import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.AppWithDatasetDuplicate;
 import co.cask.cdap.BloatedWordCountApp;
+import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
@@ -62,12 +63,22 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
+  public void testAppWithConfig() throws Exception {
+    ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("abc", "def");
+    HttpResponse response = deploy(ConfigTestApp.class, "ConfigApp", config);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    JsonObject appDetails = getAppDetails(Constants.DEFAULT_NAMESPACE, "ConfigApp");
+    Assert.assertEquals(GSON.toJson(config), appDetails.get("configuration").getAsString());
+  }
+
+  @Test
   public void testDeployWithVersion() throws Exception {
     HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN,
                                    TEST_NAMESPACE1, "BobApp", "1.2.3");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     JsonObject appDetails = getAppDetails(TEST_NAMESPACE1, "BobApp");
     Assert.assertEquals("1.2.3", appDetails.get("version").getAsString());
+    Assert.assertNull(appDetails.get("configuration"));
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }

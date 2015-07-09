@@ -16,6 +16,7 @@
 
 package co.cask.cdap.hive.context;
 
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -23,13 +24,20 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
+import co.cask.cdap.proto.Id;
+import com.google.common.base.Objects;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -47,8 +55,9 @@ import javax.annotation.Nullable;
 public class ContextManager {
   private static Context savedContext;
 
-  public static void saveContext(DatasetFramework datasetFramework, StreamAdmin streamAdmin) {
-    savedContext = new Context(datasetFramework, streamAdmin);
+  public static void saveContext(DatasetFramework datasetFramework, StreamAdmin streamAdmin,
+                                 SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
+    savedContext = new Context(datasetFramework, streamAdmin, datasetInstantiatorFactory);
   }
 
   /**
@@ -101,35 +110,62 @@ public class ContextManager {
 
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
-    return new Context(datasetFramework, streamAdmin, zkClientService);
+    SystemDatasetInstantiatorFactory datasetInstantiatorFactory =
+      injector.getInstance(SystemDatasetInstantiatorFactory.class);
+    return new Context(datasetFramework, streamAdmin, zkClientService, datasetInstantiatorFactory);
   }
 
   /**
-      * Contains DatasetFramework object and StreamAdmin object required to run Hive queries in MapReduce jobs.
-      */
+   * Contains DatasetFramework object and StreamAdmin object required to run Hive queries in MapReduce jobs.
+   */
   public static class Context implements Closeable {
     private final DatasetFramework datasetFramework;
     private final StreamAdmin streamAdmin;
     private final ZKClientService zkClientService;
+    private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
 
-    public Context(DatasetFramework datasetFramework, StreamAdmin streamAdmin, ZKClientService zkClientService) {
+    public Context(DatasetFramework datasetFramework, StreamAdmin streamAdmin,
+                   ZKClientService zkClientService,
+                   SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
       // This constructor is called from the MR job Hive launches.
       this.datasetFramework = datasetFramework;
       this.streamAdmin = streamAdmin;
       this.zkClientService = zkClientService;
+      this.datasetInstantiatorFactory = datasetInstantiatorFactory;
     }
 
-    public Context(DatasetFramework datasetFramework, StreamAdmin streamAdmin) {
+    public Context(DatasetFramework datasetFramework, StreamAdmin streamAdmin,
+                   SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
       // This constructor is called from Hive server, that is the Explore module.
-      this(datasetFramework, streamAdmin, null);
+      this(datasetFramework, streamAdmin, null, datasetInstantiatorFactory);
     }
 
-    public DatasetFramework getDatasetFramework() {
-      return datasetFramework;
+    public StreamConfig getStreamConfig(Id.Stream streamId) throws IOException {
+      return streamAdmin.getConfig(streamId);
     }
 
-    public StreamAdmin getStreamAdmin() {
-      return streamAdmin;
+    public DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetId) throws DatasetManagementException {
+      return datasetFramework.getDatasetSpec(datasetId);
+    }
+
+    /**
+     * Get a {@link SystemDatasetInstantiator} that can instantiate datasets using the given classloader as the
+     * parent classloader for datasets. Must be closed after it is no longer needed, as dataset jars may be unpacked
+     * in order to create classloaders for custom datasets.
+     *
+     * The given parent classloader will be wrapped in a {@link FilterClassLoader}
+     * to prevent CDAP dependencies from leaking through. For example, if a custom dataset has an avro dependency,
+     * the classloader should use the avro from the custom dataset and not from cdap.
+     *
+     * @param parentClassLoader the parent classloader to use when instantiating datasets. If null, the system
+     *                          classloader will be used
+     * @return a dataset instantiator that can be used to instantiate datasets
+     */
+    public SystemDatasetInstantiator createDatasetInstantiator(@Nullable ClassLoader parentClassLoader) {
+      parentClassLoader = parentClassLoader == null ?
+        Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader()) :
+        parentClassLoader;
+      return datasetInstantiatorFactory.create(FilterClassLoader.create(parentClassLoader));
     }
 
     @Override

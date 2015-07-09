@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.Id;
 
 /**
@@ -25,7 +25,7 @@ import co.cask.cdap.proto.Id;
 public class ArtifactNotExistsException extends NotFoundException {
 
   public ArtifactNotExistsException(Id.Namespace namespace, String name) {
-    super("artifact", namespace.toString() + ":" + name);
+    super("artifact", namespace.getId() + ":" + name);
   }
 
   public ArtifactNotExistsException(Id.Artifact artifactId) {
