@@ -122,6 +122,27 @@ body.theme-cdap.state-adapters-create {
     }
   }
 
+  [plugin-property-edit-view] {
+    .widget-group-container {
+      &.well {
+        padding: 10px;
+        margin: 10px;
+        
+        h3 { margin: 0 0 10px 0; }
+
+        .row-padding {
+          padding: 0 30px;
+          .popover {
+            max-width: 550px;
+            width: 500px;
+          }
+          textarea.form-control {
+            min-height: 200px;
+          }
+        }
+      }
+    }
+  }
 }
 body.theme-cdap.state-adapters-create {
 
@@ -230,26 +251,6 @@ body.theme-cdap.state-adapters-create {
   .fa-asterisk {
     font-size: 9px;
     color: @brand-danger;
-  }
-
-  [plugin-property-edit-view] {
-    .widget-group-container {
-      &.well {
-        padding: 10px;
-        h3 { margin: 0 0 10px 0; }
-
-        .row-padding {
-          padding: 0 30px;
-          .popover {
-            max-width: 550px;
-            width: 500px;
-          }
-          textarea.form-control {
-            min-height: 200px;
-          }
-        }
-      }
-    }
   }
 
   #ETLsourceTab, #ETLsinkTab, #ETLtransformsTab {
