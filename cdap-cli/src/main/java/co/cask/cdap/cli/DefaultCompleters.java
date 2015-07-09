@@ -74,7 +74,9 @@ public class DefaultCompleters implements Supplier<Map<String, Completer>> {
     for (ElementType elementType : ElementType.values()) {
       if (elementType.getProgramType() != null && elementType.isListable()) {
         result.put(elementType.getArgumentName().getName(),
-                   new ProgramIdCompleter(injector.getInstance(ApplicationClient.class), elementType.getProgramType()));
+                   new ProgramIdCompleter(injector.getInstance(ApplicationClient.class),
+                                          injector.getInstance(CLIConfig.class),
+                                          elementType.getProgramType()));
       }
     }
     return result.build();

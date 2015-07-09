@@ -25,6 +25,7 @@ import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 
@@ -48,7 +49,7 @@ public class GetWorkflowCurrentRunCommand extends AbstractCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
-    String appId = programIdParts[0];
+    Id.Application appId = Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]);
 
     List<WorkflowActionNode> nodes;
     if (elementType.getProgramType() != null) {

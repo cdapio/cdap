@@ -23,6 +23,7 @@ import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.AdapterClient;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
 
@@ -43,10 +44,11 @@ public class GetAdapterLogsCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String adapterName = arguments.get(ArgumentName.ADAPTER.toString());
+    Id.Adapter adapter = Id.Adapter.from(cliConfig.getCurrentNamespace(),
+                                         arguments.get(ArgumentName.ADAPTER.toString()));
 
     // TODO: scrollable logs
-    String logs = adapterClient.getLogs(adapterName);
+    String logs = adapterClient.getLogs(adapter);
     output.println(logs);
   }
 

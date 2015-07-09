@@ -26,6 +26,7 @@ import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -50,8 +51,9 @@ public class DescribeDatasetTypeCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String typeName = arguments.get(ArgumentName.DATASET_TYPE.toString());
-    DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get(typeName);
+    Id.DatasetType type = Id.DatasetType.from(cliConfig.getCurrentNamespace(),
+                                              arguments.get(ArgumentName.DATASET_TYPE.toString()));
+    DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get(type);
 
     Table table = Table.builder()
       .setHeader("name", "modules")

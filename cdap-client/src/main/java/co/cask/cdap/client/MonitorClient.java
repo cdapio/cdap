@@ -16,6 +16,7 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.BadRequestException;
@@ -43,6 +44,7 @@ import javax.inject.Inject;
 /**
  * Provides ways to monitor CDAP.
  */
+@Beta
 public class MonitorClient {
 
   private static final Gson GSON = new Gson();
