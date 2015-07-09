@@ -29,7 +29,6 @@ angular.module(PKG.name + '.feature.adapters')
     myAdapterApi.get(params)
       .$promise
       .then(function(res) {
-        console.log('res', res);
         $scope.source = res.config.source;
         $scope.sink = res.config.sink;
         $scope.transforms = res.config.transforms || [];
