@@ -60,8 +60,13 @@ angular.module(PKG.name + '.commons')
 
         if(attr.required!==undefined) {
           elem.find('input').attr('required', true);
+          // TODO: if the validators fail, propagate this information to the user
           ngModel.$validators.metricAndContext = function (m, v) {
             var t = m || v;
+            // Metrics context requires an even number of parts
+            if (t.context && t.context.split('.').length % 2 !== 0) {
+              return false;
+            }
             if (!t || !t.names || !t.names.length) {
               return false;
             }

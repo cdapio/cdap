@@ -1,6 +1,7 @@
 angular.module(PKG.name + '.feature.dashboard')
   .factory('MyMetricsQueryHelper', function() {
     // 'ns.default.app.foo' -> {'ns': 'default', 'app': 'foo'}
+    // returns null if context argument is malformed (odd number of parts)
     function contextToTags(context) {
       var parts, tags, i, tagValue;
       if (context.length) {
@@ -10,7 +11,8 @@ angular.module(PKG.name + '.feature.dashboard')
         parts = [];
       }
       if (parts.length % 2 !== 0) {
-        throw 'Metrics context has uneven number of parts: ' + context;
+        // Metrics context must have even number of parts
+        return null;
       }
       tags = {};
       for (i = 0; i < parts.length; i+=2) {
