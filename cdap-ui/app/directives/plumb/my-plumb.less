@@ -1,11 +1,10 @@
 @import "../../styles/variables.less";
 .my-js-plumb {
   position: relative;
-  left: 30px;
   width: 100%;
   background-color: white;
   overflow: auto;
-  height: 600px;
+  height: 100vh;
   background-image: url('@{img-path}/grid.png');
   background-repeat: repeat;
   background-color: transparent;
@@ -24,6 +23,7 @@
     top: 250px;
     color: white;
     padding: 10px;
+    overflow: hidden;
 
     .icon.fa {
       font-size: 300%;
@@ -31,22 +31,24 @@
 
     .plugin-name {
       font-size: 15px;
+      overflow: inherit;
+      text-overflow: ellipsis;
     }
 
     &.source {
       background-color: #47C037;
-      left: 100px;
+      left: 30vw;
     }
 
     &.transform {
       background-color: #4496E8;
       border-radius: 100%;
-      left: 300px;
+      left: 50vw;
     }
 
     &.sink {
       background-color: #38C0BE;
-      left: 500px;
+      left: 70vw;
     }
   }
 }
