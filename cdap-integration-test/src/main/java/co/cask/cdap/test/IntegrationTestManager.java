@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -42,6 +43,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -59,6 +62,7 @@ import java.sql.Connection;
 public class IntegrationTestManager implements TestManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(IntegrationTestManager.class);
+  private static final Gson GSON = new Gson();
 
   private final ApplicationClient applicationClient;
   private final ClientConfig clientConfig;
@@ -82,12 +86,25 @@ public class IntegrationTestManager implements TestManager {
   public ApplicationManager deployApplication(Id.Namespace namespace,
                                               Class<? extends Application> applicationClz,
                                               File... bundleEmbeddedJars) {
+    return deployApplication(namespace, applicationClz, null, bundleEmbeddedJars);
+  }
+
+  @Override
+  public ApplicationManager deployApplication(Id.Namespace namespace, Class<? extends Application> applicationClz,
+                                              Config configObject, File... bundleEmbeddedJars) {
     // See if the application class comes from file or jar.
     // If it's from JAR, no need to trace dependency since it should already be in an application jar.
     URL appClassURL = applicationClz.getClassLoader()
-                                    .getResource(applicationClz.getName().replace('.', '/') + ".class");
+      .getResource(applicationClz.getName().replace('.', '/') + ".class");
     // Should never happen, otherwise the ClassLoader is broken
     Preconditions.checkNotNull(appClassURL, "Cannot find class %s from the classloader", applicationClz);
+
+    String appConfig = "";
+    if (configObject != null) {
+      TypeToken typeToken = TypeToken.of(applicationClz);
+      TypeToken<?> configToken = typeToken.resolveType(Application.class.getTypeParameters()[0]);
+      appConfig = GSON.toJson(configObject, configToken.getType());
+    }
 
     try {
       // Create and deploy application jar
@@ -99,7 +116,7 @@ public class IntegrationTestManager implements TestManager {
           Location appJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClz, bundleEmbeddedJars);
           Files.copy(Locations.newInputSupplier(appJar), appJarFile);
         }
-        applicationClient.deploy(appJarFile);
+        applicationClient.deploy(appJarFile, appConfig);
       } finally {
         if (!appJarFile.delete()) {
           LOG.warn("Failed to delete temporary app jar {}", appJarFile.getAbsolutePath());
@@ -109,7 +126,7 @@ public class IntegrationTestManager implements TestManager {
       // Extracts application id from the application class
       Application application = applicationClz.newInstance();
       DefaultAppConfigurer configurer = new DefaultAppConfigurer(application);
-      application.configure(configurer, new DefaultApplicationContext());
+      application.configure(configurer, new DefaultApplicationContext(configObject));
       String applicationId = configurer.createSpecification().getName();
       return new RemoteApplicationManager(Id.Application.from(namespace, applicationId), clientConfig, restClient);
     } catch (Exception e) {

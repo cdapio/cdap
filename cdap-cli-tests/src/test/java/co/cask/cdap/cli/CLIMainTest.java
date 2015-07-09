@@ -24,6 +24,7 @@ import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.client.app.ConfigTestApp;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeDataset;
 import co.cask.cdap.client.app.FakeFlow;
@@ -81,7 +82,8 @@ import javax.annotation.Nullable;
  * Test for {@link CLIMain}.
  */
 @Category(XSlowTests.class)
-public class CLIMainTest {
+public class
+  CLIMainTest {
 
   @ClassRule
   public static final StandaloneTester STANDALONE = new StandaloneTester();
@@ -175,6 +177,37 @@ public class CLIMainTest {
     testCommandOutputContains(cli, "get flow status " + qualifiedFlowId, "STOPPED");
     testCommandOutputContains(cli, "get flow runs " + qualifiedFlowId, "KILLED");
     testCommandOutputContains(cli, "get flow live " + qualifiedFlowId, flowId);
+  }
+
+  @Test
+  public void testAppDeploy() throws Exception {
+    testDeploy(null);
+    testDeploy(new ConfigTestApp.ConfigClass("testStream", "testTable"));
+  }
+
+  private void testDeploy(ConfigTestApp.ConfigClass config) throws Exception {
+    String streamId = ConfigTestApp.DEFAULT_STREAM;
+    String datasetId = ConfigTestApp.DEFAULT_TABLE;
+    if (config != null) {
+      streamId = config.getStreamName();
+      datasetId = config.getTableName();
+    }
+
+    File appJarFile = createAppJarFile(ConfigTestApp.class);
+    if (config != null) {
+      String appConfig = GSON.toJson(config);
+      testCommandOutputContains(cli, String.format("deploy app %s %s", appJarFile.getAbsolutePath(), appConfig),
+                                "Successfully deployed app");
+    } else {
+      testCommandOutputContains(cli, String.format("deploy app %s", appJarFile.getAbsolutePath()), "Successfully");
+    }
+
+    if (!appJarFile.delete()) {
+      LOG.warn("Failed to delete temporary app jar file: {}", appJarFile.getAbsolutePath());
+    }
+    testCommandOutputContains(cli, "list streams", streamId);
+    testCommandOutputContains(cli, "list dataset instances", datasetId);
+    testCommandOutputContains(cli, "delete app " + ConfigTestApp.NAME, "Successfully");
   }
 
   @Test

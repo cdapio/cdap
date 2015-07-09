@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.app.ApplicationContext;
@@ -357,7 +358,13 @@ public class ConfigurableTestBase {
   protected static ApplicationManager deployApplication(Id.Namespace namespace,
                                                         Class<? extends Application> applicationClz,
                                                         File... bundleEmbeddedJars) {
-    ApplicationManager applicationManager = getTestManager().deployApplication(namespace, applicationClz,
+    return deployApplication(namespace, applicationClz, null, bundleEmbeddedJars);
+  }
+
+  protected static ApplicationManager deployApplication(Id.Namespace namespace,
+                                                        Class<? extends Application> applicationClz, Config appConfig,
+                                                        File... bundleEmbeddedJars) {
+    ApplicationManager applicationManager = getTestManager().deployApplication(namespace, applicationClz, appConfig,
                                                                                bundleEmbeddedJars);
     applicationManagers.add(applicationManager);
     return applicationManager;
@@ -373,6 +380,11 @@ public class ConfigurableTestBase {
   protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz,
                                                         File... bundleEmbeddedJars) {
     return deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, bundleEmbeddedJars);
+  }
+
+  protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz, Config appConfig,
+                                                        File... bundleEmbeddedJars) {
+    return deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, appConfig, bundleEmbeddedJars);
   }
 
   /**

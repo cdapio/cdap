@@ -51,13 +51,15 @@ public class DeployAppCommand extends AbstractAuthCommand {
     File file = resolver.resolvePathToFile(arguments.get(ArgumentName.APP_JAR_FILE.toString()));
     Preconditions.checkArgument(file.exists(), "File " + file.getAbsolutePath() + " does not exist");
     Preconditions.checkArgument(file.canRead(), "File " + file.getAbsolutePath() + " is not readable");
-    applicationClient.deploy(file);
+    String appConfig = arguments.get(ArgumentName.RUNTIME_ARGS.toString(), "");
+    applicationClient.deploy(file, appConfig);
     output.println("Successfully deployed application");
   }
 
   @Override
   public String getPattern() {
-    return String.format("deploy app <%s>", ArgumentName.APP_JAR_FILE);
+    return String.format("deploy app <%s> [<%s>]", ArgumentName.APP_JAR_FILE,
+                         ArgumentName.RUNTIME_ARGS);
   }
 
   @Override

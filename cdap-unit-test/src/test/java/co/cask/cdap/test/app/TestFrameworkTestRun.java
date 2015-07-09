@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test.app;
 
+import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -138,6 +139,24 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     countService.start();
     Assert.assertTrue(countService.isRunning());
     Assert.assertEquals(2, countService.getProvisionedInstances());
+  }
+
+  @Test
+  public void testAppConfig() throws Exception {
+    ConfigTestApp.ConfigClass object = new ConfigTestApp.ConfigClass("testStream", "testDataset");
+    ApplicationManager appManager = deployApplication(ConfigTestApp.class, object);
+    FlowManager flowManager = appManager.getFlowManager(ConfigTestApp.FLOW_NAME);
+    flowManager.start();
+    StreamManager streamManager = getStreamManager("testStream");
+    streamManager.send("abcd");
+    streamManager.send("xyz");
+    RuntimeMetrics metrics = flowManager.getFlowletMetrics(ConfigTestApp.FLOWLET_NAME);
+    metrics.waitForProcessed(2, 1, TimeUnit.MINUTES);
+    flowManager.stop();
+    DataSetManager<KeyValueTable> dsManager = getDataset("testDataset");
+    KeyValueTable table = dsManager.get();
+    Assert.assertEquals("abcd", Bytes.toString(table.read("abcd")));
+    Assert.assertEquals("xyz", Bytes.toString(table.read("xyz")));
   }
 
   @Category(SlowTests.class)

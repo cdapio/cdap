@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap;
+package co.cask.cdap.client.app;
 
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.ProcessInput;
@@ -42,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass> {
   private static final Logger LOG = LoggerFactory.getLogger(ConfigTestApp.class);
 
+  public static final String NAME = "configtestapp";
   public static final String FLOW_NAME = "simpleFlow";
   public static final String FLOWLET_NAME = "simpleFlowlet";
   public static final String DEFAULT_STREAM = "defaultStream";
@@ -62,10 +63,19 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
       this.streamName = streamName;
       this.tableName = tableName;
     }
+
+    public String getStreamName() {
+      return streamName;
+    }
+
+    public String getTableName() {
+      return tableName;
+    }
   }
 
   @Override
   public void configure() {
+    setName(NAME);
     ConfigClass configObj = getContext().getConfig();
     addStream(new Stream(configObj.streamName));
     createDataset(configObj.tableName, KeyValueTable.class);

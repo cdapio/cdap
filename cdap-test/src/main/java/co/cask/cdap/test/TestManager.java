@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationConfigurer;
@@ -49,6 +50,9 @@ public interface TestManager {
    */
   ApplicationManager deployApplication(Id.Namespace namespace,
                                        Class<? extends Application> applicationClz, File... bundleEmbeddedJars);
+
+  ApplicationManager deployApplication(Id.Namespace namespace, Class<? extends Application> applicationClz,
+                                       Config configObject, File... bundleEmbeddedJars);
 
   /**
    * Deploys an {@link ApplicationTemplate}. Only supported in unit tests.

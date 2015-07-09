@@ -183,9 +183,18 @@ public class ApplicationClient {
    * @throws IOException if a network error occurred
    */
   public void deploy(File jarFile) throws IOException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3("apps");
     Map<String, String> headers = ImmutableMap.of("X-Archive-Name", jarFile.getName());
+    deployApp(jarFile, headers);
+  }
 
+  public void deploy(File jarFile, String appConfig) throws IOException, UnauthorizedException {
+    Map<String, String> headers = ImmutableMap.of("X-Archive-Name", jarFile.getName(),
+                                                  "X-App-Config", appConfig);
+    deployApp(jarFile, headers);
+  }
+
+  private void deployApp(File jarFile, Map<String, String> headers) throws IOException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3("apps");
     HttpRequest request = HttpRequest.post(url).addHeaders(headers).withBody(jarFile).build();
     restClient.upload(request, config.getAccessToken());
   }
