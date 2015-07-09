@@ -16,9 +16,11 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
+import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
@@ -27,8 +29,10 @@ import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
@@ -37,6 +41,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,13 +49,16 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.jar.Attributes;
 import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
@@ -59,10 +67,19 @@ import javax.annotation.Nullable;
 public class ArtifactInspector {
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactInspector.class);
   private final CConfiguration cConf;
+  private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
+  private final ReflectionSchemaGenerator schemaGenerator;
 
-  // TODO: reduce visibility once PluginRepository is gone
+  // TODO: reduce visibility once PluginRepository is replaced by ArtifactRepository
   public ArtifactInspector(CConfiguration cConf) {
+    this(cConf, new ArtifactClassLoaderFactory(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+      cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile()));
+  }
+
+  ArtifactInspector(CConfiguration cConf, ArtifactClassLoaderFactory artifactClassLoaderFactory) {
     this.cConf = cConf;
+    this.artifactClassLoaderFactory = artifactClassLoaderFactory;
+    this.schemaGenerator = new ReflectionSchemaGenerator();
   }
 
   /**
@@ -83,7 +100,7 @@ public class ArtifactInspector {
     try (PluginInstantiator pluginInstantiator =
           new PluginInstantiator(cConf, template, parentClassLoader)) {
       List<PluginClass> plugins = inspectPlugins(artifactId, artifactFile, pluginInstantiator);
-      return new ArtifactClasses(plugins);
+      return ArtifactClasses.builder().addPlugins(plugins).build();
     }
   }
 
@@ -96,14 +113,72 @@ public class ArtifactInspector {
    *                          For example, a ProgramClassLoader created from the artifact the input artifact extends
    * @return metadata about the classes contained in the artifact
    * @throws IOException if there was an exception opening the jar file
+   * @throws InvalidArtifactException if the artifact is invalid. For example, if the application main class is not
+   *                                  actually an Application.
    */
   public ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile,
-                                         ClassLoader parentClassLoader) throws IOException {
+                                         ClassLoader parentClassLoader) throws IOException, InvalidArtifactException {
+
+    List<ApplicationClass> appClasses = inspectApplications(artifactFile);
 
     try (PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, parentClassLoader)) {
       List<PluginClass> plugins = inspectPlugins(artifactId, artifactFile, pluginInstantiator);
-      return new ArtifactClasses(plugins);
+      return ArtifactClasses.builder().addApps(appClasses).addPlugins(plugins).build();
     }
+  }
+
+  private List<ApplicationClass> inspectApplications(File artifactFile) throws IOException, InvalidArtifactException {
+    List<ApplicationClass> apps = Lists.newArrayList();
+
+    Location artifactLocation = Locations.toLocation(artifactFile);
+    Manifest manifest = BundleJarUtil.getManifest(artifactLocation);
+    if (manifest == null) {
+      return apps;
+    }
+    Attributes manifestAttributes = manifest.getMainAttributes();
+    if (manifestAttributes == null) {
+      return apps;
+    }
+
+    // right now we force users to include the application main class as an attribute in their manifest,
+    // which forces them to have a single application class.
+    // in the future, we may want to let users do this or maybe specify a list of classes or
+    // a package that will be searched for applications, to allow multiple applications in a single artifact.
+    String mainClassName = manifestAttributes.getValue(ManifestFields.MAIN_CLASS);
+    if (mainClassName != null) {
+      try (CloseableClassLoader artifactClassLoader =
+             artifactClassLoaderFactory.createClassLoader(Locations.toLocation(artifactFile))) {
+
+        Object appMain = artifactClassLoader.loadClass(mainClassName).newInstance();
+        if (!(appMain instanceof Application)) {
+          throw new InvalidArtifactException(String.format("Application main class is of invalid type: %s",
+            appMain.getClass().getName()));
+        }
+
+        Application app = (Application) appMain;
+
+        TypeToken typeToken = TypeToken.of(app.getClass());
+        TypeToken<?> resultToken = typeToken.resolveType(Application.class.getTypeParameters()[0]);
+        Type configType;
+        // if the user parameterized their template, like 'xyz extends ApplicationTemplate<T>',
+        // we can deserialize the config into that object. Otherwise it'll just be a Config
+        if (resultToken.getType() instanceof Class) {
+          configType = resultToken.getType();
+        } else {
+          configType = Config.class;
+        }
+        apps.add(new ApplicationClass(mainClassName, "", schemaGenerator.generate(configType)));
+      } catch (ClassNotFoundException e) {
+        throw new InvalidArtifactException(String.format("Could not find Application main class %s.", mainClassName));
+      } catch (UnsupportedTypeException e) {
+        throw new InvalidArtifactException(
+          String.format("Config for Application %s has an unsupported schema.", mainClassName));
+      } catch (InstantiationException | IllegalAccessException e) {
+        throw new InvalidArtifactException(
+          String.format("Could not instantiate Application class %s.", mainClassName), e);
+      }
+    }
+    return apps;
   }
 
   /**
