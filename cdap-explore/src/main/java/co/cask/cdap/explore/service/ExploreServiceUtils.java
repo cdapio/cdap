@@ -17,6 +17,7 @@
 package co.cask.cdap.explore.service;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data.format.RecordFormats;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
@@ -25,7 +26,6 @@ import co.cask.cdap.explore.service.hive.Hive13ExploreService;
 import co.cask.cdap.explore.service.hive.Hive14ExploreService;
 import co.cask.cdap.explore.service.hive.HiveCDH4ExploreService;
 import co.cask.cdap.explore.service.hive.HiveCDH5ExploreService;
-import co.cask.cdap.format.RecordFormats;
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
