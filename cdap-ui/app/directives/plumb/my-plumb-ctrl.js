@@ -47,7 +47,6 @@ angular.module(PKG.name + '.commons')
       return icon;
     }
 
-
     this.addPlugin = function addPlugin(config, type) {
       this.plugins.push(angular.extend({
         icon: getIcon(config.name)
@@ -71,8 +70,9 @@ angular.module(PKG.name + '.commons')
       this.instance.draggable(id);
     }
 
-    this.onPluginClick = function(pluginId) {
-      console.info('Plugin clicked: ', MyPlumbService.nodes[pluginId]);
+    // Need to move this to the controller that is using this directive.
+    this.onPluginClick = function(pluginId, pluginType) {
+      MyPlumbService.editPluginProperties($scope, pluginId, pluginType);
     };
 
     this.removePlugin = function(index, nodeId) {
@@ -94,6 +94,7 @@ angular.module(PKG.name + '.commons')
         // Have to add Connections.
       }.bind(this));
 
+      // Need to move this to the controller that is using this directive.
       this.instance.bind("connection", function (connInfo, originalEvent) {
         MyPlumbService.updateConnection(this.instance.getConnections());
       }.bind(this));
