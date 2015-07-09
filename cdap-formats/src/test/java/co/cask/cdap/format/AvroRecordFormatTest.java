@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data.format;
+package co.cask.cdap.format;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.FormatSpecification;
@@ -23,7 +23,6 @@ import co.cask.cdap.api.data.format.RecordFormat;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -224,8 +223,8 @@ public class AvroRecordFormatTest {
 
     Map<String, String> headers = Maps.newHashMap();
     if (writeSchema) {
-      headers.put(Constants.Stream.Headers.SCHEMA, schemaString);
-      headers.put(Constants.Stream.Headers.SCHEMA_HASH,
+      headers.put(AvroRecordFormat.SCHEMA, schemaString);
+      headers.put(AvroRecordFormat.SCHEMA_HASH,
                   Hashing.md5().hashString(schemaString, Charsets.UTF_8).toString());
     }
 
