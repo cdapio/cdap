@@ -39,15 +39,10 @@ public class Value {
   }
 
   /**
-   * @return the Long value, or null if cannot be converted
+   * @return the long value
    */
-  public Long getAsLong() {
-    try {
-      return Long.parseLong(value);
-    } catch (NumberFormatException e) {
-      LOG.warn(String.format("Cannot convert value '%s' to Long.", value));
-      return null;
-    }
+  public long getAsLong() {
+    return Long.parseLong(value);
   }
 
   @Override
