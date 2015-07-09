@@ -48,6 +48,8 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
+import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
+import co.cask.cdap.internal.app.runtime.batch.distributed.MRContainerLauncher;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
@@ -223,18 +225,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       setOutputClassesIfNeeded(job);
       setMapOutputClassesIfNeeded(job);
 
-      // Prefer our job jar in the classpath
-      // Set both old and new keys
-      mapredConf.setBoolean("mapreduce.user.classpath.first", true);
-      mapredConf.setBoolean(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, true);
-      mapredConf.setBoolean(Job.MAPREDUCE_JOB_CLASSLOADER, true);
-
-      // Make CDAP classes (which is in the job.jar created below) to have higher precedence
-      // It is needed to override the ApplicationClassLoader to use our implementation
-      String yarnAppClassPath = mapredConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, Joiner.on(',')
-        .join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
-      mapredConf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH, "job.jar/lib/*,job.jar/classes," + yarnAppClassPath);
-
       // set resources for the job
       TaskType.MAP.setResources(mapredConf, context.getMapperResources());
       TaskType.REDUCE.setResources(mapredConf, context.getReducerResources());
@@ -247,11 +237,23 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       File jobJar = buildJobJar(job, tempDir);
       job.setJar(jobJar.toURI().toString());
 
-      // Only need to copy and localize the program jar in distributed mode
       Location programJar = programJarLocation;
       if (!MapReduceContextProvider.isLocal(mapredConf)) {
+        // Copy and localize the program jar in distributed mode
         programJar = copyProgramJar(tempLocation);
         job.addCacheFile(programJar.toURI());
+
+        // Generate and localize the launcher jar to control the classloader of MapReduce processes
+        String yarnAppClassPath = "job.jar/lib/*,job.jar/classes," +
+          mapredConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+                         Joiner.on(',').join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
+        Location launcherJar = createLauncherJar(yarnAppClassPath, tempLocation);
+        job.addCacheFile(launcherJar.toURI());
+
+        // The only thing in the Yarn container classpath is the launcher.jar
+        // The MRContainerLauncher inside the launcher.jar will creates a MapReduceClassLoader and launch
+        // the actual MapReduce AM/Task from that
+        mapredConf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH, launcherJar.getName());
       }
 
       MapReduceContextConfig contextConfig = new MapReduceContextConfig(mapredConf);
@@ -847,6 +849,19 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     ByteStreams.copy(Locations.newInputSupplier(programJarLocation), Locations.newOutputSupplier(programJarCopy));
     LOG.info("Copied Program Jar to {}, source: {}", programJarCopy.toURI(), programJarLocation.toURI());
     return programJarCopy;
+  }
+
+  /**
+   * Creates a launcher jar.
+   *
+   * @see MRContainerLauncher
+   * @see ContainerLauncherGenerator
+   */
+  private Location createLauncherJar(String applicationClassPath, Location targetDir) throws IOException {
+    Location launcherJar = targetDir.append("launcher.jar");
+    ContainerLauncherGenerator.generateLauncherJar(applicationClassPath, MapReduceClassLoader.class.getName(),
+                                                   Locations.newOutputSupplier(launcherJar));
+    return launcherJar;
   }
 
   /**
