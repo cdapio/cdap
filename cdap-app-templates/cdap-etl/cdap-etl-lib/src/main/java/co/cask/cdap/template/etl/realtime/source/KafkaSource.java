@@ -85,6 +85,7 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
     this.config = config;
   }
 
+  @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     // check the schema if there is one
     if (!Strings.isNullOrEmpty(config.schema)) {
@@ -242,15 +243,16 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
       return defaultOffset;
     }
 
+    @Nullable
     private FormatSpecification getFormatSpec() {
       FormatSpecification formatSpec = null;
       if (!Strings.isNullOrEmpty(format)) {
         // try to parse the schema if there is one
         Schema schemaObj = parseSchema();
 
-        // strip format.settings. from any properties and use them in the format spec
-        ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
         if (getProperties() != null) {
+          // strip format.settings. from any properties and use them in the format spec
+          ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
           for (Map.Entry<String, String> entry : getProperties().getProperties().entrySet()) {
             if (entry.getKey().startsWith(FORMAT_SETTING_PREFIX)) {
               String key = entry.getKey();
