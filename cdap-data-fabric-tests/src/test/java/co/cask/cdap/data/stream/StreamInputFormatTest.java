@@ -23,10 +23,6 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.GenericStreamEventData;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.stream.StreamEventDecoder;
-<<<<<<< HEAD
-import co.cask.cdap.common.format.TextRecordFormat;
-=======
->>>>>>> fed365ca9b5edbdf37ca208424c7a38da0884bff
 import co.cask.cdap.data.stream.decoder.BytesStreamEventDecoder;
 import co.cask.cdap.data.stream.decoder.IdentityStreamEventDecoder;
 import co.cask.cdap.data.stream.decoder.StringStreamEventDecoder;
