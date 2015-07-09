@@ -215,6 +215,11 @@
       <artifactId>uadetector-resources</artifactId>
       <version>2014.04</version>
     </dependency>
+    <dependency>
+      <groupId>org.elasticsearch</groupId>
+      <artifactId>elasticsearch</artifactId>
+      <version>${es.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
