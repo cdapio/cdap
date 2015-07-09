@@ -1,7 +1,8 @@
 angular.module(PKG.name + '.commons')
   .controller('MyPlumbController', function MyPlumbController(jsPlumb, $scope, $timeout, MyPlumbService) {
-    this.plugins = [];
-    var instance;
+    this.plugins = $scope.config || [];
+    this.instance = null;
+
     var defaultSettings = {
       Connector : [ "Flowchart" ],
       ConnectionsDetachable: true
@@ -46,33 +47,37 @@ angular.module(PKG.name + '.commons')
       return icon;
     }
 
+
     this.addPlugin = function addPlugin(config, type) {
-      var id = 'plugin' + Date.now();
       this.plugins.push(angular.extend({
-        type: type,
-        id: id,
         icon: getIcon(config.name)
       }, config));
-      $timeout(function() {
-        switch(type) {
-          case 'source':
-            instance.addEndpoint(id, sourceSettings);
-            break;
-          case 'sink':
-            instance.addEndpoint(id, sinkSettings);
-            break;
-          case 'transform':
-            instance.addEndpoint(id, sourceSettings);
-            instance.addEndpoint(id, sinkSettings);
-            break;
-        }
-        instance.draggable(id);
-      });
+      $timeout(drawNode.bind(this, config.id, type));
+    };
+
+    function drawNode(id, type) {
+      switch(type) {
+        case 'source':
+          this.instance.addEndpoint(id, sourceSettings);
+          break;
+        case 'sink':
+          this.instance.addEndpoint(id, sinkSettings);
+          break;
+        case 'transform':
+          this.instance.addEndpoint(id, sourceSettings);
+          this.instance.addEndpoint(id, sinkSettings);
+          break;
+      }
+      this.instance.draggable(id);
+    }
+
+    this.onPluginClick = function(pluginId) {
+      console.info('Plugin clicked: ', MyPlumbService.nodes[pluginId]);
     };
 
     this.removePlugin = function(index, nodeId) {
-      instance.detachAllConnections(nodeId);
-      instance.remove(nodeId);
+      this.instance.detachAllConnections(nodeId);
+      this.instance.remove(nodeId);
       this.plugins.splice(index, 1);
     };
 
@@ -80,7 +85,18 @@ angular.module(PKG.name + '.commons')
 
     jsPlumb.ready(function() {
       jsPlumb.setContainer('plumb-container');
-      instance = jsPlumb.getInstance();
-      instance.importDefaults(defaultSettings);
-    });
+      this.instance = jsPlumb.getInstance();
+
+      this.instance.importDefaults(defaultSettings);
+
+      this.plugins.forEach(function(plugin) {
+        drawNode.call(this, plugin.id, plugin.type);
+        // Have to add Connections.
+      }.bind(this));
+
+      this.instance.bind("connection", function (connInfo, originalEvent) {
+        MyPlumbService.updateConnection(this.instance.getConnections());
+      }.bind(this));
+
+    }.bind(this));
   });
