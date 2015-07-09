@@ -75,13 +75,13 @@ angular.module(PKG.name + '.feature.adapters')
       var prom;
       switch(group.name) {
         case 'source':
-          prom = myAdapterApi.fetchSources({ adapterType: 'ETLRealtime' }).$promise;
+          prom = myAdapterApi.fetchSources({ adapterType: 'ETLBatch' }).$promise;
           break;
         case 'transform':
-          prom = myAdapterApi.fetchTransforms({ adapterType: 'ETLRealtime' }).$promise;
+          prom = myAdapterApi.fetchTransforms({ adapterType: 'ETLBatch' }).$promise;
           break;
         case 'sink':
-          prom = myAdapterApi.fetchSinks({ adapterType: 'ETLRealtime' }).$promise;
+          prom = myAdapterApi.fetchSinks({ adapterType: 'ETLBatch' }).$promise;
           break;
       }
       prom.then(function(res) {
@@ -113,5 +113,6 @@ angular.module(PKG.name + '.feature.adapters')
       };
       MyPlumbService.updateNodes(config, config.type);
     };
+
 
   })
