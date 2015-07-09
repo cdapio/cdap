@@ -19,6 +19,10 @@ angular.module(PKG.name + '.feature.adapters')
       return icon;
     }
 
+    // Purely for feeding my-plumb to draw the diagram
+    // if I already have the nodes and connections
+    this.nodes = [];
+
     this.pluginTypes = [
       {
         name: 'source',
@@ -61,6 +65,8 @@ angular.module(PKG.name + '.feature.adapters')
       }
     ];
 
+    this.onCanvasOperationsClicked = function(group) {};
+
     this.plugins= {
       items: []
     };
@@ -94,13 +100,18 @@ angular.module(PKG.name + '.feature.adapters')
       }.bind(this))
     };
 
-    this.onCanvasOperationsClicked = function(group) {
-      console.info('Clicked: ', group);
-    }
-
     this.onPluginItemClicked = function(event, item) {
+      // TODO: Better UUID?
+      var id = item.name + '-' + item.type + '-' + Date.now();;
       event.stopPropagation();
-      MyPlumbService.updateConfig(item, item.type);
+      var config = {
+        id: id,
+        name: item.name,
+        icon: item.icon,
+        description: item.description,
+        type: item.type
+      };
+      MyPlumbService.updateNodes(config, config.type);
     };
 
   })

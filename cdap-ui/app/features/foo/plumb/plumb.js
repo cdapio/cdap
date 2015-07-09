@@ -95,14 +95,10 @@ angular.module(PKG.name + '.feature.foo')
     };
 
     this.onCanvasOperationsClicked = function(group) {
-      console.info('Clicked: ', group);
     }
 
     this.onPluginItemClicked = function(event, item) {
       event.stopPropagation();
-      MyPlumbService.updateConfig(item, item.type);
+      MyPlumbService.updateNodes(item, item.type);
     };
-
-
-
   });
