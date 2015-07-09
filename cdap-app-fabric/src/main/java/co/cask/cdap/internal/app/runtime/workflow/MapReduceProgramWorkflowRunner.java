@@ -99,6 +99,9 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
       mapReduceCounters.put(group.getName(), new HashMap<String, Long>());
       for (Counter counter : group) {
         mapReduceCounters.get(group.getName()).put(counter.getName(), counter.getValue());
+        ((BasicWorkflowToken) workflowTokenFromContext).put(group.getName() + "." + counter.getName(),
+                                                            String.valueOf(counter.getValue()),
+                                                            WorkflowToken.Scope.SYSTEM);
       }
     }
 

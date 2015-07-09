@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.internal.app.WorkflowTokenCodec;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
@@ -30,6 +31,7 @@ import co.cask.tephra.Transaction;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
@@ -52,7 +54,8 @@ import javax.annotation.Nullable;
 public final class MapReduceContextConfig {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceContextConfig.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder().registerTypeAdapter(WorkflowToken.class,
+                                                                         new WorkflowTokenCodec()).create();
 
   private static final String HCONF_ATTR_RUN_ID = "hconf.program.run.id";
   private static final String HCONF_ATTR_LOGICAL_START_TIME = "hconf.program.logical.start.time";
@@ -138,7 +141,7 @@ public final class MapReduceContextConfig {
     if (tokenJson == null) {
       return null;
     }
-    return GSON.fromJson(tokenJson, BasicWorkflowToken.class);
+    return GSON.fromJson(tokenJson, WorkflowToken.class);
   }
 
   private void setAdapterSpec(@Nullable AdapterDefinition adapterSpec) {

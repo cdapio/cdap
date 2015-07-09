@@ -38,6 +38,7 @@ import co.cask.cdap.common.logging.logback.CAppender;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.WorkflowTokenCodec;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -54,6 +55,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -74,7 +76,8 @@ import javax.annotation.Nullable;
  */
 public class MapReduceProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder().registerTypeAdapter(WorkflowToken.class,
+                                                                         new WorkflowTokenCodec()).create();
 
   private final StreamAdmin streamAdmin;
   private final CConfiguration cConf;
@@ -142,8 +145,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
     WorkflowToken workflowToken = null;
     if (arguments.hasOption(ProgramOptionConstants.WORKFLOW_TOKEN)) {
-      workflowToken = GSON.fromJson(arguments.getOption(ProgramOptionConstants.WORKFLOW_TOKEN),
-                                    BasicWorkflowToken.class);
+      workflowToken = GSON.fromJson(arguments.getOption(ProgramOptionConstants.WORKFLOW_TOKEN), WorkflowToken.class);
     }
 
     final AdapterDefinition adapterSpec = getAdapterSpecification(arguments);

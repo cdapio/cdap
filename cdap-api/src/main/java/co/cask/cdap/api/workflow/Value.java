@@ -33,7 +33,8 @@ public class Value {
   /**
    * @return the value as String
    */
-  public String getAsString() {
+  @Override
+  public String toString() {
     return value;
   }
 
@@ -47,11 +48,6 @@ public class Value {
       LOG.warn(String.format("Cannot convert value '%s' to Long.", value));
       return null;
     }
-  }
-
-  @Override
-  public String toString() {
-    return value;
   }
 
   @Override
