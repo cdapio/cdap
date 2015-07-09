@@ -225,3 +225,22 @@ Spark programs in CDAP can also be added to a :ref:`workflow <workflows>`, simil
   and :ref:`Spark Page Rank <examples-spark-page-rank>` examples.
 
 - For a longer example, the how-to guide :ref:`cdap-spark-guide` gives another demonstration.
+
+Known Issues
+------------------
+
+- Spark's Mlib Dependencies
+
+Spark's Mlib has various dependencies. Please make sure you have the appropriate dependencies according to your installation::
+
+    Spark 1.2: https://spark.apache.org/docs/1.2.0/mllib-guide.html#dependencies
+    Spark 1.3: https://spark.apache.org/docs/1.3.0/mllib-guide.html#dependencies
+    Spark 1.4: https://spark.apache.org/docs/1.4.0/mllib-guide.html#dependencies
+
+- Unable to resolve methods imported implicitly
+
+Your IDE might fail to resolve methods which are imported implicitly while writing Spark programs. reduceByKey() in PairRDDFunctions class is an example of such methods. If you are using Spark 1.2 or 1.3 to write your application you can resolve this issue by adding the following import explicitly::
+
+    import org.apache.spark.SparkContext._
+
+Note: This issue is got resolved in Spark 1.4 and you will not need an explicit import.
