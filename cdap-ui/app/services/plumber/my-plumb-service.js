@@ -31,12 +31,19 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function() {
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal) {
     this.callbacks = [];
     this.nodes = {};
+    this.connections = [];
 
     this.registerCallBack = function (callback) {
       this.callbacks.push(callback);
+    };
+
+    this.notifyListeners = function(conf, type) {
+      this.callbacks.forEach(function(callback) {
+        callback(conf, type);
+      });
     };
 
     this.updateConnection = function(connections) {
@@ -60,11 +67,47 @@ angular.module(PKG.name + '.services')
       this.notifyListeners(config, type);
     };
 
-    this.notifyListeners = function(conf, type) {
-      this.callbacks.forEach(function(callback) {
-        callback(conf, type);
-      });
+    this.editPluginProperties = function (scope, pluginId, pluginType) {
+      var plugin = this.nodes[pluginId];
+      var prom = $q.defer();
+      var propertiesApiMap = {
+        'source': myAdapterApi.fetchSourceProperties,
+        'sink': myAdapterApi.fetchSinkProperties,
+        'transform': myAdapterApi.fetchTransformProperties
+      };
+      var params = {
+        scope: scope,
+        adapterType: 'ETLBatch'
+      };
+      params[pluginType] = plugin.name;
+      
+      propertiesApiMap[pluginType](params)
+        .$promise
+        .then(function(res) {
+          var pluginProperties = (res.length? res[0].properties: {});
+          plugin._backendProperties = pluginProperties;
+          prom.resolve(plugin);
+          return prom.promise;
+        })
+        .then(function(plugin) {
+          $bootstrapModal.open({
+            animation: false,
+            templateUrl: '/assets/features/adapters/templates/tabs/runs/tabs/properties/properties.html',
+            controller: ['$scope', 'AdapterModel', 'type', function ($scope, AdapterModel, type){
+              $scope.plugin = AdapterModel;
+              $scope.type = type;
+              $scope.isDisabled = false;
+            }],
+            size: 'lg',
+            resolve: {
+              AdapterModel: function () {
+                return plugin;
+              },
+              type: function () {
+                return 'ETLBatch';
+              }
+            }
+          });
+        })
     };
-
-
   });
