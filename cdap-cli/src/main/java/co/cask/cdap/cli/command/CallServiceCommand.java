@@ -31,6 +31,7 @@ import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.conf.StringUtils;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -78,6 +79,9 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
 
     String appId = appAndServiceId[0];
     String serviceId = appAndServiceId[1];
+    Id.Service service = Id.Service.from(
+      Id.Application.from(cliConfig.getCurrentNamespace(), appId), serviceId);
+
     String method = arguments.get(ArgumentName.HTTP_METHOD.toString());
     String path = arguments.get(ArgumentName.ENDPOINT.toString());
     path = path.startsWith("/") ? path.substring(1) : path;
@@ -92,7 +96,7 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
     }
 
     Map<String, String> headerMap = GSON.fromJson(headers, new TypeToken<Map<String, String>>() { }.getType());
-    URL url = new URL(serviceClient.getServiceURL(appId, serviceId), path);
+    URL url = new URL(serviceClient.getServiceURL(service), path);
 
     HttpMethod httpMethod = HttpMethod.valueOf(method);
     HttpRequest.Builder builder = HttpRequest.builder(httpMethod, url).addHeaders(headerMap);

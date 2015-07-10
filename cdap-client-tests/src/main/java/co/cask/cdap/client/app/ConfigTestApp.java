@@ -37,7 +37,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Test Application to test passing in Configuration during Application creation time.
  */
 public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass> {
   private static final Logger LOG = LoggerFactory.getLogger(ConfigTestApp.class);
@@ -48,6 +48,9 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
   public static final String DEFAULT_STREAM = "defaultStream";
   public static final String DEFAULT_TABLE = "defaultTable";
 
+  /**
+   * Application Config Class.
+   */
   public static class ConfigClass extends Config {
     private String streamName;
     private String tableName;

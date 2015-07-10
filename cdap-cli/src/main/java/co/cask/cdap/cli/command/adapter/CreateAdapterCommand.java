@@ -25,6 +25,7 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.proto.AdapterConfig;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -59,7 +60,8 @@ public class CreateAdapterCommand extends AbstractAuthCommand {
 
     FileReader fileReader = new FileReader(adapterConfigFile);
     try {
-      adapterClient.create(adapterName, GSON.fromJson(fileReader, AdapterConfig.class));
+      adapterClient.create(Id.Adapter.from(cliConfig.getCurrentNamespace(), adapterName),
+                           GSON.fromJson(fileReader, AdapterConfig.class));
       output.printf("Successfully created adapter '%s'\n", adapterName);
     } finally {
       fileReader.close();

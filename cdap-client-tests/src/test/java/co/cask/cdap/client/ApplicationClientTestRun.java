@@ -23,6 +23,7 @@ import co.cask.cdap.client.app.FakeDatasetModule;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.DatasetModuleNotFoundException;
 import co.cask.cdap.common.DatasetNotFoundException;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
@@ -65,14 +66,16 @@ public class ApplicationClientTestRun extends ClientTestBase {
     // Delete FakeApp's dataset and module so that DatasetClientTestRun works when running both inside a test suite
     // This is due to DatasetClientTestRun assuming that it is using a blank CDAP instance
 
+    Id.Namespace namespace = Id.Namespace.DEFAULT;
+
     try {
-      datasetClient.delete(FakeApp.DS_NAME);
+      datasetClient.delete(Id.DatasetInstance.from(namespace, FakeApp.DS_NAME));
     } catch (DatasetNotFoundException e) {
       // NO-OP
     }
 
     try {
-      datasetModuleClient.delete(FakeDatasetModule.NAME);
+      datasetModuleClient.delete(Id.DatasetModule.from(namespace, FakeDatasetModule.NAME));
     } catch (DatasetModuleNotFoundException e) {
       // NO-OP
     }
@@ -80,47 +83,49 @@ public class ApplicationClientTestRun extends ClientTestBase {
 
   @Test
   public void testAll() throws Exception {
-    Assert.assertEquals(0, appClient.list().size());
+    Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, FakeApp.NAME);
+
+    Assert.assertEquals(0, appClient.list(Id.Namespace.DEFAULT).size());
 
     // deploy app
     LOG.info("Deploying app");
-    appClient.deploy(createAppJarFile(FakeApp.class));
-    appClient.waitForDeployed(FakeApp.NAME, 30, TimeUnit.SECONDS);
-    Assert.assertEquals(1, appClient.list().size());
+    appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(FakeApp.class));
+    appClient.waitForDeployed(app, 30, TimeUnit.SECONDS);
+    Assert.assertEquals(1, appClient.list(Id.Namespace.DEFAULT).size());
 
     try {
       // check program list
       LOG.info("Checking program list for app");
-      Map<ProgramType, List<ProgramRecord>> programs = appClient.listProgramsByType(FakeApp.NAME);
+      Map<ProgramType, List<ProgramRecord>> programs = appClient.listProgramsByType(app);
       verifyProgramNames(FakeApp.FLOWS, programs.get(ProgramType.FLOW));
       verifyProgramNames(FakeApp.MAPREDUCES, programs.get(ProgramType.MAPREDUCE));
       verifyProgramNames(FakeApp.WORKFLOWS, programs.get(ProgramType.WORKFLOW));
       verifyProgramNames(FakeApp.SERVICES, programs.get(ProgramType.SERVICE));
 
-      verifyProgramNames(FakeApp.FLOWS, appClient.listPrograms(FakeApp.NAME, ProgramType.FLOW));
-      verifyProgramNames(FakeApp.MAPREDUCES, appClient.listPrograms(FakeApp.NAME, ProgramType.MAPREDUCE));
-      verifyProgramNames(FakeApp.WORKFLOWS, appClient.listPrograms(FakeApp.NAME, ProgramType.WORKFLOW));
-      verifyProgramNames(FakeApp.SERVICES, appClient.listPrograms(FakeApp.NAME, ProgramType.SERVICE));
+      verifyProgramNames(FakeApp.FLOWS, appClient.listPrograms(app, ProgramType.FLOW));
+      verifyProgramNames(FakeApp.MAPREDUCES, appClient.listPrograms(app, ProgramType.MAPREDUCE));
+      verifyProgramNames(FakeApp.WORKFLOWS, appClient.listPrograms(app, ProgramType.WORKFLOW));
+      verifyProgramNames(FakeApp.SERVICES, appClient.listPrograms(app, ProgramType.SERVICE));
 
-      verifyProgramNames(FakeApp.FLOWS, appClient.listAllPrograms(ProgramType.FLOW));
-      verifyProgramNames(FakeApp.MAPREDUCES, appClient.listAllPrograms(ProgramType.MAPREDUCE));
-      verifyProgramNames(FakeApp.WORKFLOWS, appClient.listAllPrograms(ProgramType.WORKFLOW));
-      verifyProgramNames(FakeApp.SERVICES, appClient.listAllPrograms(ProgramType.SERVICE));
+      verifyProgramNames(FakeApp.FLOWS, appClient.listAllPrograms(Id.Namespace.DEFAULT, ProgramType.FLOW));
+      verifyProgramNames(FakeApp.MAPREDUCES, appClient.listAllPrograms(Id.Namespace.DEFAULT, ProgramType.MAPREDUCE));
+      verifyProgramNames(FakeApp.WORKFLOWS, appClient.listAllPrograms(Id.Namespace.DEFAULT, ProgramType.WORKFLOW));
+      verifyProgramNames(FakeApp.SERVICES, appClient.listAllPrograms(Id.Namespace.DEFAULT, ProgramType.SERVICE));
 
-      verifyProgramRecords(FakeApp.ALL_PROGRAMS, appClient.listAllPrograms());
+      verifyProgramRecords(FakeApp.ALL_PROGRAMS, appClient.listAllPrograms(Id.Namespace.DEFAULT));
     } finally {
       // delete app
       LOG.info("Deleting app");
-      appClient.delete(FakeApp.NAME);
-      appClient.waitForDeleted(FakeApp.NAME, 30, TimeUnit.SECONDS);
-      Assert.assertEquals(0, appClient.list().size());
+      appClient.delete(app);
+      appClient.waitForDeleted(app, 30, TimeUnit.SECONDS);
+      Assert.assertEquals(0, appClient.list(Id.Namespace.DEFAULT).size());
     }
   }
 
   @Test
   public void testAppConfig() throws Exception {
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("testStream", "testDataset");
-    appClient.deploy(createAppJarFile(ConfigTestApp.class), GSON.toJson(config));
+    appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(ConfigTestApp.class), GSON.toJson(config));
     Assert.assertEquals(1, appClient.list().size());
 
     try {
@@ -134,25 +139,29 @@ public class ApplicationClientTestRun extends ClientTestBase {
 
   @Test
   public void testDeleteAll() throws Exception {
-    Assert.assertEquals(0, appClient.list().size());
+    Id.Namespace namespace = Id.Namespace.DEFAULT;
+    Id.Application app = Id.Application.from(namespace, FakeApp.NAME);
+    Id.Application app2 = Id.Application.from(namespace, AppReturnsArgs.NAME);
+
+    Assert.assertEquals(0, appClient.list(namespace).size());
 
     try {
       // deploy first app
       LOG.info("Deploying first app");
-      appClient.deploy(createAppJarFile(FakeApp.class));
-      appClient.waitForDeployed(FakeApp.NAME, 30, TimeUnit.SECONDS);
-      Assert.assertEquals(1, appClient.list().size());
+      appClient.deploy(namespace, createAppJarFile(FakeApp.class));
+      appClient.waitForDeployed(app, 30, TimeUnit.SECONDS);
+      Assert.assertEquals(1, appClient.list(namespace).size());
 
       // deploy second app
       LOG.info("Deploying second app");
-      appClient.deploy(createAppJarFile(AppReturnsArgs.class));
-      appClient.waitForDeployed(AppReturnsArgs.NAME, 30, TimeUnit.SECONDS);
-      Assert.assertEquals(2, appClient.list().size());
+      appClient.deploy(namespace, createAppJarFile(AppReturnsArgs.class));
+      appClient.waitForDeployed(app2, 30, TimeUnit.SECONDS);
+      Assert.assertEquals(2, appClient.list(namespace).size());
     } finally {
-      appClient.deleteAll();
-      appClient.waitForDeleted(FakeApp.NAME, 30, TimeUnit.SECONDS);
-      appClient.waitForDeleted(AppReturnsArgs.NAME, 30, TimeUnit.SECONDS);
-      Assert.assertEquals(0, appClient.list().size());
+      appClient.deleteAll(namespace);
+      appClient.waitForDeleted(app, 30, TimeUnit.SECONDS);
+      appClient.waitForDeleted(app2, 30, TimeUnit.SECONDS);
+      Assert.assertEquals(0, appClient.list(namespace).size());
     }
   }
 }

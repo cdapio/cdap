@@ -27,6 +27,7 @@ import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.SingletonExternalResource;
@@ -84,45 +85,41 @@ public abstract class ClientTestBase {
     verifyProgramNames(expected, Lists.newArrayList(Iterables.concat(map.values())));
   }
 
-  protected void assertFlowletInstances(ProgramClient programClient, String appId, String flowId, String flowletId,
-                                        int numInstances)
+  protected void assertFlowletInstances(ProgramClient programClient, Id.Flow.Flowlet flowlet, int numInstances)
     throws IOException, NotFoundException, UnauthorizedException {
 
     int actualInstances;
     int numTries = 0;
     int maxTries = 5;
     do {
-      actualInstances = programClient.getFlowletInstances(appId, flowId, flowletId);
+      actualInstances = programClient.getFlowletInstances(flowlet);
       numTries++;
     } while (actualInstances != numInstances && numTries <= maxTries);
     Assert.assertEquals(numInstances, actualInstances);
   }
 
-  protected void assertProgramRunning(ProgramClient programClient, String appId, ProgramType programType,
-                                      String programId)
+  protected void assertProgramRunning(ProgramClient programClient, Id.Program program)
     throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
 
-    assertProgramStatus(programClient, appId, programType, programId, "RUNNING");
+    assertProgramStatus(programClient, program, "RUNNING");
   }
 
-  protected void assertProgramStopped(ProgramClient programClient, String appId, ProgramType programType,
-                                      String programId)
+  protected void assertProgramStopped(ProgramClient programClient, Id.Program program)
     throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
 
-    assertProgramStatus(programClient, appId, programType, programId, "STOPPED");
+    assertProgramStatus(programClient, program, "STOPPED");
   }
 
-  protected void assertProgramStatus(ProgramClient programClient, String appId, ProgramType programType,
-                                     String programId, String programStatus)
+  protected void assertProgramStatus(ProgramClient programClient, Id.Program program, String programStatus)
     throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
 
     try {
-      programClient.waitForStatus(appId, programType, programId, programStatus, 60, TimeUnit.SECONDS);
+      programClient.waitForStatus(program, programStatus, 60, TimeUnit.SECONDS);
     } catch (TimeoutException e) {
       // NO-OP
     }
 
-    Assert.assertEquals(programStatus, programClient.getStatus(appId, programType, programId));
+    Assert.assertEquals(programStatus, programClient.getStatus(program));
   }
 
   protected File createAppJarFile(Class<?> cls) throws IOException {

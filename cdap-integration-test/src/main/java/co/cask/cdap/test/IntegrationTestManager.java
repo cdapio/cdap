@@ -116,7 +116,7 @@ public class IntegrationTestManager implements TestManager {
           Location appJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClz, bundleEmbeddedJars);
           Files.copy(Locations.newInputSupplier(appJar), appJarFile);
         }
-        applicationClient.deploy(appJarFile, appConfig);
+        applicationClient.deploy(namespace, appJarFile, appConfig);
       } finally {
         if (!appJarFile.delete()) {
           LOG.warn("Failed to delete temporary app jar {}", appJarFile.getAbsolutePath());
@@ -156,13 +156,15 @@ public class IntegrationTestManager implements TestManager {
 
   @Override
   public AdapterManager createAdapter(Id.Adapter adapterId, AdapterConfig config) throws Exception {
-    adapterClient.create(adapterId.getId(), config);
+    adapterClient.create(adapterId, config);
     return new RemoteAdapterManager(adapterId, adapterClient);
   }
 
   @Override
   public void clear() throws Exception {
-    programClient.stopAll();
+    for (NamespaceMeta namespace : namespaceClient.list()) {
+      programClient.stopAll(Id.Namespace.from(namespace.getName()));
+    }
     namespaceClient.deleteAll();
   }
 
