@@ -97,6 +97,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -234,8 +235,7 @@ public abstract class HBaseQueueTest extends QueueTest {
       new ConsumerGroupConfig(3L, 3, DequeueStrategy.FIFO, null)
     );
 
-    final HBaseConsumerStateStore stateStore = ((HBaseQueueAdmin) queueAdmin).getConsumerStateStore(queueName);
-    try {
+    try (HBaseConsumerStateStore stateStore = ((HBaseQueueAdmin) queueAdmin).getConsumerStateStore(queueName)) {
       TransactionExecutor txExecutor = Transactions.createTransactionExecutor(executorFactory, stateStore);
       // Intentionally set a row state for group 2, instance 0. It's for testing upgrade of config.
       txExecutor.execute(new TransactionExecutor.Subroutine() {
@@ -395,7 +395,6 @@ public abstract class HBaseQueueTest extends QueueTest {
         }
       });
     } finally {
-      stateStore.close();
       queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE_ID);
     }
   }
@@ -416,10 +415,11 @@ public abstract class HBaseQueueTest extends QueueTest {
     oldQueueAdmin.create(queueName);
 
     int buckets = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS);
-    final HBaseQueueProducer oldProducer = hBaseQueueClientFactory.createProducer(
-      oldQueueAdmin, queueName, QueueConstants.QueueType.QUEUE,
-      QueueMetrics.NOOP_QUEUE_METRICS, new SaltedHBaseQueueStrategy(buckets), ImmutableList.<ConsumerGroupConfig>of());
-    try {
+    try (
+      final HBaseQueueProducer oldProducer = hBaseQueueClientFactory.createProducer(
+        oldQueueAdmin, queueName, QueueConstants.QueueType.QUEUE,
+        QueueMetrics.NOOP_QUEUE_METRICS, new SaltedHBaseQueueStrategy(buckets), new ArrayList<ConsumerGroupConfig>());
+    ) {
       // Enqueue 10 items to old queue table
       Transactions.createTransactionExecutor(executorFactory, oldProducer)
         .execute(new TransactionExecutor.Subroutine() {
@@ -430,27 +430,21 @@ public abstract class HBaseQueueTest extends QueueTest {
             }
           }
         });
-    } finally {
-      oldProducer.close();
     }
 
     // Configure the consumer
     final ConsumerConfig consumerConfig = new ConsumerConfig(0L, 0, 1, DequeueStrategy.HASH, "key");
-    final QueueConfigurer configurer = queueAdmin.getQueueConfigurer(queueName);
-    try {
+    try (QueueConfigurer configurer = queueAdmin.getQueueConfigurer(queueName)) {
       Transactions.createTransactionExecutor(executorFactory, configurer).execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
           configurer.configureGroups(ImmutableList.of(consumerConfig));
         }
       });
-    } finally {
-      configurer.close();
     }
 
     // explicit set the consumer state to be the lowest start row
-    final HBaseConsumerStateStore stateStore = hbaseQueueAdmin.getConsumerStateStore(queueName);
-    try {
+    try (HBaseConsumerStateStore stateStore = hbaseQueueAdmin.getConsumerStateStore(queueName)) {
       Transactions.createTransactionExecutor(executorFactory, stateStore).execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
@@ -458,8 +452,6 @@ public abstract class HBaseQueueTest extends QueueTest {
                                  QueueEntryRow.getQueueEntryRowKey(queueName, 0L, 0));
         }
       });
-    } finally {
-      stateStore.close();
     }
 
     // Enqueue 10 more items to new queue table
@@ -473,8 +465,7 @@ public abstract class HBaseQueueTest extends QueueTest {
 
     // Create a consumer. It should see all 20 items
     final List<String> messages = Lists.newArrayList();
-    final QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1);
-    try {
+    try (final QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1)) {
       while (messages.size() != 20) {
         Transactions.createTransactionExecutor(executorFactory, (TransactionAware) consumer)
           .execute(new TransactionExecutor.Subroutine() {
@@ -487,8 +478,6 @@ public abstract class HBaseQueueTest extends QueueTest {
             }
           });
       }
-    } finally {
-      configurer.close();
     }
 
     verifyQueueIsEmpty(queueName, ImmutableList.of(consumerConfig));
@@ -510,8 +499,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     // Consume 2 items for each consumer instances
     for (int instanceId = 0; instanceId < groupConfig.getGroupSize(); instanceId++) {
       final ConsumerConfig consumerConfig = new ConsumerConfig(groupConfig, instanceId);
-      final QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1);
-      try {
+      try (QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1)) {
         Transactions.createTransactionExecutor(executorFactory, (TransactionAware) consumer)
           .execute(new TransactionExecutor.Subroutine() {
             @Override
@@ -523,8 +511,6 @@ public abstract class HBaseQueueTest extends QueueTest {
               }
             }
           });
-      } finally {
-        consumer.close();
       }
     }
 
@@ -540,8 +526,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     while (dequeued.size() != 20) {
       for (int instanceId = 0; instanceId < groupConfig.getGroupSize(); instanceId++) {
         final ConsumerConfig consumerConfig = new ConsumerConfig(groupConfig, instanceId);
-        final QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1);
-        try {
+        try (QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1)) {
           Transactions.createTransactionExecutor(executorFactory, (TransactionAware) consumer)
             .execute(new TransactionExecutor.Subroutine() {
               @Override
@@ -551,8 +536,6 @@ public abstract class HBaseQueueTest extends QueueTest {
                 }
               }
             });
-        } finally {
-          consumer.close();
         }
       }
     }
@@ -567,8 +550,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     // All consumers should have empty dequeue now
     for (int instanceId = 0; instanceId < groupConfig.getGroupSize(); instanceId++) {
       final ConsumerConfig consumerConfig = new ConsumerConfig(groupConfig, instanceId);
-      final QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1);
-      try {
+      try (QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1)) {
         Transactions.createTransactionExecutor(executorFactory, (TransactionAware) consumer)
           .execute(new TransactionExecutor.Subroutine() {
             @Override
@@ -577,8 +559,6 @@ public abstract class HBaseQueueTest extends QueueTest {
               Assert.assertTrue(result.isEmpty());
             }
           });
-      } finally {
-        consumer.close();
       }
     }
 
@@ -591,17 +571,18 @@ public abstract class HBaseQueueTest extends QueueTest {
     // The consumer 0 should be able to consume all 10 new items
     dequeued.clear();
     final ConsumerConfig consumerConfig = new ConsumerConfig(0L, 0, 1, DequeueStrategy.HASH, "key");
-    final QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1);
-    while (dequeued.size() != 6) {
-      Transactions.createTransactionExecutor(executorFactory, (TransactionAware) consumer)
-        .execute(new TransactionExecutor.Subroutine() {
-          @Override
-          public void apply() throws Exception {
-            for (byte[] data : consumer.dequeue(1)) {
-              dequeued.put(consumerConfig.getInstanceId(), Bytes.toInt(data));
+    try (final QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1)) {
+      while (dequeued.size() != 6) {
+        Transactions.createTransactionExecutor(executorFactory, (TransactionAware) consumer)
+          .execute(new TransactionExecutor.Subroutine() {
+            @Override
+            public void apply() throws Exception {
+              for (byte[] data : consumer.dequeue(1)) {
+                dequeued.put(consumerConfig.getInstanceId(), Bytes.toInt(data));
+              }
             }
-          }
-        });
+          });
+      }
     }
 
     Assert.assertEquals(ImmutableList.of(0, 1, 2, 3, 4, 5), dequeued.get(0));
