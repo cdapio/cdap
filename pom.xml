@@ -113,6 +113,7 @@
     <hadoop.version>2.3.0</hadoop.version>
     <hbase96.version>0.96.2-hadoop2</hbase96.version>
     <hbase98.version>0.98.6.1-hadoop2</hbase98.version>
+    <hbase10cdh.version>1.0.0-cdh5.4.4</hbase10cdh.version>
     <hive.version>1.1.0</hive.version>
     <hsql.version>2.2.4</hsql.version>
     <http.component.version>4.2.5</http.component.version>
@@ -210,6 +211,17 @@
       <dependency>
         <groupId>co.cask.tephra</groupId>
         <artifactId>tephra-hbase-compat-0.98</artifactId>
+        <version>${tephra.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>co.cask.tephra</groupId>
+        <artifactId>tephra-hbase-compat-1.0-cdh</artifactId>
         <version>${tephra.version}</version>
         <exclusions>
           <exclusion>
@@ -683,12 +695,12 @@
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-common</artifactId>
-        <version>${hbase96.version}</version>
+        <version>${hbase98.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-client</artifactId>
-        <version>${hbase96.version}</version>
+        <version>${hbase98.version}</version>
         <exclusions>
           <exclusion>
             <groupId>io.netty</groupId>
@@ -703,12 +715,12 @@
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-protocol</artifactId>
-        <version>${hbase96.version}</version>
+        <version>${hbase98.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-server</artifactId>
-        <version>${hbase96.version}</version>
+        <version>${hbase98.version}</version>
         <exclusions>
           <exclusion>
             <groupId>org.mortbay.jetty</groupId>
@@ -1014,7 +1026,7 @@
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-testing-util</artifactId>
-        <version>${hbase96.version}</version>
+        <version>${hbase98.version}</version>
         <scope>test</scope>
         <exclusions>
           <exclusion>
@@ -2048,6 +2060,7 @@
         <module>cdap-data-fabric</module>
         <module>cdap-hbase-compat-0.96</module>
         <module>cdap-hbase-compat-0.98</module>
+        <module>cdap-hbase-compat-1.0-cdh</module>
         <module>cdap-watchdog</module>
         <module>cdap-app-fabric</module>
         <module>cdap-security</module>

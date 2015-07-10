@@ -28,8 +28,15 @@
   </parent>
 
   <artifactId>cdap-hbase-compat-1.0-cdh</artifactId>
-  <name>CDAP HBase 1.0 Compatibility</name>
+  <name>CDAP HBase 1.0-CDH Compatibility</name>
   <packaging>jar</packaging>
+
+  <repositories>
+    <repository>
+      <id>cloudera</id>
+      <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+    </repository>
+  </repositories>
 
   <dependencies>
     <dependency>
