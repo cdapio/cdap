@@ -46,14 +46,20 @@ angular.module(PKG.name + '.services')
       });
     };
 
-    this.updateConnection = function(connection) {
+    this.addConnection = function(connection) {
       this.connections.push({
         source: connection.sourceId,
         target: connection.targetId
       });
     };
 
-    this.updateNodes = function(conf, type) {
+    this.setConnections = function(connections) {
+      this.connections = [];
+      var connection = angular.copy(connections);
+      connection.forEach(this.addConnection.bind(this));
+    };
+
+    this.addNodes = function(conf, type) {
       var config = {
         id: conf.id,
         name: conf.name,
@@ -63,6 +69,10 @@ angular.module(PKG.name + '.services')
       };
       this.nodes[config.id] = config;
       this.notifyListeners(config, type);
+    };
+
+    this.removeNode = function (nodeId) {
+      delete this.nodes[nodeId];
     };
 
     this.editPluginProperties = function (scope, pluginId, pluginType) {
@@ -163,8 +173,12 @@ angular.module(PKG.name + '.services')
 
     this.getConfig = function() {
       var config = {
-        source: {},
-        sink: {},
+        source: {
+          properties: {}
+        },
+        sink: {
+          properties: {}
+        },
         transforms: []
       };
       var errors = [];
@@ -175,13 +189,19 @@ angular.module(PKG.name + '.services')
       function addPluginToConfig(plugin, id) {
         if (['source', 'sink'].indexOf(plugin.type) !== -1) {
           config[plugin.type] = {
+            // Solely adding id and _backendProperties for validation.
+            // Should be removed while saving it to backend.
+            id: plugin.id,
             name: plugin.name,
-            properties: plugin.properties || {}
+            properties: plugin.properties || {},
+            _backendProperties: plugin._backendProperties
           };
         } else if (plugin.type === 'transform') {
           config.transforms.push({
+            id: plugin.id,
             name: plugin.name,
-            properties: plugin.properties
+            properties: plugin.properties || {},
+            _backendProperties: plugin._backendProperties
           });
         }
         delete nodes[id];
@@ -197,4 +217,95 @@ angular.module(PKG.name + '.services')
       });
       return config;
     };
+
+    this.save = function() {
+      return this.isModelValid();
+    };
+    this.isModelValid = function() {
+      var validationRules = [
+        hasExactlyOneSourceAndSink,
+        hasNameAndTemplateType,
+        checkForRequiredField,
+        checkForUnconnectedNodes,
+        checkForParallelDAGs
+      ];
+      var errors = [];
+      validationRules.forEach(function(rule) {
+        var errorObj = rule.call(this);
+        if (angular.isArray(errorObj)) {
+          errors = errors.concat(errorObj);
+        } else if (angular.isObject(errorObj)) {
+          errors.push(errorObj);
+        }
+      }.bind(this));
+      return errors.length? errors: true;
+    };
+
+    function hasExactlyOneSourceAndSink() {
+      var source =0, sink =0;
+      var errObj = true;
+      this.connections.forEach(function(conn) {
+        // Source cannot be target just like sink cannot be source in a connection in DAG.
+        source += (this.nodes[conn.source].type === 'source'? 1: 0);
+        sink += (this.nodes[conn.target].type === 'sink'? 1: 0);
+      }.bind(this));
+      if ( source + sink !== 2) {
+        errObj = {};
+        errObj.type = 'nodes';
+        errObj.message = 'Adapter should have exactly one source and one sink';
+      }
+      return errObj;
+    }
+
+    function hasNameAndTemplateType() {
+
+    }
+    function checkForRequiredField() {
+      var errors = true;
+      var config = this.getConfig();
+      function addToErrors(type, message) {
+        if (!angular.isArray(errors)) {
+          errors = [];
+        }
+        var obj = {};
+        obj.type = type;
+        obj.message = message;
+        errors.push(obj);
+      }
+      if(!isValidPlugin(config.source)) {
+        addToErrors('nodes', 'Adapter\'s source is missing required fields');
+      }
+      if (!isValidPlugin(config.sink)) {
+        addToErrors('nodes', 'Adapter\'s sink is missing required fields');
+      }
+      config.transforms.forEach(function(transform) {
+        if (!isValidPlugin(transform)) {
+          addToErrors('nodes', 'Adapter\'s transforms is missing required fields');
+        }
+      });
+      return errors;
+    }
+    function isValidPlugin(plugin) {
+      var i;
+      var keys = Object.keys(plugin.properties);
+      if (!keys.length) {
+        plugin.valid = false;
+        return plugin.valid;
+      }
+      plugin.valid = true;
+      for (i=0; i< keys.length; i++) {
+        var property = plugin.properties[keys[i]];
+        if (plugin._backendProperties[keys[i]].required && (!property || property === '')) {
+          plugin.valid = false;
+          break;
+        }
+      }
+      return plugin.valid;
+    }
+    function checkForUnconnectedNodes() {
+
+    }
+    function checkForParallelDAGs() {
+
+    }
   });

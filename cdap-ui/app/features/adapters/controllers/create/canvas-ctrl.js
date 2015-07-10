@@ -65,11 +65,24 @@ angular.module(PKG.name + '.feature.adapters')
       }
     ];
 
+    function pruneProperties(config) {
+      if (config.source && config.source._backendProperties) {
+        delete config.source._backendProperties;
+      }
+      if (config.sink && config.sink._backendProperties) {
+        delete config.sink._backendProperties;
+      }
+      config.transforms.forEach(function(t) {
+        delete t._backendProperties;
+      });
+    }
+
     this.onCanvasOperationsClicked = function(group) {
       var config;
       switch(group.name) {
         case 'Export':
-          config = MyPlumbService.getConfig();
+          config = angular.copy(MyPlumbService.getConfig());
+          pruneProperties(config);
           $bootstrapModal.open({
             templateUrl: '/assets/features/adapters/templates/create/viewconfig.html',
             size: 'lg',
