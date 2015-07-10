@@ -44,6 +44,11 @@ public final class NoopQueueConfigurer implements QueueConfigurer {
   }
 
   @Override
+  public void updateTx(Transaction tx) {
+    // No-op
+  }
+
+  @Override
   public Collection<byte[]> getTxChanges() {
     return ImmutableList.of();
   }

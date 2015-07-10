@@ -320,6 +320,11 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   }
 
   @Override
+  public final void updateTx(Transaction tx) {
+    this.transaction = tx;
+  }
+
+  @Override
   public final Collection<byte[]> getTxChanges() {
     // Guaranteed no conflict in the consumer logic
     return ImmutableList.of();

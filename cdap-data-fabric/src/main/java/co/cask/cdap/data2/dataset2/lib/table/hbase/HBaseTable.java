@@ -216,6 +216,7 @@ public class HBaseTable extends BufferingTable {
       for (Map.Entry<byte[], Update> column : row.getValue().entrySet()) {
         // we want support tx and non-tx modes
         if (tx != null) {
+          delete.setAttribute(TxConstants.TX_ROLLBACK_ATTRIBUTE_KEY, new byte[0]);
           // TODO: hijacking timestamp... bad
           delete.deleteColumn(columnFamily, column.getKey(), tx.getWritePointer());
         } else {

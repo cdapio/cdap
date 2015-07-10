@@ -126,6 +126,13 @@ public final class QueueToStreamConsumer implements StreamConsumer {
   }
 
   @Override
+  public void updateTx(Transaction tx) {
+    if (consumer instanceof TransactionAware) {
+      ((TransactionAware) consumer).updateTx(tx);
+    }
+  }
+
+  @Override
   public Collection<byte[]> getTxChanges() {
     if (consumer instanceof TransactionAware) {
       return ((TransactionAware) consumer).getTxChanges();
