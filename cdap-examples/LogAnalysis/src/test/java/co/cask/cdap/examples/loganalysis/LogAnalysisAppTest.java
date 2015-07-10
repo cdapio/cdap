@@ -20,8 +20,11 @@
  *
  */
 
-package co.cask.cdap.examples.sparkloganalysis;
+package co.cask.cdap.examples.loganalysis;
 
+import co.cask.cdap.examples.loganalysis.HitCounterProgram;
+import co.cask.cdap.examples.loganalysis.LogAnalysisApp;
+import co.cask.cdap.examples.loganalysis.ResponseCounterProgram;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;

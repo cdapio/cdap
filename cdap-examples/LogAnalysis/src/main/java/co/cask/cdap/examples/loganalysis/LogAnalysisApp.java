@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.examples.sparkloganalysis;
+package co.cask.cdap.examples.loganalysis;
 
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
@@ -28,6 +28,7 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.Workflow;
+import co.cask.cdap.examples.loganalysis.ResponseCounterProgram;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
