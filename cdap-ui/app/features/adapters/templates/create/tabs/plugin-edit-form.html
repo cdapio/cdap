@@ -9,7 +9,7 @@
   <div class="modal-body">
 
     <!-- INPUT SCHEMA -->
-    <div class="col-xs-2">
+    <div class="col-xs-2" ng-if="!hideInput">
       <h4>Input Schema</h4>
       <div class="schema-container" ng-if="inputSchema">
         <ul class="list-unstyled">
@@ -22,7 +22,7 @@
     </div>
 
     <!-- MAIN WIDGET -->
-    <div class="col-xs-5">
+    <div ng-class="{ 'col-xs-10': isSink, 'col-xs-5': !isSink }">
       <form plugin-property-edit-view>
         <fieldset ng-disabled="isDisabled">
           <div ng-if="PluginEditController.noconfig">
@@ -61,7 +61,6 @@
                    ng-repeat="group in PluginEditController.config.groups.position">
                 <div class="well well-lg widget-group-container">
                   <h3>{{PluginEditController.groups[group].display}}</h3>
-
                   <div ng-repeat="field in PluginEditController.groups[group].position" class="row">
                     <div class="row-padding" ng-if="field !== 'schema'">
                       <div class="form-group">
@@ -105,11 +104,17 @@
     </div>
 
     <!-- OUTPUT EDITOR -->
-    <div class="col-xs-5">
-      <h4>Output Schema</h4>
+    <div ng-class="{ 'col-xs-offset-2 col-xs-10': isSink, 'col-xs-5': !isSink && !hideInput, 'col-xs-7': hideInput }">
+      <h4 ng-if="!isSink">Output Schema</h4>
+      <h4 ng-if="isSink">Schema</h4>
       <my-schema-editor
-        ng-model="plugin.outputSchema"></my-schema-editor>
-
+        ng-model="plugin.outputSchema"
+        data-disabled="plugin.implicitSchema" ng-if="plugin.name !== 'Stream'"></my-schema-editor>
+      <my-stream-properties
+        ng-model="plugin.outputSchema"
+        plugins="plugin.properties"
+        ng-if="plugin.name === 'Stream'"
+      ></my-stream-properties>
     </div>
   </div>
 </div>

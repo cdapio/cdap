@@ -117,6 +117,7 @@ angular.module(PKG.name + '.services')
               $scope.plugin = AdapterModel;
               $scope.type = type;
               $scope.isDisabled = false;
+
               var input;
               try {
                 input = JSON.parse(inputSchema);
@@ -143,6 +144,14 @@ angular.module(PKG.name + '.services')
                   }
                   $scope.plugin.properties.schema = $scope.plugin.outputSchema;
                 });
+              }
+
+              if (AdapterModel.type === 'source') {
+                $scope.hideInput = true;
+              }
+
+              if (AdapterModel.type === 'sink') {
+                $scope.isSink = true;
               }
 
             }],
