@@ -62,19 +62,16 @@ body {
 
             @media (min-width: @screen-lg-min) {
               position: absolute;
-              top: 75px;
+              top: 76px;
               left: 45%;
               margin-left: 0;
               text-align: center;
               .border-radius(0 0 8px 8px);
             }
             li.dropdown {
+
               @media (max-width: @screen-md-max) {
-                a.dropdown-toggle {
-                  .caret { display: none; }
-                }
                 &.one {
-                  a.dropdown-toggle { cursor: default; }
                   &.open {
                     ul.dropdown-menu { padding: 0; }
                   }
@@ -84,7 +81,6 @@ body {
             }
 
             @media (min-width: @screen-lg-min) {
-              margin-left: 10px;
               visibility: visible;
               width: 160px;
 
@@ -106,23 +102,16 @@ body {
                 width: 100%;
                 a.dropdown-toggle {
                   white-space: nowrap;
-                  padding-top: 12px;
-                  padding-bottom: 12px;
+                  padding: 10px;
                   > span:first-child {
                     &:after {
                       content: "▾";
-                      color: @body-bg;
                       display: block;
                       height: 5px;
                       position: relative;
                       top: -5px;
                     }
                   }
-                  // .caret {
-                  //   border-width: 5px 5px 0 5px;
-                  //   display: block;
-                  //   margin: 0 auto;
-                  // }
                   .tooltip.right { visibility: hidden; }
                 }
 
@@ -130,23 +119,29 @@ body {
                   width: 160px;
                   z-index: 10;
                   a.dropdown-toggle {
-                    margin: 7px;
-                    padding: 10px;
+                    margin: 0;
                     overflow: auto;
                     .border-radius(8px);
-                    > span:first-child {
-                      &:after { display: none; }
+                    &.multiple {
+                      > span:first-child {
+                        &:after { display: none; }
+                      }
                     }
                   }
-                  ul.dropdown-menu {
-                    &:after {
-                      content: "▾";
-                      color: @body-bg;
-                      cursor: pointer;
-                      display: block;
-                      position: relative;
-                      bottom: 5px;
-                      .rotate(180deg);
+                  &.multiple {
+                    a.dropdown-toggle {
+                      margin: 7px;
+                    }
+                    ul.dropdown-menu {
+                      &:after {
+                        content: "▾";
+                        color: @body-bg;
+                        cursor: pointer;
+                        display: block;
+                        position: relative;
+                        bottom: 5px;
+                        .rotate(180deg);
+                      }
                     }
                   }
                 }
@@ -170,13 +165,16 @@ body {
               &.open {
                 span.fa-cog { padding: 0 5px; }
                 a.dropdown-toggle {
-                  @media (min-width: @screen-lg-min) { .border-radius(4px); }
+                  @media (min-width: @screen-lg-min) {
+                    .border-radius(4px);
+                    font-size: 14px;
+                  }
                 }
               }
 
               a.dropdown-toggle {
                 height: auto;
-                .fa-cog:before { font-size: 16px; }
+                .fa-cog:before { font-size: 17px; }
                 @media (max-width: @screen-md-max) {
                   padding-top: 0;
                   padding-left: 10px;
@@ -212,6 +210,11 @@ body {
 
           // Namespace and Settings dropdowns
           li.dropdown {
+            &.one {
+              a.dropdown-toggle {
+                cursor: default;
+              }
+            }
             @media (max-width: @screen-md-max) {
               min-width: 140px;
               a.dropdown-toggle { padding-bottom: 0; }
@@ -228,17 +231,12 @@ body {
             @media (min-width: @screen-lg-min) {
               background-color: transparent;
               .transition(background-color 0.2s ease-in);
-              &.open {
-                a.dropdown-toggle {
-                  font-size: 14px;
-                }
-              }
 
               ul.dropdown-menu {
                 border: 0;
                 margin: 0;
                 padding: 0;
-                top: 47px !important;
+                top: 51px !important;
                 li { position: relative; }
                 a {
                   font-size: 14px;
@@ -373,6 +371,23 @@ body {
                   &.open {
                     background-color: @ns-dropdown;
                     a.dropdown-toggle { color: @cdap-bluegray; }
+                    &.multiple {
+                      a.dropdown-toggle {
+                        background-color: white;
+                        > span:first-child:after {
+                          color: @body-bg;
+                        }
+                      }
+                    }
+                    &.one {
+                      a.dropdown-toggle {
+                        background-color: transparent;
+                        color: @cdap-gray;
+                        > span:first-child:after {
+                          color: @cdap-gray;
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -392,7 +407,13 @@ body {
                   }
                 }
                 @media (min-width: @screen-lg-min) {
-                  &.open { background-color: @brand-primary; }
+                  &.open {
+                    background-color: @brand-primary;
+                    a.dropdown-toggle {
+                      background-color: @cdap-white;
+                      color: @cdap-header;
+                    }
+                  }
                   a.dropdown-toggle { color: white; }
                   ul.dropdown-menu {
                     background-color: @brand-primary;
@@ -415,14 +436,6 @@ body {
             li.dropdown {
               @media (max-width: @screen-md-max) {
                 a.dropdown-toggle { color: @cdap-gray; }
-              }
-              @media (min-width: @screen-lg-min) {
-                &.open {
-                  a.dropdown-toggle {
-                    background-color: @cdap-white;
-                    color: @cdap-header;
-                  }
-                }
               }
             }
           }
