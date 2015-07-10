@@ -31,7 +31,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal) {
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $filter) {
     this.callbacks = [];
     this.nodes = {};
     this.connections = [];
@@ -62,25 +62,45 @@ angular.module(PKG.name + '.services')
         icon: conf.icon,
         description: conf.description,
         type: conf.type
-      }
+      };
       this.nodes[config.id] = config;
       this.notifyListeners(config, type);
     };
 
     this.editPluginProperties = function (scope, pluginId, pluginType) {
-      var plugin = this.nodes[pluginId];
-      var prom = $q.defer();
       var propertiesApiMap = {
         'source': myAdapterApi.fetchSourceProperties,
         'sink': myAdapterApi.fetchSinkProperties,
         'transform': myAdapterApi.fetchTransformProperties
       };
+
+      var sourceConn = $filter('filter')(this.connections, { target: pluginId });
+      var sourceSchema = null;
+
+      if (sourceConn.length) {
+        var source = sourceConn.length ? this.nodes[sourceConn[0].source] : null;
+
+        sourceSchema = source.outputSchema;
+        // try {
+        //   sourceSchema = JSON.parse(source.outputSchema);
+        //   sourceSchema = sourceSchema ? sourceSchema.fields : null;
+        // }
+        // catch (e) {
+        //   if (source.outputSchema) {
+        //     sourceSchema = source.outputSchema;
+        //   }
+        // }
+      }
+
+      var plugin = this.nodes[pluginId];
+      var prom = $q.defer();
+
       var params = {
         scope: scope,
         adapterType: 'ETLBatch'
       };
       params[pluginType] = plugin.name;
-      
+
       propertiesApiMap[pluginType](params)
         .$promise
         .then(function(res) {
@@ -93,10 +113,38 @@ angular.module(PKG.name + '.services')
           $bootstrapModal.open({
             animation: false,
             templateUrl: '/assets/features/adapters/templates/tabs/runs/tabs/properties/properties.html',
-            controller: ['$scope', 'AdapterModel', 'type', function ($scope, AdapterModel, type){
+            controller: ['$scope', 'AdapterModel', 'type', 'inputSchema', function ($scope, AdapterModel, type, inputSchema){
               $scope.plugin = AdapterModel;
               $scope.type = type;
               $scope.isDisabled = false;
+              var input;
+              try {
+                input = JSON.parse(inputSchema);
+              } catch (e) {
+                input = null;
+              }
+              $scope.inputSchema = input ? input.fields : null;
+
+              if (!$scope.plugin.outputSchema && inputSchema) {
+                $scope.plugin.outputSchema = angular.copy(inputSchema) || null;
+              }
+
+              if ($scope.plugin._backendProperties.schema) {
+                $scope.$watch('plugin.outputSchema', function () {
+                  if (!$scope.plugin.outputSchema) {
+                    if ($scope.plugin.properties && $scope.plugin.properties.schema) {
+                      $scope.plugin.properties.schema = null;
+                    }
+                    return;
+                  }
+
+                  if (!$scope.plugin.properties) {
+                    $scope.plugin.properties = {};
+                  }
+                  $scope.plugin.properties.schema = $scope.plugin.outputSchema;
+                });
+              }
+
             }],
             size: 'lg',
             resolve: {
@@ -105,9 +153,12 @@ angular.module(PKG.name + '.services')
               },
               type: function () {
                 return 'ETLBatch';
+              },
+              inputSchema: function () {
+                return sourceSchema;
               }
             }
           });
-        })
+        });
     };
   });
