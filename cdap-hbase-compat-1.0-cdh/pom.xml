@@ -122,6 +122,13 @@
       <artifactId>hadoop-hdfs</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- HBase-1.0-CDH depends on org.htrace, not org.apache.htrace (newer) -->
+    <dependency>
+      <groupId>org.htrace</groupId>
+      <artifactId>htrace-core</artifactId>
+      <version>3.0.4</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
