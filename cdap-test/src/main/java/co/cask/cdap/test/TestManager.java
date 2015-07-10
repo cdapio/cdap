@@ -46,11 +46,20 @@ public interface TestManager {
    *
    * @param namespace The namespace to deploy to
    * @param applicationClz The application class
-   * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
+   * @return An {@link ApplicationManager} to manage the deployed application.
    */
   ApplicationManager deployApplication(Id.Namespace namespace,
                                        Class<? extends Application> applicationClz, File... bundleEmbeddedJars);
 
+  /**
+   * Deploys an {@link Application}.
+   *
+   * @param namespace The namespace to deploy to
+   * @param applicationClz The application class
+   * @param configObject Configuration object to be used during deployment and can be accessed
+   *                     in {@link Application#configure} via {@link ApplicationContext#getConfig}
+   * @return An {@link ApplicationManager} to manage the deployed application.
+   */
   ApplicationManager deployApplication(Id.Namespace namespace, Class<? extends Application> applicationClz,
                                        Config configObject, File... bundleEmbeddedJars);
 

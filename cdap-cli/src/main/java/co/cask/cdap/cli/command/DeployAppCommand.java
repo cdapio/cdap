@@ -30,7 +30,6 @@ import com.google.inject.Inject;
 
 import java.io.File;
 import java.io.PrintStream;
-import javax.ws.rs.HEAD;
 
 /**
  * Deploys an application.
@@ -53,7 +52,7 @@ public class DeployAppCommand extends AbstractAuthCommand {
     Preconditions.checkArgument(file.exists(), "File " + file.getAbsolutePath() + " does not exist");
     Preconditions.checkArgument(file.canRead(), "File " + file.getAbsolutePath() + " is not readable");
     String appConfig = arguments.get(ArgumentName.RUNTIME_ARGS.toString(), "");
-    applicationClient.deploy(cliConfig.getCurrentNamespace(), file);
+    applicationClient.deploy(cliConfig.getCurrentNamespace(), file, appConfig);
     output.println("Successfully deployed application");
   }
 

@@ -95,7 +95,7 @@ public class IntegrationTestManager implements TestManager {
     // See if the application class comes from file or jar.
     // If it's from JAR, no need to trace dependency since it should already be in an application jar.
     URL appClassURL = applicationClz.getClassLoader()
-      .getResource(applicationClz.getName().replace('.', '/') + ".class");
+                                    .getResource(applicationClz.getName().replace('.', '/') + ".class");
     // Should never happen, otherwise the ClassLoader is broken
     Preconditions.checkNotNull(appClassURL, "Cannot find class %s from the classloader", applicationClz);
 

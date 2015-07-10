@@ -78,8 +78,7 @@ import javax.annotation.Nullable;
  * Test for {@link CLIMain}.
  */
 @Category(XSlowTests.class)
-public class
-  CLIMainTest {
+public class CLIMainTest {
 
   @ClassRule
   public static final StandaloneTester STANDALONE = new StandaloneTester();
