@@ -514,6 +514,10 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     } catch (Exception e) {
       throw new DataSetException("Partition filter must be correctly specified in arguments.");
     }
+    if (filter == null) {
+      // no PartitionFilter specified. Perhaps input paths were specified. Embedded FileSet will deal with that.
+      return files.getInputFormatConfiguration();
+    }
     Collection<String> inputPaths = getPartitionPaths(filter);
     List<Location> inputLocations = Lists.newArrayListWithExpectedSize(inputPaths.size());
     for (String path : inputPaths) {
