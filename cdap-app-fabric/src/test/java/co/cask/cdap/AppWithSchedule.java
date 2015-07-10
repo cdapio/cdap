@@ -35,22 +35,25 @@ import java.util.concurrent.TimeUnit;
  * Application with workflow scheduling.
  */
 public class AppWithSchedule extends AbstractApplication {
+  public static final String NAME = "AppWithSchedule";
+  public static final String SCHEDULE_NAME = "SampleSchedule";
 
   @Override
   public void configure() {
     try {
-      setName("AppWithSchedule");
+      setName(NAME);
       setDescription("Sample application");
       ObjectStores.createObjectStore(getConfigurer(), "input", String.class);
       ObjectStores.createObjectStore(getConfigurer(), "output", String.class);
       addWorkflow(new SampleWorkflow());
+      addWorkflow(new SampleWorkflow1());
 
       Map<String, String> scheduleProperties = Maps.newHashMap();
       scheduleProperties.put("oneKey", "oneValue");
       scheduleProperties.put("anotherKey", "anotherValue");
       scheduleProperties.put("someKey", "someValue");
 
-      scheduleWorkflow(Schedules.createTimeSchedule("SampleSchedule", "Sample schedule", "0/1 * * * * ?"),
+      scheduleWorkflow(Schedules.createTimeSchedule(SCHEDULE_NAME, "Sample schedule", "0/1 * * * * ?"),
                        "SampleWorkflow", scheduleProperties);
     } catch (UnsupportedTypeException e) {
       throw Throwables.propagate(e);
@@ -61,12 +64,27 @@ public class AppWithSchedule extends AbstractApplication {
    * Sample workflow. Schedules a dummy MR job.
    */
   public static class SampleWorkflow extends AbstractWorkflow {
+    public static final String NAME = "SampleWorkflow";
 
     @Override
     public void configure() {
-        setName("SampleWorkflow");
+        setName(NAME);
         setDescription("SampleWorkflow description");
         addAction(new DummyAction());
+    }
+  }
+
+  /**
+   * Sample workflow. Schedules a dummy MR job.
+   */
+  public static class SampleWorkflow1 extends AbstractWorkflow {
+    public static final String NAME = "SampleWorkflow1";
+
+    @Override
+    public void configure() {
+      setName(NAME);
+      setDescription("SampleWorkflow1 description");
+      addAction(new DummyAction());
     }
   }
 

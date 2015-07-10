@@ -18,6 +18,7 @@ package co.cask.cdap.internal.guice;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
@@ -106,11 +107,16 @@ public final class AppFabricTestModule extends AbstractModule {
   private Scheduler createNoopScheduler() {
     return new Scheduler() {
       @Override
-      public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule) {
+      public void schedule(Id.Program program, ScheduleSpecification scheduleSpec) {
       }
 
       @Override
-      public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
+      public void schedule(Id.Program program, ScheduleSpecification scheduleSpec,
+                           boolean updateMds) throws SchedulerException {
+      }
+
+      @Override
+      public void schedule(Id.Program program, ScheduleSpecification scheduleSpec,
                            Map<String, String> properties) {
       }
 
@@ -147,12 +153,12 @@ public final class AppFabricTestModule extends AbstractModule {
       }
 
       @Override
-      public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule) {
+      public void updateSchedule(Id.Program program, ScheduleSpecification scheduleSpec) {
       }
 
       @Override
-      public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
-                                 Map<String, String> properties) {
+      public void updateSchedule(Id.Program program,
+                                 ScheduleSpecification scheduleSpec, Map<String, String> properties) {
       }
 
       @Override

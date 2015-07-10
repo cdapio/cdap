@@ -20,7 +20,9 @@ import co.cask.cdap.AppWithStreamSizeSchedule;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Schedules;
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NamespaceCannotBeDeletedException;
@@ -28,13 +30,13 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -77,7 +79,6 @@ public abstract class SchedulerTestBase {
   @BeforeClass
   public static void init() throws Exception {
     injector = AppFabricTestHelper.getInjector(CCONF);
-    PreferencesStore preferencesStore = injector.getInstance(PreferencesStore.class);
     streamSizeScheduler = injector.getInstance(StreamSizeScheduler.class);
     store = injector.getInstance(Store.class);
     metricStore = injector.getInstance(MetricStore.class);
@@ -137,7 +138,10 @@ public abstract class SchedulerTestBase {
 
     // Update the schedule2's data trigger
     // Both schedules should now trigger execution after 1 MB of data received
-    streamSizeScheduler.updateSchedule(PROGRAM_ID, PROGRAM_TYPE, UPDATE_SCHEDULE_2);
+    ScheduleSpecification updatedScheduleSpec =
+      new ScheduleSpecification(UPDATE_SCHEDULE_2, new ScheduleProgramInfo(PROGRAM_TYPE, PROGRAM_ID.getId()),
+                                ImmutableMap.<String, String>of());
+    streamSizeScheduler.updateSchedule(PROGRAM_ID, updatedScheduleSpec);
     metricsPublisher.increment(1024 * 1024);
     waitForRuns(store, PROGRAM_ID, 8, 5);
 

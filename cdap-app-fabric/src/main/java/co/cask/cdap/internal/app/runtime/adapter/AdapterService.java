@@ -483,15 +483,13 @@ public class AdapterService extends AbstractIdleService {
     throws NotFoundException, SchedulerException {
     Id.Program workflowId = getProgramId(namespace, adapterSpec);
     ScheduleSpecification scheduleSpec = adapterSpec.getScheduleSpecification();
-    scheduler.schedule(workflowId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule(),
+    scheduler.schedule(workflowId, scheduleSpec,
                        ImmutableMap.of(
                          ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName(),
                          ProgramOptionConstants.ADAPTER_SPEC, GSON.toJson(adapterSpec),
                          // hack for scheduler weirdness in unit tests, remove once CDAP-2281 is done
                          Constants.Scheduler.IGNORE_LAZY_START, String.valueOf(true)
                        ));
-    //TODO: Scheduler API should also manage the MDS.
-    store.addSchedule(workflowId, scheduleSpec);
   }
 
   private void stopWorkflowAdapter(Id.Namespace namespace, AdapterDefinition adapterSpec)
@@ -500,8 +498,6 @@ public class AdapterService extends AbstractIdleService {
     String scheduleName = adapterSpec.getScheduleSpecification().getSchedule().getName();
     try {
       scheduler.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
-      //TODO: Scheduler API should also manage the MDS.
-      store.deleteSchedule(workflowId, scheduleName);
     } catch (NotFoundException e) {
       // its possible a stop was already called and the schedule was deleted, but then there
       // was some failure stopping the active run.  In that case, the next time stop is called

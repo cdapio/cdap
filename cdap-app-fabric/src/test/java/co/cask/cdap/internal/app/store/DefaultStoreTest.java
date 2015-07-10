@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.AppWithNoServices;
+import co.cask.cdap.AppWithSchedule;
 import co.cask.cdap.AppWithServices;
 import co.cask.cdap.AppWithWorker;
 import co.cask.cdap.AppWithWorkflow;
@@ -245,7 +246,7 @@ public class DefaultStoreTest {
     store.setStart(programId2, run4.getId(), runIdToSecs(run4));
     store.setStop(programId2, run4.getId(), nowSecs - 4, ProgramController.State.COMPLETED.getRunStatus());
 
-    // record for different account
+    // record for different namespace
     store.setStart(Id.Program.from("account2", "application1", ProgramType.FLOW, "flow1"),
                    run3.getId(), RunIds.getTime(run3, TimeUnit.MILLISECONDS));
 
@@ -797,8 +798,8 @@ public class DefaultStoreTest {
     Assert.assertEquals(0, specsToBeDeleted.size());
   }
 
-  private static final Id.Namespace account = new Id.Namespace(Constants.DEFAULT_NAMESPACE);
-  private static final Id.Application appId = new Id.Application(account, AppWithWorkflow.NAME);
+  private static final Id.Namespace namespace = new Id.Namespace(Constants.DEFAULT_NAMESPACE);
+  private static final Id.Application appId = new Id.Application(namespace, AppWithWorkflow.NAME);
   private static final Id.Program program = new Id.Program(appId, ProgramType.WORKFLOW,
                                                            AppWithWorkflow.SampleWorkflow.NAME);
   private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
@@ -859,6 +860,37 @@ public class DefaultStoreTest {
     schedules = getSchedules(appId);
     Assert.assertEquals(1, schedules.size());
     Assert.assertEquals(null, schedules.get("Schedule2"));
+  }
+
+  @Test
+  public void testScheduleDeleteApis() throws Exception {
+    AppFabricTestHelper.deployApplication(AppWithSchedule.class);
+    Id.Application appId = Id.Application.from(Constants.DEFAULT_NAMESPACE, AppWithSchedule.NAME);
+    // App already contains 1 schedule
+    Assert.assertEquals(1, getSchedules(appId).size());
+    Id.Program programId = Id.Program.from(appId, ProgramType.WORKFLOW, AppWithSchedule.SampleWorkflow.NAME);
+    ScheduleProgramInfo scheduleProgramInfo = new ScheduleProgramInfo(programType, AppWithSchedule.SampleWorkflow.NAME);
+    ScheduleSpecification scheduleSpec = new ScheduleSpecification(schedule2, scheduleProgramInfo, properties2);
+    store.addSchedule(programId, scheduleSpec);
+    Id.Program programId1 = Id.Program.from(appId, ProgramType.WORKFLOW, AppWithSchedule.SampleWorkflow1.NAME);
+    ScheduleProgramInfo scheduleProgramInfo1 = new ScheduleProgramInfo(programType,
+                                                                       AppWithSchedule.SampleWorkflow1.NAME);
+    ScheduleSpecification scheduleSpec1 = new ScheduleSpecification(schedule1, scheduleProgramInfo1, properties1);
+    store.addSchedule(programId1, scheduleSpec1);
+    // 2 more schedules should have been added
+    Assert.assertEquals(3, getSchedules(appId).size());
+    store.deleteSchedules(programId);
+    // All (2) schedules on SampleWorkflow should have been deleted, but one schedule on SampleWorkflow1 should exist
+    Map<String, ScheduleSpecification> schedules = getSchedules(appId);
+    Assert.assertEquals(1, schedules.size());
+    Assert.assertTrue(schedules.containsKey(schedule1.getName()));
+    ScheduleSpecification remainingSchedule = schedules.get(schedule1.getName());
+    Assert.assertEquals(scheduleSpec1, remainingSchedule);
+    Assert.assertEquals(AppWithSchedule.SampleWorkflow1.NAME, remainingSchedule.getProgram().getProgramName());
+    // add a schedule on SampleWorkflow
+    store.addSchedule(programId, scheduleSpec);
+    store.deleteSchedules(Constants.DEFAULT_NAMESPACE_ID);
+    Assert.assertEquals(0, getSchedules(appId).size());
   }
 
   private Map<String, ScheduleSpecification> getSchedules(Id.Application appId) {

@@ -21,32 +21,28 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Schedules;
-import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NamespaceCannotBeDeletedException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Map;
 
 public class SchedulerServiceTest {
   private static SchedulerService schedulerService;
   private static Store store;
-  private static LocationFactory locationFactory;
   private static NamespaceAdmin namespaceAdmin;
   private static final Id.Namespace namespace = new Id.Namespace("notdefault");
   private static final Id.Application appId = new Id.Application(namespace, AppWithWorkflow.NAME);
@@ -65,7 +61,6 @@ public class SchedulerServiceTest {
   public static void set() throws Exception {
     schedulerService = AppFabricTestHelper.getInjector().getInstance(SchedulerService.class);
     store = AppFabricTestHelper.getInjector().getInstance(Store.class);
-    locationFactory = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class);
     namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
     namespaceAdmin.createNamespace(new NamespaceMeta.Builder().setName(namespace).build());
     namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
@@ -81,62 +76,59 @@ public class SchedulerServiceTest {
   @Test
   public void testSchedulesAcrossNamespace() throws Exception {
     AppFabricTestHelper.deployApplication(namespace, AppWithWorkflow.class);
-    ApplicationSpecification applicationSpecification = store.getApplication(appId);
 
     schedulerService.schedule(program, programType, ImmutableList.of(timeSchedule1));
-    store.addApplication(appId, createNewSpecification(applicationSpecification, program, programType, timeSchedule1),
-                         locationFactory.create("app"));
-
-    Id.Program programInOtherNamespace =
-      Id.Program.from(new Id.Application(new Id.Namespace("otherNamespace"), appId.getId()),
-                      program.getType(), program.getId());
-
+    Assert.assertEquals(1, getSchedules(appId).size());
     List<String> scheduleIds = schedulerService.getScheduleIds(program, programType);
     Assert.assertEquals(1, scheduleIds.size());
+
+    Id.Namespace otherNamespace = Id.Namespace.from("otherNamespace");
+    Id.Application appInOtherNamespace = Id.Application.from(otherNamespace, appId.getId());
+    Id.Program programInOtherNamespace = Id.Program.from(appInOtherNamespace, program.getType(), program.getId());
 
     List<String> scheduleIdsOtherNamespace = schedulerService.getScheduleIds(programInOtherNamespace, programType);
     Assert.assertEquals(0, scheduleIdsOtherNamespace.size());
 
+    namespaceAdmin.createNamespace(new NamespaceMeta.Builder().setName(otherNamespace).build());
+    AppFabricTestHelper.deployApplication(otherNamespace, AppWithWorkflow.class);
     schedulerService.schedule(programInOtherNamespace, programType, ImmutableList.of(timeSchedule2));
-    store.addApplication(appId, createNewSpecification(applicationSpecification, programInOtherNamespace, programType,
-                                                       timeSchedule2),
-                         locationFactory.create("app"));
-
+    Assert.assertEquals(1, getSchedules(appInOtherNamespace).size());
     scheduleIdsOtherNamespace = schedulerService.getScheduleIds(programInOtherNamespace, programType);
     Assert.assertEquals(1, scheduleIdsOtherNamespace.size());
 
     Assert.assertNotEquals(scheduleIds.get(0), scheduleIdsOtherNamespace.get(0));
 
+    schedulerService.deleteSchedule(program, programType, timeSchedule1.getName());
+    Assert.assertEquals(0, getSchedules(appId).size());
+    schedulerService.deleteAllSchedules(otherNamespace);
+    Assert.assertEquals(0, getSchedules(appInOtherNamespace).size());
+    namespaceAdmin.deleteNamespace(otherNamespace);
   }
 
   @Test
   public void testSimpleSchedulerLifecycle() throws Exception {
     AppFabricTestHelper.deployApplication(namespace, AppWithWorkflow.class);
-    ApplicationSpecification applicationSpecification = store.getApplication(appId);
 
     schedulerService.schedule(program, programType, ImmutableList.of(timeSchedule1));
-    applicationSpecification = createNewSpecification(applicationSpecification, program, programType, timeSchedule1);
-    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
     List<String> scheduleIds = schedulerService.getScheduleIds(program, programType);
     Assert.assertEquals(1, scheduleIds.size());
+    Assert.assertEquals(1, getSchedules(appId).size());
+
     checkState(Scheduler.ScheduleState.SUSPENDED, scheduleIds);
     schedulerService.resumeSchedule(program, programType, "Schedule1");
     checkState(Scheduler.ScheduleState.SCHEDULED, scheduleIds);
 
-    schedulerService.schedule(program, programType, timeSchedule2);
-    applicationSpecification = createNewSpecification(applicationSpecification, program, programType, timeSchedule2);
-    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
+    schedulerService.schedule(program, programType, ImmutableList.of(timeSchedule2));
     scheduleIds = schedulerService.getScheduleIds(program, programType);
     Assert.assertEquals(2, scheduleIds.size());
+    Assert.assertEquals(2, getSchedules(appId).size());
     schedulerService.resumeSchedule(program, programType, "Schedule2");
     checkState(Scheduler.ScheduleState.SCHEDULED, scheduleIds);
 
     schedulerService.schedule(program, programType, ImmutableList.of(dataSchedule1, dataSchedule2));
-    applicationSpecification = createNewSpecification(applicationSpecification, program, programType, dataSchedule1);
-    applicationSpecification = createNewSpecification(applicationSpecification, program, programType, dataSchedule2);
-    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
     scheduleIds = schedulerService.getScheduleIds(program, programType);
     Assert.assertEquals(4, scheduleIds.size());
+    Assert.assertEquals(4, getSchedules(appId).size());
     schedulerService.resumeSchedule(program, programType, "Schedule3");
     schedulerService.resumeSchedule(program, programType, "Schedule4");
     checkState(Scheduler.ScheduleState.SCHEDULED, scheduleIds);
@@ -154,9 +146,7 @@ public class SchedulerServiceTest {
 
     schedulerService.deleteSchedules(program, programType);
     Assert.assertEquals(0, schedulerService.getScheduleIds(program, programType).size());
-    applicationSpecification = deleteSchedulesFromSpec(applicationSpecification);
-    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
-
+    Assert.assertEquals(0, getSchedules(appId).size());
     // Check the state of the old scheduleIds
     // (which should be deleted by the call to SchedulerService#delete(Program, ProgramType)
     checkState(Scheduler.ScheduleState.NOT_FOUND, scheduleIds);
@@ -170,47 +160,9 @@ public class SchedulerServiceTest {
     }
   }
 
-  private ApplicationSpecification createNewSpecification(ApplicationSpecification spec, Id.Program programId,
-                                                          SchedulableProgramType programType, Schedule schedule) {
-    ImmutableMap.Builder<String, ScheduleSpecification> builder = ImmutableMap.builder();
-    builder.putAll(spec.getSchedules());
-    builder.put(schedule.getName(), new ScheduleSpecification(schedule,
-                                                              new ScheduleProgramInfo(programType, programId.getId()),
-                                                              ImmutableMap.<String, String>of()));
-    return new DefaultApplicationSpecification(
-      spec.getName(),
-      spec.getVersion(),
-      spec.getDescription(),
-      spec.getConfiguration(),
-      spec.getStreams(),
-      spec.getDatasetModules(),
-      spec.getDatasets(),
-      spec.getFlows(),
-      spec.getMapReduce(),
-      spec.getSpark(),
-      spec.getWorkflows(),
-      spec.getServices(),
-      builder.build(),
-      spec.getWorkers()
-    );
-  }
-
-  private ApplicationSpecification deleteSchedulesFromSpec(ApplicationSpecification spec) {
-    return new DefaultApplicationSpecification(
-      spec.getName(),
-      spec.getVersion(),
-      spec.getDescription(),
-      spec.getConfiguration(),
-      spec.getStreams(),
-      spec.getDatasetModules(),
-      spec.getDatasets(),
-      spec.getFlows(),
-      spec.getMapReduce(),
-      spec.getSpark(),
-      spec.getWorkflows(),
-      spec.getServices(),
-      ImmutableMap.<String, ScheduleSpecification>of(),
-      spec.getWorkers()
-    );
+  private Map<String, ScheduleSpecification> getSchedules(Id.Application appId) {
+    ApplicationSpecification application = store.getApplication(appId);
+    Assert.assertNotNull(application);
+    return application.getSchedules();
   }
 }

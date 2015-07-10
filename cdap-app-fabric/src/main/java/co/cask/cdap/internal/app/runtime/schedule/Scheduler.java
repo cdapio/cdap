@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ScheduledRuntime;
@@ -34,23 +35,34 @@ public interface Scheduler {
    * Schedule a program to be run in a defined schedule.
    *
    * @param program Program that needs to be run.
-   * @param programType type of program.
-   * @param schedule Schedule with which the program runs.
+   * @param scheduleSpec specification of the schedule.
    * @throws SchedulerException on unforeseen error.
    */
-  void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
+  void schedule(Id.Program program, ScheduleSpecification scheduleSpec)
     throws SchedulerException;
 
   /**
    * Schedule a program to be run in a defined schedule.
    *
    * @param program Program that needs to be run.
-   * @param programType type of program.
-   * @param schedule Schedule with which the program runs.
-   * @param properties system properties to be passed to the schedule
+   * @param scheduleSpec specification of the schedule.
+   * @param updateMds indicates whether to update the application specification in the MDS with this schedule. This is
+   *                  needed because during application deployment, the app spec in the MDS already contains a schedule
+   *                  spec, so we do not want to add it again/override it.
    * @throws SchedulerException on unforeseen error.
    */
-  void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
+  void schedule(Id.Program program, ScheduleSpecification scheduleSpec, boolean updateMds)
+    throws SchedulerException;
+
+  /**
+   * Schedule a program to be run in a defined schedule.
+   *
+   * @param program Program that needs to be run.
+   * @param scheduleSpec specification of the schedule.
+   * @param properties system properties to be passed to the schedule.
+   * @throws SchedulerException on unforeseen error.
+   */
+  void schedule(Id.Program program, ScheduleSpecification scheduleSpec,
                 Map<String, String> properties) throws SchedulerException;
 
   /**
@@ -152,28 +164,26 @@ public interface Scheduler {
    * Update the given schedule. The schedule with the same name than the given {@code schedule} will be replaced.
    *
    * @param program the program for which schedule needs to be updated
-   * @param programType the type of the program
-   * @param schedule the new schedule. The schedule with the same name will be replaced
+   * @param scheduleSpec the specification of the schedule
    * @throws NotFoundException if the {@code schedule} does not exist, or if the application the {@code program}
    *                           belongs to does not exist.
    * @throws SchedulerException on unforeseen error.
    */
-  void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
+  void updateSchedule(Id.Program program, ScheduleSpecification scheduleSpec)
     throws NotFoundException, SchedulerException;
 
   /**
    * Update the given schedule. The schedule with the same name than the given {@code schedule} will be replaced.
    *
    * @param program the program for which schedule needs to be updated
-   * @param programType the type of the program
-   * @param schedule the new schedule. The schedule with the same name will be replaced
+   * @param scheduleSpec the specification of the schedule
    * @param properties properties that can be passed to the quartz scheduler
    * @throws NotFoundException if the {@code schedule} does not exist, or if the application the {@code program}
    *                           belongs to does not exist.
    * @throws SchedulerException on unforeseen error.
    */
-  void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
-                             Map<String, String> properties) throws NotFoundException, SchedulerException;
+  void updateSchedule(Id.Program program, ScheduleSpecification scheduleSpec,
+                      Map<String, String> properties) throws NotFoundException, SchedulerException;
 
   /**
    * Deletes the schedule.
