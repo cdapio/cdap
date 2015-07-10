@@ -35,11 +35,11 @@ import javax.annotation.Nullable;
  */
 public final class DatasetInstanceMDS extends MetadataStoreDataset {
   /**
-   * Prefix for rows containing instance info.
+   * Prefix for rows containing instance info. Public so that the upgrade tool can use it.
    * NOTE: even though we don't have to have it now we may want to store different type of data in one table, so
    *       the prefix may help us in future
    */
-  static final String INSTANCE_PREFIX = "i_";
+  public static final String INSTANCE_PREFIX = "i_";
 
   public DatasetInstanceMDS(DatasetSpecification spec, @EmbeddedDataset("") Table table) {
     super(table);
