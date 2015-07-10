@@ -20,7 +20,7 @@
  *
  */
 
-package co.cask.cdap.examples.sparkloganalysis
+package co.cask.cdap.examples.loganalysis
 
 import co.cask.cdap.api.common.Bytes
 import co.cask.cdap.api.spark.{ScalaSparkProgram, SparkContext}

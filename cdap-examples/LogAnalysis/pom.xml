@@ -27,7 +27,7 @@
   <artifactId>SparkLogAnalysis</artifactId>
 
   <properties>
-    <app.main.class>co.cask.cdap.examples.sparkloganalysis.LogAnalysisApp</app.main.class>
+    <app.main.class>co.cask.cdap.examples.loganalysis.LogAnalysisApp</app.main.class>
   </properties>
 
   <repositories>
