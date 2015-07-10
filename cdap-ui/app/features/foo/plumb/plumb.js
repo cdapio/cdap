@@ -99,6 +99,6 @@ angular.module(PKG.name + '.feature.foo')
 
     this.onPluginItemClicked = function(event, item) {
       event.stopPropagation();
-      MyPlumbService.updateNodes(item, item.type);
+      MyPlumbService.addNodes(item, item.type);
     };
   });

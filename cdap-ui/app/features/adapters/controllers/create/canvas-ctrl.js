@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('CanvasController', function (myAdapterApi, MyPlumbService) {
+  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal) {
     function getIcon(plugin) {
       var iconMap = {
         'script': 'fa-code',
@@ -70,6 +70,27 @@ angular.module(PKG.name + '.feature.adapters')
       switch(group.name) {
         case 'Export':
           config = MyPlumbService.getConfig();
+          $bootstrapModal.open({
+            templateUrl: '/assets/features/adapters/templates/create/viewconfig.html',
+            size: 'lg',
+            keyboard: true,
+            controller: ['$scope', 'config', function($scope, config) {
+              $scope.config = JSON.stringify(config);
+            }],
+            resolve: {
+              config: function() {
+                return config;
+              }
+            }
+          });
+          break;
+        case 'Publish':
+          errorObj = MyPlumbService.save();
+          if (angular.isArray(errorObj)) {
+            console.error('ERROR!: ', errorObj);
+          } else {
+            console.info('GUJOB');
+          }
           break;
       }
     };
@@ -118,7 +139,7 @@ angular.module(PKG.name + '.feature.adapters')
         description: item.description,
         type: item.type
       };
-      MyPlumbService.updateNodes(config, config.type);
+      MyPlumbService.addNodes(config, config.type);
     };
 
 
