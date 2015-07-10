@@ -55,8 +55,7 @@ angular.module(PKG.name + '.services')
 
     this.setConnections = function(connections) {
       this.connections = [];
-      var connection = angular.copy(connections);
-      connection.forEach(this.addConnection.bind(this));
+      connections.forEach(this.addConnection.bind(this));
     };
 
     this.addNodes = function(conf, type) {
@@ -272,14 +271,14 @@ angular.module(PKG.name + '.services')
         obj.message = message;
         errors.push(obj);
       }
-      if(!isValidPlugin(config.source)) {
+      if(config.source.name && !isValidPlugin(config.source)) {
         addToErrors('nodes', 'Adapter\'s source is missing required fields');
       }
-      if (!isValidPlugin(config.sink)) {
+      if (config.sink.name && !isValidPlugin(config.sink)) {
         addToErrors('nodes', 'Adapter\'s sink is missing required fields');
       }
       config.transforms.forEach(function(transform) {
-        if (!isValidPlugin(transform)) {
+        if (transform.name && !isValidPlugin(transform)) {
           addToErrors('nodes', 'Adapter\'s transforms is missing required fields');
         }
       });
@@ -302,10 +301,34 @@ angular.module(PKG.name + '.services')
       }
       return plugin.valid;
     }
-    function checkForUnconnectedNodes() {
 
+    function checkForUnconnectedNodes() {
+      var nodesCount = Object.keys(this.nodes).length;
+      var edgeCount = this.connections.length;
+      var errorObj = true;
+      if ((nodesCount - 1)!== edgeCount) {
+        errorObj = {
+          type: 'nodes',
+          message: 'There are nodes that are not part of the DAG left hanging'
+        };
+      }
+      return errorObj;
     }
     function checkForParallelDAGs() {
-
+      var i,
+          currConn,
+          nextConn;
+      var errorObj = true;
+      for(i=0; i<this.connections.length-1; i++) {
+        currConn = this.connections[i]
+        nextConn = this.connections[i+1];
+        if (currConn.target !== nextConn.source) {
+          errorObj = {};
+          errorObj.type = 'nodes';
+          errorObj.message = 'There are parallel connections outside the main DAG';
+          break;
+        }
+      }
+      return errorObj;
     }
   });
