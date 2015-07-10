@@ -19,12 +19,15 @@ package co.cask.cdap.internal.app.workflow;
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.WorkflowAction;
+import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowConditionConfigurer;
 import co.cask.cdap.api.workflow.WorkflowConditionNode;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
+import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 import java.util.List;
@@ -42,8 +45,10 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   private List<WorkflowNode> currentBranch;
   private boolean addingToIfBranch = true;
   private final String predicateClassName;
+  private final String conditionUniqueName;
 
-  public DefaultWorkflowConditionConfigurer(T parentConfigurer, String predicateClassName) {
+  public DefaultWorkflowConditionConfigurer(String conditionUniqueName, T parentConfigurer, String predicateClassName) {
+    this.conditionUniqueName = conditionUniqueName;
     this.parentConfigurer = parentConfigurer;
     this.predicateClassName = predicateClassName;
     currentBranch = Lists.newArrayList();
@@ -51,19 +56,40 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
 
   @Override
   public WorkflowConditionConfigurer<T> addMapReduce(String mapReduce) {
-    currentBranch.add(WorkflowNodeCreator.createWorkflowActionNode(mapReduce, SchedulableProgramType.MAPREDUCE));
+    return addMapReduce(mapReduce, mapReduce);
+  }
+
+  @Override
+  public WorkflowConditionConfigurer<T> addMapReduce(String uniqueName, String mapReduce) {
+    currentBranch.add(WorkflowNodeCreator.createWorkflowActionNode(uniqueName, mapReduce,
+                                                                   SchedulableProgramType.MAPREDUCE));
     return this;
   }
 
   @Override
   public WorkflowConditionConfigurer<T> addSpark(String spark) {
-    currentBranch.add(WorkflowNodeCreator.createWorkflowActionNode(spark, SchedulableProgramType.SPARK));
+    return addSpark(spark, spark);
+  }
+
+  @Override
+  public WorkflowConditionConfigurer<T> addSpark(String uniqueName, String spark) {
+    currentBranch.add(WorkflowNodeCreator.createWorkflowActionNode(uniqueName, spark, SchedulableProgramType.SPARK));
     return this;
   }
 
   @Override
   public WorkflowConditionConfigurer<T> addAction(WorkflowAction action) {
-    currentBranch.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action));
+    Preconditions.checkArgument(action != null, "WorkflowAction is null.");
+    WorkflowActionSpecification spec = new DefaultWorkflowActionSpecification(action);
+    currentBranch.add(WorkflowNodeCreator.createWorkflowCustomActionNode(spec.getName(), spec));
+    return this;
+  }
+
+  @Override
+  public WorkflowConditionConfigurer<T> addAction(String uniqueName, WorkflowAction action) {
+    Preconditions.checkArgument(action != null, "WorkflowAction is null.");
+    WorkflowActionSpecification spec = new DefaultWorkflowActionSpecification(action);
+    currentBranch.add(WorkflowNodeCreator.createWorkflowCustomActionNode(uniqueName, spec));
     return this;
   }
 
@@ -76,8 +102,13 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   @SuppressWarnings("unchecked")
   public WorkflowConditionConfigurer<? extends WorkflowConditionConfigurer<T>> condition(
     Predicate<WorkflowContext> predicate) {
-    String predicateClassName = predicate.getClass().getName();
-    return new DefaultWorkflowConditionConfigurer<>(this, predicateClassName);
+    return condition(predicate.getClass().getSimpleName(), predicate);
+  }
+
+  @Override
+  public WorkflowConditionConfigurer<? extends WorkflowConditionConfigurer<T>> condition(
+    String uniqueName, Predicate<WorkflowContext> predicate) {
+    return new DefaultWorkflowConditionConfigurer<>(uniqueName, this, predicate.getClass().getName());
   }
 
   @Override
@@ -95,14 +126,14 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
     } else {
       elseBranch.addAll(currentBranch);
     }
-    parentConfigurer.addWorkflowConditionNode(predicateClassName, ifBranch, elseBranch);
+    parentConfigurer.addWorkflowConditionNode(conditionUniqueName, predicateClassName, ifBranch, elseBranch);
     return parentConfigurer;
   }
 
   @Override
-  public void addWorkflowConditionNode(String predicateClassName, List<WorkflowNode> ifBranch,
+  public void addWorkflowConditionNode(String uniqueName, String predicateClassName, List<WorkflowNode> ifBranch,
                                        List<WorkflowNode> elseBranch) {
-    currentBranch.add(new WorkflowConditionNode(null, predicateClassName, ifBranch, elseBranch));
+    currentBranch.add(new WorkflowConditionNode(uniqueName, predicateClassName, ifBranch, elseBranch));
   }
 
   @Override

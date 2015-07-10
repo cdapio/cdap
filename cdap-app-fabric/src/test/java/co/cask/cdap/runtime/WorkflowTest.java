@@ -18,6 +18,8 @@ package co.cask.cdap.runtime;
 import co.cask.cdap.AppWithAnonymousWorkflow;
 import co.cask.cdap.MissingMapReduceWorkflowApp;
 import co.cask.cdap.MissingSparkWorkflowApp;
+import co.cask.cdap.NonUniqueProgramsInWorkflowApp;
+import co.cask.cdap.NonUniqueProgramsInWorkflowWithForkApp;
 import co.cask.cdap.OneActionWorkflowApp;
 import co.cask.cdap.ScheduleAppWithMissingWorkflow;
 import co.cask.cdap.WorkflowApp;
@@ -172,6 +174,24 @@ public class WorkflowTest {
     } catch (Exception ex) {
       Assert.assertEquals(ex.getCause().getMessage(),
                           "'' name is not an ID. ID should be non empty and can contain only characters A-Za-z0-9_-");
+    }
+
+    // try deploying app containing workflow with non-unique programs
+    try {
+      final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(
+        NonUniqueProgramsInWorkflowApp.class, TEMP_FOLDER_SUPPLIER);
+      Assert.fail("Should have thrown Exception because Workflow does not have name.");
+    } catch (Exception ex) {
+      Assert.assertEquals(ex.getCause().getMessage(), "Node with the name 'NoOpMR' added multiple times.");
+    }
+
+    // try deploying app containing workflow fork with non-unique programs
+    try {
+      final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(
+        NonUniqueProgramsInWorkflowWithForkApp.class, TEMP_FOLDER_SUPPLIER);
+      Assert.fail("Should have thrown Exception because Workflow does not have name.");
+    } catch (Exception ex) {
+      Assert.assertEquals(ex.getCause().getMessage(), "Node with the name 'MyTestPredicate' added multiple times.");
     }
   }
 

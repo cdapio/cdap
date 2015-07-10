@@ -18,11 +18,9 @@ package co.cask.cdap.internal.app.workflow;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
-import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowNode;
-import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
 import com.google.common.base.Preconditions;
 
 /**
@@ -32,7 +30,8 @@ final class WorkflowNodeCreator {
 
   private WorkflowNodeCreator() {}
 
-  static WorkflowNode createWorkflowActionNode(String programName, SchedulableProgramType programType) {
+  static WorkflowNode createWorkflowActionNode(String uniqueName, String programName,
+                                               SchedulableProgramType programType) {
     switch (programType) {
       case MAPREDUCE:
         Preconditions.checkNotNull(programName, "MapReduce name is null.");
@@ -49,13 +48,10 @@ final class WorkflowNodeCreator {
         break;
     }
 
-    return new WorkflowActionNode(null, new ScheduleProgramInfo(programType, programName));
+    return new WorkflowActionNode(uniqueName, new ScheduleProgramInfo(programType, programName));
   }
 
-  static WorkflowNode createWorkflowCustomActionNode(WorkflowAction action) {
-    Preconditions.checkArgument(action != null, "WorkflowAction is null.");
-    WorkflowActionSpecification spec = new DefaultWorkflowActionSpecification(action);
-    return new WorkflowActionNode(null, spec);
+  static WorkflowNode createWorkflowCustomActionNode(String uniqueName, WorkflowActionSpecification spec) {
+    return new WorkflowActionNode(uniqueName, spec);
   }
-
 }

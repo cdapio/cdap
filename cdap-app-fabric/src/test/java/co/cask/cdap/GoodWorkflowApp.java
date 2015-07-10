@@ -49,38 +49,38 @@ public class GoodWorkflowApp extends AbstractApplication {
       setName("GoodWorkflow");
       setDescription("GoodWorkflow description");
 
-      addAction(new DummyAction());
+      addAction("a1", new DummyAction());
 
       // complex fork
       fork()
-        .addMapReduce("DummyMR")
+        .addMapReduce("mr1", "DummyMR")
         .fork()
-          .addAction(new DummyAction())
+          .addAction("a2", new DummyAction())
           .fork()
             .fork()
-              .addMapReduce("DummyMR")
-              .addAction(new DummyAction())
+              .addMapReduce("mr2", "DummyMR")
+              .addAction("a3", new DummyAction())
             .also()
-              .addMapReduce("DummyMR")
+              .addMapReduce("mr3", "DummyMR")
             .join()
-            .addMapReduce("DummyMR")
+            .addMapReduce("mr4", "DummyMR")
           .also()
-            .addMapReduce("DummyMR")
+            .addMapReduce("mr5", "DummyMR")
           .join()
         .also()
-          .addAction(new DummyAction())
+          .addAction("a4", new DummyAction())
         .join()
       .also()
-        .addAction(new DummyAction())
+        .addAction("a5", new DummyAction())
       .join();
 
-      addMapReduce("DummyMR");
+      addMapReduce("mr6", "DummyMR");
 
       // simple fork
       fork()
-        .addAction(new DummyAction())
+        .addAction("a6", new DummyAction())
       .also()
-        .addMapReduce("DummyMR")
+        .addMapReduce("mr7", "DummyMR")
       .join();
     }
   }
@@ -121,7 +121,7 @@ public class GoodWorkflowApp extends AbstractApplication {
         .addMapReduce("MR8")
       .join();
 
-     condition(new MyVerificationPredicate())
+     condition("anotherMyVerificationPredicate", new MyVerificationPredicate())
        .addSpark("SP1")
        .addSpark("SP2")
      .otherwise()

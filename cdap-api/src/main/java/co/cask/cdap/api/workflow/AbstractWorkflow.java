@@ -94,6 +94,15 @@ public abstract class AbstractWorkflow implements Workflow {
   }
 
   /**
+   * Adds a custom action to the {@link Workflow}.
+   * @param uniqueName the unique name to be assigned to the {@link WorkflowNode} that represents the action
+   * @param action the action to be added
+   */
+  protected final void addAction(String uniqueName, WorkflowAction action) {
+    configurer.addAction(uniqueName, action);
+  }
+
+  /**
    * Adds a MapReduce program to the {@link Workflow}.
    * @param mapReduce the name of MapReduce program to be added
    */
@@ -102,11 +111,29 @@ public abstract class AbstractWorkflow implements Workflow {
   }
 
   /**
+   * Adds a MapReduce program to the {@link Workflow}.
+   * @param uniqueName the unique name to be assigned to the {@link WorkflowNode} that represents the MapReduce program
+   * @param mapReduce the name of MapReduce program to be added
+   */
+  protected final void addMapReduce(String uniqueName, String mapReduce) {
+    configurer.addMapReduce(uniqueName, mapReduce);
+  }
+
+  /**
    * Adds a Spark program to the {@link Workflow}.
    * @param spark the name of the Spark program to be added
    */
   protected final void addSpark(String spark) {
     configurer.addSpark(spark);
+  }
+
+  /**
+   * Adds a Spark program to the {@link Workflow}.
+   * @param uniqueName the unique name to be assigned to the {@link WorkflowNode} that represents the Spark program
+   * @param spark the name of the Spark program to be added
+   */
+  protected final void addSpark(String uniqueName, String spark) {
+    configurer.addSpark(uniqueName, spark);
   }
 
   /**
@@ -125,5 +152,16 @@ public abstract class AbstractWorkflow implements Workflow {
   protected final WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(
     Predicate<WorkflowContext> predicate) {
     return configurer.condition(predicate);
+  }
+
+  /**
+   * Adds a condition to the {@link Workflow}.
+   * @param uniqueName the unique name to be assigned to the {@link WorkflowNode} that represents the condition
+   * @param predicate the {@link Predicate} to be evaluated to determine which branch to take
+   * @return the {@link WorkflowConditionConfigurer} to configure the branches in the condition
+   */
+  protected final WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(
+    String uniqueName, Predicate<WorkflowContext> predicate) {
+    return configurer.condition(uniqueName, predicate);
   }
 }
