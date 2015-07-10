@@ -46,12 +46,10 @@ angular.module(PKG.name + '.services')
       });
     };
 
-    this.updateConnection = function(connections) {
-      this.connections = connections.map(function(conn) {
-        return {
-          source: conn.sourceId,
-          target: conn.targetId
-        };
+    this.updateConnection = function(connection) {
+      this.connections.push({
+        source: connection.sourceId,
+        target: connection.targetId
       });
     };
 
@@ -161,5 +159,42 @@ angular.module(PKG.name + '.services')
             }
           });
         });
+    };
+
+    this.getConfig = function() {
+      var config = {
+        source: {},
+        sink: {},
+        transforms: []
+      };
+      var errors = [];
+      var conn;
+      var i;
+      var nodes = angular.copy(this.nodes);
+
+      function addPluginToConfig(plugin, id) {
+        if (['source', 'sink'].indexOf(plugin.type) !== -1) {
+          config[plugin.type] = {
+            name: plugin.name,
+            properties: plugin.properties || {}
+          };
+        } else if (plugin.type === 'transform') {
+          config.transforms.push({
+            name: plugin.name,
+            properties: plugin.properties
+          });
+        }
+        delete nodes[id];
+      }
+
+      this.connections.forEach(function (connection) {
+        if (nodes[connection.source]) {
+          addPluginToConfig(nodes[connection.source], connection.source);
+        }
+        if (nodes[connection.target]) {
+          addPluginToConfig(nodes[connection.target], connection.target);
+        }
+      });
+      return config;
     };
   });
