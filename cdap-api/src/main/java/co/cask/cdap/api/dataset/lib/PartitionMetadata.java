@@ -51,6 +51,9 @@ public class PartitionMetadata implements Iterable<Map.Entry<String, String>> {
     return metadata;
   }
 
+  /**
+   * @return the creation time of the partition, in milliseconds.
+   */
   public long getCreationTime() {
     return creationTime;
   }

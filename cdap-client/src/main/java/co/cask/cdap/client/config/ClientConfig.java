@@ -122,8 +122,39 @@ public class ClientConfig {
    * @return URL of the resolved path
    * @throws MalformedURLException
    */
+  public URL resolveNamespacedURLV3(Id.Namespace namespace, String path) throws MalformedURLException {
+    return getConnectionConfig().resolveNamespacedURI(namespace, Constants.Gateway.API_VERSION_3_TOKEN, path).toURL();
+  }
+
+  /**
+   * Resolves a path against the target CDAP server with the provided namespace, using V3 APIs
+   *
+   * @param path Path to the HTTP endpoint. For example, "apps" would result
+   *             in a URL like "http://example.com:10000/v3/&lt;namespace&gt;/apps".
+   * @return URL of the resolved path
+   * @throws MalformedURLException
+   *
+   * @deprecated As of 3.1, namespace is no longer be stored as part of {@link ConnectionConfig}.
+   */
+  @Deprecated
   public URL resolveNamespacedURLV3(String path) throws MalformedURLException {
-    return getConnectionConfig().resolveNamespacedURI(Constants.Gateway.API_VERSION_3_TOKEN, path).toURL();
+    return getConnectionConfig().resolveNamespacedURI(getNamespace(),
+                                                      Constants.Gateway.API_VERSION_3_TOKEN, path).toURL();
+  }
+
+  /**
+   * @deprecated As of 3.1, namespace is no longer be stored as part of {@link ConnectionConfig}.
+   */
+  @Deprecated
+  public Id.Namespace getNamespace() {
+    return connectionConfig == null ? null : connectionConfig.getNamespace();
+  }
+
+  /**
+   * @deprecated As of 3.1, namespace is no longer be stored as part of {@link ConnectionConfig}.
+   */
+  public void setNamespace(Id.Namespace namespace) {
+    this.connectionConfig = ConnectionConfig.builder(connectionConfig).setNamespace(namespace).build();
   }
 
   public HttpRequestConfig getDefaultRequestConfig() {
@@ -193,14 +224,6 @@ public class ClientConfig {
 
   public void setUnavailableRetryLimit(int unavailableRetryLimit) {
     this.unavailableRetryLimit = unavailableRetryLimit;
-  }
-
-  public Id.Namespace getNamespace() {
-    return this.connectionConfig.getNamespace();
-  }
-
-  public void setNamespace(Id.Namespace namespace) {
-    this.connectionConfig = ConnectionConfig.builder(connectionConfig).setNamespace(namespace).build();
   }
 
   public String getApiVersion() {

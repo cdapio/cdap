@@ -62,31 +62,22 @@ public class StreamClientTestRun extends ClientTestBase {
     super.setUp();
     namespaceClient = new NamespaceClient(clientConfig);
     namespaceClient.create(new NamespaceMeta.Builder().setName(namespaceId).build());
-    clientConfig.setNamespace(namespaceId);
     streamClient = new StreamClient(clientConfig);
   }
 
   @Test
   public void testAll() throws Exception {
-    String testStreamId = "teststream";
+    Id.Stream streamId = Id.Stream.from(namespaceId, "testAll");
 
     LOG.info("Getting stream list");
-    int baseStreamCount = streamClient.list().size();
-    Assert.assertEquals(baseStreamCount, streamClient.list().size());
+    int baseStreamCount = streamClient.list(namespaceId).size();
+    Assert.assertEquals(baseStreamCount, streamClient.list(namespaceId).size());
     LOG.info("Creating stream");
-    streamClient.create(testStreamId);
+    streamClient.create(streamId);
     LOG.info("Checking stream list");
-    Assert.assertEquals(baseStreamCount + 1, streamClient.list().size());
-    StreamProperties config = streamClient.getConfig(testStreamId);
+    Assert.assertEquals(baseStreamCount + 1, streamClient.list(namespaceId).size());
+    StreamProperties config = streamClient.getConfig(streamId);
     Assert.assertNotNull(config);
-    // TODO: getting and setting config for stream is not supported with in-memory
-//    streamClient.setTTL(testStreamId, 123);
-//    streamClient.sendEvent(testStreamId, testStreamEvent);
-//    streamClient.truncate(testStreamId);
-//    streamClient.sendEvent(testStreamId, testStreamEvent);
-//    String consumerId = streamClient.getConsumerId(testStreamId);
-//    Assert.assertEquals(testStreamEvent, streamClient.dequeueEvent(testStreamId, consumerId));
-//    Assert.assertEquals(null, streamClient.dequeueEvent(testStreamId, consumerId));
   }
 
   /**
@@ -96,8 +87,7 @@ public class StreamClientTestRun extends ClientTestBase {
   public void testStreamEvents() throws IOException, BadRequestException,
     StreamNotFoundException, UnauthorizedException {
 
-    String streamId = "testEvents";
-
+    Id.Stream streamId = Id.Stream.from(namespaceId, "testEvents");
     streamClient.create(streamId);
 
     // Send 5000 events
@@ -137,8 +127,7 @@ public class StreamClientTestRun extends ClientTestBase {
    */
   @Test
   public void testAsyncWrite() throws Exception {
-    String streamId = "testAsync";
-
+    Id.Stream streamId = Id.Stream.from(namespaceId, "testAsync");
     streamClient.create(streamId);
 
     // Send 10 async writes
@@ -188,7 +177,7 @@ public class StreamClientTestRun extends ClientTestBase {
 
   @Test
   public void testDelete() throws Exception {
-    String streamId = "testDelete";
+    Id.Stream streamId = Id.Stream.from(namespaceId, "testDelete");
     streamClient.create(streamId);
 
     // Send an event and get it back
@@ -226,8 +215,7 @@ public class StreamClientTestRun extends ClientTestBase {
 
 
   private void testSendFile(int msgCount) throws Exception {
-    String streamId = "testSendFile";
-
+    Id.Stream streamId = Id.Stream.from(namespaceId, "testSendFile");
     streamClient.create(streamId);
 
     // Generate msgCount lines of events
@@ -255,6 +243,5 @@ public class StreamClientTestRun extends ClientTestBase {
   @After
   public void tearDown() throws CannotBeDeletedException, UnauthorizedException, NotFoundException, IOException {
     namespaceClient.delete(namespaceId.getId());
-    clientConfig.setNamespace(namespaceId);
   }
 }

@@ -47,7 +47,7 @@ public class ListAppsCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     Table table = Table.builder()
       .setHeader("id", "description")
-      .setRows(appClient.list(), new RowMaker<ApplicationRecord>() {
+      .setRows(appClient.list(cliConfig.getCurrentNamespace()), new RowMaker<ApplicationRecord>() {
         @Override
         public List<?> makeRow(ApplicationRecord object) {
           return Lists.newArrayList(object.getName(), object.getDescription());

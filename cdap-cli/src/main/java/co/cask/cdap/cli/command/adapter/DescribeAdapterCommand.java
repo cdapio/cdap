@@ -26,6 +26,7 @@ import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.proto.AdapterDetail;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
@@ -53,8 +54,9 @@ public class DescribeAdapterCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String adapterName = arguments.get(ArgumentName.ADAPTER.toString());
-    AdapterDetail spec = adapterClient.get(adapterName);
+    Id.Adapter adapter = Id.Adapter.from(cliConfig.getCurrentNamespace(),
+                                         arguments.get(ArgumentName.ADAPTER.toString()));
+    AdapterDetail spec = adapterClient.get(adapter);
 
     Table table = Table.builder()
       .setHeader("name", "description", "template", "config", "properties")

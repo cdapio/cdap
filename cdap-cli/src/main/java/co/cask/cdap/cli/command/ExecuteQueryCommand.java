@@ -66,7 +66,7 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
     String query = arguments.get(ArgumentName.QUERY.toString());
     long timeOutMins = arguments.getLong(ArgumentName.TIMEOUT.toString(), DEFAULT_TIMEOUT_MIN);
 
-    ListenableFuture<ExploreExecutionResult> future = queryClient.execute(query);
+    ListenableFuture<ExploreExecutionResult> future = queryClient.execute(cliConfig.getCurrentNamespace(), query);
     try {
       ExploreExecutionResult executionResult = future.get(timeOutMins, TimeUnit.MINUTES);
       if (!executionResult.canContainResults()) {

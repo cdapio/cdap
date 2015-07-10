@@ -45,7 +45,7 @@ public class ListDatasetModulesCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    List<DatasetModuleMeta> modules = client.list();
+    List<DatasetModuleMeta> modules = client.list(cliConfig.getCurrentNamespace());
     Table table = Table.builder()
       .setHeader("name", "className")
       .setRows(modules, new RowMaker<DatasetModuleMeta>() {

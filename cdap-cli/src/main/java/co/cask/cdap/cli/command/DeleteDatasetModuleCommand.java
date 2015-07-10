@@ -23,6 +23,7 @@ import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.DatasetModuleClient;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
 
@@ -43,10 +44,11 @@ public class DeleteDatasetModuleCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String datasetModuleName = arguments.get(ArgumentName.DATASET_MODULE.toString());
+    Id.DatasetModule module = Id.DatasetModule.from(cliConfig.getCurrentNamespace(),
+                                                    arguments.get(ArgumentName.DATASET_MODULE.toString()));
 
-    datasetClient.delete(datasetModuleName);
-    output.printf("Successfully deleted dataset module '%s'\n", datasetModuleName);
+    datasetClient.delete(module);
+    output.printf("Successfully deleted %s\n", module);
   }
 
   @Override

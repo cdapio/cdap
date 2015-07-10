@@ -49,7 +49,7 @@ public class ListAdaptersCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    List<AdapterDetail> list = adapterClient.list();
+    List<AdapterDetail> list = adapterClient.list(cliConfig.getCurrentNamespace());
 
     Table table = Table.builder()
       .setHeader("name", "description", "template", "config", "properties")

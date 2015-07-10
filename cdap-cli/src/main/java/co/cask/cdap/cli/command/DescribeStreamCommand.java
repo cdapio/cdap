@@ -26,6 +26,7 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.StreamClient;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.ImmutableList;
@@ -50,7 +51,8 @@ public class DescribeStreamCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String streamId = arguments.get(ArgumentName.STREAM.toString());
+    Id.Stream streamId = Id.Stream.from(cliConfig.getCurrentNamespace(),
+                                        arguments.get(ArgumentName.STREAM.toString()));
     StreamProperties config = streamClient.getConfig(streamId);
 
     Table table = Table.builder()

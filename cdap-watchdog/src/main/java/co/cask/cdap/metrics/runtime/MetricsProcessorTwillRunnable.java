@@ -16,6 +16,8 @@
 
 package co.cask.cdap.metrics.runtime;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -40,6 +42,7 @@ import co.cask.cdap.metrics.process.MetricsProcessorStatusService;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -63,10 +66,15 @@ import java.util.List;
 public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsProcessorTwillRunnable.class);
 
+  public static final ImmutableMap<String, String> METRICS_PROCESSOR_CONTEXT =
+    ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+                    Constants.Metrics.Tag.COMPONENT, Constants.Service.METRICS_PROCESSOR);
+
   private KafkaMetricsProcessorService kafkaMetricsProcessorService;
   private ZKClientService zkClientService;
   private KafkaClientService kafkaClientService;
   private MetricsProcessorStatusService metricsProcessorStatusService;
+  private MetricsCollectionService metricsCollectionService;
 
   public MetricsProcessorTwillRunnable(String name, String cConfName, String hConfName) {
     super(name, cConfName, hConfName);
@@ -88,7 +96,12 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
 
       zkClientService = injector.getInstance(ZKClientService.class);
       kafkaClientService = injector.getInstance(KafkaClientService.class);
+      metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+
+      MetricsContext metricsContext = metricsCollectionService.getContext(METRICS_PROCESSOR_CONTEXT);
+
       kafkaMetricsProcessorService = injector.getInstance(KafkaMetricsProcessorService.class);
+      kafkaMetricsProcessorService.setMetricsContext(metricsContext);
       metricsProcessorStatusService = injector.getInstance(MetricsProcessorStatusService.class);
       LOG.info("Runnable initialized {}", name);
     } catch (Throwable t) {
@@ -101,6 +114,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
   public void getServices(List<? super Service> services) {
     services.add(zkClientService);
     services.add(kafkaClientService);
+    services.add(metricsCollectionService);
     services.add(kafkaMetricsProcessorService);
     services.add(metricsProcessorStatusService);
   }

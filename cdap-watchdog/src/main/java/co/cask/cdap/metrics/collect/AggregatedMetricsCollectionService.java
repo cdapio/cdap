@@ -155,7 +155,8 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
         while (iterator.hasNext()) {
           Map.Entry<Map<String, String>, LoadingCache<String, AggregatedMetricsEmitter>> entry = iterator.next();
           Map<String, AggregatedMetricsEmitter> metricEmitters = entry.getValue().asMap();
-          List<MetricValue> metricValues = Lists.newArrayListWithCapacity(metricEmitters.size());
+          // +1 because we add extra metric about how many metric values did we emit in this context (see below)
+          List<MetricValue> metricValues = Lists.newArrayListWithCapacity(metricEmitters.size() + 1);
           for (Map.Entry<String, AggregatedMetricsEmitter> emitterEntry : metricEmitters.entrySet()) {
             MetricValue metricValue = emitterEntry.getValue().emit();
             // skip increment by 0
@@ -169,6 +170,9 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
             // skip if there are no metric values to send
             continue;
           }
+
+          // number of emitted metrics
+          metricValues.add(new MetricValue("metrics.emitted.count", MetricType.COUNTER, metricValues.size() + 1));
 
           LOG.trace("Emit metric {}", metricValues);
           return new MetricValues(entry.getKey(), timestamp, metricValues);
@@ -192,7 +196,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
     private final Map<String, String> tags;
 
     private MetricsContextImpl(final Map<String, String> tags) {
-      this.tags = tags;
+      this.tags = ImmutableMap.copyOf(tags);
     }
 
     @Override
@@ -210,6 +214,11 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
       ImmutableMap<String, String> allTags = ImmutableMap.<String, String>builder()
         .putAll(tags).put(tagName, tagValue).build();
       return collectors.getUnchecked(allTags);
+    }
+
+    @Override
+    public Map<String, String> getTags() {
+      return tags;
     }
 
     @Override

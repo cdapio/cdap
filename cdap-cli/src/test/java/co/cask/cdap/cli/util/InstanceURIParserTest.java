@@ -16,7 +16,7 @@
 
 package co.cask.cdap.cli.util;
 
-import co.cask.cdap.client.config.ConnectionConfig;
+import co.cask.cdap.cli.CLIConnectionConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
@@ -37,25 +37,25 @@ public class InstanceURIParserTest {
     Id.Namespace someNamespace = Id.Namespace.from("nsx");
     InstanceURIParser parser = new InstanceURIParser(cConf);
 
-    Assert.assertEquals(new ConnectionConfig(defaultNamespace, "somehost", defaultPort, false),
+    Assert.assertEquals(new CLIConnectionConfig(defaultNamespace, "somehost", defaultPort, false),
                         parser.parse("somehost"));
-    Assert.assertEquals(new ConnectionConfig(defaultNamespace, "somehost", defaultPort, false),
+    Assert.assertEquals(new CLIConnectionConfig(defaultNamespace, "somehost", defaultPort, false),
                         parser.parse("http://somehost"));
-    Assert.assertEquals(new ConnectionConfig(defaultNamespace, "somehost", defaultSSLPort, true),
+    Assert.assertEquals(new CLIConnectionConfig(defaultNamespace, "somehost", defaultSSLPort, true),
                         parser.parse("https://somehost"));
 
-    Assert.assertEquals(new ConnectionConfig(defaultNamespace, "somehost", 1234, false),
+    Assert.assertEquals(new CLIConnectionConfig(defaultNamespace, "somehost", 1234, false),
                         parser.parse("somehost:1234"));
-    Assert.assertEquals(new ConnectionConfig(defaultNamespace, "somehost", 1234, false),
+    Assert.assertEquals(new CLIConnectionConfig(defaultNamespace, "somehost", 1234, false),
                         parser.parse("http://somehost:1234"));
-    Assert.assertEquals(new ConnectionConfig(defaultNamespace, "somehost", 1234, true),
+    Assert.assertEquals(new CLIConnectionConfig(defaultNamespace, "somehost", 1234, true),
                         parser.parse("https://somehost:1234"));
 
-    Assert.assertEquals(new ConnectionConfig(someNamespace, "somehost", 1234, false),
+    Assert.assertEquals(new CLIConnectionConfig(someNamespace, "somehost", 1234, false),
                         parser.parse("somehost:1234/nsx"));
-    Assert.assertEquals(new ConnectionConfig(someNamespace, "somehost", 1234, false),
+    Assert.assertEquals(new CLIConnectionConfig(someNamespace, "somehost", 1234, false),
                         parser.parse("http://somehost:1234/nsx"));
-    Assert.assertEquals(new ConnectionConfig(someNamespace, "somehost", 1234, true),
+    Assert.assertEquals(new CLIConnectionConfig(someNamespace, "somehost", 1234, true),
                         parser.parse("https://somehost:1234/nsx"));
   }
 
@@ -65,7 +65,7 @@ public class InstanceURIParserTest {
     Id.Namespace defaultNamespace = Id.Namespace.from(Constants.DEFAULT_NAMESPACE);
     InstanceURIParser parser = new InstanceURIParser(cConf);
 
-    Assert.assertEquals(new ConnectionConfig(defaultNamespace, "somehost", 1234, true),
+    Assert.assertEquals(new CLIConnectionConfig(defaultNamespace, "somehost", 1234, true),
                         parser.parse("https://somehost:1234/"));
   }
 

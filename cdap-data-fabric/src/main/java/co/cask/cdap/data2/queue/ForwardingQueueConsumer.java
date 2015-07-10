@@ -75,6 +75,13 @@ public abstract class ForwardingQueueConsumer implements QueueConsumer, Transact
   }
 
   @Override
+  public void updateTx(Transaction transaction) {
+    if (txAware != null) {
+      txAware.updateTx(transaction);
+    }
+  }
+
+  @Override
   public Collection<byte[]> getTxChanges() {
     return (txAware != null) ? txAware.getTxChanges() : ImmutableList.<byte[]>of();
   }

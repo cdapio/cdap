@@ -24,6 +24,7 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 
 import java.io.PrintStream;
@@ -45,7 +46,7 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
-    String appId = programIdParts[0];
+    Id.Application appId = Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]);
     int numInstances = arguments.getInt(ArgumentName.NUM_INSTANCES.toString());
 
     switch (elementType) {
@@ -54,8 +55,9 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
           throw new CommandInputError(this);
         }
         String flowId = programIdParts[1];
-        String flowletId = programIdParts[2];
-        programClient.setFlowletInstances(appId, flowId, flowletId, numInstances);
+        String flowletName = programIdParts[2];
+        Id.Flow.Flowlet flowletId = Id.Flow.Flowlet.from(appId, flowId, flowletName);
+        programClient.setFlowletInstances(flowletId, numInstances);
         output.printf("Successfully set flowlet '%s' of flow '%s' of app '%s' to %d instances\n",
                       flowId, flowletId, appId, numInstances);
         break;
@@ -63,8 +65,9 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
         if (programIdParts.length < 2) {
           throw new CommandInputError(this);
         }
-        String workerId = programIdParts[1];
-        programClient.setWorkerInstances(appId, workerId, numInstances);
+        String workerName = programIdParts[1];
+        Id.Worker workerId = Id.Worker.from(appId, workerName);
+        programClient.setWorkerInstances(workerId, numInstances);
         output.printf("Successfully set worker '%s' of app '%s' to %d instances\n",
                       workerId, appId, numInstances);
         break;
@@ -72,8 +75,9 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
         if (programIdParts.length < 2) {
           throw new CommandInputError(this);
         }
-        String service = programIdParts[1];
-        programClient.setServiceInstances(appId, service, numInstances);
+        String serviceName = programIdParts[1];
+        Id.Service service = Id.Service.from(appId, serviceName);
+        programClient.setServiceInstances(service, numInstances);
         output.printf("Successfully set service '%s' of app '%s' to %d instances\n", service, appId, numInstances);
         break;
       default:
