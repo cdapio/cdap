@@ -162,6 +162,7 @@ public class ConditionalWorkflowApp extends AbstractApplication {
       // Put something in the token
       context.getWorkflowToken().put("action_type", "MapReduce");
       context.getWorkflowToken().put("start_time", Value.of(System.currentTimeMillis()));
+      Preconditions.checkNotNull(context.getWorkflowToken().get("start_time", "RecordVerifier"));
     }
   }
 
@@ -219,9 +220,9 @@ public class ConditionalWorkflowApp extends AbstractApplication {
         List<NodeValueEntry> nodeValueEntries = workflowToken.getAll("action_type");
         Preconditions.checkArgument(5 == nodeValueEntries.size());
         Preconditions.checkArgument(new NodeValueEntry("RecordVerifier",
-                                                       new Value("MapReduce")).equals(nodeValueEntries.get(0)));
+                                                       Value.of("MapReduce")).equals(nodeValueEntries.get(0)));
         Preconditions.checkArgument(new NodeValueEntry("ClassicWordCount",
-                                                       new Value("MapReduce")).equals(nodeValueEntries.get(2)));
+                                                       Value.of("MapReduce")).equals(nodeValueEntries.get(2)));
         Preconditions.checkArgument(workflowToken.get("action_type",
                                                       "iffork_one").toString().equals("CustomAction"));
         Preconditions.checkArgument(workflowToken.get("action_type",
@@ -232,7 +233,7 @@ public class ConditionalWorkflowApp extends AbstractApplication {
         List<NodeValueEntry> nodeValueEntries = workflowToken.getAll("action_type");
         Preconditions.checkArgument(5 == nodeValueEntries.size());
         Preconditions.checkArgument(new NodeValueEntry("RecordVerifier",
-                                                       new Value("MapReduce")).equals(nodeValueEntries.get(0)));
+                                                       Value.of("MapReduce")).equals(nodeValueEntries.get(0)));
         Preconditions.checkArgument(workflowToken.get("action_type",
                                                       "elsefork_one").toString().equals("CustomAction"));
         Preconditions.checkArgument(workflowToken.get("action_type",

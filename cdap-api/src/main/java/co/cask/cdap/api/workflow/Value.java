@@ -16,26 +16,28 @@
 
 package co.cask.cdap.api.workflow;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Class representing the value of the key in the {@link WorkflowToken}.
  */
 public class Value {
   private final String value;
-  private static final Logger LOG = LoggerFactory.getLogger(Value.class);
 
-  public Value(String value) {
+  private Value(String value) {
     this.value = value;
   }
 
   /**
-   * @return the value as String
+   * @return the boolean value
    */
-  @Override
-  public String toString() {
-    return value;
+  public boolean getAsBoolean() {
+    return Boolean.parseBoolean(value);
+  }
+
+  /**
+   * @return the int value
+   */
+  public int getAsInt() {
+    return Integer.parseInt(value);
   }
 
   /**
@@ -46,10 +48,11 @@ public class Value {
   }
 
   /**
-   * @return the int value
+   * @return the String value
    */
-  public int getAsInt() {
-    return Integer.parseInt(value);
+  @Override
+  public String toString() {
+    return value;
   }
 
   @Override
@@ -71,11 +74,39 @@ public class Value {
     return value.hashCode();
   }
 
+  /**
+   * Return the {@link Value} representation of the input <code>boolean</code> parameter.
+   * @param value the <code>boolean</code> value to be represented as {@link Value}
+   * @return a {@link Value} representation of the argument
+   */
+  public static Value of(boolean value) {
+    return new Value(String.valueOf(value));
+  }
+
+  /**
+   * Return the {@link Value} representation of the input <code>int</code> parameter.
+   * @param value the <code>int</code> value to be represented as {@link Value}
+   * @return a {@link Value} representation of the argument
+   */
   public static Value of(int value) {
     return new Value(String.valueOf(value));
   }
 
+  /**
+   * Return the {@link Value} representation of the input <code>long</code> parameter.
+   * @param value the <code>long</code> value to be represented as {@link Value}
+   * @return a {@link Value} representation of the argument
+   */
   public static Value of(long value) {
     return new Value(String.valueOf(value));
+  }
+
+  /**
+   * Return the {@link Value} representation of the input <code>String</code> parameter.
+   * @param value the <code>String</code> value to be represented as {@link Value}
+   * @return a {@link Value} representation of the argument
+   */
+  public static Value of(String value) {
+    return new Value(value);
   }
 }

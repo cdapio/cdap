@@ -46,7 +46,6 @@ public interface WorkflowToken {
    * @param key the key representing the entry
    * @param value the value for the key
    */
-  // TODO [CDAP-2895] put operation should throw certain exceptions
   void put(String key, String value);
 
   /**
@@ -61,7 +60,8 @@ public interface WorkflowToken {
   /**
    * Get the most recent value added for the specified key for a {@link Scope#USER} scope.
    * @param key the key to be searched
-   * @return the {@link Value} for the key
+   * @return the {@link Value} for the key or <code>null</code> if the key does not
+   * exist in the {@link Scope#USER} scope
    */
   @Nullable
   Value get(String key);
@@ -70,7 +70,8 @@ public interface WorkflowToken {
    * Get the most recent value for the specified key for a given scope.
    * @param key the key to be searched
    * @param scope the {@link WorkflowToken.Scope} for the key
-   * @return the {@link Value} for the key from the specified scope
+   * @return the {@link Value} for the key from the specified scope or <code>null</code> if the key
+   * does not exist in the given scope
    */
   @Nullable
   Value get(String key, Scope scope);
@@ -79,7 +80,8 @@ public interface WorkflowToken {
    * Get the value set for the specified key by the specified node for a {@link Scope#USER} scope.
    * @param key the key to be searched
    * @param nodeName the name of the node
-   * @return the {@link Value} set for the key by nodeName
+   * @return the {@link Value} set for the key by nodeName or <code>null</code> if the key is not
+   * added by the nodeName in the {@link Scope#USER} scope
    */
   @Nullable
   Value get(String key, String nodeName);
@@ -89,7 +91,8 @@ public interface WorkflowToken {
    * @param key the key to be searched
    * @param nodeName the name of the node
    * @param scope the {@link WorkflowToken.Scope} for the key
-   * @return the {@link Value} set for the key by nodeName for a given scope
+   * @return the {@link Value} set for the key by nodeName for a given scope or <code>null</code>
+   * if the key is not added by the nodeName in the given scope
    */
   @Nullable
   Value get(String key, String nodeName, Scope scope);
@@ -153,6 +156,15 @@ public interface WorkflowToken {
   /**
    * Same key can be added to the WorkflowToken by multiple nodes.
    * This method returns the key to {@link List} of {@link NodeValueEntry}
+   * added in the {@link Scope#USER} scope.
+   * @return the {@link Map} of key to {@link List} of {@link NodeValueEntry} added for
+   * the given scope
+   */
+  Map<String, List<NodeValueEntry>> getAll();
+
+  /**
+   * Same key can be added to the WorkflowToken by multiple nodes.
+   * This method returns the key to {@link List} of {@link NodeValueEntry}
    * added in the {@link WorkflowToken.Scope} provided.
    * @param scope the scope for the key
    * @return the {@link Map} of key to {@link List} of {@link NodeValueEntry} added for
@@ -169,20 +181,4 @@ public interface WorkflowToken {
   @Deprecated
   @Nullable
   Map<String, Map<String, Long>> getMapReduceCounters();
-
-  /**
-   * Return true if the {@link WorkflowToken} contains the specified key
-   * for a {@link Scope#USER} scope.
-   * @param key the key to be tested for the presence in the {@link WorkflowToken}
-   * @return the result of the test
-   */
-  boolean containsKey(String key);
-
-  /**
-   * Return true if the {@link WorkflowToken} contains the specified key.
-   * @param key the key to be tested for the presence in the {@link WorkflowToken}
-   * @param scope the {@link WorkflowToken.Scope} for the key
-   * @return the result of the test
-   */
-  boolean containsKey(String key, Scope scope);
 }

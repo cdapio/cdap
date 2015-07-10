@@ -25,7 +25,6 @@ import co.cask.cdap.WorkflowAppWithErrorRuns;
 import co.cask.cdap.WorkflowAppWithFork;
 import co.cask.cdap.WorkflowAppWithScopedParameters;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.common.conf.Constants;

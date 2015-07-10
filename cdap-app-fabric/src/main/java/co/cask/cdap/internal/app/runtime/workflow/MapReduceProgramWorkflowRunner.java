@@ -17,6 +17,7 @@ package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -100,7 +101,7 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
       for (Counter counter : group) {
         mapReduceCounters.get(group.getName()).put(counter.getName(), counter.getValue());
         ((BasicWorkflowToken) workflowTokenFromContext).put(group.getName() + "." + counter.getName(),
-                                                            String.valueOf(counter.getValue()),
+                                                            Value.of(counter.getValue()),
                                                             WorkflowToken.Scope.SYSTEM);
       }
     }
