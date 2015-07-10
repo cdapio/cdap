@@ -20,12 +20,11 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.MetricValues;
-import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.internal.io.DatumReader;
 import co.cask.common.io.ByteBufferInputStream;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.apache.twill.kafka.client.FetchedMessage;
 import org.apache.twill.kafka.client.KafkaConsumer;
@@ -33,9 +32,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * A {@link KafkaConsumer.MessageCallback} that decodes message into {@link co.cask.cdap.api.metrics.MetricValues}
@@ -44,21 +46,22 @@ import java.util.concurrent.TimeUnit;
 public final class MetricsMessageCallback implements KafkaConsumer.MessageCallback {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsMessageCallback.class);
-  private static final ImmutableMap<String, String> METRICS_PROCESSOR_CONTEXT =
-    ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
-                    Constants.Metrics.Tag.COMPONENT, "metrics.processor");
 
   private final DatumReader<MetricValues> recordReader;
   private final Schema recordSchema;
   private long recordProcessed;
-  private MetricStore metricStore;
+  private final MetricStore metricStore;
+  private final Map<String, String> metricsContext;
 
   public MetricsMessageCallback(DatumReader<MetricValues> recordReader,
                                 Schema recordSchema,
-                                MetricStore metricStore) {
+                                MetricStore metricStore,
+                                @Nullable
+                                MetricsContext metricsContext) {
     this.recordReader = recordReader;
     this.recordSchema = recordSchema;
     this.metricStore = metricStore;
+    this.metricsContext = metricsContext == null ? Collections.<String, String>emptyMap() : metricsContext.getTags();
   }
 
   @Override
@@ -107,7 +110,7 @@ public final class MetricsMessageCallback implements KafkaConsumer.MessageCallba
     long now = System.currentTimeMillis();
     long delay = now - TimeUnit.SECONDS.toMillis(records.get(records.size() - 1).getTimestamp());
     records.add(
-      new MetricValues(METRICS_PROCESSOR_CONTEXT, TimeUnit.MILLISECONDS.toSeconds(now),
+      new MetricValues(metricsContext, TimeUnit.MILLISECONDS.toSeconds(now),
                        ImmutableList.of(new MetricValue("metrics.process.count", MetricType.COUNTER, count),
                                         new MetricValue("metrics.process.delay.ms", MetricType.GAUGE, delay))));
   }

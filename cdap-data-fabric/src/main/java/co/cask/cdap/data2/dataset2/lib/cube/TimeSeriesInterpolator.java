@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.metrics;
+package co.cask.cdap.data2.dataset2.lib.cube;
 
 import co.cask.cdap.api.dataset.lib.cube.Interpolator;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
@@ -46,7 +46,7 @@ import javax.annotation.Nullable;
  *   5   -   -   -   3
  *   5   5   5   5   3
  */
-public class TimeSeriesInterpolator implements Iterable<TimeValue> {
+class TimeSeriesInterpolator implements Iterable<TimeValue> {
 
   private final Collection<TimeValue> timeSeries;
   @Nullable
