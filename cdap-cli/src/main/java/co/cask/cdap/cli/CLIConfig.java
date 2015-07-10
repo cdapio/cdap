@@ -22,9 +22,9 @@ import co.cask.cdap.cli.util.table.AltStyleTableRenderer;
 import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.cli.util.table.TableRendererConfig;
 import co.cask.cdap.client.MetaClient;
-import co.cask.cdap.client.config.AuthenticatedConnectionConfig;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
+import co.cask.cdap.client.exception.DisconnectedException;
 import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.authentication.client.AccessToken;
@@ -67,6 +67,7 @@ public class CLIConfig implements TableRendererConfig {
   private final FilePathResolver resolver;
   private final String version;
   private final PrintStream output;
+  private CLIConnectionConfig connectionConfig;
 
   private TableRenderer tableRenderer;
   private List<ConnectionChangeListener> connectionChangeListeners;
@@ -127,25 +128,31 @@ public class CLIConfig implements TableRendererConfig {
   }
 
   public Id.Namespace getCurrentNamespace() {
-    return clientConfig.getNamespace();
+    if (connectionConfig == null || connectionConfig.getNamespace() == null) {
+      throw new DisconnectedException();
+    }
+    return connectionConfig.getNamespace();
   }
 
   public void setTableRenderer(TableRenderer tableRenderer) {
     this.tableRenderer = tableRenderer;
   }
 
-  public void setConnectionConfig(@Nullable ConnectionConfig connectionConfig) {
+  public void setConnectionConfig(@Nullable CLIConnectionConfig connectionConfig) {
+    this.connectionConfig = connectionConfig;
     clientConfig.setConnectionConfig(connectionConfig);
     notifyConnectionChanged();
   }
 
-  public void tryConnect(ConnectionConfig connectionConfig, PrintStream output, boolean debug) throws Exception {
+  public void tryConnect(CLIConnectionConfig connectionConfig,
+                         PrintStream output, boolean debug) throws Exception {
     try {
       UserAccessToken userToken = acquireAccessToken(clientConfig, connectionConfig, output, debug);
       AccessToken accessToken = null;
       if (userToken != null) {
         accessToken = userToken.getAccessToken();
-        connectionConfig = new AuthenticatedConnectionConfig(connectionConfig, userToken.getUsername());
+        connectionConfig = new CLIConnectionConfig(connectionConfig, connectionConfig.getNamespace(),
+                                                   userToken.getUsername());
       }
       checkConnection(clientConfig, connectionConfig, accessToken);
       setConnectionConfig(connectionConfig);
@@ -293,14 +300,15 @@ public class CLIConfig implements TableRendererConfig {
   }
 
   public void setNamespace(Id.Namespace namespace) {
-    ConnectionConfig connectionConfig = ConnectionConfig.builder(clientConfig.getConnectionConfig())
-      .setNamespace(namespace)
-      .build();
-    this.setConnectionConfig(connectionConfig);
+    setConnectionConfig(new CLIConnectionConfig(connectionConfig, namespace));
   }
 
   public ClientConfig getClientConfig() {
     return clientConfig;
+  }
+
+  public CLIConnectionConfig getConnectionConfig() {
+    return connectionConfig;
   }
 
   public String getVersion() {
@@ -313,7 +321,7 @@ public class CLIConfig implements TableRendererConfig {
 
   private void notifyConnectionChanged() {
     for (ConnectionChangeListener listener : connectionChangeListeners) {
-      listener.onConnectionChanged(clientConfig);
+      listener.onConnectionChanged(connectionConfig);
     }
   }
 
@@ -329,6 +337,6 @@ public class CLIConfig implements TableRendererConfig {
    * Listener for hostname changes.
    */
   public interface ConnectionChangeListener {
-    void onConnectionChanged(ClientConfig clientConfig);
+    void onConnectionChanged(CLIConnectionConfig config);
   }
 }

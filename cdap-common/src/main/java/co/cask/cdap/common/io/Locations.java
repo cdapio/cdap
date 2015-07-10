@@ -228,6 +228,12 @@ public final class Locations {
     }
 
     URI resolvedParent = URI.create(source.toString() + "/..").normalize();
+    // NOTE: if there is a trailing slash at the end, rename(), getName() and other operations on file
+    // does not work in MapR. so we remove the trailing slash (if any) at the end.
+    if (resolvedParent.toString().endsWith("/")) {
+      String parent = resolvedParent.toString();
+      resolvedParent = URI.create(parent.substring(0, parent.length() - 1));
+    }
     return location.getLocationFactory().create(resolvedParent);
   }
 

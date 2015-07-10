@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.spark;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.io.Serializable;
 
 /**
@@ -27,6 +29,7 @@ import java.io.Serializable;
  * containing class to be serializable else java.io.NotSerializableException is thrown. We do not expect user job
  * class to be serializable so we serialize this interface which user job class implements to have a neater API.
  */
+@Beta
 public interface SparkProgram extends Serializable {
 
   /**

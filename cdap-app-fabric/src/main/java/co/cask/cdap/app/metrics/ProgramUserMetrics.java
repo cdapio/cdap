@@ -21,25 +21,13 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 /**
  * Implementation of {@link Metrics} for user-defined metrics.
  * Metrics will be emitted through {@link MetricsCollectionService}.
  */
-// todo: was made Externalizable for Spark. Seems wrong that we try to pass it
-public class ProgramUserMetrics implements Metrics, Externalizable {
-  private static final long serialVersionUID = -5913108632034346101L;
+public class ProgramUserMetrics implements Metrics {
 
   private final MetricsContext metricsContext;
-
-  /** For serde purposes only */
-  public ProgramUserMetrics() {
-    metricsContext = null;
-  }
 
   public ProgramUserMetrics(MetricsContext metricsContext) {
     this.metricsContext = metricsContext.childContext(Constants.Metrics.Tag.SCOPE, "user");
@@ -53,15 +41,5 @@ public class ProgramUserMetrics implements Metrics, Externalizable {
   @Override
   public void gauge(String metricName, long value) {
     metricsContext.gauge(metricName, value);
-  }
-
-  @Override
-  public void writeExternal(ObjectOutput out) throws IOException {
-    // do nothing
-  }
-
-  @Override
-  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-    // do nothing
   }
 }

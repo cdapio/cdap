@@ -23,6 +23,7 @@ import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.StreamClient;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
 
@@ -43,7 +44,8 @@ public class DeleteStreamCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String streamId = arguments.get(ArgumentName.STREAM.toString());
+    Id.Stream streamId = Id.Stream.from(cliConfig.getCurrentNamespace(),
+                                        arguments.get(ArgumentName.STREAM.toString()));
     streamClient.delete(streamId);
     output.printf("Successfully deleted stream '%s'\n", streamId);
   }

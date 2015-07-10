@@ -16,11 +16,15 @@
 
 package co.cask.cdap.api.spark;
 
+import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.annotation.Beta;
+
 import java.util.Map;
 
 /**
  * Configurer for configuring {@link Spark}.
  */
+@Beta
 public interface SparkConfigurer {
   /**
    * Sets the name of the {@link Spark}.
@@ -47,4 +51,14 @@ public interface SparkConfigurer {
    * @param properties the properties to set
    */
   void setProperties(Map<String, String> properties);
+
+  /**
+   * Sets the resources requirement for the Spark driver process.
+   */
+  void setDriverResources(Resources resources);
+
+  /**
+   * Sets the resources requirement for the Spark executor processes.
+   */
+  void setExecutorResources(Resources resources);
 }

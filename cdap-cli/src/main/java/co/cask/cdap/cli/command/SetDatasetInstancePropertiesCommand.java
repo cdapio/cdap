@@ -24,6 +24,7 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.DatasetClient;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -47,12 +48,13 @@ public class SetDatasetInstancePropertiesCommand extends AbstractCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String name = arguments.get(ArgumentName.DATASET.toString());
+    Id.DatasetInstance instance = Id.DatasetInstance.from(cliConfig.getCurrentNamespace(),
+                                                          arguments.get(ArgumentName.DATASET.toString()));
     Map<String, String> properties = ArgumentParser.parseMap(
       arguments.get(ArgumentName.DATASET_PROPERTIES.toString()));
 
-    datasetClient.updateExisting(name, properties);
-    output.printf("Successfully updated properties for dataset instance '%s' to %s", name, GSON.toJson(properties));
+    datasetClient.updateExisting(instance, properties);
+    output.printf("Successfully updated properties for %s to %s", instance, GSON.toJson(properties));
   }
 
   @Override

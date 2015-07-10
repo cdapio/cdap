@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli.completer.element;
 
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.completer.StringsCompleter;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.common.UnauthorizedException;
@@ -36,12 +37,13 @@ import javax.inject.Inject;
 public class DatasetTypeNameCompleter extends StringsCompleter {
 
   @Inject
-  public DatasetTypeNameCompleter(final DatasetTypeClient datasetTypeClient) {
+  public DatasetTypeNameCompleter(final DatasetTypeClient datasetTypeClient,
+                                  final CLIConfig cliConfig) {
     super(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
         try {
-          List<DatasetTypeMeta> list = datasetTypeClient.list();
+          List<DatasetTypeMeta> list = datasetTypeClient.list(cliConfig.getCurrentNamespace());
           return Lists.newArrayList(
             Iterables.transform(list, new Function<DatasetTypeMeta, String>() {
               @Override

@@ -16,8 +16,11 @@
 
 package co.cask.cdap.api.spark;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
+import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
@@ -37,7 +40,8 @@ import java.io.Serializable;
  * Classes implementing this interface should also have a Spark Context member of appropriate type on which these
  * method acts.
  */
-public interface SparkContext extends RuntimeContext {
+@Beta
+public interface SparkContext extends RuntimeContext, DatasetContext {
   /**
    * @return The specification used to configure this {@link Spark} job instance.
    */
@@ -129,14 +133,6 @@ public interface SparkContext extends RuntimeContext {
   <T> T getOriginalSparkContext();
 
   /**
-   * Returns value of the given argument key as a String[]
-   *
-   * @param argsKey {@link String} which is the key for the argument
-   * @return String[] containing all the arguments which is indexed by their position as they were supplied
-   */
-  String[] getRuntimeArguments(String argsKey);
-
-  /**
    * Returns a {@link Serializable} {@link ServiceDiscoverer} for Service Discovery in Spark Program which can be
    * passed in Spark program's closures.
    *
@@ -151,4 +147,12 @@ public interface SparkContext extends RuntimeContext {
    * @return {@link Serializable} {@link Metrics} for {@link Spark} programs
    */
   Metrics getMetrics();
+
+  /**
+   * Override the resources, such as memory and virtual cores, to use for each executor process for the Spark program.
+   * This method should be called in {@link Spark#beforeSubmit(SparkContext)} to take effect.
+   *
+   * @param resources Resources that each executor should use
+   */
+  void setExecutorResources(Resources resources);
 }

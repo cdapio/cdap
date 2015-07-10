@@ -83,7 +83,7 @@ set_hbase()
   fi
 
   if [ -z "$HBASE_VERSION" ]; then
-    HBASE_VERSION=`$JAVA -cp $CLASSPATH co.cask.cdap.data2.util.hbase.HBaseVersion 2> /dev/null`
+    HBASE_VERSION=`$JAVA -cp $CLASSPATH co.cask.tephra.util.HBaseVersion 2> /dev/null`
     retvalue=$?
   fi
 

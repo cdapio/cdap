@@ -115,8 +115,8 @@ final class ProgramResources {
     Set<String> resources = getBaseResources();
 
     // Base on the type, add extra resources
-    // Current only Spark type has extra visible resources
-    if (type == ProgramType.SPARK) {
+    // Current only Spark and Workflow type has extra visible resources
+    if (type == ProgramType.SPARK || type == ProgramType.WORKFLOW) {
       resources = getResources(ClassPath.from(ProgramResources.class.getClassLoader(), JAR_ONLY_URI),
                                SPARK_PACKAGES, CLASS_INFO_TO_RESOURCE_NAME, Sets.newHashSet(resources));
     }

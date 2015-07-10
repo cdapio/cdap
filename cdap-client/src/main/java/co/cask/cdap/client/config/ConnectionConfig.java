@@ -57,8 +57,29 @@ public class ConnectionConfig {
   private final String hostname;
   private final int port;
   private final boolean sslEnabled;
+
+  /**
+   * @deprecated As of 3.1, namespace is no longer be stored as part of {@link ConnectionConfig}.
+   */
+  @Deprecated
   private final Id.Namespace namespace;
 
+  public ConnectionConfig(ConnectionConfig config) {
+    this(config.getHostname(), config.getPort(), config.isSSLEnabled());
+  }
+
+  public ConnectionConfig(String hostname, int port, boolean sslEnabled) {
+    Preconditions.checkArgument(hostname != null && !hostname.isEmpty(), "hostname cannot be empty");
+    this.hostname = hostname;
+    this.port = port;
+    this.sslEnabled = sslEnabled;
+    this.namespace = null;
+  }
+
+  /**
+   * @deprecated As of 3.1, namespace is no longer be stored as part of {@link ConnectionConfig}.
+   */
+  @Deprecated
   public ConnectionConfig(Id.Namespace namespace, String hostname, int port, boolean sslEnabled) {
     Preconditions.checkArgument(namespace != null, "namespace cannot be empty");
     Preconditions.checkArgument(hostname != null && !hostname.isEmpty(), "hostname cannot be empty");
@@ -80,10 +101,22 @@ public class ConnectionConfig {
     return getURI().resolve(String.format("/%s/%s", apiVersion, path));
   }
 
+  public URI resolveNamespacedURI(Id.Namespace namespace, String apiVersion, String path) {
+    return getURI().resolve(String.format("/%s/namespaces/%s/%s", apiVersion, namespace.getId(), path));
+  }
+
+  /**
+   * @deprecated As of 3.1, namespace is no longer be stored as part of {@link ConnectionConfig}.
+   */
+  @Deprecated
   public URI resolveNamespacedURI(String apiVersion, String path) {
     return getURI().resolve(String.format("/%s/namespaces/%s/%s", apiVersion, namespace.getId(), path));
   }
 
+  /**
+   * @deprecated As of 3.1, namespace is no longer be stored as part of {@link ConnectionConfig}.
+   */
+  @Deprecated
   public Id.Namespace getNamespace() {
     return namespace;
   }
@@ -116,8 +149,7 @@ public class ConnectionConfig {
     final ConnectionConfig other = (ConnectionConfig) obj;
     return Objects.equal(this.hostname, other.hostname) &&
       Objects.equal(this.port, other.port) &&
-      Objects.equal(this.sslEnabled, other.sslEnabled) &&
-      Objects.equal(this.namespace, other.namespace);
+      Objects.equal(this.sslEnabled, other.sslEnabled);
   }
 
   @Override
@@ -126,7 +158,6 @@ public class ConnectionConfig {
       .add("hostname", hostname)
       .add("port", port)
       .add("sslEnabled", sslEnabled)
-      .add("namespace", namespace)
       .toString();
   }
 
@@ -145,7 +176,12 @@ public class ConnectionConfig {
     private String hostname = DEFAULT_HOST;
     private Integer port = null;
     private boolean sslEnabled = DEFAULT_SSL_ENABLED;
-    private Id.Namespace namespace = Constants.DEFAULT_NAMESPACE_ID;
+
+    /**
+     * @deprecated As of 3.1, namespace is no longer be stored as part of {@link ConnectionConfig}.
+     */
+    @Deprecated
+    private Id.Namespace namespace = Id.Namespace.DEFAULT;
 
     public Builder() {
     }
@@ -163,6 +199,15 @@ public class ConnectionConfig {
     }
 
     /**
+     * @deprecated As of 3.1, namespace is no longer be stored as part of {@link ConnectionConfig}.
+     */
+    @Deprecated
+    public Builder setNamespace(Id.Namespace namespace) {
+      this.namespace = namespace;
+      return this;
+    }
+
+    /**
      * @param port connection port - use null if you want to use the default non-SSL or SSL port,
      *             depending on sslEnabled
      * @return this
@@ -174,11 +219,6 @@ public class ConnectionConfig {
 
     public Builder setSSLEnabled(boolean sslEnabled) {
       this.sslEnabled = sslEnabled;
-      return this;
-    }
-
-    public Builder setNamespace(Id.Namespace namespace) {
-      this.namespace = namespace;
       return this;
     }
 

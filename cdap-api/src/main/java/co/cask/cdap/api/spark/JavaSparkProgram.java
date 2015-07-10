@@ -16,9 +16,12 @@
 
 package co.cask.cdap.api.spark;
 
+import co.cask.cdap.api.annotation.Beta;
+
 /**
  * Defines an interface for User's Spark job written in Java
  */
+@Beta
 public interface JavaSparkProgram extends SparkProgram {
 
 }

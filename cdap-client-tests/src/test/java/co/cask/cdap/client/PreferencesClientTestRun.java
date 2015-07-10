@@ -50,8 +50,9 @@ import static org.junit.Assert.assertEquals;
  */
 @Category(XSlowTests.class)
 public class PreferencesClientTestRun extends ClientTestBase {
+
   private static final Gson GSON = new Gson();
-  private static final Id.Application FAKE_APP_ID = Id.Application.from(Constants.DEFAULT_NAMESPACE_ID, FakeApp.NAME);
+  private static final Id.Application FAKE_APP_ID = Id.Application.from(Id.Namespace.DEFAULT, FakeApp.NAME);
 
   private PreferencesClient client;
   private ApplicationClient appClient;
@@ -71,60 +72,61 @@ public class PreferencesClientTestRun extends ClientTestBase {
 
   @Test
   public void testProgramAPI() throws Exception {
-    // Add Namespace Id when ProgramClient needs it.
     Map<String, String> propMap = Maps.newHashMap();
     propMap.put("key", "instance");
     File jarFile = createAppJarFile(AppReturnsArgs.class);
-    appClient.deploy(jarFile);
+    appClient.deploy(Id.Namespace.DEFAULT, jarFile);
+    Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, AppReturnsArgs.NAME);
+    Id.Service service = Id.Service.from(app, AppReturnsArgs.SERVICE);
+
     try {
       client.setInstancePreferences(propMap);
       Map<String, String> setMap = Maps.newHashMap();
       setMap.put("saved", "args");
-      programClient.setRuntimeArgs(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE, setMap);
-      assertEquals(setMap, programClient.getRuntimeArgs(AppReturnsArgs.NAME, ProgramType.SERVICE,
-                                                        AppReturnsArgs.SERVICE));
-      programClient.start(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE, false,
-                          ImmutableMap.of("run", "value"));
-      assertProgramRunning(programClient, AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
+
+      programClient.setRuntimeArgs(service, setMap);
+      assertEquals(setMap, programClient.getRuntimeArgs(service));
+      programClient.start(service, false, ImmutableMap.of("run", "value"));
+      assertProgramRunning(programClient, service);
+
       propMap.put("run", "value");
       propMap.putAll(setMap);
-      URL serviceURL = new URL(serviceClient.getServiceURL(AppReturnsArgs.NAME, AppReturnsArgs.SERVICE),
-                               AppReturnsArgs.ENDPOINT);
+
+      URL serviceURL = new URL(serviceClient.getServiceURL(service), AppReturnsArgs.ENDPOINT);
       HttpRequest request = HttpRequest.builder(HttpMethod.GET, serviceURL).build();
       HttpResponse response = HttpRequests.execute(request);
       assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
       assertEquals(GSON.toJson(propMap), response.getResponseBodyAsString());
-      programClient.stop(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
-      assertProgramStopped(programClient, AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
+      programClient.stop(service);
+      assertProgramStopped(programClient, service);
 
       client.deleteInstancePreferences();
-      programClient.start(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
-      assertProgramRunning(programClient, AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
+      programClient.start(service);
+      assertProgramRunning(programClient, service);
       propMap.remove("key");
       propMap.remove("run");
-      serviceURL = new URL(serviceClient.getServiceURL(AppReturnsArgs.NAME, AppReturnsArgs.SERVICE),
-                           AppReturnsArgs.ENDPOINT);
+
+      serviceURL = new URL(serviceClient.getServiceURL(service), AppReturnsArgs.ENDPOINT);
       request = HttpRequest.builder(HttpMethod.GET, serviceURL).build();
       response = HttpRequests.execute(request);
       assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
       assertEquals(GSON.toJson(propMap), response.getResponseBodyAsString());
-      programClient.stop(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
-      assertProgramStopped(programClient, AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
+      programClient.stop(service);
+      assertProgramStopped(programClient, service);
 
       propMap.clear();
-      programClient.setRuntimeArgs(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE, propMap);
-      programClient.start(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
-      assertProgramRunning(programClient, AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
-      serviceURL = new URL(serviceClient.getServiceURL(AppReturnsArgs.NAME, AppReturnsArgs.SERVICE),
-                           AppReturnsArgs.ENDPOINT);
+      programClient.setRuntimeArgs(service, propMap);
+      programClient.start(service);
+      assertProgramRunning(programClient, service);
+      serviceURL = new URL(serviceClient.getServiceURL(service), AppReturnsArgs.ENDPOINT);
       request = HttpRequest.builder(HttpMethod.GET, serviceURL).build();
       response = HttpRequests.execute(request);
       assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
       assertEquals(GSON.toJson(propMap), response.getResponseBodyAsString());
     } finally {
-      programClient.stop(AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
-      assertProgramStopped(programClient, AppReturnsArgs.NAME, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
-      appClient.delete(AppReturnsArgs.NAME);
+      programClient.stop(service);
+      assertProgramStopped(programClient, service);
+      appClient.delete(app);
     }
   }
 
@@ -140,7 +142,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
     Assert.assertEquals(propMap, client.getInstancePreferences());
 
     File jarFile = createAppJarFile(FakeApp.class);
-    appClient.deploy(jarFile);
+    appClient.deploy(Id.Namespace.DEFAULT, jarFile);
 
     try {
       propMap.put("k1", "namespace");
@@ -209,16 +211,16 @@ public class PreferencesClientTestRun extends ClientTestBase {
       client.setProgramPreferences(flow, propMap);
       Assert.assertEquals(propMap, client.getProgramPreferences(flow, false));
 
-      appClient.delete(FAKE_APP_ID.getId());
+      appClient.delete(FAKE_APP_ID);
       // deleting the app should have deleted the preferences that were stored. so deploy the app and check
       // if the preferences are empty. we need to deploy the app again since getting preferences of non-existent apps
       // is not allowed by the API.
-      appClient.deploy(jarFile);
+      appClient.deploy(Id.Namespace.DEFAULT, jarFile);
       propMap.clear();
       Assert.assertEquals(propMap, client.getApplicationPreferences(FAKE_APP_ID, false));
       Assert.assertEquals(propMap, client.getProgramPreferences(flow, false));
     } finally {
-      appClient.delete(FAKE_APP_ID.getId());
+      appClient.delete(FAKE_APP_ID);
       namespaceClient.delete(invalidNamespace.getId());
     }
   }

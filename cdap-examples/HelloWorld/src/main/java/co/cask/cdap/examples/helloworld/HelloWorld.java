@@ -22,8 +22,7 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.metrics.Metrics;
@@ -60,16 +59,14 @@ public class HelloWorld extends AbstractApplication {
   /**
    * Sample Flow.
    */
-  public static final class WhoFlow implements Flow {
+  public static final class WhoFlow extends AbstractFlow {
 
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with().
-        setName("WhoFlow").
-        setDescription("A flow that collects names").
-        withFlowlets().add("saver", new NameSaver()).
-        connect().fromStream("who").to("saver").
-        build();
+    protected void configureFlow() {
+      setName("WhoFlow");
+      setDescription("A flow that collects names");
+      addFlowlet("saver", new NameSaver());
+      connectStream("who", "saver");
     }
   }
 

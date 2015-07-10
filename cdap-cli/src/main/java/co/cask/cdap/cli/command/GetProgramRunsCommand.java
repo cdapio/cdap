@@ -26,6 +26,7 @@ import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
@@ -62,14 +63,14 @@ public class GetProgramRunsCommand extends AbstractCommand {
       if (programIdParts.length < 2) {
         throw new CommandInputError(this);
       }
-      String programId = programIdParts[1];
+      String programName = programIdParts[1];
+      Id.Program programId = Id.Program.from(cliConfig.getCurrentNamespace(), appId,
+                                             elementType.getProgramType(), programName);
       if (arguments.hasArgument(ArgumentName.RUN_STATUS.toString())) {
-        records = programClient.getProgramRuns(appId, elementType.getProgramType(), programId,
-                                               arguments.get(ArgumentName.RUN_STATUS.toString()),
+        records = programClient.getProgramRuns(programId, arguments.get(ArgumentName.RUN_STATUS.toString()),
                                                startTime, endTime, limit);
       } else {
-        records = programClient.getAllProgramRuns(appId, elementType.getProgramType(), programId,
-                                                  startTime, endTime, limit);
+        records = programClient.getAllProgramRuns(programId, startTime, endTime, limit);
       }
 
     } else {

@@ -35,7 +35,6 @@ body.theme-cdap {
   .alert-warning    { .alert-styles(@alert-warning-bg); }
   .alert-danger     { .alert-styles(@alert-danger-bg); }
 
-
   //
   // Progress bars
   // --------------------------------------------------
@@ -72,16 +71,14 @@ body.theme-cdap {
     margin-top: 10px;
     &[cask-sortable] {
       thead {
-
-
         .empty { cursor: default; }
       }
     }
     tbody {
-      color: @cdap-bluegray;
+      color: #999;
       a {
         color: @cdap-bluegray;
-        &:hover, &:focus { text-decoration: underline; }
+        &:hover, &:focus { text-decoration: none; }
         &.btn-danger { .cask-btn(@background: transparent, @border: 0, @border-radius: 0, @color: @brand-danger, @padding: 0); }
       }
     }
@@ -189,11 +186,10 @@ body.theme-cdap {
 // Message panel (appears on Dev + Management start screens)
   .panel-message {
     background: white;
-    border: 1px solid lightgray;
+    border: 1px solid #d1d4dc;
     margin-bottom: 20px;
     padding: 10px;
     .border-radius(4px);
-    .box-shadow(0 8px 6px -6px @cdap-darkness);
     p { margin-bottom: 0; }
     .btn-close {
       .cask-btn(@background: @cdap-lightgray, @border: 0, @border-radius: 28px, @padding: 0);
@@ -207,23 +203,26 @@ body.theme-cdap {
     }
   }
 
+  .panel { .box-shadow(none); }
+
+  .panel-title {
+    span.fa {
+      font-size: 10px;
+      margin-right: 10px;
+      height: 15px;
+      vertical-align: middle;
+      .border-radius(25px);
+    }
+  }
   .panel-explore {
     background-color: transparent;
     color: @cdap-header;
-    .box-shadow(none);
     > .panel-heading {
       background: white;
       border: 1px solid lightgray;
       padding: 20px;
+      cursor: pointer;
       .border-radius(8px);
-    }
-    .panel-title {
-      font-size: 17px;
-      span.fa {
-        margin-right: 10px;
-        line-height: 1.2;
-        .border-radius(25px);
-      }
     }
     > .panel-collapse {
       > .panel-body {
@@ -307,7 +306,6 @@ body.theme-cdap {
         line-height: 1;
         opacity: 1;
       }
-      .modal-title { font-weight: bold; }
     }
     .modal-dialog { .border-radius(4px); }
     .modal-content {
@@ -365,7 +363,6 @@ body.theme-cdap {
 
     // caskConfirm modal styling (no modal-lg or modal-sm class present)
     &.center {
-      h4 { font-weight: bold; }
       .close { display: none; }
       .modal-content, .modal-footer { text-align: center; }
       .modal-content {
@@ -410,7 +407,9 @@ body.theme-cdap {
           .btn-danger {}
         }
         .modal-footer { text-align: right; }
-        .panel { background-color: transparent; }
+        .panel {
+          background-color: transparent;
+        }
       }
     }
   }

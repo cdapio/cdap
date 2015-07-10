@@ -33,4 +33,9 @@ public interface MetricsContext extends MetricsCollector {
    * Convenience method that acts as {@link #childContext(java.util.Map)} by supplying single tag.
    */
   MetricsContext childContext(String tagName, String tagValue);
+
+  /**
+   * @return tags that identify the context.
+   */
+  Map<String, String> getTags();
 }

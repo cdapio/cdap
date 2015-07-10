@@ -22,10 +22,12 @@ import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.artifact.ArtifactVersion;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.CharStreams;
@@ -41,6 +43,7 @@ import java.io.InputStreamReader;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
@@ -90,26 +93,17 @@ public class ArtifactStoreTest {
 
   @Test
   public void testGetNonexistantPlugin() throws IOException {
-    Id.Namespace namespace = Id.Namespace.from("ns1");
+    Id.Artifact parentArtifact = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "abc", "1.2.3");
 
     // no plugins in a namespace should return an empty collection
-    Assert.assertTrue(artifactStore.getPluginClasses(namespace).isEmpty());
+    Assert.assertTrue(artifactStore.getPluginClasses(parentArtifact).isEmpty());
 
     // no plugins in namespace of a given type should return an empty map
-    Assert.assertTrue(artifactStore.getPluginClasses(namespace, "sometype").isEmpty());
+    Assert.assertTrue(artifactStore.getPluginClasses(parentArtifact, "sometype").isEmpty());
 
     // no plugins in namespace of a given type and name should throw an exception
     try {
-      artifactStore.getPluginClasses(namespace, "sometype", "somename");
-      Assert.fail();
-    } catch (PluginNotExistsException e) {
-      // expected
-    }
-
-    // no plugins in namespace of a given type and name and artifact should throw an exception
-    try {
-      Id.Artifact artifactId = Id.Artifact.from(namespace, "A", "1.0.0");
-      artifactStore.getPluginClass(artifactId, "sometype", "somename");
+      artifactStore.getPluginClasses(parentArtifact, "sometype", "somename");
       Assert.fail();
     } catch (PluginNotExistsException e) {
       // expected
@@ -150,17 +144,19 @@ public class ArtifactStoreTest {
 
   @Test
   public void testSnapshotMutability() throws Exception {
+    ArtifactRange parentArtifacts = new ArtifactRange(
+      Constants.DEFAULT_NAMESPACE_ID, "parent", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
     // write the snapshot once
     PluginClass plugin1 = new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg",
       ImmutableMap.<String, PluginPropertyField>of());
     PluginClass plugin2 = new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg",
       ImmutableMap.<String, PluginPropertyField>of());
     Id.Artifact artifactId = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "myplugins", "1.0.0-SNAPSHOT");
-    ArtifactMeta artifactMeta = new ArtifactMeta(ImmutableList.of(plugin1, plugin2));
+    ArtifactMeta artifactMeta = new ArtifactMeta(ImmutableList.of(plugin1, plugin2), ImmutableSet.of(parentArtifacts));
     artifactStore.write(artifactId, artifactMeta, new ByteArrayInputStream(Bytes.toBytes("abc123")));
 
     // update meta and jar contents
-    artifactMeta = new ArtifactMeta(ImmutableList.of(plugin2));
+    artifactMeta = new ArtifactMeta(ImmutableList.of(plugin2), ImmutableSet.of(parentArtifacts));
     artifactStore.write(artifactId, artifactMeta, new ByteArrayInputStream(Bytes.toBytes("xyz321")));
 
     // check the metadata and contents got updated
@@ -168,10 +164,11 @@ public class ArtifactStoreTest {
     assertEqual(artifactId, artifactMeta, "xyz321", detail);
 
     // check that plugin1 was deleted and plugin2 remains
-    Assert.assertEquals(Maps.immutableEntry(detail.getInfo(), plugin2),
-      artifactStore.getPluginClass(artifactId, plugin2.getType(), plugin2.getName()));
+    Id.Artifact parentArtifactId = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "parent", "1.0.0");
+    Assert.assertEquals(ImmutableMap.of(detail.getInfo(), plugin2),
+      artifactStore.getPluginClasses(parentArtifactId, plugin2.getType(), plugin2.getName()));
     try {
-      artifactStore.getPluginClass(artifactId, plugin1.getType(), plugin1.getName());
+      artifactStore.getPluginClasses(parentArtifactId, plugin1.getType(), plugin1.getName());
       Assert.fail();
     } catch (PluginNotExistsException e) {
       // expected
@@ -266,6 +263,8 @@ public class ArtifactStoreTest {
 
   @Test
   public void testGetPlugins() throws Exception {
+    ArtifactRange parentArtifacts = new ArtifactRange(
+      Constants.DEFAULT_NAMESPACE_ID, "parent", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
     // we have 2 plugins of type A and 2 plugins of type B
     PluginClass pluginA1 = new PluginClass(
       "A", "p1", "desc", "c.p1", "cfg",
@@ -301,46 +300,48 @@ public class ArtifactStoreTest {
 
     // artifact artifactX-1.0.0 contains plugin A1
     Id.Artifact artifactXv100 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "artifactX", "1.0.0");
-    ArtifactMeta metaXv100 = new ArtifactMeta(ImmutableList.of(pluginA1));
+    ArtifactMeta metaXv100 = new ArtifactMeta(ImmutableList.of(pluginA1), ImmutableSet.of(parentArtifacts));
     artifactStore.write(artifactXv100, metaXv100, new ByteArrayInputStream(contents));
     ArtifactInfo artifactXv100Info = artifactStore.getArtifact(artifactXv100).getInfo();
 
     // artifact artifactX-1.1.0 contains plugin A1
     Id.Artifact artifactXv110 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "artifactX", "1.1.0");
-    ArtifactMeta metaXv110 = new ArtifactMeta(ImmutableList.of(pluginA1));
+    ArtifactMeta metaXv110 = new ArtifactMeta(ImmutableList.of(pluginA1), ImmutableSet.of(parentArtifacts));
     artifactStore.write(artifactXv110, metaXv110, new ByteArrayInputStream(contents));
     ArtifactInfo artifactXv110Info = artifactStore.getArtifact(artifactXv110).getInfo();
 
     // artifact artifactX-2.0.0 contains plugins A1 and A2
     Id.Artifact artifactXv200 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "artifactX", "2.0.0");
-    ArtifactMeta metaXv200 = new ArtifactMeta(ImmutableList.of(pluginA1, pluginA2));
+    ArtifactMeta metaXv200 = new ArtifactMeta(ImmutableList.of(pluginA1, pluginA2), ImmutableSet.of(parentArtifacts));
     artifactStore.write(artifactXv200, metaXv200, new ByteArrayInputStream(contents));
     ArtifactInfo artifactXv200Info = artifactStore.getArtifact(artifactXv200).getInfo();
 
     // artifact artifactY-1.0.0 contains plugin B1
     Id.Artifact artifactYv100 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "artifactY", "1.0.0");
-    ArtifactMeta metaYv100 = new ArtifactMeta(ImmutableList.of(pluginB1));
+    ArtifactMeta metaYv100 = new ArtifactMeta(ImmutableList.of(pluginB1), ImmutableSet.of(parentArtifacts));
     artifactStore.write(artifactYv100, metaYv100, new ByteArrayInputStream(contents));
     ArtifactInfo artifactYv100Info = artifactStore.getArtifact(artifactYv100).getInfo();
 
     // artifact artifactY-2.0.0 contains plugin B2
     Id.Artifact artifactYv200 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "artifactY", "2.0.0");
-    ArtifactMeta metaYv200 = new ArtifactMeta(ImmutableList.of(pluginB2));
+    ArtifactMeta metaYv200 = new ArtifactMeta(ImmutableList.of(pluginB2), ImmutableSet.of(parentArtifacts));
     artifactStore.write(artifactYv200, metaYv200, new ByteArrayInputStream(contents));
     ArtifactInfo artifactYv200Info = artifactStore.getArtifact(artifactYv200).getInfo();
 
     // artifact artifactZ-1.0.0 contains plugins A1 and B1
     Id.Artifact artifactZv100 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "artifactZ", "1.0.0");
-    ArtifactMeta metaZv100 = new ArtifactMeta(ImmutableList.of(pluginA1, pluginB1));
+    ArtifactMeta metaZv100 = new ArtifactMeta(ImmutableList.of(pluginA1, pluginB1), ImmutableSet.of(parentArtifacts));
     artifactStore.write(artifactZv100, metaZv100, new ByteArrayInputStream(contents));
     ArtifactInfo artifactZv100Info = artifactStore.getArtifact(artifactZv100).getInfo();
 
     // artifact artifactZ-2.0.0 contains plugins A1, A2, B1, and B2
     Id.Artifact artifactZv200 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "artifactZ", "2.0.0");
-    ArtifactMeta metaZv200 = new ArtifactMeta(ImmutableList.of(pluginA1, pluginA2, pluginB1, pluginB2));
+    ArtifactMeta metaZv200 = new ArtifactMeta(
+      ImmutableList.of(pluginA1, pluginA2, pluginB1, pluginB2), ImmutableSet.of(parentArtifacts));
     artifactStore.write(artifactZv200, metaZv200, new ByteArrayInputStream(contents));
     ArtifactInfo artifactZv200Info = artifactStore.getArtifact(artifactZv200).getInfo();
 
+    Id.Artifact parentArtifactId = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "parent", "1.0.0");
     // test getting all plugins in the namespace
     Map<ArtifactInfo, List<PluginClass>> expected = Maps.newHashMap();
     expected.put(artifactXv100Info, ImmutableList.of(pluginA1));
@@ -350,7 +351,7 @@ public class ArtifactStoreTest {
     expected.put(artifactYv200Info, ImmutableList.of(pluginB2));
     expected.put(artifactZv100Info, ImmutableList.of(pluginA1, pluginB1));
     expected.put(artifactZv200Info, ImmutableList.of(pluginA1, pluginA2, pluginB1, pluginB2));
-    Map<ArtifactInfo, List<PluginClass>> actual = artifactStore.getPluginClasses(Constants.DEFAULT_NAMESPACE_ID);
+    Map<ArtifactInfo, List<PluginClass>> actual = artifactStore.getPluginClasses(parentArtifactId);
     Assert.assertEquals(expected, actual);
 
     // test getting all plugins by namespace and type
@@ -361,7 +362,7 @@ public class ArtifactStoreTest {
     expected.put(artifactXv200Info, ImmutableList.of(pluginA1, pluginA2));
     expected.put(artifactZv100Info, ImmutableList.of(pluginA1));
     expected.put(artifactZv200Info, ImmutableList.of(pluginA1, pluginA2));
-    actual = artifactStore.getPluginClasses(Constants.DEFAULT_NAMESPACE_ID, "A");
+    actual = artifactStore.getPluginClasses(parentArtifactId, "A");
     Assert.assertEquals(expected, actual);
     // get all of type B
     expected = Maps.newHashMap();
@@ -369,97 +370,118 @@ public class ArtifactStoreTest {
     expected.put(artifactYv200Info, ImmutableList.of(pluginB2));
     expected.put(artifactZv100Info, ImmutableList.of(pluginB1));
     expected.put(artifactZv200Info, ImmutableList.of(pluginB1, pluginB2));
-    actual = artifactStore.getPluginClasses(Constants.DEFAULT_NAMESPACE_ID, "B");
+    actual = artifactStore.getPluginClasses(parentArtifactId, "B");
     Assert.assertEquals(expected, actual);
 
     // test getting plugins by namespace, type, and name
     // get all of type A and name p1
-    expected = Maps.newHashMap();
-    expected.put(artifactXv100Info, ImmutableList.of(pluginA1));
-    expected.put(artifactXv110Info, ImmutableList.of(pluginA1));
-    expected.put(artifactXv200Info, ImmutableList.of(pluginA1));
-    expected.put(artifactZv100Info, ImmutableList.of(pluginA1));
-    expected.put(artifactZv200Info, ImmutableList.of(pluginA1));
-    actual = artifactStore.getPluginClasses(Constants.DEFAULT_NAMESPACE_ID, "A", "p1");
-    Assert.assertEquals(expected, actual);
+    Map<ArtifactInfo, PluginClass> expectedMap = Maps.newHashMap();
+    expectedMap.put(artifactXv100Info, pluginA1);
+    expectedMap.put(artifactXv110Info, pluginA1);
+    expectedMap.put(artifactXv200Info, pluginA1);
+    expectedMap.put(artifactZv100Info, pluginA1);
+    expectedMap.put(artifactZv200Info, pluginA1);
+    Map<ArtifactInfo, PluginClass> actualMap = artifactStore.getPluginClasses(parentArtifactId, "A", "p1");
+    Assert.assertEquals(expectedMap, actualMap);
     // get all of type A and name p2
-    expected = Maps.newHashMap();
-    expected.put(artifactXv200Info, ImmutableList.of(pluginA2));
-    expected.put(artifactZv200Info, ImmutableList.of(pluginA2));
-    actual = artifactStore.getPluginClasses(Constants.DEFAULT_NAMESPACE_ID, "A", "p2");
-    Assert.assertEquals(expected, actual);
+    expectedMap = Maps.newHashMap();
+    expectedMap.put(artifactXv200Info, pluginA2);
+    expectedMap.put(artifactZv200Info, pluginA2);
+    actualMap = artifactStore.getPluginClasses(parentArtifactId, "A", "p2");
+    Assert.assertEquals(expectedMap, actualMap);
     // get all of type B and name p1
-    expected = Maps.newHashMap();
-    expected.put(artifactYv100Info, ImmutableList.of(pluginB1));
-    expected.put(artifactZv100Info, ImmutableList.of(pluginB1));
-    expected.put(artifactZv200Info, ImmutableList.of(pluginB1));
-    actual = artifactStore.getPluginClasses(Constants.DEFAULT_NAMESPACE_ID, "B", "p1");
-    Assert.assertEquals(expected, actual);
+    expectedMap = Maps.newHashMap();
+    expectedMap.put(artifactYv100Info, pluginB1);
+    expectedMap.put(artifactZv100Info, pluginB1);
+    expectedMap.put(artifactZv200Info, pluginB1);
+    actualMap = artifactStore.getPluginClasses(parentArtifactId, "B", "p1");
+    Assert.assertEquals(expectedMap, actualMap);
     // get all of type B and name p2
-    expected = Maps.newHashMap();
-    expected.put(artifactYv200Info, ImmutableList.of(pluginB2));
-    expected.put(artifactZv200Info, ImmutableList.of(pluginB2));
-    actual = artifactStore.getPluginClasses(Constants.DEFAULT_NAMESPACE_ID, "B", "p2");
-    Assert.assertEquals(expected, actual);
-
-    // test getting plugin by artifact, plugin type, and plugin name
-    Assert.assertEquals(Maps.immutableEntry(artifactXv100Info, pluginA1),
-      artifactStore.getPluginClass(artifactXv100, pluginA1.getType(), pluginA1.getName()));
-    Assert.assertEquals(Maps.immutableEntry(artifactXv110Info, pluginA1),
-      artifactStore.getPluginClass(artifactXv110, pluginA1.getType(), pluginA1.getName()));
-    Assert.assertEquals(Maps.immutableEntry(artifactXv200Info, pluginA1),
-      artifactStore.getPluginClass(artifactXv200, pluginA1.getType(), pluginA1.getName()));
-    Assert.assertEquals(Maps.immutableEntry(artifactXv200Info, pluginA2),
-      artifactStore.getPluginClass(artifactXv200, pluginA2.getType(), pluginA2.getName()));
-
-    Assert.assertEquals(Maps.immutableEntry(artifactYv100Info, pluginB1),
-      artifactStore.getPluginClass(artifactYv100, pluginB1.getType(), pluginB1.getName()));
-    Assert.assertEquals(Maps.immutableEntry(artifactYv200Info, pluginB2),
-      artifactStore.getPluginClass(artifactYv200, pluginB2.getType(), pluginB2.getName()));
-
-    Assert.assertEquals(Maps.immutableEntry(artifactZv100Info, pluginA1),
-      artifactStore.getPluginClass(artifactZv100, pluginA1.getType(), pluginA1.getName()));
-    Assert.assertEquals(Maps.immutableEntry(artifactZv100Info, pluginB1),
-      artifactStore.getPluginClass(artifactZv100, pluginB1.getType(), pluginB1.getName()));
-    Assert.assertEquals(Maps.immutableEntry(artifactZv200Info, pluginA1),
-      artifactStore.getPluginClass(artifactZv200, pluginA1.getType(), pluginA1.getName()));
-    Assert.assertEquals(Maps.immutableEntry(artifactZv200Info, pluginA2),
-      artifactStore.getPluginClass(artifactZv200, pluginA2.getType(), pluginA2.getName()));
-    Assert.assertEquals(Maps.immutableEntry(artifactZv200Info, pluginB1),
-      artifactStore.getPluginClass(artifactZv200, pluginB1.getType(), pluginB1.getName()));
-    Assert.assertEquals(Maps.immutableEntry(artifactZv200Info, pluginB2),
-      artifactStore.getPluginClass(artifactZv200, pluginB2.getType(), pluginB2.getName()));
-
-    // test some things that should return empty maps
-    // namespace with nothing in it
-    Assert.assertTrue(artifactStore.getPluginClasses(Id.Namespace.from("something")).isEmpty());
-    // type with no plugins
-    Assert.assertTrue(artifactStore.getPluginClasses(Constants.DEFAULT_NAMESPACE_ID, "C").isEmpty());
+    expectedMap = Maps.newHashMap();
+    expectedMap.put(artifactYv200Info, pluginB2);
+    expectedMap.put(artifactZv200Info, pluginB2);
+    actualMap = artifactStore.getPluginClasses(parentArtifactId, "B", "p2");
+    Assert.assertEquals(expectedMap, actualMap);
   }
 
   @Test
   public void testSamePluginDifferentArtifacts() throws Exception {
+    ArtifactRange parentArtifacts = new ArtifactRange(
+      Constants.DEFAULT_NAMESPACE_ID, "parent", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
     // add one artifact with a couple plugins
     Id.Artifact artifact1 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "plugins1", "1.0.0");
     List<PluginClass> plugins = ImmutableList.of(
       new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of()),
       new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of())
     );
-    ArtifactMeta meta1 = new ArtifactMeta(plugins);
+    ArtifactMeta meta1 = new ArtifactMeta(plugins, ImmutableSet.of(parentArtifacts));
     artifactStore.write(artifact1, meta1, new ByteArrayInputStream(Bytes.toBytes("something")));
     ArtifactInfo artifact1Info = artifactStore.getArtifact(artifact1).getInfo();
 
     // add a different artifact with the same plugins
     Id.Artifact artifact2 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "plugins2", "1.0.0");
-    ArtifactMeta meta2 = new ArtifactMeta(plugins);
+    ArtifactMeta meta2 = new ArtifactMeta(plugins, ImmutableSet.of(parentArtifacts));
     artifactStore.write(artifact2, meta2, new ByteArrayInputStream(Bytes.toBytes("something")));
     ArtifactInfo artifact2Info = artifactStore.getArtifact(artifact2).getInfo();
 
+    Id.Artifact parentArtifactId = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "parent", "1.0.0");
     Map<ArtifactInfo, List<PluginClass>> expected = Maps.newHashMap();
     expected.put(artifact1Info, plugins);
     expected.put(artifact2Info, plugins);
-    Map<ArtifactInfo, List<PluginClass>> actual = artifactStore.getPluginClasses(Constants.DEFAULT_NAMESPACE_ID);
+    Map<ArtifactInfo, List<PluginClass>> actual = artifactStore.getPluginClasses(parentArtifactId);
     Assert.assertEquals(expected, actual);
+  }
+
+  // this test tests that when an artifact specifies a range of artifact versions it extends,
+  // those versions are honored
+  @Test
+  public void testPluginParentVersions() throws Exception {
+    // write an artifact that extends parent-[1.0.0, 2.0.0)
+    Id.Artifact artifactId = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "plugins", "0.1.0");
+    Set<ArtifactRange> parentArtifacts = ImmutableSet.of(new ArtifactRange(
+      Constants.DEFAULT_NAMESPACE_ID, "parent", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+    List<PluginClass> plugins = ImmutableList.of(
+      new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of())
+    );
+    ArtifactMeta meta = new ArtifactMeta(plugins, parentArtifacts);
+    artifactStore.write(artifactId, meta, new ByteArrayInputStream(Bytes.toBytes("some contents")));
+    ArtifactInfo artifactInfo = artifactStore.getArtifact(artifactId).getInfo();
+
+    // check ids that are out of range. They should not return anything
+    List<Id.Artifact> badIds = Lists.newArrayList(
+      // ids that are too low
+      Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "parent", "0.9.9"),
+      Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "parent", "1.0.0-SNAPSHOT"),
+      // ids that are too high
+      Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "parent", "2.0.0")
+    );
+    for (Id.Artifact badId : badIds) {
+      Assert.assertTrue(artifactStore.getPluginClasses(badId).isEmpty());
+      Assert.assertTrue(artifactStore.getPluginClasses(badId, "atype").isEmpty());
+      try {
+        artifactStore.getPluginClasses(badId, "atype", "plugin1");
+        Assert.fail();
+      } catch (PluginNotExistsException e) {
+        // expected
+      }
+    }
+
+    // check ids that are in range return what we expect
+    List<Id.Artifact> goodIds = Lists.newArrayList(
+      // ids that are too low
+      Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "parent", "1.0.0"),
+      // ids that are too high
+      Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "parent", "1.9.9"),
+      Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "parent", "1.99.999"),
+      Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "parent", "2.0.0-SNAPSHOT")
+    );
+    Map<ArtifactInfo, List<PluginClass>> expectedPluginsMapList = ImmutableMap.of(artifactInfo, plugins);
+    Map<ArtifactInfo, PluginClass> expectedPluginsMap = ImmutableMap.of(artifactInfo, plugins.get(0));
+    for (Id.Artifact goodId : goodIds) {
+      Assert.assertEquals(expectedPluginsMapList, artifactStore.getPluginClasses(goodId));
+      Assert.assertEquals(expectedPluginsMapList, artifactStore.getPluginClasses(goodId, "atype"));
+      Assert.assertEquals(expectedPluginsMap, artifactStore.getPluginClasses(goodId, "atype", "plugin1"));
+    }
   }
 
   @Category(SlowTests.class)
@@ -516,11 +538,12 @@ public class ArtifactStoreTest {
   @Category(SlowTests.class)
   @Test
   public void testConcurrentSnapshotWrite() throws Exception {
+    final ArtifactRange parentArtifacts = new ArtifactRange(
+      Constants.DEFAULT_NAMESPACE_ID, "parent", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
     // start up a bunch of threads that will try and write the same artifact at the same time
     // only one of them should be able to write it
     int numThreads = 20;
     final Id.Artifact artifactId = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "abc", "1.0.0-SNAPSHOT");
-    final List<String> successfulWriters = Collections.synchronizedList(Lists.<String>newArrayList());
 
     // use a barrier so they all try and write at the same time
     final CyclicBarrier barrier = new CyclicBarrier(numThreads);
@@ -533,11 +556,13 @@ public class ArtifactStoreTest {
         public void run() {
           try {
             barrier.await();
-            ArtifactMeta meta = new ArtifactMeta(ImmutableList.of(new PluginClass(
-              "plugin-type", "plugin" + writer, "", "classname", "cfg",
-              ImmutableMap.<String, PluginPropertyField>of())));
+            ArtifactMeta meta = new ArtifactMeta(
+              ImmutableList.of(new PluginClass(
+                "plugin-type", "plugin" + writer, "", "classname", "cfg",
+                ImmutableMap.<String, PluginPropertyField>of())),
+              ImmutableSet.of(parentArtifacts)
+            );
             artifactStore.write(artifactId, meta, new ByteArrayInputStream(Bytes.toBytes(writer)));
-            successfulWriters.add(writer);
           } catch (InterruptedException | BrokenBarrierException | ArtifactAlreadyExistsException | IOException e) {
             // something went wrong, fail the test
             throw new RuntimeException(e);
@@ -552,17 +577,25 @@ public class ArtifactStoreTest {
 
     // wait for all writers to finish
     latch.await();
-    // get the last writer that was able to write
-    String winnerWriter = successfulWriters.get(successfulWriters.size() - 1);
-    // check that the contents weren't mixed between writers
+
+    // figure out which was the last writer by reading our data. all the writers should have been able to write,
+    // and they should have all overwritten each other in a consistent manner
     ArtifactDetail detail = artifactStore.getArtifact(artifactId);
-    ArtifactMeta expectedMeta = new ArtifactMeta(ImmutableList.of(new PluginClass(
-      "plugin-type", "plugin" + winnerWriter, "", "classname", "cfg",
-      ImmutableMap.<String, PluginPropertyField>of())));
+    // figure out the winning writer from the plugin name, which is 'plugin<writer>'
+    String pluginName = detail.getMeta().getPlugins().get(0).getName();
+    String winnerWriter = pluginName.substring("plugin".length());
+
+    ArtifactMeta expectedMeta = new ArtifactMeta(
+      ImmutableList.of(new PluginClass(
+        "plugin-type", "plugin" + winnerWriter, "", "classname", "cfg",
+        ImmutableMap.<String, PluginPropertyField>of())),
+      ImmutableSet.of(parentArtifacts));
     assertEqual(artifactId, expectedMeta, winnerWriter, detail);
+
     // check only 1 plugin remains and that its the correct one
+    Id.Artifact parentArtifactId = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "parent", "1.0.0");
     Map<ArtifactInfo, List<PluginClass>> pluginMap =
-      artifactStore.getPluginClasses(artifactId.getNamespace(), "plugin-type");
+      artifactStore.getPluginClasses(parentArtifactId, "plugin-type");
     Map<ArtifactInfo, List<PluginClass>> expected = Maps.newHashMap();
     expected.put(detail.getInfo(), Lists.newArrayList(
       new PluginClass("plugin-type", "plugin" + winnerWriter, "", "classname", "cfg",

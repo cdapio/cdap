@@ -108,16 +108,28 @@ public final class FilterClassLoader extends ClassLoader {
 
   @Override
   public URL getResource(String name) {
+    URL resource = bootstrapClassLoader.getResource(name);
+    if (resource != null) {
+      return resource;
+    }
     return resourceAcceptor.apply(name) ? super.getResource(name) : null;
   }
 
   @Override
   public Enumeration<URL> getResources(String name) throws IOException {
+    Enumeration<URL> resources = bootstrapClassLoader.getResources(name);
+    if (resources.hasMoreElements()) {
+      return resources;
+    }
     return resourceAcceptor.apply(name) ? super.getResources(name) : Collections.<URL>emptyEnumeration();
   }
 
   @Override
   public InputStream getResourceAsStream(String name) {
+    InputStream resourceStream = bootstrapClassLoader.getResourceAsStream(name);
+    if (resourceStream != null) {
+      return resourceStream;
+    }
     return resourceAcceptor.apply(name) ? super.getResourceAsStream(name) : null;
   }
 

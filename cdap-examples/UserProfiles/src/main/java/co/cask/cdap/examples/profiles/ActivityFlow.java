@@ -23,8 +23,7 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
@@ -34,24 +33,20 @@ import org.slf4j.LoggerFactory;
 /**
  * Reads click events from a stream, counts clicks per URL, and records user's last activity in their profiles.
  */
-public class ActivityFlow implements Flow {
+public class ActivityFlow extends AbstractFlow {
 
   private static final Logger LOG = LoggerFactory.getLogger(ActivityFlow.class);
 
   @Override
-  public FlowSpecification configure() {
-    return FlowSpecification.Builder.with()
-      .setName("ActivityFlow")
-      .setDescription("Reads click events from a stream, counts clicks per URL, and records user activity.")
-      .withFlowlets()
-      .add("reader", new EventReader())
-      .add("counter", new Counter())
-      .add("updater", new Updater())
-      .connect()
-      .fromStream("events").to("reader")
-      .from("reader").to("counter")
-      .from("reader").to("updater")
-      .build();
+  protected void configureFlow() {
+    setName("ActivityFlow");
+    setDescription("Reads click events from a stream, counts clicks per URL, and records user activity.");
+    addFlowlet("reader", new EventReader());
+    addFlowlet("counter", new Counter());
+    addFlowlet("updater", new Updater());
+    connectStream("events", "reader");
+    connect("reader", "counter");
+    connect("reader", "updater");
   }
 
   private class EventReader extends AbstractFlowlet {

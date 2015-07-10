@@ -16,7 +16,6 @@ gulp.task('css:lib', ['fonts'], function() {
       './bower_components/angular-loading-bar/build/loading-bar.min.css',
       './bower_components/angular-motion/dist/angular-motion.min.css',
       './bower_components/font-awesome/css/font-awesome.min.css',
-      './bower_components/epoch/epoch.min.css',
       './bower_components/ng-sortable/dist/ng-sortable.min.css',
       './bower_components/c3/c3.min.css',
       './bower_components/angular-gridster/dist/angular-gridster.min.css'
@@ -110,9 +109,8 @@ gulp.task('js:lib', function() {
 
       './bower_components/d3/d3.min.js',
       './bower_components/d3-tip/index.js',
-      './bower_components/epoch/epoch.min.js',
 
-      './bower_components/lodash/dist/lodash.js',
+      './bower_components/lodash/lodash.js',
       './bower_components/graphlib/dist/graphlib.core.js',
       './bower_components/dagre/dist/dagre.core.js',
       './bower_components/dagre-d3/dist/dagre-d3.core.js',

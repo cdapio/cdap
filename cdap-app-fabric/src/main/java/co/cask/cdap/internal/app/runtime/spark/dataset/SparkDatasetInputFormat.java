@@ -22,21 +22,22 @@ import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputSplit;
-import co.cask.cdap.internal.app.runtime.spark.BasicSparkContext;
-import co.cask.cdap.internal.app.runtime.spark.SparkContextConfig;
+import co.cask.cdap.internal.app.runtime.spark.ExecutionSparkContext;
 import co.cask.cdap.internal.app.runtime.spark.SparkContextProvider;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * An {@link InputFormat} for {@link Spark} jobs that reads from {@link Dataset}.
@@ -46,41 +47,50 @@ import java.util.List;
  *                TODO: Refactor this and MapReduce DatasetInputFormat
  */
 public final class SparkDatasetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE> {
-  private static final Logger LOG = LoggerFactory.getLogger(SparkDatasetInputFormat.class);
-  public static final String HCONF_ATTR_INPUT_DATASET = "input.dataset.name";
+
+  private static final Gson GSON = new Gson();
+  private static final Type ARGS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+
+  // Set of job configuration keys for setting configurations into job conf.
+  private static final String INPUT_DATASET_NAME = "input.spark.dataset.name";
+  private static final String INPUT_DATASET_ARGS = "input.spark.dataset.args";
+
+  /**
+   * Sets the configurations for the dataset name and configurations for the input format.
+   */
+  public static void setDataset(Configuration configuration, String dataset, Map<String, String> arguments) {
+    configuration.set(INPUT_DATASET_NAME, dataset);
+    configuration.set(INPUT_DATASET_ARGS, GSON.toJson(arguments, ARGS_TYPE));
+  }
 
   @Override
   public List<InputSplit> getSplits(final JobContext context) throws IOException, InterruptedException {
-    SparkContextConfig sparkContextConfig = new SparkContextConfig(context.getConfiguration());
-    List<Split> splits = sparkContextConfig.getInputSelection();
-    List<InputSplit> list = new ArrayList<>();
+    ExecutionSparkContext sparkContext = SparkContextProvider.getSparkContext();
+
+    Configuration configuration = context.getConfiguration();
+    Map<String, String> arguments = GSON.fromJson(configuration.get(INPUT_DATASET_ARGS), ARGS_TYPE);
+    BatchReadable<?, ?> batchReadable = sparkContext.getBatchReadable(configuration.get(INPUT_DATASET_NAME), arguments);
+
+    List<Split> splits = batchReadable.getSplits();
+    List<InputSplit> list = new ArrayList<>(splits.size());
     for (Split split : splits) {
       list.add(new DataSetInputSplit(split));
     }
     return list;
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public RecordReader<KEY, VALUE> createRecordReader(final InputSplit split,
-                                                     final TaskAttemptContext context)
-    throws IOException, InterruptedException {
-
+  public RecordReader<KEY, VALUE> createRecordReader(InputSplit split,
+                                                     TaskAttemptContext context) throws IOException {
     DataSetInputSplit inputSplit = (DataSetInputSplit) split;
+    BatchReadable<KEY, VALUE> batchReadable = getBatchReadable(context.getConfiguration());
+    SplitReader<KEY, VALUE> splitReader = batchReadable.createSplitReader(inputSplit.getSplit());
 
-    Configuration conf = context.getConfiguration();
-    SparkContextProvider contextProvider = new SparkContextProvider(context.getConfiguration());
-    BasicSparkContext sparkContext = contextProvider.get();
-    //TODO: Metrics should be started here when implemented
-    String dataSetName = getInputName(conf);
-    BatchReadable<KEY, VALUE> inputDataset = (BatchReadable<KEY, VALUE>) sparkContext.getDataset(dataSetName);
-    SplitReader<KEY, VALUE> splitReader = inputDataset.createSplitReader(inputSplit.getSplit());
-
-    // the record reader now owns the context and will close it
-    return new DatasetRecordReader<>(splitReader, sparkContext, dataSetName);
+    return new DatasetRecordReader<>(splitReader);
   }
 
-  private String getInputName(Configuration conf) {
-    return conf.get(HCONF_ATTR_INPUT_DATASET);
+  private BatchReadable<KEY, VALUE> getBatchReadable(Configuration configuration) {
+    Map<String, String> args = GSON.fromJson(configuration.get(INPUT_DATASET_ARGS), ARGS_TYPE);
+    return SparkContextProvider.getSparkContext().getBatchReadable(configuration.get(INPUT_DATASET_NAME), args);
   }
 }

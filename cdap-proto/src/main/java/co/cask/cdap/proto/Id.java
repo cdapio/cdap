@@ -629,6 +629,28 @@ public abstract class Id {
     public static Service from(Application application, String id) {
       return new Service(application, id);
     }
+
+    public static Service from(Namespace namespace, String application, String id) {
+      return new Service(Id.Application.from(namespace, application), id);
+    }
+  }
+
+  /**
+   * Uniquely identifies a Workflow.
+   */
+  public static class Workflow extends Program {
+
+    private Workflow(Application application, String id) {
+      super(application, ProgramType.WORKFLOW, id);
+    }
+
+    public static Workflow from(Application application, String id) {
+      return new Workflow(application, id);
+    }
+
+    public static Workflow from(Namespace namespace, String application, String id) {
+      return new Workflow(Id.Application.from(namespace, application), id);
+    }
   }
 
   /**
@@ -649,6 +671,10 @@ public abstract class Id {
     }
 
     public static Flow from(String namespaceId, String appId, String flowId) {
+      return new Flow(Id.Application.from(namespaceId, appId), flowId);
+    }
+
+    public static Flow from(Id.Namespace namespaceId, String appId, String flowId) {
       return new Flow(Id.Application.from(namespaceId, appId), flowId);
     }
 
@@ -758,6 +784,10 @@ public abstract class Id {
     @Override
     public Namespace getNamespace() {
       return application.getNamespace();
+    }
+
+    public Application getApplication() {
+      return application;
     }
 
     @Override
@@ -1030,14 +1060,6 @@ public abstract class Id {
       return this.namespace.equals(that.namespace) &&
         this.streamName.equals(that.streamName);
     }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-        .add("namespace", namespace)
-        .add("streamName", streamName)
-        .toString();
-    }
   }
 
   /**
@@ -1236,14 +1258,6 @@ public abstract class Id {
     @Override
     public int hashCode() {
       return Objects.hashCode(namespace, instanceId);
-    }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-        .add("namespace", namespace)
-        .add("instance", instanceId)
-        .toString();
     }
 
     public static DatasetInstance from(Namespace id, String instanceId) {
