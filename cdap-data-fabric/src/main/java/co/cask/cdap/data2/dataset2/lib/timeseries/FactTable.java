@@ -373,6 +373,10 @@ public final class FactTable implements Closeable {
     entityTable.close();
   }
 
+  public static byte[][] getSplits(int aggGroupsCount) {
+    return FactCodec.getSplits(aggGroupsCount);
+  }
+
   @Nullable
   private FuzzyRowFilter createFuzzyRowFilter(FactScan scan, byte[] startRow) {
     // we need to always use a fuzzy row filter as it is the only one to do the matching of values

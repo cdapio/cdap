@@ -24,6 +24,7 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
 import co.cask.cdap.data2.dataset2.lib.timeseries.EntityTable;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -34,6 +35,7 @@ import co.cask.cdap.proto.Id;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
@@ -48,6 +50,7 @@ import java.util.concurrent.TimeUnit;
 public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultMetricDatasetFactory.class);
+  private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
   private final Supplier<EntityTable> entityTable;
@@ -75,7 +78,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
   // todo: figure out roll time based on resolution from config? See DefaultMetricsTableFactory for example
   @Override
-  public FactTable get(int resolution) {
+  public FactTable getOrCreateFactTable(int resolution) {
     String tableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
                                  Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
     int ttl =  cConf.getInt(Constants.Metrics.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
@@ -87,6 +90,9 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     }
     // for efficient counters
     props.add(Table.PROPERTY_READLESS_INCREMENT, "true");
+    // configuring pre-splits
+    props.add(HBaseTableAdmin.PROPERTY_SPLITS,
+              GSON.toJson(FactTable.getSplits(DefaultMetricStore.AGGREGATIONS.size())));
 
     MetricsTable table = getOrCreateMetricsTable(tableName, props.build());
     LOG.info("FactTable created: {}", tableName);
@@ -144,10 +150,10 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   public static void setupDatasets(DefaultMetricDatasetFactory factory)
     throws IOException, DatasetManagementException {
     // adding all fact tables
-    factory.get(1);
-    factory.get(60);
-    factory.get(3600);
-    factory.get(Integer.MAX_VALUE);
+    factory.getOrCreateFactTable(1);
+    factory.getOrCreateFactTable(60);
+    factory.getOrCreateFactTable(3600);
+    factory.getOrCreateFactTable(Integer.MAX_VALUE);
 
     // adding kafka consumer meta
     factory.createKafkaConsumerMeta();
