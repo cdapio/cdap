@@ -16,12 +16,13 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.proto.ProgramType;
+import com.google.common.base.Objects;
 import org.apache.twill.api.EventHandler;
-import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 
 import java.io.File;
@@ -32,12 +33,12 @@ import java.util.Map;
  */
 public class SparkTwillApplication extends AbstractProgramTwillApplication {
 
-  private final String name;
+  private final SparkSpecification spec;
 
   public SparkTwillApplication(Program program, SparkSpecification spec,
                                Map<String, File> localizeFiles, EventHandler eventHandler) {
     super(program, localizeFiles, eventHandler);
-    this.name = spec.getName();
+    this.spec = spec;
   }
 
   @Override
@@ -47,16 +48,9 @@ public class SparkTwillApplication extends AbstractProgramTwillApplication {
 
   @Override
   protected void addRunnables(Map<String, RunnableResource> runnables) {
-    // TODO (CDAP-2936): Make it configurable
-    ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
-      .setVirtualCores(1)
-      .setMemory(512, ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(1)
-      .build();
-
-    runnables.put(name, new RunnableResource(
-      new SparkTwillRunnable(name, "hConf.xml", "cConf.xml"),
-      resourceSpec
+    runnables.put(spec.getName(), new RunnableResource(
+      new SparkTwillRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
+      createResourceSpec(Objects.firstNonNull(spec.getDriverResources(), new Resources()), 1)
     ));
   }
 }

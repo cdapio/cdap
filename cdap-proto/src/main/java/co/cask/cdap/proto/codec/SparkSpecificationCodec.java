@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto.codec;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.spark.SparkSpecification;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
@@ -26,6 +27,7 @@ import com.google.gson.JsonSerializationContext;
 
 import java.lang.reflect.Type;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -42,6 +44,13 @@ public final class SparkSpecificationCodec extends AbstractSpecificationCodec<Sp
     jsonObj.add("mainClassName", new JsonPrimitive(src.getMainClassName()));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
 
+    if (src.getDriverResources() != null) {
+      jsonObj.add("driverResources", context.serialize(src.getDriverResources()));
+    }
+    if (src.getExecutorResources() != null) {
+      jsonObj.add("executorResources", context.serialize(src.getExecutorResources()));
+    }
+
     return jsonObj;
   }
 
@@ -56,6 +65,21 @@ public final class SparkSpecificationCodec extends AbstractSpecificationCodec<Sp
     String mainClassName = jsonObj.get("mainClassName").getAsString();
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
 
-    return new SparkSpecification(className, name, description, mainClassName, properties);
+    Resources driverResources = deserializeResources(jsonObj, "driver", context);
+    Resources executorResources = deserializeResources(jsonObj, "executor", context);
+
+    return new SparkSpecification(className, name, description, mainClassName,
+                                  properties, driverResources, executorResources);
+  }
+
+  /**
+   * Deserialize {@link Resources} object from a json property named with {@code <prefix>Resources}.
+   * A {@code null} value will be returned if no such property exist.
+   */
+  @Nullable
+  private Resources deserializeResources(JsonObject jsonObj, String prefix, JsonDeserializationContext context) {
+    String name = prefix + "Resources";
+    JsonElement element = jsonObj.get(name);
+    return element == null ? null : (Resources) context.deserialize(element, Resources.class);
   }
 }
