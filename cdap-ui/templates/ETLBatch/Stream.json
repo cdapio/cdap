@@ -16,13 +16,6 @@
              "label": "Process Time Window"
           },
 
-          "schema" : {
-             "widget": "schema",
-             "label" : "Schema",
-             "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
-             "schema-default-type" : "string"
-          },
-
           "delay" : {
              "widget": "textbox",
              "label": "Process Delay"

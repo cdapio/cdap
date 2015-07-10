@@ -13,5 +13,11 @@
           }
        }
     }
+  },
+  "implicit" : {
+    "schema": {
+      "key": "bytes",
+      "value": "bytes"
+    }
   }
 }

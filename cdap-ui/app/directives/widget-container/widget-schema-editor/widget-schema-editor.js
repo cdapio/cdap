@@ -9,7 +9,7 @@ angular.module(PKG.name + '.commons')
       },
       templateUrl: 'widget-container/widget-schema-editor/widget-schema-editor.html',
       controller: function($scope, myHelpers) {
-        var defaultOptions = [ "boolean", "int", "long", "float", "double", "bytes", "string" ];
+        var defaultOptions = [ 'boolean', 'int', 'long', 'float', 'double', 'bytes', 'string' ];
         var defaultType = null;
         if ($scope.config) {
           $scope.options = $scope.config['schema-types'];
@@ -23,7 +23,6 @@ angular.module(PKG.name + '.commons')
         // Format model
         function initialize() {
           var schema = {};
-          console.log('model', $scope.model);
           if ($scope.model) {
             try {
               schema = JSON.parse($scope.model);
@@ -67,6 +66,10 @@ angular.module(PKG.name + '.commons')
         } // End of initialize
 
         initialize();
+
+        $scope.$watch('disabled', function () {
+          initialize();
+        });
 
 
         function formatSchema() {
