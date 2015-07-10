@@ -3,6 +3,7 @@
     <div ng-repeat="plugin in MyPlumbController.plugins"
           ng-click="MyPlumbController.onPluginClick(plugin.id, plugin.type)"
           class="box {{plugin.type}}"
+          data-type="{{plugin.type}}"
           id="{{plugin.id}}">
       <div class="icon fa {{plugin.icon}}"></div>
       <div class="plugin-name">{{plugin.name}}</div>

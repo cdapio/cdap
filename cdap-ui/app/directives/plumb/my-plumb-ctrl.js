@@ -96,7 +96,7 @@ angular.module(PKG.name + '.commons')
 
       // Need to move this to the controller that is using this directive.
       this.instance.bind("connection", function (connInfo, originalEvent) {
-        MyPlumbService.updateConnection(this.instance.getConnections());
+        MyPlumbService.updateConnection(connInfo);
       }.bind(this));
 
     }.bind(this));
