@@ -59,7 +59,7 @@ public interface WorkflowToken {
   void put(String key, Value value);
 
   /**
-   * Get the most recent value for the specified key.
+   * Get the most recent value added for the specified key for a {@link Scope#USER} scope.
    * @param key the key to be searched
    * @return the {@link Value} for the key
    */
@@ -76,7 +76,7 @@ public interface WorkflowToken {
   Value get(String key, Scope scope);
 
   /**
-   * Get the value set for the specified key by the specified node.
+   * Get the value set for the specified key by the specified node for a {@link Scope#USER} scope.
    * @param key the key to be searched
    * @param nodeName the name of the node
    * @return the {@link Value} set for the key by nodeName
@@ -95,10 +95,10 @@ public interface WorkflowToken {
   Value get(String key, String nodeName, Scope scope);
 
   /**
-   * Same key can be added to the WorkflowToken by multiple nodes.
+   * Same key can be added to the {@link WorkflowToken} by multiple nodes.
    * This method returns the {@link List} of {@link NodeValueEntry}, where
-   * each entry represents the unique node name and the value that it set
-   * for the specified key.
+   * each entry represents the unique node name and the {@link Value} that it set
+   * for the specified key for a {@link Scope#USER} scope.
    * <p>
    * The list maintains the order in which the values were
    * inserted in the WorkflowToken for a specific key except in the case of fork
@@ -116,8 +116,8 @@ public interface WorkflowToken {
   /**
    * Same key can be added to the WorkflowToken by multiple nodes.
    * This method returns the {@link List} of {@link NodeValueEntry}, where
-   * each entry represents the unique node name and the value that it set
-   * for the specified key.
+   * each entry represents the unique node name and the {@link Value} that it set
+   * for the specified key for a given scope.
    * <p>
    * The list maintains the order in which the values were
    * inserted in the WorkflowToken for a specific key except in the case of fork
@@ -134,16 +134,16 @@ public interface WorkflowToken {
   List<NodeValueEntry> getAll(String key, Scope scope);
 
   /**
-   * Get the {@link Map} of key-values that were added to the {@link WorkflowToken}
-   * by specific node.
+   * Get the {@link Map} of key to {@link Value}s that were added to the {@link WorkflowToken}
+   * by specific node for a {@link Scope#USER} scope.
    * @param nodeName the unique name of the node
    * @return the map of key to values that were added by the specified node
    */
   Map<String, Value> getAllFromNode(String nodeName);
 
   /**
-   * Get the {@link Map} of key-values that were added to the {@link WorkflowToken}
-   * by specific node.
+   * Get the {@link Map} of key to {@link Value}s that were added to the {@link WorkflowToken}
+   * by specific node for a given scope.
    * @param nodeName the unique name of the node
    * @param scope the {@link WorkflowToken.Scope} for the key
    * @return the map of key to values that were added by the specified node for a given scope
@@ -171,7 +171,8 @@ public interface WorkflowToken {
   Map<String, Map<String, Long>> getMapReduceCounters();
 
   /**
-   * Return true if the {@link WorkflowToken} contains the specified key.
+   * Return true if the {@link WorkflowToken} contains the specified key
+   * for a {@link Scope#USER} scope.
    * @param key the key to be tested for the presence in the {@link WorkflowToken}
    * @return the result of the test
    */
