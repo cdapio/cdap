@@ -65,7 +65,14 @@ angular.module(PKG.name + '.feature.adapters')
       }
     ];
 
-    this.onCanvasOperationsClicked = function(group) {};
+    this.onCanvasOperationsClicked = function(group) {
+      var config;
+      switch(group.name) {
+        case 'Export':
+          config = MyPlumbService.getConfig();
+          break;
+      }
+    };
 
     this.plugins= {
       items: []
