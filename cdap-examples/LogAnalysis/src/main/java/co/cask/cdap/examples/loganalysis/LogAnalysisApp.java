@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,6 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.Workflow;
-import co.cask.cdap.examples.loganalysis.ResponseCounterProgram;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -120,28 +119,21 @@ public class LogAnalysisApp extends AbstractApplication {
     @POST
     public void getHitCount(HttpServiceRequest request, HttpServiceResponder responder) {
       String urlRequest = Charsets.UTF_8.decode(request.getContent()).toString();
-      if (urlRequest == null) {
-        responder.sendString(HttpURLConnection.HTTP_BAD_REQUEST,
-                             String.format("Please provide an url or path to query for its hit count in JSON."),
-                             Charsets.UTF_8);
-        return;
-      }
-
       String url = GSON.fromJson(urlRequest, JsonObject.class).get(URL_KEY).getAsString();
       if (url == null) {
         responder.sendString(HttpURLConnection.HTTP_BAD_REQUEST,
-                             String.format("A url or path must be specified with \"url\" as key in JSON."),
+                             "A url or path must be specified with \"url\" as key in JSON.",
                              Charsets.UTF_8);
         return;
       }
 
       // Get the total number of hits from the dataset for this path
-      Integer hitCount = Bytes.toInt(hitCountStore.read(url.getBytes(Charsets.UTF_8)));
+      byte[] hitCount = hitCountStore.read(url.getBytes(Charsets.UTF_8));
       if (hitCount == null) {
         responder.sendString(HttpURLConnection.HTTP_NO_CONTENT,
                              String.format("No record found of %s", url), Charsets.UTF_8);
       } else {
-        responder.sendString(HttpURLConnection.HTTP_OK, hitCount.toString(), Charsets.UTF_8);
+        responder.sendString(HttpURLConnection.HTTP_OK, String.valueOf(Bytes.toInt(hitCount)), Charsets.UTF_8);
       }
     }
   }
