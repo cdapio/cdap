@@ -16,25 +16,21 @@
 package co.cask.cdap.examples.countrandom;
 
 
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 
 /**
  * Count random Flow declaration {@code CountRandomFlow}.
  */
-public class CountRandomFlow implements Flow {
+public class CountRandomFlow extends AbstractFlow {
+
   @Override
-  public FlowSpecification configure() {
-    return FlowSpecification.Builder.with()
-      .setName("CountRandom")
-      .setDescription("CountRandom Flow")
-      .withFlowlets()
-        .add("source", new RandomSource())
-        .add("splitter", new NumberSplitter())
-        .add("counter", new NumberCounter())
-      .connect()
-        .from("source").to("splitter")
-        .from("splitter").to("counter")
-      .build();
+  protected void configureFlow() {
+    setName("CountRandom");
+    setDescription("CountRandom Flow");
+    addFlowlet("source", new RandomSource());
+    addFlowlet("splitter", new NumberSplitter());
+    addFlowlet("counter", new NumberCounter());
+    connect("source", "splitter");
+    connect("splitter", "counter");
   }
 }
