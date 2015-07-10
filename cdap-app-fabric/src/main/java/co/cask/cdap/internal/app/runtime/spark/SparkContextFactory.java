@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.tephra.Transaction;
@@ -52,11 +54,19 @@ final class SparkContextFactory {
    * @param transaction the transaction for the spark execution.
    */
   ExecutionSparkContext createExecutionContext(Transaction transaction) {
-    return new ExecutionSparkContext(clientContext.getSpecification(), clientContext.getProgramId(),
+    SparkSpecification spec = updateSpecExecutorResources(clientContext.getSpecification(),
+                                                          clientContext.getExecutorResources());
+    return new ExecutionSparkContext(spec, clientContext.getProgramId(),
                                      clientContext.getRunId(), clientContext.getProgramClassLoader(),
                                      clientContext.getLogicalStartTime(), clientContext.getRuntimeArguments(),
                                      transaction, datasetFramework, clientContext.getDiscoveryServiceClient(),
                                      clientContext.getMetricsContext(), clientContext.getLoggingContext(),
                                      hConf, streamAdmin);
+  }
+
+  private SparkSpecification updateSpecExecutorResources(SparkSpecification originalSpec, Resources executorResources) {
+    return new SparkSpecification(originalSpec.getClassName(), originalSpec.getName(), originalSpec.getDescription(),
+                                  originalSpec.getMainClassName(), originalSpec.getProperties(),
+                                  originalSpec.getDriverResources(), executorResources);
   }
 }

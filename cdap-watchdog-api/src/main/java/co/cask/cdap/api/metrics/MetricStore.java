@@ -24,6 +24,12 @@ import java.util.Collection;
 // todo: methods should throw IOException instead of Exception
 public interface MetricStore {
   /**
+   * Sets {@link MetricsContext} to be used for emitting metrics by this {@link MetricStore}.
+   * @param metricsContext metrics context to use
+   */
+  void setMetricsContext(MetricsContext metricsContext);
+
+  /**
    * Adds {@link MetricValues} to the store.
    * @param metricValues metric values to add.
    * @throws Exception

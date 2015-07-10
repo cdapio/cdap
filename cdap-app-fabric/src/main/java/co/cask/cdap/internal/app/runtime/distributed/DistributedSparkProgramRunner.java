@@ -27,6 +27,7 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.spark.SparkContextConfig;
+import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -70,9 +71,13 @@ public class DistributedSparkProgramRunner extends AbstractDistributedProgramRun
     SparkSpecification spec = appSpec.getSpark().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing SparkSpecification for %s", program.getId());
 
+    // Localize the spark-assembly jar
+    File sparkAssemblyJar = SparkUtils.locateSparkAssemblyJar();
+    localizeFiles.put(sparkAssemblyJar.getName(), sparkAssemblyJar);
+
     LOG.info("Launching Spark program: {}", program.getId());
-    TwillController controller = launcher.launch(new SparkTwillApplication(program, spec,
-                                                                           localizeFiles, eventHandler));
+    TwillController controller = launcher.launch(new SparkTwillApplication(program, spec, localizeFiles, eventHandler),
+                                                 sparkAssemblyJar.getName());
 
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     return new SparkTwillProgramController(program.getName(), controller, runId).startListen();

@@ -25,6 +25,7 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ApplicationClient;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
@@ -48,7 +49,8 @@ public class DescribeAppCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    final String appId = arguments.get(ArgumentName.APP.toString());
+    Id.Application appId = Id.Application.from(cliConfig.getCurrentNamespace(),
+                                               arguments.get(ArgumentName.APP.toString()));
     List<ProgramRecord> programsList = applicationClient.listPrograms(appId);
 
     Table table = Table.builder()

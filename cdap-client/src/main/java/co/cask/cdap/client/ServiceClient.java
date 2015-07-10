@@ -16,6 +16,7 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
@@ -39,6 +40,7 @@ import javax.inject.Inject;
 /**
  * Provides ways to interact with CDAP User Services.
  */
+@Beta
 public class ServiceClient {
 
   private final RESTClient restClient;
@@ -55,6 +57,7 @@ public class ServiceClient {
     this.restClient = new RESTClient(config);
   }
 
+
   /**
    * Gets a {@link ServiceSpecification} for a {@link Service}.
    *
@@ -64,21 +67,14 @@ public class ServiceClient {
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the app or service could not be found
+   *
+   * @deprecated As of 3.1, use {@link #get(Id.Service)}.
    */
+  @Deprecated
   public ServiceSpecification get(String appId, String serviceId)
     throws IOException, UnauthorizedException, NotFoundException {
 
-    Id.Application app = Id.Application.from(config.getNamespace(), appId);
-    Id.Service service = Id.Service.from(app, serviceId);
-
-    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/services/%s", appId, serviceId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
-
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(service);
-    }
-    return ObjectResponse.fromJsonBody(response, ServiceSpecification.class).getResponseObject();
+    return get(Id.Service.from(config.getNamespace(), appId, serviceId));
   }
 
   /**
@@ -89,11 +85,63 @@ public class ServiceClient {
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the app or service could not be found
+   *
+   * @deprecated As of 3.1, use {@link #getEndpoints(Id.Service)}.
    */
+  @Deprecated
   public List<ServiceHttpEndpoint> getEndpoints(String appId, String serviceId)
     throws IOException, UnauthorizedException, NotFoundException {
 
-    ServiceSpecification specification = get(appId, serviceId);
+    return getEndpoints(Id.Service.from(config.getNamespace(), appId, serviceId));
+  }
+
+  /**
+   * @deprecated As of 3.1, use {@link #getServiceURL(Id.Service)}.
+   */
+  @Deprecated
+  public URL getServiceURL(String appId, String serviceId)
+    throws NotFoundException, IOException, UnauthorizedException {
+
+    return getServiceURL(Id.Service.from(config.getNamespace(), appId, serviceId));
+  }
+
+  /**
+   * Gets a {@link ServiceSpecification} for a {@link Service}.
+   *
+   * @param service ID of the service
+   * @return {@link ServiceSpecification} representing the service
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws NotFoundException if the app or service could not be found
+   */
+  public ServiceSpecification get(Id.Service service)
+    throws IOException, UnauthorizedException, NotFoundException {
+
+    URL url = config.resolveNamespacedURLV3(service.getNamespace(),
+                                            String.format("apps/%s/services/%s",
+                                                          service.getApplicationId(), service.getId()));
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new NotFoundException(service);
+    }
+    return ObjectResponse.fromJsonBody(response, ServiceSpecification.class).getResponseObject();
+  }
+
+  /**
+   * Gets a list of {@link ServiceHttpEndpoint} that a {@link Service} exposes.
+   *
+   * @param service ID of the service
+   * @return A list of {@link ServiceHttpEndpoint}
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws NotFoundException if the app or service could not be found
+   */
+  public List<ServiceHttpEndpoint> getEndpoints(Id.Service service)
+    throws IOException, UnauthorizedException, NotFoundException {
+
+    ServiceSpecification specification = get(service);
     ImmutableList.Builder<ServiceHttpEndpoint> builder = new ImmutableList.Builder<>();
     for (HttpServiceHandlerSpecification handlerSpecification : specification.getHandlers().values()) {
       builder.addAll(handlerSpecification.getEndpoints());
@@ -101,10 +149,12 @@ public class ServiceClient {
     return builder.build();
   }
 
-  public URL getServiceURL(String appId, String serviceId)
+  public URL getServiceURL(Id.Service service)
     throws NotFoundException, IOException, UnauthorizedException {
     // Make sure the service actually exists
-    get(appId, serviceId);
-    return config.resolveNamespacedURLV3(String.format("apps/%s/services/%s/methods/", appId, serviceId));
+    get(service);
+    return config.resolveNamespacedURLV3(service.getNamespace(),
+                                         String.format("apps/%s/services/%s/methods/",
+                                                       service.getApplicationId(), service.getId()));
   }
 }

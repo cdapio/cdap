@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.lib.cube.MeasureType;
 import co.cask.cdap.api.dataset.lib.cube.Measurement;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
@@ -78,6 +79,12 @@ public final class FactTable implements Closeable {
   // todo: should not be used outside of codec
   private final int rollTime;
 
+  private final String putCountMetric;
+  private final String incrementCountMetric;
+
+  @Nullable
+  private MetricsCollector metrics;
+
   /**
    * Creates an instance of {@link FactTable}.
    *
@@ -99,6 +106,12 @@ public final class FactTable implements Closeable {
     this.codec = new FactCodec(entityTable, resolution, rollTime);
     this.resolution = resolution;
     this.rollTime = rollTime;
+    this.putCountMetric = "factTable." + resolution + ".put.count";
+    this.incrementCountMetric = "factTable." + resolution + ".increment.count";
+  }
+
+  public void setMetricsCollector(MetricsCollector metrics) {
+    this.metrics = metrics;
   }
 
   public void add(List<Fact> facts) {
@@ -127,6 +140,10 @@ public final class FactTable implements Closeable {
     // todo: replace with single call, to be able to optimize rpcs in underlying table
     timeSeriesTable.put(convertedGaugesTable);
     timeSeriesTable.increment(convertedIncrementsTable);
+    if (metrics != null) {
+      metrics.increment(putCountMetric, convertedGaugesTable.size());
+      metrics.increment(incrementCountMetric, convertedIncrementsTable.size());
+    }
   }
 
   public FactScanner scan(FactScan scan) {

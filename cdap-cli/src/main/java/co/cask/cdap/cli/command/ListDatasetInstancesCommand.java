@@ -45,7 +45,7 @@ public class ListDatasetInstancesCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    List<DatasetSpecificationSummary> datasetMetas = datasetClient.list();
+    List<DatasetSpecificationSummary> datasetMetas = datasetClient.list(cliConfig.getCurrentNamespace());
 
     Table table = Table.builder()
       .setHeader("name", "type")

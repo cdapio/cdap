@@ -17,11 +17,13 @@
 package co.cask.cdap.cli.completer.element;
 
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ProgramIdArgument;
 import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.completers.PrefixCompleter;
 import com.google.common.collect.Lists;
 
@@ -42,9 +44,12 @@ public class HttpEndpointPrefixCompleter extends PrefixCompleter {
 
   private final ServiceClient serviceClient;
   private final EndpointCompleter completer;
+  private final CLIConfig cliConfig;
 
-  public HttpEndpointPrefixCompleter(final ServiceClient serviceClient, String prefix, EndpointCompleter completer) {
+  public HttpEndpointPrefixCompleter(final ServiceClient serviceClient, CLIConfig cliConfig,
+                                     String prefix, EndpointCompleter completer) {
     super(prefix, completer);
+    this.cliConfig = cliConfig;
     this.serviceClient = serviceClient;
     this.completer = completer;
   }
@@ -54,25 +59,24 @@ public class HttpEndpointPrefixCompleter extends PrefixCompleter {
     Map<String, String> arguments = ArgumentParser.getArguments(buffer, PATTERN);
     ProgramIdArgument programIdArgument = ArgumentParser.parseProgramId(arguments.get(PROGRAM_ID));
     if (programIdArgument != null) {
-      completer.setEndpoints(getEndpoints(programIdArgument.getAppId(), programIdArgument.getProgramId(),
-                                          arguments.get(METHOD)));
+      Id.Service service = Id.Service.from(cliConfig.getCurrentNamespace(),
+                                           programIdArgument.getAppId(), programIdArgument.getProgramId());
+      completer.setEndpoints(getEndpoints(service, arguments.get(METHOD)));
     } else {
       completer.setEndpoints(Collections.<String>emptyList());
     }
     return super.complete(buffer, cursor, candidates);
   }
 
-  public Collection<String> getEndpoints(String appId, String serviceId, String method) {
+  public Collection<String> getEndpoints(Id.Service serviceId, String method) {
     Collection<String> httpEndpoints = Lists.newArrayList();
     try {
-      for (ServiceHttpEndpoint endpoint : serviceClient.getEndpoints(appId, serviceId)) {
+      for (ServiceHttpEndpoint endpoint : serviceClient.getEndpoints(serviceId)) {
         if (endpoint.getMethod().equals(method)) {
           httpEndpoints.add(endpoint.getPath());
         }
       }
-    } catch (IOException ignored) {
-    } catch (UnauthorizedException ignored) {
-    } catch (NotFoundException ignored) {
+    } catch (IOException | NotFoundException | UnauthorizedException ignored) {
     }
     return httpEndpoints;
   }

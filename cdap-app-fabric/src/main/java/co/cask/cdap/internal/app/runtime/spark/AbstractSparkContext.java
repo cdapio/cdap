@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
@@ -36,6 +37,7 @@ import co.cask.cdap.logging.context.SparkLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -63,6 +65,8 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   private final MetricsContext metricsContext;
   private final LoggingContext loggingContext;
 
+  private Resources executorResources;
+
   protected AbstractSparkContext(SparkSpecification specification, Id.Program programId, RunId runId,
                                  ClassLoader programClassLoader, long logicalStartTime,
                                  Map<String, String> runtimeArguments, DiscoveryServiceClient discoveryServiceClient,
@@ -76,6 +80,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
     this.discoveryServiceClient = discoveryServiceClient;
     this.metricsContext = metricsContext;
     this.loggingContext = loggingContext;
+    this.executorResources = Objects.firstNonNull(specification.getExecutorResources(), new Resources());
   }
 
   @Override
@@ -116,6 +121,12 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   @Override
   public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
     return getDataset(name, RuntimeArguments.extractScope(Scope.DATASET, name, getRuntimeArguments()));
+  }
+
+  @Override
+  public void setExecutorResources(Resources resources) {
+    Preconditions.checkArgument(resources != null, "Resources must not be null");
+    this.executorResources = resources;
   }
 
   @Override
@@ -166,6 +177,13 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
    */
   public LoggingContext getLoggingContext() {
     return loggingContext;
+  }
+
+  /**
+   * Returns the {@link Resources} requirement for the executor.
+   */
+  public Resources getExecutorResources() {
+    return executorResources;
   }
 
   /**

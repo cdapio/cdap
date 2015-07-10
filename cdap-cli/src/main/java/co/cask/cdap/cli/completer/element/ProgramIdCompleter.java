@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli.completer.element;
 
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.completer.StringsCompleter;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.common.UnauthorizedException;
@@ -33,12 +34,14 @@ import java.util.List;
  */
 public class ProgramIdCompleter extends StringsCompleter {
 
-  public ProgramIdCompleter(final ApplicationClient appClient, final ProgramType programType) {
+  public ProgramIdCompleter(final ApplicationClient appClient,
+                            final CLIConfig cliConfig,
+                            final ProgramType programType) {
     super(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
         try {
-          List<ProgramRecord> programs = appClient.listAllPrograms(programType);
+          List<ProgramRecord> programs = appClient.listAllPrograms(cliConfig.getCurrentNamespace(), programType);
           List<String> programIds = Lists.newArrayList();
           for (ProgramRecord programRecord : programs) {
             programIds.add(programRecord.getApp() + "." + programRecord.getName());

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
@@ -51,6 +52,7 @@ import javax.inject.Inject;
 /**
  * Provides ways to interact with CDAP Metrics.
  */
+@Beta
 public class MetricsClient {
 
   private final RESTClient restClient;

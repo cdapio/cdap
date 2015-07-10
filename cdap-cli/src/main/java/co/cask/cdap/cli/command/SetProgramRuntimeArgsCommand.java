@@ -24,6 +24,7 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.gson.Gson;
 
@@ -50,10 +51,12 @@ public class SetProgramRuntimeArgsCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
     String appId = programIdParts[0];
-    String programId = programIdParts[1];
+    String programName = programIdParts[1];
+    Id.Program programId = Id.Program.from(cliConfig.getCurrentNamespace(), appId,
+                                           elementType.getProgramType(), programName);
     String runtimeArgsString = arguments.get(ArgumentName.RUNTIME_ARGS.toString());
     Map<String, String> runtimeArgs = ArgumentParser.parseMap(runtimeArgsString);
-    programClient.setRuntimeArgs(appId, elementType.getProgramType(), programId, runtimeArgs);
+    programClient.setRuntimeArgs(programId, runtimeArgs);
     output.printf("Successfully set runtime args of %s '%s' of application '%s' to '%s'\n",
                   elementType.getTitleName(), programId, appId, runtimeArgsString);
   }

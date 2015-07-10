@@ -47,7 +47,7 @@ public class ListStreamsCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     Table table = Table.builder()
       .setHeader("name")
-      .setRows(streamClient.list(), new RowMaker<StreamDetail>() {
+      .setRows(streamClient.list(cliConfig.getCurrentNamespace()), new RowMaker<StreamDetail>() {
         @Override
         public List<?> makeRow(StreamDetail object) {
           return Lists.newArrayList(object.getName());

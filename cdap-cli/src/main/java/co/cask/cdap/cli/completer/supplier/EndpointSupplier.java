@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli.completer.supplier;
 
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.completer.element.EndpointCompleter;
 import co.cask.cdap.cli.completer.element.HttpEndpointPrefixCompleter;
 import co.cask.cdap.cli.completer.element.HttpMethodPrefixCompleter;
@@ -33,10 +34,12 @@ public class EndpointSupplier implements CompleterSupplier {
   private static final String ENDPOINT_PREFIX = "call service <> <>";
 
   private final ServiceClient serviceClient;
+  private final CLIConfig cliConfig;
 
   @Inject
-  private EndpointSupplier(final ServiceClient serviceClient) {
+  private EndpointSupplier(final ServiceClient serviceClient, CLIConfig cliConfig) {
     this.serviceClient = serviceClient;
+    this.cliConfig = cliConfig;
   }
 
   @Override
@@ -44,9 +47,9 @@ public class EndpointSupplier implements CompleterSupplier {
     if (prefix != null && !prefix.isEmpty()) {
       String prefixMatch = prefix.replaceAll("<.+?>", "<>");
       if (METHOD_PREFIX.equals(prefixMatch)) {
-        return new HttpMethodPrefixCompleter(serviceClient, prefix, (EndpointCompleter) completer);
+        return new HttpMethodPrefixCompleter(serviceClient, cliConfig, prefix, (EndpointCompleter) completer);
       } else if (ENDPOINT_PREFIX.equals(prefixMatch)) {
-        return new HttpEndpointPrefixCompleter(serviceClient, prefix, (EndpointCompleter) completer);
+        return new HttpEndpointPrefixCompleter(serviceClient, cliConfig, prefix, (EndpointCompleter) completer);
       }
     }
     return null;

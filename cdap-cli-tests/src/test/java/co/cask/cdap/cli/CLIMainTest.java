@@ -27,16 +27,13 @@ import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeDataset;
 import co.cask.cdap.client.app.FakeFlow;
-import co.cask.cdap.client.app.FakeSpark;
 import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.app.PrefixedEchoHandler;
-import co.cask.cdap.client.config.AuthenticatedConnectionConfig;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.UnauthorizedException;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.DatasetTypeMeta;
@@ -58,7 +55,6 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -102,7 +98,6 @@ public class CLIMainTest {
 
   @BeforeClass
   public static void setUpClass() throws Exception {
-
     ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(STANDALONE.getBaseURI().toString());
     clientConfig = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
     clientConfig.setAllTimeouts(60000);
@@ -128,11 +123,6 @@ public class CLIMainTest {
     testCommandOutputContains(cli, "delete app " + FakeApp.NAME, "Successfully deleted app");
   }
 
-  @Before
-  public void setUp() {
-    clientConfig.setNamespace(Constants.DEFAULT_NAMESPACE_ID);
-  }
-
   @Test
   public void testConnect() throws Exception {
     testCommandOutputContains(cli, "connect fakehost", "could not be reached");
@@ -149,15 +139,16 @@ public class CLIMainTest {
 
   @Test
   public void testPrompt() throws Exception {
-    String prompt = cliMain.getPrompt(cliConfig.getClientConfig());
+    String prompt = cliMain.getPrompt(cliConfig.getConnectionConfig());
     Assert.assertFalse(prompt.contains("@"));
     Assert.assertTrue(prompt.contains(STANDALONE.getBaseURI().getHost()));
     Assert.assertTrue(prompt.contains(cliConfig.getCurrentNamespace().getId()));
 
-    ConnectionConfig oldConnectionConfig = clientConfig.getConnectionConfig();
-    ConnectionConfig authConnectionConfig = new AuthenticatedConnectionConfig(oldConnectionConfig, "test-username");
+    CLIConnectionConfig oldConnectionConfig = cliConfig.getConnectionConfig();
+    CLIConnectionConfig authConnectionConfig = new CLIConnectionConfig(
+      oldConnectionConfig, Id.Namespace.DEFAULT, "test-username");
     cliConfig.setConnectionConfig(authConnectionConfig);
-    prompt = cliMain.getPrompt(cliConfig.getClientConfig());
+    prompt = cliMain.getPrompt(cliConfig.getConnectionConfig());
     Assert.assertTrue(prompt.contains("test-username@"));
     Assert.assertTrue(prompt.contains(STANDALONE.getBaseURI().getHost()));
     Assert.assertTrue(prompt.contains(cliConfig.getCurrentNamespace().getId()));
@@ -167,11 +158,14 @@ public class CLIMainTest {
   @Test
   public void testProgram() throws Exception {
     String flowId = FakeApp.FLOWS.get(0);
+    Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, FakeApp.NAME);
+    Id.Flow flow = Id.Flow.from(app, flowId);
+
     String qualifiedFlowId = FakeApp.NAME + "." + flowId;
     testCommandOutputContains(cli, "start flow " + qualifiedFlowId, "Successfully started Flow");
-    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.FLOW, flowId, "RUNNING");
+    assertProgramStatus(programClient, flow, "RUNNING");
     testCommandOutputContains(cli, "stop flow " + qualifiedFlowId, "Successfully stopped Flow");
-    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.FLOW, flowId, "STOPPED");
+    assertProgramStatus(programClient, flow, "STOPPED");
     testCommandOutputContains(cli, "get flow status " + qualifiedFlowId, "STOPPED");
     testCommandOutputContains(cli, "get flow runs " + qualifiedFlowId, "KILLED");
     testCommandOutputContains(cli, "get flow live " + qualifiedFlowId, flowId);
@@ -180,6 +174,8 @@ public class CLIMainTest {
   @Test
   public void testStream() throws Exception {
     String streamId = PREFIX + "sdf123";
+    Id.Stream stream = Id.Stream.from(Id.Namespace.DEFAULT, streamId);
+
     testCommandOutputContains(cli, "create stream " + streamId, "Successfully created stream");
     testCommandOutputContains(cli, "list streams", streamId);
     testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
@@ -213,9 +209,9 @@ public class CLIMainTest {
                               "Successfully sent stream event to stream");
     testCommandOutputContains(cli, "get stream " + streamId, "9, Event 9");
     testCommandOutputContains(cli, "get stream-stats " + streamId,
-                              String.format("No schema found for Stream '%s'", streamId));
+                              String.format("No schema found for %s", stream));
     testCommandOutputContains(cli, "set stream format " + streamId + " csv 'body string'",
-                              String.format("Successfully set format of stream '%s'", streamId));
+                              String.format("Successfully set format of %s", stream));
     testCommandOutputContains(cli, "execute 'show tables'", String.format("stream_%s", streamId));
     testCommandOutputContains(cli, "get stream-stats " + streamId,
                               "Analyzed 10 Stream events in the time range [0, 9223372036854775807]");
@@ -238,8 +234,10 @@ public class CLIMainTest {
   @Test
   public void testDataset() throws Exception {
     String datasetName = PREFIX + "sdf123lkj";
+    Id.DatasetInstance dataset = Id.DatasetInstance.from(Id.Namespace.DEFAULT, datasetName);
+
     DatasetTypeClient datasetTypeClient = new DatasetTypeClient(cliConfig.getClientConfig());
-    DatasetTypeMeta datasetType = datasetTypeClient.list().get(0);
+    DatasetTypeMeta datasetType = datasetTypeClient.list(Id.Namespace.DEFAULT).get(0);
     testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName,
                               "Successfully created dataset");
     testCommandOutputContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
@@ -247,7 +245,7 @@ public class CLIMainTest {
     NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
     Id.Namespace barspace = Id.Namespace.from("bar");
     namespaceClient.create(new NamespaceMeta.Builder().setName(barspace).build());
-    cliConfig.getClientConfig().setNamespace(barspace);
+    cliConfig.setNamespace(barspace);
     // list of dataset instances is different in 'foo' namespace
     testCommandOutputNotContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
 
@@ -258,17 +256,18 @@ public class CLIMainTest {
 
     testCommandOutputContains(cli, "use namespace default", "Now using namespace 'default'");
     try {
-      testCommandOutputContains(cli, "truncate dataset instance " + datasetName, "Successfully truncated dataset");
+      testCommandOutputContains(cli, "truncate dataset instance " + datasetName, "Successfully truncated");
     } finally {
-      testCommandOutputContains(cli, "delete dataset instance " + datasetName, "Successfully deleted dataset");
+      testCommandOutputContains(cli, "delete dataset instance " + datasetName, "Successfully deleted");
     }
   }
 
   @Test
   public void testService() throws Exception {
+    Id.Service service = Id.Service.from(Id.Namespace.DEFAULT, FakeApp.NAME, PrefixedEchoHandler.NAME);
     String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
     testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started Service");
-    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, PrefixedEchoHandler.NAME, "RUNNING");
+    assertProgramStatus(programClient, service, "RUNNING");
     try {
       testCommandOutputContains(cli, "get endpoints service " + qualifiedServiceId, "POST");
       testCommandOutputContains(cli, "get endpoints service " + qualifiedServiceId, "/echo");
@@ -276,24 +275,25 @@ public class CLIMainTest {
         + " POST /echo body \"testBody\"", ":testBody");
     } finally {
       testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped Service");
-      assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, PrefixedEchoHandler.NAME, "STOPPED");
+      assertProgramStatus(programClient, service, "STOPPED");
     }
   }
 
   @Test
   public void testRuntimeArgs() throws Exception {
     String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
+    Id.Service service = Id.Service.from(Id.Namespace.DEFAULT, FakeApp.NAME, PrefixedEchoHandler.NAME);
 
     Map<String, String> runtimeArgs = ImmutableMap.of("sdf", "bacon");
     String runtimeArgsKV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs);
     testCommandOutputContains(cli, "start service " + qualifiedServiceId + " '" + runtimeArgsKV + "'",
                               "Successfully started Service");
     try {
-      assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, PrefixedEchoHandler.NAME, "RUNNING");
+      assertProgramStatus(programClient, service, "RUNNING");
       testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"",
                                 "bacon:testBody");
       testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped Service");
-      assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, PrefixedEchoHandler.NAME, "STOPPED");
+      assertProgramStatus(programClient, service, "STOPPED");
 
       Map<String, String> runtimeArgs2 = ImmutableMap.of("sdf", "chickenz");
       String runtimeArgs2Json = GSON.toJson(runtimeArgs2);
@@ -306,7 +306,7 @@ public class CLIMainTest {
                                 "chickenz:testBody");
     } finally {
       testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped Service");
-      assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, PrefixedEchoHandler.NAME, "STOPPED");
+      assertProgramStatus(programClient, service, "STOPPED");
     }
   }
 
@@ -314,10 +314,12 @@ public class CLIMainTest {
   public void testSpark() throws Exception {
     String sparkId = FakeApp.SPARK.get(0);
     String qualifiedSparkId = FakeApp.NAME + "." + sparkId;
+    Id.Program spark = Id.Program.from(Id.Namespace.DEFAULT, FakeApp.NAME, ProgramType.SPARK, sparkId);
+
     testCommandOutputContains(cli, "list spark", sparkId);
     testCommandOutputContains(cli, "start spark " + qualifiedSparkId, "Successfully started Spark");
-    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "RUNNING");
-    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "STOPPED");
+    assertProgramStatus(programClient, spark, "RUNNING");
+    assertProgramStatus(programClient, spark, "STOPPED");
     testCommandOutputContains(cli, "get spark status " + qualifiedSparkId, "STOPPED");
     testCommandOutputContains(cli, "get spark runs " + qualifiedSparkId, "COMPLETED");
     testCommandOutputContains(cli, "get spark logs " + qualifiedSparkId, "HelloFakeSpark");
@@ -487,14 +489,13 @@ public class CLIMainTest {
     outputValidator.apply(output);
   }
 
-  protected void assertProgramStatus(ProgramClient programClient, String appId, ProgramType programType,
-                                     String programId, String programStatus, int tries)
+  protected void assertProgramStatus(ProgramClient programClient, Id.Program programId, String programStatus, int tries)
     throws IOException, ProgramNotFoundException, UnauthorizedException {
 
     String status;
     int numTries = 0;
     do {
-      status = programClient.getStatus(appId, programType, programId);
+      status = programClient.getStatus(programId);
       numTries++;
       try {
         TimeUnit.SECONDS.sleep(1);
@@ -505,11 +506,10 @@ public class CLIMainTest {
     Assert.assertEquals(programStatus, status);
   }
 
-  protected void assertProgramStatus(ProgramClient programClient, String appId, ProgramType programType,
-                                     String programId, String programStatus)
+  protected void assertProgramStatus(ProgramClient programClient, Id.Program programId, String programStatus)
     throws IOException, ProgramNotFoundException, UnauthorizedException {
 
-    assertProgramStatus(programClient, appId, programType, programId, programStatus, 180);
+    assertProgramStatus(programClient, programId, programStatus, 180);
   }
 
   private static void testNamespacesOutput(CLI cli, String command, final List<NamespaceMeta> expected)

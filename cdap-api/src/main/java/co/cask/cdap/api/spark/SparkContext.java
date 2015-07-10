@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.spark;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.annotation.Beta;
@@ -146,4 +147,12 @@ public interface SparkContext extends RuntimeContext, DatasetContext {
    * @return {@link Serializable} {@link Metrics} for {@link Spark} programs
    */
   Metrics getMetrics();
+
+  /**
+   * Override the resources, such as memory and virtual cores, to use for each executor process for the Spark program.
+   * This method should be called in {@link Spark#beforeSubmit(SparkContext)} to take effect.
+   *
+   * @param resources Resources that each executor should use
+   */
+  void setExecutorResources(Resources resources);
 }
