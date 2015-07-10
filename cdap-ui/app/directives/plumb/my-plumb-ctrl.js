@@ -97,7 +97,10 @@ angular.module(PKG.name + '.commons')
 
       // Need to move this to the controller that is using this directive.
       this.instance.bind("connection", function (connInfo, originalEvent) {
-        MyPlumbService.addConnection(connInfo);
+        // Whenever there is a change in the connection just copy the entire array
+        // We never know if a connection was altered or removed. We don't want to 'Sync'
+        // between jsPlumb's internal connection array and ours (pointless)
+        MyPlumbService.setConnections(this.instance.getConnections());
       }.bind(this));
 
     }.bind(this));

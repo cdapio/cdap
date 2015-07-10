@@ -1,11 +1,11 @@
 <div class="my-js-plumb">
   <div id="plumb-container">
     <div ng-repeat="plugin in MyPlumbController.plugins"
-          ng-click="MyPlumbController.onPluginClick(plugin.id, plugin.type)"
           class="box {{plugin.type}}"
           data-type="{{plugin.type}}"
           id="{{plugin.id}}">
-      <div class="icon fa {{plugin.icon}}"></div>
+      <div ng-click="MyPlumbController.onPluginClick(plugin.id, plugin.type)"
+            class="icon fa {{plugin.icon}}"></div>
       <div class="plugin-name">{{plugin.name}}</div>
       <div class="fa fa-close" ng-click="MyPlumbController.removePlugin($index, plugin.id)"></div>
     </div>
