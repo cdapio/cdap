@@ -11,7 +11,7 @@
     1. When the user makes a connection in the UI this service gets notified of that connection.
     2. (In the future) if someone is interested then they can register for this event.
 
-  Editing Properties in canvas-ctrl: -- NOT DONE
+  Editing Properties in canvas-ctrl: -- DONE
     1. When the user wants to edit the properties of a plugin this service gets the notification
     2. The plugin ID will be sent. Now the service should fetch the list of properties for the plugin.
     3. Create a map of properties and add it to the plugin (identified by passed in plugin ID)
@@ -31,10 +31,21 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $filter) {
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $filter, $state) {
     this.callbacks = [];
     this.nodes = {};
     this.connections = [];
+    this.metadata = {
+      name: '',
+      description: '',
+      template: {
+        type: 'ETLBatch',
+        instance: '',
+        schedule: {
+          cron: ''
+        }
+      }
+    };
 
     this.registerCallBack = function (callback) {
       this.callbacks.push(callback);
@@ -116,7 +127,6 @@ angular.module(PKG.name + '.services')
               $scope.plugin = AdapterModel;
               $scope.type = type;
               $scope.isDisabled = false;
-
               var input;
               try {
                 input = JSON.parse(inputSchema);
@@ -160,8 +170,8 @@ angular.module(PKG.name + '.services')
                 return plugin;
               },
               type: function () {
-                return 'ETLBatch';
-              },
+                return this.metadata.template.type;
+              }.bind(this),
               inputSchema: function () {
                 return sourceSchema;
               }
@@ -170,8 +180,13 @@ angular.module(PKG.name + '.services')
         });
     };
 
+    // Used for UI alone. Has _backendProperties and ids to plugins for
+    // construction and validation of DAGs in UI.
     this.getConfig = function() {
       var config = {
+        name: this.metadata.name,
+        description: this.metadata.description,
+        template: this.metadata.template.type,
         source: {
           properties: {}
         },
@@ -217,9 +232,70 @@ angular.module(PKG.name + '.services')
       return config;
     };
 
-    this.save = function() {
-      return this.isModelValid();
+    function pruneProperties(config) {
+      if (config.source && config.source._backendProperties) {
+        delete config.source._backendProperties;
+      }
+      if (config.sink && config.sink._backendProperties) {
+        delete config.sink._backendProperties;
+      }
+      config.transforms.forEach(function(t) {
+        delete t._backendProperties;
+      });
+    }
+
+    // Used to save to backend. Has no fluff. Just real stuff that is needed.
+    this.getConfigForBackend = function () {
+      var config = this.getConfig();
+      pruneProperties(config);
+      var data = {
+        template: this.metadata.template.type,
+        description: this.metadata.description,
+        config: {
+          source: config.source,
+          sink: config.sink,
+          transforms: config.transforms
+        }
+      };
+      if (this.metadata.template.type === 'ETLRealtime') {
+        data.config.instances = this.metadata.template.instance;
+      } else if (this.metadata.template.type === 'ETLBatch') {
+        // default value should be * * * * *
+        data.config.schedule = this.metadata.template.schedule.cron;
+      }
+      return data;
     };
+    this.save = function() {
+      var defer = $q.defer();
+      var errors = this.isModelValid();
+      if (!errors.length) {
+        var data = this.getConfigForBackend();
+        myAdapterApi.save(
+          {
+            namespace: $state.params.namespace,
+            adapter: this.metadata.name
+          },
+          data
+        )
+          .$promise
+          .then(
+            function success() {
+              // delete this.adapterDrafts[this.metadata.name];
+              // return mySettings.set('adapterdrafts', this.adapterDrafts);
+              defer.resolve(true);
+            },
+            function error(err) {
+              defer.reject({
+                messages: err
+              });
+            }
+          );
+      } else {
+        defer.reject(errors);
+      }
+      return defer.promise
+    };
+
     this.isModelValid = function() {
       var validationRules = [
         hasExactlyOneSourceAndSink,
@@ -257,7 +333,18 @@ angular.module(PKG.name + '.services')
     }
 
     function hasNameAndTemplateType() {
-
+      var name = this.metadata.name;
+      var template = this.metadata.template.type;
+      var errors = true;
+      if (!name.length) {
+        errors = [];
+        errors.push({
+          type: 'name',
+          message: 'Adapter needs to have a name'
+        });
+      }
+      return errors;
+      // Should probably add template type check here. Waiting for design.
     }
     function checkForRequiredField() {
       var errors = true;
