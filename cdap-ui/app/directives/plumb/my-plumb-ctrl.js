@@ -7,7 +7,6 @@ angular.module(PKG.name + '.commons')
       Connector : [ "Flowchart" ],
       ConnectionsDetachable: true
     };
-
     var commonSettings = {
       endpoint:"Dot",
       paintStyle: {
@@ -70,15 +69,17 @@ angular.module(PKG.name + '.commons')
       this.instance.draggable(id);
     }
 
-    // Need to move this to the controller that is using this directive.
-    this.onPluginClick = function(pluginId, pluginType) {
-      MyPlumbService.editPluginProperties($scope, pluginId, pluginType);
-    };
-
     this.removePlugin = function(index, nodeId) {
       this.instance.detachAllConnections(nodeId);
       this.instance.remove(nodeId);
       this.plugins.splice(index, 1);
+      MyPlumbService.removeNode(nodeId);
+      MyPlumbService.setConnections(this.instance.getConnections());
+    };
+
+    // Need to move this to the controller that is using this directive.
+    this.onPluginClick = function(pluginId, pluginType) {
+      MyPlumbService.editPluginProperties($scope, pluginId, pluginType);
     };
 
     MyPlumbService.registerCallBack(this.addPlugin.bind(this));
@@ -96,7 +97,7 @@ angular.module(PKG.name + '.commons')
 
       // Need to move this to the controller that is using this directive.
       this.instance.bind("connection", function (connInfo, originalEvent) {
-        MyPlumbService.updateConnection(connInfo);
+        MyPlumbService.addConnection(connInfo);
       }.bind(this));
 
     }.bind(this));
