@@ -102,6 +102,11 @@ public class BasicWorkflowToken implements WorkflowToken {
     put(key, value, Scope.USER);
   }
 
+  @Override
+  public void put(String key, Value value) {
+    put(key, value.toString());
+  }
+
   void put(String key, String value, Scope scope) {
     if (nodeName == null) {
       throw new IllegalStateException("Node name cannot be null.");
@@ -201,6 +206,11 @@ public class BasicWorkflowToken implements WorkflowToken {
       }
     }
     return tokenValuesFromNode;
+  }
+
+  @Override
+  public Map<String, List<NodeValueEntry>> getAll(Scope scope) {
+    return ImmutableMap.copyOf(tokenValueMap.rowMap().get(scope));
   }
 
   @Deprecated

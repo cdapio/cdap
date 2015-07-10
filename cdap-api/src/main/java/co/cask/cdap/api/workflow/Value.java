@@ -45,6 +45,13 @@ public class Value {
     return Long.parseLong(value);
   }
 
+  /**
+   * @return the int value
+   */
+  public int getAsInt() {
+    return Integer.parseInt(value);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -62,5 +69,13 @@ public class Value {
   @Override
   public int hashCode() {
     return value.hashCode();
+  }
+
+  public static Value of(int value) {
+    return new Value(String.valueOf(value));
+  }
+
+  public static Value of(long value) {
+    return new Value(String.valueOf(value));
   }
 }

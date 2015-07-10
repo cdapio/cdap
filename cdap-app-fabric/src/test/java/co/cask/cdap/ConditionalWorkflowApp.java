@@ -127,7 +127,7 @@ public class ConditionalWorkflowApp extends AbstractApplication {
       FileOutputFormat.setOutputPath(job, new Path(outputPath));
       // Put something in the token
       context.getWorkflowToken().put("action_type", "MapReduce");
-      context.getWorkflowToken().put("start_time", String.valueOf(System.currentTimeMillis()));
+      context.getWorkflowToken().put("start_time", Value.of(System.currentTimeMillis()));
     }
   }
 
@@ -161,7 +161,7 @@ public class ConditionalWorkflowApp extends AbstractApplication {
       WordCount.configureJob((Job) context.getHadoopJob(), inputPath, outputPath);
       // Put something in the token
       context.getWorkflowToken().put("action_type", "MapReduce");
-      context.getWorkflowToken().put("start_time", String.valueOf(System.currentTimeMillis()));
+      context.getWorkflowToken().put("start_time", Value.of(System.currentTimeMillis()));
     }
   }
 
@@ -241,6 +241,8 @@ public class ConditionalWorkflowApp extends AbstractApplication {
                                                       "elsefork_third").toString().equals("CustomAction"));
         validateMapReduceCounters(workflowToken, "RecordVerifier");
       }
+      Map<String, List<NodeValueEntry>> allUserKeys = workflowToken.getAll(WorkflowToken.Scope.USER);
+      Preconditions.checkArgument(5 == allUserKeys.get("action_type").size());
     }
 
     private void validateMapReduceCounters(WorkflowToken workflowToken, String programName) {
@@ -294,6 +296,9 @@ public class ConditionalWorkflowApp extends AbstractApplication {
       Preconditions.checkArgument(mapOutputRecords == mapOutputRecordsFromGetAll);
       Preconditions.checkArgument(reduceInputRecords == reduceInputRecordsFromGetAll);
       Preconditions.checkArgument(reduceOutputRecords == reduceOutputRecordsFromGetAll);
+
+      long startTime = workflowToken.get("start_time", programName).getAsLong();
+      Preconditions.checkArgument(System.currentTimeMillis() > startTime);
     }
   }
 }

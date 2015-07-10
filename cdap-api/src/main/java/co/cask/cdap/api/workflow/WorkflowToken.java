@@ -40,7 +40,7 @@ public interface WorkflowToken {
   }
 
   /**
-   * Put the specified key-value entry into the {@link WorkflowToken}.
+   * Put the specified key and value into the {@link WorkflowToken}.
    * The token may store additional information about the context in which
    * this key is being set, for example, the unique name of the workflow node.
    * @param key the key representing the entry
@@ -48,6 +48,15 @@ public interface WorkflowToken {
    */
   // TODO [CDAP-2895] put operation should throw certain exceptions
   void put(String key, String value);
+
+  /**
+   * Put the specified key and {@link Value} into the {@link WorkflowToken}.
+   * The token may store additional information about the context in which
+   * this key is being set, for example, the unique name of the workflow node.
+   * @param key the key representing entry
+   * @param value the {@link Value} for the key
+   */
+  void put(String key, Value value);
 
   /**
    * Get the most recent value for the specified key.
@@ -140,6 +149,16 @@ public interface WorkflowToken {
    * @return the map of key to values that were added by the specified node for a given scope
    */
   Map<String, Value> getAllFromNode(String nodeName, Scope scope);
+
+  /**
+   * Same key can be added to the WorkflowToken by multiple nodes.
+   * This method returns the key to {@link List} of {@link NodeValueEntry}
+   * added in the {@link WorkflowToken.Scope} provided.
+   * @param scope the scope for the key
+   * @return the {@link Map} of key to {@link List} of {@link NodeValueEntry} added for
+   * the given scope
+   */
+  Map<String, List<NodeValueEntry>> getAll(Scope scope);
 
   /**
    * This method is deprecated as of release 3.1.
