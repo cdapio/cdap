@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal) {
+  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state) {
     function getIcon(plugin) {
       var iconMap = {
         'script': 'fa-code',
@@ -41,7 +41,7 @@ angular.module(PKG.name + '.feature.adapters')
     this.canvasOperations = [
       {
         name: 'Publish',
-        icon: 'fa fa-play'
+        icon: 'fa fa-save'
       },
       {
         name: 'Zoom In',
@@ -53,7 +53,7 @@ angular.module(PKG.name + '.feature.adapters')
       },
       {
         name: 'Export',
-        icon: 'fa fa-download'
+        icon: 'fa fa-eye'
       },
       {
         name: 'Import',
@@ -65,24 +65,11 @@ angular.module(PKG.name + '.feature.adapters')
       }
     ];
 
-    function pruneProperties(config) {
-      if (config.source && config.source._backendProperties) {
-        delete config.source._backendProperties;
-      }
-      if (config.sink && config.sink._backendProperties) {
-        delete config.sink._backendProperties;
-      }
-      config.transforms.forEach(function(t) {
-        delete t._backendProperties;
-      });
-    }
-
     this.onCanvasOperationsClicked = function(group) {
       var config;
       switch(group.name) {
         case 'Export':
-          config = angular.copy(MyPlumbService.getConfig());
-          pruneProperties(config);
+          config = angular.copy(MyPlumbService.getConfigForBackend());
           $bootstrapModal.open({
             templateUrl: '/assets/features/adapters/templates/create/viewconfig.html',
             size: 'lg',
@@ -98,12 +85,16 @@ angular.module(PKG.name + '.feature.adapters')
           });
           break;
         case 'Publish':
-          errorObj = MyPlumbService.save();
-          if (angular.isArray(errorObj)) {
-            console.error('ERROR!: ', errorObj);
-          } else {
-            console.info('GUJOB');
-          }
+          MyPlumbService
+            .save()
+            .then(
+              function sucess() {
+                $state.go('adapters.list');
+              },
+              function error(errorObj) {
+                console.error('ERROR!: ', errorObj);
+              }
+            );
           break;
       }
     };

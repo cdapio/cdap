@@ -1,7 +1,13 @@
-<h3 class="adapter-name">
-  {{AdapterCreateController.model.metadata.name}}
-  <small class="fa fa-pencil" ng-click="AdapterCreateController.showMetadataModal()"></small>
-</h3>
+<h1 class="adapter-name">
+  <a ng-if="AdapterCreateController.metadata.name.length > 0"
+      ng-click="AdapterCreateController.showMetadataModal()">
+    {{AdapterCreateController.metadata.name}}
+  </a>
+  <a ng-if="AdapterCreateController.metadata.name.length === 0"
+      ng-click="AdapterCreateController.showMetadataModal()">
+    [Adapter Name]
+  </a>
+</h1>
 
 <div ng-controller="CanvasController as PlumbController">
   <div ng-include="'/assets/features/adapters/templates/create/canvas.html'"></div>
