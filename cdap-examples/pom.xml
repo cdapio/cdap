@@ -37,7 +37,7 @@
     <module>Purchase</module>
     <module>SparkKMeans</module>
     <module>SparkPageRank</module>
-    <module>SparkLogAnalysis</module>
+    <module>LogAnalysis</module>
     <module>SportResults</module>
     <module>StreamConversion</module>
     <module>UserProfiles</module>

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -12,19 +12,10 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- *
- * This example is based on the Apache Spark Example SparkKMeans. The original file may be found at
- * https://github.com/apache/spark/blob/master/examples/src/main/scala/org/apache/spark/examples/SparkKMeans.scala
- *
- * Copyright 2014 The Apache Software Foundation. Licensed under the Apache License, Version 2.0.
- *
  */
 
 package co.cask.cdap.examples.loganalysis;
 
-import co.cask.cdap.examples.loganalysis.HitCounterProgram;
-import co.cask.cdap.examples.loganalysis.LogAnalysisApp;
-import co.cask.cdap.examples.loganalysis.ResponseCounterProgram;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
@@ -32,7 +23,6 @@ import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import org.junit.Assert;
 import org.junit.Test;
@@ -72,19 +62,17 @@ public class LogAnalysisAppTest extends TestBase {
     sparkManager.waitForFinish(60, TimeUnit.SECONDS);
 
     // run the mapreduce job
-    MapReduceManager mapReduceManager = appManager.startMapReduce(HitCounterProgram.class.getSimpleName(),
-                                                                  ImmutableMap.<String, String>of());
+    MapReduceManager mapReduceManager = appManager.getMapReduceManager(HitCounterProgram.class.getSimpleName()).start();
     mapReduceManager.waitForFinish(3, TimeUnit.MINUTES);
 
     // start and wait for services
-    ServiceManager hitCounterServiceManager = appManager.startService(LogAnalysisApp.HIT_COUNTER_SERVICE);
-    ServiceManager responseCounterServiceManager = appManager.startService(LogAnalysisApp.RESPONSE_COUNTER_SERVICE);
-    hitCounterServiceManager.waitForStatus(true);
-    responseCounterServiceManager.waitForStatus(true);
+    ServiceManager hitCounterServiceManager = getServiceManager(appManager, LogAnalysisApp.HIT_COUNTER_SERVICE);
+    ServiceManager responseCounterServiceManager = getServiceManager(appManager,
+                                                                     LogAnalysisApp.RESPONSE_COUNTER_SERVICE);
 
     //Query for hit counts and verify it
     URL totalHitsURL = new URL(hitCounterServiceManager.getServiceURL(15, TimeUnit.SECONDS),
-                           LogAnalysisApp.HitCounterServiceHandler.HIT_COUNTER_SERVICE_PATH);
+                               LogAnalysisApp.HitCounterServiceHandler.HIT_COUNTER_SERVICE_PATH);
     HttpURLConnection totalHitsURLConnection = (HttpURLConnection) totalHitsURL.openConnection();
 
     try {
@@ -107,6 +95,17 @@ public class LogAnalysisAppTest extends TestBase {
                                              LogAnalysisApp.ResponseCounterHandler.RESPONSE_COUNT_PATH
                                                + "/" + RESPONSE_CODE));
     Assert.assertEquals(TOTAL_RESPONSE_VALUE, response);
+  }
+
+  private ServiceManager getServiceManager(ApplicationManager appManager, String serviceName)
+    throws InterruptedException {
+    // Start the service
+    ServiceManager serviceManager =
+      appManager.getServiceManager(serviceName).start();
+
+    // Wait for service startup
+    serviceManager.waitForStatus(true);
+    return serviceManager;
   }
 
   private String requestService(URL url) throws IOException {

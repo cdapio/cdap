@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014 Cask Data, Inc.
+  Copyright © 2015 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>SparkLogAnalysis</artifactId>
+  <artifactId>LogAnalysis</artifactId>
 
   <properties>
     <app.main.class>co.cask.cdap.examples.loganalysis.LogAnalysisApp</app.main.class>
@@ -47,11 +47,6 @@
   </pluginRepositories>
 
   <dependencies>
-    <dependency>
-      <groupId>org.scalanlp</groupId>
-      <artifactId>breeze_2.10</artifactId>
-      <version>0.9</version>
-    </dependency>
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
