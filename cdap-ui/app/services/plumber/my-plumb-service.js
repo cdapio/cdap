@@ -81,15 +81,7 @@ angular.module(PKG.name + '.services')
         var source = sourceConn.length ? this.nodes[sourceConn[0].source] : null;
 
         sourceSchema = source.outputSchema;
-        // try {
-        //   sourceSchema = JSON.parse(source.outputSchema);
-        //   sourceSchema = sourceSchema ? sourceSchema.fields : null;
-        // }
-        // catch (e) {
-        //   if (source.outputSchema) {
-        //     sourceSchema = source.outputSchema;
-        //   }
-        // }
+
       }
 
       var plugin = this.nodes[pluginId];
