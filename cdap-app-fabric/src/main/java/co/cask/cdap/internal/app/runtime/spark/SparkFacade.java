@@ -18,10 +18,9 @@ package co.cask.cdap.internal.app.runtime.spark;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaSparkContext;
-
-import java.util.Map;
 
 /**
  * Interface to provide abstraction for accessing either scala or java version of the Apache SparkContext.
@@ -48,8 +47,7 @@ interface SparkFacade {
    * Writes the RDD into dataset.
    *
    * @param rdd the RDD to write to dataset
-   * @param datasetName name of the dataset
-   * @param arguments arguments for the creation of the dataset
+   * @param outputFormatClass the {@link OutputFormat} class
    * @param keyClass the key type
    * @param valueClass the value type
    * @param hConf the hadoop configuration
@@ -57,7 +55,7 @@ interface SparkFacade {
    * @param <K> type of the key
    * @param <V> type of the value
    */
-  <R, K, V> void saveAsDataset(R rdd, String datasetName, Map<String, String> arguments,
+  <R, K, V> void saveAsDataset(R rdd, Class<? extends OutputFormat> outputFormatClass,
                                Class<K> keyClass, Class<V> valueClass, Configuration hConf);
 
   /**

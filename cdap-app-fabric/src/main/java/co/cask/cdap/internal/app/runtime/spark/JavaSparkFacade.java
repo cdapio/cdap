@@ -16,16 +16,14 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
-import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.MRJobConfig;
+import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-
-import java.util.Map;
 
 /**
  * Implements {@link SparkFacade} with a {@link JavaSparkContext}.
@@ -48,16 +46,13 @@ final class JavaSparkFacade implements SparkFacade {
 
   @SuppressWarnings("unchecked")
   @Override
-  public <R, K, V> void saveAsDataset(R rdd, String datasetName, Map<String, String> arguments,
+  public <R, K, V> void saveAsDataset(R rdd, Class<? extends OutputFormat> outputFormatClass,
                                       Class<K> keyClass, Class<V> valueClass, Configuration hConf) {
     Preconditions.checkArgument(rdd instanceof JavaPairRDD,
                                 "RDD class %s is not a subclass of %s",
                                 rdd.getClass().getName(), JavaPairRDD.class.getName());
-
-    Configuration configuration = new Configuration(hConf);
-    SparkDatasetOutputFormat.setDataset(configuration, datasetName, arguments);
-    configuration.set(MRJobConfig.OUTPUT_FORMAT_CLASS_ATTR, SparkDatasetOutputFormat.class.getName());
-    ((JavaPairRDD<K, V>) rdd).saveAsNewAPIHadoopDataset(configuration);
+    hConf.set(MRJobConfig.OUTPUT_FORMAT_CLASS_ATTR, outputFormatClass.getName());
+    ((JavaPairRDD<K, V>) rdd).saveAsNewAPIHadoopDataset(hConf);
   }
 
   @SuppressWarnings("unchecked")
