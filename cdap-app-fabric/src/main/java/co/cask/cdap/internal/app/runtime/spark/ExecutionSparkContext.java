@@ -21,6 +21,7 @@ import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
+import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
@@ -50,6 +51,7 @@ import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.io.Closeables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
@@ -113,10 +115,43 @@ public class ExecutionSparkContext extends AbstractSparkContext {
 
   @Override
   public <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass) {
-    Map<String, String> datasetArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName, getRuntimeArguments());
-
     // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
     Configuration configuration = new Configuration(hConf);
+
+    // first try if it is InputFormatProvider
+    Map<String, String> dsArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName, getRuntimeArguments());
+    Dataset dataset = getDataset(datasetName, dsArgs);
+    if (dataset instanceof InputFormatProvider) {
+      // get the input format and its configuration from the dataset
+      String inputFormatName = ((InputFormatProvider) dataset).getInputFormatClassName();
+
+      // load the input format class
+      if (inputFormatName == null) {
+        throw new DatasetInstantiationException(
+          String.format("Dataset '%s' provided null as the input format class name", datasetName));
+      }
+      try {
+        @SuppressWarnings("unchecked")
+        Class<? extends InputFormat> inputFormatClass = (Class<? extends InputFormat>) Class.forName(inputFormatName);
+        Map<String, String> inputConfig = ((InputFormatProvider) dataset).getInputFormatConfiguration();
+        if (inputConfig != null) {
+          for (Map.Entry<String, String> entry : inputConfig.entrySet()) {
+            configuration.set(entry.getKey(), entry.getValue());
+          }
+        }
+        return getSparkFacade().createRDD(inputFormatClass, kClass, vClass, configuration);
+
+      } catch (ClassNotFoundException e) {
+        throw new DatasetInstantiationException(String.format(
+          "Cannot load input format class %s provided by dataset '%s'", inputFormatName, datasetName), e);
+      } catch (ClassCastException e) {
+        throw new DatasetInstantiationException(String.format(
+          "Input format class %s provided by dataset '%s' is not an input format", inputFormatName, datasetName), e);
+      }
+    }
+
+    // it must be supported by SparkDatasetInputFormat
+    Map<String, String> datasetArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName, getRuntimeArguments());
     SparkDatasetInputFormat.setDataset(configuration, datasetName, datasetArgs);
     return getSparkFacade().createRDD(SparkDatasetInputFormat.class, kClass, vClass, configuration);
   }
@@ -160,7 +195,8 @@ public class ExecutionSparkContext extends AbstractSparkContext {
 
   @Override
   public synchronized <T extends Dataset> T getDataset(String name, Map<String, String> arguments) {
-    Map<String, String> datasetArgs = RuntimeArguments.extractScope(Scope.DATASET, name, getRuntimeArguments());
+    Map<String, String> datasetArgs = new HashMap<>();
+    datasetArgs.putAll(RuntimeArguments.extractScope(Scope.DATASET, name, getRuntimeArguments()));
     datasetArgs.putAll(arguments);
 
     String key = name + ImmutableSortedMap.copyOf(datasetArgs).toString();
@@ -169,6 +205,9 @@ public class ExecutionSparkContext extends AbstractSparkContext {
     T dataset = (T) datasets.get(key);
     if (dataset == null) {
       dataset = instantiateDataset(name, datasetArgs);
+      if (dataset instanceof TransactionAware) {
+        ((TransactionAware) dataset).startTx(getTransaction());
+      }
       datasets.put(key, dataset);
     }
     return dataset;
