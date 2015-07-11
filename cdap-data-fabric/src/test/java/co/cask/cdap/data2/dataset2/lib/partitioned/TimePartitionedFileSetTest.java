@@ -33,6 +33,7 @@ import co.cask.tephra.TransactionFailureException;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.junit.After;
 import org.junit.Assert;
@@ -279,7 +280,7 @@ public class TimePartitionedFileSetTest {
       @Override
       public void apply() throws Exception {
         Map<String, String> inputConfig = tpfs.getInputFormatConfiguration();
-        String inputs = inputConfig.get("mapred.input.dir");
+        String inputs = inputConfig.get(FileInputFormat.INPUT_DIR);
         Assert.assertNotNull(inputs);
         if (expected.length == 0) {
           Assert.assertTrue(inputs.isEmpty());
@@ -518,7 +519,7 @@ public class TimePartitionedFileSetTest {
       @Override
       public void apply() throws Exception {
         Map<String, String> inputConf = dataset.getInputFormatConfiguration();
-        String input = inputConf.get("mapred.input.dir");
+        String input = inputConf.get(FileInputFormat.INPUT_DIR);
         Assert.assertNotNull(input);
         String[] inputs = input.split(",");
         Assert.assertEquals(1, inputs.length);
