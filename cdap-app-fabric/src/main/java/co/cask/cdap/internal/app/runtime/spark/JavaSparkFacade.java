@@ -42,9 +42,8 @@ final class JavaSparkFacade implements SparkFacade {
   @Override
   public <R, K, V> R createRDD(Class<? extends InputFormat> inputFormatClass,
                                Class<K> keyClass, Class<V> valueClass, Configuration hConf) {
-    Configuration configuration = new Configuration(hConf);
-    configuration.set(MRJobConfig.INPUT_FORMAT_CLASS_ATTR, inputFormatClass.getName());
-    return (R) sparkContext.newAPIHadoopRDD(configuration, inputFormatClass, keyClass, valueClass);
+    hConf.set(MRJobConfig.INPUT_FORMAT_CLASS_ATTR, inputFormatClass.getName());
+    return (R) sparkContext.newAPIHadoopRDD(hConf, inputFormatClass, keyClass, valueClass);
   }
 
   @SuppressWarnings("unchecked")

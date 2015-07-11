@@ -34,7 +34,8 @@ interface SparkFacade {
    * @param inputFormatClass the {@link InputFormat} class
    * @param keyClass the key type
    * @param valueClass the value type
-   * @param hConf the hadoop configuration
+   * @param hConf the hadoop configuration. This may be modified with additional properties for creating
+   *              the RDD; hence the caller should make a copy of the hadoop configuration before passing it.
    * @param <R> type of the resulting RDD
    * @param <K> type of the key
    * @param <V> type of the value
