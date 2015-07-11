@@ -198,6 +198,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       try {
         onFinish(success);
       } finally {
+        Closeables.closeQuietly(executionContext);
         Closeables.closeQuietly(sparkContextFactory.getClientContext());
         cleanupTask.run();
       }
