@@ -38,6 +38,11 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-formats</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
       <version>${hadoop.version}</version>
