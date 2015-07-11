@@ -74,12 +74,10 @@ public class DatasetMetaTableUtil {
     }
 
     datasetFramework.addInstance(DatasetTypeMDS.class.getName(), Id.DatasetInstance.from(
-                                   Constants.DEFAULT_NAMESPACE_ID, Joiner.on(".").join(Constants.SYSTEM_NAMESPACE,
-                                                                                       META_TABLE_NAME)),
+                                   Constants.SYSTEM_NAMESPACE_ID, META_TABLE_NAME),
                                  DatasetProperties.EMPTY);
     datasetFramework.addInstance(DatasetInstanceMDS.class.getName(), Id.DatasetInstance.from(
-                                   Constants.DEFAULT_NAMESPACE_ID, Joiner.on(".").join(Constants.SYSTEM_NAMESPACE,
-                                                                                       INSTANCE_TABLE_NAME)),
+                                   Constants.SYSTEM_NAMESPACE_ID, INSTANCE_TABLE_NAME),
                                  DatasetProperties.EMPTY);
   }
 

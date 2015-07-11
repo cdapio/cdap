@@ -53,8 +53,7 @@ public class ScheduleStoreTableUtil extends MetaTableUtil {
    */
   public static void setupDatasets(DatasetFramework datasetFramework) throws IOException, DatasetManagementException {
     Id.DatasetInstance scheduleStoreDatasetInstance =
-      Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, (Joiner.on(".").join(Constants.SYSTEM_NAMESPACE,
-                                                                                   SCHEDULE_STORE_DATASET_NAME)));
+      Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE_ID, SCHEDULE_STORE_DATASET_NAME);
     datasetFramework.addInstance(Table.class.getName(), scheduleStoreDatasetInstance, DatasetProperties.EMPTY);
   }
 }

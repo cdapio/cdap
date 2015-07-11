@@ -52,7 +52,8 @@ public class DatasetUpgrader extends AbstractUpgrader {
   private final LocationFactory locationFactory;
   private final HBaseTableUtil hBaseTableUtil;
   private final DatasetFramework dsFramework;
-  private final Pattern userTablePrefix;
+  private final Pattern defaultNSUserTablePrefix;
+  private final String datasetTablePrefix;
 
   @Inject
   private DatasetUpgrader(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
@@ -65,7 +66,9 @@ public class DatasetUpgrader extends AbstractUpgrader {
     this.locationFactory = locationFactory;
     this.hBaseTableUtil = hBaseTableUtil;
     this.dsFramework = dsFramework;
-    this.userTablePrefix = Pattern.compile(String.format("^%s\\.user\\..*", cConf.get(Constants.Dataset.TABLE_PREFIX)));
+    this.datasetTablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+    this.defaultNSUserTablePrefix = Pattern.compile(String.format("^%s\\.user\\..*",
+                                                                  datasetTablePrefix));
   }
 
   @Override
@@ -79,11 +82,9 @@ public class DatasetUpgrader extends AbstractUpgrader {
   }
 
   private void upgradeSystemDatasets() throws Exception {
-
-    // Upgrade all datasets in system namespace
-    for (DatasetSpecificationSummary spec : dsFramework.getInstances(Constants.DEFAULT_NAMESPACE_ID)) {
-      LOG.info("Upgrading dataset: {}, spec: {}", spec.getName(), spec.toString());
-      DatasetAdmin admin = dsFramework.getAdmin(Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, spec.getName()),
+    for (DatasetSpecificationSummary spec : dsFramework.getInstances(Constants.SYSTEM_NAMESPACE_ID)) {
+      LOG.info("Upgrading dataset in system namespace: {}, spec: {}", spec.getName(), spec.toString());
+      DatasetAdmin admin = dsFramework.getAdmin(Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE_ID, spec.getName()),
                                                 null);
       // we know admin is not null, since we are looping over existing datasets
       admin.upgrade();
@@ -93,39 +94,69 @@ public class DatasetUpgrader extends AbstractUpgrader {
 
   private void upgradeUserTables() throws Exception {
     HBaseAdmin hAdmin = new HBaseAdmin(hConf);
-
-    for (HTableDescriptor desc : hAdmin.listTables(userTablePrefix)) {
-      HTableNameConverter hTableNameConverter = new HTableNameConverterFactory().get();
-      TableId tableId = hTableNameConverter.from(desc);
-      LOG.info("Upgrading hbase table: {}, desc: {}", tableId, desc);
-
-      final boolean supportsIncrement = HBaseTableAdmin.supportsReadlessIncrements(desc);
-      final boolean transactional = HBaseTableAdmin.isTransactional(desc);
-      DatasetAdmin admin = new AbstractHBaseDataSetAdmin(tableId, hConf, hBaseTableUtil) {
-        @Override
-        protected CoprocessorJar createCoprocessorJar() throws IOException {
-          return HBaseTableAdmin.createCoprocessorJarInternal(cConf,
-                                                              locationFactory,
-                                                              hBaseTableUtil,
-                                                              transactional,
-                                                              supportsIncrement);
-        }
-
-        @Override
-        protected boolean upgradeTable(HTableDescriptor tableDescriptor) {
-          // we don't do any other changes apart from coprocessors upgrade
-          return false;
-        }
-
-        @Override
-        public void create() throws IOException {
-          // no-op
-          throw new UnsupportedOperationException("This DatasetAdmin is only used for upgrade() operation");
-        }
-      };
-      admin.upgrade();
-      LOG.info("Upgraded hbase table: {}", tableId);
+    for (HTableDescriptor desc : hAdmin.listTables()) {
+      String tableName = desc.getNameAsString();
+      if (!isTableInSystemNamespace(tableName) &&
+           isUserTable(tableName) &&
+           isTableCreatedByCDAP(desc)) {
+        upgradeUserTable(desc);
+      }
     }
   }
 
+
+  private void upgradeUserTable(HTableDescriptor desc) throws IOException {
+    HTableNameConverter hTableNameConverter = new HTableNameConverterFactory().get();
+    TableId tableId = hTableNameConverter.from(desc);
+    LOG.info("Upgrading hbase table: {}, desc: {}", tableId, desc);
+
+    final boolean supportsIncrement = HBaseTableAdmin.supportsReadlessIncrements(desc);
+    final boolean transactional = HBaseTableAdmin.isTransactional(desc);
+    DatasetAdmin admin = new AbstractHBaseDataSetAdmin(tableId, hConf, hBaseTableUtil) {
+      @Override
+      protected CoprocessorJar createCoprocessorJar() throws IOException {
+        return HBaseTableAdmin.createCoprocessorJarInternal(cConf,
+                                                            locationFactory,
+                                                            hBaseTableUtil,
+                                                            transactional,
+                                                            supportsIncrement);
+      }
+
+      @Override
+      protected boolean upgradeTable(HTableDescriptor tableDescriptor) {
+        return false;
+      }
+
+      @Override
+      public void create() throws IOException {
+        // no-op
+        throw new UnsupportedOperationException("This DatasetAdmin is only used for upgrade() operation");
+      }
+    };
+    admin.upgrade();
+    LOG.info("Upgraded hbase table: {}", tableId);
+  }
+
+  // Note: This check can be safely used for user table since we create meta.
+  // CDAP-2963 should be fixed so that we can make use of this check generically for all cdap tables
+  private boolean isTableCreatedByCDAP(HTableDescriptor desc) {
+    return (desc.getValue("cdap.version") != null);
+  }
+
+  private boolean isTableInSystemNamespace(String tableName) {
+    // dataset in system namespace starts with <prefix>_system ex: cdap_system
+    return tableName.startsWith(String.format("%s_%s", this.datasetTablePrefix, "system"));
+  }
+
+  private boolean isUserTable(String tableName) {
+    // User tables are named differently in default vs non-default namespace
+    // User table in default namespace starts with cdap.user
+    // User table in Non-default namespace is a table that doesn't have
+    //    system.queue or system.stream or system.sharded.queue
+   return defaultNSUserTablePrefix.matcher(tableName).matches() ||
+          // Note: if the user has created a dataset called system.* then we will not upgrade the table.
+          // CDAP-2977 should be fixed to have a cleaner fix for this.
+          !(tableName.contains("system.queue") || tableName.contains("system.stream") ||
+            tableName.contains("system.sharded.queue"));
+  }
 }
