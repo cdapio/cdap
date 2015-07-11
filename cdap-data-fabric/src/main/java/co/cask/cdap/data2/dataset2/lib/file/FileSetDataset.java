@@ -33,6 +33,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -200,7 +201,7 @@ public final class FileSetDataset implements FileSet {
     Map<String, String> config = Maps.newHashMap();
     config.putAll(FileSetProperties.getInputProperties(spec.getProperties()));
     config.putAll(FileSetProperties.getInputProperties(runtimeArguments));
-    config.put("mapred.input.dir", inputs);
+    config.put(FileInputFormat.INPUT_DIR, inputs);
     return ImmutableMap.copyOf(config);
   }
 

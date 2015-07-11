@@ -89,11 +89,14 @@ public final class RuntimeArguments {
    * @param scope The type of the scope
    * @param name The name of the scope, e.g. "myTable"
    * @param arguments the runtime arguments of the enclosing scope
-   * @return a map that contains the arguments with and without prefix
+   * @return a new map that contains the arguments with and without prefix; or null if the input was null.
    */
   public static Map<String, String> extractScope(Scope scope, String name, Map<String, String> arguments) {
-    if (arguments == null || arguments.isEmpty()) {
-      return arguments;
+    if (arguments == null) {
+      return null;
+    }
+    if (arguments.isEmpty()) {
+      return NO_ARGUMENTS;
     }
 
     String prefix = scope + DOT + name + DOT;

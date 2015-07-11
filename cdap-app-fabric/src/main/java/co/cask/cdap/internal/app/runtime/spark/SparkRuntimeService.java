@@ -168,11 +168,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         throw e;
       }
     } finally {
-      try {
-        Closeables.closeQuietly(executionContext);
-      } finally {
-        Thread.currentThread().setContextClassLoader(oldClassLoader);
-      }
+      Thread.currentThread().setContextClassLoader(oldClassLoader);
     }
   }
 
@@ -201,6 +197,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       try {
         onFinish(success);
       } finally {
+        Closeables.closeQuietly(executionContext);
         Closeables.closeQuietly(sparkContextFactory.getClientContext());
         cleanupTask.run();
       }
