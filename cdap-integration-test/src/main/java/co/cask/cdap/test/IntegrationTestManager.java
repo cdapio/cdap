@@ -55,6 +55,7 @@ import java.io.IOException;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.sql.Connection;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -91,7 +92,7 @@ public class IntegrationTestManager implements TestManager {
 
   @Override
   public ApplicationManager deployApplication(Id.Namespace namespace, Class<? extends Application> applicationClz,
-                                              Config configObject, File... bundleEmbeddedJars) {
+                                              @Nullable Config configObject, File... bundleEmbeddedJars) {
     // See if the application class comes from file or jar.
     // If it's from JAR, no need to trace dependency since it should already be in an application jar.
     URL appClassURL = applicationClz.getClassLoader()
@@ -100,13 +101,16 @@ public class IntegrationTestManager implements TestManager {
     Preconditions.checkNotNull(appClassURL, "Cannot find class %s from the classloader", applicationClz);
 
     String appConfig = "";
-    if (configObject != null) {
-      TypeToken typeToken = TypeToken.of(applicationClz);
-      TypeToken<?> configToken = typeToken.resolveType(Application.class.getTypeParameters()[0]);
-      appConfig = GSON.toJson(configObject, configToken.getType());
-    }
+    TypeToken typeToken = TypeToken.of(applicationClz);
+    TypeToken<?> configToken = typeToken.resolveType(Application.class.getTypeParameters()[0]);
 
     try {
+      if (configObject != null) {
+        appConfig = GSON.toJson(configObject, configToken.getType());
+      } else {
+        configObject = (Config) configToken.getRawType().newInstance();
+      }
+
       // Create and deploy application jar
       File appJarFile = File.createTempFile(applicationClz.getSimpleName(), ".jar");
       try {

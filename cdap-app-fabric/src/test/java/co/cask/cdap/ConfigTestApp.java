@@ -62,6 +62,14 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
       this.streamName = streamName;
       this.tableName = tableName;
     }
+
+    public String getStreamName() {
+      return streamName;
+    }
+
+    public String getTableName() {
+      return tableName;
+    }
   }
 
   @Override

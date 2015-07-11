@@ -142,18 +142,37 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  public void testAppConfigWithNull() throws Exception {
+    testAppConfig(null);
+  }
+
+  @Test
   public void testAppConfig() throws Exception {
-    ConfigTestApp.ConfigClass object = new ConfigTestApp.ConfigClass("testStream", "testDataset");
-    ApplicationManager appManager = deployApplication(ConfigTestApp.class, object);
+    testAppConfig(new ConfigTestApp.ConfigClass("testStream", "testDataset"));
+  }
+
+  private void testAppConfig(ConfigTestApp.ConfigClass object) throws Exception {
+    String streamName = ConfigTestApp.DEFAULT_STREAM;
+    String datasetName = ConfigTestApp.DEFAULT_TABLE;
+
+    ApplicationManager appManager;
+    if (object != null) {
+      streamName = object.getStreamName();
+      datasetName = object.getTableName();
+      appManager = deployApplication(ConfigTestApp.class, object);
+    } else {
+      appManager = deployApplication(ConfigTestApp.class);
+    }
+
     FlowManager flowManager = appManager.getFlowManager(ConfigTestApp.FLOW_NAME);
     flowManager.start();
-    StreamManager streamManager = getStreamManager("testStream");
+    StreamManager streamManager = getStreamManager(streamName);
     streamManager.send("abcd");
     streamManager.send("xyz");
     RuntimeMetrics metrics = flowManager.getFlowletMetrics(ConfigTestApp.FLOWLET_NAME);
     metrics.waitForProcessed(2, 1, TimeUnit.MINUTES);
     flowManager.stop();
-    DataSetManager<KeyValueTable> dsManager = getDataset("testDataset");
+    DataSetManager<KeyValueTable> dsManager = getDataset(datasetName);
     KeyValueTable table = dsManager.get();
     Assert.assertEquals("abcd", Bytes.toString(table.read("abcd")));
     Assert.assertEquals("xyz", Bytes.toString(table.read("xyz")));

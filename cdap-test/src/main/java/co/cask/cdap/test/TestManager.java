@@ -33,6 +33,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -61,7 +62,7 @@ public interface TestManager {
    * @return An {@link ApplicationManager} to manage the deployed application.
    */
   ApplicationManager deployApplication(Id.Namespace namespace, Class<? extends Application> applicationClz,
-                                       Config configObject, File... bundleEmbeddedJars);
+                                       @Nullable Config configObject, File... bundleEmbeddedJars);
 
   /**
    * Deploys an {@link ApplicationTemplate}. Only supported in unit tests.

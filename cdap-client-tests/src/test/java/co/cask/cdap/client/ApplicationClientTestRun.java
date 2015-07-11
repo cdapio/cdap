@@ -125,7 +125,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
   @Test
   public void testAppConfig() throws Exception {
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("testStream", "testDataset");
-    appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(ConfigTestApp.class), GSON.toJson(config));
+    appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(ConfigTestApp.class), config);
     Assert.assertEquals(1, appClient.list().size());
 
     try {

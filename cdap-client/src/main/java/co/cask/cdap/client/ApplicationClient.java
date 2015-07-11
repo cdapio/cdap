@@ -16,6 +16,7 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
@@ -37,6 +38,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,6 +57,8 @@ import javax.inject.Inject;
  */
 @Beta
 public class ApplicationClient {
+
+  private static final Gson GSON = new Gson();
 
   private final RESTClient restClient;
   private final ClientConfig config;
@@ -384,10 +388,32 @@ public class ApplicationClient {
     deployApp(namespace, jarFile, headers);
   }
 
+  /**
+   * Deploys an application with a serialized application configuration string.
+   *
+   * @param namespace namespace to which the application should be deployed
+   * @param jarFile jar file of the application to deploy
+   * @param appConfig serialized application configuration
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
   public void deploy(Id.Namespace namespace, File jarFile, String appConfig) throws IOException, UnauthorizedException {
     Map<String, String> headers = ImmutableMap.of("X-Archive-Name", jarFile.getName(),
                                                   "X-App-Config", appConfig);
     deployApp(namespace, jarFile, headers);
+  }
+
+  /**
+   * Deploys an application with an application configuration object.
+   *
+   * @param namespace namespace to which the application should be deployed
+   * @param jarFile jar file of the application to deploy
+   * @param appConfig application configuration object
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public void deploy(Id.Namespace namespace, File jarFile, Config appConfig) throws IOException, UnauthorizedException {
+    deploy(namespace, jarFile, GSON.toJson(appConfig));
   }
 
   private void deployApp(Id.Namespace namespace, File jarFile, Map<String, String> headers)
