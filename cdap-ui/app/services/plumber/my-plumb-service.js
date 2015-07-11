@@ -31,7 +31,25 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state) {
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter) {
+
+    this.resetToDefaults = function() {
+      this.callbacks = [];
+      this.nodes = {};
+      this.connections = [];
+      this.metadata = {
+        name: '',
+        description: '',
+        template: {
+          type: 'ETLBatch',
+          instance: '',
+          schedule: {
+            cron: ''
+          }
+        }
+      };
+    };
+
     this.resetToDefaults();
     this.registerCallBack = function (callback) {
       this.callbacks.push(callback);
@@ -163,7 +181,7 @@ angular.module(PKG.name + '.services')
               }
             }
           });
-        });
+        }.bind(this));
     };
 
     // Used for UI alone. Has _backendProperties and ids to plugins for
@@ -181,9 +199,6 @@ angular.module(PKG.name + '.services')
         },
         transforms: []
       };
-      var errors = [];
-      var conn;
-      var i;
       var nodes = angular.copy(this.nodes);
 
       function addPluginToConfig(plugin, id) {
@@ -230,22 +245,6 @@ angular.module(PKG.name + '.services')
       });
     }
 
-    this.resetToDefaults = function() {
-      this.callbacks = [];
-      this.nodes = {};
-      this.connections = [];
-      this.metadata = {
-        name: '',
-        description: '',
-        template: {
-          type: 'ETLBatch',
-          instance: '',
-          schedule: {
-            cron: ''
-          }
-        }
-      };
-    }
     // Used to save to backend. Has no fluff. Just real stuff that is needed.
     this.getConfigForBackend = function () {
       var config = this.getConfig();
@@ -286,7 +285,7 @@ angular.module(PKG.name + '.services')
               // return mySettings.set('adapterdrafts', this.adapterDrafts);
               defer.resolve(true);
               this.resetToDefaults();
-            },
+            }.bind(this),
             function error(err) {
               defer.reject({
                 messages: err
@@ -296,7 +295,7 @@ angular.module(PKG.name + '.services')
       } else {
         defer.reject(errors);
       }
-      return defer.promise
+      return defer.promise;
     };
 
     this.isModelValid = function() {
@@ -337,7 +336,6 @@ angular.module(PKG.name + '.services')
 
     function hasNameAndTemplateType() {
       var name = this.metadata.name;
-      var template = this.metadata.template.type;
       var errors = true;
       if (!name.length) {
         errors = [];
@@ -410,7 +408,7 @@ angular.module(PKG.name + '.services')
           nextConn;
       var errorObj = true;
       for(i=0; i<this.connections.length-1; i++) {
-        currConn = this.connections[i]
+        currConn = this.connections[i];
         nextConn = this.connections[i+1];
         if (currConn.target !== nextConn.source) {
           errorObj = {};

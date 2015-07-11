@@ -129,12 +129,12 @@ angular.module(PKG.name + '.feature.adapters')
             )
           );
         }.bind(this));
-      }.bind(this))
+      }.bind(this));
     };
 
     this.onPluginItemClicked = function(event, item) {
       // TODO: Better UUID?
-      var id = item.name + '-' + item.type + '-' + Date.now();;
+      var id = item.name + '-' + item.type + '-' + Date.now();
       event.stopPropagation();
       var config = {
         id: id,
@@ -147,4 +147,4 @@ angular.module(PKG.name + '.feature.adapters')
     };
 
 
-  })
+  });
