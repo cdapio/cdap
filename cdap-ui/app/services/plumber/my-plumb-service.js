@@ -31,22 +31,8 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $filter, $state) {
-    this.callbacks = [];
-    this.nodes = {};
-    this.connections = [];
-    this.metadata = {
-      name: '',
-      description: '',
-      template: {
-        type: 'ETLBatch',
-        instance: '',
-        schedule: {
-          cron: ''
-        }
-      }
-    };
-
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state) {
+    this.resetToDefaults();
     this.registerCallBack = function (callback) {
       this.callbacks.push(callback);
     };
@@ -244,6 +230,22 @@ angular.module(PKG.name + '.services')
       });
     }
 
+    this.resetToDefaults = function() {
+      this.callbacks = [];
+      this.nodes = {};
+      this.connections = [];
+      this.metadata = {
+        name: '',
+        description: '',
+        template: {
+          type: 'ETLBatch',
+          instance: '',
+          schedule: {
+            cron: ''
+          }
+        }
+      };
+    }
     // Used to save to backend. Has no fluff. Just real stuff that is needed.
     this.getConfigForBackend = function () {
       var config = this.getConfig();
@@ -283,6 +285,7 @@ angular.module(PKG.name + '.services')
               // delete this.adapterDrafts[this.metadata.name];
               // return mySettings.set('adapterdrafts', this.adapterDrafts);
               defer.resolve(true);
+              this.resetToDefaults();
             },
             function error(err) {
               defer.reject({
