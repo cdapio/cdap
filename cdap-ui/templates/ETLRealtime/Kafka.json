@@ -58,5 +58,11 @@
           }
        }
     }
+  },
+  "implicit": {
+    "schema": {
+      "key": ["string", "null"],
+      "message": "bytes"
+    }
   }
 }

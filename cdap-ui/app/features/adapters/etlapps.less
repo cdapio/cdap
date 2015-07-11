@@ -22,6 +22,15 @@ body.theme-cdap.state-adapters {
 body.theme-cdap.state-adapters-detail,
 body.theme-cdap.state-adapters-create {
 
+  .row {
+    padding-right: 15px;
+  }
+
+  [class*='col-'] {
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+
   .ui-select-container.ui-select-bootstrap {
     .ui-select-toggle {
       overflow-x: auto;
@@ -115,6 +124,19 @@ body.theme-cdap.state-adapters-create {
   }
 
   .modal {
+
+    .modal-lg {
+      width: 95%;
+    }
+
+    .schema-container {
+      height: 100%;
+      background-color: @body-bg;
+      color: @gray-dark;
+      padding: 15px;
+      border-radius: @border-radius-base;
+    }
+
     .adapter-properties-detail {
       h3 {
         color: @text-color;

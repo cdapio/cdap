@@ -4,17 +4,25 @@ angular.module(PKG.name + '.commons')
       restrict: 'EA',
       scope: {
         model: '=ngModel',
-        config: '='
+        config: '=',
+        disabled: '='
       },
       templateUrl: 'widget-container/widget-schema-editor/widget-schema-editor.html',
       controller: function($scope, myHelpers) {
-        $scope.options = $scope.config['schema-types'];
-        var defaultType = $scope.config['schema-default-type'] || $scope.options[0];
+        var defaultOptions = [ 'boolean', 'int', 'long', 'float', 'double', 'bytes', 'string' ];
+        var defaultType = null;
+        if ($scope.config) {
+          $scope.options = $scope.config['schema-types'];
+          defaultType = $scope.config['schema-default-type'] || $scope.options[0];
+        } else {
+          $scope.options = defaultOptions;
+          defaultType = 'string';
+        }
+
 
         // Format model
         function initialize() {
           var schema = {};
-
           if ($scope.model) {
             try {
               schema = JSON.parse($scope.model);
@@ -58,6 +66,10 @@ angular.module(PKG.name + '.commons')
         } // End of initialize
 
         initialize();
+
+        $scope.$watch('disabled', function () {
+          initialize();
+        });
 
 
         function formatSchema() {

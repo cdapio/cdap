@@ -103,4 +103,6 @@ angular.module(PKG.name + '.feature.adapters')
     $scope.plugin = AdapterModel;
     $scope.type = type;
     $scope.isDisabled = true;
+
+    $scope.plugin.outputSchema = $scope.plugin.properties.schema;
   });
