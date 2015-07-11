@@ -167,8 +167,17 @@ public class SparkProgramRunnerTest {
 
   @Test
   public void testSparkWithFileSet() throws Exception {
+    testSparkWithFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.CharCountSpecification.class);
+  }
+
+  @Test
+  public void testSparkScalaWithFileSet() throws Exception {
+    testSparkWithFileSet(ScalaSparkAppUsingFileSet.class, ScalaSparkAppUsingFileSet.CharCountSpecification.class);
+  }
+
+  private void testSparkWithFileSet(Class<?> appClass, Class<?> programClass) throws Exception {
     final ApplicationWithPrograms app =
-      AppFabricTestHelper.deployApplicationWithManager(SparkAppUsingFileSet.class, TEMP_FOLDER_SUPPLIER);
+      AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
 
     final FileSet fileset = datasetInstantiator.getDataset("fs");
     Location location = fileset.getLocation("nn");
@@ -183,15 +192,26 @@ public class SparkProgramRunnerTest {
     args.putAll(RuntimeArguments.addScope(Scope.DATASET, "fs", outputArgs));
     args.put("input", "fs");
     args.put("output", "fs");
-    runProgram(app, SparkAppUsingFileSet.CharCountSpecification.class, args);
+
+    runProgram(app, programClass, args);
 
     validateFileOutput(fileset.getLocation("xx"));
   }
 
   @Test
   public void testSparkWithPartitionedFileSet() throws Exception {
+    testSparkWithPartitionedFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.CharCountSpecification.class);
+  }
+
+  @Test
+  public void testSparkScalaWithPartitionedFileSet() throws Exception {
+    testSparkWithPartitionedFileSet(ScalaSparkAppUsingFileSet.class,
+                                    ScalaSparkAppUsingFileSet.CharCountSpecification.class);
+  }
+
+  private void testSparkWithPartitionedFileSet(Class<?> appClass, Class<?> programClass) throws Exception {
     final ApplicationWithPrograms app =
-      AppFabricTestHelper.deployApplicationWithManager(SparkAppUsingFileSet.class, TEMP_FOLDER_SUPPLIER);
+      AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
 
     final PartitionedFileSet pfs = datasetInstantiator.getDataset("pfs");
     final PartitionOutput partitionOutput = pfs.getPartitionOutput(
@@ -218,7 +238,7 @@ public class SparkProgramRunnerTest {
     args.put("input", "pfs");
     args.put("output", "pfs");
 
-    runProgram(app, SparkAppUsingFileSet.CharCountSpecification.class, args);
+    runProgram(app, programClass, args);
 
     txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
       new TransactionExecutor.Subroutine() {
@@ -233,8 +253,18 @@ public class SparkProgramRunnerTest {
 
   @Test
   public void testSparkWithTimePartitionedFileSet() throws Exception {
+    testSparkWithPartitionedFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.CharCountSpecification.class);
+  }
+
+  @Test
+  public void testSparkScalaWithTimePartitionedFileSet() throws Exception {
+    testSparkWithTimePartitionedFileSet(ScalaSparkAppUsingFileSet.class,
+                                        ScalaSparkAppUsingFileSet.CharCountSpecification.class);
+  }
+
+  private void testSparkWithTimePartitionedFileSet(Class<?> appClass, Class<?> programClass) throws Exception {
     final ApplicationWithPrograms app =
-      AppFabricTestHelper.deployApplicationWithManager(SparkAppUsingFileSet.class, TEMP_FOLDER_SUPPLIER);
+      AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
 
     final TimePartitionedFileSet tpfs = datasetInstantiator.getDataset("tpfs");
     long inputTime = System.currentTimeMillis();
@@ -262,7 +292,7 @@ public class SparkProgramRunnerTest {
     args.put("input", "tpfs");
     args.put("output", "tpfs");
 
-    runProgram(app, SparkAppUsingFileSet.CharCountSpecification.class, args);
+    runProgram(app, programClass, args);
 
     txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
       new TransactionExecutor.Subroutine() {
