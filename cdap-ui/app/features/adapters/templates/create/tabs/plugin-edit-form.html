@@ -107,7 +107,7 @@
     <div ng-class="{ 'col-xs-offset-2 col-xs-10': isSink, 'col-xs-5': !isSink && !hideInput, 'col-xs-7': hideInput }">
       <h4 ng-if="!isSink">Output Schema</h4>
       <h4 ng-if="isSink">Schema</h4>
-      <fieldset ng-disabled="isDisabled" ng-if="plugin.outputSchema">
+      <fieldset ng-disabled="isDisabled">
         <my-schema-editor
           ng-model="plugin.outputSchema"
           data-disabled="plugin.implicitSchema" ng-if="plugin.name !== 'Stream'"></my-schema-editor>
@@ -117,7 +117,7 @@
           ng-if="plugin.name === 'Stream'"
         ></my-stream-properties>
       </fieldset>
-      <div ng-if="!plugin.outputSchema">
+      <div ng-if="!plugin.outputSchema && isDisabled">
         <h5>There is no output schema</h5>
       </div>
     </div>
