@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
@@ -31,12 +30,20 @@ import co.cask.cdap.api.spark.SparkContext;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
+
+import java.io.IOException;
+import java.util.List;
 
 /**
  * A dummy app with spark program which counts the characters in a string
@@ -49,16 +56,16 @@ public class SparkAppUsingFileSet extends AbstractApplication {
       setDescription("Application with Spark program using fileset input/output");
       createDataset("count", KeyValueTable.class);
       createDataset("fs", FileSet.class, FileSetProperties.builder()
-        .setInputFormat(TextInputFormat.class)
+        .setInputFormat(MyTextFormat.class)
         .setOutputFormat(TextOutputFormat.class)
         .setOutputProperty(TextOutputFormat.SEPERATOR, ":").build());
       createDataset("pfs", PartitionedFileSet.class, PartitionedFileSetProperties.builder()
         .setPartitioning(Partitioning.builder().addStringField("x").build())
-        .setInputFormat(TextInputFormat.class)
+        .setInputFormat(MyTextFormat.class)
         .setOutputFormat(TextOutputFormat.class)
         .setOutputProperty(TextOutputFormat.SEPERATOR, ":").build());
       createDataset("tpfs", TimePartitionedFileSet.class, FileSetProperties.builder()
-        .setInputFormat(TextInputFormat.class)
+        .setInputFormat(MyTextFormat.class)
         .setOutputFormat(TextOutputFormat.class)
         .setOutputProperty(TextOutputFormat.SEPERATOR, ":").build());
       addSpark(new CharCountSpecification());
@@ -79,23 +86,86 @@ public class SparkAppUsingFileSet extends AbstractApplication {
   public static class CharCountProgram implements JavaSparkProgram {
     @Override
     public void run(SparkContext context) {
-      String dataset = context.getRuntimeArguments().get("input");
+      String input = context.getRuntimeArguments().get("input");
+      String output = context.getRuntimeArguments().get("output");
 
       // read the dataset
-      JavaPairRDD<LongWritable, Text> inputData = context.readFromDataset(dataset, LongWritable.class, Text.class);
+      JavaPairRDD<Long, String> inputData = context.readFromDataset(input, Long.class, String.class);
 
       // create a new RDD with the same key but with a new value which is the length of the string
-      JavaPairRDD<byte[], byte[]> stringLengths = inputData.mapToPair(
-        new PairFunction<Tuple2<LongWritable, Text>, byte[], byte[]>() {
+      JavaPairRDD<String, Integer> stringLengths = inputData.mapToPair(
+        new PairFunction<Tuple2<Long, String>, String, Integer>() {
         @Override
-        public Tuple2<byte[], byte[]> call(Tuple2<LongWritable, Text> pair) throws Exception {
-          return new Tuple2<>(Bytes.toBytes(pair._1().get()), Bytes.toBytes(pair._2().getLength()));
+        public Tuple2<String, Integer> call(Tuple2<Long, String> pair) throws Exception {
+          return new Tuple2<>(pair._2(), pair._2().length());
         }
       });
 
       // write the character count to dataset
-      context.writeToDataset(stringLengths, "count", byte[].class, byte[].class);
+      context.writeToDataset(stringLengths, output, String.class, Integer.class);
       ((JavaSparkContext) context.getOriginalSparkContext()).stop();
+    }
+  }
+
+  /**
+   * An input format that delegates to TextInputFormat. It is defined in the application and requires
+   * the Spark runtime to use the program class loader to load the class.
+   */
+  public static final class MyTextFormat extends InputFormat<Long, String> {
+
+    TextInputFormat delegate = new TextInputFormat();
+
+    @Override
+    public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
+      return delegate.getSplits(context);
+    }
+
+    @Override
+    public RecordReader<Long, String> createRecordReader(InputSplit split, TaskAttemptContext context)
+      throws IOException, InterruptedException {
+      return new MyRecordReader(delegate.createRecordReader(split, context));
+    }
+  }
+
+  public static class MyRecordReader extends RecordReader<Long, String> {
+
+    private RecordReader<LongWritable, Text> delegate;
+
+    public MyRecordReader(RecordReader<LongWritable, Text> delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public void initialize(InputSplit split, TaskAttemptContext context)
+      throws IOException, InterruptedException {
+      delegate.initialize(split, context);
+    }
+
+    @Override
+    public boolean nextKeyValue() throws IOException, InterruptedException {
+      return delegate.nextKeyValue();
+    }
+
+    @Override
+    public Long getCurrentKey() throws IOException, InterruptedException {
+      LongWritable writable = delegate.getCurrentKey();
+      return writable == null ? null : writable.get();
+    }
+
+    @Override
+    public String getCurrentValue() throws IOException, InterruptedException {
+      Text text = delegate.getCurrentValue();
+      return text == null ? null : text.toString();
+    }
+
+    @Override
+    public float getProgress() throws IOException, InterruptedException {
+      return delegate.getProgress();
+    }
+
+    @Override
+    public void close() throws IOException {
+      delegate.close();
     }
   }
 }
