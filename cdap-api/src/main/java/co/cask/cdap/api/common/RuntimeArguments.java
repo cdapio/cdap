@@ -92,8 +92,11 @@ public final class RuntimeArguments {
    * @return a map that contains the arguments with and without prefix
    */
   public static Map<String, String> extractScope(Scope scope, String name, Map<String, String> arguments) {
-    if (arguments == null || arguments.isEmpty()) {
-      return arguments;
+    if (arguments == null) {
+      return null;
+    }
+    if (arguments.isEmpty()) {
+      return NO_ARGUMENTS;
     }
 
     String prefix = scope + DOT + name + DOT;
