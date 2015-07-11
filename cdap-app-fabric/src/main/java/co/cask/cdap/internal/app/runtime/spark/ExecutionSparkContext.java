@@ -132,7 +132,8 @@ public class ExecutionSparkContext extends AbstractSparkContext {
       }
       try {
         @SuppressWarnings("unchecked")
-        Class<? extends InputFormat> inputFormatClass = (Class<? extends InputFormat>) Class.forName(inputFormatName);
+        Class<? extends InputFormat> inputFormatClass =
+          (Class<? extends InputFormat>) SparkClassLoader.findFromContext().loadClass(inputFormatName);
         Map<String, String> inputConfig = ((InputFormatProvider) dataset).getInputFormatConfiguration();
         if (inputConfig != null) {
           for (Map.Entry<String, String> entry : inputConfig.entrySet()) {
@@ -205,9 +206,6 @@ public class ExecutionSparkContext extends AbstractSparkContext {
     T dataset = (T) datasets.get(key);
     if (dataset == null) {
       dataset = instantiateDataset(name, datasetArgs);
-      if (dataset instanceof TransactionAware) {
-        ((TransactionAware) dataset).startTx(getTransaction());
-      }
       datasets.put(key, dataset);
     }
     return dataset;
