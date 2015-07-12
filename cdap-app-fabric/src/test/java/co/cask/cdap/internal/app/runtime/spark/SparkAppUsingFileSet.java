@@ -37,7 +37,6 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
 
@@ -101,7 +100,6 @@ public class SparkAppUsingFileSet extends AbstractApplication {
 
       // write the character count to dataset
       context.writeToDataset(stringLengths, output, String.class, Integer.class);
-      ((JavaSparkContext) context.getOriginalSparkContext()).stop();
     }
   }
 

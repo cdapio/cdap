@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -89,14 +90,11 @@ public final class RuntimeArguments {
    * @param scope The type of the scope
    * @param name The name of the scope, e.g. "myTable"
    * @param arguments the runtime arguments of the enclosing scope
-   * @return a new map that contains the arguments with and without prefix; or null if the input was null.
+   * @return a new map that contains the arguments with and without prefix, never null
    */
   public static Map<String, String> extractScope(Scope scope, String name, Map<String, String> arguments) {
-    if (arguments == null) {
-      return null;
-    }
-    if (arguments.isEmpty()) {
-      return NO_ARGUMENTS;
+    if (arguments == null || arguments.isEmpty()) {
+      return new HashMap<>();
     }
 
     String prefix = scope + DOT + name + DOT;

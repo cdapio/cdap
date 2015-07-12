@@ -34,6 +34,5 @@ class ScalaCharCountProgram extends ScalaSparkProgram {
 
     // write to dataset
     sc.writeToDataset(stringLengths, "count", classOf[Array[Byte]], classOf[Array[Byte]])
-    sc.getOriginalSparkContext.asInstanceOf[org.apache.spark.SparkContext].stop()
   }
 }
