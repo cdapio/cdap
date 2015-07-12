@@ -37,6 +37,5 @@ class ScalaFileCountProgram extends ScalaSparkProgram {
 
     // write to dataset
     sc.writeToDataset(stringLengths, output, classOf[String], classOf[Integer])
-    sc.getOriginalSparkContext.asInstanceOf[org.apache.spark.SparkContext].stop()
   }
 }

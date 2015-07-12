@@ -155,8 +155,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
     }
 
     // it must be supported by SparkDatasetInputFormat
-    Map<String, String> datasetArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName, getRuntimeArguments());
-    SparkDatasetInputFormat.setDataset(configuration, datasetName, datasetArgs);
+    SparkDatasetInputFormat.setDataset(configuration, datasetName, dsArgs);
     return getSparkFacade().createRDD(SparkDatasetInputFormat.class, kClass, vClass, configuration);
   }
 
@@ -204,8 +203,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
       }
     }
 
-    Map<String, String> datasetArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName, getRuntimeArguments());
-    SparkDatasetOutputFormat.setDataset(hConf, datasetName, datasetArgs);
+    SparkDatasetOutputFormat.setDataset(hConf, datasetName, dsArgs);
     getSparkFacade().saveAsDataset(rdd, SparkDatasetOutputFormat.class, kClass, vClass, new Configuration(hConf));
   }
 
@@ -242,8 +240,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
 
   @Override
   public synchronized <T extends Dataset> T getDataset(String name, Map<String, String> arguments) {
-    Map<String, String> datasetArgs = new HashMap<>();
-    datasetArgs.putAll(RuntimeArguments.extractScope(Scope.DATASET, name, getRuntimeArguments()));
+    Map<String, String> datasetArgs = RuntimeArguments.extractScope(Scope.DATASET, name, getRuntimeArguments());
     datasetArgs.putAll(arguments);
 
     String key = name + ImmutableSortedMap.copyOf(datasetArgs).toString();
