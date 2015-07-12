@@ -34,6 +34,7 @@ import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkProgram;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data.stream.StreamInputFormat;
@@ -67,6 +68,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * A {@link SparkContext} implementation that is used in both {@link SparkProgram#run(SparkContext)} and
@@ -93,11 +95,11 @@ public class ExecutionSparkContext extends AbstractSparkContext {
                                Transaction transaction, DatasetFramework datasetFramework,
                                DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService,
-                               Configuration hConf, StreamAdmin streamAdmin) {
+                               Configuration hConf, StreamAdmin streamAdmin, @Nullable WorkflowToken workflowToken) {
     this(specification, programId, runId, programClassLoader, logicalStartTime, runtimeArguments,
          transaction, datasetFramework, discoveryServiceClient,
          createMetricsContext(metricsCollectionService, programId, runId),
-         createLoggingContext(programId, runId), hConf, streamAdmin);
+         createLoggingContext(programId, runId), hConf, streamAdmin, workflowToken);
   }
 
   public ExecutionSparkContext(SparkSpecification specification, Id.Program programId, RunId runId,
@@ -105,9 +107,10 @@ public class ExecutionSparkContext extends AbstractSparkContext {
                                Map<String, String> runtimeArguments,
                                Transaction transaction, DatasetFramework datasetFramework,
                                DiscoveryServiceClient discoveryServiceClient, MetricsContext metricsContext,
-                               LoggingContext loggingContext, Configuration hConf, StreamAdmin streamAdmin) {
+                               LoggingContext loggingContext, Configuration hConf, StreamAdmin streamAdmin,
+                               WorkflowToken workflowToken) {
     super(specification, programId, runId, programClassLoader, logicalStartTime,
-          runtimeArguments, discoveryServiceClient, metricsContext, loggingContext);
+          runtimeArguments, discoveryServiceClient, metricsContext, loggingContext, workflowToken);
 
     this.datasets = new HashMap<>();
     this.hConf = hConf;

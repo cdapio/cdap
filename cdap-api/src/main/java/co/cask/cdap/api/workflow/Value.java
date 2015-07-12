@@ -16,10 +16,15 @@
 
 package co.cask.cdap.api.workflow;
 
+import java.io.Serializable;
+
 /**
  * Class representing the value of the key in the {@link WorkflowToken}.
  */
-public class Value {
+public class Value implements Serializable {
+
+  private static final long serialVersionUID = -3420759818008526875L;
+
   private final String value;
 
   private Value(String value) {

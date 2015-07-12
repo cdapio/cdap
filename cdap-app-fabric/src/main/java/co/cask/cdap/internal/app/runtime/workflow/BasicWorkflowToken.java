@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
+import java.io.Serializable;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +33,10 @@ import java.util.Map;
 /**
  * Implementation of the {@link WorkflowToken} interface.
  */
-public class BasicWorkflowToken implements WorkflowToken {
+public class BasicWorkflowToken implements WorkflowToken, Serializable {
+
+  private static final long serialVersionUID = -1173500180640174909L;
+
   private Map<String, Map<String, Long>> mapReduceCounters;
   private final Map<Scope, Map<String, List<NodeValue>>> tokenValueMap = new EnumMap<>(Scope.class);
   private String nodeName;

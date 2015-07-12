@@ -25,8 +25,11 @@ import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.stream.StreamEventDecoder;
+import co.cask.cdap.api.workflow.Workflow;
+import co.cask.cdap.api.workflow.WorkflowToken;
 
 import java.io.Serializable;
+import javax.annotation.Nullable;
 
 /**
  * Spark job execution context. This context is shared between CDAP and User's Spark job.
@@ -165,4 +168,11 @@ public interface SparkContext extends RuntimeContext, DatasetContext {
    * @param <T> the SparkConf type
    */
   <T> void setSparkConf(T sparkConf);
+
+  /**
+   * @return the {@link WorkflowToken} associated with the current {@link Workflow},
+   * if the {@link Spark} program is executed as a part of the Workflow.
+   */
+  @Nullable
+  WorkflowToken getWorkflowToken();
 }

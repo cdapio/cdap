@@ -29,6 +29,7 @@ import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkProgram;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
@@ -48,6 +49,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import java.io.Closeable;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * An abstract implementation of {@link SparkContext} for common functionality that spread across
@@ -61,10 +63,10 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   private final ClassLoader programClassLoader;
   private final long logicalStartTime;
   private final Map<String, String> runtimeArguments;
-
   private final DiscoveryServiceClient discoveryServiceClient;
   private final MetricsContext metricsContext;
   private final LoggingContext loggingContext;
+  private final WorkflowToken workflowToken;
 
   private Resources executorResources;
   private SparkConf sparkConf;
@@ -72,7 +74,8 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   protected AbstractSparkContext(SparkSpecification specification, Id.Program programId, RunId runId,
                                  ClassLoader programClassLoader, long logicalStartTime,
                                  Map<String, String> runtimeArguments, DiscoveryServiceClient discoveryServiceClient,
-                                 MetricsContext metricsContext, LoggingContext loggingContext) {
+                                 MetricsContext metricsContext, LoggingContext loggingContext,
+                                 @Nullable WorkflowToken workflowToken) {
     this.specification = specification;
     this.programId = programId;
     this.runId = runId;
@@ -84,6 +87,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
     this.loggingContext = loggingContext;
     this.executorResources = Objects.firstNonNull(specification.getExecutorResources(), new Resources());
     this.sparkConf = new SparkConf();
+    this.workflowToken = workflowToken;
   }
 
   @Override
@@ -130,6 +134,12 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   public void setExecutorResources(Resources resources) {
     Preconditions.checkArgument(resources != null, "Resources must not be null");
     this.executorResources = resources;
+  }
+
+  @Nullable
+  @Override
+  public WorkflowToken getWorkflowToken() {
+    return workflowToken;
   }
 
   @Override

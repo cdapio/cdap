@@ -16,12 +16,17 @@
 
 package co.cask.cdap.api.workflow;
 
+import java.io.Serializable;
+
 /**
  * Multiple nodes in the Workflow can add the same key to the {@link WorkflowToken}.
  * This class provides a mapping from node name to the {@link Value} which was set for the
  * specific key.
  */
-public final class NodeValue {
+public final class NodeValue implements Serializable {
+
+  private static final long serialVersionUID = 6157808964174399650L;
+
   private final String nodeName;
   private final Value value;
 
