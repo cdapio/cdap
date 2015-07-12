@@ -1,13 +1,12 @@
 <div class="row" ng-controller="AppsSectionCtrl as AppsSectionCtrl">
   <div class="col-xs-12 col-md-6">
-    <div ng-if="AppsSectionCtrl.dataList.length > 0">
+    <div ng-if="AppsSectionCtrl.dataList.length > 0" class="data-list">
       <h3> Data </h3>
       <div class="row">
         <div class="col-xs-12 col-sm-3">
-          <p ng-if="AppsSectionCtrl.dataList.length < 5"> Showing {{ AppsSectionCtrl.dataList.length }} of {{ dataList.length }}</p>
-          <p ng-if="AppsSectionCtrl.dataList.length >= 5"> Showing 5 of {{ AppsSectionCtrl.dataList.length }}</p>
+          <p> Add sample datasets: </p>
         </div>
-        <div class="col-xs-12 col-sm-9 text-right">
+        <div class="col-xs-12 col-sm-9">
           <div class="btn-group">
             <a ui-sref="data.list" class="btn btn-default">
               <span class="fa fa-list-ul"></span>
@@ -60,14 +59,13 @@
     </div>
   </div>
   <div class="col-xs-12 col-md-6">
-    <div ng-if="AppsSectionCtrl.apps.length > 0">
+    <div ng-if="AppsSectionCtrl.apps.length > 0" class="apps-list">
       <h3> Apps </h3>
       <div class="row">
         <div class="col-xs-12 col-sm-3">
-          <p ng-if="AppsSectionCtrl.apps.length < 5"> Showing {{ AppsSectionCtrl.apps.length }} of {{ AppsSectionCtrl.apps.length }}</p>
-          <p ng-if="AppsSectionCtrl.apps.length >= 5"> Showing 5 of {{ AppsSectionCtrl.apps.length }}</p>
+          <p> Add sample apps: </p>
         </div>
-        <div class="col-xs-12 col-sm-9 text-right">
+        <div class="col-xs-12 col-sm-9">
           <div class="btn-group">
             <a ui-sref="apps.list" class="btn btn-default">
               <span class="fa fa-list-ul"></span>
