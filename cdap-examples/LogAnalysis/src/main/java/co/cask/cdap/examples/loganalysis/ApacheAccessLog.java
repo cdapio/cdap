@@ -12,6 +12,15 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
+ *
+ * This class is taken from on the DataBricks "Log Analysis with Spark" reference application.
+ * The origin file may be found here:
+ * http://databricks.gitbooks.io/databricks-spark-reference-applications/content/logs_analyzer/
+ * chapter1/java8/src/main/java/com/databricks/apps/logs/ApacheAccessLog.java
+ *
+ * Attribution-NonCommercial 3.0 Unported:
+ * http://databricks.gitbooks.io/databricks-spark-reference-applications/content/LICENSE
+ *
  */
 
 package co.cask.cdap.examples.loganalysis;

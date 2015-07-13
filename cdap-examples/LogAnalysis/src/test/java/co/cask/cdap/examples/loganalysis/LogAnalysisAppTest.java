@@ -22,6 +22,9 @@ import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import org.junit.Assert;
@@ -58,7 +61,8 @@ public class LogAnalysisAppTest extends TestBase {
     streamManager.send(LOG_3);
 
     // run the spark program
-    SparkManager sparkManager = appManager.getSparkManager(ResponseCounterProgram.class.getSimpleName()).start();
+    SparkManager sparkManager = appManager.getSparkManager(
+      LogAnalysisApp.ResponseCounterSpark.class.getSimpleName()).start();
     sparkManager.waitForFinish(60, TimeUnit.SECONDS);
 
     // run the mapreduce job
@@ -73,28 +77,20 @@ public class LogAnalysisAppTest extends TestBase {
     //Query for hit counts and verify it
     URL totalHitsURL = new URL(hitCounterServiceManager.getServiceURL(15, TimeUnit.SECONDS),
                                LogAnalysisApp.HitCounterServiceHandler.HIT_COUNTER_SERVICE_PATH);
-    HttpURLConnection totalHitsURLConnection = (HttpURLConnection) totalHitsURL.openConnection();
 
-    try {
-      totalHitsURLConnection.setDoOutput(true);
-      totalHitsURLConnection.setRequestMethod("POST");
-      totalHitsURLConnection.getOutputStream().write(("{\"url\":\"" + "/home.html" + "\"}").getBytes(Charsets.UTF_8));
-
-      Assert.assertEquals(HttpURLConnection.HTTP_OK, totalHitsURLConnection.getResponseCode());
-
-      if (totalHitsURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(totalHitsURLConnection.getInputStream()));
-        Assert.assertEquals(TOTAL_HITS_VALUE, reader.readLine());
-      }
-    } finally {
-      totalHitsURLConnection.disconnect();
-    }
+    HttpResponse response = HttpRequests.execute(HttpRequest.post(totalHitsURL)
+                                                   .withBody("{\"url\":\"" + "/home.html" + "\"}")
+                                                   .build());
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+    Assert.assertEquals(TOTAL_HITS_VALUE, response.getResponseBodyAsString());
 
     // query for total responses for a response code and verify it
-    String response = requestService(new URL(responseCounterServiceManager.getServiceURL(15, TimeUnit.SECONDS),
+    URL responseCodeURL = new URL(responseCounterServiceManager.getServiceURL(15, TimeUnit.SECONDS),
                                              LogAnalysisApp.ResponseCounterHandler.RESPONSE_COUNT_PATH
-                                               + "/" + RESPONSE_CODE));
-    Assert.assertEquals(TOTAL_RESPONSE_VALUE, response);
+                                               + "/" + RESPONSE_CODE);
+    HttpRequest request = HttpRequest.get(responseCodeURL).build();
+    response = HttpRequests.execute(request);
+    Assert.assertEquals(TOTAL_RESPONSE_VALUE, response.getResponseBodyAsString());
   }
 
   private ServiceManager getServiceManager(ApplicationManager appManager, String serviceName)
@@ -106,15 +102,5 @@ public class LogAnalysisAppTest extends TestBase {
     // Wait for service startup
     serviceManager.waitForStatus(true);
     return serviceManager;
-  }
-
-  private String requestService(URL url) throws IOException {
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
-    try {
-      return new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
-    } finally {
-      conn.disconnect();
-    }
   }
 }

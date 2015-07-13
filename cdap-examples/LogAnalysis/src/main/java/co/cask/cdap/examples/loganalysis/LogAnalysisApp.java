@@ -43,7 +43,6 @@ import javax.ws.rs.PathParam;
  */
 public class LogAnalysisApp extends AbstractApplication {
 
-  public static final String LOG_ANALYSIS_APP_NAME = "LogAnalysisApp";
   public static final String LOG_STREAM = "logStream";
   public static final String HIT_COUNTER_SERVICE = "HitCounterService";
   public static final String RESPONSE_COUNTER_SERVICE = "ResponseCounterService";
@@ -52,14 +51,13 @@ public class LogAnalysisApp extends AbstractApplication {
 
   @Override
   public void configure() {
-    setName(LOG_ANALYSIS_APP_NAME);
     setDescription("CDAP Log Analysis App");
 
     // A stream to ingest log data
     addStream(new Stream(LOG_STREAM));
 
     // A Spark and MapReduce for processing log data
-    addSpark(new SparkKMeansSpecification());
+    addSpark(new ResponseCounterSpark());
     addMapReduce(new HitCounterProgram());
 
     addWorkflow(new LogAnalysisWorkflow());
@@ -80,12 +78,11 @@ public class LogAnalysisApp extends AbstractApplication {
 
     @Override
     public void configure() {
-      setName(LogAnalysisWorkflow.class.getSimpleName());
       setDescription("Runs log analysis spark and mapreduce programs simultaneously");
       fork()
         .addMapReduce(HitCounterProgram.class.getSimpleName())
         .also()
-        .addSpark(ResponseCounterProgram.class.getSimpleName())
+        .addSpark(ResponseCounterSpark.class.getSimpleName())
         .join();
     }
   }
@@ -93,11 +90,10 @@ public class LogAnalysisApp extends AbstractApplication {
   /**
    * Specification for the Spark program in this application
    */
-  public static final class SparkKMeansSpecification extends AbstractSpark {
+  public static final class ResponseCounterSpark extends AbstractSpark {
 
     @Override
     public void configure() {
-      setName(ResponseCounterProgram.class.getSimpleName());
       setDescription("Counts the total number of responses for every unique response code");
       setMainClass(ResponseCounterProgram.class);
     }
@@ -109,8 +105,8 @@ public class LogAnalysisApp extends AbstractApplication {
   public static final class HitCounterServiceHandler extends AbstractHttpServiceHandler {
 
     private static final Gson GSON = new Gson();
-    public static final String URL_KEY = "url";
-    public static final String HIT_COUNTER_SERVICE_PATH = "hitcount";
+    private static final String URL_KEY = "url";
+    static final String HIT_COUNTER_SERVICE_PATH = "hitcount";
 
     @UseDataSet(HIT_COUNT_STORE)
     private KeyValueTable hitCountStore;
@@ -133,7 +129,7 @@ public class LogAnalysisApp extends AbstractApplication {
         responder.sendString(HttpURLConnection.HTTP_NO_CONTENT,
                              String.format("No record found of %s", url), Charsets.UTF_8);
       } else {
-        responder.sendString(HttpURLConnection.HTTP_OK, String.valueOf(Bytes.toInt(hitCount)), Charsets.UTF_8);
+        responder.sendString(String.valueOf(Bytes.toLong(hitCount)));
       }
     }
   }
@@ -143,7 +139,7 @@ public class LogAnalysisApp extends AbstractApplication {
    */
   public static final class ResponseCounterHandler extends AbstractHttpServiceHandler {
 
-    public static final String RESPONSE_COUNT_PATH = "rescount";
+    static final String RESPONSE_COUNT_PATH = "rescount";
 
     @UseDataSet(RESPONSE_COUNT_STORE)
     private KeyValueTable responseCountstore;
@@ -158,7 +154,7 @@ public class LogAnalysisApp extends AbstractApplication {
         responder.sendString(HttpURLConnection.HTTP_NO_CONTENT,
                              String.format("No record found for response code: %s", responseCode), Charsets.UTF_8);
       } else {
-        responder.sendString(HttpURLConnection.HTTP_OK, String.valueOf(Bytes.toLong(read)), Charsets.UTF_8);
+        responder.sendString(String.valueOf(Bytes.toLong(read)));
       }
     }
   }
