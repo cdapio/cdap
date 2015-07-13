@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
@@ -247,7 +248,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     Transactions.execute(txContext, spark.getClass().getName() + ".beforeSubmit()", new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(spark.getClass().getClassLoader());
+        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
+          null, ImmutableList.of(spark.getClass().getClassLoader(), getClass().getClassLoader())));
         try {
           spark.beforeSubmit(sparkContextFactory.getClientContext());
           return null;
@@ -266,7 +268,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     Transactions.execute(txContext, spark.getClass().getName() + ".onFinish()", new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(spark.getClass().getClassLoader());
+        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
+          null, ImmutableList.of(spark.getClass().getClassLoader(), getClass().getClassLoader())));
         try {
           spark.onFinish(succeeded, sparkContextFactory.getClientContext());
           return null;
