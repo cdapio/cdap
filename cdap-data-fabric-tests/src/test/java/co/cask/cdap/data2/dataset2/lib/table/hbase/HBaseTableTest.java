@@ -69,7 +69,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.annotation.Nullable;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -205,8 +204,7 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     String presplittedTable = "presplitted";
     getTableAdmin(CONTEXT1, presplittedTable, props).create();
 
-    HBaseAdmin hBaseAdmin = testHBase.getHBaseAdmin();
-    try {
+    try (HBaseAdmin hBaseAdmin = testHBase.getHBaseAdmin()) {
       List<HRegionInfo> regions = hBaseTableUtil.getTableRegions(hBaseAdmin, TableId.from(NAMESPACE1.getId(),
                                                                                           presplittedTable));
       // note: first region starts at very first row key, so we have one extra to the splits count
@@ -214,8 +212,6 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
       Assert.assertArrayEquals(Bytes.toBytes("a"), regions.get(1).getStartKey());
       Assert.assertArrayEquals(Bytes.toBytes("b"), regions.get(2).getStartKey());
       Assert.assertArrayEquals(Bytes.toBytes("c"), regions.get(3).getStartKey());
-    } finally {
-      hBaseAdmin.close();
     }
   }
 
@@ -262,10 +258,9 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
       final AtomicBoolean foundValue = new AtomicBoolean();
       byte [] enabledTableNameBytes = hBaseTableUtil.getHTableDescriptor(admin, enabledTableId).getName();
       testHBase.forEachRegion(enabledTableNameBytes, new Function<HRegion, Object>() {
-        @Nullable
         @Override
-        public Object apply(@Nullable HRegion hRegion) {
-          Scan scan = new Scan();
+        public Object apply(HRegion hRegion) {
+          Scan scan = hBaseTableUtil.buildScan().build();
           try {
             RegionScanner scanner = hRegion.getScanner(scan);
             List<Cell> results = Lists.newArrayList();

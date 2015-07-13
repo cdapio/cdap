@@ -21,7 +21,7 @@ import co.cask.cdap.common.queue.QueueName;
 import org.apache.hadoop.hbase.client.HTable;
 
 /**
- * HBase 0.98 implementation of {@link HBaseQueueUtil}.
+ * HBase 1.0 implementation of {@link HBaseQueueUtil}.
  */
 public class HBase10QueueUtil extends HBaseQueueUtil {
   @Override

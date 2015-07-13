@@ -27,6 +27,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerState;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.DistributedScanner;
 import co.cask.cdap.proto.Id;
@@ -55,26 +56,22 @@ import javax.annotation.concurrent.NotThreadSafe;
 @NotThreadSafe
 public final class HBaseStreamFileConsumer extends AbstractStreamFileConsumer {
 
+  private final HBaseTableUtil tableUtil;
   private final HTable hTable;
   private final AbstractRowKeyDistributor keyDistributor;
   private final ExecutorService scanExecutor;
 
   /**
    * Constructor.
-   *
-   * @param streamConfig Stream configuration.
-   * @param consumerConfig Consumer configuration.
-   * @param hTable For communicate with HBase for storing polled entry states (not consumer state). This class is
-   *               responsible for closing the HTable.
-   * @param reader For reading stream events. This class is responsible for closing the reader.
    */
-  public HBaseStreamFileConsumer(CConfiguration cConf,
-                                 StreamConfig streamConfig, ConsumerConfig consumerConfig, HTable hTable,
+  public HBaseStreamFileConsumer(CConfiguration cConf, StreamConfig streamConfig,
+                                 ConsumerConfig consumerConfig, HBaseTableUtil tableUtil, HTable hTable,
                                  FileReader<StreamEventOffset, Iterable<StreamFileOffset>> reader,
                                  StreamConsumerStateStore stateStore, StreamConsumerState beginConsumerState,
                                  @Nullable ReadFilter extraFilter,
                                  AbstractRowKeyDistributor keyDistributor) {
     super(cConf, streamConfig, consumerConfig, reader, stateStore, beginConsumerState, extraFilter);
+    this.tableUtil = tableUtil;
     this.hTable = hTable;
     this.keyDistributor = keyDistributor;
     this.scanExecutor = createScanExecutor(streamConfig.getStreamId());
@@ -120,10 +117,14 @@ public final class HBaseStreamFileConsumer extends AbstractStreamFileConsumer {
 
   @Override
   protected StateScanner scanStates(byte[] startRow, byte[] stopRow) throws IOException {
-    Scan scan = new Scan(startRow, stopRow);
-    scan.setMaxVersions(1);
-    scan.addColumn(QueueEntryRow.COLUMN_FAMILY, stateColumnName);
-    scan.setCaching(MAX_SCAN_ROWS);
+    Scan scan = tableUtil.buildScan()
+      .setStartRow(startRow)
+      .setStopRow(stopRow)
+      .setMaxVersions(1)
+      .addColumn(QueueEntryRow.COLUMN_FAMILY, stateColumnName)
+      .setCaching(MAX_SCAN_ROWS)
+      .build();
+
     // TODO: Add filter for getting committed processed rows only. Need to refactor HBaseQueue2Consumer to extract that.
     final ResultScanner scanner = DistributedScanner.create(hTable, scan, keyDistributor, scanExecutor);
     return new StateScanner() {

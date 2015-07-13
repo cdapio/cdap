@@ -193,7 +193,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     TableId tableId = hbaseQueueAdmin.getDataTableId(queueName);
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE_ID, tableId.getNamespace());
     Assert.assertEquals("system." + hbaseQueueAdmin.getType() + ".application1.flow1", tableId.getTableName());
-    String tableName = tableUtil.createHTableDescriptor(tableId).getNameAsString();
+    String tableName = tableUtil.createHTableDescriptor(tableId).build().getNameAsString();
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
 
@@ -201,7 +201,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     tableId = hbaseQueueAdmin.getDataTableId(queueName);
     Assert.assertEquals(Id.Namespace.from("testNamespace"), tableId.getNamespace());
     Assert.assertEquals("system." + hbaseQueueAdmin.getType() + ".application1.flow1", tableId.getTableName());
-    tableName = tableUtil.createHTableDescriptor(tableId).getNameAsString();
+    tableName = tableUtil.createHTableDescriptor(tableId).build().getNameAsString();
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
   }
@@ -418,7 +418,8 @@ public abstract class HBaseQueueTest extends QueueTest {
     try (
       final HBaseQueueProducer oldProducer = hBaseQueueClientFactory.createProducer(
         oldQueueAdmin, queueName, QueueConstants.QueueType.QUEUE,
-        QueueMetrics.NOOP_QUEUE_METRICS, new SaltedHBaseQueueStrategy(buckets), new ArrayList<ConsumerGroupConfig>());
+        QueueMetrics.NOOP_QUEUE_METRICS, new SaltedHBaseQueueStrategy(tableUtil, buckets),
+        new ArrayList<ConsumerGroupConfig>());
     ) {
       // Enqueue 10 items to old queue table
       Transactions.createTransactionExecutor(executorFactory, oldProducer)

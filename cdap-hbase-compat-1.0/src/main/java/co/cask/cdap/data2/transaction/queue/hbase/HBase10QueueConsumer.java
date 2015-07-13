@@ -31,8 +31,10 @@ import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 
+import java.util.Map;
+
 /**
- * HBase 0.98 implementation of {@link HBaseQueueConsumer}.
+ * HBase 1.0 implementation of {@link HBaseQueueConsumer}.
  */
 final class HBase10QueueConsumer extends HBaseQueueConsumer {
   private final Filter processedStateFilter;
@@ -45,7 +47,7 @@ final class HBase10QueueConsumer extends HBaseQueueConsumer {
   }
 
   @Override
-  protected Scan createScan(byte[] startRow, byte[] stopRow, int numRows) {
+  protected Scan createScan(byte[] startRow, byte[] stopRow, int numRows, Map<String, byte[]> attributes) {
     // Scan the table for queue entries.
     Scan scan = new Scan();
     scan.setStartRow(startRow);
@@ -55,6 +57,11 @@ final class HBase10QueueConsumer extends HBaseQueueConsumer {
     scan.addColumn(QueueEntryRow.COLUMN_FAMILY, stateColumnName);
     scan.setFilter(createFilter());
     scan.setMaxVersions(1);
+
+    for (Map.Entry<String, byte[]> entry : attributes.entrySet()) {
+      scan.setAttribute(entry.getKey(), entry.getValue());
+    }
+
     return scan;
   }
 

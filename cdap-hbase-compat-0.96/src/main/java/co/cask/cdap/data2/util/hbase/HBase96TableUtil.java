@@ -58,9 +58,15 @@ public class HBase96TableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public HTableDescriptor createHTableDescriptor(TableId tableId) {
+  public HTableDescriptorBuilder createHTableDescriptor(TableId tableId) {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");
-    return new HTableDescriptor(nameConverter.toTableName(tablePrefix, tableId));
+    return new HTableDescriptorBuilder(nameConverter.toTableName(tablePrefix, tableId));
+  }
+
+  @Override
+  public HTableDescriptorBuilder createHTableDescriptor(HTableDescriptor tableDescriptorToCopy) {
+    Preconditions.checkArgument(tableDescriptorToCopy != null, "Table descriptor should not be null");
+    return new HTableDescriptorBuilder(tableDescriptorToCopy);
   }
 
   @Override

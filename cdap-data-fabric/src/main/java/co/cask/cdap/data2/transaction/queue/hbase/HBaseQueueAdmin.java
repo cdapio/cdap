@@ -35,6 +35,7 @@ import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.proto.Id;
@@ -476,7 +477,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     @Override
     public void create() throws IOException {
       // Create the queue table
-      HTableDescriptor htd = tableUtil.createHTableDescriptor(tableId);
+      HTableDescriptorBuilder htd = tableUtil.createHTableDescriptor(tableId);
       for (String key : properties.stringPropertyNames()) {
         htd.setValue(key, properties.getProperty(key));
       }
@@ -501,12 +502,12 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
       createQueueTable(tableId, htd, splitKeys);
     }
 
-    private void createQueueTable(TableId tableId, HTableDescriptor htd, byte[][] splitKeys) throws IOException {
+    private void createQueueTable(TableId tableId, HTableDescriptorBuilder htd, byte[][] splitKeys) throws IOException {
       int prefixBytes = (type == QueueConstants.QueueType.SHARDED_QUEUE) ? ShardedHBaseQueueStrategy.PREFIX_BYTES
                                                                          : SaltedHBaseQueueStrategy.SALT_BYTES;
       htd.setValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES, Integer.toString(prefixBytes));
       LOG.info("Create queue table with prefix bytes {}", htd.getValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES));
-      tableUtil.createTableIfNotExists(getHBaseAdmin(), tableId, htd, splitKeys);
+      tableUtil.createTableIfNotExists(getHBaseAdmin(), tableId, htd.build(), splitKeys);
     }
   }
 }
