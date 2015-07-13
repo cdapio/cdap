@@ -26,6 +26,7 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.StreamClient;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
@@ -67,7 +68,8 @@ public class LoadStreamCommand extends AbstractAuthCommand implements Categorize
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String streamId = arguments.get(ArgumentName.STREAM.toString());
+    Id.Stream streamId = Id.Stream.from(cliConfig.getCurrentNamespace(),
+                                        arguments.get(ArgumentName.STREAM.toString()));
     File file = resolver.resolvePathToFile(arguments.get(ArgumentName.LOCAL_FILE_PATH.toString()));
     String contentType = arguments.get(ArgumentName.CONTENT_TYPE.toString(), "");
 

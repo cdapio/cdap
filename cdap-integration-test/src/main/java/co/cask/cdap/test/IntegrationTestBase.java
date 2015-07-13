@@ -82,23 +82,13 @@ public class IntegrationTestBase {
     assertIsClear();
   }
 
-  protected ClientConfig createNamespacedClientConfig(ClientConfig initialClientConfig, Id.Namespace namespace) {
-    ClientConfig newClientConfig = new ClientConfig.Builder(initialClientConfig).build();
-    newClientConfig.setNamespace(namespace);
-    return newClientConfig;
-  }
-
-  protected TestManager createTestManager(Id.Namespace namespace) {
+  protected TestManager getTestManager() {
     try {
-      return new IntegrationTestManager(createNamespacedClientConfig(getClientConfig(), namespace), getRestClient(),
+      return new IntegrationTestManager(getClientConfig(), getRestClient(),
                                         new LocalLocationFactory(TEMP_FOLDER.newFolder()));
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
-  }
-
-  protected TestManager getTestManager() {
-    return createTestManager(Id.Namespace.DEFAULT);
   }
 
   /**
@@ -118,15 +108,17 @@ public class IntegrationTestBase {
   }
 
   private void assertIsClear() throws Exception {
+    Id.Namespace namespace = Id.Namespace.DEFAULT;
+
     // only namespace existing should be 'default'
     NamespaceClient namespaceClient = getNamespaceClient();
     List<NamespaceMeta> list = namespaceClient.list();
     Assert.assertEquals(1, list.size());
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE_META, list.get(0));
 
-    assertNoApps();
-    assertNoUserDatasets();
-    assertNoStreams();
+    assertNoApps(namespace);
+    assertNoUserDatasets(namespace);
+    assertNoStreams(namespace);
     // TODO: check metrics, etc.
   }
 
@@ -189,21 +181,11 @@ public class IntegrationTestBase {
   protected ApplicationManager deployApplication(Id.Namespace namespace,
                                                  Class<? extends Application> applicationClz,
                                                  File...bundleEmbeddedJars) throws IOException {
-    return createTestManager(namespace).deployApplication(namespace, applicationClz, bundleEmbeddedJars);
-  }
-
-  protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
-                                                 File...bundleEmbeddedJars) throws IOException {
-    return deployApplication(getClientConfig().getNamespace(), applicationClz, bundleEmbeddedJars);
-  }
-
-  protected ApplicationManager deployApplication(Id.Namespace namespace,
-                                                 Class<? extends Application> applicationClz) throws IOException {
-    return deployApplication(namespace, applicationClz, new File[0]);
+    return getTestManager().deployApplication(namespace, applicationClz, bundleEmbeddedJars);
   }
 
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz) throws IOException {
-    return deployApplication(getClientConfig().getNamespace(), applicationClz, new File[0]);
+    return deployApplication(Id.Namespace.DEFAULT, applicationClz, new File[0]);
   }
 
   private boolean isUserDataset(DatasetSpecificationSummary specification) {
@@ -211,42 +193,42 @@ public class IntegrationTestBase {
     return !dsNamespace.contains(specification.getName(), Constants.SYSTEM_NAMESPACE);
   }
 
-  private void assertNoUserDatasets() throws Exception {
+  private void assertNoUserDatasets(Id.Namespace namespace) throws Exception {
     DatasetClient datasetClient = getDatasetClient();
-    List<DatasetSpecificationSummary> datasets = datasetClient.list();
+    List<DatasetSpecificationSummary> datasets = datasetClient.list(namespace);
 
     Iterable<DatasetSpecificationSummary> filteredDatasts = Iterables.filter(
       datasets, new Predicate<DatasetSpecificationSummary>() {
-      @Override
-      public boolean apply(@Nullable DatasetSpecificationSummary input) {
-        if (input == null) {
-          return true;
-        }
+        @Override
+        public boolean apply(@Nullable DatasetSpecificationSummary input) {
+          if (input == null) {
+            return true;
+          }
 
-        return isUserDataset(input);
-      }
+          return isUserDataset(input);
+        }
     });
 
     Iterable<String> filteredDatasetsNames = Iterables.transform(
       filteredDatasts, new Function<DatasetSpecificationSummary, String>() {
-      @Nullable
-      @Override
-      public String apply(@Nullable DatasetSpecificationSummary input) {
-        if (input == null) {
-          throw new IllegalStateException();
-        }
+        @Nullable
+        @Override
+        public String apply(@Nullable DatasetSpecificationSummary input) {
+          if (input == null) {
+            throw new IllegalStateException();
+          }
 
-        return input.getName();
-      }
+          return input.getName();
+        }
     });
 
     Assert.assertFalse("Must have no user datasets, but found the following user datasets: "
                          + Joiner.on(", ").join(filteredDatasetsNames), filteredDatasts.iterator().hasNext());
   }
 
-  private void assertNoApps() throws Exception {
+  private void assertNoApps(Id.Namespace namespace) throws Exception {
     ApplicationClient applicationClient = getApplicationClient();
-    List<ApplicationRecord> applicationRecords = applicationClient.list();
+    List<ApplicationRecord> applicationRecords = applicationClient.list(namespace);
     List<String> applicationIds = Lists.newArrayList();
     for (ApplicationRecord applicationRecord : applicationRecords) {
       applicationIds.add(applicationRecord.getName());
@@ -256,8 +238,8 @@ public class IntegrationTestBase {
                         + Joiner.on(", ").join(applicationIds), applicationRecords.isEmpty());
   }
 
-  private void assertNoStreams() throws Exception {
-    List<StreamDetail> streams = getStreamClient().list();
+  private void assertNoStreams(Id.Namespace namespace) throws Exception {
+    List<StreamDetail> streams = getStreamClient().list(namespace);
     List<String> streamNames = Lists.newArrayList();
     for (StreamDetail stream : streams) {
       streamNames.add(stream.getName());
@@ -285,8 +267,7 @@ public class IntegrationTestBase {
     return result;
   }
 
-  private void assertFlowletInstances(ProgramClient programClient, String appId, String flowId, String flowletId,
-                                        int numInstances)
+  private void assertFlowletInstances(ProgramClient programClient, Id.Flow.Flowlet flowletId, int numInstances)
     throws IOException, NotFoundException, UnauthorizedException {
 
     // TODO: replace with programClient.waitForFlowletInstances()
@@ -294,36 +275,33 @@ public class IntegrationTestBase {
     int numTries = 0;
     int maxTries = 5;
     do {
-      actualInstances = programClient.getFlowletInstances(appId, flowId, flowletId);
+      actualInstances = programClient.getFlowletInstances(flowletId);
       numTries++;
     } while (actualInstances != numInstances && numTries <= maxTries);
     Assert.assertEquals(numInstances, actualInstances);
   }
 
-  private void assertProgramRunning(ProgramClient programClient, String appId, ProgramType programType,
-                                      String programId)
+  private void assertProgramRunning(ProgramClient programClient, Id.Program programId)
     throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
 
-    assertProgramStatus(programClient, appId, programType, programId, "RUNNING");
+    assertProgramStatus(programClient, programId, "RUNNING");
   }
 
-  private void assertProgramStopped(ProgramClient programClient, String appId, ProgramType programType,
-                                      String programId)
+  private void assertProgramStopped(ProgramClient programClient, Id.Program programId)
     throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
 
-    assertProgramStatus(programClient, appId, programType, programId, "STOPPED");
+    assertProgramStatus(programClient, programId, "STOPPED");
   }
 
-  private void assertProgramStatus(ProgramClient programClient, String appId, ProgramType programType,
-                                     String programId, String programStatus)
+  private void assertProgramStatus(ProgramClient programClient, Id.Program programId, String programStatus)
     throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
 
     try {
-      programClient.waitForStatus(appId, programType, programId, programStatus, 30, TimeUnit.SECONDS);
+      programClient.waitForStatus(programId, programStatus, 30, TimeUnit.SECONDS);
     } catch (TimeoutException e) {
       // NO-OP
     }
 
-    Assert.assertEquals(programStatus, programClient.getStatus(appId, programType, programId));
+    Assert.assertEquals(programStatus, programClient.getStatus(programId));
   }
 }

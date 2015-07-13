@@ -17,7 +17,6 @@
       ui-sref-active="active"
       ng-repeat="dashboard in dashboards | orderBy:$index">
     <a ui-sref="dashboard.user({tab: $index})"
-        ui-sref-opts="{reload: true}"
         role="tab"
         ng-click="activeTabClick($event, $index)"
         tooltip="{{dashboard.title}}"

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.ApplicationNotFoundException;
@@ -38,6 +39,7 @@ import java.util.Map;
 /**
  * Provides ways to get/set Preferences.
  */
+@Beta
 public class PreferencesClient {
 
   private static final Gson GSON = new Gson();

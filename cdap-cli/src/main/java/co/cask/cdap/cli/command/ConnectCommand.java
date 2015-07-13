@@ -17,6 +17,7 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.CLIConfig;
+import co.cask.cdap.cli.CLIConnectionConfig;
 import co.cask.cdap.cli.LaunchOptions;
 import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.config.ConnectionConfig;
@@ -46,9 +47,9 @@ public class ConnectCommand implements Command {
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
     String instanceURI = arguments.get("cdap-instance-uri");
-    ConnectionConfig connectionInfo = instanceURIParser.parse(instanceURI);
+    CLIConnectionConfig connection = instanceURIParser.parse(instanceURI);
     try {
-      cliConfig.tryConnect(connectionInfo, output, debug);
+      cliConfig.tryConnect(connection, output, debug);
     } catch (Exception e) {
       output.println("Failed to connect to " + instanceURI + ": " + e.getMessage());
       if (debug) {

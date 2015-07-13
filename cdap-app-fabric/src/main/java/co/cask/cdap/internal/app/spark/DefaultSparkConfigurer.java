@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.spark;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
@@ -44,6 +45,8 @@ public final class DefaultSparkConfigurer implements SparkConfigurer {
   private String description;
   private String mainClassName;
   private Map<String, String> properties;
+  private Resources driverResources;
+  private Resources executorResources;
 
   public DefaultSparkConfigurer(Spark spark, ApplicationConfigurer appConfigurer) {
     this.spark = spark;
@@ -74,10 +77,21 @@ public final class DefaultSparkConfigurer implements SparkConfigurer {
     this.properties = ImmutableMap.copyOf(properties);
   }
 
+  @Override
+  public void setDriverResources(Resources resources) {
+    this.driverResources = resources;
+  }
+
+  @Override
+  public void setExecutorResources(Resources resources) {
+    this.executorResources = resources;
+  }
+
   public SparkSpecification createSpecification() {
     // Grab all @Property fields
     Reflections.visit(spark, TypeToken.of(spark.getClass()), new PropertyFieldExtractor(properties));
-    return new SparkSpecification(spark.getClass().getName(), name, description, mainClassName, properties);
+    return new SparkSpecification(spark.getClass().getName(), name, description,
+                                  mainClassName, properties, driverResources, executorResources);
   }
 
   @Override

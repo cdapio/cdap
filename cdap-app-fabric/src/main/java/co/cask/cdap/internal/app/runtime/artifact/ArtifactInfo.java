@@ -17,8 +17,9 @@
 package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.proto.Id;
-import com.google.common.base.Objects;
 import org.apache.twill.filesystem.Location;
+
+import java.util.Objects;
 
 /**
  * Information about the artifact itself, but nothing about the contents of the artifact.
@@ -51,11 +52,11 @@ public class ArtifactInfo {
 
     ArtifactInfo that = (ArtifactInfo) o;
 
-    return Objects.equal(id, that.id) && Objects.equal(location, that.location);
+    return Objects.equals(id, that.id) && Objects.equals(location, that.location);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(id, location);
+    return Objects.hash(id, location);
   }
 }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.spark;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.data.stream.Stream;
@@ -98,6 +99,7 @@ public abstract class AbstractSpark implements Spark {
   }
 
   /**
+<<<<<<< HEAD
    * @see SparkConfigurer#addStream(Stream)
    */
   protected final void addStream(Stream stream) {
@@ -161,6 +163,20 @@ public abstract class AbstractSpark implements Spark {
   protected final void createDataset(String datasetName,
                                      Class<? extends Dataset> datasetClass) {
     configurer.createDataset(datasetName, datasetClass, DatasetProperties.EMPTY);
+  }
+
+  /**
+   * Sets the resources requirement for the Spark driver process.
+   */
+  protected final void setDriverResources(Resources resources) {
+    configurer.setDriverResources(resources);
+  }
+
+  /**
+   * Sets the resources requirement for the Spark executor processes.
+   */
+  protected final void setExecutorResources(Resources resources) {
+    configurer.setExecutorResources(resources);
   }
 
   @Override

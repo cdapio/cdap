@@ -64,6 +64,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.distributed.TransactionService;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -104,15 +105,17 @@ public class UpgradeTool {
 
   private static final Logger LOG = LoggerFactory.getLogger(UpgradeTool.class);
 
+  @VisibleForTesting
+  final Injector injector;
+
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final TransactionService txService;
   private final ZKClientService zkClientService;
-  private final Injector injector;
   private final NamespacedLocationFactory namespacedLocationFactory;
 
   private Store store;
-  QuartzScheduler qs;
+  private QuartzScheduler qs;
   private final AdapterService adapterService;
   private final DatasetFramework dsFramework;
   private DatasetBasedTimeScheduleStore datasetBasedTimeScheduleStore;
@@ -123,7 +126,7 @@ public class UpgradeTool {
   private enum Action {
     UPGRADE("Upgrades CDAP to 3.0\n" +
               "  The upgrade tool upgrades the following: \n" +
-              "  1. User Datasets (Upgrades only the coprocessor jars)\n" +
+              "  1. User Datasets (Upgrades the coprocessor jars for tables, and the base paths for file sets)\n" +
               "  2. System Datasets\n" +
               "  3. StreamConversionAdapter\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),

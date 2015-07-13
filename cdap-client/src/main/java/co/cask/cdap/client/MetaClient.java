@@ -16,6 +16,7 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.UnauthorizedException;
@@ -35,6 +36,7 @@ import javax.inject.Inject;
 /**
  * Provides ways to interact with CDAP.
  */
+@Beta
 public class MetaClient {
 
   private final RESTClient restClient;

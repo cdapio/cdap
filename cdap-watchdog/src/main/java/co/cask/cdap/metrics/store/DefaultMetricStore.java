@@ -33,6 +33,7 @@ import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.MetricValues;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.cube.Aggregation;
@@ -60,9 +61,11 @@ public class DefaultMetricStore implements MetricStore {
   public static final int TOTALS_RESOLUTION = Integer.MAX_VALUE;
   private final int resolutions[];
   private final Supplier<Cube> cube;
+  private MetricsContext metricsContext;
 
   @Inject
   public DefaultMetricStore(final MetricDatasetFactory dsFactory) {
+    // 1 sec, 1 min, 1 hour and "all time totals"
     this(dsFactory, new int[] {1, 60, 3600, TOTALS_RESOLUTION});
   }
 
@@ -76,13 +79,20 @@ public class DefaultMetricStore implements MetricStore {
         return dsFactory.get(resolution);
       }
     };
+
     this.cube = Suppliers.memoize(new Supplier<Cube>() {
       @Override
       public Cube get() {
-        // 1 sec, 1 min, 1 hour and "all time totals"
-        return new DefaultCube(resolutions, factTableSupplier, createAggregations());
+        DefaultCube cube = new DefaultCube(resolutions, factTableSupplier, createAggregations());
+        cube.setMetricsCollector(metricsContext);
+        return cube;
       }
     });
+  }
+
+  @Override
+  public void setMetricsContext(MetricsContext metricsContext) {
+    this.metricsContext = metricsContext;
   }
 
   private static Map<String, Aggregation> createAggregations() {
@@ -118,6 +128,9 @@ public class DefaultMetricStore implements MetricStore {
                        Constants.Metrics.Tag.FLOW)));
     // queue
     aggs.put("flow.queue", new DefaultAggregation(
+      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
+                       Constants.Metrics.Tag.FLOW, Constants.Metrics.Tag.CONSUMER,
+                       Constants.Metrics.Tag.PRODUCER, Constants.Metrics.Tag.FLOWLET_QUEUE),
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.FLOW, Constants.Metrics.Tag.CONSUMER,
                        Constants.Metrics.Tag.PRODUCER, Constants.Metrics.Tag.FLOWLET_QUEUE)));

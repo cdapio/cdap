@@ -16,10 +16,12 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.client.SuppliedAddressExploreClient;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -28,6 +30,7 @@ import javax.inject.Inject;
 /**
  * Provides ways to query CDAP Datasets.
  */
+@Beta
 public class QueryClient {
 
   private final ClientConfig config;
@@ -73,8 +76,8 @@ public class QueryClient {
    *         of the query, when it is done. The {@link ListenableFuture#get()} method will throw exceptions if a
    *         network error occurs, if the query is malformed, or if the query is cancelled.
    */
-  public ListenableFuture<ExploreExecutionResult> execute(String query) {
-    return exploreClient.submit(config.getConnectionConfig().getNamespace(), query);
+  public ListenableFuture<ExploreExecutionResult> execute(Id.Namespace namespace, String query) {
+    return exploreClient.submit(namespace, query);
   }
 
 }

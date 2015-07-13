@@ -18,7 +18,10 @@ package co.cask.cdap.api.spark;
 
 import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.ProgramConfigurer;
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Beta;
+
+import java.util.Map;
 
 /**
  * Configurer for configuring {@link Spark}.
@@ -33,4 +36,22 @@ public interface SparkConfigurer extends ProgramConfigurer, DatasetConfigurer {
    * @param className the fully qualified name of class containing the main method
    */
   void setMainClassName(String className);
+
+  /**
+   * Sets a set of properties that will be available through the {@link SparkSpecification#getProperties()}
+   * at runtime.
+   *
+   * @param properties the properties to set
+   */
+  void setProperties(Map<String, String> properties);
+
+  /**
+   * Sets the resources requirement for the Spark driver process.
+   */
+  void setDriverResources(Resources resources);
+
+  /**
+   * Sets the resources requirement for the Spark executor processes.
+   */
+  void setExecutorResources(Resources resources);
 }
