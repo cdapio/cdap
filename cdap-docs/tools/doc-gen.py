@@ -54,7 +54,6 @@ from optparse import OptionParser
 import os
 import subprocess
 import sys
-import tempfile
 
 
 def parse_options():

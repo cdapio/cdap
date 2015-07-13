@@ -21,6 +21,7 @@ import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetCreationSpec;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.AbstractFlow;
@@ -41,7 +42,6 @@ import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
 import co.cask.cdap.internal.app.runtime.flow.DefaultFlowConfigurer;
@@ -155,19 +155,26 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   @Override
   public void addMapReduce(MapReduce mapReduce) {
     Preconditions.checkArgument(mapReduce != null, "MapReduce cannot be null.");
-    DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce, this);
+    DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce);
     mapReduce.configure(configurer);
 
     MapReduceSpecification spec = configurer.createSpecification();
+    streams.putAll(spec.getStreams());
+    dataSetModules.putAll(spec.getDataSetModules());
+    dataSetInstances.putAll(spec.getDataSetInstances());
     mapReduces.put(spec.getName(), spec);
   }
 
   @Override
   public void addSpark(Spark spark) {
     Preconditions.checkArgument(spark != null, "Spark cannot be null.");
-    DefaultSparkConfigurer configurer = new DefaultSparkConfigurer(spark, this);
+    DefaultSparkConfigurer configurer = new DefaultSparkConfigurer(spark);
     spark.configure(configurer);
+
     SparkSpecification spec = configurer.createSpecification();
+    streams.putAll(spec.getStreams());
+    dataSetModules.putAll(spec.getDataSetModules());
+    dataSetInstances.putAll(spec.getDataSetInstances());
     sparks.put(spec.getName(), spec);
   }
 
@@ -182,7 +189,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
 
   public void addService(Service service) {
     Preconditions.checkArgument(service != null, "Service cannot be null.");
-    DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service, this);
+    DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service);
     service.configure(configurer);
 
     ServiceSpecification spec = configurer.createSpecification();
@@ -192,9 +199,12 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   @Override
   public void addWorker(Worker worker) {
     Preconditions.checkArgument(worker != null, "Worker cannot be null.");
-    DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker, this);
+    DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker);
     worker.configure(configurer);
     WorkerSpecification spec = configurer.createSpecification();
+    streams.putAll(spec.getStreams());
+    dataSetModules.putAll(spec.getDataSetModules());
+    dataSetInstances.putAll(spec.getDataSetInstances());
     workers.put(spec.getName(), spec);
   }
 

@@ -20,6 +20,8 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.common.PropertyProvider;
+import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.dataset.DatasetCreationSpec;
 
 import java.util.Collections;
 import java.util.Map;
@@ -38,10 +40,15 @@ public final class SparkSpecification implements ProgramSpecification, PropertyP
   private final Map<String, String> properties;
   private final Resources driverResources;
   private final Resources executorResources;
+  private final Map<String, StreamSpecification> streams;
+  private final Map<String, String> dataSetModules;
+  private final Map<String, DatasetCreationSpec> dataSetInstances;
 
   public SparkSpecification(String className, String name, String description,
                             String mainClassName, Map<String, String> properties,
-                            @Nullable Resources driverResources, @Nullable Resources executorResources) {
+                            @Nullable Resources driverResources, @Nullable Resources executorResources,
+                            Map<String, StreamSpecification> streams, Map<String, String> dataSetModules,
+                            Map<String, DatasetCreationSpec> dataSetInstances) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -49,6 +56,9 @@ public final class SparkSpecification implements ProgramSpecification, PropertyP
     this.properties = Collections.unmodifiableMap(properties);
     this.driverResources = driverResources;
     this.executorResources = executorResources;
+    this.streams = Collections.unmodifiableMap(streams);
+    this.dataSetInstances = Collections.unmodifiableMap(dataSetInstances);
+    this.dataSetModules = Collections.unmodifiableMap(dataSetModules);
   }
 
   @Override
@@ -94,5 +104,17 @@ public final class SparkSpecification implements ProgramSpecification, PropertyP
   @Nullable
   public Resources getExecutorResources() {
     return executorResources;
+  }
+
+  public Map<String, StreamSpecification> getStreams() {
+    return streams;
+  }
+
+  public Map<String, String> getDataSetModules() {
+    return dataSetModules;
+  }
+
+  public Map<String, DatasetCreationSpec> getDataSetInstances() {
+    return dataSetInstances;
   }
 }

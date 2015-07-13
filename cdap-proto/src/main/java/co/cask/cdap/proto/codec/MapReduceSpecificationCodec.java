@@ -17,8 +17,11 @@
 package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.dataset.DatasetCreationSpec;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.internal.batch.DefaultMapReduceSpecification;
+import com.google.common.collect.Maps;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -56,6 +59,9 @@ public final class MapReduceSpecificationCodec extends AbstractSpecificationCode
     }
     jsonObj.add("datasets", serializeSet(src.getDataSets(), context, String.class));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
+    jsonObj.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
+    jsonObj.add("dataSetModules", serializeMap(src.getDataSetModules(), context, String.class));
+    jsonObj.add("dataSetInstances", serializeMap(src.getDataSetInstances(), context, DatasetCreationSpec.class));
 
     return jsonObj;
   }
@@ -78,8 +84,22 @@ public final class MapReduceSpecificationCodec extends AbstractSpecificationCode
     Set<String> dataSets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
 
+    JsonElement streamElement = jsonObj.get("streams");
+    JsonElement dataSetModElement = jsonObj.get("dataSetModules");
+    JsonElement dataSetInstElement = jsonObj.get("dataSetInstances");
+
+    Map<String, StreamSpecification> streams = (streamElement == null) ?
+      Maps.<String, StreamSpecification>newHashMap() : deserializeMap(streamElement, context,
+                                                                      StreamSpecification.class);
+    Map<String, String> dataSetModules = (dataSetModElement == null) ? Maps.<String, String>newHashMap() :
+      deserializeMap(dataSetModElement, context, String.class);
+    Map<String, DatasetCreationSpec> dataSetInstances = (dataSetInstElement == null) ?
+      Maps.<String, DatasetCreationSpec>newHashMap() : deserializeMap(dataSetInstElement, context,
+                                                                      DatasetCreationSpec.class);
+
     return new DefaultMapReduceSpecification(className, name, description, inputDataSet, outputDataSet,
-                                             dataSets, properties, mapperResources, reducerResources);
+                                             dataSets, properties, mapperResources, reducerResources, streams,
+                                             dataSetModules, dataSetInstances);
   }
 
   /**

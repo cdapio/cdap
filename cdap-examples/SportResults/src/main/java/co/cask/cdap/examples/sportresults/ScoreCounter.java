@@ -26,7 +26,6 @@ import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
-import com.google.gson.Gson;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;

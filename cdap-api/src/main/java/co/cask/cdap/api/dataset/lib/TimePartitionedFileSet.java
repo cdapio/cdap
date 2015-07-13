@@ -19,7 +19,6 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.DataSetException;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;

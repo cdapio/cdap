@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceConfigurer;
@@ -47,7 +46,6 @@ import java.util.Map;
  */
 public class DefaultServiceConfigurer implements ServiceConfigurer {
   private final String className;
-  private final ApplicationConfigurer appConfigurer;
   private String name;
   private String description;
   private List<HttpServiceHandler> handlers;
@@ -58,14 +56,13 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   /**
    * Create an instance of {@link DefaultServiceConfigurer}
    */
-  public DefaultServiceConfigurer(Service service, ApplicationConfigurer appConfigurer) {
+  public DefaultServiceConfigurer(Service service) {
     this.className = service.getClass().getName();
     this.name = service.getClass().getSimpleName();
     this.description = "";
     this.handlers = Lists.newArrayList();
     this.resources = new Resources();
     this.instances = 1;
-    this.appConfigurer = appConfigurer;
   }
 
   @Override
@@ -108,7 +105,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
     verifyHandlers(handlers);
     Map<String, HttpServiceHandlerSpecification> handleSpecs = Maps.newHashMap();
     for (HttpServiceHandler handler : handlers) {
-      DefaultHttpServiceHandlerConfigurer configurer = new DefaultHttpServiceHandlerConfigurer(handler, appConfigurer);
+      DefaultHttpServiceHandlerConfigurer configurer = new DefaultHttpServiceHandlerConfigurer(handler);
       handler.configure(configurer);
       HttpServiceHandlerSpecification spec = configurer.createSpecification();
       Preconditions.checkArgument(!handleSpecs.containsKey(spec.getName()),

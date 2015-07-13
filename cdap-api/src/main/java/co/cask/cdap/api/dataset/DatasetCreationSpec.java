@@ -14,9 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data.dataset;
-
-import co.cask.cdap.api.dataset.DatasetProperties;
+package co.cask.cdap.api.dataset;
 
 /**
  * Information for creating dataset instance.

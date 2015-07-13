@@ -282,8 +282,7 @@ def process_cdap_ui(options):
     missing_libs_dict = {}
     
     import json
-    from pprint import pprint
-    
+
     for type in CDAP_UI_SOURCES.keys():
         
         source = CDAP_UI_SOURCES[type][0]

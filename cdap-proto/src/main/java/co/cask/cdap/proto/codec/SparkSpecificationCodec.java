@@ -17,7 +17,10 @@
 package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.dataset.DatasetCreationSpec;
 import co.cask.cdap.api.spark.SparkSpecification;
+import com.google.common.collect.Maps;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -50,6 +53,9 @@ public final class SparkSpecificationCodec extends AbstractSpecificationCodec<Sp
     if (src.getExecutorResources() != null) {
       jsonObj.add("executorResources", context.serialize(src.getExecutorResources()));
     }
+    jsonObj.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
+    jsonObj.add("dataSetModules", serializeMap(src.getDataSetModules(), context, String.class));
+    jsonObj.add("dataSetInstances", serializeMap(src.getDataSetInstances(), context, DatasetCreationSpec.class));
 
     return jsonObj;
   }
@@ -68,8 +74,22 @@ public final class SparkSpecificationCodec extends AbstractSpecificationCodec<Sp
     Resources driverResources = deserializeResources(jsonObj, "driver", context);
     Resources executorResources = deserializeResources(jsonObj, "executor", context);
 
+    JsonElement streamElement = jsonObj.get("streams");
+    JsonElement dataSetModElement = jsonObj.get("dataSetModules");
+    JsonElement dataSetInstElement = jsonObj.get("dataSetInstances");
+
+    Map<String, StreamSpecification> streams = (streamElement == null) ?
+      Maps.<String, StreamSpecification>newHashMap() : deserializeMap(streamElement, context,
+                                                                      StreamSpecification.class);
+    Map<String, String> dataSetModules = (dataSetModElement == null) ? Maps.<String, String>newHashMap() :
+      deserializeMap(dataSetModElement, context, String.class);
+    Map<String, DatasetCreationSpec> dataSetInstances = (dataSetInstElement == null) ?
+      Maps.<String, DatasetCreationSpec>newHashMap() : deserializeMap(dataSetInstElement, context,
+                                                                      DatasetCreationSpec.class);
+
     return new SparkSpecification(className, name, description, mainClassName,
-                                  properties, driverResources, executorResources);
+                                  properties, driverResources, executorResources,
+                                  streams, dataSetModules, dataSetInstances);
   }
 
   /**

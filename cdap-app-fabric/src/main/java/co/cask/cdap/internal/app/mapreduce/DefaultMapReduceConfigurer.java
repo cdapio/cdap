@@ -17,14 +17,10 @@
 package co.cask.cdap.internal.app.mapreduce;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.app.ApplicationConfigurer;
-import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceConfigurer;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.internal.app.program.ProgramDatasetConfigurer;
 import co.cask.cdap.internal.batch.DefaultMapReduceSpecification;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -35,10 +31,9 @@ import java.util.Set;
 /**
  * Default implementation of {@link MapReduceConfigurer}.
  */
-public final class DefaultMapReduceConfigurer implements MapReduceConfigurer {
+public final class DefaultMapReduceConfigurer extends ProgramDatasetConfigurer implements MapReduceConfigurer {
 
   private final String className;
-  private final ApplicationConfigurer appConfigurer;
   private String name;
   private String description;
   private Map<String, String> properties;
@@ -48,12 +43,11 @@ public final class DefaultMapReduceConfigurer implements MapReduceConfigurer {
   private Resources mapperResources;
   private Resources reducerResources;
 
-  public DefaultMapReduceConfigurer(MapReduce mapReduce, ApplicationConfigurer appConfigurer) {
+  public DefaultMapReduceConfigurer(MapReduce mapReduce) {
     this.className = mapReduce.getClass().getName();
     this.name = mapReduce.getClass().getSimpleName();
     this.description = "";
     this.datasets = ImmutableSet.of();
-    this.appConfigurer = appConfigurer;
   }
 
   @Override
@@ -98,31 +92,7 @@ public final class DefaultMapReduceConfigurer implements MapReduceConfigurer {
 
   public MapReduceSpecification createSpecification() {
     return new DefaultMapReduceSpecification(className, name, description, inputDataset, outputDataset, datasets,
-                                             properties, mapperResources, reducerResources);
-  }
-
-  @Override
-  public void addStream(Stream stream) {
-    appConfigurer.addStream(stream);
-  }
-
-  @Override
-  public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
-    appConfigurer.addDatasetModule(moduleName, moduleClass);
-  }
-
-  @Override
-  public void addDatasetType(Class<? extends Dataset> datasetClass) {
-    appConfigurer.addDatasetType(datasetClass);
-  }
-
-  @Override
-  public void createDataset(String datasetName, String typeName, DatasetProperties properties) {
-    appConfigurer.createDataset(datasetName, typeName, properties);
-  }
-
-  @Override
-  public void createDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props) {
-    appConfigurer.createDataset(datasetName, datasetClass, props);
+                                             properties, mapperResources, reducerResources, streams, dataSetModules,
+                                             dataSetInstances);
   }
 }
