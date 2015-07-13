@@ -10,6 +10,20 @@ body.state-overview {
 
     .panel-body {
       padding: 0 0 0 20px;
+      h2 {
+        margin-top: 0;
+        > span {
+          display: inline-block;
+          font-size: 24px;
+          font-weight: 500;
+          letter-spacing: 1px;
+          padding-right: 10px;
+        }
+      }
+      h3 {
+        font-weight: 500;
+        margin: 5px auto 2px;
+      }
     }
     img {
       max-width: 120px;
@@ -26,20 +40,6 @@ body.state-overview {
       right: 10px;
       z-index: 10;
     }
-    h2 {
-      margin-top: 0;
-      > span {
-        display: inline-block !important;
-        font-size: 24px;
-        font-weight: 500;
-        letter-spacing: 1px;
-        padding-right: 10px;
-      }
-    }
-    h3 {
-      font-weight: 500;
-      margin: 5px auto 2px;
-    }
     small {
       display: inline-block;
       font-size: 13px;
@@ -51,11 +51,24 @@ body.state-overview {
     }
   }
   section {
-    padding: 0 0 20px;
 
     &.system-health {
       margin: 20px 0;
-      padding: 15px;
+      padding: 0;
+      position: relative;
+      div.divider {
+        @media (min-width: @screen-lg-min) {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 38.2%;
+          background-color: @body-bg;
+          width: 2px;
+        }
+        + div {
+          padding: 15px;
+        }
+      }
       h2 {
         margin-top: 0;
       }
@@ -81,6 +94,11 @@ body.state-overview {
         }
         .col-xs-8 {
           padding-left: 0;
+          @media (max-width: @screen-xs-max) {
+            p {
+              font-size: 10px;
+            }
+          }
         }
         > div {
           height: 90px;
@@ -93,6 +111,7 @@ body.state-overview {
           @media (min-width: @screen-lg-min) {
             position: relative;
             top: 30px;
+            left: 15px;
             margin-left: 28px;
           }
         }
@@ -122,9 +141,9 @@ body.state-overview {
           text-align: center;
         }
         @media (min-width: @screen-lg-min) {
-          text-align: right;
+          text-align: center;
           p.text-center {
-            padding-left: 86px;
+            padding-left: 55px;
           }
         }
         .health-widget {
@@ -142,15 +161,13 @@ body.state-overview {
             max-width: 280px;
             margin: 0 auto;
           }
-          &:last-of-type {
-            @media (min-width: @screen-lg-min) {
-              margin-right: 28px;
-            }
-          }
         }
         .health-widgets + .health-widget {
           @media (min-width: @screen-sm-min) {
             margin-right: 28px;
+          }
+          @media (min-width: @screen-lg-min) {
+            margin-left: 56px;
           }
         }
         .warning-alert {
@@ -172,6 +189,7 @@ body.state-overview {
           }
           span {
             height: 16px;
+            line-height: 16px;
             min-width: 25px;
             display: inline-block;
             font-weight: 400;
@@ -190,6 +208,7 @@ body.state-overview {
       }
     }
     &.data-apps {
+      padding: 0 0 20px;
       h3 {
         margin-bottom: 18px;
       }
@@ -279,7 +298,7 @@ body.state-overview {
         .c3 {
           svg {
             border: 1px solid rgba(0,0,0,0.1);
-            background-color: rgb(42, 46, 55);
+            background-color: @cdap-header;
           }
         }
         .col-lg-4 {
@@ -317,19 +336,7 @@ body.state-overview {
             color: #5F6674;
           }
         }
-        .data-list .list-group-item {
-          background-color: @cdap-bluegray;
-          a, p {
-            color: white;
-          }
-          &:hover, &:focus {
-            background-color: white;
-            a, p {
-              color: @cdap-bluegray;
-            }
-          }
-        }
-        .apps-list .list-group-item {
+        li.list-group-item {
           background-color: white;
           a, p {
             color: @cdap-bluegray;
