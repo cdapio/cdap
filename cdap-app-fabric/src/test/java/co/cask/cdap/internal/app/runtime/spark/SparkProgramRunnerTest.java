@@ -60,6 +60,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
+import org.apache.hadoop.mapred.FileAlreadyExistsException;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.junit.After;
@@ -80,6 +81,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *
@@ -305,6 +307,53 @@ public class SparkProgramRunnerTest {
       });
   }
 
+  @Test
+  public void testSparkWithCustomFileSet() throws Exception {
+    testSparkWithCustomFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.CharCountSpecification.class);
+  }
+
+  @Test
+  public void testSparkScalaWithCustomFileSet() throws Exception {
+    testSparkWithCustomFileSet(ScalaSparkAppUsingFileSet.class, ScalaSparkAppUsingFileSet.CharCountSpecification.class);
+  }
+
+  private void testSparkWithCustomFileSet(Class<?> appClass, Class<?> programClass) throws Exception {
+    final ApplicationWithPrograms app =
+      AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
+
+    final SparkAppUsingFileSet.MyFileSet myfileset = datasetInstantiator.getDataset("myfs");
+    final FileSet fileset = myfileset.getEmbeddedFileSet();
+    Location location = fileset.getLocation("nn");
+    prepareFileInput(location);
+
+    Map<String, String> inputArgs = new HashMap<>();
+    FileSetArguments.setInputPath(inputArgs, "nn");
+    Map<String, String> outputArgs = new HashMap<>();
+    FileSetArguments.setOutputPath(inputArgs, "xx");
+    Map<String, String> args = new HashMap<>();
+    args.putAll(RuntimeArguments.addScope(Scope.DATASET, "myfs", inputArgs));
+    args.putAll(RuntimeArguments.addScope(Scope.DATASET, "myfs", outputArgs));
+    args.put("input", "myfs");
+    args.put("output", "myfs");
+
+    runProgram(app, programClass, args);
+
+    validateFileOutput(fileset.getLocation("xx"));
+
+    // verify that onSuccess() was called and onFailure() was not
+    Assert.assertTrue(myfileset.getSuccessLocation().exists());
+    Assert.assertFalse(myfileset.getFailureLocation().exists());
+    myfileset.getSuccessLocation().delete();
+
+    // run the program again. It should fail due to existing output.
+    expectProgramError(app, programClass, args, FileAlreadyExistsException.class);
+
+    // Then we can verify that onFailure() was called.
+    Assert.assertFalse(myfileset.getSuccessLocation().exists());
+    Assert.assertTrue(myfileset.getFailureLocation().exists());
+    myfileset.getSuccessLocation().delete();
+  }
+
   private void validateFileOutput(Location location) throws Exception {
     Assert.assertTrue(location.isDirectory());
     for (Location child : location.list()) {
@@ -371,10 +420,19 @@ public class SparkProgramRunnerTest {
 
   private void runProgram(ApplicationWithPrograms app, Class<?> programClass, Map<String, String> args)
     throws Exception {
-    waitForCompletion(submit(app, programClass, args));
+    Assert.assertNull(waitForCompletion(submit(app, programClass, args)));
   }
 
-  private void waitForCompletion(ProgramController controller) throws InterruptedException {
+  private void expectProgramError(ApplicationWithPrograms app, Class<?> programClass, Map<String, String> args,
+                                  Class<? extends Throwable> expected)
+    throws Exception {
+    //noinspection ThrowableResultOfMethodCallIgnored
+    Throwable error = waitForCompletion(submit(app, programClass, args));
+    Assert.assertTrue(expected.isAssignableFrom(error.getClass()));
+  }
+
+  private Throwable waitForCompletion(ProgramController controller) throws InterruptedException {
+    final AtomicReference<Throwable> errorCause = new AtomicReference<>();
     final CountDownLatch completion = new CountDownLatch(1);
     controller.addListener(new AbstractListener() {
       @Override
@@ -385,10 +443,12 @@ public class SparkProgramRunnerTest {
       @Override
       public void error(Throwable cause) {
         completion.countDown();
+        errorCause.set(cause);
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
     completion.await(10, TimeUnit.MINUTES);
+    return errorCause.get();
   }
 
   private ProgramController submit(ApplicationWithPrograms app,

@@ -17,12 +17,19 @@
 package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
+import co.cask.cdap.api.data.batch.InputFormatProvider;
+import co.cask.cdap.api.data.batch.OutputFormatProvider;
+import co.cask.cdap.api.dataset.DataSetException;
+import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
+import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
@@ -38,10 +45,12 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.function.PairFunction;
+import org.apache.twill.filesystem.Location;
 import scala.Tuple2;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A dummy app with spark program which counts the characters in a string
@@ -53,16 +62,20 @@ public class SparkAppUsingFileSet extends AbstractApplication {
       setName("SparkAppUsingFileSet");
       setDescription("Application with Spark program using fileset input/output");
       createDataset("fs", FileSet.class, FileSetProperties.builder()
-        .setInputFormat(MyTextFormat.class)
+        .setInputFormat(MyTextInputFormat.class)
         .setOutputFormat(TextOutputFormat.class)
         .setOutputProperty(TextOutputFormat.SEPERATOR, ":").build());
       createDataset("pfs", PartitionedFileSet.class, PartitionedFileSetProperties.builder()
         .setPartitioning(Partitioning.builder().addStringField("x").build())
-        .setInputFormat(MyTextFormat.class)
+        .setInputFormat(MyTextInputFormat.class)
         .setOutputFormat(TextOutputFormat.class)
         .setOutputProperty(TextOutputFormat.SEPERATOR, ":").build());
       createDataset("tpfs", TimePartitionedFileSet.class, FileSetProperties.builder()
-        .setInputFormat(MyTextFormat.class)
+        .setInputFormat(MyTextInputFormat.class)
+        .setOutputFormat(TextOutputFormat.class)
+        .setOutputProperty(TextOutputFormat.SEPERATOR, ":").build());
+      createDataset("myfs", MyFileSet.class, FileSetProperties.builder()
+        .setInputFormat(MyTextInputFormat.class)
         .setOutputFormat(TextOutputFormat.class)
         .setOutputProperty(TextOutputFormat.SEPERATOR, ":").build());
       addSpark(new CharCountSpecification());
@@ -77,6 +90,73 @@ public class SparkAppUsingFileSet extends AbstractApplication {
       setName("SparkCharCountProgram");
       setDescription("Use Objectstore dataset as input job");
       setMainClass(CharCountProgram.class);
+    }
+  }
+
+  /**
+   * A custom dataset embedding a fileset. It delegates all operations to the embedded fileset, but it
+   * overrides the DatasetOutputCommitter to create a file names "success" or "failure", which can be
+   * validated by the test case.
+   */
+  public static class MyFileSet extends AbstractDataset
+    implements InputFormatProvider, OutputFormatProvider, DatasetOutputCommitter {
+
+    private final FileSet delegate;
+    private final Location statusLocation = null;
+
+    public MyFileSet(DatasetSpecification spec, @EmbeddedDataset("files") FileSet embedded) {
+      super(spec.getName(), embedded);
+      this.delegate = embedded;
+    }
+
+    public FileSet getEmbeddedFileSet() {
+      return delegate;
+    }
+
+    public Location getSuccessLocation() throws IOException {
+      return delegate.getBaseLocation().append("success");
+    }
+
+    public Location getFailureLocation() throws IOException {
+      return delegate.getBaseLocation().append("failure");
+    }
+
+    @Override
+    public String getInputFormatClassName() {
+      return delegate.getInputFormatClassName();
+    }
+
+    @Override
+    public Map<String, String> getInputFormatConfiguration() {
+      return delegate.getInputFormatConfiguration();
+    }
+
+    @Override
+    public String getOutputFormatClassName() {
+      return delegate.getOutputFormatClassName();
+    }
+
+    @Override
+    public Map<String, String> getOutputFormatConfiguration() {
+      return delegate.getOutputFormatConfiguration();
+    }
+
+    @Override
+    public void onSuccess() throws DataSetException {
+      try {
+        getSuccessLocation().createNew();
+      } catch (Throwable t) {
+        throw Throwables.propagate(t);
+      }
+    }
+
+    @Override
+    public void onFailure() throws DataSetException {
+      try {
+        getFailureLocation().createNew();
+      } catch (Throwable t) {
+        throw Throwables.propagate(t);
+      }
     }
   }
 
@@ -107,7 +187,7 @@ public class SparkAppUsingFileSet extends AbstractApplication {
    * An input format that delegates to TextInputFormat. It is defined in the application and requires
    * the Spark runtime to use the program class loader to load the class.
    */
-  public static final class MyTextFormat extends InputFormat<Long, String> {
+  public static final class MyTextInputFormat extends InputFormat<Long, String> {
 
     TextInputFormat delegate = new TextInputFormat();
 
