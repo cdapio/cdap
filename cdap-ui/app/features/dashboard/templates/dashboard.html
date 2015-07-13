@@ -11,7 +11,7 @@
 
 <ul class="nav nav-tabs slanted-tabs" role="tablist">
   <li role="presentation" ui-sref-active="active">
-    <a ui-sref="dashboard.standard.cdap" role="tab" tooltip="System" data-toggle="tab">System</a>
+    <a ui-sref="dashboard.standard.cdap" role="tab" data-toggle="tab">System</a>
   </li>
   <li role="presentation"
       ui-sref-active="active"
@@ -21,7 +21,8 @@
         ng-click="activeTabClick($event, $index)"
         tooltip="{{dashboard.title}}"
         data-toggle="tab"
-        class="dropdown-toggle">
+        class="dropdown-toggle"
+        tooltip-placement="bottom">
         <span class="dtitle">
         {{dashboard.title}}
         </span>
