@@ -41,8 +41,12 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableExistsException;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
@@ -388,12 +392,20 @@ public abstract class HBaseTableUtil {
   public abstract HTable createHTable(Configuration conf, TableId tableId) throws IOException;
 
   /**
-   * Creates a new {@link HTableDescriptor} which may contain an HBase namespace depending on the HBase version
+   * Creates a new {@link HTableDescriptorBuilder} which may contain an HBase namespace depending on the HBase version
    *
    * @param tableId the {@link TableId} to create an {@link HTableDescriptor} for
-   * @return an {@link HTableDescriptor} for the table
+   * @return an {@link HTableDescriptorBuilder} for the table
    */
-  public abstract HTableDescriptor createHTableDescriptor(TableId tableId);
+  public abstract HTableDescriptorBuilder createHTableDescriptor(TableId tableId);
+
+  /**
+   * Creates a new {@link HTableDescriptorBuilder} which may contain an HBase namespace depending on the HBase version
+   *
+   * @param tableDescriptor the {@link HTableDescriptor} whose values should be copied
+   * @return an {@link HTableDescriptorBuilder} for the table
+   */
+  public abstract HTableDescriptorBuilder createHTableDescriptor(HTableDescriptor tableDescriptor);
 
   /**
    * Constructs a {@link HTableDescriptor} which may contain an HBase namespace for an existing table
@@ -551,6 +563,62 @@ public abstract class HBaseTableUtil {
     HTableDescriptor tableDescriptor = getHTableDescriptor(admin, tableId);
     dropTable(admin, tableId);
     createTableIfNotExists(admin, tableId, tableDescriptor);
+  }
+
+  /**
+   * Creates a {@link ScanBuilder}.
+   */
+  public ScanBuilder buildScan() {
+    return new DefaultScanBuilder();
+  }
+
+  /**
+   * Creates a {@link ScanBuilder} by copying from another {@link Scan} instance.
+   */
+  public ScanBuilder buildScan(Scan scan) throws IOException {
+    return new DefaultScanBuilder(scan);
+  }
+
+  /**
+   * Creates a {@link PutBuilder} for the given row.
+   */
+  public PutBuilder buildPut(byte[] row) {
+    return new DefaultPutBuilder(row);
+  }
+
+  /**
+   * Creates a {@link PutBuilder} by copying from another {@link Put} instance.
+   */
+  public PutBuilder buildPut(Put put) {
+    return new DefaultPutBuilder(put);
+  }
+
+  /**
+   * Creates a {@link GetBuilder} for the given row.
+   */
+  public GetBuilder buildGet(byte[] row) {
+    return new DefaultGetBuilder(row);
+  }
+
+  /**
+   * Creates a {@link GetBuilder} by copying from another {@link Get} instance.
+   */
+  public GetBuilder buildGet(Get get) {
+    return new DefaultGetBuilder(get);
+  }
+
+  /**
+   * Creates a {@link DeleteBuilder} for the given row.
+   */
+  public DeleteBuilder buildDelete(byte[] row) {
+    return new DefaultDeleteBuilder(row);
+  }
+
+  /**
+   * Creates a {@link DeleteBuilder} by copying from another {@link Delete} instance.
+   */
+  public DeleteBuilder buildDelete(Delete delete) {
+    return new DefaultDeleteBuilder(delete);
   }
 
   public abstract void setCompression(HColumnDescriptor columnDescriptor, CompressionType type);

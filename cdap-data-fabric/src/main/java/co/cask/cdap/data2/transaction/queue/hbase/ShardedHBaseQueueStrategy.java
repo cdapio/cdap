@@ -23,6 +23,8 @@ import co.cask.cdap.data2.queue.DequeueStrategy;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.QueueScanner;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.ScanBuilder;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.DistributedScanner;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
@@ -77,14 +79,16 @@ public final class ShardedHBaseQueueStrategy implements HBaseQueueStrategy, Clos
     }
   };
 
-  private int distributorBuckets;
+  private final HBaseTableUtil tableUtil;
+  private final int distributorBuckets;
   private final AbstractRowKeyDistributor rowKeyDistributor;
   private final ExecutorService scansExecutor;
 
   /**
    * Constructs a new instance with the given number of buckets for distributed scan.
    */
-  public ShardedHBaseQueueStrategy(int distributorBuckets) {
+  public ShardedHBaseQueueStrategy(HBaseTableUtil tableUtil, int distributorBuckets) {
+    this.tableUtil = tableUtil;
     this.distributorBuckets = distributorBuckets;
     this.rowKeyDistributor = new RowKeyDistributorByHashPrefix(
       new RowKeyDistributorByHashPrefix.OneByteSimpleHash(distributorBuckets));
@@ -111,7 +115,7 @@ public final class ShardedHBaseQueueStrategy implements HBaseQueueStrategy, Clos
   private ResultScanner createHBaseScanner(ConsumerConfig consumerConfig, HTable hTable, Scan scan,
                                            int numRows) throws IOException {
     // Modify the scan with sharded key prefix
-    Scan shardedScan = new Scan(scan);
+    ScanBuilder shardedScan = tableUtil.buildScan(scan);
 
     // we should roughly divide by number of buckets, but don't want another RPC for the case we are not exactly right
     int caching = (int) (1.1 * numRows / distributorBuckets);
@@ -126,7 +130,7 @@ public final class ShardedHBaseQueueStrategy implements HBaseQueueStrategy, Clos
       byte[] rowKey = getShardedKey(consumerConfig, consumerConfig.getInstanceId(), scan.getStopRow());
       shardedScan.setStopRow(rowKey);
     }
-    return DistributedScanner.create(hTable, shardedScan, rowKeyDistributor, scansExecutor);
+    return DistributedScanner.create(hTable, shardedScan.build(), rowKeyDistributor, scansExecutor);
   }
 
   @Override

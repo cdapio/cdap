@@ -26,6 +26,7 @@ import co.cask.tephra.persist.TransactionSnapshot;
 import co.cask.tephra.util.TxUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableNotFoundException;
@@ -38,6 +39,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -147,10 +150,8 @@ public class ConsumerConfigCache {
       // Scan the table with the transaction snapshot
       Scan scan = new Scan();
       scan.addFamily(QueueEntryRow.COLUMN_FAMILY);
-      scan.setCacheBlocks(false);
-      scan.setCaching(1000);
       Transaction tx = TxUtils.createDummyTransaction(txSnapshot);
-      scan.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, txCodec.encode(tx));
+      setScanAttribute(scan, TxConstants.TX_OPERATION_ATTRIBUTE_KEY, txCodec.encode(tx));
       ResultScanner scanner = table.getScanner(scan);
       int configCnt = 0;
       for (Result result : scanner) {
@@ -230,6 +231,21 @@ public class ConsumerConfigCache {
     };
     refreshThread.setDaemon(true);
     refreshThread.start();
+  }
+
+  /**
+   * Sets an attribute to the given {@link Scan} object. Instead of calling {@link Scan#setAttribute(String, byte[])}
+   * directly, it uses reflection to call the method. This is because the return type for the setAttribute method
+   * is different in different HBase version.
+   */
+  private void setScanAttribute(Scan scan, String name, byte[] value) {
+    try {
+      Method setAttribute = scan.getClass().getMethod("setAttribute", String.class, byte[].class);
+      setAttribute.invoke(scan, name, value);
+    } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+      LOG.error("Failed to call Scan.setAttribute", e);
+      throw Throwables.propagate(e);
+    }
   }
 
   public static ConsumerConfigCache getInstance(Configuration hConf, byte[] tableName,

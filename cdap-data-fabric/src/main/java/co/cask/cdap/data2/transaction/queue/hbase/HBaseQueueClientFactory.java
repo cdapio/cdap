@@ -105,7 +105,7 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
       HTable hTable = createHTable(admin.getDataTableId(queueName, queueAdmin.getType()));
       int distributorBuckets = getDistributorBuckets(hTable.getTableDescriptor());
       return createProducer(hTable, queueName, queueMetrics,
-                            new ShardedHBaseQueueStrategy(distributorBuckets), groupConfigs);
+                            new ShardedHBaseQueueStrategy(hBaseTableUtil, distributorBuckets), groupConfigs);
     } catch (Exception e) {
       Throwables.propagateIfPossible(e);
       throw new IOException(e);
@@ -174,8 +174,8 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
             int distributorBuckets = getDistributorBuckets(hTable.getTableDescriptor());
 
             HBaseQueueStrategy strategy = (state.getPreviousBarrier() == null)
-                                          ? new SaltedHBaseQueueStrategy(distributorBuckets)
-                                          : new ShardedHBaseQueueStrategy(distributorBuckets);
+                                          ? new SaltedHBaseQueueStrategy(hBaseTableUtil, distributorBuckets)
+                                          : new ShardedHBaseQueueStrategy(hBaseTableUtil, distributorBuckets);
             consumers.add(queueUtil.getQueueConsumer(cConf, hTable, queueName, state,
                                                      admin.getConsumerStateStore(queueName),
                                                      strategy));

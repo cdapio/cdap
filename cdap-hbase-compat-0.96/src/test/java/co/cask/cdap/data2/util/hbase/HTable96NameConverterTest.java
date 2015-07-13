@@ -32,9 +32,9 @@ public class HTable96NameConverterTest {
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
     HTableNameConverter hBaseNameConversionUtil = new HTableNameConverterFactory().get();
 
-    HTableDescriptor htd = tableUtil.createHTableDescriptor(TableId.from("user", "some_table"));
-    Assert.assertEquals(tablePrefix + "_system:", hBaseNameConversionUtil.getSysConfigTablePrefix(htd));
+    HTableDescriptorBuilder htd = tableUtil.createHTableDescriptor(TableId.from("user", "some_table"));
+    Assert.assertEquals(tablePrefix + "_system:", hBaseNameConversionUtil.getSysConfigTablePrefix(htd.build()));
     htd = tableUtil.createHTableDescriptor(TableId.from(Constants.DEFAULT_NAMESPACE_ID, "table_in_default_ns"));
-    Assert.assertEquals(tablePrefix + "_system:", hBaseNameConversionUtil.getSysConfigTablePrefix(htd));
+    Assert.assertEquals(tablePrefix + "_system:", hBaseNameConversionUtil.getSysConfigTablePrefix(htd.build()));
   }
 }

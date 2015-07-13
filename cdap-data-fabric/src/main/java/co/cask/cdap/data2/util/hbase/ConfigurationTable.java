@@ -76,9 +76,9 @@ public class ConfigurationTable {
     HTable table = null;
     try {
       HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
-      HTableDescriptor htd = tableUtil.createHTableDescriptor(tableId);
+      HTableDescriptorBuilder htd = tableUtil.createHTableDescriptor(tableId);
       htd.addFamily(new HColumnDescriptor(FAMILY));
-      tableUtil.createTableIfNotExists(admin, tableId, htd);
+      tableUtil.createTableIfNotExists(admin, tableId, htd.build());
 
       long now = System.currentTimeMillis();
       long previous = now - 1;
