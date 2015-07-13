@@ -14,17 +14,19 @@
 
   </div>
   <div class="col-xs-10">
-
-    <div class="terminal" infinite-scroll="scroll()">
+    <div class="text-center" ng-if="loadingPrev">
+      <span class="fa fa-refresh fa-spin"></span> Loading Logs
+    </div>
+    <div class="terminal" infinite-scroll-next="next()" infinite-scroll-prev="prev()" infinite-scroll>
       <ul class="list-unstyled" ng-if="activeFilter.entries.length">
-        <li ng-repeat="entry in activeFilter.entries | orderBy:'offset'">
+        <li ng-repeat="entry in activeFilter.entries | orderBy:'offset'" id="{{entry.offset}}">
           <pre ng-bind="entry.log"></pre>
         </li>
       </ul>
       <div ng-if="!activeFilter.entries.length && !loading">
         No logs to display
       </div>
-      <div class="text-center" ng-if="loading">
+      <div class="text-center" ng-if="loadingNext">
         <span class="fa fa-refresh fa-spin"></span> Loading Logs
       </div>
     </div>

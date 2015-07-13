@@ -2,7 +2,9 @@
   <div ng-controller="MapreduceRunDetailLogsController as LogsController">
     <my-log-viewer
       data-model="LogsController.logs"
-      data-scroll="LogsController.loadMoreLogs()"
-      data-loading="LogsController.loading"></my-log-viewer>
+      data-next="LogsController.loadNextLogs()"
+      data-prev="LogsController.loadPrevLogs()"
+      data-loading-next="LogsController.loadingNext"
+      data-loading-prev="LogsController.loadingPrev"></my-log-viewer>
   </div>
 </div>

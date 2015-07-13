@@ -9,8 +9,10 @@ angular.module(PKG.name + '.commons')
 
       scope: {
         model: '=',
-        scroll: '&',
-        loading: '='
+        next: '&',
+        prev: '&',
+        loadingNext: '=',
+        loadingPrev: '='
       },
 
       templateUrl: 'log-viewer/log-viewer.html',

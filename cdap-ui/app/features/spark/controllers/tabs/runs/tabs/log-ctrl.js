@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.spark')
-  .controller('SparkRunDetailLogController', function($scope, $state, mySparkApi) {
+  .controller('SparkRunDetailLogController', function($scope, $state, mySparkApi, $timeout) {
 
     var params = {
       namespace: $state.params.namespace,
@@ -14,26 +14,47 @@ angular.module(PKG.name + '.feature.spark')
       return;
     }
 
-    this.loading = true;
-    mySparkApi.logs(params)
+    this.loadingNext = true;
+    mySparkApi.prevLogs(params)
       .$promise
       .then(function (res) {
         this.logs = res;
-        this.loading = false;
+        this.loadingNext = false;
       }.bind(this));
 
-    this.loadMoreLogs = function () {
-      if (this.logs.length < params.max) {
+    this.loadNextLogs = function () {
+      if (this.loadingNext) {
         return;
       }
-      this.loading = true;
-      params.max += 50;
 
-      mySparkApi.logs(params)
+      this.loading = true;
+      params.fromOffset = this.logs[this.logs.length-1].offset;
+
+      mySparkApi.nextLogs(params)
         .$promise
         .then(function (res) {
-          this.logs = res;
-          this.loading = false;
+          this.logs = _.uniq(this.logs.concat(res));
+          this.loadingNext = false;
+        }.bind(this));
+    };
+
+    this.loadPrevLogs = function () {
+      if (this.loadingPrev) {
+        return;
+      }
+
+      this.loadingPrev = true;
+      params.fromOffset = this.logs[0].offset;
+
+      mySparkApi.prevLogs(params)
+        .$promise
+        .then(function (res) {
+          this.logs = _.uniq(res.concat(this.logs));
+          this.loadingPrev = false;
+
+          $timeout(function() {
+            document.getElementById(params.fromOffset).scrollIntoView();
+          });
         }.bind(this));
     };
 });

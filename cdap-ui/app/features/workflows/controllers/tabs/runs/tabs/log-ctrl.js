@@ -1,8 +1,9 @@
 var params;
 class WorkFlowsRunDetailLogController {
 
-  constructor($scope, myWorkFlowApi, $state) {
+  constructor($scope, myWorkFlowApi, $state, $timeout) {
     this.myWorkFlowApi = myWorkFlowApi;
+    this.$timeout = $timeout;
 
     params = {
       appId: $state.params.appId,
@@ -16,31 +17,52 @@ class WorkFlowsRunDetailLogController {
       return;
     }
 
-    this.loading = true;
-    this.myWorkFlowApi.logs(params)
+    this.loadingNext = true;
+    this.myWorkFlowApi.prevLogs(params)
       .$promise
       .then( res => {
         this.logs = res;
-        this.loading = false;
+        this.loadingNext = false;
       });
   }
 
-  loadMoreLogs () {
+  loadNextLogs () {
     if (this.logs.length < params.max) {
       return;
     }
-    this.loading = true;
-    params.max += 50;
+    this.loadingNext = true;
+    params.fromOffset = this.logs[this.logs.length-1].offset;
 
     this.myWorkFlowApi.logs(params)
       .$promise
       .then( res => {
-        this.logs = res;
-        this.loading = false;
+        this.logs = _.uniq(this.logs.concat(res));
+        this.loadingNext = false;
       });
   }
+
+  loadPrevLogs () {
+    if (this.loadingPrev) {
+      return;
+    }
+
+    this.loadingPrev = true;
+    params.fromOffset = this.logs[0].offset;
+
+    this.myWorkFlowApi.prevLogs(params)
+      .$promise
+      .then( res => {
+        this.logs = _.uniq(res.concat(this.logs));
+        this.loadingPrev = false;
+
+        this.$timeout(function() {
+          document.getElementById(params.fromOffset).scrollIntoView();
+        });
+      });
+  }
+
 }
 
-WorkFlowsRunDetailLogController.$inject = ['$scope', 'myWorkFlowApi', '$state'];
+WorkFlowsRunDetailLogController.$inject = ['$scope', 'myWorkFlowApi', '$state', '$timeout'];
 angular.module(`${PKG.name}.feature.workflows`)
   .controller('WorkFlowsRunDetailLogController', WorkFlowsRunDetailLogController);

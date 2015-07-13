@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsRunDetailLogController', function($scope, $state, myFlowsApi) {
+  .controller('FlowsRunDetailLogController', function($scope, $state, myFlowsApi, $timeout) {
 
     this.logs = [];
     if (!$scope.RunsController.runs.length) {
@@ -15,27 +15,47 @@ angular.module(PKG.name + '.feature.flows')
       scope: $scope
     };
 
-    this.loading = true;
-    myFlowsApi.logs(params)
+    this.loadingNext = true;
+    myFlowsApi.prevLogs(params)
       .$promise
       .then(function (res) {
         this.logs = res;
-        this.loading = false;
+        this.loadingNext = false;
       }.bind(this));
 
-    this.loadMoreLogs = function () {
-      if (this.logs.length < params.max) {
+    this.loadNextLogs = function () {
+      if (this.loadingNext) {
         return;
       }
-      this.loading = true;
 
-      params.max += 50;
+      this.loadingNext = true;
+      params.fromOffset = this.logs[this.logs.length-1].offset;
 
-      myFlowsApi.logs(params)
+      myFlowsApi.nextLogs(params)
         .$promise
         .then(function (res) {
-          this.logs = res;
-          this.loading = false;
+          this.logs = _.uniq(this.logs.concat(res));
+          this.loadingNext = false;
+        }.bind(this));
+    };
+
+    this.loadPrevLogs = function () {
+      if (this.loadingPrev) {
+        return;
+      }
+
+      this.loadingPrev = true;
+      params.fromOffset = this.logs[0].offset;
+
+      myFlowsApi.prevLogs(params)
+        .$promise
+        .then(function (res) {
+          this.logs = _.uniq(res.concat(this.logs));
+          this.loadingPrev = false;
+
+          $timeout(function() {
+            document.getElementById(params.fromOffset).scrollIntoView();
+          });
         }.bind(this));
     };
 
