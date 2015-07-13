@@ -52,60 +52,62 @@
 <section class="system-health"> <!-- ng-show="isEnterprise" -->
   <div class="divider"></div>
   <div>
-    <div class="row">
-      <div class="col-xs-12 col-lg-4">
-        <div>
-          <div class="row">
-            <div class="col-xs-4">
-              <div>
-                <svg xmlns="http://www.w3.org/2000/svg" version="1.1">
-                  <circle ng-if="OverviewCtrl.systemStatus === 'yellow'" cx="50" cy="70" r="30" fill="#f4b400" />
-                  <circle ng-if="OverviewCtrl.systemStatus === 'red'" cx="50" cy="70" r="30" fill="#d15668" />
-                  <circle ng-if="OverviewCtrl.systemStatus === 'green'" cx="50" cy="70" r="30" fill="#4ab63c" />
-                </svg>
+    <a ui-sref="admin.system.services">
+      <div class="row">
+        <div class="col-xs-12 col-lg-4">
+          <div>
+            <div class="row">
+              <div class="col-xs-4">
+                <div>
+                  <svg xmlns="http://www.w3.org/2000/svg" version="1.1">
+                    <circle ng-if="OverviewCtrl.systemStatus === 'yellow'" cx="50" cy="70" r="30" fill="#f4b400" />
+                    <circle ng-if="OverviewCtrl.systemStatus === 'red'" cx="50" cy="70" r="30" fill="#d15668" />
+                    <circle ng-if="OverviewCtrl.systemStatus === 'green'" cx="50" cy="70" r="30" fill="#4ab63c" />
+                  </svg>
+                </div>
               </div>
-            </div>
-            <div class="col-xs-8">
-              <p ng-if="OverviewCtrl.systemStatus === 'yellow'">
-                Some <a ui-sref="admin.system.services"> services</a> might have an issue.
-              </p>
-              <p ng-if="OverviewCtrl.systemStatus === 'red'">
-                All <a ui-sref="admin.system.services"> services</a> are down.
-              </p>
-              <p ng-if="OverviewCtrl.systemStatus === 'green'">
-                All <a ui-sref="admin.system.services" class="nounderline"> services</a> are up and running.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-xs-12 col-lg-8">
-        <div class="row health-widgets">
-          <div class="col-xs-12">
-            <p class="text-center">
-              <span> Errors last hour </span>
-            </p>
-          </div>
-        </div>
-
-          <div ng-controller="C3WidgetTimeseriesCtrl" ng-repeat="wdgt in OverviewCtrl.wdgts" class="health-widget">
-            <span>{{wdgt.title}}</span>
-            <c3-spline
-              chart-metric="wdgt.formattedData"
-              chart-metric-alias="wdgt.metricAlias"
-              chart-settings="wdgt.settings"
-              chart-size="chartSize"
-              ></c3-spline>
-            <div class="warning-alert">
-              <div>
-                <p> Warning </p><span class="warn"> {{wdgt.chartData.totals[1]}} </span>
-                <p> Alert </p><span class="error"> {{wdgt.chartData.totals[0]}} </span>
+              <div class="col-xs-8">
+                <p ng-if="OverviewCtrl.systemStatus === 'yellow'">
+                  Some services might have an issue.
+                </p>
+                <p ng-if="OverviewCtrl.systemStatus === 'red'">
+                  All services are down.
+                </p>
+                <p ng-if="OverviewCtrl.systemStatus === 'green'">
+                  All services are up and running.
+                </p>
               </div>
             </div>
           </div>
+        </div>
+
+        <div class="col-xs-12 col-lg-8">
+          <div class="row health-widgets">
+            <div class="col-xs-12">
+              <p class="text-center">
+                <span> Errors last hour </span>
+              </p>
+            </div>
+          </div>
+
+            <div ng-controller="C3WidgetTimeseriesCtrl" ng-repeat="wdgt in OverviewCtrl.wdgts" class="health-widget">
+              <span>{{wdgt.title}}</span>
+              <c3-spline
+                chart-metric="wdgt.formattedData"
+                chart-metric-alias="wdgt.metricAlias"
+                chart-settings="wdgt.settings"
+                chart-size="chartSize"
+                ></c3-spline>
+              <div class="warning-alert">
+                <div>
+                  <p> Warning </p><span class="warn"> {{wdgt.chartData.totals[1]}} </span>
+                  <p> Alert </p><span class="error"> {{wdgt.chartData.totals[0]}} </span>
+                </div>
+              </div>
+            </div>
+        </div>
       </div>
-    </div>
+    </a>
   </div>
 </section>
 
