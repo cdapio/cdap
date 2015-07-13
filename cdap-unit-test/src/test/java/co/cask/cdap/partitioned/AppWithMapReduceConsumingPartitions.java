@@ -24,22 +24,18 @@ import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.lib.PartitionConsumerResult;
-import co.cask.cdap.api.dataset.lib.PartitionConsumerState;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionOutput;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
-import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.mapreduce.PartitionConsumingMapReduce;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import com.google.common.collect.Maps;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -53,7 +49,6 @@ import org.apache.twill.filesystem.Location;
 import java.io.IOException;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
-import java.util.Map;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -108,9 +103,8 @@ public class AppWithMapReduceConsumingPartitions extends AbstractApplication {
     }
   }
 
-  public static class WordCount extends AbstractMapReduce {
+  public static class WordCount extends PartitionConsumingMapReduce {
     private static final String STATE_KEY = "state.key";
-    private PartitionConsumerState finalPartitionConsumerState;
 
     @Override
     public void configure() {
@@ -121,16 +115,7 @@ public class AppWithMapReduceConsumingPartitions extends AbstractApplication {
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
-      KeyValueTable keyValueTable = context.getDataset("consumingState");
-      byte[] state = keyValueTable.read(STATE_KEY);
-      PartitionConsumerState initialPartitionConsumerState;
-      if (state == null) {
-        initialPartitionConsumerState = PartitionConsumerState.FROM_BEGINNING;
-      } else {
-        initialPartitionConsumerState = PartitionConsumerState.fromBytes(state);
-      }
-
-      setInputPartitions(context, "lines", initialPartitionConsumerState);
+      setInputPartitions(context, "lines");
 
       Job job = context.getHadoopJob();
       job.setMapperClass(Tokenizer.class);
@@ -138,25 +123,14 @@ public class AppWithMapReduceConsumingPartitions extends AbstractApplication {
       job.setNumReduceTasks(1);
     }
 
-    private void setInputPartitions(MapReduceContext mapReduceContext, String partitionedFileSetName,
-                                    PartitionConsumerState partitionConsumerState) {
-      PartitionedFileSet partitionedFileSet = mapReduceContext.getDataset(partitionedFileSetName);
-      PartitionConsumerResult partitionConsumerResult = partitionedFileSet.consumePartitions(partitionConsumerState);
-      finalPartitionConsumerState = partitionConsumerResult.getPartitionConsumerState();
-
-      Map<String, String> arguments = Maps.newHashMap();
-      PartitionedFileSetArguments.addInputPartitions(arguments, partitionConsumerResult.getPartitionIterator());
-
-      mapReduceContext.setInput(partitionedFileSetName, mapReduceContext.getDataset(partitionedFileSetName, arguments));
+    @Override
+    protected byte[] readBytes(MapReduceContext mapReduceContext) {
+      return ((KeyValueTable) mapReduceContext.getDataset("consumingState")).read(STATE_KEY);
     }
 
     @Override
-    public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-      if (succeeded) {
-        KeyValueTable keyValueTable = context.getDataset("consumingState");
-        keyValueTable.write(STATE_KEY, finalPartitionConsumerState.toBytes());
-      }
-      super.onFinish(succeeded, context);
+    protected void writeBytes(MapReduceContext mapReduceContext, byte[] stateBytes) {
+      ((KeyValueTable) mapReduceContext.getDataset("consumingState")).write(STATE_KEY, stateBytes);
     }
 
     /**
