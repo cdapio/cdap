@@ -16,9 +16,12 @@
 
 package co.cask.cdap.proto.codec;
 
+import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.dataset.DatasetCreationSpec;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -50,7 +53,22 @@ public class HttpServiceSpecificationCodec extends AbstractSpecificationCodec<Ht
     } else {
       endpointsExposed = deserializeList(jsonObj.get("endpoints"), context, ServiceHttpEndpoint.class);
     }
-    return new HttpServiceHandlerSpecification(className, name, description, properties, datasets, endpointsExposed);
+
+    JsonElement streamElement = jsonObj.get("streams");
+    JsonElement dataSetModElement = jsonObj.get("dataSetModules");
+    JsonElement dataSetInstElement = jsonObj.get("dataSetInstances");
+
+    Map<String, StreamSpecification> streams = (streamElement == null) ?
+      Maps.<String, StreamSpecification>newHashMap() : deserializeMap(streamElement, context,
+                                                                      StreamSpecification.class);
+    Map<String, String> dataSetModules = (dataSetModElement == null) ? Maps.<String, String>newHashMap() :
+      deserializeMap(dataSetModElement, context, String.class);
+    Map<String, DatasetCreationSpec> dataSetInstances = (dataSetInstElement == null) ?
+      Maps.<String, DatasetCreationSpec>newHashMap() : deserializeMap(dataSetInstElement, context,
+                                                                      DatasetCreationSpec.class);
+
+    return new HttpServiceHandlerSpecification(className, name, description, properties, datasets, endpointsExposed,
+                                               streams, dataSetModules, dataSetInstances);
   }
 
   private boolean isOldSpec(JsonObject json) {
@@ -66,7 +84,9 @@ public class HttpServiceSpecificationCodec extends AbstractSpecificationCodec<Ht
     json.add("properties", serializeMap(src.getProperties(), context, String.class));
     json.add("datasets", serializeSet(src.getDatasets(), context, String.class));
     json.add("endpoints", serializeList(src.getEndpoints(), context, ServiceHttpEndpoint.class));
-
+    json.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
+    json.add("dataSetModules", serializeMap(src.getDataSetModules(), context, String.class));
+    json.add("dataSetInstances", serializeMap(src.getDataSetInstances(), context, DatasetCreationSpec.class));
     return json;
   }
 }

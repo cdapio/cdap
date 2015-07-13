@@ -17,6 +17,8 @@
 package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.dataset.DatasetCreationSpec;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
@@ -119,7 +121,10 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
                                                        spec.get("name").getAsString(),
                                                        spec.get("description").getAsString(),
                                                        properties, ImmutableSet.<String>of(),
-                                                       ImmutableList.<ServiceHttpEndpoint>of()));
+                                                       ImmutableList.<ServiceHttpEndpoint>of(),
+                                                       Maps.<String, StreamSpecification>newHashMap(),
+                                                       Maps.<String, String>newHashMap(),
+                                                       Maps.<String, DatasetCreationSpec>newHashMap()));
     }
 
     ResourceSpecification resourceSpec = handlerSpec.getResourceSpecification();

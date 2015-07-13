@@ -17,7 +17,11 @@
 package co.cask.cdap.api.worker;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.module.DatasetModule;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -100,6 +104,72 @@ public abstract class AbstractWorker implements Worker {
   @Deprecated
   protected void useDatasets(Iterable<String> datasets) {
     configurer.useDatasets(datasets);
+  }
+
+  /**
+   * @see WorkerConfigurer#addStream(Stream)
+   */
+  protected final void addStream(Stream stream) {
+    configurer.addStream(stream);
+  }
+
+  /**
+   * @see WorkerConfigurer#addDatasetModule(String, Class)
+   */
+  @Beta
+  protected final void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
+    configurer.addDatasetModule(moduleName, moduleClass);
+  }
+
+  /**
+   * @see WorkerConfigurer#addDatasetType(Class)
+   */
+  @Beta
+  protected final void addDatasetType(Class<? extends Dataset> datasetClass) {
+    configurer.addDatasetType(datasetClass);
+  }
+
+  /**
+   * Calls {@link WorkerConfigurer#createDataset(String, String, DatasetProperties)}, passing empty properties.
+   *
+   * @see WorkerConfigurer#createDataset(String, String, DatasetProperties)
+   */
+  @Beta
+  protected final void createDataset(String datasetName, String typeName) {
+    configurer.createDataset(datasetName, typeName, DatasetProperties.EMPTY);
+  }
+
+  /**
+   * Calls {@link WorkerConfigurer#createDataset(String, String, DatasetProperties)}, passing the type name and
+   * properties.
+   *
+   * @see WorkerConfigurer#createDataset(String, String, co.cask.cdap.api.dataset.DatasetProperties)
+   */
+  @Beta
+  protected final void createDataset(String datasetName, String typeName, DatasetProperties properties) {
+    configurer.createDataset(datasetName, typeName, properties);
+  }
+
+  /**
+   * Calls {@link WorkerConfigurer#createDataset(String, String, DatasetProperties)}, passing the dataset class
+   * and properties.
+   *
+   * @see WorkerConfigurer#createDataset(String, Class, co.cask.cdap.api.dataset.DatasetProperties)
+   */
+  protected final void createDataset(String datasetName,
+                               Class<? extends Dataset> datasetClass,
+                               DatasetProperties properties) {
+    configurer.createDataset(datasetName, datasetClass, properties);
+  }
+
+  /**
+   * Calls {@link WorkerConfigurer#createDataset(String, Class, DatasetProperties)}, passing empty properties.
+   *
+   * @see WorkerConfigurer#createDataset(String, Class, DatasetProperties)
+   */
+  protected void createDataset(String datasetName,
+                               Class<? extends Dataset> datasetClass) {
+    configurer.createDataset(datasetName, datasetClass, DatasetProperties.EMPTY);
   }
 
   /**

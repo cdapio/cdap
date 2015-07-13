@@ -21,11 +21,14 @@ import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetCreationSpec;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.FlowletDefinition;
+import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
@@ -34,6 +37,7 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.worker.Worker;
@@ -41,7 +45,6 @@ import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
 import co.cask.cdap.internal.app.runtime.flow.DefaultFlowConfigurer;
@@ -149,6 +152,13 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     } else {
       spec = new DefaultFlowSpecification(flow.getClass().getName(), spec);
     }
+
+    for (Map.Entry<String, FlowletDefinition> flowletEntry : spec.getFlowlets().entrySet()) {
+      FlowletSpecification flowletSpec = flowletEntry.getValue().getFlowletSpec();
+      streams.putAll(flowletSpec.getStreams());
+      dataSetModules.putAll(flowletSpec.getDataSetModules());
+      dataSetInstances.putAll(flowletSpec.getDataSetInstances());
+    }
     flows.put(spec.getName(), spec);
   }
 
@@ -159,6 +169,9 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     mapReduce.configure(configurer);
 
     MapReduceSpecification spec = configurer.createSpecification();
+    streams.putAll(spec.getStreams());
+    dataSetModules.putAll(spec.getDataSetModules());
+    dataSetInstances.putAll(spec.getDataSetInstances());
     mapReduces.put(spec.getName(), spec);
   }
 
@@ -167,7 +180,11 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     Preconditions.checkArgument(spark != null, "Spark cannot be null.");
     DefaultSparkConfigurer configurer = new DefaultSparkConfigurer(spark);
     spark.configure(configurer);
+
     SparkSpecification spec = configurer.createSpecification();
+    streams.putAll(spec.getStreams());
+    dataSetModules.putAll(spec.getDataSetModules());
+    dataSetInstances.putAll(spec.getDataSetInstances());
     sparks.put(spec.getName(), spec);
   }
 
@@ -186,6 +203,12 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     service.configure(configurer);
 
     ServiceSpecification spec = configurer.createSpecification();
+    for (Map.Entry<String, HttpServiceHandlerSpecification> handlerSpecEntry : spec.getHandlers().entrySet()) {
+      HttpServiceHandlerSpecification handlerSpec = handlerSpecEntry.getValue();
+      streams.putAll(handlerSpec.getStreams());
+      dataSetModules.putAll(handlerSpec.getDataSetModules());
+      dataSetInstances.putAll(handlerSpec.getDataSetInstances());
+    }
     services.put(spec.getName(), spec);
   }
 
@@ -195,6 +218,9 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker);
     worker.configure(configurer);
     WorkerSpecification spec = configurer.createSpecification();
+    streams.putAll(spec.getStreams());
+    dataSetModules.putAll(spec.getDataSetModules());
+    dataSetInstances.putAll(spec.getDataSetInstances());
     workers.put(spec.getName(), spec);
   }
 

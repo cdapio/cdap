@@ -18,11 +18,8 @@ package co.cask.cdap.template.etl.transform;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.template.etl.common.AvroToStructuredTransformer;
 import co.cask.cdap.template.etl.common.StructuredToAvroTransformer;
-import com.google.common.collect.ImmutableList;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.generic.GenericRecordBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 

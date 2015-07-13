@@ -88,7 +88,9 @@ public final class FlowletDefinition {
                                                        flowletName == null ? flowletSpec.getName() : flowletName,
                                                        flowletSpec.getDescription(), flowletSpec.getFailurePolicy(),
                                                        datasets, properties,
-                                                       flowletSpec.getResources());
+                                                       flowletSpec.getResources(),
+                                                       flowletSpec.getStreams(), flowletSpec.getDataSetModules(),
+                                                       flowletSpec.getDataSetInstances());
   }
 
   /**

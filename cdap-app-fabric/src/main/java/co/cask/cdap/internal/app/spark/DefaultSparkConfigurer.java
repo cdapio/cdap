@@ -20,6 +20,7 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkConfigurer;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.internal.app.program.ProgramDatasetConfigurer;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import com.google.common.base.Preconditions;
@@ -32,7 +33,7 @@ import java.util.Map;
 /**
  * Default implementation of {@link SparkConfigurer}.
  */
-public final class DefaultSparkConfigurer implements SparkConfigurer {
+public final class DefaultSparkConfigurer extends ProgramDatasetConfigurer implements SparkConfigurer {
 
   private final Spark spark;
   private String name;
@@ -84,6 +85,7 @@ public final class DefaultSparkConfigurer implements SparkConfigurer {
     // Grab all @Property fields
     Reflections.visit(spark, TypeToken.of(spark.getClass()), new PropertyFieldExtractor(properties));
     return new SparkSpecification(spark.getClass().getName(), name, description,
-                                  mainClassName, properties, driverResources, executorResources);
+                                  mainClassName, properties, driverResources, executorResources, streams,
+                                  dataSetModules, dataSetInstances);
   }
 }

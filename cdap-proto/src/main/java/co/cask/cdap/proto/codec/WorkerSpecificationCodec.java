@@ -17,7 +17,10 @@
 package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.dataset.DatasetCreationSpec;
 import co.cask.cdap.api.worker.WorkerSpecification;
+import com.google.common.collect.Maps;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -43,6 +46,9 @@ public final class WorkerSpecificationCodec extends AbstractSpecificationCodec<W
     object.add("resources", context.serialize(spec.getResources(), Resources.class));
     object.add("datasets", serializeSet(spec.getDatasets(), context, String.class));
     object.addProperty("instances", spec.getInstances());
+    object.add("streams", serializeMap(spec.getStreams(), context, StreamSpecification.class));
+    object.add("dataSetModules", serializeMap(spec.getDataSetModules(), context, String.class));
+    object.add("dataSetInstances", serializeMap(spec.getDataSetInstances(), context, DatasetCreationSpec.class));
     return object;
   }
 
@@ -58,6 +64,21 @@ public final class WorkerSpecificationCodec extends AbstractSpecificationCodec<W
     Resources resources = context.deserialize(jsonObj.get("resources"), Resources.class);
     Set<String> datasets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     int instances = jsonObj.get("instances").getAsInt();
-    return new WorkerSpecification(className, name, description, properties, datasets, resources, instances);
+
+    JsonElement streamElement = jsonObj.get("streams");
+    JsonElement dataSetModElement = jsonObj.get("dataSetModules");
+    JsonElement dataSetInstElement = jsonObj.get("dataSetInstances");
+
+    Map<String, StreamSpecification> streams = (streamElement == null) ?
+      Maps.<String, StreamSpecification>newHashMap() : deserializeMap(streamElement, context,
+                                                                      StreamSpecification.class);
+    Map<String, String> dataSetModules = (dataSetModElement == null) ? Maps.<String, String>newHashMap() :
+      deserializeMap(dataSetModElement, context, String.class);
+    Map<String, DatasetCreationSpec> dataSetInstances = (dataSetInstElement == null) ?
+      Maps.<String, DatasetCreationSpec>newHashMap() : deserializeMap(dataSetInstElement, context,
+                                                                      DatasetCreationSpec.class);
+
+    return new WorkerSpecification(className, name, description, properties, datasets, resources, instances,
+                                   streams, dataSetModules, dataSetInstances);
   }
 }

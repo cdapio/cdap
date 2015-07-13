@@ -17,10 +17,13 @@
 package co.cask.cdap.internal.batch;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.dataset.DatasetCreationSpec;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -39,10 +42,15 @@ public class DefaultMapReduceSpecification implements MapReduceSpecification {
   private final String outputDataSet;
   private final Resources mapperResources;
   private final Resources reducerResources;
+  private final Map<String, StreamSpecification> streams;
+  private final Map<String, String> dataSetModules;
+  private final Map<String, DatasetCreationSpec> dataSetInstances;
 
   public DefaultMapReduceSpecification(String className, String name, String description, String inputDataSet,
                                        String outputDataSet, Set<String> dataSets, Map<String, String> properties,
-                                       Resources mapperResources, Resources reducerResources) {
+                                       Resources mapperResources, Resources reducerResources,
+                                       Map<String, StreamSpecification> streams, Map<String, String> dataSetModules,
+                                       Map<String, DatasetCreationSpec> dataSetInstances) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -52,6 +60,9 @@ public class DefaultMapReduceSpecification implements MapReduceSpecification {
     this.mapperResources = mapperResources;
     this.reducerResources = reducerResources;
     this.dataSets = getAllDatasets(dataSets, inputDataSet, outputDataSet);
+    this.streams = Collections.unmodifiableMap(streams);
+    this.dataSetModules = Collections.unmodifiableMap(dataSetModules);
+    this.dataSetInstances = Collections.unmodifiableMap(dataSetInstances);
   }
 
   @Override
@@ -106,6 +117,21 @@ public class DefaultMapReduceSpecification implements MapReduceSpecification {
   @Override
   public Resources getReducerResources() {
     return reducerResources;
+  }
+
+  @Override
+  public Map<String, StreamSpecification> getStreams() {
+    return streams;
+  }
+
+  @Override
+  public Map<String, String> getDataSetModules() {
+    return dataSetModules;
+  }
+
+  @Override
+  public Map<String, DatasetCreationSpec> getDataSetInstances() {
+    return dataSetInstances;
   }
 
   private Set<String> getAllDatasets(Set<String> dataSets, String inputDataSet, String outputDataSet) {

@@ -20,7 +20,6 @@ import co.cask.cdap.api.templates.plugins.PluginClass;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;

@@ -18,6 +18,11 @@ package co.cask.cdap.api.spark;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.app.ApplicationConfigurer;
+import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.module.DatasetModule;
 
 import java.util.Map;
 
@@ -91,6 +96,73 @@ public abstract class AbstractSpark implements Spark {
    */
   protected final void setProperties(Map<String, String> properties) {
     configurer.setProperties(properties);
+  }
+
+  /**
+<<<<<<< HEAD
+   * @see SparkConfigurer#addStream(Stream)
+   */
+  protected final void addStream(Stream stream) {
+    configurer.addStream(stream);
+  }
+
+  /**
+   * @see SparkConfigurer#addDatasetModule(String, Class)
+   */
+  @Beta
+  protected final void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
+    configurer.addDatasetModule(moduleName, moduleClass);
+  }
+
+  /**
+   * @see SparkConfigurer#addDatasetType(Class)
+   */
+  @Beta
+  protected final void addDatasetType(Class<? extends Dataset> datasetClass) {
+    configurer.addDatasetType(datasetClass);
+  }
+
+  /**
+   * Calls {@link SparkConfigurer#createDataset(String, String, DatasetProperties)}, passing empty properties.
+   *
+   * @see SparkConfigurer#createDataset(String, String, DatasetProperties)
+   */
+  @Beta
+  protected final void createDataset(String datasetName, String typeName) {
+    configurer.createDataset(datasetName, typeName, DatasetProperties.EMPTY);
+  }
+
+  /**
+   * Calls {@link ApplicationConfigurer#createDataset(String, String, DatasetProperties)}, passing the type name and
+   * properties.
+   *
+   * @see SparkConfigurer#createDataset(String, String, co.cask.cdap.api.dataset.DatasetProperties)
+   */
+  @Beta
+  protected final void createDataset(String datasetName, String typeName, DatasetProperties properties) {
+    configurer.createDataset(datasetName, typeName, properties);
+  }
+
+  /**
+   * Calls {@link SparkConfigurer#createDataset(String, String, DatasetProperties)}, passing the dataset class
+   * and properties.
+   *
+   * @see SparkConfigurer#createDataset(String, Class, co.cask.cdap.api.dataset.DatasetProperties)
+   */
+  protected final void createDataset(String datasetName,
+                                     Class<? extends Dataset> datasetClass,
+                                     DatasetProperties properties) {
+    configurer.createDataset(datasetName, datasetClass, properties);
+  }
+
+  /**
+   * Calls {@link SparkConfigurer#createDataset(String, Class, DatasetProperties)}, passing empty properties.
+   *
+   * @see SparkConfigurer#createDataset(String, Class, DatasetProperties)
+   */
+  protected final void createDataset(String datasetName,
+                                     Class<? extends Dataset> datasetClass) {
+    configurer.createDataset(datasetName, datasetClass, DatasetProperties.EMPTY);
   }
 
   /**

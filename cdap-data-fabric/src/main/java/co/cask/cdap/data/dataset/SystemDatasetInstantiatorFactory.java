@@ -17,7 +17,6 @@
 package co.cask.cdap.data.dataset;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import com.google.inject.Inject;

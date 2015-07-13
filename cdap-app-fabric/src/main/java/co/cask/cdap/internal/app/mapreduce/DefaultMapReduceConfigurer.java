@@ -20,6 +20,7 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceConfigurer;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.internal.app.program.ProgramDatasetConfigurer;
 import co.cask.cdap.internal.batch.DefaultMapReduceSpecification;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -30,7 +31,7 @@ import java.util.Set;
 /**
  * Default implementation of {@link MapReduceConfigurer}.
  */
-public final class DefaultMapReduceConfigurer implements MapReduceConfigurer {
+public final class DefaultMapReduceConfigurer extends ProgramDatasetConfigurer implements MapReduceConfigurer {
 
   private final String className;
   private String name;
@@ -91,6 +92,7 @@ public final class DefaultMapReduceConfigurer implements MapReduceConfigurer {
 
   public MapReduceSpecification createSpecification() {
     return new DefaultMapReduceSpecification(className, name, description, inputDataset, outputDataset, datasets,
-                                             properties, mapperResources, reducerResources);
+                                             properties, mapperResources, reducerResources, streams, dataSetModules,
+                                             dataSetInstances);
   }
 }

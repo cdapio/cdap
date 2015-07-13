@@ -79,7 +79,6 @@ public class AppWithServices extends AbstractApplication {
       addService(new DatasetUpdateService());
       addService(new TransactionalHandlerService());
       addWorker(new DatasetUpdateWorker());
-      createDataset(DATASET_NAME, KeyValueTable.class);
       createDataset(TRANSACTIONS_DATASET_NAME, KeyValueTable.class);
    }
 
@@ -92,6 +91,12 @@ public class AppWithServices extends AbstractApplication {
     public void ping(HttpServiceRequest request, HttpServiceResponder responder,
                      @PathParam("key") String key) throws IOException {
       responder.sendJson(Bytes.toString(table.read(key)));
+    }
+
+    @Override
+    protected void configure() {
+      super.configure();
+      createDataset(DATASET_NAME, KeyValueTable.class);
     }
   }
 

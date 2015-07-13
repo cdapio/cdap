@@ -20,6 +20,7 @@ import co.cask.cdap.api.service.http.HttpServiceConfigurer;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
+import co.cask.cdap.internal.app.program.ProgramDatasetConfigurer;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
@@ -37,7 +38,7 @@ import java.util.Set;
 /**
  * Default implementation of {@link HttpServiceConfigurer}.
  */
-public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigurer {
+public class DefaultHttpServiceHandlerConfigurer extends ProgramDatasetConfigurer implements HttpServiceConfigurer {
 
   private final Map<String, String> propertyFields;
   private final String className;
@@ -90,6 +91,7 @@ public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigure
   public HttpServiceHandlerSpecification createSpecification() {
     Map<String, String> properties = Maps.newHashMap(this.properties);
     properties.putAll(propertyFields);
-    return new HttpServiceHandlerSpecification(className, name, "", properties, datasets, endpoints);
+    return new HttpServiceHandlerSpecification(className, name, "", properties, datasets, endpoints,
+                                               streams, dataSetModules, dataSetInstances);
   }
 }
