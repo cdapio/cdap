@@ -38,6 +38,7 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -255,7 +256,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       Future<?> future = executor.submit(new Runnable() {
         @Override
         public void run() {
-          ClassLoaders.setContextClassLoader(action.getClass().getClassLoader());
+          setContextCombinedClassLoader(action);
           try {
             if (actionInfo.getProgramType() == SchedulableProgramType.CUSTOM_ACTION) {
               try {
@@ -487,7 +488,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     Preconditions.checkArgument(WorkflowAction.class.isAssignableFrom(clz), "%s is not a WorkflowAction.", clz);
     WorkflowAction action = instantiator.get(TypeToken.of((Class<? extends WorkflowAction>) clz)).create();
 
-    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(action.getClass().getClassLoader());
+    ClassLoader oldClassLoader = setContextCombinedClassLoader(action);
     try {
       Reflections.visit(action, TypeToken.of(action.getClass()),
                         new PropertyFieldSetter(actionSpec.getProperties()),
@@ -510,7 +511,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
    * Calls the destroy method on the given WorkflowAction.
    */
   private void destroy(WorkflowActionSpecification actionSpec, WorkflowAction action) {
-    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(action.getClass().getClassLoader());
+    ClassLoader oldClassLoader = setContextCombinedClassLoader(action);
     try {
       action.destroy();
     } catch (Throwable t) {
@@ -540,5 +541,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         return currentNodes;
       }
     };
+  }
+
+  private ClassLoader setContextCombinedClassLoader(WorkflowAction action) {
+    return ClassLoaders.setContextClassLoader(
+      new CombineClassLoader(null, ImmutableList.of(action.getClass().getClassLoader(), getClass().getClassLoader())));
   }
 }
