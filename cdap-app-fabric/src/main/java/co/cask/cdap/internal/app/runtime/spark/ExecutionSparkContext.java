@@ -206,6 +206,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
           if (dataset instanceof DatasetOutputCommitter) {
             ((DatasetOutputCommitter) dataset).onFailure();
           }
+          throw t;
         }
         if (dataset instanceof DatasetOutputCommitter) {
           ((DatasetOutputCommitter) dataset).onSuccess();
