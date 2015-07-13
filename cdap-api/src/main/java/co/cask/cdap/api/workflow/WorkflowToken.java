@@ -99,7 +99,7 @@ public interface WorkflowToken {
 
   /**
    * Same key can be added to the {@link WorkflowToken} by multiple nodes.
-   * This method returns the {@link List} of {@link NodeValueEntry}, where
+   * This method returns the {@link List} of {@link NodeValue}, where
    * each entry represents the unique node name and the {@link Value} that it set
    * for the specified key for a {@link Scope#USER} scope.
    * <p>
@@ -111,14 +111,14 @@ public interface WorkflowToken {
    * inserted for a specific key is guaranteed within the same branch, but not across
    * different branches.
    * @param key the key to be searched
-   * @return the list of {@link NodeValueEntry} from node name to the value that node
+   * @return the list of {@link NodeValue} from node name to the value that node
    * added for the input key
    */
-  List<NodeValueEntry> getAll(String key);
+  List<NodeValue> getAll(String key);
 
   /**
    * Same key can be added to the WorkflowToken by multiple nodes.
-   * This method returns the {@link List} of {@link NodeValueEntry}, where
+   * This method returns the {@link List} of {@link NodeValue}, where
    * each entry represents the unique node name and the {@link Value} that it set
    * for the specified key for a given scope.
    * <p>
@@ -131,10 +131,10 @@ public interface WorkflowToken {
    * different branches.
    * @param key the key to be searched
    * @param scope the {@link WorkflowToken.Scope} for the key
-   * @return the list of {@link NodeValueEntry} from node name to the value that node
+   * @return the list of {@link NodeValue} from node name to the value that node
    * added for the input key for a given scope
    */
-  List<NodeValueEntry> getAll(String key, Scope scope);
+  List<NodeValue> getAll(String key, Scope scope);
 
   /**
    * Get the {@link Map} of key to {@link Value}s that were added to the {@link WorkflowToken}
@@ -155,22 +155,22 @@ public interface WorkflowToken {
 
   /**
    * Same key can be added to the WorkflowToken by multiple nodes.
-   * This method returns the key to {@link List} of {@link NodeValueEntry}
+   * This method returns the key to {@link List} of {@link NodeValue}
    * added in the {@link Scope#USER} scope.
-   * @return the {@link Map} of key to {@link List} of {@link NodeValueEntry} added for
+   * @return the {@link Map} of key to {@link List} of {@link NodeValue} added for
    * the given scope
    */
-  Map<String, List<NodeValueEntry>> getAll();
+  Map<String, List<NodeValue>> getAll();
 
   /**
    * Same key can be added to the WorkflowToken by multiple nodes.
-   * This method returns the key to {@link List} of {@link NodeValueEntry}
+   * This method returns the key to {@link List} of {@link NodeValue}
    * added in the {@link WorkflowToken.Scope} provided.
    * @param scope the scope for the key
-   * @return the {@link Map} of key to {@link List} of {@link NodeValueEntry} added for
+   * @return the {@link Map} of key to {@link List} of {@link NodeValue} added for
    * the given scope
    */
-  Map<String, List<NodeValueEntry>> getAll(Scope scope);
+  Map<String, List<NodeValue>> getAll(Scope scope);
 
   /**
    * This method is deprecated as of release 3.1.
