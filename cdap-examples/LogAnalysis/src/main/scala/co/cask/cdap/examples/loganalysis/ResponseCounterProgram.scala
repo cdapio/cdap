@@ -22,6 +22,7 @@ import org.apache.hadoop.io.{LongWritable, Text}
 import org.apache.spark.rdd.{NewHadoopRDD, RDD}
 import org.slf4j.{Logger, LoggerFactory}
 import org.apache.spark.SparkContext._
+
 /**
  * A spark program which counts the total number of responses for every unique response code
  */
@@ -32,9 +33,6 @@ class ResponseCounterProgram extends ScalaSparkProgram {
 
     val logsData: NewHadoopRDD[LongWritable, Text] =
       context.readFromStream(LogAnalysisApp.LOG_STREAM, classOf[Text])
-
-    val apacheLogs: RDD[ApacheAccessLog] = logsData.map(x => ApacheAccessLog.
-      parseFromLogLine(x._2.toString)).cache()
 
     val responseCounts = logsData.map(x => (ApacheAccessLog.
       parseFromLogLine(x._2.toString).getResponseCode, 1L)).reduceByKey(_ + _)

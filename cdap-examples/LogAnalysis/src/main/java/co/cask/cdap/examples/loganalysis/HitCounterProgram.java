@@ -42,11 +42,8 @@ public class HitCounterProgram extends AbstractMapReduce {
   @Override
   public void beforeSubmit(MapReduceContext context) throws Exception {
     Job job = context.getHadoopJob();
-    job.setMapOutputKeyClass(Text.class);
-    job.setMapOutputValueClass(IntWritable.class);
     job.setMapperClass(Emitter.class);
     job.setReducerClass(Counter.class);
-    job.setNumReduceTasks(1);
     StreamBatchReadable.useStreamInput(context, LogAnalysisApp.LOG_STREAM);
   }
 
@@ -56,11 +53,13 @@ public class HitCounterProgram extends AbstractMapReduce {
   public static class Emitter extends Mapper<LongWritable, Text, Text, IntWritable> {
 
     private static final IntWritable ONE = new IntWritable(1);
+    Text logText = new Text();
 
     @Override
     protected void map(LongWritable key, Text value, Context context)
       throws IOException, InterruptedException {
-      context.write(new Text(ApacheAccessLog.parseFromLogLine(value.toString()).getEndpoint()), ONE);
+      logText.set(ApacheAccessLog.parseFromLogLine(value.toString()).getEndpoint());
+      context.write(logText, ONE);
     }
   }
 
@@ -72,7 +71,7 @@ public class HitCounterProgram extends AbstractMapReduce {
     @Override
     public void reduce(Text key, Iterable<IntWritable> values, Context context)
       throws IOException, InterruptedException {
-      int sum = 0;
+      long sum = 0;
       for (IntWritable value : values) {
         sum += value.get();
       }
