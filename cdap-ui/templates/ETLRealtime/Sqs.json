@@ -1,0 +1,36 @@
+{
+  "id": "Sqs",
+  "groups" : {
+    "position": [ "group1" ],
+    "group1": {
+      "display" : "SQS realtime source",
+      "position" : [ "region", "accessID", "accessKey", "queueName", "endpoint" ],
+      "fields" : {
+        "region" : {
+          "widget": "textbox",
+          "label": "Region"
+        },
+
+        "accessID" : {
+          "widget": "textbox",
+          "label": "AccessID"
+        },
+
+        "accessKey" : {
+          "widget": "textbox",
+          "label": "AccessKey"
+        },
+
+        "queueName" : {
+          "widget": "textbox",
+          "label": "Queue Name"
+        },
+
+        "endpoint" : {
+          "widget": "textbox",
+          "label": "Endpoint"
+        }
+      }
+    }
+  }
+}
