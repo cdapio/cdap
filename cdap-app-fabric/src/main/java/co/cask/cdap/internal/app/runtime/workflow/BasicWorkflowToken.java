@@ -16,33 +16,41 @@
 
 package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.workflow.NodeValueEntry;
+import co.cask.cdap.api.workflow.NodeValue;
+import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Implementation of the {@link WorkflowToken} interface.
  */
 public class BasicWorkflowToken implements WorkflowToken {
   private Map<String, Map<String, Long>> mapReduceCounters;
-  private final Map<String, List<NodeValueEntry>> tokenValueMap = Maps.newHashMap();
+  private final Map<Scope, Map<String, List<NodeValue>>> tokenValueMap = new EnumMap<>(Scope.class);
   private String nodeName;
 
   public BasicWorkflowToken() {
+    for (Scope scope : Scope.values()) {
+      tokenValueMap.put(scope, new HashMap<String, List<NodeValue>>());
+    }
   }
 
-  public BasicWorkflowToken(BasicWorkflowToken other) {
-    for (Map.Entry<String, List<NodeValueEntry>> entry : other.tokenValueMap.entrySet()) {
-      List<NodeValueEntry> nodeValueList = Lists.newArrayList();
-      nodeValueList.addAll(entry.getValue());
-      this.tokenValueMap.put(entry.getKey(), nodeValueList);
+  private BasicWorkflowToken(BasicWorkflowToken other) {
+    for (Map.Entry<Scope, Map<String, List<NodeValue>>> entry : other.tokenValueMap.entrySet()) {
+      Map<String, List<NodeValue>> tokenValueMapForScope = new HashMap<>();
+      for (Map.Entry<String, List<NodeValue>> valueEntry : entry.getValue().entrySet()) {
+        tokenValueMapForScope.put(valueEntry.getKey(), Lists.newArrayList(valueEntry.getValue()));
+      }
+
+      this.tokenValueMap.put(entry.getKey(), tokenValueMapForScope);
     }
 
     this.nodeName = other.nodeName;
@@ -62,29 +70,33 @@ public class BasicWorkflowToken implements WorkflowToken {
    * @param other the other WorkflowToken to be merged
    */
   void mergeToken(BasicWorkflowToken other) {
-    Map<String, List<NodeValueEntry>> otherTokenValueMap = other.tokenValueMap;
+    for (Map.Entry<Scope, Map<String, List<NodeValue>>> entry : other.tokenValueMap.entrySet()) {
+      Map<String, List<NodeValue>> thisTokenValueMapForScope = this.tokenValueMap.get(entry.getKey());
 
-    for (Map.Entry<String, List<NodeValueEntry>> entry : otherTokenValueMap.entrySet()) {
-      if (!tokenValueMap.containsKey(entry.getKey())) {
-        // Key is newly added to the other WorkflowToken
-        tokenValueMap.put(entry.getKey(), Lists.<NodeValueEntry>newArrayList());
-      }
-
-      // Iterate over the list of NodeValueEntry corresponding to the current key.
-      // Only add those NodeValueEntry to the merged token which already do not exist.
-      for (NodeValueEntry otherNodeValueEntry : otherTokenValueMap.get(entry.getKey())) {
-        boolean otherNodeValueEntryExist = false;
-        for (NodeValueEntry thisNodeValueEntry : tokenValueMap.get(entry.getKey())) {
-          if (thisNodeValueEntry.equals(otherNodeValueEntry)) {
-            otherNodeValueEntryExist = true;
-            break;
-          }
+      for (Map.Entry<String, List<NodeValue>> otherTokenValueMapForScopeEntry : entry.getValue().entrySet()) {
+        if (!thisTokenValueMapForScope.containsKey(otherTokenValueMapForScopeEntry.getKey())) {
+          thisTokenValueMapForScope.put(otherTokenValueMapForScopeEntry.getKey(), Lists.<NodeValue>newArrayList());
         }
-        if (!otherNodeValueEntryExist) {
-          tokenValueMap.get(entry.getKey()).add(otherNodeValueEntry);
+
+        // Iterate over the list of NodeValue corresponding to the current key.
+        // Only add those NodeValue to the merged token which already do not exist.
+
+        for (NodeValue otherNodeValue : otherTokenValueMapForScopeEntry.getValue()) {
+          boolean otherNodeValueExist = false;
+          for (NodeValue thisNodeValue :
+            thisTokenValueMapForScope.get(otherTokenValueMapForScopeEntry.getKey())) {
+            if (thisNodeValue.equals(otherNodeValue)) {
+              otherNodeValueExist = true;
+              break;
+            }
+          }
+          if (!otherNodeValueExist) {
+            thisTokenValueMapForScope.get(otherTokenValueMapForScopeEntry.getKey()).add(otherNodeValue);
+          }
         }
       }
     }
+
     if (other.getMapReduceCounters() != null) {
       setMapReduceCounters(other.getMapReduceCounters());
     }
@@ -92,60 +104,71 @@ public class BasicWorkflowToken implements WorkflowToken {
 
   @Override
   public void put(String key, String value) {
-    if (nodeName == null) {
-      throw new IllegalStateException("Node name cannot be null.");
-    }
-    List<NodeValueEntry> nodeValueList = tokenValueMap.get(key);
+    put(key, Value.of(value));
+  }
+
+  @Override
+  public void put(String key, Value value) {
+    put(key, value, Scope.USER);
+  }
+
+  void put(String key, Value value, Scope scope) {
+    Preconditions.checkNotNull(key, "Null key cannot be added in the WorkflowToken.");
+    Preconditions.checkNotNull(value, String.format("Null value provided for the key '%s'.", key));
+    Preconditions.checkNotNull(value.toString(), String.format("Null value provided for the key '%s'.", key));
+    Preconditions.checkState(nodeName != null, "nodeName cannot be null.");
+
+    List<NodeValue> nodeValueList = tokenValueMap.get(scope).get(key);
     if (nodeValueList == null) {
       nodeValueList = Lists.newArrayList();
-      tokenValueMap.put(key, nodeValueList);
+      tokenValueMap.get(scope).put(key, nodeValueList);
     }
 
     // Check if the current node already added the key to the token.
     // In that case replace that entry with the new one
     for (int i = 0; i < nodeValueList.size(); i++) {
       if (nodeValueList.get(i).getNodeName().equals(nodeName)) {
-        nodeValueList.set(i, new NodeValueEntry(nodeName, value));
+        nodeValueList.set(i, new NodeValue(nodeName, value));
         return;
       }
     }
 
-    nodeValueList.add(new NodeValueEntry(nodeName, value));
+    nodeValueList.add(new NodeValue(nodeName, value));
   }
 
   @Override
-  public List<NodeValueEntry> getAll(String key) {
-    if (containsKey(key)) {
-      return ImmutableList.copyOf(tokenValueMap.get(key));
-    }
-    return ImmutableList.of();
+  public Value get(String key) {
+    return get(key, Scope.USER);
   }
 
   @Override
-  public Map<String, String> getAllFromNode(String nodeName) {
-    Map<String, String> tokenValuesFromNode = Maps.newHashMap();
-    for (Map.Entry<String, List<NodeValueEntry>> entry : tokenValueMap.entrySet()) {
-
-      List<NodeValueEntry> nodeValueEntryList = entry.getValue();
-      for (NodeValueEntry nodeValueEntry : nodeValueEntryList) {
-        if (nodeValueEntry.getNodeName().equals(nodeName)) {
-          tokenValuesFromNode.put(entry.getKey(), nodeValueEntry.getValue());
-          break;
-        }
-      }
-    }
-    return tokenValuesFromNode;
-  }
-
-  @Nullable
-  @Override
-  public String get(String key, String nodeName) {
-    List<NodeValueEntry> nodeValueList = tokenValueMap.get(key);
+  public Value get(String key, Scope scope) {
+    List<NodeValue> nodeValueList = tokenValueMap.get(scope).get(key);
     if (nodeValueList == null) {
       return null;
     }
 
-    for (NodeValueEntry nodeValue : nodeValueList) {
+    // List of NodeValue cannot be empty if the key is added in the WorkflowToken as
+    // when we add key, we also add single NodeValue.
+    Preconditions.checkState(!nodeValueList.isEmpty(),
+                             String.format("List of NodeValue for the key %s cannot be empty", key));
+
+    return nodeValueList.get(nodeValueList.size() - 1).getValue();
+  }
+
+  @Override
+  public Value get(String key, String nodeName) {
+    return get(key, nodeName, Scope.USER);
+  }
+
+  @Override
+  public Value get(String key, String nodeName, Scope scope) {
+    List<NodeValue> nodeValueList = tokenValueMap.get(scope).get(key);
+    if (nodeValueList == null) {
+      return null;
+    }
+
+    for (NodeValue nodeValue : nodeValueList) {
       if (nodeValue.getNodeName().equals(nodeName)) {
         return nodeValue.getValue();
       }
@@ -153,32 +176,52 @@ public class BasicWorkflowToken implements WorkflowToken {
     return null;
   }
 
-  @Nullable
   @Override
-  public String get(String key) {
-    List<NodeValueEntry> nodeValueList = tokenValueMap.get(key);
-    if (nodeValueList == null) {
-      return null;
-    }
-
-    if (nodeValueList.isEmpty()) {
-      // List of NodeValueEntry cannot be empty if the key is added in the WorkflowToken as
-      // when we add key, we also add single NodeValueEntry.
-      throw new IllegalStateException(String.format("List of NodeValueEntry for the key %s cannot be empty", key));
-    }
-    return nodeValueList.get(nodeValueList.size() - 1).getValue();
+  public List<NodeValue> getAll(String key) {
+    return getAll(key, Scope.USER);
   }
 
-  @Deprecated
-  @Nullable
+  @Override
+  public List<NodeValue> getAll(String key, Scope scope) {
+    if (tokenValueMap.get(scope).containsKey(key)) {
+      return ImmutableList.copyOf(tokenValueMap.get(scope).get(key));
+    }
+    return ImmutableList.of();
+  }
+
+  @Override
+  public Map<String, Value> getAllFromNode(String nodeName) {
+    return getAllFromNode(nodeName, Scope.USER);
+  }
+
+  @Override
+  public Map<String, Value> getAllFromNode(String nodeName, Scope scope) {
+    ImmutableMap.Builder<String, Value> tokenValuesBuilder = ImmutableMap.builder();
+    for (Map.Entry<String, List<NodeValue>> entry : tokenValueMap.get(scope).entrySet()) {
+      List<NodeValue> nodeValueList = entry.getValue();
+      for (NodeValue nodeValue : nodeValueList) {
+        if (nodeValue.getNodeName().equals(nodeName)) {
+          tokenValuesBuilder.put(entry.getKey(), nodeValue.getValue());
+          break;
+        }
+      }
+    }
+    return tokenValuesBuilder.build();
+  }
+
+  @Override
+  public Map<String, List<NodeValue>> getAll() {
+    return getAll(Scope.USER);
+  }
+
+  @Override
+  public Map<String, List<NodeValue>> getAll(Scope scope) {
+    return ImmutableMap.copyOf(tokenValueMap.get(scope));
+  }
+
   @Override
   public Map<String, Map<String, Long>> getMapReduceCounters() {
     return mapReduceCounters;
-  }
-
-  @Override
-  public boolean containsKey(String key) {
-    return tokenValueMap.containsKey(key);
   }
 
   public void setMapReduceCounters(Map<String, Map<String, Long>> mapReduceCounters) {
