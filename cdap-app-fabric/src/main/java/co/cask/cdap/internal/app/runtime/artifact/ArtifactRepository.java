@@ -107,8 +107,7 @@ public class ArtifactRepository {
    * @throws IOException if there was an exception reading from the artifact store
    * @throws ArtifactRangeNotFoundException if none of the parent artifacts could be found
    */
-  @VisibleForTesting
-  void inspectArtifact(Id.Artifact artifactId, File artifactFile, @Nullable Set<ArtifactRange> parentArtifacts)
+  public void addArtifact(Id.Artifact artifactId, File artifactFile, @Nullable Set<ArtifactRange> parentArtifacts)
     throws IOException, ArtifactRangeNotFoundException, WriteConflictException, ArtifactAlreadyExistsException {
 
     CloseableClassLoader parentClassLoader;
@@ -118,11 +117,17 @@ public class ArtifactRepository {
       parentClassLoader = createArtifactClassLoader(Locations.toLocation(artifactFile));
     } else {
       // otherwise, use any of the parent artifacts to create the parent classloader.
-      List<ArtifactDetail> parents = artifactStore.getArtifacts(parentArtifacts);
-      if (parents.isEmpty()) {
+      Location parentLocation = null;
+      for (ArtifactRange parentRange : parentArtifacts) {
+        List<ArtifactDetail> parents = artifactStore.getArtifacts(parentRange);
+        if (!parents.isEmpty()) {
+          parentLocation = parents.get(0).getDescriptor().getLocation();
+        }
+      }
+      if (parentLocation == null) {
         throw new ArtifactRangeNotFoundException(parentArtifacts);
       }
-      parentClassLoader = createArtifactClassLoader(parents.get(0).getDescriptor().getLocation());
+      parentClassLoader = createArtifactClassLoader(parentLocation);
     }
 
     try {

@@ -59,7 +59,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedMap;
 
 /**
@@ -168,7 +167,7 @@ public class ArtifactStore {
         Scanner scanner = context.get().scan(scanArtifacts(namespace));
         Row row;
         while ((row = scanner.next()) != null) {
-          addArchivesToList(artifacts, row);
+          addArtifactsToList(artifacts, row);
         }
         return Collections.unmodifiableList(artifacts);
       }
@@ -178,26 +177,25 @@ public class ArtifactStore {
   /**
    * Get all artifacts that match artifacts in the given ranges.
    *
-   * @param ranges the ranges to match artifacts in
+   * @param range the range to match artifacts in
    * @return an unmodifiable list of all artifacts that match the given ranges. If none exist, an empty list
    *         is returned
    */
-  public List<ArtifactDetail> getArtifacts(final Set<ArtifactRange> ranges) {
+  public List<ArtifactDetail> getArtifacts(final ArtifactRange range) {
     return metaTable.executeUnchecked(new TransactionExecutor.Function<DatasetContext<Table>, List<ArtifactDetail>>() {
       @Override
       public List<ArtifactDetail> apply(DatasetContext<Table> context) throws Exception {
         List<ArtifactDetail> artifacts = Lists.newArrayList();
         Table table = context.get();
-        for (ArtifactRange range : ranges) {
-          ArtifactKey artifactKey = new ArtifactKey(range.getNamespace(), range.getName());
-          Row row = table.get(artifactKey.getRowKey());
-          if (!row.isEmpty()) {
-            for (Map.Entry<byte[], byte[]> columnEntry : row.getColumns().entrySet()) {
-              String version = Bytes.toString(columnEntry.getKey());
-              ArtifactData data = gson.fromJson(Bytes.toString(columnEntry.getValue()), ArtifactData.class);
-              Id.Artifact artifactId = Id.Artifact.from(artifactKey.namespace, artifactKey.name, version);
-              artifacts.add(new ArtifactDetail(getDescriptor(artifactId, data.location), data.meta));
-            }
+        ArtifactKey artifactKey = new ArtifactKey(range.getNamespace(), range.getName());
+
+        Row row = table.get(artifactKey.getRowKey());
+        for (Map.Entry<byte[], byte[]> columnEntry : row.getColumns().entrySet()) {
+          String version = Bytes.toString(columnEntry.getKey());
+          if (range.versionIsInRange(new ArtifactVersion(version))) {
+            ArtifactData data = gson.fromJson(Bytes.toString(columnEntry.getValue()), ArtifactData.class);
+            Id.Artifact artifactId = Id.Artifact.from(artifactKey.namespace, artifactKey.name, version);
+            artifacts.add(new ArtifactDetail(getDescriptor(artifactId, data.location), data.meta));
           }
         }
         return Collections.unmodifiableList(artifacts);
@@ -226,7 +224,7 @@ public class ArtifactStore {
           ArtifactKey artifactKey = new ArtifactKey(namespace, artifactName);
           Row row = context.get().get(artifactKey.getRowKey());
           if (!row.isEmpty()) {
-            addArchivesToList(archives, row);
+            addArtifactsToList(archives, row);
           }
           return archives;
         }
@@ -534,14 +532,14 @@ public class ArtifactStore {
     oldMeta.location.delete();
   }
 
-  private void addArchivesToList(List<ArtifactDetail> archives, Row row) throws IOException {
+  private void addArtifactsToList(List<ArtifactDetail> artifactDetails, Row row) throws IOException {
     ArtifactKey artifactKey = ArtifactKey.parse(row.getRow());
 
     for (Map.Entry<byte[], byte[]> columnVal : row.getColumns().entrySet()) {
       String version = Bytes.toString(columnVal.getKey());
       ArtifactData data = gson.fromJson(Bytes.toString(columnVal.getValue()), ArtifactData.class);
       Id.Artifact artifactId = Id.Artifact.from(artifactKey.namespace, artifactKey.name, version);
-      archives.add(new ArtifactDetail(getDescriptor(artifactId, data.location), data.meta));
+      artifactDetails.add(new ArtifactDetail(getDescriptor(artifactId, data.location), data.meta));
     }
   }
 

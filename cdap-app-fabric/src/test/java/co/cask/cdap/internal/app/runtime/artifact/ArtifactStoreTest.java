@@ -73,6 +73,10 @@ public class ArtifactStoreTest {
 
     // no artifacts in a namespace should return an empty collection
     Assert.assertTrue(artifactStore.getArtifacts(namespace).isEmpty());
+    // no artifacts in range should return an empty collection
+    ArtifactRange range = new ArtifactRange(
+      namespace, "something", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
+    Assert.assertTrue(artifactStore.getArtifacts(range).isEmpty());
 
     // no artifact by namespace and artifact name should throw an exception
     try {
@@ -259,6 +263,27 @@ public class ArtifactStoreTest {
     assertEqual(artifact1V1, meta1V1, contents1V1, artifactVersions.get(0));
     assertEqual(artifact2V1, meta2V1, contents2V1, artifactVersions.get(1));
     assertEqual(artifact2V2, meta2V2, contents2V2, artifactVersions.get(2));
+
+    // test get using a range
+    // this range should get everything
+    ArtifactRange range = new ArtifactRange(
+      Constants.DEFAULT_NAMESPACE_ID, "artifact2", new ArtifactVersion("0.1.0"), new ArtifactVersion("0.1.2"));
+    artifactVersions = artifactStore.getArtifacts(range);
+    Assert.assertEquals(2, artifactVersions.size());
+    assertEqual(artifact2V1, meta2V1, contents2V1, artifactVersions.get(0));
+    assertEqual(artifact2V2, meta2V2, contents2V2, artifactVersions.get(1));
+    // this range should get just v0.1.1
+    range = new ArtifactRange(
+      Constants.DEFAULT_NAMESPACE_ID, "artifact2", new ArtifactVersion("0.1.1"), new ArtifactVersion("1.0.0"));
+    artifactVersions = artifactStore.getArtifacts(range);
+    Assert.assertEquals(1, artifactVersions.size());
+    assertEqual(artifact2V2, meta2V2, contents2V2, artifactVersions.get(0));
+    // this range should get just v0.1.0
+    range = new ArtifactRange(
+      Constants.DEFAULT_NAMESPACE_ID, "artifact2", new ArtifactVersion("0.0.0"), new ArtifactVersion("0.1.1"));
+    artifactVersions = artifactStore.getArtifacts(range);
+    Assert.assertEquals(1, artifactVersions.size());
+    assertEqual(artifact2V1, meta2V1, contents2V1, artifactVersions.get(0));
   }
 
   @Test
