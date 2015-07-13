@@ -40,7 +40,8 @@ import org.junit.runners.Suite;
   MetaClientTestRun.class,
   NamespaceClientTestRun.class,
   PreferencesClientTestRun.class,
-  ScheduleClientTestRun.class })
+  ScheduleClientTestRun.class,
+  WorkflowClientTestRun.class })
 public class ClientTestsSuite extends ClientTestBase {
 
 }

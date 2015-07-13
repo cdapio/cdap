@@ -78,7 +78,11 @@ public enum ArgumentName {
   ADAPTER_SPEC("adapter-spec-file"),
   COMMAND_CATEGORY("command-category"),
 
-  TABLE_RENDERER("table-renderer");
+  TABLE_RENDERER("table-renderer"),
+
+  WORKFLOW_NODE("workflow-node"),
+  WORKFLOW_TOKEN_SCOPE("workflow-token-scope"),
+  WORKFLOW_TOKEN_KEY("workflow-token-key");
 
   private final String name;
 

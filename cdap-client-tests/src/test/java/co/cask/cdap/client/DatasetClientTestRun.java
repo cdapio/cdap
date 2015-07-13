@@ -65,10 +65,12 @@ public class DatasetClientTestRun extends ClientTestBase {
     try {
       namespaceClient.create(new NamespaceMeta.Builder().setName(TEST_NAMESPACE).build());
     } catch (AlreadyExistsException e) {
+      // expected
     }
     try {
       namespaceClient.create(new NamespaceMeta.Builder().setName(OTHER_NAMESPACE).build());
     } catch (AlreadyExistsException e) {
+      // expected
     }
   }
 
@@ -107,6 +109,7 @@ public class DatasetClientTestRun extends ClientTestBase {
       moduleClient.get(moduleInOtherNamespace);
       Assert.fail("datasetModule found in namespace other than one in which it was expected");
     } catch (DatasetModuleNotFoundException expected) {
+      // expected
     }
 
     LOG.info("Checking that the new Dataset type exists");
@@ -124,6 +127,7 @@ public class DatasetClientTestRun extends ClientTestBase {
       typeClient.get(typeInOtherNamespace);
       Assert.fail("datasetType found in namespace other than one in which it was expected");
     } catch (DatasetTypeNotFoundException expected) {
+      // expected
     }
 
     LOG.info("Creating, truncating, and deleting dataset of new Dataset type");

@@ -44,17 +44,13 @@ public class ScheduleClientTestRun extends ClientTestBase {
   private final Id.Schedule schedule = Id.Schedule.from(app, FakeApp.SCHEDULE_NAME);
 
   private ScheduleClient scheduleClient;
-  private ProgramClient programClient;
   private ApplicationClient appClient;
 
   @Before
   public void setUp() throws Throwable {
     super.setUp();
-
     appClient = new ApplicationClient(clientConfig);
     scheduleClient = new ScheduleClient(clientConfig);
-    programClient = new ProgramClient(clientConfig);
-
     appClient.deploy(namespace, createAppJarFile(FakeApp.class));
   }
 
