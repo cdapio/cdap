@@ -173,13 +173,27 @@ public class PartitionedFileSetArguments {
     }
   }
 
-  public static void addPartitions(Map<String, String> arguments, Iterator<Partition> partitionIterator) {
+  /**
+   * Sets partitions as input for a PartitionedFileSet. If both a PartitionFilter and Partition(s) are specified, the
+   * PartitionFilter takes precedence and the specified Partition(s) will be ignored.
+   *
+   * @param arguments the runtime arguments for a partitioned dataset
+   * @param partitionIterator the iterator of partitions to add as input
+   */
+  public static void addInputPartitions(Map<String, String> arguments, Iterator<Partition> partitionIterator) {
     while (partitionIterator.hasNext()) {
-      addPartition(arguments, partitionIterator.next());
+      addInputPartition(arguments, partitionIterator.next());
     }
   }
 
-  public static void addPartition(Map<String, String> arguments, Partition partition) {
+  /**
+   * Sets a partition as input for a PartitionedFileSet. If both a PartitionFilter and Partition(s) are specified, the
+   * PartitionFilter takes precedence and the specified Partition(s) will be ignored.
+   *
+   * @param arguments the runtime arguments for a partitioned dataset
+   * @param partition the partition to add as input
+   */
+  public static void addInputPartition(Map<String, String> arguments, Partition partition) {
     FileSetArguments.addInputPath(arguments, partition.getRelativePath());
   }
 
