@@ -51,5 +51,9 @@ describe 'cdap::master' do
     it 'does not install cdap-hbase-compat-0.98 package' do
       expect(chef_run).not_to install_package('cdap-hbase-compat-0.98')
     end
+
+    it 'does not install cdap-hbase-compat-1.0 package' do
+      expect(chef_run).not_to install_package('cdap-hbase-compat-1.0')
+    end
   end
 end
