@@ -43,7 +43,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -123,73 +122,78 @@ public class TimePartitionedFileSetTest {
   }
 
   @Test
-  public void testAddGetPartitions() throws IOException, ParseException, DatasetManagementException {
-    TimePartitionedFileSet fileSet = dsFrameworkUtil.getInstance(TPFS_INSTANCE);
+  public void testAddGetPartitions() throws Exception {
+    final TimePartitionedFileSet fileSet = dsFrameworkUtil.getInstance(TPFS_INSTANCE);
 
-    // this is an arbitrary data to use as the test time
-    long time = DATE_FORMAT.parse("12/10/14 5:10 am").getTime();
-    long time2 = time + HOUR;
-    String firstPath = "first/partition";
-    String secondPath = "second/partition";
+    dsFrameworkUtil.newTransactionExecutor((TransactionAware) fileSet).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // this is an arbitrary data to use as the test time
+        long time = DATE_FORMAT.parse("12/10/14 5:10 am").getTime();
+        long time2 = time + HOUR;
+        String firstPath = "first/partition";
+        String secondPath = "second/partition";
 
-    // make sure the file set has no partitions initially
-    validateTimePartition(fileSet, time, null);
-    validateTimePartitions(fileSet, 0L, MAX, Collections.<Long, String>emptyMap());
+        // make sure the file set has no partitions initially
+        validateTimePartition(fileSet, time, null);
+        validateTimePartitions(fileSet, 0L, MAX, Collections.<Long, String>emptyMap());
 
-    // add a partition, verify getPartition() works
-    fileSet.addPartition(time, firstPath);
-    validateTimePartition(fileSet, time, firstPath);
+        // add a partition, verify getPartition() works
+        fileSet.addPartition(time, firstPath);
+        validateTimePartition(fileSet, time, firstPath);
 
-    Map<Long, String> expectNone = Collections.emptyMap();
-    Map<Long, String> expectFirst = ImmutableMap.of(time, firstPath);
-    Map<Long, String> expectSecond = ImmutableMap.of(time2, secondPath);
-    Map<Long, String> expectBoth = ImmutableMap.of(time, firstPath, time2, secondPath);
+        Map<Long, String> expectNone = Collections.emptyMap();
+        Map<Long, String> expectFirst = ImmutableMap.of(time, firstPath);
+        Map<Long, String> expectSecond = ImmutableMap.of(time2, secondPath);
+        Map<Long, String> expectBoth = ImmutableMap.of(time, firstPath, time2, secondPath);
 
-    // verify various ways to list partitions with various ranges
-    validateTimePartitions(fileSet, time + MINUTE, MAX, expectNone);
-    validateTimePartitions(fileSet, 0L, time, expectNone);
-    validateTimePartitions(fileSet, 0L, MAX, expectFirst);
-    validateTimePartitions(fileSet, 0L, time + MINUTE, expectFirst);
-    validateTimePartitions(fileSet, 0L, time + MINUTE, expectFirst);
-    validateTimePartitions(fileSet, 0L, time + HOUR, expectFirst);
-    validateTimePartitions(fileSet, time - HOUR, time + HOUR, expectFirst);
+        // verify various ways to list partitions with various ranges
+        validateTimePartitions(fileSet, time + MINUTE, MAX, expectNone);
+        validateTimePartitions(fileSet, 0L, time, expectNone);
+        validateTimePartitions(fileSet, 0L, MAX, expectFirst);
+        validateTimePartitions(fileSet, 0L, time + MINUTE, expectFirst);
+        validateTimePartitions(fileSet, 0L, time + MINUTE, expectFirst);
+        validateTimePartitions(fileSet, 0L, time + HOUR, expectFirst);
+        validateTimePartitions(fileSet, time - HOUR, time + HOUR, expectFirst);
 
-    // add and verify another partition
-    fileSet.addPartition(time2, secondPath);
-    validateTimePartition(fileSet, time2, secondPath);
+        // add and verify another partition
+        fileSet.addPartition(time2, secondPath);
+        validateTimePartition(fileSet, time2, secondPath);
 
-    // verify various ways to list partitions with various ranges
-    validateTimePartitions(fileSet, 0L, MAX, expectBoth);
-    validateTimePartitions(fileSet, time, time + 30 * MINUTE, expectFirst);
-    validateTimePartitions(fileSet, time + 30 * MINUTE, time2, expectNone);
-    validateTimePartitions(fileSet, time + 30 * MINUTE, time2 + 30 * MINUTE, expectSecond);
-    validateTimePartitions(fileSet, time - 30 * MINUTE, time2 + 30 * MINUTE, expectBoth);
+        // verify various ways to list partitions with various ranges
+        validateTimePartitions(fileSet, 0L, MAX, expectBoth);
+        validateTimePartitions(fileSet, time, time + 30 * MINUTE, expectFirst);
+        validateTimePartitions(fileSet, time + 30 * MINUTE, time2, expectNone);
+        validateTimePartitions(fileSet, time + 30 * MINUTE, time2 + 30 * MINUTE, expectSecond);
+        validateTimePartitions(fileSet, time - 30 * MINUTE, time2 + 30 * MINUTE, expectBoth);
 
-    // try to add another partition with the same key
-    try {
-      fileSet.addPartition(time2, "third/partition");
-      Assert.fail("Should have thrown Exception for duplicate partition");
-    } catch (DataSetException e) {
-      //expected
-    }
+        // try to add another partition with the same key
+        try {
+          fileSet.addPartition(time2, "third/partition");
+          Assert.fail("Should have thrown Exception for duplicate partition");
+        } catch (DataSetException e) {
+          //expected
+        }
 
-    // remove first partition and validate
-    fileSet.dropPartition(time);
-    validateTimePartition(fileSet, time, null);
+        // remove first partition and validate
+        fileSet.dropPartition(time);
+        validateTimePartition(fileSet, time, null);
 
-    // verify various ways to list partitions with various ranges
-    validateTimePartitions(fileSet, 0L, MAX, expectSecond);
-    validateTimePartitions(fileSet, time, time + 30 * MINUTE, expectNone);
-    validateTimePartitions(fileSet, time + 30 * MINUTE, time2, expectNone);
-    validateTimePartitions(fileSet, time + 30 * MINUTE, time2 + 30 * MINUTE, expectSecond);
-    validateTimePartitions(fileSet, time - 30 * MINUTE, time2 + 30 * MINUTE, expectSecond);
+        // verify various ways to list partitions with various ranges
+        validateTimePartitions(fileSet, 0L, MAX, expectSecond);
+        validateTimePartitions(fileSet, time, time + 30 * MINUTE, expectNone);
+        validateTimePartitions(fileSet, time + 30 * MINUTE, time2, expectNone);
+        validateTimePartitions(fileSet, time + 30 * MINUTE, time2 + 30 * MINUTE, expectSecond);
+        validateTimePartitions(fileSet, time - 30 * MINUTE, time2 + 30 * MINUTE, expectSecond);
 
-    // try to delete  another partition with the same key
-    try {
-      fileSet.dropPartition(time);
-    } catch (DataSetException e) {
-      Assert.fail("Should not have have thrown Exception for removing non-existent partition");
-    }
+        // try to delete  another partition with the same key
+        try {
+          fileSet.dropPartition(time);
+        } catch (DataSetException e) {
+          Assert.fail("Should not have have thrown Exception for removing non-existent partition");
+        }
+      }
+    });
   }
 
   /**

@@ -21,14 +21,15 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.spark.metrics.SparkMetricsSink;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionContext;
-import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
@@ -115,6 +116,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     // Creates a temporary directory locally for storing all generated files.
     File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                                    cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
+    tempDir.mkdirs();
     this.cleanupTask = createCleanupTask(tempDir);
     try {
       SparkContextConfig contextConfig = new SparkContextConfig(hConf);
@@ -239,10 +241,12 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    * Calls the {@link Spark#beforeSubmit(SparkContext)} method.
    */
   private void beforeSubmit() throws TransactionFailureException, InterruptedException {
-    transactionExecute(new Callable<Void>() {
+    TransactionContext txContext = sparkContextFactory.getClientContext().getTransactionContext();
+    Transactions.execute(txContext, spark.getClass().getName() + ".beforeSubmit()", new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(spark.getClass().getClassLoader());
+        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
+          null, ImmutableList.of(spark.getClass().getClassLoader(), getClass().getClassLoader())));
         try {
           spark.beforeSubmit(sparkContextFactory.getClientContext());
           return null;
@@ -257,11 +261,12 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    * Calls the {@link Spark#onFinish(boolean, SparkContext)} method.
    */
   private void onFinish(final boolean succeeded) throws TransactionFailureException, InterruptedException {
-    transactionExecute(new Callable<Void>() {
-
+    TransactionContext txContext = sparkContextFactory.getClientContext().getTransactionContext();
+    Transactions.execute(txContext, spark.getClass().getName() + ".onFinish()", new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(spark.getClass().getClassLoader());
+        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
+          null, ImmutableList.of(spark.getClass().getClassLoader(), getClass().getClassLoader())));
         try {
           spark.onFinish(succeeded, sparkContextFactory.getClientContext());
           return null;
@@ -270,26 +275,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         }
       }
     });
-  }
-
-  /**
-   * Calls the given {@link Callable} with the {@link TransactionContext} from the {@link ClientSparkContext}.
-   * This method is needed since {@link TransactionExecutor} doesn't support external {@link TransactionContext}.
-   */
-  private <V> V transactionExecute(Callable<V> callable) throws TransactionFailureException {
-    TransactionContext txContext = sparkContextFactory.getClientContext().getTransactionContext();
-    V result = null;
-    txContext.start();
-    try {
-      result = callable.call();
-    } catch (Throwable t) {
-      // Abort will always throw with the TransactionFailureException.
-      txContext.abort(new TransactionFailureException("Failed to execute user method inside a transaction", t));
-    }
-
-    // If commit failed, it will throw.
-    txContext.finish();
-    return result;
   }
 
   /**

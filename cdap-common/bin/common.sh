@@ -96,6 +96,12 @@ set_hbase()
       0.98*)
         hbasecompat="$CDAP_HOME/hbase-compat-0.98/lib/*"
         ;;
+      1.0-cdh*)
+        hbasecompat="$CDAP_HOME/hbase-compat-1.0-cdh/lib/*"
+        ;;
+      1.0*)
+        hbasecompat="$CDAP_HOME/hbase-compat-1.0/lib/*"
+        ;;
       *)
         echo "ERROR: Unknown/unsupported version of HBase found: $HBASE_VERSION"
         exit 1
