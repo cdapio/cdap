@@ -158,6 +158,7 @@ body {
               @media (max-width: @screen-xs-max) { padding-top: 0; }
               @media (min-width: @screen-sm-min) { padding-bottom: 0; }
               @media (min-width: @screen-lg-min) {
+                height: 51px;
                 padding-bottom: 11px;
                 .border-radius(4px 4px 0 0);
               }
@@ -431,19 +432,11 @@ body {
                 }
               }
             }
-
-            // Namespace and Settings dropdowns
-            li.dropdown {
-              @media (max-width: @screen-md-max) {
-                a.dropdown-toggle { color: @cdap-gray; }
-              }
-            }
           }
 
           ul.navbar-nav {
             ul.dropdown-menu {
-              li.nav-subsection { color: lightgray; }
-              a:disabled { color: lightgray; }
+              li.nav-subsection, a:disabled { color: lightgray; }
             }
           }
 
