@@ -24,6 +24,7 @@ import co.cask.cdap.template.etl.api.PipelineConfigurable;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.batch.sink.BatchCubeSink;
 import co.cask.cdap.template.etl.batch.sink.DBSink;
+import co.cask.cdap.template.etl.batch.sink.ElasticsearchSink;
 import co.cask.cdap.template.etl.batch.sink.KVTableSink;
 import co.cask.cdap.template.etl.batch.sink.TableSink;
 import co.cask.cdap.template.etl.batch.sink.TimePartitionedFileSetDatasetAvroSink;
@@ -73,7 +74,7 @@ public class BaseETLBatchTest extends TestBase {
     addTemplatePlugins(TEMPLATE_ID, "batch-plugins-1.0.0.jar",
       DBSource.class, KVTableSource.class, StreamBatchSource.class, TableSource.class, DBRecord.class,
       TimePartitionedFileSetDatasetAvroSource.class,
-      BatchCubeSink.class, DBSink.class, KVTableSink.class, TableSink.class,
+      BatchCubeSink.class, DBSink.class, KVTableSink.class, TableSink.class, ElasticsearchSink.class,
       TimePartitionedFileSetDatasetAvroSink.class, AvroKeyOutputFormat.class, AvroKey.class,
       TimePartitionedFileSetDatasetParquetSink.class, AvroParquetOutputFormat.class);
     addTemplatePlugins(TEMPLATE_ID, "test-sources-1.0.0.jar", MetaKVTableSource.class);

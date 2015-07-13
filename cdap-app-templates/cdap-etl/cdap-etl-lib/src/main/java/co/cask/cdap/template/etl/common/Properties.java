@@ -119,7 +119,8 @@ public final class Properties {
     public static final String SCHEMA = "mapping";
     public static final String HOST = "host name for master node";
     public static final String PORT = "port";
-
+    public static final String ID_FIELD = "id field";
+    public static final String SERVER = "server";
   }
 
   /**
