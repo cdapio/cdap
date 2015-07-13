@@ -263,10 +263,11 @@ body.theme-cdap {
     .box-shadow(@shadow);
     p {
       color: @cdap-header;
-      &:only-child {
-        margin: 0;
-      }
     }
+    a {
+      cursor: pointer;
+    }
+    *:only-child { margin: 0; }
     &.dark {
       margin-top: 0;
       background: @cdap-darkness;
@@ -422,5 +423,4 @@ body.theme-cdap {
   // Tooltips
   // --------------------------------------------------
   .tooltip-inner { padding: 5px; }
-  .tooltip { .box-shadow(0 8px 6px -6px @cdap-lightgray); }
 }
