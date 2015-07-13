@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,30 +19,29 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.client.WorkflowClient;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
-import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Contains commands for getting program runs.
+ * Contains commands for interacting with workflows.
  */
-public class GetProgramRunsCommandSet extends CommandSet<Command> {
+public class WorkflowCommandSet extends CommandSet<Command> {
 
   @Inject
-  public GetProgramRunsCommandSet(ProgramClient programClient, CLIConfig cliConfig) {
-    super(generateCommands(programClient, cliConfig));
+  public WorkflowCommandSet(ProgramClient programClient, WorkflowClient workflowClient, CLIConfig cliConfig) {
+    super(generateCommands(programClient, workflowClient, cliConfig));
   }
 
-  private static Iterable<Command> generateCommands(ProgramClient programClient, CLIConfig cliConfig) {
-    List<Command> commands = Lists.newArrayList();
-    for (ElementType elementType : ElementType.values()) {
-      if (elementType.hasRuns()) {
-        commands.add(new GetProgramRunsCommand(elementType, programClient, cliConfig));
-      }
-    }
+  private static Iterable<Command> generateCommands(ProgramClient programClient, WorkflowClient workflowClient,
+                                                    CLIConfig cliConfig) {
+    List<Command> commands = new ArrayList<>();
+    commands.add(new GetWorkflowCurrentRunCommand(ElementType.WORKFLOW, programClient, cliConfig));
+    commands.add(new GetWorkflowTokenCommand(workflowClient, cliConfig));
     return commands;
   }
 }
