@@ -169,12 +169,12 @@ public class SparkProgramRunnerTest {
 
   @Test
   public void testSparkWithFileSet() throws Exception {
-    testSparkWithFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.CharCountSpecification.class);
+    testSparkWithFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.JavaCharCount.class);
   }
 
   @Test
   public void testSparkScalaWithFileSet() throws Exception {
-    testSparkWithFileSet(ScalaSparkAppUsingFileSet.class, ScalaSparkAppUsingFileSet.CharCountSpecification.class);
+    testSparkWithFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.ScalaCharCount.class);
   }
 
   private void testSparkWithFileSet(Class<?> appClass, Class<?> programClass) throws Exception {
@@ -202,13 +202,12 @@ public class SparkProgramRunnerTest {
 
   @Test
   public void testSparkWithPartitionedFileSet() throws Exception {
-    testSparkWithPartitionedFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.CharCountSpecification.class);
+    testSparkWithPartitionedFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.JavaCharCount.class);
   }
 
   @Test
   public void testSparkScalaWithPartitionedFileSet() throws Exception {
-    testSparkWithPartitionedFileSet(ScalaSparkAppUsingFileSet.class,
-                                    ScalaSparkAppUsingFileSet.CharCountSpecification.class);
+    testSparkWithPartitionedFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.ScalaCharCount.class);
   }
 
   private void testSparkWithPartitionedFileSet(Class<?> appClass, Class<?> programClass) throws Exception {
@@ -255,13 +254,12 @@ public class SparkProgramRunnerTest {
 
   @Test
   public void testSparkWithTimePartitionedFileSet() throws Exception {
-    testSparkWithPartitionedFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.CharCountSpecification.class);
+    testSparkWithPartitionedFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.JavaCharCount.class);
   }
 
   @Test
   public void testSparkScalaWithTimePartitionedFileSet() throws Exception {
-    testSparkWithTimePartitionedFileSet(ScalaSparkAppUsingFileSet.class,
-                                        ScalaSparkAppUsingFileSet.CharCountSpecification.class);
+    testSparkWithTimePartitionedFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.ScalaCharCount.class);
   }
 
   private void testSparkWithTimePartitionedFileSet(Class<?> appClass, Class<?> programClass) throws Exception {
@@ -309,12 +307,12 @@ public class SparkProgramRunnerTest {
 
   @Test
   public void testSparkWithCustomFileSet() throws Exception {
-    testSparkWithCustomFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.CharCountSpecification.class);
+    testSparkWithCustomFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.JavaCharCount.class);
   }
 
   @Test
   public void testSparkScalaWithCustomFileSet() throws Exception {
-    testSparkWithCustomFileSet(ScalaSparkAppUsingFileSet.class, ScalaSparkAppUsingFileSet.CharCountSpecification.class);
+    testSparkWithCustomFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.ScalaCharCount.class);
   }
 
   private void testSparkWithCustomFileSet(Class<?> appClass, Class<?> programClass) throws Exception {

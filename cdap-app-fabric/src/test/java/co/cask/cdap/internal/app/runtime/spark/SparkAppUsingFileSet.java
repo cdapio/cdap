@@ -33,6 +33,7 @@ import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.api.spark.SparkProgram;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -56,11 +57,10 @@ import java.util.Map;
  * A dummy app with spark program which counts the characters in a string
  */
 public class SparkAppUsingFileSet extends AbstractApplication {
+
   @Override
   public void configure() {
     try {
-      setName("SparkAppUsingFileSet");
-      setDescription("Application with Spark program using fileset input/output");
       createDataset("fs", FileSet.class, FileSetProperties.builder()
         .setInputFormat(MyTextInputFormat.class)
         .setOutputFormat(TextOutputFormat.class)
@@ -78,18 +78,61 @@ public class SparkAppUsingFileSet extends AbstractApplication {
         .setInputFormat(MyTextInputFormat.class)
         .setOutputFormat(TextOutputFormat.class)
         .setOutputProperty(TextOutputFormat.SEPERATOR, ":").build());
-      addSpark(new CharCountSpecification());
+      addSpark(new JavaCharCount());
+      addSpark(new ScalaCharCount());
     } catch (Throwable t) {
       throw Throwables.propagate(t);
     }
   }
 
-  public static final class CharCountSpecification extends AbstractSpark {
+  public static final class JavaCharCount extends AbstractSpark {
     @Override
     public void configure() {
-      setName("SparkCharCountProgram");
-      setDescription("Use Objectstore dataset as input job");
       setMainClass(CharCountProgram.class);
+    }
+  }
+
+  public static final class ScalaCharCount extends AbstractSpark {
+    @Override
+    public void configure() {
+      setMainClass(ScalaFileCountProgram.class);
+    }
+  }
+
+  public static class CharCountProgram implements JavaSparkProgram {
+    @Override
+    public void run(SparkContext context) {
+      String input = context.getRuntimeArguments().get("input");
+      String output = context.getRuntimeArguments().get("output");
+
+      // read the dataset
+      JavaPairRDD<Long, String> inputData = context.readFromDataset(input, Long.class, String.class);
+
+      // create a new RDD with the same key but with a new value which is the length of the string
+      JavaPairRDD<String, Integer> stringLengths = inputData.mapToPair(
+        new PairFunction<Tuple2<Long, String>, String, Integer>() {
+          @Override
+          public Tuple2<String, Integer> call(Tuple2<Long, String> pair) throws Exception {
+            return new Tuple2<>(pair._2(), pair._2().length());
+          }
+        });
+
+      // write the character count to dataset
+      context.writeToDataset(stringLengths, output, String.class, Integer.class);
+    }
+  }
+
+  public static final class CharCount extends AbstractSpark {
+
+    private Class<? extends SparkProgram> mainSparkClass;
+
+    public CharCount(Class<? extends SparkProgram> mainSparkClass) {
+      this.mainSparkClass = mainSparkClass;
+    }
+
+    @Override
+    public void configure() {
+      setMainClass(mainSparkClass);
     }
   }
 
@@ -102,7 +145,6 @@ public class SparkAppUsingFileSet extends AbstractApplication {
     implements InputFormatProvider, OutputFormatProvider, DatasetOutputCommitter {
 
     private final FileSet delegate;
-    private final Location statusLocation = null;
 
     public MyFileSet(DatasetSpecification spec, @EmbeddedDataset("files") FileSet embedded) {
       super(spec.getName(), embedded);
@@ -157,29 +199,6 @@ public class SparkAppUsingFileSet extends AbstractApplication {
       } catch (Throwable t) {
         throw Throwables.propagate(t);
       }
-    }
-  }
-
-  public static class CharCountProgram implements JavaSparkProgram {
-    @Override
-    public void run(SparkContext context) {
-      String input = context.getRuntimeArguments().get("input");
-      String output = context.getRuntimeArguments().get("output");
-
-      // read the dataset
-      JavaPairRDD<Long, String> inputData = context.readFromDataset(input, Long.class, String.class);
-
-      // create a new RDD with the same key but with a new value which is the length of the string
-      JavaPairRDD<String, Integer> stringLengths = inputData.mapToPair(
-        new PairFunction<Tuple2<Long, String>, String, Integer>() {
-        @Override
-        public Tuple2<String, Integer> call(Tuple2<Long, String> pair) throws Exception {
-          return new Tuple2<>(pair._2(), pair._2().length());
-        }
-      });
-
-      // write the character count to dataset
-      context.writeToDataset(stringLengths, output, String.class, Integer.class);
     }
   }
 
