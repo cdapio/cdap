@@ -34,6 +34,7 @@ import co.cask.cdap.template.etl.realtime.sink.RealtimeTableSink;
 import co.cask.cdap.template.etl.realtime.sink.StreamSink;
 import co.cask.cdap.template.etl.realtime.source.JmsSource;
 import co.cask.cdap.template.etl.realtime.source.KafkaSource;
+import co.cask.cdap.template.etl.realtime.source.SqsSource;
 import co.cask.cdap.template.etl.realtime.source.TestSource;
 import co.cask.cdap.template.etl.realtime.source.TwitterSource;
 import co.cask.cdap.template.etl.transform.ProjectionTransform;
@@ -98,7 +99,7 @@ public class ETLWorkerTest extends TestBase {
   @BeforeClass
   public static void setupTests() throws IOException {
     addTemplatePlugins(TEMPLATE_ID, "realtime-sources-1.0.0.jar",
-                       TestSource.class, JmsSource.class, KafkaSource.class, TwitterSource.class);
+                       TestSource.class, JmsSource.class, KafkaSource.class, TwitterSource.class, SqsSource.class);
     addTemplatePlugins(TEMPLATE_ID, "realtime-sinks-1.0.0.jar",
                        RealtimeCubeSink.class, RealtimeTableSink.class, StreamSink.class);
     addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar",

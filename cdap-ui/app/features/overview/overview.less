@@ -3,201 +3,353 @@
 @import "../../styles/themes/cdap/mixins.less";
 
 body.state-overview {
+
+  .panel-message {
+    margin-bottom: 40px;
+    position: relative;
+
+    .panel-body {
+      padding: 0 0 0 20px;
+      h2 {
+        margin-top: 0;
+        > span {
+          display: inline-block;
+          font-size: 24px;
+          font-weight: 500;
+          letter-spacing: 1px;
+          padding-right: 10px;
+        }
+      }
+      h3 {
+        font-weight: 500;
+        margin: 5px auto 2px;
+      }
+    }
+    img {
+      max-width: 120px;
+      + div {
+        display: inline-block;
+        vertical-align: middle;
+        @media (min-width: @screen-lg-min) {
+          margin-left: 15px;
+        }
+      }
+    }
+    .btn-close {
+      position: absolute;
+      right: 10px;
+      z-index: 10;
+    }
+    small {
+      display: inline-block;
+      font-size: 13px;
+      margin-top: 4px;
+      vertical-align: text-top;
+    }
+    p {
+      font-size: 11px;
+    }
+  }
   section {
-    padding: 0 0 20px;
 
     &.system-health {
-      padding-bottom: 20px;
-      margin-bottom: 20px;
-      h2 { margin-top: 0; }
-
-      .nounderline {
-        color: @cdap-bluegray;
-
-        &:hover {
-          text-decoration: none;
+      margin: 20px 0;
+      padding: 0;
+      position: relative;
+      div.divider {
+        @media (min-width: @screen-lg-min) {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 38.2%;
+          background-color: @body-bg;
+          width: 2px;
+        }
+        + div {
+          padding: 15px;
         }
       }
-
-      .col-xs-12.col-lg-4 {
+      h2 {
+        margin-top: 0;
+      }
+      .c3 {
+        svg {
+          .border-radius(8px);
+          .box-shadow(none);
+        }
+      }
+      .c3-tooltip-container {
+        text-align: left;
+      }
+      .col-lg-4 {
         white-space: nowrap;
-        @media (max-width: @screen-md-max) { text-align: center; }
+        .col-xs-4 {
+          padding-right: 0;
+          > div {
+            height: 80px;
+          }
+        }
+        .col-xs-8 {
+          padding-left: 0;
+          @media (max-width: @screen-xs-max) {
+            p {
+              font-size: 10px;
+            }
+          }
+        }
+        > div {
+          height: 90px;
+          line-height: 90px;
+          max-width: 340px;
+          .border-radius(50px);
+          @media (max-width: @screen-md-max) {
+            margin: 0 auto;
+          }
+          @media (min-width: @screen-lg-min) {
+            position: relative;
+            top: 30px;
+            left: 15px;
+            margin-left: 28px;
+          }
+        }
         svg {
           position: relative;
-          top: -10px;
-          left: 15px;
-          height: 119px;
-          width: 115px;
+          top: -25px;
+          left: 0;
         }
         p {
-          line-height: 119px;
-          display: inline-block;
-          vertical-align: top;
+          position: relative;
+          left: -12px;
+          font-weight: 500;
           white-space: nowrap;
+          text-align: center;
         }
       }
-      .col-xs-12.col-lg-8 {
-        @media (max-width: @screen-md-max) { text-align: center; }
-        @media (min-width: @screen-lg-min) { text-align: right; }
-        .col-xs-12 > p {
-          @media (min-width: @screen-lg-min) { padding-left: 86px; }
+      .col-lg-8 {
+        p {
+          margin: 0;
+          span {
+            display: block;
+            font-weight: 500;
+            padding-bottom: 10px;
+          }
+        }
+        @media (max-width: @screen-md-max) {
+          text-align: center;
+        }
+        @media (min-width: @screen-lg-min) {
+          text-align: center;
+          p.text-center {
+            padding-left: 55px;
+          }
         }
         .health-widget {
           display: inline-block;
+          position: relative;
+          > span {
+            font-size: 12px;
+            position: absolute;
+            top: 5px;
+            left: 10px;
+            z-index: 10;
+          }
+          .c3-line {
+            stroke-width: 2px;
+          }
           @media (max-width: @screen-xs-max) {
             display: block;
             max-width: 280px;
             margin: 0 auto;
           }
-          &:last-of-type {
-            @media (min-width: @screen-lg-min) { margin-right: 28px; }
-          }
         }
         .health-widgets + .health-widget {
-          @media (min-width: @screen-sm-min) { margin-right: 28px; }
-        }
-        .health-metrics {
-          position: relative;
-          font-weight: 700;
-          span {
-            color: white;
-            height: 16px;
-            width: 38px;
-            position: absolute;
-            bottom: 2px;
-            z-index: 10;
-            line-height: 16px;
-            text-align: center;
-            vertical-align: middle;
-            .border-radius(4px);
-            &:first-child { left: 0; }
-            &:last-child { right: 0; }
-            &.warn { background-color: @brand-warning; }
-            &.error { background-color: @brand-danger; }
+          @media (min-width: @screen-sm-min) {
+            margin-right: 28px;
+          }
+          @media (min-width: @screen-lg-min) {
+            margin-left: 56px;
           }
         }
-        svg {
-          vertical-align: middle;
-          background-color: #E8E9EE;
-          circle { width: 90px; }
-        }
-        img { max-width: 300px; }
-        .epoch svg { max-height: 75px; }
-        p {
-          margin: 0;
-          &.text-center { margin-top: 5px; }
+        .warning-alert {
+          position: relative;
+          font-weight: 700;
+          margin-top: 25px;
+          width: 100%;
+          > div {
+            position: absolute;
+            right: 0;
+            bottom: 2px;
+            z-index: 10;
+            p {
+              display: inline-block;
+              font-size: 11px;
+              font-weight: 500;
+              letter-spacing: 0.5px;
+              vertical-align: middle;
+            }
+          }
+          span {
+            height: 16px;
+            line-height: 16px;
+            min-width: 25px;
+            display: inline-block;
+            font-weight: 400;
+            margin: 0 10px;
+            text-align: center;
+            vertical-align: middle;
+            .border-radius(2px);
+            &.warn {
+              margin-right: 15px;
+            }
+            &.error {
+              margin-right: 0;
+            }
+          }
         }
       }
     }
+    &.data-apps {
+      padding: 0 0 20px;
+      h3 {
+        margin-bottom: 18px;
+      }
+      .btn-group .btn {
+        padding-top: 3px;
+        padding-bottom: 3px;
+        font-size: 12px;
+      }
+      .col-sm-3 {
+        p {
+          font-weight: bold;
+          line-height: 24px;
+          margin-bottom: 0;
+          white-space: nowrap;
+        }
+      }
+      .col-sm-9 {
+        text-align: left;
+        @media (min-width: @screen-sm-min) {
+         text-align: right;
+        }
+      }
+      .col-md-6 {
+        @media (min-width: @screen-md-min) {
+          &:first-child > div {
+            margin-right: 15px;
+          }
+          &:last-child > div {
+            margin-left: 15px;
+          }
+        }
+      }
+      .list-group {
+        margin-top: 20px;
+        .border-radius(@border-radius-base);
+        .title-type-image {
+          line-height: 18px;
+          span {
+            font-size: 12px;
+            vertical-align: middle;
+          }
+        }
+      }
+      .list-group-item {
+        padding: 0;
+        .border-radius(@border-radius-base);
+        .transition(all 0.2s ease-in-out);
+        &:not(:last-child) {
+          margin-bottom: 10px;
+        }
+        a {
+          display: block;
+          padding: 10px 15px;
+          &:hover, &:focus {
+            text-decoration: none;
+          }
+        }
+        p {
+          margin-bottom: 0;
+          font-size: 15px;
+          font-weight: 400;
+        }
+      }
+      my-file-select button {
+        .border-radius(0 4px 4px 0);
+        margin-left: -1px;
+      }
+    }
   }
+
   &.theme-cdap {
     .panel-message {
-      position: relative;
-      .btn-close {
-        position: absolute;
-        right: 10px;
-        z-index: 10;
+      small {
+        color: @cdap-bluegray;
       }
-      h2 { padding-bottom: 20px; }
-      h3 { margin: 5px auto; }
-      .col-xs-12.col-sm-3:first-child > div { padding-left: 30px; }
-      .panel-heading { padding: 0; }
-      .panel-body {
-        padding: 0;
-        p:first-child { text-align: left; }
-        img { max-width: 120px; }
+      p {
+        color: #5F6674;
       }
     }
     section {
       color: @cdap-header;
       &.system-health {
+        background-color: white;
         color: @cdap-bluegray;
-        padding: 10px;
         border: 1px solid #d1d4dc;
-        h3 {
-          padding-left: 30px;
-          position: relative;
-          top: 5px;
-        }
-        svg {
-          + canvas {
-            background-color: #E8E9EE;
-            border: 1px solid lightgray;
-            .border-radius(@border-radius-base);
-          }
-          path { stroke: lightgray; }
-          .c3-line {
-            stroke-width: 2px;
-          }
-        }
+        p, span { color: @cdap-bluegray; }
         .c3 {
           svg {
-            border-radius: 5px;
             border: 1px solid rgba(0,0,0,0.1);
-            background-color: #E8E9EE;
-            .border-radius(8px);
-            .box-shadow(inset 0 0 10px rgba(223, 224, 229, 0.5));
+            background-color: @cdap-header;
           }
         }
-        .c3-tooltip-container { text-align: left; }
+        .col-lg-4 {
+          > div {
+            background-color: @panel-default-border;
+          }
+        }
+        .col-lg-8 {
+          .health-widget {
+            > span {
+              color: @body-bg;
+            }
+          }
+          .warning-alert {
+            span {
+              color: white;
+              &.warn {
+                background-color: @brand-warning;
+              }
+              &.error {
+                background-color: red;
+              }
+            }
+          }
+        }
       }
       &.data-apps {
-        .col-xs-12.col-sm-3 {
+        .col-md-6 {
+          h3 + p {
+            color: @cdap-bluegray;
+          }
+        }
+        .col-sm-3 {
           p {
-            font-weight: bold;
-            line-height: 32px;
-            margin-bottom: 0;
-            white-space: nowrap;
+            color: #5F6674;
           }
         }
-        .col-xs-12.col-md-6 {
-          @media (min-width: @screen-sm-min) {
-            .col-xs-12.col-sm-7 { text-align: right; }
-          }
-          @media (min-width: @screen-md-min) {
-            &:first-child > div { margin-right: 15px; }
-            &:last-child > div { margin-left: 15px; }
-          }
-        }
-
-        .list-group {
+        li.list-group-item {
           background-color: white;
-          border: 1px solid lightgray;
-          margin-top: 10px;
-          padding: 10px;
-          .border-radius(@border-radius-base);
-
-          .title-type-image {
-            span { vertical-align: middle; }
+          a, p {
+            color: @cdap-bluegray;
           }
-        }
-        .list-group-item {
-          background-color: @cdap-bluegray;
-          color: white;
-          padding: 0;
-          .border-radius(@border-radius-base);
-          .transition(background-color 0.2s ease-in-out);
-          &:not(:last-child) { margin-bottom: 10px; }
-          &:hover, &:focus { background-color: @brand-primary; }
-          a {
-            color: white;
-            display: block;
-            padding: 10px 15px;
-            &:hover, &:focus { text-decoration: none; }
+          &:hover, &:focus {
+            background-color: @cdap-bluegray;
+            a, p {
+              color: white;
+            }
           }
-          p {
-            color: white;
-            margin-bottom: 0;
-            font-size: 15px;
-            font-weight: 700;
-          }
-        }
-        my-file-select button {
-          .border-radius(0 4px 4px 0);
-          margin-left: -1px;
         }
       }
     }
   }
-
 }

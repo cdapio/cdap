@@ -20,11 +20,13 @@ import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.lang.Reflections;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -70,7 +72,7 @@ public class WorkerDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void run() throws Exception {
-    ClassLoader classLoader = ClassLoaders.setContextClassLoader(worker.getClass().getClassLoader());
+    ClassLoader classLoader = setContextCombinedClassLoader();
     try {
       worker.run();
     } finally {
@@ -83,7 +85,7 @@ public class WorkerDriver extends AbstractExecutionThreadService {
     if (worker == null) {
       return;
     }
-    ClassLoader classLoader = ClassLoaders.setContextClassLoader(worker.getClass().getClassLoader());
+    ClassLoader classLoader = setContextCombinedClassLoader();
     try {
       worker.destroy();
     } finally {
@@ -100,7 +102,7 @@ public class WorkerDriver extends AbstractExecutionThreadService {
     if (worker == null) {
       return;
     }
-    ClassLoader classLoader = ClassLoaders.setContextClassLoader(worker.getClass().getClassLoader());
+    ClassLoader classLoader = setContextCombinedClassLoader();
     try {
       worker.stop();
     } finally {
@@ -125,11 +127,16 @@ public class WorkerDriver extends AbstractExecutionThreadService {
   }
 
   private void initialize() throws Exception {
-    ClassLoader classLoader = ClassLoaders.setContextClassLoader(worker.getClass().getClassLoader());
+    ClassLoader classLoader = setContextCombinedClassLoader();
     try {
       worker.initialize(context);
     } finally {
       ClassLoaders.setContextClassLoader(classLoader);
     }
+  }
+
+  private ClassLoader setContextCombinedClassLoader() {
+    return ClassLoaders.setContextClassLoader(
+      new CombineClassLoader(null, ImmutableList.of(worker.getClass().getClassLoader(), getClass().getClassLoader())));
   }
 }

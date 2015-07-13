@@ -25,6 +25,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
@@ -48,6 +49,7 @@ import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -247,7 +249,7 @@ public class ServiceHttpServer extends AbstractIdleService {
   }
 
   private void initHandler(final HttpServiceHandler handler, final BasicHttpServiceContext serviceContext) {
-    ClassLoader classLoader = ClassLoaders.setContextClassLoader(handler.getClass().getClassLoader());
+    ClassLoader classLoader = setContextCombinedClassLoader(handler);
     DataFabricFacade dataFabricFacade = dataFabricFacadeFactory.create(program,
                                                                        serviceContext.getDatasetInstantiator());
     try {
@@ -266,7 +268,7 @@ public class ServiceHttpServer extends AbstractIdleService {
   }
 
   private void destroyHandler(final HttpServiceHandler handler, final BasicHttpServiceContext serviceContext) {
-    ClassLoader classLoader = ClassLoaders.setContextClassLoader(handler.getClass().getClassLoader());
+    ClassLoader classLoader = setContextCombinedClassLoader(handler);
     DataFabricFacade dataFabricFacade = dataFabricFacadeFactory.create(program,
                                                                        serviceContext.getDatasetInstantiator());
     try {
@@ -420,5 +422,10 @@ public class ServiceHttpServer extends AbstractIdleService {
     TypeToken<HttpServiceHandler> getHandlerType() {
       return handlerType;
     }
+  }
+
+  private ClassLoader setContextCombinedClassLoader(HttpServiceHandler handler) {
+    return ClassLoaders.setContextClassLoader(
+      new CombineClassLoader(null, ImmutableList.of(handler.getClass().getClassLoader(), getClass().getClassLoader())));
   }
 }
