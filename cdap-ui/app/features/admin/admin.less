@@ -1,197 +1,194 @@
 @import "../../styles/variables.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
 @import '../../styles/themes/cdap/mixins.less';
 
-body.theme-cdap.state-admin {
-  main.container {
+body.theme-cdap {
+  &.state-admin {
+    main.container {
+      .search-bar { margin-bottom: 15px; }
+      .clickable { cursor: pointer; }
+      .sidebar {
+        ul {
+          > li {
+            &:first-child {
+              .border-radius(8px 8px 0 0);
+              border-bottom: 0;
+            }
+            &:last-of-type {
+              .border-radius(0 0 8px 8px);
+              > ul {
+                .border-radius(0 0 8px 8px);
+                max-height: 500px;
+                overflow-y: auto;
 
-    // This is required to steal the focus from an already clicked button on previous state.
-    .btn-default.active {
-      background-color: #fff;
-    }
-
-    .btn.btn-default:focus {
-      background-color: #fff;
-    }
-    .search-bar { margin-bottom: 15px; }
-    .clickable { cursor: pointer; }
-    .sidebar {
-      ul {
-        > li {
-          &:first-child {
-            border-top-right-radius: 8px;
-            border-top-left-radius: 8px;
-            border-bottom: 0;
-          }
-          &:last-of-type {
-            border-bottom-right-radius: 8px;
-            border-bottom-left-radius: 8px;
-            > ul {
-              border-bottom-right-radius: 8px;
-              border-bottom-left-radius: 8px;
-              max-height: 500px;
-              overflow-y: auto;
-
-              > li:last-of-type ul {
-                border-bottom-right-radius: 8px;
-                border-bottom-left-radius: 8px;
+                > li:last-of-type ul {
+                  .border-radius(0 0 8px 8px);
+                }
               }
             }
-          }
-          &.current { color: @cdap-orange; }
-          > ul { // Management child menu (secondary)
-            background-color: @cdap-darkness;
-            > li {
-              &:not(:last-child) {
-                border-bottom: 2px solid transparent;
-                box-shadow: inset 0 -1px 0 0 fade(black, 20%);
-              }
-              a {
-                color: white;
-                &.current { color: @cdap-orange; }
-                span { color: white; }
-              }
-              ul { // Namespace child menu (tertiary)
-                background-color: @tertiary-menu-bg;
-                box-shadow: 0 2px 6px black, 0 -1px 0px black;
-                li {
-                  &:not(:last-child) { border-bottom: 1px solid fade(@child-menu-link-color, 30%); }
-                  a { text-indent: 15px; }
+            &.current { color: @cdap-orange; }
+            > ul { // Management child menu (secondary)
+              background-color: @cdap-darkness;
+              > li {
+                &:not(:last-child) {
+                  border-bottom: 2px solid transparent;
+                  .box-shadow(inset 0 -1px 0 0 fade(black, 20%));
+                }
+                a {
+                  color: white;
+                  &.current { color: @cdap-orange; }
+                  span { color: white; }
+                }
+                ul { // Namespace child menu (tertiary)
+                  background-color: @tertiary-menu-bg;
+                  @shadow: 0 1px 4px black, 0 -1px 0px black;
+                  .box-shadow(@shadow);
+                  li {
+                    &:not(:last-child) { border-bottom: 1px solid fade(@child-menu-link-color, 30%); }
+                    a { text-indent: 15px; }
+                  }
                 }
               }
             }
           }
-        }
-        li {
-          padding: 0;
-          a {
-            color: @primary-menu-link-color;
-            font-size: 14px;
-            font-weight: 500;
-            padding: 15px;
-            &:hover, &:focus { text-decoration: none; }
-            &.abstract {
-              &.current {
-                border-left: 4px solid @cdap-orange;
-                color: @cdap-orange;
-              }
-              // Create namespace "+"
-              + a {
-                border-left: 1px solid @body-bg;
-                color: @cdap-orange;
-                font-size: 16px;
+          li {
+            padding: 0;
+            a {
+              color: @primary-menu-link-color;
+              font-size: 14px;
+              font-weight: 500;
+              padding: 15px;
+              &:hover, &:focus { text-decoration: none; }
+              &.abstract {
+                &.current {
+                  border-left: 4px solid @cdap-orange;
+                  color: @cdap-orange;
+                }
+                // Create namespace "+"
+                + a {
+                  border-left: 1px solid @body-bg;
+                  color: @cdap-orange;
+                  font-size: 16px;
+                }
               }
             }
-          }
-          &.current a {
-            cursor: default;
-            text-decoration: none;
-          }
-        }
-      }
-    }
-    [datasets-list] {
-      table {
-        tr{
-          td {
-            [class*="icon-"] {
-              vertical-align: middle;
+            &.current a {
+              cursor: default;
+              text-decoration: none;
             }
           }
         }
       }
-    }
-    h2:first-child { margin-top: 0; }
-    .panel-default { margin-top: 18px; }
-    // All list templates using circular status icons will rely on this selector
-    td > span[class^="status-"] {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      margin-right: 5px;
-      .border-radius(25px);
-    }
-    td > span {
-      &.status-green { background-color: @brand-success; }
-      &.status-grey { background-color: @cdap-gray; }
-    }
-    input.pref-key { font-weight: bold; }
+      [datasets-list] {
+        table {
+          tr{
+            td {
+              [class*="icon-"] {
+                vertical-align: middle;
+              }
+            }
+          }
+        }
+      }
+      h2:first-child { margin-top: 0; }
+      .panel-default { margin-top: 18px; }
+      // All list templates using circular status icons will rely on this selector
+      td > span[class^="status-"] {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        margin-right: 5px;
+        .border-radius(25px);
+      }
+      td > span {
+        &.status-green { background-color: @brand-success; }
+        &.status-grey { background-color: @cdap-gray; }
+      }
+      input.pref-key { font-weight: bold; }
 
-    .namespace-table {
-      td {
-        max-width: 300px;
-        div {
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
+      .namespace-table {
+        td {
+          max-width: 300px;
+          div {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+        }
+      }
+    }
+
+    .modal-dialog.modal-lg {
+      .modal-body {
+        padding-top: 0;
+        .alert.alert-danger.alert-dismissible {
+          .close {
+            right: 0;
+          }
+          padding: 5px;
+          margin-bottom: 0;
+        }
+      }
+      .modal-footer {
+        padding-top: 0;
+        .btn.btn-success {
+          div {
+            display: inline-block;
+          }
         }
       }
     }
   }
+  &.state-admin-namespace-detail-data-streammetadata {
+    .form-horizontal {
 
-  .modal-dialog.modal-lg {
-    .modal-body {
-      padding-top: 0;
-      .alert.alert-danger.alert-dismissible {
-        .close {
-          right: 0;
+      padding-left: 15px;
+      padding-right: 15px;
+
+      .null {
+        line-height: 25px;
+
+        input {
+          vertical-align: middle;
         }
-        padding: 5px;
-        margin-bottom: 0;
       }
-    }
-    .modal-footer {
-      padding-top: 0;
-      .btn.btn-success {
-        div {
-          display: inline-block;
+
+      .avro {
+        resize: vertical;
+        min-height: 250px;
+      }
+
+      .form-group {
+        margin-left: 0;
+        margin-right: 0;
+
+        .fields {
+          top: -15px;
+          position: relative;
         }
+
+        .field-row {
+          margin-bottom: 5px;
+        }
+      }
+
+      .well {
+        margin-left: 15px;
       }
     }
   }
-}
-
-body.state-admin-namespace-detail-data-streammetadata {
-  .form-horizontal {
-
-    padding-left: 15px;
-    padding-right: 15px;
-
-    .null {
-      line-height: 25px;
-
-      input {
-        vertical-align: middle;
-      }
-    }
-
-    .avro {
-      resize: vertical;
-      min-height: 250px;
-    }
-
-    .form-group {
-      margin-left: 0;
-      margin-right: 0;
-
-      .fields {
-        top: -15px;
-        position: relative;
-      }
-
-      .field-row {
-        margin-bottom: 5px;
-      }
-    }
-
-    .well {
-      margin-left: 15px;
+  &.state-admin-namespace-detail-settings {
+    textarea {
+      min-height: 100px;
+      resize: none;
     }
   }
-}
-
-body.state-admin-namespace-detail-settings {
-  textarea {
-    min-height: 100px;
-    resize: none;
+  &.state-admin-system-services-detail {
+    main.container {
+      // This is required to steal the focus from an already clicked button on previous state.
+      .btn-default.active, .btn.btn-default:focus {
+        background-color: white;
+      }
+    }
   }
 }
