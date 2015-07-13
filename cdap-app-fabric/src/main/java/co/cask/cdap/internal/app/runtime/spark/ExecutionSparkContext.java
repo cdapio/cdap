@@ -123,35 +123,39 @@ public class ExecutionSparkContext extends AbstractSparkContext {
 
     // first try if it is InputFormatProvider
     Map<String, String> dsArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName, getRuntimeArguments());
-    Dataset dataset = getDataset(datasetName, dsArgs);
-    if (dataset instanceof InputFormatProvider) {
-      // get the input format and its configuration from the dataset
-      String inputFormatName = ((InputFormatProvider) dataset).getInputFormatClassName();
-
-      // load the input format class
-      if (inputFormatName == null) {
-        throw new DatasetInstantiationException(
-          String.format("Dataset '%s' provided null as the input format class name", datasetName));
-      }
-      try {
-        @SuppressWarnings("unchecked")
-        Class<? extends InputFormat> inputFormatClass =
-          (Class<? extends InputFormat>) SparkClassLoader.findFromContext().loadClass(inputFormatName);
-        Map<String, String> inputConfig = ((InputFormatProvider) dataset).getInputFormatConfiguration();
-        if (inputConfig != null) {
-          for (Map.Entry<String, String> entry : inputConfig.entrySet()) {
-            configuration.set(entry.getKey(), entry.getValue());
+    Dataset dataset = instantiateDataset(datasetName, dsArgs);
+    try {
+      if (dataset instanceof InputFormatProvider) {
+        // get the input format and its configuration from the dataset
+        String inputFormatName = ((InputFormatProvider) dataset).getInputFormatClassName();
+        // load the input format class
+        if (inputFormatName == null) {
+          throw new DatasetInstantiationException(
+            String.format("Dataset '%s' provided null as the input format class name", datasetName));
+        }
+        Class<? extends InputFormat> inputFormatClass;
+        try {
+          @SuppressWarnings("unchecked")
+          Class<? extends InputFormat> ifClass =
+            (Class<? extends InputFormat>) SparkClassLoader.findFromContext().loadClass(inputFormatName);
+          inputFormatClass = ifClass;
+          Map<String, String> inputConfig = ((InputFormatProvider) dataset).getInputFormatConfiguration();
+          if (inputConfig != null) {
+            for (Map.Entry<String, String> entry : inputConfig.entrySet()) {
+              configuration.set(entry.getKey(), entry.getValue());
+            }
           }
+        } catch (ClassNotFoundException e) {
+          throw new DatasetInstantiationException(String.format(
+            "Cannot load input format class %s provided by dataset '%s'", inputFormatName, datasetName), e);
+        } catch (ClassCastException e) {
+          throw new DatasetInstantiationException(String.format(
+            "Input format class %s provided by dataset '%s' is not an input format", inputFormatName, datasetName), e);
         }
         return getSparkFacade().createRDD(inputFormatClass, kClass, vClass, configuration);
-
-      } catch (ClassNotFoundException e) {
-        throw new DatasetInstantiationException(String.format(
-          "Cannot load input format class %s provided by dataset '%s'", inputFormatName, datasetName), e);
-      } catch (ClassCastException e) {
-        throw new DatasetInstantiationException(String.format(
-          "Input format class %s provided by dataset '%s' is not an input format", inputFormatName, datasetName), e);
       }
+    } finally {
+      commitAndClose(datasetName, dataset);
     }
 
     // it must be supported by SparkDatasetInputFormat
@@ -166,43 +170,53 @@ public class ExecutionSparkContext extends AbstractSparkContext {
 
     // first try if it is OutputFormatProvider
     Map<String, String> dsArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName, getRuntimeArguments());
-    Dataset dataset = getDataset(datasetName, dsArgs);
-    if (dataset instanceof OutputFormatProvider) {
-      // get the output format and its configuration from the dataset
-      String outputFormatName = ((OutputFormatProvider) dataset).getOutputFormatClassName();
-
-      // load the input format class
-      if (outputFormatName == null) {
-        throw new DatasetInstantiationException(
-          String.format("Dataset '%s' provided null as the output format class name", datasetName));
-      }
-      try {
-        @SuppressWarnings("unchecked")
-        Class<? extends OutputFormat> outputFormatClass =
-          (Class<? extends OutputFormat>) SparkClassLoader.findFromContext().loadClass(outputFormatName);
-        Map<String, String> outputConfig = ((OutputFormatProvider) dataset).getOutputFormatConfiguration();
-        if (outputConfig != null) {
-          for (Map.Entry<String, String> entry : outputConfig.entrySet()) {
-            configuration.set(entry.getKey(), entry.getValue());
+    Dataset dataset = instantiateDataset(datasetName, dsArgs);
+    try {
+      if (dataset instanceof OutputFormatProvider) {
+        // get the output format and its configuration from the dataset
+        String outputFormatName = ((OutputFormatProvider) dataset).getOutputFormatClassName();
+        // load the output format class
+        if (outputFormatName == null) {
+          throw new DatasetInstantiationException(
+            String.format("Dataset '%s' provided null as the output format class name", datasetName));
+        }
+        Class<? extends OutputFormat> outputFormatClass;
+        try {
+          @SuppressWarnings("unchecked")
+          Class<? extends OutputFormat> ofClass =
+            (Class<? extends OutputFormat>) SparkClassLoader.findFromContext().loadClass(outputFormatName);
+          outputFormatClass = ofClass;
+          Map<String, String> outputConfig = ((OutputFormatProvider) dataset).getOutputFormatConfiguration();
+          if (outputConfig != null) {
+            for (Map.Entry<String, String> entry : outputConfig.entrySet()) {
+              configuration.set(entry.getKey(), entry.getValue());
+            }
+          }
+        } catch (ClassNotFoundException e) {
+          throw new DatasetInstantiationException(String.format(
+            "Cannot load input format class %s provided by dataset '%s'", outputFormatName, datasetName), e);
+        } catch (ClassCastException e) {
+          throw new DatasetInstantiationException(String.format(
+            "Input format class %s provided by dataset '%s' is not an input format", outputFormatName, datasetName), e);
+        }
+        try {
+          getSparkFacade().saveAsDataset(rdd, outputFormatClass, kClass, vClass, configuration);
+        } catch (Throwable t) {
+          // whatever went wrong, give the dataset a chance to handle the failure
+          if (dataset instanceof DatasetOutputCommitter) {
+            ((DatasetOutputCommitter) dataset).onFailure();
           }
         }
-        getSparkFacade().saveAsDataset(rdd, outputFormatClass, kClass, vClass, configuration);
-
         if (dataset instanceof DatasetOutputCommitter) {
           ((DatasetOutputCommitter) dataset).onSuccess();
-          // TODO must call onFailure() in case of failure [CDAP-2983]
         }
         return;
-
-      } catch (ClassNotFoundException e) {
-        throw new DatasetInstantiationException(String.format(
-          "Cannot load input format class %s provided by dataset '%s'", outputFormatName, datasetName), e);
-      } catch (ClassCastException e) {
-        throw new DatasetInstantiationException(String.format(
-          "Input format class %s provided by dataset '%s' is not an input format", outputFormatName, datasetName), e);
       }
+    } finally {
+      commitAndClose(datasetName, dataset);
     }
 
+    // it must be supported by SparkDatasetOutputFormat
     SparkDatasetOutputFormat.setDataset(hConf, datasetName, dsArgs);
     getSparkFacade().saveAsDataset(rdd, SparkDatasetOutputFormat.class, kClass, vClass, new Configuration(hConf));
   }
