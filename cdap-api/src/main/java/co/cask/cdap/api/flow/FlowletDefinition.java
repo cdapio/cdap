@@ -16,7 +16,6 @@
 
 package co.cask.cdap.api.flow;
 
-import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
@@ -58,11 +57,11 @@ public final class FlowletDefinition {
   private Map<String, Set<Schema>> inputs;
   private Map<String, Set<Schema>> outputs;
 
-  public FlowletDefinition(String flowletName, Flowlet flowlet, int instances, ApplicationConfigurer appConfigurer) {
+  public FlowletDefinition(String flowletName, Flowlet flowlet, int instances) {
     FlowletSpecification flowletSpec;
     //TODO: CDAP-2943 Remove deprecated methods in Flow/Flowlet and move the configure methods.
-    if (flowlet instanceof AbstractFlowlet && appConfigurer != null) {
-      DefaultFlowletConfigurer flowletConfigurer = new DefaultFlowletConfigurer(flowlet, appConfigurer);
+    if (flowlet instanceof AbstractFlowlet) {
+      DefaultFlowletConfigurer flowletConfigurer = new DefaultFlowletConfigurer(flowlet);
       AbstractFlowlet abstractFlowlet = (AbstractFlowlet) flowlet;
       abstractFlowlet.configure(flowletConfigurer);
       flowletSpec = flowletConfigurer.createSpecification();
@@ -89,7 +88,9 @@ public final class FlowletDefinition {
                                                        flowletName == null ? flowletSpec.getName() : flowletName,
                                                        flowletSpec.getDescription(), flowletSpec.getFailurePolicy(),
                                                        datasets, properties,
-                                                       flowletSpec.getResources());
+                                                       flowletSpec.getResources(),
+                                                       flowletSpec.getStreams(), flowletSpec.getDataSetModules(),
+                                                       flowletSpec.getDataSetInstances());
   }
 
   /**

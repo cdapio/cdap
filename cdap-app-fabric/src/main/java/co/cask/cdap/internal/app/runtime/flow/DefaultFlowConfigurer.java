@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.flow;
 
-import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowConfigurer;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -43,12 +42,10 @@ public class DefaultFlowConfigurer implements FlowConfigurer {
   private String description;
   private Map<String, FlowletDefinition> flowlets;
   private List<FlowletConnection> connections;
-  private ApplicationConfigurer appConfigurer;
 
-  public DefaultFlowConfigurer(Flow flow, ApplicationConfigurer appConfigurer) {
+  public DefaultFlowConfigurer(Flow flow) {
     this.className = flow.getClass().getName();
     this.name = flow.getClass().getSimpleName();
-    this.appConfigurer = appConfigurer;
     this.description = "";
     this.flowlets = Maps.newHashMap();
     this.connections = Lists.newArrayList();
@@ -80,14 +77,14 @@ public class DefaultFlowConfigurer implements FlowConfigurer {
   }
 
   private String getFlowletName(Flowlet flowlet) {
-    FlowletDefinition flowletDef = new FlowletDefinition(null, flowlet, 1, appConfigurer);
+    FlowletDefinition flowletDef = new FlowletDefinition(null, flowlet, 1);
     return flowletDef.getFlowletSpec().getName();
   }
 
   @Override
   public void addFlowlet(String name, Flowlet flowlet, int instances) {
     Preconditions.checkArgument(flowlet != null, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
-    FlowletDefinition flowletDef = new FlowletDefinition(name, flowlet, instances, appConfigurer);
+    FlowletDefinition flowletDef = new FlowletDefinition(name, flowlet, instances);
     String flowletName = flowletDef.getFlowletSpec().getName();
     Preconditions.checkArgument(instances > 0, String.format(UserMessages.getMessage(UserErrors.INVALID_INSTANCES),
                                                              flowletName, instances));

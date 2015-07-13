@@ -17,11 +17,14 @@
 package co.cask.cdap.internal.flowlet;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.dataset.DatasetCreationSpec;
 import co.cask.cdap.api.flow.flowlet.FailurePolicy;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,17 +40,25 @@ public final class DefaultFlowletSpecification implements FlowletSpecification {
   private final Set<String> dataSets;
   private final Map<String, String> properties;
   private final Resources resources;
+  private final Map<String, StreamSpecification> streams;
+  private final Map<String, String> dataSetModules;
+  private final Map<String, DatasetCreationSpec> dataSetInstances;
 
   public DefaultFlowletSpecification(String name, String description,
                                      FailurePolicy failurePolicy, Set<String> dataSets,
-                                     Map<String, String> properties, Resources resources) {
-    this(null, name, description, failurePolicy, dataSets, properties, resources);
+                                     Map<String, String> properties, Resources resources,
+                                     Map<String, StreamSpecification> streams, Map<String, String> dataSetModules,
+                                     Map<String, DatasetCreationSpec> dataSetInstances) {
+    this(null, name, description, failurePolicy, dataSets, properties, resources, streams, dataSetModules,
+         dataSetInstances);
   }
 
   public DefaultFlowletSpecification(String className, String name,
                                      String description, FailurePolicy failurePolicy,
                                      Set<String> dataSets, Map<String, String> properties,
-                                     Resources resources) {
+                                     Resources resources, Map<String, StreamSpecification> streams,
+                                     Map<String, String> dataSetModules,
+                                     Map<String, DatasetCreationSpec> dataSetInstances) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -55,6 +66,9 @@ public final class DefaultFlowletSpecification implements FlowletSpecification {
     this.dataSets = ImmutableSet.copyOf(dataSets);
     this.properties = properties == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(properties);
     this.resources = resources;
+    this.streams = Collections.unmodifiableMap(streams);
+    this.dataSetModules = Collections.unmodifiableMap(dataSetModules);
+    this.dataSetInstances = Collections.unmodifiableMap(dataSetInstances);
   }
 
   @Override
@@ -96,4 +110,20 @@ public final class DefaultFlowletSpecification implements FlowletSpecification {
   public Resources getResources() {
     return resources;
   }
+
+  @Override
+  public Map<String, StreamSpecification> getStreams() {
+    return streams;
+  }
+
+  @Override
+  public Map<String, String> getDataSetModules() {
+    return dataSetModules;
+  }
+
+  @Override
+  public Map<String, DatasetCreationSpec> getDataSetInstances() {
+    return dataSetInstances;
+  }
+
 }

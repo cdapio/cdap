@@ -27,6 +27,8 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.FlowletDefinition;
+import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
@@ -35,6 +37,7 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.worker.Worker;
@@ -140,7 +143,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   @Override
   public void addFlow(Flow flow) {
     Preconditions.checkArgument(flow != null, "Flow cannot be null.");
-    DefaultFlowConfigurer configurer = new DefaultFlowConfigurer(flow, this);
+    DefaultFlowConfigurer configurer = new DefaultFlowConfigurer(flow);
     FlowSpecification spec = flow.configure();
     if (spec == null && flow instanceof AbstractFlow) {
       AbstractFlow abstractFlow = (AbstractFlow) flow;
@@ -148,6 +151,13 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
       spec = configurer.createSpecification();
     } else {
       spec = new DefaultFlowSpecification(flow.getClass().getName(), spec);
+    }
+
+    for (Map.Entry<String, FlowletDefinition> flowletEntry : spec.getFlowlets().entrySet()) {
+      FlowletSpecification flowletSpec = flowletEntry.getValue().getFlowletSpec();
+      streams.putAll(flowletSpec.getStreams());
+      dataSetModules.putAll(flowletSpec.getDataSetModules());
+      dataSetInstances.putAll(flowletSpec.getDataSetInstances());
     }
     flows.put(spec.getName(), spec);
   }
@@ -193,6 +203,12 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     service.configure(configurer);
 
     ServiceSpecification spec = configurer.createSpecification();
+    for (Map.Entry<String, HttpServiceHandlerSpecification> handlerSpecEntry : spec.getHandlers().entrySet()) {
+      HttpServiceHandlerSpecification handlerSpec = handlerSpecEntry.getValue();
+      streams.putAll(handlerSpec.getStreams());
+      dataSetModules.putAll(handlerSpec.getDataSetModules());
+      dataSetInstances.putAll(handlerSpec.getDataSetInstances());
+    }
     services.put(spec.getName(), spec);
   }
 

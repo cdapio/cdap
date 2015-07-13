@@ -17,9 +17,12 @@
 package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.dataset.DatasetCreationSpec;
 import co.cask.cdap.api.flow.flowlet.FailurePolicy;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.internal.flowlet.DefaultFlowletSpecification;
+import com.google.common.collect.Maps;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -47,6 +50,9 @@ public final class FlowletSpecificationCodec extends AbstractSpecificationCodec<
     jsonObj.add("datasets", serializeSet(src.getDataSets(), context, String.class));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
     jsonObj.add("resources", context.serialize(src.getResources(), Resources.class));
+    jsonObj.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
+    jsonObj.add("dataSetModules", serializeMap(src.getDataSetModules(), context, String.class));
+    jsonObj.add("dataSetInstances", serializeMap(src.getDataSetInstances(), context, DatasetCreationSpec.class));
 
     return jsonObj;
   }
@@ -63,7 +69,20 @@ public final class FlowletSpecificationCodec extends AbstractSpecificationCodec<
     Set<String> dataSets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
     Resources resources = context.deserialize(jsonObj.get("resources"), Resources.class);
+    JsonElement streamElement = jsonObj.get("streams");
+    JsonElement dataSetModElement = jsonObj.get("dataSetModules");
+    JsonElement dataSetInstElement = jsonObj.get("dataSetInstances");
 
-    return new DefaultFlowletSpecification(className, name, description, policy, dataSets, properties, resources);
+    Map<String, StreamSpecification> streams = (streamElement == null) ?
+      Maps.<String, StreamSpecification>newHashMap() : deserializeMap(streamElement, context,
+                                                                      StreamSpecification.class);
+    Map<String, String> dataSetModules = (dataSetModElement == null) ? Maps.<String, String>newHashMap() :
+      deserializeMap(dataSetModElement, context, String.class);
+    Map<String, DatasetCreationSpec> dataSetInstances = (dataSetInstElement == null) ?
+      Maps.<String, DatasetCreationSpec>newHashMap() : deserializeMap(dataSetInstElement, context,
+                                                                      DatasetCreationSpec.class);
+
+    return new DefaultFlowletSpecification(className, name, description, policy, dataSets, properties, resources,
+                                           streams, dataSetModules, dataSetInstances);
   }
 }
