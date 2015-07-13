@@ -53,6 +53,10 @@ public class ArtifactRange {
     return upper;
   }
 
+  public boolean versionIsInRange(ArtifactVersion version) {
+    return version.compareTo(lower) >= 0 && version.compareTo(upper) < 0;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {

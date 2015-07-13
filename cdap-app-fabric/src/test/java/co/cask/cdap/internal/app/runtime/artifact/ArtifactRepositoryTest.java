@@ -91,7 +91,7 @@ public class ArtifactRepositoryTest {
     File appArtifactFile = createJar(PluginTestAppTemplate.class, new File(tmpDir, "PluginTest-1.0.0.jar"),
       createManifest(ManifestFields.EXPORT_PACKAGE,
         PluginTestRunnable.class.getPackage().getName()));
-    artifactRepository.inspectArtifact(APP_ARTIFACT_ID, appArtifactFile, null);
+    artifactRepository.addArtifact(APP_ARTIFACT_ID, appArtifactFile, null);
     appClassLoader = createAppClassLoader(appArtifactFile);
   }
 
@@ -116,7 +116,7 @@ public class ArtifactRepositoryTest {
       new ArtifactRange(APP_ARTIFACT_ID.getNamespace(), APP_ARTIFACT_ID.getName(),
       new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Id.Artifact artifactId = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "myPlugin", "1.0");
-    artifactRepository.inspectArtifact(artifactId, jarFile, parents);
+    artifactRepository.addArtifact(artifactId, jarFile, parents);
 
     // check the parent can see the plugins
     SortedMap<ArtifactDescriptor, List<PluginClass>> plugins = artifactRepository.getPlugins(APP_ARTIFACT_ID);
@@ -158,7 +158,7 @@ public class ArtifactRepositoryTest {
     Set<ArtifactRange> parents = ImmutableSet.of(
       new ArtifactRange(APP_ARTIFACT_ID.getNamespace(), APP_ARTIFACT_ID.getName(),
       new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
-    artifactRepository.inspectArtifact(artifact1Id, jarFile, parents);
+    artifactRepository.addArtifact(artifact1Id, jarFile, parents);
 
     // Should get the only version.
     Map.Entry<ArtifactDescriptor, PluginClass> plugin =
@@ -170,7 +170,7 @@ public class ArtifactRepositoryTest {
     // Create another plugin jar with later version and update the repository
     Id.Artifact artifact2Id = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "myPlugin", "2.0");
     jarFile = createJar(TestPlugin.class, new File(tmpDir, "myPlugin-2.0.jar"), manifest);
-    artifactRepository.inspectArtifact(artifact2Id, jarFile, parents);
+    artifactRepository.addArtifact(artifact2Id, jarFile, parents);
 
     // Should select the latest version
     plugin = artifactRepository.findPlugin(APP_ARTIFACT_ID, "plugin", "TestPlugin2", new PluginSelector());
@@ -178,7 +178,7 @@ public class ArtifactRepositoryTest {
     Assert.assertEquals(new ArtifactVersion("2.0"), plugin.getKey().getVersion());
     Assert.assertEquals("TestPlugin2", plugin.getValue().getName());
 
-    // Load the Plugin class and the common "EmptyClass" from the classLoader.
+    // Load the Plugin class from the classLoader.
     PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader);
     ClassLoader pluginClassLoader = instantiator.getArtifactClassLoader(plugin.getKey());
     Class<?> pluginClass = pluginClassLoader.loadClass(TestPlugin2.class.getName());
@@ -194,7 +194,7 @@ public class ArtifactRepositoryTest {
     Assert.assertEquals(new ArtifactVersion("1.0"), plugin.getKey().getVersion());
     Assert.assertEquals("TestPlugin2", plugin.getValue().getName());
 
-    // Load the Plugin class and the "EmptyClass" again from the current plugin selected
+    // Load the Plugin class again from the current plugin selected
     // The plugin class should be different (from different ClassLoader)
     // The empty class should be the same (from the plugin lib ClassLoader)
     pluginClassLoader = instantiator.getArtifactClassLoader(plugin.getKey());
