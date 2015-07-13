@@ -92,14 +92,14 @@ public class PartitionedFileSetArgumentsTest {
     List<Partition> partitions = Lists.newArrayList();
     for (String relativePath : relativePaths) {
       BasicPartition basicPartition = new BasicPartition(null, relativePath, null);
-      PartitionedFileSetArguments.addPartition(arguments, basicPartition);
-      // add the partitions to a list to also test the addPartitions(Map, Iterator) method below
+      PartitionedFileSetArguments.addInputPartition(arguments, basicPartition);
+      // add the partitions to a list to also test the addInputPartitions(Map, Iterator) method below
       partitions.add(basicPartition);
     }
     Assert.assertEquals(relativePaths, FileSetArguments.getInputPaths(arguments));
 
     arguments = Maps.newHashMap();
-    PartitionedFileSetArguments.addPartitions(arguments, partitions.iterator());
+    PartitionedFileSetArguments.addInputPartitions(arguments, partitions.iterator());
     Assert.assertEquals(relativePaths, FileSetArguments.getInputPaths(arguments));
 
   }

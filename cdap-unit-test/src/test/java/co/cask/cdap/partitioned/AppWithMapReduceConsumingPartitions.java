@@ -145,7 +145,7 @@ public class AppWithMapReduceConsumingPartitions extends AbstractApplication {
       finalPartitionConsumerState = partitionConsumerResult.getPartitionConsumerState();
 
       Map<String, String> arguments = Maps.newHashMap();
-      PartitionedFileSetArguments.addPartitions(arguments, partitionConsumerResult.getPartitionIterator());
+      PartitionedFileSetArguments.addInputPartitions(arguments, partitionConsumerResult.getPartitionIterator());
 
       mapReduceContext.setInput(partitionedFileSetName, mapReduceContext.getDataset(partitionedFileSetName, arguments));
     }
