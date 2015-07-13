@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
+import co.cask.cdap.api.dataset.lib.TimePartitionDetail;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.table.Row;
@@ -160,6 +161,10 @@ public class MapReduceWithPartitionedTest {
     Map<String, String> runtimeArguments = Maps.newHashMap();
     Map<String, String> outputArgs = Maps.newHashMap();
     TimePartitionedFileSetArguments.setOutputPartitionTime(outputArgs, time);
+    final ImmutableMap<String, String> assignedMetadata = ImmutableMap.of("region", "13",
+                                                                          "data.source.name", "input",
+                                                                          "data.source.type", "table");
+    TimePartitionedFileSetArguments.setOutputPartitionMetadata(outputArgs, assignedMetadata);
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, TIME_PARTITIONED, outputArgs));
     runProgram(app, AppWithTimePartitionedFileSet.PartitionWriter.class, new BasicArguments(runtimeArguments));
 
@@ -169,11 +174,12 @@ public class MapReduceWithPartitionedTest {
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
-          Partition partition = tpfs.getPartitionByTime(time);
+          TimePartitionDetail partition = tpfs.getPartitionByTime(time);
           Assert.assertNotNull(partition);
           String path = partition.getRelativePath();
           Assert.assertNotNull(path);
           Assert.assertTrue(path.contains("2015-01-15/11-15"));
+          Assert.assertEquals(assignedMetadata, partition.getMetadata().asMap());
         }
       });
 

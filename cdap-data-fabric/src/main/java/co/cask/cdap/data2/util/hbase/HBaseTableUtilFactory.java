@@ -53,4 +53,14 @@ public class HBaseTableUtilFactory extends HBaseVersionSpecificFactory<HBaseTabl
   protected String getHBase98Classname() {
     return "co.cask.cdap.data2.util.hbase.HBase98TableUtil";
   }
+
+  @Override
+  protected String getHBase10Classname() {
+    return "co.cask.cdap.data2.util.hbase.HBase10TableUtil";
+  }
+
+  @Override
+  protected String getHBase10CDHClassname() {
+    return "co.cask.cdap.data2.util.hbase.HBase10CDHTableUtil";
+  }
 }

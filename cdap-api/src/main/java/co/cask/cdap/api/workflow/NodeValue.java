@@ -18,14 +18,14 @@ package co.cask.cdap.api.workflow;
 
 /**
  * Multiple nodes in the Workflow can add the same key to the {@link WorkflowToken}.
- * This class provides a mapping from node name to the value which was set for the
+ * This class provides a mapping from node name to the {@link Value} which was set for the
  * specific key.
  */
-public final class NodeValueEntry {
+public final class NodeValue {
   private final String nodeName;
-  private final String value;
+  private final Value value;
 
-  public NodeValueEntry(String nodeName, String value) {
+  public NodeValue(String nodeName, Value value) {
     this.nodeName = nodeName;
     this.value = value;
   }
@@ -34,13 +34,13 @@ public final class NodeValueEntry {
     return nodeName;
   }
 
-  public String getValue() {
+  public Value getValue() {
     return value;
   }
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("NodeValueEntry {");
+    StringBuilder sb = new StringBuilder("NodeValue {");
     sb.append("nodeName=").append(nodeName);
     sb.append(", value=").append(value);
     sb.append('}');
@@ -57,7 +57,7 @@ public final class NodeValueEntry {
       return false;
     }
 
-    NodeValueEntry that = (NodeValueEntry) o;
+    NodeValue that = (NodeValue) o;
     return nodeName.equals(that.nodeName) && value.equals(that.value);
   }
 

@@ -19,11 +19,13 @@ package co.cask.cdap.internal.app.runtime.flow;
 import co.cask.cdap.api.flow.flowlet.Callback;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import org.slf4j.Logger;
@@ -108,7 +110,7 @@ final class FlowletRuntimeService extends AbstractIdleService {
         @Override
         public void apply() throws Exception {
           LOG.info("Initializing flowlet: " + flowletContext);
-          ClassLoader classLoader = ClassLoaders.setContextClassLoader(flowletContext.getProgram().getClassLoader());
+          ClassLoader classLoader = setContextCombinedClassLoader();
           try {
             flowlet.initialize(flowletContext);
           } finally {
@@ -130,7 +132,7 @@ final class FlowletRuntimeService extends AbstractIdleService {
         @Override
         public void apply() throws Exception {
           LOG.info("Destroying flowlet: " + flowletContext);
-          ClassLoader classLoader = ClassLoaders.setContextClassLoader(flowletContext.getProgram().getClassLoader());
+          ClassLoader classLoader = setContextCombinedClassLoader();
           try {
             flowlet.destroy();
           } finally {
@@ -157,5 +159,11 @@ final class FlowletRuntimeService extends AbstractIdleService {
     } catch (Throwable t) {
       LOG.warn("Exception when stopping service {}", service);
     }
+  }
+
+
+  private ClassLoader setContextCombinedClassLoader() {
+    return ClassLoaders.setContextClassLoader(new CombineClassLoader(
+      null, ImmutableList.of(flowletContext.getProgram().getClassLoader(), getClass().getClassLoader())));
   }
 }

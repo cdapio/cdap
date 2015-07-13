@@ -558,8 +558,8 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     }
     // we know for sure there is an output partition key (checked in getOutputFormatConfig())
     PartitionKey outputKey = PartitionedFileSetArguments.getOutputPartitionKey(runtimeArguments, getPartitioning());
-    // TODO: Add support to write to metadata from MapReduce - https://issues.cask.co/browse/CDAP-2784
-    addPartition(outputKey, outputPath);
+    Map<String, String> metadata = PartitionedFileSetArguments.getOutputPartitionMetadata(runtimeArguments);
+    addPartition(outputKey, outputPath, metadata);
   }
 
   @Override

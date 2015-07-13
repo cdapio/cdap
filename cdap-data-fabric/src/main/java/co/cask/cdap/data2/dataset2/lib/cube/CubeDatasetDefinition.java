@@ -26,8 +26,12 @@ import co.cask.cdap.api.dataset.lib.CompositeDatasetAdmin;
 import co.cask.cdap.api.dataset.lib.cube.Cube;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
+import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -77,6 +81,8 @@ public class CubeDatasetDefinition extends AbstractDatasetDefinition<CubeDataset
   // 1 second is the only default resolution
   public static final int[] DEFAULT_RESOLUTIONS = new int[]{1};
 
+  private static final Gson GSON = new Gson();
+
   private final DatasetDefinition<? extends Table, ?> tableDef;
   private final DatasetDefinition<MetricsTable, ? extends DatasetAdmin> metricsTableDef;
 
@@ -101,12 +107,22 @@ public class CubeDatasetDefinition extends AbstractDatasetDefinition<CubeDataset
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     int[] resolutions = getResolutions(properties.getProperties());
 
-    // Configuring tables that hold data of specific resolution
     List<DatasetSpecification> datasetSpecs = Lists.newArrayList();
+
+    // Configuring table that hold mappings of tag names and values and such
     datasetSpecs.add(metricsTableDef.configure("entity", properties));
+
+    // Configuring tables that hold data of specific resolution
+    Map<String, Aggregation> aggregations = getAggregations(properties.getProperties());
+
+    // Adding pre-splitting for fact tables
+    Map<String, String> preSplitProperties = configurePreSplits(aggregations);
+    DatasetProperties factTableProperties =
+      DatasetProperties.builder().addAll(properties.getProperties()).addAll(preSplitProperties).build();
+
     // NOTE: we create a table per resolution; we later will use that to e.g. configure ttl separately for each
     for (int resolution : resolutions) {
-      datasetSpecs.add(tableDef.configure(String.valueOf(resolution), properties));
+      datasetSpecs.add(tableDef.configure(String.valueOf(resolution), factTableProperties));
     }
 
     return DatasetSpecification.builder(instanceName, getName())
@@ -148,6 +164,11 @@ public class CubeDatasetDefinition extends AbstractDatasetDefinition<CubeDataset
     Map<String, Aggregation> aggregations = getAggregations(spec.getProperties());
 
     return new CubeDataset(spec.getName(), entityTable, resolutionTables, aggregations);
+  }
+
+  private Map<String, String> configurePreSplits(Map<String, Aggregation> aggregations) {
+    byte[][] splits = FactTable.getSplits(aggregations.size());
+    return ImmutableMap.of(HBaseTableAdmin.PROPERTY_SPLITS, GSON.toJson(splits));
   }
 
   private Map<String, Aggregation> getAggregations(Map<String, String> properties) {

@@ -50,6 +50,7 @@ import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -59,43 +60,12 @@ import javax.annotation.Nullable;
  */
 public class DefaultMetricStore implements MetricStore {
   public static final int TOTALS_RESOLUTION = Integer.MAX_VALUE;
+  static final Map<String, Aggregation> AGGREGATIONS;
   private final int resolutions[];
   private final Supplier<Cube> cube;
   private MetricsContext metricsContext;
 
-  @Inject
-  public DefaultMetricStore(final MetricDatasetFactory dsFactory) {
-    // 1 sec, 1 min, 1 hour and "all time totals"
-    this(dsFactory, new int[] {1, 60, 3600, TOTALS_RESOLUTION});
-  }
-
-  // NOTE: should never be used apart from data migration during cdap upgrade
-  public DefaultMetricStore(final MetricDatasetFactory dsFactory, final int resolutions[]) {
-    this.resolutions = resolutions;
-    final FactTableSupplier factTableSupplier = new FactTableSupplier() {
-      @Override
-      public FactTable get(int resolution, int ignoredRollTime) {
-        // roll time will be taken from configuration todo: clean this up
-        return dsFactory.get(resolution);
-      }
-    };
-
-    this.cube = Suppliers.memoize(new Supplier<Cube>() {
-      @Override
-      public Cube get() {
-        DefaultCube cube = new DefaultCube(resolutions, factTableSupplier, createAggregations());
-        cube.setMetricsCollector(metricsContext);
-        return cube;
-      }
-    });
-  }
-
-  @Override
-  public void setMetricsContext(MetricsContext metricsContext) {
-    this.metricsContext = metricsContext;
-  }
-
-  private static Map<String, Aggregation> createAggregations() {
+  static {
     // NOTE: changing aggregations will require more work than just changing the below code. See CDAP-1466 for details.
     Map<String, Aggregation> aggs = Maps.newHashMap();
 
@@ -206,9 +176,40 @@ public class DefaultMetricStore implements MetricStore {
       // i.e. for components only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT)));
 
-    return aggs;
+    AGGREGATIONS = Collections.unmodifiableMap(aggs);
   }
 
+  @Inject
+  public DefaultMetricStore(final MetricDatasetFactory dsFactory) {
+    // 1 sec, 1 min, 1 hour and "all time totals"
+    this(dsFactory, new int[] {1, 60, 3600, TOTALS_RESOLUTION});
+  }
+
+  // NOTE: should never be used apart from data migration during cdap upgrade
+  public DefaultMetricStore(final MetricDatasetFactory dsFactory, final int resolutions[]) {
+    this.resolutions = resolutions;
+    final FactTableSupplier factTableSupplier = new FactTableSupplier() {
+      @Override
+      public FactTable get(int resolution, int ignoredRollTime) {
+        // roll time will be taken from configuration todo: clean this up
+        return dsFactory.getOrCreateFactTable(resolution);
+      }
+    };
+    this.cube = Suppliers.memoize(new Supplier<Cube>() {
+      @Override
+      public Cube get() {
+        DefaultCube cube = new DefaultCube(resolutions, factTableSupplier, AGGREGATIONS);
+        cube.setMetricsCollector(metricsContext);
+        return cube;
+      }
+    });
+  }
+
+  @Override
+  public void setMetricsContext(MetricsContext metricsContext) {
+    this.metricsContext = metricsContext;
+  }
+  
   @Override
   public void add(MetricValues metricValues) throws Exception {
     add(ImmutableList.of(metricValues));
