@@ -17,8 +17,20 @@
 package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.common.Scope;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
+import co.cask.cdap.api.dataset.lib.PartitionDetail;
+import co.cask.cdap.api.dataset.lib.PartitionFilter;
+import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.lib.PartitionOutput;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
+import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
+import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
@@ -47,9 +59,10 @@ import co.cask.tephra.TxConstants;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.inject.Injector;
+import org.apache.hadoop.mapred.FileAlreadyExistsException;
 import org.apache.twill.common.Threads;
+import org.apache.twill.filesystem.Location;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -59,11 +72,16 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *
@@ -149,6 +167,218 @@ public class SparkProgramRunnerTest {
     checkOutputData();
   }
 
+  @Test
+  public void testSparkWithFileSet() throws Exception {
+    testSparkWithFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.JavaCharCount.class);
+  }
+
+  @Test
+  public void testSparkScalaWithFileSet() throws Exception {
+    testSparkWithFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.ScalaCharCount.class);
+  }
+
+  private void testSparkWithFileSet(Class<?> appClass, Class<?> programClass) throws Exception {
+    final ApplicationWithPrograms app =
+      AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
+
+    final FileSet fileset = datasetInstantiator.getDataset("fs");
+    Location location = fileset.getLocation("nn");
+    prepareFileInput(location);
+
+    Map<String, String> inputArgs = new HashMap<>();
+    FileSetArguments.setInputPath(inputArgs, "nn");
+    Map<String, String> outputArgs = new HashMap<>();
+    FileSetArguments.setOutputPath(inputArgs, "xx");
+    Map<String, String> args = new HashMap<>();
+    args.putAll(RuntimeArguments.addScope(Scope.DATASET, "fs", inputArgs));
+    args.putAll(RuntimeArguments.addScope(Scope.DATASET, "fs", outputArgs));
+    args.put("input", "fs");
+    args.put("output", "fs");
+
+    runProgram(app, programClass, args);
+
+    validateFileOutput(fileset.getLocation("xx"));
+  }
+
+  @Test
+  public void testSparkWithPartitionedFileSet() throws Exception {
+    testSparkWithPartitionedFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.JavaCharCount.class);
+  }
+
+  @Test
+  public void testSparkScalaWithPartitionedFileSet() throws Exception {
+    testSparkWithPartitionedFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.ScalaCharCount.class);
+  }
+
+  private void testSparkWithPartitionedFileSet(Class<?> appClass, Class<?> programClass) throws Exception {
+    final ApplicationWithPrograms app =
+      AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
+
+    final PartitionedFileSet pfs = datasetInstantiator.getDataset("pfs");
+    final PartitionOutput partitionOutput = pfs.getPartitionOutput(
+      PartitionKey.builder().addStringField("x", "nn").build());
+    Location location = partitionOutput.getLocation();
+    prepareFileInput(location);
+    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          partitionOutput.addPartition();
+        }
+      });
+
+    Map<String, String> inputArgs = new HashMap<>();
+    PartitionedFileSetArguments.setInputPartitionFilter(
+      inputArgs, PartitionFilter.builder().addRangeCondition("x", "na", "nx").build());
+    Map<String, String> outputArgs = new HashMap<>();
+    final PartitionKey outputKey = PartitionKey.builder().addStringField("x", "xx").build();
+    PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, outputKey);
+    Map<String, String> args = new HashMap<>();
+    args.putAll(RuntimeArguments.addScope(Scope.DATASET, "pfs", inputArgs));
+    args.putAll(RuntimeArguments.addScope(Scope.DATASET, "pfs", outputArgs));
+    args.put("input", "pfs");
+    args.put("output", "pfs");
+
+    runProgram(app, programClass, args);
+
+    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          PartitionDetail partition = pfs.getPartition(outputKey);
+          Assert.assertNotNull(partition);
+          validateFileOutput(partition.getLocation());
+        }
+      });
+  }
+
+  @Test
+  public void testSparkWithTimePartitionedFileSet() throws Exception {
+    testSparkWithPartitionedFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.JavaCharCount.class);
+  }
+
+  @Test
+  public void testSparkScalaWithTimePartitionedFileSet() throws Exception {
+    testSparkWithTimePartitionedFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.ScalaCharCount.class);
+  }
+
+  private void testSparkWithTimePartitionedFileSet(Class<?> appClass, Class<?> programClass) throws Exception {
+    final ApplicationWithPrograms app =
+      AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
+
+    final TimePartitionedFileSet tpfs = datasetInstantiator.getDataset("tpfs");
+    long inputTime = System.currentTimeMillis();
+    final long outputTime = inputTime + TimeUnit.HOURS.toMillis(1);
+
+    final PartitionOutput partitionOutput = tpfs.getPartitionOutput(inputTime);
+    Location location = partitionOutput.getLocation();
+    prepareFileInput(location);
+    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          partitionOutput.addPartition();
+        }
+      });
+
+    Map<String, String> inputArgs = new HashMap<>();
+    TimePartitionedFileSetArguments.setInputStartTime(inputArgs, inputTime - 100);
+    TimePartitionedFileSetArguments.setInputEndTime(inputArgs, inputTime + 100);
+    Map<String, String> outputArgs = new HashMap<>();
+    TimePartitionedFileSetArguments.setOutputPartitionTime(outputArgs, outputTime);
+    Map<String, String> args = new HashMap<>();
+    args.putAll(RuntimeArguments.addScope(Scope.DATASET, "tpfs", inputArgs));
+    args.putAll(RuntimeArguments.addScope(Scope.DATASET, "tpfs", outputArgs));
+    args.put("input", "tpfs");
+    args.put("output", "tpfs");
+
+    runProgram(app, programClass, args);
+
+    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          PartitionDetail partition = tpfs.getPartitionByTime(outputTime);
+          Assert.assertNotNull(partition);
+          validateFileOutput(partition.getLocation());
+        }
+      });
+  }
+
+  @Test
+  public void testSparkWithCustomFileSet() throws Exception {
+    testSparkWithCustomFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.JavaCharCount.class);
+  }
+
+  @Test
+  public void testSparkScalaWithCustomFileSet() throws Exception {
+    testSparkWithCustomFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.ScalaCharCount.class);
+  }
+
+  private void testSparkWithCustomFileSet(Class<?> appClass, Class<?> programClass) throws Exception {
+    final ApplicationWithPrograms app =
+      AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
+
+    final SparkAppUsingFileSet.MyFileSet myfileset = datasetInstantiator.getDataset("myfs");
+    final FileSet fileset = myfileset.getEmbeddedFileSet();
+    Location location = fileset.getLocation("nn");
+    prepareFileInput(location);
+
+    Map<String, String> inputArgs = new HashMap<>();
+    FileSetArguments.setInputPath(inputArgs, "nn");
+    Map<String, String> outputArgs = new HashMap<>();
+    FileSetArguments.setOutputPath(inputArgs, "xx");
+    Map<String, String> args = new HashMap<>();
+    args.putAll(RuntimeArguments.addScope(Scope.DATASET, "myfs", inputArgs));
+    args.putAll(RuntimeArguments.addScope(Scope.DATASET, "myfs", outputArgs));
+    args.put("input", "myfs");
+    args.put("output", "myfs");
+
+    runProgram(app, programClass, args);
+
+    validateFileOutput(fileset.getLocation("xx"));
+
+    // verify that onSuccess() was called and onFailure() was not
+    Assert.assertTrue(myfileset.getSuccessLocation().exists());
+    Assert.assertFalse(myfileset.getFailureLocation().exists());
+    myfileset.getSuccessLocation().delete();
+
+    // run the program again. It should fail due to existing output.
+    expectProgramError(app, programClass, args, FileAlreadyExistsException.class);
+
+    // Then we can verify that onFailure() was called.
+    Assert.assertFalse(myfileset.getSuccessLocation().exists());
+    Assert.assertTrue(myfileset.getFailureLocation().exists());
+    myfileset.getSuccessLocation().delete();
+  }
+
+  private void validateFileOutput(Location location) throws Exception {
+    Assert.assertTrue(location.isDirectory());
+    for (Location child : location.list()) {
+      if (child.getName().startsWith("part-r-")) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(child.getInputStream()))) {
+          String line = reader.readLine();
+          Assert.assertNotNull(line);
+          Assert.assertEquals("13 characters:13", line);
+          line = reader.readLine();
+          Assert.assertNotNull(line);
+          Assert.assertEquals("7 chars:7", line);
+          line = reader.readLine();
+          Assert.assertNull(line);
+          return;
+        }
+      }
+    }
+    Assert.fail("Output directory does not contain any part file: " + location.list());
+  }
+
+  private void prepareFileInput(Location location) throws IOException {
+    try (OutputStreamWriter out = new OutputStreamWriter(location.getOutputStream())) {
+      out.write("13 characters\n");
+      out.write("7 chars\n");
+    }
+  }
+
   private void prepareInputData() throws TransactionFailureException, InterruptedException {
     final ObjectStore<String> input = datasetInstantiator.getDataset("keys");
 
@@ -183,10 +413,24 @@ public class SparkProgramRunnerTest {
   }
 
   private void runProgram(ApplicationWithPrograms app, Class<?> programClass) throws Exception {
-    waitForCompletion(submit(app, programClass));
+    runProgram(app, programClass, RuntimeArguments.NO_ARGUMENTS);
   }
 
-  private void waitForCompletion(ProgramController controller) throws InterruptedException {
+  private void runProgram(ApplicationWithPrograms app, Class<?> programClass, Map<String, String> args)
+    throws Exception {
+    Assert.assertNull(waitForCompletion(submit(app, programClass, args)));
+  }
+
+  private void expectProgramError(ApplicationWithPrograms app, Class<?> programClass, Map<String, String> args,
+                                  Class<? extends Throwable> expected)
+    throws Exception {
+    //noinspection ThrowableResultOfMethodCallIgnored
+    Throwable error = waitForCompletion(submit(app, programClass, args));
+    Assert.assertTrue(expected.isAssignableFrom(error.getClass()));
+  }
+
+  private Throwable waitForCompletion(ProgramController controller) throws InterruptedException {
+    final AtomicReference<Throwable> errorCause = new AtomicReference<>();
     final CountDownLatch completion = new CountDownLatch(1);
     controller.addListener(new AbstractListener() {
       @Override
@@ -197,18 +441,23 @@ public class SparkProgramRunnerTest {
       @Override
       public void error(Throwable cause) {
         completion.countDown();
+        errorCause.set(cause);
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
     completion.await(10, TimeUnit.MINUTES);
+    return errorCause.get();
   }
 
-  private ProgramController submit(ApplicationWithPrograms app, Class<?> programClass) throws ClassNotFoundException {
+  private ProgramController submit(ApplicationWithPrograms app,
+                                   Class<?> programClass,
+                                   Map<String, String> userArgs) throws ClassNotFoundException {
+
     ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
     Program program = getProgram(app, programClass);
+    Assert.assertNotNull(program);
     ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
 
-    HashMap<String, String> userArgs = Maps.newHashMap();
     BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
                                                                    RunIds.generate().getId()));
 
