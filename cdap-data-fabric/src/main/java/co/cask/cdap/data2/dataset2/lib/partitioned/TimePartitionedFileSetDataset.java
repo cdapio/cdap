@@ -25,7 +25,6 @@ import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionMetadata;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.lib.TimePartitionDetail;
@@ -145,14 +144,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     Long startTime = TimePartitionedFileSetArguments.getInputStartTime(getRuntimeArguments());
     Long endTime = TimePartitionedFileSetArguments.getInputEndTime(getRuntimeArguments());
     if (startTime == null && endTime == null) {
-      PartitionFilter inputPartitionFilter =
-        PartitionedFileSetArguments.getInputPartitionFilter(getRuntimeArguments(), partitioning);
-      if (inputPartitionFilter == null) {
-        throw new DataSetException(
-          String.format("Neither a start time, end time, nor a partition filter was specified for dataset: %s",
-                        getName()));
-      }
-      // no times specified; a partition filter was specified. super will deal with that
+      // no times specified; perhaps a partition filter was specified. super will deal with that
       return super.getInputFormatConfiguration();
     }
     if (startTime == null) {

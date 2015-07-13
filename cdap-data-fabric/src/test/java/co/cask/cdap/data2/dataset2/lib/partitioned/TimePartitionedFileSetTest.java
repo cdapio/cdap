@@ -513,8 +513,6 @@ public class TimePartitionedFileSetTest {
     arguments.clear();
     TimePartitionedFileSetArguments.setInputEndTime(arguments, time8 + 30 * MINUTE);
     testInputConfigurationFailure(arguments, " with only an end time");
-    arguments.clear();
-    testInputConfigurationFailure(arguments, " without a time range");
   }
 
   private void testInputConfiguration(Map<String, String> arguments, final String expectedPath) throws Exception {
