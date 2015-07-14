@@ -30,6 +30,7 @@ import co.cask.cdap.data2.util.hbase.HTable10CDHNameConverter;
 import co.cask.tephra.coprocessor.TransactionStateCache;
 import co.cask.tephra.persist.TransactionSnapshot;
 import com.google.common.base.Supplier;
+import com.google.common.io.InputSupplier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -37,6 +38,8 @@ import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
@@ -62,8 +65,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
 
   private static final Log LOG = LogFactory.getLog(HBaseQueueRegionObserver.class);
 
-  private Configuration conf;
-  private byte[] configTableNameBytes;
+  private TableName configTableName;
   private CConfigurationReader cConfReader;
   TransactionStateCache txStateCache;
   private Supplier<TransactionSnapshot> txSnapshotSupplier;
@@ -96,7 +98,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       appName = HBaseQueueAdmin.getApplicationName(hTableName);
       flowName = HBaseQueueAdmin.getFlowName(hTableName);
 
-      conf = env.getConfiguration();
+      Configuration conf = env.getConfiguration();
       String hbaseNamespacePrefix = nameConverter.getNamespacePrefix(tableDesc);
       TableId queueConfigTableId = HBaseQueueAdmin.getConfigTableId(namespaceId);
       final String sysConfigTablePrefix = nameConverter.getSysConfigTablePrefix(tableDesc);
@@ -107,9 +109,9 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
           return txStateCache.getLatestState();
         }
       };
-      configTableNameBytes = nameConverter.toTableName(hbaseNamespacePrefix, queueConfigTableId).getName();
+      configTableName = nameConverter.toTableName(hbaseNamespacePrefix, queueConfigTableId);
       cConfReader = new CConfigurationReader(conf, sysConfigTablePrefix);
-      configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, cConfReader, txSnapshotSupplier);
+      configCache = createConfigCache(env);
     }
   }
 
@@ -137,11 +139,29 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   }
 
   // needed for queue unit-test
-  private ConsumerConfigCache getConfigCache() {
+  @SuppressWarnings("unused")
+  private void updateCache() throws IOException {
+    ConsumerConfigCache configCache = this.configCache;
+    if (configCache != null) {
+      configCache.updateCache();
+    }
+  }
+
+  private ConsumerConfigCache getConfigCache(CoprocessorEnvironment env) {
     if (!configCache.isAlive()) {
-      configCache = ConsumerConfigCache.getInstance(conf, configTableNameBytes, cConfReader, txSnapshotSupplier);
+      configCache = createConfigCache(env);
     }
     return configCache;
+  }
+
+  private ConsumerConfigCache createConfigCache(final CoprocessorEnvironment env) {
+    return ConsumerConfigCache.getInstance(configTableName, cConfReader,
+                                           txSnapshotSupplier, new InputSupplier<HTableInterface>() {
+      @Override
+      public HTableInterface getInput() throws IOException {
+        return env.getTable(configTableName);
+      }
+    });
   }
 
   // need for queue unit-test
@@ -204,7 +224,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
                                                            cell.getRowLength());
           currentQueue = queueName.toBytes();
           currentQueueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);
-          consumerConfig = getConfigCache().getConsumerConfig(currentQueue);
+          consumerConfig = getConfigCache(env).getConsumerConfig(currentQueue);
         }
 
         if (consumerConfig == null) {

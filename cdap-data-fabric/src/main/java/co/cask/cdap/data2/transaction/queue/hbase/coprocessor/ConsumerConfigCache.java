@@ -28,9 +28,10 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
-import org.apache.hadoop.conf.Configuration;
+import com.google.common.io.InputSupplier;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
@@ -44,6 +45,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import javax.annotation.Nullable;
@@ -60,13 +62,12 @@ public class ConsumerConfigCache {
   // update interval for CConfiguration
   private static final long CONFIG_UPDATE_FREQUENCY = 300 * 1000L;
 
-  private static final ConcurrentMap<byte[], ConsumerConfigCache> INSTANCES =
-    new ConcurrentSkipListMap<>(Bytes.BYTES_COMPARATOR);
+  private static final ConcurrentMap<TableName, ConsumerConfigCache> INSTANCES = new ConcurrentHashMap<>();
 
-  private final byte[] queueConfigTableName;
-  private final Configuration hConf;
+  private final TableName queueConfigTableName;
   private final CConfigurationReader cConfReader;
   private final Supplier<TransactionSnapshot> transactionSnapshotSupplier;
+  private final InputSupplier<HTableInterface> hTableSupplier;
   private final TransactionCodec txCodec;
 
   private Thread refreshThread;
@@ -80,17 +81,18 @@ public class ConsumerConfigCache {
   /**
    * Constructs a new instance.
    *
-   * @param hConf configuration for HBase
    * @param queueConfigTableName table name that stores queue configuration
    * @param cConfReader reader to read the latest {@link CConfiguration}
    * @param transactionSnapshotSupplier A supplier for the latest {@link TransactionSnapshot}
+   * @param hTableSupplier A supplier for creating {@link HTableInterface}.
    */
-  ConsumerConfigCache(Configuration hConf, byte[] queueConfigTableName,
-                      CConfigurationReader cConfReader, Supplier<TransactionSnapshot> transactionSnapshotSupplier) {
-    this.hConf = hConf;
+  ConsumerConfigCache(TableName queueConfigTableName, CConfigurationReader cConfReader,
+                      Supplier<TransactionSnapshot> transactionSnapshotSupplier,
+                      InputSupplier<HTableInterface> hTableSupplier) {
     this.queueConfigTableName = queueConfigTableName;
     this.cConfReader = cConfReader;
     this.transactionSnapshotSupplier = transactionSnapshotSupplier;
+    this.hTableSupplier = hTableSupplier;
     this.txCodec = new TransactionCodec();
   }
 
@@ -145,7 +147,7 @@ public class ConsumerConfigCache {
       return;
     }
 
-    HTable table = new HTable(hConf, queueConfigTableName);
+    HTableInterface table = hTableSupplier.getInput();
     try {
       // Scan the table with the transaction snapshot
       Scan scan = new Scan();
@@ -192,7 +194,7 @@ public class ConsumerConfigCache {
       try {
         table.close();
       } catch (IOException ioe) {
-        LOG.error("Error closing table {}", Bytes.toString(queueConfigTableName), ioe);
+        LOG.error("Error closing table {}", queueConfigTableName, ioe);
       }
     }
   }
@@ -211,7 +213,7 @@ public class ConsumerConfigCache {
               // This is expected when the namespace goes away since there is one config table per namespace
               // If the table is not found due to other situation, the region observer already
               // has logic to get a new one through the getInstance method
-              LOG.warn("Queue config table not found: {}", Bytes.toString(queueConfigTableName), e);
+              LOG.warn("Queue config table not found: {}", queueConfigTableName, e);
               break;
             } catch (IOException e) {
               LOG.warn("Error updating queue consumer config cache", e);
@@ -225,7 +227,7 @@ public class ConsumerConfigCache {
             break;
           }
         }
-        LOG.info("Config cache update for {} terminated.", Bytes.toString(queueConfigTableName));
+        LOG.info("Config cache update for {} terminated.", queueConfigTableName);
         INSTANCES.remove(queueConfigTableName, this);
       }
     };
@@ -248,12 +250,13 @@ public class ConsumerConfigCache {
     }
   }
 
-  public static ConsumerConfigCache getInstance(Configuration hConf, byte[] tableName,
+  public static ConsumerConfigCache getInstance(TableName tableName,
                                                 CConfigurationReader cConfReader,
-                                                Supplier<TransactionSnapshot> txSnapshotSupplier) {
+                                                Supplier<TransactionSnapshot> txSnapshotSupplier,
+                                                InputSupplier<HTableInterface> hTableSupplier) {
     ConsumerConfigCache cache = INSTANCES.get(tableName);
     if (cache == null) {
-      cache = new ConsumerConfigCache(hConf, tableName, cConfReader, txSnapshotSupplier);
+      cache = new ConsumerConfigCache(tableName, cConfReader, txSnapshotSupplier, hTableSupplier);
       if (INSTANCES.putIfAbsent(tableName, cache) == null) {
         // if another thread created an instance for the same table, that's ok, we only init the one saved
         cache.init();

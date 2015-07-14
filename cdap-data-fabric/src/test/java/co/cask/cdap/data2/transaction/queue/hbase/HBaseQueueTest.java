@@ -72,6 +72,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
+import com.google.common.io.InputSupplier;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -80,8 +81,10 @@ import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.twill.filesystem.LocationFactory;
@@ -132,7 +135,7 @@ public abstract class HBaseQueueTest extends QueueTest {
               Integer.toString(Networks.getRandomPort()));
     cConf.set(Constants.Dataset.TABLE_PREFIX, "test");
     cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
-    cConf.setLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY, 1L);
+    cConf.setLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY, 10000L);
 
     cConf.setLong(TxConstants.Manager.CFG_TX_TIMEOUT, 100000000L);
 
@@ -616,16 +619,11 @@ public abstract class HBaseQueueTest extends QueueTest {
    * Count how many rows are there in the given HBase table.
    */
   private int countRows(TableId tableId) throws Exception {
-    HTable hTable = tableUtil.createHTable(hConf, tableId);
-    try {
-      ResultScanner scanner = hTable.getScanner(QueueEntryRow.COLUMN_FAMILY);
-      try {
-        return Iterables.size(scanner);
-      } finally {
-        scanner.close();
-      }
-    } finally {
-      hTable.close();
+    try (
+      HTable hTable = tableUtil.createHTable(hConf, tableId);
+      ResultScanner scanner = hTable.getScanner(QueueEntryRow.COLUMN_FAMILY)
+    ) {
+      return Iterables.size(scanner);
     }
   }
 
@@ -633,11 +631,10 @@ public abstract class HBaseQueueTest extends QueueTest {
   private ConsumerConfigCache getConsumerConfigCache(QueueName queueName) throws Exception {
     TableId tableId = HBaseQueueAdmin.getConfigTableId(queueName);
     HTableDescriptor htd = tableUtil.createHTable(hConf, tableId).getTableDescriptor();
-    String configTableName = htd.getNameAsString();
-    byte[] configTableNameBytes = Bytes.toBytes(configTableName);
+    final TableName configTableName = htd.getTableName();
     HTableNameConverter nameConverter = new HTableNameConverterFactory().get();
     CConfigurationReader cConfReader = new CConfigurationReader(hConf, nameConverter.getSysConfigTablePrefix(htd));
-    return ConsumerConfigCache.getInstance(hConf, configTableNameBytes,
+    return ConsumerConfigCache.getInstance(configTableName,
                                            cConfReader, new Supplier<TransactionSnapshot>() {
       @Override
       public TransactionSnapshot get() {
@@ -646,6 +643,11 @@ public abstract class HBaseQueueTest extends QueueTest {
         } catch (IOException e) {
           throw Throwables.propagate(e);
         }
+      }
+    }, new InputSupplier<HTableInterface>() {
+      @Override
+      public HTableInterface getInput() throws IOException {
+        return new HTable(hConf, configTableName);
       }
     });
   }
@@ -687,7 +689,7 @@ public abstract class HBaseQueueTest extends QueueTest {
       public Object apply(HRegion region) {
         try {
           Coprocessor cp = region.getCoprocessorHost().findCoprocessor(coprocessorClass.getName());
-          // calling cp.getConfigCache().updateConfig(), NOTE: cannot do normal cast and stuff because cp is loaded
+          // calling cp.updateCache(), NOTE: cannot do normal cast and stuff because cp is loaded
           // by different classloader (corresponds to a cp's jar)
           LOG.info("forcing update of transaction state cache for HBaseQueueRegionObserver of region: {}", region);
           Method getTxStateCache = cp.getClass().getDeclaredMethod("getTxStateCache");
@@ -700,12 +702,10 @@ public abstract class HBaseQueueTest extends QueueTest {
           refreshState.invoke(txStateCache);
 
           LOG.info("forcing update cache for HBaseQueueRegionObserver of region: {}", region);
-          Method getConfigCacheMethod = cp.getClass().getDeclaredMethod("getConfigCache");
-          getConfigCacheMethod.setAccessible(true);
-          Object configCache = getConfigCacheMethod.invoke(cp);
-          Method updateConfigMethod = configCache.getClass().getDeclaredMethod("updateCache");
-          updateConfigMethod.setAccessible(true);
-          updateConfigMethod.invoke(configCache);
+          Method updateCache = cp.getClass().getDeclaredMethod("updateCache");
+          updateCache.setAccessible(true);
+          updateCache.invoke(cp);
+
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
