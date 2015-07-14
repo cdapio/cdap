@@ -111,6 +111,19 @@ public final class Properties {
   }
 
   /**
+   * Properties for elasticsearch
+   */
+  public static class Elasticsearch {
+    public static final String INDEX_NAME = "index name";
+    public static final String TYPE_NAME = "type name";
+    public static final String SCHEMA = "mapping";
+    public static final String HOST = "host name for master node";
+    public static final String PORT = "port";
+    public static final String ID_FIELD = "id field";
+    public static final String SERVER = "server";
+  }
+
+  /**
    * Properties for ProjectionTransform
    */
   public static class ProjectionTransform {
