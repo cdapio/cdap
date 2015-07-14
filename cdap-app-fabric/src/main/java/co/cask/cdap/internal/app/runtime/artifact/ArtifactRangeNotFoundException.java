@@ -16,24 +16,18 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
+import co.cask.cdap.common.NotFoundException;
+import com.google.common.base.Joiner;
+
+import java.util.Collection;
+
 /**
- * Details about an artifact, including info about the artifact itself and metadata about the contents of the artifact.
+ * Thrown when a range of artifacts are not found.
  */
-public class ArtifactDetail {
-  private final ArtifactDescriptor descriptor;
-  private final ArtifactMeta meta;
+public class ArtifactRangeNotFoundException extends NotFoundException {
 
-  public ArtifactDetail(ArtifactDescriptor descriptor, ArtifactMeta meta) {
-    this.descriptor = descriptor;
-    this.meta = meta;
-  }
-
-  public ArtifactDescriptor getDescriptor() {
-    return descriptor;
-  }
-
-  public ArtifactMeta getMeta() {
-    return meta;
+  public ArtifactRangeNotFoundException(Collection<ArtifactRange> artifactRanges) {
+    super("artifacts", Joiner.on(',').join(artifactRanges).toString());
   }
 
 }
