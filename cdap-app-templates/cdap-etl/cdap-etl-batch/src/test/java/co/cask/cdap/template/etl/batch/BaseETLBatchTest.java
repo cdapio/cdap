@@ -74,7 +74,7 @@ public class BaseETLBatchTest extends TestBase {
     addTemplatePlugins(TEMPLATE_ID, "batch-plugins-1.0.0.jar",
       DBSource.class, KVTableSource.class, StreamBatchSource.class, TableSource.class, DBRecord.class,
       TimePartitionedFileSetDatasetAvroSource.class,
-      BatchCubeSink.class, DBSink.class, KVTableSink.class, TableSink.class, ElasticsearchSink.class,
+      BatchCubeSink.class, DBSink.class, KVTableSink.class, TableSink.class,
       TimePartitionedFileSetDatasetAvroSink.class, AvroKeyOutputFormat.class, AvroKey.class,
       TimePartitionedFileSetDatasetParquetSink.class, AvroParquetOutputFormat.class);
     addTemplatePlugins(TEMPLATE_ID, "test-sources-1.0.0.jar", MetaKVTableSource.class);

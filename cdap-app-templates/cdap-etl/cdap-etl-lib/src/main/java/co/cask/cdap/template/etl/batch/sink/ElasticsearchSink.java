@@ -145,6 +145,9 @@ public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Wri
     conf.set("es.nodes", getNodes());
     conf.set("es.resource", getResource());
     conf.set("es.input.json", "yes");
+    if (config.idField != null) {
+      conf.set("es.mapping.id", config.idField);
+    }
     job.setMapOutputValueClass(Text.class);
     job.setOutputFormatClass(EsOutputFormat.class);
   }
