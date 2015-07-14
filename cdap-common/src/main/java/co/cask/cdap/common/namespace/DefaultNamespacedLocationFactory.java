@@ -65,7 +65,7 @@ public class DefaultNamespacedLocationFactory implements NamespacedLocationFacto
     String namespacesDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
     Location namespaceLocation = locationFactory.create(namespacesDir).append(namespaceId.getId());
     if (subPath != null) {
-      namespaceLocation.append(subPath);
+      namespaceLocation = namespaceLocation.append(subPath);
     }
     return namespaceLocation;
   }

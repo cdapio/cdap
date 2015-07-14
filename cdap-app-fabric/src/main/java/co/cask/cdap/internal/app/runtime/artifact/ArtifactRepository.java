@@ -16,19 +16,23 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
+import co.cask.cdap.api.artifact.ArtifactClasses;
+import co.cask.cdap.api.artifact.ArtifactDescriptor;
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.proto.Id;
-import com.google.common.annotations.VisibleForTesting;
+import co.cask.cdap.proto.artifact.ArtifactSummary;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -53,16 +57,67 @@ public class ArtifactRepository {
     this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory);
   }
 
-  @VisibleForTesting
-  void clear(Id.Namespace namespace) throws IOException {
+  /**
+   * Clear all artifacts in the given namespace. This method is only intended to be called by unit tests, and
+   * when a namespace is being deleted.
+   *
+   * @param namespace the namespace to delete artifacts in.
+   * @throws IOException if there was an error making changes in the meta store
+   */
+  public void clear(Id.Namespace namespace) throws IOException {
     artifactStore.clear(namespace);
   }
 
   /**
-   * Returns a {@link SortedMap} of all plugins available for the given artifact. The keys
+   * Get all artifacts in the given namespace, optionally including system artifacts as well. Will never return
+   * null. If no artifacts exist, an empty list is returned. Namespace existence is not checked.
+   *
+   * @param namespace the namespace to get artifacts from
+   * @param includeSystem whether system artifacts should be included in the results
+   * @return an unmodifiable list of artifacts that belong to the given namespace
+   * @throws IOException if there as an exception reading from the meta store
+   */
+  public List<ArtifactSummary> getArtifacts(Id.Namespace namespace, boolean includeSystem) throws IOException {
+    List<ArtifactSummary> summaries = Lists.newArrayList();
+    if (includeSystem) {
+      convertAndAdd(summaries, artifactStore.getArtifacts(Constants.SYSTEM_NAMESPACE_ID));
+    }
+    return Collections.unmodifiableList(convertAndAdd(summaries, artifactStore.getArtifacts(namespace)));
+  }
+
+  /**
+   * Get all artifacts in the given namespace of the given name. Will never return null.
+   * If no artifacts exist, an exception is thrown. Namespace existence is not checked.
+   *
+   * @param namespace the namespace to get artifacts from
+   * @param name the name of artifacts to get
+   * @return an unmodifiable list of artifacts in the given namespace of the given name
+   * @throws IOException if there as an exception reading from the meta store
+   * @throws ArtifactNotExistsException if no artifacts of the given name in the given namespace exist
+   */
+  public List<ArtifactSummary> getArtifacts(Id.Namespace namespace, String name)
+    throws IOException, ArtifactNotExistsException {
+    List<ArtifactSummary> summaries = Lists.newArrayList();
+    return Collections.unmodifiableList(convertAndAdd(summaries, artifactStore.getArtifacts(namespace, name)));
+  }
+
+  /**
+   * Get details about the given artifact. Will never return null.
+   * If no such artifact exist, an exception is thrown. Namespace existence is not checked.
+   *
+   * @param artifactId the id of the artifact to get
+   * @return details about the given artifact
+   * @throws IOException if there as an exception reading from the meta store
+   * @throws ArtifactNotExistsException if the given artifact does not exist
+   */
+  public ArtifactDetail getArtifact(Id.Artifact artifactId) throws IOException, ArtifactNotExistsException {
+    return artifactStore.getArtifact(artifactId);
+  }
+
+  /**
+   * Returns a {@link SortedMap} of plugin artifact to all plugins available for the given artifact. The keys
    * are sorted by the {@link ArtifactDescriptor} for the artifact that contains plugins available to the given
-   * artifact. Only unique {@link PluginClass} are returned in the value
-   * Collection, where uniqueness is determined by the plugin class type and name only.
+   * artifact.
    *
    * @param artifactId the id of the artifact to get plugins for
    * @return an unmodifiable sorted map from plugin artifact to plugins in that artifact
@@ -70,6 +125,38 @@ public class ArtifactRepository {
    */
   public SortedMap<ArtifactDescriptor, List<PluginClass>> getPlugins(Id.Artifact artifactId) throws IOException {
     return artifactStore.getPluginClasses(artifactId);
+  }
+
+  /**
+   * Returns a {@link SortedMap} of plugin artifact to all plugins of the given type available for the given artifact.
+   * The keys are sorted by the {@link ArtifactDescriptor} for the artifact that contains plugins available to the given
+   * artifact.
+   *
+   * @param artifactId the id of the artifact to get plugins for
+   * @param pluginType the type of plugins to get
+   * @return an unmodifiable sorted map from plugin artifact to plugins in that artifact
+   * @throws IOException if there was an exception reading plugin metadata from the artifact store
+   */
+  public SortedMap<ArtifactDescriptor, List<PluginClass>> getPlugins(Id.Artifact artifactId,
+                                                                     String pluginType) throws IOException {
+    return artifactStore.getPluginClasses(artifactId, pluginType);
+  }
+
+  /**
+   * Returns a {@link SortedMap} of plugin artifact to plugin available for the given artifact. The keys
+   * are sorted by the {@link ArtifactDescriptor} for the artifact that contains plugins available to the given
+   * artifact.
+   *
+   * @param artifactId the id of the artifact to get plugins for
+   * @param pluginType the type of plugins to get
+   * @param pluginName the name of plugins to get
+   * @return an unmodifiable sorted map from plugin artifact to plugins in that artifact
+   * @throws IOException if there was an exception reading plugin metadata from the artifact store
+   */
+  public SortedMap<ArtifactDescriptor, PluginClass> getPlugins(Id.Artifact artifactId, String pluginType,
+                                                               String pluginName)
+    throws IOException, PluginNotExistsException {
+    return artifactStore.getPluginClasses(artifactId, pluginType, pluginName);
   }
 
   /**
@@ -83,8 +170,8 @@ public class ArtifactRepository {
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    * @throws PluginNotExistsException if no plugins of the given type and name are available to the given artifact
    */
-  public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(Id.Artifact artifactId, final String pluginType,
-                                                               final String pluginName, PluginSelector selector)
+  public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(Id.Artifact artifactId, String pluginType,
+                                                               String pluginName, PluginSelector selector)
     throws IOException, PluginNotExistsException {
     return selector.select(artifactStore.getPluginClasses(artifactId, pluginType, pluginName));
   }
@@ -130,5 +217,15 @@ public class ArtifactRepository {
     } finally {
       parentClassLoader.close();
     }
+  }
+
+  // convert details to summaries (to hide location and other unnecessary information)
+  private List<ArtifactSummary> convertAndAdd(List<ArtifactSummary> summaries, Iterable<ArtifactDetail> details) {
+    for (ArtifactDetail detail : details) {
+      ArtifactDescriptor descriptor = detail.getDescriptor();
+      summaries.add(
+        new ArtifactSummary(descriptor.getName(), descriptor.getVersion().getVersion(), descriptor.isSystem()));
+    }
+    return summaries;
   }
 }

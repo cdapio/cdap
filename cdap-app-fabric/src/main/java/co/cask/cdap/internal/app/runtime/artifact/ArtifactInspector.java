@@ -16,11 +16,14 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.app.Application;
+import co.cask.cdap.api.artifact.ApplicationClass;
+import co.cask.cdap.api.artifact.ArtifactClasses;
+import co.cask.cdap.api.artifact.ArtifactDescriptor;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
@@ -37,7 +40,6 @@ import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
@@ -49,16 +51,15 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import java.util.zip.ZipException;
 import javax.annotation.Nullable;
 
 /**
@@ -93,14 +94,14 @@ public class ArtifactInspector {
    *                          For example, a ProgramClassLoader created from the artifact the input artifact extends
    * @return metadata about the classes contained in the artifact
    * @throws IOException if there was an exception opening the jar file
+   * @throws InvalidArtifactException if inspection failed due to a problem with the artifact, such as a class not
+   *                                  found error, or if the application main class isn't really an application
    */
   public ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile, String template,
-                                         ClassLoader parentClassLoader) throws IOException {
+                                         ClassLoader parentClassLoader) throws IOException, InvalidArtifactException {
 
-    try (PluginInstantiator pluginInstantiator =
-          new PluginInstantiator(cConf, template, parentClassLoader)) {
-      List<PluginClass> plugins = inspectPlugins(artifactId, artifactFile, pluginInstantiator);
-      return ArtifactClasses.builder().addPlugins(plugins).build();
+    try (PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, template, parentClassLoader)) {
+      return inspectPlugins(ArtifactClasses.builder(), artifactId, artifactFile, pluginInstantiator).build();
     }
   }
 
@@ -119,39 +120,46 @@ public class ArtifactInspector {
   public ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile,
                                          ClassLoader parentClassLoader) throws IOException, InvalidArtifactException {
 
-    List<ApplicationClass> appClasses = inspectApplications(artifactFile);
+    ArtifactClasses.Builder builder = inspectApplications(ArtifactClasses.builder(), artifactFile);
 
     try (PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, parentClassLoader)) {
-      List<PluginClass> plugins = inspectPlugins(artifactId, artifactFile, pluginInstantiator);
-      return ArtifactClasses.builder().addApps(appClasses).addPlugins(plugins).build();
+      inspectPlugins(builder, artifactId, artifactFile, pluginInstantiator);
     }
+
+    return builder.build();
   }
 
-  private List<ApplicationClass> inspectApplications(File artifactFile) throws IOException, InvalidArtifactException {
-    List<ApplicationClass> apps = Lists.newArrayList();
+  private ArtifactClasses.Builder inspectApplications(ArtifactClasses.Builder builder,
+                                                      File artifactFile) throws IOException, InvalidArtifactException {
 
     Location artifactLocation = Locations.toLocation(artifactFile);
-    Manifest manifest = BundleJarUtil.getManifest(artifactLocation);
-    if (manifest == null) {
-      return apps;
-    }
-    Attributes manifestAttributes = manifest.getMainAttributes();
-    if (manifestAttributes == null) {
-      return apps;
-    }
 
     // right now we force users to include the application main class as an attribute in their manifest,
     // which forces them to have a single application class.
     // in the future, we may want to let users do this or maybe specify a list of classes or
     // a package that will be searched for applications, to allow multiple applications in a single artifact.
-    String mainClassName = manifestAttributes.getValue(ManifestFields.MAIN_CLASS);
+    String mainClassName;
+    try {
+      Manifest manifest = BundleJarUtil.getManifest(artifactLocation);
+      if (manifest == null) {
+        return builder;
+      }
+      Attributes manifestAttributes = manifest.getMainAttributes();
+      if (manifestAttributes == null) {
+        return builder;
+      }
+      mainClassName = manifestAttributes.getValue(ManifestFields.MAIN_CLASS);
+    } catch (ZipException e) {
+      throw new InvalidArtifactException("Couldn't unzip artifact, please check it is a valid jar file.", e);
+    }
+
     if (mainClassName != null) {
       try (CloseableClassLoader artifactClassLoader =
              artifactClassLoaderFactory.createClassLoader(Locations.toLocation(artifactFile))) {
 
         Object appMain = artifactClassLoader.loadClass(mainClassName).newInstance();
         if (!(appMain instanceof Application)) {
-          throw new InvalidArtifactException(String.format("Application main class is of invalid type: %s",
+          throw new InvalidArtifactException(String.format("Application main class %s does not implement Application",
             appMain.getClass().getName()));
         }
 
@@ -159,15 +167,13 @@ public class ArtifactInspector {
 
         TypeToken typeToken = TypeToken.of(app.getClass());
         TypeToken<?> resultToken = typeToken.resolveType(Application.class.getTypeParameters()[0]);
-        Type configType;
+        Schema configSchema = null;
         // if the user parameterized their template, like 'xyz extends ApplicationTemplate<T>',
         // we can deserialize the config into that object. Otherwise it'll just be a Config
         if (resultToken.getType() instanceof Class) {
-          configType = resultToken.getType();
-        } else {
-          configType = Config.class;
+          configSchema = schemaGenerator.generate(resultToken.getType());
         }
-        apps.add(new ApplicationClass(mainClassName, "", schemaGenerator.generate(configType)));
+        builder.addApp(new ApplicationClass(mainClassName, "", configSchema));
       } catch (ClassNotFoundException e) {
         throw new InvalidArtifactException(String.format("Could not find Application main class %s.", mainClassName));
       } catch (UnsupportedTypeException e) {
@@ -178,21 +184,21 @@ public class ArtifactInspector {
           String.format("Could not instantiate Application class %s.", mainClassName), e);
       }
     }
-    return apps;
+
+    return builder;
   }
 
   /**
    * Inspects the plugin file and extracts plugin classes information.
    */
-  private List<PluginClass> inspectPlugins(Id.Artifact artifactId, File artifactFile,
-                                           PluginInstantiator pluginInstantiator) throws IOException {
-
-    List<PluginClass> pluginClasses = Lists.newArrayList();
+  private ArtifactClasses.Builder inspectPlugins(ArtifactClasses.Builder builder, Id.Artifact artifactId,
+                                                 File artifactFile, PluginInstantiator pluginInstantiator)
+    throws IOException, InvalidArtifactException {
 
     // See if there are export packages. Plugins should be in those packages
     Set<String> exportPackages = getExportPackages(artifactFile);
     if (exportPackages.isEmpty()) {
-      return pluginClasses;
+      return builder;
     }
 
     // Load the plugin class and inspect the config field.
@@ -201,25 +207,31 @@ public class ArtifactInspector {
       Constants.SYSTEM_NAMESPACE_ID.equals(artifactId.getNamespace()),
       Locations.toLocation(artifactFile));
 
-    ClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(artifactDescriptor);
-    for (Class<?> cls : getPluginClasses(exportPackages, pluginClassLoader)) {
-      Plugin pluginAnnotation = cls.getAnnotation(Plugin.class);
-      if (pluginAnnotation == null) {
-        continue;
+    try {
+      ClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(artifactDescriptor);
+      for (Class<?> cls : getPluginClasses(exportPackages, pluginClassLoader)) {
+        Plugin pluginAnnotation = cls.getAnnotation(Plugin.class);
+        if (pluginAnnotation == null) {
+          continue;
+        }
+        Map<String, PluginPropertyField> pluginProperties = Maps.newHashMap();
+        try {
+          String configField = getProperties(TypeToken.of(cls), pluginProperties);
+          PluginClass pluginClass = new PluginClass(pluginAnnotation.type(), getPluginName(cls),
+            getPluginDescription(cls), cls.getName(),
+            configField, pluginProperties);
+          builder.addPlugin(pluginClass);
+        } catch (UnsupportedTypeException e) {
+          LOG.warn("Plugin configuration type not supported. Plugin ignored. {}", cls, e);
+        }
       }
-      Map<String, PluginPropertyField> pluginProperties = Maps.newHashMap();
-      try {
-        String configField = getProperties(TypeToken.of(cls), pluginProperties);
-        PluginClass pluginClass = new PluginClass(pluginAnnotation.type(), getPluginName(cls),
-          getPluginDescription(cls), cls.getName(),
-          configField, pluginProperties);
-        pluginClasses.add(pluginClass);
-      } catch (UnsupportedTypeException e) {
-        LOG.warn("Plugin configuration type not supported. Plugin ignored. {}", cls, e);
-      }
+    } catch (Throwable t) {
+      throw new InvalidArtifactException(
+        "Class could not be found while inspecting artifact for plugins. Please check dependencies are available, " +
+          "and that the correct parent artifact was specified.", t);
     }
 
-    return pluginClasses;
+    return builder;
   }
 
   /**

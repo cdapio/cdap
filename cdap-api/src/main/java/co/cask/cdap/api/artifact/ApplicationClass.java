@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package co.cask.cdap.api.artifact;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.schema.Schema;
@@ -26,8 +26,7 @@ import javax.annotation.Nullable;
  * Contains information about an Application class.
  */
 @Beta
-public class ApplicationClass {
-
+public final class ApplicationClass {
   private final String className;
   private final String description;
   private final Schema configSchema;
@@ -77,9 +76,9 @@ public class ApplicationClass {
 
     ApplicationClass that = (ApplicationClass) o;
 
-    return description.equals(that.description)
-      && className.equals(that.className)
-      && configSchema.equals(that.configSchema);
+    return Objects.equals(description, that.description) &&
+      Objects.equals(className, that.className) &&
+      Objects.equals(configSchema, that.configSchema);
   }
 
   @Override

@@ -14,28 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package co.cask.cdap.internal.app.runtime.artifact.plugin;
 
-import co.cask.cdap.api.artifact.ArtifactDescriptor;
+import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Plugin;
+import co.cask.cdap.api.templates.plugins.PluginConfig;
 
 /**
- * Details about an artifact, including info about the artifact itself and metadata about the contents of the artifact.
+ * plugin doesn't actually do anything, just for tests
  */
-public class ArtifactDetail {
-  private final ArtifactDescriptor descriptor;
-  private final ArtifactMeta meta;
+@Plugin(type = "dummy")
+@Name("Plugin1")
+@Description("This is plugin1")
+public class Plugin1 {
+  private P1Config config;
 
-  public ArtifactDetail(ArtifactDescriptor descriptor, ArtifactMeta meta) {
-    this.descriptor = descriptor;
-    this.meta = meta;
+  public static class P1Config extends PluginConfig {
+    private int x;
+    private String stuff;
   }
-
-  public ArtifactDescriptor getDescriptor() {
-    return descriptor;
-  }
-
-  public ArtifactMeta getMeta() {
-    return meta;
-  }
-
 }

@@ -16,26 +16,13 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.artifact.ArtifactDescriptor;
-
 /**
- * Details about an artifact, including info about the artifact itself and metadata about the contents of the artifact.
+ * Thrown when an artifact range is invalid.
  */
-public class ArtifactDetail {
-  private final ArtifactDescriptor descriptor;
-  private final ArtifactMeta meta;
+public class InvalidArtifactRangeException extends Exception {
 
-  public ArtifactDetail(ArtifactDescriptor descriptor, ArtifactMeta meta) {
-    this.descriptor = descriptor;
-    this.meta = meta;
-  }
-
-  public ArtifactDescriptor getDescriptor() {
-    return descriptor;
-  }
-
-  public ArtifactMeta getMeta() {
-    return meta;
+  public InvalidArtifactRangeException(String message) {
+    super(message);
   }
 
 }

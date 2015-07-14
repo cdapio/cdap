@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package co.cask.cdap.api.artifact;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.internal.artifact.ArtifactVersion;
@@ -25,7 +25,6 @@ import java.util.Objects;
 /**
  * Uniquely describes an artifact. Artifact descriptors are ordered by whether or not they are system artifacts,
  * then by name, and finally by version.
- * TODO: move this into cdap-api once everything is ready
  */
 @Beta
 public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> {

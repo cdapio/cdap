@@ -14,8 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package co.cask.cdap.api.artifact;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import com.google.common.collect.ImmutableSet;
 
@@ -25,7 +26,8 @@ import java.util.Set;
 /**
  * Classes contained in an artifact, such as plugin classes and application classes.
  */
-public class ArtifactClasses {
+@Beta
+public final class ArtifactClasses {
   private final Set<ApplicationClass> apps;
   private final Set<PluginClass> plugins;
 
