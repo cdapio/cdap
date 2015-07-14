@@ -16,6 +16,8 @@
 
 package co.cask.cdap.examples.loganalysis
 
+import java.util.concurrent.TimeUnit
+
 import co.cask.cdap.api.common.Bytes
 import co.cask.cdap.api.spark.{ScalaSparkProgram, SparkContext}
 import org.apache.hadoop.io.{LongWritable, Text}
@@ -31,8 +33,13 @@ class ResponseCounterProgram extends ScalaSparkProgram {
 
   override def run(context: SparkContext): Unit = {
 
+    val output = context.getRuntimeArguments.get("output")
+
+    val endTime = context.getLogicalStartTime
+    val startTime = endTime - TimeUnit.MINUTES.toMillis(60)
+
     val logsData: NewHadoopRDD[LongWritable, Text] =
-      context.readFromStream(LogAnalysisApp.LOG_STREAM, classOf[Text])
+      context.readFromStream(LogAnalysisApp.LOG_STREAM, classOf[Text], startTime, endTime)
 
     val responseCounts = logsData.map(x => (ApacheAccessLog.
       parseFromLogLine(x._2.toString).getResponseCode, 1L)).reduceByKey(_ + _)
@@ -40,5 +47,11 @@ class ResponseCounterProgram extends ScalaSparkProgram {
 
     context.writeToDataset(responseCounts, LogAnalysisApp.RESPONSE_COUNT_STORE,
       classOf[Array[Byte]], classOf[Array[Byte]])
+
+    val ipCounts = logsData.map(x => (ApacheAccessLog.
+      parseFromLogLine(x._2.toString).getIpAddress, 1L)).reduceByKey(_ + _)
+
+    context.writeToDataset(ipCounts, LogAnalysisApp.IP_COUNT_STORE,
+      classOf[String], classOf[java.lang.Long])
   }
 }
