@@ -357,8 +357,8 @@ public abstract class AppFabricTestBase {
    * Deploys an application with (optionally) a defined app name and app version
    */
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
-                                       @Nullable String appName, @Nullable String appVersion,
-                                       @Nullable Config appConfig) throws Exception {
+                                @Nullable String appName, @Nullable String appVersion,
+                                @Nullable Config appConfig) throws Exception {
     namespace = namespace == null ? Constants.DEFAULT_NAMESPACE : namespace;
     apiVersion = apiVersion == null ? Constants.Gateway.API_VERSION_3_TOKEN : apiVersion;
 
@@ -646,19 +646,7 @@ public abstract class AppFabricTestBase {
     String versionedUrl = getVersionedAPIPath(schedulesUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
     HttpResponse response = doGet(versionedUrl);
     String json = EntityUtils.toString(response.getEntity());
-    return GSON.fromJson(json, new TypeToken<List<ScheduleSpecification>>() {
-    }.getType());
-  }
-
-  /**
-   * @deprecated Use {@link #getProgramRuns(Id.Program, String status)}.
-   */
-  @Deprecated
-  protected int getRuns(String runsUrl) throws Exception {
-    HttpResponse response = doGet(runsUrl);
-    String json = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> history = GSON.fromJson(json, LIST_RUNRECORD_TYPE);
-    return history.size();
+    return GSON.fromJson(json, new TypeToken<List<ScheduleSpecification>>() { }.getType());
   }
 
   protected void verifyProgramRuns(final Id.Program program, final String status) throws Exception {
@@ -681,7 +669,7 @@ public abstract class AppFabricTestBase {
     HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespaceId()));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());
-    return new Gson().fromJson(json, LIST_RUNRECORD_TYPE);
+    return GSON.fromJson(json, LIST_RUNRECORD_TYPE);
   }
 
   protected boolean datasetExists(Id.DatasetInstance datasetID) throws Exception {

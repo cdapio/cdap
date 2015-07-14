@@ -38,6 +38,11 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-formats</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
       <version>${hadoop.version}</version>
@@ -185,6 +190,21 @@
       <artifactId>snappy-java</artifactId>
     </dependency>
     <!-- End for Kafka Source -->
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>amazon-sqs-java-messaging-lib</artifactId>
+      <version>1.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.elasticmq</groupId>
+      <artifactId>elasticmq-core_2.10</artifactId>
+      <version>0.6.3</version>
+    </dependency>
+    <dependency>
+      <groupId>org.elasticmq</groupId>
+      <artifactId>elasticmq-rest-sqs_2.10</artifactId>
+      <version>0.6.3</version>
+    </dependency>
     <dependency>
       <groupId>com.twitter</groupId>
       <artifactId>parquet-avro</artifactId>

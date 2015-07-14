@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.dataset.DatasetAdmin;
@@ -57,6 +58,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
@@ -76,6 +78,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.Manifest;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -129,18 +132,31 @@ public class UnitTestManager implements TestManager {
   public ApplicationManager deployApplication(Id.Namespace namespace,
                                               Class<? extends Application> applicationClz,
                                               File... bundleEmbeddedJars) {
+    return deployApplication(namespace, applicationClz, null, bundleEmbeddedJars);
+  }
+
+  @Override
+  public ApplicationManager deployApplication(Id.Namespace namespace, Class<? extends Application> applicationClz,
+                                              @Nullable Config configObject, File... bundleEmbeddedJars) {
     Preconditions.checkNotNull(applicationClz, "Application class cannot be null.");
+    String appConfig = "";
+    TypeToken typeToken = TypeToken.of(applicationClz);
+    TypeToken<?> configToken = typeToken.resolveType(Application.class.getTypeParameters()[0]);
 
     try {
+      if (configObject != null) {
+        appConfig = GSON.toJson(configObject);
+      } else {
+        configObject = (Config) configToken.getRawType().newInstance();
+      }
+
       Application app = applicationClz.newInstance();
       DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
-      app.configure(configurer, new DefaultApplicationContext());
+      app.configure(configurer, new DefaultApplicationContext(configObject));
       ApplicationSpecification appSpec = configurer.createSpecification();
-
       Location deployedJar = appFabricClient.deployApplication(namespace, appSpec.getName(),
-                                                               applicationClz, bundleEmbeddedJars);
+                                                               applicationClz, appConfig, bundleEmbeddedJars);
       return appManagerFactory.create(Id.Application.from(namespace, appSpec.getName()), deployedJar, appSpec);
-
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

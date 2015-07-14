@@ -16,16 +16,21 @@
 
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
+import co.cask.cdap.api.dataset.lib.FileSetArguments;
+import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -76,5 +81,26 @@ public class PartitionedFileSetArgumentsTest {
       .build();
     PartitionedFileSetArguments.setInputPartitionFilter(arguments, filter);
     Assert.assertEquals(filter, PartitionedFileSetArguments.getInputPartitionFilter(arguments, PARTITIONING));
+  }
+
+
+  @Test
+  public void testGetPartitionPaths() throws Exception {
+    Map<String, String> arguments = Maps.newHashMap();
+
+    Collection<String> relativePaths = Lists.newArrayList("path1", "relative/path.part100", "some\\ other*path");
+    List<Partition> partitions = Lists.newArrayList();
+    for (String relativePath : relativePaths) {
+      BasicPartition basicPartition = new BasicPartition(null, relativePath, null);
+      PartitionedFileSetArguments.addInputPartition(arguments, basicPartition);
+      // add the partitions to a list to also test the addInputPartitions(Map, Iterator) method below
+      partitions.add(basicPartition);
+    }
+    Assert.assertEquals(relativePaths, FileSetArguments.getInputPaths(arguments));
+
+    arguments = Maps.newHashMap();
+    PartitionedFileSetArguments.addInputPartitions(arguments, partitions.iterator());
+    Assert.assertEquals(relativePaths, FileSetArguments.getInputPaths(arguments));
+
   }
 }

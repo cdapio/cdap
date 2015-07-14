@@ -32,11 +32,13 @@ import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
@@ -117,14 +119,19 @@ public class AppFabricTestHelper {
     deployApplication(Constants.DEFAULT_NAMESPACE_ID, application);
   }
 
-  /**
-   *
-   */
   public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
                                        String appName, String config) throws Exception {
+    ensureNamespaceExists(namespace);
     AppFabricClient appFabricClient = getInjector().getInstance(AppFabricClient.class);
     Location deployedJar = appFabricClient.deployApplication(namespace, appName, applicationClz, config);
     deployedJar.delete(true);
+  }
+
+  private static void ensureNamespaceExists(Id.Namespace namespace) throws Exception {
+    NamespaceAdmin namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
+    if (!namespaceAdmin.hasNamespace(namespace)) {
+      namespaceAdmin.createNamespace(new NamespaceMeta.Builder().setName(namespace).build());
+    }
   }
 
   public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz, String appName)
@@ -143,6 +150,7 @@ public class AppFabricTestHelper {
   public static ApplicationWithPrograms deployApplicationWithManager(Class<?> appClass,
                                                                      final Supplier<File> folderSupplier)
     throws Exception {
+    ensureNamespaceExists(Id.Namespace.DEFAULT);
     Location deployedJar = createAppJar(appClass);
     Location destination = new LocalLocationFactory().create(tempFolder.toURI()).append(deployedJar.getName());
     DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination, null);

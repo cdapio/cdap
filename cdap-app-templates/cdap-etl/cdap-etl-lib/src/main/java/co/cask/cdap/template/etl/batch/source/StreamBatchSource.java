@@ -215,7 +215,6 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
     }
 
     private Schema parseSchema() {
-      // try to parse the schema if there is one
       try {
         return Strings.isNullOrEmpty(schema) ? null : Schema.parseJson(schema);
       } catch (IOException e) {
