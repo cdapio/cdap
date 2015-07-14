@@ -23,6 +23,8 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.datafabric.dataset.DatasetType;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
@@ -60,13 +62,16 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   private final RemoteDatasetFramework dsFramework;
   private final CConfiguration cConf;
   private final LocationFactory locationFactory;
+  private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
 
   @Inject
   public DatasetAdminOpHTTPHandler(RemoteDatasetFramework dsFramework,
-                                   CConfiguration cConf, LocationFactory locationFactory) {
+                                   CConfiguration cConf, LocationFactory locationFactory,
+                                   SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
     this.dsFramework = dsFramework;
     this.cConf = cConf;
     this.locationFactory = locationFactory;
+    this.datasetInstantiatorFactory = datasetInstantiatorFactory;
   }
 
   @POST
@@ -196,11 +201,14 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
 
   private DatasetAdmin getDatasetAdmin(Id.DatasetInstance datasetInstanceId)
     throws IOException, DatasetManagementException {
-    DatasetAdmin admin = dsFramework.getAdmin(datasetInstanceId, null);
-    if (admin == null) {
-      throw new HandlerException(HttpResponseStatus.NOT_FOUND,
-                                 "Couldn't obtain DatasetAdmin for dataset instance " + datasetInstanceId);
+
+    try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
+      DatasetAdmin admin = datasetInstantiator.getDatasetAdmin(datasetInstanceId);
+      if (admin == null) {
+        throw new HandlerException(HttpResponseStatus.NOT_FOUND,
+                                   "Couldn't obtain DatasetAdmin for dataset instance " + datasetInstanceId);
+      }
+      return admin;
     }
-    return admin;
   }
 }

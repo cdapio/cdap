@@ -27,6 +27,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
@@ -338,7 +339,15 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Override
   public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId,
-                                                          @Nullable ClassLoader classLoader) throws IOException {
+                                             @Nullable ClassLoader classLoader) throws IOException {
+    return getAdmin(datasetInstanceId, classLoader, new ConstantClassLoaderProvider(classLoader));
+  }
+
+  @Nullable
+  @Override
+  public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId,
+                                             @Nullable ClassLoader classLoader,
+                                             DatasetClassLoaderProvider classLoaderProvider) throws IOException {
     readLock.lock();
     try {
       DatasetSpecification spec = instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
