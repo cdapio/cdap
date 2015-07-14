@@ -18,7 +18,7 @@ package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.api.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonDeserializationContext;
@@ -66,14 +66,15 @@ public final class WorkerSpecificationCodec extends AbstractSpecificationCodec<W
     int instances = jsonObj.get("instances").getAsInt();
 
     JsonElement streamElement = jsonObj.get("streams");
-    JsonElement dataSetModElement = jsonObj.get("dataSetModules");
-    JsonElement dataSetInstElement = jsonObj.get("dataSetInstances");
-
     Map<String, StreamSpecification> streams = (streamElement == null) ?
       Maps.<String, StreamSpecification>newHashMap() : deserializeMap(streamElement, context,
                                                                       StreamSpecification.class);
+
+    JsonElement dataSetModElement = jsonObj.get("dataSetModules");
     Map<String, String> dataSetModules = (dataSetModElement == null) ? Maps.<String, String>newHashMap() :
       deserializeMap(dataSetModElement, context, String.class);
+
+    JsonElement dataSetInstElement = jsonObj.get("dataSetInstances");
     Map<String, DatasetCreationSpec> dataSetInstances = (dataSetInstElement == null) ?
       Maps.<String, DatasetCreationSpec>newHashMap() : deserializeMap(dataSetInstElement, context,
                                                                       DatasetCreationSpec.class);

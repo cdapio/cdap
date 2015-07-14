@@ -53,7 +53,6 @@ public class AppWithMapReduce extends AbstractApplication {
 
     @Override
     protected void configure() {
-      super.configure();
       createDataset("jobConfig", KeyValueTable.class);
     }
 

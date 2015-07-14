@@ -20,7 +20,7 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.PropertyProvider;
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.api.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 
 import java.util.Map;
 import java.util.Set;
@@ -63,9 +63,18 @@ public interface MapReduceSpecification extends ProgramSpecification, PropertyPr
   @Nullable
   Resources getReducerResources();
 
+  /**
+   * @return Map of streams and {@link StreamSpecification} created in this program.
+   */
   Map<String, StreamSpecification> getStreams();
 
+  /**
+   * @return Map of dataset modules created in this program.
+   */
   Map<String, String> getDataSetModules();
 
+  /**
+   * @return Map of dataset instances and {@link DatasetCreationSpec} created in this program.
+   */
   Map<String, DatasetCreationSpec> getDataSetInstances();
 }

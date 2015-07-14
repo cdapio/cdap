@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.api.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;

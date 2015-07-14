@@ -18,7 +18,7 @@ package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.api.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.api.flow.flowlet.FailurePolicy;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.internal.flowlet.DefaultFlowletSpecification;
@@ -69,15 +69,16 @@ public final class FlowletSpecificationCodec extends AbstractSpecificationCodec<
     Set<String> dataSets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
     Resources resources = context.deserialize(jsonObj.get("resources"), Resources.class);
-    JsonElement streamElement = jsonObj.get("streams");
-    JsonElement dataSetModElement = jsonObj.get("dataSetModules");
-    JsonElement dataSetInstElement = jsonObj.get("dataSetInstances");
 
+    JsonElement streamElement = jsonObj.get("streams");
     Map<String, StreamSpecification> streams = (streamElement == null) ?
       Maps.<String, StreamSpecification>newHashMap() : deserializeMap(streamElement, context,
                                                                       StreamSpecification.class);
+    JsonElement dataSetModElement = jsonObj.get("dataSetModules");
     Map<String, String> dataSetModules = (dataSetModElement == null) ? Maps.<String, String>newHashMap() :
       deserializeMap(dataSetModElement, context, String.class);
+
+    JsonElement dataSetInstElement = jsonObj.get("dataSetInstances");
     Map<String, DatasetCreationSpec> dataSetInstances = (dataSetInstElement == null) ?
       Maps.<String, DatasetCreationSpec>newHashMap() : deserializeMap(dataSetInstElement, context,
                                                                       DatasetCreationSpec.class);

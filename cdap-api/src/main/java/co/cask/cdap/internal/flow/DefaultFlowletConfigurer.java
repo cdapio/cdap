@@ -20,7 +20,7 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.flowlet.FailurePolicy;
@@ -115,6 +115,7 @@ public class DefaultFlowletConfigurer implements FlowletConfigurer {
                                            this.dataSetModules, this.dataSetInstances);
   }
 
+  //TODO: CDAP-2943 Use ProgramDatasetConfigurer after moving this class to cdap-app-fabric.
   @Override
   public void addStream(Stream stream) {
     Preconditions.checkArgument(stream != null, "Stream cannot be null.");

@@ -50,8 +50,7 @@ public class AppWithWorker extends AbstractApplication {
 
     @Override
     protected void configure() {
-      super.configure();
-      getConfigurer().createDataset(DATASET, KeyValueTable.class, DatasetProperties.EMPTY);
+      createDataset(DATASET, KeyValueTable.class, DatasetProperties.EMPTY);
     }
 
     @Override

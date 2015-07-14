@@ -20,7 +20,7 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.common.PropertyProvider;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 
 import java.util.ArrayList;
 import java.util.Collections;

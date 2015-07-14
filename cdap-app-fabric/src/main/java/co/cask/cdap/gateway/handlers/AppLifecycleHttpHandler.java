@@ -18,7 +18,7 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.api.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.Manager;

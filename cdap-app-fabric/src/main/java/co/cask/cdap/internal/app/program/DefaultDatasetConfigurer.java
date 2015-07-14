@@ -20,7 +20,7 @@ import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import com.google.common.base.Preconditions;
@@ -29,9 +29,9 @@ import com.google.common.collect.Maps;
 import java.util.Map;
 
 /**
- *
+ * Implementation of {@link DatasetConfigurer} for adding datasets and streams in Configurers.
  */
-public class ProgramDatasetConfigurer implements DatasetConfigurer {
+public class DefaultDatasetConfigurer implements DatasetConfigurer {
 
   protected final Map<String, StreamSpecification> streams = Maps.newHashMap();
   protected final Map<String, DatasetCreationSpec> dataSetInstances = Maps.newHashMap();

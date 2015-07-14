@@ -20,7 +20,7 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerConfigurer;
 import co.cask.cdap.api.worker.WorkerSpecification;
-import co.cask.cdap.internal.app.program.ProgramDatasetConfigurer;
+import co.cask.cdap.internal.app.program.DefaultDatasetConfigurer;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import com.google.common.base.Preconditions;
@@ -36,7 +36,7 @@ import java.util.Set;
 /**
  * Default implementation of the {@link WorkerConfigurer}.
  */
-public class DefaultWorkerConfigurer extends ProgramDatasetConfigurer implements WorkerConfigurer {
+public class DefaultWorkerConfigurer extends DefaultDatasetConfigurer implements WorkerConfigurer {
 
   private final String className;
   private final Map<String, String> propertyFields;
@@ -49,7 +49,6 @@ public class DefaultWorkerConfigurer extends ProgramDatasetConfigurer implements
   private Set<String> datasets;
 
   public DefaultWorkerConfigurer(Worker worker) {
-    super();
     this.name = worker.getClass().getSimpleName();
     this.className = worker.getClass().getName();
     this.propertyFields = Maps.newHashMap();

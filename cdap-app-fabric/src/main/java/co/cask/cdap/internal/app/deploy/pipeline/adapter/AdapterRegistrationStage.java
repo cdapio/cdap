@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.deploy.pipeline.adapter;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.api.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.pipeline.AbstractStage;

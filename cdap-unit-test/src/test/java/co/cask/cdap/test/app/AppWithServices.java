@@ -95,7 +95,6 @@ public class AppWithServices extends AbstractApplication {
 
     @Override
     protected void configure() {
-      super.configure();
       createDataset(DATASET_NAME, KeyValueTable.class);
     }
   }

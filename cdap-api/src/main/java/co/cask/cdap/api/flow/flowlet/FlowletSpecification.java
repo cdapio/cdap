@@ -19,7 +19,7 @@ package co.cask.cdap.api.flow.flowlet;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.PropertyProvider;
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.api.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.flowlet.DefaultFlowletSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -78,10 +78,19 @@ public interface FlowletSpecification extends PropertyProvider {
    */
   Resources getResources();
 
+  /**
+   * @return Map of streams and {@link StreamSpecification} created in this flowlet
+   */
   Map<String, StreamSpecification> getStreams();
 
+  /**
+   * @return Map of dataset modules created in this flowlet.
+   */
   Map<String, String> getDataSetModules();
 
+  /**
+   * @return Map of dataset instances and {@link DatasetCreationSpec} created in this flowlet.
+   */
   Map<String, DatasetCreationSpec> getDataSetInstances();
 
   /**

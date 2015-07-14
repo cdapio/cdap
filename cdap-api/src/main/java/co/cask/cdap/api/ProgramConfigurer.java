@@ -24,14 +24,14 @@ import java.util.Map;
 public interface ProgramConfigurer {
 
   /**
-   * Sets the name.
+   * Sets the name of the program.
    *
    * @param name name
    */
   void setName(String name);
 
   /**
-   * Sets the description.
+   * Sets the description of the program.
    *
    * @param description description
    */
@@ -40,6 +40,7 @@ public interface ProgramConfigurer {
   /**
    * Sets a set of properties that will be available through the {@link ProgramSpecification's getProperties()}
    * at runtime.
+   *
    * @param properties the properties to set
    */
   void setProperties(Map<String, String> properties);

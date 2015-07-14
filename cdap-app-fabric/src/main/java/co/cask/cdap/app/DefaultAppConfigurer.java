@@ -18,12 +18,7 @@ package co.cask.cdap.app;
 
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationConfigurer;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetCreationSpec;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -47,11 +42,13 @@ import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
+import co.cask.cdap.internal.app.program.DefaultDatasetConfigurer;
 import co.cask.cdap.internal.app.runtime.flow.DefaultFlowConfigurer;
 import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
 import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
 import co.cask.cdap.internal.app.worker.DefaultWorkerConfigurer;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import com.google.common.base.Preconditions;
@@ -62,7 +59,7 @@ import java.util.Map;
 /**
  * Default implementation of {@link ApplicationConfigurer}.
  */
-public class DefaultAppConfigurer implements ApplicationConfigurer {
+public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements ApplicationConfigurer {
   private String name;
   private String description;
   private String configuration;
@@ -96,48 +93,6 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   @Override
   public void setDescription(String description) {
     this.description = description;
-  }
-
-  @Override
-  public void addStream(Stream stream) {
-    Preconditions.checkArgument(stream != null, "Stream cannot be null.");
-    StreamSpecification spec = stream.configure();
-    streams.put(spec.getName(), spec);
-  }
-
-  @Override
-  public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
-    Preconditions.checkArgument(moduleName != null, "Dataset module name cannot be null.");
-    Preconditions.checkArgument(moduleClass != null, "Dataset module class cannot be null.");
-    dataSetModules.put(moduleName, moduleClass.getName());
-  }
-
-  @Override
-  public void addDatasetType(Class<? extends Dataset> datasetClass) {
-    Preconditions.checkArgument(datasetClass != null, "Dataset class cannot be null.");
-    dataSetModules.put(datasetClass.getName(), datasetClass.getName());
-  }
-
-  @Override
-  public void createDataset(String datasetInstanceName, String typeName, DatasetProperties properties) {
-    Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
-    Preconditions.checkArgument(typeName != null, "Dataset type name cannot be null.");
-    Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
-    dataSetInstances.put(datasetInstanceName,
-                         new DatasetCreationSpec(datasetInstanceName, typeName, properties));
-  }
-
-  @Override
-  public void createDataset(String datasetInstanceName,
-                            Class<? extends Dataset> datasetClass,
-                            DatasetProperties properties) {
-
-    Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
-    Preconditions.checkArgument(datasetClass != null, "Dataset class name cannot be null.");
-    Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
-    dataSetInstances.put(datasetInstanceName,
-                         new DatasetCreationSpec(datasetInstanceName, datasetClass.getName(), properties));
-    dataSetModules.put(datasetClass.getName(), datasetClass.getName());
   }
 
   @Override

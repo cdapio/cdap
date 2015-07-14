@@ -99,7 +99,6 @@ public abstract class AbstractSpark implements Spark {
   }
 
   /**
-<<<<<<< HEAD
    * @see SparkConfigurer#addStream(Stream)
    */
   protected final void addStream(Stream stream) {

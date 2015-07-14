@@ -38,14 +38,6 @@ public interface SparkConfigurer extends ProgramConfigurer, DatasetConfigurer {
   void setMainClassName(String className);
 
   /**
-   * Sets a set of properties that will be available through the {@link SparkSpecification#getProperties()}
-   * at runtime.
-   *
-   * @param properties the properties to set
-   */
-  void setProperties(Map<String, String> properties);
-
-  /**
    * Sets the resources requirement for the Spark driver process.
    */
   void setDriverResources(Resources resources);
