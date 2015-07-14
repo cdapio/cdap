@@ -145,7 +145,7 @@ public class UnitTestManager implements TestManager {
 
     try {
       if (configObject != null) {
-        appConfig = GSON.toJson(configObject, configToken.getType());
+        appConfig = GSON.toJson(configObject);
       } else {
         configObject = (Config) configToken.getRawType().newInstance();
       }
