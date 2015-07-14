@@ -40,7 +40,7 @@ public class SparkContextConfig {
 
   public static final String HCONF_ATTR_EXECUTION_MODE = "cdap.spark.execution.mode";
   public static final String LOCAL_EXECUTION_MODE = "local";
-  public static final String YARN_EXECUTION_MODE = "yarn";
+  public static final String YARN_EXECUTION_MODE = "yarn-client";
 
   private static final String HCONF_ATTR_PROGRAM_SPEC = "cdap.spark.program.spec";
   private static final String HCONF_ATTR_PROGRAM_ID = "cdap.spark.program.id";

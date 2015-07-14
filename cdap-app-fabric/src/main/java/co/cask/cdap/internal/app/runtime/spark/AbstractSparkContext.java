@@ -41,6 +41,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import org.apache.spark.SparkConf;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -66,6 +67,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   private final LoggingContext loggingContext;
 
   private Resources executorResources;
+  private SparkConf sparkConf;
 
   protected AbstractSparkContext(SparkSpecification specification, Id.Program programId, RunId runId,
                                  ClassLoader programClassLoader, long logicalStartTime,
@@ -81,6 +83,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
     this.metricsContext = metricsContext;
     this.loggingContext = loggingContext;
     this.executorResources = Objects.firstNonNull(specification.getExecutorResources(), new Resources());
+    this.sparkConf = new SparkConf();
   }
 
   @Override
@@ -127,6 +130,13 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   public void setExecutorResources(Resources resources) {
     Preconditions.checkArgument(resources != null, "Resources must not be null");
     this.executorResources = resources;
+  }
+
+  @Override
+  public <T> void setSparkConf(T sparkConf) {
+    Preconditions.checkArgument(sparkConf instanceof SparkConf, "Invalid config type %s. Only accept %s.",
+                                sparkConf.getClass().getName(), SparkConf.class.getName());
+    this.sparkConf = (SparkConf) sparkConf;
   }
 
   @Override
@@ -184,6 +194,13 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
    */
   public Resources getExecutorResources() {
     return executorResources;
+  }
+
+  /**
+   * Returns the {@link SparkConf} for the spark program.
+   */
+  public SparkConf getSparkConf() {
+    return sparkConf;
   }
 
   /**

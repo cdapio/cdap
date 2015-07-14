@@ -23,8 +23,11 @@ import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
 
@@ -52,12 +55,23 @@ public class SparkAppUsingObjectStore extends AbstractApplication {
       setDescription("Use Objectstore dataset as input job");
       setMainClass(CharCountProgram.class);
     }
+
+    @Override
+    public void beforeSubmit(SparkContext context) throws Exception {
+      context.setSparkConf(new SparkConf().set("spark.io.compression.codec",
+                                               "org.apache.spark.io.LZFCompressionCodec"));
+    }
   }
 
   public static class CharCountProgram implements JavaSparkProgram {
     @Override
     public void run(SparkContext context) {
-      // read the dataset
+      JavaSparkContext sc = context.getOriginalSparkContext();
+      // Verify the codec is being set
+      Preconditions.checkArgument(
+        "org.apache.spark.io.LZFCompressionCodec".equals(sc.getConf().get("spark.io.compression.codec")));
+
+                                  // read the dataset
       JavaPairRDD<byte[], String> inputData = context.readFromDataset("keys", byte[].class, String.class);
 
       // create a new RDD with the same key but with a new value which is the length of the string
