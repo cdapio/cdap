@@ -163,7 +163,7 @@
       <id>dist</id>
       <properties>
         <package.depends>--depends cdap --depends cdap-hbase-compat-0.96 --depends cdap-hbase-compat-0.98
-        --depends cdap-hbase-compat-1.0 --depends cdap-hbase-compat-1.0-cdh</package.depends>
+        --depends cdap-hbase-compat-1.0-cdh</package.depends>
       </properties>
       <build>
         <plugins>
