@@ -20,7 +20,9 @@ import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
@@ -31,6 +33,7 @@ import co.cask.cdap.api.workflow.Workflow;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.net.HttpURLConnection;
 import javax.ws.rs.GET;
@@ -48,6 +51,7 @@ public class LogAnalysisApp extends AbstractApplication {
   public static final String RESPONSE_COUNTER_SERVICE = "ResponseCounterService";
   public static final String RESPONSE_COUNT_STORE = "responseCount";
   public static final String HIT_COUNT_STORE = "hitCount";
+  public static final String IP_COUNT_STORE = "ipCount";
 
   @Override
   public void configure() {
@@ -69,6 +73,9 @@ public class LogAnalysisApp extends AbstractApplication {
     // Datasets to store output after processing
     createDataset(RESPONSE_COUNT_STORE, KeyValueTable.class);
     createDataset(HIT_COUNT_STORE, KeyValueTable.class);
+    createDataset(IP_COUNT_STORE, TimePartitionedFileSet.class, FileSetProperties.builder()
+      .setOutputFormat(TextOutputFormat.class)
+      .setOutputProperty(TextOutputFormat.SEPERATOR, ":").build());
   }
 
   /**

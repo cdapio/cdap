@@ -16,7 +16,13 @@
 
 package co.cask.cdap.examples.loganalysis;
 
+import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.common.Scope;
+import co.cask.cdap.api.dataset.lib.TimePartitionDetail;
+import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
+import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.test.ApplicationManager;
+import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
@@ -25,16 +31,15 @@ import co.cask.cdap.test.TestBase;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
-import com.google.common.base.Charsets;
-import com.google.common.io.ByteStreams;
+import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -48,11 +53,15 @@ public class LogAnalysisAppTest extends TestBase {
   private static final String TOTAL_HITS_VALUE = "2";
   private static final String TOTAL_RESPONSE_VALUE = "2";
   private static final String RESPONSE_CODE = "200";
+  public static final String TPFS_RESULT = "127.0.0.1:2";
 
   @Test
   public void test() throws Exception {
     // Deploy the App
     ApplicationManager appManager = deployApplication(LogAnalysisApp.class);
+
+    long inputTime = System.currentTimeMillis();
+    final long outputTime = inputTime + TimeUnit.HOURS.toMillis(1);
 
     // Send a stream events to the Stream
     StreamManager streamManager = getStreamManager(LogAnalysisApp.LOG_STREAM);
@@ -60,9 +69,15 @@ public class LogAnalysisAppTest extends TestBase {
     streamManager.send(LOG_2);
     streamManager.send(LOG_3);
 
+    Map<String, String> outputArgs = new HashMap<>();
+    TimePartitionedFileSetArguments.setOutputPartitionTime(outputArgs, outputTime);
+    Map<String, String> args = new HashMap<>();
+    args.putAll(RuntimeArguments.addScope(Scope.DATASET, LogAnalysisApp.IP_COUNT_STORE, outputArgs));
+    args.put("output", LogAnalysisApp.IP_COUNT_STORE);
+
     // run the spark program
     SparkManager sparkManager = appManager.getSparkManager(
-      LogAnalysisApp.ResponseCounterSpark.class.getSimpleName()).start();
+      LogAnalysisApp.ResponseCounterSpark.class.getSimpleName()).start(args);
     sparkManager.waitForFinish(60, TimeUnit.SECONDS);
 
     // run the mapreduce job
@@ -86,12 +101,31 @@ public class LogAnalysisAppTest extends TestBase {
 
     // query for total responses for a response code and verify it
     URL responseCodeURL = new URL(responseCounterServiceManager.getServiceURL(15, TimeUnit.SECONDS),
-                                             LogAnalysisApp.ResponseCounterHandler.RESPONSE_COUNT_PATH
-                                               + "/" + RESPONSE_CODE);
+                                  LogAnalysisApp.ResponseCounterHandler.RESPONSE_COUNT_PATH
+                                    + "/" + RESPONSE_CODE);
     HttpRequest request = HttpRequest.get(responseCodeURL).build();
     response = HttpRequests.execute(request);
     Assert.assertEquals(TOTAL_RESPONSE_VALUE, response.getResponseBodyAsString());
+
+    // validate the output by reading directly from the tpfs
+    DataSetManager<TimePartitionedFileSet> dataSetManager = getDataset(LogAnalysisApp.IP_COUNT_STORE);
+    TimePartitionedFileSet tpfs = dataSetManager.get();
+    TimePartitionDetail partitionDetail = tpfs.getPartitionByTime(outputTime);
+
+    Assert.assertNotNull(partitionDetail);
+    Location location = partitionDetail.getLocation();
+
+    // find the part file that has the actual results
+    Assert.assertTrue(location.isDirectory());
+    for (Location file : location.list()) {
+      if (file.getName().startsWith("part")) {
+        location = file;
+      }
+    }
+    BufferedReader reader = new BufferedReader(new jline.internal.InputStreamReader(location.getInputStream()));
+    Assert.assertEquals(TPFS_RESULT, reader.readLine());
   }
+
 
   private ServiceManager getServiceManager(ApplicationManager appManager, String serviceName)
     throws InterruptedException {
