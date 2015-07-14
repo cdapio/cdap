@@ -121,7 +121,7 @@ class DefaultGetBuilder implements GetBuilder {
   }
 
   @Override
-  public Get create() {
+  public Get build() {
     return get;
   }
 

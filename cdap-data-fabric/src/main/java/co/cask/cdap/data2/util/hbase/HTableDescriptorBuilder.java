@@ -26,7 +26,7 @@ import java.util.Map;
 
 /**
  * Builder for creating an HBase {@code HTableDescriptor} object.  This should be used instead of creating an
- * {@code HTableDescriptor} directly in order to avoid
+ * {@code HTableDescriptor} directly in order to avoid API incompatibilities between HBase versions.
  */
 public class HTableDescriptorBuilder {
   protected final HTableDescriptor instance;

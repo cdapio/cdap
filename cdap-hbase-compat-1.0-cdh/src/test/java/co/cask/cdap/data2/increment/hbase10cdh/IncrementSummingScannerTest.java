@@ -436,7 +436,7 @@ public class IncrementSummingScannerTest {
   static HRegion createRegion(Configuration hConf, CConfiguration cConf, TableId tableId,
                               HColumnDescriptor cfd) throws Exception {
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
-    HTableDescriptorBuilder htd = tableUtil.createHTableDescriptor(tableId);
+    HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId);
     cfd.setMaxVersions(Integer.MAX_VALUE);
     cfd.setKeepDeletedCells(true);
     htd.addFamily(cfd);

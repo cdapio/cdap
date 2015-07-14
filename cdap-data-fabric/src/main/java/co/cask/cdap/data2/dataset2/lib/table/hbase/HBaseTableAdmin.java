@@ -88,7 +88,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
       }
     }
 
-    final HTableDescriptorBuilder tableDescriptor = tableUtil.createHTableDescriptor(tableId);
+    final HTableDescriptorBuilder tableDescriptor = tableUtil.buildHTableDescriptor(tableId);
     setVersion(tableDescriptor);
     tableDescriptor.addFamily(columnDescriptor);
 

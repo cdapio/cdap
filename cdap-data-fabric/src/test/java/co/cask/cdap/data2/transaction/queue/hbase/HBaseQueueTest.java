@@ -196,7 +196,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     TableId tableId = hbaseQueueAdmin.getDataTableId(queueName);
     Assert.assertEquals(Constants.DEFAULT_NAMESPACE_ID, tableId.getNamespace());
     Assert.assertEquals("system." + hbaseQueueAdmin.getType() + ".application1.flow1", tableId.getTableName());
-    String tableName = tableUtil.createHTableDescriptor(tableId).build().getNameAsString();
+    String tableName = tableUtil.buildHTableDescriptor(tableId).build().getNameAsString();
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
 
@@ -204,7 +204,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     tableId = hbaseQueueAdmin.getDataTableId(queueName);
     Assert.assertEquals(Id.Namespace.from("testNamespace"), tableId.getNamespace());
     Assert.assertEquals("system." + hbaseQueueAdmin.getType() + ".application1.flow1", tableId.getTableName());
-    tableName = tableUtil.createHTableDescriptor(tableId).build().getNameAsString();
+    tableName = tableUtil.buildHTableDescriptor(tableId).build().getNameAsString();
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
   }

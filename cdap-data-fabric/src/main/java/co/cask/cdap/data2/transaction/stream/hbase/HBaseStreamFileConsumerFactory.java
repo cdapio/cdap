@@ -79,7 +79,7 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
 
     byte[][] splitKeys = HBaseTableUtil.getSplitKeys(splits, splits, distributor);
 
-    HTableDescriptorBuilder htd = tableUtil.createHTableDescriptor(tableId);
+    HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId);
 
     HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
     hcd.setMaxVersions(1);

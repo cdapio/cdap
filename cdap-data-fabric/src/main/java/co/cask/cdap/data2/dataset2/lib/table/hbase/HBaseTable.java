@@ -191,7 +191,7 @@ public class HBaseTable extends BufferingTable {
         puts.add(incrementPut);
       }
       if (!put.isEmpty()) {
-        puts.add(put.create());
+        puts.add(put.build());
       }
     }
     if (!puts.isEmpty()) {
@@ -208,7 +208,7 @@ public class HBaseTable extends BufferingTable {
     }
     return tableUtil.buildPut(row)
       .setAttribute(DELTA_WRITE, Bytes.toBytes(true))
-      .create();
+      .build();
   }
 
   @Override
@@ -227,7 +227,7 @@ public class HBaseTable extends BufferingTable {
           delete.deleteColumns(columnFamily, column.getKey());
         }
       }
-      deletes.add(delete.create());
+      deletes.add(delete.build());
     }
     hTable.delete(deletes);
     hTable.flushCommits();
@@ -310,7 +310,7 @@ public class HBaseTable extends BufferingTable {
     } catch (IOException ioe) {
       throw Throwables.propagate(ioe);
     }
-    return get.create();
+    return get.build();
   }
 
   private NavigableMap<byte[], byte[]> getInternal(byte[] row, @Nullable byte[][] columns) throws IOException {

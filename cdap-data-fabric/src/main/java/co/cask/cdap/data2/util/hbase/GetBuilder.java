@@ -55,5 +55,5 @@ public interface GetBuilder {
 
   GetBuilder setCacheBlocks(boolean cacheBlocks);
 
-  Get create();
+  Get build();
 }

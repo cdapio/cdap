@@ -477,7 +477,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     @Override
     public void create() throws IOException {
       // Create the queue table
-      HTableDescriptorBuilder htd = tableUtil.createHTableDescriptor(tableId);
+      HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId);
       for (String key : properties.stringPropertyNames()) {
         htd.setValue(key, properties.getProperty(key));
       }

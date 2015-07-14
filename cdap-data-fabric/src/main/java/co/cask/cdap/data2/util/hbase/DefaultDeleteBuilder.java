@@ -99,7 +99,7 @@ class DefaultDeleteBuilder implements DeleteBuilder {
   }
 
   @Override
-  public Delete create() {
+  public Delete build() {
     return delete;
   }
 

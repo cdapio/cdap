@@ -75,7 +75,7 @@ public class HBaseMetricsTable implements MetricsTable {
       Get get = tableUtil.buildGet(row)
         .addColumn(columnFamily, column)
         .setMaxVersions(1)
-        .create();
+        .build();
       Result getResult = hTable.get(get);
       if (!getResult.isEmpty()) {
         return getResult.getValue(columnFamily, column);
@@ -94,7 +94,7 @@ public class HBaseMetricsTable implements MetricsTable {
       for (Map.Entry<byte[], Long> column : row.getValue().entrySet()) {
         put.add(columnFamily, column.getKey(), Bytes.toBytes(column.getValue()));
       }
-      puts.add(put.create());
+      puts.add(put.build());
     }
     try {
       hTable.put(puts);
@@ -111,12 +111,12 @@ public class HBaseMetricsTable implements MetricsTable {
         // HBase API weirdness: we must use deleteColumns() because deleteColumn() deletes only the last version.
         Delete delete = tableUtil.buildDelete(row)
           .deleteColumns(columnFamily, column)
-          .create();
+          .build();
         return hTable.checkAndDelete(row, columnFamily, column, oldValue, delete);
       } else {
         Put put = tableUtil.buildPut(row)
           .add(columnFamily, column, newValue)
-          .create();
+          .build();
         return hTable.checkAndPut(row, columnFamily, column, oldValue, put);
       }
     } catch (IOException e) {
@@ -155,7 +155,7 @@ public class HBaseMetricsTable implements MetricsTable {
   private Put getIncrementalPut(byte[] row) {
     return tableUtil.buildPut(row)
       .setAttribute(HBaseTable.DELTA_WRITE, Bytes.toBytes(true))
-      .create();
+      .build();
   }
 
   @Override
@@ -205,7 +205,7 @@ public class HBaseMetricsTable implements MetricsTable {
       delete.deleteColumns(columnFamily, column);
     }
     try {
-      hTable.delete(delete.create());
+      hTable.delete(delete.build());
     } catch (IOException e) {
       throw new DataSetException("Delete failed on table " + tableId, e);
     }

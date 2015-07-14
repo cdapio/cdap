@@ -141,7 +141,7 @@ public abstract class AbstractHBaseTableUtilTest {
 
     // modify
     HTableDescriptor desc = getTableDescriptor("namespace2", "table1");
-    HTableDescriptorBuilder newDesc = getTableUtil().createHTableDescriptor(desc);
+    HTableDescriptorBuilder newDesc = getTableUtil().buildHTableDescriptor(desc);
     newDesc.setValue("mykey", "myvalue");
     disable("namespace2", "table1");
     getTableUtil().modifyTable(hAdmin, newDesc.build());
@@ -328,7 +328,7 @@ public abstract class AbstractHBaseTableUtilTest {
 
   private void create(TableId tableId) throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
-    HTableDescriptorBuilder desc = tableUtil.createHTableDescriptor(tableId);
+    HTableDescriptorBuilder desc = tableUtil.buildHTableDescriptor(tableId);
     desc.addFamily(new HColumnDescriptor("d"));
     tableUtil.createTableIfNotExists(hAdmin, tableId, desc.build());
   }
