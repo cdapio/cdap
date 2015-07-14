@@ -21,8 +21,6 @@ import co.cask.cdap.api.ProgramConfigurer;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Beta;
 
-import java.util.Map;
-
 /**
  * Configurer for configuring {@link Spark}.
  */

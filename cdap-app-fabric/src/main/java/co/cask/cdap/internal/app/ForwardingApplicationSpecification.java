@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
@@ -26,6 +25,7 @@ import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 
 import java.util.Map;
 import javax.annotation.Nullable;

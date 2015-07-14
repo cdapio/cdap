@@ -17,9 +17,9 @@
 package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonDeserializationContext;
