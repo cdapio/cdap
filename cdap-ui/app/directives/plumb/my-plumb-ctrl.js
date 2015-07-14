@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .controller('MyPlumbController', function MyPlumbController(jsPlumb, $scope, $timeout, MyPlumbService, AdapterErrorFactory) {
+  .controller('MyPlumbController', function MyPlumbController(jsPlumb, $scope, $timeout, MyPlumbService, myHelpers, AdapterErrorFactory) {
     this.plugins = $scope.config || [];
     this.instance = null;
     // this.nodesErrors = AdapterErrorFactory.nodesError;
@@ -141,21 +141,9 @@ angular.module(PKG.name + '.commons')
       return styles;
     }
 
-    this.drawGraph = function() {
-      var graph = this.getGraph();
-      var nodes = graph.nodes()
-        .map(function(node) {
-          return graph.node(node);
-        });
+    function drawConnections() {
       var i;
       var prev, curr, next;
-
-      this.plugins.forEach(function(plugin) {
-        plugin.icon = getIcon(plugin.name);
-        plugin.style = generateStyles(plugin.id, nodes, 200, 300);
-        drawNode.call(this, plugin.id, plugin.type);
-      }.bind(this));
-
       for(i=0; i<this.plugins.length-1; i++) {
         if (this.plugins[i].type === 'transform') {
           curr = 'Left' + this.plugins[i].id;
@@ -172,8 +160,46 @@ angular.module(PKG.name + '.commons')
           editable: true
         });
       }
+    }
+
+    function mapSchemas() {
+      var connections = MyPlumbService.connections;
+      var nodes = MyPlumbService.nodes;
+      connections.forEach(function(connection) {
+        var sourceNode = nodes[connection.source];
+        var targetNode = nodes[connection.target];
+        var sourceOutputSchema = myHelpers.objectQuery(sourceNode, 'properties', 'schema');
+        var targetOuputSchema = myHelpers.objectQuery(targetNode, 'properties', 'schema');
+        if (sourceOutputSchema) {
+          sourceNode.outputSchema = sourceOutputSchema;
+        }
+        if (targetOuputSchema) {
+          targetNode.outputSchema = targetOuputSchema;
+        } else {
+          targetNode.outputSchema = sourceNode.outputSchema;
+        }
+      });
+    }
+
+    this.drawGraph = function() {
+      var graph = this.getGraph();
+      var nodes = graph.nodes()
+        .map(function(node) {
+          return graph.node(node);
+        });
+
+      this.plugins.forEach(function(plugin) {
+        plugin.icon = getIcon(plugin.name);
+        plugin.style = generateStyles(plugin.id, nodes, 200, 300);
+        drawNode.call(this, plugin.id, plugin.type);
+      }.bind(this));
+
+      drawConnections.call(this);
 
       MyPlumbService.setConnections(this.instance.getConnections());
+
+      mapSchemas.call(this);
+
       $timeout(this.instance.repaintEverything);
     };
 
