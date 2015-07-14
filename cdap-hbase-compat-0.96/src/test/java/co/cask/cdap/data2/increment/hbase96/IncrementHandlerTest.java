@@ -113,7 +113,7 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
   @Override
   public HTable createTable(TableId tableId) throws Exception {
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
-    HTableDescriptorBuilder tableDesc = tableUtil.createHTableDescriptor(tableId);
+    HTableDescriptorBuilder tableDesc = tableUtil.buildHTableDescriptor(tableId);
     HColumnDescriptor columnDesc = new HColumnDescriptor(FAMILY);
     columnDesc.setMaxVersions(Integer.MAX_VALUE);
     columnDesc.setValue(IncrementHandlerState.PROPERTY_TRANSACTIONAL, "false");

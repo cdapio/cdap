@@ -46,5 +46,5 @@ public interface DeleteBuilder {
 
   boolean isEmpty();
 
-  Delete create();
+  Delete build();
 }

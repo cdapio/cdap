@@ -89,7 +89,7 @@ class DefaultPutBuilder implements PutBuilder {
   }
 
   @Override
-  public Put create() {
+  public Put build() {
     return put;
   }
 

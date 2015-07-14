@@ -121,7 +121,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     }
 
     // create a new descriptor for the table upgrade
-    HTableDescriptorBuilder newDescriptor = tableUtil.createHTableDescriptor(tableDescriptor);
+    HTableDescriptorBuilder newDescriptor = tableUtil.buildHTableDescriptor(tableDescriptor);
 
     // Generate the coprocessor jar
     CoprocessorJar coprocessorJar = createCoprocessorJar();

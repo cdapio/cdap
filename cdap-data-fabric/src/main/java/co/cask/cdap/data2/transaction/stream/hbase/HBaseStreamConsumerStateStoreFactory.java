@@ -29,7 +29,6 @@ import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 
@@ -56,7 +55,7 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
       if (!tableUtil.tableExists(admin, streamStateStoreTableId)) {
 
-        HTableDescriptorBuilder htd = tableUtil.createHTableDescriptor(streamStateStoreTableId);
+        HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(streamStateStoreTableId);
 
         HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
         htd.addFamily(hcd);

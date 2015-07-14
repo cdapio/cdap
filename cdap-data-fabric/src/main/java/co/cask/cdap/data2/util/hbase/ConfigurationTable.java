@@ -24,7 +24,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -76,7 +75,7 @@ public class ConfigurationTable {
     HTable table = null;
     try {
       HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
-      HTableDescriptorBuilder htd = tableUtil.createHTableDescriptor(tableId);
+      HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId);
       htd.addFamily(new HColumnDescriptor(FAMILY));
       tableUtil.createTableIfNotExists(admin, tableId, htd.build());
 

@@ -107,7 +107,7 @@ public abstract class AbstractQueueUpgrader extends AbstractUpgrader {
               mutations.add(put);
             }
             LOG.debug("Marking old key {} for deletion", rowKeyString);
-            mutations.add(tableUtil.buildDelete(row).create());
+            mutations.add(tableUtil.buildDelete(row).build());
           }
           LOG.info("Finished processing row key {}", rowKeyString);
         }
