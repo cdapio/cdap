@@ -26,6 +26,13 @@ angular.module(PKG.name + '.feature.adapters')
       this.nodes.forEach(function(node) {
         MyPlumbService.addNodes(angular.copy(node), node.type);
       });
+      MyPlumbService.metadata.name = $scope.AdapterCreateController.data.config.metadata.name;
+      MyPlumbService.metadata.description = $scope.AdapterCreateController.data.config.metadata.description;
+      if ($scope.AdapterCreateController.data.config.metadata.type === 'ETLBatch') {
+        MyPlumbService.metadata.template.schedule.cron = $scope.AdapterCreateController.data.config.schedule.cron || $scope.AdapterCreateController.data.config.metadata.template.schedule.cron;
+      } else if ($scope.AdapterCreateController.data.config.metadata.type === 'ETLRealtime') {
+        MyPlumbService.metadata.template.instance = $scope.AdapterCreateController.data.config.instance || $scope.AdapterCreateController.data.config.metadata.template.instance;
+      }
     }
     function getNodes(config) {
       var nodes = [];

@@ -90,6 +90,8 @@ angular.module(PKG.name + '.services')
         name: conf.name,
         icon: conf.icon,
         description: conf.description,
+        properties: conf.properties || {},
+        _backendProperties: conf._backendProperties,
         type: conf.type
       };
       this.nodes[config.id] = config;
@@ -110,11 +112,12 @@ angular.module(PKG.name + '.services')
       var sourceConn = $filter('filter')(this.connections, { target: pluginId });
       var sourceSchema = null;
 
+      var source;
       if (sourceConn.length) {
-        var source = sourceConn.length ? this.nodes[sourceConn[0].source] : null;
-
+        source = this.nodes[sourceConn[0].source];
         sourceSchema = source.outputSchema;
-
+      } else {
+        sourceSchema = this.nodes[pluginId].properties.schema || {};
       }
 
       var plugin = this.nodes[pluginId];
