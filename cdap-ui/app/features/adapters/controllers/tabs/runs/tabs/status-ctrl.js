@@ -1,6 +1,6 @@
 angular.module(PKG.name + '.feature.adapters')
   // TODO: We should use rAdapterDetail here since this data is already resolved at adapter.detail state
-  .controller('AdapterRunDetailStatusController', function($scope, $state, myAdapterApi, $bootstrapModal, PluginConfigFactory, AdapterCreateModel) {
+  .controller('AdapterRunDetailStatusController', function($scope, $state, myAdapterApi, $bootstrapModal) {
 
     $scope.transforms = [{
       name: '',

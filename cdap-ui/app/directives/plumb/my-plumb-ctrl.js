@@ -4,19 +4,18 @@ angular.module(PKG.name + '.commons')
     this.instance = null;
 
     var defaultSettings = {
-      Connector : [ "Flowchart" ],
+      Connector : [ 'Flowchart' ],
       ConnectionsDetachable: true
     };
-
     var commonSettings = {
-      endpoint:"Dot",
+      endpoint:'Dot',
       paintStyle: {
-          strokeStyle: "white",
-          fillStyle: "#666",
+          strokeStyle: 'white',
+          fillStyle: '#666',
           radius: 7,
           lineWidth: 3
       },
-      connectorOverlays: [ [ "Arrow", { location:1, width: 10, height: 10 } ] ],
+      connectorOverlays: [ [ 'Arrow', { location:1, width: 10, height: 10 } ] ],
       anchors: [ 'Perimeter', {shape: 'Circle'}]
     };
     var sourceSettings = angular.extend({
@@ -70,15 +69,17 @@ angular.module(PKG.name + '.commons')
       this.instance.draggable(id);
     }
 
-    // Need to move this to the controller that is using this directive.
-    this.onPluginClick = function(pluginId, pluginType) {
-      MyPlumbService.editPluginProperties($scope, pluginId, pluginType);
-    };
-
     this.removePlugin = function(index, nodeId) {
       this.instance.detachAllConnections(nodeId);
       this.instance.remove(nodeId);
       this.plugins.splice(index, 1);
+      MyPlumbService.removeNode(nodeId);
+      MyPlumbService.setConnections(this.instance.getConnections());
+    };
+
+    // Need to move this to the controller that is using this directive.
+    this.onPluginClick = function(pluginId, pluginType) {
+      MyPlumbService.editPluginProperties($scope, pluginId, pluginType);
     };
 
     MyPlumbService.registerCallBack(this.addPlugin.bind(this));
@@ -95,8 +96,11 @@ angular.module(PKG.name + '.commons')
       }.bind(this));
 
       // Need to move this to the controller that is using this directive.
-      this.instance.bind("connection", function (connInfo, originalEvent) {
-        MyPlumbService.updateConnection(this.instance.getConnections());
+      this.instance.bind('connection', function () {
+        // Whenever there is a change in the connection just copy the entire array
+        // We never know if a connection was altered or removed. We don't want to 'Sync'
+        // between jsPlumb's internal connection array and ours (pointless)
+        MyPlumbService.setConnections(this.instance.getConnections());
       }.bind(this));
 
     }.bind(this));

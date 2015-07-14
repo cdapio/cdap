@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('CanvasController', function (myAdapterApi, MyPlumbService) {
+  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state) {
     function getIcon(plugin) {
       var iconMap = {
         'script': 'fa-code',
@@ -41,7 +41,7 @@ angular.module(PKG.name + '.feature.adapters')
     this.canvasOperations = [
       {
         name: 'Publish',
-        icon: 'fa fa-play'
+        icon: 'fa fa-save'
       },
       {
         name: 'Zoom In',
@@ -53,7 +53,7 @@ angular.module(PKG.name + '.feature.adapters')
       },
       {
         name: 'Export',
-        icon: 'fa fa-download'
+        icon: 'fa fa-eye'
       },
       {
         name: 'Import',
@@ -65,7 +65,39 @@ angular.module(PKG.name + '.feature.adapters')
       }
     ];
 
-    this.onCanvasOperationsClicked = function(group) {};
+    this.onCanvasOperationsClicked = function(group) {
+      var config;
+      switch(group.name) {
+        case 'Export':
+          config = angular.copy(MyPlumbService.getConfigForBackend());
+          $bootstrapModal.open({
+            templateUrl: '/assets/features/adapters/templates/create/viewconfig.html',
+            size: 'lg',
+            keyboard: true,
+            controller: ['$scope', 'config', function($scope, config) {
+              $scope.config = JSON.stringify(config);
+            }],
+            resolve: {
+              config: function() {
+                return config;
+              }
+            }
+          });
+          break;
+        case 'Publish':
+          MyPlumbService
+            .save()
+            .then(
+              function sucess() {
+                $state.go('adapters.list');
+              },
+              function error(errorObj) {
+                console.error('ERROR!: ', errorObj);
+              }
+            );
+          break;
+      }
+    };
 
     this.plugins= {
       items: []
@@ -97,12 +129,12 @@ angular.module(PKG.name + '.feature.adapters')
             )
           );
         }.bind(this));
-      }.bind(this))
+      }.bind(this));
     };
 
     this.onPluginItemClicked = function(event, item) {
       // TODO: Better UUID?
-      var id = item.name + '-' + item.type + '-' + Date.now();;
+      var id = item.name + '-' + item.type + '-' + Date.now();
       event.stopPropagation();
       var config = {
         id: id,
@@ -111,8 +143,8 @@ angular.module(PKG.name + '.feature.adapters')
         description: item.description,
         type: item.type
       };
-      MyPlumbService.updateNodes(config, config.type);
+      MyPlumbService.addNodes(config, config.type);
     };
 
 
-  })
+  });

@@ -11,7 +11,7 @@
     1. When the user makes a connection in the UI this service gets notified of that connection.
     2. (In the future) if someone is interested then they can register for this event.
 
-  Editing Properties in canvas-ctrl: -- NOT DONE
+  Editing Properties in canvas-ctrl: -- DONE
     1. When the user wants to edit the properties of a plugin this service gets the notification
     2. The plugin ID will be sent. Now the service should fetch the list of properties for the plugin.
     3. Create a map of properties and add it to the plugin (identified by passed in plugin ID)
@@ -31,11 +31,26 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $filter) {
-    this.callbacks = [];
-    this.nodes = {};
-    this.connections = [];
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter) {
 
+    this.resetToDefaults = function() {
+      this.callbacks = [];
+      this.nodes = {};
+      this.connections = [];
+      this.metadata = {
+        name: '',
+        description: '',
+        template: {
+          type: 'ETLBatch',
+          instance: '',
+          schedule: {
+            cron: ''
+          }
+        }
+      };
+    };
+
+    this.resetToDefaults();
     this.registerCallBack = function (callback) {
       this.callbacks.push(callback);
     };
@@ -46,16 +61,19 @@ angular.module(PKG.name + '.services')
       });
     };
 
-    this.updateConnection = function(connections) {
-      this.connections = connections.map(function(conn) {
-        return {
-          source: conn.sourceId,
-          target: conn.targetId
-        };
+    this.addConnection = function(connection) {
+      this.connections.push({
+        source: connection.sourceId,
+        target: connection.targetId
       });
     };
 
-    this.updateNodes = function(conf, type) {
+    this.setConnections = function(connections) {
+      this.connections = [];
+      connections.forEach(this.addConnection.bind(this));
+    };
+
+    this.addNodes = function(conf, type) {
       var config = {
         id: conf.id,
         name: conf.name,
@@ -65,6 +83,10 @@ angular.module(PKG.name + '.services')
       };
       this.nodes[config.id] = config;
       this.notifyListeners(config, type);
+    };
+
+    this.removeNode = function (nodeId) {
+      delete this.nodes[nodeId];
     };
 
     this.editPluginProperties = function (scope, pluginId, pluginType) {
@@ -109,7 +131,6 @@ angular.module(PKG.name + '.services')
               $scope.plugin = AdapterModel;
               $scope.type = type;
               $scope.isDisabled = false;
-
               var input;
               try {
                 input = JSON.parse(inputSchema);
@@ -153,13 +174,249 @@ angular.module(PKG.name + '.services')
                 return plugin;
               },
               type: function () {
-                return 'ETLBatch';
-              },
+                return this.metadata.template.type;
+              }.bind(this),
               inputSchema: function () {
                 return sourceSchema;
               }
             }
           });
-        });
+        }.bind(this));
     };
+
+    // Used for UI alone. Has _backendProperties and ids to plugins for
+    // construction and validation of DAGs in UI.
+    this.getConfig = function() {
+      var config = {
+        name: this.metadata.name,
+        description: this.metadata.description,
+        template: this.metadata.template.type,
+        source: {
+          properties: {}
+        },
+        sink: {
+          properties: {}
+        },
+        transforms: []
+      };
+      var nodes = angular.copy(this.nodes);
+
+      function addPluginToConfig(plugin, id) {
+        if (['source', 'sink'].indexOf(plugin.type) !== -1) {
+          config[plugin.type] = {
+            // Solely adding id and _backendProperties for validation.
+            // Should be removed while saving it to backend.
+            id: plugin.id,
+            name: plugin.name,
+            properties: plugin.properties || {},
+            _backendProperties: plugin._backendProperties
+          };
+        } else if (plugin.type === 'transform') {
+          config.transforms.push({
+            id: plugin.id,
+            name: plugin.name,
+            properties: plugin.properties || {},
+            _backendProperties: plugin._backendProperties
+          });
+        }
+        delete nodes[id];
+      }
+
+      this.connections.forEach(function (connection) {
+        if (nodes[connection.source]) {
+          addPluginToConfig(nodes[connection.source], connection.source);
+        }
+        if (nodes[connection.target]) {
+          addPluginToConfig(nodes[connection.target], connection.target);
+        }
+      });
+      return config;
+    };
+
+    function pruneProperties(config) {
+      if (config.source && config.source._backendProperties) {
+        delete config.source._backendProperties;
+      }
+      if (config.sink && config.sink._backendProperties) {
+        delete config.sink._backendProperties;
+      }
+      config.transforms.forEach(function(t) {
+        delete t._backendProperties;
+      });
+    }
+
+    // Used to save to backend. Has no fluff. Just real stuff that is needed.
+    this.getConfigForBackend = function () {
+      var config = this.getConfig();
+      pruneProperties(config);
+      var data = {
+        template: this.metadata.template.type,
+        description: this.metadata.description,
+        config: {
+          source: config.source,
+          sink: config.sink,
+          transforms: config.transforms
+        }
+      };
+      if (this.metadata.template.type === 'ETLRealtime') {
+        data.config.instances = this.metadata.template.instance;
+      } else if (this.metadata.template.type === 'ETLBatch') {
+        // default value should be * * * * *
+        data.config.schedule = this.metadata.template.schedule.cron;
+      }
+      return data;
+    };
+    this.save = function() {
+      var defer = $q.defer();
+      var errors = this.isModelValid();
+      if (!errors.length) {
+        var data = this.getConfigForBackend();
+        myAdapterApi.save(
+          {
+            namespace: $state.params.namespace,
+            adapter: this.metadata.name
+          },
+          data
+        )
+          .$promise
+          .then(
+            function success() {
+              // delete this.adapterDrafts[this.metadata.name];
+              // return mySettings.set('adapterdrafts', this.adapterDrafts);
+              defer.resolve(true);
+              this.resetToDefaults();
+            }.bind(this),
+            function error(err) {
+              defer.reject({
+                messages: err
+              });
+            }
+          );
+      } else {
+        defer.reject(errors);
+      }
+      return defer.promise;
+    };
+
+    this.isModelValid = function() {
+      var validationRules = [
+        hasExactlyOneSourceAndSink,
+        hasNameAndTemplateType,
+        checkForRequiredField,
+        checkForUnconnectedNodes,
+        checkForParallelDAGs
+      ];
+      var errors = [];
+      validationRules.forEach(function(rule) {
+        var errorObj = rule.call(this);
+        if (angular.isArray(errorObj)) {
+          errors = errors.concat(errorObj);
+        } else if (angular.isObject(errorObj)) {
+          errors.push(errorObj);
+        }
+      }.bind(this));
+      return errors.length? errors: true;
+    };
+
+    function hasExactlyOneSourceAndSink() {
+      var source =0, sink =0;
+      var errObj = true;
+      this.connections.forEach(function(conn) {
+        // Source cannot be target just like sink cannot be source in a connection in DAG.
+        source += (this.nodes[conn.source].type === 'source'? 1: 0);
+        sink += (this.nodes[conn.target].type === 'sink'? 1: 0);
+      }.bind(this));
+      if ( source + sink !== 2) {
+        errObj = {};
+        errObj.type = 'nodes';
+        errObj.message = 'Adapter should have exactly one source and one sink';
+      }
+      return errObj;
+    }
+
+    function hasNameAndTemplateType() {
+      var name = this.metadata.name;
+      var errors = true;
+      if (!name.length) {
+        errors = [];
+        errors.push({
+          type: 'name',
+          message: 'Adapter needs to have a name'
+        });
+      }
+      return errors;
+      // Should probably add template type check here. Waiting for design.
+    }
+    function checkForRequiredField() {
+      var errors = true;
+      var config = this.getConfig();
+      function addToErrors(type, message) {
+        if (!angular.isArray(errors)) {
+          errors = [];
+        }
+        var obj = {};
+        obj.type = type;
+        obj.message = message;
+        errors.push(obj);
+      }
+      if(config.source.name && !isValidPlugin(config.source)) {
+        addToErrors('nodes', 'Adapter\'s source is missing required fields');
+      }
+      if (config.sink.name && !isValidPlugin(config.sink)) {
+        addToErrors('nodes', 'Adapter\'s sink is missing required fields');
+      }
+      config.transforms.forEach(function(transform) {
+        if (transform.name && !isValidPlugin(transform)) {
+          addToErrors('nodes', 'Adapter\'s transforms is missing required fields');
+        }
+      });
+      return errors;
+    }
+    function isValidPlugin(plugin) {
+      var i;
+      var keys = Object.keys(plugin.properties);
+      if (!keys.length) {
+        plugin.valid = false;
+        return plugin.valid;
+      }
+      plugin.valid = true;
+      for (i=0; i< keys.length; i++) {
+        var property = plugin.properties[keys[i]];
+        if (plugin._backendProperties[keys[i]].required && (!property || property === '')) {
+          plugin.valid = false;
+          break;
+        }
+      }
+      return plugin.valid;
+    }
+
+    function checkForUnconnectedNodes() {
+      var nodesCount = Object.keys(this.nodes).length;
+      var edgeCount = this.connections.length;
+      var errorObj = true;
+      if ((nodesCount - 1)!== edgeCount) {
+        errorObj = {
+          type: 'nodes',
+          message: 'There are nodes that are not part of the DAG left hanging'
+        };
+      }
+      return errorObj;
+    }
+    function checkForParallelDAGs() {
+      var i,
+          currConn,
+          nextConn;
+      var errorObj = true;
+      for(i=0; i<this.connections.length-1; i++) {
+        currConn = this.connections[i];
+        nextConn = this.connections[i+1];
+        if (currConn.target !== nextConn.source) {
+          errorObj = {};
+          errorObj.type = 'nodes';
+          errorObj.message = 'There are parallel connections outside the main DAG';
+          break;
+        }
+      }
+      return errorObj;
+    }
   });

@@ -27,5 +27,7 @@ angular.module(PKG.name + '.commons')
         fn.call($scope.onPanelItemClickContext, event, item);
       }
     };
-    this.openGroup(this.groups[0]);
+    if (this.isSubMenu) {
+      this.openGroup(this.groups[0]);
+    }
   });
