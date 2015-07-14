@@ -55,6 +55,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.OutputFormat;
+import org.apache.spark.SparkConf;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
@@ -379,6 +380,13 @@ public class ExecutionSparkContext extends AbstractSparkContext {
         commitAndClose(datasetName, dataset);
       }
     };
+  }
+
+  @Override
+  public SparkConf getSparkConf() {
+    // This is an internal method.
+    // Throwing exception here to avoid being called inside CDAP wrongly, since we shouldn't call this during execution.
+    throw new UnsupportedOperationException("getSparkConf shouldn't be called in execution context");
   }
 
   /**
