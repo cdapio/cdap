@@ -11,6 +11,7 @@ angular.module(PKG.name + '.commons')
     };
     var commonSettings = {
       endpoint:'Dot',
+      maxConnections: -1,
       paintStyle: {
           strokeStyle: 'white',
           fillStyle: '#666',
@@ -53,19 +54,21 @@ angular.module(PKG.name + '.commons')
         icon: getIcon(config.name)
       }, config));
       $timeout(drawNode.bind(this, config.id, type));
+      $timeout(this.instance.repaintEverything);
     };
 
     function drawNode(id, type) {
       switch(type) {
         case 'source':
-          this.instance.addEndpoint(id, sourceSettings);
+          this.instance.addEndpoint(id, sourceSettings, {uuid: id});
           break;
         case 'sink':
-          this.instance.addEndpoint(id, sinkSettings);
+          this.instance.addEndpoint(id, sinkSettings, {uuid: id});
           break;
         case 'transform':
-          this.instance.addEndpoint(id, sourceSettings);
-          this.instance.addEndpoint(id, sinkSettings);
+          // Need to id each end point so that it can be used later to make connections.
+          this.instance.addEndpoint(id, sourceSettings, {uuid: 'Left' + id});
+          this.instance.addEndpoint(id, sinkSettings, {uuid: 'Right' + id});
           break;
       }
       this.instance.draggable(id);
@@ -105,16 +108,85 @@ angular.module(PKG.name + '.commons')
     MyPlumbService.registerCallBack(this.addPlugin.bind(this));
     MyPlumbService.errorCallback(errorNotification.bind(this));
 
+    // Using Dagre here to generate x and y co-ordinates for each node.
+    // When we fork and branch and have complex connections this will be useful for us.
+    // Right now this returns a pretty simple straight linear graph.
+    this.getGraph = function() {
+      var graph = new dagre.graphlib.Graph();
+      graph.setGraph({
+        nodesep: 60,
+        ranksep: 100,
+        rankdir: 'LR',
+        marginx: 30,
+        marginy: 30
+      });
+      this.plugins.forEach(function(plugin) {
+        graph.setNode(plugin.id, {label: plugin.id, width: 100, height: 100});
+      });
+      dagre.layout(graph);
+      return graph;
+    };
+
+    function generateStyles(name, nodes, xmargin, ymargin) {
+      var styles = {};
+      var nodeStylesFromDagre = nodes.filter(function(node) {
+        return node.label === name;
+      });
+      if (nodeStylesFromDagre.length) {
+        styles = {
+          'top': (nodeStylesFromDagre[0].x + xmargin) + 'px',
+          'left': (nodeStylesFromDagre[0].y + ymargin) + 'px'
+        };
+      }
+      return styles;
+    }
+
+    this.drawGraph = function() {
+      var graph = this.getGraph();
+      var nodes = graph.nodes()
+        .map(function(node) {
+          return graph.node(node);
+        });
+      var i;
+      var prev, curr, next;
+
+      this.plugins.forEach(function(plugin) {
+        plugin.icon = getIcon(plugin.name);
+        plugin.style = generateStyles(plugin.id, nodes, 200, 300);
+        drawNode.call(this, plugin.id, plugin.type);
+      }.bind(this));
+
+      for(i=0; i<this.plugins.length-1; i++) {
+        if (this.plugins[i].type === 'transform') {
+          curr = 'Left' + this.plugins[i].id;
+        } else {
+          curr = this.plugins[i].id;
+        }
+        if (this.plugins[i+1].type === 'transform') {
+          next = 'Right' + this.plugins[i+1].id;
+        } else {
+          next = this.plugins[i+1].id;
+        }
+        this.instance.connect({
+          uuids: [curr, next],
+          editable: true
+        });
+      }
+
+      MyPlumbService.setConnections(this.instance.getConnections());
+      $timeout(this.instance.repaintEverything);
+    };
+
+    $scope.$on('$destroy', function() {
+      this.instance.reset();
+      MyPlumbService.resetToDefaults();
+    }.bind(this));
+
     jsPlumb.ready(function() {
       jsPlumb.setContainer('plumb-container');
       this.instance = jsPlumb.getInstance();
 
       this.instance.importDefaults(defaultSettings);
-
-      this.plugins.forEach(function(plugin) {
-        drawNode.call(this, plugin.id, plugin.type);
-        // Have to add Connections.
-      }.bind(this));
 
       // Need to move this to the controller that is using this directive.
       this.instance.bind('connection', function () {
@@ -124,6 +196,9 @@ angular.module(PKG.name + '.commons')
         MyPlumbService.setConnections(this.instance.getConnections());
       }.bind(this));
 
+      if (this.plugins.length > 0) {
+        $timeout(this.drawGraph.bind(this));
+      }
     }.bind(this));
 
   });

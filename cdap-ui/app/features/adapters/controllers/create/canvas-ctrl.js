@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, AdapterErrorFactory) {
+  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, AdapterErrorFactory) {
     function getIcon(plugin) {
       var iconMap = {
         'script': 'fa-code',
@@ -18,10 +18,40 @@ angular.module(PKG.name + '.feature.adapters')
       var icon = iconMap[pluginName] ? iconMap[pluginName]: 'fa-plug';
       return icon;
     }
-
-    // Purely for feeding my-plumb to draw the diagram
-    // if I already have the nodes and connections
     this.nodes = [];
+    if ($scope.AdapterCreateController.data) {
+      // Purely for feeding my-plumb to draw the diagram
+      // if I already have the nodes and connections
+      this.nodes = getNodes($scope.AdapterCreateController.data.config);
+      this.nodes.forEach(function(node) {
+        MyPlumbService.addNodes(angular.copy(node), node.type);
+      });
+    }
+    function getNodes(config) {
+      var nodes = [];
+      var i =0;
+      nodes.push({
+        id: config.source.name + (++i),
+        name: config.source.name,
+        type: 'source',
+        properties: config.source.properties
+      });
+      config.transforms.forEach(function(transform) {
+        nodes.push({
+          id: transform.name + (++i),
+          name: transform.name,
+          type: 'transform',
+          properties: transform.properties
+        });
+      });
+      nodes.push({
+        id: config.sink.name + (++i),
+        name: config.sink.name,
+        type: 'sink',
+        properties: config.sink.properties
+      });
+      return nodes;
+    }
 
     this.pluginTypes = [
       {
