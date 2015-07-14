@@ -144,7 +144,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     Long startTime = TimePartitionedFileSetArguments.getInputStartTime(getRuntimeArguments());
     Long endTime = TimePartitionedFileSetArguments.getInputEndTime(getRuntimeArguments());
     if (startTime == null && endTime == null) {
-      // no times specified, perhaps a partition filter was specified? super will deal with that
+      // no times specified; perhaps a partition filter was specified. super will deal with that
       return super.getInputFormatConfiguration();
     }
     if (startTime == null) {

@@ -20,6 +20,7 @@ import co.cask.cdap.batch.stream.BatchStreamIntegrationTestRun;
 import co.cask.cdap.flow.stream.FlowStreamIntegrationTestRun;
 import co.cask.cdap.mapreduce.MapReduceStreamInputTestRun;
 import co.cask.cdap.mapreduce.service.MapReduceServiceIntegrationTestRun;
+import co.cask.cdap.partitioned.MapReducePartitionConsumingTest;
 import co.cask.cdap.spark.metrics.SparkMetricsIntegrationTestRun;
 import co.cask.cdap.spark.service.SparkServiceIntegrationTestRun;
 import co.cask.cdap.spark.stream.SparkStreamIntegrationTestRun;
@@ -44,6 +45,7 @@ import org.junit.runners.Suite;
   FlowStreamIntegrationTestRun.class,
   MapReduceStreamInputTestRun.class,
   MapReduceServiceIntegrationTestRun.class,
+  MapReducePartitionConsumingTest.class,
   SparkMetricsIntegrationTestRun.class,
   SparkServiceIntegrationTestRun.class,
   SparkStreamIntegrationTestRun.class,
