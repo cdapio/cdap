@@ -156,6 +156,7 @@ public class CLIConfig implements TableRendererConfig {
       }
       checkConnection(clientConfig, connectionConfig, accessToken);
       setConnectionConfig(connectionConfig);
+      clientConfig.setAccessToken(accessToken);
       output.printf("Successfully connected to CDAP instance at %s", connectionConfig.getURI().toString());
       output.println();
     } catch (IOException e) {
