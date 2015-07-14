@@ -17,6 +17,7 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.app.AppReturnsArgs;
+import co.cask.cdap.client.app.ConfigTestApp;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeDatasetModule;
 import co.cask.cdap.client.common.ClientTestBase;
@@ -26,6 +27,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
+import com.google.gson.Gson;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -45,6 +47,7 @@ import java.util.concurrent.TimeUnit;
 public class ApplicationClientTestRun extends ClientTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(ApplicationClientTestRun.class);
+  private static final Gson GSON = new Gson();
 
   private ApplicationClient appClient;
   private DatasetClient datasetClient;
@@ -116,6 +119,21 @@ public class ApplicationClientTestRun extends ClientTestBase {
       appClient.delete(app);
       appClient.waitForDeleted(app, 30, TimeUnit.SECONDS);
       Assert.assertEquals(0, appClient.list(Id.Namespace.DEFAULT).size());
+    }
+  }
+
+  @Test
+  public void testAppConfig() throws Exception {
+    ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("testStream", "testDataset");
+    appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(ConfigTestApp.class), config);
+    Assert.assertEquals(1, appClient.list().size());
+
+    try {
+      appClient.exists(ConfigTestApp.NAME);
+    } finally {
+      appClient.delete(ConfigTestApp.NAME);
+      appClient.waitForDeleted(ConfigTestApp.NAME, 30, TimeUnit.SECONDS);
+      Assert.assertEquals(0, appClient.list().size());
     }
   }
 
