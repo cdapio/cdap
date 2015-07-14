@@ -52,10 +52,10 @@
 <section class="system-health"> <!-- ng-show="isEnterprise" -->
   <div class="divider"></div>
   <div>
-    <a ui-sref="admin.system.services">
-      <div class="row">
-        <div class="col-xs-12 col-lg-4">
-          <div>
+    <div class="row">
+      <div class="col-xs-12 col-lg-4">
+        <div>
+          <a ui-sref="admin.system.services">
             <div class="row">
               <div class="col-xs-4">
                 <div>
@@ -78,36 +78,36 @@
                 </p>
               </div>
             </div>
-          </div>
-        </div>
-
-        <div class="col-xs-12 col-lg-8">
-          <div class="row health-widgets">
-            <div class="col-xs-12">
-              <p class="text-center">
-                <span> Errors last hour </span>
-              </p>
-            </div>
-          </div>
-
-            <div ng-controller="C3WidgetTimeseriesCtrl" ng-repeat="wdgt in OverviewCtrl.wdgts" class="health-widget">
-              <span>{{wdgt.title}}</span>
-              <c3-spline
-                chart-metric="wdgt.formattedData"
-                chart-metric-alias="wdgt.metricAlias"
-                chart-settings="wdgt.settings"
-                chart-size="chartSize"
-                ></c3-spline>
-              <div class="warning-alert">
-                <div>
-                  <p> Warning </p><span class="warn"> {{wdgt.chartData.totals[1]}} </span>
-                  <p> Alert </p><span class="error"> {{wdgt.chartData.totals[0]}} </span>
-                </div>
-              </div>
-            </div>
+          </a>
         </div>
       </div>
-    </a>
+
+      <div class="col-xs-12 col-lg-8">
+        <div class="row health-widgets">
+          <div class="col-xs-12">
+            <p class="text-center">
+              <span> Errors last hour </span>
+            </p>
+          </div>
+        </div>
+
+          <div ng-controller="C3WidgetTimeseriesCtrl" ng-repeat="wdgt in OverviewCtrl.wdgts" class="health-widget">
+            <span>{{wdgt.title}}</span>
+            <c3-spline
+              chart-metric="wdgt.formattedData"
+              chart-metric-alias="wdgt.metricAlias"
+              chart-settings="wdgt.settings"
+              chart-size="chartSize"
+              ></c3-spline>
+            <div class="warning-alert">
+              <div>
+                <p> Warning </p><span class="warn"> {{wdgt.chartData.totals[1]}} </span>
+                <p> Alert </p><span class="error"> {{wdgt.chartData.totals[0]}} </span>
+              </div>
+            </div>
+          </div>
+      </div>
+    </div>
   </div>
 </section>
 
