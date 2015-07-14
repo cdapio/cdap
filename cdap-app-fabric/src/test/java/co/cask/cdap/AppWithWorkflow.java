@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import com.google.common.base.Throwables;
@@ -53,13 +54,15 @@ public class AppWithWorkflow extends AbstractApplication {
    */
   public static class SampleWorkflow extends AbstractWorkflow {
     public static final String NAME = "SampleWorkflow";
+    public static String firstActionName = "firstAction";
+    public static String secondActionName = "secondAction";
 
     @Override
     public void configure() {
         setName(NAME);
         setDescription("SampleWorkflow description");
-        addAction(new DummyAction());
-        addAction(new DummyAction());
+        addAction(new DummyAction(firstActionName));
+        addAction(new DummyAction(secondActionName));
     }
   }
 
@@ -70,6 +73,19 @@ public class AppWithWorkflow extends AbstractApplication {
     private static final Logger LOG = LoggerFactory.getLogger(DummyAction.class);
     public static final String TOKEN_KEY = "tokenKey";
     public static final String TOKEN_VALUE = "tokenValue";
+    private final String name;
+
+    public DummyAction(String name) {
+      this.name = name;
+    }
+
+    @Override
+    public WorkflowActionSpecification configure() {
+      return WorkflowActionSpecification.Builder.with()
+        .setName(name)
+        .setDescription(getDescription())
+        .build();
+    }
 
     @Override
     public void initialize(WorkflowContext context) throws Exception {
