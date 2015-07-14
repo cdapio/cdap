@@ -27,6 +27,23 @@ angular.module(PKG.name + '.feature.adapters')
           params: {
             data: null
           },
+          resolve: {
+            rConfig: function($stateParams, mySettings, $q) {
+              var defer = $q.defer();
+              if ($stateParams.data) {
+                mySettings.get('adapterDrafts')
+                  .then(function(res) {
+                    var draft = res[$stateParams.data];
+                    if (draft) {
+                      defer.resolve(draft);
+                    }
+                  });
+              } else {
+                defer.resolve(false);
+              }
+              return defer.promise;
+            }
+          },
           controller: '_AdapterCreateController as AdapterCreateController',
           templateUrl: '/assets/features/adapters/templates/create.html',
           ncyBreadcrumb: {

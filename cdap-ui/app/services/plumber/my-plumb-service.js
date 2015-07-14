@@ -248,14 +248,17 @@ angular.module(PKG.name + '.services')
     };
 
     function pruneProperties(config) {
-      if (config.source && config.source._backendProperties) {
+      if (config.source && (config.source.id || config.source._backendProperties)) {
         delete config.source._backendProperties;
+        delete config.source.id;
       }
-      if (config.sink && config.sink._backendProperties) {
+      if (config.sink && (config.sink.id || config.sink._backendProperties)) {
         delete config.sink._backendProperties;
+        delete config.sink.id;
       }
       config.transforms.forEach(function(t) {
         delete t._backendProperties;
+        delete t.id;
       });
     }
 

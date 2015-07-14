@@ -1,5 +1,8 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('_AdapterCreateController', function(MyPlumbService, myAdapterApi, $bootstrapModal, $scope, AdapterErrorFactory) {
+  .controller('_AdapterCreateController', function(MyPlumbService, myAdapterApi, $bootstrapModal, $scope, rConfig, AdapterErrorFactory) {
+    if (rConfig) {
+      this.data =  rConfig;
+    }
     this.metadata = MyPlumbService.metadata;
 
     myAdapterApi.fetchTemplates({

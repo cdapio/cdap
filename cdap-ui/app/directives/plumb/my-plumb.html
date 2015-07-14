@@ -2,6 +2,7 @@
   <div id="plumb-container">
     <div ng-repeat="plugin in MyPlumbController.plugins"
           class="box {{plugin.type}}"
+          ng-style="plugin.style"
           data-type="{{plugin.type}}"
           id="{{plugin.id}}">
       <div ng-click="MyPlumbController.onPluginClick(plugin)"
