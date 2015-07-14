@@ -20,14 +20,13 @@ The example below shows a flowlet that reads *Double* values, rounds
 them, and emits the results. It has a simple configuration method and
 doesn't do anything for initialization or destruction::
 
-  class RoundingFlowlet implements Flowlet {
+  class RoundingFlowlet extends AbstractFlowlet {
 
     @Override
-    public FlowletSpecification configure() {
-      return FlowletSpecification.Builder.with()
-        .setName("round")
-        .setDescription("A rounding flowlet")
-        .build();
+    public void configure(FlowletConfigurer configurer) {
+      super.configure(configurer);
+      setName("round");
+      setDescription("A rounding flowlet");
     }
 
     @Override

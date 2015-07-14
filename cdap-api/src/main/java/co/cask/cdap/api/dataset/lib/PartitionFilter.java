@@ -141,6 +141,13 @@ public class PartitionFilter {
       Preconditions.checkState(!map.isEmpty(), "Partition filter cannot be empty.");
       return new PartitionFilter(map);
     }
+
+    /**
+     * @return <tt>true</tt> if no conditions have been set on this builder.
+     */
+    public boolean isEmpty() {
+      return map.isEmpty();
+    }
   }
 
   @Override

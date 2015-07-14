@@ -24,8 +24,7 @@ import java.util.NavigableMap;
 import javax.annotation.Nullable;
 
 /**
- * A table interface dedicated to our metrics system. It is non-transactional, hence does not implement read or write
- * isolation. It provides all functions that the metrics system uses for its data.
+ * A table interface dedicated to our metrics system and is currently used by Cube dataset.
  */
 public interface MetricsTable extends Dataset {
 

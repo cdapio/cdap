@@ -22,7 +22,8 @@ import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
-import co.cask.cdap.api.workflow.NodeValueEntry;
+import co.cask.cdap.api.workflow.NodeValue;
+import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.internal.app.runtime.batch.WordCount;
@@ -31,9 +32,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Counter;
-import org.apache.hadoop.mapreduce.CounterGroup;
-import org.apache.hadoop.mapreduce.Counters;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -94,7 +92,7 @@ public class ConditionalWorkflowApp extends AbstractApplication {
     @Override
     public boolean apply(@Nullable WorkflowContext input) {
       if (input != null) {
-        input.getToken().put("action_type", "Condition");
+        input.getToken().put("action.type", "Condition");
         Map<String, Map<String, Long>> hadoopCounters = input.getToken().getMapReduceCounters();
         if (hadoopCounters != null) {
           Map<String, Long> customCounters = hadoopCounters.get("MyCustomCounter");
@@ -128,30 +126,12 @@ public class ConditionalWorkflowApp extends AbstractApplication {
       FileInputFormat.addInputPath(job, new Path(inputPath));
       FileOutputFormat.setOutputPath(job, new Path(outputPath));
       // Put something in the token
-      context.getWorkflowToken().put("action_type", "MapReduce");
-      context.getWorkflowToken().put("start_time", String.valueOf(System.currentTimeMillis()));
-    }
-
-    // TODO: CDAP-2894 MapReduce counters should be available implicitly from the WorkflowToken.
-    // We yet to figure out the scheme.
-    @Override
-    public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-      if (!succeeded) {
-        return;
-      }
-
       WorkflowToken workflowToken = context.getWorkflowToken();
       if (workflowToken == null) {
-        throw new IllegalStateException("WorkflowToken cannot be null when the MapReduce program" +
-                                          " is started from the Workflow.");
+        return;
       }
-
-      Counters counters = ((Job) context.getHadoopJob()).getCounters();
-      for (CounterGroup group : counters) {
-        for (Counter counter : group) {
-          workflowToken.put(group.getName() + "." + counter.getName(), String.valueOf(counter.getValue()));
-        }
-      }
+      workflowToken.put("action.type", "MapReduce");
+      workflowToken.put("start.time", Value.of(System.currentTimeMillis()));
     }
   }
 
@@ -169,6 +149,7 @@ public class ConditionalWorkflowApp extends AbstractApplication {
   /**
    *
    */
+  @SuppressWarnings("ConstantConditions")
   public static final class WordCountMapReduce extends AbstractMapReduce {
 
     @Override
@@ -183,31 +164,14 @@ public class ConditionalWorkflowApp extends AbstractApplication {
       String inputPath = args.get("inputPath");
       String outputPath = args.get("outputPath");
       WordCount.configureJob((Job) context.getHadoopJob(), inputPath, outputPath);
-      // Put something in the token
-      context.getWorkflowToken().put("action_type", "MapReduce");
-      context.getWorkflowToken().put("start_time", String.valueOf(System.currentTimeMillis()));
-    }
-
-    // TODO: CDAP-2894 MapReduce counters should be available implicitly from the WorkflowToken.
-    // We yet to figure out the scheme.
-    @Override
-    public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-      if (!succeeded) {
-        return;
-      }
-
       WorkflowToken workflowToken = context.getWorkflowToken();
       if (workflowToken == null) {
-        throw new IllegalStateException("WorkflowToken cannot be null when the MapReduce program" +
-                                          " is started from the Workflow.");
+        return;
       }
-
-      Counters counters = ((Job) context.getHadoopJob()).getCounters();
-      for (CounterGroup group : counters) {
-        for (Counter counter : group) {
-          workflowToken.put(group.getName() + "." + counter.getName(), String.valueOf(counter.getValue()));
-        }
-      }
+      // Put something in the token
+      workflowToken.put("action.type", "MapReduce");
+      workflowToken.put("start.time", Value.of(System.currentTimeMillis()));
+      Preconditions.checkNotNull(workflowToken.get("start.time", "RecordVerifier"));
     }
   }
 
@@ -226,11 +190,11 @@ public class ConditionalWorkflowApp extends AbstractApplication {
       WorkflowToken token = getContext().getToken();
 
       // Put something in the token
-      token.put("action_type", "CustomAction");
+      token.put("action.type", "CustomAction");
 
       try {
         File file = new File(getContext().getRuntimeArguments().get(actionName + ".simple.action.file"));
-        file.createNewFile();
+        Preconditions.checkState(file.createNewFile());
         File doneFile = new File(getContext().getRuntimeArguments().get(actionName + ".simple.action.donefile"));
         while (!doneFile.exists()) {
           TimeUnit.MILLISECONDS.sleep(50);
@@ -256,32 +220,43 @@ public class ConditionalWorkflowApp extends AbstractApplication {
     private final String flattenReduceOutputRecordsCounterName =
       "org.apache.hadoop.mapreduce.TaskCounter.REDUCE_OUTPUT_RECORDS";
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void run() {
       WorkflowToken workflowToken = getContext().getToken();
-      boolean trueBranchExecuted = Boolean.parseBoolean(workflowToken.get("conditionResult"));
+      boolean trueBranchExecuted = Boolean.parseBoolean(workflowToken.get("conditionResult").toString());
       if (trueBranchExecuted) {
         // Previous condition returned true
-        List<NodeValueEntry> nodeValueEntries = workflowToken.getAll("action_type");
+        List<NodeValue> nodeValueEntries = workflowToken.getAll("action.type");
         Preconditions.checkArgument(5 == nodeValueEntries.size());
-        Preconditions.checkArgument(new NodeValueEntry("RecordVerifier", "MapReduce").equals(nodeValueEntries.get(0)));
-        Preconditions.checkArgument(new NodeValueEntry("ClassicWordCount",
-                                                       "MapReduce").equals(nodeValueEntries.get(2)));
-        Preconditions.checkArgument(workflowToken.get("action_type", "iffork_one").equals("CustomAction"));
-        Preconditions.checkArgument(workflowToken.get("action_type", "iffork_another").equals("CustomAction"));
+        Preconditions.checkArgument(new NodeValue("RecordVerifier",
+                                                       Value.of("MapReduce")).equals(nodeValueEntries.get(0)));
+        Preconditions.checkArgument(new NodeValue("ClassicWordCount",
+                                                       Value.of("MapReduce")).equals(nodeValueEntries.get(2)));
+        Preconditions.checkArgument(workflowToken.get("action.type",
+                                                      "iffork_one").toString().equals("CustomAction"));
+        Preconditions.checkArgument(workflowToken.get("action.type",
+                                                      "iffork_another").toString().equals("CustomAction"));
         validateMapReduceCounters(workflowToken, "ClassicWordCount");
       } else {
         // Previous condition returned false
-        List<NodeValueEntry> nodeValueEntries = workflowToken.getAll("action_type");
+        List<NodeValue> nodeValueEntries = workflowToken.getAll("action.type");
         Preconditions.checkArgument(5 == nodeValueEntries.size());
-        Preconditions.checkArgument(new NodeValueEntry("RecordVerifier", "MapReduce").equals(nodeValueEntries.get(0)));
-        Preconditions.checkArgument(workflowToken.get("action_type", "elsefork_one").equals("CustomAction"));
-        Preconditions.checkArgument(workflowToken.get("action_type", "elsefork_another").equals("CustomAction"));
-        Preconditions.checkArgument(workflowToken.get("action_type", "elsefork_third").equals("CustomAction"));
+        Preconditions.checkArgument(new NodeValue("RecordVerifier",
+                                                       Value.of("MapReduce")).equals(nodeValueEntries.get(0)));
+        Preconditions.checkArgument(workflowToken.get("action.type",
+                                                      "elsefork_one").toString().equals("CustomAction"));
+        Preconditions.checkArgument(workflowToken.get("action.type",
+                                                      "elsefork_another").toString().equals("CustomAction"));
+        Preconditions.checkArgument(workflowToken.get("action.type",
+                                                      "elsefork_third").toString().equals("CustomAction"));
         validateMapReduceCounters(workflowToken, "RecordVerifier");
       }
+      Map<String, List<NodeValue>> allUserKeys = workflowToken.getAll(WorkflowToken.Scope.USER);
+      Preconditions.checkArgument(5 == allUserKeys.get("action.type").size());
     }
 
+    @SuppressWarnings("ConstantConditions")
     private void validateMapReduceCounters(WorkflowToken workflowToken, String programName) {
       Map<String, Map<String, Long>> mapReduceCounters = workflowToken.getMapReduceCounters();
       Preconditions.checkNotNull(mapReduceCounters);
@@ -292,32 +267,50 @@ public class ConditionalWorkflowApp extends AbstractApplication {
       long reduceInputRecords = taskCounters.get(reduceInputRecordsCounterName);
       long reduceOutputRecords = taskCounters.get(reduceOutputRecordsCounterName);
 
-      long flattenMapInputRecords = Long.parseLong(workflowToken.get(flattenMapInputRecordsCounterName));
-      long flattenMapOutputRecords = Long.parseLong(workflowToken.get(flattenMapOutputRecordsCounterName));
-      long flattenReduceInputRecords = Long.parseLong(workflowToken.get(flattenReduceInputRecordsCounterName));
-      long flattenReduceOutputRecords = Long.parseLong(workflowToken.get(flattenReduceOutputRecordsCounterName));
+      long flattenMapInputRecords = workflowToken.get(flattenMapInputRecordsCounterName,
+                                                      WorkflowToken.Scope.SYSTEM).getAsLong();
+      long flattenMapOutputRecords = workflowToken.get(flattenMapOutputRecordsCounterName,
+                                                       WorkflowToken.Scope.SYSTEM).getAsLong();
+      long flattenReduceInputRecords = workflowToken.get(flattenReduceInputRecordsCounterName,
+                                                         WorkflowToken.Scope.SYSTEM).getAsLong();
+      long flattenReduceOutputRecords = workflowToken.get(flattenReduceOutputRecordsCounterName,
+                                                          WorkflowToken.Scope.SYSTEM).getAsLong();
 
       Preconditions.checkArgument(mapInputRecords == flattenMapInputRecords);
       Preconditions.checkArgument(mapOutputRecords == flattenMapOutputRecords);
       Preconditions.checkArgument(reduceInputRecords == flattenReduceInputRecords);
       Preconditions.checkArgument(reduceOutputRecords == flattenReduceOutputRecords);
 
-      long nodeSpecificMapInputRecords = Long.parseLong(workflowToken.get(flattenMapInputRecordsCounterName,
-                                                                          programName));
+      long nodeSpecificMapInputRecords = workflowToken.get(flattenMapInputRecordsCounterName, programName,
+                                                           WorkflowToken.Scope.SYSTEM).getAsLong();
 
-      long nodeSpecificMapOutputRecords = Long.parseLong(workflowToken.get(flattenMapOutputRecordsCounterName,
-                                                                           programName));
+      long nodeSpecificMapOutputRecords = workflowToken.get(flattenMapOutputRecordsCounterName, programName,
+                                                            WorkflowToken.Scope.SYSTEM).getAsLong();
 
-      long nodeSpecificReduceInputRecords = Long.parseLong(workflowToken.get(flattenReduceInputRecordsCounterName,
-                                                                             programName));
+      long nodeSpecificReduceInputRecords = workflowToken.get(flattenReduceInputRecordsCounterName, programName,
+                                                              WorkflowToken.Scope.SYSTEM).getAsLong();
 
-      long nodeSpecificReduceOutputRecords = Long.parseLong(
-        workflowToken.get(flattenReduceOutputRecordsCounterName, programName));
+      long nodeSpecificReduceOutputRecords = workflowToken.get(flattenReduceOutputRecordsCounterName, programName,
+                                                               WorkflowToken.Scope.SYSTEM).getAsLong();
 
       Preconditions.checkArgument(mapInputRecords == nodeSpecificMapInputRecords);
       Preconditions.checkArgument(mapOutputRecords == nodeSpecificMapOutputRecords);
       Preconditions.checkArgument(reduceInputRecords == nodeSpecificReduceInputRecords);
       Preconditions.checkArgument(reduceOutputRecords == nodeSpecificReduceOutputRecords);
+
+      Map<String, Value> systemValueMap = workflowToken.getAllFromNode(programName, WorkflowToken.Scope.SYSTEM);
+      long mapInputRecordsFromGetAll = systemValueMap.get(flattenMapInputRecordsCounterName).getAsLong();
+      long mapOutputRecordsFromGetAll = systemValueMap.get(flattenMapOutputRecordsCounterName).getAsLong();
+      long reduceInputRecordsFromGetAll = systemValueMap.get(flattenReduceInputRecordsCounterName).getAsLong();
+      long reduceOutputRecordsFromGetAll = systemValueMap.get(flattenReduceOutputRecordsCounterName).getAsLong();
+
+      Preconditions.checkArgument(mapInputRecords == mapInputRecordsFromGetAll);
+      Preconditions.checkArgument(mapOutputRecords == mapOutputRecordsFromGetAll);
+      Preconditions.checkArgument(reduceInputRecords == reduceInputRecordsFromGetAll);
+      Preconditions.checkArgument(reduceOutputRecords == reduceOutputRecordsFromGetAll);
+
+      long startTime = workflowToken.get("start.time", programName).getAsLong();
+      Preconditions.checkArgument(System.currentTimeMillis() > startTime);
     }
   }
 }

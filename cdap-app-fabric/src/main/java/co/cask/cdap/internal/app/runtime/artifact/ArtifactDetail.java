@@ -20,16 +20,16 @@ package co.cask.cdap.internal.app.runtime.artifact;
  * Details about an artifact, including info about the artifact itself and metadata about the contents of the artifact.
  */
 public class ArtifactDetail {
-  private final ArtifactInfo info;
+  private final ArtifactDescriptor descriptor;
   private final ArtifactMeta meta;
 
-  public ArtifactDetail(ArtifactInfo info, ArtifactMeta meta) {
-    this.info = info;
+  public ArtifactDetail(ArtifactDescriptor descriptor, ArtifactMeta meta) {
+    this.descriptor = descriptor;
     this.meta = meta;
   }
 
-  public ArtifactInfo getInfo() {
-    return info;
+  public ArtifactDescriptor getDescriptor() {
+    return descriptor;
   }
 
   public ArtifactMeta getMeta() {

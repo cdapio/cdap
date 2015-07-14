@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
+import co.cask.cdap.internal.artifact.ArtifactVersion;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.artifact.ArtifactVersion;
 
 import java.util.Objects;
 
@@ -51,6 +51,10 @@ public class ArtifactRange {
 
   public ArtifactVersion getUpper() {
     return upper;
+  }
+
+  public boolean versionIsInRange(ArtifactVersion version) {
+    return version.compareTo(lower) >= 0 && version.compareTo(upper) < 0;
   }
 
   @Override

@@ -36,6 +36,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.utils.DirUtils;
@@ -420,7 +421,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Transactions.execute(txContext, "beforeSubmit", new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(context.getProgram().getClassLoader());
+        ClassLoader oldClassLoader = setContextCombinedClassLoader(context);
         try {
           mapReduce.beforeSubmit(context);
 
@@ -444,7 +445,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Transactions.execute(txContext, "onFinish", new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(context.getProgram().getClassLoader());
+        ClassLoader oldClassLoader = setContextCombinedClassLoader(context);
         try {
           // TODO this should be done in the output committer, to make the M/R fail if addPartition fails
           boolean success = succeeded;
@@ -987,5 +988,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         conf.setInt(vcoreConfKey, resources.getVirtualCores());
       }
     }
+  }
+
+  private ClassLoader setContextCombinedClassLoader(DynamicMapReduceContext context) {
+    return ClassLoaders.setContextClassLoader(new CombineClassLoader(
+      null, ImmutableList.of(context.getProgram().getClassLoader(), getClass().getClassLoader())));
   }
 }

@@ -19,6 +19,9 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.workflow.NodeValue;
+import co.cask.cdap.api.workflow.Value;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -38,9 +41,17 @@ import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduledRuntime;
+import co.cask.cdap.proto.WorkflowTokenDetail;
+import co.cask.cdap.proto.WorkflowTokenNodeDetail;
+import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
+import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
+import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import co.cask.http.HttpResponder;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -50,13 +61,16 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * Workflow HTTP Handler.
@@ -65,6 +79,11 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramLifecycleHttpHandler.class);
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
+    .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
+    .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
+    .create();
 
   private final WorkflowClient workflowClient;
 
@@ -126,10 +145,10 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
 
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-name}/{run-id}/current")
-  public void workflowStatus(HttpRequest request, final HttpResponder responder,
-                             @PathParam("namespace-id") String namespaceId,
-                             @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName,
-                             @PathParam("run-id") String runId) {
+  public void getWorkflowStatus(HttpRequest request, final HttpResponder responder,
+                                @PathParam("namespace-id") String namespaceId,
+                                @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName,
+                                @PathParam("run-id") String runId) {
 
     try {
       workflowClient.getWorkflowStatus(namespaceId, appId, workflowName, runId,
@@ -225,5 +244,74 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     }
     responder.sendJson(HttpResponseStatus.OK, specList,
                        new TypeToken<List<ScheduleSpecification>>() { }.getType(), GSON);
+  }
+
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/runs/{run-id}/token")
+  public void getWorkflowToken(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("app-id") String appId,
+                               @PathParam("workflow-id") String workflowId,
+                               @PathParam("run-id") String runId,
+                               @QueryParam("scope") @DefaultValue("user") String scope,
+                               @QueryParam("key") @DefaultValue("") String key) throws NotFoundException {
+    WorkflowToken workflowToken = getWorkflowToken(namespaceId, appId, workflowId, runId);
+    WorkflowToken.Scope tokenScope = WorkflowToken.Scope.valueOf(scope.toUpperCase());
+    WorkflowTokenDetail workflowTokenDetail = WorkflowTokenDetail.of(workflowToken.getAll(tokenScope));
+    Type workflowTokenDetailType = new TypeToken<WorkflowTokenDetail>() { }.getType();
+    if (key.isEmpty()) {
+      responder.sendJson(HttpResponseStatus.OK, workflowTokenDetail, workflowTokenDetailType, GSON);
+      return;
+    }
+    List<NodeValue> nodeValueEntries = workflowToken.getAll(key, tokenScope);
+    if (nodeValueEntries.isEmpty()) {
+      throw new NotFoundException(key);
+    }
+    responder.sendJson(HttpResponseStatus.OK, WorkflowTokenDetail.of(ImmutableMap.of(key, nodeValueEntries)),
+                       workflowTokenDetailType, GSON);
+  }
+
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-id}/runs/{run-id}/nodes/{node-id}/token")
+  public void getWorkflowToken(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("app-id") String appId,
+                               @PathParam("workflow-id") String workflowId,
+                               @PathParam("run-id") String runId,
+                               @PathParam("node-id") String nodeId,
+                               @QueryParam("scope") @DefaultValue("user") String scope,
+                               @QueryParam("key") @DefaultValue("") String key) throws NotFoundException {
+    WorkflowToken workflowToken = getWorkflowToken(namespaceId, appId, workflowId, runId);
+    WorkflowToken.Scope tokenScope = WorkflowToken.Scope.valueOf(scope.toUpperCase());
+    Map<String, Value> workflowTokenFromNode = workflowToken.getAllFromNode(nodeId, tokenScope);
+    WorkflowTokenNodeDetail tokenAtNode = WorkflowTokenNodeDetail.of(workflowTokenFromNode);
+    Type workflowTokenNodeDetailType = new TypeToken<WorkflowTokenNodeDetail>() { }.getType();
+    if (key.isEmpty()) {
+      responder.sendJson(HttpResponseStatus.OK, tokenAtNode, workflowTokenNodeDetailType, GSON);
+      return;
+    }
+    if (!workflowTokenFromNode.containsKey(key)) {
+      throw new NotFoundException(key);
+    }
+    responder.sendJson(HttpResponseStatus.OK,
+                       WorkflowTokenNodeDetail.of(ImmutableMap.of(key, workflowTokenFromNode.get(key))),
+                       workflowTokenNodeDetailType, GSON);
+  }
+
+  private WorkflowToken getWorkflowToken(String namespaceId, String appName, String workflow,
+                                         String runId) throws NotFoundException {
+    Id.Application appId = Id.Application.from(namespaceId, appName);
+    ApplicationSpecification appSpec = store.getApplication(appId);
+    if (appSpec == null) {
+      throw new NotFoundException(appId);
+    }
+    Id.Workflow workflowId = Id.Workflow.from(appId, workflow);
+    if (!appSpec.getWorkflows().containsKey(workflow)) {
+      throw new NotFoundException(workflowId);
+    }
+    if (store.getRun(workflowId, runId) == null) {
+      throw new NotFoundException(new Id.Run(workflowId, runId));
+    }
+    return store.getWorkflowToken(workflowId, runId);
   }
 }

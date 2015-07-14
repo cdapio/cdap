@@ -19,6 +19,7 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.lib.Partitioning.FieldType;
 
+import java.util.Iterator;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -121,6 +122,7 @@ public class PartitionedFileSetArguments {
    *
    * @param arguments the runtime arguments for a partitioned dataset
    * @param partitioning the declared partitioning for the dataset, needed for proper interpretation of values
+   * @return the PartitionFilter specified in the arguments or null if no filter is specified.
    */
   @Nullable
   public static PartitionFilter getInputPartitionFilter(Map<String, String> arguments, Partitioning partitioning) {
@@ -148,7 +150,7 @@ public class PartitionedFileSetArguments {
       @SuppressWarnings({ "unchecked", "unused" }) // we know it's type safe, but Java does not
       PartitionFilter.Builder unused = builder.addRangeCondition(fieldName, lowerValue, upperValue);
     }
-    return builder.build();
+    return builder.isEmpty() ? null : builder.build();
   }
 
   // helper to convert a string value into a field value in a partition key or filter
@@ -170,4 +172,29 @@ public class PartitionedFileSetArguments {
                       where, kind, stringValue, fieldName, fieldType.name()), e);
     }
   }
+
+  /**
+   * Sets partitions as input for a PartitionedFileSet. If both a PartitionFilter and Partition(s) are specified, the
+   * PartitionFilter takes precedence and the specified Partition(s) will be ignored.
+   *
+   * @param arguments the runtime arguments for a partitioned dataset
+   * @param partitionIterator the iterator of partitions to add as input
+   */
+  public static void addInputPartitions(Map<String, String> arguments, Iterator<Partition> partitionIterator) {
+    while (partitionIterator.hasNext()) {
+      addInputPartition(arguments, partitionIterator.next());
+    }
+  }
+
+  /**
+   * Sets a partition as input for a PartitionedFileSet. If both a PartitionFilter and Partition(s) are specified, the
+   * PartitionFilter takes precedence and the specified Partition(s) will be ignored.
+   *
+   * @param arguments the runtime arguments for a partitioned dataset
+   * @param partition the partition to add as input
+   */
+  public static void addInputPartition(Map<String, String> arguments, Partition partition) {
+    FileSetArguments.addInputPath(arguments, partition.getRelativePath());
+  }
+
 }
