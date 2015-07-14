@@ -23,6 +23,7 @@ angular.module(PKG.name + '.commons')
         // Format model
         function initialize() {
           var schema = {};
+          $scope.error = null;
           if ($scope.model) {
             try {
               schema = JSON.parse($scope.model);
