@@ -20,9 +20,11 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
+import co.cask.cdap.api.dataset.lib.BatchPartitionConsumer;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionOutput;
@@ -30,8 +32,8 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
+import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.mapreduce.PartitionConsumingMapReduce;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
@@ -103,8 +105,22 @@ public class AppWithMapReduceConsumingPartitions extends AbstractApplication {
     }
   }
 
-  public static class WordCount extends PartitionConsumingMapReduce {
-    private static final String STATE_KEY = "state.key";
+  public static class WordCount extends AbstractMapReduce {
+
+    private final BatchPartitionConsumer batchPartitionConsumer = new BatchPartitionConsumer() {
+      private static final String STATE_KEY = "state.key";
+
+      @Nullable
+      @Override
+      protected byte[] readBytes(DatasetContext datasetContext) {
+        return ((KeyValueTable) datasetContext.getDataset("consumingState")).read(STATE_KEY);
+      }
+
+      @Override
+      protected void writeBytes(DatasetContext datasetContext, byte[] stateBytes) {
+        ((KeyValueTable) datasetContext.getDataset("consumingState")).write(STATE_KEY, stateBytes);
+      }
+    };
 
     @Override
     public void configure() {
@@ -115,7 +131,8 @@ public class AppWithMapReduceConsumingPartitions extends AbstractApplication {
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
-      setInputPartitions(context, "lines");
+      PartitionedFileSet lines = batchPartitionConsumer.getPartitionedFileSet(context, "lines");
+      context.setInput("lines", lines);
 
       Job job = context.getHadoopJob();
       job.setMapperClass(Tokenizer.class);
@@ -124,13 +141,11 @@ public class AppWithMapReduceConsumingPartitions extends AbstractApplication {
     }
 
     @Override
-    protected byte[] readBytes(MapReduceContext mapReduceContext) {
-      return ((KeyValueTable) mapReduceContext.getDataset("consumingState")).read(STATE_KEY);
-    }
-
-    @Override
-    protected void writeBytes(MapReduceContext mapReduceContext, byte[] stateBytes) {
-      ((KeyValueTable) mapReduceContext.getDataset("consumingState")).write(STATE_KEY, stateBytes);
+    public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
+      if (succeeded) {
+        batchPartitionConsumer.onFinish(context);
+      }
+      super.onFinish(succeeded, context);
     }
 
     /**
