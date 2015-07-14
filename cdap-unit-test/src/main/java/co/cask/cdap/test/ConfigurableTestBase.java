@@ -585,7 +585,7 @@ public class ConfigurableTestBase {
    * @param streamName the specified stream
    * @return {@link StreamManager} for the specified stream in the default namespace
    */
-  protected final StreamManager getStreamManager(String streamName) throws Exception {
+  protected final StreamManager getStreamManager(String streamName) {
     return getStreamManager(Constants.DEFAULT_NAMESPACE_ID, streamName);
   }
 
@@ -595,7 +595,7 @@ public class ConfigurableTestBase {
    * @param streamName the specified stream
    * @return {@link StreamManager} for the specified stream in the specified namespace
    */
-  protected final StreamManager getStreamManager(Id.Namespace namespace, String streamName) throws Exception {
+  protected final StreamManager getStreamManager(Id.Namespace namespace, String streamName) {
     return getTestManager().getStreamManager(Id.Stream.from(namespace, streamName));
   }
 
