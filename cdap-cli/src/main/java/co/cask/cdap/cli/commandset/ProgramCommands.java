@@ -30,6 +30,7 @@ import co.cask.cdap.cli.command.SetProgramInstancesCommandSet;
 import co.cask.cdap.cli.command.SetProgramRuntimeArgsCommandSet;
 import co.cask.cdap.cli.command.StartProgramCommandSet;
 import co.cask.cdap.cli.command.StopProgramCommandSet;
+import co.cask.cdap.cli.command.WorkflowCommandSet;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
 import com.google.common.collect.ImmutableList;
@@ -59,6 +60,7 @@ public class ProgramCommands extends CommandSet<Command> implements Categorized 
         .add(injector.getInstance(SetProgramInstancesCommandSet.class))
         .add(injector.getInstance(StartProgramCommandSet.class))
         .add(injector.getInstance(StopProgramCommandSet.class))
+        .add(injector.getInstance(WorkflowCommandSet.class))
         .build());
   }
 
