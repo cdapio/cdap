@@ -36,6 +36,7 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
@@ -52,6 +53,8 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.http.NettyHttpService;
 import co.cask.tephra.TransactionAware;
@@ -119,11 +122,13 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final DatasetFramework datasetFramework;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
+  private final Store store;
+  private final Id.Workflow workflowId;
 
   WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
                  MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
-                 DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient) {
+                 DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient, Store store) {
     this.program = program;
     this.hostname = hostname;
     this.runtimeArgs = createRuntimeArgs(options.getUserArguments());
@@ -149,6 +154,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
+    this.store = store;
+    this.workflowId = Id.Workflow.from(program.getId().getApplication(), workflowSpec.getName());
   }
 
   @Override
@@ -220,29 +227,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                              InstantiatorFactory instantiator, final ClassLoader classLoader,
                              WorkflowToken token) throws Exception {
 
-    final WorkflowActionSpecification actionSpec;
-    final ScheduleProgramInfo actionInfo = node.getProgram();
-    switch (actionInfo.getProgramType()) {
-      case MAPREDUCE:
-        MapReduceSpecification mapReduceSpec = appSpec.getMapReduce().get(actionInfo.getProgramName());
-        String mapReduce = mapReduceSpec.getName();
-        actionSpec = new DefaultWorkflowActionSpecification(new ProgramWorkflowAction(
-          mapReduce, mapReduce, SchedulableProgramType.MAPREDUCE));
-        break;
-      case SPARK:
-        SparkSpecification sparkSpec = appSpec.getSpark().get(actionInfo.getProgramName());
-        String spark = sparkSpec.getName();
-        actionSpec = new DefaultWorkflowActionSpecification(new ProgramWorkflowAction(
-          spark, spark, SchedulableProgramType.SPARK));
-        break;
-      case CUSTOM_ACTION:
-        actionSpec = node.getActionSpecification();
-        break;
-      default:
-        LOG.error("Unknown Program Type '{}', Program '{}' in the Workflow.", actionInfo.getProgramType(),
-                  actionInfo.getProgramName());
-        throw new IllegalStateException("Workflow stopped without executing all tasks");
-    }
+    final SchedulableProgramType programType = node.getProgram().getProgramType();
+    final WorkflowActionSpecification actionSpec = getActionSpecification(appSpec, node, programType);
 
     status.put(node.getNodeId(), node);
 
@@ -258,7 +244,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         public void run() {
           setContextCombinedClassLoader(action);
           try {
-            if (actionInfo.getProgramType() == SchedulableProgramType.CUSTOM_ACTION) {
+            if (programType == SchedulableProgramType.CUSTOM_ACTION) {
               try {
                 runInTransaction(action, workflowContext);
               } catch (TransactionFailureException e) {
@@ -285,6 +271,35 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       executor.shutdownNow();
       status.remove(node.getNodeId());
     }
+    store.updateWorkflowToken(workflowId, runId.getId(), token);
+  }
+
+  private WorkflowActionSpecification getActionSpecification(ApplicationSpecification appSpec, WorkflowActionNode node,
+                                                             SchedulableProgramType programType) {
+    WorkflowActionSpecification actionSpec;
+    ScheduleProgramInfo actionInfo = node.getProgram();
+    switch (programType) {
+      case MAPREDUCE:
+        MapReduceSpecification mapReduceSpec = appSpec.getMapReduce().get(actionInfo.getProgramName());
+        String mapReduce = mapReduceSpec.getName();
+        actionSpec = new DefaultWorkflowActionSpecification(new ProgramWorkflowAction(
+          mapReduce, mapReduce, SchedulableProgramType.MAPREDUCE));
+        break;
+      case SPARK:
+        SparkSpecification sparkSpec = appSpec.getSpark().get(actionInfo.getProgramName());
+        String spark = sparkSpec.getName();
+        actionSpec = new DefaultWorkflowActionSpecification(new ProgramWorkflowAction(
+          spark, spark, SchedulableProgramType.SPARK));
+        break;
+      case CUSTOM_ACTION:
+        actionSpec = node.getActionSpecification();
+        break;
+      default:
+        LOG.error("Unknown Program Type '{}', Program '{}' in the Workflow.", actionInfo.getProgramType(),
+                  actionInfo.getProgramName());
+        throw new IllegalStateException("Workflow stopped without executing all tasks");
+    }
+    return actionSpec;
   }
 
   private TransactionContext getTransactionContextFromContext(WorkflowContext context) {
@@ -421,6 +436,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       // execute the else branch
       iterator = node.getElseBranch().iterator();
     }
+    // If a workflow updates its token at a condition node, it will be persisted after the execution of the next node.
+    // However, the call below ensures that even if the workflow fails/crashes after a condition node, updates from the
+    // condition node are also persisted.
+    store.updateWorkflowToken(workflowId, runId.getId(), token);
     executeAll(iterator, appSpec, instantiator, classLoader, token);
   }
 

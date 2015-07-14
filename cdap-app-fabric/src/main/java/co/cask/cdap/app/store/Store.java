@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.worker.Worker;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.proto.AdapterStatus;
@@ -151,6 +152,7 @@ public interface Store {
    * @param runid     run id of the program
    * @return          run record for the specified program and runid, null if not found
    */
+  @Nullable
   RunRecord getRun(Id.Program id, String runid);
 
   /**
@@ -457,4 +459,22 @@ public interface Store {
   void setWorkflowProgramStart(Id.Program programId, String programRunId, String workflow, String workflowRunId,
                                String workflowNodeId, long startTimeInSeconds, @Nullable String adapter,
                                @Nullable String twillRunId);
+
+  /**
+   * Updates the {@link WorkflowToken} for a specified run of a workflow.
+   *
+   * @param workflowId {@link Id.Workflow} of the workflow whose {@link WorkflowToken} is to be updated
+   * @param workflowRunId Run Id of the workflow for which the {@link WorkflowToken} is to be updated
+   * @param token the {@link WorkflowToken} to update
+   */
+  void updateWorkflowToken(Id.Workflow workflowId, String workflowRunId, WorkflowToken token);
+
+  /**
+   * Retrieves the {@link WorkflowToken} for a specified run of a workflow.
+   *
+   * @param workflowId {@link Id.Workflow} of the workflow whose {@link WorkflowToken} is to be retrieved
+   * @param workflowRunId Run Id of the workflow for which the {@link WorkflowToken} is to be retrieved
+   * @return the {@link WorkflowToken} for the specified workflow run
+   */
+  WorkflowToken getWorkflowToken(Id.Workflow workflowId, String workflowRunId);
 }
