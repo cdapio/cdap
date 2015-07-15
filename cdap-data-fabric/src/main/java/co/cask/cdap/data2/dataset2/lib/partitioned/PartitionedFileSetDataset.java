@@ -331,10 +331,12 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     }
     if (!isExternal) {
       try {
-        boolean deleteSuccess = partition.getLocation().delete(true);
-        if (!deleteSuccess) {
-          throw new DataSetException(String.format("Error deleting file(s) for partition %s at path %s.",
-                                                   key, partition.getLocation().toURI().getPath()));
+        if (partition.getLocation().exists()) {
+          boolean deleteSuccess = partition.getLocation().delete(true);
+          if (!deleteSuccess) {
+            throw new DataSetException(String.format("Error deleting file(s) for partition %s at path %s.",
+                                                     key, partition.getLocation().toURI().getPath()));
+          }
         }
       } catch (IOException e) {
         throw new DataSetException(String.format("Error deleting file(s) for partition %s at path %s: %s.",
