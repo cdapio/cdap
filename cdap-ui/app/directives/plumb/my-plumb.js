@@ -9,6 +9,22 @@ commonModule.directive('myPlumb', function() {
     scope: {
       config: '='
     },
+    link: function(scope, element, attrs) {
+      scope.element = element;
+      scope.getGraphMargins = function (plugins) {
+        var margins = this.element[0].parentElement.getBoundingClientRect();
+        var parentWidth = margins.width;
+        var noOfNodes = plugins.length;
+        var widthOfEachNode = 260;
+        var finalMargin = parentWidth - (noOfNodes * 260);
+        if ( finalMargin >= 100) {
+          finalMargin = finalMargin / 2;
+        } else if (finalMargin < 100){
+          finalMargin = 150;
+        }
+        return finalMargin;
+      };
+    },
     templateUrl: 'plumb/my-plumb.html',
     controller: 'MyPlumbController',
     controllerAs: 'MyPlumbController'
