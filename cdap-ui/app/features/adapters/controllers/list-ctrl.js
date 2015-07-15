@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdapterListController', function($scope, mySettings, $state, $alert, $timeout, myAdapterApi, myAlert) {
+  .controller('AdapterListController', function($scope, mySettings, $state, $alert, $timeout, myAdapterApi, myAlert, myHelpers) {
     $scope.adapters  = [];
 
     var params = {
@@ -27,9 +27,9 @@ angular.module(PKG.name + '.feature.adapters')
             $scope.adapters.push({
               isdraft: true,
               name: key,
-              template: value.config.metadata.type,
+              template: myHelpers.objectQuery(value, 'config', 'metadata', 'type') || myHelpers.objectQuery(value, 'template'),
               status: '-',
-              description: value.config.metadata.description
+              description: myHelpers.objectQuery(value, 'config', 'metadata', 'description') || myHelpers.objectQuery(value, 'description')
             });
           });
         }

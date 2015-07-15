@@ -31,8 +31,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, AdapterErrorFactory) {
-
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory) {
     this.resetToDefaults = function() {
       this.callbacks = [];
       this.errorCallbacks = [];
@@ -318,5 +317,18 @@ angular.module(PKG.name + '.services')
       return defer.promise;
     };
 
+    this.saveAsDraft = function() {
+      var config = this.getConfigForBackend();
+      config.ui = {
+        nodes: this.nodes,
+        connections: this.connections
+      };
+      var defer = $q.defer();
+      return mySettings.get('adapterDrafts')
+        .then(function(res) {
+          res[this.metadata.name] = config;
+          return mySettings.set('adapterDrafts', res);
+        }.bind(this));
+    }
 
   });
