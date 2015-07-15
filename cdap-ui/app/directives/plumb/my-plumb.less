@@ -53,5 +53,40 @@
       background-color: #38C0BE;
       left: 70vw;
     }
+
+
+    .label-as-badge {
+      border-radius: 50%;
+    }
+
+    .error-node-notification {
+      position: absolute;
+      top: 3px;
+      right: 5px;
+
+      .badge-danger {
+        background-color: @brand-danger;
+
+        > i {
+          margin-left: 0;
+          color: white;
+        }
+      }
+    }
+  }
+
+  .error-container {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    width: 40%;
+    margin: 0 auto;
+
+    &.well {
+      background-color: @brand-danger;
+      border-radius: 8px;
+      color: white;
+    }
   }
 }

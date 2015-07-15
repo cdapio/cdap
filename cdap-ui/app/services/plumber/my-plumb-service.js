@@ -319,19 +319,56 @@ angular.module(PKG.name + '.services')
     };
 
     function hasExactlyOneSourceAndSink() {
-      var source =0, sink =0;
-      var errObj = true;
-      this.connections.forEach(function(conn) {
-        // Source cannot be target just like sink cannot be source in a connection in DAG.
-        source += (this.nodes[conn.source].type === 'source'? 1: 0);
-        sink += (this.nodes[conn.target].type === 'sink'? 1: 0);
-      }.bind(this));
-      if ( source + sink !== 2) {
-        errObj = {};
-        errObj.type = 'nodes';
-        errObj.message = 'Adapter should have exactly one source and one sink';
+      var source = [], sink = [];
+      var errObj = [];
+
+      angular.forEach(this.nodes, function (value, key) {
+        switch (value.type) {
+          case 'sink':
+            sink.push(key);
+            break;
+          case 'source':
+            source.push(key);
+            break;
+        }
+      });
+
+      if (source.length !== 1) {
+        if (source.length < 1) {
+          errObj.push({
+            type: 'source',
+            message: 'Adapter is missing a source'
+          });
+        } else if (source.length > 1) {
+          errObj.push({
+            type: 'nodes',
+            message: 'Adapter should only have 1 source',
+            unattached: source
+          });
+        }
       }
-      return errObj;
+
+      if (sink.length !== 1) {
+        if (sink.length < 1) {
+          errObj.push({
+            type: 'sink',
+            message: 'Adapter is missing a sink'
+          });
+        } else if (sink.length > 1) {
+          errObj.push({
+            type: 'nodes',
+            message: 'Adapter should only have 1 sink',
+            unattached: sink
+          });
+        }
+      }
+
+      if (errObj.length === 0) {
+        return true;
+      } else {
+        return errObj;
+      }
+
     }
 
     function hasNameAndTemplateType() {
@@ -350,24 +387,25 @@ angular.module(PKG.name + '.services')
     function checkForRequiredField() {
       var errors = true;
       var config = this.getConfig();
-      function addToErrors(type, message) {
+      function addToErrors(type, message, node) {
         if (!angular.isArray(errors)) {
           errors = [];
         }
         var obj = {};
         obj.type = type;
         obj.message = message;
+        obj.node = node;
         errors.push(obj);
       }
       if(config.source.name && !isValidPlugin(config.source)) {
-        addToErrors('nodes', 'Adapter\'s source is missing required fields');
+        addToErrors('nodes', 'Adapter\'s source is missing required fields', config.source.id);
       }
       if (config.sink.name && !isValidPlugin(config.sink)) {
-        addToErrors('nodes', 'Adapter\'s sink is missing required fields');
+        addToErrors('nodes', 'Adapter\'s sink is missing required fields', config.sink.id);
       }
       config.transforms.forEach(function(transform) {
         if (transform.name && !isValidPlugin(transform)) {
-          addToErrors('nodes', 'Adapter\'s transforms is missing required fields');
+          addToErrors('nodes', 'Adapter\'s transforms is missing required fields', transform.id);
         }
       });
       return errors;
@@ -391,17 +429,34 @@ angular.module(PKG.name + '.services')
     }
 
     function checkForUnconnectedNodes() {
-      var nodesCount = Object.keys(this.nodes).length;
-      var edgeCount = this.connections.length;
+
       var errorObj = true;
-      if ((nodesCount - 1)!== edgeCount) {
+      var nodes = angular.copy(this.nodes);
+
+      angular.forEach(this.connections, function (conn) {
+        nodes[conn.source].visited = true;
+        nodes[conn.target].visited = true;
+      });
+
+      var unattached = [];
+
+      angular.forEach(nodes, function (value, key) {
+        if (!value.visited) {
+          unattached.push(key);
+        }
+      });
+
+      if (unattached.length > 0) {
         errorObj = {
           type: 'nodes',
-          message: 'There are nodes that are not part of the DAG left hanging'
+          message: 'There are nodes that are not part of the DAG left hanging',
+          unattached: unattached
         };
       }
+
       return errorObj;
     }
+
     function checkForParallelDAGs() {
       var i,
           currConn,
