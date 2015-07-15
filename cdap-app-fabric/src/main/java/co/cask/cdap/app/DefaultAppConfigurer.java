@@ -18,7 +18,6 @@ package co.cask.cdap.app;
 
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationConfigurer;
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -48,7 +47,6 @@ import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
 import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
 import co.cask.cdap.internal.app.worker.DefaultWorkerConfigurer;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import com.google.common.base.Preconditions;
@@ -63,9 +61,6 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
   private String name;
   private String description;
   private String configuration;
-  private final Map<String, StreamSpecification> streams = Maps.newHashMap();
-  private final Map<String, String> dataSetModules = Maps.newHashMap();
-  private final Map<String, DatasetCreationSpec> dataSetInstances = Maps.newHashMap();
   private final Map<String, FlowSpecification> flows = Maps.newHashMap();
   private final Map<String, MapReduceSpecification> mapReduces = Maps.newHashMap();
   private final Map<String, SparkSpecification> sparks = Maps.newHashMap();
