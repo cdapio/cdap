@@ -1,3 +1,5 @@
+<h3>Create Adapter</h3>
+
 <my-side-panel
   data-panel-groups="PlumbController.pluginTypes"
   data-on-group-click-context="PlumbController"
@@ -12,14 +14,16 @@
   data-on-panel-item-click="PlumbController.onPluginItemClicked">
 </my-side-panel>
 
-<my-plumb data-config="PlumbController.nodes"></my-plumb>
+<my-plumb></my-plumb>
 
-<my-side-panel
-  data-panel-groups="PlumbController.canvasOperations"
-  data-on-group-click-context="PlumbController"
-  data-on-group-click="PlumbController.onCanvasOperationsClicked"
+<div class="right-panel">
+  <my-side-panel
+    data-panel-groups="PlumbController.canvasOperations"
+    data-on-group-click-context="PlumbController"
+    data-on-group-click="PlumbController.onCanvasOperationsClicked"
 
-  data-placement="right"
+    data-placement="right"
 
-  data-is-sub-menu="false">
-</my-side-panel>
+    data-is-sub-menu="false">
+  </my-side-panel>
+</div>

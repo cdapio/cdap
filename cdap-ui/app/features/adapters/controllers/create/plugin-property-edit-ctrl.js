@@ -23,7 +23,7 @@ angular.module(PKG.name + '.feature.adapters')
     if (this.noproperty) {
       PluginConfigFactory.fetch(
         $scope,
-        $scope.AdapterCreateController.model.metadata.type,
+        $scope.type,
         $scope.plugin.name
       )
         .then(
@@ -45,6 +45,24 @@ angular.module(PKG.name + '.feature.adapters')
               this.groups.position.push('generic');
               this.groups['generic'] = missedFieldsGroup;
             }
+
+            if (res.implicit) {
+              var schema = res.implicit.schema;
+              var keys = Object.keys(schema);
+
+              var formattedSchema = [];
+              angular.forEach(keys, function (key) {
+                formattedSchema.push({
+                  name: key,
+                  type: schema[key]
+                });
+              });
+
+              var obj = { fields: formattedSchema };
+              $scope.plugin.outputSchema = JSON.stringify(obj);
+              $scope.plugin.implicitSchema = true;
+            }
+
 
             // Mark the configfetched to show that configurations have been received.
             this.configfetched = true;
