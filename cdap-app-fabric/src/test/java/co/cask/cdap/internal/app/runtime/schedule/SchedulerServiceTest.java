@@ -41,7 +41,9 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Calendar;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class SchedulerServiceTest {
   private static SchedulerService schedulerService;
@@ -54,8 +56,10 @@ public class SchedulerServiceTest {
                                                            AppWithWorkflow.SampleWorkflow.NAME);
   private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
   private static final Id.Stream STREAM_ID = Id.Stream.from(namespace, "stream");
-  private static final Schedule timeSchedule1 = Schedules.createTimeSchedule("Schedule1", "Every minute", "* * * * ?");
-  private static final Schedule timeSchedule2 = Schedules.createTimeSchedule("Schedule2", "Every Hour", "0 * * * ?");
+  private static final Schedule timeSchedule1 =
+    Schedules.createTimeSchedule("Schedule1", "Next hour", getCron(1, TimeUnit.HOURS));
+  private static final Schedule timeSchedule2 =
+    Schedules.createTimeSchedule("Schedule2", "Next day", getCron(1, TimeUnit.DAYS));
   private static final Schedule dataSchedule1 =
     Schedules.createDataSchedule("Schedule3", "Every 1M", Schedules.Source.STREAM, STREAM_ID.getId(), 1);
   private static final Schedule dataSchedule2 =
@@ -160,6 +164,17 @@ public class SchedulerServiceTest {
     // Check the state of the old scheduleIds
     // (which should be deleted by the call to SchedulerService#delete(Program, ProgramType)
     checkState(Scheduler.ScheduleState.NOT_FOUND, scheduleIds);
+  }
+
+  /**
+   * Returns a crontab that will get triggered after {@code offset} time in the given unit from current time.
+   */
+  private static String getCron(long offset, TimeUnit unit) {
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTimeInMillis(System.currentTimeMillis() + unit.toMillis(offset));
+    return String.format("%s %s %s %s *",
+                         calendar.get(Calendar.MINUTE), calendar.get(Calendar.HOUR_OF_DAY),
+                         calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.MONTH) + 1);
   }
 
   private void checkState(Scheduler.ScheduleState expectedState, List<String> scheduleIds) throws Exception {
