@@ -55,7 +55,16 @@ public abstract class HBaseTestBase {
 
   // Test startup / teardown
 
-  public abstract void startHBase() throws Exception;
+  public final void startHBase() throws Exception {
+    // Tune down the connection thread pool size
+    getConfiguration().setInt("hbase.hconnection.threads.core", 5);
+    getConfiguration().setInt("hbase.hconnection.threads.max", 10);
+    // Tunn down handler threads in regionserver
+    getConfiguration().setInt("hbase.regionserver.handler.count", 10);
+    doStartHBase();
+  }
+
+  public abstract void doStartHBase() throws Exception;
 
   public abstract void stopHBase() throws Exception;
 
