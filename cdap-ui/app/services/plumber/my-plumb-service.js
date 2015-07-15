@@ -141,7 +141,7 @@ angular.module(PKG.name + '.services')
         source = this.nodes[sourceConn[0].source];
         sourceSchema = source.outputSchema;
       } else {
-        sourceSchema = this.nodes[pluginId].properties.schema || {};
+        sourceSchema = this.nodes[pluginId].properties.schema || '';
       }
 
       var plugin = this.nodes[pluginId];
