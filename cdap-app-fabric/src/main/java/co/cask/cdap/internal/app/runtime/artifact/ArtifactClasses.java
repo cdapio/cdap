@@ -16,24 +16,21 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
+import co.cask.cdap.api.templates.plugins.PluginClass;
+
+import java.util.List;
+
 /**
- * Details about an artifact, including info about the artifact itself and metadata about the contents of the artifact.
+ * Classes contained in an artifact, such as plugin classes and application classes.
  */
-public class ArtifactDetail {
-  private final ArtifactDescriptor descriptor;
-  private final ArtifactMeta meta;
+public class ArtifactClasses {
+  private final List<PluginClass> plugins;
 
-  public ArtifactDetail(ArtifactDescriptor descriptor, ArtifactMeta meta) {
-    this.descriptor = descriptor;
-    this.meta = meta;
+  public ArtifactClasses(List<PluginClass> plugins) {
+    this.plugins = plugins;
   }
 
-  public ArtifactDescriptor getDescriptor() {
-    return descriptor;
+  public List<PluginClass> getPlugins() {
+    return plugins;
   }
-
-  public ArtifactMeta getMeta() {
-    return meta;
-  }
-
 }

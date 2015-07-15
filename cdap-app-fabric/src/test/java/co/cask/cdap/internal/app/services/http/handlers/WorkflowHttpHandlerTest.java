@@ -1089,7 +1089,9 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(200, deploy(AppWithWorkflow.class).getStatusLine().getStatusCode());
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, AppWithWorkflow.NAME);
     Id.Workflow workflowId = Id.Workflow.from(appId, AppWithWorkflow.SampleWorkflow.NAME);
-    startProgram(workflowId);
+    String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
+    startProgram(workflowId, ImmutableMap.of("inputPath", createInput("input"),
+                                             "outputPath", outputPath));
     waitState(workflowId, ProgramRunStatus.RUNNING.name());
     waitState(workflowId, "STOPPED");
 
@@ -1151,8 +1153,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     String versionedUrl = getVersionedAPIPath(appendScopeAndKeyToUrl(workflowTokenUrl, scope, key),
                                               Constants.Gateway.API_VERSION_3_TOKEN, workflowId.getNamespaceId());
     HttpResponse response = doGet(versionedUrl);
-    return readResponse(response, new TypeToken<WorkflowTokenNodeDetail>() {
-    }.getType(), GSON);
+    return readResponse(response, new TypeToken<WorkflowTokenNodeDetail>() { }.getType(), GSON);
   }
 
   private String appendScopeAndKeyToUrl(String workflowTokenUrl, @Nullable WorkflowToken.Scope scope, String key) {

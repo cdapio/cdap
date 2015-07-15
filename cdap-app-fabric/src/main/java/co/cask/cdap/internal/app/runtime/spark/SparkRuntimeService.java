@@ -49,6 +49,7 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.ApplicationBundler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Tuple2;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -144,7 +145,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         localizedFiles.add(saveHConf(contextConfig.set(executionContext).getConfiguration(), tempDir));
       }
 
-      sparkSubmitArgs = prepareSparkSubmitArgs(contextConfig.getExecutionMode(), executionContext,
+      sparkSubmitArgs = prepareSparkSubmitArgs(contextConfig.getExecutionMode(), sparkContextFactory.getClientContext(),
                                                tempDir, localizedArchives, localizedFiles, jobJar, metricsConf);
 
     } catch (Throwable t) {
@@ -281,7 +282,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    * Prepares arguments which {@link SparkProgramWrapper} is submitted to {@link SparkSubmit} to run.
    *
    * @param executionMode name of the execution mode
-   * @param context the {@link AbstractSparkContext} for this execution
+   * @param context the {@link ClientSparkContext} for this execution
    * @param localDir the directory to be used as the spark local directory
    * @param localizedArchives list of files to be localized to the remote container as archives (.jar wil be expanded)
    * @param localizedFiles list of files to be localized to the remote container
@@ -290,7 +291,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    *
    * @return String[] of arguments with which {@link SparkProgramWrapper} will be submitted
    */
-  private String[] prepareSparkSubmitArgs(String executionMode, AbstractSparkContext context, File localDir,
+  private String[] prepareSparkSubmitArgs(String executionMode, ClientSparkContext context, File localDir,
                                           Iterable<File> localizedArchives, Iterable<File> localizedFiles,
                                           File jobJar, File metricsConf) {
 
@@ -299,13 +300,18 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
     ImmutableList.Builder<String> builder = ImmutableList.builder();
 
+    // Add user specified configs first. CDAP specifics config will override them later if there are duplicates.
+    for (Tuple2<String, String> tuple : context.getSparkConf().getAll()) {
+      builder.add("--conf").add(tuple._1() + "=" + tuple._2());
+    }
+
     builder.add("--class").add(SparkProgramWrapper.class.getName())
            .add("--master").add(executionMode)
-           .add("--deploy-mode").add("client")
            .add("--conf").add("spark.executor.extraClassPath=$PWD/" + CDAP_SPARK_JAR + "/lib/*")
            .add("--conf").add("spark.metrics.conf=" + metricsConf.getAbsolutePath())
            .add("--conf").add("spark.local.dir=" + localDir.getAbsolutePath())
-           .add("--conf").add("spark.executor.memory=" + context.getExecutorResources().getMemoryMB() + "m");
+           .add("--conf").add("spark.executor.memory=" + context.getExecutorResources().getMemoryMB() + "m")
+           .add("--conf").add("spark.executor.cores=" + context.getExecutorResources().getVirtualCores());
 
     if (!archives.isEmpty()) {
       builder.add("--archives").add(archives);

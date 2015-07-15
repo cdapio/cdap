@@ -32,9 +32,9 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.tx.DatasetContext;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
+import co.cask.cdap.internal.artifact.ArtifactVersion;
 import co.cask.cdap.internal.filesystem.LocationCodec;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.artifact.ArtifactVersion;
 import co.cask.tephra.TransactionConflictException;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -59,6 +59,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 
 /**
  * This class manages artifacts as well as metadata for each artifact. Artifacts and their metadata cannot be changed
@@ -162,13 +163,42 @@ public class ArtifactStore {
     return metaTable.executeUnchecked(new TransactionExecutor.Function<DatasetContext<Table>, List<ArtifactDetail>>() {
       @Override
       public List<ArtifactDetail> apply(DatasetContext<Table> context) throws Exception {
-        List<ArtifactDetail> archives = Lists.newArrayList();
+        List<ArtifactDetail> artifacts = Lists.newArrayList();
         Scanner scanner = context.get().scan(scanArtifacts(namespace));
         Row row;
         while ((row = scanner.next()) != null) {
-          addArchivesToList(archives, row);
+          addArtifactsToList(artifacts, row);
         }
-        return Collections.unmodifiableList(archives);
+        return Collections.unmodifiableList(artifacts);
+      }
+    });
+  }
+
+  /**
+   * Get all artifacts that match artifacts in the given ranges.
+   *
+   * @param range the range to match artifacts in
+   * @return an unmodifiable list of all artifacts that match the given ranges. If none exist, an empty list
+   *         is returned
+   */
+  public List<ArtifactDetail> getArtifacts(final ArtifactRange range) {
+    return metaTable.executeUnchecked(new TransactionExecutor.Function<DatasetContext<Table>, List<ArtifactDetail>>() {
+      @Override
+      public List<ArtifactDetail> apply(DatasetContext<Table> context) throws Exception {
+        List<ArtifactDetail> artifacts = Lists.newArrayList();
+        Table table = context.get();
+        ArtifactKey artifactKey = new ArtifactKey(range.getNamespace(), range.getName());
+
+        Row row = table.get(artifactKey.getRowKey());
+        for (Map.Entry<byte[], byte[]> columnEntry : row.getColumns().entrySet()) {
+          String version = Bytes.toString(columnEntry.getKey());
+          if (range.versionIsInRange(new ArtifactVersion(version))) {
+            ArtifactData data = gson.fromJson(Bytes.toString(columnEntry.getValue()), ArtifactData.class);
+            Id.Artifact artifactId = Id.Artifact.from(artifactKey.namespace, artifactKey.name, version);
+            artifacts.add(new ArtifactDetail(getDescriptor(artifactId, data.location), data.meta));
+          }
+        }
+        return Collections.unmodifiableList(artifacts);
       }
     });
   }
@@ -194,7 +224,7 @@ public class ArtifactStore {
           ArtifactKey artifactKey = new ArtifactKey(namespace, artifactName);
           Row row = context.get().get(artifactKey.getRowKey());
           if (!row.isEmpty()) {
-            addArchivesToList(archives, row);
+            addArtifactsToList(archives, row);
           }
           return archives;
         }
@@ -227,31 +257,34 @@ public class ArtifactStore {
     if (data == null) {
       throw new ArtifactNotExistsException(artifactId);
     }
-    return new ArtifactDetail(new ArtifactInfo(artifactId, data.location), data.meta);
+    return new ArtifactDetail(getDescriptor(artifactId, data.location), data.meta);
   }
 
   /**
    * Get all plugin classes that extend the given parent artifact.
-   * Results are returned as a map from plugin artifact to plugins in that artifact.
+   * Results are returned as a sorted map from plugin artifact to plugins in that artifact.
+   * Map entries are sorted by the artifact
    *
    * @param parentArtifactId the id of the artifact to find plugins for
-   * @return a map of artifact info to plugin classes for all plugin classes of the given type in the namespace.
-   *         The map will never be null. If there are no plugin classes, an empty map will be returned.
+   * @return an unmodifiable map of plugin artifact to plugin classes for all plugin classes accessible by the given
+   *         artifact. The map will never be null. If there are no plugin classes, an empty map will be returned.
    * @throws IOException if there was an exception reading metadata from the metastore
    */
-  public Map<ArtifactInfo, List<PluginClass>> getPluginClasses(final Id.Artifact parentArtifactId) throws IOException {
+  public SortedMap<ArtifactDescriptor, List<PluginClass>> getPluginClasses(final Id.Artifact parentArtifactId)
+    throws IOException {
+
     return metaTable.executeUnchecked(
-      new TransactionExecutor.Function<DatasetContext<Table>, Map<ArtifactInfo, List<PluginClass>>>() {
+      new TransactionExecutor.Function<DatasetContext<Table>, SortedMap<ArtifactDescriptor, List<PluginClass>>>() {
         @Override
-        public Map<ArtifactInfo, List<PluginClass>> apply(DatasetContext<Table> context) throws Exception {
-          Map<ArtifactInfo, List<PluginClass>> result = Maps.newHashMap();
+        public SortedMap<ArtifactDescriptor, List<PluginClass>> apply(DatasetContext<Table> context) throws Exception {
+          SortedMap<ArtifactDescriptor, List<PluginClass>> result = Maps.newTreeMap();
 
           Scanner scanner = context.get().scan(scanPlugins(parentArtifactId));
           Row row;
           while ((row = scanner.next()) != null) {
             addPluginsToMap(parentArtifactId, result, row);
           }
-          return result;
+          return Collections.unmodifiableSortedMap(result);
         }
       });
   }
@@ -262,24 +295,24 @@ public class ArtifactStore {
    *
    * @param parentArtifactId the id of the artifact to find plugins for
    * @param type the type of plugin to look for
-   * @return a map of artifact info to plugin classes for all plugin classes of the given type in the namespace.
-   *         The map will never be null. If there are no plugin classes, an empty map will be returned.
+   * @return an unmodifiable map of plugin artifact to plugin classes for all plugin classes accessible by the
+   *         given artifact. The map will never be null. If there are no plugin classes, an empty map will be returned.
    * @throws IOException if there was an exception reading metadata from the metastore
    */
-  public Map<ArtifactInfo, List<PluginClass>> getPluginClasses(final Id.Artifact parentArtifactId,
-                                                               final String type) throws IOException {
+  public SortedMap<ArtifactDescriptor, List<PluginClass>> getPluginClasses(final Id.Artifact parentArtifactId,
+                                                                           final String type) throws IOException {
     return metaTable.executeUnchecked(
-      new TransactionExecutor.Function<DatasetContext<Table>, Map<ArtifactInfo, List<PluginClass>>>() {
+      new TransactionExecutor.Function<DatasetContext<Table>, SortedMap<ArtifactDescriptor, List<PluginClass>>>() {
         @Override
-        public Map<ArtifactInfo, List<PluginClass>> apply(DatasetContext<Table> context) throws Exception {
-          Map<ArtifactInfo, List<PluginClass>> result = Maps.newHashMap();
+        public SortedMap<ArtifactDescriptor, List<PluginClass>> apply(DatasetContext<Table> context) throws Exception {
+          SortedMap<ArtifactDescriptor, List<PluginClass>> result = Maps.newTreeMap();
 
           Scanner scanner = context.get().scan(scanPlugins(parentArtifactId, type));
           Row row;
           while ((row = scanner.next()) != null) {
             addPluginsToMap(parentArtifactId, result, row);
           }
-          return result;
+          return Collections.unmodifiableSortedMap(result);
         }
       });
   }
@@ -291,20 +324,20 @@ public class ArtifactStore {
    * @param parentArtifactId the id of the artifact to find plugins for
    * @param type the type of plugin to look for
    * @param name the name of the plugin to look for
-   * @return a map of artifact info to plugin classes of the given type and name in the namespace.
-   *         The map will never be null, and will never be empty.
+   * @return an unmodifiable map of plugin artifact to plugin classes of the given type and name, accessible by the
+   *         given artifact. The map will never be null, and will never be empty.
    * @throws PluginNotExistsException if no plugin with the given type and name exists in the namespace
    * @throws IOException if there was an exception reading metadata from the metastore
    */
-  public Map<ArtifactInfo, PluginClass> getPluginClasses(final Id.Artifact parentArtifactId,
-                                                         final String type, final String name)
+  public SortedMap<ArtifactDescriptor, PluginClass> getPluginClasses(final Id.Artifact parentArtifactId,
+                                                                     final String type, final String name)
     throws IOException, PluginNotExistsException {
 
-    Map<ArtifactInfo, PluginClass> plugins = metaTable.executeUnchecked(
-      new TransactionExecutor.Function<DatasetContext<Table>, Map<ArtifactInfo, PluginClass>>() {
+    SortedMap<ArtifactDescriptor, PluginClass> plugins = metaTable.executeUnchecked(
+      new TransactionExecutor.Function<DatasetContext<Table>, SortedMap<ArtifactDescriptor, PluginClass>>() {
         @Override
-        public Map<ArtifactInfo, PluginClass> apply(DatasetContext<Table> context) throws Exception {
-          Map<ArtifactInfo, PluginClass> result = Maps.newHashMap();
+        public SortedMap<ArtifactDescriptor, PluginClass> apply(DatasetContext<Table> context) throws Exception {
+          SortedMap<ArtifactDescriptor, PluginClass> result = Maps.newTreeMap();
 
           PluginKey pluginKey = new PluginKey(parentArtifactId.getNamespace(), parentArtifactId.getName(), type, name);
           Row row = context.get().get(pluginKey.getRowKey());
@@ -315,7 +348,7 @@ public class ArtifactStore {
               PluginData pluginData = gson.fromJson(Bytes.toString(column.getValue()), PluginData.class);
               // filter out plugins that don't extend this version of the parent artifact
               if (matches(pluginData, parentArtifactId.getVersion())) {
-                ArtifactInfo artifactInfo = new ArtifactInfo(artifactColumn.artifactId, pluginData.artifactLocation);
+                ArtifactDescriptor artifactInfo = getDescriptor(artifactColumn.artifactId, pluginData.artifactLocation);
                 result.put(artifactInfo, pluginData.pluginClass);
               }
             }
@@ -326,7 +359,7 @@ public class ArtifactStore {
     if (plugins.isEmpty()) {
       throw new PluginNotExistsException(parentArtifactId.getNamespace(), type, name);
     }
-    return plugins;
+    return Collections.unmodifiableSortedMap(plugins);
   }
 
   private boolean matches(PluginData pluginData, ArtifactVersion version) {
@@ -499,20 +532,20 @@ public class ArtifactStore {
     oldMeta.location.delete();
   }
 
-  private void addArchivesToList(List<ArtifactDetail> archives, Row row) throws IOException {
+  private void addArtifactsToList(List<ArtifactDetail> artifactDetails, Row row) throws IOException {
     ArtifactKey artifactKey = ArtifactKey.parse(row.getRow());
 
     for (Map.Entry<byte[], byte[]> columnVal : row.getColumns().entrySet()) {
       String version = Bytes.toString(columnVal.getKey());
       ArtifactData data = gson.fromJson(Bytes.toString(columnVal.getValue()), ArtifactData.class);
       Id.Artifact artifactId = Id.Artifact.from(artifactKey.namespace, artifactKey.name, version);
-      archives.add(new ArtifactDetail(new ArtifactInfo(artifactId, data.location), data.meta));
+      artifactDetails.add(new ArtifactDetail(getDescriptor(artifactId, data.location), data.meta));
     }
   }
 
   // this method examines all plugins in the given row and checks if they extend the given parent artifact.
   // if so, information about the plugin artifact and the plugin details are added to the given map.
-  private void addPluginsToMap(Id.Artifact parentArtifactId, Map<ArtifactInfo, List<PluginClass>> map,
+  private void addPluginsToMap(Id.Artifact parentArtifactId, SortedMap<ArtifactDescriptor, List<PluginClass>> map,
                                Row row) throws IOException {
     // column is the artifact namespace, name, and version. value is the serialized PluginData
     for (Map.Entry<byte[], byte[]> column : row.getColumns().entrySet()) {
@@ -521,7 +554,7 @@ public class ArtifactStore {
 
       // filter out plugins that don't extend this version of the parent artifact
       if (matches(pluginData, parentArtifactId.getVersion())) {
-        ArtifactInfo artifactInfo = new ArtifactInfo(artifactColumn.artifactId, pluginData.artifactLocation);
+        ArtifactDescriptor artifactInfo = getDescriptor(artifactColumn.artifactId, pluginData.artifactLocation);
 
         if (!map.containsKey(artifactInfo)) {
           map.put(artifactInfo, Lists.<PluginClass>newArrayList());
@@ -529,6 +562,11 @@ public class ArtifactStore {
         map.get(artifactInfo).add(pluginData.pluginClass);
       }
     }
+  }
+
+  private ArtifactDescriptor getDescriptor(Id.Artifact artifactId, Location location) {
+    return new ArtifactDescriptor(artifactId.getName(), artifactId.getVersion(),
+                                  Constants.SYSTEM_NAMESPACE_ID.equals(artifactId.getNamespace()), location);
   }
 
   private Scan scanArtifacts(Id.Namespace namespace) {

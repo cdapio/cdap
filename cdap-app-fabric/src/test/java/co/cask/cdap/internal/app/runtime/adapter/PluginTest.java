@@ -39,7 +39,6 @@ import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -72,7 +71,6 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.Callable;
 import java.util.jar.Attributes;
@@ -134,16 +132,6 @@ public class PluginTest {
     for (File jarFile : DirUtils.listFiles(templatePluginDir, "jar")) {
       jarFile.delete();
     }
-  }
-
-  @Test
-  public void testExportPackage() {
-    Manifest manifest = new Manifest();
-    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE,
-                                     "co.cask.plugin;use:=\"\\\"test,test2\\\"\";version=\"1.0\",co.cask.plugin2");
-
-    Set<String> packages = ManifestFields.getExportPackages(manifest);
-    Assert.assertEquals(ImmutableSet.of("co.cask.plugin", "co.cask.plugin2"), packages);
   }
 
   @Test

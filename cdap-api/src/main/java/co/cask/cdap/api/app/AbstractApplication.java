@@ -80,6 +80,15 @@ public abstract class AbstractApplication<T extends Config> implements Applicati
   }
 
   /**
+   * Get the configuration object.
+   *
+   * @return application configuration provided during application creation
+   */
+  protected T getConfig() {
+    return getContext().getConfig();
+  }
+
+  /**
    * @see ApplicationConfigurer#setName(String)
    */
   protected void setName(String name) {

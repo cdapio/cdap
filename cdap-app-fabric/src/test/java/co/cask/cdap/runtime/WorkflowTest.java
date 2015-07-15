@@ -186,8 +186,8 @@ public class WorkflowTest {
       Assert.fail("Should have thrown Exception because 'NoOpMR' added multiple times in the workflow " +
                     "'NonUniqueProgramsInWorkflow'.");
     } catch (Exception ex) {
-      Assert.assertEquals("Node with the name 'NoOpMR' added multiple times in workflow " +
-                            "'NonUniqueProgramsInWorkflow'.", ex.getCause().getMessage());
+      Assert.assertEquals("Node 'NoOpMR' already exists in workflow 'NonUniqueProgramsInWorkflow'.",
+                          ex.getCause().getMessage());
     }
 
     // try deploying app containing workflow fork with non-unique programs
@@ -197,8 +197,8 @@ public class WorkflowTest {
       Assert.fail("Should have thrown Exception because 'MyTestPredicate' added multiple times in the workflow " +
                     "'NonUniqueProgramsInWorkflowWithFork'");
     } catch (Exception ex) {
-      Assert.assertEquals("Node with the name 'MyTestPredicate' added multiple times in workflow " +
-                            "'NonUniqueProgramsInWorkflowWithFork'.", ex.getCause().getMessage());
+      Assert.assertEquals("Node 'MyTestPredicate' already exists in workflow 'NonUniqueProgramsInWorkflowWithFork'.",
+                          ex.getCause().getMessage());
     }
   }
 

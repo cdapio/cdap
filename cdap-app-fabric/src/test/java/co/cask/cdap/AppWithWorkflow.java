@@ -20,14 +20,21 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
+import co.cask.cdap.api.mapreduce.AbstractMapReduce;
+import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
+import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.internal.app.runtime.batch.WordCount;
 import com.google.common.base.Throwables;
+import org.apache.hadoop.mapreduce.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 /**
  * App with workflow.
@@ -43,6 +50,7 @@ public class AppWithWorkflow extends AbstractApplication {
       addStream(new Stream("stream"));
       ObjectStores.createObjectStore(getConfigurer(), "input", String.class);
       ObjectStores.createObjectStore(getConfigurer(), "output", String.class);
+      addMapReduce(new WordCountMapReduce());
       addWorkflow(new SampleWorkflow());
     } catch (UnsupportedTypeException e) {
       throw Throwables.propagate(e);
@@ -59,10 +67,11 @@ public class AppWithWorkflow extends AbstractApplication {
 
     @Override
     public void configure() {
-        setName(NAME);
-        setDescription("SampleWorkflow description");
-        addAction(new DummyAction(firstActionName));
-        addAction(new DummyAction(secondActionName));
+      setName(NAME);
+      setDescription("SampleWorkflow description");
+      addAction(new DummyAction(firstActionName));
+      addAction(new DummyAction(secondActionName));
+      addMapReduce(WordCountMapReduce.class.getSimpleName());
     }
   }
 
@@ -97,6 +106,35 @@ public class AppWithWorkflow extends AbstractApplication {
     @Override
     public void run() {
       LOG.info("Ran dummy action");
+    }
+  }
+
+  /**
+   * WordCount MapReduce job
+   */
+  public static final class WordCountMapReduce extends AbstractMapReduce {
+    public static final String NAME = "WordCountMapReduce";
+
+    @Override
+    public void configure() {
+      setName(NAME);
+      setDescription("WordCount job from Hadoop examples");
+    }
+
+    @Override
+    @SuppressWarnings("ConstantConditions")
+    public void beforeSubmit(MapReduceContext context) throws Exception {
+      Map<String, String> args = context.getRuntimeArguments();
+      String inputPath = args.get("inputPath");
+      String outputPath = args.get("outputPath");
+      WordCount.configureJob((Job) context.getHadoopJob(), inputPath, outputPath);
+      WorkflowToken workflowToken = context.getWorkflowToken();
+      if (workflowToken == null) {
+        return;
+      }
+      // Put something in the token
+      workflowToken.put("action_type", "MapReduce");
+      workflowToken.put("start_time", Value.of(System.currentTimeMillis()));
     }
   }
 }

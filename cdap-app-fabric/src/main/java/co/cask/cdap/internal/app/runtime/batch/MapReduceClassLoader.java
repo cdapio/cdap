@@ -245,7 +245,7 @@ public class MapReduceClassLoader extends CombineClassLoader {
 
         // There should be just one plugin lib ClassLoader shared across all plugins
         List<ClassLoader> pluginClassLoaders = Lists.newArrayList();
-        pluginClassLoaders.add(pluginInstantiator.getPluginParentClassLoader());
+        pluginClassLoaders.add(pluginInstantiator.getParentClassLoader());
 
         for (PluginInfo pluginInfo : adapterSpec.getPluginInfos()) {
           ClassLoader pluginClassLoader = pluginInstantiator.getPluginClassLoader(pluginInfo);

@@ -53,6 +53,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -188,7 +189,7 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
   }
 
   private void verifyWorkflowSpecifications(ApplicationSpecification appSpec, WorkflowSpecification workflowSpec) {
-    Set<String> existingNodeNames = Sets.newHashSet();
+    Set<String> existingNodeNames = new HashSet<>();
     verifyWorkflowNodeList(appSpec, workflowSpec, workflowSpec.getNodes(), existingNodeNames);
   }
 
@@ -232,8 +233,8 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
                                       List<WorkflowNode> nodeList, Set<String> existingNodeNames) {
     for (WorkflowNode n : nodeList) {
       if (existingNodeNames.contains(n.getNodeId())) {
-        throw new RuntimeException(String.format("Node with the name '%s' added multiple times in workflow '%s'.",
-                                                 n.getNodeId(), workflowSpec.getName()));
+        throw new RuntimeException(String.format("Node '%s' already exists in workflow '%s'.", n.getNodeId(),
+                                                 workflowSpec.getName()));
       }
       existingNodeNames.add(n.getNodeId());
       verifyWorkflowNode(appSpec, workflowSpec, n, existingNodeNames);

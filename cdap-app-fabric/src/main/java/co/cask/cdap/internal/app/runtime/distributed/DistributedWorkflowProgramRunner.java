@@ -25,6 +25,8 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.spark.SparkContextConfig;
+import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -47,7 +49,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
 
   @Inject
   public DistributedWorkflowProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf) {
-    super(twillRunner, hConf, cConf);
+    super(twillRunner, createConfiguration(hConf), cConf);
   }
 
   @Override
@@ -64,10 +66,22 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(program.getName());
     Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getName());
 
+    // Localize the spark-assembly jar, since workflow can execute spark.
+    File sparkAssemblyJar = SparkUtils.locateSparkAssemblyJar();
+    localizeFiles.put(sparkAssemblyJar.getName(), sparkAssemblyJar);
+
     LOG.info("Launching distributed workflow: " + program.getName() + ":" + workflowSpec.getName());
-    TwillController controller = launcher.launch(new WorkflowTwillApplication(program, workflowSpec,
-                                                                              localizeFiles, eventHandler));
+    TwillController controller = launcher.launch(
+      new WorkflowTwillApplication(program, workflowSpec, localizeFiles, eventHandler),
+      sparkAssemblyJar.getName()
+    );
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     return new WorkflowTwillProgramController(program.getName(), controller, runId).startListen();
+  }
+
+  private static Configuration createConfiguration(Configuration hConf) {
+    Configuration configuration = new Configuration(hConf);
+    configuration.set(SparkContextConfig.HCONF_ATTR_EXECUTION_MODE, SparkContextConfig.YARN_EXECUTION_MODE);
+    return configuration;
   }
 }
