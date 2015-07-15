@@ -44,7 +44,7 @@ import java.util.regex.Pattern;
  * a string and passed in as dateRangesToRead, which is described below. The files are assumed to succeed so that files
  * will not be read in multiple times. Thus, a singleton element is written into the table as the list denoting that
  * the only files that haven't been read in are after that element. If the read fails, then dateRangesToRead with
- * prevMinute appended to the end is inserted to the beginning of whatever the list is now in the table. This is done
+ * prevHour appended to the end is inserted to the beginning of whatever the list is now in the table. This is done
  * because these were exactly the time ranges that we wanted to read from (which failed, so we should reinsert them
  * to try again). If the read succeeds then we don't do anything since we assumed that the read would succeed
  * initially.
@@ -52,54 +52,59 @@ import java.util.regex.Pattern;
 public class BatchFileFilter extends Configured implements PathFilter {
 
   private static final Logger LOG = LoggerFactory.getLogger(FileBatchSource.class);
-  //length of 'YYYY-MM-dd-HH-mm"
-  private static final int DATE_LENGTH = 16;
+  //length of 'YYYY-MM-dd-HH"
+  private static final int DATE_LENGTH = 13;
   private static final Gson GSON = new Gson();
   private static final Type ARRAYLIST_DATE_TYPE  = new TypeToken<ArrayList<Date>>() { }.getType();
-  private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
+  private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HH");
   private boolean useTimeFilter;
   private Pattern regex;
   private String pathName;
   private String lastRead;
-  private Date prevMinute;
+  private Date prevHour;
 
   /*
    * dateRangesToRead is an odd length List of Dates. The non terminal elements are tuples of Dates that
    * denote ranges of time that are acceptable for the file to have been created during. The start times are inclusive
-   * and the end times are exclusive. The range of time between the terminal element and prevMinute is the final
+   * and the end times are exclusive. The range of time between the terminal element and prevHour is the final
    * acceptable range for the file to have been created during.
    */
   private List<Date> dateRangesToRead;
 
   @Override
   public boolean accept(Path path) {
-    String filename = path.toString();
+    String filePathName = path.toString();
     //The path filter will first check the directory if a directory is given
-    if (filename.equals(pathName) || filename.equals(pathName + "/")) {
+    if (filePathName.equals(pathName) || filePathName.equals(pathName + "/")) {
       return true;
     }
 
     //filter by file name using regex from configuration
     if (!useTimeFilter) {
-      Matcher matcher = regex.matcher(filename);
+      Matcher matcher = regex.matcher(filePathName);
       return matcher.matches();
     }
 
     //use hourly time filter
     if (lastRead.equals("-1")) {
-      Date prevHour = new Date(System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1));
-      String currentTime = new SimpleDateFormat("yyyy-MM-dd-HH").format(prevHour);
-      return filename.contains(currentTime);
+      String currentTime = sdf.format(prevHour);
+      return filePathName.contains(currentTime);
     }
 
     //use stateful time filter
     Date fileDate;
+    String filename = path.getName();
     try {
-      fileDate = sdf.parse(path.getName().substring(0, DATE_LENGTH));
-    } catch (ParseException pe) {
-      //this should never happen
-      LOG.warn("Couldn't parse file: " + path.getName());
-      return false;
+      fileDate = sdf.parse(filename.substring(0, DATE_LENGTH));
+    } catch (Exception pe) {
+      //Try to parse cloudfront format
+      try {
+        int startIndex = filename.indexOf(".") + 1;
+        fileDate = sdf.parse(filename.substring(startIndex, startIndex + DATE_LENGTH));
+      } catch (Exception e) {
+        LOG.warn("Couldn't parse file: " + path.getName());
+        return false;
+      }
     }
     return isWithinRange(fileDate);
   }
@@ -130,9 +135,9 @@ public class BatchFileFilter extends Configured implements PathFilter {
     }
 
     try {
-      prevMinute = sdf.parse(conf.get(FileBatchSource.CUTOFF_READ_TIME));
+      prevHour = sdf.parse(conf.get(FileBatchSource.CUTOFF_READ_TIME));
     } catch (ParseException pe) {
-      prevMinute = new Date(System.currentTimeMillis());
+      prevHour = new Date(System.currentTimeMillis());
     }
   }
 
@@ -140,7 +145,7 @@ public class BatchFileFilter extends Configured implements PathFilter {
    * Determines if a file should be read in
    *
    * Iterates through the list dateRangesToRead and returns true if the filedate falls between one of the tuples, or
-   * if the filedate is between the terminal element and prevMinute.
+   * if the filedate is between the terminal element and prevHour.
    *
    * @param fileDate when the file was created
    * @return true if the file is to be read, false otherwise
@@ -153,6 +158,6 @@ public class BatchFileFilter extends Configured implements PathFilter {
       }
     }
     return fileDate.compareTo(dateRangesToRead.get(dateRangesToRead.size() - 1)) >= 0
-      && fileDate.compareTo(prevMinute) < 0;
+      && fileDate.compareTo(prevHour) < 0;
   }
 }
