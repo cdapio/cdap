@@ -115,7 +115,7 @@ public class DefaultFlowletConfigurer implements FlowletConfigurer {
                                            this.dataSetModules, this.dataSetInstances);
   }
 
-  //TODO: CDAP-2943 Use ProgramDatasetConfigurer after moving this class to cdap-app-fabric.
+  //TODO: CDAP-2943 Use DefaultDatasetConfigurer after moving this class to cdap-app-fabric.
   @Override
   public void addStream(Stream stream) {
     Preconditions.checkArgument(stream != null, "Stream cannot be null.");
