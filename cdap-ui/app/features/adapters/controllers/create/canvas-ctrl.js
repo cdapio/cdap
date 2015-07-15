@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, AdapterErrorFactory) {
+  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, myHelpers, AdapterErrorFactory) {
     function getIcon(plugin) {
       var iconMap = {
         'script': 'fa-code',
@@ -18,20 +18,50 @@ angular.module(PKG.name + '.feature.adapters')
       var icon = iconMap[pluginName] ? iconMap[pluginName]: 'fa-plug';
       return icon;
     }
+
     this.nodes = [];
+
     if ($scope.AdapterCreateController.data) {
+      var data = $scope.AdapterCreateController.data;
+      var ui = data.ui;
+      var config = data.config;
       // Purely for feeding my-plumb to draw the diagram
       // if I already have the nodes and connections
-      this.nodes = getNodes($scope.AdapterCreateController.data.config);
-      this.nodes.forEach(function(node) {
-        MyPlumbService.addNodes(angular.copy(node), node.type);
-      });
-      MyPlumbService.metadata.name = $scope.AdapterCreateController.data.config.metadata.name;
-      MyPlumbService.metadata.description = $scope.AdapterCreateController.data.config.metadata.description;
-      if ($scope.AdapterCreateController.data.config.metadata.type === 'ETLBatch') {
-        MyPlumbService.metadata.template.schedule.cron = $scope.AdapterCreateController.data.config.schedule.cron || $scope.AdapterCreateController.data.config.metadata.template.schedule.cron;
-      } else if ($scope.AdapterCreateController.data.config.metadata.type === 'ETLRealtime') {
-        MyPlumbService.metadata.template.instance = $scope.AdapterCreateController.data.config.instance || $scope.AdapterCreateController.data.config.metadata.template.instance;
+      if (ui && ui.nodes) {
+        var nodes = ui.nodes;
+        Object.keys(nodes).forEach(function(node) {
+          var nodeObj = nodes[node];
+          this.nodes.push(nodeObj);
+          MyPlumbService.addNodes(angular.copy(nodeObj), nodeObj.type);
+        }.bind(this));
+      } else {
+        this.nodes = getNodes(config);
+        this.nodes.forEach(function(node) {
+          MyPlumbService.addNodes(angular.copy(node), node.type);
+        });
+      }
+
+      if (ui && ui.connections) {
+        MyPlumbService.connections = ui.connections;
+      }
+
+      // Too many ORs. Should be removed when all drafts eventually are
+      // resaved in the new format. This is temporary
+      MyPlumbService.metadata.name = myHelpers.objectQuery(config, 'metadata', 'name')
+      || myHelpers.objectQuery(data, 'name');
+
+      MyPlumbService.metadata.description = myHelpers.objectQuery(config, 'metadata', 'description')
+      || myHelpers.objectQuery(data, 'description');
+
+      var template = myHelpers.objectQuery(config, 'metadata', 'type')
+      || myHelpers.objectQuery(data, 'template');
+
+      if (template === 'ETLBatch') {
+        MyPlumbService.metadata.template.schedule.cron = myHelpers.objectQuery(config, 'schedule', 'cron')
+        || myHelpers.objectQuery(config, 'schedule');
+      } else if (template === 'ETLRealtime') {
+        MyPlumbService.metadata.template.instance = myHelpers.objectQuery(config, 'instance')
+        || myHelpers.objectQuery(config, 'metadata', 'template', 'instance');
       }
     }
     function getNodes(config) {
@@ -78,23 +108,15 @@ angular.module(PKG.name + '.feature.adapters')
     this.canvasOperations = [
       {
         name: 'Publish',
+        icon: 'fa fa-cloud-upload'
+      },
+      {
+        name: 'Save Draft',
         icon: 'fa fa-save'
       },
       {
-        name: 'Zoom In',
-        icon: 'fa fa-search-plus'
-      },
-      {
-        name: 'Zoom Out',
-        icon: 'fa fa-search-minus'
-      },
-      {
-        name: 'Export',
+        name: 'Config',
         icon: 'fa fa-eye'
-      },
-      {
-        name: 'Import',
-        icon: 'fa fa-upload'
       },
       {
         name: 'Settings',
@@ -105,7 +127,7 @@ angular.module(PKG.name + '.feature.adapters')
     this.onCanvasOperationsClicked = function(group) {
       var config;
       switch(group.name) {
-        case 'Export':
+        case 'Config':
           config = angular.copy(MyPlumbService.getConfigForBackend());
           $bootstrapModal.open({
             templateUrl: '/assets/features/adapters/templates/create/viewconfig.html',
@@ -126,6 +148,10 @@ angular.module(PKG.name + '.feature.adapters')
             .save()
             .then(
               function sucess() {
+                $alert({
+                  type: 'success',
+                  content: MyPlumbService.metadata.name + ' successfully published.'
+                });
                 $state.go('adapters.list');
               },
               function error(errorObj) {
@@ -134,6 +160,24 @@ angular.module(PKG.name + '.feature.adapters')
               }.bind(this)
             );
           break;
+        case 'Save Draft':
+          MyPlumbService
+            .saveAsDraft()
+            .then(
+              function success() {
+                $alert({
+                  type: 'success',
+                  content: MyPlumbService.metadata.name + ' successfully saved as draft.'
+                });
+                $state.go('adapters.list');
+              },
+              function error() {
+                $alert({
+                  type: 'danger',
+                  content: 'Problem saving ' + MyPlumbService.metadata.name + ' as draft'
+                });
+              }
+            )
       }
     };
 
