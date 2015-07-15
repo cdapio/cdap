@@ -102,6 +102,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * HBase queue tests.
@@ -220,10 +221,11 @@ public abstract class HBaseQueueTest extends QueueTest {
     if (!admin.exists(queueName)) {
       admin.create(queueName);
     }
-    HTable hTable = tableUtil.createHTable(testHBase.getConfiguration(), tableId);
-    Assert.assertEquals("Failed for " + admin.getClass().getName(),
-                        cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS),
-                        hTable.getRegionsInRange(new byte[]{0}, new byte[]{(byte) 0xff}).size());
+    try (HTable hTable = tableUtil.createHTable(testHBase.getConfiguration(), tableId)) {
+      Assert.assertEquals("Failed for " + admin.getClass().getName(),
+                          cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS),
+                          hTable.getRegionsInRange(new byte[]{0}, new byte[]{(byte) 0xff}).size());
+    }
   }
 
   @Test
@@ -630,26 +632,28 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   private ConsumerConfigCache getConsumerConfigCache(QueueName queueName) throws Exception {
     TableId tableId = HBaseQueueAdmin.getConfigTableId(queueName);
-    HTableDescriptor htd = tableUtil.createHTable(hConf, tableId).getTableDescriptor();
-    final TableName configTableName = htd.getTableName();
-    HTableNameConverter nameConverter = new HTableNameConverterFactory().get();
-    CConfigurationReader cConfReader = new CConfigurationReader(hConf, nameConverter.getSysConfigTablePrefix(htd));
-    return ConsumerConfigCache.getInstance(configTableName,
-                                           cConfReader, new Supplier<TransactionSnapshot>() {
-      @Override
-      public TransactionSnapshot get() {
-        try {
-          return transactionManager.getSnapshot();
-        } catch (IOException e) {
-          throw Throwables.propagate(e);
-        }
-      }
-    }, new InputSupplier<HTableInterface>() {
-      @Override
-      public HTableInterface getInput() throws IOException {
-        return new HTable(hConf, configTableName);
-      }
-    });
+    try (HTable hTable = tableUtil.createHTable(hConf, tableId)) {
+      HTableDescriptor htd = hTable.getTableDescriptor();
+      final TableName configTableName = htd.getTableName();
+      HTableNameConverter nameConverter = new HTableNameConverterFactory().get();
+      CConfigurationReader cConfReader = new CConfigurationReader(hConf, nameConverter.getSysConfigTablePrefix(htd));
+      return ConsumerConfigCache.getInstance(configTableName,
+                                             cConfReader, new Supplier<TransactionSnapshot>() {
+          @Override
+          public TransactionSnapshot get() {
+            try {
+              return transactionManager.getSnapshot();
+            } catch (IOException e) {
+              throw Throwables.propagate(e);
+            }
+          }
+        }, new InputSupplier<HTableInterface>() {
+          @Override
+          public HTableInterface getInput() throws IOException {
+            return new HTable(hConf, configTableName);
+          }
+        });
+    }
   }
 
   /**
@@ -666,6 +670,9 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @AfterClass
   public static void finish() throws Exception {
+    System.out.println("Finishing");
+    TimeUnit.SECONDS.sleep(10000);
+
     tableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), NAMESPACE_ID);
     tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), NAMESPACE_ID);
 
