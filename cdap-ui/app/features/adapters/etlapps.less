@@ -1,4 +1,6 @@
 @import '../../styles/variables.less';
+@import "../../../bower_components/bootstrap/less/mixins.less";
+@import '../../styles/themes/cdap/mixins.less';
 
 @font-size: 18px;
 body.theme-cdap.state-adapters {
@@ -21,14 +23,9 @@ body.theme-cdap.state-adapters {
 }
 body.theme-cdap.state-adapters-detail,
 body.theme-cdap.state-adapters-create {
-
-  .row {
-    padding-right: 15px;
-  }
-
-  [class*='col-'] {
-    padding-left: 5px;
-    padding-right: 5px;
+  main.container {
+    background-color: transparent;
+    background-image: linear-gradient(@body-bg, @body-bg);
   }
 
   .ui-select-container.ui-select-bootstrap {
@@ -46,7 +43,7 @@ body.theme-cdap.state-adapters-create {
       &:hover { cursor: pointer; }
     }
     .wrapper {
-      border-radius: 4px;
+      .border-radius(4px);
       margin: 8px 0;
       padding: 10px;
       border: 1px solid white;
@@ -128,18 +125,72 @@ body.theme-cdap.state-adapters-create {
     .modal-lg {
       width: 95%;
     }
+    .modal-body {
+      &.modal-source {
+        .my-widget-container {
+          width: 90%;
+          display: inline-block;
+          margin-right: 10px;
+        }
+      }
+    }
+    .modal-content {
+      background-color: transparent;
+      border: 0;
+      .box-shadow(none);
 
+      .well {
+        background-color: white;
+        &.input-schema {
+          background-color: @body-bg;
+        }
+        h4, strong {
+          color: @cdap-header;
+        }
+        h4 {
+          margin-top: 0;
+        }
+      }
+    }
+    .widget-group-container {
+      &.well {
+        padding: 10px;
+      }
+    }
+    .my-widget-container {
+      [class*="-container"] {
+        padding: 10px;
+      }
+    }
+    label {
+      font-weight: 500;
+    }
+    .form-control {
+      border: 1px solid #ddd;
+    }
+    select {
+      background-color: white;
+      color: @cdap-header;
+    }
+    .input-schema {
+      padding: 10px;
+      * {
+        color: @cdap-header;
+      }
+    }
     .schema-container {
+      border: 0;
       height: 100%;
-      background-color: @body-bg;
-      color: @gray-dark;
-      padding: 15px;
-      border-radius: @border-radius-base;
+      color: @cdap-header;
+      .border-radius(@border-radius-base);
+      .well {
+        background-color: @body-bg;
+      }
     }
 
     .adapter-properties-detail {
       h3 {
-        color: @text-color;
+        color: @cdap-header;
 
         &.modal-title {
           color: white;
@@ -151,13 +202,10 @@ body.theme-cdap.state-adapters-create {
   [plugin-property-edit-view] {
     .widget-group-container {
       &.well {
-        padding: 10px;
-        margin: 10px;
 
         h3 { margin: 0 0 10px 0; }
 
         .row-padding {
-          padding: 0 30px;
           .popover {
             max-width: 550px;
             width: 500px;
@@ -171,6 +219,14 @@ body.theme-cdap.state-adapters-create {
   }
 }
 body.theme-cdap.state-adapters-create {
+  // Adjust margins for the grid background
+  margin-bottom: 52px;
+  main.container {
+    margin-top: 77px;
+    > div {
+      margin-bottom: 0;
+    }
+  }
 
   [create-adapter-container] {
     white-space: nowrap;
@@ -327,7 +383,7 @@ body.theme-cdap.state-adapters-list {
       }
     }
     .well.well-md {
-      box-shadow: none;
+      .box-shadow(none);
       background-image: none;
       margin-bottom: 10px;
       padding: 10px;
