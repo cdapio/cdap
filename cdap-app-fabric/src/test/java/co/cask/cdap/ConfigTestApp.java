@@ -75,8 +75,6 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
   @Override
   public void configure() {
     ConfigClass configObj = getConfig();
-    addStream(new Stream(configObj.streamName));
-    createDataset(configObj.tableName, KeyValueTable.class);
     addWorker(new DefaultWorker(configObj.streamName));
     addFlow(new SimpleFlow(configObj.streamName, configObj.tableName));
   }
@@ -118,6 +116,7 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
     @Override
     public void configure(FlowletConfigurer configurer) {
       super.configure(configurer);
+      createDataset(datasetName, KeyValueTable.class);
       useDatasets(datasetName);
     }
   }
@@ -146,6 +145,12 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
           LOG.error("IOException while trying to write to stream", e);
         }
       }
+    }
+
+    @Override
+    protected void configure() {
+      super.configure();
+      addStream(new Stream(streamName));
     }
 
     @Override
