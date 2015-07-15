@@ -1103,27 +1103,30 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     WorkflowTokenDetail workflowTokenDetail = getWorkflowToken(workflowId, pid, null, null);
     List<WorkflowTokenDetail.NodeValueDetail> nodeValueDetails =
       workflowTokenDetail.getTokenData().get(AppWithWorkflow.DummyAction.TOKEN_KEY);
-    Assert.assertEquals(1, nodeValueDetails.size());
-    Assert.assertEquals(AppWithWorkflow.DummyAction.class.getSimpleName(), nodeValueDetails.get(0).getNode());
+    Assert.assertEquals(2, nodeValueDetails.size());
+    Assert.assertEquals(AppWithWorkflow.SampleWorkflow.firstActionName, nodeValueDetails.get(0).getNode());
+    Assert.assertEquals(AppWithWorkflow.SampleWorkflow.secondActionName, nodeValueDetails.get(1).getNode());
     Assert.assertEquals(AppWithWorkflow.DummyAction.TOKEN_VALUE, nodeValueDetails.get(0).getValue());
+    Assert.assertEquals(AppWithWorkflow.DummyAction.TOKEN_VALUE, nodeValueDetails.get(1).getValue());
     // Verify entire workflow token by passing in the scope and key in the request
     workflowTokenDetail = getWorkflowToken(workflowId, pid, WorkflowToken.Scope.USER,
                                            AppWithWorkflow.DummyAction.TOKEN_KEY);
     nodeValueDetails = workflowTokenDetail.getTokenData().get(AppWithWorkflow.DummyAction.TOKEN_KEY);
-    Assert.assertEquals(1, nodeValueDetails.size());
-    Assert.assertEquals(AppWithWorkflow.DummyAction.class.getSimpleName(), nodeValueDetails.get(0).getNode());
+    Assert.assertEquals(2, nodeValueDetails.size());
+    Assert.assertEquals(AppWithWorkflow.SampleWorkflow.firstActionName, nodeValueDetails.get(0).getNode());
+    Assert.assertEquals(AppWithWorkflow.SampleWorkflow.secondActionName, nodeValueDetails.get(1).getNode());
     Assert.assertEquals(AppWithWorkflow.DummyAction.TOKEN_VALUE, nodeValueDetails.get(0).getValue());
+    Assert.assertEquals(AppWithWorkflow.DummyAction.TOKEN_VALUE, nodeValueDetails.get(1).getValue());
 
     // Verify workflow token at a given node
     WorkflowTokenNodeDetail tokenAtNode = getWorkflowToken(workflowId, pid,
-                                                           AppWithWorkflow.DummyAction.class.getSimpleName(),
-                                                           null, null);
+                                                           AppWithWorkflow.SampleWorkflow.firstActionName, null, null);
     Map<String, String> tokenDataAtNode = tokenAtNode.getTokenDataAtNode();
     Assert.assertEquals(1, tokenDataAtNode.size());
     Assert.assertEquals(AppWithWorkflow.DummyAction.TOKEN_VALUE,
                         tokenDataAtNode.get(AppWithWorkflow.DummyAction.TOKEN_KEY));
     // Verify workflow token at a given node by passing in a scope and a key
-    tokenAtNode = getWorkflowToken(workflowId, pid, AppWithWorkflow.DummyAction.class.getSimpleName(),
+    tokenAtNode = getWorkflowToken(workflowId, pid, AppWithWorkflow.SampleWorkflow.firstActionName,
                                    WorkflowToken.Scope.USER, AppWithWorkflow.DummyAction.TOKEN_KEY);
     tokenDataAtNode = tokenAtNode.getTokenDataAtNode();
     Assert.assertEquals(1, tokenDataAtNode.size());

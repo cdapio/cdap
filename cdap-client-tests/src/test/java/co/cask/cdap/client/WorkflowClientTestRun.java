@@ -112,7 +112,7 @@ public class WorkflowClientTestRun extends ClientTestBase {
     tokenData = workflowToken.getTokenData();
     Assert.assertEquals(AppWithWorkflow.WordCountMapReduce.NAME, tokenData.get("action_type").get(0).getNode());
     Assert.assertEquals("MapReduce", tokenData.get("action_type").get(0).getValue());
-    String nodeName = AppWithWorkflow.DummyAction.class.getSimpleName();
+    String nodeName = AppWithWorkflow.SampleWorkflow.firstActionName;
     WorkflowTokenNodeDetail workflowTokenAtNode =
       workflowClient.getWorkflowTokenAtNode(workflowRunId, nodeName);
     Assert.assertEquals(AppWithWorkflow.DummyAction.TOKEN_VALUE,

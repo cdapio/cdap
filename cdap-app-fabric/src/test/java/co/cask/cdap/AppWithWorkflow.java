@@ -25,10 +25,10 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.Value;
+import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.internal.app.runtime.batch.WordCount;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.mapreduce.Job;
 import org.slf4j.Logger;
@@ -62,13 +62,15 @@ public class AppWithWorkflow extends AbstractApplication {
    */
   public static class SampleWorkflow extends AbstractWorkflow {
     public static final String NAME = "SampleWorkflow";
+    public static String firstActionName = "firstAction";
+    public static String secondActionName = "secondAction";
 
     @Override
     public void configure() {
       setName(NAME);
       setDescription("SampleWorkflow description");
-      addAction(new DummyAction());
-      addAction(new DummyAction());
+      addAction(new DummyAction(firstActionName));
+      addAction(new DummyAction(secondActionName));
       addMapReduce(WordCountMapReduce.class.getSimpleName());
     }
   }
@@ -80,6 +82,19 @@ public class AppWithWorkflow extends AbstractApplication {
     private static final Logger LOG = LoggerFactory.getLogger(DummyAction.class);
     public static final String TOKEN_KEY = "tokenKey";
     public static final String TOKEN_VALUE = "tokenValue";
+    private final String name;
+
+    public DummyAction(String name) {
+      this.name = name;
+    }
+
+    @Override
+    public WorkflowActionSpecification configure() {
+      return WorkflowActionSpecification.Builder.with()
+        .setName(name)
+        .setDescription(getDescription())
+        .build();
+    }
 
     @Override
     public void initialize(WorkflowContext context) throws Exception {

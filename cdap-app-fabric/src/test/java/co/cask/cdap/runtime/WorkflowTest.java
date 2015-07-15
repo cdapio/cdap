@@ -18,6 +18,8 @@ package co.cask.cdap.runtime;
 import co.cask.cdap.AppWithAnonymousWorkflow;
 import co.cask.cdap.MissingMapReduceWorkflowApp;
 import co.cask.cdap.MissingSparkWorkflowApp;
+import co.cask.cdap.NonUniqueProgramsInWorkflowApp;
+import co.cask.cdap.NonUniqueProgramsInWorkflowWithForkApp;
 import co.cask.cdap.OneActionWorkflowApp;
 import co.cask.cdap.ScheduleAppWithMissingWorkflow;
 import co.cask.cdap.WorkflowApp;
@@ -138,8 +140,8 @@ public class WorkflowTest {
       AppFabricTestHelper.deployApplicationWithManager(MissingMapReduceWorkflowApp.class, TEMP_FOLDER_SUPPLIER);
       Assert.fail("Should have thrown Exception because MapReduce program is missing in the Application.");
     } catch (Exception ex) {
-      Assert.assertEquals(ex.getCause().getMessage(),
-                          "MapReduce program 'SomeMapReduceProgram' is not configured with the Application.");
+      Assert.assertEquals("MapReduce program 'SomeMapReduceProgram' is not configured with the Application.",
+                          ex.getCause().getMessage());
     }
 
     // try deploying app containing Workflow configured with non-existent Spark program
@@ -147,8 +149,8 @@ public class WorkflowTest {
       AppFabricTestHelper.deployApplicationWithManager(MissingSparkWorkflowApp.class, TEMP_FOLDER_SUPPLIER);
       Assert.fail("Should have thrown Exception because Spark program is missing in the Application.");
     } catch (Exception ex) {
-      Assert.assertEquals(ex.getCause().getMessage(),
-                          "Spark program 'SomeSparkProgram' is not configured with the Application.");
+      Assert.assertEquals("Spark program 'SomeSparkProgram' is not configured with the Application.",
+                          ex.getCause().getMessage());
     }
 
     // try deploying app containing Workflow configured with multiple schedules with the same name
@@ -156,8 +158,8 @@ public class WorkflowTest {
       AppFabricTestHelper.deployApplicationWithManager(WorkflowSchedulesWithSameNameApp.class, TEMP_FOLDER_SUPPLIER);
       Assert.fail("Should have thrown Exception because Workflow is configured with schedules having same name.");
     } catch (Exception ex) {
-      Assert.assertEquals(ex.getCause().getCause().getMessage(),
-                          "Schedule with the name 'DailySchedule' already exists.");
+      Assert.assertEquals("Schedule with the name 'DailySchedule' already exists.",
+                          ex.getCause().getCause().getMessage());
     }
 
     // try deploying app containing a schedule for non existent workflow
@@ -165,8 +167,8 @@ public class WorkflowTest {
       AppFabricTestHelper.deployApplicationWithManager(ScheduleAppWithMissingWorkflow.class, TEMP_FOLDER_SUPPLIER);
       Assert.fail("Should have thrown Exception because Schedule is configured for non existent Workflow.");
     } catch (Exception ex) {
-      Assert.assertEquals(ex.getCause().getMessage(),
-                          "Workflow 'NonExistentWorkflow' is not configured with the Application.");
+      Assert.assertEquals("Workflow 'NonExistentWorkflow' is not configured with the Application.",
+                          ex.getCause().getMessage());
     }
 
     // try deploying app containing anonymous workflow
@@ -174,8 +176,29 @@ public class WorkflowTest {
       AppFabricTestHelper.deployApplicationWithManager(AppWithAnonymousWorkflow.class, TEMP_FOLDER_SUPPLIER);
       Assert.fail("Should have thrown Exception because Workflow does not have name.");
     } catch (Exception ex) {
-      Assert.assertEquals(ex.getCause().getMessage(),
-                          "'' name is not an ID. ID should be non empty and can contain only characters A-Za-z0-9_-");
+      Assert.assertEquals("'' name is not an ID. ID should be non empty and can contain only characters A-Za-z0-9_-",
+                          ex.getCause().getMessage());
+    }
+
+    // try deploying app containing workflow with non-unique programs
+    try {
+      AppFabricTestHelper.deployApplicationWithManager(NonUniqueProgramsInWorkflowApp.class, TEMP_FOLDER_SUPPLIER);
+      Assert.fail("Should have thrown Exception because 'NoOpMR' added multiple times in the workflow " +
+                    "'NonUniqueProgramsInWorkflow'.");
+    } catch (Exception ex) {
+      Assert.assertEquals("Node 'NoOpMR' already exists in workflow 'NonUniqueProgramsInWorkflow'.",
+                          ex.getCause().getMessage());
+    }
+
+    // try deploying app containing workflow fork with non-unique programs
+    try {
+      AppFabricTestHelper.deployApplicationWithManager(NonUniqueProgramsInWorkflowWithForkApp.class,
+                                                       TEMP_FOLDER_SUPPLIER);
+      Assert.fail("Should have thrown Exception because 'MyTestPredicate' added multiple times in the workflow " +
+                    "'NonUniqueProgramsInWorkflowWithFork'");
+    } catch (Exception ex) {
+      Assert.assertEquals("Node 'MyTestPredicate' already exists in workflow 'NonUniqueProgramsInWorkflowWithFork'.",
+                          ex.getCause().getMessage());
     }
   }
 
