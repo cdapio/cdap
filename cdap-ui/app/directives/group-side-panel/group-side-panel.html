@@ -1,6 +1,6 @@
 <div class="side-panel text-center"
       ng-class="{'expanded': MySidePanel.isExpanded === true, 'left': MySidePanel.placement === 'left', 'right': MySidePanel.placement === 'right'}">
-      
+
   <div ng-if="MySidePanel.isExpanded == false"
         class="btn btn-info btn-block"
         ng-click="MySidePanel.isExpanded = true">
@@ -22,6 +22,10 @@
           ng-class="{'opened': MySidePanel.openedGroup === group.name }">
         <span class="{{group.icon}}"></span>
         <span class="name">{{group.name | caskCapitalizeFilter}}</span>
+    </div>
+
+    <div class="red-box">
+      <span>Hello!!</span>
     </div>
 
     <div class="item-body"

@@ -1,8 +1,9 @@
 angular.module(PKG.name + '.commons')
-  .controller('MyPlumbController', function MyPlumbController(jsPlumb, $scope, $timeout, MyPlumbService) {
+  .controller('MyPlumbController', function MyPlumbController(jsPlumb, $scope, $timeout, MyPlumbService, AdapterErrorFactory) {
     this.plugins = $scope.config || [];
     this.instance = null;
-    this.nodesErrors = [];
+    this.nodesErrors = AdapterErrorFactory.nodesError;
+    this.canvasError = AdapterErrorFactory.canvasError;
 
     var defaultSettings = {
       Connector : [ 'Flowchart' ],
@@ -106,23 +107,4 @@ angular.module(PKG.name + '.commons')
 
     }.bind(this));
 
-    $scope.$watch('errors', processErrors.bind(this));
-
-    function processErrors() {
-      if (!$scope.errors) {
-        return;
-      }
-      this.nodesErrors = [];
-
-      angular.forEach($scope.errors, function (error) {
-        if (error.node) {
-          this.nodesErrors.push(error.node);
-        }
-
-        if (error.unattached && error.unattached.length > 0) {
-          this.nodesErrors = this.nodesErrors.concat(error.unattached);
-        }
-      }, this);
-
-    }
   });

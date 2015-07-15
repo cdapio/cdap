@@ -7,8 +7,7 @@ commonModule.directive('myPlumb', function() {
   return {
     restrict: 'E',
     scope: {
-      config: '=',
-      errors: '='
+      config: '='
     },
     templateUrl: 'plumb/my-plumb.html',
     controller: 'MyPlumbController',

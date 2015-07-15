@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state) {
+  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, AdapterErrorFactory) {
     function getIcon(plugin) {
       var iconMap = {
         'script': 'fa-code',
@@ -93,7 +93,7 @@ angular.module(PKG.name + '.feature.adapters')
               },
               function error(errorObj) {
                 console.error('ERROR!: ', errorObj);
-                this.errors = errorObj;
+                AdapterErrorFactory.processError(errorObj);
               }.bind(this)
             );
           break;

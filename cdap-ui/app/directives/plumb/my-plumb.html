@@ -10,7 +10,11 @@
       <div class="fa fa-close" ng-click="MyPlumbController.removePlugin($index, plugin.id)"></div>
 
       <div class="error-node-notification"
-            ng-if="MyPlumbController.nodesErrors.indexOf(plugin.id) !== -1">
+            ng-if="MyPlumbController.nodesErrors()[plugin.id].length > 0"
+            tooltip-html-unsafe="{{MyPlumbController.nodesErrors()[plugin.id]}}"
+            tooltip-trigger="mouseenter"
+            tooltip-append-to-body="true"
+            >
         <span class="badge badge-danger">
           <i class="fa fa-exclamation"></i>
         </span>
@@ -18,14 +22,12 @@
     </div>
   </div>
 
-  <div class="error-container well" ng-if="errors">
+  <div class="error-container well" ng-if="MyPlumbController.canvasError().length > 0">
     <ul>
-      <li ng-repeat="error in errors">
+      <li ng-repeat="error in MyPlumbController.canvasError()">
         <strong ng-if="error.node">{{ error.node }}:</strong>
         <span>{{ error.message }}</span>
       </li>
     </ul>
   </div>
 </div>
-
-
