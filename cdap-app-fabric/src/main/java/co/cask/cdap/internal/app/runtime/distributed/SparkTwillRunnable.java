@@ -18,17 +18,11 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.internal.app.runtime.spark.SparkProgramRunner;
 import org.apache.twill.api.TwillRunnable;
-import org.spark_project.protobuf.GeneratedMessage;
 
 /**
  * A {@link TwillRunnable} wrapper for {@link SparkProgramRunner}.
  */
 public class SparkTwillRunnable extends AbstractProgramTwillRunnable<SparkProgramRunner> {
-
-  // Don't remove. This dummy variable is needed for dependency tracing
-  // by Twill to pick the jar containing the GeneratedMessage class.
-  @SuppressWarnings("unused")
-  private GeneratedMessage gm;
 
   SparkTwillRunnable(String name, String hConfName, String cConfName) {
     super(name, hConfName, cConfName);
