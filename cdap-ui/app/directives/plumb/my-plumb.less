@@ -22,7 +22,6 @@
     left: 100px;
     top: 250px;
     color: white;
-    padding: 10px;
     overflow: hidden;
 
     .icon.fa {
@@ -41,17 +40,24 @@
     &.source {
       background-color: #47C037;
       left: 30vw;
+      padding: 10px;
     }
 
     &.transform {
-      background-color: #4496E8;
-      border-radius: 100%;
       left: 50vw;
+
+      .plugin-box-container {
+        border-radius: 100%;
+        background-color: #4496E8;
+        padding: 10px;
+      }
+
     }
 
     &.sink {
       background-color: #38C0BE;
       left: 70vw;
+      padding: 10px;
     }
 
 
@@ -77,7 +83,7 @@
 
   .error-container {
     position: absolute;
-    bottom: 50px;
+    bottom: 80px;
     left: 0;
     right: 0;
     width: 40%;
