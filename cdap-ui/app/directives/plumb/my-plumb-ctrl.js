@@ -148,14 +148,14 @@ angular.module(PKG.name + '.commons')
       var connections = MyPlumbService.connections;
       for(i=0; i<connections.length; i++) {
         if (connections[i].source.indexOf('transform') !== -1) {
-          curr = 'Left' + connection[i].source;
+          curr = 'Left' + connections[i].source;
         } else {
-          curr = connection[i].source;
+          curr = connections[i].source;
         }
         if (connections[i].target.indexOf('transform') !== -1) {
-          next = 'Right' + connection[i].target;
+          next = 'Right' + connections[i].target;
         } else {
-          next = connection[i].target;
+          next = connections[i].target;
         }
 
         this.instance.connect({
@@ -191,9 +191,10 @@ angular.module(PKG.name + '.commons')
           return graph.node(node);
         });
 
+      var marginLeft = $scope.getGraphMargins(this.plugins);
       this.plugins.forEach(function(plugin) {
         plugin.icon = getIcon(plugin.name);
-        plugin.style = generateStyles(plugin.id, nodes, 200, 300);
+        plugin.style = generateStyles(plugin.id, nodes, 200, marginLeft);
         drawNode.call(this, plugin.id, plugin.type);
       }.bind(this));
 
