@@ -36,8 +36,12 @@ import org.apache.hadoop.hbase.NamespaceNotFoundException;
 import org.apache.hadoop.hbase.RegionLoad;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.compress.Compression;
 
 import java.io.IOException;
@@ -58,9 +62,15 @@ public class HBase10TableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public HTableDescriptor createHTableDescriptor(TableId tableId) {
+  public HTableDescriptorBuilder buildHTableDescriptor(TableId tableId) {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");
-    return new HTableDescriptor(nameConverter.toTableName(tablePrefix, tableId));
+    return new HBase10HTableDescriptorBuilder(nameConverter.toTableName(tablePrefix, tableId));
+  }
+
+  @Override
+  public HTableDescriptorBuilder buildHTableDescriptor(HTableDescriptor descriptorToCopy) {
+    Preconditions.checkArgument(descriptorToCopy != null, "Table descriptor should not be null");
+    return new HBase10HTableDescriptorBuilder(descriptorToCopy);
   }
 
   @Override
@@ -287,5 +297,45 @@ public class HBase10TableUtil extends HBaseTableUtil {
       }
     }
     return datasetStat;
+  }
+
+  @Override
+  public ScanBuilder buildScan() {
+    return new HBase10ScanBuilder();
+  }
+
+  @Override
+  public ScanBuilder buildScan(Scan scan) throws IOException {
+    return new HBase10ScanBuilder(scan);
+  }
+
+  @Override
+  public PutBuilder buildPut(byte[] row) {
+    return new HBase10PutBuilder(row);
+  }
+
+  @Override
+  public PutBuilder buildPut(Put put) {
+    return new HBase10PutBuilder(put);
+  }
+
+  @Override
+  public GetBuilder buildGet(byte[] row) {
+    return new HBase10GetBuilder(row);
+  }
+
+  @Override
+  public GetBuilder buildGet(Get get) {
+    return new HBase10GetBuilder(get);
+  }
+
+  @Override
+  public DeleteBuilder buildDelete(byte[] row) {
+    return new HBase10DeleteBuilder(row);
+  }
+
+  @Override
+  public DeleteBuilder buildDelete(Delete delete) {
+    return new HBase10DeleteBuilder(delete);
   }
 }

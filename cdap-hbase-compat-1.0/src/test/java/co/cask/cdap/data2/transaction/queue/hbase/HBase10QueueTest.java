@@ -20,7 +20,7 @@ import co.cask.cdap.test.XSlowTests;
 import org.junit.experimental.categories.Category;
 
 /**
- * Queue test implementation running on HBase 0.98.
+ * Queue test implementation running on HBase 1.0.
  */
 @Category(XSlowTests.class)
 public class HBase10QueueTest extends HBaseQueueTest {
