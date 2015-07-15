@@ -155,4 +155,14 @@ public interface SparkContext extends RuntimeContext, DatasetContext {
    * @param resources Resources that each executor should use
    */
   void setExecutorResources(Resources resources);
+
+  /**
+   * Sets a
+   * <a href="http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.SparkConf">SparkConf</a>
+   * to be used for the Spark execution. Only configurations set inside the
+   * {@link Spark#beforeSubmit(SparkContext)} call will affect the Spark execution.
+   *
+   * @param <T> the SparkConf type
+   */
+  <T> void setSparkConf(T sparkConf);
 }

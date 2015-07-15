@@ -18,6 +18,7 @@ package co.cask.cdap.test;
 
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.app.ApplicationContext;
@@ -58,7 +59,7 @@ public interface TestManager {
    * @param namespace The namespace to deploy to
    * @param applicationClz The application class
    * @param configObject Configuration object to be used during deployment and can be accessed
-   *                     in {@link Application#configure} via {@link ApplicationContext#getConfig}
+   *                     in {@link Application#configure} via {@link AbstractApplication#getConfig}
    * @return An {@link ApplicationManager} to manage the deployed application.
    */
   ApplicationManager deployApplication(Id.Namespace namespace, Class<? extends Application> applicationClz,

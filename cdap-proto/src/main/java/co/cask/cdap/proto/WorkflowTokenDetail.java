@@ -51,8 +51,8 @@ public class WorkflowTokenDetail {
     Map<String, List<NodeValueDetail>> converted = new HashMap<>();
     for (Map.Entry<String, List<NodeValue>> entry : data.entrySet()) {
       List<NodeValueDetail> convertedList = new ArrayList<>();
-      for (NodeValue nodeValueEntry : entry.getValue()) {
-        convertedList.add(new NodeValueDetail(nodeValueEntry));
+      for (NodeValue nodeValue : entry.getValue()) {
+        convertedList.add(new NodeValueDetail(nodeValue.getNodeName(), nodeValue.getValue().toString()));
       }
       converted.put(entry.getKey(), convertedList);
     }
@@ -66,9 +66,9 @@ public class WorkflowTokenDetail {
     private final String node;
     private final String value;
 
-    private NodeValueDetail(NodeValue entry) {
-      this.node = entry.getNodeName();
-      this.value = entry.getValue().toString();
+    public NodeValueDetail(String node, String value) {
+      this.node = node;
+      this.value = value;
     }
 
     public String getNode() {

@@ -79,7 +79,7 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
   @Override
   public void configure() {
     setName(NAME);
-    ConfigClass configObj = getContext().getConfig();
+    ConfigClass configObj = getConfig();
     addStream(new Stream(configObj.streamName));
     createDataset(configObj.tableName, KeyValueTable.class);
     addWorker(new DefaultWorker(configObj.streamName));

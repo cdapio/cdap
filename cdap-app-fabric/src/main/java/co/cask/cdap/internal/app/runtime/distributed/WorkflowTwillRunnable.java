@@ -31,6 +31,7 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.mapred.YarnClientProtocolProvider;
 import org.apache.twill.api.TwillContext;
+import org.spark_project.protobuf.GeneratedMessage;
 
 import java.util.Map;
 
@@ -40,7 +41,14 @@ import java.util.Map;
 final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<WorkflowProgramRunner> {
 
   // NOTE: DO NOT REMOVE.  Though it is unused, the dependency is needed when submitting the mapred job.
+  @SuppressWarnings("unused")
   private YarnClientProtocolProvider provider;
+
+  // Don't remove. This dummy variable is needed for dependency tracing
+  // by Twill to pick the jar containing the GeneratedMessage class.
+  @SuppressWarnings("unused")
+  private GeneratedMessage gm;
+
 
   WorkflowTwillRunnable(String name, String hConfName, String cConfName) {
     super(name, hConfName, cConfName);
