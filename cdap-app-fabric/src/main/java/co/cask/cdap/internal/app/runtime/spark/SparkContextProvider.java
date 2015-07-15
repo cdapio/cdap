@@ -154,7 +154,7 @@ public final class SparkContextProvider {
         classLoader, contextConfig.getLogicalStartTime(), contextConfig.getArguments(),
         contextConfig.getTransaction(), injector.getInstance(DatasetFramework.class),
         injector.getInstance(DiscoveryServiceClient.class), metricsCollectionService, hConf,
-        injector.getInstance(StreamAdmin.class)
+        injector.getInstance(StreamAdmin.class), contextConfig.getWorkflowToken()
       );
       return sparkContext;
     } catch (Exception e) {

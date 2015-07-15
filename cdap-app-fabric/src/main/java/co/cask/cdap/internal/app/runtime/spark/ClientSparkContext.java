@@ -22,6 +22,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.stream.StreamEventDecoder;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
@@ -33,6 +34,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * A {@link SparkContext} implementation that is used in {@link Spark#beforeSubmit(SparkContext)} and
@@ -49,12 +51,12 @@ public final class ClientSparkContext extends AbstractSparkContext {
   public ClientSparkContext(Program program, RunId runId, long logicalStartTime, Map<String, String> runtimeArguments,
                             TransactionContext transactionContext, DatasetFramework datasetFramework,
                             DiscoveryServiceClient discoveryServiceClient,
-                            MetricsCollectionService metricsCollectionService) {
+                            MetricsCollectionService metricsCollectionService, @Nullable WorkflowToken workflowToken) {
     super(program.getApplicationSpecification().getSpark().get(program.getName()),
          program.getId(), runId, program.getClassLoader(), logicalStartTime,
          runtimeArguments, discoveryServiceClient,
          createMetricsContext(metricsCollectionService, program.getId(), runId),
-         createLoggingContext(program.getId(), runId));
+         createLoggingContext(program.getId(), runId), workflowToken);
 
     this.datasets = new ArrayList<>();
     this.transactionContext = transactionContext;
