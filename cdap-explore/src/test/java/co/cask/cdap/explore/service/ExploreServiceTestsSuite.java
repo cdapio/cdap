@@ -33,7 +33,8 @@ import org.junit.runners.Suite;
   HiveExploreServiceTestRun.class,
   WritableDatasetTestRun.class,
   HiveExploreObjectMappedTableTestRun.class,
-  HiveExploreServiceFileSetTestRun.class
+  HiveExploreServiceFileSetTestRun.class,
+  HiveExploreStructuredRecordTestRun.class
 })
 public class ExploreServiceTestsSuite {
 

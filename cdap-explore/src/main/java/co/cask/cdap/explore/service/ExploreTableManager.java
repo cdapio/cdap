@@ -18,6 +18,7 @@ package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordWritable;
+import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.Dataset;
@@ -175,9 +176,17 @@ public class ExploreTableManager {
       if (dataset instanceof Table) {
         return createFromSchemaProperty(spec, datasetID, serdeProperties);
       } else if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
+        Type recordType = dataset instanceof RecordScannable ?
+          ((RecordScannable) dataset).getRecordType() : ((RecordWritable) dataset).getRecordType();
+        // if the type is a structured record, use the schema property to create the table
+        if (StructuredRecord.class.equals(recordType)) {
+          return createFromSchemaProperty(spec, datasetID, serdeProperties);
+        }
+
+        // otherwise, derive the schema from the record type
         LOG.debug("Enabling explore for dataset instance {}", datasetName);
         createStatement = new CreateStatementBuilder(datasetName, getDatasetTableName(datasetID))
-          .setSchema(hiveSchemaFor(dataset))
+          .setSchema(hiveSchemaFor(recordType))
           .setTableComment("CDAP Dataset")
           .buildWithStorageHandler(Constants.Explore.DATASET_STORAGE_HANDLER_CLASS, serdeProperties);
       } else if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
@@ -205,10 +214,13 @@ public class ExploreTableManager {
     throws ExploreException, SQLException, UnsupportedTypeException {
 
     String schemaStr = spec.getProperty(DatasetProperties.SCHEMA);
-    // if there is no schema, this is a no-op.
+    // if there is no schema property, we cannot create the table and this is an error
     if (schemaStr == null) {
-      return QueryHandle.NO_OP;
+      throw new IllegalArgumentException(String.format(
+        "Unable to enable exploration on dataset %s because the %s property is not set.",
+        datasetID.getId(), DatasetProperties.SCHEMA));
     }
+
     try {
       Schema schema = Schema.parseJson(schemaStr);
       String createStatement = new CreateStatementBuilder(datasetID.getId(), getDatasetTableName(datasetID))
@@ -442,27 +454,14 @@ public class ExploreTableManager {
     return builder.toString();
   }
 
-  /**
-   * Given a record-enabled dataset, its record type and generate a schema string compatible with Hive.
-   *
-   * @param dataset The data set
-   * @return the hive schema
-   * @throws UnsupportedTypeException if the dataset is neither RecordScannable, nor RecordWritable,
-   * or if the row type is not a record or contains null types.
-   */
-  private String hiveSchemaFor(Dataset dataset) throws UnsupportedTypeException {
-    if (dataset instanceof RecordScannable) {
-      return hiveSchemaFor(((RecordScannable) dataset).getRecordType());
-    } else if (dataset instanceof RecordWritable) {
-      return hiveSchemaFor(((RecordWritable) dataset).getRecordType());
-    }
-    throw new UnsupportedTypeException("Dataset neither implements RecordScannable not RecordWritable.");
-  }
-
   // TODO: replace with SchemaConverter.toHiveSchema when we tackle queries on Tables.
   private String hiveSchemaFor(Type type) throws UnsupportedTypeException {
     // This call will make sure that the type is not recursive
-    new ReflectionSchemaGenerator().generate(type, false);
+    try {
+      new ReflectionSchemaGenerator().generate(type, false);
+    } catch (Exception e) {
+      throw new UnsupportedTypeException("Unable to derive schema from " + type, e);
+    }
 
     ObjectInspector objectInspector = ObjectInspectorFactory.getReflectionObjectInspector(type);
     if (!(objectInspector instanceof StructObjectInspector)) {
