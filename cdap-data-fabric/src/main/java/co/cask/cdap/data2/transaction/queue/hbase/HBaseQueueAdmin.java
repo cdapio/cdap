@@ -296,13 +296,14 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     if (!datasetFramework.hasInstance(id)) {
       return;
     }
-    final HBaseConsumerStateStore stateStore = getConsumerStateStore(queueName);
-    Transactions.createTransactionExecutor(txExecutorFactory, stateStore).execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        stateStore.clear();
-      }
-    });
+    try (final HBaseConsumerStateStore stateStore = getConsumerStateStore(queueName)) {
+      Transactions.createTransactionExecutor(txExecutorFactory, stateStore).execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          stateStore.clear();
+        }
+      });
+    }
   }
 
   private void deleteFlowConfigs(Id.Flow flowId) throws Exception {
@@ -319,25 +320,29 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
       return;
     }
 
-    final Table table = stateStore.getInternalTable();
-    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) table)
-      .execute(new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          // Prefix name is "/" terminated ("queue:///namespace/app/flow/"), hence the scan is unique for the flow
-          byte[] startRow = Bytes.toBytes(prefixName.toString());
-          Scanner scanner = table.scan(startRow, Bytes.stopKeyForPrefix(startRow));
-          try {
-            Row row = scanner.next();
-            while (row != null) {
-              table.delete(row.getRow());
-              row = scanner.next();
+    try {
+      final Table table = stateStore.getInternalTable();
+      Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) table)
+        .execute(new TransactionExecutor.Subroutine() {
+          @Override
+          public void apply() throws Exception {
+            // Prefix name is "/" terminated ("queue:///namespace/app/flow/"), hence the scan is unique for the flow
+            byte[] startRow = Bytes.toBytes(prefixName.toString());
+            Scanner scanner = table.scan(startRow, Bytes.stopKeyForPrefix(startRow));
+            try {
+              Row row = scanner.next();
+              while (row != null) {
+                table.delete(row.getRow());
+                row = scanner.next();
+              }
+            } finally {
+              scanner.close();
             }
-          } finally {
-            scanner.close();
           }
-        }
-      });
+        });
+    } finally {
+      stateStore.close();
+    }
   }
 
   /**

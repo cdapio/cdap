@@ -158,6 +158,15 @@ public class HBaseTable extends BufferingTable {
   }
 
   @Override
+  public void close() throws IOException {
+    try {
+      super.close();
+    } finally {
+      hTable.close();
+    }
+  }
+
+  @Override
   protected void persist(NavigableMap<byte[], NavigableMap<byte[], Update>> buff) throws Exception {
     List<Put> puts = Lists.newArrayList();
     for (Map.Entry<byte[], NavigableMap<byte[], Update>> row : buff.entrySet()) {

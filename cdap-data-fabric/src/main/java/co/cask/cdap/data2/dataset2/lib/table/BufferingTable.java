@@ -39,6 +39,7 @@ import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -231,7 +232,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   }
 
   @Override
-  public void close() {
+  public void close() throws IOException {
     // releasing resources
     buff = null;
     toUndo = null;

@@ -92,14 +92,15 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
   public QueueProducer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
     HBaseQueueAdmin admin = ensureTableExists(queueName);
     try {
-      final HBaseConsumerStateStore stateStore = admin.getConsumerStateStore(queueName);
       final List<ConsumerGroupConfig> groupConfigs = Lists.newArrayList();
-      Transactions.createTransactionExecutor(txExecutorFactory, stateStore).execute(new Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          stateStore.getLatestConsumerGroups(groupConfigs);
-        }
-      });
+      try (final HBaseConsumerStateStore stateStore = admin.getConsumerStateStore(queueName)) {
+        Transactions.createTransactionExecutor(txExecutorFactory, stateStore).execute(new Subroutine() {
+          @Override
+          public void apply() throws Exception {
+            stateStore.getLatestConsumerGroups(groupConfigs);
+          }
+        });
+      }
       Preconditions.checkState(!groupConfigs.isEmpty(), "Missing consumer group information for queue %s", queueName);
 
       HTable hTable = createHTable(admin.getDataTableId(queueName, queueAdmin.getType()));
