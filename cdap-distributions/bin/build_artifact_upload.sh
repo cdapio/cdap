@@ -33,7 +33,6 @@ REMOTE_INCOMING_DIR=${3}                                ### target directory on 
 REMOTE_BASE_DIR="${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_INCOMING_DIR}"
 BUILD_RELEASE_DIRS='*/target'                           ### Source directories
 BUILD_PACKAGE=${BUILD_PACKAGE:-cdap}
-
 #############################
 # find top of repo
 find_repo_root() {
@@ -82,25 +81,59 @@ function sync_build_artifacts_to_server () {
   for i in ${PACKAGES}
   do
     decho "PACKAGE=${i}"
-    _package=`echo ${i} | awk -F / '{ print $(NF) }'`
-    if [[ "${_package}" == *rpm ]]
-    then
-      _version_stub=`echo ${_package} | awk -F - '{ print $(NF-1) }'`
-    else
-      if [[ "${_package}" == *_* ]]
-      then
-        _version_stub=`echo ${_package} | awk -F _ '{ print $2 }'`
-      else
-        _version_stub=`echo ${_package} | awk -F - '{ print $(NF) }'`
-      fi
-    fi
-    _version=`echo ${_version_stub} | awk -F . '{ print $1"."$2"."$3 }'`
-    decho "version = ${_version}"
+    _package=`basename ${i}`
+    _snapshot_time=''
 
-    OUTGOING_DIR=${BUILD_PACKAGE}/${_version}
-    mkdir -p ${OUTGOING_DIR}
-    decho "rsyncing with rsync -av -e \"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\" ${RSYNC_QUIET} ${i} ${REMOTE_BASE_DIR}/${OUTGOING_DIR} ${DRY_RUN} 2>&1"
-    rsync -av -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ${RSYNC_QUIET} ${i} ${REMOTE_BASE_DIR}/${OUTGOING_DIR} ${DRY_RUN} 2>&1 || die "could not rsync ${_package} as ${REMOTE_USER} to ${REMOTE_HOST}: ${!}"
+    ##
+    # most CDAP Debian packages will look like this: (typical, not just in CDAP)
+    #      cdap-blah-blah-blah_2.8.0-1_all.deb
+    #      cdap-blah-blah-blah_2.8.0.1427234000548-1_all.deb
+    #    Pattern: <package name>_<version>-<build_revision>_all.deb
+    #
+    # most CDAP RPM packages will look like this:
+    #      cdap-blah-blah-blah-2.8.0-1.noarch.rpm
+    #      cdap-blah-blah-blah-2.8.0.1427234000548-1.noarch.rpm
+    #    Pattern: <package name>-<version>-<build_revision>.noarch.rpm
+    #
+    # Where version = <Major>.<Minor>.<Patch>(.optional time stamp)(-optional build revision)
+    ##
+
+    # grab version stub
+    if [[ "${_package}" == *_all.deb ]]
+    then
+      _version_stub=`echo ${_package} | sed 's/cdap.*_\(.*\)_all.deb/\1/'`
+    elif [[ "${_package}" == *.noarch.rpm ]]
+    then
+      _version_stub=`echo ${_package} | sed 's/cdap.*-\(.*-.*\).noarch.rpm/\1/'`
+    else # send failure notification because package file has an unexpected format/pattern
+      decho "something is wrong this this package"
+      die "package ${_package} has the wrong format: ${!}"
+    fi
+
+    # filter out version in 2 steps: 
+    #   remove trailing build revision (e.g. -1)
+    #   keep just the first 3 digits in case name includes timestamp
+    decho "version stub=${_version_stub}"
+    _version=`echo ${_version_stub} | awk -F - '{ print $1 }' | awk -F . '{ print $1"."$2"."$3 }'`
+    decho "version = ${_version}"
+    _snapshot_time=`echo ${_version_stub} | awk -F - '{ print $1 }' | sed 's/[0-9]\.[0-9]\.[0-9][\.]*\([0-9]*\)/\1/'`
+    if [ "${_version}" == ${_snapshot_time} ]; then
+      _snapshot_time=''
+    fi
+    decho "snapshot time = ${_snapshot_time}"
+
+    # identify and create remote incoming directory
+    if [ "${_snapshot_time}" == '' ]; then
+      OUTGOING_DIR=${BUILD_PACKAGE}/${_version}
+    else
+      OUTGOING_DIR=snapshot/cask/${BUILD_PACKAGE}/${_version}  ## send snapshots to a different directory
+    fi
+    echo "Create remote directory ${REMOTE_INCOMING_DIR}/${OUTGOING_DIR} if necessary"
+    ssh -l ${REMOTE_USER} ${REMOTE_HOST} "mkdir -p ${REMOTE_INCOMING_DIR}/${OUTGOING_DIR}" || die "could not create remote directory"
+
+    # sync package(s) to remote server
+    decho "rsyncing with rsync -av -e \"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\" ${RSYNC_QUIET} ${i} ${REMOTE_BASE_DIR}/${OUTGOING_DIR}/ ${DRY_RUN} 2>&1"
+    rsync -av -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ${RSYNC_QUIET} ${i} ${REMOTE_BASE_DIR}/${OUTGOING_DIR}/ ${DRY_RUN} 2>&1 || die "could not rsync ${_package} as ${REMOTE_USER} to ${REMOTE_HOST}: ${!}"
     decho ""
   done
 }
