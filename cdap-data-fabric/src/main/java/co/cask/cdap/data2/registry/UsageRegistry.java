@@ -17,9 +17,11 @@
 package co.cask.cdap.data2.registry;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
+import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.proto.Id;
@@ -320,6 +322,29 @@ public class UsageRegistry {
         return input.getUsageDataset().getAdapters(id);
       }
     });
+  }
+
+  /**
+   * Upgrades the UsageRegistry. In its current implementation it changed the type of usage.registry table in
+   * dataset.instances table from table to UsageDataset.
+   *
+   * @param datasetInstanceManager {@link DatasetInstanceManager} for the dataset instance meta data
+   */
+  public void upgrade(DatasetInstanceManager datasetInstanceManager) {
+    DatasetSpecification oldDatasetSpecification = datasetInstanceManager.get(USAGE_INSTANCE_ID);
+
+    if (!oldDatasetSpecification.getType().equals(UsageDataset.class.getSimpleName())) {
+      LOG.info("Upgrading {} dataset from Table to UsageDataset type", USAGE_INSTANCE_ID);
+      DatasetSpecification newDatasetSpecification = DatasetSpecification.builder(oldDatasetSpecification.getName(),
+                                                                                  UsageDataset.class.getSimpleName())
+        .properties(oldDatasetSpecification.getProperties())
+        .datasets(oldDatasetSpecification.getSpecifications().values())
+        .build();
+      datasetInstanceManager.delete(USAGE_INSTANCE_ID);
+      datasetInstanceManager.add(Constants.SYSTEM_NAMESPACE_ID, newDatasetSpecification);
+    } else {
+      LOG.info("{} dataset is of type UsageDataset. No upgrade required.", USAGE_INSTANCE_ID);
+    }
   }
 
   /**

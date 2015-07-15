@@ -38,11 +38,14 @@ import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
+import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
+import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
@@ -63,6 +66,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionExecutorFactory;
+import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.distributed.TransactionService;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.AbstractModule;
@@ -113,6 +117,7 @@ public class UpgradeTool {
   private final TransactionService txService;
   private final ZKClientService zkClientService;
   private final NamespacedLocationFactory namespacedLocationFactory;
+  private final MDSDatasetsRegistry mdsDatasetsRegistry;
 
   private Store store;
   private QuartzScheduler qs;
@@ -129,6 +134,7 @@ public class UpgradeTool {
               "  1. User Datasets (Upgrades the coprocessor jars for tables, and the base paths for file sets)\n" +
               "  2. System Datasets\n" +
               "  3. StreamConversionAdapter\n" +
+              "  4. UsageRegistry Dataset Type\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
     HELP("Show this help.");
 
@@ -151,6 +157,8 @@ public class UpgradeTool {
     this.zkClientService = injector.getInstance(ZKClientService.class);
     this.namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
     this.dsFramework = injector.getInstance(DatasetFramework.class);
+    this.mdsDatasetsRegistry = injector.getInstance(Key.get(MDSDatasetsRegistry.class,
+                                                            Names.named("mdsDatasetsRegistry")));
     this.adapterService = injector.getInstance(AdapterService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -199,6 +207,22 @@ public class UpgradeTool {
 
         @Provides
         @Singleton
+        @Named("mdsDatasetsRegistry")
+        public MDSDatasetsRegistry getMDSDatasetsRegistry (TransactionSystemClient txClient,
+                            @Named("datasetMDS") DatasetFramework framework) {
+          return new MDSDatasetsRegistry(txClient, framework);
+        }
+
+        @Provides
+        @Singleton
+        @Named("datasetInstanceManager")
+        public DatasetInstanceManager getDatasetInstanceManager (@Named("mdsDatasetsRegistry")
+                                                                 MDSDatasetsRegistry mdsDatasetsRegistry) {
+          return new DatasetInstanceManager(mdsDatasetsRegistry);
+        }
+
+        @Provides
+        @Singleton
         @Named("defaultStore")
         public Store getStore(DatasetFramework dsFramework,
                               CConfiguration cConf, LocationFactory locationFactory,
@@ -221,11 +245,12 @@ public class UpgradeTool {
   /**
    * Do the start up work
    */
-  private void startUp() throws IOException, DatasetManagementException {
+  private void startUp() throws Exception {
     // Start all the services.
     zkClientService.startAndWait();
     txService.startAndWait();
     initializeDSFramework(cConf, dsFramework);
+    mdsDatasetsRegistry.startUp();
   }
 
   /**
@@ -238,6 +263,7 @@ public class UpgradeTool {
       if (qs != null) {
         qs.shutdown();
       }
+      mdsDatasetsRegistry.shutDown();
     } catch (Throwable e) {
       LOG.error("Exception while trying to stop upgrade process", e);
       Runtime.getRuntime().halt(1);
@@ -337,6 +363,10 @@ public class UpgradeTool {
     queueAdmin.upgrade();
 
     upgradeAdapters();
+
+    UsageRegistry usageRegistry = injector.getInstance(UsageRegistry.class);
+    usageRegistry.upgrade(injector.getInstance(Key.get(DatasetInstanceManager.class,
+                                                       Names.named("datasetInstanceManager"))));
   }
 
   /**
