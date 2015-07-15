@@ -297,7 +297,8 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
       return;
     }
     try (final HBaseConsumerStateStore stateStore = getConsumerStateStore(queueName)) {
-      Transactions.createTransactionExecutor(txExecutorFactory, stateStore).execute(new TransactionExecutor.Subroutine() {
+      Transactions.createTransactionExecutor(txExecutorFactory, stateStore)
+        .execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
           stateStore.clear();

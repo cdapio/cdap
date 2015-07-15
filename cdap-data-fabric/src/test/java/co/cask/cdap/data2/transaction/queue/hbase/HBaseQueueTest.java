@@ -83,6 +83,7 @@ import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -120,6 +121,7 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   protected static HBaseTestBase testHBase;
   protected static HBaseTableUtil tableUtil;
+  protected static HBaseAdmin hbaseAdmin;
   private static ZKClientService zkClientService;
 
   @BeforeClass
@@ -159,10 +161,11 @@ public abstract class HBaseQueueTest extends QueueTest {
     );
 
     //create HBase namespace
+    hbaseAdmin = testHBase.getHBaseAdmin();
     tableUtil = injector.getInstance(HBaseTableUtil.class);
-    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
-    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), NAMESPACE_ID);
-    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), NAMESPACE_ID1);
+    tableUtil.createNamespaceIfNotExists(hbaseAdmin, Constants.SYSTEM_NAMESPACE_ID);
+    tableUtil.createNamespaceIfNotExists(hbaseAdmin, NAMESPACE_ID);
+    tableUtil.createNamespaceIfNotExists(hbaseAdmin, NAMESPACE_ID1);
 
     ConfigurationTable configTable = new ConfigurationTable(hConf);
     configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
@@ -670,15 +673,13 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @AfterClass
   public static void finish() throws Exception {
-    System.out.println("Finishing");
-    TimeUnit.SECONDS.sleep(10000);
+    tableUtil.deleteAllInNamespace(hbaseAdmin, NAMESPACE_ID);
+    tableUtil.deleteNamespaceIfExists(hbaseAdmin, NAMESPACE_ID);
 
-    tableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), NAMESPACE_ID);
-    tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), NAMESPACE_ID);
+    tableUtil.deleteAllInNamespace(hbaseAdmin, NAMESPACE_ID1);
+    tableUtil.deleteNamespaceIfExists(hbaseAdmin, NAMESPACE_ID1);
 
-    tableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), NAMESPACE_ID1);
-    tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), NAMESPACE_ID1);
-
+    hbaseAdmin.close();
     txService.stop();
     testHBase.stopHBase();
     zkClientService.stopAndWait();
@@ -687,7 +688,7 @@ public abstract class HBaseQueueTest extends QueueTest {
   @Override
   protected void forceEviction(QueueName queueName, int numGroups) throws Exception {
     TableId tableId = ((HBaseQueueAdmin) queueAdmin).getDataTableId(queueName);
-    byte[] tableName = tableUtil.getHTableDescriptor(testHBase.getHBaseAdmin(), tableId).getName();
+    byte[] tableName = tableUtil.getHTableDescriptor(hbaseAdmin, tableId).getName();
 
     // make sure consumer config cache is updated with the latest tx snapshot
     takeTxSnapshot();
