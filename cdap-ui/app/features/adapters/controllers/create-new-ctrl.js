@@ -1,6 +1,7 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('_AdapterCreateController', function(MyPlumbService, myAdapterApi, $bootstrapModal, $scope) {
+  .controller('_AdapterCreateController', function(MyPlumbService, myAdapterApi, $bootstrapModal, $scope, AdapterErrorFactory) {
     this.metadata = MyPlumbService.metadata;
+    this.nameError = AdapterErrorFactory.nameError;
     myAdapterApi.fetchTemplates({
       scope: $scope
     })
@@ -18,5 +19,11 @@ angular.module(PKG.name + '.feature.adapters')
           $scope.metadata = this.metadata;
         }.bind(this)]
       });
+    };
+
+    this.nameErrorMessage = function () {
+      if (this.nameError) {
+        return 'Enter adapter name';
+      }
     };
   });
