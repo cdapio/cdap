@@ -345,6 +345,11 @@ angular.module(PKG.name + '.services')
             message: 'Adapter should only have 1 source',
             unattached: source
           });
+
+          errObj.push({
+            type: 'canvas',
+            message: 'Adapter should only have 1 source'
+          });
         }
       }
 
@@ -359,6 +364,11 @@ angular.module(PKG.name + '.services')
             type: 'nodes',
             message: 'Adapter should only have 1 sink',
             unattached: sink
+          });
+
+          errObj.push({
+            type: 'canvas',
+            message: 'Adapter should only have 1 sink'
           });
         }
       }
@@ -449,7 +459,7 @@ angular.module(PKG.name + '.services')
       if (unattached.length > 0) {
         errorObj = {
           type: 'nodes',
-          message: 'There are nodes that are not part of the DAG left hanging',
+          message: 'Node is not connected to any other node',
           unattached: unattached
         };
       }
@@ -467,8 +477,8 @@ angular.module(PKG.name + '.services')
         nextConn = this.connections[i+1];
         if (currConn.target !== nextConn.source) {
           errorObj = {};
-          errorObj.type = 'nodes';
-          errorObj.message = 'There are parallel connections outside the main DAG';
+          errorObj.type = 'canvas';
+          errorObj.message = 'There are parallel connections inside this adapter';
           break;
         }
       }
