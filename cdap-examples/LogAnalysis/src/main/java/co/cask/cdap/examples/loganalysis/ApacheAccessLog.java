@@ -14,7 +14,7 @@
  * the License.
  *
  * This class is taken from on the DataBricks "Log Analysis with Spark" reference application.
- * The origin file may be found here:
+ * The original file may be found here:
  * http://databricks.gitbooks.io/databricks-spark-reference-applications/content/logs_analyzer/
  * chapter1/java8/src/main/java/com/databricks/apps/logs/ApacheAccessLog.java
  *
