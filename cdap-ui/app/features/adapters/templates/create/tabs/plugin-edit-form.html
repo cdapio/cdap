@@ -1,88 +1,99 @@
 <div ng-controller="PluginEditController as PluginEditController">
-  <div class="modal-header clearfix">
-    <h3 class="pull-left modal-title">{{plugin.name | caskCapitalizeFilter}} Properties</h3>
-    <a class="btn pull-right" ng-click="$close()">
-      <span class="fa fa-remove"></span>
-      <span class="sr-only"> Close </span>
-    </a>
-  </div>
-  <div class="modal-body">
-
-    <!-- INPUT SCHEMA -->
-    <div class="col-xs-2" ng-if="!hideInput">
-      <h4>Input Schema</h4>
-      <div class="schema-container" ng-if="inputSchema">
-        <ul class="list-unstyled">
-          <li ng-repeat="schema in inputSchema">{{schema.name}} ({{schema.type}})</li>
-        </ul>
+  <div class="row">
+    <div class="col-md-10 col-md-offset-1">
+      <div class="modal-header clearfix">
+        <h3 class="pull-left modal-title">{{plugin.name | caskCapitalizeFilter}} Properties</h3>
+        <a class="btn pull-right" ng-click="$close()">
+          <span class="fa fa-remove"></span>
+          <span class="sr-only"> Close </span>
+        </a>
       </div>
-      <div ng-if="!inputSchema">
-        <h5>There is no input schema</h5>
-      </div>
-    </div>
+      <div class="modal-body" ng-class="{'modal-source': plugin.type === 'source', 'modal-transform': plugin.type === 'transform', 'modal-sink': plugin.type === 'sink'}">
+        <div class="row">
 
-    <!-- MAIN WIDGET -->
-    <div ng-class="{ 'col-xs-10': isSink, 'col-xs-5': !isSink }">
-      <form plugin-property-edit-view>
-        <fieldset ng-disabled="isDisabled">
-          <div ng-if="PluginEditController.noconfig">
-            <div class="well well-lg widget-group-container">
-              <div ng-repeat="(name, value) in plugin.properties track by $index" class="row">
-                <div class="row-padding">
-                  <div class="form-group">
-                    <label
-                          ng-init="title='info';description=plugin._backendProperties[name].description"
-                          class="control-label col-xs-12">
-                          <span>{{name}}</span>
-                      <span  class="fa fa-info-circle"
-                             data-placement="right"
-                             data-trigger="hover"
-                             data-auto-close="1"
-                             data-template="/assets/features/adapters/templates/create/popover.html"
-                             bs-popover>
-                      </span>
-                      <span class="fa fa-asterisk" ng-if="plugin._backendProperties[name].required"></span>
-                    </label>
-                    <div class="col-xs-12">
-                      <input type="text"
-                              class="form-control"
-                              ng-model="plugin.properties[name]"/>
-                    </div>
-                  </div>
-                </div>
+          <!-- INPUT SCHEMA -->
+          <div class="col-lg-2" ng-if="!hideInput">
+            <div class="well well-lg input-schema">
+              <h4>Input Schema</h4>
+              <div class="schema-container" ng-if="inputSchema">
+                <ul class="list-unstyled">
+                  <li ng-repeat="schema in inputSchema">{{schema.name}} ({{schema.type}})</li>
+                </ul>
+              </div>
+              <div ng-if="!inputSchema">
+                <p>There is no input schema</p>
               </div>
             </div>
           </div>
 
-          <div ng-if="PluginEditController.configfetched">
-            <div class="row">
-
-              <div class="col-xs-12"
-                   ng-repeat="group in PluginEditController.config.groups.position">
-                <div class="well well-lg widget-group-container">
-                  <h3>{{PluginEditController.groups[group].display}}</h3>
-                  <div ng-repeat="field in PluginEditController.groups[group].position" class="row">
-                    <div class="row-padding" ng-if="field !== 'schema'">
+          <!-- MAIN WIDGET -->
+          <div ng-class="{ 'col-lg-10': isSink, 'col-lg-5': !isSink }">
+            <form plugin-property-edit-view>
+              <fieldset ng-disabled="isDisabled">
+                <div ng-if="PluginEditController.noconfig">
+                  <div class="well well-lg widget-group-container">
+                    <div ng-repeat="(name, value) in plugin.properties track by $index">
                       <div class="form-group">
-                        <label class="control-label col-xs-12"
-                            ng-init="title=PluginEditController.groups[group].fields[field].info;description=PluginEditController.groups[group].fields[field].description">
-                            <span>{{PluginEditController.groups[group].fields[field].label}}</span>
-                          <span data-placement="right"
-                                data-trigger="hover"
-                                data-auto-close="1"
-                                data-template="/assets/features/adapters/templates/create/popover.html"
-                                bs-popover>
-                                <span class="fa fa-info-circle"></span>
-                          </span>
-                          <span class="fa fa-asterisk" ng-if="plugin._backendProperties[field].required"></span>
+                        <label ng-init="title='info';description=plugin._backendProperties[name].description"
+                                class="control-label">
+                          <span>{{name}}</span>
+                          <span class="fa fa-asterisk" ng-if="plugin._backendProperties[name].required"></span>
                         </label>
-                        <div class="col-xs-12">
-                          <div data-name="field"
-                               class="my-widget-container"
-                               data-model="plugin.properties[field]"
-                               data-myconfig="PluginEditController.groups[group].fields[field]"
-                               data-properties="plugin.properties"
-                               widget-container>
+                        <input type="text"
+                                class="form-control"
+                                ng-model="plugin.properties[name]" />
+                        <span  class="fa fa-info-circle"
+                               data-placement="right"
+                               data-trigger="hover"
+                               data-auto-close="1"
+                               data-template="/assets/features/adapters/templates/create/popover.html"
+                               bs-popover></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div ng-if="PluginEditController.configfetched">
+
+                  <div ng-repeat="group in PluginEditController.config.groups.position">
+                    <div class="well well-lg widget-group-container">
+                      <h4>{{PluginEditController.groups[group].display}}</h4>
+                      <div ng-repeat="field in PluginEditController.groups[group].position">
+                        <div ng-if="field !== 'schema'">
+                          <div class="form-group">
+                            <label class="control-label"
+                                    ng-init="title=PluginEditController.groups[group].fields[field].info;description=PluginEditController.groups[group].fields[field].description">
+                              <span>{{PluginEditController.groups[group].fields[field].label}}</span>
+                              <span ng-if="plugin.type === 'transform'"
+                                    data-placement="right"
+                                    data-trigger="hover"
+                                    data-auto-close="1"
+                                    data-template="/assets/features/adapters/templates/create/popover.html"
+                                    data-container="body"
+                                    bs-popover>
+                                <span class="fa fa-info-circle"></span>
+                              </span>
+                              <span class="fa fa-asterisk" ng-if="plugin._backendProperties[field].required"></span>
+                            </label>
+                            <div>
+                              <div data-name="field"
+                                   class="my-widget-container"
+                                   data-model="plugin.properties[field]"
+                                   data-myconfig="PluginEditController.groups[group].fields[field]"
+                                   data-properties="plugin.properties"
+                                   widget-container>
+                              </div>
+
+                              <span ng-if="plugin.type === 'source'"
+                                    data-placement="left"
+                                    data-trigger="hover"
+                                    data-auto-close="1"
+                                    data-template="/assets/features/adapters/templates/create/popover.html"
+                                    data-container="body"
+                                    bs-popover>
+                                <span class="fa fa-info-circle"></span>
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -90,35 +101,40 @@
                   </div>
 
                 </div>
+              </fieldset>
+
+              <div ng-if="!PluginEditController.noproperty">
+                <div class="well well-lg">
+                  <h4>No Properties for this Plugin.</h4>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <!-- OUTPUT EDITOR -->
+          <div ng-class="{ 'col-lg-offset-2 col-lg-10': isSink, 'col-lg-5': !isSink && !hideInput, 'col-lg-7': hideInput }">
+            <div class="well well-lg">
+              <h4 ng-if="!isSink">Output Schema</h4>
+              <h4 ng-if="isSink">Schema</h4>
+              <fieldset ng-disabled="isDisabled">
+                <my-schema-editor
+                  ng-model="plugin.outputSchema"
+                  data-disabled="plugin.implicitSchema" ng-if="plugin.name !== 'Stream'"></my-schema-editor>
+                <my-stream-properties
+                  ng-model="plugin.outputSchema"
+                  plugins="plugin.properties"
+                  ng-if="plugin.name === 'Stream'"
+                ></my-stream-properties>
+              </fieldset>
+              <div ng-if="!plugin.outputSchema && isDisabled">
+                <div class="well well-lg">
+                  <h4>There is no output schema</h4>
+                </div>
               </div>
             </div>
           </div>
-        </fieldset>
 
-        <div ng-if="!PluginEditController.noproperty">
-          <div class="well well-lg">
-            No Properties for this Plugin.
-          </div>
         </div>
-      </form>
-    </div>
-
-    <!-- OUTPUT EDITOR -->
-    <div ng-class="{ 'col-xs-offset-2 col-xs-10': isSink, 'col-xs-5': !isSink && !hideInput, 'col-xs-7': hideInput }">
-      <h4 ng-if="!isSink">Output Schema</h4>
-      <h4 ng-if="isSink">Schema</h4>
-      <fieldset ng-disabled="isDisabled">
-        <my-schema-editor
-          ng-model="plugin.outputSchema"
-          data-disabled="plugin.implicitSchema" ng-if="plugin.name !== 'Stream'"></my-schema-editor>
-        <my-stream-properties
-          ng-model="plugin.outputSchema"
-          plugins="plugin.properties"
-          ng-if="plugin.name === 'Stream'"
-        ></my-stream-properties>
-      </fieldset>
-      <div ng-if="!plugin.outputSchema && isDisabled">
-        <h5>There is no output schema</h5>
       </div>
     </div>
   </div>

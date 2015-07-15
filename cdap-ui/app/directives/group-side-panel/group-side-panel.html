@@ -4,12 +4,18 @@
   <div ng-if="MySidePanel.isExpanded == false"
         class="btn btn-info btn-block"
         ng-click="MySidePanel.isExpanded = true">
-    <span class="fa fa-angle-double-right"></span>
+    <span class="fa"
+          ng-class="{'fa-caret-right': MySidePanel.placement === 'left', 'fa-caret-left': MySidePanel.placement === 'right'}"></span>
+    <span class="fa"
+          ng-class="{'fa-caret-right': MySidePanel.placement === 'left', 'fa-caret-left': MySidePanel.placement === 'right'}"></span>
   </div>
   <div ng-if="MySidePanel.isExpanded == true"
         class="btn btn-info btn-block"
         ng-click="MySidePanel.isExpanded = false">
-    <span class="fa fa-angle-double-left"></span>
+    <span class="fa"
+          ng-class="{'fa-caret-right': MySidePanel.placement === 'right', 'fa-caret-left': MySidePanel.placement === 'left'}"></span>
+    <span class="fa"
+          ng-class="{'fa-caret-right': MySidePanel.placement === 'right', 'fa-caret-left': MySidePanel.placement === 'left'}"></span>
   </div>
 
   <div class="item"
@@ -18,12 +24,15 @@
         ng-click="MySidePanel.openGroup(group)">
 
     <div class="item-heading"
-          ng-class="{'opened': MySidePanel.openedGroup === group.name, 'error': group.error }"
           tooltip="{{ group.error }}"
           tooltip-placement="right"
-          tooltip-append-to-body="true">
+          tooltip-append-to-body="true"
+          ng-class="{source: group.name === 'source', transform: group.name === 'transform', sink: group.name === 'sink', 'item-open': MySidePanel.openedGroup === group.name, 'error': group.error }">
         <span class="{{group.icon}}"></span>
         <span class="name">{{group.name | caskCapitalizeFilter}}</span>
+        <span ng-if="MySidePanel.isExpanded === true"
+              ng-class="{'fa-chevron-right': MySidePanel.openedGroup !== group.name, 'fa-chevron-down': MySidePanel.openedGroup === group.name}"
+              class="fa pull-right"></span>
     </div>
 
     <div class="item-body"
@@ -33,9 +42,10 @@
             class="plugin-item"
             tooltip="{{plugin.name}}"
             tooltip-placement="right"
+            tooltip-append-to-body="true"
             ng-click="MySidePanel.onItemClicked($event, plugin)">
-        <strong class="fa {{plugin.icon}}"></strong>
-        <strong class="name">{{plugin.name}}</strong>
+        <span class="fa {{plugin.icon}}"></span>
+        <span class="name">{{plugin.name}}</span>
       </div>
     </div>
 
