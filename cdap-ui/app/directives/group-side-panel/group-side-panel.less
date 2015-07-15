@@ -1,4 +1,5 @@
 @import "../../styles/variables.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
 @import "../../styles/themes/cdap/mixins.less";
 
 my-side-panel {
@@ -13,24 +14,39 @@ my-side-panel {
 
     &.left {
       left: 10px;
+      .btn.btn-info.btn-block {
+        text-align: left;
+      }
+      .item .item-heading {
+        &.item-open {
+          color: white;
+        }
+      }
     }
 
     &.right {
+      .btn.btn-info.btn-block {
+        text-align: right;
+      }
       right: 10px;
     }
 
     .btn.btn-info.btn-block {
+      background-color: white;
+      border-bottom: 1px solid #DDD;
+      color: @cdap-header;
+      padding: 5px 10px;
       .border-radius(0);
-      padding: 5px;
-      text-align: left;
+      .fa {
+        font-size: 11px;
+        &:first-child {
+          margin-right: -1px;
+        }
+      }
     }
 
     &.expanded {
       width: 100px;
-
-      .btn.btn-info.btn-block {
-        text-align: left;
-      }
 
       .item {
         .item-body, .item-heading {
@@ -49,13 +65,44 @@ my-side-panel {
       border-bottom: 1px solid #DDD;
       color: #686C78;
       cursor: pointer;
-      &:first-child {
-        .item-heading {
-          background-color: @brand-success;
-        }
-      }
+      font-size: 11px;
+      .transition(all 0.2s ease-in);
       .item-heading {
-        padding: 5px;
+        height: 40px;
+        padding: 12px 8px;
+        vertical-align: middle;
+        span {
+          .name, &:last-child {
+            line-height: 15px;
+            vertical-align: text-bottom;
+          }
+          &.name {
+            margin-left: 3px;
+          }
+          &:last-child {
+            font-size: 8px;
+          }
+        }
+        &.item-open {
+          &.source {
+            background-color: @adapter-source;
+            + .item-body .plugin-item {
+              color: @adapter-source;
+            }
+          }
+          &.transform {
+            background-color: @adapter-transform;
+            + .item-body .plugin-item {
+              color: @adapter-transform;
+            }
+          }
+          &.sink {
+            background-color: @adapter-sink;
+            + .item-body .plugin-item {
+              color: @adapter-sink;
+            }
+          }
+        }
         .name, .description {
           display: none;
         }
@@ -73,10 +120,21 @@ my-side-panel {
 
         .plugin-item {
           background-color: white;
-          margin: 5px 0;
+          margin: 5px 0 10px;
           padding: 5px 5px;
-          font-size: 10px;
+          font-size: 12px;
           .border-radius(4px);
+          &:first-child {
+            margin-top: 4px;
+          }
+          &:last-child {
+            margin-bottom: 4px;
+          }
+          > .fa {
+            margin-right: 3px;
+            text-align: center;
+            width: 12px;
+          }
         }
         .name, .description {
           display: none;
