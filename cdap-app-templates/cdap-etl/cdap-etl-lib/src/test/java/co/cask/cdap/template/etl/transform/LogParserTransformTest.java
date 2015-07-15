@@ -38,10 +38,17 @@ public class LogParserTransformTest {
   private static final LogParserTransform.LogParserConfig S3_CONFIG =
     new LogParserTransform.LogParserConfig("S3", "body");
   private static final Transform<StructuredRecord, StructuredRecord> S3_TRANSFORM = new LogParserTransform(S3_CONFIG);
+
   private static final LogParserTransform.LogParserConfig CLF_CONFIG =
     new LogParserTransform.LogParserConfig("CLF", "body");
   private static final Transform<StructuredRecord, StructuredRecord> CLF_TRANSFORM =
     new LogParserTransform(CLF_CONFIG);
+
+  private static final LogParserTransform.LogParserConfig CLOUDFRONT_CONFIG =
+    new LogParserTransform.LogParserConfig("Cloudfront", "body");
+  private static final Transform<StructuredRecord, StructuredRecord> CLOUDFRONT_TRANSFORM =
+    new LogParserTransform(CLOUDFRONT_CONFIG);
+
 
   @Test
   public void transformS3Log() throws Exception {
@@ -77,6 +84,38 @@ public class LogParserTransformTest {
     Assert.assertEquals("Firefox", output.get("browser"));
     Assert.assertEquals("Personal computer", output.get("device"));
     Assert.assertEquals(1422741477000L, output.get("ts"));
+  }
+
+  @Test
+  public void transformCloudfrontLog() throws Exception {
+    String event = "2015-04-17\t13:35:48\tSFO20\t582123\t68.180.228.98\tGET\td37zdowskk8frq.cloudfront" +
+      ".net\t/coopr-standalone-vm/0.9.8/coopr-standalone-vm-0.9.8.ova\t200\t-\tMozilla/5" +
+      ".0%2520(compatible;%2520Yahoo!%2520Slurp;%2520http://help.yahoo.com/help/us/ysearch/slurp)" +
+      "\t-\tError\tsCmB94WPP5v-QoCyn7Jz1ZLn0kBhzIEkqfFuX2Gh5oA1SA8dsLp-kw==\trepository.cask.co\thttp\t264\t0.984";
+
+    StructuredRecord record = StructuredRecord.builder(STRING_SCHEMA)
+      .set("body", event)
+      .build();
+
+    String comment = "#Fields: date time x-edge-location sc-bytes c-ip cs-method cs(Host) cs-uri-stem sc-status " +
+      "cs(Referer) cs(User-Agent) cs-uri-query cs(Cookie) x-edge-result-type x-edge-request-id x-host-header " +
+      "cs-protocol cs-bytes time-taken";
+
+    StructuredRecord commentRecord = StructuredRecord.builder(STRING_SCHEMA)
+      .set("body", comment)
+      .build();
+
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
+    CLOUDFRONT_TRANSFORM.transform(record, emitter);
+    StructuredRecord output = emitter.getEmitted().get(0);
+    Assert.assertEquals("/coopr-standalone-vm/0.9.8/coopr-standalone-vm-0.9.8.ova", output.get("uri"));
+    Assert.assertEquals("68.180.228.98", output.get("ip"));
+    Assert.assertEquals("unknown", output.get("browser"));
+    Assert.assertEquals("", output.get("device"));
+    Assert.assertEquals(1429277748000L, output.get("ts"));
+
+    CLOUDFRONT_TRANSFORM.transform(commentRecord, emitter);
+    Assert.assertEquals(1, emitter.getEmitted().size());
   }
 
   @Test

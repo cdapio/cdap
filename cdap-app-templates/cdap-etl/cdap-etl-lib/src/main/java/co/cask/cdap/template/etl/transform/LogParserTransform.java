@@ -55,8 +55,8 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
     Schema.Field.of("device", Schema.of(Schema.Type.STRING)),
     Schema.Field.of("ts", Schema.of(Schema.Type.LONG))
   );
-  private static final String LOG_FORMAT_DESCRIPTION = "Log format to parse. Currently only supports S3 and " +
-    "CLF Log format.";
+  private static final String LOG_FORMAT_DESCRIPTION = "Log format to parse. Currently supports S3, " +
+    "CLF, and Cloudfront formats.";
   private static final String INPUT_NAME_DESCRIPTION = "Name of the field in the input schema which encodes the " +
     "log information. The given field must be of type String or Bytes";
   private static final Logger LOG = LoggerFactory.getLogger(LogParserTransform.class);
@@ -82,10 +82,14 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
   private static final int S3_REGEX_LENGTH = 18;
   //Number of groups matched in the CLF regex
   private static final int CLF_REGEX_LENGTH = 9;
+  //Number of fields in a Cloudfront log
+  private static final int CLOUDFRONT_LENGTH = 23;
   private static final String S3_LOG = "S3";
   private static final String CLF_LOG = "CLF";
+  private static final String CLOUDFRONT_LOG = "Cloudfront";
   private final LogParserConfig config;
   private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z");
+  private final SimpleDateFormat sdfCloudfront = new SimpleDateFormat("yyyy-MM-dd:HH:mm:ss z");
 
   public LogParserTransform(LogParserConfig config) {
     this.config = config;
@@ -93,9 +97,10 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
 
   @Override
   public void initialize(TransformContext context) throws Exception {
-    if (!S3_LOG.equals(config.logFormat) && !CLF_LOG.equals(config.logFormat)) {
+    if (!S3_LOG.equals(config.logFormat) && !CLF_LOG.equals(config.logFormat) &&
+        !CLOUDFRONT_LOG.equals(config.logFormat)) {
       LOG.error("Log format not currently supported.");
-      throw new IllegalStateException("Unsupported log format");
+      throw new IllegalStateException("Unsupported log format: " + config.logFormat);
     }
   }
 
@@ -107,7 +112,7 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
       return;
     }
 
-    StructuredRecord output;
+    StructuredRecord output = null;
     if (S3_LOG.equals(config.logFormat)) {
       Matcher logMatcher = S3_LOG_PATTERN.matcher(log);
       if (!logMatcher.matches() || logMatcher.groupCount() < S3_REGEX_LENGTH) {
@@ -115,13 +120,40 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
         return;
       }
       output = parseRequest(logMatcher, S3_INDICES);
-    } else {
+    } else if (CLF_LOG.equals(config.logFormat)) {
       Matcher logMatcher = CLF_LOG_PATTERN.matcher(log);
       if (!logMatcher.matches() || logMatcher.groupCount() < CLF_REGEX_LENGTH) {
         LOG.debug("Couldn't parse log because the log did not match the CLF format. log: {}", log);
         return;
       }
       output = parseRequest(logMatcher, CLF_INDICES);
+    } else if (CLOUDFRONT_LOG.equals(config.logFormat)) {
+      if (log.startsWith("#")) {
+        LOG.info("Log is a comment. Ignoring...");
+        return;
+      }
+
+      String[] fields = log.split("\\t");
+//      if (fields.length < CLOUDFRONT_LENGTH) {
+//        LOG.debug("Couldn't parse log because the log did not match the Cloudfront format. log: {}", log);
+//        return;
+//      }
+
+      String uri = fields[7];
+      String ip = fields[4];
+      long ts = sdfCloudfront.parse(fields[0] + ":" + fields[1] + " UTC").getTime();
+      UserAgentStringParser parser = UADetectorServiceFactory.getResourceModuleParser();
+      ReadableUserAgent userAgent = parser.parse(fields[10]);
+      String browser = userAgent.getFamily().getName();
+      String device = userAgent.getDeviceCategory().getCategory().getName();
+
+      output = StructuredRecord.builder(LOG_SCHEMA)
+        .set("uri", uri)
+        .set("ip", ip)
+        .set("browser", browser)
+        .set("device", device)
+        .set("ts", ts)
+        .build();
     }
 
     if (output != null) {
