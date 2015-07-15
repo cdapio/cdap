@@ -57,7 +57,7 @@ public class HBase98Test extends HBaseTestBase {
   }
 
   @Override
-  public void startHBase() throws Exception {
+  public void doStartHBase() throws Exception {
     testUtil.startMiniCluster();
   }
 
