@@ -43,6 +43,16 @@ angular.module(PKG.name + '.feature.adapters')
 
       if (ui && ui.connections) {
         MyPlumbService.connections = ui.connections;
+      } else {
+        var j;
+        var connections = [];
+        for (j=0; j<this.nodes.length-1; j++) {
+          connections.push({
+            source: this.nodes[j].id,
+            target: this.nodes[j+1].id
+          });
+        }
+        MyPlumbService.connections = connections;
       }
 
       // Too many ORs. Should be removed when all drafts eventually are
@@ -68,21 +78,21 @@ angular.module(PKG.name + '.feature.adapters')
       var nodes = [];
       var i =0;
       nodes.push({
-        id: config.source.name + (++i),
+        id: config.source.name + '-source-' + (++i),
         name: config.source.name,
         type: 'source',
         properties: config.source.properties
       });
       config.transforms.forEach(function(transform) {
         nodes.push({
-          id: transform.name + (++i),
+          id: transform.name + '-transform-' + (++i),
           name: transform.name,
           type: 'transform',
           properties: transform.properties
         });
       });
       nodes.push({
-        id: config.sink.name + (++i),
+        id: config.sink.name + '-sink-' + (++i),
         name: config.sink.name,
         type: 'sink',
         properties: config.sink.properties
