@@ -94,6 +94,9 @@ angular.module(PKG.name + '.services')
         type: conf.type
       };
       this.nodes[config.id] = config;
+      if (!conf._backendProperties) {
+        fetchBackendProperties(this.nodes[config.id]);
+      }
       this.notifyListeners(config, type);
     };
 
@@ -101,13 +104,35 @@ angular.module(PKG.name + '.services')
       delete this.nodes[nodeId];
     };
 
-    this.editPluginProperties = function (scope, pluginId, pluginType) {
+    function fetchBackendProperties(plugin, scope) {
+      var defer = $q.defer();
+
       var propertiesApiMap = {
         'source': myAdapterApi.fetchSourceProperties,
         'sink': myAdapterApi.fetchSinkProperties,
         'transform': myAdapterApi.fetchTransformProperties
       };
+      // This needs to pass on a scope always. Right now there is no cleanup
+      // happening
+      var params = {
+        adapterType: 'ETLBatch'
+      };
+      if (scope) {
+        params.scope = scope;
+      }
+      params[plugin.type] = plugin.name;
 
+      return propertiesApiMap[plugin.type](params)
+        .$promise
+        .then(function(res) {
+          var pluginProperties = (res.length? res[0].properties: {});
+          plugin._backendProperties = pluginProperties;
+          defer.resolve(plugin);
+          return defer.promise;
+        })
+    }
+
+    this.editPluginProperties = function (scope, pluginId) {
       var sourceConn = $filter('filter')(this.connections, { target: pluginId });
       var sourceSchema = null;
 
@@ -120,22 +145,8 @@ angular.module(PKG.name + '.services')
       }
 
       var plugin = this.nodes[pluginId];
-      var prom = $q.defer();
 
-      var params = {
-        scope: scope,
-        adapterType: 'ETLBatch'
-      };
-      params[pluginType] = plugin.name;
-
-      propertiesApiMap[pluginType](params)
-        .$promise
-        .then(function(res) {
-          var pluginProperties = (res.length? res[0].properties: {});
-          plugin._backendProperties = pluginProperties;
-          prom.resolve(plugin);
-          return prom.promise;
-        })
+      fetchBackendProperties(plugin, scope)
         .then(function(plugin) {
           $bootstrapModal.open({
             animation: false,
@@ -299,17 +310,21 @@ angular.module(PKG.name + '.services')
           .$promise
           .then(
             function success() {
-              // delete this.adapterDrafts[this.metadata.name];
-              // return mySettings.set('adapterdrafts', this.adapterDrafts);
-              defer.resolve(true);
-              this.resetToDefaults();
+              mySettings.get('adapterDrafts')
+               .then(function(res) {
+                 var adapterName = this.metadata.name;
+                 delete res[adapterName];
+                 mySettings.set('adapterDrafts', res);
+                 defer.resolve(adapterName);
+                 this.resetToDefaults();
+               }.bind(this));
             }.bind(this),
             function error(err) {
               defer.reject({
                 messages: err
               });
             }
-          );
+          )
       } else {
         this.notifyError(errors);
         defer.reject(errors);
