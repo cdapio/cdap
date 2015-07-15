@@ -34,6 +34,7 @@ angular.module(PKG.name + '.feature.adapters')
                 mySettings.get('adapterDrafts')
                   .then(function(res) {
                     var draft = res[$stateParams.data];
+                    draft.name = $stateParams.data;
                     if (draft) {
                       defer.resolve(draft);
                     }
