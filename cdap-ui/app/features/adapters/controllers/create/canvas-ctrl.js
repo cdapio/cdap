@@ -64,10 +64,10 @@ angular.module(PKG.name + '.feature.adapters')
           MyPlumbService
             .save()
             .then(
-              function sucess() {
+              function sucess(adapter) {
                 $alert({
                   type: 'success',
-                  content: MyPlumbService.metadata.name + ' successfully published.'
+                  content: adapter + ' successfully published.'
                 });
                 $state.go('adapters.list');
               },
