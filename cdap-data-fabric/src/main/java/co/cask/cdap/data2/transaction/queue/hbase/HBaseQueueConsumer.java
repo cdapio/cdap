@@ -33,7 +33,9 @@ import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.Scan;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -44,7 +46,6 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
   private final HTable hTable;
   private final HBaseConsumerState state;
   private final HBaseConsumerStateStore stateStore;
-  private final byte[] queueRowPrefix;
   private final HBaseQueueStrategy queueStrategy;
   private boolean closed;
   private boolean canConsume;
@@ -66,7 +67,6 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
     this.hTable = hTable;
     this.state = consumerState;
     this.stateStore = stateStore;
-    this.queueRowPrefix = QueueEntryRow.getQueueRowPrefix(queueName);
     this.queueStrategy = queueStrategy;
     this.canConsume = false;
   }
@@ -134,12 +134,9 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
       }
     }
 
-    Scan scan = createScan(startRow, getScanStopRow(stopRow), numRows);
-
-    /** TODO: Remove when {@link DequeueScanAttributes#ATTR_QUEUE_ROW_PREFIX} is removed. It is for transition. **/
-    DequeueScanAttributes.setQueueRowPrefix(scan, queueRowPrefix);
-    DequeueScanAttributes.set(scan, getConfig());
-    DequeueScanAttributes.set(scan, transaction);
+    Map<String, byte[]> attributes = DequeueScanAttributes.addAttribute(transaction,
+                                     DequeueScanAttributes.addAttribute(getConfig(), new HashMap<String, byte[]>()));
+    Scan scan = createScan(startRow, getScanStopRow(stopRow), numRows, attributes);
 
     return queueStrategy.createScanner(getConfig(), hTable, scan, numRows);
   }
@@ -193,7 +190,7 @@ abstract class HBaseQueueConsumer extends AbstractQueueConsumer {
     }
   }
 
-  protected abstract Scan createScan(byte[] startRow, byte[] stopRow, int numRows);
+  protected abstract Scan createScan(byte[] startRow, byte[] stopRow, int numRows, Map<String, byte[]> attributes);
 
   private byte[] getScanStopRow(byte[] stopRow) {
     byte[] barrierEndRow = state.getNextBarrier();

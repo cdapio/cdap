@@ -22,6 +22,7 @@ import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.tephra.TxConstants;
 import com.google.common.collect.ImmutableMap;
@@ -61,6 +62,7 @@ public abstract class AbstractIncrementHandlerTest {
   protected static HBaseTestBase testUtil;
   protected static Configuration conf;
   protected static CConfiguration cConf;
+  protected static HBaseTableUtil tableUtil;
 
   protected long ts = 1;
 
@@ -70,6 +72,7 @@ public abstract class AbstractIncrementHandlerTest {
     testUtil.startHBase();
     conf = testUtil.getConfiguration();
     cConf = CConfiguration.create();
+    tableUtil = new HBaseTableUtilFactory(cConf).get();
   }
 
   @AfterClass
@@ -95,9 +98,7 @@ public abstract class AbstractIncrementHandlerTest {
       assertColumn(table, row1, colA, 3);
 
       // test intermixed increments and puts
-      Put putA = new Put(row1);
-      putA.add(FAMILY, colA, ts++, Bytes.toBytes(5L));
-      table.put(putA);
+      table.put(tableUtil.buildPut(row1).add(FAMILY, colA, ts++, Bytes.toBytes(5L)).build());
 
       assertColumn(table, row1, colA, 5);
 
@@ -118,12 +119,10 @@ public abstract class AbstractIncrementHandlerTest {
       // increment A once more
       table.put(newIncrement(row2, colA, 1));
 
-      assertColumns(table, row2, new byte[][]{ colA, colB }, new long[]{ 3, 2 });
+      assertColumns(table, row2, new byte[][]{colA, colB}, new long[]{3, 2});
 
       // overwrite B with a new put
-      Put p = new Put(row2);
-      p.add(FAMILY, colB, ts++, Bytes.toBytes(10L));
-      table.put(p);
+      table.put(tableUtil.buildPut(row2).add(FAMILY, colB, ts++, Bytes.toBytes(10L)).build());
 
       assertColumns(table, row2, new byte[][]{ colA, colB }, new long[]{ 3, 10 });
     } finally {
@@ -265,19 +264,18 @@ public abstract class AbstractIncrementHandlerTest {
       assertColumn(table, row1, col, 100);
 
       // do a new put on the column
-      Put put = new Put(row1);
-      put.add(FAMILY, col, Bytes.toBytes(11L));
-      table.put(put);
+      table.put(tableUtil.buildPut(row1).add(FAMILY, col, Bytes.toBytes(11L)).build());
 
       assertColumn(table, row1, col, 11);
 
       // perform a delete on the column
-      Delete delete = new Delete(row1);
-      delete.deleteColumns(FAMILY, col);
+      Delete delete = tableUtil.buildDelete(row1)
+        .deleteColumns(FAMILY, col)
+        .build();
       // use batch to work around a bug in delete coprocessor hooks on HBase 0.94
       table.batch(Lists.newArrayList(delete));
 
-      Get get = new Get(row1);
+      Get get = tableUtil.buildGet(row1).build();
       Result result = table.get(get);
       LOG.info("Get after delete returned " + result);
       assertTrue(result.isEmpty());
@@ -290,12 +288,13 @@ public abstract class AbstractIncrementHandlerTest {
       assertColumn(table, row1, col, 100);
 
       // perform a family delete
-      delete = new Delete(row1);
-      delete.deleteFamily(FAMILY);
+      delete = tableUtil.buildDelete(row1)
+        .deleteFamily(FAMILY)
+        .build();
       // use batch to work around a bug in delete coprocessor hooks on HBase 0.94
       table.batch(Lists.newArrayList(delete));
 
-      get = new Get(row1);
+      get = tableUtil.buildGet(row1).build();
       result = table.get(get);
       LOG.info("Get after delete returned " + result);
       assertTrue(result.isEmpty());
@@ -308,11 +307,11 @@ public abstract class AbstractIncrementHandlerTest {
       assertColumn(table, row1, col, 100);
 
       // perform a row delete
-      delete = new Delete(row1);
+      delete = tableUtil.buildDelete(row1).build();
       // use batch to work around a bug in delete coprocessor hooks on HBase 0.94
       table.batch(Lists.newArrayList(delete));
 
-      get = new Get(row1);
+      get = tableUtil.buildGet(row1).build();
       result = table.get(get);
       LOG.info("Get after delete returned " + result);
       assertTrue(result.isEmpty());
@@ -390,9 +389,7 @@ public abstract class AbstractIncrementHandlerTest {
       // test that we do not apply TTL to a put terminating a set of increments
       byte[] row2 = Bytes.toBytes("r2");
       // first add a full put
-      Put p = new Put(row2);
-      p.add(FAMILY, col, Bytes.toBytes(50L));
-      region.put(p);
+      region.put(tableUtil.buildPut(row2).add(FAMILY, col, Bytes.toBytes(50L)).build());
 
       // move 51 msec into the future, so that the previous put is behind the TTL
       now = now + 51;
@@ -438,9 +435,7 @@ public abstract class AbstractIncrementHandlerTest {
       timeOracle.setCurrentTime(now * IncrementHandlerState.MAX_TS_PER_MS);
 
       // do another full put
-      p = new Put(row2);
-      p.add(FAMILY, col, Bytes.toBytes(99L));
-      region.put(p);
+      region.put(tableUtil.buildPut(row2).add(FAMILY, col, Bytes.toBytes(99L)).build());
 
       // run a compaction to apply TTL
       region.compact(true);
@@ -453,9 +448,7 @@ public abstract class AbstractIncrementHandlerTest {
 
       // test that we apply TTL to a standalone put
       byte[] row3 = Bytes.toBytes("r3");
-      p = new Put(row3);
-      p.add(FAMILY, col, Bytes.toBytes(11L));
-      region.put(p);
+      region.put(tableUtil.buildPut(row3).add(FAMILY, col, Bytes.toBytes(11L)).build());
 
       results.clear();
       assertFalse(region.scanRegion(results, row3));
@@ -482,10 +475,10 @@ public abstract class AbstractIncrementHandlerTest {
   }
 
   public Put newIncrement(byte[] row, byte[] column, long timestamp, long value) {
-    Put p = new Put(row);
-    p.add(FAMILY, column, timestamp, Bytes.toBytes(value));
-    p.setAttribute(HBaseTable.DELTA_WRITE, EMPTY_BYTES);
-    return p;
+    return tableUtil.buildPut(row)
+      .add(FAMILY, column, timestamp, Bytes.toBytes(value))
+      .setAttribute(HBaseTable.DELTA_WRITE, EMPTY_BYTES)
+      .build();
   }
 
   public abstract void assertColumn(HTable table, byte[] row, byte[] col, long expected) throws Exception;

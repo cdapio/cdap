@@ -21,6 +21,8 @@ import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.transaction.queue.QueueScanner;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.ScanBuilder;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.DistributedScanner;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
@@ -59,7 +61,8 @@ public final class SaltedHBaseQueueStrategy implements HBaseQueueStrategy {
 
   public static final int SALT_BYTES = 1;
 
-  private int distributorBuckets;
+  private final HBaseTableUtil tableUtil;
+  private final int distributorBuckets;
   private final AbstractRowKeyDistributor rowKeyDistributor;
   private final Function<byte[], byte[]> rowKeyConverter;
   private final ExecutorService scansExecutor;
@@ -67,7 +70,8 @@ public final class SaltedHBaseQueueStrategy implements HBaseQueueStrategy {
   /**
    * Constructs a new instance with the given number of buckets for distributed scan.
    */
-  SaltedHBaseQueueStrategy(int distributorBuckets) {
+  SaltedHBaseQueueStrategy(HBaseTableUtil tableUtil, int distributorBuckets) {
+    this.tableUtil = tableUtil;
     this.distributorBuckets = distributorBuckets;
     this.rowKeyDistributor = new RowKeyDistributorByHashPrefix(
       new RowKeyDistributorByHashPrefix.OneByteSimpleHash(distributorBuckets));
@@ -94,11 +98,12 @@ public final class SaltedHBaseQueueStrategy implements HBaseQueueStrategy {
   public QueueScanner createScanner(ConsumerConfig consumerConfig,
                                     HTable hTable, Scan scan, int numRows) throws IOException {
     // we should roughly divide by number of buckets, but don't want another RPC for the case we are not exactly right
-    Scan distributedScan = new Scan(scan);
+    ScanBuilder distributedScan = tableUtil.buildScan(scan);
     int caching = (int) (1.1 * numRows / distributorBuckets);
     distributedScan.setCaching(caching);
 
-    ResultScanner scanner = DistributedScanner.create(hTable, distributedScan, rowKeyDistributor, scansExecutor);
+    ResultScanner scanner = DistributedScanner.create(hTable, distributedScan.build(),
+                                                      rowKeyDistributor, scansExecutor);
     return new HBaseQueueScanner(scanner, numRows, rowKeyConverter);
   }
 
