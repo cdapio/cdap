@@ -144,17 +144,20 @@ angular.module(PKG.name + '.commons')
     function drawConnections() {
       var i;
       var prev, curr, next;
-      for(i=0; i<this.plugins.length-1; i++) {
-        if (this.plugins[i].type === 'transform') {
-          curr = 'Left' + this.plugins[i].id;
+
+      var connections = MyPlumbService.connections;
+      for(i=0; i<connections.length; i++) {
+        if (connections[i].source.indexOf('transform') !== -1) {
+          curr = 'Left' + connection[i].source;
         } else {
-          curr = this.plugins[i].id;
+          curr = connection[i].source;
         }
-        if (this.plugins[i+1].type === 'transform') {
-          next = 'Right' + this.plugins[i+1].id;
+        if (connections[i].target.indexOf('transform') !== -1) {
+          next = 'Right' + connection[i].target;
         } else {
-          next = this.plugins[i+1].id;
+          next = connection[i].target;
         }
+
         this.instance.connect({
           uuids: [curr, next],
           editable: true
