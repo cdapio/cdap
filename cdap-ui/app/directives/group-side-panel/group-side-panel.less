@@ -53,7 +53,13 @@ my-side-panel {
         .name, .description {
           display: none;
         }
+
+        &.error {
+          background-color: @brand-danger;
+          color: white;
+        }
       }
+
 
       .item-body {
         padding: 5px;
@@ -72,8 +78,8 @@ my-side-panel {
       }
     }
 
-    .red-box {
-      position: absolute;
+    .tooltip.tooltip-red .tooltip-inner {
+      background-color: @brand-danger;
     }
   }
 }
