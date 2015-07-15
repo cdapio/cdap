@@ -69,4 +69,14 @@ public abstract class AbstractInMemoryMasterServiceManager implements MasterServ
   public boolean isServiceEnabled() {
     return true;
   }
+
+  @Override
+  public void restartAllInstances() {
+    // No operation for in memory manager.
+  }
+
+  @Override
+  public void restartInstances(int instanceId, int... moreInstanceIds) {
+    // No operation for in memory manager.
+  }
 }

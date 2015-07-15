@@ -179,4 +179,31 @@ public abstract class AbstractDistributedMasterServiceManager implements MasterS
       }
     }
   }
+
+  @Override
+  public void restartAllInstances() {
+    try {
+      Iterable<TwillController> twillControllers = twillRunnerService.lookup(Constants.Service.MASTER_SERVICES);
+      for (TwillController twillController : twillControllers) {
+        // Call restart instances
+        twillController.restartAllInstances(serviceName).get();
+      }
+    } catch (Throwable t) {
+      throw new RuntimeException(String.format("Could not change service instances of %s", serviceName), t);
+    }
+  }
+
+  @Override
+  public void restartInstances(int instanceId, int... moreInstanceIds) {
+    // Get Twill controller for the service
+    try {
+      Iterable<TwillController> twillControllers = twillRunnerService.lookup(Constants.Service.MASTER_SERVICES);
+      for (TwillController twillController : twillControllers) {
+        // Call restart instances
+        twillController.restartInstances(serviceName, instanceId, moreInstanceIds).get();
+      }
+    } catch (Throwable t) {
+      throw new RuntimeException(String.format("Could not change service instances of %s", serviceName), t);
+    }
+  }
 }

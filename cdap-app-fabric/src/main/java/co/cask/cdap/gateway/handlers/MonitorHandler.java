@@ -91,4 +91,36 @@ public class MonitorHandler extends AbstractMonitorHandler {
   public void getServiceSpec(HttpRequest request, HttpResponder responder) throws Exception {
     super.getServiceSpec(request, responder);
   }
+
+  /**
+   * Send request to restart all instances for a CDAP system service.
+   */
+  @Path("/system/services/{service-name}/instances/restart")
+  @PUT
+  public void restartAllServiceInstances(HttpRequest request, HttpResponder responder,
+                                         @PathParam("service-name") String serviceName) {
+    super.restartAllServiceInstances(request, responder, serviceName);
+  }
+
+  /**
+   * Send request to restart single instance identified by <instance-id>
+   */
+  @Path("/system/services/{service-name}/instances/{instance-id}/restart")
+  @PUT
+  public void restartServiceInstance(HttpRequest request, HttpResponder responder,
+                                     @PathParam("service-name") String serviceName,
+                                     @PathParam("instance-id") int instanceId) {
+    super.restartServiceInstance(request, responder, serviceName, instanceId);
+  }
+
+  /**
+   * Send request to get the status of latest restart instances request for a CDAP system service.
+   */
+  @Path("/system/services/{service-name}/instances/restart")
+  @GET
+  public void getLatestRestartServiceInstanceStatus(HttpRequest request, HttpResponder responder,
+                                                    @PathParam("service-name") String serviceName) {
+    super.getLatestRestartServiceInstanceStatus(request, responder, serviceName);
+  }
+
 }

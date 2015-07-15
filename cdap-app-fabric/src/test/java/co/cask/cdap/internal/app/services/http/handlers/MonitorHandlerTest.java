@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.RestartServiceInstancesStatus;
 import co.cask.cdap.proto.SystemServiceMeta;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
@@ -35,6 +36,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Monitor handler tests.
@@ -96,5 +98,29 @@ public class MonitorHandlerTest extends AppFabricTestBase {
     urlConn.disconnect();
     Assert.assertEquals(1, (int) result.get("requested"));
     Assert.assertEquals(1, (int) result.get("provisioned"));
+  }
+
+  @Test
+  public void testRestartInstances() throws Exception {
+    String path = String.format("system/services/%s/instances/restart", Constants.Service.APP_FABRIC_HTTP);
+    HttpURLConnection urlConn = openURL(path, HttpMethod.PUT);
+
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+
+    urlConn.disconnect();
+
+    urlConn = openURL(path, HttpMethod.GET);
+
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+
+    RestartServiceInstancesStatus result =
+      GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8),
+                    RestartServiceInstancesStatus.class);
+
+    urlConn.disconnect();
+
+    Assert.assertNotNull(result);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result.getServiceName());
+    Assert.assertEquals(RestartServiceInstancesStatus.RestartStatus.SUCCESS, result.getStatus());
   }
 }
