@@ -39,6 +39,7 @@ import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamUtils;
@@ -79,6 +80,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -94,6 +96,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.net.URI;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -678,10 +681,16 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     // Excludes libraries that are for sure not needed.
     // Hadoop - Available from the cluster
     // Spark - MR never uses Spark
-    ApplicationBundler appBundler = new ApplicationBundler(ImmutableList.of("org.apache.hadoop",
-                                                                            "org.apache.spark"),
-                                                           ImmutableList.of("org.apache.hadoop.hbase",
-                                                                            "org.apache.hadoop.hive"));
+    final HadoopClassExcluder hadoopClassExcluder = new HadoopClassExcluder();
+    ApplicationBundler appBundler = new ApplicationBundler(new ClassAcceptor() {
+      @Override
+      public boolean accept(String className, URL classUrl, URL classPathUrl) {
+        if (className.startsWith("org.apache.spark") || classPathUrl.toString().contains("spark-assembly")) {
+          return false;
+        }
+        return hadoopClassExcluder.accept(className, classUrl, classPathUrl);
+      }
+    });
     Set<Class<?>> classes = Sets.newHashSet();
     classes.add(MapReduce.class);
     classes.add(MapperWrapper.class);
