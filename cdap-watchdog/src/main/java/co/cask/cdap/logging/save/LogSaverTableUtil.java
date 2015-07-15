@@ -52,9 +52,8 @@ public class LogSaverTableUtil extends MetaTableUtil {
    * @param datasetFramework framework to add types and datasets to
    */
   public static void setupDatasets(DatasetFramework datasetFramework) throws IOException, DatasetManagementException {
-    Id.DatasetInstance logMetaDatasetInstance = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID,
-                                                                        (Joiner.on(".").join(Constants.SYSTEM_NAMESPACE,
-                                                                                             TABLE_NAME)));
+    Id.DatasetInstance logMetaDatasetInstance = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE_ID,
+                                                                        TABLE_NAME);
     datasetFramework.addInstance(Table.class.getName(), logMetaDatasetInstance, DatasetProperties.EMPTY);
   }
 }

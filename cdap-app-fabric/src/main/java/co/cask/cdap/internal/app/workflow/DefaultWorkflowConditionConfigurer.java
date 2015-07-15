@@ -42,8 +42,10 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   private List<WorkflowNode> currentBranch;
   private boolean addingToIfBranch = true;
   private final String predicateClassName;
+  private final String conditionNodeName;
 
-  public DefaultWorkflowConditionConfigurer(T parentConfigurer, String predicateClassName) {
+  public DefaultWorkflowConditionConfigurer(String conditionNodeName, T parentConfigurer, String predicateClassName) {
+    this.conditionNodeName = conditionNodeName;
     this.parentConfigurer = parentConfigurer;
     this.predicateClassName = predicateClassName;
     currentBranch = Lists.newArrayList();
@@ -76,8 +78,8 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   @SuppressWarnings("unchecked")
   public WorkflowConditionConfigurer<? extends WorkflowConditionConfigurer<T>> condition(
     Predicate<WorkflowContext> predicate) {
-    String predicateClassName = predicate.getClass().getName();
-    return new DefaultWorkflowConditionConfigurer<>(this, predicateClassName);
+    return new DefaultWorkflowConditionConfigurer<>(predicate.getClass().getSimpleName(), this,
+                                                    predicate.getClass().getName());
   }
 
   @Override
@@ -95,14 +97,14 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
     } else {
       elseBranch.addAll(currentBranch);
     }
-    parentConfigurer.addWorkflowConditionNode(predicateClassName, ifBranch, elseBranch);
+    parentConfigurer.addWorkflowConditionNode(conditionNodeName, predicateClassName, ifBranch, elseBranch);
     return parentConfigurer;
   }
 
   @Override
-  public void addWorkflowConditionNode(String predicateClassName, List<WorkflowNode> ifBranch,
+  public void addWorkflowConditionNode(String conditionNodeName, String predicateClassName, List<WorkflowNode> ifBranch,
                                        List<WorkflowNode> elseBranch) {
-    currentBranch.add(new WorkflowConditionNode(null, predicateClassName, ifBranch, elseBranch));
+    currentBranch.add(new WorkflowConditionNode(conditionNodeName, predicateClassName, ifBranch, elseBranch));
   }
 
   @Override

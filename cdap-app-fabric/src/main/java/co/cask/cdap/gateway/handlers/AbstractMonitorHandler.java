@@ -29,6 +29,8 @@ import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,6 +43,8 @@ import java.util.TreeSet;
  * Monitor Handler returns the status of different discoverable services
  */
 public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractMonitorHandler.class);
+
   private final Map<String, MasterServiceManager> serviceManagementMap;
   private static final String STATUSOK = Constants.Monitor.STATUS_OK;
   private static final String STATUSNOTOK = Constants.Monitor.STATUS_NOTOK;
@@ -202,4 +206,55 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  public void restartAllServiceInstances(HttpRequest request, HttpResponder responder, String serviceName) {
+    restartInstances(responder, serviceName, -1);
+  }
+
+  public void restartServiceInstance(HttpRequest request, HttpResponder responder, String serviceName,
+                                     int instanceId) {
+    restartInstances(responder, serviceName, instanceId);
+  }
+
+  private void restartInstances(HttpResponder responder, String serviceName, int instanceId) {
+    long startTimeMs = System.currentTimeMillis();
+    boolean isSuccess = true;
+    try {
+      if (!serviceManagementMap.containsKey(serviceName)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Invalid service name %s", serviceName));
+        return;
+      }
+
+      MasterServiceManager masterServiceManager = serviceManagementMap.get(serviceName);
+      if (instanceId < 0) {
+        masterServiceManager.restartAllInstances();
+      } else {
+        masterServiceManager.restartInstances(instanceId);
+      }
+
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (Exception ex) {
+      LOG.warn(String.format("Exception when trying to restart instances for service %s", serviceName), ex);
+
+      isSuccess = false;
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           String.format("Error restarting instance %d for service: %s", instanceId, serviceName));
+    } finally {
+      // Record the time
+      long endTimeMs = System.currentTimeMillis();
+      if (instanceId < 0) {
+        serviceStore.setRestartAllInstancesRequest(serviceName, startTimeMs, endTimeMs, isSuccess);
+      } else {
+        serviceStore.setRestartInstanceRequest(serviceName, startTimeMs, endTimeMs, isSuccess, instanceId);
+      }
+    }
+  }
+
+  public void getLatestRestartServiceInstanceStatus(HttpRequest request, HttpResponder responder, String serviceName) {
+    try {
+      responder.sendJson(HttpResponseStatus.OK, serviceStore.getLatestRestartInstancesRequest(serviceName));
+    } catch (IllegalStateException ex) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND,
+                           String.format("No restart instances request found or %s", serviceName));
+    }
+  }
 }

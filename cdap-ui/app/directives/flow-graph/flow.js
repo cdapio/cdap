@@ -487,6 +487,7 @@ function genericRender(scope, filter, location) {
     selector += scope.parentSelector;
   }
   selector += ' svg';
+
   // Set up an SVG group so that we can translate the final graph and tooltip.
   var svg = d3.select(selector).attr('fill', 'white');
   var svgGroup = d3.select(selector + ' g');
@@ -513,18 +514,21 @@ function genericRender(scope, filter, location) {
     scope.translateX = scope.translateX + d3.event.dx;
     scope.translateY = scope.translateY + d3.event.dy;
 
-    if (scope.translateX > svg.width()) {
-      scope.translateX = svg.width();
+    var boundingClient = svg.node().getBoundingClientRect(),
+        gGraph = g.graph();
+
+    if (scope.translateX > boundingClient.width) {
+      scope.translateX = boundingClient.width;
     }
-    if (scope.translateX < -(g.graph().width * scope.currentScale)) {
-      scope.translateX = -(g.graph().width * scope.currentScale);
+    if (scope.translateX < -(gGraph.width * scope.currentScale)) {
+      scope.translateX = -(gGraph.width * scope.currentScale);
     }
 
-    if (scope.translateY > svg.height()) {
-      scope.translateY = svg.height();
+    if (scope.translateY > boundingClient.height) {
+      scope.translateY = boundingClient.height;
     }
-    if (scope.translateY < -(g.graph().height * scope.currentScale)) {
-      scope.translateY = -(g.graph().height * scope.currentScale);
+    if (scope.translateY < -(gGraph.height * scope.currentScale)) {
+      scope.translateY = -(gGraph.height * scope.currentScale);
     }
 
     var arr = [scope.translateX, scope.translateY];

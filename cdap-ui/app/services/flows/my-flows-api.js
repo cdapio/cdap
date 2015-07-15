@@ -16,7 +16,8 @@ angular.module(PKG.name + '.services')
     {
       get: myHelpers.getConfig('GET', 'REQUEST', basepath),
       runs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs', true),
-      logs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/next', true),
+      nextLogs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/next', true),
+      prevLogs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/prev', true),
       getFlowletInstance: myHelpers.getConfig('GET', 'REQUEST', basepath + '/flowlets/:flowletId/instances'),
       pollFlowletInstance: myHelpers.getConfig('GET', 'POLL', basepath + '/flowlets/:flowletId/instances'),
       setFlowletInstance: myHelpers.getConfig('PUT', 'REQUEST', basepath + '/flowlets/:flowletId/instances')

@@ -26,6 +26,7 @@ import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.internal.app.runtime.batch.WordCount;
 import co.cask.cdap.runtime.WorkflowTest;
 import com.google.common.base.Preconditions;
@@ -33,6 +34,7 @@ import com.google.common.base.Throwables;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +47,6 @@ import java.util.Map;
  * A workflow app used by {@link WorkflowTest} for testing.
  */
 public class WorkflowApp extends AbstractApplication {
-
 
   @Override
   public void configure() {
@@ -63,11 +64,11 @@ public class WorkflowApp extends AbstractApplication {
 
     @Override
     public void configure() {
-        setName("FunWorkflow");
-        setDescription("FunWorkflow description");
-        addMapReduce("ClassicWordCount");
-        addAction(new CustomAction("verify"));
-        addSpark("SparkWorkflowTest");
+      setName("FunWorkflow");
+      setDescription("FunWorkflow description");
+      addMapReduce("ClassicWordCount");
+      addAction(new CustomAction("verify"));
+      addSpark("SparkWorkflowTest");
     }
   }
 
@@ -112,13 +113,27 @@ public class WorkflowApp extends AbstractApplication {
       File successFile = new File(outputDir, "_SUCCESS");
       Preconditions.checkState(successFile.exists());
       try {
-        successFile.delete();
+        Preconditions.checkState(successFile.delete());
       } catch (Exception e) {
         Throwables.propagate(e);
       }
       List<Integer> data = Arrays.asList(1, 2, 3, 4, 5);
       JavaRDD<Integer> distData = ((JavaSparkContext) context.getOriginalSparkContext()).parallelize(data);
       distData.collect();
+      // If there are problems accessing workflow token here, Spark will throw a NotSerializableException in the test
+      final WorkflowToken workflowToken = context.getWorkflowToken();
+      if (workflowToken != null) {
+        workflowToken.put("otherKey", "otherValue");
+      }
+      distData.map(new Function<Integer, Integer>() {
+        @Override
+        public Integer call(Integer val) throws Exception {
+          if (workflowToken != null && workflowToken.get("tokenKey") != null) {
+            return 2 * val;
+          }
+          return val;
+        }
+      });
       Preconditions.checkState(!successFile.exists());
     }
   }
@@ -151,6 +166,10 @@ public class WorkflowApp extends AbstractApplication {
     public void initialize(WorkflowContext context) throws Exception {
       super.initialize(context);
       LOG.info("Custom action initialized: " + context.getSpecification().getName());
+      WorkflowToken workflowToken = context.getToken();
+      if (workflowToken != null) {
+        workflowToken.put("tokenKey", "value");
+      }
     }
 
     @Override
