@@ -93,7 +93,8 @@ angular.module(PKG.name + '.feature.adapters')
               },
               function error(errorObj) {
                 console.error('ERROR!: ', errorObj);
-              }
+                this.errors = errorObj;
+              }.bind(this)
             );
           break;
       }
