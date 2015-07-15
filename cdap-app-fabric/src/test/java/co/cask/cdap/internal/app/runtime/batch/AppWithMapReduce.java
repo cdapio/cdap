@@ -52,7 +52,7 @@ public class AppWithMapReduce extends AbstractApplication {
     private KeyValueTable table;
 
     @Override
-    public void configure() {
+    protected void configure() {
       createDataset("jobConfig", KeyValueTable.class);
     }
 
