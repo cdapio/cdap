@@ -134,6 +134,7 @@ public class UpgradeTool {
               "  1. User Datasets (Upgrades the coprocessor jars for tables, and the base paths for file sets)\n" +
               "  2. System Datasets\n" +
               "  3. StreamConversionAdapter\n" +
+              "  4. UsageRegistry Dataset Type\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
     HELP("Show this help.");
 
