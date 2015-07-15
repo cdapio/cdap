@@ -16,12 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.templates.plugins.PluginClass;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -33,21 +29,21 @@ import java.util.Set;
  * as information about which versions of the etl-batch artifact can use the plugins it contains.
  */
 public class ArtifactMeta {
-  private final List<PluginClass> plugins;
+  private final ArtifactClasses classes;
   // can't call this 'extends' since that's a reserved keyword
   private final Set<ArtifactRange> usableBy;
 
-  public ArtifactMeta(List<PluginClass> plugins) {
-    this(plugins, ImmutableSet.<ArtifactRange>of());
+  public ArtifactMeta(ArtifactClasses classes) {
+    this(classes, ImmutableSet.<ArtifactRange>of());
   }
 
-  public ArtifactMeta(List<PluginClass> plugins, Set<ArtifactRange> usableBy) {
-    this.plugins = ImmutableList.copyOf(plugins);
-    this.usableBy = ImmutableSet.copyOf(usableBy);
+  public ArtifactMeta(ArtifactClasses classes, Set<ArtifactRange> usableBy) {
+    this.classes = classes;
+    this.usableBy = usableBy;
   }
 
-  public List<PluginClass> getPlugins() {
-    return plugins;
+  public ArtifactClasses getClasses() {
+    return classes;
   }
 
   public Set<ArtifactRange> getUsableBy() {
@@ -65,18 +61,18 @@ public class ArtifactMeta {
 
     ArtifactMeta that = (ArtifactMeta) o;
 
-    return Objects.equals(plugins, that.plugins) && Objects.equals(usableBy, that.usableBy);
+    return Objects.equals(classes, that.classes) && Objects.equals(usableBy, that.usableBy);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(plugins, usableBy);
+    return Objects.hash(classes, usableBy);
   }
 
   @Override
   public String toString() {
     return "ArtifactMeta{" +
-      "plugins=" + plugins +
+      "classes=" + classes +
       ", usableBy=" + usableBy +
       '}';
   }
