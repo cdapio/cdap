@@ -59,6 +59,7 @@ public abstract class HBaseTestBase {
     // Tune down the connection thread pool size
     getConfiguration().setInt("hbase.hconnection.threads.core", 5);
     getConfiguration().setInt("hbase.hconnection.threads.max", 10);
+    getConfiguration().setInt("hbase.htable.threads.max", 10);
     // Tunn down handler threads in regionserver
     getConfiguration().setInt("hbase.regionserver.handler.count", 10);
     doStartHBase();
