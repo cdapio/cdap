@@ -1,103 +1,10 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, myHelpers, AdapterErrorFactory) {
-    function getIcon(plugin) {
-      var iconMap = {
-        'script': 'fa-code',
-        'twitter': 'fa-twitter',
-        'cube': 'fa-cubes',
-        'data': 'fa-database',
-        'database': 'fa-database',
-        'table': 'fa-table',
-        'kafka': 'icon-kafka',
-        'stream': 'icon-plugin-stream',
-        'avro': 'icon-avro',
-        'jms': 'icon-jms'
-      };
-
-      var pluginName = plugin.toLowerCase();
-      var icon = iconMap[pluginName] ? iconMap[pluginName]: 'fa-plug';
-      return icon;
-    }
+  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, myHelpers, CanvasFactory, MyPlumbFactory, AdapterErrorFactory) {
 
     this.nodes = [];
 
     if ($scope.AdapterCreateController.data) {
-      var data = $scope.AdapterCreateController.data;
-      var ui = data.ui;
-      var config = data.config;
-      // Purely for feeding my-plumb to draw the diagram
-      // if I already have the nodes and connections
-      if (ui && ui.nodes) {
-        var nodes = ui.nodes;
-        Object.keys(nodes).forEach(function(node) {
-          var nodeObj = nodes[node];
-          this.nodes.push(nodeObj);
-          MyPlumbService.addNodes(angular.copy(nodeObj), nodeObj.type);
-        }.bind(this));
-      } else {
-        this.nodes = getNodes(config);
-        this.nodes.forEach(function(node) {
-          MyPlumbService.addNodes(angular.copy(node), node.type);
-        });
-      }
-
-      if (ui && ui.connections) {
-        MyPlumbService.connections = ui.connections;
-      } else {
-        var j;
-        var connections = [];
-        for (j=0; j<this.nodes.length-1; j++) {
-          connections.push({
-            source: this.nodes[j].id,
-            target: this.nodes[j+1].id
-          });
-        }
-        MyPlumbService.connections = connections;
-      }
-
-      // Too many ORs. Should be removed when all drafts eventually are
-      // resaved in the new format. This is temporary
-      MyPlumbService.metadata.name = myHelpers.objectQuery(config, 'metadata', 'name')
-      || myHelpers.objectQuery(data, 'name');
-
-      MyPlumbService.metadata.description = myHelpers.objectQuery(config, 'metadata', 'description')
-      || myHelpers.objectQuery(data, 'description');
-
-      var template = myHelpers.objectQuery(config, 'metadata', 'type')
-      || myHelpers.objectQuery(data, 'template');
-
-      if (template === 'ETLBatch') {
-        MyPlumbService.metadata.template.schedule.cron = myHelpers.objectQuery(config, 'schedule', 'cron')
-        || myHelpers.objectQuery(config, 'schedule');
-      } else if (template === 'ETLRealtime') {
-        MyPlumbService.metadata.template.instance = myHelpers.objectQuery(config, 'instance')
-        || myHelpers.objectQuery(config, 'metadata', 'template', 'instance');
-      }
-    }
-    function getNodes(config) {
-      var nodes = [];
-      var i =0;
-      nodes.push({
-        id: config.source.name + '-source-' + (++i),
-        name: config.source.name,
-        type: 'source',
-        properties: config.source.properties
-      });
-      config.transforms.forEach(function(transform) {
-        nodes.push({
-          id: transform.name + '-transform-' + (++i),
-          name: transform.name,
-          type: 'transform',
-          properties: transform.properties
-        });
-      });
-      nodes.push({
-        id: config.sink.name + '-sink-' + (++i),
-        name: config.sink.name,
-        type: 'sink',
-        properties: config.sink.properties
-      });
-      return nodes;
+      setNodesAndConnectionsFromDraft.call(this, $scope.AdapterCreateController.data);
     }
 
     this.pluginTypes = [
@@ -215,7 +122,7 @@ angular.module(PKG.name + '.feature.adapters')
             angular.extend(
               {
                 type: group.name,
-                icon: getIcon(plugin.name)
+                icon: MyPlumbFactory.getIcon(plugin.name)
               },
               plugin
             )
@@ -253,5 +160,36 @@ angular.module(PKG.name + '.feature.adapters')
     }
 
     MyPlumbService.errorCallback(errorNotification.bind(this));
+
+    function setNodesAndConnectionsFromDraft(data) {
+      var ui = data.ui;
+      var config = data.config;
+      var nodes;
+      // Purely for feeding my-plumb to draw the diagram
+      // if I already have the nodes and connections
+      if (ui && ui.nodes) {
+        nodes = ui.nodes;
+        Object.keys(nodes).forEach(function(node) {
+          this.nodes.push(nodes[node]);
+        }.bind(this));
+      } else {
+        this.nodes = CanvasFactory.getNodes(config);
+      }
+      this.nodes.forEach(function(node) {
+        MyPlumbService.addNodes(node, node.type);
+      });
+
+      if (ui && ui.connections) {
+        MyPlumbService.connections = ui.connections;
+      } else {
+        MyPlumbService.connections = CanvasFactory.getConnectionsBasedOnNodes(this.nodes);
+      }
+
+      var config = CanvasFactory.extractMetadataFromDraft(data.config, data);
+
+      MyPlumbService.metadata.name = config.name;
+      MyPlumbService.metadata.description = config.description;
+      MyPlumbService.metadata.template = config.template;
+    }
 
   });

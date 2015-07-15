@@ -12,6 +12,8 @@ commonModule.directive('myPlumb', function() {
     link: function(scope, element, attrs) {
       scope.element = element;
       scope.getGraphMargins = function (plugins) {
+        // Very simple logic for centering the DAG.
+        // Should eventually be changed to something close to what we use in workflow/flow graphs.
         var margins = this.element[0].parentElement.getBoundingClientRect();
         var parentWidth = margins.width;
         var noOfNodes = plugins.length;
