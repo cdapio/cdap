@@ -95,7 +95,7 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
 
   private final FileBatchConfig config;
   private KeyValueTable table;
-  private Date prevMinute;
+  private Date prevHour;
   private String datesToRead;
 
   public FileBatchSource(FileBatchConfig config) {
@@ -112,15 +112,16 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
   @Override
   public void prepareRun(BatchSourceContext context) throws Exception {
     //SimpleDateFormat needs to be local because it is not threadsafe
-    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH");
 
-    //calculate date one minute ago, rounded down to the nearest minute
-    prevMinute = new Date(context.getLogicalStartTime() - TimeUnit.MINUTES.toMillis(1));
+    //calculate date one hour ago, rounded down to the nearest hour
+    prevHour = new Date(context.getLogicalStartTime() - TimeUnit.HOURS.toMillis(1));
     Calendar cal = Calendar.getInstance();
-    cal.setTime(prevMinute);
+    cal.setTime(prevHour);
+    cal.set(Calendar.MINUTE, 0);
     cal.set(Calendar.SECOND, 0);
     cal.set(Calendar.MILLISECOND, 0);
-    prevMinute = cal.getTime();
+    prevHour = cal.getTime();
 
     Job job = context.getHadoopJob();
     Configuration conf = job.getConfiguration();
@@ -143,7 +144,7 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
         List<Date> firstRun = Lists.newArrayList(new Date(0));
         datesToRead = GSON.toJson(firstRun, ARRAYLIST_DATE_TYPE);
       }
-      List<Date> attempted = Lists.newArrayList(prevMinute);
+      List<Date> attempted = Lists.newArrayList(prevHour);
       String updatedDatesToRead = GSON.toJson(attempted, ARRAYLIST_DATE_TYPE);
       if (!updatedDatesToRead.equals(datesToRead)) {
         table.write(LAST_TIME_READ, updatedDatesToRead);
@@ -151,7 +152,7 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
       conf.set(LAST_TIME_READ, datesToRead);
     }
 
-    conf.set(CUTOFF_READ_TIME, dateFormat.format(prevMinute));
+    conf.set(CUTOFF_READ_TIME, dateFormat.format(prevHour));
     if (config.inputFormatClass != null) {
       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
       Class<? extends FileInputFormat> classType = (Class<? extends FileInputFormat>)
@@ -176,7 +177,7 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
     if (!succeeded && table != null && USE_TIMEFILTER.equals(config.fileRegex)) {
       List<Date> existing = GSON.fromJson(Bytes.toString(table.read(LAST_TIME_READ)), ARRAYLIST_DATE_TYPE);
       List<Date> failed = GSON.fromJson(datesToRead, ARRAYLIST_DATE_TYPE);
-      failed.add(prevMinute);
+      failed.add(prevHour);
       failed.addAll(existing);
       table.write(LAST_TIME_READ, GSON.toJson(failed, ARRAYLIST_DATE_TYPE));
     }
