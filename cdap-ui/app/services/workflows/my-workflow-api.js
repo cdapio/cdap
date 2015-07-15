@@ -44,7 +44,8 @@ angular.module(PKG.name + '.services')
       suspendRun: getConfig('POST', 'REQUEST', basepath + '/runs/:runId/suspend'),
       resumeRun: getConfig('POST', 'REQUEST', basepath + '/runs/:runId/resume'),
 
-      logs: getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/next', true),
+      nextLogs: getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/next', true),
+      prevLogs: getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/prev', true),
 
       schedules: getConfig('GET', 'REQUEST', basepath + '/schedules', true),
       schedulesPreviousRunTime: getConfig('GET', 'REQUEST', basepath + '/previousruntime', true),
