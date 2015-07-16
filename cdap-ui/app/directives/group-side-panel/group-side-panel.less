@@ -9,8 +9,7 @@ my-side-panel {
     z-index: 1025;
     width: 40px;
     background-color: white;
-    transition: width 0.5s;
-    transition-duration: 0.5s;
+    .transition(all 0.2s ease);
 
     &.left {
       left: 10px;
@@ -22,6 +21,18 @@ my-side-panel {
           color: white;
         }
       }
+      .item-heading {
+        span[class*="icon-"] {
+          font-size: 22px;
+        }
+      }
+      &.expanded {
+        .item-heading {
+          span[class*="icon-"] {
+            font-size: 15px;
+          }
+        }
+      }
     }
 
     &.right {
@@ -29,6 +40,18 @@ my-side-panel {
         text-align: right;
       }
       right: 10px;
+      .item-heading {
+        span.fa:first-child {
+          font-size: 15px;
+        }
+      }
+      &.expanded {
+        .item-heading {
+          span.fa:first-child {
+            font-size: 11px;
+          }
+        }
+      }
     }
 
     .btn.btn-info.btn-block {
@@ -58,26 +81,25 @@ my-side-panel {
             text-overflow: ellipsis;
           }
         }
+        .item-heading {
+          padding: 0 8px;
+        }
       }
     }
 
     .item {
       border-bottom: 1px solid #DDD;
-      color: #686C78;
+      color: @cdap-lightgray;
       cursor: pointer;
       font-size: 11px;
-      .transition(all 0.2s ease-in);
       .item-heading {
         height: 40px;
-        padding: 12px 8px;
+        line-height: 40px;
         vertical-align: middle;
         span {
-          .name, &:last-child {
-            line-height: 15px;
-            vertical-align: text-bottom;
-          }
+          line-height: inherit;
           &.name {
-            margin-left: 3px;
+            padding-left: 3px;
           }
           &:last-child {
             font-size: 8px;
@@ -112,7 +134,6 @@ my-side-panel {
           color: white;
         }
       }
-
 
       .item-body {
         padding: 5px;
