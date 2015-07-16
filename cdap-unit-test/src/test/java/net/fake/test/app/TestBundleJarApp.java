@@ -17,6 +17,7 @@
 package net.fake.test.app;
 
 import co.cask.cdap.api.metrics.RuntimeMetrics;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.RuntimeStats;
@@ -24,10 +25,12 @@ import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestConfiguration;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -45,6 +48,9 @@ import java.util.concurrent.TimeUnit;
  */
 @Category(SlowTests.class)
 public class TestBundleJarApp extends TestBase {
+
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   @Test
   public void testBundleJar() throws Exception {
