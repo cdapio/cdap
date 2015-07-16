@@ -417,6 +417,10 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
       "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "*") +
         "&metric=system.reads&aggregate=true", 4);
 
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter") +
+        "&metric=system.reads&aggregate=true", 4);
+
     // for adapters, the same metrics should be available at both, just adapter level as well as mapreduce level
     // adapter level
     verifyAggregateQueryResult(
