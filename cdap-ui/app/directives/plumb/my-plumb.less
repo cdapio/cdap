@@ -3,24 +3,20 @@
   position: relative;
   width: 100%;
   overflow: auto;
-  height: 100vh;
+
+  ight: 100vh;
   background-image: url('@{img-path}/grid.png');
-  background-position: 0 0;
-  background-repeat: repeat;
-  background-size: 80px 80px;
-  background-color: transparent;
   border: 0.5px solid #c5c7d3;
 
   .box {
-    background-size: 100px 100px;
+    background-repeat: no-repeat;
     position: absolute;
-    height: 100px;
-    width: 100px;
     text-align: center;
     cursor: move;
     left: 100px;
     top: 250px;
     color: white;
+    padding: 20px 10px 10px;
     overflow: hidden;
 
     .icon.fa {
@@ -38,12 +34,16 @@
 
     &.source {
       background-image: url('@{img-path}/ico_source.png');
+      height: 117px;
+      width: 92px;
       left: 30vw;
       padding: 10px;
     }
 
     &.transform {
       background-image: url('@{img-path}/ico_transform.png');
+      height: 117px;
+      width: 102px;
       left: 50vw;
 
       .plugin-box-container {
@@ -56,6 +56,8 @@
 
     &.sink {
       background-image: url('@{img-path}/ico_sink.png');
+      height: 117px;
+      width: 92px;
       left: 70vw;
       padding: 10px;
     }
