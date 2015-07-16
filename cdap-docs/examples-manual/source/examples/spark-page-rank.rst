@@ -99,7 +99,7 @@ Standalone CDAP SDK directory, using the Command Line Interface::
   
   $ cdap-cli.sh load stream backlinkURLStream examples/SparkPageRank/resources/urlpairs.txt
   
-  Successfully sent stream event to stream 'pointsStream' 
+  Successfully sent stream event to stream 'backlinkURLStream'
 
 Running the Workflow
 -------------------------
@@ -150,7 +150,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 - Go to the *SparkPageRank* `application overview page 
   <http://localhost:9999/ns/default/apps/SparkPageRank/overview/status>`__,
-  click ``SparkPageRank`` to get to the spark detail page, then click the *Stop* button; or
+  click ``PageRankWorkflow`` to get to the spark detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh stop spark SparkPageRank.SparkPageRankProgram   
