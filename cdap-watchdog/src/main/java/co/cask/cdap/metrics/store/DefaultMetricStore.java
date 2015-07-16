@@ -45,6 +45,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -53,6 +54,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -61,19 +63,35 @@ import javax.annotation.Nullable;
 public class DefaultMetricStore implements MetricStore {
   public static final int TOTALS_RESOLUTION = Integer.MAX_VALUE;
   static final Map<String, Aggregation> AGGREGATIONS;
+
+  private static final String BY_NAMESPACE = "namespace";
+  private static final String BY_APP = "app";
+  private static final String BY_FLOW = "flow";
+  private static final String BY_FLOWLET_QUEUE = "flow.queue";
+  private static final String BY_MAPREDUCE = "mapreduce";
+  private static final String BY_SERVICE = "service";
+  private static final String BY_WORKER = "worker";
+  private static final String BY_WORKFLOW = "workflow";
+  private static final String BY_SPARK = "spark";
+  private static final String BY_ADAPTER = "adapter";
+  private static final String BY_STREAM = "stream";
+  private static final String BY_DATASET = "dataset";
+  private static final String BY_COMPONENT = "component";
+
   private final int resolutions[];
   private final Supplier<Cube> cube;
   private MetricsContext metricsContext;
+
 
   static {
     // NOTE: changing aggregations will require more work than just changing the below code. See CDAP-1466 for details.
     Map<String, Aggregation> aggs = Maps.newHashMap();
 
     // Namespaces:
-    aggs.put("namespace", new DefaultAggregation(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE)));
+    aggs.put(BY_NAMESPACE, new DefaultAggregation(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE)));
 
     // Applications:
-    aggs.put("app", new DefaultAggregation(
+    aggs.put(BY_APP, new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP, Constants.Metrics.Tag.DATASET),
       // i.e. for programs only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP)));
@@ -88,7 +106,7 @@ public class DefaultMetricStore implements MetricStore {
     // "writes into dataset A per program" would be potentially scannig thru whole program history.
 
     // flow
-    aggs.put("flow", new DefaultAggregation(
+    aggs.put(BY_FLOW, new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.FLOW, Constants.Metrics.Tag.DATASET,
                        Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.FLOWLET,
@@ -97,7 +115,7 @@ public class DefaultMetricStore implements MetricStore {
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.FLOW)));
     // queue
-    aggs.put("flow.queue", new DefaultAggregation(
+    aggs.put(BY_FLOWLET_QUEUE, new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.FLOW, Constants.Metrics.Tag.CONSUMER,
                        Constants.Metrics.Tag.PRODUCER, Constants.Metrics.Tag.FLOWLET_QUEUE),
@@ -105,7 +123,7 @@ public class DefaultMetricStore implements MetricStore {
                        Constants.Metrics.Tag.FLOW, Constants.Metrics.Tag.CONSUMER,
                        Constants.Metrics.Tag.PRODUCER, Constants.Metrics.Tag.FLOWLET_QUEUE)));
     // mapreduce
-    aggs.put("mapreduce", new DefaultAggregation(
+    aggs.put(BY_MAPREDUCE, new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.MAPREDUCE, Constants.Metrics.Tag.DATASET,
                        Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.MR_TASK_TYPE,
@@ -114,7 +132,7 @@ public class DefaultMetricStore implements MetricStore {
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.MAPREDUCE)));
     // service
-    aggs.put("service", new DefaultAggregation(
+    aggs.put(BY_SERVICE, new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.SERVICE, Constants.Metrics.Tag.DATASET,
                        Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.HANDLER,
@@ -124,7 +142,7 @@ public class DefaultMetricStore implements MetricStore {
                        Constants.Metrics.Tag.SERVICE)));
 
     // worker
-    aggs.put("worker", new DefaultAggregation(
+    aggs.put(BY_WORKER, new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.WORKER, Constants.Metrics.Tag.DATASET,
                        Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.INSTANCE_ID),
@@ -133,7 +151,7 @@ public class DefaultMetricStore implements MetricStore {
                        Constants.Metrics.Tag.WORKER)));
 
     // workflow
-    aggs.put("workflow", new DefaultAggregation(
+    aggs.put(BY_WORKFLOW, new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.WORKFLOW, Constants.Metrics.Tag.DATASET,
                        Constants.Metrics.Tag.RUN_ID),
@@ -142,7 +160,7 @@ public class DefaultMetricStore implements MetricStore {
                        Constants.Metrics.Tag.WORKFLOW)));
 
     // spark
-    aggs.put("spark", new DefaultAggregation(
+    aggs.put(BY_SPARK, new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.SPARK, Constants.Metrics.Tag.DATASET,
                        Constants.Metrics.Tag.RUN_ID),
@@ -151,26 +169,26 @@ public class DefaultMetricStore implements MetricStore {
                        Constants.Metrics.Tag.SPARK)));
 
     // batch adapters
-    aggs.put("adapter", new DefaultAggregation(
+    aggs.put(BY_ADAPTER, new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.ADAPTER,
                        Constants.Metrics.Tag.RUN_ID),
       // i.e. for adapter only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.ADAPTER)));
 
     // Streams:
-    aggs.put("stream", new DefaultAggregation(
+    aggs.put(BY_STREAM, new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.STREAM),
       // i.e. for streams only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.STREAM)));
 
     // Datasets:
-    aggs.put("dataset", new DefaultAggregation(
+    aggs.put(BY_DATASET, new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET),
       // i.e. for datasets only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET)));
 
     // System components:
-    aggs.put("component", new DefaultAggregation(
+    aggs.put(BY_COMPONENT, new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
                        Constants.Metrics.Tag.HANDLER, Constants.Metrics.Tag.METHOD),
       // i.e. for components only
@@ -249,8 +267,25 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   private CubeQuery buildCubeQuery(MetricDataQuery q) {
-    return new CubeQuery(null, q.getStartTs(), q.getEndTs(), q.getResolution(), q.getLimit(), q.getMetrics(),
+    String aggregation = getAggregation(q);
+    return new CubeQuery(aggregation, q.getStartTs(), q.getEndTs(), q.getResolution(), q.getLimit(), q.getMetrics(),
                          q.getSliceByTags(), q.getGroupByTags(), q.getInterpolator());
+  }
+
+  @Nullable
+  private String getAggregation(MetricDataQuery q) {
+    // We mostly rely on auto-selection of aggregation during query (in which case null is returned from
+    // this method). In some specific cases we need to help resolve the aggregation though.
+    Set<String> tagNames = ImmutableSet.<String>builder()
+      .addAll(q.getSliceByTags().keySet()).addAll(q.getGroupByTags()).build();
+    if (tagNames.contains(Constants.Metrics.Tag.FLOW)) {
+      if (tagNames.contains(Constants.Metrics.Tag.PRODUCER) || tagNames.contains(Constants.Metrics.Tag.CONSUMER)) {
+        return "flow.queue";
+      } else {
+        return "flow";
+      }
+    }
+    return null;
   }
 
   @Override
