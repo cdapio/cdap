@@ -55,8 +55,8 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
     Schema.Field.of("device", Schema.of(Schema.Type.STRING)),
     Schema.Field.of("ts", Schema.of(Schema.Type.LONG))
   );
-  private static final String LOG_FORMAT_DESCRIPTION = "Log format to parse. Currently only supports S3 and " +
-    "CLF Log format.";
+  private static final String LOG_FORMAT_DESCRIPTION = "Log format to parse. Currently supports S3, " +
+    "CLF, and Cloudfront formats.";
   private static final String INPUT_NAME_DESCRIPTION = "Name of the field in the input schema which encodes the " +
     "log information. The given field must be of type String or Bytes";
   private static final Logger LOG = LoggerFactory.getLogger(LogParserTransform.class);
@@ -84,8 +84,10 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
   private static final int CLF_REGEX_LENGTH = 9;
   private static final String S3_LOG = "S3";
   private static final String CLF_LOG = "CLF";
+  private static final String CLOUDFRONT_LOG = "Cloudfront";
   private final LogParserConfig config;
-  private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z");
+  private final SimpleDateFormat sdfStrftime = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z");
+  private final SimpleDateFormat sdfCloudfront = new SimpleDateFormat("yyyy-MM-dd:HH:mm:ss z");
 
   public LogParserTransform(LogParserConfig config) {
     this.config = config;
@@ -93,9 +95,10 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
 
   @Override
   public void initialize(TransformContext context) throws Exception {
-    if (!S3_LOG.equals(config.logFormat) && !CLF_LOG.equals(config.logFormat)) {
+    if (!S3_LOG.equals(config.logFormat) && !CLF_LOG.equals(config.logFormat) &&
+        !CLOUDFRONT_LOG.equals(config.logFormat)) {
       LOG.error("Log format not currently supported.");
-      throw new IllegalStateException("Unsupported log format");
+      throw new IllegalStateException("Unsupported log format: " + config.logFormat);
     }
   }
 
@@ -103,7 +106,7 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
     String log = getLog(input);
     if (log == null) {
-      LOG.error("Couldn't read schema, log message was null");
+      LOG.debug("Couldn't read schema, log message was null");
       return;
     }
 
@@ -115,13 +118,35 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
         return;
       }
       output = parseRequest(logMatcher, S3_INDICES);
-    } else {
+    } else if (CLF_LOG.equals(config.logFormat)) {
       Matcher logMatcher = CLF_LOG_PATTERN.matcher(log);
       if (!logMatcher.matches() || logMatcher.groupCount() < CLF_REGEX_LENGTH) {
         LOG.debug("Couldn't parse log because the log did not match the CLF format. log: {}", log);
         return;
       }
       output = parseRequest(logMatcher, CLF_INDICES);
+    } else {
+      if (log.startsWith("#")) {
+        LOG.trace("Log is a comment. Ignoring...");
+        return;
+      }
+
+      String[] fields = log.split("\\t");
+      String uri = fields[7];
+      String ip = fields[4];
+      long ts = sdfCloudfront.parse(String.format("%s:%s UTC", fields[0], fields[1])).getTime();
+      UserAgentStringParser parser = UADetectorServiceFactory.getResourceModuleParser();
+      ReadableUserAgent userAgent = parser.parse(fields[10]);
+      String browser = userAgent.getFamily().getName();
+      String device = userAgent.getDeviceCategory().getCategory().getName();
+
+      output = StructuredRecord.builder(LOG_SCHEMA)
+        .set("uri", uri)
+        .set("ip", ip)
+        .set("browser", browser)
+        .set("device", device)
+        .set("ts", ts)
+        .build();
     }
 
     if (output != null) {
@@ -187,7 +212,7 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
     String uri = requestMatcher.group(2);
     long ts = System.currentTimeMillis();
     try {
-      ts = sdf.parse(logMatcher.group(indices[1])).getTime();
+      ts = sdfStrftime.parse(logMatcher.group(indices[1])).getTime();
     } catch (ParseException e) {
       LOG.debug("Couldn't parse time from the input record, using current timestamp instead. Exception: {}",
                 e.getMessage());

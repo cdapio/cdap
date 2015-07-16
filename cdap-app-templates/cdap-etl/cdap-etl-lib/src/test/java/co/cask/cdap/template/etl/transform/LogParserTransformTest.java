@@ -42,9 +42,13 @@ public class LogParserTransformTest {
     new LogParserTransform.LogParserConfig("CLF", "body");
   private static final Transform<StructuredRecord, StructuredRecord> CLF_TRANSFORM =
     new LogParserTransform(CLF_CONFIG);
+  private static final LogParserTransform.LogParserConfig CLOUDFRONT_CONFIG =
+    new LogParserTransform.LogParserConfig("Cloudfront", "body");
+  private static final Transform<StructuredRecord, StructuredRecord> CLOUDFRONT_TRANSFORM =
+    new LogParserTransform(CLOUDFRONT_CONFIG);
 
   @Test
-  public void transformS3Log() throws Exception {
+  public void testS3LogTransform() throws Exception {
     StructuredRecord botRecord = StructuredRecord.builder(STRING_SCHEMA)
       .set("body", "13a9f69e4a00effd6b4b891dcbcabef632ef9a9da7c localhost " +
         "[22/Jan/2015:11:03:21 +0000] 122.122.111.11 - 6006CA0AE4 REST.GET.OBJECT " +
@@ -80,7 +84,39 @@ public class LogParserTransformTest {
   }
 
   @Test
-  public void transformCLFLog() throws Exception {
+  public void testCloudfrontLogTransform() throws Exception {
+    String event = "2015-04-17\t13:35:48\tSFO20\t582123\t11.111.111.11\tGET\texample.cloudfront" +
+      ".net\t/coopr-standalone-vm/0.9.8/coopr-standalone-vm-0.9.8.ova\t200\t-\tMozilla/5" +
+      ".0%2520(compatible;%2520Yahoo!%2520Slurp;%2520http://help.yahoo.com/help/us/ysearch/slurp)" +
+      "\t-\tError\tsCmB94WPP5v-QoCyn7Jz1ZLn0kBhzIEkqfFuX2Gh5oA1SA8dsLp-kw==\texample.co\thttp\t264\t0.984";
+
+    StructuredRecord record = StructuredRecord.builder(STRING_SCHEMA)
+      .set("body", event)
+      .build();
+
+    String comment = "#Fields: date time x-edge-location sc-bytes c-ip cs-method cs(Host) cs-uri-stem sc-status " +
+      "cs(Referer) cs(User-Agent) cs-uri-query cs(Cookie) x-edge-result-type x-edge-request-id x-host-header " +
+      "cs-protocol cs-bytes time-taken";
+
+    StructuredRecord commentRecord = StructuredRecord.builder(STRING_SCHEMA)
+      .set("body", comment)
+      .build();
+
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
+    CLOUDFRONT_TRANSFORM.transform(record, emitter);
+    StructuredRecord output = emitter.getEmitted().get(0);
+    Assert.assertEquals("/coopr-standalone-vm/0.9.8/coopr-standalone-vm-0.9.8.ova", output.get("uri"));
+    Assert.assertEquals("11.111.111.11", output.get("ip"));
+    Assert.assertEquals("unknown", output.get("browser"));
+    Assert.assertEquals("", output.get("device"));
+    Assert.assertEquals(1429277748000L, output.get("ts"));
+
+    CLOUDFRONT_TRANSFORM.transform(commentRecord, emitter);
+    Assert.assertEquals(1, emitter.getEmitted().size());
+  }
+
+  @Test
+  public void testCLFLogTransform() throws Exception {
     StructuredRecord record = StructuredRecord.builder(BYTE_SCHEMA)
       .set("body", ByteBuffer.wrap((Bytes.toBytes("127.0.0.1 - frank [10/Oct/2000:13:55:36 -0700] " +
                                                     "\"GET /apache_pb.gif HTTP/1.0\" 200 2326 " +
