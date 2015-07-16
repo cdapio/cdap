@@ -91,7 +91,6 @@ angular.module(PKG.name + '.feature.adapters')
         errors[config.sink.id] = 'Adapter\'s sink is missing required fields';
       }
       config.transforms.forEach(function(transform) {
-        console.log('check', isValidPlugin(transform));
         if (transform.name && !isValidPlugin(transform)) {
           errors[transform.id] = 'Adapter\'s transforms is missing required fields';
         }
