@@ -169,8 +169,8 @@ angular.module(PKG.name + '.feature.adapters')
       // if I already have the nodes and connections
       if (ui && ui.nodes) {
         nodes = ui.nodes;
-        Object.keys(nodes).forEach(function(node) {
-          this.nodes.push(nodes[node]);
+        angular.forEach(nodes, function(value) {
+          this.nodes.push(value);
         }.bind(this));
       } else {
         this.nodes = CanvasFactory.getNodes(config);
