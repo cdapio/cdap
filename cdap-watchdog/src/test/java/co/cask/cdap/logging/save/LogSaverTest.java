@@ -48,9 +48,9 @@ import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.test.SlowTests;
-import co.cask.cdap.watchdog.election.MultiLeaderElection;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.runtime.TransactionModules;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
@@ -60,7 +60,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.google.inject.PrivateModule;
 import com.google.inject.TypeLiteral;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -135,7 +137,14 @@ public class LogSaverTest extends KafkaTestBase {
       new DataSetsModules().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new MetricsClientRuntimeModule().getNoopModules(),
-      new LoggingModules().getDistributedModules()
+      new LoggingModules().getDistributedModules(),
+      new PrivateModule() {
+        @Override
+        protected void configure() {
+          install(new FactoryModuleBuilder().build(LogSaverFactory.class));
+          expose(LogSaverFactory.class);
+        }
+      }
     );
 
     txManager = injector.getInstance(TransactionManager.class);
@@ -147,12 +156,10 @@ public class LogSaverTest extends KafkaTestBase {
     KafkaClientService kafkaClient = injector.getInstance(KafkaClientService.class);
     kafkaClient.startAndWait();
 
-    LogSaver logSaver = injector.getInstance(LogSaver.class);
+    LogSaverFactory factory = injector.getInstance(LogSaverFactory.class);
+    // {0, 1} - because we have 2 partitions as per configuration above (see LoggingConfiguration.NUM_PARTITIONS)
+    LogSaver logSaver = factory.create(ImmutableSet.of(0, 1));
     logSaver.startAndWait();
-
-    MultiLeaderElection multiElection = new MultiLeaderElection(zkClientService, "log-saver", 2, logSaver);
-    multiElection.setLeaderElectionSleepMs(1);
-    multiElection.startAndWait();
 
     // Sleep a while to let Kafka server fully initialized.
     TimeUnit.SECONDS.sleep(5);
@@ -171,7 +178,6 @@ public class LogSaverTest extends KafkaTestBase {
     waitTillLogSaverDone(systemLogBaseDir, "services/service-metrics/%s", "Test log message 59 arg1 arg2");
 
     logSaver.stopAndWait();
-    multiElection.stopAndWait();
     kafkaClient.stopAndWait();
     zkClientService.stopAndWait();
   }

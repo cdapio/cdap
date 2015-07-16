@@ -70,7 +70,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
     ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
                     Constants.Metrics.Tag.COMPONENT, Constants.Service.METRICS_PROCESSOR);
 
-  private KafkaMetricsProcessorService kafkaMetricsProcessorService;
+  private MetricsProcessorService metricsProcessorService;
   private ZKClientService zkClientService;
   private KafkaClientService kafkaClientService;
   private MetricsProcessorStatusService metricsProcessorStatusService;
@@ -100,8 +100,8 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
 
       MetricsContext metricsContext = metricsCollectionService.getContext(METRICS_PROCESSOR_CONTEXT);
 
-      kafkaMetricsProcessorService = injector.getInstance(KafkaMetricsProcessorService.class);
-      kafkaMetricsProcessorService.setMetricsContext(metricsContext);
+      metricsProcessorService = injector.getInstance(MetricsProcessorService.class);
+      metricsProcessorService.setMetricsContext(metricsContext);
       metricsProcessorStatusService = injector.getInstance(MetricsProcessorStatusService.class);
       LOG.info("Runnable initialized {}", name);
     } catch (Throwable t) {
@@ -115,7 +115,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
     services.add(zkClientService);
     services.add(kafkaClientService);
     services.add(metricsCollectionService);
-    services.add(kafkaMetricsProcessorService);
+    services.add(metricsProcessorService);
     services.add(metricsProcessorStatusService);
   }
 
