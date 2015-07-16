@@ -17,14 +17,13 @@
 package co.cask.cdap.test.app;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.ConfigurableTestBase;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SlowTests;
+import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.XSlowTests;
-import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -32,17 +31,18 @@ import org.junit.experimental.categories.Category;
  *
  */
 @Category(SlowTests.class)
-public class DatasetUpgradeDisabledTest extends ConfigurableTestBase {
+public class DatasetUpgradeDisabledTest extends TestBase {
 
-  @BeforeClass
-  public static void init() throws Exception {
-    initTestBase(ImmutableMap.of(Constants.Dataset.DATASET_UNCHECKED_UPGRADE, Boolean.FALSE.toString()));
-  }
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration(
+    Constants.Dataset.DATASET_UNCHECKED_UPGRADE, false,
+    Constants.Explore.EXPLORE_ENABLED, false
+  );
 
   @Category(XSlowTests.class)
   @Test
   public void testDatasetUncheckedUpgrade() throws Exception {
-    ApplicationManager applicationManager = deployApplication(DatasetUncheckedUpgradeApp.class);
+    deployApplication(DatasetUncheckedUpgradeApp.class);
     DataSetManager<DatasetUncheckedUpgradeApp.RecordDataset> datasetManager =
       getDataset(DatasetUncheckedUpgradeApp.DATASET_NAME);
     DatasetUncheckedUpgradeApp.Record expectedRecord = new DatasetUncheckedUpgradeApp.Record("0AXB", "john", "doe");
@@ -54,7 +54,7 @@ public class DatasetUpgradeDisabledTest extends ConfigurableTestBase {
     Assert.assertEquals(expectedRecord, actualRecord);
 
     // Test incompatible upgrade
-    applicationManager = deployApplication(IncompatibleDatasetUncheckedUpgradeApp.class);
+    deployApplication(IncompatibleDatasetUncheckedUpgradeApp.class);
     datasetManager = getDataset(DatasetUncheckedUpgradeApp.DATASET_NAME);
     // new dataset is incompatible, but because dataset upgrade is disabled, it should not have an effect
     // this would either fail in getRecord() or throw a class cast exception if the dataset had been upgraded
