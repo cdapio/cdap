@@ -144,7 +144,7 @@ angular.module(PKG.name + '.feature.adapters')
         currConn = connections[i];
         nextConn = connections[i+1];
         if (currConn.target !== nextConn.source) {
-          addCanvasError('There are parallel connectiosn inside this adapter', errors);
+          addCanvasError('There are parallel connections inside this adapter', errors);
           break;
         }
       }
