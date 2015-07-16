@@ -1,24 +1,15 @@
 @import "../../../styles/variables.less";
+@import "../../../styles/themes/cdap/mixins.less";
+
 my-dsv {
   .dsv-container {
     background-color: @body-bg;
     border: 1px solid #ddd;
-    border-radius: 4px;
+    .border-radius(4px);
 
     .empty-container {
-      padding: 5px 15px;
-    }
-  }
-
-  .delimiter {
-    margin-bottom: 5px;
-
-    .delimiter-label {
-      padding-left: 17px;
-      line-height: 30px;
-
-      > strong {
-        vertical-align: middle;
+      .btn.btn-info {
+        margin-top: 10px;
       }
     }
   }
