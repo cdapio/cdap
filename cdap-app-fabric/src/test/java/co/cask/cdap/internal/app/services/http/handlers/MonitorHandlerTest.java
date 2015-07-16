@@ -23,6 +23,7 @@ import co.cask.cdap.proto.SystemServiceMeta;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
+import org.apache.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
@@ -36,7 +37,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Monitor handler tests.
@@ -122,5 +122,28 @@ public class MonitorHandlerTest extends AppFabricTestBase {
     Assert.assertNotNull(result);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result.getServiceName());
     Assert.assertEquals(RestartServiceInstancesStatus.RestartStatus.SUCCESS, result.getStatus());
+  }
+
+  @Test
+  public void testInvalidIdRestartInstances() throws Exception {
+    String path = String.format("%s/system/services/%s/instances/1000/restart", Constants.Gateway.API_VERSION_3,
+                                Constants.Service.APP_FABRIC_HTTP);
+    HttpResponse response = doPut(path);
+
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
+
+    path = String.format("%s/system/services/%s/instances/restart", Constants.Gateway.API_VERSION_3,
+                         Constants.Service.APP_FABRIC_HTTP);
+    response = doGet(path);
+
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+
+    RestartServiceInstancesStatus result =
+      GSON.fromJson(new String(ByteStreams.toByteArray(response.getEntity().getContent()), Charsets.UTF_8),
+                    RestartServiceInstancesStatus.class);
+
+    Assert.assertNotNull(result);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result.getServiceName());
+    Assert.assertEquals(RestartServiceInstancesStatus.RestartStatus.FAILURE, result.getStatus());
   }
 }
