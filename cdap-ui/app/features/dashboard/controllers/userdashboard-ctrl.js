@@ -3,9 +3,10 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').controller('UserDashboardCtrl',
-function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, DashboardHelper) {
+function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, DashboardHelper, $rootScope) {
 
 
+  window.unknown = $scope;
   $scope.unknownBoard = false;
   $scope.liveDashboard = false;
 
@@ -44,13 +45,10 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, Dashbo
     }
   };
 
-  if (!$scope.currentBoard) {
-    $scope.unknownBoard = true;
-  }
-
-
   $scope.$on('$destroy', function() {
-    DashboardHelper.stopPollDashboard($scope.currentBoard);
+    if ($scope.liveDashboard) {
+      DashboardHelper.stopPollDashboard($scope.currentBoard);
+    }
   });
 
   function applyOnWidgets(rDashboardsModel, func) {
@@ -68,7 +66,7 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, Dashbo
   $scope.currentTab = 1;
 
   // TODO: new widgets added won't have the properties set below
-  $scope.updateWithTimeRange = function() {
+  $scope.updateWithTimeRange = function(isStopPoll) {
     var millisecondsPerDay = 1000*60*60*24;
     var limitInDays = 30;
     var timeRange = $scope.timeOptions.endMs - $scope.timeOptions.startMs;
@@ -80,8 +78,10 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, Dashbo
       });
       return;
     }
-    $scope.liveDashboard = false;
-    DashboardHelper.stopPollDashboard($scope.currentBoard);
+    if (isStopPoll !== false) {
+      $scope.liveDashboard = false;
+      DashboardHelper.stopPollDashboard($scope.currentBoard);
+    }
 
     applyOnWidgets(rDashboardsModel, function (widget) {
       widget.metric.startTime = Math.floor($scope.timeOptions.startMs / 1000);
@@ -92,7 +92,7 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, Dashbo
 
     DashboardHelper.fetchDataDashboard($scope.currentBoard);
   };
-  $scope.updateWithTimeRange(); // getting initial value for graph
+  $scope.updateWithTimeRange(false); // getting initial value for graph
 
   $scope.updateWithFrequency = function() {
     $scope.liveDashboard = true;

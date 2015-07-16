@@ -10,19 +10,18 @@
 <div class="cdap-subnav-end"></div>
 
 <ul class="nav nav-tabs slanted-tabs" role="tablist">
-  <li role="presentation" ui-sref-active="active">
-    <a ui-sref="dashboard.standard.cdap" role="tab" data-toggle="tab">System</a>
+  <li role="presentation" ng-class="{'active': dashboards.activeIndex == 'system'}">
+    <a href="" ng-click="activeTabClick($event, 'system')" role="tab" data-toggle="tab"> System </a>
   </li>
   <li role="presentation"
-      ui-sref-active="active"
+      ng-class="{'active': dashboards.activeIndex === $index}"
       ng-repeat="dashboard in dashboards | orderBy:$index">
-    <a ui-sref="dashboard.user({tab: $index})"
+    <a
         role="tab"
+        href=""
         ng-click="activeTabClick($event, $index)"
-        tooltip="{{dashboard.title}}"
         data-toggle="tab"
-        class="dropdown-toggle"
-        tooltip-placement="bottom">
+        class="dropdown-toggle">
         <span class="dtitle">
         {{dashboard.title}}
         </span>
