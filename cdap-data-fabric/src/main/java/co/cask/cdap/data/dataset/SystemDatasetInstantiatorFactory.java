@@ -37,9 +37,9 @@ public class SystemDatasetInstantiatorFactory {
   private final CConfiguration cConf;
 
   @Inject
-  private SystemDatasetInstantiatorFactory(LocationFactory locationFactory,
-                                           DatasetFramework datasetFramework,
-                                           CConfiguration cConf) {
+  public SystemDatasetInstantiatorFactory(LocationFactory locationFactory,
+                                          DatasetFramework datasetFramework,
+                                          CConfiguration cConf) {
     this.locationFactory = locationFactory;
     this.datasetFramework = datasetFramework;
     this.cConf = cConf;

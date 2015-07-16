@@ -25,8 +25,8 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -49,18 +49,18 @@ public final class LocalStreamFileJanitorService extends AbstractService impleme
 
   @Override
   protected void doStart() {
-    executor = new ScheduledThreadPoolExecutor(1, Threads.createDaemonThreadFactory("stream-cleanup")) {
-      @Override
-      protected void terminated() {
-        notifyStopped();
-      }
-    };
+    executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("stream-cleanup"));
 
     // Always run the cleanup when it starts
     executor.submit(new Runnable() {
 
       @Override
       public void run() {
+        if (state() != State.RUNNING) {
+          LOG.info("Janitor already stopped");
+          return;
+        }
+
         LOG.debug("Execute stream file cleanup.");
 
         try {
@@ -87,6 +87,13 @@ public final class LocalStreamFileJanitorService extends AbstractService impleme
 
   @Override
   protected void doStop() {
-    executor.shutdownNow();
+    executor.submit(new Runnable() {
+      @Override
+      public void run() {
+        LOG.debug("Stream file janitor stopped");
+        notifyStopped();
+      }
+    });
+    executor.shutdown();
   }
 }
