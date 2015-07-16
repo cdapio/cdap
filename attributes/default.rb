@@ -20,5 +20,5 @@
 # Install Java and Hadoop clients by default
 default['cdap']['skip_prerequisites'] = false
 
-# User to run hdfs commands as
+# User to run hadoop fs commands as
 default['cdap']['fs_superuser'] = 'hdfs'
