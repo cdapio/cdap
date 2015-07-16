@@ -100,7 +100,7 @@ public class ProgramClientTestRun extends ClientTestBase {
   private void testWorkflowCommand(final Id.Program workflow) throws Exception {
     // File is used to synchronized between the test case and the FakeWorkflow
     File doneFile = TMP_FOLDER.newFile();
-    doneFile.delete();
+    Assert.assertTrue(doneFile.delete());
 
     LOG.info("Starting workflow");
 
@@ -118,7 +118,7 @@ public class ProgramClientTestRun extends ClientTestBase {
     }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     // Signal the FakeWorkflow that execution can be continued by creating temp file
-    doneFile.createNewFile();
+    Assert.assertTrue(doneFile.createNewFile());
 
     assertProgramStopped(programClient, workflow);
     LOG.info("Workflow stopped");

@@ -831,7 +831,7 @@ public class ProgramClient {
    */
   public List<WorkflowActionNode> getWorkflowCurrent(Id.Application appId, String workflowId, String runId)
     throws IOException, NotFoundException, UnauthorizedException {
-    String path = String.format("/apps/%s/workflows/%s/%s/current", appId.getId(), workflowId, runId);
+    String path = String.format("/apps/%s/workflows/%s/runs/%s/current", appId.getId(), workflowId, runId);
     URL url = config.resolveNamespacedURLV3(appId.getNamespace(), path);
 
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
