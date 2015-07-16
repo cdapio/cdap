@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Test that MapReduce can incrementally process partitions.
  */
-public class MapReducePartitionConsumingTest extends TestFrameworkTestBase {
+public class MapReducePartitionConsumingTestRun extends TestFrameworkTestBase {
   private static final String LINE1 = "a b a";
   private static final String LINE2 = "b a b";
   private static final String LINE3 = "c c c";

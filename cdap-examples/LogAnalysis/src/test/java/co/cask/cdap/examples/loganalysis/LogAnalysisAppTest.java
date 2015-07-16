@@ -28,14 +28,18 @@ import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestConfiguration;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
+import com.google.common.base.Charsets;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
@@ -53,7 +57,10 @@ public class LogAnalysisAppTest extends TestBase {
   private static final String TOTAL_HITS_VALUE = "2";
   private static final String TOTAL_RESPONSE_VALUE = "2";
   private static final String RESPONSE_CODE = "200";
-  public static final String TPFS_RESULT = "127.0.0.1:2";
+  private static final String TPFS_RESULT = "127.0.0.1:2";
+
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
   @Test
   public void test() throws Exception {
@@ -122,8 +129,9 @@ public class LogAnalysisAppTest extends TestBase {
         location = file;
       }
     }
-    BufferedReader reader = new BufferedReader(new jline.internal.InputStreamReader(location.getInputStream()));
-    Assert.assertEquals(TPFS_RESULT, reader.readLine());
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(location.getInputStream(), Charsets.UTF_8))) {
+      Assert.assertEquals(TPFS_RESULT, reader.readLine());
+    }
   }
 
 

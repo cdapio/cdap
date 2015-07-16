@@ -45,6 +45,7 @@ import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestConfiguration;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -87,6 +88,9 @@ public class ETLWorkerTest extends TestBase {
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
+
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
   protected static final int PARTITIONS = 1;
 

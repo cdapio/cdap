@@ -26,6 +26,8 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>cdap-formats</artifactId>
+  <name>CDAP Data Format</name>
+  <packaging>jar</packaging>
 
   <dependencies>
     <dependency>

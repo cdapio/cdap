@@ -21,10 +21,11 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.ConfigurableTestBase;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SlowTests;
+import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.XSlowTests;
-import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -32,12 +33,13 @@ import org.junit.experimental.categories.Category;
  *
  */
 @Category(SlowTests.class)
-public class DatasetUpgradeEnabledTest extends ConfigurableTestBase {
+public class DatasetUpgradeEnabledTest extends TestBase {
 
-  @BeforeClass
-  public static void init() throws Exception {
-    initTestBase(ImmutableMap.of(Constants.Dataset.DATASET_UNCHECKED_UPGRADE, Boolean.TRUE.toString()));
-  }
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration(
+    Constants.Dataset.DATASET_UNCHECKED_UPGRADE, true,
+    Constants.Explore.EXPLORE_ENABLED, false
+  );
 
   @Category(XSlowTests.class)
   @Test
