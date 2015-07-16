@@ -27,10 +27,12 @@ import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestConfiguration;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.net.HttpURLConnection;
@@ -41,6 +43,9 @@ import java.util.concurrent.TimeUnit;
  * Tests the UserProfiles example app.
  */
 public class UserProfilesTest extends TestBase {
+
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
   @Test
   public void testUserProfiles() throws Exception {
