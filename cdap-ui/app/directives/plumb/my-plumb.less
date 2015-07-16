@@ -12,6 +12,7 @@
   border: 0.5px solid #c5c7d3;
 
   .box {
+    background-size: 100px 100px;
     position: absolute;
     height: 100px;
     width: 100px;
@@ -36,12 +37,13 @@
     }
 
     &.source {
-      background-color: #47C037;
+      background-image: url('@{img-path}/ico_source.png');
       left: 30vw;
       padding: 10px;
     }
 
     &.transform {
+      background-image: url('@{img-path}/ico_transform.png');
       left: 50vw;
 
       .plugin-box-container {
@@ -53,7 +55,7 @@
     }
 
     &.sink {
-      background-color: #38C0BE;
+      background-image: url('@{img-path}/ico_sink.png');
       left: 70vw;
       padding: 10px;
     }
