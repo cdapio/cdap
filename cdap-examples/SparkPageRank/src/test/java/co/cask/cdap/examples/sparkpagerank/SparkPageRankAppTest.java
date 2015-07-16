@@ -24,11 +24,12 @@ import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestConfiguration;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -47,6 +48,9 @@ public class SparkPageRankAppTest extends TestBase {
   private static final String RANK = "14";
   private static final String TOTAL_PAGES = "1";
 
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+
   @Test
   public void test() throws Exception {
     // Deploy the SparkPageRankApp
@@ -60,14 +64,14 @@ public class SparkPageRankAppTest extends TestBase {
     streamManager.send(Joiner.on(" ").join(URL_3, URL_1));
 
     // Start GoogleTypePR
-    ServiceManager transformServiceManager = appManager.startService(SparkPageRankApp.GOOGLE_TYPE_PR_SERVICE_NAME);
-
+    ServiceManager transformServiceManager = appManager.getServiceManager(SparkPageRankApp.GOOGLE_TYPE_PR_SERVICE_NAME)
+                                                       .start();
     // Start RanksService
-    ServiceManager ranksServiceManager = appManager.startService(SparkPageRankApp.RANKS_SERVICE_NAME);
+    ServiceManager ranksServiceManager = appManager.getServiceManager(SparkPageRankApp.RANKS_SERVICE_NAME).start();
 
     // Start TotalPagesPRService
-    ServiceManager totalPagesServiceManager = appManager.startService(SparkPageRankApp.TOTAL_PAGES_PR_SERVICE_NAME);
-
+    ServiceManager totalPagesServiceManager = appManager.getServiceManager(SparkPageRankApp.TOTAL_PAGES_PR_SERVICE_NAME)
+                                                        .start();
     // Wait for GoogleTypePR service to start since the Spark program needs it
     transformServiceManager.waitForStatus(true);
 
@@ -76,8 +80,7 @@ public class SparkPageRankAppTest extends TestBase {
     sparkManager.waitForFinish(60, TimeUnit.SECONDS);
 
     // Run RanksCounter which will count the number of pages for a pr
-    MapReduceManager mapReduceManager = appManager.startMapReduce("RanksCounter",
-                                                                  ImmutableMap.<String, String>of());
+    MapReduceManager mapReduceManager = appManager.getMapReduceManager("RanksCounter").start();
     mapReduceManager.waitForFinish(3, TimeUnit.MINUTES);
 
     // Wait for ranks service to start
