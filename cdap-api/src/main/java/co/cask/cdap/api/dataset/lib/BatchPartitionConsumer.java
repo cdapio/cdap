@@ -48,6 +48,9 @@ public abstract class BatchPartitionConsumer {
   /**
    * Used from the beforeSubmit method of the implementing batch job to get a PartitionedFileSet that has specified
    * a set of {@link Partition}s of a {@link PartitionedFileSet} to be processed by the run of the batch job.
+   * It does this by reading back the previous state, determining the new partitions to read, and computing the new
+   * state (but the persistence of this new state does not happen until the call to {@code persist()}. It then returns
+   * the dataset instantiated with the discovered partitions as input.
    *
    * @param datasetContext dataset context used to access the PartitionedFileSet.
    * @param partitionedFileSetName the name of the PartitionedFileSet of which partitions will be processed.
@@ -55,7 +58,7 @@ public abstract class BatchPartitionConsumer {
    * will return the paths of the Partitions that have yet to be consumed, according to the state deserialized from
    * the implementing readBytes(DatasetContext) method.
    */
-  public PartitionedFileSet getPartitionedFileSet(DatasetContext datasetContext, String partitionedFileSetName) {
+  public PartitionedFileSet getConfiguredDataset(DatasetContext datasetContext, String partitionedFileSetName) {
     byte[] stateBytes = readBytes(datasetContext);
     PartitionConsumerState partitionConsumerState =
       stateBytes == null ? PartitionConsumerState.FROM_BEGINNING : PartitionConsumerState.fromBytes(stateBytes);
@@ -73,7 +76,7 @@ public abstract class BatchPartitionConsumer {
   /**
    * Used to persist the state of the PartitionConsumerState. Call this method at the end of processing the partitions.
    */
-  public void onFinish(DatasetContext context) {
+  public void persist(DatasetContext context) {
     writeBytes(context, finalConsumerState.toBytes());
   }
 }
