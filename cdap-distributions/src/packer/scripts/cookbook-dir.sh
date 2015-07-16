@@ -25,7 +25,7 @@ cd /var/chef/cookbooks
 # Initialize Git repository
 touch .gitignore
 
-which git || echo "Cannot locate git" && exit 1
+which git || (echo "Cannot locate git" && exit 1)
 git init
 git add .gitignore
 git commit -m 'Initial commit'
