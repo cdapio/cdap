@@ -46,14 +46,16 @@ public class WordCountTest extends TestBase {
 
   @Test
   public void testWordCount() throws Exception {
+
+    WordCount.WordCountConfig config = new WordCount.WordCountConfig("words", "stats", "counts", "unique", "assoc");
     // Deploy the Application
-    ApplicationManager appManager = deployApplication(WordCount.class);
+    ApplicationManager appManager = deployApplication(WordCount.class, config);
 
     // Start the Flow
     appManager.getFlowManager("WordCounter").start();
 
     // Send a few events to the stream
-    StreamManager streamManager = getStreamManager("wordStream");
+    StreamManager streamManager = getStreamManager("words");
     streamManager.send("hello world");
     streamManager.send("a wonderful world");
     streamManager.send("the world says hello");

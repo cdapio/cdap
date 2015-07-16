@@ -16,15 +16,36 @@
 package co.cask.cdap.examples.wordcount;
 
 import co.cask.cdap.api.annotation.ProcessInput;
-import co.cask.cdap.api.annotation.UseDataSet;
+import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
+import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
+import co.cask.cdap.api.flow.flowlet.FlowletContext;
 
 /**
  *
  */
 public class UniqueCounter extends AbstractFlowlet {
-  @UseDataSet("uniqueCount")
+
+  @Property
+  private final String ucTable;
+
   private UniqueCountTable uniqueCountTable;
+
+  @Override
+  public void configure(FlowletConfigurer configurer) {
+    super.configure(configurer);
+    useDatasets(ucTable);
+  }
+
+  public UniqueCounter(String ucTable) {
+    this.ucTable = ucTable;
+  }
+
+  @Override
+  public void initialize(FlowletContext context) throws Exception {
+    super.initialize(context);
+    uniqueCountTable = context.getDataset(ucTable);
+  }
 
   @ProcessInput
   public void process(String word) {

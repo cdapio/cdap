@@ -51,6 +51,38 @@ name.
 Names used for streams and datasets need to be unique across the CDAP instance, while
 names used for programs and services need to be unique only to the application.
 
+Application can also use a Configuration class to get a configuration during deployment time of the Application.
+This can be used to, for example, provide the stream, dataset to create/read from during application deployment time
+instead of hard coding it in the ``AbstractApplication``'s ``configure`` method. For example, we can modify
+the ``MyApp`` class above to take in a Configuration::
+
+      public class MyApp extends AbstractApplication<MyApp.MyAppConfig> {
+
+        public static class MyAppConfig extends Config {
+          String streamName;
+          String datasetName;
+
+          public MyAppConfig() {
+            // Default values
+            this.streamName = "myAppStream";
+            this.datasetName = "myAppDataset";
+          }
+        }
+
+        @Override
+        public void configure() {
+          MyAppConfig config = getConfig();
+          setName("myApp");
+          setDescription("My Sample Application");
+          addStream(new Stream(config.streamName));
+          createDataset(config.datasetName, Table.class);
+          addFlow(new MyAppFlow(config));
+          addService(new MyService(config.datasetName));
+          addMapReduce(new MyMapReduce(config.datasetName));
+          addWorkflow(new MyAppWorkflow());
+        }
+      }
+
 .. rubric:: A Typical CDAP Application
 
 A typical design of a CDAP application consists of:

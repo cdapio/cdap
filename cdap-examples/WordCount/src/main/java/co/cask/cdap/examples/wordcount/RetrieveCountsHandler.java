@@ -16,13 +16,14 @@
 
 package co.cask.cdap.examples.wordcount;
 
-import co.cask.cdap.api.annotation.UseDataSet;
+import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
@@ -42,20 +43,46 @@ import javax.ws.rs.QueryParam;
  * Retrieve Counts service handler.
  */
 public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
-
   private static final int WORD_COUNT_LIMIT = 10;
 
-  @UseDataSet("wordStats")
+  @Property
+  private final String wsTable;
+
+  @Property
+  private final String wcTable;
+
+  @Property
+  private final String ucTable;
+
+  @Property
+  private final String waTable;
+
   private Table wordStatsTable;
-
-  @UseDataSet("wordCounts")
   private KeyValueTable wordCountsTable;
-
-  @UseDataSet("uniqueCount")
   private UniqueCountTable uniqueCountTable;
-
-  @UseDataSet("wordAssocs")
   private AssociationTable associationTable;
+
+  public RetrieveCountsHandler(WordCount.WordCountConfig config) {
+    this.wsTable = config.getWsTable();
+    this.wcTable = config.getWcTable();
+    this.ucTable = config.getUcTable();
+    this.waTable = config.getWaTable();
+  }
+
+  @Override
+  protected void configure() {
+    super.configure();
+    useDatasets(wsTable, wcTable, ucTable, waTable);
+  }
+
+  @Override
+  public void initialize(HttpServiceContext context) throws Exception {
+    super.initialize(context);
+    wordStatsTable = context.getDataset(wsTable);
+    wordCountsTable = context.getDataset(wcTable);
+    uniqueCountTable = context.getDataset(ucTable);
+    associationTable = context.getDataset(waTable);
+  }
 
   /**
    * Returns total number of words, the number of unique words, and the average word length.
