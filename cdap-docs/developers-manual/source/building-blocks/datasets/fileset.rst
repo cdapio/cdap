@@ -162,12 +162,12 @@ Yet that can become tedious to manage, especially if the naming convention shoul
 applications would have to be changed simultaneously for proper functioning.
 
 The PartitionedFileSet dataset relieves applications from understanding file name conventions. Instead,
-it associates a partition key with every file; for example the year and month associated with that file.
-Because different files cannot have the same partition key, this allows applications to address the
-data uniquely through its partition keys, or more broadly through conditions over the partition keys.
-For example, the months of February through June of a particular year, or the month of November in any
-year. By inheriting the attributes |---| such as format and schema |---| of FileSets, PartitionedFileSets
-are a powerful abstraction over data that is organized into files.
+it associates a partition key with a path; for example the year and month associated with that path.
+Because different paths cannot have the same partition key, this allows applications to address the
+file(s) at that path uniquely through its partition keys, or more broadly through conditions over the
+partition keys. For example, the months of February through June of a particular year, or the month of
+November in any year. By inheriting the attributes |---| such as format and schema |---| of FileSets,
+PartitionedFileSets are a powerful abstraction over data that is organized into files.
 
 Creating a PartitionedFileSet
 =============================
@@ -208,8 +208,8 @@ partition key to obtain a Partition; you can then get a Location from that Parti
 
 For example, to read the content of a partition::
 
-      PartitionKey key = PartitionKey.builder().addStringField(...)
-                                               .addIntField(...)
+      PartitionKey key = PartitionKey.builder().addStringField("league", ...)
+                                               .addIntField("season", ...)
                                                .build());
       Partition partition = dataset.getPartition(key);
       if (partition != null) {
