@@ -1,12 +1,8 @@
 angular.module(PKG.name + '.commons')
-  .controller('MySidePanel', function ($scope, AdapterErrorFactory) {
+  .controller('MySidePanel', function ($scope) {
     this.groups = $scope.panelGroups;
     this.placement = $scope.placement;
     this.panel = $scope.panel;
-
-    this.sourceError = AdapterErrorFactory.sourceError;
-    this.sinkError = AdapterErrorFactory.sinkError;
-
 
     this.isSubMenu = $scope.isSubMenu === 'true';
     this.isExpanded = $scope.isExpanded === 'true';
@@ -34,11 +30,4 @@ angular.module(PKG.name + '.commons')
       this.openGroup(this.groups[0]);
     }
 
-    this.generateMessage = function (type) {
-      if (type === 'sink' && this.sinkError()) {
-        return 'Add sink to the canvas';
-      } else if (type === 'source' && this.sourceError()) {
-        return 'Add source to the canvas';
-      }
-    }
   });

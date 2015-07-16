@@ -4,18 +4,16 @@
           class="box {{plugin.type}}"
           data-type="{{plugin.type}}"
           id="{{plugin.id}}">
-
       <div class="plugin-box-container">
-        <div ng-click="MyPlumbController.onPluginClick(plugin.id, plugin.type)"
+        <div ng-click="MyPlumbController.onPluginClick(plugin)"
               class="icon fa {{plugin.icon}}"></div>
         <div class="plugin-name">{{plugin.name}}</div>
         <div class="fa fa-close" ng-click="MyPlumbController.removePlugin($index, plugin.id)"></div>
       </div>
 
-
       <div class="error-node-notification"
-            ng-if="MyPlumbController.nodesErrors()[plugin.id].length > 0"
-            tooltip-html-unsafe="{{MyPlumbController.nodesErrors()[plugin.id]}}"
+            ng-if="plugin.error"
+            tooltip="{{plugin.error}}"
             tooltip-append-to-body="true"
             >
         <span class="badge badge-danger">
@@ -25,11 +23,10 @@
     </div>
   </div>
 
-  <div class="error-container well" ng-if="MyPlumbController.canvasError().length > 0">
+  <div class="error-container well" ng-if="MyPlumbController.canvasError.length > 0">
     <ul>
-      <li ng-repeat="error in MyPlumbController.canvasError()">
-        <strong ng-if="error.node">{{ error.node }}:</strong>
-        <span>{{ error.message }}</span>
+      <li ng-repeat="error in MyPlumbController.canvasError">
+        <span>{{ error }}</span>
       </li>
     </ul>
   </div>
