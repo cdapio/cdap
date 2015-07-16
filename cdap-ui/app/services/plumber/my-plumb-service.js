@@ -31,7 +31,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory) {
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, $alert, AdapterErrorFactory) {
     this.resetToDefaults = function() {
       this.callbacks = [];
       this.errorCallbacks = [];
@@ -337,6 +337,14 @@ angular.module(PKG.name + '.services')
 
     this.saveAsDraft = function() {
       var config = this.getConfigForBackend();
+      var error = hasNameAndTemplateType.call(this);
+      if (angular.isArray(error)) {
+        $alert({
+          type: 'danger',
+          content: 'Adapter needs to have a name to be saved as draft'
+        });
+        return;
+      }
       config.ui = {
         nodes: this.nodes,
         connections: this.connections
