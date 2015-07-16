@@ -18,8 +18,8 @@
         ng-click="MySidePanel.openGroup(group)">
 
     <div class="item-heading"
-          ng-class="{'opened': MySidePanel.openedGroup === group.name, 'error': (group.name === 'sink' && MySidePanel.sinkError()) || (group.name === 'source' && MySidePanel.sourceError()) }"
-          tooltip="{{MySidePanel.generateMessage(group.name)}}"
+          ng-class="{'opened': MySidePanel.openedGroup === group.name, 'error': group.error }"
+          tooltip="{{ group.error }}"
           tooltip-placement="right"
           tooltip-append-to-body="true">
         <span class="{{group.icon}}"></span>

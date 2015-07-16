@@ -1,88 +1,157 @@
 angular.module(PKG.name + '.feature.adapters')
   .factory('AdapterErrorFactory', function () {
-    var nameError = false,
-        sinkError = false,
-        sourceError = false,
-        canvasError = [],
-        nodesError = {};
 
-    // clearing out previous errors
-    function initialize() {
-      nameError = false;
-      sinkError = false;
-      sourceError = false;
-      canvasError = [];
-      nodesError = {};
+    function isModelValid (nodes, connections, metadata, config) {
+      var validationRules = [
+        hasExactlyOneSourceAndSink,
+        hasNameAndTemplateType,
+        checkForRequiredField,
+        checkForUnconnectedNodes,
+        checkForParallelDAGs
+      ];
+      var errors = {};
+      validationRules.forEach(function(rule) {
+        rule.call(this, nodes, connections, metadata, config, errors);
+      });
+
+      if (Object.keys(errors).length === 0) {
+        return true;
+      } else {
+        return errors;
+      }
+
     }
 
-    function processError(errors) {
-      initialize();
+    function addCanvasError (error, errors) {
+      if (!errors.canvas) {
+        errors.canvas = [error];
+      } else {
+        errors.canvas.push(error);
+      }
+    }
 
-      var nodes = {};
+    function hasExactlyOneSourceAndSink(nodes, connections, metadata, config, errors) {
+      var source = [], sink = [];
 
-      angular.forEach(errors, function (error) {
-        if (error.type === 'name') {
-          nameError = true;
-        } else if (error.type === 'sink') {
-          sinkError = true;
-        } else if (error.type === 'source') {
-          sourceError = true;
-        } else if (error.type === 'canvas') {
-          canvasError.push(error);
-        } else if (error.type === 'nodes') {
-          if (angular.isArray(error.unattached)) {
-            angular.forEach(error.unattached, function (node) {
-              if (!nodes[node]) {
-                nodes[node] = [error.message];
-              } else {
-                nodes[node].push(error.message);
-              }
-            });
-          } else {
-            if (!nodes[error.node]) {
-              nodes[error.node] = [error.message];
-            } else {
-              nodes[error.node].push(error.message);
-            }
-          }
+      angular.forEach(nodes, function (value, key) {
+        switch (value.type) {
+          case 'sink':
+            sink.push(key);
+            break;
+          case 'source':
+            source.push(key);
+            break;
         }
       });
 
-      angular.forEach(nodes, function (value, key) {
-        var htmlString = '<ul>';
-        angular.forEach(value, function (error) {
-          htmlString += '<li>' + error + '</li>';
-        });
-        htmlString+= '</ul>';
+      if (source.length !== 1) {
+        if (source.length < 1) {
+          errors.source = 'Adapter is missing a source';
+        } else if (source.length > 1) {
+          angular.forEach(source, function (node) {
+            errors[node] = 'Adapter should only have 1 source';
+          });
 
-        nodesError[key] = htmlString;
+          addCanvasError('Adapter should only have 1 source', errors);
+
+        }
+      }
+
+      if (sink.length !== 1) {
+        if (sink.length < 1) {
+          errors.sink = 'Adapter is missing a sink';
+        } else if (sink.length > 1) {
+          angular.forEach(sink, function (node) {
+            errors[node] = 'Adapter should only have 1 sink';
+          });
+
+          addCanvasError('Adapter should only have 1 sink', errors);
+
+        }
+      }
+
+    }
+
+    function hasNameAndTemplateType(nodes, connections, metadata, config, errors) {
+      var name = metadata.name;
+      if (!name.length) {
+        errors.name = 'Adapter needs to have a name';
+        metadata.error = 'Enter adapter name';
+      }
+
+      // Should probably add template type check here. Waiting for design.
+    }
+
+    function checkForRequiredField(nodes, connections, metadata, config, errors) {
+
+      if(config.source.name && !isValidPlugin(config.source)) {
+        errors[config.source.id] = 'Adapter\'s source is missing required fields';
+      }
+      if (config.sink.name && !isValidPlugin(config.sink)) {
+        errors[config.sink.id] = 'Adapter\'s sink is missing required fields';
+      }
+      config.transforms.forEach(function(transform) {
+        console.log('check', isValidPlugin(transform));
+        if (transform.name && !isValidPlugin(transform)) {
+          errors[transform.id] = 'Adapter\'s transforms is missing required fields';
+        }
       });
+
+    }
+    function isValidPlugin(plugin) {
+      var i;
+      var keys = Object.keys(plugin.properties);
+      if (!keys.length) {
+        plugin.valid = false;
+        return plugin.valid;
+      }
+      plugin.valid = true;
+      for (i=0; i< keys.length; i++) {
+        var property = plugin.properties[keys[i]];
+        if (plugin._backendProperties[keys[i]].required && (!property || property === '')) {
+          plugin.valid = false;
+          break;
+        }
+      }
+      return plugin.valid;
     }
 
-    function getNameError() {
-      return nameError;
-    }
-    function getSinkError() {
-      return sinkError;
-    }
-    function getSourceError() {
-      return sourceError;
-    }
-    function getCanvasError() {
-      return canvasError;
-    }
-    function getNodesError() {
-      return nodesError;
+    function checkForUnconnectedNodes(nodes, connections, metadata, config, errors) {
+
+      var nodesCopy = angular.copy(nodes);
+
+      angular.forEach(connections, function (conn) {
+        nodesCopy[conn.source].visited = true;
+        nodesCopy[conn.target].visited = true;
+      });
+
+      var unattached = [];
+
+      angular.forEach(nodesCopy, function (value, key) {
+        if (!value.visited) {
+          unattached.push(key);
+          errors[key] = 'Node is not connected to any other node';
+        }
+      });
+
     }
 
+    function checkForParallelDAGs(nodes, connections, metadata, config, errors) {
+      var i,
+          currConn,
+          nextConn;
+      for(i=0; i<connections.length-1; i++) {
+        currConn = connections[i];
+        nextConn = connections[i+1];
+        if (currConn.target !== nextConn.source) {
+          addCanvasError('There are parallel connectiosn inside this adapter', errors);
+          break;
+        }
+      }
+    }
 
     return {
-      nameError: getNameError,
-      sinkError: getSinkError,
-      sourceError: getSourceError,
-      canvasError: getCanvasError,
-      nodesError: getNodesError,
-      processError: processError
+      isModelValid: isModelValid
     };
 
   });

@@ -31,10 +31,11 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter) {
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, AdapterErrorFactory) {
 
     this.resetToDefaults = function() {
       this.callbacks = [];
+      this.errorCallbacks = [];
       this.nodes = {};
       this.connections = [];
       this.metadata = {
@@ -58,6 +59,16 @@ angular.module(PKG.name + '.services')
     this.notifyListeners = function(conf, type) {
       this.callbacks.forEach(function(callback) {
         callback(conf, type);
+      });
+    };
+
+    this.errorCallback = function (callback) {
+      this.errorCallbacks.push(callback);
+    };
+
+    this.notifyError = function (errorObj) {
+      this.errorCallbacks.forEach(function(callback) {
+        callback(errorObj);
       });
     };
 
@@ -268,8 +279,10 @@ angular.module(PKG.name + '.services')
     };
     this.save = function() {
       var defer = $q.defer();
-      var errors = this.isModelValid();
-      if (!errors.length) {
+      var config = this.getConfig();
+      var errors = AdapterErrorFactory.isModelValid(this.nodes, this.connections, this.metadata, config);
+
+      if (!angular.isObject(errors)) {
         var data = this.getConfigForBackend();
         myAdapterApi.save(
           {
@@ -293,195 +306,11 @@ angular.module(PKG.name + '.services')
             }
           );
       } else {
+        this.notifyError(errors);
         defer.reject(errors);
       }
       return defer.promise;
     };
 
-    this.isModelValid = function() {
-      var validationRules = [
-        hasExactlyOneSourceAndSink,
-        hasNameAndTemplateType,
-        checkForRequiredField,
-        checkForUnconnectedNodes,
-        checkForParallelDAGs
-      ];
-      var errors = [];
-      validationRules.forEach(function(rule) {
-        var errorObj = rule.call(this);
-        if (angular.isArray(errorObj)) {
-          errors = errors.concat(errorObj);
-        } else if (angular.isObject(errorObj)) {
-          errors.push(errorObj);
-        }
-      }.bind(this));
-      return errors.length? errors: true;
-    };
 
-    function hasExactlyOneSourceAndSink() {
-      var source = [], sink = [];
-      var errObj = [];
-
-      angular.forEach(this.nodes, function (value, key) {
-        switch (value.type) {
-          case 'sink':
-            sink.push(key);
-            break;
-          case 'source':
-            source.push(key);
-            break;
-        }
-      });
-
-      if (source.length !== 1) {
-        if (source.length < 1) {
-          errObj.push({
-            type: 'source',
-            message: 'Adapter is missing a source'
-          });
-        } else if (source.length > 1) {
-          errObj.push({
-            type: 'nodes',
-            message: 'Adapter should only have 1 source',
-            unattached: source
-          });
-
-          errObj.push({
-            type: 'canvas',
-            message: 'Adapter should only have 1 source'
-          });
-        }
-      }
-
-      if (sink.length !== 1) {
-        if (sink.length < 1) {
-          errObj.push({
-            type: 'sink',
-            message: 'Adapter is missing a sink'
-          });
-        } else if (sink.length > 1) {
-          errObj.push({
-            type: 'nodes',
-            message: 'Adapter should only have 1 sink',
-            unattached: sink
-          });
-
-          errObj.push({
-            type: 'canvas',
-            message: 'Adapter should only have 1 sink'
-          });
-        }
-      }
-
-      if (errObj.length === 0) {
-        return true;
-      } else {
-        return errObj;
-      }
-
-    }
-
-    function hasNameAndTemplateType() {
-      var name = this.metadata.name;
-      var errors = true;
-      if (!name.length) {
-        errors = [];
-        errors.push({
-          type: 'name',
-          message: 'Adapter needs to have a name'
-        });
-      }
-      return errors;
-      // Should probably add template type check here. Waiting for design.
-    }
-    function checkForRequiredField() {
-      var errors = true;
-      var config = this.getConfig();
-      function addToErrors(type, message, node) {
-        if (!angular.isArray(errors)) {
-          errors = [];
-        }
-        var obj = {};
-        obj.type = type;
-        obj.message = message;
-        obj.node = node;
-        errors.push(obj);
-      }
-      if(config.source.name && !isValidPlugin(config.source)) {
-        addToErrors('nodes', 'Adapter\'s source is missing required fields', config.source.id);
-      }
-      if (config.sink.name && !isValidPlugin(config.sink)) {
-        addToErrors('nodes', 'Adapter\'s sink is missing required fields', config.sink.id);
-      }
-      config.transforms.forEach(function(transform) {
-        if (transform.name && !isValidPlugin(transform)) {
-          addToErrors('nodes', 'Adapter\'s transforms is missing required fields', transform.id);
-        }
-      });
-      return errors;
-    }
-    function isValidPlugin(plugin) {
-      var i;
-      var keys = Object.keys(plugin.properties);
-      if (!keys.length) {
-        plugin.valid = false;
-        return plugin.valid;
-      }
-      plugin.valid = true;
-      for (i=0; i< keys.length; i++) {
-        var property = plugin.properties[keys[i]];
-        if (plugin._backendProperties[keys[i]].required && (!property || property === '')) {
-          plugin.valid = false;
-          break;
-        }
-      }
-      return plugin.valid;
-    }
-
-    function checkForUnconnectedNodes() {
-
-      var errorObj = true;
-      var nodes = angular.copy(this.nodes);
-
-      angular.forEach(this.connections, function (conn) {
-        nodes[conn.source].visited = true;
-        nodes[conn.target].visited = true;
-      });
-
-      var unattached = [];
-
-      angular.forEach(nodes, function (value, key) {
-        if (!value.visited) {
-          unattached.push(key);
-        }
-      });
-
-      if (unattached.length > 0) {
-        errorObj = {
-          type: 'nodes',
-          message: 'Node is not connected to any other node',
-          unattached: unattached
-        };
-      }
-
-      return errorObj;
-    }
-
-    function checkForParallelDAGs() {
-      var i,
-          currConn,
-          nextConn;
-      var errorObj = true;
-      for(i=0; i<this.connections.length-1; i++) {
-        currConn = this.connections[i];
-        nextConn = this.connections[i+1];
-        if (currConn.target !== nextConn.source) {
-          errorObj = {};
-          errorObj.type = 'canvas';
-          errorObj.message = 'There are parallel connections inside this adapter';
-          break;
-        }
-      }
-      return errorObj;
-    }
   });
