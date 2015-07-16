@@ -47,7 +47,6 @@ import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.test.SlowTests;
-import co.cask.cdap.watchdog.election.MultiLeaderElection;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.runtime.TransactionModules;
 import com.google.common.collect.Lists;
@@ -110,7 +109,6 @@ public class LogSaverPluginTest extends KafkaTestBase {
   private static ZKClientService zkClientService;
   private static KafkaClientService kafkaClientService;
   private static LogSaver logSaver;
-  private static MultiLeaderElection multiElection;
   private static String namespaceDir;
 
   @BeforeClass
@@ -161,17 +159,12 @@ public class LogSaverPluginTest extends KafkaTestBase {
     logSaver = injector.getInstance(LogSaver.class);
     logSaver.startAndWait();
 
-    multiElection = new MultiLeaderElection(zkClientService, "log-saver", 2, logSaver);
-    multiElection.setLeaderElectionSleepMs(1);
-    multiElection.startAndWait();
-
     // Sleep a while to let Kafka server fully initialized.
     TimeUnit.SECONDS.sleep(5);
   }
 
   private void stopLogSaver() {
     logSaver.stopAndWait();
-    multiElection.stopAndWait();
     kafkaClientService.stopAndWait();
     zkClientService.stopAndWait();
   }
