@@ -67,18 +67,8 @@ public final class ClientSparkContext extends AbstractSparkContext {
   }
 
   @Override
-  public <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass) {
-    return readFromDataset(datasetName, kClass, vClass, Collections.<String, String>emptyMap());
-  }
-
-  @Override
   public <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass, Map<String, String> datasetArgs) {
     throw new UnsupportedOperationException("Only supported in SparkProgram.run() execution context");
-  }
-
-  @Override
-  public <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass) {
-    writeToDataset(rdd, datasetName, kClass, vClass, Collections.<String, String>emptyMap());
   }
 
   @Override
