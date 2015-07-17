@@ -171,11 +171,14 @@ angular.module(PKG.name + '.services')
               }
 
               if (AdapterModel.type === 'source') {
-                $scope.hideInput = true;
+                $scope.isSource = true;
               }
 
               if (AdapterModel.type === 'sink') {
                 $scope.isSink = true;
+              }
+              if (AdapterModel.type === 'transform') {
+                $scope.isTransform = true;
               }
 
             }],
