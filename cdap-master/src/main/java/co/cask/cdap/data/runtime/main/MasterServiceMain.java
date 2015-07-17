@@ -681,7 +681,7 @@ public class MasterServiceMain extends DaemonMain {
       if (file.getName().matches(".*\\.xml") && !file.getName().equals("logback.xml")) {
         if (addedFiles.add(file.getName())) {
           LOG.debug("Adding config file: {}", file.getAbsolutePath());
-          preparer = preparer.withResources(ExploreServiceUtils.hijackHiveConfFile(file).toURI());
+          preparer = preparer.withResources(ExploreServiceUtils.hijackConfFile(file).toURI());
         } else {
           LOG.warn("Ignoring duplicate config file: {}", file.getAbsolutePath());
         }
