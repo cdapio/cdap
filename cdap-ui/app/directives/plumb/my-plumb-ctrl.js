@@ -83,7 +83,9 @@ angular.module(PKG.name + '.commons')
           this.instance.addEndpoint(id, sinkSettings, {uuid: 'Right' + id});
           break;
       }
-      this.instance.draggable(id);
+      this.instance.draggable(id, {
+        containment: true
+      });
     }
 
     function drawConnections() {
