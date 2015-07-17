@@ -320,12 +320,13 @@ For example, give these arguments when starting the MapReduce through a RESTful 
 Incrementally Processing Partitions of a PartitionedFileSets in MapReduce
 =========================================================================
 
-Another way to process a partitioned file set from a MapReduce is via the beta feature of incrementally
-consuming its partitions. Using this, a MapReduce job can run and process the files of all partitions
-committed to a particular partitioned file set since the last run of the MapReduce job. Currently, the
-MapReduce job utilizing this feature is responsible for storing its own state of processing. The following
-example demonstrates how to use the ``BatchPartitionConsumer`` class. Note that it writes and reads the
-state from a particular row in a KeyValueTable, but other types Datasets can also be used for persistence::
+One way to process a partitioned file set is with a MapReduce program that runs repeatedly and,
+in every run, reads the partitions that have been added since its previous run. This requires
+that the MapReduce program persists between runs what partitions have already been consumed.
+An easy way to do that is the BatchPartitionConsumer, an experimental feature introduced in CDAP 3.1.0.
+The MapReduce program is responsible for extending this abstract consumer class with methods to
+persist and the read back its state. In the following example, the state is persisted to a row in a
+KeyValue Table, but other types of Datasets can also be used::
 
   public static class WordCount extends AbstractMapReduce {
 
@@ -351,7 +352,7 @@ Then, in the ``beforeSubmit()`` method of the MapReduce, specify the partitioned
       PartitionedFileSet inputRecords = batchPartitionConsumer.getPartitionedFileSet(context, "inputRecords");
       context.setInput("inputRecords", inputRecords);
 
-To save the state of partition processing call the consumer's ``onFinish()`` method. This ensures that the
+To save the state of partition processing, call the consumer's ``onFinish()`` method. This ensures that the
 next time the MapReduce job runs, it processes only the newly committed partitions::
 
   @Override
@@ -362,8 +363,7 @@ next time the MapReduce job runs, it processes only the newly committed partitio
     super.onFinish(succeeded, context);
   }
 
-A limitation of the current implementation of BatchPartitionConsumer is that there can not be concurrent
-runs of the MapReduce job.
+A limitation of the BatchPartitionConsumer is that there can not be concurrent runs of the MapReduce job.
 
 Exploring PartitionedFileSets
 =============================
