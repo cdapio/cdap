@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.transform;
 
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.etl.api.Lookup;
 import org.slf4j.Logger;
 
 /**
@@ -26,10 +27,12 @@ import org.slf4j.Logger;
 public class ScriptContext {
   private final Logger logger;
   private final Metrics metrics;
+  private final Lookup lookup;
 
-  public ScriptContext(Logger logger, Metrics metrics) {
+  public ScriptContext(Logger logger, Metrics metrics, Lookup lookup) {
     this.logger = logger;
     this.metrics = metrics;
+    this.lookup = lookup;
   }
 
   public Logger getLogger() {
@@ -38,5 +41,9 @@ public class ScriptContext {
 
   public Metrics getMetrics() {
     return metrics;
+  }
+
+  public Lookup getLookup() {
+    return lookup;
   }
 }

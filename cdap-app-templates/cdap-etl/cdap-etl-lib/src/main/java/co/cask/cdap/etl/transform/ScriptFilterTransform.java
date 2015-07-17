@@ -23,6 +23,7 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.etl.api.Emitter;
+import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.TransformContext;
@@ -81,14 +82,15 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
     super.configurePipeline(pipelineConfigurer);
     Preconditions.checkArgument(!Strings.isNullOrEmpty(scriptFilterConfig.script), "Filter script must be specified.");
     // try evaluating the script to fail application creation if the script is invalid
-    init();
+    init(getContext());
   }
 
   @Override
-  public void initialize(TransformContext context) {
+  public void initialize(TransformContext context) throws Exception {
+    super.initialize(context);
     metrics = context.getMetrics();
     logger = LoggerFactory.getLogger(ScriptFilterTransform.class.getName() + " - Stage:" + context.getStageId());
-    init();
+    init(context);
   }
 
   @Override
@@ -106,11 +108,15 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
     }
   }
 
-  private void init() {
+  protected Lookup getLookup(TransformContext context) {
+    return context.getLookup();
+  }
+
+  private void init(TransformContext context) {
     ScriptEngineManager manager = new ScriptEngineManager();
     engine = manager.getEngineByName("JavaScript");
 
-    engine.put(CONTEXT_NAME, new ScriptContext(logger, metrics));
+    engine.put(CONTEXT_NAME, new ScriptContext(logger, metrics, getLookup(context)));
 
     // this is pretty ugly, but doing this so that we can pass the 'input' json into the shouldFilter function.
     // that is, we want people to implement

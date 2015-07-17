@@ -19,7 +19,9 @@ package co.cask.cdap.etl.transform;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.Transform;
+import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.common.MockEmitter;
 import co.cask.cdap.etl.common.MockMetrics;
 import com.google.common.collect.ImmutableList;
@@ -35,6 +37,24 @@ import java.util.Map;
 /**
  */
 public class ScriptTransformTest {
+
+  private static final Lookup TEST_LOOKUP = new Lookup() {
+    @Override
+    public String lookupKVString(String instance, String key) throws Exception {
+      return instance + ":" + key;
+    }
+
+    @Override
+    public byte[] lookupKVBytes(String instance, String key) throws Exception {
+      return Bytes.toBytes(instance + ":" + key);
+    }
+
+    @Override
+    public byte[] lookupKVBytes(String instance, byte[] key) throws Exception {
+      return Bytes.toBytes(instance + ":" + Bytes.toString(key));
+    }
+  };
+
   private static final Schema SCHEMA = Schema.recordOf("record",
     Schema.Field.of("booleanField", Schema.of(Schema.Type.BOOLEAN)),
     Schema.Field.of("intField", Schema.of(Schema.Type.INT)),
@@ -72,6 +92,13 @@ public class ScriptTransformTest {
     .set("mapField", ImmutableMap.of())
     .set("arrayField", ImmutableList.of())
     .set("unionField", 3)
+    .build();
+
+  private static final Schema STRING_SCHEMA = Schema.recordOf(
+    "record",
+    Schema.Field.of("stringField", Schema.of(Schema.Type.STRING)));
+  private static final StructuredRecord STRING_RECORD = StructuredRecord.builder(STRING_SCHEMA)
+    .set("stringField", "zzz")
     .build();
 
   @Test
@@ -119,6 +146,24 @@ public class ScriptTransformTest {
     expectedListField = ImmutableList.of();
     Assert.assertEquals(expectedMapField, output.get("mapField"));
     Assert.assertEquals(expectedListField, output.get("arrayField"));
+  }
+
+  @Test
+  public void testLookup() throws Exception {
+    ScriptTransform.Config config = new TestScriptTransform.Config(
+      "function transform(x, ctx) { " +
+        "x.stringField = x.stringField + '..hi..' + ctx.lookup.lookupKVString('purchases', 'a'); return x; }",
+      null);
+    Transform<StructuredRecord, StructuredRecord> transform = new TestScriptTransform(config);
+    transform.initialize(new MockTransformContext());
+
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
+    transform.transform(STRING_RECORD, emitter);
+    StructuredRecord output = emitter.getEmitted().get(0);
+
+    // check record1
+    Assert.assertEquals(STRING_SCHEMA, output.getSchema());
+    Assert.assertEquals("zzz..hi..purchases:a", output.get("stringField"));
   }
 
   @Test
@@ -221,5 +266,20 @@ public class ScriptTransformTest {
     Assert.assertEquals(outputSchema, output.getSchema());
     Assert.assertTrue(Math.abs(2.71 * 2.71 + 3.14 * 3.14 * 3.14 - (Double) output.get("x")) < 0.000001);
     Assert.assertEquals(1, mockMetrics.getCount("script.transform.count"));
+  }
+
+  /**
+   * Test {@link ScriptTransform} that has a fake {@link Lookup}.
+   */
+  public class TestScriptTransform extends ScriptTransform {
+
+    public TestScriptTransform(Config config) {
+      super(config);
+    }
+
+    @Override
+    protected Lookup getLookup(TransformContext context) {
+      return TEST_LOOKUP;
+    }
   }
 }

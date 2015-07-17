@@ -39,6 +39,8 @@ public class PurchaseStore extends AbstractFlowlet {
 
   @UseDataSet("purchases")
   private ObjectMappedTable<Purchase> store;
+  @UseDataSet("purchases_by_name")
+  private ObjectMappedTable<Purchase> store2;
   private Metrics metrics; // Declare the custom metrics
 
   private static final Logger LOG = LoggerFactory.getLogger(PurchaseStore.class);
@@ -59,6 +61,7 @@ public class PurchaseStore extends AbstractFlowlet {
     LOG.info("Purchase info: Customer {}, ProductId {}, CatalogId {}",
              purchase.getCustomer(), purchase.getProduct(), purchase.getCatalogId());
     store.write(Bytes.toBytes(purchase.getPurchaseTime()), purchase);
+    store2.write(purchase.getCustomer(), purchase);
   }
 
   @Override

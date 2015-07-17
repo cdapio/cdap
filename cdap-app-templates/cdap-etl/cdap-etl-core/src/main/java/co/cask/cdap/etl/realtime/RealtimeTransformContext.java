@@ -19,6 +19,7 @@ package co.cask.cdap.etl.realtime;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.worker.WorkerContext;
+import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.common.PluginID;
 import co.cask.cdap.etl.common.ScopedPluginContext;
@@ -33,11 +34,13 @@ public class RealtimeTransformContext extends ScopedPluginContext implements Tra
   private static final Logger LOG = LoggerFactory.getLogger(RealtimeTransformContext.class);
   private final WorkerContext context;
   private final Metrics metrics;
+  private final Lookup lookup;
 
-  public RealtimeTransformContext(WorkerContext context, Metrics metrics, String stageId) {
+  public RealtimeTransformContext(WorkerContext context, Metrics metrics, Lookup lookup, String stageId) {
     super(stageId);
     this.context = context;
     this.metrics = metrics;
+    this.lookup = lookup;
   }
 
   @Override
@@ -48,6 +51,11 @@ public class RealtimeTransformContext extends ScopedPluginContext implements Tra
   @Override
   public int getStageId() {
     return PluginID.from(stageId).getStage();
+  }
+
+  @Override
+  public Lookup getLookup() {
+    return lookup;
   }
 
   @Override

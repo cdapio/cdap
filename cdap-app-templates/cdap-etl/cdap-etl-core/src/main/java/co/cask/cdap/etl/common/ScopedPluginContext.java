@@ -17,13 +17,13 @@
 package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.etl.api.TransformContext;
+import co.cask.cdap.etl.api.StageContext;
 
 /**
  * Context that scopes plugin ids by the id of the transform. This allows multiple transforms to use plugins with
  * the same id without clobbering each other.
  */
-public abstract class ScopedPluginContext implements TransformContext {
+public abstract class ScopedPluginContext implements StageContext {
   protected final String stageId;
 
   public ScopedPluginContext(String stageId) {

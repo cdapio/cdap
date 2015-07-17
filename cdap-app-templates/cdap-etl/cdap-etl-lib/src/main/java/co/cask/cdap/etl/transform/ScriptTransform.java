@@ -24,6 +24,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.etl.api.Emitter;
+import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.TransformContext;
@@ -102,14 +103,15 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
     super.configurePipeline(pipelineConfigurer);
     // try evaluating the script to fail application creation if the script is invalid
-    init();
+    init(getContext());
   }
 
   @Override
-  public void initialize(TransformContext context) {
+  public void initialize(TransformContext context) throws Exception {
+    super.initialize(context);
     metrics = context.getMetrics();
     logger = LoggerFactory.getLogger(ScriptTransform.class.getName() + " - Stage:" + context.getStageId());
-    init();
+    init(context);
   }
 
   @Override
@@ -122,6 +124,10 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
     } catch (Exception e) {
       throw new IllegalArgumentException("Could not transform input: " + e.getMessage(), e);
     }
+  }
+
+  protected Lookup getLookup(TransformContext context) {
+    return context.getLookup();
   }
 
   private Object decode(Object object, Schema schema) {
@@ -227,10 +233,10 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
     throw new RuntimeException("Unable decode union with schema " + schemas);
   }
 
-  private void init() {
+  private void init(TransformContext context) {
     ScriptEngineManager manager = new ScriptEngineManager();
     engine = manager.getEngineByName("JavaScript");
-    engine.put(CONTEXT_NAME, new ScriptContext(logger, metrics));
+    engine.put(CONTEXT_NAME, new ScriptContext(logger, metrics, getLookup(context)));
 
     try {
       // this is pretty ugly, but doing this so that we can pass the 'input' json into the transform function.
