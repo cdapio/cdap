@@ -88,10 +88,10 @@ angular.module(PKG.name + '.feature.adapters')
                 });
                 $state.go('adapters.list');
               },
-              function error() {
+              function error(message) {
                 $alert({
                   type: 'danger',
-                  content: 'Problem saving ' + MyPlumbService.metadata.name + ' as draft'
+                  content: message
                 });
               }
             )

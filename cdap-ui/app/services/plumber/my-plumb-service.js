@@ -96,6 +96,10 @@ angular.module(PKG.name + '.services')
       this.nodes[config.id] = config;
       if (!conf._backendProperties) {
         fetchBackendProperties(this.nodes[config.id]);
+      } else if(Object.keys(conf._backendProperties).length !== Object.keys(conf.properties).length) {
+        angular.forEach(conf._backendProperties, function(value, key) {
+          config.properties[key] = '';
+        });
       }
       this.notifyListeners(config, type);
     };
@@ -336,20 +340,16 @@ angular.module(PKG.name + '.services')
     };
 
     this.saveAsDraft = function() {
+      var defer = $q.defer();
       var config = this.getConfigForBackend();
-      var error = hasNameAndTemplateType.call(this);
-      if (angular.isArray(error)) {
-        $alert({
-          type: 'danger',
-          content: 'Adapter needs to have a name to be saved as draft'
-        });
-        return;
+      if (!this.metadata.name.length) {
+        defer.reject('Adapter needs to have a name to be saved as draft');
+        return defer.promise;
       }
       config.ui = {
         nodes: this.nodes,
         connections: this.connections
       };
-      var defer = $q.defer();
       return mySettings.get('adapterDrafts')
         .then(function(res) {
           res[this.metadata.name] = config;
