@@ -24,10 +24,10 @@ import co.cask.cdap.logging.filter.AndFilter;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.logging.write.FileMetaDataManager;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -37,10 +37,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
+import java.util.NavigableMap;
 
 /**
  * Reads log events from a file.
@@ -82,30 +80,14 @@ public class FileLogReader implements LogReader {
       long fromTimeMs = readRange.getFromMillis() + 1;
 
       LOG.trace("Using fromTimeMs={}, readRange={}", fromTimeMs, readRange);
-      SortedMap<Long, Location> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
+      NavigableMap<Long, Location> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
       if (sortedFiles.isEmpty()) {
         return;
       }
 
-      long prevInterval = -1;
-      Location prevPath = null;
-      List<Location> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
-      for (Map.Entry<Long, Location> entry : sortedFiles.entrySet()) {
-        LOG.trace("Considering file {} with timestamp {}", entry.getValue().toURI(), entry.getKey());
-        if (entry.getKey() >= readRange.getFromMillis() &&
-          prevPath != null && entry.getKey() <= readRange.getToMillis()) {
-          tailFiles.add(prevPath);
-        }
-        prevInterval = entry.getKey();
-        prevPath = entry.getValue();
-      }
-
-      if (prevInterval != -1) {
-        tailFiles.add(prevPath);
-      }
-
+      List<Location> filesInRange = getFilesInRange(sortedFiles, readRange.getFromMillis(), readRange.getToMillis());
       AvroFileReader logReader = new AvroFileReader(schema);
-      for (Location file : tailFiles) {
+      for (Location file : filesInRange) {
         LOG.trace("Reading file {}", file.toURI());
         logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - callback.getCount(), callback);
         if (callback.getCount() >= maxEvents) {
@@ -126,27 +108,19 @@ public class FileLogReader implements LogReader {
       Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
                                                         filter));
 
-      SortedMap<Long, Location> sortedFiles =
-        ImmutableSortedMap.copyOf(fileMetaDataManager.listFiles(loggingContext), Collections.<Long>reverseOrder());
+      NavigableMap<Long, Location> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
       if (sortedFiles.isEmpty()) {
         return;
       }
 
-      long fromTimeMs = readRange != ReadRange.LATEST ? readRange.getToMillis() - 1 : System.currentTimeMillis();
+      long fromTimeMs = readRange.getToMillis() - 1;
 
       LOG.trace("Using fromTimeMs={}, readRange={}", fromTimeMs, readRange);
-      List<Location> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
-      for (Map.Entry<Long, Location> entry : sortedFiles.entrySet()) {
-        LOG.trace("Considering file {} with timestamp {}", entry.getValue().toURI(), entry.getKey());
-        if (entry.getKey() >= readRange.getFromMillis() && entry.getKey() <= readRange.getToMillis()) {
-          tailFiles.add(entry.getValue());
-        }
-      }
-
+      List<Location> filesInRange = getFilesInRange(sortedFiles, readRange.getFromMillis(), readRange.getToMillis());
       List<Collection<LogEvent>> logSegments = Lists.newLinkedList();
       AvroFileReader logReader = new AvroFileReader(schema);
       int count = 0;
-      for (Location file : tailFiles) {
+      for (Location file : Lists.reverse(filesInRange)) {
         LOG.trace("Reading file {}", file.toURI());
         Collection<LogEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs, maxEvents - count);
         logSegments.add(events);
@@ -174,29 +148,14 @@ public class FileLogReader implements LogReader {
                                                         filter));
 
       LOG.trace("Using fromTimeMs={}, toTimeMs={}", fromTimeMs, toTimeMs);
-      SortedMap<Long, Location> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
+      NavigableMap<Long, Location> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
       if (sortedFiles.isEmpty()) {
         return;
       }
 
-      long prevInterval = -1;
-      Location prevPath = null;
-      List<Location> files = Lists.newArrayListWithExpectedSize(sortedFiles.size());
-      for (Map.Entry<Long, Location> entry : sortedFiles.entrySet()) {
-        LOG.trace("Considering file {} with timestamp {}", entry.getValue().toURI(), entry.getKey());
-        if (entry.getKey() >= fromTimeMs && prevInterval != -1 && prevInterval < toTimeMs) {
-          files.add(prevPath);
-        }
-        prevInterval = entry.getKey();
-        prevPath = entry.getValue();
-      }
-
-      if (prevInterval != -1 && prevInterval < toTimeMs) {
-        files.add(prevPath);
-      }
-
+      List<Location> filesInRange = getFilesInRange(sortedFiles, fromTimeMs, toTimeMs);
       AvroFileReader avroFileReader = new AvroFileReader(schema);
-      for (Location file : files) {
+      for (Location file : filesInRange) {
         LOG.trace("Reading file {}", file.toURI());
         avroFileReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
       }
@@ -204,5 +163,18 @@ public class FileLogReader implements LogReader {
       LOG.error("Got exception: ", e);
       throw  Throwables.propagate(e);
     }
+  }
+
+  @VisibleForTesting
+  static List<Location> getFilesInRange(NavigableMap<Long, Location> sortedFiles, long fromTimeMs, long toTimeMs) {
+    // Get a list of files to read based on fromMillis and toMillis.
+    // Each file is associated with the time of the first log message in it.
+    // Let c be the file with the largest timestamp smaller than readRange.getFromMillis().
+    // We need to select all the files within the range [c, readRange.toMillis()).
+    Long start = sortedFiles.floorKey(fromTimeMs);
+    if (start == null) {
+      start = sortedFiles.firstKey();
+    }
+    return ImmutableList.copyOf(sortedFiles.subMap(start, toTimeMs).values());
   }
 }
