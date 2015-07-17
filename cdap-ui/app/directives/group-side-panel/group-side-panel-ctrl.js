@@ -4,7 +4,6 @@ angular.module(PKG.name + '.commons')
     this.placement = $scope.placement;
     this.panel = $scope.panel;
 
-
     this.isSubMenu = $scope.isSubMenu === 'true';
     this.isExpanded = $scope.isExpanded === 'true';
 
@@ -30,4 +29,5 @@ angular.module(PKG.name + '.commons')
     if (this.isSubMenu) {
       this.openGroup(this.groups[0]);
     }
+
   });

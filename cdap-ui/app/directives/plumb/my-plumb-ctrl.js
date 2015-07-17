@@ -1,7 +1,9 @@
 angular.module(PKG.name + '.commons')
-  .controller('MyPlumbController', function MyPlumbController(jsPlumb, $scope, $timeout, MyPlumbService) {
+  .controller('MyPlumbController', function MyPlumbController(jsPlumb, $scope, $timeout, MyPlumbService, AdapterErrorFactory) {
     this.plugins = $scope.config || [];
     this.instance = null;
+    // this.nodesErrors = AdapterErrorFactory.nodesError;
+    // this.canvasError = AdapterErrorFactory.canvasError;
 
     var defaultSettings = {
       Connector : [ 'Flowchart' ],
@@ -78,11 +80,30 @@ angular.module(PKG.name + '.commons')
     };
 
     // Need to move this to the controller that is using this directive.
-    this.onPluginClick = function(pluginId, pluginType) {
-      MyPlumbService.editPluginProperties($scope, pluginId, pluginType);
+    this.onPluginClick = function(plugin) {
+      if (plugin.error) {
+        delete plugin.error;
+      }
+      MyPlumbService.editPluginProperties($scope, plugin.id, plugin.type);
     };
 
+    function errorNotification(errObj) {
+      if (errObj.canvas) {
+        this.canvasError = errObj.canvas;
+      }
+
+      angular.forEach(this.plugins, function (plugin) {
+        if (errObj[plugin.id]) {
+          plugin.error = errObj[plugin.id];
+        } else if (plugin.error) {
+          delete plugin.error;
+        }
+      });
+    }
+
+
     MyPlumbService.registerCallBack(this.addPlugin.bind(this));
+    MyPlumbService.errorCallback(errorNotification.bind(this));
 
     jsPlumb.ready(function() {
       jsPlumb.setContainer('plumb-container');
@@ -104,4 +125,5 @@ angular.module(PKG.name + '.commons')
       }.bind(this));
 
     }.bind(this));
+
   });

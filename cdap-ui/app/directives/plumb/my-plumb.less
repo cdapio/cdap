@@ -22,7 +22,6 @@
     left: 100px;
     top: 250px;
     color: white;
-    padding: 10px;
     overflow: hidden;
 
     .icon.fa {
@@ -41,17 +40,66 @@
     &.source {
       background-color: #47C037;
       left: 30vw;
+      padding: 10px;
     }
 
     &.transform {
-      background-color: #4496E8;
-      border-radius: 100%;
       left: 50vw;
+
+      .plugin-box-container {
+        border-radius: 100%;
+        background-color: #4496E8;
+        padding: 10px;
+      }
+
     }
 
     &.sink {
       background-color: #38C0BE;
       left: 70vw;
+      padding: 10px;
     }
+
+
+    .label-as-badge {
+      border-radius: 50%;
+    }
+
+    .error-node-notification {
+      position: absolute;
+      top: 3px;
+      right: 5px;
+
+      .badge-danger {
+        background-color: @brand-danger;
+
+        > i {
+          margin-left: 0;
+          color: white;
+        }
+      }
+    }
+  }
+
+  .error-container {
+    position: absolute;
+    bottom: 80px;
+    left: 0;
+    right: 0;
+    width: 40%;
+    margin: 0 auto;
+
+    &.well {
+      background-color: @brand-danger;
+      border-radius: 8px;
+      color: white;
+    }
+  }
+
+}
+
+.tooltip .tooltip-inner {
+  ul {
+    padding-left: 20px;
   }
 }

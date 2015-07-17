@@ -1,6 +1,7 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('_AdapterCreateController', function(MyPlumbService, myAdapterApi, $bootstrapModal, $scope) {
+  .controller('_AdapterCreateController', function(MyPlumbService, myAdapterApi, $bootstrapModal, $scope, AdapterErrorFactory) {
     this.metadata = MyPlumbService.metadata;
+
     myAdapterApi.fetchTemplates({
       scope: $scope
     })
@@ -10,6 +11,10 @@ angular.module(PKG.name + '.feature.adapters')
       }.bind(this));
 
     this.showMetadataModal = function() {
+      if (this.metadata.error) {
+        delete this.metadata.error;
+      }
+
       $bootstrapModal.open({
         templateUrl: '/assets/features/adapters/templates/create/metadata.html',
         size: 'lg',
@@ -19,4 +24,5 @@ angular.module(PKG.name + '.feature.adapters')
         }.bind(this)]
       });
     };
+
   });

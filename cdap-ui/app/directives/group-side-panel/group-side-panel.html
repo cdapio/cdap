@@ -1,6 +1,6 @@
 <div class="side-panel text-center"
       ng-class="{'expanded': MySidePanel.isExpanded === true, 'left': MySidePanel.placement === 'left', 'right': MySidePanel.placement === 'right'}">
-      
+
   <div ng-if="MySidePanel.isExpanded == false"
         class="btn btn-info btn-block"
         ng-click="MySidePanel.isExpanded = true">
@@ -12,14 +12,16 @@
     <span class="fa fa-angle-double-left"></span>
   </div>
 
-
   <div class="item"
         ng-repeat="group in MySidePanel.groups"
         ng-class="{'text-left': MySidePanel.isExpanded === true}"
         ng-click="MySidePanel.openGroup(group)">
 
     <div class="item-heading"
-          ng-class="{'opened': MySidePanel.openedGroup === group.name }">
+          ng-class="{'opened': MySidePanel.openedGroup === group.name, 'error': group.error }"
+          tooltip="{{ group.error }}"
+          tooltip-placement="right"
+          tooltip-append-to-body="true">
         <span class="{{group.icon}}"></span>
         <span class="name">{{group.name | caskCapitalizeFilter}}</span>
     </div>

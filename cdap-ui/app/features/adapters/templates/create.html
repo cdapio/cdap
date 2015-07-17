@@ -1,4 +1,7 @@
-<h1 class="adapter-name">
+<h1 class="adapter-name"
+    ng-class="{ 'name-error': AdapterCreateController.metadata.error }"
+    tooltip="{{ AdapterCreateController.metadata.error }}"
+    tooltip-placement="right">
   <a ng-if="AdapterCreateController.metadata.name.length > 0"
       ng-click="AdapterCreateController.showMetadataModal()">
     {{AdapterCreateController.metadata.name}}

@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state) {
+  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, AdapterErrorFactory) {
     function getIcon(plugin) {
       var iconMap = {
         'script': 'fa-code',
@@ -93,7 +93,8 @@ angular.module(PKG.name + '.feature.adapters')
               },
               function error(errorObj) {
                 console.error('ERROR!: ', errorObj);
-              }
+                // AdapterErrorFactory.processError(errorObj);
+              }.bind(this)
             );
           break;
       }
@@ -133,6 +134,12 @@ angular.module(PKG.name + '.feature.adapters')
     };
 
     this.onPluginItemClicked = function(event, item) {
+      if (item.type === 'source' && this.pluginTypes[0].error) {
+        delete this.pluginTypes[0].error;
+      } else if (item.type === 'sink' && this.pluginTypes[2].error) {
+        delete this.pluginTypes[2].error;
+      }
+
       // TODO: Better UUID?
       var id = item.name + '-' + item.type + '-' + Date.now();
       event.stopPropagation();
@@ -146,5 +153,14 @@ angular.module(PKG.name + '.feature.adapters')
       MyPlumbService.addNodes(config, config.type);
     };
 
+    function errorNotification(errors) {
+      angular.forEach(this.pluginTypes, function (type) {
+        if (errors[type.name]) {
+          type.error = errors[type.name];
+        }
+      });
+    }
+
+    MyPlumbService.errorCallback(errorNotification.bind(this));
 
   });
