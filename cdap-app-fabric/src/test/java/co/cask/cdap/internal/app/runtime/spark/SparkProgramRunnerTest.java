@@ -254,7 +254,7 @@ public class SparkProgramRunnerTest {
 
   @Test
   public void testSparkWithTimePartitionedFileSet() throws Exception {
-    testSparkWithPartitionedFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.JavaCharCount.class);
+    testSparkWithTimePartitionedFileSet(SparkAppUsingFileSet.class, SparkAppUsingFileSet.JavaCharCount.class);
   }
 
   @Test
@@ -270,16 +270,7 @@ public class SparkProgramRunnerTest {
     long inputTime = System.currentTimeMillis();
     final long outputTime = inputTime + TimeUnit.HOURS.toMillis(1);
 
-    final PartitionOutput partitionOutput = tpfs.getPartitionOutput(inputTime);
-    Location location = partitionOutput.getLocation();
-    prepareFileInput(location);
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
-      new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          partitionOutput.addPartition();
-        }
-      });
+    addTimePartition(tpfs, inputTime);
 
     Map<String, String> inputArgs = new HashMap<>();
     TimePartitionedFileSetArguments.setInputStartTime(inputArgs, inputTime - 100);
@@ -301,6 +292,61 @@ public class SparkProgramRunnerTest {
           PartitionDetail partition = tpfs.getPartitionByTime(outputTime);
           Assert.assertNotNull(partition);
           validateFileOutput(partition.getLocation());
+        }
+      });
+  }
+
+  @Test
+  public void testSparkWithTimePartitionedFileSetAndDSArgs() throws Exception {
+    testSparkWithTimePartitionedFileSetAndDSArgs(SparkAppUsingFileSet.class, SparkAppUsingFileSet.JavaCharCount.class);
+  }
+
+  @Test
+  public void testSparkScalaWithTimePartitionedFileSetAndDSArgs() throws Exception {
+    testSparkWithTimePartitionedFileSetAndDSArgs(SparkAppUsingFileSet.class, SparkAppUsingFileSet.ScalaCharCount.class);
+  }
+
+  private void testSparkWithTimePartitionedFileSetAndDSArgs(Class<?> appClass, Class<?> programClass) throws Exception {
+
+    final long customOutputPartitionKey = 123456789L;
+    final long customInputPartitionKey = 987654321L;
+
+    final ApplicationWithPrograms app =
+      AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
+
+    final TimePartitionedFileSet tpfs = datasetInstantiator.getDataset("tpfs");
+
+    addTimePartition(tpfs, customInputPartitionKey);
+
+    Map<String, String> args = new HashMap<>();
+    args.put("input", "tpfs");
+    args.put("output", "tpfs");
+    args.put("outputKey", String.valueOf(customOutputPartitionKey));
+    args.put("inputKey", String.valueOf(customInputPartitionKey));
+
+    runProgram(app, programClass, args);
+
+    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          PartitionDetail customPartition = tpfs.getPartitionByTime(customOutputPartitionKey);
+          Assert.assertNotNull(customPartition);
+          validateFileOutput(customPartition.getLocation());
+        }
+      });
+  }
+
+  private void addTimePartition(TimePartitionedFileSet tpfs, long inputTime) throws IOException,
+    TransactionFailureException, InterruptedException {
+    final PartitionOutput partitionOutput = tpfs.getPartitionOutput(inputTime);
+    Location location = partitionOutput.getLocation();
+    prepareFileInput(location);
+    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          partitionOutput.addPartition();
         }
       });
   }

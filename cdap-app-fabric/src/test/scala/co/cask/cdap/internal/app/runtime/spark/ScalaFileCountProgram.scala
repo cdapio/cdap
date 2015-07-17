@@ -16,6 +16,9 @@
 
 package co.cask.cdap.internal.app.runtime.spark
 
+import java.util
+
+import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments
 import co.cask.cdap.api.spark.{ScalaSparkProgram, SparkContext}
 import org.apache.spark.rdd.NewHadoopRDD
 
@@ -29,13 +32,36 @@ class ScalaFileCountProgram extends ScalaSparkProgram {
     val input = sc.getRuntimeArguments.get("input")
     val output = sc.getRuntimeArguments.get("output")
 
-    // read the dataset
-    val inputData: NewHadoopRDD[Long, String] = sc.readFromDataset(input, classOf[Long], classOf[String])
+    val inputPartitionKey = sc.getRuntimeArguments.get("inputKey")
+    val outputPartitinKey = sc.getRuntimeArguments.get("outputKey")
 
-    // create a new RDD with the same key but the value is the length of the string
-    val stringLengths = inputData.map(str => (str._2, str._2.length))
+    // read and write datasets with dataset arguments
+    if (inputPartitionKey != null && outputPartitinKey != null) {
+      val inputArgs: util.HashMap[String, String] = new util.HashMap[String, String]
+      TimePartitionedFileSetArguments.setInputStartTime(inputArgs, inputPartitionKey.toLong - 100)
+      TimePartitionedFileSetArguments.setInputEndTime(inputArgs, inputPartitionKey.toLong + 100)
 
-    // write to dataset
-    sc.writeToDataset(stringLengths, output, classOf[String], classOf[Integer])
+
+      // read the dataset with custom user dataset arguments
+      val customInputData: NewHadoopRDD[Long, String] = sc.readFromDataset(input, classOf[Long], classOf[String], inputArgs)
+
+      // create a new RDD with the same key but the value is the length of the string
+      val customPartitionStringLengths = customInputData.map(str => (str._2, str._2.length))
+
+
+      // write the character count to dataset with user custom dataset args
+      val outputArgs: util.HashMap[String, String] = new util.HashMap[String, String]
+      TimePartitionedFileSetArguments.setOutputPartitionTime(outputArgs, outputPartitinKey.toLong)
+      sc.writeToDataset(customPartitionStringLengths, output, classOf[String], classOf[Integer], outputArgs)
+    } else {
+      // read the dataset
+      val inputData: NewHadoopRDD[Long, String] = sc.readFromDataset(input, classOf[Long], classOf[String])
+
+      // create a new RDD with the same key but the value is the length of the string
+      val stringLengths = inputData.map(str => (str._2, str._2.length))
+
+      // write to dataset
+      sc.writeToDataset(stringLengths, output, classOf[String], classOf[Integer])
+    }
   }
 }
