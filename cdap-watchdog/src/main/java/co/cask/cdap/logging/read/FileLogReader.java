@@ -81,6 +81,7 @@ public class FileLogReader implements LogReader {
                                                         filter));
       long fromTimeMs = readRange.getFromMillis() + 1;
 
+      LOG.trace("Using fromTimeMs={}, readRange={}", fromTimeMs, readRange);
       SortedMap<Long, Location> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
       if (sortedFiles.isEmpty()) {
         return;
@@ -90,6 +91,7 @@ public class FileLogReader implements LogReader {
       Location prevPath = null;
       List<Location> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
       for (Map.Entry<Long, Location> entry : sortedFiles.entrySet()) {
+        LOG.trace("Considering file {} with timestamp {}", entry.getValue().toURI(), entry.getKey());
         if (entry.getKey() >= readRange.getFromMillis() &&
           prevPath != null && entry.getKey() <= readRange.getToMillis()) {
           tailFiles.add(prevPath);
@@ -104,6 +106,7 @@ public class FileLogReader implements LogReader {
 
       AvroFileReader logReader = new AvroFileReader(schema);
       for (Location file : tailFiles) {
+        LOG.trace("Reading file {}", file.toURI());
         logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - callback.getCount(), callback);
         if (callback.getCount() >= maxEvents) {
           break;
@@ -131,8 +134,10 @@ public class FileLogReader implements LogReader {
 
       long fromTimeMs = readRange != ReadRange.LATEST ? readRange.getToMillis() - 1 : System.currentTimeMillis();
 
+      LOG.trace("Using fromTimeMs={}, readRange={}", fromTimeMs, readRange);
       List<Location> tailFiles = Lists.newArrayListWithExpectedSize(sortedFiles.size());
       for (Map.Entry<Long, Location> entry : sortedFiles.entrySet()) {
+        LOG.trace("Considering file {} with timestamp {}", entry.getValue().toURI(), entry.getKey());
         if (entry.getKey() >= readRange.getFromMillis() && entry.getKey() <= readRange.getToMillis()) {
           tailFiles.add(entry.getValue());
         }
@@ -142,6 +147,7 @@ public class FileLogReader implements LogReader {
       AvroFileReader logReader = new AvroFileReader(schema);
       int count = 0;
       for (Location file : tailFiles) {
+        LOG.trace("Reading file {}", file.toURI());
         Collection<LogEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs, maxEvents - count);
         logSegments.add(events);
         count += events.size();
@@ -167,6 +173,7 @@ public class FileLogReader implements LogReader {
       Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
                                                         filter));
 
+      LOG.trace("Using fromTimeMs={}, toTimeMs={}", fromTimeMs, toTimeMs);
       SortedMap<Long, Location> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
       if (sortedFiles.isEmpty()) {
         return;
@@ -176,6 +183,7 @@ public class FileLogReader implements LogReader {
       Location prevPath = null;
       List<Location> files = Lists.newArrayListWithExpectedSize(sortedFiles.size());
       for (Map.Entry<Long, Location> entry : sortedFiles.entrySet()) {
+        LOG.trace("Considering file {} with timestamp {}", entry.getValue().toURI(), entry.getKey());
         if (entry.getKey() >= fromTimeMs && prevInterval != -1 && prevInterval < toTimeMs) {
           files.add(prevPath);
         }
@@ -189,6 +197,7 @@ public class FileLogReader implements LogReader {
 
       AvroFileReader avroFileReader = new AvroFileReader(schema);
       for (Location file : files) {
+        LOG.trace("Reading file {}", file.toURI());
         avroFileReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
       }
     } catch (Throwable e) {

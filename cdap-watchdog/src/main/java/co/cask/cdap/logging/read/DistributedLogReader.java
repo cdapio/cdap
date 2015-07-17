@@ -62,6 +62,7 @@ public final class DistributedLogReader implements LogReader {
         fileLogReader.getLogNext(loggingContext, readRange, maxEvents, filter, callback);
         // If there are events from fileLogReader, return. Otherwise try in kafkaLogReader.
         if (callback.getCount() != 0) {
+          LOG.trace("Got {} log entries from file", callback.getCount());
           return;
         }
       }
@@ -76,9 +77,10 @@ public final class DistributedLogReader implements LogReader {
     // If latest logs are not requested, try reading from file.
     if (readRange != ReadRange.LATEST) {
       long checkpointTime = getCheckpointTime(loggingContext);
-      // Read from file only if logs are saved for the loggingContext until fromTime
+      // Read from file only if logs are saved for the loggingContext until toTime
       if (readRange.getToMillis() < checkpointTime) {
         fileLogReader.getLogPrev(loggingContext, readRange, maxEvents, filter, callback);
+        LOG.trace("Got {} log entries from file", callback.getCount());
         return;
       }
     }
