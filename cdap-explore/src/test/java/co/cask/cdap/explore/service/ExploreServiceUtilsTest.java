@@ -49,11 +49,9 @@ public class ExploreServiceUtilsTest {
     Assert.assertEquals(1, conf.size());
 
     File confFile = tmpFolder.newFile("hive-site.xml");
-    FileOutputStream fos = new FileOutputStream(confFile);
-    try {
-      conf.writeXml(fos);
-    } finally {
-      fos.close();
+
+    try (FileOutputStream os = new FileOutputStream(confFile)) {
+      conf.writeXml(os);
     }
 
     File newConfFile = ExploreServiceUtils.hijackConfFile(confFile);
@@ -69,11 +67,9 @@ public class ExploreServiceUtilsTest {
     // check yarn-site changes
     confFile = tmpFolder.newFile("yarn-site.xml");
     conf = new YarnConfiguration();
-    fos = new FileOutputStream(confFile);
-    try {
-      conf.writeXml(fos);
-    } finally {
-      fos.close();
+
+    try (FileOutputStream os = new FileOutputStream(confFile)) {
+      conf.writeXml(os);
     }
 
     String yarnApplicationClassPath = "$PWD/*," +
