@@ -51,10 +51,10 @@ public class WordCounter extends AbstractFlow {
   protected void configureFlow() {
     setName("WordCounter");
     setDescription("Example Word Count Flow");
-    addFlowlet("splitter", new WordSplitter(config.getWsTable()));
-    addFlowlet("associator", new WordAssociator(config.getWaTable()));
-    addFlowlet("counter", new Counter(config.getWcTable()));
-    addFlowlet("unique", new UniqueCounter(config.getUcTable()));
+    addFlowlet("splitter", new WordSplitter(config.getWordStatsTable()));
+    addFlowlet("associator", new WordAssociator(config.getWordAssocTable()));
+    addFlowlet("counter", new Counter(config.getWordCountTable()));
+    addFlowlet("unique", new UniqueCounter(config.getUniqueCountTable()));
     connectStream(config.getStream(), "splitter");
     connect("splitter", "associator");
     connect("splitter", "counter");

@@ -25,7 +25,7 @@ with the name of the JAR file as a header::
 
   X-Archive-Name: <JAR filename>
 
-configuration object as a serialized json as another header (optional) ::
+configuration object as a serialized JSON as another header (optional)::
 
   X-App-Config: <Serialized JSON of the Configuration Object>
 

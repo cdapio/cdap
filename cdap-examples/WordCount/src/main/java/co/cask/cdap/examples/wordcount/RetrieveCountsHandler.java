@@ -46,16 +46,16 @@ public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
   private static final int WORD_COUNT_LIMIT = 10;
 
   @Property
-  private final String wsTable;
+  private final String wordStatsTableName;
 
   @Property
-  private final String wcTable;
+  private final String wordCountTableName;
 
   @Property
-  private final String ucTable;
+  private final String uniqueCountTableName;
 
   @Property
-  private final String waTable;
+  private final String wordAssocTableName;
 
   private Table wordStatsTable;
   private KeyValueTable wordCountsTable;
@@ -63,25 +63,25 @@ public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
   private AssociationTable associationTable;
 
   public RetrieveCountsHandler(WordCount.WordCountConfig config) {
-    this.wsTable = config.getWsTable();
-    this.wcTable = config.getWcTable();
-    this.ucTable = config.getUcTable();
-    this.waTable = config.getWaTable();
+    this.wordStatsTableName = config.getWordStatsTable();
+    this.wordCountTableName = config.getWordCountTable();
+    this.uniqueCountTableName = config.getUniqueCountTable();
+    this.wordAssocTableName = config.getWordAssocTable();
   }
 
   @Override
   protected void configure() {
     super.configure();
-    useDatasets(wsTable, wcTable, ucTable, waTable);
+    useDatasets(wordStatsTableName, wordCountTableName, uniqueCountTableName, wordAssocTableName);
   }
 
   @Override
   public void initialize(HttpServiceContext context) throws Exception {
     super.initialize(context);
-    wordStatsTable = context.getDataset(wsTable);
-    wordCountsTable = context.getDataset(wcTable);
-    uniqueCountTable = context.getDataset(ucTable);
-    associationTable = context.getDataset(waTable);
+    wordStatsTable = context.getDataset(wordStatsTableName);
+    wordCountsTable = context.getDataset(wordCountTableName);
+    uniqueCountTable = context.getDataset(uniqueCountTableName);
+    associationTable = context.getDataset(wordAssocTableName);
   }
 
   /**

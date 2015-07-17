@@ -31,27 +31,27 @@ import co.cask.cdap.api.metrics.Metrics;
 public class Counter extends AbstractFlowlet {
 
   @Property
-  private final String wcTable;
+  private final String wordCountTableName;
 
   private KeyValueTable wordCountsTable;
   private OutputEmitter<String> wordOutput;
   private Metrics metrics;
   int longestWordLength = 0;
 
-  public Counter(String wcTable) {
-    this.wcTable = wcTable;
+  public Counter(String wordCountTableName) {
+    this.wordCountTableName = wordCountTableName;
   }
 
   @Override
   public void configure(FlowletConfigurer configurer) {
     super.configure(configurer);
-    useDatasets(wcTable);
+    useDatasets(wordCountTableName);
   }
 
   @Override
   public void initialize(FlowletContext context) throws Exception {
     super.initialize(context);
-    wordCountsTable = context.getDataset(wcTable);
+    wordCountsTable = context.getDataset(wordCountTableName);
   }
 
   @ProcessInput("wordOut")

@@ -41,22 +41,22 @@ public class WordSplitter extends AbstractFlowlet {
   private OutputEmitter<List<String>> wordListOutput;
 
   @Property
-  private final String wsTable;
+  private final String wordStatsTableName;
 
-  public WordSplitter(String wsTable) {
-    this.wsTable = wsTable;
+  public WordSplitter(String wordStatsTableName) {
+    this.wordStatsTableName = wordStatsTableName;
   }
 
   @Override
   public void configure(FlowletConfigurer configurer) {
     super.configure(configurer);
-    useDatasets(wsTable);
+    useDatasets(wordStatsTableName);
   }
 
   @Override
   public void initialize(FlowletContext context) throws Exception {
     super.initialize(context);
-    wordStatsTable = context.getDataset(wsTable);
+    wordStatsTable = context.getDataset(wordStatsTableName);
   }
 
   @ProcessInput

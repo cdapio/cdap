@@ -23,8 +23,8 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 
 /**
- * Word count sample Application. Uses a configuration class which can be used to pass in a configuration during
- * application creation time.
+ * Word count sample Application. Includes a configuration class which can be used to pass in a configuration during
+ * application deployment time.
  *
  * @see {@link WordCountConfig}
  */
@@ -35,45 +35,52 @@ public class WordCount extends AbstractApplication<WordCount.WordCountConfig> {
    */
   public static class WordCountConfig extends Config {
     private String stream;
-    private String wsTable;
-    private String wcTable;
-    private String ucTable;
-    private String waTable;
+    private String wordStatsTable;
+    private String wordCountTable;
+    private String uniqueCountTable;
+    private String wordAssocTable;
 
+    /**
+     * Set default values for the configuration variables.
+     */
     public WordCountConfig() {
       this.stream = "wordStream";
-      this.wsTable = "wordStats";
-      this.wcTable = "wordCounts";
-      this.ucTable = "unqiueCount";
-      this.waTable = "wordAssocs";
+      this.wordStatsTable = "wordStats";
+      this.wordCountTable = "wordCounts";
+      this.uniqueCountTable = "unqiueCount";
+      this.wordAssocTable = "wordAssocs";
     }
 
-    public WordCountConfig(String stream, String wsTable, String wcTable, String ucTable, String waTable) {
+    /**
+     * Used only for unit testing.
+     */
+    public WordCountConfig(String stream, String wordStatsTable, String wordCountTable, String uniqueCountTable,
+                           String wordAssocTable) {
       this.stream = stream;
-      this.wsTable = wsTable;
-      this.wcTable = wcTable;
-      this.ucTable = ucTable;
-      this.waTable = waTable;
+      this.wordStatsTable = wordStatsTable;
+      this.wordCountTable = wordCountTable;
+      this.uniqueCountTable = uniqueCountTable;
+      this.wordAssocTable = wordAssocTable;
     }
 
     public String getStream() {
       return stream;
     }
 
-    public String getWsTable() {
-      return wsTable;
+    public String getWordStatsTable() {
+      return wordStatsTable;
     }
 
-    public String getWcTable() {
-      return wcTable;
+    public String getWordCountTable() {
+      return wordCountTable;
     }
 
-    public String getUcTable() {
-      return ucTable;
+    public String getUniqueCountTable() {
+      return uniqueCountTable;
     }
 
-    public String getWaTable() {
-      return waTable;
+    public String getWordAssocTable() {
+      return wordAssocTable;
     }
   }
 
@@ -87,10 +94,10 @@ public class WordCount extends AbstractApplication<WordCount.WordCountConfig> {
     addStream(new Stream(config.getStream()));
 
     // Store processed data in Datasets
-    createDataset(config.getWsTable(), Table.class);
-    createDataset(config.getWcTable(), KeyValueTable.class);
-    createDataset(config.getUcTable(), UniqueCountTable.class);
-    createDataset(config.getWaTable(), AssociationTable.class);
+    createDataset(config.getWordStatsTable(), Table.class);
+    createDataset(config.getWordCountTable(), KeyValueTable.class);
+    createDataset(config.getUniqueCountTable(), UniqueCountTable.class);
+    createDataset(config.getWordAssocTable(), AssociationTable.class);
 
     // Process events in real-time using Flows
     addFlow(new WordCounter(config));

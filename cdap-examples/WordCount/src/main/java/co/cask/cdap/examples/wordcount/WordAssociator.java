@@ -29,24 +29,24 @@ import java.util.Set;
 public class WordAssociator extends AbstractFlowlet {
 
   @Property
-  private final String waTable;
+  private final String wordAssocTableName;
 
   private AssociationTable associationTable;
 
-  public WordAssociator(String waTable) {
-    this.waTable = waTable;
+  public WordAssociator(String wordAssocTableName) {
+    this.wordAssocTableName = wordAssocTableName;
   }
 
   @Override
   public void configure(FlowletConfigurer configurer) {
     super.configure(configurer);
-    useDatasets(waTable);
+    useDatasets(wordAssocTableName);
   }
 
   @Override
   public void initialize(FlowletContext context) throws Exception {
     super.initialize(context);
-    associationTable = context.getDataset(waTable);
+    associationTable = context.getDataset(wordAssocTableName);
   }
 
   @ProcessInput

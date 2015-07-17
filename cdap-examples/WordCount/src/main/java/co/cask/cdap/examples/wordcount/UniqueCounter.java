@@ -22,29 +22,29 @@ import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
 
 /**
- *
+ * Flowlet that updates unique count of words.
  */
 public class UniqueCounter extends AbstractFlowlet {
 
   @Property
-  private final String ucTable;
+  private final String uniqueCountTableName;
 
   private UniqueCountTable uniqueCountTable;
 
   @Override
   public void configure(FlowletConfigurer configurer) {
     super.configure(configurer);
-    useDatasets(ucTable);
+    useDatasets(uniqueCountTableName);
   }
 
-  public UniqueCounter(String ucTable) {
-    this.ucTable = ucTable;
+  public UniqueCounter(String uniqueCountTableName) {
+    this.uniqueCountTableName = uniqueCountTableName;
   }
 
   @Override
   public void initialize(FlowletContext context) throws Exception {
     super.initialize(context);
-    uniqueCountTable = context.getDataset(ucTable);
+    uniqueCountTable = context.getDataset(uniqueCountTableName);
   }
 
   @ProcessInput

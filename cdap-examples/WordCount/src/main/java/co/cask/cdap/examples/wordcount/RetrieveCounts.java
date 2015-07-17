@@ -34,7 +34,7 @@ public class RetrieveCounts extends AbstractService {
   @Override
   protected void configure() {
     setName(SERVICE_NAME);
-    setDescription("A service to retrieve statistics, word counts and associations.");
+    setDescription("A service to retrieve statistics, word counts, and associations.");
     addHandler(new RetrieveCountsHandler(config));
   }
 }
