@@ -34,7 +34,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
-import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
@@ -47,7 +46,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -380,21 +378,11 @@ public class ExploreServiceUtils {
     conf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH, yarnAppClassPath);
 
     File newYarnConfFile = new File(Files.createTempDir(), "yarn-site.xml");
-    FileOutputStream fos;
-    try {
-      fos = new FileOutputStream(newYarnConfFile);
-    } catch (FileNotFoundException e) {
-      LOG.error("Problem creating temporary yarn-site.xml conf file at {}", newYarnConfFile, e);
-      throw Throwables.propagate(e);
-    }
-
-    try {
-      conf.writeXml(fos);
+    try (FileOutputStream os = new FileOutputStream(newYarnConfFile)) {
+      conf.writeXml(os);
     } catch (IOException e) {
-      LOG.error("Could not write modified configuration to temporary yarn-site.xml at {}", newYarnConfFile, e);
+      LOG.error("Problem creating and writing to temporary yarn-conf.xml conf file at {}", newYarnConfFile, e);
       throw Throwables.propagate(e);
-    } finally {
-      Closeables.closeQuietly(fos);
     }
 
     return newYarnConfFile;
@@ -422,23 +410,13 @@ public class ExploreServiceUtils {
     conf.setBoolean(MRJobConfig.MAPREDUCE_JOB_CLASSLOADER, false);
 
     File newHiveConfFile = new File(Files.createTempDir(), "hive-site.xml");
-    FileOutputStream fos;
-    try {
-      fos = new FileOutputStream(newHiveConfFile);
-    } catch (FileNotFoundException e) {
+
+    try (FileOutputStream os = new FileOutputStream(newHiveConfFile)) {
+      conf.writeXml(os);
+    } catch (IOException e) {
       LOG.error("Problem creating temporary hive-site.xml conf file at {}", newHiveConfFile, e);
       throw Throwables.propagate(e);
     }
-
-    try {
-      conf.writeXml(fos);
-    } catch (IOException e) {
-      LOG.error("Could not write modified configuration to temporary hive-site.xml at {}", newHiveConfFile, e);
-      throw Throwables.propagate(e);
-    } finally {
-      Closeables.closeQuietly(fos);
-    }
-
     return newHiveConfFile;
   }
 }
