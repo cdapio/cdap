@@ -48,13 +48,18 @@ Other components are defined using user-written classes that implement correspon
 interfaces and are referenced by passing an object, in addition to being assigned a unique
 name.
 
-Names used for streams and datasets need to be unique across the CDAP instance, while
+Names used for streams and datasets need to be unique across the CDAP namespace, while
 names used for programs and services need to be unique only to the application.
 
-Application can also use a Configuration class to get a configuration during deployment time of the Application.
-This can be used to, for example, provide the stream, dataset to create/read from during application deployment time
-instead of hard coding it in the ``AbstractApplication``'s ``configure`` method. For example, we can modify
-the ``MyApp`` class above to take in a Configuration::
+Applications can also use a Configuration class to receive a configuration during deployment time of the Application.
+For example, this can be used to specify the stream, dataset to create/read from at application deployment time
+instead of hard coding it in the ``AbstractApplication``'s ``configure`` method. The configuration class needs to be
+the type parameter of ``AbstractApplication`` class. It should also extend the ``Config`` class present in CDAP API.
+The configuration is provided during application creation time through a Header in the REST API. It is available during
+configuration time through the ``getConfig()`` method in ``AbstractApplication``.
+Information about the REST call is available in Lifecycle HTTP REST API documentation.
+
+We can modify the ``MyApp`` class above to take in a Configuration ``MyApp.MyAppConfig``::
 
       public class MyApp extends AbstractApplication<MyApp.MyAppConfig> {
 
@@ -82,6 +87,37 @@ the ``MyApp`` class above to take in a Configuration::
           addWorkflow(new MyAppWorkflow());
         }
       }
+
+In order to use the configuration in programs, we pass it to individual Programs using their constructor. But if
+the configuration parameter is also required during runtime, you can use the ``@Property`` annotation::
+
+  public class UniqueCounter extends AbstractFlowlet {
+    @Property
+    private final String uniqueCountTableName;
+
+    private UniqueCountTable uniqueCountTable;
+
+    @Override
+    public void configure(FlowletConfigurer configurer) {
+      super.configure(configurer);
+      useDatasets(uniqueCountTableName);
+    }
+
+    public UniqueCounter(String uniqueCountTableName) {
+      this.uniqueCountTableName = uniqueCountTableName;
+    }
+
+    @Override
+    public void initialize(FlowletContext context) throws Exception {
+      super.initialize(context);
+      uniqueCountTable = context.getDataset(uniqueCountTableName);
+    }
+
+    @ProcessInput
+    public void process(String word) {
+      this.uniqueCountTable.updateUniqueCount(word);
+    }
+  }
 
 .. rubric:: A Typical CDAP Application
 

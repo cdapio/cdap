@@ -25,9 +25,9 @@ with the name of the JAR file as a header::
 
   X-Archive-Name: <JAR filename>
 
-configuration object as a serialized JSON as another header (optional)::
+configuration object as a serialized JSON string as another header (optional)::
 
-  X-App-Config: <Serialized JSON of the Configuration Object>
+  X-App-Config: <JSON Serialization String of the Configuration Object>
 
 and its content as the body of the request::
 
@@ -36,6 +36,21 @@ and its content as the body of the request::
 Invoke the same command to update an application to a newer version.
 However, be sure to stop all of its flows, Spark and MapReduce programs before updating the application.
 
+For an application that has following configuration class::
+
+  public static class MyAppConfig extends Config {
+    String streamName;
+    String datasetName;
+  }
+
+we can deploy it using the following REST call::
+
+  POST <bas-url>/namespaces/<namespace>/apps
+  -H "X-Archive-Name: <jar-name>"
+  -H "X-App-Config: "{\"streamName\" : \"newStream\", \"datasetName\" : \"newDataset\" }"
+  --data-binary "@<jar-location>"
+
+Note that the ``X-App-Config`` header contains the JSON serialization string of the ``MyAppConfig`` object.
 
 Deployed Applications
 ---------------------
