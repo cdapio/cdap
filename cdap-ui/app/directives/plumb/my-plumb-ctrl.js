@@ -1,9 +1,7 @@
 angular.module(PKG.name + '.commons')
-  .controller('MyPlumbController', function MyPlumbController(jsPlumb, $scope, $timeout, MyPlumbService, myHelpers, MyPlumbFactory, AdapterErrorFactory) {
+  .controller('MyPlumbController', function MyPlumbController(jsPlumb, $scope, $timeout, MyPlumbService, myHelpers, MyPlumbFactory) {
     this.plugins = $scope.config || [];
     this.instance = null;
-    // this.nodesErrors = AdapterErrorFactory.nodesError;
-    // this.canvasError = AdapterErrorFactory.canvasError;
 
     this.addPlugin = function addPlugin(config, type) {
       this.plugins.push(angular.extend({
