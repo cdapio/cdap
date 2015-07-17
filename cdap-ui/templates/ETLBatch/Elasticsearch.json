@@ -1,87 +1,66 @@
 {
-  "id": "KafkaSource",
+  "id": "ElasticsearchSink",
   "groups" : {
     "position": [ "group1", "group2"  ],
     "group1": {
       "display" : "Elasticsearch Configuration",
-      "position" : [ "es.host", "es.port", "es.index", "es.topic", "" ],
+      "position" : [ "es.host", "es.port", "es.index", "es.type" ],
       "fields" : {
-        "kafka.zookeeper" : {
+        "es.host": {
           "widget": "textbox",
-          "label": "Zookeeper Quorum",
-          "description" : "Specify the zookeeper connection string. E.g. host:2181,host2:2181,host3:2181. Either we can specify zookeeper quorum or broker list.",
+          "label": "Elasticsearch Host",
+          "description": "Specify the hostname and port for your elasticsearch instance (e.g. localhost:9200).",
           "properties": {
             "width": "large"
           }
         },
-
-        "kafka.brokers" : {
-          "widget": "csv",
-          "label": "Kafka Brokers",
-          "description" : "Server names on which kafka server is running. Kafka is run as a cluster comprised of one or more servers each of which is called broker. Either we can specify zookeeper connection string or this configuration.",
-          "properties": {
-            "width": "medium",
-            "delimiter" : ","
-          }
-        },
-
-        "kafka.partitions" : {
-          "widget": "number",
-          "label": "Number of Partitions",
-          "description": "Specifies the number of partitions. Each partition is an ordered, immutable sequence of messages that is continually appended to—a commit log. The messages in the partitions are each assigned a sequential id number called the offset that uniquely identifies each message within the partition",
-          "properties": {
-            "width": "extra-small",
-            "default": 1
-          },
-          "max": 999,
-          "min": 1
-        },
-
-        "kafka.topic" : {
+        "es.index": {
           "widget": "textbox",
-          "label": "Topic",
-          "description" : "Topic you want to subscribe to. Kafka maintains feeds of messages in categories called topics",
+          "label": "Index",
+          "description": "The index name where the documents will be stored. If the index does not exist, one will be created using elasticsearch defaults",
           "properties": {
             "width": "medium"
           }
         },
-        "schema" : {
-          "widget": "schema",
-          "label" : "Schema",
-          "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
-          "schema-default-type" : "string"
-        },
 
-        "kafka.default.offset" : {
-          "widget": "number",
-          "label": "Start Offset",
-          "description": "Specifies the start offset for processing from the queue",
+        "es.type": {
+          "widget": "textbox",
+          "label": "Type",
+          "description": "The type the documents will be stored as. If the type does not exist, one will be created. A mapping will be applied to documents of this type, so any existing mapping will be overwritten",
           "properties": {
-            "width": "extra-small",
-            "default": 0
-          },
-          "min": 1
+            "width": "medium"
+          }
         }
       }
     },
-
     "group2" : {
-      "display" : "Format & Schema",
-      "position" : [ "kafka.format", "kafka.schema" ],
+      "display" : "Mapping",
+      "position" : [ "es.mapping", "es.idField" ],
       "fields" : {
-        "kafka.format" : {
-          "widget" : "select",
-          "label"  : "Format",
-          "properties" : {
-            "values" : [ "", "avro", "clf", "csv", "grok", "syslog", "text", "tsv" ],
-            "default" : ""
-          }
+        "es.mapping" : {
+          "widget": "schema",
+          "label": "Mapping",
+          "description": "This is the type that will be applied to every document. It should correspond to the structured record of the event being stored in elasticsearch. If no mapping is provided, the mapping of the structured record will be used",
+          "schema-types": [
+            "boolean",
+            "int",
+            "long",
+            "float",
+            "double",
+            "bytes",
+            "string - exact value",
+            "string - full-text",
+            "date"
+          ],
+          "schema-default-type": "string - exact value"
         },
-        "kafka.schema" : {
-          "widget": "stream-properties",
-          "label" : "Schema",
-          "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
-          "schema-default-type" : "string"
+        "es.idField" : {
+          "widget": "textbox",
+          "label": "ID Field",
+          "description": "The idField will specify from which field the id of the document is derived. If no field is specified, elasticsearch will generate one",
+          "properties": {
+            "width": "large"
+          }
         }
       }
     }

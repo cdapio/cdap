@@ -124,7 +124,7 @@
     </dependency>
     <dependency>
       <groupId>org.elasticsearch</groupId>
-      <artifactId>elasticsearch-hadoop</artifactId>
+      <artifactId>elasticsearch-hadoop-mr</artifactId>
       <version>2.1.0</version>
     </dependency>
   </dependencies>

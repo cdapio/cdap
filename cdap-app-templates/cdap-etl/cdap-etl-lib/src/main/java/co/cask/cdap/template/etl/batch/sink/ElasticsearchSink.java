@@ -25,27 +25,14 @@ import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
 import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
-import co.cask.cdap.template.etl.api.realtime.DataWriter;
-import co.cask.cdap.template.etl.api.realtime.RealtimeContext;
-import co.cask.cdap.template.etl.api.realtime.RealtimeSink;
 import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.template.etl.common.RecordUtils;
-import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.BytesWritable;
-import org.apache.hadoop.io.MapWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.hadoop.mr.EsOutputFormat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-
-import java.io.IOException;
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -55,11 +42,6 @@ import javax.annotation.Nullable;
 @Name("Elasticsearch")
 @Description("CDAP Elasticsearch Batch Sink")
 public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Writable> {
-  private static final Logger LOG = LoggerFactory.getLogger(ElasticsearchSink.class);
-
-  private static final String CLUSTER_DESC = "The name of the elasticsearch cluster. " +
-    "Defaults to the elasticsearch default: \"elasticsearch\"";
-
   private static final String INDEX_DESC = "The name of the index where the data will be stored. " +
     "The index should already exist and be configured.";
 
@@ -72,14 +54,14 @@ public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Wri
 
   private static final String HOST_DESC = "The hostname and port for an elasticsearch node. e.g. localhost:9300";
 
-  private static final String SERVER_DESC = "The elasticsearch server to connect to";
-
-  private static final String PORT_DESC = "The port to connect to, e.g. 9200";
-
   /**
    * Config class for RealtimeTableSink
    */
   public static class ESConfig extends PluginConfig {
+    @Name(Properties.Elasticsearch.HOST)
+    @Description(HOST_DESC)
+    private String hostname;
+
     @Name(Properties.Elasticsearch.INDEX_NAME)
     @Description(INDEX_DESC)
     private String index;
@@ -88,38 +70,22 @@ public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Wri
     @Description(TYPE_DESC)
     private String type;
 
-    @Name(Properties.Elasticsearch.SCHEMA)
+    @Name(Properties.Elasticsearch.MAPPING)
     @Description(PROPERTY_SCHEMA_DESC)
     @Nullable
-    private String schemaStr;
+    private String mapping;
 
     @Name(Properties.Elasticsearch.ID_FIELD)
     @Description(ID_DESC)
     @Nullable
     private String idField;
 
-    @Name(Properties.Elasticsearch.HOST)
-    @Description(HOST_DESC)
-    @Nullable
-    private String hostname;
-
-    @Name(Properties.Elasticsearch.SERVER)
-    @Description(SERVER_DESC)
-    private String server;
-
-    @Name(Properties.Elasticsearch.PORT)
-    @Description(PORT_DESC)
-    private String port;
-
-    public ESConfig(String server, String port, String index, String type, String schemaStr,
-                    String idField, String hostname) {
+    public ESConfig(String hostname, String index, String type, String mapping, String idField) {
+      this.hostname = hostname;
       this.index = index;
       this.type = type;
-      this.schemaStr = schemaStr;
+      this.mapping = mapping;
       this.idField = idField;
-      this.hostname = hostname;
-      this.server = server;
-      this.port = port;
     }
   }
 
@@ -129,9 +95,6 @@ public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Wri
     this.config = config;
   }
 
-  private String getNodes() {
-    return String.format("%s:%s", config.server, config.port);
-  }
   private String getResource() {
     return String.format("%s/%s", config.index, config.type);
   }
@@ -142,7 +105,7 @@ public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Wri
     Configuration conf = job.getConfiguration();
     conf.setBoolean("mapred.map.tasks.speculative.execution", false);
     conf.setBoolean("mapred.reduce.tasks.speculative.execution", false);
-    conf.set("es.nodes", getNodes());
+    conf.set("es.nodes", config.hostname);
     conf.set("es.resource", getResource());
     conf.set("es.input.json", "yes");
     if (config.idField != null) {
