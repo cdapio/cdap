@@ -5,7 +5,6 @@
 angular.module(PKG.name+'.feature.dashboard').controller('DashboardCtrl',
 function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, $timeout) {
 
-
   $scope.unknownBoard = false;
   $scope.isEnterprise = MY_CONFIG.isEnterprise;
   $scope.dashboards = rDashboardsModel.data || [];
@@ -34,24 +33,14 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, $timeo
       $scope.dashboards.activeIndex = index;
       return;
     }
-    var toggle = angular.element(event.target);
-    if(!toggle.hasClass('dropdown-toggle')) {
-      toggle = toggle.parent();
-    }
 
-    dropdown = $dropdown(toggle, {
-      template: 'assets/features/dashboard/templates/partials/tab-dd.html',
-      animation: 'am-flip-x',
-      trigger: 'manual',
-      prefixEvent: 'dashboard-tab-dd',
-      scope: $scope
+    $scope.dashboards.forEach(function (dashboard, i) {
+      if (index === i) {
+        dashboard.isopen = !dashboard.isopen;
+      }
     });
-    dropdown.$promise.then(function(){
-      dropdown.show();
-    });
-    $scope.$on('dashboard-tab-dd.hide', function () {
-      dropdown.destroy();
-    });
+
+    event.preventDefault();
     event.stopPropagation();
   };
 
@@ -89,4 +78,11 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, $timeo
     }
   };
 
+})
+.directive('tabDdMenu', function() {
+    return {
+        replace: true,
+        restrict: 'E',
+        templateUrl: '/assets/features/dashboard/templates/partials/tab-dd.html'
+    };
 });
