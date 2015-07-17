@@ -37,7 +37,7 @@ execute 'initaction-create-hdfs-cdap-user-dir' do
   retry_delay 10
 end
 
-%w(cdap yarn).each do |u|
+%w(cdap yarn mapr).each do |u|
   execute "initaction-create-hdfs-mr-jhs-staging-intermediate-done-dir-#{u}" do
     only_if "getent passwd #{u}"
     not_if "hadoop fs -test -d /tmp/hadoop-yarn/staging/history/done_intermediate/#{u}", :user => u
