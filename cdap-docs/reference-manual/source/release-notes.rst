@@ -24,6 +24,28 @@ Cask Data Application Platform Release Notes
    :depth: 2
 
 
+`Release 2.8.2 <http://docs.cask.co/cdap/2.8.2/index.html>`__
+=============================================================
+
+Bug Fix
+-------
+
+- Fixed a Bower dependency error in the CDAP UI
+  (`CDAP-3010 <https://issues.cask.co/browse/CDAP-3010>`__).
+
+
+`Release 2.8.1 <http://docs.cask.co/cdap/2.8.1/index.html>`__
+=============================================================
+
+Bug Fixes
+---------
+
+- Changed CDAP to use the transaction codec from Tephra instead of CDAP
+  (`CDAP-2496 <https://issues.cask.co/browse/CDAP-2496>`__).
+- Fixed a problem with TransactionStateCache needing to reference Tephra SnapshotCodecV3
+  (`CDAP-2522 <https://issues.cask.co/browse/CDAP-2522>`__).
+
+
 `Release 2.8.0 <http://docs.cask.co/cdap/2.8.0/index.html>`__
 =============================================================
 
