@@ -40,3 +40,27 @@ A collection of tips and hints on solving problems encountered during developmen
     config.setClassLoader(Thread.currentThread().getContextClassLoader());
   
   before passing it (``config``) to the SequenceFile.Reader constructor.
+
+
+.. _development-troubleshooting-spark:
+
+.. rubric:: Spark's MLlib Dependencies
+
+Spark's MLlib (Machine Learning Library) has various dependencies; please make sure you
+have the appropriate dependencies according to your installation:
+
+- Spark 1.2: https://spark.apache.org/docs/1.2.0/mllib-guide.html#dependencies
+- Spark 1.3: https://spark.apache.org/docs/1.3.0/mllib-guide.html#dependencies
+- Spark 1.4: https://spark.apache.org/docs/1.4.0/mllib-guide.html#dependencies
+
+.. rubric:: Spark and IDEs Unable to Resolve Methods Imported Implicitly
+
+Your IDE might fail to resolve methods which are imported implicitly while writing Spark
+programs. The method ``reduceByKey`` in the class ``PairRDDFunctions`` is an example of
+such a method. If you are using either Spark 1.2 or 1.3 to write your application, you can
+resolve this issue by adding an explicit import::
+
+  import org.apache.spark.SparkContext
+
+**Note:** This issue has been resolved in Spark 1.4; in that version and later you will
+not need this explicit import.
