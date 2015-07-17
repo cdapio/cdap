@@ -43,8 +43,6 @@ angular.module(PKG.name + '.commons')
       });
     }
 
-
-    MyPlumbService.registerCallBack(this.addPlugin.bind(this));
     MyPlumbService.errorCallback(errorNotification.bind(this));
 
     this.drawGraph = function() {
