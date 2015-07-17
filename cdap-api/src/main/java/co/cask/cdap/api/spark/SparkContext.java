@@ -29,6 +29,7 @@ import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowToken;
 
 import java.io.Serializable;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -72,6 +73,19 @@ public interface SparkContext extends RuntimeContext, DatasetContext {
   <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass);
 
   /**
+   * Create a Spark RDD that uses {@link Dataset} instantiated using the provided arguments as an input source
+   *
+   * @param datasetName the name of the {@link Dataset} to be read as an RDD
+   * @param kClass      the key class
+   * @param vClass      the value class
+   * @param datasetArgs arguments for the dataset
+   * @param <T>         type of RDD
+   * @return the RDD created from Dataset
+   * @throws UnsupportedOperationException if the SparkContext is not yet initialized
+   */
+  <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass, Map<String, String> datasetArgs);
+
+  /**
    * Writes a Spark RDD to {@link Dataset}
    *
    * @param rdd         the rdd to be stored
@@ -82,6 +96,19 @@ public interface SparkContext extends RuntimeContext, DatasetContext {
    * @throws UnsupportedOperationException if the SparkContext is not yet initialized
    */
   <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass);
+
+  /**
+   * Writes a Spark RDD to {@link Dataset} instantiated using the provided arguments
+   *
+   * @param rdd         the rdd to be stored
+   * @param datasetName the name of the {@link Dataset} where the RDD should be stored
+   * @param kClass      the key class
+   * @param vClass      the value class
+   * @param datasetArgs arguments for the dataset
+   * @param <T>         type of RDD
+   * @throws UnsupportedOperationException if the SparkContext is not yet initialized
+   */
+  <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass, Map<String, String> datasetArgs);
 
   /**
    * Create a Spark RDD that uses complete {@link Stream} as input source
