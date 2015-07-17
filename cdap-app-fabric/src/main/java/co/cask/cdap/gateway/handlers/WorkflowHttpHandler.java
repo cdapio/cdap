@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
@@ -143,13 +144,22 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     responder.sendString(HttpResponseStatus.OK, "Program run resumed.");
   }
 
+  // TODO: CDAP-2481. Deprecated API. Remove in 3.2.
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-name}/{run-id}/current")
+  public void getWorkflowStatusOld(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespaceId,
+                                  @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName,
+                                  @PathParam("run-id") String runId) {
+    getWorkflowStatus(request, responder, namespaceId, appId, workflowName, runId);
+  }
+
+  @GET
+  @Path("/apps/{app-id}/workflows/{workflow-name}/runs/{run-id}/current")
   public void getWorkflowStatus(HttpRequest request, final HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId,
                                 @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName,
                                 @PathParam("run-id") String runId) {
-
     try {
       workflowClient.getWorkflowStatus(namespaceId, appId, workflowName, runId,
                                        new WorkflowClient.Callback() {
@@ -158,8 +168,11 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                            if (status.getCode() == WorkflowClient.Status.Code.NOT_FOUND) {
                                              responder.sendStatus(HttpResponseStatus.NOT_FOUND);
                                            } else if (status.getCode() == WorkflowClient.Status.Code.OK) {
+                                             // This uses responder.sendByteArray because status.getResult returns a
+                                             // json string, and responder.sendJson would need deserialization and
+                                             // serialization.
                                              responder.sendByteArray(HttpResponseStatus.OK,
-                                                                     status.getResult().getBytes(),
+                                                                     Bytes.toBytes(status.getResult()),
                                                                      ImmutableMultimap.of(
                                                                        HttpHeaders.Names.CONTENT_TYPE,
                                                                        "application/json; charset=utf-8"));

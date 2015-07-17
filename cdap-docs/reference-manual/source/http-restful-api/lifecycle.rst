@@ -619,9 +619,19 @@ For services, you can retrieve:
 
 For workflows, you can retrieve:
 
-- the information about the specific run currently running::
+- the information about the currently running node(s) in the workflow:
 
-    GET <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/<run-id>/current
+  .. topic::  **Note: Workflow Current Node(s) RESTful API Deprecated**
+
+    As of *CDAP v3.1.0*, the *Workflow Current Node(s) RESTful API* has been deprecated, pending removal in a later
+    version. Replace all use of this *Workflow Current Node(s) RESTful API*  ::
+
+      GET <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/<run-id>/current
+
+    with the revised API shown below for the *currently running node(s) of the workflow*.
+    Note the addition of a ``/runs/`` component in the path::
+
+      GET <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/current
 
 - the schedules defined for a workflow (using the parameter ``schedules``)::
 
