@@ -239,14 +239,14 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
       }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IllegalStateException ise) {
-      LOG.warn(String.format("IllegalStateException when trying to restart instances for service %s", serviceName));
+      LOG.debug(String.format("IllegalStateException when trying to restart instances for service %s", serviceName));
 
       isSuccess = false;
       responder.sendString(HttpResponseStatus.FORBIDDEN,
                            String.format("Fail to restart instance for % because the service may not be enabled or " +
                                            "not ready yet", serviceName));
     } catch (IllegalArgumentException iex) {
-      LOG.warn(String.format("IllegalArgumentException when trying to restart instances for service %s", serviceName),
+      LOG.debug(String.format("IllegalArgumentException when trying to restart instances for service %s", serviceName),
                iex);
 
       isSuccess = false;
