@@ -20,7 +20,7 @@
 
 # Grab cookbooks using knife
 for cb in hadoop idea maven nodejs cdap ; do
-  knife cookbook site install $cb || echo "Cannot fetch cookbook $cb" && exit 1
+  knife cookbook site install $cb || (echo "Cannot fetch cookbook $cb" && exit 1)
 done
 
 # Do not change HOME for cdap user
