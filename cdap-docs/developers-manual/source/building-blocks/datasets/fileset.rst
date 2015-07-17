@@ -65,11 +65,11 @@ and
 specifications.
 
 If you do not specify a base path, the dataset framework will generate a path based on the dataset name.
-This path|---|and any relative base path you specify|---|is relative to the data directory of the CDAP namespace
+This path |---| and any relative base path you specify |---| is relative to the data directory of the CDAP namespace
 in which the FileSet is created. You can also specify an absolute base path (one that begins with the letter ``/``).
 This path is interpreted as an absolute path in the file system. Beware that if you create two FileSets with the
-same base path|---|be it two FileSets in the same namespace with the same relative base path, or be it in different
-namespaces with the same absolute base path|---|then these two FileSets will use the same directory and possibly
+same base path |---| be it two FileSets in the same namespace with the same relative base path, or be it in different
+namespaces with the same absolute base path |---| then these two FileSets will use the same directory and possibly
 obstruct each other's operations.
 
 You can configure a FileSet as "external". This means that the data (the actual files) in the FileSet are
