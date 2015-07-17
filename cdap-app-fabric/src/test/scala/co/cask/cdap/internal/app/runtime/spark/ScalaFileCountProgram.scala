@@ -32,14 +32,22 @@ class ScalaFileCountProgram extends ScalaSparkProgram {
     val input = sc.getRuntimeArguments.get("input")
     val output = sc.getRuntimeArguments.get("output")
 
-    val inputPartitionKey = sc.getRuntimeArguments.get("inputKey")
-    val outputPartitinKey = sc.getRuntimeArguments.get("outputKey")
+    // read the dataset
+    val inputData: NewHadoopRDD[Long, String] = sc.readFromDataset(input, classOf[Long], classOf[String])
 
-    // read and write datasets with dataset arguments
-    if (inputPartitionKey != null && outputPartitinKey != null) {
+    // create a new RDD with the same key but the value is the length of the string
+    val stringLengths = inputData.map(str => (str._2, str._2.length))
+
+    // write to dataset
+    sc.writeToDataset(stringLengths, output, classOf[String], classOf[Integer])
+
+    val inputPartitionTime = sc.getRuntimeArguments.get("inputKey")
+    val outputPartitionTime = sc.getRuntimeArguments.get("outputKey")
+
+    if (inputPartitionTime != null && outputPartitionTime != null) {
       val inputArgs: util.HashMap[String, String] = new util.HashMap[String, String]
-      TimePartitionedFileSetArguments.setInputStartTime(inputArgs, inputPartitionKey.toLong - 100)
-      TimePartitionedFileSetArguments.setInputEndTime(inputArgs, inputPartitionKey.toLong + 100)
+      TimePartitionedFileSetArguments.setInputStartTime(inputArgs, inputPartitionTime.toLong - 100)
+      TimePartitionedFileSetArguments.setInputEndTime(inputArgs, inputPartitionTime.toLong + 100)
 
 
       // read the dataset with custom user dataset arguments
@@ -48,20 +56,10 @@ class ScalaFileCountProgram extends ScalaSparkProgram {
       // create a new RDD with the same key but the value is the length of the string
       val customPartitionStringLengths = customInputData.map(str => (str._2, str._2.length))
 
-
       // write the character count to dataset with user custom dataset args
       val outputArgs: util.HashMap[String, String] = new util.HashMap[String, String]
-      TimePartitionedFileSetArguments.setOutputPartitionTime(outputArgs, outputPartitinKey.toLong)
+      TimePartitionedFileSetArguments.setOutputPartitionTime(outputArgs, outputPartitionTime.toLong)
       sc.writeToDataset(customPartitionStringLengths, output, classOf[String], classOf[Integer], outputArgs)
-    } else {
-      // read the dataset
-      val inputData: NewHadoopRDD[Long, String] = sc.readFromDataset(input, classOf[Long], classOf[String])
-
-      // create a new RDD with the same key but the value is the length of the string
-      val stringLengths = inputData.map(str => (str._2, str._2.length))
-
-      // write to dataset
-      sc.writeToDataset(stringLengths, output, classOf[String], classOf[Integer])
     }
   }
 }

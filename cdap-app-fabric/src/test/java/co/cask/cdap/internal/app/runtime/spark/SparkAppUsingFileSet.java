@@ -107,48 +107,46 @@ public class SparkAppUsingFileSet extends AbstractApplication {
       String input = context.getRuntimeArguments().get("input");
       String output = context.getRuntimeArguments().get("output");
 
-      String inputPartitionKey = context.getRuntimeArguments().get("inputKey");
-      String outputPartitinKey = context.getRuntimeArguments().get("outputKey");
+      // read the dataset
+      JavaPairRDD<Long, String> inputData = context.readFromDataset(input, Long.class, String.class);
+
+      JavaPairRDD<String, Integer> stringLengths = transformRDD(inputData);
+
+      // write the character count to dataset
+      context.writeToDataset(stringLengths, output, String.class, Integer.class);
+
+      String inputPartitionTime = context.getRuntimeArguments().get("inputKey");
+      String outputPartitionTime = context.getRuntimeArguments().get("outputKey");
 
       // read and write datasets with dataset arguments
-      if (inputPartitionKey != null && outputPartitinKey != null) {
+      if (inputPartitionTime != null && outputPartitionTime != null) {
         Map<String, String> inputArgs = new HashMap<>();
-        TimePartitionedFileSetArguments.setInputStartTime(inputArgs, Long.parseLong(inputPartitionKey) - 100);
-        TimePartitionedFileSetArguments.setInputEndTime(inputArgs, Long.parseLong(inputPartitionKey) + 100);
+        TimePartitionedFileSetArguments.setInputStartTime(inputArgs, Long.parseLong(inputPartitionTime) - 100);
+        TimePartitionedFileSetArguments.setInputEndTime(inputArgs, Long.parseLong(inputPartitionTime) + 100);
 
         // read the dataset with user custom dataset args
         JavaPairRDD<Long, String> customPartitionData = context.readFromDataset(input, Long.class, String.class,
                                                                                 inputArgs);
 
         // create a new RDD with the same key but with a new value which is the length of the string
-        JavaPairRDD<String, Integer> customPartitionStringLengths = customPartitionData.mapToPair(
-          new PairFunction<Tuple2<Long, String>, String, Integer>() {
-            @Override
-            public Tuple2<String, Integer> call(Tuple2<Long, String> pair) throws Exception {
-              return new Tuple2<>(pair._2(), pair._2().length());
-            }
-          });
+        JavaPairRDD<String, Integer> customPartitionStringLengths = transformRDD(customPartitionData);
 
         // write the character count to dataset with user custom dataset args
         Map<String, String> outputArgs = new HashMap<>();
-        TimePartitionedFileSetArguments.setOutputPartitionTime(outputArgs, Long.parseLong(outputPartitinKey));
+        TimePartitionedFileSetArguments.setOutputPartitionTime(outputArgs, Long.parseLong(outputPartitionTime));
         context.writeToDataset(customPartitionStringLengths, output, String.class, Integer.class, outputArgs);
-      } else {
-        // read the dataset
-        JavaPairRDD<Long, String> inputData = context.readFromDataset(input, Long.class, String.class);
-
-        // create a new RDD with the same key but with a new value which is the length of the string
-        JavaPairRDD<String, Integer> stringLengths = inputData.mapToPair(
-          new PairFunction<Tuple2<Long, String>, String, Integer>() {
-            @Override
-            public Tuple2<String, Integer> call(Tuple2<Long, String> pair) throws Exception {
-              return new Tuple2<>(pair._2(), pair._2().length());
-            }
-          });
-
-        // write the character count to dataset
-        context.writeToDataset(stringLengths, output, String.class, Integer.class);
       }
+    }
+
+    private JavaPairRDD<String, Integer> transformRDD(JavaPairRDD<Long, String> inputData) {
+      // create a new RDD with the same key but with a new value which is the length of the string
+      return inputData.mapToPair(
+        new PairFunction<Tuple2<Long, String>, String, Integer>() {
+          @Override
+          public Tuple2<String, Integer> call(Tuple2<Long, String> pair) throws Exception {
+            return new Tuple2<>(pair._2(), pair._2().length());
+          }
+        });
     }
   }
 

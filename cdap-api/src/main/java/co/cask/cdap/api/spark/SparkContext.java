@@ -73,7 +73,7 @@ public interface SparkContext extends RuntimeContext, DatasetContext {
   <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass);
 
   /**
-   * Create a Spark RDD that uses {@link Dataset} instantiated using the provided arguments as an input source
+   * Create a Spark RDD that uses {@link Dataset} instantiated using the provided arguments as an input source.
    *
    * @param datasetName the name of the {@link Dataset} to be read as an RDD
    * @param kClass      the key class
@@ -98,7 +98,7 @@ public interface SparkContext extends RuntimeContext, DatasetContext {
   <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass);
 
   /**
-   * Writes a Spark RDD to {@link Dataset} instantiated using the provided arguments
+   * Writes a Spark RDD to {@link Dataset} instantiated using the provided arguments.
    *
    * @param rdd         the rdd to be stored
    * @param datasetName the name of the {@link Dataset} where the RDD should be stored

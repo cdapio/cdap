@@ -122,20 +122,14 @@ public class ExecutionSparkContext extends AbstractSparkContext {
   }
 
   @Override
-  public <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass) {
-    return readFromDataset(datasetName, kClass, vClass, Collections.<String, String>emptyMap());
-  }
-
-  @Override
   public <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass, Map<String, String> userDsArgs) {
     // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
     Configuration configuration = new Configuration(hConf);
 
     // first try if it is InputFormatProvider
-    Map<String, String> runtimeDsArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName,
-                                                                      getRuntimeArguments());
-    runtimeDsArgs.putAll(userDsArgs);
-    Dataset dataset = instantiateDataset(datasetName, runtimeDsArgs);
+    Map<String, String> dsArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName, getRuntimeArguments());
+    dsArgs.putAll(userDsArgs);
+    Dataset dataset = instantiateDataset(datasetName, dsArgs);
     try {
       if (dataset instanceof InputFormatProvider) {
         // get the input format and its configuration from the dataset
@@ -171,13 +165,8 @@ public class ExecutionSparkContext extends AbstractSparkContext {
     }
 
     // it must be supported by SparkDatasetInputFormat
-    SparkDatasetInputFormat.setDataset(configuration, datasetName, runtimeDsArgs);
+    SparkDatasetInputFormat.setDataset(configuration, datasetName, dsArgs);
     return getSparkFacade().createRDD(SparkDatasetInputFormat.class, kClass, vClass, configuration);
-  }
-
-  @Override
-  public <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass) {
-    writeToDataset(rdd, datasetName, kClass, vClass, Collections.<String, String>emptyMap());
   }
 
   @Override
@@ -187,10 +176,9 @@ public class ExecutionSparkContext extends AbstractSparkContext {
     Configuration configuration = new Configuration(hConf);
 
     // first try if it is OutputFormatProvider
-    Map<String, String> runtimeDsArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName,
-                                                                      getRuntimeArguments());
-    runtimeDsArgs.putAll(userDsArgs);
-    Dataset dataset = instantiateDataset(datasetName, runtimeDsArgs);
+    Map<String, String> dsArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName, getRuntimeArguments());
+    dsArgs.putAll(userDsArgs);
+    Dataset dataset = instantiateDataset(datasetName, dsArgs);
     try {
       if (dataset instanceof OutputFormatProvider) {
         // get the output format and its configuration from the dataset
@@ -238,7 +226,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
     }
 
     // it must be supported by SparkDatasetOutputFormat
-    SparkDatasetOutputFormat.setDataset(hConf, datasetName, runtimeDsArgs);
+    SparkDatasetOutputFormat.setDataset(hConf, datasetName, dsArgs);
     getSparkFacade().saveAsDataset(rdd, SparkDatasetOutputFormat.class, kClass, vClass, new Configuration(hConf));
   }
 
