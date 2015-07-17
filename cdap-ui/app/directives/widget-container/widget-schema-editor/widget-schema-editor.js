@@ -54,13 +54,21 @@ angular.module(PKG.name + '.commons')
               });
             }
           });
+          // Note: 15 for now
+          if ($scope.properties.length < 15) {
+            if ($scope.properties.length === 0) {
+              $scope.properties.push({
+                name: '',
+                type: defaultType,
+                nullable: false
+              });
+            }
 
-          if ($scope.properties.length === 0) {
-            $scope.properties.push({
-              name: '',
-              type: defaultType,
-              nullable: false
-            });
+            for (var i = $scope.properties.length; i < 15; i++) {
+              $scope.properties.push({
+                empty: true
+              });
+            }
           }
 
         } // End of initialize
@@ -104,6 +112,16 @@ angular.module(PKG.name + '.commons')
         // watch for changes
         $scope.$watch('properties', formatSchema, true);
 
+        $scope.emptyRowClick = function (property) {
+          if (!property.empty) {
+            return;
+          }
+
+          delete property.empty;
+          property.name = '';
+          property.type = defaultType;
+          property.nullable = false;
+        };
 
         $scope.addProperties = function() {
           $scope.properties.push({
@@ -116,6 +134,10 @@ angular.module(PKG.name + '.commons')
         $scope.removeProperty = function(property) {
           var index = $scope.properties.indexOf(property);
           $scope.properties.splice(index, 1);
+
+          $scope.properties.push({
+            empty: true
+          });
         };
 
         $scope.enter = function(event, last) {
