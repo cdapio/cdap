@@ -3,10 +3,8 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').controller('UserDashboardCtrl',
-function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, DashboardHelper, $rootScope) {
+function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, DashboardHelper) {
 
-
-  window.unknown = $scope;
   $scope.unknownBoard = false;
   $scope.liveDashboard = false;
 
@@ -37,10 +35,11 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, Dashbo
       stop: function(event, uiWidget, $element) {
         var resizedHeight = parseInt(uiWidget[0].style.height, 10),
             resizedWidth = parseInt(uiWidget[0].style.width, 10);
-
-        $element.height = (resizedHeight < 300 ? 200: resizedHeight - 70);
-        // Probably need to revisit this if the user wants to view a chart in column
-        $element.width = (resizedWidth < 450? 370: resizedWidth - 32);
+        if ($element) {
+          $element.height = (resizedHeight < 300 ? 200: resizedHeight - 70);
+          // Probably need to revisit this if the user wants to view a chart in column
+          $element.width = (resizedWidth < 450? 370: resizedWidth - 32);
+        }
       } // optional callback fired when item is finished resizing
     }
   };
