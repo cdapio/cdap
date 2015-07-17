@@ -352,6 +352,9 @@ angular.module(PKG.name + '.services')
       };
       return mySettings.get('adapterDrafts')
         .then(function(res) {
+          if (!angular.isObject(res)) {
+            res = {};
+          }
           res[this.metadata.name] = config;
           return mySettings.set('adapterDrafts', res);
         }.bind(this));

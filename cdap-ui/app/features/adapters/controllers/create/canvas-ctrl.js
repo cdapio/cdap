@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, myHelpers, CanvasFactory, MyPlumbFactory, AdapterErrorFactory) {
+  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, myHelpers, CanvasFactory, MyPlumbFactory) {
 
     this.nodes = [];
 
@@ -73,7 +73,6 @@ angular.module(PKG.name + '.feature.adapters')
               },
               function error(errorObj) {
                 console.error('ERROR!: ', errorObj);
-                // AdapterErrorFactory.processError(errorObj);
               }.bind(this)
             );
           break;
