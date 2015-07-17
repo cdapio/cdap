@@ -4,7 +4,7 @@
   width: 100%;
   overflow: auto;
 
-  ight: 100vh;
+  height: 100vh;
   background-image: url('@{img-path}/grid.png');
   border: 0.5px solid #c5c7d3;
 
@@ -28,7 +28,7 @@
 
     .plugin-name {
       font-size: 15px;
-      overflow: inherit;
+      overflow: hidden;
       text-overflow: ellipsis;
     }
 
@@ -37,7 +37,6 @@
       height: 117px;
       width: 92px;
       left: 30vw;
-      padding: 10px;
     }
 
     &.transform {
@@ -45,13 +44,6 @@
       height: 117px;
       width: 102px;
       left: 50vw;
-
-      .plugin-box-container {
-        border-radius: 100%;
-        background-color: #4496E8;
-        padding: 10px;
-      }
-
     }
 
     &.sink {
@@ -59,7 +51,6 @@
       height: 117px;
       width: 92px;
       left: 70vw;
-      padding: 10px;
     }
 
 
