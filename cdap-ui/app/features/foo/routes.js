@@ -96,6 +96,12 @@ angular.module(PKG.name+'.feature.foo')
         }
       })
 
+      .state('rule-driver', {
+        url: '/ruledriver',
+        templateUrl: '/assets/features/foo/hack1/hack1.html',
+        controller: 'RuleDriverController',
+        controllerAs: 'RuleDriverController'
+      })
       .state('test-settings', {
         url: '/test/settings',
         templateUrl: '/assets/features/foo/settings.html',
