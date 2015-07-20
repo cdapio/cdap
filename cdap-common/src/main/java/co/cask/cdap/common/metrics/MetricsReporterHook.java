@@ -68,7 +68,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
   public boolean preCall(HttpRequest request, HttpResponder responder, HandlerInfo handlerInfo) {
     if (metricsCollectionService != null) {
       try {
-        MetricsContext collector = collectorCache.get(createContext(handlerInfo));
+        MetricsContext collector = collectorCache.get(createContext(request, handlerInfo));
         collector.increment("request.received", 1);
       } catch (Throwable e) {
         LOG.error("Got exception while getting collector", e);
@@ -81,7 +81,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
   public void postCall(HttpRequest request, HttpResponseStatus status, HandlerInfo handlerInfo) {
     if (metricsCollectionService != null) {
       try {
-        MetricsContext collector = collectorCache.get(createContext(handlerInfo));
+        MetricsContext collector = collectorCache.get(createContext(request, handlerInfo));
         String name;
         int code = status.getCode();
         if (code < 100) {
@@ -108,13 +108,13 @@ public class MetricsReporterHook extends AbstractHandlerHook {
     }
   }
 
-  private Map<String, String> createContext(HandlerInfo handlerInfo) {
+  private Map<String, String> createContext(HttpRequest request, HandlerInfo handlerInfo) {
     // todo: really inefficient to call this on the intense data flow path
     return ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+      Constants.Metrics.Tag.NAMESPACE, "hack",
       Constants.Metrics.Tag.COMPONENT, serviceName,
       Constants.Metrics.Tag.HANDLER, getSimpleName(handlerInfo.getHandlerName()),
-      Constants.Metrics.Tag.METHOD, handlerInfo.getMethodName());
+      Constants.Metrics.Tag.METHOD, request.getMethod().getName() + ":" + request.getUri());
   }
 
   private String getSimpleName(String className) {
