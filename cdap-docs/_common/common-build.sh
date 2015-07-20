@@ -120,7 +120,7 @@ GITHUB="github"
 
 # BUILD.rst
 BUILD_RST="BUILD.rst"
-BUILD_RST_HASH="0d41d293a6e11c0461bf3ff3be03c242"
+BUILD_RST_HASH="f54ae74bb72f9ad894766b6c0bd2d2df"
 
 
 function usage() {
@@ -183,7 +183,7 @@ function build_javadocs_api() {
   cd ${PROJECT_PATH}
   set_mvn_environment
   check_build_for_changes
-  MAVEN_OPTS="-Xmx1024m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && mvn clean site -DskipTests -P templates -DisOffline=false
+  MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && mvn clean site -DskipTests -P templates -DisOffline=false
 }
 
 function build_javadocs_sdk() {
