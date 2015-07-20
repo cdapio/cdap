@@ -122,6 +122,9 @@ body.theme-cdap.state-adapters-create {
 
   .modal {
 
+    .modal-dialog {
+      margin-top: 115px;
+    }
     .modal-lg {
       width: 95%;
     }
@@ -134,6 +137,12 @@ body.theme-cdap.state-adapters-create {
       div.pull-left {
         height: 60px;
         padding-left: 15px;
+        max-width: 725px;
+        * {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
       }
       h3.modal-title {
         font-weight: 500;
@@ -186,7 +195,7 @@ body.theme-cdap.state-adapters-create {
     .modal-body {
       background-color: white;
       overflow: hidden;
-      padding: 0 15px;
+      padding: 0 10px;
       width: 100%;
       .border-radius(0 0 4px 4px);
       @shadow: 0 6px 20px 0 rgba(0,0,0,.2),0 5px 15px 0 rgba(0,0,0,0.19);
@@ -199,7 +208,7 @@ body.theme-cdap.state-adapters-create {
         overflow: hidden;
       }
       [class*="col-"] {
-        padding-top: 15px;
+        padding-top: 20px;
       }
       .modal-content-scroll {
         @media (min-width: @screen-lg-min) {
@@ -215,13 +224,30 @@ body.theme-cdap.state-adapters-create {
       .col-lg-5 {
         @media (min-width: @screen-lg-min) {
           border-left: 3px solid #ddd;
-          padding-left: 10px;
+          &.plugin-edit {
+            padding-right: 15px;
+            padding-left: 10px;
+          }
+          &.output-schema {
+            padding-right: 0;
+            padding-left: 0;
+            > h4 {
+              padding-left: 10px;
+            }
+            .schema-inner {
+              padding-right: 15px;
+              padding-left: 10px;
+            }
+          }
         }
       }
       .col-lg-10 {
         @media (min-width: @screen-lg-min) {
+          border-left: 3px solid #ddd;
           height: 700px;
           overflow: scroll;
+          padding-right: 15px;
+          padding-left: 10px;
         }
       }
     }
@@ -254,6 +280,13 @@ body.theme-cdap.state-adapters-create {
       th {
         border: 0;
         padding: 0;
+        @media (min-width: @screen-lg-min) {
+          padding-left: 10px;
+        }
+        label {
+          margin-bottom: 0;
+          vertical-align: top;
+        }
       }
       tr {
 
@@ -261,8 +294,8 @@ body.theme-cdap.state-adapters-create {
       td {
         border: 1px solid #ddd;
         border-collapse: collapse;
-        height: 43px;
-        padding: 5px 5px 5px 5px;
+        height: 39px;
+        padding: 0 5px;
         vertical-align: middle;
         &.name {
           width: 40%;
@@ -306,6 +339,22 @@ body.theme-cdap.state-adapters-create {
         padding: 10px;
       }
     }
+    fieldset {
+      > div > div {
+        .widget-group-container {
+          padding-top: 15px;
+        }
+        &:first-child .widget-group-container {
+          padding-top: 0;
+        }
+      }
+      &[disabled] {
+        .form-control {
+          height: 32px;
+        }
+      }
+    }
+
     .my-widget-container {
       [class*="-container"] {
         padding: 10px;
@@ -319,6 +368,8 @@ body.theme-cdap.state-adapters-create {
     }
     .form-control {
       border: 1px solid #ddd;
+      height: 40px;
+      padding: 10px 12px;
     }
     select {
       background-color: white;
