@@ -92,6 +92,50 @@ By default, a workflow runs sequentially. Multiple instances of a workflow can b
 concurrently. To enable concurrent runs for a workflow, set its runtime argument
 ``concurrent.runs.enabled`` to ``true``.
 
+
+.. _workflow_token:
+
+Workflow Tokens
+===============
+
+In addition to passing the control flow from one node to the next, a **workflow token** is
+passed, available to each of the programs in the workflow. This allows programs to:
+
+- pass custom data (such as metrics, a status, or an error code) from one program in the 
+  workflow to the next subsequent programs; 
+- query and set the data in the token;
+- fetch the data from the token which was set by a specific node; and
+- determine the name of the node which most recently set the token value for a specific key;
+  e.g., the node who last set the ERROR flag in the token.
+  
+The last example is intended to allow appropriate action to be taken in response, such as
+logging, modifying the conditional execution, or terminating the execution of workflow.
+
+Execution in the workflow can be made conditional, based on the information contained in
+the token. Execution can be terminated if a node in the workflow produces unexpected
+results.
+
+Once a run is completed, you can query the tokens from past workflow runs for analyses that
+determine which node was executed more frequently and when. You can retrieve the token values
+that were added by a specific node in the workflow to debug the flow of execution.
+
+Scope
+
+Two scopes |---| *System* and *User* |---| are provided for workflow keys. CDAP adds keys
+(such as MapReduce counters) under the *System* scope. User programs add their keys under
+the *User* scope.
+
+
+Putting and Getting Token Values
+
+When a value is put into a token, it is stored under a specific key. Both keys and their
+corresponding values must be non-null. The token stores additional information about the 
+context in which the key is being set, such as the unique name of the workflow node. 
+
+
+
+
+
 .. _workflow_parallel:
 
 Parallelizing Workflow Execution
@@ -221,12 +265,11 @@ where ``MyPredicate`` is a public class which implements the ``Predicate`` inter
          if (input == null) {
             return false;
          }
-         Map<String, Map<String, Long>> mapReduceCounters = input.getToken().getMapReduceCounters();
-         if (mapReduceCounters == null) {
+         Value tokenValue = input.getToken().get("BuildProductProfile");
+         if (tokenValue == null) {
             return false;
          }
-         Map<String, Long> customCounters = mapReduceCounters.get("MyCustomCounters");
-         if (customCounters.get("BuildProductProfile") > 0) {
+         if (tokenValue.getAsInt() > 0) {
            return true;
          }
          return false;
@@ -274,11 +317,9 @@ otherwise, the other path will be taken. The diagram for this code would be:
    :width: 8in
    :align: center
 
-For this 3.0 release, CDAP only supports predicate conditions based on counters from
-previous MapReduce programs. Because of this, condition nodes are currently only useful
-when they follow MapReduce nodes; they can then make use of counters emitted by the
-MapReduce program to take the decision. In a later version, we will add more information
-to the ``WorkflowContext`` which will allow for more complex decisions.
+In addition to using counters of MapReduce programs, you can use :ref:`workflow tokens
+<workflow_token>` and base the logic on data stored in a token.
+
 
 Example of Using a Workflow
 ===========================
