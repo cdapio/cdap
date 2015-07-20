@@ -47,18 +47,22 @@
 </div>
 
 <div class="schema-container" ng-if="fields === 'AVRO'">
-  <div ng-if="plugins.format === 'avro'">
+  <div ng-if="plugins.format === 'avro'" class="schema-inner">
     <textarea cask-json-edit="avro['schema']" class="form-control avro"></textarea>
   </div>
 </div>
 
 <div class="schema-container" ng-if="fields === 'GROK'">
+  <div class="schema-inner">
     <label class="control-label">Pattern</label>
     <input type="text" class="form-control" ng-model="model" />
+  </div>
 </div>
 
 <div class="schema-container" ng-if="fields === 'NOTHING'">
-  <div class="well well-lg text-center">
-    <h4>No Editable Schema</h4>
+  <div class="schema-inner">
+    <div class="well well-lg text-center">
+      <h4>No Editable Schema</h4>
+    </div>
   </div>
 </div>
