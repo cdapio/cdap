@@ -95,7 +95,7 @@ angular.module(PKG.name + '.services')
       };
       this.nodes[config.id] = config;
       if (!conf._backendProperties) {
-        fetchBackendProperties(this.nodes[config.id]);
+        fetchBackendProperties.call(this, this.nodes[config.id]);
       } else if(Object.keys(conf._backendProperties).length !== Object.keys(conf.properties).length) {
         angular.forEach(conf._backendProperties, function(value, key) {
           config.properties[key] = '';
@@ -119,7 +119,7 @@ angular.module(PKG.name + '.services')
       // This needs to pass on a scope always. Right now there is no cleanup
       // happening
       var params = {
-        adapterType: 'ETLBatch'
+        adapterType: this.metadata.template.type
       };
       if (scope) {
         params.scope = scope;
@@ -150,7 +150,7 @@ angular.module(PKG.name + '.services')
 
       var plugin = this.nodes[pluginId];
 
-      fetchBackendProperties(plugin, scope)
+      fetchBackendProperties.call(this, plugin, scope)
         .then(function(plugin) {
           $bootstrapModal.open({
             animation: false,
