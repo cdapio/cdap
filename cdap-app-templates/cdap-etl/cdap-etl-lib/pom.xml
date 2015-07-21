@@ -244,6 +244,7 @@
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-tools</artifactId>
       <version>1.2.1</version>
+      <scope>provided</scope>
       <exclusions>
         <exclusion>
           <artifactId>org.apache.hadoop</artifactId>
@@ -255,6 +256,55 @@
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>unpack-hadoop-tools</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.apache.hadoop</groupId>
+                  <artifactId>hadoop-tools</artifactId>
+                  <version>1.2.1</version>
+                  <outputDirectory>
+                    ${project.build.directory}/hadoop-tools
+                  </outputDirectory>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <!-- Remove classes from the root package and re jar -->
+            <id>fix-hadoop-tools</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <tasks>
+                <delete>
+                  <fileset dir="${project.build.directory}/hadoop-tools" includes="*.class"/>
+                </delete>
+                <jar destfile="${project.build.directory}/hadoop-tools-1.2.1-fixed.jar">
+                  <fileset dir="${project.build.directory}/hadoop-tools"/>
+                </jar>
+              </tasks>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
@@ -268,6 +318,9 @@
               <classifier>batch</classifier>
               <instructions>
                 <!-- build bundle jar for batch. excluding realtime-->
+                <Bundle-ClassPath>.,{maven-dependencies},hadoop-tools-1.2.1-fixed.jar</Bundle-ClassPath>
+                <Include-Resource>{maven-resources},{maven-dependencies},
+                  ${project.build.directory}/hadoop-tools-1.2.1-fixed.jar</Include-Resource>
                 <Export-Package>co.cask.cdap.template.etl.batch.*;co.cask.cdap.template.etl.transform.*;
                   co.cask.cdap.template.etl.common;org.apache.avro.mapreduce;parquet.avro;
                   org.elasticsearch.hadoop.mr.*;</Export-Package>
