@@ -207,13 +207,29 @@ body.theme-cdap.state-adapters-create {
         height: 700px;
         overflow: hidden;
       }
-      [class*="col-"] {
+      > .row > [class*="col-"] {
         padding-top: 20px;
       }
       .modal-content-scroll {
         @media (min-width: @screen-lg-min) {
           height: 700px;
           overflow: scroll;
+        }
+      }
+      .col-lg-2 {
+        background-color: @body-bg;
+        @media (min-width: @screen-lg-min) {
+          padding-right: 0;
+          padding-left: 0;
+          > h4, .table th, td.name {
+            padding-left: 15px;
+          }
+          .table {
+            margin-bottom: 0;
+            td.type {
+              border-right: 0;
+            }
+          }
         }
       }
       .col-lg-7 {
@@ -257,9 +273,6 @@ body.theme-cdap.state-adapters-create {
       color: @cdap-header;
       .box-shadow(none);
 
-      &.input-schema {
-        background-color: @body-bg;
-      }
       h4, strong {
         color: @cdap-header;
       }
@@ -299,6 +312,9 @@ body.theme-cdap.state-adapters-create {
         vertical-align: middle;
         &.name {
           width: 40%;
+          @media (min-width: @screen-lg-min) {
+            border-left: 0;
+          }
         }
         &.type {
           width: 40%;
@@ -357,7 +373,19 @@ body.theme-cdap.state-adapters-create {
 
     .my-widget-container {
       [class*="-container"] {
-        padding: 10px;
+        padding: 20px 10px;
+        a.btn-info, a.btn-danger {
+          padding-top: 10px;
+          padding-bottom: 10px;
+        }
+        a.btn-danger {
+          @media (min-width: @screen-lg-min) {
+            margin-left: 6px;
+          }
+          + a.btn-info {
+            margin-left: 6px;
+          }
+        }
       }
       .empty-container {
         padding: 0;
@@ -376,11 +404,14 @@ body.theme-cdap.state-adapters-create {
       color: @cdap-header;
     }
     .input-schema {
-      padding: 10px;
-      * {
-        color: @cdap-header;
+      .well {
+        padding: 10px;
+        * {
+          color: @cdap-header;
+        }
       }
     }
+
     .schema-container {
       border: 0;
       height: 100%;
