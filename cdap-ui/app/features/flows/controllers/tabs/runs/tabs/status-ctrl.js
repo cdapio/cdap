@@ -67,4 +67,8 @@ angular.module(PKG.name + '.feature.flows')
     this.flowletClick = function(node) {
       $scope.RunsController.selectTab($scope.RunsController.tabs[1], node);
     };
+
+    $scope.$on('$destroy', function () {
+      FlowDiagramData.reset();
+    });
   });
