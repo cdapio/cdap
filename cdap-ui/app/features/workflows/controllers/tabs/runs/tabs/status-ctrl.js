@@ -17,6 +17,7 @@ class WorkflowsRunsStatusController {
     this.runsCtrl = $scope.RunsController;
 
     params = {
+      namespace: this.$state.params.namespace,
       appId: this.$state.params.appId,
       workflowId: this.$state.params.programId,
       scope: this.$scope

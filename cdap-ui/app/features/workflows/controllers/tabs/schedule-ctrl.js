@@ -6,6 +6,7 @@ class ScheduleController {
     this.myAlert = myAlert;
 
     let params = {
+      namespace: this.$state.params.namespace,
       appId: this.$state.params.appId,
       workflowId: this.$state.params.programId,
       scope: this.$scope
@@ -40,6 +41,7 @@ class ScheduleController {
           }
           schedule.isOpen = false;
           this.myWorkFlowApi.pollScheduleStatus({
+            namespace: this.$state.params.namespace,
             appId: this.$state.params.appId,
             scheduleId: schedule.schedule.name,
             scope: this.$scope
@@ -57,7 +59,9 @@ class ScheduleController {
   }
 
   suspendSchedule(obj) {
+    obj.status = 'SUSPENDING';
     this.myWorkFlowApi.scheduleSuspend({
+      namespace: this.$state.params.namespace,
       appId: this.$state.params.appId,
       scheduleId: obj.schedule.name,
       scope: this.$scope
@@ -72,7 +76,9 @@ class ScheduleController {
   }
 
   resumeSchedule(obj) {
+    obj.status = 'RESUMING';
     this.myWorkFlowApi.scheduleResume({
+      namespace: this.$state.params.namespace,
       appId: this.$state.params.appId,
       scheduleId: obj.schedule.name,
       scope: this.$scope

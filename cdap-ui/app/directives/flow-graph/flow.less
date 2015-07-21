@@ -109,7 +109,6 @@ my-workflow-graph {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
     font-size: 14px;
     font-weight: bold;
-    cursor: pointer;
     fill: @cdap-header;
   }
 
@@ -129,10 +128,26 @@ my-workflow-graph {
     fill: white;
     stroke: @cdap-darkness;
     stroke-width: 5px;
-    cursor: pointer;
+    cursor: not-allowed;
+
+    + .label text {
+      cursor: not-allowed;
+    }
+
+    &.running, &.failed, &.completed, &.killed {
+      cursor: pointer;
+
+      + .label text {
+        cursor: pointer;
+      }
+    }
 
     &.running {
       stroke: @brand-success;
+    }
+
+    &.killed {
+      stroke: @brand-danger;
     }
 
     &.completed, &.failed {
@@ -163,7 +178,7 @@ my-workflow-graph {
 
   .conditional-svg {
     fill: white;
-    cursor: pointer;
+    cursor: default;
     stroke: @cdap-orange;
     stroke-width: 5px;
   }
