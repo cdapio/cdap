@@ -18,17 +18,19 @@ package co.cask.cdap.logging.guice;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
+import co.cask.cdap.logging.save.LogSaverFactory;
 import co.cask.cdap.logging.service.LogSaverStatusService;
 import co.cask.http.HttpHandler;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 
 /**
- * Module for LogSaverStatusService
+ * Module for LogSaver
  */
-public class LogSaverStatusServiceModule extends PrivateModule {
+public class LogSaverServiceModule extends PrivateModule {
 
   @Override
   protected void configure() {
@@ -37,5 +39,8 @@ public class LogSaverStatusServiceModule extends PrivateModule {
     CommonHandlers.add(handlerBinder);
     bind(LogSaverStatusService.class).in(Scopes.SINGLETON);
     expose(LogSaverStatusService.class);
+
+    install(new FactoryModuleBuilder().build(LogSaverFactory.class));
+    expose(LogSaverFactory.class);
   }
 }

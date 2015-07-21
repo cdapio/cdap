@@ -331,9 +331,15 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     }
     if (!isExternal) {
       try {
-        partition.getLocation().delete();
+        if (partition.getLocation().exists()) {
+          boolean deleteSuccess = partition.getLocation().delete(true);
+          if (!deleteSuccess) {
+            throw new DataSetException(String.format("Error deleting file(s) for partition %s at path %s.",
+                                                     key, partition.getLocation().toURI().getPath()));
+          }
+        }
       } catch (IOException e) {
-        throw new DataSetException(String.format("Error deleting file(s) for partition %s at path %s: %s",
+        throw new DataSetException(String.format("Error deleting file(s) for partition %s at path %s: %s.",
                                                  key, partition.getLocation().toURI().getPath(), e.getMessage()), e);
       }
     }
@@ -513,6 +519,10 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       filter = PartitionedFileSetArguments.getInputPartitionFilter(runtimeArguments, partitioning);
     } catch (Exception e) {
       throw new DataSetException("Partition filter must be correctly specified in arguments.");
+    }
+    if (filter == null) {
+      // no PartitionFilter specified. Perhaps input paths were specified. Embedded FileSet will deal with that.
+      return files.getInputFormatConfiguration();
     }
     Collection<String> inputPaths = getPartitionPaths(filter);
     List<Location> inputLocations = Lists.newArrayListWithExpectedSize(inputPaths.size());

@@ -24,6 +24,7 @@ import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.client.app.ConfigTestApp;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeDataset;
 import co.cask.cdap.client.app.FakeFlow;
@@ -40,6 +41,7 @@ import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.cli.CLI;
 import com.google.common.base.Charsets;
@@ -68,6 +70,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -91,7 +94,6 @@ public class CLIMainTest {
   private static final String PREFIX = "123ff1_";
 
   private static ProgramClient programClient;
-  private static ClientConfig clientConfig;
   private static CLIConfig cliConfig;
   private static CLIMain cliMain;
   private static CLI cli;
@@ -99,7 +101,7 @@ public class CLIMainTest {
   @BeforeClass
   public static void setUpClass() throws Exception {
     ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(STANDALONE.getBaseURI().toString());
-    clientConfig = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
+    ClientConfig clientConfig = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
     clientConfig.setAllTimeouts(60000);
     cliConfig = new CLIConfig(clientConfig, System.out, new CsvTableRenderer());
     LaunchOptions launchOptions = new LaunchOptions(LaunchOptions.DEFAULT.getUri(), true, true, false);
@@ -169,6 +171,37 @@ public class CLIMainTest {
     testCommandOutputContains(cli, "get flow status " + qualifiedFlowId, "STOPPED");
     testCommandOutputContains(cli, "get flow runs " + qualifiedFlowId, "KILLED");
     testCommandOutputContains(cli, "get flow live " + qualifiedFlowId, flowId);
+  }
+
+  @Test
+  public void testAppDeploy() throws Exception {
+    testDeploy(null);
+    testDeploy(new ConfigTestApp.ConfigClass("testStream", "testTable"));
+  }
+
+  private void testDeploy(ConfigTestApp.ConfigClass config) throws Exception {
+    String streamId = ConfigTestApp.DEFAULT_STREAM;
+    String datasetId = ConfigTestApp.DEFAULT_TABLE;
+    if (config != null) {
+      streamId = config.getStreamName();
+      datasetId = config.getTableName();
+    }
+
+    File appJarFile = createAppJarFile(ConfigTestApp.class);
+    if (config != null) {
+      String appConfig = GSON.toJson(config);
+      testCommandOutputContains(cli, String.format("deploy app %s %s", appJarFile.getAbsolutePath(), appConfig),
+                                "Successfully deployed app");
+    } else {
+      testCommandOutputContains(cli, String.format("deploy app %s", appJarFile.getAbsolutePath()), "Successfully");
+    }
+
+    if (!appJarFile.delete()) {
+      LOG.warn("Failed to delete temporary app jar file: {}", appJarFile.getAbsolutePath());
+    }
+    testCommandOutputContains(cli, "list streams", streamId);
+    testCommandOutputContains(cli, "list dataset instances", datasetId);
+    testCommandOutputContains(cli, "delete app " + ConfigTestApp.NAME, "Successfully");
   }
 
   @Test
@@ -448,6 +481,51 @@ public class CLIMainTest {
 //    testCommandOutputContains(cli, command, String.format("Namespace '%s' deleted successfully.", name));
   }
 
+  @Test
+  public void testWorkflowToken() throws Exception {
+    Id.Application fakeAppId = Id.Application.from(Id.Namespace.DEFAULT, FakeApp.NAME);
+    Id.Workflow fakeWorkflowId = Id.Workflow.from(fakeAppId, FakeWorkflow.NAME);
+    String workflow = String.format("%s.%s", FakeApp.NAME, FakeWorkflow.NAME);
+    File doneFile = TMP_FOLDER.newFile("fake.done");
+    Map<String, String> runtimeArgs = ImmutableMap.of("done.file", doneFile.getAbsolutePath());
+    String runtimeArgsKV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs);
+    testCommandOutputContains(cli, "start workflow " + workflow + " '" + runtimeArgsKV + "'",
+                              "Successfully started Workflow");
+    assertProgramStatus(programClient, fakeWorkflowId, "STOPPED");
+    testCommandOutputContains(cli, "cli render as csv", "Now rendering as CSV");
+    String commandOutput = getCommandOutput(cli, "get workflow runs " + workflow);
+    String [] lines = commandOutput.split("\\r?\\n");
+    Assert.assertEquals(2, lines.length);
+    String[] split = lines[1].split(",");
+    String runId = split[0];
+    // Test entire workflow token
+    List<WorkflowTokenDetail.NodeValueDetail> tokenValues = new ArrayList<>();
+    tokenValues.add(new WorkflowTokenDetail.NodeValueDetail(FakeWorkflow.FakeAction.class.getSimpleName(),
+                                                            FakeWorkflow.FakeAction.TOKEN_VALUE));
+    tokenValues.add(new WorkflowTokenDetail.NodeValueDetail(FakeWorkflow.FakeAction.ANOTHER_FAKE_NAME,
+                                                            FakeWorkflow.FakeAction.TOKEN_VALUE));
+    testCommandOutputContains(cli, String.format("get workflow token %s %s", workflow, runId),
+                              Joiner.on(",").join(FakeWorkflow.FakeAction.TOKEN_KEY, GSON.toJson(tokenValues)));
+    testCommandOutputNotContains(cli, String.format("get workflow token %s %s scope system", workflow, runId),
+                                 Joiner.on(",").join(FakeWorkflow.FakeAction.TOKEN_KEY, GSON.toJson(tokenValues)));
+    testCommandOutputContains(
+      cli, String.format("get workflow token %s %s scope user key %s", workflow, runId,
+                         FakeWorkflow.FakeAction.TOKEN_KEY),
+      Joiner.on(",").join(FakeWorkflow.FakeAction.TOKEN_KEY, GSON.toJson(tokenValues)));
+
+    // Test with node name
+    String fakeNodeValue = Joiner.on(",").join(FakeWorkflow.FakeAction.TOKEN_KEY, FakeWorkflow.FakeAction.TOKEN_VALUE);
+    testCommandOutputContains(
+      cli, String.format("get workflow token %s %s at node %s", workflow, runId,
+                         FakeWorkflow.FakeAction.class.getSimpleName()), fakeNodeValue);
+    testCommandOutputNotContains(
+      cli, String.format("get workflow token %s %s at node %s scope system", workflow, runId,
+                         FakeWorkflow.FakeAction.ANOTHER_FAKE_NAME), fakeNodeValue);
+    testCommandOutputContains(
+      cli, String.format("get workflow token %s %s at node %s scope user key %s", workflow, runId,
+                         FakeWorkflow.FakeAction.ANOTHER_FAKE_NAME, FakeWorkflow.FakeAction.TOKEN_KEY), fakeNodeValue);
+  }
+
   private static File createAppJarFile(Class<?> cls) throws IOException {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
@@ -482,11 +560,16 @@ public class CLIMainTest {
   }
 
   private static void testCommand(CLI cli, String command, Function<String, Void> outputValidator) throws Exception {
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    PrintStream printStream = new PrintStream(outputStream);
-    cli.execute(command, printStream);
-    String output = outputStream.toString();
+    String output = getCommandOutput(cli, command);
     outputValidator.apply(output);
+  }
+
+  private static String getCommandOutput(CLI cli, String command) throws Exception {
+    try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    PrintStream printStream = new PrintStream(outputStream)) {
+      cli.execute(command, printStream);
+      return outputStream.toString();
+    }
   }
 
   protected void assertProgramStatus(ProgramClient programClient, Id.Program programId, String programStatus, int tries)

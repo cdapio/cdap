@@ -28,7 +28,7 @@ that filters out specific words::
     @Property
     private final String toFilterOut;
 
-    public CountByField(String toFilterOut) {
+    public WordFilter(String toFilterOut) {
       this.toFilterOut = toFilterOut;
     }
 
@@ -43,19 +43,18 @@ that filters out specific words::
 
 The flowlet constructor is called with the parameter when the flow is configured::
 
-  public static class WordCountFlow implements Flow {
+  public static class WordCountFlow extends AbstractFlow {
+
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("WordCountFlow")
-        .setDescription("Flow for counting words")
-        .withFlowlets().add(new Tokenizer())
-                       .add(new WordsFilter("the"))
-                       .add(new WordsCounter())
-        .connect().fromStream("text").to("Tokenizer")
-                  .from("Tokenizer").to("WordsFilter")
-                  .from("WordsFilter").to("WordsCounter")
-        .build();
+    public void configureFlow() {
+      setName("WordCountFlow");
+      setDescription("Flow for counting words");
+      addFlowlet("Tokenizer", new Tokenizer());
+      addFlowlet("WordsFilter", new WordsFilter("the"));
+      addFlowlet("WordsCounter", new WordsCounter());
+      connectStream("text", "Tokenizer");
+      connect("Tokenizer", "WordsFilter");
+      connect("WordsFilter", "WordsCounter");
     }
   }
 

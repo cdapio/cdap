@@ -29,6 +29,7 @@ import org.apache.hadoop.io.WritableUtils;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -38,24 +39,20 @@ public class DequeueScanAttributes {
   private static final String ATTR_CONSUMER_CONFIG = "cdap.queue.dequeue.consumerConfig";
   private static final String ATTR_TX = "cdap.queue.dequeue.transaction";
 
-  /**
-   * Deprecated. It is maintained for old queue table only.
-   */
-  @Deprecated
-  private static final String ATTR_QUEUE_ROW_PREFIX = "cdap.queue.dequeue.queueRowPrefix";
-
-  public static void set(Scan scan, ConsumerConfig consumerConfig) {
+  public static Map<String, byte[]> addAttribute(ConsumerConfig consumerConfig, Map<String, byte[]> attributes) {
     try {
-      scan.setAttribute(ATTR_CONSUMER_CONFIG, toBytes(consumerConfig));
+      attributes.put(ATTR_CONSUMER_CONFIG, toBytes(consumerConfig));
+      return attributes;
     } catch (IOException e) {
       // SHOULD NEVER happen
       throw new RuntimeException(e);
     }
   }
 
-  public static void set(Scan scan, Transaction transaction) {
+  public static Map<String, byte[]> addAttribute(Transaction transaction, Map<String, byte[]> attributes) {
     try {
-      scan.setAttribute(ATTR_TX, toBytes(transaction));
+      attributes.put(ATTR_TX, toBytes(transaction));
+      return attributes;
     } catch (IOException e) {
       // SHOULD NEVER happen
       throw new RuntimeException(e);
@@ -82,14 +79,6 @@ public class DequeueScanAttributes {
       // SHOULD NEVER happen
       throw new RuntimeException(e);
     }
-  }
-
-  /**
-   * TODO: Remove when {@link #ATTR_QUEUE_ROW_PREFIX} is removed.
-   */
-  @Deprecated
-  public static void setQueueRowPrefix(Scan scan, byte[] queueNamePrefix) {
-    scan.setAttribute(ATTR_QUEUE_ROW_PREFIX, queueNamePrefix);
   }
 
   private static byte[] toBytes(ConsumerConfig consumerConfig) throws IOException {

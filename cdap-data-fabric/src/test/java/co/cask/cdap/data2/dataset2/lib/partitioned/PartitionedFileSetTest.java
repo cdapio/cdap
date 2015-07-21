@@ -393,7 +393,7 @@ public class PartitionedFileSetTest {
       @Override
       public void apply() throws Exception {
         PartitionOutput output = pfs.getPartitionOutput(PARTITION_KEY);
-        Location outputLocation = output.getLocation();
+        Location outputLocation = output.getLocation().append("file");
         OutputStream out = outputLocation.getOutputStream();
         out.close();
         output.addPartition();

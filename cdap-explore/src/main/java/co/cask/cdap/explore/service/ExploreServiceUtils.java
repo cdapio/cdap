@@ -27,24 +27,25 @@ import co.cask.cdap.explore.service.hive.HiveCDH4ExploreService;
 import co.cask.cdap.explore.service.hive.HiveCDH5ExploreService;
 import co.cask.cdap.format.RecordFormats;
 import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
-import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.util.VersionInfo;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.internal.utils.Dependencies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -97,6 +98,7 @@ public class ExploreServiceUtils {
   private static ClassLoader exploreClassLoader = null;
 
   private static final Pattern HIVE_SITE_FILE_PATTERN = Pattern.compile("^.*/hive-site\\.xml$");
+  private static final Pattern YARN_SITE_FILE_PATTERN = Pattern.compile("^.*/yarn-site\\.xml$");
 
   /**
    * Get all the files contained in a class path.
@@ -255,37 +257,54 @@ public class ExploreServiceUtils {
     if (classLoader == null) {
       usingCL = ExploreRuntimeModule.class.getClassLoader();
     }
-    Set<String> bootstrapClassPaths = getBoostrapClasses();
+
+    final Set<String> bootstrapClassPaths = getBoostrapClasses();
+
+    ClassAcceptor classAcceptor = new ClassAcceptor() {
+      /* Excluding any class contained in the bootstrapClassPaths and Kryo classes.
+        * We need to remove Kryo dependency in the Explore container. Spark introduced version 2.21 version of Kryo,
+        * which would be normally shipped to the Explore container. Yet, Hive requires Kryo 2.22,
+        * and gets it from the Hive jars - hive-exec.jar to be precise.
+        * */
+      @Override
+      public boolean accept(String className, URL classUrl, URL classPathUrl) {
+        if (bootstrapClassPaths.contains(classPathUrl.getFile()) ||
+          className.startsWith("com.esotericsoftware.kryo")) {
+          return false;
+        }
+        return true;
+      }
+    };
 
     Set<File> hBaseTableDeps = traceDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass().getName(),
-                                                 bootstrapClassPaths, usingCL);
+                                                 usingCL, classAcceptor);
 
     // Note the order of dependency jars is important so that HBase jars come first in the classpath order
     // LinkedHashSet maintains insertion order while removing duplicate entries.
     Set<File> orderedDependencies = new LinkedHashSet<>();
     orderedDependencies.addAll(hBaseTableDeps);
     orderedDependencies.addAll(traceDependencies(DatasetService.class.getName(),
-                                                 bootstrapClassPaths, usingCL));
+                                                 usingCL, classAcceptor));
     orderedDependencies.addAll(traceDependencies("co.cask.cdap.hive.datasets.DatasetStorageHandler",
-                                                 bootstrapClassPaths, usingCL));
+                                                 usingCL, classAcceptor));
     orderedDependencies.addAll(traceDependencies("co.cask.cdap.hive.datasets.StreamStorageHandler",
-                                                 bootstrapClassPaths, usingCL));
+                                                 usingCL, classAcceptor));
     orderedDependencies.addAll(traceDependencies("org.apache.hadoop.hive.ql.exec.mr.ExecDriver",
-                                                 bootstrapClassPaths, usingCL));
+                                                 usingCL, classAcceptor));
     orderedDependencies.addAll(traceDependencies("org.apache.hive.service.cli.CLIService",
-                                                 bootstrapClassPaths, usingCL));
+                                                 usingCL, classAcceptor));
     orderedDependencies.addAll(traceDependencies("org.apache.hadoop.mapred.YarnClientProtocolProvider",
-                                                 bootstrapClassPaths, usingCL));
+                                                 usingCL, classAcceptor));
     orderedDependencies.addAll(traceDependencies(RecordFormats.class.getName(),
-                                                 bootstrapClassPaths, usingCL));
+                                                 usingCL, classAcceptor));
 
     // Needed for - at least - CDH 4.4 integration
     orderedDependencies.addAll(traceDependencies("org.apache.hive.builtins.BuiltinUtils",
-                                                 bootstrapClassPaths, usingCL));
+                                                 usingCL, classAcceptor));
 
     // Needed for - at least - CDH 5 integration
     orderedDependencies.addAll(traceDependencies("org.apache.hadoop.hive.shims.Hadoop23Shims",
-                                                 bootstrapClassPaths, usingCL));
+                                                 usingCL, classAcceptor));
 
     exploreDependencies = orderedDependencies;
     return orderedDependencies;
@@ -293,15 +312,12 @@ public class ExploreServiceUtils {
 
   /**
    * Trace the dependencies files of the given className, using the classLoader,
-   * and excluding any class contained in the bootstrapClassPaths and Kryo classes.
-   * We need to remove Kryo dependency in the Explore container. Spark introduced version 2.21 version of Kryo,
-   * which would be normally shipped to the Explore container. Yet, Hive requires Kryo 2.22,
-   * and gets it from the Hive jars - hive-exec.jar to be precise.
+   * and including the classes that's accepted by the classAcceptor
    *
    * Nothing is returned if the classLoader does not contain the className.
    */
-  public static Set<File> traceDependencies(String className, final Set<String> bootstrapClassPaths,
-                                            ClassLoader classLoader)
+  public static Set<File> traceDependencies(String className, ClassLoader classLoader,
+                                            final ClassAcceptor classAcceptor)
     throws IOException {
     ClassLoader usingCL = classLoader;
     if (usingCL == null) {
@@ -314,11 +330,7 @@ public class ExploreServiceUtils {
       new ClassAcceptor() {
         @Override
         public boolean accept(String className, URL classUrl, URL classPathUrl) {
-          if (bootstrapClassPaths.contains(classPathUrl.getFile())) {
-            return false;
-          }
-
-          if (className.startsWith("com.esotericsoftware.kryo")) {
+          if (!classAcceptor.accept(className, classUrl, classPathUrl)) {
             return false;
           }
 
@@ -332,15 +344,21 @@ public class ExploreServiceUtils {
     return jarFiles;
   }
 
-  /**
-   * Check that the file is a hive-site.xml file, and return a temp copy of it to which are added
-   * necessary options. If it is not a hive-site.xml file, return it as is.
-   */
-  public static File hijackHiveConfFile(File confFile) {
-    if (!HIVE_SITE_FILE_PATTERN.matcher(confFile.getAbsolutePath()).matches()) {
+  public static File hijackConfFile(File confFile) {
+    if (HIVE_SITE_FILE_PATTERN.matcher(confFile.getAbsolutePath()).matches()) {
+      return hijackHiveConfFile(confFile);
+    } else if (YARN_SITE_FILE_PATTERN.matcher(confFile.getAbsolutePath()).matches()) {
+      return hijackYarnConfFile(confFile);
+    } else {
       return confFile;
     }
+  }
 
+  /**
+   * Check that the file is a yarn-site.xml file, and return a temp copy of it to which are added
+   * necessary options. If it is not a yarn-site.xml file, return it as is.
+   */
+  private static File hijackYarnConfFile(File confFile) {
     Configuration conf = new Configuration(false);
     try {
       conf.addResource(confFile.toURI().toURL());
@@ -349,32 +367,56 @@ public class ExploreServiceUtils {
       throw Throwables.propagate(e);
     }
 
-    // Prefer our job jar in the classpath
-    // Set both old and new keys
-    // Those settings will be in hive-site.xml in the classpath of the Explore Service. Therefore,
-    // all HiveConf objects created there will have those settings, and they will be passed to
-    // the map reduces jobs launched by Hive.
-    conf.setBoolean("mapreduce.user.classpath.first", true);
-    conf.setBoolean(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, true);
+    String yarnAppClassPath = conf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+                                       Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
+
+    // add the pwd/* at the beginning of classpath. so user's jar will take precedence and without this change,
+    // job.jar will be at the begging of the classpath, since job.jar has old guava version classes,
+    // we want to add pwd/* before
+    yarnAppClassPath = "$PWD/*," + yarnAppClassPath;
+
+    conf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH, yarnAppClassPath);
+
+    File newYarnConfFile = new File(Files.createTempDir(), "yarn-site.xml");
+    try (FileOutputStream os = new FileOutputStream(newYarnConfFile)) {
+      conf.writeXml(os);
+    } catch (IOException e) {
+      LOG.error("Problem creating and writing to temporary yarn-conf.xml conf file at {}", newYarnConfFile, e);
+      throw Throwables.propagate(e);
+    }
+
+    return newYarnConfFile;
+  }
+
+  /**
+   * Check that the file is a hive-site.xml file, and return a temp copy of it to which are added
+   * necessary options. If it is not a hive-site.xml file, return it as is.
+   */
+  private static File hijackHiveConfFile(File confFile) {
+    Configuration conf = new Configuration(false);
+    try {
+      conf.addResource(confFile.toURI().toURL());
+    } catch (MalformedURLException e) {
+      LOG.error("File {} is malformed.", confFile, e);
+      throw Throwables.propagate(e);
+    }
+
+    // we prefer jars at container's root directory before job.jar,
+    // we edit the YARN_APPLICATION_CLASSPATH in yarn-site.xml using
+    // co.cask.cdap.explore.service.ExploreServiceUtils.hijackYarnConfFile and
+    // setting the MAPREDUCE_JOB_CLASSLOADER and MAPREDUCE_JOB_USER_CLASSPATH_FIRST to false will put
+    // YARN_APPLICATION_CLASSPATH before job.jar for container's classpath.
+    conf.setBoolean(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, false);
+    conf.setBoolean(MRJobConfig.MAPREDUCE_JOB_CLASSLOADER, false);
 
     File newHiveConfFile = new File(Files.createTempDir(), "hive-site.xml");
-    FileOutputStream fos;
-    try {
-      fos = new FileOutputStream(newHiveConfFile);
-    } catch (FileNotFoundException e) {
+
+    try (FileOutputStream os = new FileOutputStream(newHiveConfFile)) {
+      conf.writeXml(os);
+    } catch (IOException e) {
       LOG.error("Problem creating temporary hive-site.xml conf file at {}", newHiveConfFile, e);
       throw Throwables.propagate(e);
     }
-
-    try {
-      conf.writeXml(fos);
-    } catch (IOException e) {
-      LOG.error("Could not write modified configuration to temporary hive-site.xml at {}", newHiveConfFile, e);
-      throw Throwables.propagate(e);
-    } finally {
-      Closeables.closeQuietly(fos);
-    }
-
     return newHiveConfFile;
   }
 }

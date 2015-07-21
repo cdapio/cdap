@@ -42,6 +42,7 @@ import co.cask.cdap.template.etl.transform.StructuredRecordToGenericRecordTransf
 import co.cask.cdap.template.test.sink.MetaKVTableSink;
 import co.cask.cdap.template.test.source.MetaKVTableSource;
 import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestConfiguration;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
@@ -55,6 +56,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.twill.filesystem.Location;
 import org.hsqldb.jdbc.JDBCDriver;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import parquet.avro.AvroParquetOutputFormat;
 import parquet.avro.AvroParquetReader;
 
@@ -65,6 +67,10 @@ import java.util.List;
  * Base test class that sets up plugins and the batch template.
  */
 public class BaseETLBatchTest extends TestBase {
+
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+
   protected static final Id.Namespace NAMESPACE = Constants.DEFAULT_NAMESPACE_ID;
   protected static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("ETLBatch");
   protected static final Gson GSON = new Gson();

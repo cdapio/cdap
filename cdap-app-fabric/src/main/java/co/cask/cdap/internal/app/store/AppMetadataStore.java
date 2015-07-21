@@ -19,13 +19,16 @@ package co.cask.cdap.internal.app.store;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
+import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -66,6 +69,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   public static final String TYPE_PROGRAM_ARGS = "programArgs";
   private static final String TYPE_NAMESPACE = "namespace";
   private static final String TYPE_ADAPTER = "adapter";
+  private static final String WORKFLOW_TOKEN_PROPERTY_KEY = "workflowToken";
 
   public AppMetadataStore(Table table) {
     super(table);
@@ -573,14 +577,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
                                          String workflowRunId, String workflowNodeId, long startTimeInSeconds,
                                          String adapter, String twillRunId) {
     // Get the run record of the Workflow which started this program
-    MDSKey key = new MDSKey.Builder()
-      .add(TYPE_RUN_RECORD_STARTED)
-      .add(program.getNamespaceId())
-      .add(program.getApplicationId())
-      .add(ProgramType.WORKFLOW.name())
-      .add(workflow)
-      .add(workflowRunId)
-      .build();
+    MDSKey key = getWorkflowRunRecordKey(Id.Workflow.from(program.getApplication(), workflow), workflowRunId);
 
     RunRecord record = get(key, RunRecord.class);
     if (record == null) {
@@ -611,5 +608,49 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
     write(key, new RunRecord(programRunId, startTimeInSeconds, null, ProgramRunStatus.RUNNING, adapter, twillRunId,
                              ImmutableMap.of("workflowrunid", workflowRunId)));
+  }
+
+  public void updateWorkflowToken(Id.Workflow workflowId, String workflowRunId,
+                                  WorkflowToken workflowToken) throws NotFoundException {
+    RunRecord runRecord = getUnfinishedRun(workflowId, TYPE_RUN_RECORD_STARTED, workflowRunId);
+    if (runRecord == null) {
+      // Even if a run is suspended, the currently running node runs to completion.
+      // This node also updates the workflow token at the end.
+      // For such a scenario, check for a suspended run record too.
+      runRecord = getUnfinishedRun(workflowId, TYPE_RUN_RECORD_SUSPENDED, workflowRunId);
+      if (runRecord == null) {
+        throw new NotFoundException(new Id.Run(workflowId, workflowRunId));
+      }
+    }
+    Map<String, String> propertiesToUpdate = runRecord.getProperties();
+    propertiesToUpdate.put(WORKFLOW_TOKEN_PROPERTY_KEY, GSON.toJson(workflowToken));
+
+    write(getWorkflowRunRecordKey(workflowId, workflowRunId),
+          new RunRecord(runRecord, propertiesToUpdate));
+  }
+
+  public WorkflowToken getWorkflowToken(Id.Workflow workflowId, String workflowRunId) throws NotFoundException {
+    RunRecord runRecord = getRun(workflowId, workflowRunId);
+    if (runRecord == null) {
+      throw new NotFoundException(new Id.Run(workflowId, workflowRunId));
+    }
+    String workflowToken = runRecord.getProperties().get(WORKFLOW_TOKEN_PROPERTY_KEY);
+    // For pre-3.1 run records, there won't be a workflow token. Return an empty token for such run records.
+    if (workflowToken == null) {
+      LOG.debug("Could not find workflowToken for workflow: {}, runId: {}", workflowId, workflowRunId);
+      return new BasicWorkflowToken();
+    }
+    return GSON.fromJson(workflowToken, BasicWorkflowToken.class);
+  }
+
+  private MDSKey getWorkflowRunRecordKey(Id.Workflow workflowId, String workflowRunId) {
+    return new MDSKey.Builder()
+      .add(TYPE_RUN_RECORD_STARTED)
+      .add(workflowId.getNamespaceId())
+      .add(workflowId.getApplicationId())
+      .add(ProgramType.WORKFLOW.name())
+      .add(workflowId.getId())
+      .add(workflowRunId)
+      .build();
   }
 }

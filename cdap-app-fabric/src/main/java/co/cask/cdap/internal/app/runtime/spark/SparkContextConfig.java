@@ -17,8 +17,10 @@
 package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
+import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import com.google.common.reflect.TypeToken;
@@ -29,6 +31,7 @@ import org.apache.twill.api.RunId;
 
 import java.lang.reflect.Type;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Helper class for getting and setting specific config settings for a spark job context.
@@ -40,7 +43,7 @@ public class SparkContextConfig {
 
   public static final String HCONF_ATTR_EXECUTION_MODE = "cdap.spark.execution.mode";
   public static final String LOCAL_EXECUTION_MODE = "local";
-  public static final String YARN_EXECUTION_MODE = "yarn";
+  public static final String YARN_EXECUTION_MODE = "yarn-client";
 
   private static final String HCONF_ATTR_PROGRAM_SPEC = "cdap.spark.program.spec";
   private static final String HCONF_ATTR_PROGRAM_ID = "cdap.spark.program.id";
@@ -48,6 +51,7 @@ public class SparkContextConfig {
   private static final String HCONF_ATTR_LOGICAL_START_TIME = "hconf.program.logical.start.time";
   private static final String HCONF_ATTR_ARGS = "hconf.program.args";
   private static final String HCONF_ATTR_NEW_TX = "hconf.program.newtx.tx";
+  private static final String HCONF_ATTR_WORKFLOW_TOKEN = "hconf.program.workflow.token";
 
   private final Configuration hConf;
 
@@ -82,6 +86,7 @@ public class SparkContextConfig {
     setLogicalStartTime(context.getLogicalStartTime());
     setArguments(context.getRuntimeArguments());
     setTransaction(context.getTransaction());
+    setWorkflowToken(context.getWorkflowToken());
 
     return this;
   }
@@ -91,45 +96,53 @@ public class SparkContextConfig {
   }
 
   /**
-   * Returns the {@link SparkSpecification} stored in the configuration.
+   * @return the {@link SparkSpecification} stored in the configuration.
    */
   public SparkSpecification getSpecification() {
     return GSON.fromJson(hConf.get(HCONF_ATTR_PROGRAM_SPEC), SparkSpecification.class);
   }
 
   /**
-   * Returns the {@link Id.Program} stored in the configuration.
+   * @return the {@link Id.Program} stored in the configuration.
    */
   public Id.Program getProgramId() {
     return GSON.fromJson(hConf.get(HCONF_ATTR_PROGRAM_ID), Id.Program.class);
   }
 
   /**
-   * Returns the {@link RunId} stored in the configuration.
+   * @return the {@link RunId} stored in the configuration.
    */
   public RunId getRunId() {
     return RunIds.fromString(hConf.get(HCONF_ATTR_RUN_ID));
   }
 
   /**
-   * Returns the runtime arguments stored in the configuration.
+   * @return the runtime arguments stored in the configuration.
    */
   public Map<String, String> getArguments() {
     return GSON.fromJson(hConf.get(HCONF_ATTR_ARGS), ARGS_TYPE);
   }
 
   /**
-   * Returns the logical start time stored in the configuration.
+   * @return the logical start time stored in the configuration.
    */
   public long getLogicalStartTime() {
     return hConf.getLong(HCONF_ATTR_LOGICAL_START_TIME, System.currentTimeMillis());
   }
 
   /**
-   * Returns the transaction stored in the configuration.
+   * @return the {@link Transaction} stored in the configuration.
    */
   public Transaction getTransaction() {
     return GSON.fromJson(hConf.get(HCONF_ATTR_NEW_TX), Transaction.class);
+  }
+
+  /**
+   * @return the {@link WorkflowToken} stored in the configuration.
+   */
+  @Nullable
+  public WorkflowToken getWorkflowToken() {
+    return GSON.fromJson(hConf.get(HCONF_ATTR_WORKFLOW_TOKEN), BasicWorkflowToken.class);
   }
 
   private void setSpecification(SparkSpecification spec) {
@@ -154,5 +167,9 @@ public class SparkContextConfig {
 
   private void setTransaction(Transaction tx) {
     hConf.set(HCONF_ATTR_NEW_TX, GSON.toJson(tx));
+  }
+
+  public void setWorkflowToken(@Nullable WorkflowToken workflowToken) {
+    hConf.set(HCONF_ATTR_WORKFLOW_TOKEN, GSON.toJson(workflowToken));
   }
 }

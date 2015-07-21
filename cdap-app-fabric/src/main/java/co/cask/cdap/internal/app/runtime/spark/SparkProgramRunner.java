@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.spark;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
@@ -35,6 +36,7 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -44,6 +46,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
@@ -61,6 +64,7 @@ import java.util.concurrent.TimeUnit;
 public class SparkProgramRunner implements ProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkProgramRunner.class);
+  private static final Gson GSON = new Gson();
 
   private final DatasetFramework datasetFramework;
   private final Configuration hConf;
@@ -105,10 +109,17 @@ public class SparkProgramRunner implements ProgramRunner {
     long logicalStartTime = arguments.hasOption(ProgramOptionConstants.LOGICAL_START_TIME)
       ? Long.parseLong(arguments.getOption(ProgramOptionConstants.LOGICAL_START_TIME)) : System.currentTimeMillis();
 
+    WorkflowToken workflowToken = null;
+    if (arguments.hasOption(ProgramOptionConstants.WORKFLOW_TOKEN)) {
+      workflowToken = GSON.fromJson(arguments.getOption(ProgramOptionConstants.WORKFLOW_TOKEN),
+                                    BasicWorkflowToken.class);
+    }
+
     ClientSparkContext context = new ClientSparkContext(program, runId, logicalStartTime,
                                                         options.getUserArguments().asMap(),
                                                         new TransactionContext(txSystemClient), datasetFramework,
-                                                        discoveryServiceClient, metricsCollectionService);
+                                                        discoveryServiceClient, metricsCollectionService,
+                                                        workflowToken);
 
     Spark spark;
     try {

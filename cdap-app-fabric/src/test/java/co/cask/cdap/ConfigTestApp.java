@@ -17,9 +17,16 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.Config;
+import co.cask.cdap.api.annotation.ProcessInput;
+import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.flow.AbstractFlow;
+import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
+import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.worker.AbstractWorker;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -35,6 +42,8 @@ import java.util.concurrent.TimeUnit;
 public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass> {
   private static final Logger LOG = LoggerFactory.getLogger(ConfigTestApp.class);
 
+  public static final String FLOW_NAME = "simpleFlow";
+  public static final String FLOWLET_NAME = "simpleFlowlet";
   public static final String DEFAULT_STREAM = "defaultStream";
   public static final String DEFAULT_TABLE = "defaultTable";
 
@@ -53,14 +62,64 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
       this.streamName = streamName;
       this.tableName = tableName;
     }
+
+    public String getStreamName() {
+      return streamName;
+    }
+
+    public String getTableName() {
+      return tableName;
+    }
   }
 
   @Override
   public void configure() {
-    ConfigClass configObj = getContext().getConfig();
+    ConfigClass configObj = getConfig();
     addStream(new Stream(configObj.streamName));
-    createDataset(configObj.tableName, Table.class);
+    createDataset(configObj.tableName, KeyValueTable.class);
     addWorker(new DefaultWorker(configObj.streamName));
+    addFlow(new SimpleFlow(configObj.streamName, configObj.tableName));
+  }
+
+  private static class SimpleFlow extends AbstractFlow {
+
+    private final String streamName;
+    private final String datasetName;
+
+    public SimpleFlow(String streamName, String datasetName) {
+      this.streamName = streamName;
+      this.datasetName = datasetName;
+    }
+
+    @Override
+    protected void configureFlow() {
+      setName(FLOW_NAME);
+      addFlowlet(FLOWLET_NAME, new SimpleFlowlet(datasetName));
+      connectStream(streamName, FLOWLET_NAME);
+    }
+  }
+
+  private static class SimpleFlowlet extends AbstractFlowlet {
+
+    @Property
+    private final String datasetName;
+
+    public SimpleFlowlet(String datasetName) {
+      this.datasetName = datasetName;
+    }
+
+    @ProcessInput
+    public void process(StreamEvent event) {
+      KeyValueTable dataset = getContext().getDataset(datasetName);
+      String data = Bytes.toString(event.getBody());
+      dataset.write(data, data);
+    }
+
+    @Override
+    public void configure(FlowletConfigurer configurer) {
+      super.configure(configurer);
+      useDatasets(datasetName);
+    }
   }
 
   private static class DefaultWorker extends AbstractWorker {

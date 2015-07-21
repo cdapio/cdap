@@ -1,0 +1,107 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package co.cask.cdap.partitioned;
+
+import co.cask.cdap.test.ApplicationManager;
+import co.cask.cdap.test.MapReduceManager;
+import co.cask.cdap.test.ServiceManager;
+import co.cask.cdap.test.base.TestFrameworkTestBase;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.net.URL;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * Test that MapReduce can incrementally process partitions.
+ */
+public class MapReducePartitionConsumingTestRun extends TestFrameworkTestBase {
+  private static final String LINE1 = "a b a";
+  private static final String LINE2 = "b a b";
+  private static final String LINE3 = "c c c";
+
+  @Test
+  public void testWordCountOnFileSet() throws Exception {
+    ApplicationManager applicationManager = deployApplication(AppWithMapReduceConsumingPartitions.class);
+
+    ServiceManager serviceManager = applicationManager.getServiceManager("DatasetService").start();
+    serviceManager.waitForStatus(true);
+    URL serviceURL = serviceManager.getServiceURL();
+
+    // write a file to the file set using the service and run the WordCount MapReduce job on that one partition
+    createPartition(serviceURL, LINE1, "1");
+
+    MapReduceManager mapReduceManager = applicationManager.getMapReduceManager("WordCount").start();
+    mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    Assert.assertEquals(new Long(2), getCount(serviceURL, "a"));
+    Assert.assertEquals(new Long(1), getCount(serviceURL, "b"));
+    Assert.assertEquals(new Long(0), getCount(serviceURL, "c"));
+
+    // create two additional partitions
+    createPartition(serviceURL, LINE2, "2");
+    createPartition(serviceURL, LINE3, "3");
+
+    // running the MapReduce job now processes these two new partitions (LINE2 and LINE3) and updates the counts
+    // dataset accordingly
+    mapReduceManager = applicationManager.getMapReduceManager("WordCount").start();
+    mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    Assert.assertEquals(new Long(3), getCount(serviceURL, "a"));
+    Assert.assertEquals(new Long(3), getCount(serviceURL, "b"));
+    Assert.assertEquals(new Long(3), getCount(serviceURL, "c"));
+
+    // running the MapReduce job without adding new partitions does not affect the counts dataset
+    mapReduceManager = applicationManager.getMapReduceManager("WordCount").start();
+    mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    Assert.assertEquals(new Long(3), getCount(serviceURL, "a"));
+    Assert.assertEquals(new Long(3), getCount(serviceURL, "b"));
+    Assert.assertEquals(new Long(3), getCount(serviceURL, "c"));
+  }
+
+  private void createPartition(URL serviceUrl, String body, String time) throws IOException {
+    HttpResponse response =
+      HttpRequests.execute(HttpRequest.put(new URL(serviceUrl, "lines?time=" + time)).withBody(body).build());
+    Assert.assertEquals(200, response.getResponseCode());
+  }
+
+  private Long getCount(URL serviceUrl, String word) throws IOException {
+    HttpResponse response =
+      HttpRequests.execute(HttpRequest.get(new URL(serviceUrl, "counts?word=" + word)).build());
+    Assert.assertEquals(200, response.getResponseCode());
+    return Long.valueOf(response.getResponseBodyAsString());
+  }
+}

@@ -87,4 +87,17 @@ public interface MasterServiceManager {
   SystemServiceLiveInfo getLiveInfo();
 
   //TODO: Add method to get the metrics name to get event rate on UI
+
+  /**
+   * Restart all instances of this service.
+   */
+  void restartAllInstances();
+
+  /**
+   * Restart some instances of this service.
+   *
+   * @param instanceId the instance id to be restarted.
+   * @param moreInstanceIds optional additional instance ids to be restarted.
+   */
+   void restartInstances(int instanceId, int... moreInstanceIds);
 }

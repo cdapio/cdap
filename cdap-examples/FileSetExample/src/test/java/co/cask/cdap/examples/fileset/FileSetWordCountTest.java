@@ -25,10 +25,12 @@ import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestConfiguration;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -45,6 +47,9 @@ import java.util.concurrent.TimeUnit;
  * A unit test for word count over file sets.
  */
 public class FileSetWordCountTest extends TestBase {
+
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
   @Test
   public void testWordCountOnFileSet() throws Exception {

@@ -16,7 +16,9 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.app.ApplicationContext;
@@ -32,6 +34,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -45,10 +48,22 @@ public interface TestManager {
    *
    * @param namespace The namespace to deploy to
    * @param applicationClz The application class
-   * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
+   * @return An {@link ApplicationManager} to manage the deployed application.
    */
   ApplicationManager deployApplication(Id.Namespace namespace,
                                        Class<? extends Application> applicationClz, File... bundleEmbeddedJars);
+
+  /**
+   * Deploys an {@link Application}.
+   *
+   * @param namespace The namespace to deploy to
+   * @param applicationClz The application class
+   * @param configObject Configuration object to be used during deployment and can be accessed
+   *                     in {@link Application#configure} via {@link AbstractApplication#getConfig}
+   * @return An {@link ApplicationManager} to manage the deployed application.
+   */
+  ApplicationManager deployApplication(Id.Namespace namespace, Class<? extends Application> applicationClz,
+                                       @Nullable Config configObject, File... bundleEmbeddedJars);
 
   /**
    * Deploys an {@link ApplicationTemplate}. Only supported in unit tests.

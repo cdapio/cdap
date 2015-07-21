@@ -24,11 +24,11 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 
@@ -55,13 +55,13 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
       if (!tableUtil.tableExists(admin, streamStateStoreTableId)) {
 
-        HTableDescriptor htd = tableUtil.createHTableDescriptor(streamStateStoreTableId);
+        HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(streamStateStoreTableId);
 
         HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
         htd.addFamily(hcd);
         hcd.setMaxVersions(1);
 
-        tableUtil.createTableIfNotExists(admin, streamStateStoreTableId, htd, null,
+        tableUtil.createTableIfNotExists(admin, streamStateStoreTableId, htd.build(), null,
                                          QueueConstants.MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
       }
     }

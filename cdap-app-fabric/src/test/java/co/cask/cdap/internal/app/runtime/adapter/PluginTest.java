@@ -35,11 +35,11 @@ import co.cask.cdap.internal.app.plugins.template.test.api.PluginTestRunnable;
 import co.cask.cdap.internal.app.plugins.test.TestPlugin;
 import co.cask.cdap.internal.app.plugins.test.TestPlugin2;
 import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -72,7 +72,6 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.Callable;
 import java.util.jar.Attributes;
@@ -137,20 +136,10 @@ public class PluginTest {
   }
 
   @Test
-  public void testExportPackage() {
-    Manifest manifest = new Manifest();
-    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE,
-                                     "co.cask.plugin;use:=\"\\\"test,test2\\\"\";version=\"1.0\",co.cask.plugin2");
-
-    Set<String> packages = ManifestFields.getExportPackages(manifest);
-    Assert.assertEquals(ImmutableSet.of("co.cask.plugin", "co.cask.plugin2"), packages);
-  }
-
-  @Test
   public void testPlugin() throws Exception {
     // Create the plugin jar. There should be two plugins there (TestPlugin and TestPlugin2).
     Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
-    createJar(TestPlugin.class, new File(templatePluginDir, "myPlugin-1.0.jar"), manifest);
+    createPluginJar(TestPlugin.class, new File(templatePluginDir, "myPlugin-1.0.jar"), manifest);
 
     // Build up the plugin repository.
     PluginRepository repository = new PluginRepository(cConf);
@@ -175,7 +164,7 @@ public class PluginTest {
   public void testExternalConfig() throws IOException {
     // For testing plugins that are configure externally through a json file.
     // Create a jar, without any export package information
-    createJar(TestPlugin.class, new File(templatePluginDir, "external-plugin-1.0.jar"));
+    createPluginJar(TestPlugin.class, new File(templatePluginDir, "external-plugin-1.0.jar"), new Manifest());
 
     // Create a config json file that expose two plugins (to the same class).
     // One of the plugin has no property field
@@ -232,7 +221,7 @@ public class PluginTest {
 
     // Create a plugin jar. It contains two plugins, TestPlugin and TestPlugin2 inside.
     Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
-    createJar(TestPlugin.class, new File(templatePluginDir, "myPlugin-1.0.jar"), manifest);
+    createPluginJar(TestPlugin.class, new File(templatePluginDir, "myPlugin-1.0.jar"), manifest);
 
     // Build up the plugin repository.
     repository.inspectPlugins(ImmutableList.of(appTemplateInfo));
@@ -244,7 +233,7 @@ public class PluginTest {
     Assert.assertEquals("TestPlugin2", plugin.getValue().getName());
 
     // Create another plugin jar with later version and update the repository
-    createJar(TestPlugin.class, new File(templatePluginDir, "myPlugin-2.0.jar"), manifest);
+    createPluginJar(TestPlugin.class, new File(templatePluginDir, "myPlugin-2.0.jar"), manifest);
     repository.inspectPlugins(ImmutableList.of(appTemplateInfo));
 
     // Should select the latest version
@@ -294,13 +283,17 @@ public class PluginTest {
     return ProgramClassLoader.create(unpackDir, PluginTest.class.getClassLoader());
   }
 
-  private static File createJar(Class<?> cls, File destFile) throws IOException {
-    return createJar(cls, destFile, new Manifest());
-  }
-
   private static File createJar(Class<?> cls, File destFile, Manifest manifest) throws IOException {
     Location deploymentJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
                                                               cls, manifest);
+    DirUtils.mkdirs(destFile.getParentFile());
+    Files.copy(Locations.newInputSupplier(deploymentJar), destFile);
+    return destFile;
+  }
+
+  private static File createPluginJar(Class<?> cls, File destFile, Manifest manifest) throws IOException {
+    Location deploymentJar = PluginJarHelper.createPluginJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
+      manifest, cls);
     DirUtils.mkdirs(destFile.getParentFile());
     Files.copy(Locations.newInputSupplier(deploymentJar), destFile);
     return destFile;

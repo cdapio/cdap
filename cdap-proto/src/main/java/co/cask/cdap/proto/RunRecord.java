@@ -50,7 +50,8 @@ public final class RunRecord {
   private final Map<String, String> properties;
 
   public RunRecord(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status,
-                   @Nullable String adapterName, @Nullable String twillRunId, Map<String, String> properties) {
+                   @Nullable String adapterName, @Nullable String twillRunId,
+                   @Nullable Map<String, String> properties) {
     this.pid = pid;
     this.startTs = startTs;
     this.stopTs = stopTs;
@@ -72,6 +73,11 @@ public final class RunRecord {
   public RunRecord(RunRecord started, @Nullable Long stopTs, ProgramRunStatus status) {
     this(started.pid, started.startTs, stopTs, status, started.getAdapterName(), started.getTwillRunId(),
          started.getProperties());
+  }
+
+  public RunRecord(RunRecord existing, Map<String, String> updatedProperties) {
+    this(existing.pid, existing.startTs, existing.stopTs, existing.status, existing.adapterName, existing.twillRunId,
+         updatedProperties);
   }
 
   public String getPid() {

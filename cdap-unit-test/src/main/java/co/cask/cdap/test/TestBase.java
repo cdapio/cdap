@@ -17,9 +17,17 @@
 package co.cask.cdap.test;
 
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 
 /**
+ * Base class to inherit from for unit-test.
+ * It provides testing functionality for {@link co.cask.cdap.api.app.Application}.
+ * To clean App Fabric state, you can use the {@link #clear} method.
+ * <p>
+ * Custom configurations for CDAP can be set by using {@link ClassRule} and {@link TestConfiguration}.
+ * </p>
  *
+ * @see TestConfiguration
  */
 public class TestBase extends ConfigurableTestBase {
 

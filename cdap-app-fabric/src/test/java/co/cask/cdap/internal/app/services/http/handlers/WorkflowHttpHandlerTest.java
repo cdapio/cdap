@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.AppWithSchedule;
 import co.cask.cdap.AppWithStreamSizeSchedule;
+import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.ConcurrentWorkflowApp;
 import co.cask.cdap.ConditionalWorkflowApp;
 import co.cask.cdap.PauseResumeWorklowApp;
@@ -27,18 +28,24 @@ import co.cask.cdap.WorkflowAppWithScopedParameters;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.proto.WorkflowTokenDetail;
+import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
+import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
+import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
@@ -62,6 +69,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Tests for {@link WorkflowHttpHandler}
@@ -71,10 +79,11 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
+    .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
+    .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
     .create();
 
-  protected static final Type LIST_WORKFLOWACTIONNODE_TYPE = new TypeToken<List<WorkflowActionNode>>()
-  { }.getType();
+  protected static final Type LIST_WORKFLOWACTIONNODE_TYPE = new TypeToken<List<WorkflowActionNode>>() { }.getType();
 
   private void verifyRunningProgramCount(final Id.Program program, final String runId, final int expected)
     throws Exception {
@@ -87,7 +96,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
   }
 
   private Integer runningProgramCount(Id.Program program, String runId) throws Exception {
-    String path = String.format("apps/%s/workflows/%s/%s/current", program.getApplicationId(), program.getId(), runId);
+    String path = String.format("apps/%s/workflows/%s/runs/%s/current", program.getApplicationId(), program.getId(),
+                                runId);
     HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespaceId()));
     if (response.getStatusLine().getStatusCode() == 200) {
       String json = EntityUtils.toString(response.getEntity());
@@ -137,8 +147,22 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
   }
 
   private HttpResponse getWorkflowCurrentStatus(Id.Program program, String runId) throws Exception {
-    String currentUrl = String.format("apps/%s/workflows/%s/%s/current", program.getApplicationId(), program.getId(),
-                                      runId);
+    String currentUrl = String.format("apps/%s/workflows/%s/runs/%s/current", program.getApplicationId(),
+                                      program.getId(), runId);
+    String versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN,
+                                              program.getNamespaceId());
+    return doGet(versionedUrl);
+  }
+
+  /**
+   * Tests deprecated workflow current API. For new tests, use {@link #getWorkflowCurrentStatus(Id.Program, String)}
+   * instead
+   * TODO: CDAP-2481: Remove in 3.2
+   */
+  @Deprecated
+  private HttpResponse getWorkflowCurrentStatusOld(Id.Program program, String runId) throws Exception {
+    String currentUrl = String.format("apps/%s/workflows/%s/%s/current", program.getApplicationId(),
+                                      program.getId(), runId);
     String versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN,
                                               program.getNamespaceId());
     return doGet(versionedUrl);
@@ -168,8 +192,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     String versionedUrl = getVersionedAPIPath(nextRunTimeUrl, Constants.Gateway.API_VERSION_3_TOKEN,
                                               program.getNamespaceId());
     HttpResponse response = doGet(versionedUrl);
-    return readResponse(response, new TypeToken<List<ScheduledRuntime>>() {
-    }.getType());
+    return readResponse(response, new TypeToken<List<ScheduledRuntime>>() { }.getType());
   }
 
   @Test
@@ -212,7 +235,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     startProgram(programId, 200);
 
     // Workflow should be running
-    waitState(programId, "RUNNING");
+    waitState(programId, ProgramRunStatus.RUNNING.name());
 
     // Get runid for the running Workflow
     List<RunRecord> historyRuns = getProgramRuns(programId, "running");
@@ -230,7 +253,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     suspendWorkflow(programId, runId, 200);
 
     // Workflow status hould be SUSPENDED
-    waitState(programId, "SUSPENDED");
+    waitState(programId, ProgramRunStatus.SUSPENDED.name());
 
     // Meta store information for this Workflow should reflect suspended run
     verifyProgramRuns(programId, "suspended");
@@ -239,7 +262,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     suspendWorkflow(programId, runId, 409);
 
     // Signal the FirstSimpleAction in the Workflow to continue
-    firstSimpleActionDoneFile.createNewFile();
+    Assert.assertTrue(firstSimpleActionDoneFile.createNewFile());
 
     // Even if the Workflow is suspended, currently executing action will complete and currently running nodes
     // should be zero
@@ -252,7 +275,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     resumeWorkflow(programId, runId, 200);
 
     // Workflow should be running
-    waitState(programId, "RUNNING");
+    waitState(programId, ProgramRunStatus.RUNNING.name());
 
     verifyProgramRuns(programId, "running");
 
@@ -271,14 +294,14 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     suspendWorkflow(programId, runId, 200);
 
     // Status of the Workflow should be suspended
-    waitState(programId, "SUSPENDED");
+    waitState(programId, ProgramRunStatus.SUSPENDED.name());
 
     // Store should reflect the suspended status of the Workflow
     verifyProgramRuns(programId, "suspended");
 
     // Allow currently executing actions to complete
-    forkedSimpleActionDoneFile.createNewFile();
-    anotherForkedSimpleActionDoneFile.createNewFile();
+    Assert.assertTrue(forkedSimpleActionDoneFile.createNewFile());
+    Assert.assertTrue(anotherForkedSimpleActionDoneFile.createNewFile());
 
     // Workflow should have zero actions running
     verifyRunningProgramCount(programId, runId, 0);
@@ -289,7 +312,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     resumeWorkflow(programId, runId, 200);
 
-    waitState(programId, "RUNNING");
+    waitState(programId, ProgramRunStatus.RUNNING.name());
 
     while (!lastSimpleActionFile.exists()) {
       TimeUnit.SECONDS.sleep(1);
@@ -297,7 +320,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     verifyRunningProgramCount(programId, runId, 1);
 
-    lastSimpleActionDoneFile.createNewFile();
+    Assert.assertTrue(lastSimpleActionDoneFile.createNewFile());
 
     verifyProgramRuns(programId, "completed");
 
@@ -323,14 +346,13 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     File simpleActionDoneFile = new File(tmpFolder.newFolder() + "/simpleaction.file.done");
 
     // create app in default namespace so that v2 and v3 api can be tested in the same test
-    String defaultNamespace = "default";
+    String defaultNamespace = Id.Namespace.DEFAULT.getId();
     HttpResponse response = deploy(ConcurrentWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN,
                                    defaultNamespace);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Id.Program programId = Id.Program.from(defaultNamespace, appWithConcurrentWorkflow, ProgramType.WORKFLOW,
+    Id.Program programId = Id.Program.from(Id.Namespace.DEFAULT, appWithConcurrentWorkflow, ProgramType.WORKFLOW,
                                            concurrentWorkflowName);
-
 
     Map<String, String> propMap = ImmutableMap.of("concurrentWorkflowSchedule1.file", schedule1File.getAbsolutePath(),
                                                   "concurrentWorkflowSchedule2.file", schedule2File.getAbsolutePath(),
@@ -368,6 +390,13 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(1, nodes.size());
     Assert.assertEquals("SimpleAction", nodes.get(0).getProgram().getProgramName());
 
+    response = getWorkflowCurrentStatusOld(programId, historyRuns.get(0).getPid());
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    json = EntityUtils.toString(response.getEntity());
+    nodes = GSON.fromJson(json, LIST_WORKFLOWACTIONNODE_TYPE);
+    Assert.assertEquals(1, nodes.size());
+    Assert.assertEquals("SimpleAction", nodes.get(0).getProgram().getProgramName());
+
     response = getWorkflowCurrentStatus(programId, historyRuns.get(1).getPid());
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     json = EntityUtils.toString(response.getEntity());
@@ -375,7 +404,14 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(1, nodes.size());
     Assert.assertEquals("SimpleAction", nodes.get(0).getProgram().getProgramName());
 
-    simpleActionDoneFile.createNewFile();
+    response = getWorkflowCurrentStatusOld(programId, historyRuns.get(1).getPid());
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    json = EntityUtils.toString(response.getEntity());
+    nodes = GSON.fromJson(json, LIST_WORKFLOWACTIONNODE_TYPE);
+    Assert.assertEquals(1, nodes.size());
+    Assert.assertEquals("SimpleAction", nodes.get(0).getProgram().getProgramName());
+
+    Assert.assertTrue(simpleActionDoneFile.createNewFile());
 
     // delete the application
     deleteApp(programId.getApplication(), 200, 60, TimeUnit.SECONDS);
@@ -428,10 +464,10 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     setAndTestRuntimeArgs(programId, runtimeArgs);
 
     // Start a Workflow
-    startProgram(programId, 200);
+    startProgram(programId);
 
     // Workflow should be running
-    waitState(programId, "RUNNING");
+    waitState(programId, ProgramRunStatus.RUNNING.name());
 
     // Get the currently running RunRecord for the Workflow
     List<RunRecord> historyRuns = getProgramRuns(programId, "running");
@@ -445,19 +481,19 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     verifyRunningProgramCount(programId, runId, 1);
 
     // Stop the Workflow
-    stopProgram(programId, 200);
+    stopProgram(programId);
 
     // Workflow run record should be marked 'killed'
     verifyProgramRuns(programId, "killed");
 
     // Delete the asset created in the previous run
-    firstSimpleActionFile.delete();
+    Assert.assertTrue(firstSimpleActionFile.delete());
 
     // Start the Workflow again
-    startProgram(programId, 200);
+    startProgram(programId);
 
     // Workflow should be running
-    waitState(programId, "RUNNING");
+    waitState(programId, ProgramRunStatus.RUNNING.name());
 
     // Get the currently running RunRecord for the Workflow
     historyRuns = getProgramRuns(programId, "running");
@@ -474,7 +510,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     verifyRunningProgramCount(programId, runId, 1);
 
     // Signal the first action to continue
-    firstSimpleActionDoneFile.createNewFile();
+    Assert.assertTrue(firstSimpleActionDoneFile.createNewFile());
 
     // Wait till fork in the Workflow starts executing
     verifyFileExists(Lists.newArrayList(oneSimpleActionFile, anotherSimpleActionFile));
@@ -493,16 +529,16 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     verifyProgramRuns(programId, "killed", 1);
 
     // Delete the assets generated in the previous run
-    firstSimpleActionFile.delete();
-    firstSimpleActionDoneFile.delete();
-    oneSimpleActionFile.delete();
-    anotherSimpleActionFile.delete();
+    Assert.assertTrue(firstSimpleActionFile.delete());
+    Assert.assertTrue(firstSimpleActionDoneFile.delete());
+    Assert.assertTrue(oneSimpleActionFile.delete());
+    Assert.assertTrue(anotherSimpleActionFile.delete());
 
     // Restart the run again
-    startProgram(programId, 200);
+    startProgram(programId);
 
     // Wait till the Workflow is running
-    waitState(programId, "RUNNING");
+    waitState(programId, ProgramRunStatus.RUNNING.name());
 
     // Store the new RunRecord for the currently running run
     historyRuns = getProgramRuns(programId, "running");
@@ -515,7 +551,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     verifyRunningProgramCount(programId, runId, 1);
 
     // Signal the first action to continue
-    firstSimpleActionDoneFile.createNewFile();
+    Assert.assertTrue(firstSimpleActionDoneFile.createNewFile());
 
     // Wait till fork in the Workflow starts executing
     verifyFileExists(Lists.newArrayList(oneSimpleActionFile, anotherSimpleActionFile));
@@ -524,8 +560,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     verifyRunningProgramCount(programId, runId, 2);
 
     // Signal the Workflow that execution can be continued
-    oneSimpleActionDoneFile.createNewFile();
-    anotherSimpleActionDoneFile.createNewFile();
+    Assert.assertTrue(oneSimpleActionDoneFile.createNewFile());
+    Assert.assertTrue(anotherSimpleActionDoneFile.createNewFile());
 
     // Workflow should now have one completed run
     verifyProgramRuns(programId, "completed");
@@ -572,7 +608,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     setAndTestRuntimeArgs(programId, runtimeArguments);
 
     // Start the workflow
-    startProgram(programId, 200);
+    startProgram(programId);
 
     verifyProgramRuns(programId, "completed");
 
@@ -909,7 +945,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     historyRuns = getProgramRuns(programId, "running");
     Assert.assertTrue(historyRuns.size() == 1);
 
-    doneFile.createNewFile();
+    Assert.assertTrue(doneFile.createNewFile());
 
     // Verify that Workflow should move to "COMPLETED" state.
     verifyProgramRuns(programId, "completed");
@@ -990,7 +1026,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     setAndTestRuntimeArgs(programId, runtimeArguments);
 
     // Start the workflow
-    startProgram(programId, 200);
+    startProgram(programId);
 
     // Since the number of good records are lesser than the number of bad records,
     // 'else' branch of the condition will get executed.
@@ -1011,21 +1047,21 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     verifyRunningProgramCount(programId, runId, 3);
 
     // Signal the Workflow to continue
-    elseForkOneActionDoneFile.createNewFile();
-    elseForkAnotherActionDoneFile.createNewFile();
-    elseForkThirdActionDoneFile.createNewFile();
+    Assert.assertTrue(elseForkOneActionDoneFile.createNewFile());
+    Assert.assertTrue(elseForkAnotherActionDoneFile.createNewFile());
+    Assert.assertTrue(elseForkThirdActionDoneFile.createNewFile());
 
     verifyProgramRuns(programId, "completed");
 
     List<RunRecord> workflowHistoryRuns = getProgramRuns(programId, "completed");
 
     Id.Program recordVerifierProgramId = Id.Program.from(TEST_NAMESPACE2, conditionalWorkflowApp, ProgramType.MAPREDUCE,
-                                              "RecordVerifier");
+                                                         "RecordVerifier");
 
     List<RunRecord> recordVerifierRuns = getProgramRuns(recordVerifierProgramId, "completed");
 
     Id.Program wordCountProgramId = Id.Program.from(TEST_NAMESPACE2, conditionalWorkflowApp, ProgramType.MAPREDUCE,
-                                              "ClassicWordCount");
+                                                    "ClassicWordCount");
 
     List<RunRecord> wordCountRuns = getProgramRuns(wordCountProgramId, "completed");
 
@@ -1043,7 +1079,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     setAndTestRuntimeArgs(programId, runtimeArguments);
 
     // Start the workflow
-    startProgram(programId, 200);
+    startProgram(programId);
 
     // Since the number of good records are greater than the number of bad records,
     // 'if' branch of the condition will get executed.
@@ -1062,8 +1098,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     verifyRunningProgramCount(programId, runId, 2);
 
     // Signal the Workflow to continue
-    ifForkOneActionDoneFile.createNewFile();
-    ifForkAnotherActionDoneFile.createNewFile();
+    Assert.assertTrue(ifForkOneActionDoneFile.createNewFile());
+    Assert.assertTrue(ifForkAnotherActionDoneFile.createNewFile());
 
     verifyProgramRuns(programId, "completed", 1);
 
@@ -1074,5 +1110,91 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(2, workflowHistoryRuns.size());
     Assert.assertEquals(2, recordVerifierRuns.size());
     Assert.assertEquals(1, wordCountRuns.size());
+  }
+
+  @Test
+  @SuppressWarnings("ConstantConditions")
+  public void testWorkflowToken() throws Exception {
+    Assert.assertEquals(200, deploy(AppWithWorkflow.class).getStatusLine().getStatusCode());
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, AppWithWorkflow.NAME);
+    Id.Workflow workflowId = Id.Workflow.from(appId, AppWithWorkflow.SampleWorkflow.NAME);
+    String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
+    startProgram(workflowId, ImmutableMap.of("inputPath", createInput("input"),
+                                             "outputPath", outputPath));
+    waitState(workflowId, ProgramRunStatus.RUNNING.name());
+    waitState(workflowId, "STOPPED");
+
+    List<RunRecord> programRuns = getProgramRuns(workflowId, ProgramRunStatus.COMPLETED.name());
+    Assert.assertEquals(1, programRuns.size());
+    RunRecord runRecord = programRuns.get(0);
+    String pid = runRecord.getPid();
+    // Verify entire worfklow token
+    WorkflowTokenDetail workflowTokenDetail = getWorkflowToken(workflowId, pid, null, null);
+    List<WorkflowTokenDetail.NodeValueDetail> nodeValueDetails =
+      workflowTokenDetail.getTokenData().get(AppWithWorkflow.DummyAction.TOKEN_KEY);
+    Assert.assertEquals(2, nodeValueDetails.size());
+    Assert.assertEquals(AppWithWorkflow.SampleWorkflow.firstActionName, nodeValueDetails.get(0).getNode());
+    Assert.assertEquals(AppWithWorkflow.SampleWorkflow.secondActionName, nodeValueDetails.get(1).getNode());
+    Assert.assertEquals(AppWithWorkflow.DummyAction.TOKEN_VALUE, nodeValueDetails.get(0).getValue());
+    Assert.assertEquals(AppWithWorkflow.DummyAction.TOKEN_VALUE, nodeValueDetails.get(1).getValue());
+    // Verify entire workflow token by passing in the scope and key in the request
+    workflowTokenDetail = getWorkflowToken(workflowId, pid, WorkflowToken.Scope.USER,
+                                           AppWithWorkflow.DummyAction.TOKEN_KEY);
+    nodeValueDetails = workflowTokenDetail.getTokenData().get(AppWithWorkflow.DummyAction.TOKEN_KEY);
+    Assert.assertEquals(2, nodeValueDetails.size());
+    Assert.assertEquals(AppWithWorkflow.SampleWorkflow.firstActionName, nodeValueDetails.get(0).getNode());
+    Assert.assertEquals(AppWithWorkflow.SampleWorkflow.secondActionName, nodeValueDetails.get(1).getNode());
+    Assert.assertEquals(AppWithWorkflow.DummyAction.TOKEN_VALUE, nodeValueDetails.get(0).getValue());
+    Assert.assertEquals(AppWithWorkflow.DummyAction.TOKEN_VALUE, nodeValueDetails.get(1).getValue());
+
+    // Verify workflow token at a given node
+    WorkflowTokenNodeDetail tokenAtNode = getWorkflowToken(workflowId, pid,
+                                                           AppWithWorkflow.SampleWorkflow.firstActionName, null, null);
+    Map<String, String> tokenDataAtNode = tokenAtNode.getTokenDataAtNode();
+    Assert.assertEquals(1, tokenDataAtNode.size());
+    Assert.assertEquals(AppWithWorkflow.DummyAction.TOKEN_VALUE,
+                        tokenDataAtNode.get(AppWithWorkflow.DummyAction.TOKEN_KEY));
+    // Verify workflow token at a given node by passing in a scope and a key
+    tokenAtNode = getWorkflowToken(workflowId, pid, AppWithWorkflow.SampleWorkflow.firstActionName,
+                                   WorkflowToken.Scope.USER, AppWithWorkflow.DummyAction.TOKEN_KEY);
+    tokenDataAtNode = tokenAtNode.getTokenDataAtNode();
+    Assert.assertEquals(1, tokenDataAtNode.size());
+    Assert.assertEquals(AppWithWorkflow.DummyAction.TOKEN_VALUE,
+                        tokenDataAtNode.get(AppWithWorkflow.DummyAction.TOKEN_KEY));
+  }
+
+  private WorkflowTokenDetail getWorkflowToken(Id.Workflow workflowId, String runId,
+                                               @Nullable WorkflowToken.Scope scope,
+                                               @Nullable String key) throws Exception {
+    String workflowTokenUrl = String.format("apps/%s/workflows/%s/runs/%s/token", workflowId.getApplicationId(),
+                                            workflowId.getId(), runId);
+    String versionedUrl = getVersionedAPIPath(appendScopeAndKeyToUrl(workflowTokenUrl, scope, key),
+                                              Constants.Gateway.API_VERSION_3_TOKEN, workflowId.getNamespaceId());
+    HttpResponse response = doGet(versionedUrl);
+    return readResponse(response, new TypeToken<WorkflowTokenDetail>() { }.getType(), GSON);
+  }
+
+  private WorkflowTokenNodeDetail getWorkflowToken(Id.Workflow workflowId, String runId, String nodeName,
+                                                   @Nullable WorkflowToken.Scope scope,
+                                                   @Nullable String key) throws Exception {
+    String workflowTokenUrl = String.format("apps/%s/workflows/%s/runs/%s/nodes/%s/token",
+                                            workflowId.getApplicationId(), workflowId.getId(), runId, nodeName);
+    String versionedUrl = getVersionedAPIPath(appendScopeAndKeyToUrl(workflowTokenUrl, scope, key),
+                                              Constants.Gateway.API_VERSION_3_TOKEN, workflowId.getNamespaceId());
+    HttpResponse response = doGet(versionedUrl);
+    return readResponse(response, new TypeToken<WorkflowTokenNodeDetail>() { }.getType(), GSON);
+  }
+
+  private String appendScopeAndKeyToUrl(String workflowTokenUrl, @Nullable WorkflowToken.Scope scope, String key) {
+    StringBuilder output = new StringBuilder(workflowTokenUrl);
+    if (scope != null) {
+      output.append(String.format("?scope=%s", scope.name()));
+      if (key != null) {
+        output.append(String.format("&key=%s", key));
+      }
+    } else if (key != null) {
+      output.append(String.format("?key=%s", key));
+    }
+    return output.toString();
   }
 }

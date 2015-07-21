@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,7 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
+package co.cask.cdap.internal.app.runtime.artifact;
+
+import co.cask.cdap.common.NotFoundException;
+import com.google.common.base.Joiner;
+
+import java.util.Collection;
+
 /**
- * This package contains helper classes for leader election.
+ * Thrown when a range of artifacts are not found.
  */
-package co.cask.cdap.watchdog.election;
+public class ArtifactRangeNotFoundException extends NotFoundException {
+
+  public ArtifactRangeNotFoundException(Collection<ArtifactRange> artifactRanges) {
+    super("artifacts", Joiner.on(',').join(artifactRanges).toString());
+  }
+
+}

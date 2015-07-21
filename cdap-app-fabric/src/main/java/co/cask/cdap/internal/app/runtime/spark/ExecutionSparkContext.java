@@ -21,6 +21,9 @@ import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
+import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
+import co.cask.cdap.api.data.batch.InputFormatProvider;
+import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
@@ -31,6 +34,7 @@ import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkProgram;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data.stream.StreamInputFormat;
@@ -50,6 +54,9 @@ import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.io.Closeables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.OutputFormat;
+import org.apache.spark.SparkConf;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
@@ -61,6 +68,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * A {@link SparkContext} implementation that is used in both {@link SparkProgram#run(SparkContext)} and
@@ -87,11 +95,11 @@ public class ExecutionSparkContext extends AbstractSparkContext {
                                Transaction transaction, DatasetFramework datasetFramework,
                                DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService,
-                               Configuration hConf, StreamAdmin streamAdmin) {
+                               Configuration hConf, StreamAdmin streamAdmin, @Nullable WorkflowToken workflowToken) {
     this(specification, programId, runId, programClassLoader, logicalStartTime, runtimeArguments,
          transaction, datasetFramework, discoveryServiceClient,
          createMetricsContext(metricsCollectionService, programId, runId),
-         createLoggingContext(programId, runId), hConf, streamAdmin);
+         createLoggingContext(programId, runId), hConf, streamAdmin, workflowToken);
   }
 
   public ExecutionSparkContext(SparkSpecification specification, Id.Program programId, RunId runId,
@@ -99,9 +107,10 @@ public class ExecutionSparkContext extends AbstractSparkContext {
                                Map<String, String> runtimeArguments,
                                Transaction transaction, DatasetFramework datasetFramework,
                                DiscoveryServiceClient discoveryServiceClient, MetricsContext metricsContext,
-                               LoggingContext loggingContext, Configuration hConf, StreamAdmin streamAdmin) {
+                               LoggingContext loggingContext, Configuration hConf, StreamAdmin streamAdmin,
+                               WorkflowToken workflowToken) {
     super(specification, programId, runId, programClassLoader, logicalStartTime,
-          runtimeArguments, discoveryServiceClient, metricsContext, loggingContext);
+          runtimeArguments, discoveryServiceClient, metricsContext, loggingContext, workflowToken);
 
     this.datasets = new HashMap<>();
     this.hConf = hConf;
@@ -113,18 +122,108 @@ public class ExecutionSparkContext extends AbstractSparkContext {
 
   @Override
   public <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass) {
-    Map<String, String> datasetArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName, getRuntimeArguments());
-
     // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
     Configuration configuration = new Configuration(hConf);
-    SparkDatasetInputFormat.setDataset(configuration, datasetName, datasetArgs);
+
+    // first try if it is InputFormatProvider
+    Map<String, String> dsArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName, getRuntimeArguments());
+    Dataset dataset = instantiateDataset(datasetName, dsArgs);
+    try {
+      if (dataset instanceof InputFormatProvider) {
+        // get the input format and its configuration from the dataset
+        String inputFormatName = ((InputFormatProvider) dataset).getInputFormatClassName();
+        // load the input format class
+        if (inputFormatName == null) {
+          throw new DatasetInstantiationException(
+            String.format("Dataset '%s' provided null as the input format class name", datasetName));
+        }
+        Class<? extends InputFormat> inputFormatClass;
+        try {
+          @SuppressWarnings("unchecked")
+          Class<? extends InputFormat> ifClass =
+            (Class<? extends InputFormat>) SparkClassLoader.findFromContext().loadClass(inputFormatName);
+          inputFormatClass = ifClass;
+          Map<String, String> inputConfig = ((InputFormatProvider) dataset).getInputFormatConfiguration();
+          if (inputConfig != null) {
+            for (Map.Entry<String, String> entry : inputConfig.entrySet()) {
+              configuration.set(entry.getKey(), entry.getValue());
+            }
+          }
+        } catch (ClassNotFoundException e) {
+          throw new DatasetInstantiationException(String.format(
+            "Cannot load input format class %s provided by dataset '%s'", inputFormatName, datasetName), e);
+        } catch (ClassCastException e) {
+          throw new DatasetInstantiationException(String.format(
+            "Input format class %s provided by dataset '%s' is not an input format", inputFormatName, datasetName), e);
+        }
+        return getSparkFacade().createRDD(inputFormatClass, kClass, vClass, configuration);
+      }
+    } finally {
+      commitAndClose(datasetName, dataset);
+    }
+
+    // it must be supported by SparkDatasetInputFormat
+    SparkDatasetInputFormat.setDataset(configuration, datasetName, dsArgs);
     return getSparkFacade().createRDD(SparkDatasetInputFormat.class, kClass, vClass, configuration);
   }
 
   @Override
   public <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass) {
-    Map<String, String> datasetArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName, getRuntimeArguments());
-    getSparkFacade().saveAsDataset(rdd, datasetName, datasetArgs, kClass, vClass, new Configuration(hConf));
+    // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
+    Configuration configuration = new Configuration(hConf);
+
+    // first try if it is OutputFormatProvider
+    Map<String, String> dsArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName, getRuntimeArguments());
+    Dataset dataset = instantiateDataset(datasetName, dsArgs);
+    try {
+      if (dataset instanceof OutputFormatProvider) {
+        // get the output format and its configuration from the dataset
+        String outputFormatName = ((OutputFormatProvider) dataset).getOutputFormatClassName();
+        // load the output format class
+        if (outputFormatName == null) {
+          throw new DatasetInstantiationException(
+            String.format("Dataset '%s' provided null as the output format class name", datasetName));
+        }
+        Class<? extends OutputFormat> outputFormatClass;
+        try {
+          @SuppressWarnings("unchecked")
+          Class<? extends OutputFormat> ofClass =
+            (Class<? extends OutputFormat>) SparkClassLoader.findFromContext().loadClass(outputFormatName);
+          outputFormatClass = ofClass;
+          Map<String, String> outputConfig = ((OutputFormatProvider) dataset).getOutputFormatConfiguration();
+          if (outputConfig != null) {
+            for (Map.Entry<String, String> entry : outputConfig.entrySet()) {
+              configuration.set(entry.getKey(), entry.getValue());
+            }
+          }
+        } catch (ClassNotFoundException e) {
+          throw new DatasetInstantiationException(String.format(
+            "Cannot load input format class %s provided by dataset '%s'", outputFormatName, datasetName), e);
+        } catch (ClassCastException e) {
+          throw new DatasetInstantiationException(String.format(
+            "Input format class %s provided by dataset '%s' is not an input format", outputFormatName, datasetName), e);
+        }
+        try {
+          getSparkFacade().saveAsDataset(rdd, outputFormatClass, kClass, vClass, configuration);
+        } catch (Throwable t) {
+          // whatever went wrong, give the dataset a chance to handle the failure
+          if (dataset instanceof DatasetOutputCommitter) {
+            ((DatasetOutputCommitter) dataset).onFailure();
+          }
+          throw t;
+        }
+        if (dataset instanceof DatasetOutputCommitter) {
+          ((DatasetOutputCommitter) dataset).onSuccess();
+        }
+        return;
+      }
+    } finally {
+      commitAndClose(datasetName, dataset);
+    }
+
+    // it must be supported by SparkDatasetOutputFormat
+    SparkDatasetOutputFormat.setDataset(hConf, datasetName, dsArgs);
+    getSparkFacade().saveAsDataset(rdd, SparkDatasetOutputFormat.class, kClass, vClass, new Configuration(hConf));
   }
 
   @Override
@@ -284,6 +383,13 @@ public class ExecutionSparkContext extends AbstractSparkContext {
         commitAndClose(datasetName, dataset);
       }
     };
+  }
+
+  @Override
+  public SparkConf getSparkConf() {
+    // This is an internal method.
+    // Throwing exception here to avoid being called inside CDAP wrongly, since we shouldn't call this during execution.
+    throw new UnsupportedOperationException("getSparkConf shouldn't be called in execution context");
   }
 
   /**

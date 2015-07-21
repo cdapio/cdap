@@ -23,6 +23,7 @@ import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -435,22 +436,23 @@ public class IncrementSummingScannerTest {
   static HRegion createRegion(Configuration hConf, CConfiguration cConf, TableId tableId,
                               HColumnDescriptor cfd) throws Exception {
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
-    HTableDescriptor htd = tableUtil.createHTableDescriptor(tableId);
+    HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId);
     cfd.setMaxVersions(Integer.MAX_VALUE);
     cfd.setKeepDeletedCells(true);
     htd.addFamily(cfd);
     htd.addCoprocessor(IncrementHandler.class.getName());
 
-    String tableName = htd.getNameAsString();
+    HTableDescriptor desc = htd.build();
+    String tableName = desc.getNameAsString();
     Path tablePath = new Path("/tmp/" + tableName);
     Path hlogPath = new Path("/tmp/hlog-" + tableName);
     FileSystem fs = FileSystem.get(hConf);
     assertTrue(fs.mkdirs(tablePath));
     WALFactory walFactory = new WALFactory(hConf, null, hlogPath.toString());
     WAL hLog = walFactory.getWAL(new byte[]{1});
-    HRegionInfo regionInfo = new HRegionInfo(htd.getTableName());
+    HRegionInfo regionInfo = new HRegionInfo(desc.getTableName());
     HRegionFileSystem regionFS = HRegionFileSystem.createRegionOnFileSystem(hConf, fs, tablePath, regionInfo);
-    return new HRegion(regionFS, hLog, hConf, htd,
+    return new HRegion(regionFS, hLog, hConf, desc,
                        new LocalRegionServerServices(hConf, ServerName.valueOf(
                            InetAddress.getLocalHost().getHostName(), 0, System.currentTimeMillis())));
   }

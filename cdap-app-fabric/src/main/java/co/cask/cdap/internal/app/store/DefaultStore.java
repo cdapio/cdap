@@ -28,6 +28,7 @@ import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
@@ -129,9 +130,7 @@ public class DefaultStore implements Store {
    */
   public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
     framework.addInstance(Table.class.getName(), Id.DatasetInstance.from(
-                            Constants.DEFAULT_NAMESPACE_ID, (Joiner.on(".").join(Constants.SYSTEM_NAMESPACE,
-                                                                                 APP_META_TABLE))),
-                          DatasetProperties.EMPTY);
+                            Constants.SYSTEM_NAMESPACE_ID, APP_META_TABLE), DatasetProperties.EMPTY);
   }
 
   @Nullable
@@ -916,6 +915,27 @@ public class DefaultStore implements Store {
         mds.apps.recordWorkflowProgramStart(programId, programRunId, workflow, workflowRunId, workflowNodeId,
                                             startTimeInSeconds, adapter, twillRunId);
         return null;
+      }
+    });
+  }
+
+  @Override
+  public void updateWorkflowToken(final Id.Workflow workflowId, final String workflowRunId, final WorkflowToken token) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        mds.apps.updateWorkflowToken(workflowId, workflowRunId, token);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public WorkflowToken getWorkflowToken(final Id.Workflow workflowId, final String workflowRunId) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, WorkflowToken>() {
+      @Override
+      public WorkflowToken apply(AppMds mds) throws Exception {
+        return mds.apps.getWorkflowToken(workflowId, workflowRunId);
       }
     });
   }

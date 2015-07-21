@@ -42,10 +42,8 @@ public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
           instance = createInstance(getHBase98Classname());
           break;
         case HBASE_10:
-          // TODO: remove exception and uncomment when CDAP-2868 is in place
-          throw new ProvisionException("Apache HBase 1.0 is not yet supported.");
-          // instance = createInstance(getHBase10Classname());
-          // break;
+          instance = createInstance(getHBase10Classname());
+          break;
         case HBASE_10_CDH:
           instance = createInstance(getHBase10CDHClassname());
           break;
@@ -59,8 +57,9 @@ public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
   }
 
   protected T createInstance(String className) throws ClassNotFoundException {
-    Class clz = Class.forName(className);
-    return (T) Instances.newInstance(clz);
+    @SuppressWarnings("unchecked")
+    Class<T> clz = (Class<T>) Class.forName(className);
+    return Instances.newInstance(clz);
   }
 
   protected abstract String getHBase96Classname();
