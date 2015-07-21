@@ -162,12 +162,12 @@ Yet that can become tedious to manage, especially if the naming convention shoul
 applications would have to be changed simultaneously for proper functioning.
 
 The PartitionedFileSet dataset relieves applications from understanding file name conventions. Instead,
-it associates a partition key with every file; for example the year and month associated with that file.
-Because different files cannot have the same partition key, this allows applications to address the
-data uniquely through its partition keys, or more broadly through conditions over the partition keys.
-For example, the months of February through June of a particular year, or the month of November in any
-year. By inheriting the attributes |---| such as format and schema |---| of FileSets, PartitionedFileSets
-are a powerful abstraction over data that is organized into files.
+it associates a partition key with a path; for example the year and month associated with that path.
+Because different paths cannot have the same partition key, this allows applications to address the
+file(s) at that path uniquely through its partition keys, or more broadly through conditions over the
+partition keys. For example, the months of February through June of a particular year, or the month of
+November in any year. By inheriting the attributes |---| such as format and schema |---| of FileSets,
+PartitionedFileSets are a powerful abstraction over data that is organized into files.
 
 Creating a PartitionedFileSet
 =============================
@@ -208,8 +208,8 @@ partition key to obtain a Partition; you can then get a Location from that Parti
 
 For example, to read the content of a partition::
 
-      PartitionKey key = PartitionKey.builder().addStringField(...)
-                                               .addIntField(...)
+      PartitionKey key = PartitionKey.builder().addStringField("league", ...)
+                                               .addIntField("season", ...)
                                                .build());
       Partition partition = dataset.getPartition(key);
       if (partition != null) {
@@ -316,6 +316,58 @@ For example, give these arguments when starting the MapReduce through a RESTful 
     "dataset.results.input.partition.filter.season.upper": "1990",
     "dataset.totals.output.partition.key.league" : "nfl"
   }
+
+Incrementally Processing Partitions of a PartitionedFileSets in MapReduce
+=========================================================================
+
+One way to process a partitioned file set is with a MapReduce program that runs repeatedly and,
+in every run, reads the partitions that have been added since its previous run. This requires
+that the MapReduce program persists between runs what partitions have already been consumed.
+An easy way to do that is the BatchPartitionConsumer, an experimental feature introduced in CDAP 3.1.0.
+The MapReduce program is responsible for extending this abstract consumer class with methods to
+persist and the read back its state. In the following example, the state is persisted to a row in a
+KeyValue Table, but other types of Datasets can also be used::
+
+  public static class WordCount extends AbstractMapReduce {
+
+    private final BatchPartitionConsumer batchPartitionConsumer = new BatchPartitionConsumer() {
+      private static final String STATE_KEY = "state.key";
+
+      @Nullable
+      @Override
+      protected byte[] readBytes(DatasetContext datasetContext) {
+        return ((KeyValueTable) datasetContext.getDataset("consumingState")).read(STATE_KEY);
+      }
+
+      @Override
+      protected void writeBytes(DatasetContext datasetContext, byte[] stateBytes) {
+        ((KeyValueTable) datasetContext.getDataset("consumingState")).write(STATE_KEY, stateBytes);
+      }
+    };
+
+Then, in the ``beforeSubmit()`` method of the MapReduce, specify the partitioned file set to be used as input::
+
+  @Override
+    public void beforeSubmit(MapReduceContext context) throws Exception {
+      PartitionedFileSet inputRecords =
+        batchPartitionConsumer.getPartitionedFileSetForConsuming(context, "inputRecords");
+      context.setInput("inputRecords", inputRecords);
+
+This will read back the previously persisted state, determine the new partitions to read based upon this
+state, and compute a new state to store in memory until a call to ``persist()``. The dataset it returns
+is instantiated with the set of new partitions to read as input.
+To save the state of partition processing, call the consumer's ``persist()`` method. This ensures that the
+next time the MapReduce job runs, it processes only the newly committed partitions::
+
+  @Override
+  public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
+    if (succeeded) {
+      batchPartitionConsumer.persist(context);
+    }
+    super.onFinish(succeeded, context);
+  }
+
+A limitation of the BatchPartitionConsumer is that there can not be concurrent runs of the MapReduce job.
 
 Exploring PartitionedFileSets
 =============================
