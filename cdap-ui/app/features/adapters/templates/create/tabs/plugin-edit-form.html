@@ -30,15 +30,31 @@
         <div class="row">
 
           <!-- INPUT SCHEMA -->
-          <div class="col-lg-2" ng-if="!isSource">
+          <div class="col-lg-2 input-schema modal-content-scroll" ng-if="!isSource">
             <h4>Input Schema</h4>
-            <div class="well well-lg input-schema">
-              <div class="schema-container" ng-if="inputSchema">
-                <ul class="list-unstyled">
-                  <li ng-repeat="schema in inputSchema">{{schema.name}} ({{schema.type}})</li>
-                </ul>
-              </div>
-              <div ng-if="!inputSchema">
+            <div class="schema-container" ng-if="inputSchema">
+              <table class="table">
+                <thead>
+                  <th>
+                    <label class="control-label">Name</label>
+                  </th>
+                  <th>
+                    <label class="control-label">Type</label>
+                  </th>
+                </thead>
+                <tbody>
+                  <tr ng-repeat="schema in inputSchema" ng-keypress="enter($event, $last)">
+                    <td class="name" ng-if="!schema.empty"> {{schema.name}} </td>
+                    <td class="type" ng-if="!schema.empty"> ({{schema.type}} </td>
+
+                    <td class="name" ng-if="property.empty"></td>
+                    <td class="type" ng-if="property.empty"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div ng-if="!inputSchema">
+              <div class="well well-lg">
                 <p>There is no input schema</p>
               </div>
             </div>
