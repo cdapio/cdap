@@ -51,13 +51,14 @@ name.
 Names used for streams and datasets need to be unique across the CDAP namespace, while
 names used for programs and services need to be unique only to the application.
 
-Applications can also use a Configuration class to receive a configuration during deployment time of the Application.
+Applications can use a ``Config`` class to receive a configuration during deployment time of the Application.
 For example, this can be used to specify the stream, dataset to create/read from at application deployment time
-instead of hard coding it in the ``AbstractApplication``'s ``configure`` method. The configuration class needs to be
-the type parameter of ``AbstractApplication`` class. It should also extend the ``Config`` class present in CDAP API.
-The configuration is provided during application creation time through a Header in the REST API. It is available during
+instead of hard-coding them in the ``AbstractApplication``'s ``configure`` method. The configuration class needs to be
+the type parameter of the ``AbstractApplication`` class. It should also extend the ``Config`` class present in the CDAP API.
+The configuration is provided during application deployment time through a Header in the RESTful API. It is available during
 configuration time through the ``getConfig()`` method in ``AbstractApplication``.
-Information about the REST call is available in Lifecycle HTTP REST API documentation.
+
+Information about the RESTful call is available in the :ref:`Lifecycle HTTP RESTful API documentation <http-restful-api-lifecycle>`.
 
 We can modify the ``MyApp`` class above to take in a Configuration ``MyApp.MyAppConfig``::
 
@@ -88,7 +89,7 @@ We can modify the ``MyApp`` class above to take in a Configuration ``MyApp.MyApp
         }
       }
 
-In order to use the configuration in programs, we pass it to individual Programs using their constructor. But if
+In order to use the configuration in programs, we pass it to individual Programs using their constructor. If
 the configuration parameter is also required during runtime, you can use the ``@Property`` annotation::
 
   public class UniqueCounter extends AbstractFlowlet {

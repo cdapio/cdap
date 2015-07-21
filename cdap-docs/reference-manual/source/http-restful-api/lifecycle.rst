@@ -36,14 +36,14 @@ and its content as the body of the request::
 Invoke the same command to update an application to a newer version.
 However, be sure to stop all of its flows, Spark and MapReduce programs before updating the application.
 
-For an application that has following configuration class::
+For an application that has following configuration class such as::
 
   public static class MyAppConfig extends Config {
     String streamName;
     String datasetName;
   }
 
-we can deploy it using the following REST call::
+we can deploy it with this RESTful call::
 
   POST <bas-url>/namespaces/<namespace>/apps
   -H "X-Archive-Name: <jar-name>"
