@@ -34,12 +34,7 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, $timeo
       return;
     }
 
-    $scope.dashboards.forEach(function (dashboard, i) {
-      if (index === i) {
-        dashboard.isopen = !dashboard.isopen;
-      }
-    });
-
+    $scope.dashboards[index].isopen = !$scope.dashboards[index].isopen;
     event.preventDefault();
     event.stopPropagation();
   };
