@@ -1,9 +1,22 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('_AdapterCreateController', function(MyPlumbService, myAdapterApi, $bootstrapModal, $scope, rConfig) {
+  .controller('_AdapterCreateController', function(MyPlumbService, myAdapterApi, $bootstrapModal, $scope, rConfig, $stateParams, $alert) {
+    this.metadata = MyPlumbService.metadata;
     if (rConfig) {
       this.data =  rConfig;
     }
-    this.metadata = MyPlumbService.metadata;
+    if ($stateParams.name) {
+      this.metadata.name = $stateParams.name;
+    }
+    if ($stateParams.type) {
+      if (['ETLBatch', 'ETLRealtime'].indexOf($stateParams.type) !== -1) {
+        this.metadata.template.type = $stateParams.type;
+      } else {
+        $alert({
+          type: 'danger',
+          content: 'Invalid template type. Has to be either ETLBatch or ETLRealtime'
+        });
+      }
+    }
 
     myAdapterApi.fetchTemplates({
       scope: $scope
