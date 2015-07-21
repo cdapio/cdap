@@ -293,5 +293,5 @@ instance. For example::
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false,
                                                                        "data.tx.timeout", 60);
 
-Refer to the :ref:`cdap-site.xml <appendix-cdap-site.xml:>` for the available set of configurations used by CDAP.
+Refer to the :ref:`cdap-site.xml <appendix-cdap-site.xml>` for the available set of configurations used by CDAP.
 
