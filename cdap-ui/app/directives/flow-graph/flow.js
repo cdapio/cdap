@@ -82,7 +82,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
       scope.getShapes = function() {
         var shapes = {};
         shapes.flowlet = function(parent, bbox, node) {
-          var instances = scope.model.instances[node.elem.__data__] || 0;
+          var instances = scope.model.instances[node.elem.__data__] || 1;
 
           // Pushing labels down
           parent.select('.label')
