@@ -349,16 +349,20 @@ Then, in the ``beforeSubmit()`` method of the MapReduce, specify the partitioned
 
   @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
-      PartitionedFileSet inputRecords = batchPartitionConsumer.getPartitionedFileSet(context, "inputRecords");
+      PartitionedFileSet inputRecords =
+        batchPartitionConsumer.getPartitionedFileSetForConsuming(context, "inputRecords");
       context.setInput("inputRecords", inputRecords);
 
-To save the state of partition processing, call the consumer's ``onFinish()`` method. This ensures that the
+This will read back the previously persisted state, determine the new partitions to read based upon this
+state, and compute a new state to store in memory until a call to ``persist()``. The dataset it returns
+is instantiated with the set of new partitions to read as input.
+To save the state of partition processing, call the consumer's ``persist()`` method. This ensures that the
 next time the MapReduce job runs, it processes only the newly committed partitions::
 
   @Override
   public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
     if (succeeded) {
-      batchPartitionConsumer.onFinish(context);
+      batchPartitionConsumer.persist(context);
     }
     super.onFinish(succeeded, context);
   }
