@@ -23,20 +23,19 @@ angular.module(PKG.name + '.feature.adapters')
         })
 
         .state('adapters.create', {
-          url: '/create',
-          params: {
-            data: null
-          },
+          url: '/create?name&type',
           resolve: {
             rConfig: function($stateParams, mySettings, $q) {
               var defer = $q.defer();
-              if ($stateParams.data) {
+              if ($stateParams.name) {
                 mySettings.get('adapterDrafts')
                   .then(function(res) {
-                    var draft = res[$stateParams.data];
-                    draft.name = $stateParams.data;
-                    if (draft) {
+                    var draft = res[$stateParams.name];
+                    if (angular.isObject(draft)) {
+                      draft.name = $stateParams.name;
                       defer.resolve(draft);
+                    } else {
+                      defer.resolve(false);
                     }
                   });
               } else {

@@ -105,13 +105,13 @@ angular.module(PKG.name + '.feature.adapters')
       var prom;
       switch(group.name) {
         case 'source':
-          prom = myAdapterApi.fetchSources({ adapterType: 'ETLBatch' }).$promise;
+          prom = myAdapterApi.fetchSources({ adapterType: MyPlumbService.metadata.template.type }).$promise;
           break;
         case 'transform':
-          prom = myAdapterApi.fetchTransforms({ adapterType: 'ETLBatch' }).$promise;
+          prom = myAdapterApi.fetchTransforms({ adapterType: MyPlumbService.metadata.template.type }).$promise;
           break;
         case 'sink':
-          prom = myAdapterApi.fetchSinks({ adapterType: 'ETLBatch' }).$promise;
+          prom = myAdapterApi.fetchSinks({ adapterType: MyPlumbService.metadata.template.type }).$promise;
           break;
       }
       prom.then(function(res) {
