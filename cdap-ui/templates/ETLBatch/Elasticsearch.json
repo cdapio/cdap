@@ -1,10 +1,10 @@
 {
   "id": "ElasticsearchSink",
   "groups" : {
-    "position": [ "group1", "group2"  ],
+    "position": [ "group1"],
     "group1": {
       "display" : "Elasticsearch Configuration",
-      "position" : [ "es.host", "es.port", "es.index", "es.type" ],
+      "position" : [ "es.host", "es.port", "es.index", "es.type", "es.idField" ],
       "fields" : {
         "es.host": {
           "widget": "textbox",
@@ -30,29 +30,6 @@
           "properties": {
             "width": "medium"
           }
-        }
-      }
-    },
-    "group2" : {
-      "display" : "Mapping",
-      "position" : [ "es.mapping", "es.idField" ],
-      "fields" : {
-        "es.mapping" : {
-          "widget": "schema",
-          "label": "Mapping",
-          "description": "This is the type that will be applied to every document. It should correspond to the structured record of the event being stored in elasticsearch. If no mapping is provided, the mapping of the structured record will be used",
-          "schema-types": [
-            "boolean",
-            "int",
-            "long",
-            "float",
-            "double",
-            "bytes",
-            "string - exact value",
-            "string - full-text",
-            "date"
-          ],
-          "schema-default-type": "string - exact value"
         },
         "es.idField" : {
           "widget": "textbox",

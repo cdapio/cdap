@@ -144,7 +144,6 @@
     <cdap.client.version>1.2.0</cdap.client.version>
     <twitter4j.version>4.0.3</twitter4j.version>
     <es.version>1.6.0</es.version>
-    <lucene.version>4.10.4</lucene.version>
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
     <release.iteration>1</release.iteration>

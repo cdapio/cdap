@@ -45,12 +45,10 @@ public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Wri
   private static final String INDEX_DESC = "The name of the index where the data will be stored. " +
     "The index should already exist and be configured.";
 
-  private static final String PROPERTY_SCHEMA_DESC = "The mapping that will be applied to the data";
-
   private static final String TYPE_DESC = "The name of the type where the data will be stored";
 
   private static final String ID_DESC = "The id field that will determine the id for the document. " +
-    "Defaults to a unique ID created by elasticsearch";
+    "It should match a fieldname in the structured record of the input";
 
   private static final String HOST_DESC = "The hostname and port for an elasticsearch node. e.g. localhost:9300";
 
@@ -70,21 +68,14 @@ public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Wri
     @Description(TYPE_DESC)
     private String type;
 
-    @Name(Properties.Elasticsearch.MAPPING)
-    @Description(PROPERTY_SCHEMA_DESC)
-    @Nullable
-    private String mapping;
-
     @Name(Properties.Elasticsearch.ID_FIELD)
     @Description(ID_DESC)
-    @Nullable
     private String idField;
 
-    public ESConfig(String hostname, String index, String type, String mapping, String idField) {
+    public ESConfig(String hostname, String index, String type, String idField) {
       this.hostname = hostname;
       this.index = index;
       this.type = type;
-      this.mapping = mapping;
       this.idField = idField;
     }
   }
@@ -108,9 +99,7 @@ public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Wri
     conf.set("es.nodes", config.hostname);
     conf.set("es.resource", getResource());
     conf.set("es.input.json", "yes");
-    if (config.idField != null) {
-      conf.set("es.mapping.id", config.idField);
-    }
+    conf.set("es.mapping.id", config.idField);
     job.setMapOutputValueClass(Text.class);
     job.setOutputFormatClass(EsOutputFormat.class);
   }

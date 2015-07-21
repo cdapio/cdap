@@ -116,7 +116,6 @@ public final class Properties {
   public static class Elasticsearch {
     public static final String INDEX_NAME = "es.index";
     public static final String TYPE_NAME = "es.type";
-    public static final String MAPPING = "es.mapping";
     public static final String HOST = "es.host";
     public static final String ID_FIELD = "es.idField";
   }

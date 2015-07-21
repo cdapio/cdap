@@ -82,8 +82,7 @@ public class ETLESSinkTest extends BaseETLBatchTest {
   }
 
   @After
-  public void afterTest() {
-    node.close();
+  public void afterTest() { node.close();
   }
 
   @Test
@@ -103,25 +102,22 @@ public class ETLESSinkTest extends BaseETLBatchTest {
       .put("format.setting.delimiter", "|")
       .build());
 
-    CreateIndexResponse create = client.admin().indices().create(new CreateIndexRequest("test")).actionGet();
-    Assert.assertTrue(create.isAcknowledged());
-
-    ETLStage sink = new ETLStage("Elasticsearch",
-                                 ImmutableMap.of(Properties.Elasticsearch.HOST, "localhost:9200",
-                                                 Properties.Elasticsearch.INDEX_NAME, "test",
-                                                 Properties.Elasticsearch.TYPE_NAME, "testing",
-                                                 Properties.Elasticsearch.ID_FIELD, "ticker"
-                                 ));
-    List<ETLStage> transforms = Lists.newArrayList();
-    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transforms);
-    Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "esSinkTest");
-    AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
-    AdapterManager manager = createAdapter(adapterId, adapterConfig);
-
-    manager.start();
-    manager.waitForOneRunToFinish(5, TimeUnit.MINUTES);
-    manager.stop();
     try {
+      ETLStage sink = new ETLStage("Elasticsearch",
+                                   ImmutableMap.of(Properties.Elasticsearch.HOST, "localhost:9200",
+                                                   Properties.Elasticsearch.INDEX_NAME, "test",
+                                                   Properties.Elasticsearch.TYPE_NAME, "testing",
+                                                   Properties.Elasticsearch.ID_FIELD, "ticker"
+                                   ));
+      List<ETLStage> transforms = Lists.newArrayList();
+      ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transforms);
+      Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "esSinkTest");
+      AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
+      AdapterManager manager = createAdapter(adapterId, adapterConfig);
+
+      manager.start();
+      manager.waitForOneRunToFinish(5, TimeUnit.MINUTES);
+      manager.stop();
       SearchResponse searchResponse = client.prepareSearch("test").execute().actionGet();
       Assert.assertTrue(searchResponse.getHits().getTotalHits() == 2);
       searchResponse = client.prepareSearch().setQuery(matchQuery("ticker", "AAPL")).execute().actionGet();
