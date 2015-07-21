@@ -10,7 +10,11 @@ my-side-panel {
     width: 40px;
     background-color: white;
     .transition(all 0.2s ease);
-
+    .item-heading {
+      span:first-child {
+        font-size: 22px;
+      }
+    }
     &.left {
       left: 10px;
       .btn.btn-info.btn-block {
@@ -21,36 +25,12 @@ my-side-panel {
           color: white;
         }
       }
-      .item-heading {
-        span[class*="icon-"] {
-          font-size: 22px;
-        }
-      }
-      &.expanded {
-        .item-heading {
-          span[class*="icon-"] {
-            font-size: 15px;
-          }
-        }
-      }
     }
 
     &.right {
+      right: 10px;
       .btn.btn-info.btn-block {
         text-align: right;
-      }
-      right: 10px;
-      .item-heading {
-        span.fa:first-child {
-          font-size: 15px;
-        }
-      }
-      &.expanded {
-        .item-heading {
-          span.fa:first-child {
-            font-size: 11px;
-          }
-        }
       }
     }
 
@@ -83,6 +63,9 @@ my-side-panel {
         }
         .item-heading {
           padding: 0 8px;
+          span:first-child {
+            font-size: 15px;
+          }
         }
       }
     }
