@@ -73,22 +73,47 @@
               <span class="fa fa-list-ul"></span>
                <span>All Apps</span>
             </a>
-            <a ui-sref="adapters.list" class="btn btn-default">
-              <span class="fa fa-list-ul"></span>
-               All Adapters
-            </a>
 
-            <my-file-select data-button-label="Add App"
-                            on-file-select="AppsSectionCtrl.onFileSelected($files)">
-            </my-file-select>
-
+            <div class="btn-group dropdown-right" dropdown>
+              <button type="button" class="btn btn-default dropdown-toggle white-dropdown" dropdown-toggle>
+                Add App <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                <li>
+                  <my-file-select dropdown="true"
+                                  data-button-label="Add App"
+                                  on-file-select="AppsSectionCtrl.onFileSelected($files)">
+                  </my-file-select>
+                </li>
+                <li>
+                  <a ui-sref="adapters.create({type: 'ETLBatch'})"> Add ETL Batch App </a>
+                </li>
+                <li>
+                  <a ui-sref="adapters.create({type: 'ETLRealtime'})"> Add ETL Realtime App </a>
+                </li>
+                <li>
+                  <a ui-sref="adapters.list"> Un-Published Adapters </a>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
 
       <ul class="list-group">
         <li class="list-group-item" ng-repeat="app in AppsSectionCtrl.apps | orderBy:AppsSectionCtrl.MyOrderings.appOrdering | limitTo:5">
-          <a ui-sref="apps.detail.overview.status({appId: app.id})"  ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
+          <a ui-sref="apps.detail.overview.status({appId: app.id})"
+              ng-if="app.type !== 'adapter'"
+              ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
+            <p ng-bind="app.name"> </p>
+            <div class="title-type-image">
+              <span class="icon-fist"></span>
+              <span> CDAP </span>
+            </div>
+          </a>
+          <a ui-sref="adapters.detail.runs({adapterId: app.name})"
+              ng-if="app.type === 'adapter'"
+              ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
               <span class="icon-fist"></span>

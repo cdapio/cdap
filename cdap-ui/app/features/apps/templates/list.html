@@ -58,7 +58,14 @@
     <tbody>
       <tr ng-repeat="app in ListController.filtered = (ListController.apps | filter: ListController.searchText ) | myPaginate:ListController.currentPage | orderBy:sortable.predicate:sortable.reverse">
         <td >
-          <a ui-sref="apps.detail.overview.status({ appId: app.id })" ng-click="MyOrderings.appClicked(app.id)">
+          <a ui-sref="apps.detail.overview.status({ appId: app.id })"
+              ng-if="app.type !== 'adapter'"
+              ng-click="MyOrderings.appClicked(app.id)">
+            <strong> {{ ::app.name }} </strong>
+          </a>
+          <a ui-sref="adapters.detail.runs({adapterId: app.name})"
+              ng-if="app.type === 'adapter'"
+              ng-click="MyOrderings.appClicked(app.id)">
             <strong> {{ ::app.name }} </strong>
           </a>
         </td>
