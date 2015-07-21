@@ -290,6 +290,9 @@ module.directive('myWorkflowGraph', function ($filter, $location) {
             case 'FAILED':
               shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg failed');
               break;
+            case 'KILLED':
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg killed');
+              break;
             default:
               shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg');
           }
