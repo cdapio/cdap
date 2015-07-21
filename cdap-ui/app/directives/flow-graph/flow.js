@@ -425,7 +425,7 @@ module.directive('myWorkflowGraph', function ($filter, $location) {
         if (['Start', 'End'].indexOf(nodeId) === -1) {
           tip
             .html(function() {
-              return '<strong>'+ scope.instanceMap[nodeId].nodeId + ' : ' + scope.instanceMap[nodeId].program.programType +'</strong>';
+              return '<strong>'+ scope.instanceMap[nodeId].nodeId + ' : ' + scope.instanceMap[nodeId].program.programName +'</strong>';
             })
             .show();
         }
