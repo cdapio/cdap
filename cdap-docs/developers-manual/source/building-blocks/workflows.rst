@@ -25,6 +25,14 @@ control is transferred to the next program in the sequence until the last progra
 sequence is executed. Upon failure, the execution is stopped at the failed program and no
 subsequent programs in the sequence are executed.
 
+The control flow of a workflow can be described as a directed, acyclic graph (DAG) of actions.
+To be more precise, we require that it be a series-parallel graph. This is a graph with a
+single start node and a single finish node. As described below, execution can be either
+sequential (the default) or :ref:`concurrent <workflow-concurrent>`, and the graph can be 
+either a simple series of nodes or a more complicated :ref:`parallel workflow <workflow_parallel>`.
+
+Executing MapReduce or Spark Programs
+-------------------------------------
 To execute MapReduce or Spark programs in a workflow, you will need to add them in your
 application along with the workflow. You can optionally add a :ref:`schedule <schedules>` 
 (such as a `crontab schedule 
@@ -86,6 +94,8 @@ implement the ``run()`` method::
 The custom action then can be added to the workflow using the ``addAction()`` method as
 shown above.
 
+.. _workflow-concurrent:
+
 Concurrent Workflows
 --------------------
 By default, a workflow runs sequentially. Multiple instances of a workflow can be run
@@ -120,21 +130,76 @@ determine which node was executed more frequently and when. You can retrieve the
 that were added by a specific node in the workflow to debug the flow of execution.
 
 Scope
-
+-----
 Two scopes |---| *System* and *User* |---| are provided for workflow keys. CDAP adds keys
 (such as MapReduce counters) under the *System* scope. User programs add their keys under
 the *User* scope.
 
-
 Putting and Getting Token Values
-
+--------------------------------
 When a value is put into a token, it is stored under a specific key. Both keys and their
 corresponding values must be non-null. The token stores additional information about the 
 context in which the key is being set, such as the unique name of the workflow node. 
 
+To put a value to a token, first obtain access to the token from the workflow context, and
+then set a value for a specific key, as shown in this example from a MapReduce mapper::
 
+  public static class MyVerifier extends Mapper<LongWritable, Text, Text, NullWritable> {
+    public void map(LongWritable key, Text value, Context context)
+      throws IOException, InterruptedException {
+      String profile;
+      WorkflowToken workflowToken = context.getWorkflowToken();
+      if (workflowToken != null) {
+        if (value != null and value.toString().equals("BuildProductProfile")) {
+          profile = "1";
+        } else {
+          profile = "0";
+        }
+        workflowToken.put("BuildProductProfile", profile);
+      }
+    }
+  }
 
+The `Java API <>`__
+includes methods for getting values for different keys, scopes, and nodes. The same
+key can be added to the workflow by different nodes, and there are methods to return a map of those
+key-value pairs. Convenience methods allow the putting and getting of non-string values
+through the use of the class Value.
 
+Persisting the WorkflowToken
+----------------------------
+
+The RunRecord for the workflow contains the WorkflowToken as a property. This token
+is persisted after each action completes in a Workflow. 
+
+Examples
+--------
+
+In this code sample, we show how to update the WorkflowToken in a MapReduce program::
+
+  @Override
+  public void beforeSubmit(MapReduceContext context) throws Exception {
+    ...
+    WorkflowToken workflowToken = context.getWorkflowToken();
+    if (workflowToken != null) {
+      // Put the action type in the WorkflowToken
+      workflowToken.put("action_type", "MAPREDUCE");
+      // Put the start time for the action
+      workflowToken.put("startTime", String.valueOf(System.currentTimeMillis()));
+    }
+    ...
+  }
+ 
+  @Override
+  public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
+    ...
+    WorkflowToken workflowToken = context.getWorkflowToken();
+    if (workflowToken != null) {
+      // Put the end time for the action
+      workflowToken.put("endTime", String.valueOf(System.currentTimeMillis()));
+    }
+    ...
+  }
 
 .. _workflow_parallel:
 
@@ -260,24 +325,26 @@ where ``MyPredicate`` is a public class which implements the ``Predicate`` inter
 
   public static class MyPredicate implements Predicate<WorkflowContext> {
 
-     @Override
-      public boolean apply(@Nullable WorkflowContext input) {
-         if (input == null) {
-            return false;
-         }
-         Value tokenValue = input.getToken().get("BuildProductProfile");
-         if (tokenValue == null) {
-            return false;
-         }
-         if (tokenValue.getAsInt() > 0) {
-           return true;
-         }
-         return false;
-     }
+    @Override
+    public boolean apply(@Nullable WorkflowContext input) {
+       if (input == null) {
+          return false;
+       }
+       String flattenCounterName = "org.apache.hadoop.mapreduce.TaskCounter.MyCustomCounters";
+       Value tokenValue = input.getToken().get(flattenCounterName, "BuildProductProfile", WorkflowToken.Scope.SYSTEM);
+       if (tokenValue == null) {
+          return false;
+       }
+       if (tokenValue.getAsInt() > 0) {
+         return true;
+       }
+       return false;
+    }
   }
-
+  
 In the ``JoinWithCatalogMR`` MapReduce, it could have in its Mapper class code that 
-governs which condition to follow::
+governs which condition to follow. Note that as the context passed is a standard
+Hadoop context, the ``WorkflowContext`` is not available::
 
   public static final class JoinWithCatalogMR extends AbstractMapReduce {
 
@@ -309,7 +376,7 @@ governs which condition to follow::
     }
   }
 
-In this case, if the predicate finds that the a ``MapReduceCounter`` *BuildProductProfile*
+In this case, if the predicate finds that the ``MapReduceCounter`` *BuildProductProfile*
 is greater than zero, the logic will follow the path of *BuildProductProfileMR*;
 otherwise, the other path will be taken. The diagram for this code would be:
 
@@ -317,8 +384,104 @@ otherwise, the other path will be taken. The diagram for this code would be:
    :width: 8in
    :align: center
 
-In addition to using counters of MapReduce programs, you can use :ref:`workflow tokens
-<workflow_token>` and base the logic on data stored in a token.
+Workflow Token with Forks and Joins
+-----------------------------------
+For workflows that involve forks and joins, a single instance of the workflow token is
+shared by all branches of the fork. Updates to the singleton are made thread-safe through
+synchronized updates, guaranteeing that value you obtain from reading the token is the
+last value written.
+
+Example
+-------
+
+This code sample shows how to obtain values from the token from within a custom action,
+from within a workflow with a predicate, fork and joins.::
+
+  @Override
+  public void run() {
+    ...
+    WorkflowToken token = getContext().getToken();
+    
+    // Set the type of action of the current node:
+    token.put("action_type", "CUSTOM_ACTION");
+ 
+    // Assume that we have the following Workflow: 
+    //                                              |--> PurchaseByCustomer -->|
+    //                                        True  |                          |   
+    // Start --> RecordVerifier --> Predicate ----->|                          |----> StatusReporter --> End    
+    //                                  |           |                          |  |
+    //                                  | False     |--> PurchaseByProduct --->|  |
+    //                                  |                                         |
+    //                                  |------------> ProblemLogger ------------>|
+ 
+    // Use case 1: Predicate can add the key "branch" in the WorkflowToken with value as
+    // "true" if true branch will be executed or "false" otherwise. In "StatusReporter" in
+    // order to get which branch in the Workflow was executed, use:
+    
+    boolean bTrueBranch = token.getAsBoolean("branch");
+ 
+    // Use case 2: A user may want to compare the records emitted by "PurchaseByCustomer"
+    // and "PurchaseByProduct", in order to find which job is generating more records:
+    
+    String flattenReduceOutputRecordsCounterName = "org.apache.hadoop.mapreduce.TaskCounter.REDUCE_OUTPUT_RECORDS";
+    String purchaseByCustomerCounterValue = token.get(flattenReduceOutputRecordsCounterName, "PurchaseByCustomer", 
+                                                      WorkflowToken.Scope.SYSTEM);
+    String purchaseByProductCounterValue = token.get(flattenReduceOutputRecordsCounterName, "PurchaseByProduct", 
+                                                     WorkflowToken.Scope.SYSTEM);
+  
+    // Use case 3: Since Workflow can have multiple complex conditions and forks in its
+    // structure, in the "StatusReporter", a user may want to know how many actions were
+    // executed as a part of a run. If the number of nodes executed were below a certain
+    // threshold, send an alert. Assuming that every node in the Workflow adds the key
+    // "action_type" with the value as action type for that node in the WorkflowToken, a
+    // user can determine the breakdown by action type in a particular Workflow run:
+    
+    List<NodeValueEntry> nodeValues = token.getAll("action_type");
+    int totalNodeExecuted = nodeValues.size();
+    int mapReduceNodes = 0;
+    int sparkNodes = 0;
+    int customActionNodes = 0;
+    int conditions = 0;
+    for (NodeValueEntry entry : nodeValues) {
+      if (entry.getValue().equals("MAPREDUCE")) {
+        mapReduceNodes++;
+      }
+      if (entry.getValue().equals("SPARK")) {
+        sparkNodes++;
+      }
+      if (entry.getValue().equals("CUSTOM_ACTION")) {
+        customActionNodes++;
+      }
+      if (entry.getValue().equals("CONDITION")) {
+        conditions++;
+      }
+    }
+ 
+    // Use case 4: Retrieve values from the Workflow token.
+    
+    // To get the name of the last node which set the "ERROR" flag in the WorkflowToken:
+    
+    List<NodeValueEntry> errorNodeValueList = token.getAll("ERROR");
+    String nodeNameWhoSetTheErrorFlagLast = errorNodeValueList.get(errorNodeValueList.size() - 1);
+ 
+    // To get the start time of the MapReduce program with unique name "PurchaseHistoryBuilder":
+    
+    String startTime = token.get("startTime", "PurchaseHistoryBuilder");
+ 
+    // To get the most recent value of counter with group name
+    // 'org.apache.hadoop.mapreduce.TaskCounter' and counter name 'MAP_INPUT_RECORDS':
+   
+    String flattenCounterKey = "mr.counters.org.apache.hadoop.mapreduce.TaskCounter.MAP_INPUT_RECORDS";
+    workflowToken.get(flattenCounterKey, WorkflowToken.Scope.SYSTEM);
+ 
+    // To get the value of counter with group name
+    // 'org.apache.hadoop.mapreduce.TaskCounter' and counter name 'MAP_INPUT_RECORDS' as
+    // set by a MapReduce program with unique name 'PurchaseHistoryBuilder':
+    
+    workflowToken.get(flattenCounterKey, "PurchaseHistoryBuilder", WorkflowToken.Scope.SYSTEM);
+   ...
+  }
+
 
 
 Example of Using a Workflow
