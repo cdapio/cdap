@@ -35,6 +35,7 @@ import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -415,6 +416,14 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
       @Override
       public void run() {
+        // Cleanup all system properties setup by SparkSubmit
+        Iterable<String> sparkKeys = Iterables.filter(System.getProperties().stringPropertyNames(),
+                                                      Predicates.containsPattern("^spark\\."));
+        for (String key : sparkKeys) {
+          LOG.debug("Removing Spark system property: {}", key);
+          System.clearProperty(key);
+        }
+
         try {
           DirUtils.deleteDirectoryContents(directory);
         } catch (IOException e) {
