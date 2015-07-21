@@ -26,34 +26,70 @@ import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
 import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.template.etl.common.Properties;
-import co.cask.cdap.template.etl.common.RecordUtils;
+import co.cask.cdap.template.etl.common.StructuredRecordStringConverter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.elasticsearch.hadoop.mr.EsOutputFormat;
 
-import javax.annotation.Nullable;
-
 /**
- * An ElasticsearchSink
+ * A {@link BatchSink} that writes data to a Elasticsearch.
+ * <p/>
+ * This {@link ElasticsearchSink} takes a {@link StructuredRecord} in,
+ * converts it to a json per {@link StructuredRecordStringConverter},
+ * and writes it to the Elasticsearch server.
+ * <p/>
+ * If the Elasticsearch index does not exist, it will be created using the default properties
+ * specified by Elasticsearch. See more information at
+ * https://www.elastic.co/guide/en/elasticsearch/guide/current/_index_settings.html.
+ * <p/>
  */
 @Plugin(type = "sink")
 @Name("Elasticsearch")
-@Description("CDAP Elasticsearch Batch Sink")
+@Description("CDAP Elasticsearch Batch Sink takes the structured record from the input source" +
+  " and converts it to a json, then indexes it in elasticsearch using the index, type, and id specified by the user." +
+  "The elasticsearch server should be running prior to creating the adapter.")
 public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Writable> {
   private static final String INDEX_DESC = "The name of the index where the data will be stored. " +
-    "The index should already exist and be configured.";
-
-  private static final String TYPE_DESC = "The name of the type where the data will be stored";
-
-  private static final String ID_DESC = "The id field that will determine the id for the document. " +
+    "If the index does not already exist, it will be created using elasticsearch's default properties";
+  private static final String TYPE_DESC = "The name of the type where the data will be stored." +
+    "If it does not already exist, it will be created.";
+  private static final String ID_DESC = "The field that will determine the id for the document. " +
     "It should match a fieldname in the structured record of the input";
+  private static final String HOST_DESC = "The hostname and port for the elasticsearch instance, e.g. localhost:9200";
 
-  private static final String HOST_DESC = "The hostname and port for an elasticsearch node. e.g. localhost:9300";
+  private final ESConfig config;
+
+  public ElasticsearchSink(ESConfig config) {
+    this.config = config;
+  }
+
+  private String getResource() {
+    return String.format("%s/%s", config.index, config.type);
+  }
+
+  @Override
+  public void prepareRun(BatchSinkContext context) {
+    Job job = context.getHadoopJob();
+    job.setSpeculativeExecution(false);
+    Configuration conf = job.getConfiguration();
+    conf.set("es.nodes", config.hostname);
+    conf.set("es.resource", getResource());
+    conf.set("es.input.json", "yes");
+    conf.set("es.mapping.id", config.idField);
+    job.setMapOutputValueClass(Text.class);
+    job.setOutputFormatClass(EsOutputFormat.class);
+  }
+
+  @Override
+  public void transform(StructuredRecord record, Emitter<KeyValue<Writable, Writable>> emitter) throws Exception {
+    emitter.emit(new KeyValue<Writable, Writable>(new Text(StructuredRecordStringConverter.toJsonString(record)),
+                                                  new Text(StructuredRecordStringConverter.toJsonString(record))));
+  }
 
   /**
-   * Config class for RealtimeTableSink
+   * Config class for Batch ElasticsearchSink
    */
   public static class ESConfig extends PluginConfig {
     @Name(Properties.Elasticsearch.HOST)
@@ -78,35 +114,5 @@ public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Wri
       this.type = type;
       this.idField = idField;
     }
-  }
-
-  private final ESConfig config;
-
-  public ElasticsearchSink(ESConfig config) {
-    this.config = config;
-  }
-
-  private String getResource() {
-    return String.format("%s/%s", config.index, config.type);
-  }
-
-  @Override
-  public void prepareRun(BatchSinkContext context) {
-    Job job = context.getHadoopJob();
-    Configuration conf = job.getConfiguration();
-    conf.setBoolean("mapred.map.tasks.speculative.execution", false);
-    conf.setBoolean("mapred.reduce.tasks.speculative.execution", false);
-    conf.set("es.nodes", config.hostname);
-    conf.set("es.resource", getResource());
-    conf.set("es.input.json", "yes");
-    conf.set("es.mapping.id", config.idField);
-    job.setMapOutputValueClass(Text.class);
-    job.setOutputFormatClass(EsOutputFormat.class);
-  }
-
-  @Override
-  public void transform(StructuredRecord record, Emitter<KeyValue<Writable, Writable>> emitter) throws Exception {
-    emitter.emit(new KeyValue<Writable, Writable>(new Text(RecordUtils.toJsonString(record)),
-                                                  new Text(RecordUtils.toJsonString(record))));
   }
 }

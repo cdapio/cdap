@@ -28,10 +28,7 @@ import co.cask.cdap.test.AdapterManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.StreamManager;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
-import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.delete.DeleteResponse;
@@ -47,6 +44,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -55,7 +53,7 @@ import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 
 /**
  * <p>
- *  Unit test for {@link ElasticsearchSink} ETL realtime source class.
+ *  Unit test for {@link ElasticsearchSink} ETL batch sink class.
  * </p>
  */
 public class ETLESSinkTest extends BaseETLBatchTest {
@@ -82,7 +80,8 @@ public class ETLESSinkTest extends BaseETLBatchTest {
   }
 
   @After
-  public void afterTest() { node.close();
+  public void afterTest() {
+    node.close();
   }
 
   @Test
@@ -109,7 +108,7 @@ public class ETLESSinkTest extends BaseETLBatchTest {
                                                    Properties.Elasticsearch.TYPE_NAME, "testing",
                                                    Properties.Elasticsearch.ID_FIELD, "ticker"
                                    ));
-      List<ETLStage> transforms = Lists.newArrayList();
+      List<ETLStage> transforms = new ArrayList<>();
       ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transforms);
       Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "esSinkTest");
       AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
@@ -118,15 +117,16 @@ public class ETLESSinkTest extends BaseETLBatchTest {
       manager.start();
       manager.waitForOneRunToFinish(5, TimeUnit.MINUTES);
       manager.stop();
+
       SearchResponse searchResponse = client.prepareSearch("test").execute().actionGet();
-      Assert.assertTrue(searchResponse.getHits().getTotalHits() == 2);
+      Assert.assertEquals(2, searchResponse.getHits().getTotalHits());
       searchResponse = client.prepareSearch().setQuery(matchQuery("ticker", "AAPL")).execute().actionGet();
-      Assert.assertTrue(searchResponse.getHits().getTotalHits() == 1);
-      Assert.assertTrue(searchResponse.getHits().getAt(0).getIndex().equals("test"));
-      Assert.assertTrue(searchResponse.getHits().getAt(0).getType().equals("testing"));
-      Assert.assertTrue(searchResponse.getHits().getAt(0).getId().equals("AAPL"));
+      Assert.assertEquals(1, searchResponse.getHits().getTotalHits());
+      Assert.assertEquals("test", searchResponse.getHits().getAt(0).getIndex());
+      Assert.assertEquals("testing", searchResponse.getHits().getAt(0).getType());
+      Assert.assertEquals("AAPL", searchResponse.getHits().getAt(0).getId());
       searchResponse = client.prepareSearch().setQuery(matchQuery("ticker", "ABCD")).execute().actionGet();
-      Assert.assertTrue(searchResponse.getHits().getTotalHits() == 0);
+      Assert.assertEquals(0, searchResponse.getHits().getTotalHits());
 
       DeleteResponse response = client.prepareDelete("test", "testing", "CDAP").execute().actionGet();
       Assert.assertTrue(response.isFound());
