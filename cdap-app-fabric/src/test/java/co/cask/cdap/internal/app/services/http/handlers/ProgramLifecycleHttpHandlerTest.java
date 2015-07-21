@@ -24,6 +24,9 @@ import co.cask.cdap.DummyAppWithTrackingTable;
 import co.cask.cdap.SleepingWorkflowApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
+import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
@@ -34,6 +37,7 @@ import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
+import co.cask.cdap.internal.app.ServiceSpecificationCodec;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
@@ -43,6 +47,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
+import co.cask.cdap.proto.codec.HttpServiceSpecificationCodec;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.test.SlowTests;
@@ -55,7 +60,9 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -74,6 +81,7 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -527,6 +535,32 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(404, getProgramSpecificationResponseCode(TEST_NAMESPACE2, AppWithWorker.NAME,
                                                                  ProgramType.WORKER.getCategoryName(),
                                                                  AppWithWorker.WORKER));
+  }
+
+  @Test
+  public void testServiceSpecification() throws Exception {
+    deploy(AppWithServices.class);
+    HttpResponse response = doGet("/v3/namespaces/default/apps/AppWithServices/services/NoOpService");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    Set<ServiceHttpEndpoint> expectedEndpoints = ImmutableSet.of(new ServiceHttpEndpoint("GET", "/ping"),
+                                                                 new ServiceHttpEndpoint("POST", "/multi"),
+                                                                 new ServiceHttpEndpoint("GET", "/multi"),
+                                                                 new ServiceHttpEndpoint("GET", "/multi/ping"));
+
+    GsonBuilder gsonBuidler = new GsonBuilder();
+    gsonBuidler.registerTypeAdapter(ServiceSpecification.class, new ServiceSpecificationCodec());
+    gsonBuidler.registerTypeAdapter(HttpServiceHandlerSpecification.class, new HttpServiceSpecificationCodec());
+    Gson gson = gsonBuidler.create();
+    ServiceSpecification specification = readResponse(response, ServiceSpecification.class, gson);
+
+    Set<ServiceHttpEndpoint> returnedEndpoints = Sets.newHashSet();
+    for (HttpServiceHandlerSpecification httpServiceHandlerSpecification : specification.getHandlers().values()) {
+      returnedEndpoints.addAll(httpServiceHandlerSpecification.getEndpoints());
+    }
+
+    Assert.assertEquals("NoOpService", specification.getName());
+    Assert.assertTrue(returnedEndpoints.equals(expectedEndpoints));
   }
 
   /**
