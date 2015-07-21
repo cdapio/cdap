@@ -290,6 +290,9 @@ module.directive('myWorkflowGraph', function ($filter, $location) {
             case 'FAILED':
               shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg failed');
               break;
+            case 'KILLED':
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg killed');
+              break;
             default:
               shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg');
           }
@@ -422,7 +425,7 @@ module.directive('myWorkflowGraph', function ($filter, $location) {
         if (['Start', 'End'].indexOf(nodeId) === -1) {
           tip
             .html(function() {
-              return '<strong>'+ scope.instanceMap[nodeId].nodeId + ' : ' + scope.instanceMap[nodeId].program.programName +'</strong>';
+              return '<strong>'+ scope.instanceMap[nodeId].nodeId + ' : ' + scope.instanceMap[nodeId].program.programType +'</strong>';
             })
             .show();
         }

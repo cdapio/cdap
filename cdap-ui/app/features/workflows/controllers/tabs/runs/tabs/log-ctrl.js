@@ -6,6 +6,7 @@ class WorkFlowsRunDetailLogController {
     this.$timeout = $timeout;
 
     params = {
+      namespace: $state.params.namespace,
       appId: $state.params.appId,
       workflowId: $state.params.programId,
       runId: $scope.RunsController.runs.selected.runid,
