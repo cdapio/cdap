@@ -820,8 +820,8 @@ public final class Constants {
   /**
    * Default namespace to be used by v2 APIs
    */
-  public static final String DEFAULT_NAMESPACE = "default";
-  public static final Id.Namespace DEFAULT_NAMESPACE_ID = Id.Namespace.from(DEFAULT_NAMESPACE);
+  public static final String DEFAULT_NAMESPACE = Id.Namespace.DEFAULT.getId();
+  public static final Id.Namespace DEFAULT_NAMESPACE_ID = Id.Namespace.DEFAULT;
   public static final NamespaceMeta DEFAULT_NAMESPACE_META =
     new NamespaceMeta.Builder().setName(Constants.DEFAULT_NAMESPACE_ID).setDescription("Default Namespace").build();
 
@@ -833,8 +833,8 @@ public final class Constants {
   /**
    * 'system' reserved namespace name
    */
-  public static final String SYSTEM_NAMESPACE = "system";
-  public static final Id.Namespace SYSTEM_NAMESPACE_ID = Id.Namespace.from(SYSTEM_NAMESPACE);
+  public static final String SYSTEM_NAMESPACE = Id.Namespace.SYSTEM.getId();
+  public static final Id.Namespace SYSTEM_NAMESPACE_ID = Id.Namespace.SYSTEM;
 
   /**
    * 'cdap' reserved namespace name. Unused right now (other than in logging. Reserved in case we need it in future.

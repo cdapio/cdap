@@ -14,18 +14,31 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package co.cask.cdap.client.artifact.plugin;
+
+import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Plugin;
+import co.cask.cdap.api.templates.plugins.PluginConfig;
+
+import java.util.concurrent.Callable;
 
 /**
- * Thrown when an artifact is invalid.
+ * Plugin for ArtifactClient test
  */
-public class InvalidArtifactException extends Exception {
+@Plugin(type = "callable")
+@Name("plugin1")
+@Description("p1 description")
+public class Plugin1 implements Callable<Integer> {
+  private P1Config conf;
 
-  public InvalidArtifactException(String message) {
-    super(message);
+  @Override
+  public Integer call() throws Exception {
+    return conf.x;
   }
 
-  public InvalidArtifactException(String message, Throwable cause) {
-    super(message, cause);
+  public static class P1Config extends PluginConfig {
+    private int x;
   }
+
 }

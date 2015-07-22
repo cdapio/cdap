@@ -17,8 +17,9 @@
 package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.artifact.ArtifactVersion;
-import com.google.common.base.Splitter;
+import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.artifact.InvalidArtifactRangeException;
 import org.junit.Assert;
 import org.junit.Test;
 

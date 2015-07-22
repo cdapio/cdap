@@ -14,21 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package co.cask.cdap.common;
 
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when an artifact does not exist.
+ * Thrown when an artifact already exists.
  */
-public class ArtifactNotExistsException extends NotFoundException {
+public class ArtifactAlreadyExistsException extends ConflictException {
 
-  public ArtifactNotExistsException(Id.Namespace namespace, String name) {
-    super("artifact", namespace.getId() + ":" + name);
+  public ArtifactAlreadyExistsException(Id.Artifact artifactId) {
+    super(String.format("Artifact %s already exists.", artifactId));
   }
 
-  public ArtifactNotExistsException(Id.Artifact artifactId) {
-    super("artifact", artifactId.toString());
+  public ArtifactAlreadyExistsException(String msg) {
+    super(msg);
   }
 }

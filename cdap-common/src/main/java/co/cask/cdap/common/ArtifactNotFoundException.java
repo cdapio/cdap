@@ -14,15 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package co.cask.cdap.common;
+
+import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when an artifact range is invalid.
+ * Thrown when an artifact does not exist.
  */
-public class InvalidArtifactRangeException extends Exception {
+public class ArtifactNotFoundException extends NotFoundException {
 
-  public InvalidArtifactRangeException(String message) {
-    super(message);
+  public ArtifactNotFoundException(Id.Namespace namespace, String name) {
+    super("artifact", namespace.getId() + ":" + name);
   }
 
+  public ArtifactNotFoundException(Id.Artifact artifactId) {
+    super("artifact", artifactId.toString());
+  }
 }

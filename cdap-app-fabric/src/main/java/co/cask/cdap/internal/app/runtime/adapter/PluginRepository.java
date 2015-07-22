@@ -29,7 +29,7 @@ import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactInspector;
-import co.cask.cdap.internal.app.runtime.artifact.InvalidArtifactException;
+import co.cask.cdap.proto.artifact.InvalidArtifactException;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;

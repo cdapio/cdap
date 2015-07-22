@@ -41,7 +41,8 @@ import org.junit.runners.Suite;
   NamespaceClientTestRun.class,
   PreferencesClientTestRun.class,
   ScheduleClientTestRun.class,
-  WorkflowClientTestRun.class })
+  WorkflowClientTestRun.class,
+  ArtifactClientTestRun.class })
 public class ClientTestsSuite extends ClientTestBase {
 
 }

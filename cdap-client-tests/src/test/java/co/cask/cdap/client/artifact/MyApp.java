@@ -14,17 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package co.cask.cdap.client.artifact;
 
-import co.cask.cdap.common.ConflictException;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.api.Config;
+import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.data.stream.Stream;
 
 /**
- * Thrown when an artifact already exists.
+ * App for testing ArtifactClient.
  */
-public class ArtifactAlreadyExistsException extends ConflictException {
+public class MyApp extends AbstractApplication<MyApp.Conf> {
 
-  public ArtifactAlreadyExistsException(Id.Artifact artifactId) {
-    super(String.format("Archive %s already exists.", artifactId));
+  public static class Conf extends Config {
+    private String stream;
+  }
+
+  @Override
+  public void configure() {
+    Conf conf = getConfig();
+    addStream(new Stream(conf.stream));
   }
 }

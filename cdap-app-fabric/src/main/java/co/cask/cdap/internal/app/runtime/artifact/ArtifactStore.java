@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetDefinition;
@@ -27,6 +28,8 @@ import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.templates.plugins.PluginClass;
+import co.cask.cdap.common.ArtifactAlreadyExistsException;
+import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -34,9 +37,9 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.tx.DatasetContext;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
-import co.cask.cdap.internal.artifact.ArtifactVersion;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.tephra.TransactionConflictException;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -217,11 +220,11 @@ public class ArtifactStore {
    * @param namespace the namespace to get artifacts from
    * @param artifactName the name of the artifact to get
    * @return unmodifiable list of information about all versions of the given artifact
-   * @throws ArtifactNotExistsException if no version of the given artifact exists
+   * @throws ArtifactNotFoundException if no version of the given artifact exists
    * @throws IOException if there was an exception reading the artifact information from the metastore
    */
   public List<ArtifactDetail> getArtifacts(final Id.Namespace namespace, final String artifactName)
-    throws ArtifactNotExistsException, IOException {
+    throws ArtifactNotFoundException, IOException {
 
     List<ArtifactDetail> artifacts = metaTable.executeUnchecked(
       new TransactionExecutor.Function<DatasetContext<Table>, List<ArtifactDetail>>() {
@@ -238,7 +241,7 @@ public class ArtifactStore {
         }
       });
     if (artifacts.isEmpty()) {
-      throw new ArtifactNotExistsException(namespace, artifactName);
+      throw new ArtifactNotFoundException(namespace, artifactName);
     }
     return Collections.unmodifiableList(artifacts);
   }
@@ -248,10 +251,10 @@ public class ArtifactStore {
    *
    * @param artifactId the artifact to get
    * @return information about the artifact
-   * @throws ArtifactNotExistsException if the given artifact does not exist
+   * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if there was an exception reading the artifact information from the metastore
    */
-  public ArtifactDetail getArtifact(final Id.Artifact artifactId) throws ArtifactNotExistsException, IOException {
+  public ArtifactDetail getArtifact(final Id.Artifact artifactId) throws ArtifactNotFoundException, IOException {
     ArtifactData data = metaTable.executeUnchecked(
       new TransactionExecutor.Function<DatasetContext<Table>, ArtifactData>() {
         @Override
@@ -263,7 +266,7 @@ public class ArtifactStore {
       });
 
     if (data == null) {
-      throw new ArtifactNotExistsException(artifactId);
+      throw new ArtifactNotFoundException(artifactId);
     }
     return new ArtifactDetail(getDescriptor(artifactId, locationFactory.create(data.locationURI)), data.meta);
   }

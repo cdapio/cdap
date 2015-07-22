@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package co.cask.cdap.proto.artifact;
 
-import co.cask.cdap.internal.artifact.ArtifactVersion;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.proto.Id;
 
 import java.util.Objects;
@@ -96,7 +96,11 @@ public class ArtifactRange {
 
   @Override
   public String toString() {
-    return new StringBuilder()
+    StringBuilder stringBuilder = new StringBuilder();
+    if (namespace.getId().equals(Id.Namespace.SYSTEM)) {
+      stringBuilder.append("system:");
+    }
+    return stringBuilder
       .append(name)
       .append(isLowerInclusive ? '[' : '(')
       .append(lower.getVersion())
@@ -121,8 +125,14 @@ public class ArtifactRange {
                                     String artifactRangeStr) throws InvalidArtifactRangeException {
     artifactRangeStr = artifactRangeStr.trim();
 
+    int nameStartIndex = 0;
+    if (artifactRangeStr.startsWith("system:")) {
+      namespace = Id.Namespace.SYSTEM;
+      nameStartIndex = "system:".length();
+    }
+
     // search for the '[' or '(' between the artifact name and lower version
-    int versionStartIndex = indexOf(artifactRangeStr, '[', '(', 0);
+    int versionStartIndex = indexOf(artifactRangeStr, '[', '(', nameStartIndex);
     if (versionStartIndex < 0) {
       throw new InvalidArtifactRangeException(String.format("Malformed artifact range %s. " +
         "Could not find '[' or '(' indicating start of artifact lower version.", artifactRangeStr));
