@@ -16,6 +16,9 @@
 
 package co.cask.cdap.internal.app.runtime.spark
 
+import java.util
+
+import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments
 import co.cask.cdap.api.spark.{ScalaSparkProgram, SparkContext}
 import org.apache.spark.rdd.NewHadoopRDD
 
@@ -37,5 +40,26 @@ class ScalaFileCountProgram extends ScalaSparkProgram {
 
     // write to dataset
     sc.writeToDataset(stringLengths, output, classOf[String], classOf[Integer])
+
+    val inputPartitionTime = sc.getRuntimeArguments.get("inputKey")
+    val outputPartitionTime = sc.getRuntimeArguments.get("outputKey")
+
+    if (inputPartitionTime != null && outputPartitionTime != null) {
+      val inputArgs: util.HashMap[String, String] = new util.HashMap[String, String]
+      TimePartitionedFileSetArguments.setInputStartTime(inputArgs, inputPartitionTime.toLong - 100)
+      TimePartitionedFileSetArguments.setInputEndTime(inputArgs, inputPartitionTime.toLong + 100)
+
+
+      // read the dataset with custom user dataset arguments
+      val customInputData: NewHadoopRDD[Long, String] = sc.readFromDataset(input, classOf[Long], classOf[String], inputArgs)
+
+      // create a new RDD with the same key but the value is the length of the string
+      val customPartitionStringLengths = customInputData.map(str => (str._2, str._2.length))
+
+      // write the character count to dataset with user custom dataset args
+      val outputArgs: util.HashMap[String, String] = new util.HashMap[String, String]
+      TimePartitionedFileSetArguments.setOutputPartitionTime(outputArgs, outputPartitionTime.toLong)
+      sc.writeToDataset(customPartitionStringLengths, output, classOf[String], classOf[Integer], outputArgs)
+    }
   }
 }
