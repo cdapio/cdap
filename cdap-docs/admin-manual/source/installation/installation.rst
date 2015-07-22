@@ -523,6 +523,20 @@ For instructions on enabling CDAP Security, see :doc:`CDAP Security <security>`;
 and in particular, see the instructions for 
 :ref:`configuring the properties of cdap-site.xml <enabling-security>`.
 
+Configuring Hortonworks Data Platform
+.....................................
+Beginning with Hortonworks Data Platform (HDP) 2.2, the MapReduce framework is in HDFS.
+This requires an addition be made to the file ``cdap-env.sh`` to indicate the version of
+HDP::
+
+  export OPTS="${OPTS} -Dhdp.version=<version>" 
+  
+where ``<version>`` matches the HDP version of the cluster.
+
+The file ``cdap-env.sh`` is located in the configuration directory, as described above
+under :ref:`Configuration <install-alternatives>`.
+
+
 .. _install-starting-services:
 
 .. highlight:: console
