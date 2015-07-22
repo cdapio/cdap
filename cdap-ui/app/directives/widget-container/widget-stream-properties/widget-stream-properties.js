@@ -9,9 +9,6 @@ angular.module(PKG.name + '.commons')
       },
       templateUrl: 'widget-container/widget-stream-properties/widget-stream-properties.html',
       controller: function($scope) {
-        // $scope.options = $scope.config['schema-types'];
-        // var defaultType = $scope.config['schema-default-type'] || $scope.options[0];
-
         var defaultOptions = [ 'boolean', 'int', 'long', 'float', 'double', 'bytes', 'string' ];
         var defaultType = null;
         if ($scope.config) {
@@ -67,6 +64,8 @@ angular.module(PKG.name + '.commons')
 
         });
 
+        var filledCount = 0;
+
         // Format model
         function initialize() {
           var schema = {};
@@ -104,6 +103,8 @@ angular.module(PKG.name + '.commons')
             }
           });
 
+          filledCount = $scope.properties.length;
+
           // Note: 15 for now
           if ($scope.properties.length < 15) {
             if ($scope.properties.length === 0) {
@@ -112,6 +113,7 @@ angular.module(PKG.name + '.commons')
                 type: defaultType,
                 nullable: false
               });
+              filledCount = 1;
             }
 
             for (var i = $scope.properties.length; i < 15; i++) {
@@ -166,8 +168,8 @@ angular.module(PKG.name + '.commons')
           $scope.model = avroJson;
         }
 
-        $scope.emptyRowClick = function (property) {
-          if (!property.empty) {
+        $scope.emptyRowClick = function (property, index) {
+          if (!property.empty || index !== filledCount) {
             return;
           }
 
@@ -175,6 +177,7 @@ angular.module(PKG.name + '.commons')
           property.name = '';
           property.type = defaultType;
           property.nullable = false;
+          filledCount++;
         };
 
         $scope.addProperties = function() {
@@ -183,16 +186,28 @@ angular.module(PKG.name + '.commons')
             type: defaultType,
             nullable: false
           });
+          filledCount++;
         };
 
         $scope.removeProperty = function(property) {
           var index = $scope.properties.indexOf(property);
           $scope.properties.splice(index, 1);
+
+          if ($scope.properties.length < 15) {
+            $scope.properties.push({
+              empty: true
+            });
+          }
+          filledCount--;
         };
 
-        $scope.enter = function(event, last) {
-          if (last && event.keyCode === 13) {
-            $scope.addProperties();
+        $scope.enter = function(event, index) {
+          if (index === filledCount-1 && event.keyCode === 13) {
+            if (filledCount < $scope.properties.length) {
+              $scope.emptyRowClick($scope.properties[index + 1], index+1);
+            } else {
+              $scope.addProperties();
+            }
           }
         };
 
