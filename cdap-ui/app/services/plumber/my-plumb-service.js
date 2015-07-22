@@ -89,6 +89,7 @@ angular.module(PKG.name + '.services')
         name: conf.name,
         icon: conf.icon,
         description: conf.description,
+        outputSchema: conf.outputSchema || '',
         properties: conf.properties || {},
         _backendProperties: conf._backendProperties,
         type: conf.type
@@ -98,7 +99,7 @@ angular.module(PKG.name + '.services')
         fetchBackendProperties.call(this, this.nodes[config.id]);
       } else if(Object.keys(conf._backendProperties).length !== Object.keys(conf.properties).length) {
         angular.forEach(conf._backendProperties, function(value, key) {
-          config.properties[key] = '';
+          config.properties[key] = config.properties[key] || '';
         });
       }
       this.notifyListeners(config, type);
@@ -153,7 +154,7 @@ angular.module(PKG.name + '.services')
       fetchBackendProperties.call(this, plugin, scope)
         .then(function(plugin) {
           $bootstrapModal.open({
-            animation: false,
+            keyboard: false,
             templateUrl: '/assets/features/adapters/templates/tabs/runs/tabs/properties/properties.html',
             controller: ['$scope', 'AdapterModel', 'type', 'inputSchema', function ($scope, AdapterModel, type, inputSchema){
               $scope.plugin = AdapterModel;
