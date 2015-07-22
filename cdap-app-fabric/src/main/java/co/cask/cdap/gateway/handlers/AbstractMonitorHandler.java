@@ -226,12 +226,12 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
 
     try {
       if (!masterServiceManager.isServiceEnabled()) {
-        LOG.debug(String.format("Fail restart instances because service %s is not enabled.", serviceName));
+        String message = String.format("Failed to restart instance for % because the service is not enabled.",
+                                       serviceName);
+        LOG.debug(message);
 
         isSuccess = false;
-        responder.sendString(HttpResponseStatus.FORBIDDEN,
-                             String.format("Fail to restart instance for % because the service is not enabled.",
-                                           serviceName));
+        responder.sendString(HttpResponseStatus.FORBIDDEN, message);
         return;
       }
 
@@ -245,20 +245,19 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
       }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IllegalStateException ise) {
-      LOG.debug(String.format("IllegalStateException when trying to restart instances for service %s", serviceName));
+      String message = String.format("Failed to restart instance for % because the service may not be ready yet",
+                                 serviceName);
+      LOG.debug(message, ise);
 
       isSuccess = false;
-      responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE,
-                           String.format("Fail to restart instance for % because the service may not be ready yet",
-                                         serviceName));
+      responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE, message);
     } catch (IllegalArgumentException iex) {
-      LOG.debug(String.format("IllegalArgumentException when trying to restart instances for service %s", serviceName),
-               iex);
+      String message = String.format("Failed to restart instance %d for service: %s because invalid instance id",
+                                     instanceId, serviceName);
+      LOG.debug(message, iex);
 
       isSuccess = false;
-      responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           String.format("Fail to restart instance %d for service: %s because invalid instance id",
-                                         instanceId, serviceName));
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, message);
     } catch (Exception ex) {
       LOG.warn(String.format("Exception when trying to restart instances for service %s", serviceName), ex);
 
