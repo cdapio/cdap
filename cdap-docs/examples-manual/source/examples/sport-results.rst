@@ -14,7 +14,8 @@ A Cask Data Application Platform (CDAP) example demonstrating partitioned file s
 Overview
 ========
 
-This application demonstrates the use of the PartitionedFileSet dataset:
+This application demonstrates the use of the PartitionedFileSet datasets, 
+MapReduce with runtime arguments, and ad-hoc queries over file sets:
 
 - Game results are stored in the PartitionedFileSet ``results``. It is partitioned by league and season,
   and each partition is a CSV (comma-separated values) file containing the results in one league for a season;
