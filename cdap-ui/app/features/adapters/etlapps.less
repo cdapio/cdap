@@ -142,9 +142,15 @@ body.theme-cdap.state-adapters-create {
         white-space: nowrap;
       }
       h3 {
+        color: @cdap-header;
         font-weight: 500;
         line-height: 1.3;
         padding-top: 5px;
+        // Adapter config modal
+        &:only-child {
+          line-height: 60px;
+          padding-top: 0;
+        }
       }
       p {
         color: @cdap-lightgray;
@@ -153,23 +159,19 @@ body.theme-cdap.state-adapters-create {
         overflow: hidden;
         text-overflow: ellipsis;
       }
-      .btn-group {
-        display: block;
+      .modal-btns {
         margin-right: -15px;
         text-align: right;
         > div {
           background-color: transparent;
           border-left: 1px solid #c9ccd6;
-          display: inline-block;
           text-align: center;
           width: 60px;
-          margin-right: -4px;
+          .transition(all 0.2s ease);
           @media (max-width: @screen-sm-max) {
             width: 45px;
           }
-          .transition(all 0.2s ease);
           &:last-child {
-            margin-right: 0;
             .btn {
               border: 0;
               .border-radius(0);
@@ -178,10 +180,23 @@ body.theme-cdap.state-adapters-create {
               .border-radius(0 4px 0 0);
             }
           }
+          &:only-child {
+            margin-right: -1px;
+          }
           &:hover, &:focus {
             background-color: @cdap-header;
             .btn {
               color: white;
+            }
+          }
+        }
+        &.btn-group {
+          display: block;
+          > div {
+            display: inline-block;
+            margin-right: -4px;
+            &:last-child {
+              margin-right: 0;
             }
           }
         }
@@ -196,20 +211,33 @@ body.theme-cdap.state-adapters-create {
         width: 100%;
       }
     }
+    // Modal body helper class to enable section scrolling on larger devices
+    .plugin-modal {
+      overflow-y: hidden;
+    }
     .modal-body {
       background-color: white;
-      overflow: hidden;
+      overflow-x: hidden;
       padding: 0 10px;
       width: 100%;
       .border-radius(0 0 4px 4px);
+
       @media (max-width: @screen-md-max) {
         height: 65vh;
-        overflow: scroll;
+        overflow-y: scroll;
       }
       @media (min-width: @screen-lg-min) {
         height: 70vh;
       }
-
+      // Edit Metadata & Adapter Config modals
+      > fieldset, .form-horizontal {
+        margin-top: 20px;
+      }
+      > fieldset {
+        textarea.form-control {
+          height: 60vh;
+        }
+      }
       .modal-content-scroll {
         padding-top: 20px;
 
