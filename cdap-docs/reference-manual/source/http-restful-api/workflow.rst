@@ -106,30 +106,22 @@ Examples
    * - HTTP Request
      - ``GET <base-url>/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/runs/57c...75e2/token``
    * - HTTP Response
-     - ``[{"name":"dataset_mydataset.key","type":"array<tinyint>","position":1},``
-       ``{"name":"dataset_mydataset.value","type":"array<tinyint>","position":2}]``
+     - ``{"key1":[{"nodeName": "node1", "value":"1"}]}``
    * - Description
      - Retrieves the token for a specific run of *PurchaseHistoryWorkflow* 
 
-..
-
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
+   * - 
+     - 
 
    * - HTTP Request
      - ``GET <base-url>/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/runs/57c...75e2/token?scope=system``
    * - HTTP Response
-     - ``[{"name":"dataset_mydataset.key","type":"array<tinyint>","position":1},``
-       ``{"name":"dataset_mydataset.value","type":"array<tinyint>","position":2}]``
+     - ``{"key1":[{"nodeName": "node1", "value":"1"}]}``
    * - Description
      - Retrieves the token in the scope *System* for a specific run of *PurchaseHistoryWorkflow*
 
-..
-
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
+   * - 
+     - 
 
    * - HTTP Request
      - ``GET <base-url>/namespaces/default/apps/Purchase/workflows/MyWorkflow/runs/57c...75e2/token?key=key1``
@@ -138,11 +130,8 @@ Examples
    * - Description
      - Retrieves the values for the key "key1" from the token in the scope *User* for a specific run of *MyWorkflow*
 
-..
-
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
+   * - 
+     - 
 
    * - HTTP Request
      - ``GET <base-url>/namespaces/default/apps/Purchase/workflows/MyWorkflow/runs/57c...75e2/nodes/MyExitNode/token?key=key1``
