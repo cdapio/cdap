@@ -4,12 +4,10 @@
           class="box {{plugin.type}}"
           data-type="{{plugin.type}}"
           id="{{plugin.id}}">
-      <div class="plugin-box-container">
-        <div ng-click="MyPlumbController.onPluginClick(plugin)"
-              class="icon fa {{plugin.icon}}"></div>
-        <div class="plugin-name">{{plugin.name}}</div>
-        <div class="fa fa-close" ng-click="MyPlumbController.removePlugin($index, plugin.id)"></div>
-      </div>
+      <div ng-click="MyPlumbController.onPluginClick(plugin)"
+            class="icon fa {{plugin.icon}}"></div>
+      <div class="plugin-name">{{plugin.name}}</div>
+      <div class="fa fa-close" ng-click="MyPlumbController.removePlugin($index, plugin.id)"></div>
 
       <div class="error-node-notification"
             ng-if="plugin.error"
