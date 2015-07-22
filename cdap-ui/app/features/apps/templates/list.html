@@ -13,7 +13,7 @@
               dropdown-toggle=""
               aria-haspopup="true"
               aria-expanded="false">
-        Actions <span class="caret"></span>
+        Add App <span class="caret"></span>
       </button>
       <ul class="dropdown-menu dropdown-menu-right" role="menu">
         <li role="presentation">
@@ -21,6 +21,15 @@
                           data-button-label="Add App"
                           on-file-select="ListController.onFileSelected($files)">
           </my-file-select>
+        </li>
+        <li>
+          <a ui-sref="adapters.create({type: 'ETLBatch'})"> Add ETL Batch App </a>
+        </li>
+        <li>
+          <a ui-sref="adapters.create({type: 'ETLRealtime'})"> Add ETL Realtime App </a>
+        </li>
+        <li>
+          <a ui-sref="adapters.list"> Un-Published Adapters </a>
         </li>
       </ul>
     </div>
