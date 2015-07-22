@@ -26,7 +26,7 @@
         "es.type": {
           "widget": "textbox",
           "label": "Type",
-          "description": "The type the documents will be stored as. If the type does not exist, one will be created. A mapping will be applied to documents of this type, so any existing mapping will be overwritten",
+          "description": "The type the documents will be stored as. If the type does not exist, one will be created.",
           "properties": {
             "width": "medium"
           }
@@ -34,7 +34,7 @@
         "es.idField" : {
           "widget": "textbox",
           "label": "ID Field",
-          "description": "The idField will specify from which field the id of the document is derived. If no field is specified, elasticsearch will generate one",
+          "description": "The idField will specify from which field the id of the document is derived.",
           "properties": {
             "width": "large"
           }

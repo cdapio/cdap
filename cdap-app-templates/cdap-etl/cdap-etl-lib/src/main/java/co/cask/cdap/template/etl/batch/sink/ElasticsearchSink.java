@@ -49,11 +49,12 @@ import org.elasticsearch.hadoop.mr.EsOutputFormat;
 @Description("CDAP Elasticsearch Batch Sink")
 public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Writable> {
   private static final String INDEX_DESC = "The name of the index where the data will be stored. " +
-    "The index should already exist and be configured.";
-  private static final String TYPE_DESC = "The name of the type where the data will be stored";
-  private static final String ID_DESC = "The id field that will determine the id for the document. " +
+    "If the index does not already exist, it will be created using elasticsearch's default properties";
+  private static final String TYPE_DESC = "The name of the type where the data will be stored." +
+    "If it does not already exist, it will be created.";
+  private static final String ID_DESC = "The field that will determine the id for the document. " +
     "It should match a fieldname in the structured record of the input";
-  private static final String HOST_DESC = "The hostname and port for an elasticsearch node. e.g. localhost:9300";
+  private static final String HOST_DESC = "The hostname and port for the elasticsearch instance, e.g. localhost:9200";
 
   private final ESConfig config;
 
