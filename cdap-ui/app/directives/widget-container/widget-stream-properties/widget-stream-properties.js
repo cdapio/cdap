@@ -121,6 +121,10 @@ angular.module(PKG.name + '.commons')
                 empty: true
               });
             }
+          } else { // to add one empty line when there are more than 15
+            $scope.properties.push({
+              empty: true
+            });
           }
 
         } // End of initialize
@@ -178,6 +182,12 @@ angular.module(PKG.name + '.commons')
           property.type = defaultType;
           property.nullable = false;
           filledCount++;
+
+          if (filledCount >= 15) {
+            $scope.properties.push({
+              empty: true
+            });
+          }
         };
 
         $scope.addProperties = function() {
@@ -186,14 +196,21 @@ angular.module(PKG.name + '.commons')
             type: defaultType,
             nullable: false
           });
+
           filledCount++;
+
+          if ($scope.properties.length >= 15) {
+            $scope.properties.push({
+              empty: true
+            });
+          }
         };
 
         $scope.removeProperty = function(property) {
           var index = $scope.properties.indexOf(property);
           $scope.properties.splice(index, 1);
 
-          if ($scope.properties.length < 15) {
+          if ($scope.properties.length <= 15) {
             $scope.properties.push({
               empty: true
             });
