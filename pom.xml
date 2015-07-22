@@ -147,6 +147,7 @@
     <es.version>1.6.0</es.version>
     <es-hadoop.version>2.1.0</es-hadoop.version>
     <fastutil.version>6.6.1</fastutil.version>
+    <commons-httpclient.version>3.1</commons-httpclient.version>
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
     <release.iteration>1</release.iteration>

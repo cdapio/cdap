@@ -30,8 +30,6 @@ import co.cask.cdap.test.StreamManager;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
-import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.delete.DeleteResponse;
@@ -55,7 +53,7 @@ import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 
 /**
  * <p>
- *  Unit test for {@link ElasticsearchSink} ETL realtime source class.
+ *  Unit test for {@link ElasticsearchSink} ETL batch sink class.
  * </p>
  */
 public class ETLESSinkTest extends BaseETLBatchTest {
@@ -82,7 +80,8 @@ public class ETLESSinkTest extends BaseETLBatchTest {
   }
 
   @After
-  public void afterTest() { node.close();
+  public void afterTest() {
+    node.close();
   }
 
   @Test
@@ -119,14 +118,14 @@ public class ETLESSinkTest extends BaseETLBatchTest {
       manager.waitForOneRunToFinish(5, TimeUnit.MINUTES);
       manager.stop();
       SearchResponse searchResponse = client.prepareSearch("test").execute().actionGet();
-      Assert.assertTrue(searchResponse.getHits().getTotalHits() == 2);
+      Assert.assertEquals(searchResponse.getHits().getTotalHits(), 2);
       searchResponse = client.prepareSearch().setQuery(matchQuery("ticker", "AAPL")).execute().actionGet();
-      Assert.assertTrue(searchResponse.getHits().getTotalHits() == 1);
-      Assert.assertTrue(searchResponse.getHits().getAt(0).getIndex().equals("test"));
-      Assert.assertTrue(searchResponse.getHits().getAt(0).getType().equals("testing"));
-      Assert.assertTrue(searchResponse.getHits().getAt(0).getId().equals("AAPL"));
+      Assert.assertEquals(searchResponse.getHits().getTotalHits(), 1);
+      Assert.assertEquals(searchResponse.getHits().getAt(0).getIndex(), "test");
+      Assert.assertEquals(searchResponse.getHits().getAt(0).getType(), "testing");
+      Assert.assertEquals(searchResponse.getHits().getAt(0).getId(), "AAPL");
       searchResponse = client.prepareSearch().setQuery(matchQuery("ticker", "ABCD")).execute().actionGet();
-      Assert.assertTrue(searchResponse.getHits().getTotalHits() == 0);
+      Assert.assertEquals(searchResponse.getHits().getTotalHits(), 0);
 
       DeleteResponse response = client.prepareDelete("test", "testing", "CDAP").execute().actionGet();
       Assert.assertTrue(response.isFound());

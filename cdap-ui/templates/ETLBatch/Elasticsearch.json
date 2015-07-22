@@ -1,7 +1,7 @@
 {
   "id": "ElasticsearchSink",
   "groups" : {
-    "position": [ "group1"],
+    "position": [ "group1" ],
     "group1": {
       "display" : "Elasticsearch Configuration",
       "position" : [ "es.host", "es.port", "es.index", "es.type", "es.idField" ],

@@ -26,17 +26,23 @@ import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
 import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.template.etl.common.Properties;
-import co.cask.cdap.template.etl.common.RecordUtils;
+import co.cask.cdap.template.etl.common.StructuredRecordStringConversion;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.elasticsearch.hadoop.mr.EsOutputFormat;
 
-import javax.annotation.Nullable;
-
 /**
- * An ElasticsearchSink
+ * A {@link BatchSink} that writes data to a Elasticsearch.
+ * <p/>
+ * This {@link ElasticsearchSink} takes a {@link StructuredRecord} in and converts it to a json per {@link StructuredRecordStringConversion},
+ * and writes it to the Elasticserach server.
+ * <p/>
+ * If the Elasticserach index does not exist, it will be created using the default properties
+ * specified by Elasticsearch. See more information at
+ * {@link https://www.elastic.co/guide/en/elasticsearch/guide/current/_index_settings.html}.
+ * <p/>
  */
 @Plugin(type = "sink")
 @Name("Elasticsearch")
@@ -106,7 +112,7 @@ public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Wri
 
   @Override
   public void transform(StructuredRecord record, Emitter<KeyValue<Writable, Writable>> emitter) throws Exception {
-    emitter.emit(new KeyValue<Writable, Writable>(new Text(RecordUtils.toJsonString(record)),
-                                                  new Text(RecordUtils.toJsonString(record))));
+    emitter.emit(new KeyValue<Writable, Writable>(new Text(StructuredRecordStringConversion.toJsonString(record)),
+                                                  new Text(StructuredRecordStringConversion.toJsonString(record))));
   }
 }

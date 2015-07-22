@@ -24,8 +24,6 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -37,8 +35,10 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -48,7 +48,7 @@ import javax.annotation.Nullable;
 /**
  * Utility class for converting {@link StructuredRecord} to and from json.
  */
-public final class RecordUtils {
+public final class StructuredRecordStringConversion {
 
   // Known Java type to schema type mapping
   // Doesn't have map and array as those need to use instanceof to check
@@ -190,7 +190,7 @@ public final class RecordUtils {
   }
 
   private static List<Object> readArray(JsonReader reader, Schema elementSchema) throws IOException {
-    List<Object> result = Lists.newArrayList();
+    List<Object> result = new ArrayList<>();
     reader.beginArray();
     while (reader.peek() != JsonToken.END_ARRAY) {
       result.add(readJson(reader, elementSchema));
@@ -207,7 +207,7 @@ public final class RecordUtils {
     }
 
     Schema valueSchema = mapSchema.getValue();
-    Map<Object, Object> result = Maps.newHashMap();
+    Map<Object, Object> result = new HashMap<>();
 
     reader.beginObject();
     while (reader.peek() != JsonToken.END_OBJECT) {
@@ -433,6 +433,7 @@ public final class RecordUtils {
     throw new IOException("Unsupported type found in StructuredRecord: " + cls);
   }
 
-  private RecordUtils() {
+  private StructuredRecordStringConversion() {
+    //inaccessible constructor for static class
   }
 }

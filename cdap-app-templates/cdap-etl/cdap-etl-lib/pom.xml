@@ -225,10 +225,11 @@
       <artifactId>fastutil</artifactId>
       <version>${fastutil.version}</version>
     </dependency>
+    <!-- elasticsearch-hadoop-mr includes a class, StringUtils, which requires commons-httpclient-->
     <dependency>
       <groupId>commons-httpclient</groupId>
       <artifactId>commons-httpclient</artifactId>
-      <version>3.1</version>
+      <version>${commons-httpclient.version}</version>
       <exclusions>
         <exclusion>
             <groupId>commons-logging</groupId>

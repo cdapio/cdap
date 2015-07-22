@@ -95,7 +95,7 @@ public class SparkAppUsingFileSet extends AbstractApplication {
   public static final class ScalaCharCount extends AbstractSpark {
     @Override
     public void configure() {
-      setMainClass(ScalaFileCountProgram.class);
+      //setMainClass(ScalaFileCountProgram.class);
     }
   }
 
