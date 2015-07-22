@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
+import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
@@ -158,7 +159,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   @Override
   protected void run() throws Exception {
     SparkClassLoader sparkClassLoader = new SparkClassLoader(executionContext);
-    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(sparkClassLoader);
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(
+      new WeakReferenceDelegatorClassLoader(sparkClassLoader));
     try {
       LOG.debug("Submitting to spark with arguments: {}", Arrays.toString(sparkSubmitArgs));
       SparkSubmit.main(sparkSubmitArgs);
