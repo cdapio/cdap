@@ -44,8 +44,8 @@ write data through the data abstraction layer in CDAP.
 - :doc:`MapReduce Programs <mapreduce-programs>`
 - :doc:`Workflows <workflows>`
 - :doc:`Schedules <schedules>`
-- :doc:`Workers <workers>`
 - :doc:`Spark Programs <spark-programs>`
+- :doc:`Workers <workers>`
 - :doc:`Services <services>`
 
 A :doc:`Namespace <namespaces>` is a physical grouping of application and data in CDAP.
