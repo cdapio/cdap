@@ -138,6 +138,9 @@ public abstract class HBaseQueueTest extends QueueTest {
     cConf.set(Constants.Dataset.TABLE_PREFIX, "test");
     cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
     cConf.setLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY, 10000L);
+    // Test with fewer splits than default (16).
+    // Fewer splits make the forceEvict runs faster, which makes all queue tests run faster
+    cConf.setInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS, 4);
 
     cConf.setLong(TxConstants.Manager.CFG_TX_TIMEOUT, 100000000L);
 
