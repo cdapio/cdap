@@ -474,7 +474,7 @@ public final class Schema {
   }
 
   /**
-   * @return a JSON representation of this schema, which can be parsed with {@link #parseJson}.
+   * @return a JSON representation of this schema, which can be parsed with {@link #parseJson}
    */
   @Override
   public String toString() {
