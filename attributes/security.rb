@@ -37,8 +37,16 @@ if node['cdap']['cdap_site'].key?('kerberos.auth.enabled') && node['cdap']['cdap
   default_realm = node['krb5']['krb5_conf']['realms']['default_realm'].upcase
 
   # For cdap-master init script
-  default['cdap']['security']['cdap_keytab'] = "#{node['krb5_utils']['keytabs_dir']}/cdap.service.keytab"
-  default['cdap']['security']['cdap_principal'] = "cdap/#{node['fqdn']}@#{default_realm}"
+  if node['cdap'].key?('security') && node['cdap']['security'].key?('cdap_keytab')
+    default['cdap']['kerberos']['cdap_keytab'] = node['cdap']['security']['cdap_keytab']
+  else
+    default['cdap']['kerberos']['cdap_keytab'] = "#{node['krb5_utils']['keytabs_dir']}/cdap.service.keytab"
+  end
+  if node['cdap'].key?('security') && node['cdap']['security'].key?('cdap_principal')
+    default['cdap']['kerberos']['cdap_principal'] = default['cdap']['security']['cdap_principal']
+  else
+    default['cdap']['kerberos']['cdap_principal'] = "cdap/#{node['fqdn']}@#{default_realm}"
+  end
 
   # Add cdap user to YARN container-executor.cfg's allowed.system.users
   if node['hadoop'].key?('container_executor') && node['hadoop']['container_executor'].key?('allowed.system.users')
