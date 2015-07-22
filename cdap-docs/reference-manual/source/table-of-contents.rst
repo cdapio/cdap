@@ -16,4 +16,4 @@ CDAP Reference Manual Table of Contents
     Java Client API <java-client-api>
     Javadocs <javadocs/index>
     Trademarks, Licenses, and Dependencies <licenses/index>
-
+    Release Notes <release-notes/index>

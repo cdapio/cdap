@@ -74,5 +74,5 @@ Known Issues
 - The application...
   (`CDAP-XXXX <https://issues.cask.co/browse/CDAP-XXXX>`__).
 
-- See also the *Known Issues* of :ref:`version 3.0.1 <known-issues-301>`_\ .
+- See also the *Known Issues* of :ref:`version 3.0.1 <known-issues-301>`.
 
