@@ -531,7 +531,10 @@ HDP::
 
   export OPTS="${OPTS} -Dhdp.version=<version>" 
   
-where ``<version>`` matches the HDP version of the cluster.
+where ``<version>`` matches the HDP version of the cluster. The build iteration must be
+included, so if the cluster version of HDP is ``2.2.6.0-2800``, use::
+
+  export OPTS="${OPTS} -Dhdp.version=2.2.6.0-2800" 
 
 The file ``cdap-env.sh`` is located in the configuration directory, as described above
 under :ref:`Configuration <install-alternatives>`.
