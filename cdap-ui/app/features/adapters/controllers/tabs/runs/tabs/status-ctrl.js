@@ -108,7 +108,6 @@ angular.module(PKG.name + '.feature.adapters')
     $scope.isDisabled = true;
 
     $scope.plugin.outputSchema = $scope.plugin.properties.schema;
-    console.log('adapter', AdapterModel);
 
     if (AdapterModel.type === 'source') {
       $scope.isSource = true;
