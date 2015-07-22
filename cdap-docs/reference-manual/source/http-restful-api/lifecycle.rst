@@ -25,18 +25,20 @@ with the name of the JAR file as a header::
 
   X-Archive-Name: <JAR filename>
 
-configuration object as a serialized JSON string as another header (optional)::
+(An optional header can supply a configuration object as a serialized JSON string:)
+
+::
 
   X-App-Config: <JSON Serialization String of the Configuration Object>
 
-and its content as the body of the request::
+The application's content is the body of the request::
 
   <JAR binary content>
 
 Invoke the same command to update an application to a newer version.
 However, be sure to stop all of its flows, Spark and MapReduce programs before updating the application.
 
-For an application that has following configuration class such as::
+For an application that has a configuration class such as::
 
   public static class MyAppConfig extends Config {
     String streamName;
