@@ -25,29 +25,12 @@ import java.util.Objects;
  * Represents an artifact returned by /artifacts/{artifact-name}/versions/{artifact-version}.
  */
 @Beta
-public class ArtifactInfo {
-  private final String name;
-  private final String version;
-  private final boolean isSystem;
+public class ArtifactInfo extends ArtifactSummary {
   private final ArtifactClasses classes;
 
   public ArtifactInfo(String name, String version, boolean isSystem, ArtifactClasses classes) {
-    this.name = name;
-    this.version = version;
-    this.isSystem = isSystem;
+    super(name, version, isSystem);
     this.classes = classes;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public String getVersion() {
-    return version;
-  }
-
-  public boolean isSystem() {
-    return isSystem;
   }
 
   public ArtifactClasses getClasses() {
@@ -65,15 +48,13 @@ public class ArtifactInfo {
 
     ArtifactInfo that = (ArtifactInfo) o;
 
-    return Objects.equals(name, that.name) &&
-      Objects.equals(version, that.version) &&
-      isSystem == that.isSystem &&
+    return super.equals(that) &&
       Objects.equals(classes, that.classes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, version, isSystem, classes);
+    return Objects.hash(super.hashCode(), classes);
   }
 
   @Override

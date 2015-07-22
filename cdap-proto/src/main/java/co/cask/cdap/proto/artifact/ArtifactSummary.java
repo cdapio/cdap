@@ -25,9 +25,9 @@ import java.util.Objects;
  */
 @Beta
 public class ArtifactSummary {
-  private final String name;
-  private final String version;
-  private final boolean isSystem;
+  protected final String name;
+  protected final String version;
+  protected final boolean isSystem;
 
   public ArtifactSummary(String name, String version, boolean isSystem) {
     this.name = name;
