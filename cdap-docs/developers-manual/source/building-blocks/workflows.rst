@@ -396,7 +396,7 @@ Example
 -------
 
 This code sample shows how to obtain values from the token from within a custom action,
-from within a workflow with a predicate, fork and joins.::
+and from within a workflow with a predicate, fork and joins::
 
   @Override
   public void run() {
@@ -421,7 +421,7 @@ from within a workflow with a predicate, fork and joins.::
     
     boolean bTrueBranch = token.getAsBoolean("branch");
  
-    // Use case 2: A user may want to compare the records emitted by "PurchaseByCustomer"
+    // Use case 2: You may want to compare the records emitted by "PurchaseByCustomer"
     // and "PurchaseByProduct", in order to find which job is generating more records:
     
     String flattenReduceOutputRecordsCounterName = "org.apache.hadoop.mapreduce.TaskCounter.REDUCE_OUTPUT_RECORDS";
@@ -431,11 +431,11 @@ from within a workflow with a predicate, fork and joins.::
                                                      WorkflowToken.Scope.SYSTEM);
   
     // Use case 3: Since Workflow can have multiple complex conditions and forks in its
-    // structure, in the "StatusReporter", a user may want to know how many actions were
+    // structure, in the "StatusReporter", you may want to know how many actions were
     // executed as a part of a run. If the number of nodes executed were below a certain
     // threshold, send an alert. Assuming that every node in the Workflow adds the key
-    // "action_type" with the value as action type for that node in the WorkflowToken, a
-    // user can determine the breakdown by action type in a particular Workflow run:
+    // "action_type" with the value as action type for that node in the WorkflowToken,
+    // you can determine the breakdown by action type in a particular Workflow run:
     
     List<NodeValueEntry> nodeValues = token.getAll("action_type");
     int totalNodeExecuted = nodeValues.size();
@@ -482,7 +482,6 @@ from within a workflow with a predicate, fork and joins.::
     workflowToken.get(flattenCounterKey, "PurchaseHistoryBuilder", WorkflowToken.Scope.SYSTEM);
    ...
   }
-
 
 
 Example of Using a Workflow
