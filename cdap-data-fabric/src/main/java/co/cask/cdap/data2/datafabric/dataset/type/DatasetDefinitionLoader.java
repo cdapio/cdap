@@ -88,13 +88,12 @@ class DatasetDefinitionLoader {
         Class<?> moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);
         DatasetModule module = DatasetModules.getDatasetModule(moduleClass);
         try {
-          // TODO avoid duplicate registering of the same module (a type may have multiple transitive
-          //      dependencies on the same module. Right now, we don't know what modules are registered
-          //      because we only register the types inside each module.
           module.register(registry);
         } catch (TypeConflictException e) {
-          // this may happen if the type already existed (we are loading all dependent modules and we do not
-          // know all type names they may try to add - one of them may already be loaded). See the TODO above
+          // A type may have multiple transitive dependencies on the same module. In that case, it would be
+          // better to avoid duplicate registering of the same module. However, we don't know what modules
+          // are registered because modules only register their types and but not the module id. So here we
+          // just assume that this may happen if the module was already loaded.
         }
       }
     } catch (Exception e) {
