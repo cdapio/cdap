@@ -71,10 +71,10 @@ public interface MapReduceSpecification extends ProgramSpecification, PropertyPr
   /**
    * @return Map of dataset modules created in this program.
    */
-  Map<String, String> getDataSetModules();
+  Map<String, String> getDatasetModules();
 
   /**
    * @return Map of dataset instances and {@link DatasetCreationSpec} created in this program.
    */
-  Map<String, DatasetCreationSpec> getDataSetInstances();
+  Map<String, DatasetCreationSpec> getDatasetInstances();
 }

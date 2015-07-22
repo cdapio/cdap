@@ -144,9 +144,8 @@ public abstract class AbstractMapReduce implements MapReduce {
    *
    * @see MapReduceConfigurer#createDataset(String, Class, co.cask.cdap.api.dataset.DatasetProperties)
    */
-  protected final void createDataset(String datasetName,
-                               Class<? extends Dataset> datasetClass,
-                               DatasetProperties properties) {
+  protected final void createDataset(String datasetName, Class<? extends Dataset> datasetClass,
+                                     DatasetProperties properties) {
     configurer.createDataset(datasetName, datasetClass, properties);
   }
 
@@ -155,8 +154,7 @@ public abstract class AbstractMapReduce implements MapReduce {
    *
    * @see MapReduceConfigurer#createDataset(String, Class, DatasetProperties)
    */
-  protected final void createDataset(String datasetName,
-                               Class<? extends Dataset> datasetClass) {
+  protected final void createDataset(String datasetName, Class<? extends Dataset> datasetClass) {
     configurer.createDataset(datasetName, datasetClass, DatasetProperties.EMPTY);
   }
 

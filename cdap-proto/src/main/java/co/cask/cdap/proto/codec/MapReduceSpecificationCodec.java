@@ -60,8 +60,8 @@ public final class MapReduceSpecificationCodec extends AbstractSpecificationCode
     jsonObj.add("datasets", serializeSet(src.getDataSets(), context, String.class));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
     jsonObj.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
-    jsonObj.add("dataSetModules", serializeMap(src.getDataSetModules(), context, String.class));
-    jsonObj.add("dataSetInstances", serializeMap(src.getDataSetInstances(), context, DatasetCreationSpec.class));
+    jsonObj.add("dataSetModules", serializeMap(src.getDatasetModules(), context, String.class));
+    jsonObj.add("dataSetInstances", serializeMap(src.getDatasetInstances(), context, DatasetCreationSpec.class));
 
     return jsonObj;
   }

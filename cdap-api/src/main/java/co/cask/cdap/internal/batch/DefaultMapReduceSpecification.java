@@ -125,12 +125,12 @@ public class DefaultMapReduceSpecification implements MapReduceSpecification {
   }
 
   @Override
-  public Map<String, String> getDataSetModules() {
+  public Map<String, String> getDatasetModules() {
     return dataSetModules;
   }
 
   @Override
-  public Map<String, DatasetCreationSpec> getDataSetInstances() {
+  public Map<String, DatasetCreationSpec> getDatasetInstances() {
     return dataSetInstances;
   }
 

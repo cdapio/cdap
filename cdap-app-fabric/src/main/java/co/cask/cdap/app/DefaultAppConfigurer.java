@@ -120,8 +120,8 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
 
     MapReduceSpecification spec = configurer.createSpecification();
     streams.putAll(spec.getStreams());
-    dataSetModules.putAll(spec.getDataSetModules());
-    dataSetInstances.putAll(spec.getDataSetInstances());
+    dataSetModules.putAll(spec.getDatasetModules());
+    dataSetInstances.putAll(spec.getDatasetInstances());
     mapReduces.put(spec.getName(), spec);
   }
 
