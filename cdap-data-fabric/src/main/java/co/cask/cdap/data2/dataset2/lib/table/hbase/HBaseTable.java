@@ -23,7 +23,6 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Filter;
-import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -127,7 +126,7 @@ public class HBaseTable extends BufferingTable {
   }
 
   @Override
-  public List<Row> get(List<co.cask.cdap.api.dataset.table.Get> gets) {
+  public List<Map<byte[], byte[]>> getPersisted(List<co.cask.cdap.api.dataset.table.Get> gets) {
     List<Get> hbaseGets = Lists.transform(gets, new Function<co.cask.cdap.api.dataset.table.Get, Get>() {
       @Nullable
       @Override
@@ -138,13 +137,12 @@ public class HBaseTable extends BufferingTable {
     });
     try {
       Result[] results = hTable.get(hbaseGets);
-      return Lists.transform(Arrays.asList(results), new Function<Result, Row>() {
+      return Lists.transform(Arrays.asList(results), new Function<Result, Map<byte[], byte[]>>() {
         @Nullable
         @Override
-        public Row apply(Result result) {
+        public Map<byte[], byte[]> apply(Result result) {
           Map<byte[], byte[]> familyMap = result.getFamilyMap(columnFamily);
-          return new co.cask.cdap.api.dataset.table.Result(result.getRow(),
-              familyMap != null ? familyMap : ImmutableMap.<byte[], byte[]>of());
+          return familyMap != null ? familyMap : ImmutableMap.<byte[], byte[]>of();
         }
       });
     } catch (IOException ioe) {

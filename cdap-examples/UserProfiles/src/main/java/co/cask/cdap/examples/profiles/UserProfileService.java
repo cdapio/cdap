@@ -17,26 +17,32 @@
 package co.cask.cdap.examples.profiles;
 
 import co.cask.cdap.api.annotation.UseDataSet;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Delete;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
 
 import java.io.InputStreamReader;
+import java.util.List;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * A service for creating and modifying user profiles.
@@ -61,6 +67,51 @@ public class UserProfileService extends AbstractService {
     private Table profiles;
 
     @GET
+    @Path("profiles")
+    public void getProfiles(HttpServiceRequest request, HttpServiceResponder responder,
+                            @QueryParam("users") String users,
+                            @QueryParam("limit") @DefaultValue("10") int limit) {
+
+      List<Profile> profilesList = Lists.newArrayList();
+
+      // if the users query param is given, get the users given using a multi-get
+      if (users != null && !users.isEmpty()) {
+        // expecting the users param to be a comma separated list of users
+        String[] usersArr = users.split("\\s*,\\s*");
+        // create a list of Gets, one for each user
+        List<Get> gets = Lists.newArrayListWithCapacity(usersArr.length);
+        for (String user : usersArr) {
+          gets.add(new Get(Bytes.toBytes(user)));
+        }
+
+        // add up to limit number of users.
+        int profilesAdded = 0;
+        for (Row row : profiles.get(gets)) {
+          // row is empty if it could not be found.
+          if (row.isEmpty()) {
+            continue;
+          }
+          if (profilesAdded >= limit) {
+            break;
+          }
+          profilesList.add(toProfile(row));
+          profilesAdded++;
+        }
+      } else {
+        // otherwise, scan the entire table
+        Scanner scanner = profiles.scan(null, null);
+        Row row;
+        int profilesAdded = 0;
+        while (profilesAdded < limit && (row = scanner.next()) != null) {
+          profilesList.add(toProfile(row));
+          profilesAdded++;
+        }
+      }
+
+      responder.sendJson(200, profilesList);
+    }
+
+    @GET
     @Path("profiles/{user-id}")
     public void getProfile(HttpServiceRequest request, HttpServiceResponder responder,
                            @PathParam("user-id") String userId) {
@@ -69,12 +120,7 @@ public class UserProfileService extends AbstractService {
         responder.sendError(404, "No such user id.");
         return;
       }
-      String name = row.getString("name");
-      String email = row.getString("email");
-      Long lastLogin = row.getLong("login");
-      Long lastActive = row.getLong("active");
-      Profile profile = new Profile(userId, name, email, lastLogin, lastActive);
-      responder.sendJson(200, profile);
+      responder.sendJson(200, toProfile(row));
     }
 
     @PUT
@@ -166,6 +212,14 @@ public class UserProfileService extends AbstractService {
       responder.sendStatus(200);
     }
 
+    private Profile toProfile(Row row) {
+      String userId = Bytes.toString(row.getRow());
+      String name = row.getString("name");
+      String email = row.getString("email");
+      Long lastLogin = row.getLong("login");
+      Long lastActive = row.getLong("active");
+      return new Profile(userId, name, email, lastLogin, lastActive);
+    }
   }
 
 }
