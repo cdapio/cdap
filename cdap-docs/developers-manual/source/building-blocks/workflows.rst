@@ -160,7 +160,8 @@ then set a value for a specific key, as shown in this example from a MapReduce m
     }
   }
 
-The `Java API <>`__
+The `WorkflowToken Java API 
+<../../reference-manual/javadocs/co/cask/cdap/api/workflow/WorkflowToken.html)>`__
 includes methods for getting values for different keys, scopes, and nodes. The same
 key can be added to the workflow by different nodes, and there are methods to return a map of those
 key-value pairs. Convenience methods allow the putting and getting of non-string values
