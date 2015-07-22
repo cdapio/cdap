@@ -332,18 +332,21 @@ public class UsageRegistry {
    */
   public void upgrade(DatasetInstanceManager datasetInstanceManager) {
     DatasetSpecification oldDatasetSpecification = datasetInstanceManager.get(USAGE_INSTANCE_ID);
-
-    if (!oldDatasetSpecification.getType().equals(UsageDataset.class.getSimpleName())) {
-      LOG.info("Upgrading {} dataset from Table to UsageDataset type", USAGE_INSTANCE_ID);
-      DatasetSpecification newDatasetSpecification = DatasetSpecification.builder(oldDatasetSpecification.getName(),
-                                                                                  UsageDataset.class.getSimpleName())
-        .properties(oldDatasetSpecification.getProperties())
-        .datasets(oldDatasetSpecification.getSpecifications().values())
-        .build();
-      datasetInstanceManager.delete(USAGE_INSTANCE_ID);
-      datasetInstanceManager.add(Constants.SYSTEM_NAMESPACE_ID, newDatasetSpecification);
-    } else {
-      LOG.info("{} dataset is of type UsageDataset. No upgrade required.", USAGE_INSTANCE_ID);
+    // the usage.registry table will only be created if something runs on a cluster and creates a usage record.
+    // on a fresh cluster the dataset will not be present and in this case no upgrade is required.
+    if (oldDatasetSpecification != null) {
+      if (!oldDatasetSpecification.getType().equals(UsageDataset.class.getSimpleName())) {
+        LOG.info("Upgrading {} dataset from Table to UsageDataset type", USAGE_INSTANCE_ID);
+        DatasetSpecification newDatasetSpecification = DatasetSpecification.builder(oldDatasetSpecification.getName(),
+                                                                                    UsageDataset.class.getSimpleName())
+          .properties(oldDatasetSpecification.getProperties())
+          .datasets(oldDatasetSpecification.getSpecifications().values())
+          .build();
+        datasetInstanceManager.delete(USAGE_INSTANCE_ID);
+        datasetInstanceManager.add(Constants.SYSTEM_NAMESPACE_ID, newDatasetSpecification);
+      } else {
+        LOG.info("{} dataset is of type UsageDataset. No upgrade required.", USAGE_INSTANCE_ID);
+      }
     }
   }
 

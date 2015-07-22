@@ -24,6 +24,7 @@ import co.cask.cdap.proto.Id;
 import com.google.inject.Inject;
 
 import java.util.Collection;
+import javax.annotation.Nullable;
 
 /**
  * Manages dataset instances metadata
@@ -56,6 +57,7 @@ public class DatasetInstanceManager {
    * @param datasetInstanceId {@link Id.DatasetInstance} of the dataset instance
    * @return dataset instance's {@link DatasetSpecification}
    */
+  @Nullable
   public DatasetSpecification get(final Id.DatasetInstance datasetInstanceId) {
     return mdsDatasets.executeUnchecked(new TxCallable<MDSDatasets, DatasetSpecification>() {
       @Override
