@@ -239,11 +239,8 @@ function (Widget, MyDataSource, mySettings, $q, MyChartHelpers) {
         index = this.data.activeIndex,
         insert = index + (reverse?-1:1);
 
-    if(insert > max) {
-      insert = 0;
-    }
-    else if(insert < 0) {
-      insert = max;
+    if(insert > max || insert < 0) {
+      return -1;
     }
 
     this.data.splice(insert, 0, this.data.splice(index, 1)[0]);
