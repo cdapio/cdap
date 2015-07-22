@@ -742,7 +742,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testAppRedeployKeepsData() throws Exception {
-    ApplicationManager appManager = deployApplication(testSpace, AppWithTable.class);
+    deployApplication(testSpace, AppWithTable.class);
     DataSetManager<Table> myTableManager = getDataset(testSpace, "my_table");
     myTableManager.get().put(new Put("key1", "column1", "value1"));
     myTableManager.flush();
@@ -752,7 +752,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals("value1", myTableManager2.get().get(new Get("key1", "column1")).getString("column1"));
 
     // Even after redeploy of an app: changes should be visible to other instances of datasets
-    appManager = deployApplication(AppWithTable.class);
+    deployApplication(AppWithTable.class);
     DataSetManager<Table> myTableManager3 = getDataset(testSpace, "my_table");
     Assert.assertEquals("value1", myTableManager3.get().get(new Get("key1", "column1")).getString("column1"));
 
@@ -898,20 +898,17 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     kvTable.put("c", "1");
     myTableManager.flush();
 
-    Connection connection = getQueryClient(testSpace);
-    try {
-
-      // run a query over the dataset
+    try (
+      Connection connection = getQueryClient(testSpace);
       ResultSet results = connection.prepareStatement("select first from dataset_mytable where second = '1'")
-        .executeQuery();
+                                    .executeQuery()
+    ) {
+      // run a query over the dataset
       Assert.assertTrue(results.next());
       Assert.assertEquals("a", results.getString(1));
       Assert.assertTrue(results.next());
       Assert.assertEquals("c", results.getString(1));
       Assert.assertFalse(results.next());
-
-    } finally {
-      connection.close();
     }
   }
 

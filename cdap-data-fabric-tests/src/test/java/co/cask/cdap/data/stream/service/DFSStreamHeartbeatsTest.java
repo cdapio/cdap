@@ -26,6 +26,7 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -34,6 +35,7 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.heartbeat.HeartbeatPublisher;
 import co.cask.cdap.data.stream.service.heartbeat.StreamWriterHeartbeat;
+import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.transaction.stream.FileStreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -44,7 +46,9 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
+import co.cask.tephra.TransactionManager;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -71,7 +75,10 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -84,13 +91,13 @@ public class DFSStreamHeartbeatsTest {
 
   private static StreamHttpService streamHttpService;
   private static StreamService streamService;
+  private static TransactionManager txManager;
+  private static DatasetService datasetService;
+  private static NotificationService notificationService;
   private static MockHeartbeatPublisher heartbeatPublisher;
   private static InMemoryZKServer zkServer;
   private static ZKClientService zkClient;
   private static StreamAdmin streamAdmin;
-  private static StreamFetchHandler streamFetchHandler;
-  private static StreamHandler streamHandler;
-  private static StreamMetaStore streamMetaStore;
   private static NamespacedLocationFactory namespacedLocationFactory;
 
   @ClassRule
@@ -140,29 +147,35 @@ public class DFSStreamHeartbeatsTest {
       }));
 
     zkClient = injector.getInstance(ZKClientService.class);
-    zkClient.startAndWait();
-
+    txManager = injector.getInstance(TransactionManager.class);
+    datasetService = injector.getInstance(DatasetService.class);
+    notificationService = injector.getInstance(NotificationService.class);
     streamHttpService = injector.getInstance(StreamHttpService.class);
-    streamHttpService.startAndWait();
     streamService = injector.getInstance(StreamService.class);
-    streamService.startAndWait();
     heartbeatPublisher = (MockHeartbeatPublisher) injector.getInstance(HeartbeatPublisher.class);
+    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    streamAdmin = injector.getInstance(StreamAdmin.class);
+
+    zkClient.startAndWait();
+    txManager.startAndWait();
+    datasetService.startAndWait();
+    notificationService.startAndWait();
+    streamHttpService.startAndWait();
+    streamService.startAndWait();
 
     hostname = streamHttpService.getBindAddress().getHostName();
     port = streamHttpService.getBindAddress().getPort();
 
-    streamAdmin = injector.getInstance(StreamAdmin.class);
-    streamHandler = injector.getInstance(StreamHandler.class);
-    streamFetchHandler = injector.getInstance(StreamFetchHandler.class);
-    streamMetaStore = injector.getInstance(StreamMetaStore.class);
-
-    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
     Locations.mkdirsIfNotExists(namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID));
   }
 
   @AfterClass
   public static void afterClass() throws IOException {
     Locations.deleteQuietly(namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID), true);
+
+    notificationService.startAndWait();
+    datasetService.startAndWait();
+    txManager.startAndWait();
     streamService.stopAndWait();
     streamHttpService.stopAndWait();
     zkClient.stopAndWait();
@@ -183,7 +196,6 @@ public class DFSStreamHeartbeatsTest {
     final Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
     // Create a new stream.
     streamAdmin.create(streamId);
-    streamMetaStore.addStream(streamId);
 
     // Enqueue 10 entries
     for (int i = 0; i < entries; ++i) {
@@ -197,13 +209,21 @@ public class DFSStreamHeartbeatsTest {
       urlConn.disconnect();
     }
 
-    TimeUnit.SECONDS.sleep(Constants.Stream.HEARTBEAT_INTERVAL + 1);
+    Tasks.waitFor((long) entries * TWO_BYTES.length, new Callable<Long>() {
+      @Override
+      public Long call() throws Exception {
+        return getStreamSize(streamId, heartbeatPublisher);
+      }
+    }, Constants.Stream.HEARTBEAT_INTERVAL * 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+  }
+
+  private long getStreamSize(Id.Stream streamId, MockHeartbeatPublisher heartbeatPublisher) {
     StreamWriterHeartbeat heartbeat = heartbeatPublisher.getHeartbeat();
-    Assert.assertNotNull(heartbeat);
-    Assert.assertEquals(1, heartbeat.getStreamsSizes().size());
-    Long streamSize = heartbeat.getStreamsSizes().get(streamId);
-    Assert.assertNotNull(streamSize);
-    Assert.assertEquals(entries * TWO_BYTES.length, (long) streamSize);
+    if (heartbeat == null) {
+      return 0L;
+    }
+    Long size = heartbeat.getStreamsSizes().get(streamId);
+    return size == null ? 0L : size;
   }
 
   /**
@@ -211,7 +231,7 @@ public class DFSStreamHeartbeatsTest {
    */
   private static final class MockHeartbeatPublisher extends AbstractIdleService implements HeartbeatPublisher {
     private static final Logger LOG = LoggerFactory.getLogger(MockHeartbeatPublisher.class);
-    private StreamWriterHeartbeat heartbeat = null;
+    private final AtomicReference<StreamWriterHeartbeat> heartbeat = new AtomicReference<>();
 
     @Override
     protected void startUp() throws Exception {
@@ -225,13 +245,14 @@ public class DFSStreamHeartbeatsTest {
 
     @Override
     public ListenableFuture<StreamWriterHeartbeat> sendHeartbeat(StreamWriterHeartbeat heartbeat) {
-      LOG.info("Received heartbeat {} for Stream {}", heartbeat);
-      this.heartbeat = heartbeat;
+      LOG.info("Received heartbeat {} for Streams {}", heartbeat, heartbeat.getStreamsSizes().keySet());
+      this.heartbeat.set(heartbeat);
       return Futures.immediateFuture(heartbeat);
     }
 
+    @Nullable
     public StreamWriterHeartbeat getHeartbeat() {
-      return heartbeat;
+      return heartbeat.get();
     }
   }
 }

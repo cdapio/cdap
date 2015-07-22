@@ -48,4 +48,8 @@ angular.module(PKG.name + '.feature.flows')
       return defer.promise;
     };
 
+    this.reset = function() {
+      this.data = {};
+    };
+
   });

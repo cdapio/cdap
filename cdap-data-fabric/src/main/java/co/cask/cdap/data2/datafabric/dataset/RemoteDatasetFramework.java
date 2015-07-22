@@ -177,6 +177,15 @@ public class RemoteDatasetFramework implements DatasetFramework {
   @Override
   public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId, ClassLoader classLoader)
     throws DatasetManagementException, IOException {
+    return getAdmin(datasetInstanceId, classLoader, new ConstantClassLoaderProvider(classLoader));
+  }
+
+  @Nullable
+  @Override
+  public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId,
+                                             @Nullable ClassLoader parentClassLoader,
+                                             DatasetClassLoaderProvider classLoaderProvider)
+    throws DatasetManagementException, IOException {
     DatasetMeta instanceInfo = clientCache.getUnchecked(datasetInstanceId.getNamespace())
       .getInstance(datasetInstanceId.getId());
     if (instanceInfo == null) {
@@ -184,7 +193,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
     }
 
     DatasetType type =
-      getDatasetType(instanceInfo.getType(), classLoader, new ConstantClassLoaderProvider(classLoader));
+      getDatasetType(instanceInfo.getType(), parentClassLoader, classLoaderProvider);
     return (T) type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), instanceInfo.getSpec());
   }
 

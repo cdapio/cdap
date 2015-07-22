@@ -18,11 +18,11 @@
 # Download Eclipse cookbook for Chef from https://github.com/geocent-cookbooks/eclipse
 #
 
-cd /var/chef/cookbooks || echo "Cannot change to cookbook directory" && exit 1
+cd /var/chef/cookbooks || (echo "Cannot change to cookbook directory" && exit 1)
 
 # Check out the cookbook from GitHub
-which git || echo "Cannot locate git" && exit 1
-git clone https://github.com/geocent-cookbooks/eclipse.git || echo "Cannot checkout eclipse cookbook" && exit 1
+which git || (echo "Cannot locate git" && exit 1)
+git clone https://github.com/geocent-cookbooks/eclipse.git || (echo "Cannot checkout eclipse cookbook" && exit 1)
 
 # Remove .git, so it's no longer tracked by git
 rm -rf eclipse/.git

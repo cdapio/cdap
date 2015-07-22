@@ -19,6 +19,7 @@ package co.cask.cdap.data2.util.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.TableId;
@@ -43,6 +44,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -108,23 +110,39 @@ public abstract class AbstractHBaseTableUtilTest {
     Assert.assertTrue(exists("namespace", "table2"));
     Assert.assertTrue(exists("namespace", "table3"));
 
-    waitForMetricsToUpdate();
-
-    Assert.assertEquals(0, getTableStats("namespace", "table1").getTotalSizeMB());
-    Assert.assertEquals(0, getTableStats("namespace2", "table1").getTotalSizeMB());
-    Assert.assertEquals(0, getTableStats("namespace", "table2").getTotalSizeMB());
-    Assert.assertEquals(0, getTableStats("namespace", "table3").getTotalSizeMB());
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        try {
+          Assert.assertEquals(0, getTableStats("namespace", "table1").getTotalSizeMB());
+          Assert.assertEquals(0, getTableStats("namespace2", "table1").getTotalSizeMB());
+          Assert.assertEquals(0, getTableStats("namespace", "table2").getTotalSizeMB());
+          Assert.assertEquals(0, getTableStats("namespace", "table3").getTotalSizeMB());
+          return true;
+        } catch (Throwable t) {
+          return false;
+        }
+      }
+    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     writeSome("namespace2", "table1");
     writeSome("namespace", "table2");
     writeSome("namespace", "table3");
 
-    waitForMetricsToUpdate();
-
-    Assert.assertEquals(0, getTableStats("namespace", "table1").getTotalSizeMB());
-    Assert.assertTrue(getTableStats("namespace2", "table1").getTotalSizeMB() > 0);
-    Assert.assertTrue(getTableStats("namespace", "table2").getTotalSizeMB() > 0);
-    Assert.assertTrue(getTableStats("namespace", "table3").getTotalSizeMB() > 0);
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        try {
+          Assert.assertEquals(0, getTableStats("namespace", "table1").getTotalSizeMB());
+          Assert.assertTrue(getTableStats("namespace2", "table1").getTotalSizeMB() > 0);
+          Assert.assertTrue(getTableStats("namespace", "table2").getTotalSizeMB() > 0);
+          Assert.assertTrue(getTableStats("namespace", "table3").getTotalSizeMB() > 0);
+          return true;
+        } catch (Throwable t) {
+          return false;
+        }
+      }
+    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     drop("namespace", "table1");
     Assert.assertFalse(exists("namespace", "table1"));
@@ -132,12 +150,20 @@ public abstract class AbstractHBaseTableUtilTest {
     testHBase.forceRegionFlush(Bytes.toBytes(getTableNameAsString(TableId.from("namespace", "table2"))));
     truncate("namespace", "table3");
 
-    waitForMetricsToUpdate();
-
-    Assert.assertNull(getTableStats("namespace", "table1"));
-    Assert.assertTrue(getTableStats("namespace", "table2").getTotalSizeMB() > 0);
-    Assert.assertTrue(getTableStats("namespace", "table2").getStoreFileSizeMB() > 0);
-    Assert.assertEquals(0, getTableStats("namespace", "table3").getTotalSizeMB());
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        try {
+          Assert.assertNull(getTableStats("namespace", "table1"));
+          Assert.assertTrue(getTableStats("namespace", "table2").getTotalSizeMB() > 0);
+          Assert.assertTrue(getTableStats("namespace", "table2").getStoreFileSizeMB() > 0);
+          Assert.assertEquals(0, getTableStats("namespace", "table3").getTotalSizeMB());
+          return true;
+        } catch (Throwable t) {
+          return false;
+        }
+      }
+    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     // modify
     HTableDescriptor desc = getTableDescriptor("namespace2", "table1");

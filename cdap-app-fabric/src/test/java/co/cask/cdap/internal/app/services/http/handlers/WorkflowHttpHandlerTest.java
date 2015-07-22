@@ -96,7 +96,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
   }
 
   private Integer runningProgramCount(Id.Program program, String runId) throws Exception {
-    String path = String.format("apps/%s/workflows/%s/%s/current", program.getApplicationId(), program.getId(), runId);
+    String path = String.format("apps/%s/workflows/%s/runs/%s/current", program.getApplicationId(), program.getId(),
+                                runId);
     HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespaceId()));
     if (response.getStatusLine().getStatusCode() == 200) {
       String json = EntityUtils.toString(response.getEntity());
@@ -146,8 +147,22 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
   }
 
   private HttpResponse getWorkflowCurrentStatus(Id.Program program, String runId) throws Exception {
-    String currentUrl = String.format("apps/%s/workflows/%s/%s/current", program.getApplicationId(), program.getId(),
-                                      runId);
+    String currentUrl = String.format("apps/%s/workflows/%s/runs/%s/current", program.getApplicationId(),
+                                      program.getId(), runId);
+    String versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN,
+                                              program.getNamespaceId());
+    return doGet(versionedUrl);
+  }
+
+  /**
+   * Tests deprecated workflow current API. For new tests, use {@link #getWorkflowCurrentStatus(Id.Program, String)}
+   * instead
+   * TODO: CDAP-2481: Remove in 3.2
+   */
+  @Deprecated
+  private HttpResponse getWorkflowCurrentStatusOld(Id.Program program, String runId) throws Exception {
+    String currentUrl = String.format("apps/%s/workflows/%s/%s/current", program.getApplicationId(),
+                                      program.getId(), runId);
     String versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN,
                                               program.getNamespaceId());
     return doGet(versionedUrl);
@@ -375,7 +390,21 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(1, nodes.size());
     Assert.assertEquals("SimpleAction", nodes.get(0).getProgram().getProgramName());
 
+    response = getWorkflowCurrentStatusOld(programId, historyRuns.get(0).getPid());
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    json = EntityUtils.toString(response.getEntity());
+    nodes = GSON.fromJson(json, LIST_WORKFLOWACTIONNODE_TYPE);
+    Assert.assertEquals(1, nodes.size());
+    Assert.assertEquals("SimpleAction", nodes.get(0).getProgram().getProgramName());
+
     response = getWorkflowCurrentStatus(programId, historyRuns.get(1).getPid());
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    json = EntityUtils.toString(response.getEntity());
+    nodes = GSON.fromJson(json, LIST_WORKFLOWACTIONNODE_TYPE);
+    Assert.assertEquals(1, nodes.size());
+    Assert.assertEquals("SimpleAction", nodes.get(0).getProgram().getProgramName());
+
+    response = getWorkflowCurrentStatusOld(programId, historyRuns.get(1).getPid());
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     json = EntityUtils.toString(response.getEntity());
     nodes = GSON.fromJson(json, LIST_WORKFLOWACTIONNODE_TYPE);

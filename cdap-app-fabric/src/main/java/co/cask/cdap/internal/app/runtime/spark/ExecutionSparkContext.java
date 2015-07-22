@@ -65,6 +65,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -121,12 +122,13 @@ public class ExecutionSparkContext extends AbstractSparkContext {
   }
 
   @Override
-  public <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass) {
+  public <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass, Map<String, String> userDsArgs) {
     // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
     Configuration configuration = new Configuration(hConf);
 
     // first try if it is InputFormatProvider
     Map<String, String> dsArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName, getRuntimeArguments());
+    dsArgs.putAll(userDsArgs);
     Dataset dataset = instantiateDataset(datasetName, dsArgs);
     try {
       if (dataset instanceof InputFormatProvider) {
@@ -168,12 +170,14 @@ public class ExecutionSparkContext extends AbstractSparkContext {
   }
 
   @Override
-  public <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass) {
+  public <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass,
+                                 Map<String, String> userDsArgs) {
     // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
     Configuration configuration = new Configuration(hConf);
 
     // first try if it is OutputFormatProvider
     Map<String, String> dsArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName, getRuntimeArguments());
+    dsArgs.putAll(userDsArgs);
     Dataset dataset = instantiateDataset(datasetName, dsArgs);
     try {
       if (dataset instanceof OutputFormatProvider) {

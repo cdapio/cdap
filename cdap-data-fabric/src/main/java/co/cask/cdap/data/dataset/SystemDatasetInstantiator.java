@@ -18,10 +18,12 @@ package co.cask.cdap.data.dataset;
 
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
 
@@ -54,6 +56,12 @@ public class SystemDatasetInstantiator implements Closeable {
     this.parentClassLoader = parentClassLoader == null ?
       Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader()) :
       parentClassLoader;
+  }
+
+  @Nullable
+  public <T extends DatasetAdmin> T getDatasetAdmin(Id.DatasetInstance datasetId)
+    throws DatasetManagementException, IOException {
+    return datasetFramework.getAdmin(datasetId, parentClassLoader, classLoaderProvider);
   }
 
   public <T extends Dataset> T getDataset(Id.DatasetInstance datasetId)
