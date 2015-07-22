@@ -75,9 +75,9 @@ public class StructuredRecordStringConversionTest {
     Assert.assertTrue(one.getSchema().getRecordName().equals(two.getSchema().getRecordName()));
     Assert.assertTrue(one.getSchema().getFields().size() == two.getSchema().getFields().size());
     for (Schema.Field field : one.getSchema().getFields()) {
-      if(one.get(field.getName()).getClass().equals(StructuredRecord.class)) {
+      if (one.get(field.getName()).getClass().equals(StructuredRecord.class)) {
         areRecordsEqual((StructuredRecord) one.get(field.getName()), (StructuredRecord) two.get(field.getName()));
-      } else if (field.getName().equals("binary")){
+      } else if (field.getName().equals("binary")) {
         Assert.assertArrayEquals((byte[]) two.get(field.getName()), (byte[]) one.get(field.getName()));
       } else {
         Assert.assertTrue(one.get(field.getName()).toString().equals(two.get(field.getName()).toString()));

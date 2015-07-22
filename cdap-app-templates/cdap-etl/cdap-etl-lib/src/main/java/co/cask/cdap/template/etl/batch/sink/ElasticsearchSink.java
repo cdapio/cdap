@@ -36,7 +36,8 @@ import org.elasticsearch.hadoop.mr.EsOutputFormat;
 /**
  * A {@link BatchSink} that writes data to a Elasticsearch.
  * <p/>
- * This {@link ElasticsearchSink} takes a {@link StructuredRecord} in and converts it to a json per {@link StructuredRecordStringConversion},
+ * This {@link ElasticsearchSink} takes a {@link StructuredRecord} in,
+ * converts it to a json per {@link StructuredRecordStringConversion},
  * and writes it to the Elasticserach server.
  * <p/>
  * If the Elasticserach index does not exist, it will be created using the default properties
