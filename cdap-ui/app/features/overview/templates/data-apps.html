@@ -130,15 +130,27 @@
         <p> You haven't deployed any apps. Add one. </p>
       </div>
       <hr />
-      <div class="text-left">
-        <my-file-select ng-controller="AppsSectionCtrl"
-                        data-button-label="Add App"
-                        on-file-select="AppsSectionCtrl.onFileSelected($files)">
-        </my-file-select>
-        <a ui-sref="adapters.create" class="btn btn-default">
-          <span class="fa fa-plus"></span>
-          <span>Add Adapter</span>
-        </a>
+      <div class="btn-group dropdown-right" dropdown>
+        <button type="button" class="btn btn-default dropdown-toggle white-dropdown" dropdown-toggle>
+          Add App <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+          <li>
+            <my-file-select dropdown="true"
+                            data-button-label="Add App"
+                            on-file-select="AppsSectionCtrl.onFileSelected($files)">
+            </my-file-select>
+          </li>
+          <li>
+            <a ui-sref="adapters.create({ type: 'ETLBatch'})"> Add ETL Batch App </a>
+          </li>
+          <li>
+            <a ui-sref="adapters.create({ type: 'ETLRealtime'})"> Add ETL Realtime App </a>
+          </li>
+          <li>
+            <a ui-sref="adapters.list"> Un-Published Adapters </a>
+          </li>
+        </ul>
       </div>
     </div>
   </div>
