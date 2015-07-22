@@ -41,7 +41,7 @@ import org.elasticsearch.hadoop.mr.EsOutputFormat;
  * <p/>
  * If the Elasticserach index does not exist, it will be created using the default properties
  * specified by Elasticsearch. See more information at
- * {@link https://www.elastic.co/guide/en/elasticsearch/guide/current/_index_settings.html}.
+ * https://www.elastic.co/guide/en/elasticsearch/guide/current/_index_settings.html.
  * <p/>
  */
 @Plugin(type = "sink")
@@ -50,41 +50,10 @@ import org.elasticsearch.hadoop.mr.EsOutputFormat;
 public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Writable> {
   private static final String INDEX_DESC = "The name of the index where the data will be stored. " +
     "The index should already exist and be configured.";
-
   private static final String TYPE_DESC = "The name of the type where the data will be stored";
-
   private static final String ID_DESC = "The id field that will determine the id for the document. " +
     "It should match a fieldname in the structured record of the input";
-
   private static final String HOST_DESC = "The hostname and port for an elasticsearch node. e.g. localhost:9300";
-
-  /**
-   * Config class for RealtimeTableSink
-   */
-  public static class ESConfig extends PluginConfig {
-    @Name(Properties.Elasticsearch.HOST)
-    @Description(HOST_DESC)
-    private String hostname;
-
-    @Name(Properties.Elasticsearch.INDEX_NAME)
-    @Description(INDEX_DESC)
-    private String index;
-
-    @Name(Properties.Elasticsearch.TYPE_NAME)
-    @Description(TYPE_DESC)
-    private String type;
-
-    @Name(Properties.Elasticsearch.ID_FIELD)
-    @Description(ID_DESC)
-    private String idField;
-
-    public ESConfig(String hostname, String index, String type, String idField) {
-      this.hostname = hostname;
-      this.index = index;
-      this.type = type;
-      this.idField = idField;
-    }
-  }
 
   private final ESConfig config;
 
@@ -114,5 +83,33 @@ public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Wri
   public void transform(StructuredRecord record, Emitter<KeyValue<Writable, Writable>> emitter) throws Exception {
     emitter.emit(new KeyValue<Writable, Writable>(new Text(StructuredRecordStringConversion.toJsonString(record)),
                                                   new Text(StructuredRecordStringConversion.toJsonString(record))));
+  }
+
+  /**
+   * Config class for Batch ElasticsearchSink
+   */
+  public static class ESConfig extends PluginConfig {
+    @Name(Properties.Elasticsearch.HOST)
+    @Description(HOST_DESC)
+    private String hostname;
+
+    @Name(Properties.Elasticsearch.INDEX_NAME)
+    @Description(INDEX_DESC)
+    private String index;
+
+    @Name(Properties.Elasticsearch.TYPE_NAME)
+    @Description(TYPE_DESC)
+    private String type;
+
+    @Name(Properties.Elasticsearch.ID_FIELD)
+    @Description(ID_DESC)
+    private String idField;
+
+    public ESConfig(String hostname, String index, String type, String idField) {
+      this.hostname = hostname;
+      this.index = index;
+      this.type = type;
+      this.idField = idField;
+    }
   }
 }

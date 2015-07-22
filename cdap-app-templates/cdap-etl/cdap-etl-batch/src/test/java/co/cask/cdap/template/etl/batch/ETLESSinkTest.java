@@ -28,7 +28,6 @@ import co.cask.cdap.test.AdapterManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.StreamManager;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
@@ -45,6 +44,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -108,7 +108,7 @@ public class ETLESSinkTest extends BaseETLBatchTest {
                                                    Properties.Elasticsearch.TYPE_NAME, "testing",
                                                    Properties.Elasticsearch.ID_FIELD, "ticker"
                                    ));
-      List<ETLStage> transforms = Lists.newArrayList();
+      List<ETLStage> transforms = new ArrayList<>();
       ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transforms);
       Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "esSinkTest");
       AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
@@ -117,6 +117,7 @@ public class ETLESSinkTest extends BaseETLBatchTest {
       manager.start();
       manager.waitForOneRunToFinish(5, TimeUnit.MINUTES);
       manager.stop();
+
       SearchResponse searchResponse = client.prepareSearch("test").execute().actionGet();
       Assert.assertEquals(searchResponse.getHits().getTotalHits(), 2);
       searchResponse = client.prepareSearch().setQuery(matchQuery("ticker", "AAPL")).execute().actionGet();
