@@ -68,6 +68,6 @@ final class SparkContextFactory {
     return new SparkSpecification(originalSpec.getClassName(), originalSpec.getName(), originalSpec.getDescription(),
                                   originalSpec.getMainClassName(), originalSpec.getProperties(),
                                   originalSpec.getDriverResources(), executorResources, originalSpec.getStreams(),
-                                  originalSpec.getDataSetModules(), originalSpec.getDataSetInstances());
+                                  originalSpec.getDatasetModules(), originalSpec.getDatasetSpecs());
   }
 }

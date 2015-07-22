@@ -86,12 +86,12 @@ public interface FlowletSpecification extends PropertyProvider {
   /**
    * @return Map of dataset modules created in this flowlet.
    */
-  Map<String, String> getDataSetModules();
+  Map<String, String> getDatasetModules();
 
   /**
    * @return Map of dataset instances and {@link DatasetCreationSpec} created in this flowlet.
    */
-  Map<String, DatasetCreationSpec> getDataSetInstances();
+  Map<String, DatasetCreationSpec> getDatasetSpecs();
 
   /**
    * Builder for creating instance of {@link FlowletSpecification}. The builder instance is

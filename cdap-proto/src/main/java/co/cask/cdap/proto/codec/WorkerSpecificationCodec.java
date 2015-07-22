@@ -47,8 +47,8 @@ public final class WorkerSpecificationCodec extends AbstractSpecificationCodec<W
     object.add("datasets", serializeSet(spec.getDatasets(), context, String.class));
     object.addProperty("instances", spec.getInstances());
     object.add("streams", serializeMap(spec.getStreams(), context, StreamSpecification.class));
-    object.add("dataSetModules", serializeMap(spec.getDataSetModules(), context, String.class));
-    object.add("dataSetInstances", serializeMap(spec.getDataSetInstances(), context, DatasetCreationSpec.class));
+    object.add("dataSetModules", serializeMap(spec.getDatasetModules(), context, String.class));
+    object.add("dataSetInstances", serializeMap(spec.getDatasetSpecs(), context, DatasetCreationSpec.class));
     return object;
   }
 

@@ -85,8 +85,8 @@ public class HttpServiceSpecificationCodec extends AbstractSpecificationCodec<Ht
     json.add("datasets", serializeSet(src.getDatasets(), context, String.class));
     json.add("endpoints", serializeList(src.getEndpoints(), context, ServiceHttpEndpoint.class));
     json.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
-    json.add("dataSetModules", serializeMap(src.getDataSetModules(), context, String.class));
-    json.add("dataSetInstances", serializeMap(src.getDataSetInstances(), context, DatasetCreationSpec.class));
+    json.add("dataSetModules", serializeMap(src.getDatasetModules(), context, String.class));
+    json.add("dataSetInstances", serializeMap(src.getDatasetSpecs(), context, DatasetCreationSpec.class));
     return json;
   }
 }

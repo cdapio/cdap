@@ -106,8 +106,8 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
     for (Map.Entry<String, FlowletDefinition> flowletEntry : spec.getFlowlets().entrySet()) {
       FlowletSpecification flowletSpec = flowletEntry.getValue().getFlowletSpec();
       streams.putAll(flowletSpec.getStreams());
-      dataSetModules.putAll(flowletSpec.getDataSetModules());
-      dataSetInstances.putAll(flowletSpec.getDataSetInstances());
+      dataSetModules.putAll(flowletSpec.getDatasetModules());
+      dataSetInstances.putAll(flowletSpec.getDatasetSpecs());
     }
     flows.put(spec.getName(), spec);
   }
@@ -121,7 +121,7 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
     MapReduceSpecification spec = configurer.createSpecification();
     streams.putAll(spec.getStreams());
     dataSetModules.putAll(spec.getDatasetModules());
-    dataSetInstances.putAll(spec.getDatasetInstances());
+    dataSetInstances.putAll(spec.getDatasetSpecs());
     mapReduces.put(spec.getName(), spec);
   }
 
@@ -133,8 +133,8 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
 
     SparkSpecification spec = configurer.createSpecification();
     streams.putAll(spec.getStreams());
-    dataSetModules.putAll(spec.getDataSetModules());
-    dataSetInstances.putAll(spec.getDataSetInstances());
+    dataSetModules.putAll(spec.getDatasetModules());
+    dataSetInstances.putAll(spec.getDatasetSpecs());
     sparks.put(spec.getName(), spec);
   }
 
@@ -156,8 +156,8 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
     for (Map.Entry<String, HttpServiceHandlerSpecification> handlerSpecEntry : spec.getHandlers().entrySet()) {
       HttpServiceHandlerSpecification handlerSpec = handlerSpecEntry.getValue();
       streams.putAll(handlerSpec.getStreams());
-      dataSetModules.putAll(handlerSpec.getDataSetModules());
-      dataSetInstances.putAll(handlerSpec.getDataSetInstances());
+      dataSetModules.putAll(handlerSpec.getDatasetModules());
+      dataSetInstances.putAll(handlerSpec.getDatasetSpecs());
     }
     services.put(spec.getName(), spec);
   }
@@ -169,8 +169,8 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
     worker.configure(configurer);
     WorkerSpecification spec = configurer.createSpecification();
     streams.putAll(spec.getStreams());
-    dataSetModules.putAll(spec.getDataSetModules());
-    dataSetInstances.putAll(spec.getDataSetInstances());
+    dataSetModules.putAll(spec.getDatasetModules());
+    dataSetInstances.putAll(spec.getDatasetSpecs());
     workers.put(spec.getName(), spec);
   }
 

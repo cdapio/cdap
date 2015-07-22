@@ -89,8 +89,8 @@ public final class FlowletDefinition {
                                                        flowletSpec.getDescription(), flowletSpec.getFailurePolicy(),
                                                        datasets, properties,
                                                        flowletSpec.getResources(),
-                                                       flowletSpec.getStreams(), flowletSpec.getDataSetModules(),
-                                                       flowletSpec.getDataSetInstances());
+                                                       flowletSpec.getStreams(), flowletSpec.getDatasetModules(),
+                                                       flowletSpec.getDatasetSpecs());
   }
 
   /**

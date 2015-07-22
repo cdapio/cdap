@@ -428,8 +428,8 @@ public class DefaultStore implements Store {
                                                                        workerSpec.getResources(),
                                                                        instances,
                                                                        workerSpec.getStreams(),
-                                                                       workerSpec.getDataSetModules(),
-                                                                       workerSpec.getDataSetInstances());
+                                                                       workerSpec.getDatasetModules(),
+                                                                       workerSpec.getDatasetSpecs());
         ApplicationSpecification newAppSpec = replaceWorkerInAppSpec(appSpec, id, newSpecification);
         replaceAppSpecInProgramJar(id, newAppSpec);
         mds.apps.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);

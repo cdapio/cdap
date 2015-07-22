@@ -124,11 +124,11 @@ public final class HttpServiceHandlerSpecification implements PropertyProvider, 
     return streams;
   }
 
-  public Map<String, String> getDataSetModules() {
+  public Map<String, String> getDatasetModules() {
     return dataSetModules;
   }
 
-  public Map<String, DatasetCreationSpec> getDataSetInstances() {
+  public Map<String, DatasetCreationSpec> getDatasetSpecs() {
     return dataSetInstances;
   }
 }

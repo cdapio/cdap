@@ -103,8 +103,8 @@ public class WorkerProgramRunner implements ProgramRunner {
                                                                 workerSpec.getDescription(), workerSpec.getProperties(),
                                                                 workerSpec.getDatasets(), newResources,
                                                                 Integer.valueOf(instances),
-                                                                workerSpec.getStreams(), workerSpec.getDataSetModules(),
-                                                                workerSpec.getDataSetInstances());
+                                                                workerSpec.getStreams(), workerSpec.getDatasetModules(),
+                                                                workerSpec.getDatasetSpecs());
 
     AdapterDefinition adapterSpec = getAdapterSpecification(options.getArguments());
 

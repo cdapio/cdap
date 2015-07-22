@@ -78,8 +78,8 @@ public class DistributedWorkerProgramRunner extends AbstractDistributedProgramRu
                                                                 workerSpec.getDescription(), workerSpec.getProperties(),
                                                                 workerSpec.getDatasets(), newResources,
                                                                 Integer.valueOf(instances),
-                                                                workerSpec.getStreams(), workerSpec.getDataSetModules(),
-                                                                workerSpec.getDataSetInstances());
+                                                                workerSpec.getStreams(), workerSpec.getDatasetModules(),
+                                                                workerSpec.getDatasetSpecs());
 
     LOG.info("Launching distributed worker {}", program.getName());
 

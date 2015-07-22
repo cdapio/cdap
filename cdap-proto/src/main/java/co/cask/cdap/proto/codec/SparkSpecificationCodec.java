@@ -54,8 +54,8 @@ public final class SparkSpecificationCodec extends AbstractSpecificationCodec<Sp
       jsonObj.add("executorResources", context.serialize(src.getExecutorResources()));
     }
     jsonObj.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
-    jsonObj.add("dataSetModules", serializeMap(src.getDataSetModules(), context, String.class));
-    jsonObj.add("dataSetInstances", serializeMap(src.getDataSetInstances(), context, DatasetCreationSpec.class));
+    jsonObj.add("dataSetModules", serializeMap(src.getDatasetModules(), context, String.class));
+    jsonObj.add("dataSetInstances", serializeMap(src.getDatasetSpecs(), context, DatasetCreationSpec.class));
 
     return jsonObj;
   }
