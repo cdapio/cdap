@@ -124,7 +124,7 @@ angular.module(PKG.name + '.commons')
         $scope.$watch('properties', formatSchema, true);
 
         $scope.emptyRowClick = function (property, index) {
-          if (!property.empty || index !== filledCount) {
+          if (!property.empty || index !== filledCount || $scope.disabled) {
             return;
           }
 
