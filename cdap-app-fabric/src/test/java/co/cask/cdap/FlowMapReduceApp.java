@@ -34,5 +34,7 @@ public class FlowMapReduceApp extends AbstractApplication {
     addFlow(new AllProgramsApp.NoOpFlow());
     addMapReduce(new AllProgramsApp.NoOpMR());
     addService(new AllProgramsApp.NoOpService());
+    addWorker(new AllProgramsApp.NoOpWorker());
+    addSpark(new AllProgramsApp.NoOpSpark());
   }
 }

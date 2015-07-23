@@ -324,15 +324,17 @@ public class DefaultStore implements Store {
                                                                       .putAll(existingAppSpec.getWorkflows())
                                                                       .putAll(existingAppSpec.getFlows())
                                                                       .putAll(existingAppSpec.getServices())
+                                                                      .putAll(existingAppSpec.getWorkers())
                                                                       .build();
 
       ImmutableMap<String, ProgramSpecification> newSpec = new ImmutableMap.Builder<String, ProgramSpecification>()
                                                                       .putAll(appSpec.getMapReduce())
-                                                                      .putAll(existingAppSpec.getSpark())
+                                                                      .putAll(appSpec.getSpark())
                                                                       .putAll(appSpec.getWorkflows())
                                                                       .putAll(appSpec.getFlows())
                                                                       .putAll(appSpec.getServices())
-                                                                      .build();
+                                                                      .putAll(appSpec.getWorkers())
+        .build();
 
 
       MapDifference<String, ProgramSpecification> mapDiff = Maps.difference(existingSpec, newSpec);
