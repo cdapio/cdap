@@ -89,12 +89,18 @@ public class HBaseTable extends BufferingTable {
 
   public HBaseTable(DatasetContext datasetContext, DatasetSpecification spec,
                     CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
+    this(datasetContext, spec, cConf, hConf, tableUtil, null);
+  }
+
+  public HBaseTable(DatasetContext datasetContext, DatasetSpecification spec,
+                    CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil,
+                    String snapshotVersion) throws IOException {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), spec.getName()),
-          ConflictDetection.valueOf(spec.getProperty(PROPERTY_CONFLICT_LEVEL, ConflictDetection.ROW.name())),
-          HBaseTableAdmin.supportsReadlessIncrements(spec),
-          spec.getProperty(Table.PROPERTY_SCHEMA) == null ?
-            null : Schema.parseJson(spec.getProperty(Table.PROPERTY_SCHEMA)),
-          spec.getProperty(Table.PROPERTY_SCHEMA_ROW_FIELD));
+      ConflictDetection.valueOf(spec.getProperty(PROPERTY_CONFLICT_LEVEL, ConflictDetection.ROW.name())),
+      HBaseTableAdmin.supportsReadlessIncrements(spec),
+      spec.getProperty(Table.PROPERTY_SCHEMA) == null ?
+        null : Schema.parseJson(spec.getProperty(Table.PROPERTY_SCHEMA)),
+      spec.getProperty(Table.PROPERTY_SCHEMA_ROW_FIELD), snapshotVersion);
     TableId tableId = TableId.from(datasetContext.getNamespaceId(), spec.getName());
     HTable hTable = tableUtil.createHTable(hConf, tableId);
     // todo: make configurable

@@ -80,6 +80,12 @@ public class InMemoryTable extends BufferingTable {
           level, false, schema, schemaRowField);
   }
 
+  public InMemoryTable(DatasetContext datasetContext, String name, ConflictDetection level,
+                       CConfiguration cConf, Schema schema, String schemaRowField, String snapshotVersion) {
+    super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), name),
+      level, false, schema, schemaRowField, snapshotVersion);
+  }
+
   @Override
   public void startTx(Transaction tx) {
     super.startTx(tx);

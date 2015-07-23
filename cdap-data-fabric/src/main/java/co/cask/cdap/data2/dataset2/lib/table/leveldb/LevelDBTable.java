@@ -50,8 +50,14 @@ public class LevelDBTable extends BufferingTable {
   public LevelDBTable(DatasetContext datasetContext, String tableName, ConflictDetection level,
                       LevelDBTableService service, CConfiguration cConf,
                       Schema schema, String schemaRowField) throws IOException {
+    this(datasetContext, tableName, level, service, cConf, schema, schemaRowField, null);
+  }
+
+  public LevelDBTable(DatasetContext datasetContext, String tableName, ConflictDetection level,
+                      LevelDBTableService service, CConfiguration cConf,
+                      Schema schema, String schemaRowField, String snapshotVersion) throws IOException {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), tableName), level,
-          false, schema, schemaRowField);
+      false, schema, schemaRowField, snapshotVersion);
     this.core = new LevelDBTableCore(getTableName(), service);
   }
 
