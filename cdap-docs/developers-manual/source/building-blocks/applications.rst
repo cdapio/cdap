@@ -142,3 +142,4 @@ usage of the dataset. It is also used during the runtime to get the dataset inst
     }
   }
 
+An example demonstrating the usage of a configuration is the :ref:`WordCount example <examples-word-count>`.
