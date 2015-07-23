@@ -102,6 +102,7 @@ var Documentation = {
     this.fixFirefoxAnchorBug();
     this.highlightSearchWords();
     this.initIndexTable();
+    this.hidePageNavigation();
   },
 
   /**
