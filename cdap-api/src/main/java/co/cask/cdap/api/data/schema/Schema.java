@@ -119,7 +119,7 @@ public final class Schema {
   }
 
   /**
-   * Parse the given json representation into a schema object.
+   * Parse the given JSON representation, as returned by {@link #toString()} into a Schema object.
    *
    * @param schemaJson the json representation of the schema
    * @return the json representation parsed into a schema object
@@ -473,6 +473,9 @@ public final class Schema {
     return (unionSchemas == null || idx < 0 || unionSchemas.size() <= idx) ? null : unionSchemas.get(idx);
   }
 
+  /**
+   * @return a JSON representation of this schema, which can be parsed with {@link #parseJson}
+   */
   @Override
   public String toString() {
     // The follow logic is thread safe, as all the fields buildString() needs are immutable.

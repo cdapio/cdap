@@ -34,9 +34,9 @@ import com.google.common.collect.Maps;
 import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.File;
 import java.io.IOException;
@@ -101,7 +101,7 @@ public class DefaultStreamWriter implements StreamWriter {
   private void writeToStream(Id.Stream stream, HttpRequest request) throws IOException {
     HttpResponse response = HttpRequests.execute(request);
     int responseCode = response.getResponseCode();
-    if (responseCode == HttpResponseStatus.NOT_FOUND.code()) {
+    if (responseCode == HttpResponseStatus.NOT_FOUND.getCode()) {
       throw new IOException(String.format("Stream %s not found", stream));
     }
 
