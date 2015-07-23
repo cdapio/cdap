@@ -28,8 +28,14 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.WorkflowTokenDetail;
+import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
@@ -227,7 +233,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Category(XSlowTests.class)
   @Test
-  public void testDeployWorkflowApp() throws InterruptedException {
+  public void testDeployWorkflowApp() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppWithSchedule.class);
     WorkflowManager wfmanager = applicationManager.getWorkflowManager("SampleWorkflow");
     List<ScheduleSpecification> schedules = wfmanager.getSchedules();
@@ -237,19 +243,17 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertFalse(scheduleName.isEmpty());
     wfmanager.getSchedule(scheduleName).resume();
 
-    List<RunRecord> history;
-    int workflowRuns;
-    workFlowHistoryCheck(5, wfmanager, 0);
+    waitForWorkflowRuns(wfmanager, 0);
 
     String status = wfmanager.getSchedule(scheduleName).status(200);
     Assert.assertEquals("SCHEDULED", status);
 
     wfmanager.getSchedule(scheduleName).suspend();
-    workFlowStatusCheck(5, scheduleName, wfmanager, "SUSPENDED");
+    waitForScheduleState(scheduleName, wfmanager, Scheduler.ScheduleState.SUSPENDED);
 
     TimeUnit.SECONDS.sleep(3);
-    history = wfmanager.getHistory();
-    workflowRuns = history.size();
+    List<RunRecord> history = wfmanager.getHistory();
+    int workflowRuns = history.size();
 
     //Sleep for some time and verify there are no more scheduled jobs after the suspend.
     TimeUnit.SECONDS.sleep(10);
@@ -259,9 +263,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     wfmanager.getSchedule(scheduleName).resume();
 
     //Check that after resume it goes to "SCHEDULED" state
-    workFlowStatusCheck(5, scheduleName, wfmanager, "SCHEDULED");
+    waitForScheduleState(scheduleName, wfmanager, Scheduler.ScheduleState.SCHEDULED);
 
-    workFlowHistoryCheck(5, wfmanager, workflowRunsAfterSuspend);
+    waitForWorkflowRuns(wfmanager, workflowRunsAfterSuspend);
 
     //check scheduled state
     Assert.assertEquals("SCHEDULED", wfmanager.getSchedule(scheduleName).status(200));
@@ -273,36 +277,55 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     wfmanager.getSchedule(scheduleName).suspend();
 
     //Check that after suspend it goes to "SUSPENDED" state
-    workFlowStatusCheck(5, scheduleName, wfmanager, "SUSPENDED");
+    waitForScheduleState(scheduleName, wfmanager, Scheduler.ScheduleState.SUSPENDED);
+
+    // test workflow token while suspended
+    String pid = history.get(0).getPid();
+    WorkflowTokenDetail workflowToken = wfmanager.getToken(pid, WorkflowToken.Scope.SYSTEM, null);
+    Assert.assertEquals(0, workflowToken.getTokenData().size());
+    workflowToken = wfmanager.getToken(pid, null, null);
+    Assert.assertEquals(2, workflowToken.getTokenData().size());
+
+    // wait till workflow finishes execution
+    waitForWorkflowStatus(wfmanager, ProgramRunStatus.COMPLETED);
+
+    // verify workflow token after workflow completion
+    WorkflowTokenNodeDetail workflowTokenAtNode =
+      wfmanager.getTokenAtNode(pid, AppWithSchedule.DummyAction.class.getSimpleName(),
+                               WorkflowToken.Scope.USER, "finished");
+    Assert.assertEquals(true, Boolean.parseBoolean(workflowTokenAtNode.getTokenDataAtNode().get("finished")));
+    workflowToken = wfmanager.getToken(pid, null, null);
+    Assert.assertEquals(false, Boolean.parseBoolean(workflowToken.getTokenData().get("running").get(0).getValue()));
   }
 
-  private void workFlowHistoryCheck(int retries, WorkflowManager wfmanager, int expected) throws InterruptedException {
-    int trial = 0;
-    List<RunRecord> history;
-    int workflowRuns = 0;
-    while (trial++ < retries) {
-      history = wfmanager.getHistory();
-      workflowRuns = history.size();
-      if (workflowRuns > expected) {
-        return;
+  private void waitForWorkflowStatus(final WorkflowManager wfmanager, ProgramRunStatus expected) throws Exception {
+    Tasks.waitFor(expected, new Callable<ProgramRunStatus>() {
+      @Override
+      public ProgramRunStatus call() throws Exception {
+        List<RunRecord> history = wfmanager.getHistory();
+        RunRecord runRecord = history.get(history.size() - 1);
+        return runRecord.getStatus();
       }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    Assert.assertTrue(workflowRuns > expected);
+    }, 5, TimeUnit.SECONDS, 30, TimeUnit.MILLISECONDS);
   }
 
-  private void workFlowStatusCheck(int retries, String scheduleId, WorkflowManager wfmanager,
-                                   String expected) throws InterruptedException {
-    int trial = 0;
-    String status = null;
-    while (trial++ < retries) {
-      status = wfmanager.getSchedule(scheduleId).status(200);
-      if (status.equals(expected)) {
-        return;
+  private void waitForWorkflowRuns(final WorkflowManager wfmanager, int expected) throws Exception {
+    Tasks.waitFor(expected, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return wfmanager.getHistory().size();
       }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    Assert.assertEquals(status, expected);
+    }, 5, TimeUnit.SECONDS, 30, TimeUnit.MILLISECONDS);
+  }
+
+  private void waitForScheduleState(final String scheduleId, final WorkflowManager wfmanager,
+                                    Scheduler.ScheduleState expected) throws Exception {
+    Tasks.waitFor(expected, new Callable<Scheduler.ScheduleState>() {
+      @Override
+      public Scheduler.ScheduleState call() throws Exception {
+        return Scheduler.ScheduleState.valueOf(wfmanager.getSchedule(scheduleId).status(200));
+      }
+    }, 5, TimeUnit.SECONDS, 30, TimeUnit.MILLISECONDS);
   }
 
 

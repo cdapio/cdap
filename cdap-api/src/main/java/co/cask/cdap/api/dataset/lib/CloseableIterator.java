@@ -19,9 +19,10 @@ package co.cask.cdap.api.dataset.lib;
 import java.util.Iterator;
 
 /**
- * Iterator that can be closed
- * @param <T>
+ * Iterator that can be closed.
+ *
+ * @param <T> Type of elements returned by this iterator
  */
 public interface CloseableIterator<T> extends Iterator<T> {
- void close();
+  void close();
 }

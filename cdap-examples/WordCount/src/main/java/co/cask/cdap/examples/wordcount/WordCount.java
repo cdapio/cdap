@@ -16,34 +16,93 @@
 
 package co.cask.cdap.examples.wordcount;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 
 /**
- * Word count sample Application.
+ * Word count sample Application. Includes a configuration class which can be used to pass in a configuration during
+ * application deployment time.
+ *
+ * @see {@link WordCountConfig}
  */
-public class WordCount extends AbstractApplication {
+public class WordCount extends AbstractApplication<WordCount.WordCountConfig> {
+
+  /**
+   * Word Count Application's configuration class.
+   */
+  public static class WordCountConfig extends Config {
+    private String stream;
+    private String wordStatsTable;
+    private String wordCountTable;
+    private String uniqueCountTable;
+    private String wordAssocTable;
+
+    /**
+     * Set default values for the configuration variables.
+     */
+    public WordCountConfig() {
+      this.stream = "wordStream";
+      this.wordStatsTable = "wordStats";
+      this.wordCountTable = "wordCounts";
+      this.uniqueCountTable = "unqiueCount";
+      this.wordAssocTable = "wordAssocs";
+    }
+
+    /**
+     * Used only for unit testing.
+     */
+    public WordCountConfig(String stream, String wordStatsTable, String wordCountTable, String uniqueCountTable,
+                           String wordAssocTable) {
+      this.stream = stream;
+      this.wordStatsTable = wordStatsTable;
+      this.wordCountTable = wordCountTable;
+      this.uniqueCountTable = uniqueCountTable;
+      this.wordAssocTable = wordAssocTable;
+    }
+
+    public String getStream() {
+      return stream;
+    }
+
+    public String getWordStatsTable() {
+      return wordStatsTable;
+    }
+
+    public String getWordCountTable() {
+      return wordCountTable;
+    }
+
+    public String getUniqueCountTable() {
+      return uniqueCountTable;
+    }
+
+    public String getWordAssocTable() {
+      return wordAssocTable;
+    }
+  }
 
   @Override
   public void configure() {
+    WordCountConfig config = getConfig();
     setName("WordCount");
     setDescription("Example Word Count Application");
-    
+
     // Ingest data into the Application via Streams
-    addStream(new Stream("wordStream"));
+    addStream(new Stream(config.getStream()));
 
     // Store processed data in Datasets
-    createDataset("wordStats", Table.class);
-    createDataset("wordCounts", KeyValueTable.class);
-    createDataset("uniqueCount", UniqueCountTable.class);
-    createDataset("wordAssocs", AssociationTable.class);
-    
+    createDataset(config.getWordStatsTable(), Table.class);
+    createDataset(config.getWordCountTable(), KeyValueTable.class);
+    createDataset(config.getUniqueCountTable(), UniqueCountTable.class);
+    createDataset(config.getWordAssocTable(), AssociationTable.class);
+
     // Process events in real-time using Flows
-    addFlow(new WordCounter());
+    addFlow(new WordCounter(config));
 
     // Retrieve the processed data using a Service
-    addService(new RetrieveCounts());
+    addService(new RetrieveCounts(config));
   }
 }

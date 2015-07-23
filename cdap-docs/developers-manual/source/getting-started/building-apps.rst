@@ -59,6 +59,8 @@ Accessing CLI, curl and the SDK bin
   Note that under Windows, you'll need to create a new command line window in order to see
   this change to the path variable.
 
+.. _cdap-building-running-example:
+
 Building an Example Application
 -------------------------------
 
@@ -68,6 +70,8 @@ From the example's project root, build an example with the
 	$ mvn clean package
 
 
+.. _cdap-building-running-starting:
+
 Starting CDAP
 -------------
 
@@ -76,6 +80,8 @@ follow the instructions for :ref:`Starting and Stopping Standalone CDAP. <start-
 
 If you can reach the CDAP UI through a browser at `http://localhost:9999/ <http://localhost:9999/>`__, 
 CDAP is running.
+
+.. _cdap-building-running-deploying:
 
 Deploying an Application
 ------------------------
@@ -117,6 +123,8 @@ Once CDAP is started, you can deploy an example JAR by any of these methods:
       Deploy Complete
 
 
+.. _cdap-building-running-starting-application:
+
 Starting an Application
 -----------------------
 
@@ -145,6 +153,8 @@ Once an application is deployed, there are multiple methods for starting an appl
       - Name of the *adapter*, *flow*, *MapReduce*, *service*, *spark*, *worker* or *workflow* being called
       
 
+.. _cdap-building-running-stopping:
+
 Stopping an Application
 -----------------------
 
@@ -157,6 +167,8 @@ Once an application is deployed:
     $ cdap-cli.sh stop <program-type> <app-id.program-id>
     
     
+.. _cdap-building-running-removing:
+
 Removing an Application
 -----------------------
 
