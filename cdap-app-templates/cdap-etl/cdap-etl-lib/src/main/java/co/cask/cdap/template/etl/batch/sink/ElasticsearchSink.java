@@ -74,8 +74,6 @@ public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Wri
     Job job = context.getHadoopJob();
     job.setSpeculativeExecution(false);
     Configuration conf = job.getConfiguration();
-    //conf.setBoolean("mapred.map.tasks.speculative.execution", false);
-    //conf.setBoolean("mapred.reduce.tasks.speculative.execution", false);
     conf.set("es.nodes", config.hostname);
     conf.set("es.resource", getResource());
     conf.set("es.input.json", "yes");
