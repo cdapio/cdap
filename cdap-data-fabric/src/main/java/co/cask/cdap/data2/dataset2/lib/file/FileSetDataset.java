@@ -193,9 +193,7 @@ public final class FileSetDataset implements FileSet {
         return getFileSystemPath(location);
       }
     }));
-    if (!inputs.isEmpty()) {
-      config.put(FileInputFormat.INPUT_DIR, inputs);
-    }
+    config.put(FileInputFormat.INPUT_DIR, inputs);
     return config.build();
   }
 
