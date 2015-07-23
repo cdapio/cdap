@@ -41,15 +41,21 @@ import co.cask.cdap.api.flow.AbstractFlow;
  */
 public class WordCounter extends AbstractFlow {
 
+  private final WordCount.WordCountConfig config;
+
+  public WordCounter(WordCount.WordCountConfig config) {
+    this.config = config;
+  }
+
   @Override
   protected void configureFlow() {
     setName("WordCounter");
     setDescription("Example Word Count Flow");
-    addFlowlet("splitter", new WordSplitter());
-    addFlowlet("associator", new WordAssociator());
-    addFlowlet("counter", new Counter());
-    addFlowlet("unique", new UniqueCounter());
-    connectStream("wordStream", "splitter");
+    addFlowlet("splitter", new WordSplitter(config.getWordStatsTable()));
+    addFlowlet("associator", new WordAssociator(config.getWordAssocTable()));
+    addFlowlet("counter", new Counter(config.getWordCountTable()));
+    addFlowlet("unique", new UniqueCounter(config.getUniqueCountTable()));
+    connectStream(config.getStream(), "splitter");
     connect("splitter", "associator");
     connect("splitter", "counter");
     connect("counter", "unique");

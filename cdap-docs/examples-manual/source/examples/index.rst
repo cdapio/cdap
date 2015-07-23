@@ -74,6 +74,7 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
   * - :doc:`Word Count<word-count>`
     - A simple application that counts words, and tracks word associations and unique words seen on the stream.
       It demonstrates the power of using datasets and how they can be employed to simplify storing complex data.
+      It uses a configuration class to configure the application at deployment time.
 
 
 .. rubric:: What's Next

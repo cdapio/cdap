@@ -17,10 +17,12 @@ package co.cask.cdap.examples.wordcount;
 
 import co.cask.cdap.api.annotation.Output;
 import co.cask.cdap.api.annotation.ProcessInput;
-import co.cask.cdap.api.annotation.UseDataSet;
+import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.dataset.table.Increment;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
+import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
+import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 
@@ -32,16 +34,34 @@ import java.util.List;
  * Word splitter Flowlet.
  */
 public class WordSplitter extends AbstractFlowlet {
-  @UseDataSet("wordStats")
   private Table wordStatsTable;
   @Output("wordOut")
   private OutputEmitter<String> wordOutput;
   @Output("wordArrayOut")
   private OutputEmitter<List<String>> wordListOutput;
 
+  @Property
+  private final String wordStatsTableName;
+
+  public WordSplitter(String wordStatsTableName) {
+    this.wordStatsTableName = wordStatsTableName;
+  }
+
+  @Override
+  public void configure(FlowletConfigurer configurer) {
+    super.configure(configurer);
+    useDatasets(wordStatsTableName);
+  }
+
+  @Override
+  public void initialize(FlowletContext context) throws Exception {
+    super.initialize(context);
+    wordStatsTable = context.getDataset(wordStatsTableName);
+  }
+
   @ProcessInput
   public void process(StreamEvent event) {
-    
+
     // Input is a String, need to split it by whitespace
     String inputString = Charset.forName("UTF-8")
       .decode(event.getBody()).toString();
