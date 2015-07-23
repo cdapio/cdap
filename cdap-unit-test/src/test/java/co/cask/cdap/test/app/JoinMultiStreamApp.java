@@ -22,8 +22,7 @@ import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
@@ -72,26 +71,22 @@ public class JoinMultiStreamApp extends AbstractApplication {
   /**
    *
    */
-  public static class JoinMultiFlow implements Flow {
+  public static class JoinMultiFlow extends AbstractFlow {
 
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("JoinMultiFlow")
-        .setDescription("JoinMultiFlow")
-        .withFlowlets()
-          .add(new StreamSource("input1"))
-          .add(new StreamSource("input2"))
-          .add(new StreamSource("input3"))
-          .add(new Terminal())
-        .connect()
-          .fromStream("s1").to("input1")
-          .fromStream("s2").to("input2")
-          .fromStream("s3").to("input3")
-          .from("input1").to("Terminal")
-          .from("input2").to("Terminal")
-          .from("input3").to("Terminal")
-        .build();
+    protected void configureFlow() {
+      setName("JoinMultiFlow");
+      setDescription("JoinMultiFlow");
+      addFlowlet(new StreamSource("input1"));
+      addFlowlet(new StreamSource("input2"));
+      addFlowlet(new StreamSource("input3"));
+      addFlowlet(new Terminal());
+      connectStream("s1", "input1");
+      connectStream("s2", "input2");
+      connectStream("s3", "input3");
+      connect("input1", "Terminal");
+      connect("input2", "Terminal");
+      connect("input3", "Terminal");
     }
   }
 

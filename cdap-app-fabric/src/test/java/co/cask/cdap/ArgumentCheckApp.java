@@ -19,8 +19,7 @@ package co.cask.cdap;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.Tick;
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.FlowletException;
@@ -50,18 +49,15 @@ public class ArgumentCheckApp extends AbstractApplication {
     addService(new BasicService("SimpleService", new DummyHandler()));
   }
 
-  private class SimpleFlow implements Flow {
+  private class SimpleFlow extends AbstractFlow {
+
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("SimpleFlow")
-        .setDescription("Uses user passed value")
-        .withFlowlets()
-          .add(new SimpleGeneratorFlowlet())
-          .add(new SimpleConsumerFlowlet())
-        .connect()
-          .from(new SimpleGeneratorFlowlet()).to(new SimpleConsumerFlowlet())
-        .build();
+    protected void configureFlow() {
+      setName("SimpleFlow");
+      setDescription("Uses user passed value");
+      addFlowlet(new SimpleGeneratorFlowlet());
+      addFlowlet(new SimpleConsumerFlowlet());
+      connect(new SimpleGeneratorFlowlet(), new SimpleConsumerFlowlet());
     }
   }
 

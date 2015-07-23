@@ -21,8 +21,7 @@ import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -68,16 +67,14 @@ public class DummyAppWithTrackingTable extends AbstractApplication {
   /**
    * A flow.
    */
-  public static class DummyFlow implements Flow {
+  public static class DummyFlow extends AbstractFlow {
 
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("dummy-flow")
-        .setDescription("a dummy flow that does not much")
-        .withFlowlets().add("fwlt", new DummyFlowlet())
-        .connect().fromStream("xx").to("fwlt")
-        .build();
+    protected void configureFlow() {
+      setName("dummy-flow");
+      setDescription("a dummy flow that does not much");
+      addFlowlet("fwlt", new DummyFlowlet());
+      connectStream("xx", "fwlt");
     }
   }
 

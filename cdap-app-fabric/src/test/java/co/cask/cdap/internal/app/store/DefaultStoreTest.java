@@ -36,7 +36,7 @@ import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -419,7 +419,7 @@ public class DefaultStoreTest {
     }
   }
 
-  private static class FlowImpl implements co.cask.cdap.api.flow.Flow {
+  private static class FlowImpl extends AbstractFlow {
     private String name;
 
     private FlowImpl(String name) {
@@ -427,13 +427,11 @@ public class DefaultStoreTest {
     }
 
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName(name)
-        .setDescription("Flow for counting words")
-        .withFlowlets().add(new FlowletImpl("flowlet1"))
-        .connect().from(new co.cask.cdap.api.data.stream.Stream("stream1")).to(new FlowletImpl("flowlet1"))
-        .build();
+    protected void configureFlow() {
+      setName(name);
+      setDescription("Flow for counting words");
+      addFlowlet(new FlowletImpl("flowlet1"));
+      connectStream("stream1", new FlowletImpl("flowlet1"));
     }
   }
 

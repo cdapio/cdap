@@ -22,8 +22,7 @@ import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
@@ -50,32 +49,29 @@ public class ToyApp extends AbstractApplication {
   /**
    *
    */
-  public static final class ToyFlow implements Flow {
+  public static final class ToyFlow extends AbstractFlow {
+
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("ToyFlow")
-        .setDescription("Complex Toy Flow")
-        .withFlowlets()
-          .add(new A())
-          .add(new B())
-          .add(new C())
-          .add(new D())
-          .add(new E())
-          .add(new F())
-          .add(new G())
-        .connect()
-          .fromStream("X").to("A")
-          .fromStream("Y").to("B")
-          .from("A").to("C")
-          .from("B").to("E")
-          .from("A").to("E")
-          .from("C").to("D")
-          .from("C").to("F")
-          .from("D").to("G")
-          .from("F").to("G")
-          .from("E").to("G")
-        .build();
+    protected void configureFlow() {
+      setName("ToyFlow");
+      setDescription("Complex Toy Flow");
+      addFlowlet(new A());
+      addFlowlet(new B());
+      addFlowlet(new C());
+      addFlowlet(new D());
+      addFlowlet(new E());
+      addFlowlet(new F());
+      addFlowlet(new G());
+      connectStream("X", "A");
+      connectStream("Y", "B");
+      connect("A", "C");
+      connect("B", "E");
+      connect("A", "E");
+      connect("C", "D");
+      connect("C", "F");
+      connect("D", "G");
+      connect("F", "G");
+      connect("E", "G");
     }
   }
 

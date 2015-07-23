@@ -22,8 +22,7 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -274,17 +273,14 @@ public class BundleJarApp extends AbstractApplication {
   /**
    * Flow that writes from simpleInputStream to simpleInputDataset.
    */
-  public static class SimpleFlow implements Flow {
-    private static final Logger LOG = LoggerFactory.getLogger(SimpleFlow.class);
+  public static class SimpleFlow extends AbstractFlow {
 
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("SimpleFlow")
-        .setDescription("Description")
-        .withFlowlets().add("simpleFlowlet", new SimpleFlowlet())
-        .connect().from(new Stream("simpleInputStream")).to("simpleFlowlet")
-        .build();
+    protected void configureFlow() {
+      setName("SimpleFlow");
+      setDescription("Description");
+      addFlowlet("simpleFlowlet", new SimpleFlowlet());
+      connectStream("simpleInputStream", "simpleFlowlet");
     }
 
     private static class SimpleFlowlet extends AbstractFlowlet {

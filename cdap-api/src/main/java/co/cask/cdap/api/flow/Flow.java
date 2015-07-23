@@ -23,7 +23,7 @@ import co.cask.cdap.api.Processor;
  * wired together into a Direct Acylic Graph (DAG).
  *
  * <p>
- *   Implement this interface to create a flow. The {@link #configure()} method will be
+ *   Implement this interface to create a flow. The {@link #configure} method will be
  *   invoked during deployment time and it returns a {@link FlowSpecification} to specify how to
  *   configure the flow.
  * </p>
@@ -36,9 +36,7 @@ public interface Flow extends Processor {
   /**
    * Configure the {@link Flow} by returning a {@link FlowSpecification}.
    *
-   * @return An instance of {@link FlowSpecification}
-   * @deprecated Use {@link AbstractFlow#configureFlow} instead
+   * @param flowConfigurer {@link FlowConfigurer}
    */
-  @Deprecated
-  FlowSpecification configure();
+  void configure(FlowConfigurer flowConfigurer);
 }

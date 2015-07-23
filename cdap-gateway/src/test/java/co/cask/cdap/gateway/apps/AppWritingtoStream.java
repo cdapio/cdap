@@ -23,8 +23,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
@@ -135,15 +134,13 @@ public class AppWritingtoStream extends AbstractApplication {
     }
   }
 
-  private static final class SimpleFlow implements Flow {
+  private static final class SimpleFlow extends AbstractFlow {
 
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with().setName(FLOW).setDescription("").withFlowlets()
-        .add("flowlet", new StreamFlowlet())
-        .connect()
-        .fromStream(STREAM)
-        .to("flowlet").build();
+    protected void configureFlow() {
+      setName(FLOW);
+      addFlowlet("flowlet", new StreamFlowlet());
+      connectStream(STREAM, "flowlet");
     }
   }
 

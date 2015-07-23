@@ -16,27 +16,21 @@
 
 package co.cask.cdap.test;
 
-import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 
 /**
  *
  */
-public final class TestFlow implements Flow {
+public final class TestFlow extends AbstractFlow {
 
   public static final String NAME = "SomeFlow";
   public static final String INPUT_STREAM = "someStream";
 
   @Override
-  public FlowSpecification configure() {
-    return FlowSpecification.Builder.with()
-      .setName(NAME)
-      .setDescription("SomeDescription")
-      .withFlowlets()
-      .add("theFlowlet", new TestFlowlet())
-      .connect()
-      .from(new Stream(INPUT_STREAM)).to("theFlowlet")
-      .build();
+  protected void configureFlow() {
+    setName(NAME);
+    setDescription("SomeDescription");
+    addFlowlet("theFlowlet", new TestFlowlet());
+    connectStream(INPUT_STREAM, "theFlowlet");
   }
 }

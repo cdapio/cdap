@@ -21,8 +21,7 @@ import co.cask.cdap.api.annotation.Tick;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 
@@ -42,20 +41,17 @@ public class TestCountRandomApp extends AbstractApplication {
   }
 
 
-  private static class CountRandom implements Flow {
+  private static class CountRandom extends AbstractFlow {
+
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("CountRandom")
-        .setDescription("CountRandom")
-        .withFlowlets()
-        .add("source", new RandomSource())
-        .add("splitter", new NumberSplitter())
-        .add("counter", new NumberCounter())
-        .connect()
-        .from("source").to("splitter")
-        .from("splitter").to("counter")
-        .build();
+    protected void configureFlow() {
+      setName("CountRandom");
+      setDescription("CountRandom");
+      addFlowlet("source", new RandomSource());
+      addFlowlet("splitter", new NumberSplitter());
+      addFlowlet("counter", new NumberCounter());
+      connect("source", "splitter");
+      connect("splitter", "counter");
     }
   }
 

@@ -19,7 +19,7 @@ package co.cask.cdap.internal.app.verification;
 import co.cask.cdap.WebCrawlApp;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.flow.Flow;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
@@ -88,22 +88,18 @@ public class FlowVerificationTest {
     /**
      *
      */
-    public static class NoConsumerFlow implements Flow {
+    public static class NoConsumerFlow extends AbstractFlow {
 
       @Override
-      public FlowSpecification configure() {
-        return FlowSpecification.Builder.with()
-          .setName("NoConsumerFlow")
-          .setDescription("No consumer flow")
-          .withFlowlets()
-          .add("s1", new SourceFlowlet())
-          .add("s2", new SourceFlowlet())
-          .add("dest", new DestFlowlet())
-          .connect()
-          .fromStream("text").to("s1")
-          .fromStream("text").to("s2")
-          .from("s1").to("dest")
-          .build();
+      protected void configureFlow() {
+        setName("NoConsumerFlow");
+        setDescription("No consumer flow");
+        addFlowlet("s1", new SourceFlowlet());
+        addFlowlet("s2", new SourceFlowlet());
+        addFlowlet("dest", new DestFlowlet());
+        connectStream("text", "s1");
+        connectStream("text", "s2");
+        connect("s1", "dest");
       }
     }
 

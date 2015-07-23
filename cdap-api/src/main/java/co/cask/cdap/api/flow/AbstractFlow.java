@@ -23,15 +23,9 @@ import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
 /**
  * This abstract class provides a default implementation of {@link Flow} methods for easy extension.
  */
-public class AbstractFlow implements Flow {
+public abstract class AbstractFlow implements Flow {
 
   private FlowConfigurer configurer;
-
-  @Deprecated
-  @Override
-  public final FlowSpecification configure() {
-    return null;
-  }
 
   public final void configure(FlowConfigurer configurer) {
     this.configurer = configurer;
@@ -41,9 +35,7 @@ public class AbstractFlow implements Flow {
   /**
    * Configures the flow.
    */
-  protected void configureFlow() {
-
-  }
+  protected abstract void configureFlow();
 
   /**
    * Returns the {@link FlowConfigurer} used for configuration. Only available during configuration time.

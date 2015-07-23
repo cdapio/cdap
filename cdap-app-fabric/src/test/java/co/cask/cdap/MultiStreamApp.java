@@ -23,8 +23,7 @@ import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Increment;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.service.AbstractService;
@@ -62,18 +61,16 @@ public class MultiStreamApp extends AbstractApplication {
   /**
    *
    */
-  public static class CounterFlow implements Flow {
+  public static class CounterFlow extends AbstractFlow {
+
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("CounterFlow")
-        .setDescription("Flow for counting events")
-        .withFlowlets().add("counter1", new EventsCounter1())
-                       .add("counter2", new EventsCounter2())
-        .connect()
-          .fromStream("stream1").to("counter1")
-          .fromStream("stream3").to("counter2")
-        .build();
+    protected void configureFlow() {
+      setName("CounterFlow");
+      setDescription("Flow for counting events");
+      addFlowlet("counter1", new EventsCounter1());
+      addFlowlet("counter2", new EventsCounter2());
+      connectStream("stream1", "counter1");
+      connectStream("stream3", "counter2");
     }
   }
 

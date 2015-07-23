@@ -20,8 +20,7 @@ import co.cask.cdap.api.annotation.Batch;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import com.google.common.base.Charsets;
@@ -51,15 +50,14 @@ public class TestFlowStreamIntegrationApp extends AbstractApplication {
   /**
    * Stream test flow.
    */
-  public static class StreamTestFlow implements Flow {
+  public static class StreamTestFlow extends AbstractFlow {
+
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("StreamTestFlow")
-        .setDescription("Flow for testing batch stream dequeue")
-        .withFlowlets().add(new StreamReader())
-        .connect().fromStream("s1").to("StreamReader")
-        .build();
+    protected void configureFlow() {
+      setName("StreamTestFlow");
+      setDescription("Flow for testing batch stream dequeue");
+      addFlowlet(new StreamReader());
+      connectStream("s1", "StreamReader");
     }
   }
 

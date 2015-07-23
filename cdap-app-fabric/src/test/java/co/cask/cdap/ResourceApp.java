@@ -19,8 +19,7 @@ package co.cask.cdap;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
@@ -43,19 +42,16 @@ public class ResourceApp extends AbstractApplication {
   /**
    * Some flow
    */
-  public static final class ResourceFlow implements Flow {
+  public static final class ResourceFlow extends AbstractFlow {
+
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("ResourceFlow")
-        .setDescription("Simple Resource Flow")
-        .withFlowlets()
-          .add("A", new A())
-          .add("B", new B())
-        .connect()
-          .fromStream("X").to("A")
-          .fromStream("X").to("B")
-        .build();
+    protected void configureFlow() {
+      setName("ResourceFlow");
+      setDescription("Simple Resource Flow");
+      addFlowlet("A", new A());
+      addFlowlet("B", new B());
+      connectStream("X", "A");
+      connectStream("X", "B");
     }
   }
 

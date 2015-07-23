@@ -24,8 +24,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -76,20 +75,16 @@ public class AllProgramsApp extends AbstractApplication {
   /**
    *
    */
-  public static class NoOpFlow implements Flow {
+  public static class NoOpFlow extends AbstractFlow {
 
     public static final String NAME = "NoOpFlow";
 
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName(NAME)
-        .setDescription("NoOpflow")
-        .withFlowlets()
-          .add(A.NAME, new A())
-        .connect()
-          .fromStream(STREAM_NAME).to(A.NAME)
-        .build();
+    protected void configureFlow() {
+      setName(NAME);
+      setDescription("NoOpflow");
+      addFlowlet(A.NAME, new A());
+      connectStream(STREAM_NAME, A.NAME);
     }
   }
 
