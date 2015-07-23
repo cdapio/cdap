@@ -51,7 +51,7 @@ The calculated page rank data is stored in an ObjectStore dataset, *ranks*,
 with the total number of pages for a page rank stored in an additional ObjectStore dataset, *rankscount*.
 
 The ``RanksService`` and ``TotalPagesPRService`` Service
--------------------------------------------------
+--------------------------------------------------------
 
 This ``RanksService`` service has a ``rank`` endpoint to obtain the page rank of a given URL.
 This ``TotalPagesPRService`` service has a ``total`` endpoint to obtain the total number of pages with a given page rank.
