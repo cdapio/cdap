@@ -16,12 +16,14 @@
 
 package co.cask.cdap.explore.service;
 
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.service.datasets.EmailTableDefinition;
-import co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinition;
-import co.cask.cdap.explore.service.datasets.Record;
+import co.cask.cdap.explore.service.datasets.StructuredWritableDefinition;
+import co.cask.cdap.explore.service.datasets.TableWrapperDefinition;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
@@ -69,14 +71,43 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
     transactionManager.commit(tx1);
 
     table.postTxCommit();
-
-    Transaction tx2 = transactionManager.startShort(100);
-    table.startTx(tx2);
   }
 
   @AfterClass
   public static void stop() throws Exception {
     datasetFramework.deleteInstance(MY_TABLE);
+  }
+
+  @Test(expected = UnsupportedTypeException.class)
+  public void testStructuredRecordWritableFails() throws Exception {
+    Id.DatasetModule moduleId = Id.DatasetModule.from(NAMESPACE_ID, "StructuredWritable");
+    Id.DatasetInstance instanceId = Id.DatasetInstance.from(NAMESPACE_ID, "badtable");
+    datasetFramework.addModule(moduleId, new StructuredWritableDefinition.Module());
+    datasetFramework.addInstance("StructuredWritable", instanceId, DatasetProperties.EMPTY);
+
+    DatasetSpecification spec = datasetFramework.getDatasetSpec(instanceId);
+    try {
+      exploreTableManager.enableDataset(instanceId, spec);
+    } finally {
+      datasetFramework.deleteInstance(instanceId);
+      datasetFramework.deleteModule(moduleId);
+    }
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testMissingSchemaFails() throws Exception {
+    Id.DatasetModule moduleId = Id.DatasetModule.from(NAMESPACE_ID, "TableWrapper");
+    Id.DatasetInstance instanceId = Id.DatasetInstance.from(NAMESPACE_ID, "badtable");
+    datasetFramework.addModule(moduleId, new TableWrapperDefinition.Module());
+    datasetFramework.addInstance("TableWrapper", instanceId, DatasetProperties.EMPTY);
+
+    DatasetSpecification spec = datasetFramework.getDatasetSpec(instanceId);
+    try {
+      exploreTableManager.enableDataset(instanceId, spec);
+    } finally {
+      datasetFramework.deleteInstance(instanceId);
+      datasetFramework.deleteModule(moduleId);
+    }
   }
 
   @Test

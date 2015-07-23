@@ -168,8 +168,8 @@ Datasets that use ``StructuredRecord`` as the record type must also set the sche
                     .build());
 
 Failure to set the schema property will result in errors when enabling exploration on the dataset. The dataset will still
-be created, but it will not be explorable until the schema property is set correctly and another call to enable exploration
-on the dataset is made. In addition, it is up to the user to ensure that the schema set in the dataset properties
+be created, but it will not be explorable until the schema property is set correctly through the RESTful API.
+In addition, it is up to the user to ensure that the schema set in the dataset properties
 matches the schema of records returned by the dataset. Schema mismatches will result in runtime errors.
 
 The CDAP ``Table`` and ``ObjectMappedTable`` datasets implement ``RecordScannable`` in this way and can be used as references.

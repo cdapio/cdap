@@ -171,15 +171,24 @@ public class ExploreTableManager {
         throw new DatasetNotFoundException(datasetID);
       }
 
+      // CDAP-1573: all these instanceofs are a sign that this logic really belongs in each dataset instead of here
       // To be enabled for explore, a dataset must either be RecordScannable/Writable,
       // or it must be a FileSet or a PartitionedFileSet with explore enabled in it properties.
       if (dataset instanceof Table) {
         return createFromSchemaProperty(spec, datasetID, serdeProperties);
-      } else if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
-        Type recordType = dataset instanceof RecordScannable ?
+      }
+
+      boolean isRecordScannable = dataset instanceof RecordScannable;
+      boolean isRecordWritable = dataset instanceof RecordWritable;
+      if (isRecordScannable || isRecordWritable) {
+        Type recordType = isRecordScannable ?
           ((RecordScannable) dataset).getRecordType() : ((RecordWritable) dataset).getRecordType();
+
         // if the type is a structured record, use the schema property to create the table
         if (StructuredRecord.class.equals(recordType)) {
+          if (isRecordWritable) {
+            throw new UnsupportedTypeException("StructuredRecord is not supported as a type for RecordWritable.");
+          }
           return createFromSchemaProperty(spec, datasetID, serdeProperties);
         }
 
