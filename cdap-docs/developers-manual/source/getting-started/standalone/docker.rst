@@ -74,5 +74,4 @@ To use the **Docker image**:
 .. include:: ../start-stop-cdap.rst  
    :start-line: 4
 
-.. include:: ../building-apps.rst
-   :start-line: 7
+.. include:: building-apps.txt

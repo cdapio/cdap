@@ -82,10 +82,12 @@ scripts (``update-login.sh`` and ``send-events.sh``) are used to create a confli
 to write to two different columns of the same row at the same time.
 
 
-Building and Starting
-=====================
+.. |example| replace:: UserProfiles
+.. include:: building-starting-running-cdap.txt
 
-.. include:: building-and-starting.txt
+
+Building this Example
+=====================
 
 To observe conflict detection at both the row-level and column-level, you will need to modify 
 and build this example twice:
@@ -105,9 +107,8 @@ Before building the application, set the ``ConflictDetection`` appropriately in 
 - The first time you build the application, set the ``Table.PROPERTY_CONFLICT_LEVEL`` to
   ``ConflictDetection.ROW.name()``. 
 
-- Build the example (as described `below <#building-an-example-application>`__).
-- Start CDAP, deploy and start the application and its component as described below in 
-  `Running CDAP Applications`_\ .
+- Build the example (as described :ref:`Building an Example Application <cdap-building-running-example>`).
+- Start CDAP, deploy and start the application and its component.
   Make sure you start the flow and service as described below.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 - You should observe errors as described below, in the ``<CDAP-SDK-home>/logs/cdap-debug.log``.
@@ -124,15 +125,6 @@ Re-build the Application with Column-level Conflict Detection
 - Now, rebuild the application, setting the ``Table.PROPERTY_CONFLICT_LEVEL`` back to its
   original value, ``ConflictDetection.COLUMN.name()``.
 - Re-deploy and re-run the application. You should not see any errors in the log.    
-
-
-Running CDAP Applications
-=========================
-
-.. |example| replace:: UserProfiles
-
-.. include:: /../../developers-manual/source/getting-started/building-apps.rst
-   :start-line: 11
 
 
 Running the Example
@@ -236,8 +228,8 @@ concurrently without transaction conflicts.
 
 Stopping and Removing the Application
 =====================================
-Once done, you can stop the application as described above in `Stopping an Application. 
-<#stopping-an-application>`__ Here is an example-specific description of the steps:
+Once done, you can stop the application as described in :ref:`Stopping an Application 
+<cdap-building-running-stopping>`. Here is an example-specific description of the steps:
 
 **Stopping the Flow**
 
@@ -259,7 +251,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 **Removing the Application**
 
-You can now remove the application as described above, `Removing an Application <#removing-an-application>`__, or:
+You can now remove the application as described in :ref:`Removing an Application <cdap-building-running-removing>`, or:
 
 - Go to the *UserProfiles* `application overview page 
   <http://localhost:9999/ns/default/apps/UserProfiles/overview/status>`__,

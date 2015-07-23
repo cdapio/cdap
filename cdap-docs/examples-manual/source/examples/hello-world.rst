@@ -68,19 +68,8 @@ We will see below how to retrieve this metric using the
 :ref:`http-restful-api-metrics`.
 
 
-Building and Starting
-=====================
-
-.. include:: building-and-starting.txt
-
-
-Running CDAP Applications
-=========================
-
 .. |example| replace:: HelloWorld
-
-.. include:: /../../developers-manual/source/getting-started/building-apps.rst
-   :start-line: 11
+.. include:: building-starting-running-cdap.txt
 
 
 Running the Example
@@ -189,8 +178,8 @@ The results you receive will vary depending on the entries you have made to the 
 
 Stopping and Removing the Application
 =====================================
-Once done, you can stop the application as described above in `Stopping an Application. 
-<#stopping-an-application>`__ Here is an example-specific description of the steps:
+Once done, you can stop the application as described in :ref:`Stopping an Application 
+<cdap-building-running-stopping>`. Here is an example-specific description of the steps:
 
 **Stopping the Flow**
 
@@ -214,7 +203,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 **Removing the Application**
 
-You can now remove the application as described above, `Removing an Application <#removing-an-application>`__, or:
+You can now remove the application as described in :ref:`Removing an Application <cdap-building-running-removing>`, or:
 
 - Go to the *HelloWorld* `application overview page 
   <http://localhost:9999/ns/default/apps/HelloWorld/overview/status>`__,
