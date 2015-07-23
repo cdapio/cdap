@@ -1,3 +1,21 @@
+<!--
+  TODO: This file has to be split.
+  It right now has these cases:
+    1. Has property
+      - Has configuration from node proxy
+        - If its source - Don't show input schema
+        - If its source have it as two columns 7 and 5
+        - If its transform have three columns 2, 5 & 5
+        - If its sink have two columns with 2nd column having nested row.
+          2, 10 (with a row and col-xs-12 under 2nd column)
+      - Doesn't have configuration from node proxy
+        - Just show everything as text boxes.
+    2. Has no property
+      - Show a message saying there is are no property for this plugin
+  On top of all this we are showing a loading icon (with forced 1s delay) to have modal animation smooth.
+
+   I wish I was vandame.
+-->
 <div ng-controller="PluginEditController as PluginEditController">
   <div class="modal-header">
     <div class="col-xs-6 col-md-9">
@@ -26,7 +44,8 @@
     </div>
   </div>
   <div class="modal-body plugin-modal" ng-class="{'modal-source': plugin.type === 'source', 'modal-transform': plugin.type === 'transform', 'modal-sink': plugin.type === 'sink'}">
-    <div class="row">
+    <div ng-if="PluginEditController.noproperty !== 0">
+    <div class="row" ng-if="(PluginEditController.configfetched && !PluginEditController.noconfig)">
 
       <!-- INPUT SCHEMA -->
       <div class="col-lg-2" ng-if="!isSource">
@@ -61,31 +80,10 @@
       </div>
 
       <!-- MAIN WIDGET -->
-      <div ng-class="{'col-lg-7': isSource, 'col-lg-5': isTransform}" ng-if="!isSink">
+      <div ng-class="{'col-lg-7': isSource, 'col-lg-5': isTransform }" ng-if="!isSink">
         <div class="modal-content-scroll" ng-class="{'padding-offset-right': isSource, 'padding-offset-left': isTransform}">
           <form plugin-property-edit-view>
             <fieldset ng-disabled="isDisabled">
-              <div ng-if="PluginEditController.noconfig">
-                <div class="well well-lg widget-group-container">
-                  <div ng-repeat="(name, value) in plugin.properties track by $index">
-                    <div class="form-group">
-                      <label ng-init="title='info';description=plugin._backendProperties[name].description"
-                              class="control-label">
-                        <span>{{name}}</span>
-                        <span class="fa fa-info-circle"
-                              tooltip="{{description}}"
-                              tooltip-placement="top"
-                              tooltip-append-to-body="true">
-                        </span>
-                        <span class="fa fa-asterisk" ng-if="plugin._backendProperties[name].required"></span>
-                      </label>
-                      <input type="text"
-                              class="form-control"
-                              ng-model="plugin.properties[name]" />
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               <div ng-if="PluginEditController.configfetched">
 
@@ -123,12 +121,6 @@
               </div>
             </fieldset>
 
-            <div ng-if="!PluginEditController.noproperty">
-              <h4>{{plugin.name | caskCapitalizeFilter}}</h4>
-              <div class="well well-lg">
-                <p>No Properties for this Plugin.</p>
-              </div>
-            </div>
           </form>
         </div>
       </div>
@@ -262,6 +254,50 @@
         </div>
       </div>
 
+    </div>
+    <div class="row" ng-if="PluginEditController.noconfig">
+      <div class="col-xs-12">
+        <div class="modal-content-scroll" ng-class="{'padding-offset-right': isSource, 'padding-offset-left': isTransform}">
+          <fieldset ng-disabled="isDisabled">
+            <div ng-if="PluginEditController.noconfig">
+              <div class="well well-lg widget-group-container">
+                <div ng-repeat="(name, value) in plugin.properties track by $index">
+                  <div class="form-group">
+                    <label ng-init="title='info';description=plugin._backendProperties[name].description"
+                            class="control-label">
+                      <span>{{name}}</span>
+                      <span class="fa fa-info-circle"
+                            tooltip="{{description}}"
+                            tooltip-placement="top"
+                            tooltip-append-to-body="true">
+                      </span>
+                      <span class="fa fa-asterisk" ng-if="plugin._backendProperties[name].required"></span>
+                    </label>
+                    <input type="text"
+                            class="form-control"
+                            ng-model="plugin.properties[name]" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+      </div>
+    </div>
+    </div>
+    <div ng-if="!PluginEditController.configfetched">
+      <h1>
+        <span class="fa fa-spinner"></span>
+        <span>Loading...</span>
+      </h1>
+    </div>
+
+    <div ng-if="PluginEditController.noproperty === 0">
+      <div class="modal-content-scroll" ng-class="{'padding-offset-right': isSource, 'padding-offset-left': isTransform}">
+        <div class="well well-lg">
+          <p>No Properties for this Plugin.</p>
+        </div>
+      </div>
     </div>
   </div>
 </div>
