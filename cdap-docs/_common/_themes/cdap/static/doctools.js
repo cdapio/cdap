@@ -229,7 +229,22 @@ var Documentation = {
     });
     var url = parts.join('/');
     return path.substring(url.lastIndexOf('/') + 1, path.length - 1);
-  }
+  },
+  
+  /**
+   * Hide page navigation if requested
+   */
+  hidePageNavigation : function() {
+    var params = $.getQueryParameters();
+    if (params.hidenav) {
+      console.log('hiding navigation');
+      $(".related").hide();
+      $(".sphinxsidebar").hide();
+      $(".footer").hide();
+      $(".documentwrapper").addClass("documentwrapper-hidden");
+      $(".bodywrapper").addClass("bodywrapper-hidden");
+    }
+  }  
 };
 
 // quick alias for translations
