@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.adapter;
 
 import co.cask.cdap.api.annotation.Plugin;
+import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.api.templates.plugins.PluginPropertyField;
@@ -27,8 +28,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactClasses;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactInspector;
+import co.cask.cdap.internal.app.runtime.artifact.InvalidArtifactException;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
@@ -239,12 +240,16 @@ public class PluginRepository {
     Id.Artifact artifactId = Id.Artifact.from(
       Constants.SYSTEM_NAMESPACE_ID, pluginInfo.getName(), pluginInfo.getVersion().getVersion());
 
-    ArtifactClasses artifactClasses =
-      artifactInspector.inspectArtifact(artifactId, pluginFile.getFile(), template, templateClassLoader);
-    for (PluginClass pluginClass : artifactClasses.getPlugins()) {
-      if (!templatePlugins.put(pluginFile.getPluginInfo(), pluginClass)) {
-        LOG.warn("Plugin already exists in {}. Ignore plugin class {}", pluginFile.getPluginInfo(), pluginClass);
+    try {
+      ArtifactClasses artifactClasses =
+        artifactInspector.inspectArtifact(artifactId, pluginFile.getFile(), template, templateClassLoader);
+      for (PluginClass pluginClass : artifactClasses.getPlugins()) {
+        if (!templatePlugins.put(pluginFile.getPluginInfo(), pluginClass)) {
+          LOG.warn("Plugin already exists in {}. Ignore plugin class {}", pluginFile.getPluginInfo(), pluginClass);
+        }
       }
+    } catch (InvalidArtifactException e) {
+      LOG.warn("Exception inspecting file {} for plugin classes.", pluginFile.getPluginInfo().getFileName(), e);
     }
   }
 

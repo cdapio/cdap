@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.api.app.Application;
+import co.cask.cdap.api.artifact.ArtifactDescriptor;
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.app.program.ManifestFields;
