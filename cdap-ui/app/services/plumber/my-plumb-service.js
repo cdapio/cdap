@@ -96,7 +96,15 @@ angular.module(PKG.name + '.services')
       };
       this.nodes[config.id] = config;
       if (!conf._backendProperties) {
-        fetchBackendProperties.call(this, this.nodes[config.id]);
+        fetchBackendProperties
+          .call(this, this.nodes[config.id])
+          .then(function() {
+            this.nodes[config.id].properties = this.nodes[config.id].properties || {};
+            angular.forEach(this.nodes[config.id]._backendProperties, function(value, key) {
+              this.nodes[config.id].properties[key] = this.nodes[config.id].properties[key] || '';
+            }.bind(this));
+          }.bind(this));
+
       } else if(Object.keys(conf._backendProperties).length !== Object.keys(conf.properties).length) {
         angular.forEach(conf._backendProperties, function(value, key) {
           config.properties[key] = config.properties[key] || '';

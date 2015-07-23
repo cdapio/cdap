@@ -26,10 +26,10 @@
     </div>
   </div>
   <div class="modal-body plugin-modal" ng-class="{'modal-source': plugin.type === 'source', 'modal-transform': plugin.type === 'transform', 'modal-sink': plugin.type === 'sink'}">
-    <div class="row">
+    <div class="row" ng-if="PluginEditController.configfetched">
 
       <!-- INPUT SCHEMA -->
-      <div class="col-lg-2" ng-if="!isSource">
+      <div class="col-lg-2" ng-if="!isSource ||  && !PluginEditController.noconfig">
         <div class="input-schema modal-content-scroll">
             <div class="schema-inner" ng-if="inputSchema">
               <h4>Input Schema</h4>
@@ -61,7 +61,7 @@
       </div>
 
       <!-- MAIN WIDGET -->
-      <div ng-class="{'col-lg-7': isSource, 'col-lg-5': isTransform}" ng-if="!isSink">
+      <div ng-class="{'col-lg-7': isSource && !PluginEditController.noconfig, 'col-lg-5': isTransform && !PluginEditController.noconfig, 'col-xs-12': PluginEditController.noconfig}" ng-if="!isSink">
         <div class="modal-content-scroll" ng-class="{'padding-offset-right': isSource, 'padding-offset-left': isTransform}">
           <form plugin-property-edit-view>
             <fieldset ng-disabled="isDisabled">
@@ -134,7 +134,7 @@
       </div>
 
       <!-- OUTPUT EDITOR -->
-      <div class="col-lg-5" ng-if="!isSink">
+      <div class="col-lg-5" ng-if="!isSink || !PluginEditController.noconfig">
         <div class="modal-content-scroll output-schema">
           <h4>Output Schema</h4>
 
@@ -157,7 +157,7 @@
         </div>
       </div>
 
-      <div class="col-lg-10" ng-if="isSink">
+      <div class="col-lg-10" ng-if="isSink  && !PluginEditController.noconfig">
         <div class="modal-content-scroll">
 
           <div class="row">
@@ -262,6 +262,12 @@
         </div>
       </div>
 
+    </div>
+    <div ng-if="!PluginEditController.configfetched">
+      <h1>
+        <span class="fa fa-spinner"></span>
+        <span>Loading...</span>
+      </h1>
     </div>
   </div>
 </div>
