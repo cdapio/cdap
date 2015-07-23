@@ -36,5 +36,4 @@ Once downloaded, unzip it to a directory on your machine:
    :start-line: 30
    :end-line:   33
 
-.. include:: ../building-apps.rst
-   :start-line: 7
+.. include:: building-apps.txt

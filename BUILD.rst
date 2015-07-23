@@ -58,7 +58,7 @@ Standalone and Distributed CDAP
     
 - Build the limited set of Javadocs, including the App Templates, used in documentation::
 
-    MAVEN_OPTS="-Xmx1024m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && mvn clean site -DskipTests -P templates -DisOffline=false
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && mvn clean site -DskipTests -P templates -DisOffline=false
 
 - Build the complete set of Javadocs, for all modules (currently incomplete)::
 

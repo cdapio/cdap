@@ -743,12 +743,15 @@ public class DefaultStoreTest {
     specsToBeVerified.addAll(spec.getMapReduce().keySet());
     specsToBeVerified.addAll(spec.getWorkflows().keySet());
     specsToBeVerified.addAll(spec.getFlows().keySet());
+    specsToBeVerified.addAll(spec.getServices().keySet());
+    specsToBeVerified.addAll(spec.getWorkers().keySet());
+    specsToBeVerified.addAll(spec.getSpark().keySet());
 
-    //Verify if there are 4 program specs in AllProgramsApp
-    Assert.assertEquals(3, specsToBeVerified.size());
+    //Verify if there are 6 program specs in AllProgramsApp
+    Assert.assertEquals(6, specsToBeVerified.size());
 
     Id.Application appId = Id.Application.from(DefaultId.NAMESPACE, "App");
-    // Check the diff with the same app - re-deployement scenario where programs are not removed.
+    // Check the diff with the same app - re-deployment scenario where programs are not removed.
     List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId,  spec);
     Assert.assertEquals(0, deletedSpecs.size());
 
@@ -757,14 +760,14 @@ public class DefaultStoreTest {
 
     //Get the deleted program specs by sending a spec with same name as AllProgramsApp but with no programs
     deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
-    Assert.assertEquals(3, deletedSpecs.size());
+    Assert.assertEquals(6, deletedSpecs.size());
 
     for (ProgramSpecification specification : deletedSpecs) {
       //Remove the spec that is verified, to check the count later.
       specsToBeVerified.remove(specification.getName());
     }
 
-    //All the 4 specs should have been deleted.
+    //All the 6 specs should have been deleted.
     Assert.assertEquals(0, specsToBeVerified.size());
   }
 

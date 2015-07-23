@@ -20,8 +20,9 @@ import com.google.common.collect.AbstractIterator;
 
 /**
  * Iterator that extends {@link com.google.common.collect.AbstractIterator} and implements
- * {@link co.cask.cdap.api.dataset.lib.CloseableIterator}
- * @param <T>
+ * {@link co.cask.cdap.api.dataset.lib.CloseableIterator}.
+ * 
+ * @param <T> Type of elements returned by this iterator
  */
 public abstract class AbstractCloseableIterator<T> extends AbstractIterator<T> implements CloseableIterator<T> {
 
