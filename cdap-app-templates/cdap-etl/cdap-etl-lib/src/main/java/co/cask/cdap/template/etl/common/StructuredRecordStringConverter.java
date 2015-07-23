@@ -22,10 +22,8 @@ import co.cask.cdap.api.data.schema.Schema;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.io.Closeables;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
@@ -102,7 +100,7 @@ public final class StructuredRecordStringConverter {
   /**
    * Converts a json string to a {@link StructuredRecord} based on the schema.
    */
-  public static StructuredRecord fromJsonString(String json, Schema schema) throws IOException{
+  public static StructuredRecord fromJsonString(String json, Schema schema) throws IOException {
     JsonReader reader = new JsonReader(new StringReader(json));
     try {
       return (StructuredRecord) readJson(reader, schema);
