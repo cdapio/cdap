@@ -110,9 +110,6 @@ public class MapperWrapper extends Mapper {
         ClassLoaders.setContextClassLoader(oldClassLoader);
       }
 
-      // sleep to allow metrics to be written
-      TimeUnit.SECONDS.sleep(2L);
-
       // transaction is not finished, but we want all operations to be dispatched (some could be buffered in
       // memory by tx agent
       try {
@@ -135,8 +132,11 @@ public class MapperWrapper extends Mapper {
       }
 
     } finally {
-      basicMapReduceContext.close();
-      basicMapReduceContext.getMetricsCollectionService().stop();
+      try {
+        basicMapReduceContext.close();
+      } finally {
+        basicMapReduceContext.getMetricsCollectionService().stop();
+      }
     }
   }
 

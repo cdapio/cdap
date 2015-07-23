@@ -75,7 +75,7 @@ public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBui
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new DataSetsModules().getStandaloneModules(),
-      new MetricsClientRuntimeModule().getNoopModules(),
+      new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getInMemoryModules(),
       new StreamAdminModules().getInMemoryModules(),
       new ExploreClientModule(),
