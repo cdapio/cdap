@@ -252,14 +252,14 @@ public class MapReduceWithPartitionedTest {
         }
       });
 
-    // now run a map/reduce that reads no partitions
+    // now run a map/reduce that reads no partitions (because the range matches nothing)
     TimePartitionedFileSetArguments.setInputStartTime(inputArgs, time - TimeUnit.MINUTES.toMillis(10));
     TimePartitionedFileSetArguments.setInputEndTime(inputArgs, time - TimeUnit.MINUTES.toMillis(9));
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, TIME_PARTITIONED, inputArgs));
     runtimeArguments.put(AppWithTimePartitionedFileSet.ROW_TO_WRITE, "n");
     runProgram(app, AppWithTimePartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments));
 
-    // this should have read the first partition only - and written only x to row b
+    // this should have read no partitions - and written nothing to row n
     txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
@@ -397,12 +397,12 @@ public class MapReduceWithPartitionedTest {
         }
       });
 
-    // a partition filter that matches the no key
+    // a partition filter that matches no key
     PartitionFilter filterMT = PartitionFilter.builder()
       .addValueCondition("type", "nosuchthing")
       .build();
 
-    // now run a map/reduce that reads a range of the partitions, namely the first one
+    // now run a map/reduce that reads an empty range of partitions (the filter matches nothing)
     inputArgs.clear();
     PartitionedFileSetArguments.setInputPartitionFilter(inputArgs, filterMT);
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, PARTITIONED, inputArgs));
