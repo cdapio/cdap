@@ -27,8 +27,7 @@ an *ETL pipeline:*
    :align: center
 
 
-ETL Templates, Adapters and Plugins 
------------------------------------
+.. rubric:: ETL Templates, Adapters and Plugins 
 
 An *Application Template* is a blueprint that is used to create an *Adapter*, an instantiation of
 a template in CDAP.
@@ -57,10 +56,11 @@ This lists the available sources, sinks and transformations (transforms):
          - Stream
          - Table
 
-     -   
+     - - Transformations
+
          - Projection
-         - ScriptFilter
          - Script
+         - ScriptFilter
          - StructuredRecordToGenericRecord
 
      - - **Batch Sinks**
@@ -75,13 +75,14 @@ This lists the available sources, sinks and transformations (transforms):
 
          - JMS
          - Kafka
-         - Twitter
          - Test
+         - Twitter
 
-     -   
+     - - Transformations
+
          - Projection
-         - ScriptFilter
          - Script
+         - ScriptFilter
          - StructuredRecordToGenericRecord
 
      - - **Real-time Sinks**
@@ -92,8 +93,8 @@ This lists the available sources, sinks and transformations (transforms):
 
 
 
-ETL Adapters
-............
+.. rubric:: ETL Adapters
+
 An *ETL Adapter* is an instantiation of an ETL template that has been given a specific
 configuration on creation.
 
@@ -109,8 +110,8 @@ which source, transformations (transforms), and sinks are used to create the ada
 configuration can either be written as a JSON file or, in the case of the CDAP UI,
 specified in-memory.
 
-ETL Plugins
-...........
+.. rubric:: ETL Plugins
+
 The sources, transformations and sinks are generically called plugins. Plugins provide a
 way to extend the functionality of existing templates. An adapter can be created with
 existing plugins or, if the user wishes, they can write their own source, transform, and
@@ -130,7 +131,7 @@ Template and Plugin Details
 
 - |creating|_ Steps for creating an ETL adapter from an ETL application template.
 
-.. |operations| replace:: **Operating An ETL Adapter:**
+.. |operations| replace:: **Adapter Lifecycle Management:**
 .. _operations: operations.html
 
 - |operations|_ Lifecycle controls for operating an ETL adapter.

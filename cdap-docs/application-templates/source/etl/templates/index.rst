@@ -26,8 +26,8 @@ plugins listed below are available for creating ETL adapters.
    :maxdepth: 3
    
     Sources <sources/index>
-    Sinks <sinks/index>
     Transformations <transformations/index>
+    Sinks <sinks/index>
     
     
 .. rubric:: Exploring Application Template Details
