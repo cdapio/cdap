@@ -13,9 +13,9 @@ angular.module(PKG.name + '.feature.adapters')
       }
     };
 
-    this.configfetched = false;
+    this.configfetched = null;
     this.properties = [];
-    this.noconfig = true;
+    this.noconfig = null;
     this.noproperty = Object.keys(
       $scope.plugin._backendProperties || {}
     ).length;
@@ -80,6 +80,8 @@ angular.module(PKG.name + '.feature.adapters')
             }.bind(this), 1000);
           }.bind(this)
         );
+    } else {
+      this.configfetched = true;
     }
 
     function setGroups(propertiesFromBackend, res, group) {
