@@ -395,11 +395,6 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     reportRead(1);
     // checking if the row was deleted inside this tx
     NavigableMap<byte[], Update> buffCols = buff.get(row);
-    boolean rowDeleted = buffCols == null && buff.containsKey(row);
-    // ANDREAS: can this ever happen?
-    if (rowDeleted) {
-      return new Result(row, Collections.<byte[], byte[]>emptyMap());
-    }
 
     // NOTE: since we cannot tell the exact column set, we always have to go to persisted store.
     //       potential improvement: do not fetch columns available in in-mem buffer (we know them at this point)
@@ -450,11 +445,6 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
 
         byte[] row = get.getRow();
         NavigableMap<byte[], Update> buffCols = buff.get(row);
-        // if the row was deleted in the buffer, add an empty row to the results
-        if (buffCols == null && buff.containsKey(row)) {
-          result.add(new Result(row, Collections.<byte[], byte[]>emptyMap()));
-          continue;
-        }
 
         // merge what was in the buffer and what was persisted
         if (buffCols != null) {
@@ -734,10 +724,6 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     // checking if the row was deleted inside this tx
     NavigableMap<byte[], Update> buffCols = buff.get(row);
-    boolean rowDeleted = buffCols == null && buff.containsKey(row);
-    if (rowDeleted) {
-      return Collections.emptyMap();
-    }
 
     // if nothing locally, return all from server
     if (buffCols == null) {
