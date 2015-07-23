@@ -23,12 +23,16 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Id;
@@ -52,7 +56,10 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -75,6 +82,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -204,6 +212,41 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     DataSetManager<KeyValueTable> outTableManager = getDataset("table2");
     KeyValueTable outputTable = outTableManager.get();
     Assert.assertEquals("world", Bytes.toString(outputTable.read("hello")));
+
+    // Verify dataset metrics
+    // Currently the RuntimeStats doesn't provide easy to use method to query metrics,
+    // hence need to operate on MetricsStore directly to get the metrics
+    String readCountName = "system." + Constants.Metrics.Name.Dataset.READ_COUNT;
+    String writeCountName = "system." + Constants.Metrics.Name.Dataset.WRITE_COUNT;
+    Collection<MetricTimeSeries> metrics = RuntimeStats.metricStore.query(
+      new MetricDataQuery(
+        0, System.currentTimeMillis() / 1000, Integer.MAX_VALUE,
+        ImmutableMap.of(
+          readCountName, AggregationFunction.SUM,
+          writeCountName, AggregationFunction.SUM
+        ),
+        ImmutableMap.<String, String>of(),
+        ImmutableList.<String>of()
+      )
+    );
+
+    // Transform the collection of metrics into a map from metrics name to aggregated sum
+    Map<String, Long> aggs = Maps.transformEntries(Maps.uniqueIndex(metrics, new Function<MetricTimeSeries, String>() {
+      @Override
+      public String apply(MetricTimeSeries input) {
+        return input.getMetricName();
+      }
+    }), new Maps.EntryTransformer<String, MetricTimeSeries, Long>() {
+      @Override
+      public Long transformEntry(String key, MetricTimeSeries value) {
+        Preconditions.checkArgument(value.getTimeValues().size() == 1,
+                                    "Expected one value for aggregated sum for metrics %s", key);
+        return value.getTimeValues().get(0).getValue();
+      }
+    });
+
+    Assert.assertEquals(Long.valueOf(1), aggs.get(readCountName));
+    Assert.assertEquals(Long.valueOf(1), aggs.get(writeCountName));
   }
 
   @Category(SlowTests.class)
