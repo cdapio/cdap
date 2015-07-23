@@ -22,6 +22,9 @@ import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import co.cask.cdap.api.workflow.Value;
+import co.cask.cdap.api.workflow.WorkflowContext;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +68,15 @@ public class AppWithSchedule extends AbstractApplication {
    */
   public static class DummyAction extends AbstractWorkflowAction {
     private static final Logger LOG = LoggerFactory.getLogger(DummyAction.class);
+
+    @Override
+    public void initialize(WorkflowContext context) throws Exception {
+      super.initialize(context);
+      WorkflowToken token = context.getToken();
+      token.put("running", Value.of(true));
+      token.put("finished", Value.of(false));
+    }
+
     @Override
     public void run() {
       LOG.info("Ran dummy action");
@@ -73,6 +85,13 @@ public class AppWithSchedule extends AbstractApplication {
       } catch (InterruptedException e) {
         LOG.info("Interrupted");
       }
+    }
+
+    @Override
+    public void destroy() {
+      WorkflowToken token = getContext().getToken();
+      token.put("running", Value.of(false));
+      token.put("finished", Value.of(true));
     }
   }
 }

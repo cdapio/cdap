@@ -124,8 +124,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
         HttpRequest request = HttpRequest.get(url).build();
         HttpResponse response = HttpRequests.execute(request);
         if (response.getResponseCode() != HttpURLConnection.HTTP_NO_CONTENT) {
-          userProfile = new Gson().fromJson(new String(response.getResponseBody()
-            , Charsets.UTF_8), UserProfile.class);
+          userProfile = new Gson().fromJson(response.getResponseBodyAsString(), UserProfile.class);
         }
       } catch (Exception e) {
         LOG.warn("Error accessing user profile: {}", e.getCause());

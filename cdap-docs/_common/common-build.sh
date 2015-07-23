@@ -312,7 +312,7 @@ function test_an_include() {
   elif [[ "${new_md5_hash}" != "${md5_hash}" ]]; then
     m="${WARNING} ${RED}${BOLD}${file_name} has changed! Compare files and update hash!${NC}"   
     m="${m}\nfile: ${target}"   
-    m="${m}\nOld MD5 Hash: ${md5_hash} New MD5 Hash: ${RED}${BOLD}${new_md5_hash}${NC}"   
+    m="${m}\nOld MD5 Hash: ${md5_hash} New MD5 Hash: ${new_md5_hash}${NC}"   
   fi
   if [ "x${m}" != "x" ]; then
     set_message "${m}"

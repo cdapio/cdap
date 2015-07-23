@@ -32,6 +32,7 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -66,12 +67,13 @@ public final class ClientSparkContext extends AbstractSparkContext {
   }
 
   @Override
-  public <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass) {
+  public <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass, Map<String, String> datasetArgs) {
     throw new UnsupportedOperationException("Only supported in SparkProgram.run() execution context");
   }
 
   @Override
-  public <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass) {
+  public <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass,
+                                 Map<String, String> datasetArgs) {
     throw new UnsupportedOperationException("Only supported in SparkProgram.run() execution context");
   }
 

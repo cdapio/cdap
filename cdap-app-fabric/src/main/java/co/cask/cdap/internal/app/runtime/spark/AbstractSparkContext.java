@@ -47,6 +47,7 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.Closeable;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -113,6 +114,16 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   @Override
   public Metrics getMetrics() {
     return new SparkUserMetrics(metricsContext);
+  }
+
+  @Override
+  public <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass) {
+    return readFromDataset(datasetName, kClass, vClass, Collections.<String, String>emptyMap());
+  }
+
+  @Override
+  public <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass) {
+    writeToDataset(rdd, datasetName, kClass, vClass, Collections.<String, String>emptyMap());
   }
 
   @Override

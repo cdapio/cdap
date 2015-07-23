@@ -17,18 +17,26 @@
 package co.cask.cdap.test.remote;
 
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.ScheduleClient;
+import co.cask.cdap.client.WorkflowClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.WorkflowTokenDetail;
+import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.ScheduleManager;
 import co.cask.cdap.test.WorkflowManager;
 import com.google.common.base.Throwables;
 
+import java.io.IOException;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Remote implementation of {@link WorkflowManager}.
@@ -37,6 +45,7 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
 
   private final ScheduleClient scheduleClient;
   private final ProgramClient programClient;
+  private final WorkflowClient workflowClient;
   private final Id.Workflow workflowId;
 
   public RemoteWorkflowManager(Id.Workflow programId, ClientConfig clientConfig, RESTClient restClient,
@@ -44,6 +53,7 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
     super(programId, applicationManager);
     this.workflowId = programId;
     this.programClient = new ProgramClient(clientConfig, restClient);
+    this.workflowClient = new WorkflowClient(clientConfig, restClient);
     this.scheduleClient = new ScheduleClient(clientConfig, restClient);
   }
 
@@ -61,6 +71,26 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
     try {
       return programClient.getProgramRuns(workflowId, "ALL", 0, Long.MAX_VALUE, Integer.MAX_VALUE);
     } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public WorkflowTokenDetail getToken(String runId, @Nullable WorkflowToken.Scope scope,
+                                      @Nullable String key) throws NotFoundException {
+    try {
+      return workflowClient.getWorkflowToken(new Id.Run(workflowId, runId), scope, key);
+    } catch (IOException | UnauthorizedException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public WorkflowTokenNodeDetail getTokenAtNode(String runId, String nodeName, @Nullable WorkflowToken.Scope scope,
+                                                @Nullable String key) throws NotFoundException {
+    try {
+      return workflowClient.getWorkflowTokenAtNode(new Id.Run(workflowId, runId), nodeName, scope, key);
+    } catch (IOException | UnauthorizedException e) {
       throw Throwables.propagate(e);
     }
   }

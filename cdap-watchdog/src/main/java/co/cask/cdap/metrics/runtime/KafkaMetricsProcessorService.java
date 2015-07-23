@@ -57,6 +57,7 @@ import javax.annotation.Nullable;
 public final class KafkaMetricsProcessorService extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(KafkaMetricsProcessorService.class);
+  private static final String SERVICE_NAME = "metrics.processor.consumer";
 
   private final CConfiguration conf;
   private final LeaderElection election;
@@ -83,7 +84,7 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
     this.discoveryService = discoveryService;
 
     this.election =
-      new LeaderElection(zkClient, Constants.Service.METRICS_PROCESSOR, new ElectionHandler() {
+      new LeaderElection(zkClient, SERVICE_NAME, new ElectionHandler() {
         private ResourceCoordinator coordinator;
 
         @Override
@@ -127,7 +128,7 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
   protected void startUp() throws Exception {
     LOG.info("Starting Metrics Processor ...");
 
-    Discoverable discoverable = createDiscoverable(Constants.Service.METRICS_PROCESSOR);
+    Discoverable discoverable = createDiscoverable(SERVICE_NAME);
     cancelDiscoverable = discoveryService.register(ResolvingDiscoverable.of(discoverable));
 
     election.start();
@@ -137,11 +138,11 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
                                     Constants.Metrics.DEFAULT_KAFKA_PARTITION_SIZE);
     ResourceRequirement requirement =
       // kafka partition id is the name of the partition
-      ResourceRequirement.builder("metrics-processor").addPartitions("", partitionSize, 1).build();
+      ResourceRequirement.builder(SERVICE_NAME).addPartitions("", partitionSize, 1).build();
     resourceClient.submitRequirement(requirement).get();
 
     cancelResourceHandler =
-      resourceClient.subscribe("metrics-processor", createResourceHandler(metricsProcessorFactory, discoverable));
+      resourceClient.subscribe(SERVICE_NAME, createResourceHandler(metricsProcessorFactory, discoverable));
   }
 
   @Override

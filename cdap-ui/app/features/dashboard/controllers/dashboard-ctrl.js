@@ -3,44 +3,40 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').controller('DashboardCtrl',
-function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
-
+function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, $timeout) {
 
   $scope.unknownBoard = false;
   $scope.isEnterprise = MY_CONFIG.isEnterprise;
   $scope.dashboards = rDashboardsModel.data || [];
-  $scope.dashboards.activeIndex = parseInt($state.params.tab, 10) || 0;
-
+  var tab = parseInt($state.params.tab, 10);
+  if (isNaN(tab)) {
+    $scope.dashboards.activeIndex = 'system';
+  } else {
+    $scope.dashboards.activeIndex = tab;
+  }
+  var dropdown;
   /**
    * show a dropdown when clicking on the tab of active dashboard
    * @TODO make a directive instead
    */
   $scope.activeTabClick = function (event, index) {
-    if (index !== $scope.dashboards.activeIndex || !$state.includes('dashboard.user')) {
+    if (index == 'system') {
+      $scope.unknownBoard = true;
+      $state.go('dashboard.standard.cdap');
+      $scope.dashboards.activeIndex = 'system';
       return;
     }
-    var toggle = angular.element(event.target);
-    if(!toggle.hasClass('dropdown-toggle')) {
-      toggle = toggle.parent();
+
+    if (index !== $scope.dashboards.activeIndex || !$state.includes('dashboard.user')) {
+      $scope.unknownBoard = true;
+      $state.go('dashboard.user', {tab: index});
+      $scope.dashboards.activeIndex = index;
+      return;
     }
 
-    var scope = $scope.$new(),
-        dd = $dropdown(toggle, {
-          template: 'assets/features/dashboard/templates/partials/tab-dd.html',
-          animation: 'am-flip-x',
-          trigger: 'manual',
-          prefixEvent: 'dashboard-tab-dd',
-          scope: scope
-        });
-
-    dd.$promise.then(function(){
-      dd.show();
-    });
-
-    scope.$on('dashboard-tab-dd.hide', function () {
-      dd.destroy();
-    });
-
+    $scope.dashboards[index].isopen = !$scope.dashboards[index].isopen;
+    event.preventDefault();
+    event.stopPropagation();
   };
 
   $scope.addWidget = function () {
@@ -70,7 +66,18 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert) {
 
   $scope.reorderDashboard = function (reverse) {
     var newIndex = rDashboardsModel.reorder(reverse);
-    $state.go($state.current, {tab: newIndex}, {reload: true});
+    if (newIndex > 0) {
+      $timeout(function() {
+        $state.go($state.current, {tab: newIndex}, {reload: true});
+      });
+    }
   };
 
+})
+.directive('tabDdMenu', function() {
+    return {
+        replace: true,
+        restrict: 'E',
+        templateUrl: '/assets/features/dashboard/templates/partials/tab-dd.html'
+    };
 });

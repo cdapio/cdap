@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.SystemServiceLiveInfo;
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.Futures;
 import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunResources;
@@ -182,28 +183,19 @@ public abstract class AbstractDistributedMasterServiceManager implements MasterS
 
   @Override
   public void restartAllInstances() {
-    try {
-      Iterable<TwillController> twillControllers = twillRunnerService.lookup(Constants.Service.MASTER_SERVICES);
-      for (TwillController twillController : twillControllers) {
-        // Call restart instances
-        twillController.restartAllInstances(serviceName).get();
-      }
-    } catch (Throwable t) {
-      throw new RuntimeException(String.format("Could not change service instances of %s", serviceName), t);
+    Iterable<TwillController> twillControllers = twillRunnerService.lookup(Constants.Service.MASTER_SERVICES);
+    for (TwillController twillController : twillControllers) {
+      // Call restart instances
+      Futures.getUnchecked(twillController.restartAllInstances(serviceName));
     }
   }
 
   @Override
   public void restartInstances(int instanceId, int... moreInstanceIds) {
-    // Get Twill controller for the service
-    try {
-      Iterable<TwillController> twillControllers = twillRunnerService.lookup(Constants.Service.MASTER_SERVICES);
-      for (TwillController twillController : twillControllers) {
-        // Call restart instances
-        twillController.restartInstances(serviceName, instanceId, moreInstanceIds).get();
-      }
-    } catch (Throwable t) {
-      throw new RuntimeException(String.format("Could not change service instances of %s", serviceName), t);
+    Iterable<TwillController> twillControllers = twillRunnerService.lookup(Constants.Service.MASTER_SERVICES);
+    for (TwillController twillController : twillControllers) {
+      // Call restart instances
+      Futures.getUnchecked(twillController.restartInstances(serviceName, instanceId, moreInstanceIds));
     }
   }
 }
