@@ -50,7 +50,7 @@ This lists the available sources, sinks and transformations (transforms):
    * - Sources
      - Transformations
      - Sinks
-   * - - **Batch Sources:**
+   * - - **Batch Sources**
 
          - Database
          - KVTable
@@ -63,7 +63,7 @@ This lists the available sources, sinks and transformations (transforms):
          - Script
          - StructuredRecordToGenericRecord
 
-     - - **Batch Sinks:**
+     - - **Batch Sinks**
 
          - Cube
          - Database
@@ -71,7 +71,7 @@ This lists the available sources, sinks and transformations (transforms):
          - TPFSAvro
          - Table
 
-   * - - **Real-time Sources:**
+   * - - **Real-time Sources**
 
          - JMS
          - Kafka
@@ -84,7 +84,7 @@ This lists the available sources, sinks and transformations (transforms):
          - Script
          - StructuredRecordToGenericRecord
 
-     - - **Real-time Sinks:**
+     - - **Real-time Sinks**
 
          - Cube
          - Stream
@@ -121,7 +121,7 @@ Template and Plugin Details
 ===========================
 
 .. |templates| replace:: **ETL Template and Plugin Details:**
-.. _templates: templates.html
+.. _templates: templates/index.html
 
 - |templates|_ Detailed description of available ETL application templates and plugins.
 
