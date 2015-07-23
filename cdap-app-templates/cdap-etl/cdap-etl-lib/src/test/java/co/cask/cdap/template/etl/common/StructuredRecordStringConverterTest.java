@@ -24,18 +24,18 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Test for {@link StructuredRecordStringConversion} class from {@link StructuredRecord} to json string
+ * Test for {@link StructuredRecordStringConverter} class from {@link StructuredRecord} to json string
  */
 @SuppressWarnings("unchecked")
-public class StructuredRecordStringConversionTest {
+public class StructuredRecordStringConverterTest {
   Schema schema;
 
   @Test
-  public void checkConversion() {
+  public void checkConversion() throws Exception {
     StructuredRecord initial = getStructuredRecord();
-    String jsonOfRecord = StructuredRecordStringConversion.toJsonString(initial);
-    StructuredRecord recordOfJson = StructuredRecordStringConversion.fromJsonString(jsonOfRecord, schema);
-    areRecordsEqual(initial, recordOfJson);
+    String jsonOfRecord = StructuredRecordStringConverter.toJsonString(initial);
+    StructuredRecord recordOfJson = StructuredRecordStringConverter.fromJsonString(jsonOfRecord, schema);
+    assertRecordsEqual(initial, recordOfJson);
   }
 
   private StructuredRecord getStructuredRecord() {
@@ -71,12 +71,12 @@ public class StructuredRecordStringConversionTest {
     return recordBuilder.build();
   }
 
-  private void areRecordsEqual(StructuredRecord one, StructuredRecord two) {
+  private void assertRecordsEqual(StructuredRecord one, StructuredRecord two) {
     Assert.assertTrue(one.getSchema().getRecordName().equals(two.getSchema().getRecordName()));
     Assert.assertTrue(one.getSchema().getFields().size() == two.getSchema().getFields().size());
     for (Schema.Field field : one.getSchema().getFields()) {
       if (one.get(field.getName()).getClass().equals(StructuredRecord.class)) {
-        areRecordsEqual((StructuredRecord) one.get(field.getName()), (StructuredRecord) two.get(field.getName()));
+        assertRecordsEqual((StructuredRecord) one.get(field.getName()), (StructuredRecord) two.get(field.getName()));
       } else if (field.getName().equals("binary")) {
         Assert.assertArrayEquals((byte[]) two.get(field.getName()), (byte[]) one.get(field.getName()));
       } else {

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.template.etl.common;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import com.google.common.base.Function;
@@ -48,11 +49,11 @@ import javax.annotation.Nullable;
 /**
  * Utility class for converting {@link StructuredRecord} to and from json.
  */
-public final class StructuredRecordStringConversion {
+public final class StructuredRecordStringConverter {
 
   // Known Java type to schema type mapping
   // Doesn't have map and array as those need to use instanceof to check
-  private static final Map<Class<?>, Schema.Type> TYPE_TO_SCHEMA = new IdentityHashMap<Class<?>, Schema.Type>(
+  private static final Map<Class<?>, Schema.Type> TYPE_TO_SCHEMA = new IdentityHashMap<>(
     ImmutableMap.<Class<?>, Schema.Type>builder()
       .put(Boolean.class, Schema.Type.BOOLEAN)
       .put(Byte.class, Schema.Type.INT)
@@ -68,7 +69,7 @@ public final class StructuredRecordStringConversion {
       .build()
   );
 
-  private static final EnumMap<Schema.Type, JsonToken> SCHEMA_TO_JSON_TYPE = new EnumMap<Schema.Type, JsonToken>(
+  private static final EnumMap<Schema.Type, JsonToken> SCHEMA_TO_JSON_TYPE = new EnumMap<>(
     ImmutableMap.<Schema.Type, JsonToken>builder()
       .put(Schema.Type.NULL, JsonToken.NULL)
       .put(Schema.Type.BOOLEAN, JsonToken.BOOLEAN)
@@ -87,30 +88,26 @@ public final class StructuredRecordStringConversion {
   /**
    * Converts a {@link StructuredRecord} to a json string.
    */
-  public static String toJsonString(StructuredRecord record) {
+  public static String toJsonString(StructuredRecord record) throws IOException {
     StringWriter strWriter = new StringWriter();
     JsonWriter writer = new JsonWriter(strWriter);
     try {
       writeJson(writer, record.getSchema(), record);
       return strWriter.toString();
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
     } finally {
-      Closeables.closeQuietly(writer);
+      writer.close();
     }
   }
 
   /**
    * Converts a json string to a {@link StructuredRecord} based on the schema.
    */
-  public static StructuredRecord fromJsonString(String json, Schema schema) {
+  public static StructuredRecord fromJsonString(String json, Schema schema) throws IOException{
     JsonReader reader = new JsonReader(new StringReader(json));
     try {
       return (StructuredRecord) readJson(reader, schema);
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
     } finally {
-      Closeables.closeQuietly(reader);
+      reader.close();
     }
   }
 
@@ -220,23 +217,19 @@ public final class StructuredRecordStringConversion {
   }
 
   private static Object convertKey(String key, Schema.Type type) throws IOException {
-    if (type == Schema.Type.STRING) {
-      return key;
-    }
-    if (type == Schema.Type.BOOLEAN) {
-      return Boolean.valueOf(key);
-    }
-    if (type == Schema.Type.INT) {
-      return Integer.valueOf(key);
-    }
-    if (type == Schema.Type.LONG) {
-      return Long.valueOf(key);
-    }
-    if (type == Schema.Type.FLOAT) {
-      return Float.valueOf(key);
-    }
-    if (type == Schema.Type.DOUBLE) {
-      return Double.valueOf(key);
+    switch (type) {
+      case STRING:
+        return key;
+      case BOOLEAN:
+        return Boolean.valueOf(key);
+      case INT:
+        return Integer.valueOf(key);
+      case LONG:
+        return Long.valueOf(key);
+      case FLOAT:
+        return Float.valueOf(key);
+      case DOUBLE:
+        return Double.valueOf(key);
     }
     throw new IOException("Unable to convert string to type " + type);
   }
@@ -326,7 +319,7 @@ public final class StructuredRecordStringConversion {
     if (buffer.hasArray()) {
       writeBytes(writer, buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining());
     } else {
-      byte[] buf = new byte[buffer.remaining()];
+      byte[] buf = Bytes.getBytes(buffer);
       buffer.mark();
       buffer.get(buf);
       buffer.reset();
@@ -433,7 +426,7 @@ public final class StructuredRecordStringConversion {
     throw new IOException("Unsupported type found in StructuredRecord: " + cls);
   }
 
-  private StructuredRecordStringConversion() {
+  private StructuredRecordStringConverter() {
     //inaccessible constructor for static class
   }
 }

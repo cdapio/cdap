@@ -119,14 +119,14 @@ public class ETLESSinkTest extends BaseETLBatchTest {
       manager.stop();
 
       SearchResponse searchResponse = client.prepareSearch("test").execute().actionGet();
-      Assert.assertEquals(searchResponse.getHits().getTotalHits(), 2);
+      Assert.assertEquals(2, searchResponse.getHits().getTotalHits());
       searchResponse = client.prepareSearch().setQuery(matchQuery("ticker", "AAPL")).execute().actionGet();
-      Assert.assertEquals(searchResponse.getHits().getTotalHits(), 1);
-      Assert.assertEquals(searchResponse.getHits().getAt(0).getIndex(), "test");
-      Assert.assertEquals(searchResponse.getHits().getAt(0).getType(), "testing");
-      Assert.assertEquals(searchResponse.getHits().getAt(0).getId(), "AAPL");
+      Assert.assertEquals(1, searchResponse.getHits().getTotalHits());
+      Assert.assertEquals("test", searchResponse.getHits().getAt(0).getIndex());
+      Assert.assertEquals("testing", searchResponse.getHits().getAt(0).getType());
+      Assert.assertEquals("AAPL", searchResponse.getHits().getAt(0).getId());
       searchResponse = client.prepareSearch().setQuery(matchQuery("ticker", "ABCD")).execute().actionGet();
-      Assert.assertEquals(searchResponse.getHits().getTotalHits(), 0);
+      Assert.assertEquals(0, searchResponse.getHits().getTotalHits());
 
       DeleteResponse response = client.prepareDelete("test", "testing", "CDAP").execute().actionGet();
       Assert.assertTrue(response.isFound());

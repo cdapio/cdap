@@ -26,7 +26,7 @@ import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
 import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.template.etl.common.Properties;
-import co.cask.cdap.template.etl.common.StructuredRecordStringConversion;
+import co.cask.cdap.template.etl.common.StructuredRecordStringConverter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
@@ -37,17 +37,19 @@ import org.elasticsearch.hadoop.mr.EsOutputFormat;
  * A {@link BatchSink} that writes data to a Elasticsearch.
  * <p/>
  * This {@link ElasticsearchSink} takes a {@link StructuredRecord} in,
- * converts it to a json per {@link StructuredRecordStringConversion},
- * and writes it to the Elasticserach server.
+ * converts it to a json per {@link StructuredRecordStringConverter},
+ * and writes it to the Elasticsearch server.
  * <p/>
- * If the Elasticserach index does not exist, it will be created using the default properties
+ * If the Elasticsearch index does not exist, it will be created using the default properties
  * specified by Elasticsearch. See more information at
  * https://www.elastic.co/guide/en/elasticsearch/guide/current/_index_settings.html.
  * <p/>
  */
 @Plugin(type = "sink")
 @Name("Elasticsearch")
-@Description("CDAP Elasticsearch Batch Sink")
+@Description("CDAP Elasticsearch Batch Sink takes the structured record from the input source" +
+  " and converts it to a json, then indexes it in elasticsearch using the index, type, and id specified by the user." +
+  "The elasticsearch server should be running prior to creating the adapter.")
 public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Writable> {
   private static final String INDEX_DESC = "The name of the index where the data will be stored. " +
     "If the index does not already exist, it will be created using elasticsearch's default properties";
@@ -83,8 +85,8 @@ public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Wri
 
   @Override
   public void transform(StructuredRecord record, Emitter<KeyValue<Writable, Writable>> emitter) throws Exception {
-    emitter.emit(new KeyValue<Writable, Writable>(new Text(StructuredRecordStringConversion.toJsonString(record)),
-                                                  new Text(StructuredRecordStringConversion.toJsonString(record))));
+    emitter.emit(new KeyValue<Writable, Writable>(new Text(StructuredRecordStringConverter.toJsonString(record)),
+                                                  new Text(StructuredRecordStringConverter.toJsonString(record))));
   }
 
   /**
