@@ -131,7 +131,7 @@ body.theme-cdap.state-adapters-create {
     }
     .modal-header {
       background-color: @body-bg;
-      border-bottom: 1px solid #c9ccd6;
+      border-bottom: 1px solid @modal-table-border-color;
       color: @cdap-header;
       height: 60px;
       padding: 0;
@@ -164,7 +164,7 @@ body.theme-cdap.state-adapters-create {
         text-align: right;
         > div {
           background-color: transparent;
-          border-left: 1px solid #c9ccd6;
+          border-left: 1px solid @modal-table-border-color;
           text-align: center;
           width: 60px;
           .transition(all 0.2s ease);
@@ -228,6 +228,13 @@ body.theme-cdap.state-adapters-create {
       }
       @media (min-width: @screen-lg-min) {
         height: 70vh;
+
+        .padding-offset-right {
+          padding-right: 1px;
+        }
+        .padding-offset-left {
+          padding-left: 1px;
+        }
       }
       // Edit Metadata & Adapter Config modals
       > fieldset, .form-horizontal {
@@ -244,12 +251,6 @@ body.theme-cdap.state-adapters-create {
         @media (min-width: @screen-lg-min) {
           height: 70vh;
           overflow: scroll;
-          &.source-edit {
-            padding-right: 1px;
-          }
-          &.transform-edit, &.sink-edit {
-            padding-left: 1px;
-          }
         }
       }
       .input-schema {
@@ -263,7 +264,7 @@ body.theme-cdap.state-adapters-create {
         @media (max-width: @screen-md-max) {
           margin-top: 20px;
           padding-top: 0;
-          border: 1px solid #c9ccd6;
+          border: 1px solid @modal-table-border-color;
           .border-radius(4px);
           .schema-inner, .empty-container {
             padding: 10px;
@@ -272,7 +273,7 @@ body.theme-cdap.state-adapters-create {
         @media (min-width: @screen-lg-min) {
           margin-right: -15px;
           margin-left: -15px;
-          @shadow: inset -18px 0px 17px -16px rgba(0,0,0,0.34);
+          @shadow: inset -18px 0px 17px -16px rgba(0, 0, 0, 0.34);
           .box-shadow(@shadow);
           .empty-container {
             padding-right: 10px;
@@ -290,7 +291,7 @@ body.theme-cdap.state-adapters-create {
       }
       .output-schema {
         @media (min-width: @screen-lg-min) {
-          border-left: 3px solid #c9ccd6;
+          border-left: 3px solid @modal-table-border-color;
           margin-right: -10px;
           margin-left: -15px;
           > h4 {
@@ -321,7 +322,7 @@ body.theme-cdap.state-adapters-create {
       }
       .well {
         background-color: @body-bg;
-        border: 1px solid #c9ccd6;
+        border: 1px solid @modal-table-border-color;
         padding: 10px;
         .box-shadow(4px);
         p {
@@ -350,7 +351,7 @@ body.theme-cdap.state-adapters-create {
         }
       }
       td {
-        border: 1px solid #c9ccd6;
+        border: 1px solid @modal-table-border-color;
         border-collapse: collapse;
         height: 39px;
         padding: 0 5px;
@@ -398,11 +399,12 @@ body.theme-cdap.state-adapters-create {
         font-size: 15px;
       }
     }
+
     .control-label {
       font-weight: 400;
     }
     .form-control {
-      border: 1px solid #c9ccd6;
+      border: 1px solid @modal-table-border-color;
       height: 40px;
       padding: 10px 12px;
     }
@@ -426,7 +428,18 @@ body.theme-cdap.state-adapters-create {
         background-color: @body-bg;
       }
     }
-
+    .modal-sink .schema-container {
+      @media (min-width: @screen-lg-min) {
+        .table {
+          td.name {
+            border-left: 1px solid @modal-table-border-color;
+          }
+          td.trash {
+            border-right: 1px solid @modal-table-border-color;
+          }
+        }
+      }
+    }
     .adapter-properties-detail {
       h3 {
         color: @cdap-header;
