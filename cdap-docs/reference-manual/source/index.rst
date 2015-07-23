@@ -49,3 +49,9 @@ CDAP Reference Manual: APIs, Licenses, and Dependencies
 
 - |licenses|_ Trademark and license information for the CDAP product, and lists of
   CDAP dependent packages, licenses, and license URLs.
+
+
+.. |release-notes| replace:: **Release Notes:**
+.. _release-notes: release-notes/index.html
+
+- |release-notes|_ Release notes for this and previous releases of CDAP.

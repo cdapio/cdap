@@ -1,0 +1,78 @@
+.. meta::
+    :author: Cask Data, Inc 
+    :description: Release notes for the Cask Data Application Platform
+    :copyright: Copyright © 2015 Cask Data, Inc.
+
+.. _release-notes-310:
+
+============================================
+CDAP 3.1.0 Release Notes
+============================================
+
+
+Release Highlights
+==================
+
+
+Change List
+===========
+
+New Features
+------------
+
+- In the CDAP UI, ...
+  (`CDAP-XXXX <https://issues.cask.co/browse/CDAP-XXXX>`__).
+
+
+Improvements
+------------
+
+**Tools**
+
+- Added a tool...
+
+
+Bug Fixes
+---------
+
+**General**
+
+- Fixed a problem with ...
+  (`CDAP-XXXX <https://issues.cask.co/browse/CDAP-XXXX>`__).
+
+**CDAP CLI**
+
+- Fixed a problem with...
+  (`CDAP-XXXX <https://issues.cask.co/browse/CDAP-XXXX>`__).
+  
+  
+**CDAP UI**
+
+- Fixed a problem with...
+  (`CDAP-XXXX <https://issues.cask.co/browse/CDAP-XXXX>`__).
+  
+  
+**Documentation**
+
+- Fixed errors...
+  (`CDAP-XXXX <https://issues.cask.co/browse/CDAP-XXXX>`__).
+    
+
+API Changes
+-----------
+
+
+Deprecated and Removed Features
+-------------------------------
+
+
+.. _known-issues-310:
+
+Known Issues
+============
+
+- The application...
+  (`CDAP-XXXX <https://issues.cask.co/browse/CDAP-XXXX>`__).
+
+- See also the *Known Issues* of :ref:`version 3.0.1 <known-issues-301>`.
+

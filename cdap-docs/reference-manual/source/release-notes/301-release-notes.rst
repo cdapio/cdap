@@ -3,14 +3,7 @@
     :description: Release notes for the Cask Data Application Platform
     :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
-:hide-nav: true
-:orphan:
-
 .. _overview_release-notes:
-
-.. index::
-   single: Release Notes
-
 .. _release-notes:
 
 ============================================
