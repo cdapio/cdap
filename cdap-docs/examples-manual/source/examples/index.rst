@@ -57,7 +57,7 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
     - An application that demonstrates streaming text analysis using a Spark program. It calculates the centers
       of points from an input stream using the K-Means clustering method.
   * - :doc:`Spark Page Rank<spark-page-rank>`
-    - An application that demonstrates streaming text analysis using a Spark program. It computes the page rank
+    - An application that demonstrates text analysis using Spark and MapReduce programs. It computes the page rank
       of URLs from an input stream.
   * - :doc:`Sport Results<sport-results>`
     - An application that illustrates the use of partitioned file sets.

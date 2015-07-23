@@ -73,5 +73,13 @@ public class AppWithServices extends AbstractApplication {
     public void pingHandler(HttpServiceRequest request, HttpServiceResponder responder) {
       responder.sendStatus(200);
     }
+
+    // this non-public "handler" method is here to test that it is not exposed in the service specification, since it is
+    // not exposed as an endpoint on the http handler either.
+    @GET
+    @Path("/protected/ping")
+    protected void protectedPingHandler(HttpServiceRequest request, HttpServiceResponder responder) {
+      responder.sendStatus(200);
+    }
   }
 }

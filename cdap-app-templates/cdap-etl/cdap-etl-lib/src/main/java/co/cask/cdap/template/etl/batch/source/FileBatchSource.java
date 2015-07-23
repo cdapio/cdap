@@ -139,7 +139,7 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
 
     if (config.timeTable != null) {
       table = context.getDataset(config.timeTable);
-      String datesToRead = Bytes.toString(table.read(LAST_TIME_READ));
+      datesToRead = Bytes.toString(table.read(LAST_TIME_READ));
       if (datesToRead == null) {
         List<Date> firstRun = Lists.newArrayList(new Date(0));
         datesToRead = GSON.toJson(firstRun, ARRAYLIST_DATE_TYPE);
