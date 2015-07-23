@@ -23,6 +23,37 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 3.1.0 <http://docs.cask.co/cdap/3.1.0/index.html>`__
+=============================================================
+
+
+New Features
+------------
+
+- `CDAP-XXXX <https://issues.cask.co/browse/CDAP-XXXX>`__ -
+  In the CDAP UI...
+
+Improvements
+------------
+
+Bug Fixes
+---------
+
+API Changes
+-----------
+
+Deprecated and Removed Features
+-------------------------------
+
+.. _known-issues-310:
+
+Known Issues
+------------
+
+- See also the *Known Issues* of `version 3.0.1 <#known-issues-301>`_\ .
+
+
+
 
 `Release 3.0.1 <http://docs.cask.co/cdap/3.0.1/index.html>`__
 =============================================================
@@ -53,11 +84,17 @@ Improvements
   (`CDAP-2615 <https://issues.cask.co/browse/CDAP-2615>`__).
   
 - The list of datasets and the run histories in the CDAP UI are now paginated 
-  (`CDAP-2626, CDAP-2627 <https://issues.cask.co/browse/CDAP-2626>`__).
+  (`CDAP-2626 <https://issues.cask.co/browse/CDAP-2626>`__,
+  `CDAP-2627 <https://issues.cask.co/browse/CDAP-2627>`__).
   
 - Added improvements to the CDAP UI when creating Application Templates
-  (`CDAP-2601, CDAP-2602, CDAP-2603, CDAP-2605, CDAP-2606, CDAP-2607, CDAP-2610
-  <https://issues.cask.co/browse/CDAP-2601>`__).
+  (`CDAP-2601 <https://issues.cask.co/browse/CDAP-2601>`__,
+  `CDAP-2602 <https://issues.cask.co/browse/CDAP-2602>`__,
+  `CDAP-2603 <https://issues.cask.co/browse/CDAP-2603>`__,
+  `CDAP-2605 <https://issues.cask.co/browse/CDAP-2605>`__,
+  `CDAP-2606 <https://issues.cask.co/browse/CDAP-2606>`__,
+  `CDAP-2607 <https://issues.cask.co/browse/CDAP-2607>`__,
+  `CDAP-2610 <https://issues.cask.co/browse/CDAP-2610>`__).
   
 - Improved the error messages returned when there are problems creating Application 
   Templates in the CDAP UI
@@ -108,7 +145,8 @@ Bug Fixes
   (`CDAP-2502 <https://issues.cask.co/browse/CDAP-2502>`__).
   
 - Fixed a problem with ObjectMappedTables not deleting missing fields when updating a row
-  (`CDAP-2523, CDAP-2524 <https://issues.cask.co/browse/CDAP-2523>`__).
+  (`CDAP-2523 <https://issues.cask.co/browse/CDAP-2523>`__,
+  `CDAP-2524 <https://issues.cask.co/browse/CDAP-2524>`__).
   
 - Fixed a problem with a stream not being created properly when deploying an application
   after the default namespace was deleted
@@ -121,7 +159,9 @@ Bug Fixes
 - A problem with CDAP using its own transaction snapshot codec, leading to huge snapshot
   files and OutOfMemory exceptions, and transaction snapshots that can't be read using
   Tephra's tools, has been resolved by replacing the codec with Tephra's SnapshotCodecV3
-  (`CDAP-2563, CDAP-2946, TEPHRA-101 <https://issues.cask.co/browse/CDAP-2563>`__).
+  (`CDAP-2563 <https://issues.cask.co/browse/CDAP-2563>`__,
+  `CDAP-2946 <https://issues.cask.co/browse/CDAP-2946>`__,
+  `TEPHRA-101 <https://issues.cask.co/browse/TEPHRA-101>`__).
   
 - Fixed a problem with CDAP Master not being resilient in the handling of Zookeeper 
   exceptions
@@ -212,7 +252,8 @@ Bug Fixes
   (`CDAP-2586 <https://issues.cask.co/browse/CDAP-2586>`__).
 
 - Reduced the number of clicks required to navigate and perform actions within the CDAP UI
-  (`CDAP-2622, CDAP-2625 <https://issues.cask.co/browse/CDAP-2622>`__).
+  (`CDAP-2622 <https://issues.cask.co/browse/CDAP-2622>`__,
+  `CDAP-2625 <https://issues.cask.co/browse/CDAP-2625>`__).
   
 - Fixed a problem with an additional forward-slash character in the URL causing a "page 
   not found error" in the CDAP UI
@@ -278,7 +319,8 @@ Known Issues
 - The application in the `cdap-kafka-ingest-guide 
   <https://github.com/cdap-guides/cdap-kafka-ingest-guide/tree/release/cdap-3.0-compatible>`__ 
   does not run on Ubuntu 14.x and CDAP 3.0.x
-  (`CDAP-2632, CDAP-2749 <https://issues.cask.co/browse/CDAP-2632>`__).
+  (`CDAP-2632 <https://issues.cask.co/browse/CDAP-2632>`__,
+  `CDAP-2749 <https://issues.cask.co/browse/CDAP-2749>`__).
 
 - Metrics for :ref:`TimePartitionedFileSets <datasets-timepartitioned-fileset>` can show 
   zero values even if there is data present
