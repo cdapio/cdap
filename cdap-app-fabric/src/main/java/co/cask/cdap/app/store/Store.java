@@ -24,11 +24,11 @@ import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Predicate;
 import org.apache.twill.filesystem.Location;
@@ -121,8 +121,8 @@ public interface Store {
    * @param adapter   name of the adapter associated with the runs
    * @return          list of logged runs
    */
-  List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit,
-                          String adapter);
+  List<RunRecordMeta> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit,
+                              String adapter);
 
   /**
    * Fetches run records for particular program. Returns only finished runs.
@@ -135,7 +135,7 @@ public interface Store {
    * @param limit     max number of entries to fetch for this history call
    * @return          list of logged runs
    */
-  List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit);
+  List<RunRecordMeta> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit);
 
   /**
    * Fetches the run records for the particular status.
@@ -143,7 +143,7 @@ public interface Store {
    * @param filter  predicate to be passed to filter the records
    * @return        list of logged runs
    */
-  List<RunRecord> getRuns(ProgramRunStatus status, Predicate<RunRecord> filter);
+  List<RunRecordMeta> getRuns(ProgramRunStatus status, Predicate<RunRecordMeta> filter);
 
   /**
    * Fetches the run record for particular run of a program.
@@ -153,7 +153,7 @@ public interface Store {
    * @return          run record for the specified program and runid, null if not found
    */
   @Nullable
-  RunRecord getRun(Id.Program id, String runid);
+  RunRecordMeta getRun(Id.Program id, String runid);
 
   /**
    * Creates a new stream if it does not exist.

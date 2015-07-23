@@ -28,6 +28,7 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -245,9 +246,9 @@ public class ProgramLifecycleService extends AbstractIdleService {
   void validateAndCorrectRunningRunRecords(ProgramType programType, Set<String> processedInvalidRunRecordIds) {
     final Map<RunId, RuntimeInfo> runIdToRuntimeInfo = runtimeService.list(programType);
 
-    List<RunRecord> invalidRunRecords = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecord>() {
+    List<RunRecordMeta> invalidRunRecords = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecordMeta>() {
       @Override
-      public boolean apply(@Nullable RunRecord input) {
+      public boolean apply(@Nullable RunRecordMeta input) {
         if (input == null) {
           return false;
         }
@@ -263,15 +264,15 @@ public class ProgramLifecycleService extends AbstractIdleService {
     }
 
     // Now lets correct the invalid RunRecords
-    for (RunRecord rr : invalidRunRecords) {
-      String runId = rr.getPid();
+    for (RunRecordMeta invalidRunRecordMeta : invalidRunRecords) {
+      String runId = invalidRunRecordMeta.getPid();
       Id.Program targetProgramId = retrieveProgramIdForRunRecord(programType, runId);
       if (targetProgramId == null) {
         // wrong program type
         continue;
       }
 
-      boolean shouldCorrect = shouldCorrectForWorkflowChildren(rr, processedInvalidRunRecordIds);
+      boolean shouldCorrect = shouldCorrectForWorkflowChildren(invalidRunRecordMeta, processedInvalidRunRecordIds);
       if (!shouldCorrect) {
         continue;
       }
@@ -289,22 +290,23 @@ public class ProgramLifecycleService extends AbstractIdleService {
   /**
    * Helper method to check if the run record is a child program of a Workflow
    *
-   * @param runRecord The target {@link RunRecord} to check
+   * @param runRecordMeta The target {@link RunRecordMeta} to check
    * @param processedInvalidRunRecordIds the {@link Set} of processed invalid run record ids.
    * @return {@code true} of we should check and {@code false} otherwise
    */
-  private boolean shouldCorrectForWorkflowChildren(RunRecord runRecord, Set<String> processedInvalidRunRecordIds) {
+  private boolean shouldCorrectForWorkflowChildren(RunRecordMeta runRecordMeta,
+                                                   Set<String> processedInvalidRunRecordIds) {
     // check if it is part of workflow because it may not have actual runtime info
-    if (runRecord.getProperties() != null && runRecord.getProperties().get("workflowrunid") != null) {
+    if (runRecordMeta.getProperties() != null && runRecordMeta.getProperties().get("workflowrunid") != null) {
 
       // Get the parent Workflow info
-      String workflowRunId = runRecord.getProperties().get("workflowrunid");
+      String workflowRunId = runRecordMeta.getProperties().get("workflowrunid");
       if (!processedInvalidRunRecordIds.contains(workflowRunId)) {
         // If the parent workflow has not been processed, then check if it still valid
         Id.Program workflowProgramId = retrieveProgramIdForRunRecord(ProgramType.WORKFLOW, workflowRunId);
         if (workflowProgramId != null) {
           // lets see if the parent workflow run records state is still running
-          RunRecord wfRunRecord = store.getRun(workflowProgramId, workflowRunId);
+          RunRecordMeta wfRunRecord = store.getRun(workflowProgramId, workflowRunId);
           RuntimeInfo wfRuntimeInfo = runtimeService.lookup(workflowProgramId, RunIds.fromString(workflowRunId));
 
           // Check of the parent workflow run record exists and it is running and runtime info said it is still there
@@ -426,7 +428,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private Id.Program validateProgramForRunRecord(String namespaceName, String appName, ProgramType programType,
                                                  String programName, String runId) {
     Id.Program programId = Id.Program.from(namespaceName, appName, programType, programName);
-    RunRecord runRecord = store.getRun(programId, runId);
+    RunRecordMeta runRecord = store.getRun(programId, runId);
     if (runRecord != null) {
       return programId;
     } else {
