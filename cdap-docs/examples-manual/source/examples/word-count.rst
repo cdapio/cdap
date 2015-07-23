@@ -9,7 +9,8 @@
 Word Count
 ==========
 
-A Cask Data Application Platform (CDAP) example demonstrating flows, datasets and services.
+A Cask Data Application Platform (CDAP) example demonstrating flows, datasets, services,
+and configuring an application at deployment time.
 
 Overview
 ========
@@ -41,7 +42,7 @@ of the application are tied together by the class ``WordCount``:
 
 .. literalinclude:: /../../../cdap-examples/WordCount/src/main/java/co/cask/cdap/examples/wordcount/WordCount.java
    :language: java
-   :lines: 27-
+   :lines: 31-
 
 Data Storage
 ------------
