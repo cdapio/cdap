@@ -539,6 +539,22 @@ included, so if the cluster version of HDP is ``2.2.6.0-2800``, use::
 The file ``cdap-env.sh`` is located in the configuration directory, as described above
 under :ref:`Configuration <install-alternatives>`.
 
+In addition, the property ``app.program.jvm.opts`` must be set in the ``cdap-site.xml``::
+
+  <property>
+    <name>app.program.jvm.opts</name>
+    <value>-XX:MaxPermSize=128M ${twill.jvm.gc.opts} -Dhdp.version=<version</value>
+    <description>Java options for all program containers</description>
+  </property>
+  
+Using the same example as above, substituting for ``<version>``, as::
+
+  <property>
+    <name>app.program.jvm.opts</name>
+    <value>-XX:MaxPermSize=128M ${twill.jvm.gc.opts} -Dhdp.version=2.2.6.0-2800</value>
+    <description>Java options for all program containers</description>
+  </property>
+
 
 .. _install-starting-services:
 
