@@ -32,15 +32,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
@@ -123,20 +120,15 @@ public final class FileSetDataset implements FileSet {
 
   private Location determineOutputLocation() {
     String outputPath = FileSetArguments.getOutputPath(runtimeArguments);
-    return outputPath == null ? baseLocation : createLocation(outputPath);
+    return outputPath == null ? null : createLocation(outputPath);
   }
 
   private List<Location> determineInputLocations() {
-    Collection<String> inputPaths = FileSetArguments.getInputPaths(runtimeArguments);
-    if (inputPaths == null) {
-      return Collections.singletonList(baseLocation);
-    } else {
-      List<Location> locations = Lists.newLinkedList();
-      for (String path : inputPaths) {
-        locations.add(createLocation(path));
-      }
-      return locations;
+    List<Location> locations = Lists.newLinkedList();
+    for (String path : FileSetArguments.getInputPaths(runtimeArguments)) {
+      locations.add(createLocation(path));
     }
+    return locations;
   }
 
   private Location createLocation(String relativePath) {
@@ -192,17 +184,19 @@ public final class FileSetDataset implements FileSet {
 
   @Override
   public Map<String, String> getInputFormatConfiguration(Iterable<? extends Location> inputLocs) {
+    ImmutableMap.Builder<String, String> config = ImmutableMap.builder();
+    config.putAll(FileSetProperties.getInputProperties(spec.getProperties()));
+    config.putAll(FileSetProperties.getInputProperties(runtimeArguments));
     String inputs = Joiner.on(',').join(Iterables.transform(inputLocs, new Function<Location, String>() {
       @Override
       public String apply(@Nullable Location location) {
         return getFileSystemPath(location);
       }
     }));
-    Map<String, String> config = Maps.newHashMap();
-    config.putAll(FileSetProperties.getInputProperties(spec.getProperties()));
-    config.putAll(FileSetProperties.getInputProperties(runtimeArguments));
-    config.put(FileInputFormat.INPUT_DIR, inputs);
-    return ImmutableMap.copyOf(config);
+    if (!inputs.isEmpty()) {
+      config.put(FileInputFormat.INPUT_DIR, inputs);
+    }
+    return config.build();
   }
 
   @Override
@@ -220,11 +214,13 @@ public final class FileSetDataset implements FileSet {
       throw new UnsupportedOperationException(
         "Output is not supported for external file set '" + spec.getName() + "'");
     }
-    Map<String, String> config = Maps.newHashMap();
-    config.putAll(FileSetProperties.getOutputProperties(spec.getProperties()));
-    config.putAll(FileSetProperties.getOutputProperties(runtimeArguments));
-    config.put(FileOutputFormat.OUTDIR, getFileSystemPath(outputLocation));
-    return ImmutableMap.copyOf(config);
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.putAll(FileSetProperties.getOutputProperties(spec.getProperties()));
+    builder.putAll(FileSetProperties.getOutputProperties(runtimeArguments));
+    if (outputLocation != null) {
+      builder.put(FileOutputFormat.OUTDIR, getFileSystemPath(outputLocation));
+    }
+    return builder.build();
   }
 
   @Override
