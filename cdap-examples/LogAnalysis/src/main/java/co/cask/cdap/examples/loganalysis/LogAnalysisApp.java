@@ -31,21 +31,24 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.Workflow;
-import co.cask.cdap.common.io.Locations;
 import com.google.common.base.Charsets;
-import com.google.common.collect.Sets;
-import com.google.common.io.CharStreams;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.twill.filesystem.Location;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -80,7 +83,7 @@ public class LogAnalysisApp extends AbstractApplication {
     // Services to query for result
     addService(HIT_COUNTER_SERVICE, new HitCounterServiceHandler());
     addService(RESPONSE_COUNTER_SERVICE, new ResponseCounterHandler());
-    addService(REQUEST_COUNTER_SERVICE, new RequestCounterHanlder());
+    addService(REQUEST_COUNTER_SERVICE, new RequestCounterHandler());
 
     // Datasets to store output after processing
     createDataset(RESPONSE_COUNT_STORE, KeyValueTable.class);
@@ -181,11 +184,11 @@ public class LogAnalysisApp extends AbstractApplication {
   /**
    * A Service which serves the number of requests made by unique ip address from a {@link TimePartitionedFileSet}
    */
-  public static final class RequestCounterHanlder extends AbstractHttpServiceHandler {
+  public static final class RequestCounterHandler extends AbstractHttpServiceHandler {
 
     private static final Gson GSON = new Gson();
-    static final String REQUEST_COUNTER_PARTITIONS_HANDLER = "reqcount";
-    static final String REQUEST_FILE_CONTENT_HANDLER = "reqfile";
+    static final String REQUEST_COUNTER_PARTITIONS_PATH = "reqcount";
+    static final String REQUEST_FILE_CONTENT_PATH = "reqfile";
     static final String REQUEST_FILE_PATH_HANDLER_KEY = "time";
 
     @UseDataSet(REQ_COUNT_STORE)
@@ -195,24 +198,20 @@ public class LogAnalysisApp extends AbstractApplication {
      * Handler which lists all the different time partitions available in the {@link LogAnalysisApp#REQ_COUNT_STORE}
      * {@link TimePartitionedFileSet}
      */
-    @Path(REQUEST_COUNTER_PARTITIONS_HANDLER)
+    @Path(REQUEST_COUNTER_PARTITIONS_PATH)
     @GET
     public void getRequestFilesetPartitions(HttpServiceRequest request, HttpServiceResponder responder) {
 
       // get all the existing paritions
       Set<TimePartitionDetail> partitionsByTime = reqCountStore.getPartitionsByTime(0, Long.MAX_VALUE);
 
-      if (partitionsByTime.isEmpty()) {
-        responder.sendString(HttpURLConnection.HTTP_NO_CONTENT, "No request count information found", Charsets.UTF_8);
-      } else {
-        Set<String> formatedTimes = Sets.newHashSet();
-        for (TimePartitionDetail timePartitionDetail : partitionsByTime) {
-          String partitionTime = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(
-            new Date(timePartitionDetail.getTime()));
-          formatedTimes.add(partitionTime);
-        }
-        responder.sendJson(HttpURLConnection.HTTP_OK, formatedTimes);
+      SortedSet<String> formattedTimes = new TreeSet<>();
+      for (TimePartitionDetail timePartitionDetail : partitionsByTime) {
+        String partitionTime = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(
+          new Date(timePartitionDetail.getTime()));
+        formattedTimes.add(partitionTime);
       }
+      responder.sendJson(HttpURLConnection.HTTP_OK, formattedTimes);
     }
 
     /**
@@ -221,36 +220,43 @@ public class LogAnalysisApp extends AbstractApplication {
      * Note: We make an assumption here that the contents for partitions in the tpfs for this example is not very huge.
      * This method of serving contents is not ideal for large contents.
      */
-    @Path(REQUEST_FILE_CONTENT_HANDLER)
+    @Path(REQUEST_FILE_CONTENT_PATH)
     @POST
     public void getRequestFilesetContents(HttpServiceRequest request, HttpServiceResponder responder) {
 
       String partition = GSON.fromJson(Charsets.UTF_8.decode(request.getContent()).toString(),
-                                 JsonObject.class).get(REQUEST_FILE_PATH_HANDLER_KEY).getAsString();
+                                       JsonObject.class).get(REQUEST_FILE_PATH_HANDLER_KEY).getAsString();
       long partitionKey = 0;
       try {
         partitionKey = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse(partition).getTime();
       } catch (ParseException e) {
         responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "Failed to parse the given string to a timestamp");
+        return;
       }
 
       final Location location = reqCountStore.getPartitionByTime(partitionKey).getLocation();
       if (location == null) {
-        responder.sendError(HttpURLConnection.HTTP_NO_CONTENT, "No files for the given date time string");
+        responder.sendError(HttpURLConnection.HTTP_NOT_FOUND, "No files for the given date time string");
+        return;
       }
 
-      StringBuilder contents = new StringBuilder();
+      Map<String, Integer> requestCountsMap = Maps.newHashMap();
       try {
         for (Location file : location.list()) {
           if (file.getName().startsWith("part")) {
-            contents.append(CharStreams.toString(CharStreams.newReaderSupplier(Locations.newInputSupplier(file),
-                                                                               Charsets.UTF_8)));
+            String line;
+            BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), Charsets.UTF_8));
+            while ((line = reader.readLine()) != null) {
+              String[] reqeustCount = line.split(":");
+              requestCountsMap.put(reqeustCount[0], Integer.parseInt(reqeustCount[1]));
+            }
           }
         }
       } catch (IOException e) {
         responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to access files.");
+        return;
       }
-      responder.sendString(HttpURLConnection.HTTP_OK, contents.toString(), Charsets.UTF_8);
+      responder.sendJson(HttpURLConnection.HTTP_OK, requestCountsMap);
     }
   }
 }

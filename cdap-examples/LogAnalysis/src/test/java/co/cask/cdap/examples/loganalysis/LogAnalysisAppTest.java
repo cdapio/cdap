@@ -26,6 +26,7 @@ import co.cask.cdap.test.TestConfiguration;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.junit.Assert;
@@ -34,7 +35,8 @@ import org.junit.Test;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Set;
+import java.util.Map;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -50,7 +52,7 @@ public class LogAnalysisAppTest extends TestBase {
   private static final String TOTAL_HITS_VALUE = "2";
   private static final String TOTAL_RESPONSE_VALUE = "2";
   private static final String RESPONSE_CODE = "200";
-  private static final String TPFS_RESULT = "127.0.1.1:1\n127.0.0.1:2\n";
+  private static final Map<String, Integer> TPFS_RESULT = ImmutableMap.of("127.0.1.1", 1, "127.0.0.1", 2);
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
@@ -59,9 +61,6 @@ public class LogAnalysisAppTest extends TestBase {
   public void test() throws Exception {
     // Deploy the App
     ApplicationManager appManager = deployApplication(LogAnalysisApp.class);
-
-    long inputTime = System.currentTimeMillis();
-    final long outputTime = inputTime + TimeUnit.HOURS.toMillis(1);
 
     // Send a stream events to the Stream
     StreamManager streamManager = getStreamManager(LogAnalysisApp.LOG_STREAM);
@@ -105,27 +104,30 @@ public class LogAnalysisAppTest extends TestBase {
 
     // query to get partitions in the request count tpfs
     URL requestCountFilsetsURL = new URL(requestCounterServiceManager.getServiceURL(15, TimeUnit.SECONDS),
-                                         LogAnalysisApp.RequestCounterHanlder.REQUEST_COUNTER_PARTITIONS_HANDLER);
+                                         LogAnalysisApp.RequestCounterHandler.REQUEST_COUNTER_PARTITIONS_PATH);
     request = HttpRequest.get(requestCountFilsetsURL).build();
     response = HttpRequests.execute(request);
-    Set<String> partitions = GSON.fromJson(response.getResponseBodyAsString(),
-                                           new TypeToken<Set<String>>() {
+    TreeSet<String> partitions = GSON.fromJson(response.getResponseBodyAsString(),
+                                           new TypeToken<TreeSet<String>>() {
                                            }.getType());
     Assert.assertEquals(1, partitions.size());
     String partition = partitions.iterator().next();
 
     //Query for the contents of the files in this partition and verify
     URL requestFilesetContentURL = new URL(requestCounterServiceManager.getServiceURL(15, TimeUnit.SECONDS),
-                                           LogAnalysisApp.RequestCounterHanlder.REQUEST_FILE_CONTENT_HANDLER);
+                                           LogAnalysisApp.RequestCounterHandler.REQUEST_FILE_CONTENT_PATH);
 
     response = HttpRequests.execute(HttpRequest.post(requestFilesetContentURL)
-                                      .withBody("{\"" + LogAnalysisApp.RequestCounterHanlder.REQUEST_FILE_PATH_HANDLER_KEY + "\":\""
-                                                  + partition + "\"}")
+                                      .withBody("{\"" +
+                                                  LogAnalysisApp.RequestCounterHandler.REQUEST_FILE_PATH_HANDLER_KEY +
+                                                  "\":\"" + partition + "\"}")
                                       .build());
     Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-    Assert.assertEquals(TPFS_RESULT, response.getResponseBodyAsString());
+    Map<String, Integer> responseMap = GSON.fromJson(response.getResponseBodyAsString(),
+                                                     new TypeToken<Map<String, Integer>>() { }.getType());
+    Assert.assertTrue(responseMap.equals(TPFS_RESULT));
   }
-  
+
   private ServiceManager getServiceManager(ApplicationManager appManager, String serviceName)
     throws InterruptedException {
     // Start the service

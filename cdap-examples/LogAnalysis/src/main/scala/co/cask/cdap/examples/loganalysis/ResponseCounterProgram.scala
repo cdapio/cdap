@@ -23,7 +23,7 @@ import co.cask.cdap.api.common.Bytes
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments
 import co.cask.cdap.api.spark.{ScalaSparkProgram, SparkContext}
 import org.apache.hadoop.io.{LongWritable, Text}
-import org.apache.spark.rdd.{NewHadoopRDD, RDD}
+import org.apache.spark.rdd.NewHadoopRDD
 import org.slf4j.{Logger, LoggerFactory}
 import org.apache.spark.SparkContext._
 
@@ -51,9 +51,9 @@ class ResponseCounterProgram extends ScalaSparkProgram {
     val ipCounts = logsData.map(x => (ApacheAccessLog.
       parseFromLogLine(x._2.toString).getIpAddress, 1L)).reduceByKey(_ + _)
 
-    val outputArgs: util.HashMap[String, String] = new util.HashMap[String, String]
+    val outputArgs = new util.HashMap[String, String]
     TimePartitionedFileSetArguments.setOutputPartitionTime(outputArgs, endTime)
     context.writeToDataset(ipCounts, LogAnalysisApp.REQ_COUNT_STORE,
-      classOf[String], classOf[java.lang.Long], outputArgs)
+      classOf[String], classOf[Long], outputArgs)
   }
 }
