@@ -19,9 +19,9 @@
           <th></th>
         </thead>
         <tbody>
-          <tr ng-repeat="property in properties" ng-keypress="enter($event, $last)" ng-click="emptyRowClick(property)">
+          <tr ng-repeat="property in properties" ng-keypress="enter($event, $index)" ng-click="emptyRowClick(property, $index)">
             <td class="name" ng-if="!property.empty">
-              <input type="text" class="form-control" ng-model="property.name" placeholder="name" my-focus-watch="$last" />
+              <input type="text" class="form-control" ng-model="property.name" placeholder="name" my-focus-watch="!property.empty" />
             </td>
             <td class="type" ng-if="!property.empty">
               <select ng-model="property.type" class="form-control col-xs-4" ng-options="option as option for option in options"></select>

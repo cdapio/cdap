@@ -50,6 +50,7 @@ angular.module(PKG.name + '.feature.adapters')
         .then(function(res) {
           var pluginProperties = (res.length? res[0].properties: {});
           $scope.source._backendProperties = pluginProperties;
+          $scope.source.type = 'source';
         });
 
 
@@ -64,6 +65,7 @@ angular.module(PKG.name + '.feature.adapters')
           .then(function(res) {
             var pluginProperties = (res.length? res[0].properties : {});
             transform._backendProperties = pluginProperties;
+            transform.type = 'transform';
           });
       });
 
@@ -78,6 +80,7 @@ angular.module(PKG.name + '.feature.adapters')
         .then(function(res) {
           var pluginProperties = (res.length? res[0].properties : {});
           $scope.sink._backendProperties = pluginProperties;
+          $scope.sink.type = 'sink';
         });
     }
 
@@ -105,4 +108,15 @@ angular.module(PKG.name + '.feature.adapters')
     $scope.isDisabled = true;
 
     $scope.plugin.outputSchema = $scope.plugin.properties.schema;
+
+    if (AdapterModel.type === 'source') {
+      $scope.isSource = true;
+    }
+
+    if (AdapterModel.type === 'sink') {
+      $scope.isSink = true;
+    }
+    if (AdapterModel.type === 'transform') {
+      $scope.isTransform = true;
+    }
   });

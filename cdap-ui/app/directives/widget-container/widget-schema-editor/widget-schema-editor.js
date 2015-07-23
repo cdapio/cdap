@@ -19,6 +19,7 @@ angular.module(PKG.name + '.commons')
           defaultType = 'string';
         }
 
+        var filledCount = 0;
 
         // Format model
         function initialize() {
@@ -55,6 +56,9 @@ angular.module(PKG.name + '.commons')
               });
             }
           });
+
+          filledCount = $scope.properties.length;
+
           // Note: 15 for now
           if ($scope.properties.length < 15) {
             if ($scope.properties.length === 0) {
@@ -63,6 +67,7 @@ angular.module(PKG.name + '.commons')
                 type: defaultType,
                 nullable: false
               });
+              filledCount = 1;
             }
 
             for (var i = $scope.properties.length; i < 15; i++) {
@@ -70,7 +75,12 @@ angular.module(PKG.name + '.commons')
                 empty: true
               });
             }
+          } else { // to add one empty line when there are more than 15 fields
+            $scope.properties.push({
+              empty: true
+            });
           }
+
 
         } // End of initialize
 
@@ -113,8 +123,8 @@ angular.module(PKG.name + '.commons')
         // watch for changes
         $scope.$watch('properties', formatSchema, true);
 
-        $scope.emptyRowClick = function (property) {
-          if (!property.empty) {
+        $scope.emptyRowClick = function (property, index) {
+          if (!property.empty || index !== filledCount || $scope.disabled) {
             return;
           }
 
@@ -122,6 +132,13 @@ angular.module(PKG.name + '.commons')
           property.name = '';
           property.type = defaultType;
           property.nullable = false;
+          filledCount++;
+
+          if (filledCount >= 15) {
+            $scope.properties.push({
+              empty: true
+            });
+          }
         };
 
         $scope.addProperties = function() {
@@ -130,20 +147,35 @@ angular.module(PKG.name + '.commons')
             type: defaultType,
             nullable: false
           });
+
+          filledCount++;
+
+          if ($scope.properties.length >= 15) {
+            $scope.properties.push({
+              empty: true
+            });
+          }
         };
 
         $scope.removeProperty = function(property) {
           var index = $scope.properties.indexOf(property);
           $scope.properties.splice(index, 1);
 
-          $scope.properties.push({
-            empty: true
-          });
+          if ($scope.properties.length <= 15) {
+            $scope.properties.push({
+              empty: true
+            });
+          }
+          filledCount--;
         };
 
-        $scope.enter = function(event, last) {
-          if (last && event.keyCode === 13) {
-            $scope.addProperties();
+        $scope.enter = function(event, index) {
+          if (index === filledCount-1 && event.keyCode === 13) {
+            if (filledCount < $scope.properties.length) {
+              $scope.emptyRowClick($scope.properties[index + 1], index+1);
+            } else {
+              $scope.addProperties();
+            }
           }
         };
 
