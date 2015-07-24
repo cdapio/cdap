@@ -25,11 +25,13 @@ import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDS;
+import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDS;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDefinition;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetTableMigrator;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -45,6 +47,7 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -72,6 +75,7 @@ public class PFSUpgrader {
   public void upgrade() throws Exception {
     LOG.info("Begin upgrade of PartitionedFileSets.");
     upgradePartitionedFileSets();
+    upgradeModulesDependingOnPfs();
     LOG.info("Completed upgrade of PartitionedFileSets.");
   }
 
@@ -149,8 +153,62 @@ public class PFSUpgrader {
         }
       }
     });
+  }
 
+  // need to add 'core' as a module dependency for any modules that currently depend on partitionedFileSet or
+  // timePartitionedFileSet as a resolution to: https://issues.cask.co/browse/CDAP-3030
+  private void upgradeModulesDependingOnPfs() throws Exception {
+    final DatasetTypeMDS dsTypeMDS;
+    try {
+      dsTypeMDS = new DatasetMetaTableUtil(dsFramework).getTypeMetaTable();
+    } catch (Exception e) {
+      LOG.error("Failed to access Datasets types meta table.");
+      throw e;
+    }
 
+    TransactionExecutor executor = executorFactory.createExecutor(ImmutableList.of((TransactionAware) dsTypeMDS));
+    executor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        MDSKey key = new MDSKey.Builder().add(DatasetTypeMDS.MODULES_PREFIX).build();
+        Map<MDSKey, DatasetModuleMeta> dsSpecs = dsTypeMDS.listKV(key, DatasetModuleMeta.class);
+
+        for (Map.Entry<MDSKey, DatasetModuleMeta> entry : dsSpecs.entrySet()) {
+          DatasetModuleMeta moduleMeta = entry.getValue();
+          if (!needsConverting(moduleMeta)) {
+            continue;
+          }
+          LOG.info("Migrating dataset module meta: {}", moduleMeta);
+          DatasetModuleMeta migratedModuleMeta = migrateDatasetModuleMeta(moduleMeta);
+          dsTypeMDS.write(entry.getKey(), migratedModuleMeta);
+        }
+      }
+    });
+  }
+
+  @VisibleForTesting
+  boolean needsConverting(DatasetModuleMeta moduleMeta) {
+    for (String usesModule : moduleMeta.getUsesModules()) {
+      if ("partitionedFileSet".equals(usesModule) || "timePartitionedFileSet".equals(usesModule)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @VisibleForTesting
+  DatasetModuleMeta migrateDatasetModuleMeta(DatasetModuleMeta moduleMeta) {
+    List<String> newUsesModules = new ArrayList<>(moduleMeta.getUsesModules());
+    newUsesModules.add("core");
+    DatasetModuleMeta migratedModuleMeta = new DatasetModuleMeta(moduleMeta.getName(),
+                                                                 moduleMeta.getClassName(),
+                                                                 moduleMeta.getJarLocation(),
+                                                                 moduleMeta.getTypes(),
+                                                                 newUsesModules);
+    for (String usedByModule : moduleMeta.getUsedByModules()) {
+      migratedModuleMeta.addUsedByModule(usedByModule);
+    }
+    return migratedModuleMeta;
   }
 
   @VisibleForTesting

@@ -32,11 +32,13 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDefinition;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetTableMigrator;
+import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
@@ -145,6 +147,23 @@ public class PFSUpgraderTest {
     DatasetSpecification newPartitionsSpec =
       migratedEmbeddedPfsSpec.getSpecification(PartitionedFileSetDefinition.PARTITION_TABLE_NAME);
     assertIsNewPartitionsTable(newPartitionsSpec);
+  }
+
+  @Test
+  public void testModuleUpgrade() throws Exception {
+    DatasetModuleMeta oldModuleMetaNotNeedingUpgrade =
+      new DatasetModuleMeta("myModule", "co.cask.cdap.examples.helloworld.MyModule",
+                            null, ImmutableList.of("myType"), ImmutableList.of("cube"));
+
+    Assert.assertFalse(pfsUpgrader.needsConverting(oldModuleMetaNotNeedingUpgrade));
+
+
+    DatasetModuleMeta oldModuleMeta =
+      new DatasetModuleMeta("myOtherModule", "co.cask.cdap.examples.helloworld.MyOtherModule",
+                            null, ImmutableList.of("myType"), ImmutableList.of("partitionedFileSet"));
+    Assert.assertTrue(pfsUpgrader.needsConverting(oldModuleMeta));
+    DatasetModuleMeta newModuleMeta = pfsUpgrader.migrateDatasetModuleMeta(oldModuleMeta);
+    Assert.assertTrue(newModuleMeta.getUsesModules().contains("core"));
   }
 
   private void assertIsNewPartitionsTable(DatasetSpecification dsSpec) {
