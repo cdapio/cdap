@@ -299,18 +299,22 @@ public class ExploreRuntimeModule extends RuntimeModule {
     for (File dep : orderedDependencies) {
       builder.add("file://" + dep.getAbsolutePath());
     }
-    List<String> orderedDependenciesStr = Lists.newArrayList(builder.build());
+    List<String> orderedDependenciesStr = builder.build();
 
     System.setProperty(HiveConf.ConfVars.HIVEAUXJARS.toString(), Joiner.on(',').join(orderedDependenciesStr));
     LOG.debug("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
               System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
 
-    // add hive-exec.jar to the end of auxjars, we need this, otherwise when hive runs a MapRedLocalTask it cannot find
+    // add hive-exec.jar to the HADOOP_CLASSPATH, which is used by the local mapreduce job launched by hive ,
+    // we need to add this, otherwise when hive runs a MapRedLocalTask it cannot find
     // "org.apache.hadoop.hive.serde2.SerDe" class in its classpath.
-    orderedDependenciesStr.add(new HiveConf().getJar());
+    List<String> orderedDependenciesWithHiveJar = Lists.newArrayList(orderedDependenciesStr);
+    orderedDependenciesWithHiveJar.add(new HiveConf().getJar());
+
     //TODO: Setup HADOOP_CLASSPATH hack, more info on why this is needed, see CDAP-9
     LocalMapreduceClasspathSetter classpathSetter =
-      new LocalMapreduceClasspathSetter(new HiveConf(), System.getProperty("java.io.tmpdir"), orderedDependenciesStr);
+      new LocalMapreduceClasspathSetter(new HiveConf(), System.getProperty("java.io.tmpdir"),
+                                        orderedDependenciesWithHiveJar);
     for (File jar : hBaseTableDeps) {
       classpathSetter.accept(jar.getAbsolutePath());
     }
