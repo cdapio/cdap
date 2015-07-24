@@ -19,6 +19,7 @@ package co.cask.cdap.logging.gateway.handlers;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.Filter;
@@ -29,7 +30,6 @@ import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.logging.read.ReadRange;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.RunRecord;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
@@ -97,14 +97,14 @@ public class LogHandler extends AbstractHttpHandler {
       LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
                                                       ProgramType.valueOfCategoryName(programType),
                                                       runId, adapterId);
-    RunRecord runRecord = programStore.getRun(
+    RunRecordMeta runRecord = programStore.getRun(
       Id.Program.from(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId), runId);
     doGetLogs(responder, loggingContext, fromTimeSecsParam, toTimeSecsParam, escape, filterStr, runRecord);
   }
 
   private void doGetLogs(HttpResponder responder, LoggingContext loggingContext,
                          long fromTimeSecsParam, long toTimeSecsParam, boolean escape, String filterStr,
-                         @Nullable RunRecord runRecord) {
+                         @Nullable RunRecordMeta runRecord) {
     try {
       TimeRange timeRange = parseTime(fromTimeSecsParam, toTimeSecsParam, responder);
       if (timeRange == null) {
@@ -160,13 +160,13 @@ public class LogHandler extends AbstractHttpHandler {
       LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
                                                       ProgramType.valueOfCategoryName(programType),
                                                       runId, adapterId);
-    RunRecord runRecord = programStore.getRun(
+    RunRecordMeta runRecord = programStore.getRun(
       Id.Program.from(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId), runId);
     doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, runRecord);
   }
 
   private void doNext(HttpResponder responder, LoggingContext loggingContext, int maxEvents,
-                      String fromOffsetStr, boolean escape, String filterStr, @Nullable RunRecord runRecord) {
+                      String fromOffsetStr, boolean escape, String filterStr, @Nullable RunRecordMeta runRecord) {
     try {
       Filter filter = FilterParser.parse(filterStr);
 
@@ -190,7 +190,7 @@ public class LogHandler extends AbstractHttpHandler {
   /**
    * If readRange is outside runRecord's range, then the readRange is adjusted to fall within runRecords range.
    */
-  private ReadRange adjustReadRange(ReadRange readRange, @Nullable RunRecord runRecord) {
+  private ReadRange adjustReadRange(ReadRange readRange, @Nullable RunRecordMeta runRecord) {
     if (runRecord == null) {
       return readRange;
     }
@@ -240,13 +240,13 @@ public class LogHandler extends AbstractHttpHandler {
       LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
                                                       ProgramType.valueOfCategoryName(programType),
                                                       runId, adapterId);
-    RunRecord runRecord = programStore.getRun(
+    RunRecordMeta runRecord = programStore.getRun(
       Id.Program.from(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId), runId);
     doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, runRecord);
   }
 
   private void doPrev(HttpResponder responder, LoggingContext loggingContext, int maxEvents, String fromOffsetStr,
-                      boolean escape, String filterStr, @Nullable RunRecord runRecord) {
+                      boolean escape, String filterStr, @Nullable RunRecordMeta runRecord) {
     try {
       Filter filter = FilterParser.parse(filterStr);
 
