@@ -93,7 +93,7 @@ that doesn&#8217;t fit into the other paradigms such as Flows and MapReduce or r
 </div>
 <p>Workers have semantics similar to a Java thread and are run in a thread when CDAP is run in either In-Memory
 or Standalone Modes. In distributed mode, each instance of a worker runs in its own YARN container.
-Their instances may be updated via the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli-available-commands" title="(in Cask Data Application Platform v3.0.1)"><span class="xref std std-ref">Command Line Interface</span></a> or a <a class="reference external" href="../source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-lifecycle" title="(in Cask Data Application Platform v3.0.1)"><span class="xref std std-ref">RESTful API</span></a>:</p>
+Their instances may be updated via the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli-available-commands" title="(in Cask Data Application Platform v3.0.2)"><span class="xref std std-ref">Command Line Interface</span></a> or a <a class="reference external" href="../source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-lifecycle" title="(in Cask Data Application Platform v3.0.2)"><span class="xref std std-ref">RESTful API</span></a>:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ProcessWorker</span> <span class="kd">extends</span> <span class="n">AbstractWorker</span> <span class="o">{</span>
 
   <span class="nd">@Override</span>
@@ -163,7 +163,7 @@ cannot be rolled back, and thus the write differs in semantics compared to writi
 performed as either single event writes or in batch.</p>
 <p>When uploading events in batch, there are two options: either uploading a <code class="docutils literal"><span class="pre">File</span></code> or writing multiple events
 through a <code class="docutils literal"><span class="pre">StreamBatchWriter</span></code>. In batch mode, the content type of the data must be specified. Refer
-to the <a class="reference external" href="../source/../../reference-manual/http-restful-api/stream.html#http-restful-api-stream" title="(in Cask Data Application Platform v3.0.1)"><span class="xref std std-ref">Stream RESTful API</span></a> for information on the content type specification.</p>
+to the <a class="reference external" href="../source/../../reference-manual/http-restful-api/stream.html#http-restful-api-stream" title="(in Cask Data Application Platform v3.0.2)"><span class="xref std std-ref">Stream RESTful API</span></a> for information on the content type specification.</p>
 <p>With a <code class="docutils literal"><span class="pre">StreamBatchWriter</span></code>, the <code class="docutils literal"><span class="pre">close</span></code> method` needs to be called after all the writes have been performed:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="nd">@Override</span>
 <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>

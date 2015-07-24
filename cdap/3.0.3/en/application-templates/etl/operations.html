@@ -418,7 +418,7 @@ fit):</p>
 <p>As an Adapter is an instantiation of a particular program (a Workflow, MapReduce, Workers, etc.),
 the logs for an Adapter are the logs of the underlying program. To retrieve these logs
 using a RESTful API, you need to know which underlying program the Adapter uses
-and then use the CDAP <a class="reference external" href="../source/../../reference-manual/http-restful-api/logging.html#http-restful-api-logging" title="(in Cask Data Application Platform v3.0.3)"><span class="xref std std-ref">Logging API</span></a> to retrieve its logs.</p>
+and then use the CDAP <a class="reference external" href="../source/../../reference-manual/http-restful-api/logging.html#http-restful-api-logging" title="(in Cask Data Application Platform v3.0.1)"><span class="xref std std-ref">Logging API</span></a> to retrieve its logs.</p>
 <p>To find the underlying programs, you can <a class="reference internal" href="#http-restful-api-apptemplates-adapters-details"><span>list details of an Adapter</span></a> and then use its <code class="docutils literal"><span class="pre">program</span></code> information
 to determine how to build your request:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">&quot;program&quot;: {</span>
@@ -432,7 +432,7 @@ to determine how to build your request:</p>
 <p>For example, using the previous <code class="docutils literal"><span class="pre">streamAdapter</span></code>, you would be interested in the logs of the
 Workflow <em>ETLWorkflow</em> of the Application <em>ETLBatch</em> of the namespace <em>default</em>. From this,
 you can formulate your request.</p>
-<p>The <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.3)"><span class="xref std std-ref">CDAP CLI</span></a> has a command (<code class="docutils literal"><span class="pre">get</span> <span class="pre">adapter</span> <span class="pre">logs</span> <span class="pre">&lt;adapter-id&gt;</span></code>) that does this directly.</p>
+<p>The <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.1)"><span class="xref std std-ref">CDAP CLI</span></a> has a command (<code class="docutils literal"><span class="pre">get</span> <span class="pre">adapter</span> <span class="pre">logs</span> <span class="pre">&lt;adapter-id&gt;</span></code>) that does this directly.</p>
 </div>
 <div class="section" id="retrieving-adapter-metrics">
 <span id="http-restful-api-apptemplates-adapter-metrics"></span><h2>Retrieving Adapter Metrics<a class="headerlink" href="#retrieving-adapter-metrics" title="Permalink to this headline">¶</a></h2>
