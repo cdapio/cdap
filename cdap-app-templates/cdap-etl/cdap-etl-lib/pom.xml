@@ -166,6 +166,10 @@
     <!-- End for JMS Source -->
     <!-- Start for Kafka Source -->
     <dependency>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.twill</groupId>
       <artifactId>twill-core</artifactId>
       <exclusions>
