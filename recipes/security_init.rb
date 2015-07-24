@@ -57,8 +57,8 @@ if node['cdap']['security']['manage_realmfile'].to_s == 'true'
       # Create the realmfile
       file realmfile do
         content "#{node['cdap']['security']['realmfile']['username']}: #{node['cdap']['security']['realmfile']['password']}"
-        action :nothing
-      end.run_action(:create)
+        action :create
+      end
     end
   end
 end
