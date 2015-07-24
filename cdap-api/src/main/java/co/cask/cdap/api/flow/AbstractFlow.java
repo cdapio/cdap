@@ -33,7 +33,7 @@ public abstract class AbstractFlow implements Flow {
   }
 
   /**
-   * Configures the flow.
+   * Configure the flow.
    */
   protected abstract void configureFlow();
 

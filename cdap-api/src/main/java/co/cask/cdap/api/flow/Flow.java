@@ -24,17 +24,15 @@ import co.cask.cdap.api.Processor;
  *
  * <p>
  *   Implement this interface to create a flow. The {@link #configure} method will be
- *   invoked during deployment time and it returns a {@link FlowSpecification} to specify how to
- *   configure the flow.
+ *   invoked during deployment time.
  * </p>
  *
  * See the <i>Cask DAP Developer Guide</i> and the CDAP instance example applications.
- * @see FlowSpecification
  * @see co.cask.cdap.api.flow.flowlet.Flowlet Flowlet
  */
 public interface Flow extends Processor {
   /**
-   * Configure the {@link Flow} by returning a {@link FlowSpecification}.
+   * Configure the {@link Flow} using a {@link FlowConfigurer}.
    *
    * @param flowConfigurer {@link FlowConfigurer}
    */

@@ -22,20 +22,7 @@ import co.cask.cdap.api.common.PropertyProvider;
 import java.util.Set;
 
 /**
- * This class provides specification of a Flowlet. Instance of this class should be created through
- * the {@link Builder} class by invoking the {@link Builder#with()} method.
- *
- * <pre>
- * {@code
- * FlowletSpecification flowletSpecification =
- *  FlowletSpecification flowletSpecification =
- *      FlowletSpecification.Builder.with()
- *        .setName("tokenCount")
- *        .setDescription("Token counting flow")
- *        .setFailurePolicy(FailurePolicy.RETRY)
- *        .build();
- * }
- * </pre>
+ * This class provides specification of a Flowlet.
  */
 public interface FlowletSpecification extends PropertyProvider {
 

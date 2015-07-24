@@ -17,46 +17,12 @@
 package co.cask.cdap.api.flow;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.flow.flowlet.Flowlet;
-import co.cask.cdap.internal.UserErrors;
-import co.cask.cdap.internal.UserMessages;
-import co.cask.cdap.internal.flow.DefaultFlowSpecification;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 import java.util.List;
 import java.util.Map;
 
 /**
- * This class provides the specification of a Flow. Instances of this class should be created through
- * the {@link Builder} class by invoking the {@link Builder#with()} method.
- *
- * <p>
- * Example FlowSpecification:
- *
- *  <pre>
- *    <code>
- *      public class PurchaseFlow implements Flow {
- *        {@literal @}Override
- *        public FlowSpecification configure() {
- *          return FlowSpecification.Builder.with()
- *            .setName("PurchaseFlow")
- *            .setDescription("Reads user and purchase information and stores in dataset")
- *            .withFlowlets()
- *              .add("reader", new PurchaseStreamReader())
- *              .add("collector", new PurchaseStore())
- *            .connect()
- *              .fromStream("purchaseStream").to("reader")
- *              .from("reader").to("collector")
- *            .build();
- *        }
- *      }
- *    </code> 
- *  </pre>
- *
- * See the <i>Cask DAP Developer Guide</i> and the CDAP instance example applications.
+ * This class provides the specification of a Flow.
  *
  * @see co.cask.cdap.api.flow.flowlet.Flowlet Flowlet
  *
