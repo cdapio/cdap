@@ -1,0 +1,357 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Glossary &mdash; Cask Data Application Platform 3.0.2 Documentation</title>
+    
+    <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+
+
+
+        <link rel="stylesheet" href="_static/hide-nav.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.0.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.0.2 Documentation" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.0.2');</script>
+       
+        <li><a href="table-of-contents.html">CDAP Reference Manual</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="glossary">
+<span id="id1"></span><h1>Glossary<a class="headerlink" href="#glossary" title="Permalink to this headline">¶</a></h1>
+<dl class="glossary docutils">
+<dt id="term-adapter">Adapter</dt>
+<dd>An Adapter is an instantiation of an <a class="reference internal" href="#term-application-template"><span class="xref std std-term">Application Template</span></a> that has been created
+from a specific configuration. Adapters combine <a class="reference internal" href="#term-plugin"><span class="xref std std-term">Plugins</span></a> to access
+CDAP programs and resources.</dd>
+<dt id="term-adapter-configuration">Adapter Configuration</dt>
+<dd>A JSON String that defines an <a class="reference internal" href="#term-adapter"><span class="xref std std-term">Adapter</span></a>.</dd>
+<dt id="term-apache-hadoop">Apache Hadoop</dt>
+<dd>See <a class="reference internal" href="#term-hadoop"><span class="xref std std-term">Hadoop</span></a>.</dd>
+<dt id="term-apache-spark">Apache Spark</dt>
+<dd>See <a class="reference internal" href="#term-spark"><span class="xref std std-term">Spark Program</span></a>.</dd>
+<dt id="term-app-template">App Template</dt>
+<dd>See <a class="reference internal" href="#term-application-template"><span class="xref std std-term">Application Template</span></a>.</dd>
+<dt id="term-application">Application</dt>
+<dd>A collection of Programs and Services that read and write through the data
+abstraction layer in CDAP.</dd>
+<dt id="term-application-abstraction">Application Abstraction</dt>
+<dd>Application abstraction allows the same application to run in multiple  environments
+without modification.</dd>
+<dt id="term-application-template">Application Template</dt>
+<dd>An application that is reusable through configuration and extensible through plugins.</dd>
+<dt id="term-avro">Avro</dt>
+<dd>Refers to the <a class="reference external" href="http://avro.apache.org">Apache Avro™</a> project, which is a
+data serialization system that provides rich data structures and a compact, fast, binary data format.</dd>
+<dt id="term-cdap">CDAP</dt>
+<dd>The Cask Data Application Platform; refers to both the platform, and an installed instance of it.</dd>
+<dt id="term-cdap-console">CDAP Console</dt>
+<dd>See <a class="reference internal" href="#term-cdap-ui"><span class="xref std std-term">CDAP UI</span></a>.</dd>
+<dt id="term-cdap-ui">CDAP UI</dt>
+<dd>The CDAP UI is a web-based application used to deploy CDAP Applications, create
+<a class="reference internal" href="#term-etl-adapter"><span class="xref std std-term">ETL Adapters</span></a>, and query and manage the Cask Data Application
+Platform instance.</dd>
+<dt id="term-dag">DAG</dt>
+<dd>A directed acyclic graph. Flows are wired together and displayed as a DAG in the CDAP UI.</dd>
+<dt id="term-data-abstraction">Data Abstraction</dt>
+<dd>Abstraction of the actual representation of data in storage.</dd>
+<dt id="term-dataset">Dataset</dt>
+<dd>Datasets store and retrieve data and are a high-level abstraction of the underlying
+data storage with generic reusable implementations of common data patterns.</dd>
+<dt id="term-distributed-cdap">Distributed CDAP</dt>
+<dd>A version of the Cask Data Application Platform, supplied as either Yum <code class="docutils literal"><span class="pre">.rpm</span></code> or
+APT <code class="docutils literal"><span class="pre">.deb</span></code> packages, that runs on a <a class="reference internal" href="#term-hadoop"><span class="xref std std-term">Hadoop</span></a> cluster. Packages are available
+for <em>Ubuntu 12</em> and <em>CentOS 6</em>.</dd>
+<dt id="term-etl">ETL</dt>
+<dd>Refers to the <em>Extract</em>, <em>Transform</em> and <em>Load</em> of data.</dd>
+<dt id="term-etl-adapter">ETL Adapter</dt>
+<dd>An ETL <a class="reference internal" href="#term-adapter"><span class="xref std std-term">Adapter</span></a> is an Adapter created from an <a class="reference internal" href="#term-etl-template"><span class="xref std std-term">ETL Template</span></a>,
+specifically for creating <a class="reference internal" href="#term-etl"><span class="xref std std-term">ETL</span></a> applications.</dd>
+<dt id="term-etl-application-template">ETL Application Template</dt>
+<dd>Also referred to as an ETL Template. A type of <a class="reference internal" href="#term-application-template"><span class="xref std std-term">Application Template</span></a>,
+designed to create an <a class="reference internal" href="#term-etl-adapter"><span class="xref std std-term">ETL Adapter</span></a>. Two ETL Templates are shipped with CDAP:
+<code class="docutils literal"><span class="pre">ETLBatch</span></code> and <code class="docutils literal"><span class="pre">ETLRealtime</span></code>, for the creation of either batch or realtime
+<a class="reference internal" href="#term-etl"><span class="xref std std-term">ETL</span></a> pipelines.</dd>
+<dt id="term-etl-plugin">ETL Plugin</dt>
+<dd>A <a class="reference internal" href="#term-plugin"><span class="xref std std-term">Plugin</span></a> of type BatchSource, RealtimeSource, BatchSink, RealtimeSink, or
+Transformation, packaged in a JAR file format, for use as a <a class="reference internal" href="#term-plugin"><span class="xref std std-term">Plugin</span></a>
+in an ETL Adapter.</dd>
+<dt id="term-etl-template">ETL Template</dt>
+<dd>See <a class="reference internal" href="#term-etl-application-template"><span class="xref std std-term">ETL Application Template</span></a>.</dd>
+<dt id="term-exploring">Exploring</dt>
+<dd>Streams and Datasets in CDAP can be explored through ad-hoc SQL-like queries. To
+enable exploration, you must set several properties when creating the Stream or
+Dataset, and the files in a Dataset must meet certain requirements.</dd>
+<dt id="term-fileset">FileSet</dt>
+<dd>A <a class="reference internal" href="#term-dataset"><span class="xref std std-term">Dataset</span></a> composed of collections of files in the file system that share
+some common attributes such as the format and schema, which abstracts from the
+actual underlying file system interfaces.</dd>
+<dt id="term-flow">Flow</dt>
+<dd>Flows are user-implemented realtime stream processors, comprised of one or
+more Flowlets that are wired together into a directed acyclic graph.</dd>
+<dt id="term-flowlet">Flowlet</dt>
+<dd>A Flowlet represents an individual processing node within a Flow. Flowlets consume
+data objects from their inputs and execute custom logic on each data object, able to
+perform data operations as well as emit data objects to the Flowlet’s outputs.</dd>
+<dt id="term-hadoop">Hadoop</dt>
+<dd><p class="first">Refers to the <a class="reference external" href="http://hadoop.apache.org">Apache Hadoop®</a> project, which describes
+itself as:</p>
+<p class="last"><em>&#8220;The Apache Hadoop software library is a framework that allows for the distributed
+processing of large data sets across clusters of computers using simple programming
+models. It is designed to scale up from single servers to thousands of machines,
+each offering local computation and storage. Rather than rely on hardware to deliver
+high-availability, the library itself is designed to detect and handle failures at
+the application layer, so delivering a highly-available service on top of a cluster
+of computers, each of which may be prone to failures.&#8221;</em></p>
+</dd>
+<dt id="term-mapreduce">MapReduce</dt>
+<dd>MapReduce is a processing model used to process data in batch. MapReduce programs can be
+written as in a conventional Apache Hadoop system. CDAP Datasets can be accessed
+from MapReduce programs as both input and output.</dd>
+<dt id="term-master-services">Master Services</dt>
+<dd>CDAP system services that are run in YARN containers like Transaction Service,
+Dataset Executor, Log Saver, Metrics Processor, etc.</dd>
+<dt id="term-namespace">Namespace</dt>
+<dd>A namespace is a physical grouping of application, data and its metadata in CDAP.
+Conceptually, namespaces can be thought of as a partitioning of a CDAP instance. Any
+application or data (referred to here as an “entity”) can exist independently in
+multiple namespaces at the same time. The data and metadata of an entity is stored
+independent of another instance of the same entity in a different namespace. The
+primary motivation for namespaces in CDAP is to achieve application and data
+isolation.</dd>
+<dt id="term-plugin">Plugin</dt>
+<dd>A Plugin extends an <a class="reference internal" href="#term-application-template"><span class="xref std std-term">Application Template</span></a> by implementing an interface
+expected by the Template. One or more Plugins are packaged in a specifically
+constructed JAR file.</dd>
+<dt id="term-service">Service</dt>
+<dd>Services can be run in a Cask Data Application Platform (CDAP) Application to serve
+data to external clients. Similar to Flows, Services run in containers and the
+number of running service instances can be dynamically scaled. Developers can
+implement Custom Services to interface with a legacy system and perform additional
+processing beyond the CDAP processing paradigms. Examples could include running an
+IP-to-Geo lookup and serving user-profiles.</dd>
+<dt id="term-spark">Spark</dt>
+<dd>Spark is a fast and general processing engine, compatible with Hadoop data, used for
+in-memory cluster computing. It lets you load large sets of data into memory and
+query them repeatedly, making it suitable for both iterative and interactive
+programs. Similar to <a class="reference internal" href="#term-mapreduce"><span class="xref std std-term">MapReduce</span></a>, Spark can access Datasets as both input and output.
+Spark programs in CDAP can be written in either Java or Scala.</dd>
+<dt id="term-standalone-cdap">Standalone CDAP</dt>
+<dd>A version of the Cask Data Application Platform, supplied as a downloadable SDK,
+that runs on a single machine in a single Java Virtual Machine (JVM). It provides
+all of the CDAP APIs without requiring a Hadoop cluster, using alternative,
+fully-functional implementations of CDAP features. For example, application
+containers are implemented as Java threads instead of YARN containers.</dd>
+<dt id="term-stream">Stream</dt>
+<dd>The primary means of bringing data from external systems into CDAP in realtime; an
+ordered, time-partitioned sequences of data, usable for realtime collection and
+consumption of data.</dd>
+<dt id="term-structured-record">Structured Record</dt>
+<dd>The data format used to exchange events between most of the pre-built CDAP ETL <a class="reference internal" href="#term-plugin"><span class="xref std std-term">Plugins</span></a>.</dd>
+<dt id="term-template">Template</dt>
+<dd>See <a class="reference internal" href="#term-application-template"><span class="xref std std-term">Application Template</span></a>.</dd>
+<dt id="term-time-partitioned-fileset">Time-partitioned FileSet</dt>
+<dd>A <a class="reference internal" href="#term-fileset"><span class="xref std std-term">FileSet</span></a> <a class="reference internal" href="#term-dataset"><span class="xref std std-term">Dataset</span></a> that uses a timestamp as the partitioning key to
+split the data into indivividual files. Though it is not required that data in each
+partition be organized by time, each partition is assigned a logical time. Typically
+written to in batch mode, at a set time interval.</dd>
+<dt id="term-timeseries-dataset">Timeseries Dataset</dt>
+<dd>A <a class="reference internal" href="#term-dataset"><span class="xref std std-term">Dataset</span></a> where time is the primary means of how data is organized, and both
+the data model and the schema that represents the data are optimized for querying
+and aggregating over time ranges.</dd>
+<dt id="term-worker">Worker</dt>
+<dd>Workers are typically long-running background programs that can be used to execute tasks.
+Each instance of a worker runs either in its own YARN container (CDAP distributed mode) or
+a single thread (CDAP Standalone or In-Memory mode) and the number of instances may be updated
+via RESTful APIs or the CLI. Datasets can be accessed from inside Workers.</dd>
+<dt id="term-workflow">Workflow</dt>
+<dd>A Workflow is used to execute a series of MapReduce programs, with an optional schedule
+to run itself periodically.</dd>
+</dl>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v3.0.2</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../index.html"
+            rel="nofollow">Overview</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../introduction/index.html"
+            rel="nofollow">Introduction to CDAP</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class="new-icon"></div><a href="table-of-contents/../../application-templates/index.html"
+            rel="nofollow">Application Templates</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><b><a href="table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></b></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="table-of-contents.html">Reference Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="characters.html"> Supported Characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli-api.html"> Command Line Interface API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="http-restful-api/index.html"> HTTP RESTful API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="java-client-api.html"> Java Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="javadocs/index.html"> Javadocs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="licenses/index.html"> Trademarks, Licenses, and Dependencies</a></li>
+</ul>
+
+</nav>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.0.2/cdap-docs-3.0.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
