@@ -1,21 +1,17 @@
+<h1 class="adapter-name"
+    ng-class="{ 'name-error': AdapterCreateController.metadata.error }"
+    tooltip="{{ AdapterCreateController.metadata.error }}"
+    tooltip-placement="right">
+  <a ng-if="AdapterCreateController.metadata.name.length > 0"
+      ng-click="AdapterCreateController.showMetadataModal()">
+    {{AdapterCreateController.metadata.name}}
+  </a>
+  <a ng-if="AdapterCreateController.metadata.name.length === 0"
+      ng-click="AdapterCreateController.showMetadataModal()">
+    [Adapter Name]
+  </a>
+</h1>
 
-<div>
-  <div class="row" create-adapter-container>
-    <div class="col-md-10 col-sm-9 col-xs-12">
-      <h2 class="adapter-name-label">
-        Create Adapter: {{AdapterCreateController.model.metadata.name}}
-      </h2>
-    </div>
-    <div class="col-md-2 col-sm-3 col-xs-12">
-      <a ui-sref="adapters.list" class="btn btn-default">
-        <span class="fa fa-list-ul"></span>
-        <span>All Adapters</span>
-      </a>
-    </div>
-  </div>
-
-  <div ng-include="'/assets/features/adapters/templates/create/metadata.html'"></div>
-  <div ng-include="'/assets/features/adapters/templates/create/configuration.html'"></div>
+<div ng-controller="CanvasController as PlumbController">
   <div ng-include="'/assets/features/adapters/templates/create/canvas.html'"></div>
-
 </div>

@@ -272,7 +272,7 @@ angular
       );
     });
 
-    $rootScope.$on('$stateChangeError', function (event, state) {
+    $rootScope.$on('$stateChangeError', function () {
       $state.go('login');
     });
 

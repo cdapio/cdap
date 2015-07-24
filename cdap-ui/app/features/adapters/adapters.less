@@ -1,0 +1,32 @@
+@import "../../styles/variables.less";
+@import "../../styles/themes/cdap/mixins.less";
+body.theme-cdap {
+  &.state-adapters-list {
+    [class*="col-"] {
+      padding-left: 5px;
+      padding-right: 5px;
+    }
+  }
+  &.state-adapters {
+    .adapter-name {
+      position: absolute;
+      left: 125px;
+      z-index: 1029;
+      cursor: pointer;
+      a {
+        text-decoration: none;
+      }
+    }
+    fieldset.view-plugin-json {
+      textarea {
+        resize: none;
+        height: 60vh;
+      }
+    }
+  }
+
+  .name-error {
+    background-color: @brand-danger;
+  }
+
+}
