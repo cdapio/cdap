@@ -9,7 +9,7 @@ angular.module(PKG.name + '.commons')
       },
       templateUrl: 'widget-container/widget-stream-properties/widget-stream-properties.html',
       controller: function($scope, EventPipe) {
-        var modelCopy = angular.copy()
+        var modelCopy = angular.copy($scope.model);
 
         var defaultOptions = [ 'boolean', 'int', 'long', 'float', 'double', 'bytes', 'string' ];
         var defaultType = null;
