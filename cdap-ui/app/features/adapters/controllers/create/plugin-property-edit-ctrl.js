@@ -1,7 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers, EventPipe, $timeout) {
-    var pluginCopy = angular.copy($scope.plugin);
-
+  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers) {
     var propertiesFromBackend = Object.keys($scope.plugin._backendProperties);
     // Make a local copy that is a mix of properties from backend + config from nodejs
     this.groups = {
@@ -127,10 +125,4 @@ angular.module(PKG.name + '.feature.adapters')
         description: myHelpers.objectQuery($scope, 'plugin', '_backendProperties', property, 'description') || 'No Description Available'
       };
     }
-
-    this.reset = function () {
-      $scope.plugin = angular.copy(pluginCopy);
-      EventPipe.emit('plugin.reset');
-    };
-
   });
