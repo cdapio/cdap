@@ -48,6 +48,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
@@ -163,7 +164,11 @@ public class PFSUpgraderTest {
                             null, ImmutableList.of("myType"), ImmutableList.of("partitionedFileSet"));
     Assert.assertTrue(pfsUpgrader.needsConverting(oldModuleMeta));
     DatasetModuleMeta newModuleMeta = pfsUpgrader.migrateDatasetModuleMeta(oldModuleMeta);
-    Assert.assertTrue(newModuleMeta.getUsesModules().contains("core"));
+
+    List<String> usesModules = newModuleMeta.getUsesModules();
+    Assert.assertTrue(usesModules.contains("orderedTable-hbase"));
+    Assert.assertTrue(usesModules.contains("core"));
+    Assert.assertTrue(usesModules.indexOf("orderedTable-hbase") < usesModules.indexOf("core"));
   }
 
   private void assertIsNewPartitionsTable(DatasetSpecification dsSpec) {

@@ -155,8 +155,8 @@ public class PFSUpgrader {
     });
   }
 
-  // need to add 'core' as a module dependency for any modules that currently depend on partitionedFileSet or
-  // timePartitionedFileSet as a resolution to: https://issues.cask.co/browse/CDAP-3030
+  // need to add 'orderedTable-hbase' and 'core' as module dependencies for any modules that currently depend on
+  // partitionedFileSet or timePartitionedFileSet as a resolution to: https://issues.cask.co/browse/CDAP-3030
   private void upgradeModulesDependingOnPfs() throws Exception {
     final DatasetTypeMDS dsTypeMDS;
     try {
@@ -188,18 +188,25 @@ public class PFSUpgrader {
 
   @VisibleForTesting
   boolean needsConverting(DatasetModuleMeta moduleMeta) {
-    for (String usesModule : moduleMeta.getUsesModules()) {
-      if ("partitionedFileSet".equals(usesModule) || "timePartitionedFileSet".equals(usesModule)) {
-        return true;
-      }
+    // if 'orderedTable-hbase' and 'core' are already declared dependencies, no need to upgrade the module meta
+    List<String> usesModules = moduleMeta.getUsesModules();
+    if (usesModules.contains("orderedTable-hbase") && usesModules.contains("core")) {
+      return false;
     }
-    return false;
+    return usesModules.contains("partitionedFileSet") || usesModules.contains("timePartitionedFileSet");
   }
 
   @VisibleForTesting
   DatasetModuleMeta migrateDatasetModuleMeta(DatasetModuleMeta moduleMeta) {
-    List<String> newUsesModules = new ArrayList<>(moduleMeta.getUsesModules());
-    newUsesModules.add("core");
+    List<String> newUsesModules = new ArrayList<>();
+    // ordering of the usesModules is important. They are loaded in order of the elements' indices
+    if (!moduleMeta.getUsesModules().contains("orderedTable-hbase")) {
+      newUsesModules.add("orderedTable-hbase");
+    }
+    if (!moduleMeta.getUsesModules().contains("core")) {
+      newUsesModules.add("core");
+    }
+    newUsesModules.addAll(moduleMeta.getUsesModules());
     DatasetModuleMeta migratedModuleMeta = new DatasetModuleMeta(moduleMeta.getName(),
                                                                  moduleMeta.getClassName(),
                                                                  moduleMeta.getJarLocation(),
