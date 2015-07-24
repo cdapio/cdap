@@ -6,4 +6,6 @@
 Sinks: Batch: Database
 ===============================
 
-.. rubric:: Introduction
+.. rubric:: Description: Batch sink for a database
+
+**Columns:** Comma-separated list of columns to export into the specified table.
