@@ -59,9 +59,6 @@ if node['cdap']['security']['manage_realmfile'].to_s == 'true'
         content "#{node['cdap']['security']['realmfile']['username']}: #{node['cdap']['security']['realmfile']['password']}"
         action :nothing
       end.run_action(:create)
-
-      # Restart cdap-auth-server
-      resources('service[cdap-auth-server]').run_action(:restart)
     end
   end
 end
