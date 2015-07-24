@@ -150,10 +150,13 @@ angular.module(PKG.name + '.services')
       }
 
       var plugin = this.nodes[pluginId];
+      var pluginCopy = angular.copy(plugin);
+
+      var modalInstance;
 
       fetchBackendProperties.call(this, plugin, scope)
         .then(function(plugin) {
-          $bootstrapModal.open({
+          modalInstance = $bootstrapModal.open({
             keyboard: false,
             templateUrl: '/assets/features/adapters/templates/tabs/runs/tabs/properties/properties.html',
             controller: ['$scope', 'AdapterModel', 'type', 'inputSchema', function ($scope, AdapterModel, type, inputSchema){
@@ -213,7 +216,17 @@ angular.module(PKG.name + '.services')
               }
             }
           });
+
+
+          modalInstance.result.then(function (res) {
+            if (res === 'cancel') {
+              this.nodes[pluginId] = angular.copy(pluginCopy);
+            }
+          }.bind(this));
+
         }.bind(this));
+
+
     };
 
     // Used for UI alone. Has _backendProperties and ids to plugins for
