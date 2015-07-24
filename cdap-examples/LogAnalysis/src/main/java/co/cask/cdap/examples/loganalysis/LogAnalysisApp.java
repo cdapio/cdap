@@ -190,6 +190,8 @@ public class LogAnalysisApp extends AbstractApplication {
     static final String REQUEST_COUNTER_PARTITIONS_PATH = "reqcount";
     static final String REQUEST_FILE_CONTENT_PATH = "reqfile";
     static final String REQUEST_FILE_PATH_HANDLER_KEY = "time";
+    public static final DateFormat SHORT_DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.SHORT,
+                                                                                      DateFormat.SHORT);
 
     @UseDataSet(REQ_COUNT_STORE)
     private TimePartitionedFileSet reqCountStore;
@@ -207,8 +209,7 @@ public class LogAnalysisApp extends AbstractApplication {
 
       SortedSet<String> formattedTimes = new TreeSet<>();
       for (TimePartitionDetail timePartitionDetail : partitionsByTime) {
-        String partitionTime = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(
-          new Date(timePartitionDetail.getTime()));
+        String partitionTime = SHORT_DATE_FORMAT.format(new Date(timePartitionDetail.getTime()));
         formattedTimes.add(partitionTime);
       }
       responder.sendJson(HttpURLConnection.HTTP_OK, formattedTimes);
@@ -228,7 +229,7 @@ public class LogAnalysisApp extends AbstractApplication {
                                        JsonObject.class).get(REQUEST_FILE_PATH_HANDLER_KEY).getAsString();
       long partitionKey = 0;
       try {
-        partitionKey = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse(partition).getTime();
+        partitionKey = SHORT_DATE_FORMAT.parse(partition).getTime();
       } catch (ParseException e) {
         responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "Failed to parse the given string to a timestamp");
         return;
@@ -245,10 +246,15 @@ public class LogAnalysisApp extends AbstractApplication {
         for (Location file : location.list()) {
           if (file.getName().startsWith("part")) {
             String line;
-            BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), Charsets.UTF_8));
-            while ((line = reader.readLine()) != null) {
-              String[] reqeustCount = line.split(":");
-              requestCountsMap.put(reqeustCount[0], Integer.parseInt(reqeustCount[1]));
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(),
+                                                                                  Charsets.UTF_8))) {
+              while ((line = reader.readLine()) != null) {
+                int idx = line.indexOf(":");
+                requestCountsMap.put(line.substring(0, idx), Integer.parseInt(line.substring(idx + 1)));
+              }
+            } catch (IOException e) {
+              responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to read file.");
+              return;
             }
           }
         }
