@@ -22,6 +22,13 @@ default['cdap']['cdap_site']['security.server.ssl.keystore.password'] = 'default
 default['cdap']['cdap_site']['security.server.ssl.keystore.path'] = '/opt/cdap/security/conf/keystore.jks'
 default['cdap']['cdap_site']['security.auth.server.address'] = node['fqdn']
 
+# realmfile creation
+# node['cdap']['cdap_site']['security.authentication.handlerClassName'] must equal 'security.authentication.basic.realmfile'
+# node['cdap']['cdap_site']['security.authentication.basic.realmfile'] must define the realmfile location
+default['cdap']['security']['manage_realmfile'] = false
+default['cdap']['security']['realmfile']['username'] = 'cdap'
+default['cdap']['security']['realmfile']['password'] = 'cdap'
+
 # web ui
 default['cdap']['cdap_site']['dashboard.ssl.key'] = "/etc/cdap/#{node['cdap']['conf_dir']}/webapp.key"
 default['cdap']['cdap_site']['dashboard.ssl.cert'] = "/etc/cdap/#{node['cdap']['conf_dir']}/webapp.crt"
