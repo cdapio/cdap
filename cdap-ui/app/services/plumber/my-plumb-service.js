@@ -31,7 +31,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, $alert, AdapterErrorFactory) {
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, $alert, AdapterErrorFactory, EventPipe) {
     this.resetToDefaults = function() {
       this.callbacks = [];
       this.errorCallbacks = [];
@@ -150,13 +150,16 @@ angular.module(PKG.name + '.services')
       }
 
       var plugin = this.nodes[pluginId];
+      var pluginCopy = angular.copy(plugin);
+
+      var modalInstance;
 
       fetchBackendProperties.call(this, plugin, scope)
         .then(function(plugin) {
-          $bootstrapModal.open({
+          modalInstance = $bootstrapModal.open({
             keyboard: false,
             templateUrl: '/assets/features/adapters/templates/tabs/runs/tabs/properties/properties.html',
-            controller: ['$scope', 'AdapterModel', 'type', 'inputSchema', function ($scope, AdapterModel, type, inputSchema){
+            controller: ['$scope', 'AdapterModel', 'type', 'inputSchema', 'EventPipe', function ($scope, AdapterModel, type, inputSchema){
               $scope.plugin = AdapterModel;
               $scope.type = type;
               $scope.isDisabled = false;
@@ -199,6 +202,10 @@ angular.module(PKG.name + '.services')
                 $scope.isTransform = true;
               }
 
+              $scope.modalClose = function () {
+                $scope.$close('cancel');
+              };
+
             }],
             size: 'lg',
             resolve: {
@@ -213,7 +220,17 @@ angular.module(PKG.name + '.services')
               }
             }
           });
+
+
+          modalInstance.result.then(function (res) {
+            if (res === 'cancel') {
+              this.nodes[pluginId] = angular.copy(pluginCopy);
+            }
+          }.bind(this));
+
         }.bind(this));
+
+
     };
 
     // Used for UI alone. Has _backendProperties and ids to plugins for
