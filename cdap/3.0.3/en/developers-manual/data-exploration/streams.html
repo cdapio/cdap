@@ -275,7 +275,7 @@ Beware of name collisions. For example, <code class="docutils literal"><span cla
 <li>CDAP uses a custom storage handler to read Streams through Hive. This means that queries must be run through
 CDAP and not directly through Hive unless you place CDAP jars in your Hive classpath. This also means that
 Streams cannot be queried directly by Impala. If you wish to use Impala to explore data in a Stream, you can
-create an <a class="reference external" href="../source/../../application-templates/index.html#apptemplates-index" title="(in Cask Data Application Platform v3.0.3)"><span class="xref std std-ref">Adapter</span></a> that converts Stream data into a <code class="docutils literal"><span class="pre">TimePartitionedFileSet</span></code>.</li>
+create an <a class="reference external" href="../source/../../application-templates/index.html#apptemplates-index" title="(in Cask Data Application Platform v3.0.1)"><span class="xref std std-ref">Adapter</span></a> that converts Stream data into a <code class="docutils literal"><span class="pre">TimePartitionedFileSet</span></code>.</li>
 <li>Some versions of Hive may try to create a temporary staging directory at the table location when executing queries.
 If you are seeing permission errors, try setting <code class="docutils literal"><span class="pre">hive.exec.stagingdir</span></code> in your Hive configuration to <code class="docutils literal"><span class="pre">/tmp/hive-staging</span></code>.</li>
 </ul>

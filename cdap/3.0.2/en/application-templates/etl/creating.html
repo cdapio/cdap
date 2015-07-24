@@ -76,8 +76,8 @@
 <span id="apptemplates-etl-creating"></span><h1>Creating an ETL Adapter<a class="headerlink" href="#creating-an-etl-adapter" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
-<p>Adapters can be created using the <a class="reference external" href="../source/../../reference-manual/http-restful-api/apptemplates.html#http-restful-api-apptemplates-adapters-creating" title="(in Cask Data Application Platform v3.1.0)"><span class="xref std std-ref">RESTful API</span></a>,
-the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.1.0)"><span class="xref std std-ref">CDAP CLI</span></a>, or the <a class="reference external" href="../source/../../admin-manual/operations/cdap-ui.html#cdap-ui" title="(in Cask Data Application Platform v3.1.0)"><span class="xref std std-ref">CDAP UI</span></a>. In order to create an Adapter,
+<p>Adapters can be created using the <a class="reference external" href="../source/../../reference-manual/http-restful-api/apptemplates.html#http-restful-api-apptemplates-adapters-creating" title="(in Cask Data Application Platform v3.2.0)"><span class="xref std std-ref">RESTful API</span></a>,
+the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.2.0)"><span class="xref std std-ref">CDAP CLI</span></a>, or the <a class="reference external" href="../source/../../admin-manual/operations/cdap-ui.html#cdap-ui" title="(in Cask Data Application Platform v3.2.0)"><span class="xref std std-ref">CDAP UI</span></a>. In order to create an Adapter,
 an Adapter configuration is required that specifies the source, transformations and sink
 along with their properties.  (In the CDAP UI, the interface prompts you for the required
 information.)</p>
@@ -120,12 +120,12 @@ Stream <em>myStream</em> and writes to a Table <em>myTable</em>. A Table Sink ne
 be specified and can use the timestamp of a Stream event for that.</p>
 <p>To create an instance of this Adapter, called <em>streamAdapter</em>:</p>
 <ul>
-<li><p class="first">Using the <a class="reference external" href="../source/../../reference-manual/http-restful-api/apptemplates.html#http-restful-api-apptemplates-adapters-creating" title="(in Cask Data Application Platform v3.1.0)"><span class="xref std std-ref">RESTful API</span></a>:</p>
+<li><p class="first">Using the <a class="reference external" href="../source/../../reference-manual/http-restful-api/apptemplates.html#http-restful-api-apptemplates-adapters-creating" title="(in Cask Data Application Platform v3.2.0)"><span class="xref std std-ref">RESTful API</span></a>:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">PUT /v3/namespaces/default/adapters/streamAdapter -d @config.json</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">Using <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.1.0)"><span class="xref std std-ref">CDAP CLI</span></a>:</p>
+<li><p class="first">Using <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.2.0)"><span class="xref std std-ref">CDAP CLI</span></a>:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> create adapter streamAdapter &lt;path-to-config.json&gt;
 </pre></div>
 </div>
