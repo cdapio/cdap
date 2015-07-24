@@ -238,7 +238,6 @@ var Documentation = {
   hidePageNavigation : function() {
     var params = $.getQueryParameters();
     if (params.hidenav) {
-      console.log('hiding navigation');
       $(".related").hide();
       $(".sphinxsidebar").hide();
       $(".footer").hide();
