@@ -23,6 +23,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -39,11 +40,13 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -130,17 +133,36 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
     private final ProgramOptions options;
     private final Lock lock = new ReentrantLock();
     private final ProgramRunnerFactory.Type type;
+    private final AtomicLong liveComponents;
 
     public InMemoryProgramController(Table<String, Integer, ProgramController> components,
-                              RunId runId, Program program, ProgramSpecification spec,
-                              ProgramOptions options, ProgramRunnerFactory.Type type) {
+                                     RunId runId, Program program, ProgramSpecification spec,
+                                     ProgramOptions options, ProgramRunnerFactory.Type type) {
       super(program.getName(), runId);
       this.program = program;
       this.components = components;
       this.spec = spec;
       this.options = options;
       this.type = type;
+      this.liveComponents = new AtomicLong(components.size());
       started();
+      monitorComponents();
+    }
+
+    // Add listener to monitor completion/killed status of individual components, so that the program can be marked
+    // as completed once all the components have completed/killed.
+    private void monitorComponents() {
+      for (ProgramController controller : components.values()) {
+        controller.addListener(new AbstractListener() {
+          @Override
+          public void completed() {
+            if (liveComponents.decrementAndGet()  == 0) {
+              LOG.info("Program stopped: {}", spec.getName());
+              complete();
+            }
+          }
+        }, Threads.SAME_THREAD_EXECUTOR);
+      }
     }
 
     @Override

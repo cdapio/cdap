@@ -554,6 +554,15 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(AppWithWorker.STOP, Bytes.toString(table.read(AppWithWorker.STOP)));
   }
 
+  @Test
+  public void testWorkerStop() throws Exception {
+    // Test to make sure the worker program's status goes to stopped after the run method finishes
+    ApplicationManager manager = deployApplication(NoOpWorkerApp.class);
+    WorkerManager workerManager = manager.getWorkerManager("NoOpWorker");
+    workerManager.start();
+    workerManager.waitForStatus(false, 5, 1);
+  }
+
   @Category(SlowTests.class)
   @Test
   public void testAppWithServices() throws Exception {
