@@ -190,7 +190,7 @@ public class LogAnalysisApp extends AbstractApplication {
     static final String REQUEST_COUNTER_PARTITIONS_PATH = "reqcount";
     static final String REQUEST_FILE_CONTENT_PATH = "reqfile";
     static final String REQUEST_FILE_PATH_HANDLER_KEY = "time";
-    public static final DateFormat SHORT_DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.SHORT,
+    private static final DateFormat SHORT_DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.SHORT,
                                                                                       DateFormat.SHORT);
 
     @UseDataSet(REQ_COUNT_STORE)
@@ -245,21 +245,18 @@ public class LogAnalysisApp extends AbstractApplication {
       try {
         for (Location file : location.list()) {
           if (file.getName().startsWith("part")) {
-            String line;
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(),
                                                                                   Charsets.UTF_8))) {
+              String line;
               while ((line = reader.readLine()) != null) {
                 int idx = line.indexOf(":");
                 requestCountsMap.put(line.substring(0, idx), Integer.parseInt(line.substring(idx + 1)));
               }
-            } catch (IOException e) {
-              responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to read file.");
-              return;
             }
           }
         }
       } catch (IOException e) {
-        responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, "Failed to access files.");
+        responder.sendError(HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage());
         return;
       }
       responder.sendJson(HttpURLConnection.HTTP_OK, requestCountsMap);
