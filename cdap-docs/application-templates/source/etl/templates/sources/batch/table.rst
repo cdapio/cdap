@@ -15,6 +15,6 @@ fields. For example, if the schema contains a field named 'user' of type string,
 of that field will be taken from the value stored in the 'user' column. Only simple types
 are allowed (boolean, int, long, float, double, bytes, string).
 
-**Property Schema Row Field: Optional field name indicating that the field value should
+**Property Schema Row Field:** Optional field name indicating that the field value should
 come from the row key instead of a row column. The field name specified must be present in
 the schema, and must not be nullable.

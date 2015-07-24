@@ -9,10 +9,12 @@ Sources: Batch: Database
 .. rubric:: Description: Batch source for a Database
 
 **Query:** The SELECT query to use to import data from the specified table. You can
-specify an arbitrary number of columns to import, or import all columns using *. You can
+specify an arbitrary number of columns to import, or import all columns using \*. You can
 also specify a number of WHERE clauses or ORDER BY clauses. However, LIMIT and OFFSET
 clauses should not be used in this query.
-    
+
+.. highlight:: sql
+
 **Count Query:** The SELECT query to use to get the count of records to import from the
 specified table. Examples::
 

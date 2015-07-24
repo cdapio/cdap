@@ -6,4 +6,6 @@
 Sources: Real-time: JMS
 ===============================
 
-.. rubric:: Introduction
+.. rubric:: Description: JMS Realtime Source
+
+Emits a record with a field 'message' of string type.

@@ -6,4 +6,6 @@
 Sources: Real-time: Kafka 
 ===============================
 
-.. rubric:: Introduction
+.. rubric:: Description: Kafka Realtime Source
+
+Emits a record with two fields - 'key' (nullable string) and 'message' (bytes).
