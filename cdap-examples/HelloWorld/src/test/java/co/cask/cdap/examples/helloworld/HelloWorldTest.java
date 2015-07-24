@@ -68,7 +68,7 @@ public class HelloWorldTest extends TestBase {
     }
 
     // Start Greeting service and use it
-    ServiceManager serviceManager = appManager.getServiceManager(HelloWorld.Greeting.SERVICE_NAME).start();
+    ServiceManager serviceManager = appManager.getServiceManager("").start();
 
     // Wait service startup
     serviceManager.waitForStatus(true);

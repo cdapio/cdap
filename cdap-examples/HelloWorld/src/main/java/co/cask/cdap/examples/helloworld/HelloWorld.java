@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright Â© 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,120 +16,128 @@
 
 package co.cask.cdap.examples.helloworld;
 
-import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.flow.AbstractFlow;
-import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.lib.AbstractDataset;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.api.dataset.lib.Partition;
+import co.cask.cdap.api.dataset.lib.PartitionOutput;
+import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
+import co.cask.cdap.api.dataset.module.EmbeddedDataset;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.service.AbstractService;
-import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.io.ByteStreams;
+import org.apache.twill.filesystem.Location;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.WritableByteChannel;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
- * This is a simple HelloWorld example that uses one stream, one dataset, one flow and one service.
- * <uL>
- *   <li>A stream to send names to.</li>
- *   <li>A flow with a single flowlet that reads the stream and stores each name in a KeyValueTable</li>
- *   <li>A service that reads the name from the KeyValueTable and responds with 'Hello [Name]!'</li>
- * </uL>
+ *
  */
 public class HelloWorld extends AbstractApplication {
 
   @Override
   public void configure() {
-    setName("HelloWorld");
-    setDescription("A Hello World program for the Cask Data Application Platform");
-    addStream(new Stream("who"));
-    createDataset("whom", KeyValueTable.class);
-    addFlow(new WhoFlow());
-    addService(new Greeting());
+    setName("TestApp");
+    setDescription("An application used for testing.");
+
+    createDataset("myds", MyDataset.class, FileSetProperties.builder().setBasePath("tmp/myds").build());
+
+    addService(new FileService());
   }
 
   /**
-   * Sample Flow.
+   *
    */
-  public static final class WhoFlow extends AbstractFlow {
-
-    @Override
-    protected void configureFlow() {
-      setName("WhoFlow");
-      setDescription("A flow that collects names");
-      addFlowlet("saver", new NameSaver());
-      connectStream("who", "saver");
-    }
-  }
-
-  /**
-   * Sample Flowlet.
-   */
-  public static final class NameSaver extends AbstractFlowlet {
-
-    static final byte[] NAME = { 'n', 'a', 'm', 'e' };
-
-    @UseDataSet("whom")
-    private KeyValueTable whom;
-
-    private Metrics metrics;
-
-    @ProcessInput
-    public void process(StreamEvent event) {
-      byte[] name = Bytes.toBytes(event.getBody());
-      if (name.length > 0) {
-        whom.write(NAME, name);
-
-        if (name.length > 10) {
-          metrics.count("names.longnames", 1);
-        }
-        metrics.count("names.bytes", name.length);
-      }
-    }
-  }
-
-  /**
-   * A {@link Service} that creates a greeting using a user's name.
-   */
-  public static final class Greeting extends AbstractService {
-
-    public static final String SERVICE_NAME = "Greeting";
+  public static class FileService extends AbstractService {
 
     @Override
     protected void configure() {
-      setName(SERVICE_NAME);
-      setDescription("Service that creates a greeting using a user's name.");
-      addHandler(new GreetingHandler());
+      addHandler(new FileHandler());
+    }
+
+    /**
+     *
+     */
+    public static class FileHandler extends AbstractHttpServiceHandler {
+
+      @UseDataSet("myds")
+      private MyDataset myds;
+
+      @GET
+      @Path("/seasons/{season}")
+      public void read(HttpServiceRequest request, HttpServiceResponder responder,
+                       @PathParam("season") long season) {
+        Partition partitionDetail = myds.getTpfs().getPartitionByTime(season);
+        if (partitionDetail == null) {
+          responder.sendString(404, "Partition not found.", Charsets.UTF_8);
+          return;
+        }
+        ByteBuffer content;
+        try {
+          Location location = partitionDetail.getLocation().append("file");
+          content = ByteBuffer.wrap(ByteStreams.toByteArray(location.getInputStream()));
+        } catch (IOException e) {
+          responder.sendError(400, String.format("Unable to read path '%s'", partitionDetail.getRelativePath()));
+          return;
+        }
+        responder.send(200, content, "text/plain", ImmutableMultimap.<String, String>of());
+      }
+
+      @PUT
+      @Path("/seasons/{season}")
+      public void write(HttpServiceRequest request, HttpServiceResponder responder,
+                        @PathParam("season") long season) {
+        if (myds.getTpfs().getPartitionByTime(season) != null) {
+          responder.sendString(409, "Partition exists.", Charsets.UTF_8);
+          return;
+        }
+
+        PartitionOutput output = myds.getTpfs().getPartitionOutput(season);
+        try {
+          Location location = output.getLocation().append("file");
+          try (WritableByteChannel channel = Channels.newChannel(location.getOutputStream())) {
+            channel.write(request.getContent());
+          }
+        } catch (IOException e) {
+          responder.sendError(400, String.format("Unable to write path '%s'", output.getRelativePath()));
+          return;
+        }
+        output.addPartition();
+        responder.sendStatus(200);
+      }
     }
   }
 
   /**
-   * Greeting Service handler.
+   *
    */
-  public static final class GreetingHandler extends AbstractHttpServiceHandler {
+  public static class MyDataset extends AbstractDataset {
 
-    @UseDataSet("whom")
-    private KeyValueTable whom;
+    private TimePartitionedFileSet tpfs;
 
-    private Metrics metrics;
+    public MyDataset(DatasetSpecification spec,
+                     @EmbeddedDataset("tpfs") TimePartitionedFileSet tpfs,
+                     @EmbeddedDataset("table") Table table) {
+      super(spec.getName(), tpfs, table);
+      this.tpfs = tpfs;
+    }
 
-    @Path("greet")
-    @GET
-    public void greet(HttpServiceRequest request, HttpServiceResponder responder) {
-      byte[] name = whom.read(NameSaver.NAME);
-      String toGreet = name != null ? new String(name, Charsets.UTF_8) : "World";
-      if (toGreet.equals("Jane Doe")) {
-        metrics.count("greetings.count.jane_doe", 1);
-      }
-      responder.sendString(String.format("Hello %s!", toGreet));
+    public TimePartitionedFileSet getTpfs() {
+      return tpfs;
     }
   }
 }
