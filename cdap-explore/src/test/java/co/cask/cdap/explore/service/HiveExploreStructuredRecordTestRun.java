@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.service;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -71,18 +72,24 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
     transactionManager.commit(tx1);
 
     table.postTxCommit();
+
+
+    datasetFramework.addModule(Id.DatasetModule.from(NAMESPACE_ID, "TableWrapper"),
+                               new TableWrapperDefinition.Module());
+    datasetFramework.addModule(Id.DatasetModule.from(NAMESPACE_ID, "StructuredWritable"),
+                               new StructuredWritableDefinition.Module());
   }
 
   @AfterClass
   public static void stop() throws Exception {
     datasetFramework.deleteInstance(MY_TABLE);
+    datasetFramework.deleteModule(Id.DatasetModule.from(NAMESPACE_ID, "TableWrapper"));
+    datasetFramework.deleteModule(Id.DatasetModule.from(NAMESPACE_ID, "StructuredWritable"));
   }
 
   @Test(expected = UnsupportedTypeException.class)
   public void testStructuredRecordWritableFails() throws Exception {
-    Id.DatasetModule moduleId = Id.DatasetModule.from(NAMESPACE_ID, "StructuredWritable");
     Id.DatasetInstance instanceId = Id.DatasetInstance.from(NAMESPACE_ID, "badtable");
-    datasetFramework.addModule(moduleId, new StructuredWritableDefinition.Module());
     datasetFramework.addInstance("StructuredWritable", instanceId, DatasetProperties.EMPTY);
 
     DatasetSpecification spec = datasetFramework.getDatasetSpec(instanceId);
@@ -90,15 +97,12 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
       exploreTableManager.enableDataset(instanceId, spec);
     } finally {
       datasetFramework.deleteInstance(instanceId);
-      datasetFramework.deleteModule(moduleId);
     }
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testMissingSchemaFails() throws Exception {
-    Id.DatasetModule moduleId = Id.DatasetModule.from(NAMESPACE_ID, "TableWrapper");
     Id.DatasetInstance instanceId = Id.DatasetInstance.from(NAMESPACE_ID, "badtable");
-    datasetFramework.addModule(moduleId, new TableWrapperDefinition.Module());
     datasetFramework.addInstance("TableWrapper", instanceId, DatasetProperties.EMPTY);
 
     DatasetSpecification spec = datasetFramework.getDatasetSpec(instanceId);
@@ -106,7 +110,33 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
       exploreTableManager.enableDataset(instanceId, spec);
     } finally {
       datasetFramework.deleteInstance(instanceId);
-      datasetFramework.deleteModule(moduleId);
+    }
+  }
+
+  @Test
+  public void testRecordScannableAndWritableIsOK() throws Exception {
+    Id.DatasetInstance instanceId = Id.DatasetInstance.from(NAMESPACE_ID, "tabul");
+    datasetFramework.addInstance("TableWrapper", instanceId, DatasetProperties.builder()
+      .add(DatasetProperties.SCHEMA,
+           Schema.recordOf("intRecord", Schema.Field.of("x", Schema.of(Schema.Type.STRING))).toString())
+      .build());
+
+    DatasetSpecification spec = datasetFramework.getDatasetSpec(instanceId);
+    try {
+      exploreTableManager.enableDataset(instanceId, spec);
+      runCommand(NAMESPACE_ID, "describe dataset_tabul",
+        true,
+        Lists.newArrayList(
+          new ColumnDesc("col_name", "STRING", 1, "from deserializer"),
+          new ColumnDesc("data_type", "STRING", 2, "from deserializer"),
+          new ColumnDesc("comment", "STRING", 3, "from deserializer")
+        ),
+        Lists.newArrayList(
+          new QueryResult(Lists.<Object>newArrayList("x", "string", "from deserializer"))
+        )
+      );
+    } finally {
+      datasetFramework.deleteInstance(instanceId);
     }
   }
 

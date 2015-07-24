@@ -18,6 +18,7 @@ package co.cask.cdap.explore.service.datasets;
 
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordScanner;
+import co.cask.cdap.api.data.batch.RecordWritable;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.DatasetAdmin;
@@ -72,8 +73,10 @@ public class TableWrapperDefinition extends
   }
 
   /**
+   * Doesn't actually do anything, only used to test hive table creation.
    */
-  public static class TableWrapper extends AbstractDataset implements RecordScannable<StructuredRecord> {
+  public static class TableWrapper extends AbstractDataset
+    implements RecordScannable<StructuredRecord>, RecordWritable<StructuredRecord> {
 
     public TableWrapper(String instanceName, Table table) {
       super(instanceName, table);
@@ -82,6 +85,11 @@ public class TableWrapperDefinition extends
     @Override
     public Type getRecordType() {
       return StructuredRecord.class;
+    }
+
+    @Override
+    public void write(StructuredRecord structuredRecord) throws IOException {
+
     }
 
     @Override
