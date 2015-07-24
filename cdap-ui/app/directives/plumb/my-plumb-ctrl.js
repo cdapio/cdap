@@ -53,7 +53,7 @@ angular.module(PKG.name + '.commons')
       var marginLeft = $scope.getGraphMargins(this.plugins);
       this.plugins.forEach(function(plugin) {
         plugin.icon = MyPlumbFactory.getIcon(plugin.name);
-        plugin.style = MyPlumbFactory.generateStyles(plugin.id, nodes, 200, marginLeft);
+        plugin.style = plugin.style || MyPlumbFactory.generateStyles(plugin.id, nodes, 200, marginLeft);
         drawNode.call(this, plugin.id, plugin.type);
       }.bind(this));
 
@@ -84,8 +84,24 @@ angular.module(PKG.name + '.commons')
           break;
       }
       this.instance.draggable(id, {
-        containment: true
+        drag: function (evt) { return dragnode.call(this, evt); }.bind(this)
       });
+      // Super hacky way of restricting user to not scroll beyond certain top and left.
+      function dragnode(e) {
+        var returnResult = true;
+        if (e.pos[1] < 0) {
+          e.e.preventDefault();
+          e.el.style.top = "10px";
+          returnResult = false;
+        }
+        if (e.pos[0] < 0) {
+          e.e.preventDefault();
+          e.el.style.left = "10px";
+          returnResult = false;
+        }
+        MyPlumbService.nodes[e.el.id].style = {top: e.el.style.top, left: e.el.style.left};
+        return returnResult;
+      }
     }
 
     function drawConnections() {
