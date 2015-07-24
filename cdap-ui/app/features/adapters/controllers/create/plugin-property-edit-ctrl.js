@@ -133,11 +133,4 @@ angular.module(PKG.name + '.feature.adapters')
       EventPipe.emit('plugin.reset');
     };
 
-    // this.modalClose = function () {
-    //   $scope.plugin = angular.copy(pluginCopy);
-    //   EventPipe.emit('plugin.reset');
-
-    //   // $scope.$close();
-    // };
-
   });

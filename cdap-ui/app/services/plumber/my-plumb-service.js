@@ -31,7 +31,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, $alert, AdapterErrorFactory, EventPipe) {
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, $alert, AdapterErrorFactory) {
     this.resetToDefaults = function() {
       this.callbacks = [];
       this.errorCallbacks = [];
@@ -159,7 +159,7 @@ angular.module(PKG.name + '.services')
           modalInstance = $bootstrapModal.open({
             keyboard: false,
             templateUrl: '/assets/features/adapters/templates/tabs/runs/tabs/properties/properties.html',
-            controller: ['$scope', 'AdapterModel', 'type', 'inputSchema', 'EventPipe', function ($scope, AdapterModel, type, inputSchema){
+            controller: ['$scope', 'AdapterModel', 'type', 'inputSchema', function ($scope, AdapterModel, type, inputSchema){
               $scope.plugin = AdapterModel;
               $scope.type = type;
               $scope.isDisabled = false;
