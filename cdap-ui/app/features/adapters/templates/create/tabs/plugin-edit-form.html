@@ -18,31 +18,41 @@
 -->
 <div ng-controller="PluginEditController as PluginEditController">
   <div class="modal-header">
-    <div class="col-xs-6 col-md-9">
+    <div ng-class="{ 'col-xs-6 col-md-9': !isDisabled, 'col-xs-10 col-md-11': isDisabled }">
       <h3 class="modal-title">{{plugin.name | caskCapitalizeFilter}} Properties</h3>
       <p>{{plugin.description | caskCapitalizeFilter}}</p>
     </div>
-    <div class="col-xs-6 col-md-3">
+    <div ng-class="{ 'col-xs-6 col-md-3': !isDisabled, 'col-xs-2 col-md-1': isDisabled }">
       <div class="btn-group modal-btns">
-        <div>
+        <div ng-if="!isDisabled">
           <a class="btn" ng-click="PluginEditController.reset()">
             <span class="fa fa-refresh"></span>
           </a>
         </div>
-        <div>
+        <div ng-if="!isDisabled">
           <a class="btn" ng-click="$close('save')">
             <span class="fa fa-folder"></span>
           </a>
         </div>
-        <div>
+        <div ng-if="!isDisabled">
           <a class="btn" ng-click="$close('cancel')">
             <span class="fa fa-remove"></span>
             <span class="sr-only"> Close </span>
           </a>
         </div>
+
+        <!-- Only shows the close button on already created adapter -->
+        <div ng-if="isDisabled">
+          <a class="btn" ng-click="$close()">
+            <span class="fa fa-remove"></span>
+            <span class="sr-only">Close</span>
+          </a>
+        </div>
+
       </div>
     </div>
   </div>
+
   <div class="modal-body plugin-modal" ng-class="{'modal-source': plugin.type === 'source', 'modal-transform': plugin.type === 'transform', 'modal-sink': plugin.type === 'sink'}">
     <div ng-if="PluginEditController.noproperty !== 0">
     <div class="row" ng-if="(PluginEditController.configfetched && !PluginEditController.noconfig)">
