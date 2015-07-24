@@ -436,7 +436,8 @@ public class DistributedStreamService extends AbstractStreamService {
 
       @Override
       public void onFailure(Throwable t) {
-        LOG.warn("Failed to update stream resource requirement.", t);
+        LOG.warn("Failed to update stream resource requirement: " + t.getMessage());
+        LOG.debug("Failed to update stream resource requirement.", t);
         if (isRunning()) {
           final FutureCallback<ResourceRequirement> callback = this;
           // Retry in 2 seconds. Shouldn't sleep in this callback thread. Should start a new thread for the retry.
@@ -479,7 +480,8 @@ public class DistributedStreamService extends AbstractStreamService {
           }
           return builder.build();
         } catch (Throwable e) {
-          LOG.error("Could not create requirement for coordinator in Stream handler leader", e);
+          LOG.warn("Could not create requirement for coordinator in Stream handler leader: " + e.getMessage());
+          LOG.debug("Could not create requirement for coordinator in Stream handler leader", e);
           throw Throwables.propagate(e);
         }
       }
