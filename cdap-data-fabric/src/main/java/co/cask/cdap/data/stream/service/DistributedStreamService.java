@@ -436,7 +436,7 @@ public class DistributedStreamService extends AbstractStreamService {
 
       @Override
       public void onFailure(Throwable t) {
-        LOG.warn("Failed to update stream resource requirement: " + t.getMessage());
+        LOG.warn("Failed to update stream resource requirement: {}", t.getMessage());
         LOG.debug("Failed to update stream resource requirement.", t);
         if (isRunning()) {
           final FutureCallback<ResourceRequirement> callback = this;

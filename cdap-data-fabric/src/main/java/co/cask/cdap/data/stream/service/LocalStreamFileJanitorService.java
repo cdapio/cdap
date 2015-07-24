@@ -67,7 +67,7 @@ public final class LocalStreamFileJanitorService extends AbstractService impleme
           janitor.cleanAll();
           LOG.debug("Completed stream file cleanup.");
         } catch (Throwable e) {
-          LOG.warn("Failed to cleanup stream file: " + e.getMessage());
+          LOG.warn("Failed to cleanup stream file: {}", e.getMessage());
           LOG.debug("Failed to cleanup stream file.", e);
         } finally {
           // Compute the next cleanup time. It is aligned to work clock based on the period.
