@@ -11,7 +11,7 @@
             <li>
               <my-file-select dropdown="true"
                               data-button-label="Add App"
-                              on-file-select="AppsSectionCtrl.onFileSelected($files)">
+                              on-file-select="onFileSelected($files)">
               </my-file-select>
             </li>
             <li>
@@ -37,21 +37,33 @@
                 <th data-predicate="version">Version</th>
                 <th data-predicate="type">Type</th>
                 <th data-predicate="description">Description</th>
+                <th> </th>
               </tr>
             </thead>
             <tbody>
                 <tr ng-repeat="app in apps | orderBy:sortable.predicate:sortable.reverse">
                     <td>
                         <strong class="icon-app"></strong>
-                        <a ui-sref="admin.namespace.detail.apps.metadata({appId: app.id})">
+                        <a ng-if="app.type !== 'Adapter'" ui-sref="admin.namespace.detail.apps.metadata({appId: app.id})">
                             <strong> {{ ::app.name }} </strong>
                         </a>
+                        <span ng-if="app.type === 'Adapter'">
+                          {{ ::app.name }}
+                        </span>
                     </td>
                     <td>{{ ::app.version }}</td>
                     <td>
                         <span> {{ ::app.type }} </span>
                     </td>
                     <td>{{ ::app.description }}</td>
+                    <td>
+                      <a href=""
+                      ng-click="caskConfirm()"
+                      cask-confirmable="deleteApp(app.id, app.type)"
+                      data-confirmable-content="Are you sure you want to delete this App?">
+                        <span class=" fa fa-trash text-danger"></span>
+                      </a>
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -68,7 +80,7 @@
         <li>
           <my-file-select dropdown="true"
                           data-button-label="Add App"
-                          on-file-select="AppsSectionCtrl.onFileSelected($files)">
+                          on-file-select="onFileSelected($files)">
           </my-file-select>
         </li>
         <li>

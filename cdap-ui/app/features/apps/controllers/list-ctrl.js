@@ -12,22 +12,22 @@ angular.module(PKG.name + '.feature.apps')
       .then(function(apps) {
         this.apps = this.apps.concat(apps);
       }.bind(this));
-      this.onFileSelected = myAppUploader.upload;
+    this.onFileSelected = myAppUploader.upload;
 
-      var params = {
-        namespace: $state.params.namespace,
-        scope: $scope
-      };
-      myAdapterApi.list(params)
-        .$promise
-        .then(function(res) {
-          if (!res.length) {
-            return;
-          }
-          res.forEach(function(adapter) {
-            adapter.type = 'adapter';
-          });
-          this.apps = this.apps.concat(res);
-        }.bind(this));
+    var params = {
+      namespace: $state.params.namespace,
+      scope: $scope
+    };
+    myAdapterApi.list(params)
+      .$promise
+      .then(function(res) {
+        if (!res.length) {
+          return;
+        }
+        res.forEach(function(adapter) {
+          adapter.type = 'adapter';
+        });
+        this.apps = this.apps.concat(res);
+      }.bind(this));
 
   });
