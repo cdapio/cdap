@@ -1,0 +1,501 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Workflows &mdash; Cask Data Application Platform 3.0.2 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.0.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.0.2 Documentation" href="../index.html" />
+    <link rel="up" title="Building Blocks" href="index.html" />
+    <link rel="next" title="Schedules" href="schedules.html" />
+    <link rel="prev" title="MapReduce Programs" href="mapreduce-programs.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="schedules.html" title="Schedules"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="mapreduce-programs.html" title="MapReduce Programs"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.0.2');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Building Blocks</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="workflows">
+<span id="id1"></span><h1>Workflows<a class="headerlink" href="#workflows" title="Permalink to this headline">¶</a></h1>
+<p><strong>Workflows</strong> are used to automate the execution of a series of <a class="reference internal" href="mapreduce-programs.html#mapreduce"><span>MapReduce</span></a>, <a class="reference internal" href="spark-programs.html#spark"><span>Spark</span></a> or <a class="reference internal" href="#workflow-custom-actions"><span>custom actions</span></a>. It
+allows for both sequential and <a class="reference internal" href="#workflow-parallel"><span>parallel execution</span></a> of programs.</p>
+<p>The workflow system allows specifying, executing, scheduling, and monitoring complex
+series of jobs and tasks in CDAP. The system can manage thousands of workflows and
+maintain millions of historic workflow logs.</p>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>A Workflow is given a sequence of programs that follow each other, with an optional
+schedule to run the Workflow periodically. Upon successful execution of a program, the
+control is transferred to the next program in the sequence until the last program in the
+sequence is executed. Upon failure, the execution is stopped at the failed program and no
+subsequent programs in the sequence are executed.</p>
+<p>To execute MapReduce or Spark programs in a Workflow, you will need to add them in your
+application along with the Workflow. You can optionally add a <a class="reference internal" href="schedules.html#schedules"><span>Schedule</span></a>
+(such as a <a class="reference external" href="../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#scheduleWorkflow(java.lang.String,%20java.lang.String,%20java.lang.String)">crontab schedule</a>)
+to the Workflow:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+  <span class="o">...</span>
+  <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">MyMapReduce</span><span class="o">());</span>
+  <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">AnotherMapReduce</span><span class="o">());</span>
+  <span class="n">addSpark</span><span class="o">(</span><span class="k">new</span> <span class="n">MySpark</span><span class="o">());</span>
+  <span class="n">addWorkflow</span><span class="o">(</span><span class="k">new</span> <span class="n">MyWorkflow</span><span class="o">());</span>
+  <span class="n">scheduleWorkflow</span><span class="o">(</span><span class="n">Schedules</span><span class="o">.</span><span class="na">createTimeSchedule</span><span class="o">(</span><span class="s">&quot;FiveHourSchedule&quot;</span><span class="o">,</span>
+                                                <span class="s">&quot;Schedule running every 5 hours&quot;</span><span class="o">,</span>
+                                                <span class="s">&quot;0 */5 * * *&quot;</span><span class="o">),</span>
+                   <span class="s">&quot;MyWorkflow&quot;</span><span class="o">);</span>
+  <span class="o">...</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>You&#8217;ll then extend the <code class="docutils literal"><span class="pre">AbstractWorkflow</span></code> class and implement the <code class="docutils literal"><span class="pre">configure()</span></code>
+method. Inside <code class="docutils literal"><span class="pre">configure</span></code>, you can add multiple MapReduce, Spark programs or custom
+actions to the Workflow. The programs will be executed in the order they are specified in
+the <code class="docutils literal"><span class="pre">configure</span></code> method:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">MyWorkflow</span> <span class="kd">extends</span> <span class="n">AbstractWorkflow</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+      <span class="n">setName</span><span class="o">(</span><span class="s">&quot;MyWorkflow&quot;</span><span class="o">);</span>
+      <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;MyWorkflow description&quot;</span><span class="o">);</span>
+      <span class="n">addMapReduce</span><span class="o">(</span><span class="s">&quot;MyMapReduce&quot;</span><span class="o">);</span>
+      <span class="n">addSpark</span><span class="o">(</span><span class="s">&quot;MySpark&quot;</span><span class="o">);</span>
+      <span class="n">addMapReduce</span><span class="o">(</span><span class="s">&quot;AnotherMapReduce&quot;</span><span class="o">);</span>
+      <span class="n">addAction</span><span class="o">(</span><span class="k">new</span> <span class="n">MyAction</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>In this example, the <code class="docutils literal"><span class="pre">MyWorkflow</span></code> will be executed every 5 hours. During each execution
+of the Workflow, the <code class="docutils literal"><span class="pre">MyMapReduce</span></code>, <code class="docutils literal"><span class="pre">MySpark</span></code>, and <code class="docutils literal"><span class="pre">AnotherMapReduce</span></code> programs and
+the <code class="docutils literal"><span class="pre">MyAction</span></code> custom action will be executed in order.</p>
+<div class="section" id="workflow-custom-action">
+<span id="workflow-custom-actions"></span><h3>Workflow Custom Action<a class="headerlink" href="#workflow-custom-action" title="Permalink to this headline">¶</a></h3>
+<p>In addition to MapReduce and Spark programs, Workflow can also execute custom actions.
+Custom actions are implemented in Java and can perform tasks such as sending an email. To
+define a custom action, you will need to extend the <code class="docutils literal"><span class="pre">AbstractWorkflowAction</span></code> and
+implement the <code class="docutils literal"><span class="pre">run()</span></code> method:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">MyAction</span> <span class="kd">extends</span> <span class="n">AbstractWorkflowAction</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+    <span class="c1">// your code goes here</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The custom action then can be added to the Workflow using the <code class="docutils literal"><span class="pre">addAction()</span></code> method as
+shown above.</p>
+</div>
+<div class="section" id="concurrent-workflows">
+<h3>Concurrent Workflows<a class="headerlink" href="#concurrent-workflows" title="Permalink to this headline">¶</a></h3>
+<p>By default, a Workflow runs sequentially. Multiple instances of a Workflow can be run
+concurrently. To enable concurrent runs for a Workflow, set its runtime argument
+<code class="docutils literal"><span class="pre">concurrent.runs.enabled</span></code> to <code class="docutils literal"><span class="pre">true</span></code>.</p>
+</div>
+</div>
+<div class="section" id="parallelizing-workflow-execution">
+<span id="workflow-parallel"></span><h2>Parallelizing Workflow Execution<a class="headerlink" href="#parallelizing-workflow-execution" title="Permalink to this headline">¶</a></h2>
+<p>The control flow of a Workflow can be described as a directed, acyclic graph (DAG) of actions.
+To be more precise, we require that it be a series-parallel graph. This is a graph with a
+single start node and a single finish node. In between, execution can fork into concurrent
+branches, but the graph may not have cycles. Every action can be a batch job or a custom
+action (implemented in Java; for example, making a RESTful call to an external system).</p>
+<p>For example, a simple control flow could be computing user and product profiles from
+purchase events. After the start, a batch job could start that joins the events with the
+product catalog. After that, execution could continue with a fork, and with two batch jobs
+running in parallel: one computing product profiles; while the other computes user
+profiles. When they are both done, execution is joined and continues with a custom action
+to upload the computed profiles to a serving system, after which the control flow
+terminates:</p>
+<a class="reference internal image-reference" href="../_images/parallelized-workflow.png"><img alt="../_images/parallelized-workflow.png" class="align-center" src="../_images/parallelized-workflow.png" style="width: 8in;" /></a>
+<div class="section" id="forks-and-joins">
+<h3>Forks and Joins<a class="headerlink" href="#forks-and-joins" title="Permalink to this headline">¶</a></h3>
+<p>To create such a Workflow, you provide a series of <em>forks</em> and <em>joins</em> in your Workflow
+specification, following these rules:</p>
+<ul class="simple">
+<li>Where your control flow initially splits, you place a <code class="docutils literal"><span class="pre">fork</span></code> method.</li>
+<li>Every time your control flow splits, you add additional <code class="docutils literal"><span class="pre">fork</span></code> methods.</li>
+<li>Every point where you have either a program or an action, you add a <code class="docutils literal"><span class="pre">addMapReduce</span></code>,
+<code class="docutils literal"><span class="pre">addSpark</span></code>, or <code class="docutils literal"><span class="pre">addAction</span></code> method.</li>
+<li>To show each fork, use a <code class="docutils literal"><span class="pre">also</span></code> method to separate the different branches of the
+control flow.</li>
+<li>Where your control flow reconnects, you add a <code class="docutils literal"><span class="pre">join</span></code> method to indicate.</li>
+<li>The control flow always concludes with a <code class="docutils literal"><span class="pre">join</span></code> method.</li>
+</ul>
+<p>The application shown above could be coded (assuming the other classes referred to exist) as:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ParallelizedWorkflow</span> <span class="kd">extends</span> <span class="n">AbstractWorkflow</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;ParallelizedWorkflow&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Demonstration of parallelizing execution of a Workflow&quot;</span><span class="o">);</span>
+
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="s">&quot;JoinWithCatalogMR&quot;</span><span class="o">);</span>
+
+    <span class="n">fork</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">addMapReduce</span><span class="o">(</span><span class="s">&quot;BuildProductProfileMR&quot;</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">also</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">addMapReduce</span><span class="o">(</span><span class="s">&quot;BuildUserProfileMR&quot;</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">join</span><span class="o">();</span>
+
+    <span class="n">addAction</span><span class="o">(</span><span class="k">new</span> <span class="n">UploadProfilesCA</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Provided that the control flow does not have cycles or the joining of any branches that do
+not originate from the same fork, flows of different complexity can be created using these
+rules and methods.</p>
+<p>More complicated structures can be created using <code class="docutils literal"><span class="pre">fork</span></code>. To add another MapReduce
+that runs in parallel to the entire process described above, you could use code such as:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ComplexParallelizedWorkflow</span> <span class="kd">extends</span> <span class="n">AbstractWorkflow</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;ComplexParallelizedWorkflow&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Demonstration of parallelized execution using a complex fork in a Workflow&quot;</span><span class="o">);</span>
+
+    <span class="n">fork</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">addMapReduce</span><span class="o">(</span><span class="s">&quot;JoinWithCatalogMR&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">fork</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">addMapReduce</span><span class="o">(</span><span class="s">&quot;BuildProductProfileMR&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">also</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">addMapReduce</span><span class="o">(</span><span class="s">&quot;BuildUserProfileMR&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">join</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">addAction</span><span class="o">(</span><span class="k">new</span> <span class="n">UploadProfilesCA</span><span class="o">())</span>
+    <span class="o">.</span><span class="na">also</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">addMapReduce</span><span class="o">(</span><span class="s">&quot;LogMonitoringMR&quot;</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">join</span><span class="o">();</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The diagram for this code would be:</p>
+<a class="reference internal image-reference" href="../_images/complex-parallelized-workflow.png"><img alt="../_images/complex-parallelized-workflow.png" class="align-center" src="../_images/complex-parallelized-workflow.png" style="width: 8in;" /></a>
+</div>
+<div class="section" id="conditional-node">
+<h3>Conditional Node<a class="headerlink" href="#conditional-node" title="Permalink to this headline">¶</a></h3>
+<p>You can provide a <em>conditional</em> node in your structure that allows for branching based on
+a boolean predicate.</p>
+<p>Taking our first example and modifying it, you could use code such as:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ConditionalWorkflow</span> <span class="kd">extends</span> <span class="n">AbstractWorkflow</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;ConditionalWorkflow&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Demonstration of conditional execution of a Workflow&quot;</span><span class="o">);</span>
+
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="s">&quot;JoinWithCatalogMR&quot;</span><span class="o">);</span>
+
+    <span class="n">condition</span><span class="o">(</span><span class="k">new</span> <span class="n">MyPredicate</span><span class="o">())</span>
+      <span class="o">.</span><span class="na">addMapReduce</span><span class="o">(</span><span class="s">&quot;BuildProductProfileMR&quot;</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">otherwise</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">addMapReduce</span><span class="o">(</span><span class="s">&quot;BuildUserProfileMR&quot;</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">end</span><span class="o">();</span>
+
+    <span class="n">addAction</span><span class="o">(</span><span class="k">new</span> <span class="n">UploadProfilesCA</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal"><span class="pre">MyPredicate</span></code> is a public class which implements the <code class="docutils literal"><span class="pre">Predicate</span></code> interface as:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">MyPredicate</span> <span class="kd">implements</span> <span class="n">Predicate</span><span class="o">&lt;</span><span class="n">WorkflowContext</span><span class="o">&gt;</span> <span class="o">{</span>
+
+   <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">apply</span><span class="o">(</span><span class="nd">@Nullable</span> <span class="n">WorkflowContext</span> <span class="n">input</span><span class="o">)</span> <span class="o">{</span>
+       <span class="k">if</span> <span class="o">(</span><span class="n">input</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+          <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+       <span class="o">}</span>
+       <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Long</span><span class="o">&gt;&gt;</span> <span class="n">mapReduceCounters</span> <span class="o">=</span> <span class="n">input</span><span class="o">.</span><span class="na">getToken</span><span class="o">().</span><span class="na">getMapReduceCounters</span><span class="o">();</span>
+       <span class="k">if</span> <span class="o">(</span><span class="n">mapReduceCounters</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+          <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+       <span class="o">}</span>
+       <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Long</span><span class="o">&gt;</span> <span class="n">customCounters</span> <span class="o">=</span> <span class="n">mapReduceCounters</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;MyCustomCounters&quot;</span><span class="o">);</span>
+       <span class="k">if</span> <span class="o">(</span><span class="n">customCounters</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;BuildProductProfile&quot;</span><span class="o">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+         <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+       <span class="o">}</span>
+       <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+   <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>In the <code class="docutils literal"><span class="pre">JoinWithCatalogMR</span></code> MapReduce, it could have in its Mapper class code that
+governs which condition to follow:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">JoinWithCatalogMR</span> <span class="kd">extends</span> <span class="n">AbstractMapReduce</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="s">&quot;JoinWithCatalogMR&quot;</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;MapReduce program to demonstrate a Conditional Workflow&quot;</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">beforeSubmit</span><span class="o">(</span><span class="n">MapReduceContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">Job</span> <span class="n">job</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getHadoopJob</span><span class="o">();</span>
+    <span class="n">job</span><span class="o">.</span><span class="na">setMapperClass</span><span class="o">(</span><span class="n">MyVerifier</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">String</span> <span class="n">inputPath</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getRuntimeArguments</span><span class="o">().</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;inputPath&quot;</span><span class="o">);</span>
+    <span class="n">String</span> <span class="n">outputPath</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getRuntimeArguments</span><span class="o">().</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;outputPath&quot;</span><span class="o">);</span>
+    <span class="n">FileInputFormat</span><span class="o">.</span><span class="na">addInputPath</span><span class="o">(</span><span class="n">job</span><span class="o">,</span> <span class="k">new</span> <span class="n">Path</span><span class="o">(</span><span class="n">inputPath</span><span class="o">));</span>
+    <span class="n">FileOutputFormat</span><span class="o">.</span><span class="na">setOutputPath</span><span class="o">(</span><span class="n">job</span><span class="o">,</span> <span class="k">new</span> <span class="n">Path</span><span class="o">(</span><span class="n">outputPath</span><span class="o">));</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">MyVerifier</span> <span class="kd">extends</span> <span class="n">Mapper</span><span class="o">&lt;</span><span class="n">LongWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">,</span> <span class="n">Text</span><span class="o">,</span> <span class="n">NullWritable</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">map</span><span class="o">(</span><span class="n">LongWritable</span> <span class="n">key</span><span class="o">,</span> <span class="n">Text</span> <span class="n">value</span><span class="o">,</span> <span class="n">Context</span> <span class="n">context</span><span class="o">)</span>
+    <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">value</span> <span class="o">!=</span> <span class="kc">null</span> <span class="n">and</span> <span class="n">value</span><span class="o">.</span><span class="na">toString</span><span class="o">().</span><span class="na">equals</span><span class="o">(</span><span class="s">&quot;BuildProductProfile&quot;</span><span class="o">))</span> <span class="o">{</span>
+      <span class="n">context</span><span class="o">.</span><span class="na">getCounter</span><span class="o">(</span><span class="s">&quot;MyCustomCounters&quot;</span><span class="o">,</span> <span class="s">&quot;BuildProductProfile&quot;</span><span class="o">).</span><span class="na">setValue</span><span class="o">(</span><span class="mi">1L</span><span class="o">);</span>
+    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+      <span class="n">context</span><span class="o">.</span><span class="na">getCounter</span><span class="o">(</span><span class="s">&quot;MyCustomCounters&quot;</span><span class="o">,</span> <span class="s">&quot;BuildProductProfile&quot;</span><span class="o">).</span><span class="na">setValue</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>In this case, if the predicate finds that the a <code class="docutils literal"><span class="pre">MapReduceCounter</span></code> <em>BuildProductProfile</em>
+is greater than zero, the logic will follow the path of <em>BuildProductProfileMR</em>;
+otherwise, the other path will be taken. The diagram for this code would be:</p>
+<a class="reference internal image-reference" href="../_images/conditional-workflow.png"><img alt="../_images/conditional-workflow.png" class="align-center" src="../_images/conditional-workflow.png" style="width: 8in;" /></a>
+<p>For this 3.0 release, CDAP only supports predicate conditions based on counters from
+previous MapReduce programs. Because of this, condition nodes are currently only useful
+when they follow MapReduce nodes; they can then make use of counters emitted by the
+MapReduce program to take the decision. In a later version, we will add more information
+to the <code class="docutils literal"><span class="pre">WorkflowContext</span></code> which will allow for more complex decisions.</p>
+</div>
+</div>
+<div class="section" id="example-of-using-a-workflow">
+<h2>Example of Using a Workflow<a class="headerlink" href="#example-of-using-a-workflow" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>For an example of the use of <strong>a Workflow,</strong> see the <a class="reference external" href="../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v3.1.0)"><span class="xref std std-ref">Purchase</span></a> example.</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v3.0.2</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Overview</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html"
+            rel="nofollow">Introduction to CDAP</a></li>
+            
+      <li><div class=""></div><b><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></b></li>
+            
+      <li><div class="new-icon"></div><a href="../table-of-contents/../../application-templates/index.html"
+            rel="nofollow">Application Templates</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="core.html"> Core Abstractions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="streams.html"> Streams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets/index.html"> Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="flows-flowlets/index.html"> Flows and Flowlets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mapreduce-programs.html"> MapReduce Programs</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Workflows</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parallelizing-workflow-execution">Parallelizing Workflow Execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#example-of-using-a-workflow">Example of Using a Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="schedules.html"> Schedules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-programs.html"> Spark Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workers.html"> Workers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="services.html"> Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespaces.html"> Namespaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="mapreduce-programs.html"
+                        title="Previous Chapter">MapReduce Programs</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="schedules.html"
+                        title="Next Chapter">Schedules</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.0.2/cdap-docs-3.0.2-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="MapReduce Programs" href="mapreduce-programs.html" />MapReduce Programs</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Schedules" href="schedules.html" />Schedules</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
