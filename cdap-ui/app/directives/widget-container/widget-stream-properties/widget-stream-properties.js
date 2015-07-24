@@ -8,9 +8,8 @@ angular.module(PKG.name + '.commons')
         plugins: '='
       },
       templateUrl: 'widget-container/widget-stream-properties/widget-stream-properties.html',
-      controller: function($scope) {
-        // $scope.options = $scope.config['schema-types'];
-        // var defaultType = $scope.config['schema-default-type'] || $scope.options[0];
+      controller: function($scope, EventPipe) {
+        var modelCopy = angular.copy()
 
         var defaultOptions = [ 'boolean', 'int', 'long', 'float', 'double', 'bytes', 'string' ];
         var defaultType = null;
@@ -67,8 +66,11 @@ angular.module(PKG.name + '.commons')
 
         });
 
+        var filledCount;
+
         // Format model
         function initialize() {
+          filledCount = 0;
           var schema = {};
           $scope.avro = {};
 
@@ -124,7 +126,11 @@ angular.module(PKG.name + '.commons')
         } // End of initialize
 
         initialize();
+        EventPipe.on('plugin.reset', function () {
+          $scope.model = angular.copy(modelCopy);
 
+          initialize();
+        });
 
         function formatSchema() {
           // Format Schema
