@@ -494,7 +494,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     lifecycleWorkerManager.stop();
     lifecycleWorkerManager.waitForStatus(false);
 
-    workerManager.stop();
+    if (workerManager.isRunning()) {
+      workerManager.stop();
+    }
     workerManager.waitForStatus(false);
 
     // Should be same instances after being stopped.
