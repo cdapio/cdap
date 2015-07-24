@@ -10,16 +10,18 @@
 
   </a>
   <a class="navbar-brand" ui-sref="overview({namespace: $stateParams.namespace})">
+
      <strong>CDAP</strong>
   </a>
 </div>
 <div class="collapse navbar-collapse" ng-class="{in:navbarCollapsed}">
 
   <ul class="nav navbar-nav" id="navbar-namespace">
-    <li class="dropdown" ng-class="{one:namespaces.length<2, multiple: namespaces.length > 1}">
+    <li class="dropdown" ng-class="{one:namespaces.length<2}">
       <a href="" class="dropdown-toggle">
         <span ng-bind="$state.params.namespace && getDisplayName($state.params.namespace) | myEllipsis: 10" ng-if="namespaces.length > 1"></span>
-        <span ng-bind="$state.params.namespace && getDisplayName($state.params.namespace) | myEllipsis: 10" tooltip-append-to-body="true" tooltip="Only one namespace to display" tooltip-placement="right" ng-if="namespaces.length < 2"></span>
+        <span ng-bind="$state.params.namespace && getDisplayName($state.params.namespace) | myEllipsis: 10" tooltip="Only one namespace to display" tooltip-placement="right" ng-if="namespaces.length < 2"></span>
+        <span class="caret"></span>
       </a>
     </li>
   </ul>
@@ -56,6 +58,7 @@
     <li class="dropdown">
       <a href="" class="dropdown-toggle">
         <span class="fa fa-cog"></span>
+        <span class="caret"></span>
       </a>
     </li>
 
