@@ -38,6 +38,7 @@ import co.cask.http.HttpHandler;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.inject.Exposed;
 import com.google.inject.Inject;
@@ -298,12 +299,15 @@ public class ExploreRuntimeModule extends RuntimeModule {
     for (File dep : orderedDependencies) {
       builder.add("file://" + dep.getAbsolutePath());
     }
-    List<String> orderedDependenciesStr = builder.build();
+    List<String> orderedDependenciesStr = Lists.newArrayList(builder.build());
 
     System.setProperty(HiveConf.ConfVars.HIVEAUXJARS.toString(), Joiner.on(',').join(orderedDependenciesStr));
     LOG.debug("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
               System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
 
+    // add hive-exec.jar to the end of auxjars, we need this, otherwise when hive runs a MapRedLocalTask it cannot find
+    // "org.apache.hadoop.hive.serde2.SerDe" class in its classpath.
+    orderedDependenciesStr.add(new HiveConf().getJar());
     //TODO: Setup HADOOP_CLASSPATH hack, more info on why this is needed, see CDAP-9
     LocalMapreduceClasspathSetter classpathSetter =
       new LocalMapreduceClasspathSetter(new HiveConf(), System.getProperty("java.io.tmpdir"), orderedDependenciesStr);
