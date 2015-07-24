@@ -20,9 +20,11 @@ import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
+import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionOutput;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.api.dataset.table.Table;
@@ -55,6 +57,7 @@ public class HelloWorld extends AbstractApplication {
     setDescription("An application used for testing.");
 
     createDataset("myds", MyDataset.class, FileSetProperties.builder().setBasePath("tmp/myds").build());
+    createDataset("files2", FileSet.class, FileSetProperties.builder().setBasePath("/temp/files2").build());
 
     addService(new FileService());
   }
@@ -118,6 +121,56 @@ public class HelloWorld extends AbstractApplication {
         }
         output.addPartition();
         responder.sendStatus(200);
+      }
+
+      @UseDataSet("files2")
+      private FileSet files2;
+
+      @GET
+      @Path("/{ds}/{file}")
+      public void getFile(HttpServiceRequest request, HttpServiceResponder responder,
+                          @PathParam("ds") String datasetName, @PathParam("file") String fileName) {
+
+        FileSet fileset = getFileSet(datasetName);
+        Location location = fileset.getLocation(fileName);
+        ByteBuffer content;
+        try {
+          content = ByteBuffer.wrap(ByteStreams.toByteArray(location.getInputStream()));
+        } catch (IOException e) {
+          responder.sendError(400, String.format("Unable to read path '%s' in dataset '%s'", fileName, datasetName));
+          return;
+        }
+        responder.send(200, content, "application/octet-stream", ImmutableMultimap.<String, String>of());
+      }
+
+      @PUT
+      @Path("/{ds}/{file}")
+      public void putFile(HttpServiceRequest request, HttpServiceResponder responder,
+                          @PathParam("ds") String datasetName, @PathParam("file") String fileName) {
+
+        FileSet fileset = getFileSet(datasetName);
+        Location location = fileset.getLocation(fileName);
+        try {
+          try (WritableByteChannel channel = Channels.newChannel(location.getOutputStream())) {
+            channel.write(request.getContent());
+          }
+        } catch (IOException e) {
+          responder.sendError(400, String.format("Unable to write path '%s' in dataset '%s'", fileName, datasetName));
+          return;
+        }
+        responder.sendStatus(200);
+      }
+
+      private FileSet getFileSet(String datasetName) {
+        if (datasetName.startsWith("files")) {
+          return getContext().getDataset(datasetName);
+        }
+        if (datasetName.contains("pfs")) {
+          PartitionedFileSet pfs = getContext().getDataset(datasetName);
+          return pfs.getEmbeddedFileSet();
+        }
+        MyDataset myds = getContext().getDataset(datasetName);
+        return myds.getTpfs().getEmbeddedFileSet();
       }
     }
   }
