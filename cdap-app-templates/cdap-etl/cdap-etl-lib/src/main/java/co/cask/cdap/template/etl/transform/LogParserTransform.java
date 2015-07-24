@@ -58,7 +58,7 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
   private static final String LOG_FORMAT_DESCRIPTION = "Log format to parse. Currently supports S3, " +
     "CLF, and Cloudfront formats.";
   private static final String INPUT_NAME_DESCRIPTION = "Name of the field in the input schema which encodes the " +
-    "log information. The given field must be of type String or Bytes";
+    "log information. The given field must be of type String or Bytes.";
   private static final Logger LOG = LoggerFactory.getLogger(LogParserTransform.class);
   //Regex used to parse a CLF log, each field is commented above
   private static final Pattern CLF_LOG_PATTERN = Pattern.compile(

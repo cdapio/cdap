@@ -10,9 +10,8 @@ Sources: Batch
    :maxdepth: 1
 
     Database <database>
+    File <file>
     KVTable <kvtable>
     Stream <stream>
     Table <table>
-
-
-.. rubric:: Introduction
+    TPFSAvro <tpfsavro>

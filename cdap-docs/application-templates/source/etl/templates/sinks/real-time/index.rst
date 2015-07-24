@@ -12,6 +12,3 @@ Sinks: Real-time
     Cube <cube>
     Stream <stream>
     Table <table>
-
-
-.. rubric:: Introduction

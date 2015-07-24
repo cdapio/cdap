@@ -14,6 +14,4 @@ Sinks: Batch
     KVTable <kvtable>
     Table <table>
     TPFSAvro <tpfsavro>
-
-
-.. rubric:: Introduction
+    TPFSParquet <tpfsparquet>

@@ -11,6 +11,3 @@ Sinks
 
     Batch <batch/index>
     Real-time <real-time/index>
-
-
-.. rubric:: Introduction

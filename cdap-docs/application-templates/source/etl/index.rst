@@ -52,12 +52,15 @@ This lists the available sources, sinks and transformations (transforms):
    * - - **Batch Sources**
 
          - Database
+         - File
          - KVTable
          - Stream
          - Table
+         - TPFSAvro
 
      - - Transformations
 
+         - LogParser
          - Projection
          - Script
          - ScriptFilter
@@ -68,18 +71,21 @@ This lists the available sources, sinks and transformations (transforms):
          - Cube
          - Database
          - KVTable
-         - TPFSAvro
          - Table
+         - TPFSAvro
+         - TPFSParquet
 
    * - - **Real-time Sources**
 
          - JMS
          - Kafka
+         - SQS
          - Test
          - Twitter
 
      - - Transformations
 
+         - LogParser
          - Projection
          - Script
          - ScriptFilter

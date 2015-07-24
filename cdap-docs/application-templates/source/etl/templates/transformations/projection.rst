@@ -2,11 +2,11 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-===============================
+===========================
 Transformations: Projection
-===============================
+===========================
 
-.. rubric:: Description: Projection transform tha
+.. rubric:: Description: Projection Transform: Drop, Rename, and Cast Fields
 
 Projection transform that lets you drop, rename, and cast fields to a different type.
 
