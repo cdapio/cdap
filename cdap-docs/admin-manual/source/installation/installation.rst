@@ -534,7 +534,7 @@ and in particular, see the instructions for
 Configuring Hortonworks Data Platform
 .....................................
 Beginning with `Hortonworks Data Platform (HDP) 2.2 <http://hortonworks.com>`__, the
-MapReduce framework is in HDFS. This requires an addition be made to the file
+MapReduce libraries are in HDFS. This requires an addition be made to the file
 ``cdap-env.sh`` to indicate the version of HDP::
 
   export OPTS="${OPTS} -Dhdp.version=<version>" 
