@@ -88,6 +88,7 @@ angular.module(PKG.name + '.services')
         id: conf.id,
         name: conf.name,
         icon: conf.icon,
+        style: conf.style || '',
         description: conf.description,
         outputSchema: conf.outputSchema || '',
         properties: conf.properties || {},
