@@ -463,7 +463,11 @@ In order to configure CDAP Master for Kerberos authentication:
     CDAP_PRINCIPAL="<cdap-principal>@EXAMPLE.REALM.COM"
 
 - Edit ``/etc/cdap/conf/cdap-site.xml``, substituting the Kerberos principal for
-  ``<cdap-principal>`` when adding these two properties::
+  ``<cdap-principal>`` when adding these two properties:
+  
+  .. highlight:: xml
+
+  ::
 
     <property>
       <name>cdap.master.kerberos.keytab</name>
@@ -480,6 +484,8 @@ In order to configure CDAP Master for Kerberos authentication:
 
 - The ``<cdap-principal>`` is shown in the commands that follow as ``cdap``; however, you
   are free to use a different appropriate name.
+
+  .. highlight:: console
 
 - The ``/cdap`` directory needs to be owned by the ``<cdap-principal>``; you can set
   that by running the following command as the ``hdfs`` user::
@@ -505,6 +511,8 @@ this setting with the command ``ulimit -n`` when logged in as the CDAP user.
 For more information, refer to the ``ulimit`` discussion in the `Apache HBase Reference
 Guide <https://hbase.apache.org/book.html#ulimit>`__.
 
+.. highlight:: console
+
 .. _install-tmp-files:
 
 Writing to Temp Files
@@ -522,6 +530,41 @@ Configuring Security
 For instructions on enabling CDAP Security, see :doc:`CDAP Security <security>`;
 and in particular, see the instructions for 
 :ref:`configuring the properties of cdap-site.xml <enabling-security>`.
+
+Configuring Hortonworks Data Platform
+.....................................
+Beginning with `Hortonworks Data Platform (HDP) 2.2 <http://hortonworks.com>`__, the
+MapReduce libraries are in HDFS. This requires an addition be made to the file
+``cdap-env.sh`` to indicate the version of HDP::
+
+  export OPTS="${OPTS} -Dhdp.version=<version>" 
+  
+where ``<version>`` matches the HDP version of the cluster. The build iteration must be
+included, so if the cluster version of HDP is ``2.2.6.0-2800``, use::
+
+  export OPTS="${OPTS} -Dhdp.version=2.2.6.0-2800" 
+
+The file ``cdap-env.sh`` is located in the configuration directory, as described above
+under :ref:`Configuration <install-alternatives>`.
+
+.. highlight:: xml
+
+In addition, the property ``app.program.jvm.opts`` must be set in the ``cdap-site.xml``::
+
+  <property>
+    <name>app.program.jvm.opts</name>
+    <value>-XX:MaxPermSize=128M ${twill.jvm.gc.opts} -Dhdp.version=<version></value>
+    <description>Java options for all program containers</description>
+  </property>
+  
+Using the same example as above, substituting ``2.2.6.0-2800`` for ``<version>``, as::
+
+  <property>
+    <name>app.program.jvm.opts</name>
+    <value>-XX:MaxPermSize=128M ${twill.jvm.gc.opts} -Dhdp.version=2.2.6.0-2800</value>
+    <description>Java options for all program containers</description>
+  </property>
+
 
 .. _install-starting-services:
 
