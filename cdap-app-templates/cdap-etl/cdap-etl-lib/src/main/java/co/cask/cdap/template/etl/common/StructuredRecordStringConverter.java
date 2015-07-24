@@ -263,7 +263,6 @@ public final class StructuredRecordStringConverter {
     throw new IOException("No matching schema found for union type: " + unionSchema);
   }
 
-
   private static void writeJson(JsonWriter writer, Schema schema, Object value) throws IOException {
     switch (schema.getType()) {
       case NULL:
