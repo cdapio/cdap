@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .controller('MyPlumbController', function MyPlumbController(jsPlumb, $scope, $timeout, MyPlumbService, myHelpers, MyPlumbFactory) {
+  .controller('MyPlumbController', function MyPlumbController(jsPlumb, $scope, $timeout, MyPlumbService, myHelpers, MyPlumbFactory, $window) {
     this.plugins = $scope.config || [];
     this.instance = null;
 
@@ -157,6 +157,10 @@ angular.module(PKG.name + '.commons')
     jsPlumb.ready(function() {
       jsPlumb.setContainer('plumb-container');
       this.instance = jsPlumb.getInstance();
+
+      angular.element($window).on('resize', function() {
+        this.instance.repaintEverything();
+      }.bind(this));
 
       this.instance.importDefaults(MyPlumbFactory.getSettings().default);
 
