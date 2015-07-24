@@ -33,12 +33,14 @@ import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.File;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
@@ -53,6 +55,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
 
   private static final Gson GSON = new Gson();
   private static final Id.Application FAKE_APP_ID = Id.Application.from(Id.Namespace.DEFAULT, FakeApp.NAME);
+  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private PreferencesClient client;
   private ApplicationClient appClient;
@@ -96,7 +99,8 @@ public class PreferencesClientTestRun extends ClientTestBase {
       HttpRequest request = HttpRequest.builder(HttpMethod.GET, serviceURL).build();
       HttpResponse response = HttpRequests.execute(request);
       assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-      assertEquals(GSON.toJson(propMap), response.getResponseBodyAsString());
+      Map<String, String> responseMap = GSON.fromJson(response.getResponseBodyAsString(), STRING_MAP_TYPE);
+      assertEquals(propMap, responseMap);
       programClient.stop(service);
       assertProgramStopped(programClient, service);
 
@@ -110,7 +114,8 @@ public class PreferencesClientTestRun extends ClientTestBase {
       request = HttpRequest.builder(HttpMethod.GET, serviceURL).build();
       response = HttpRequests.execute(request);
       assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-      assertEquals(GSON.toJson(propMap), response.getResponseBodyAsString());
+      responseMap = GSON.fromJson(response.getResponseBodyAsString(), STRING_MAP_TYPE);
+      assertEquals(propMap, responseMap);
       programClient.stop(service);
       assertProgramStopped(programClient, service);
 
@@ -122,7 +127,8 @@ public class PreferencesClientTestRun extends ClientTestBase {
       request = HttpRequest.builder(HttpMethod.GET, serviceURL).build();
       response = HttpRequests.execute(request);
       assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-      assertEquals(GSON.toJson(propMap), response.getResponseBodyAsString());
+      responseMap = GSON.fromJson(response.getResponseBodyAsString(), STRING_MAP_TYPE);
+      assertEquals(propMap, responseMap);
     } finally {
       programClient.stop(service);
       assertProgramStopped(programClient, service);
