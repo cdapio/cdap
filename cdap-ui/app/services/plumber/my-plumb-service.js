@@ -202,10 +202,6 @@ angular.module(PKG.name + '.services')
                 $scope.isTransform = true;
               }
 
-              $scope.modalClose = function () {
-                $scope.$close('cancel');
-              };
-
             }],
             size: 'lg',
             resolve: {
