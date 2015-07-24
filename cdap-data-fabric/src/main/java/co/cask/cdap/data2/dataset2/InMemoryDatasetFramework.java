@@ -137,8 +137,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addModule(Id.DatasetModule moduleId,
-                        DatasetModule module) throws ModuleConflictException {
+  public void addModule(Id.DatasetModule moduleId, DatasetModule module) throws ModuleConflictException {
     writeLock.lock();
     try {
       if (moduleClasses.contains(moduleId.getNamespace(), moduleId)) {
@@ -198,7 +197,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Override
   public void addInstance(String datasetType, Id.DatasetInstance datasetInstanceId,
-                                       DatasetProperties props) throws DatasetManagementException, IOException {
+                          DatasetProperties props) throws DatasetManagementException, IOException {
     writeLock.lock();
     try {
       if (!allowDatasetUncheckedUpgrade && instances.contains(datasetInstanceId.getNamespace(), datasetInstanceId)) {
