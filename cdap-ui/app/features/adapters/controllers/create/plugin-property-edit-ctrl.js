@@ -1,5 +1,7 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers) {
+  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers, EventPipe, $timeout) {
+    var pluginCopy = angular.copy($scope.plugin);
+
     var propertiesFromBackend = Object.keys($scope.plugin._backendProperties);
     // Make a local copy that is a mix of properties from backend + config from nodejs
     this.groups = {
@@ -13,9 +15,9 @@ angular.module(PKG.name + '.feature.adapters')
       }
     };
 
-    this.configfetched = false;
+    this.configfetched = null;
     this.properties = [];
-    this.noconfig = false;
+    this.noconfig = null;
     this.noproperty = Object.keys(
       $scope.plugin._backendProperties || {}
     ).length;
@@ -63,16 +65,25 @@ angular.module(PKG.name + '.feature.adapters')
               $scope.plugin.implicitSchema = true;
             }
 
-
-            // Mark the configfetched to show that configurations have been received.
-            this.configfetched = true;
-            this.config = res;
+            // TODO: Hacky. Need to fix this for am-fade-top animation for modals.
+            $timeout(function() {
+              // Mark the configfetched to show that configurations have been received.
+              this.configfetched = true;
+              this.config = res;
+              this.noconfig = false;
+            }.bind(this), 1000);
           }.bind(this),
           function error() {
-            // Didn't receive a configuration from the backend. Fallback to all textboxes.
-            this.noconfig = true;
+            // TODO: Hacky. Need to fix this for am-fade-top animation for modals.
+            $timeout(function() {
+              // Didn't receive a configuration from the backend. Fallback to all textboxes.
+              this.noconfig = true;
+              this.configfetched = true;
+            }.bind(this), 1000);
           }.bind(this)
         );
+    } else {
+      this.configfetched = true;
     }
 
     function setGroups(propertiesFromBackend, res, group) {
@@ -125,4 +136,10 @@ angular.module(PKG.name + '.feature.adapters')
         description: myHelpers.objectQuery($scope, 'plugin', '_backendProperties', property, 'description') || 'No Description Available'
       };
     }
+
+    this.reset = function () {
+      $scope.plugin = angular.copy(pluginCopy);
+      EventPipe.emit('plugin.reset');
+    };
+
   });

@@ -88,6 +88,7 @@ angular.module(PKG.name + '.services')
         id: conf.id,
         name: conf.name,
         icon: conf.icon,
+        style: conf.style || '',
         description: conf.description,
         outputSchema: conf.outputSchema || '',
         properties: conf.properties || {},
@@ -96,7 +97,15 @@ angular.module(PKG.name + '.services')
       };
       this.nodes[config.id] = config;
       if (!conf._backendProperties) {
-        fetchBackendProperties.call(this, this.nodes[config.id]);
+        fetchBackendProperties
+          .call(this, this.nodes[config.id])
+          .then(function() {
+            this.nodes[config.id].properties = this.nodes[config.id].properties || {};
+            angular.forEach(this.nodes[config.id]._backendProperties, function(value, key) {
+              this.nodes[config.id].properties[key] = this.nodes[config.id].properties[key] || '';
+            }.bind(this));
+          }.bind(this));
+
       } else if(Object.keys(conf._backendProperties).length !== Object.keys(conf.properties).length) {
         angular.forEach(conf._backendProperties, function(value, key) {
           config.properties[key] = config.properties[key] || '';
@@ -150,10 +159,13 @@ angular.module(PKG.name + '.services')
       }
 
       var plugin = this.nodes[pluginId];
+      var pluginCopy = angular.copy(plugin);
+
+      var modalInstance;
 
       fetchBackendProperties.call(this, plugin, scope)
         .then(function(plugin) {
-          $bootstrapModal.open({
+          modalInstance = $bootstrapModal.open({
             keyboard: false,
             templateUrl: '/assets/features/adapters/templates/tabs/runs/tabs/properties/properties.html',
             controller: ['$scope', 'AdapterModel', 'type', 'inputSchema', function ($scope, AdapterModel, type, inputSchema){
@@ -213,7 +225,17 @@ angular.module(PKG.name + '.services')
               }
             }
           });
+
+
+          modalInstance.result.then(function (res) {
+            if (res === 'cancel') {
+              this.nodes[pluginId] = angular.copy(pluginCopy);
+            }
+          }.bind(this));
+
         }.bind(this));
+
+
     };
 
     // Used for UI alone. Has _backendProperties and ids to plugins for

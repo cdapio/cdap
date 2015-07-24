@@ -69,7 +69,7 @@ angular.module(PKG.name + '.feature.adapters')
                   type: 'success',
                   content: adapter + ' successfully published.'
                 });
-                $state.go('adapters.list');
+                $state.go('apps.list');
               },
               function error(errorObj) {
                 console.error('ERROR!: ', errorObj);
