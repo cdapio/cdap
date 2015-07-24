@@ -61,23 +61,19 @@ public class TestCountRandomApp extends AbstractApplication {
     @UseDataSet("counters")
     Table counters;
 
-    public NumberCounter() {
-      super("NumberCounter");
-    }
-
     @ProcessInput
     public void process(Integer number) {
       counters.increment(number.toString().getBytes(), COLUMN, 1L);
     }
 
+    @Override
+    protected void configure() {
+      setName("NumberCounter");
+    }
   }
 
   private static class NumberSplitter extends AbstractFlowlet {
     private OutputEmitter<Integer> output;
-
-    public NumberSplitter() {
-      super("NumberSplitter");
-    }
 
     @ProcessInput
     public void process(Integer number)  {
@@ -85,6 +81,11 @@ public class TestCountRandomApp extends AbstractApplication {
       output.emit(new Integer(number % 1000));
       output.emit(new Integer(number % 100));
       output.emit(new Integer(number % 10));
+    }
+
+    @Override
+    protected void configure() {
+      setName("NumberSplitter");
     }
   }
 

@@ -95,15 +95,21 @@ public class JoinMultiStreamApp extends AbstractApplication {
    */
   public static class StreamSource extends AbstractFlowlet {
 
+    private final String name;
     private OutputEmitter<Entry> output;
 
     public StreamSource(String name) {
-      super(name);
+      this.name = name;
     }
 
     @ProcessInput
     public void process(StreamEvent event) {
       output.emit(new Entry(getContext().getName(), Charsets.UTF_8.decode(event.getBody()).toString()));
+    }
+
+    @Override
+    protected void configure() {
+      setName(name);
     }
   }
 

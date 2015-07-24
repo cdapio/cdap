@@ -27,30 +27,19 @@ import javax.annotation.Nullable;
 
 /**
  * This abstract class provides a default implementation of {@link Flowlet} methods for easy extension.
- * It uses the result of {@link #getName()} as the Flowlet name and the result of
- * {@link #getDescription()} as the Flowlet description. By default, the {@link Class#getSimpleName()}
- * is used as the Flowlet name.
- * <p>
- *   Child classes can override the {@link #getName()} and/or {@link #getDescription()}
- *   methods to specify custom names. Children can also override the {@link #configure()} method
- *   for more control over customizing the {@link FlowletSpecification}.
- * </p>
  */
 public abstract class AbstractFlowlet implements Flowlet, Callback {
 
-  private final String name;
   private FlowletConfigurer configurer;
   private FlowletContext flowletContext;
 
   public void configure(FlowletConfigurer configurer) {
     this.configurer = configurer;
-    FlowletSpecification specification = configure();
-    configurer.setName(specification.getName());
-    configurer.setDescription(specification.getDescription());
-    configurer.setFailurePolicy(specification.getFailurePolicy());
-    configurer.setProperties(specification.getProperties());
-    configurer.setResources(specification.getResources());
-    configurer.useDatasets(specification.getDataSets());
+    configure();
+  }
+
+  protected void configure() {
+
   }
 
   /**
@@ -127,33 +116,6 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
     configurer.useDatasets(datasets);
   }
 
-  /**
-   * Default constructor that uses {@link #getClass()}.{@link Class#getSimpleName() getSimpleName} as the
-   * flowlet name.
-   * @deprecated not required if you are using {@link AbstractFlowlet#configure} method.
-   */
-  @Deprecated
-  protected AbstractFlowlet() {
-    this.name = getClass().getSimpleName();
-  }
-
-  /**
-   * Constructor that uses the specified name as the flowlet name.
-   * @param name Name of the flowlet
-   * @deprecated Use {@link AbstractFlowlet#setName} instead.
-   */
-  @Deprecated
-  protected AbstractFlowlet(String name) {
-    this.name = name;
-  }
-
-  @Deprecated
-  @Override
-  public FlowletSpecification configure() {
-    return FlowletSpecification.Builder.with().setName(getName())
-      .setDescription(getDescription()).build();
-  }
-
   @Override
   public void initialize(FlowletContext context) throws Exception {
     this.flowletContext = context;
@@ -181,23 +143,5 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
    */
   protected final FlowletContext getContext() {
     return flowletContext;
-  }
-
-  /**
-   * @return {@link Class#getSimpleName() Simple classname} of this {@link Flowlet}
-   * @deprecated Use {@link AbstractFlowlet#setName} instead.
-   */
-  @Deprecated
-  protected String getName() {
-    return name;
-  }
-
-  /**
-   * @return A descriptive message about this {@link Flowlet}.
-   * @deprecated Use {@link AbstractFlowlet#setDescription}
-   */
-  @Deprecated
-  protected String getDescription() {
-    return String.format("Flowlet of %s.", getName());
   }
 }

@@ -24,7 +24,6 @@ import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import com.google.common.collect.Lists;
@@ -86,17 +85,11 @@ public class ToyApp extends AbstractApplication {
     @Output("out1")
     private OutputEmitter<Float> out1;
 
-    public A() {
-      super("A");
-    }
-
     @Override
-    public FlowletSpecification configure() {
-      return FlowletSpecification.Builder.with()
-        .setName("A")
-        .setDescription("A flowlet")
-        .useDataSet("data2", "data3")
-        .build();
+    public void configure() {
+      setName("A");
+      setDescription("A flowlet");
+      useDatasets("data2", "data3");
     }
 
     @ProcessInput
@@ -113,13 +106,14 @@ public class ToyApp extends AbstractApplication {
   public static final class B extends AbstractFlowlet {
     private OutputEmitter<Boolean> out;
 
-    public B() {
-      super("B");
-    }
-
     @ProcessInput
     public void process(StreamEvent event) {
       out.emit(false);
+    }
+
+    @Override
+    protected void configure() {
+      setName("B");
     }
   }
 
@@ -133,14 +127,15 @@ public class ToyApp extends AbstractApplication {
     @Output("c2")
     private OutputEmitter<Integer> c2;
 
-    public C() {
-      super("C");
-    }
-
     @ProcessInput
     public void process(String a) {
       c1.emit(1L);
       c2.emit(1);
+    }
+
+    @Override
+    protected void configure() {
+      setName("C");
     }
   }
 
@@ -149,10 +144,6 @@ public class ToyApp extends AbstractApplication {
    */
   public static final class E extends AbstractFlowlet {
     private OutputEmitter<Double> out;
-
-    public E() {
-      super("E");
-    }
 
     @ProcessInput("out1")
     void process(Float f) {
@@ -163,6 +154,11 @@ public class ToyApp extends AbstractApplication {
     void process(Boolean b) {
       out.emit(1.5);
     }
+
+    @Override
+    protected void configure() {
+      setName("E");
+    }
   }
 
   /**
@@ -172,14 +168,15 @@ public class ToyApp extends AbstractApplication {
     @Output("d1")
     private OutputEmitter<List<String>> out;
 
-    public D() {
-      super("D");
-    }
-
     @ProcessInput("c1")
     void process(Long l) {
       List<String> p = Lists.newArrayList();
       out.emit(p);
+    }
+
+    @Override
+    protected void configure() {
+      setName("D");
     }
   }
 
@@ -190,13 +187,14 @@ public class ToyApp extends AbstractApplication {
     @Output("f1")
     private OutputEmitter<URI> f1;
 
-    public F() {
-      super("F");
-    }
-
     @ProcessInput("c2")
     void process(Integer i) {
       f1.emit(URI.create("http://www.google.com"));
+    }
+
+    @Override
+    protected void configure() {
+      setName("F");
     }
   }
 
@@ -204,9 +202,6 @@ public class ToyApp extends AbstractApplication {
    *
    */
   public static final class G extends AbstractFlowlet {
-    public G() {
-      super("G");
-    }
 
     @ProcessInput("d1")
     public void process(List<String> s) {
@@ -221,6 +216,11 @@ public class ToyApp extends AbstractApplication {
     @ProcessInput
     public void process(Double d) {
 
+    }
+
+    @Override
+    protected void configure() {
+      setName("G");
     }
   }
 }

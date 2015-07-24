@@ -98,13 +98,14 @@ public class AllProgramsApp extends AbstractApplication {
 
     public static final String NAME = "A";
 
-    public A() {
-      super(NAME);
-    }
-
     @ProcessInput
     public void process(StreamEvent event) {
       // NO-OP
+    }
+
+    @Override
+    protected void configure() {
+      setName(NAME);
     }
   }
 

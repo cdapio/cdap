@@ -21,7 +21,6 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 
@@ -72,17 +71,11 @@ public class ResourceApp extends AbstractApplication {
    */
   public static final class A extends AbstractFlowlet {
 
-    public A() {
-      super("A");
-    }
-
     @Override
-    public FlowletSpecification configure() {
-      return FlowletSpecification.Builder.with()
-        .setName("A")
-        .setDescription("A flowlet")
-        .withResources(new Resources(1024, 2))
-        .build();
+    public void configure() {
+      setName("A");
+      setDescription("A flowlet");
+      setResources(new Resources(1024, 2));
     }
 
     public void process(StreamEvent event) {
@@ -94,17 +87,11 @@ public class ResourceApp extends AbstractApplication {
    */
   public static final class B extends AbstractFlowlet {
 
-    public B() {
-      super("B");
-    }
-
     @Override
-    public FlowletSpecification configure() {
-      return FlowletSpecification.Builder.with()
-        .setName("B")
-        .setDescription("B flowlet")
-        .withResources(new Resources(2048, 5))
-        .build();
+    public void configure() {
+      setName("B");
+      setDescription("B flowlet");
+      setResources(new Resources(2048, 5));
     }
 
     public void process(StreamEvent event) {

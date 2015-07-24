@@ -439,6 +439,8 @@ public class DefaultStoreTest {
    *
    */
   public static class FlowletImpl extends AbstractFlowlet {
+    private final String name;
+
     @UseDataSet("dataset2")
     private KeyValueTable counters;
 
@@ -446,12 +448,17 @@ public class DefaultStoreTest {
     private OutputEmitter<String> output;
 
     protected FlowletImpl(String name) {
-      super(name);
+      this.name = name;
     }
 
     @ProcessInput("process")
     public void bar(String str) {
       output.emit(str);
+    }
+
+    @Override
+    protected void configure() {
+      setName(name);
     }
   }
 
