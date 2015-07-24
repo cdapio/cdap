@@ -8,7 +8,7 @@ angular.module(PKG.name + '.commons')
         disabled: '='
       },
       templateUrl: 'widget-container/widget-schema-editor/widget-schema-editor.html',
-      controller: function($scope, myHelpers, EventPipe) {
+      controller: function($scope, myHelpers) {
         var defaultOptions = [ 'boolean', 'int', 'long', 'float', 'double', 'bytes', 'string' ];
         var defaultType = null;
         if ($scope.config) {
@@ -19,20 +19,10 @@ angular.module(PKG.name + '.commons')
           defaultType = 'string';
         }
 
-
-        var modelCopy = angular.copy($scope.model);
-
-        EventPipe.on('plugin.reset', function () {
-          $scope.model = angular.copy(modelCopy);
-          initialize();
-        });
-
-        var filledCount;
+        var filledCount = 0;
 
         // Format model
         function initialize() {
-          filledCount = 0;
-
           var schema = {};
           $scope.error = null;
           if ($scope.model) {

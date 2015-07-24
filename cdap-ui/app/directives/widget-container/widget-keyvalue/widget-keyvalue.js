@@ -7,8 +7,7 @@ angular.module(PKG.name + '.commons')
         config: '='
       },
       templateUrl: 'widget-container/widget-keyvalue/widget-keyvalue.html',
-      controller: function($scope, EventPipe) {
-        var modelCopy = angular.copy($scope.model);
+      controller: function($scope) {
 
         $scope.kvdelimiter = $scope.config['kv-delimiter'] || ':';
         $scope.delimiter = $scope.config.delimiter || ',';
@@ -40,12 +39,6 @@ angular.module(PKG.name + '.commons')
         }
 
         initialize();
-
-        EventPipe.on('plugin.reset', function () {
-          $scope.model = angular.copy(modelCopy);
-
-          initialize();
-        });
 
         $scope.$watch('properties', function() {
 
