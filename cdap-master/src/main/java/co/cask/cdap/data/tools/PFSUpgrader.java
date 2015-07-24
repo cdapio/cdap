@@ -200,13 +200,15 @@ public class PFSUpgrader {
   DatasetModuleMeta migrateDatasetModuleMeta(DatasetModuleMeta moduleMeta) {
     List<String> newUsesModules = new ArrayList<>();
     // ordering of the usesModules is important. They are loaded in order of the elements' indices
-    if (!moduleMeta.getUsesModules().contains("orderedTable-hbase")) {
-      newUsesModules.add("orderedTable-hbase");
+    // add the following two modules as the first two dependencies, and then simply exclude them from the existing
+    // declared dependencies to avoid duplicate declared dependencies.
+    newUsesModules.add("orderedTable-hbase");
+    newUsesModules.add("core");
+    for (String usesModule : moduleMeta.getUsesModules()) {
+      if (!"orderedTable-hbase".equals(usesModule) && !"core".equals(usesModule)) {
+        newUsesModules.add(usesModule);
+      }
     }
-    if (!moduleMeta.getUsesModules().contains("core")) {
-      newUsesModules.add("core");
-    }
-    newUsesModules.addAll(moduleMeta.getUsesModules());
     DatasetModuleMeta migratedModuleMeta = new DatasetModuleMeta(moduleMeta.getName(),
                                                                  moduleMeta.getClassName(),
                                                                  moduleMeta.getJarLocation(),
