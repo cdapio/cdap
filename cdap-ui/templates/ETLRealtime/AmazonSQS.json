@@ -1,5 +1,5 @@
 {
-  "id": "Sqs",
+  "id": "AmazonSQS",
   "groups" : {
     "position": [ "group1" ],
     "group1": {

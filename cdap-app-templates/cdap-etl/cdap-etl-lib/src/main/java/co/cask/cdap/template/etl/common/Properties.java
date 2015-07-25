@@ -37,7 +37,7 @@ public final class Properties {
   }
 
   /**
-   * Class to hold properties for S3BatchSource
+   * Class to hold properties for FileBatchSource
    */
   public static class File {
     public static final String FILESYSTEM = "fileSystem";
@@ -46,6 +46,7 @@ public final class Properties {
     public static final String FILE_REGEX = "fileRegex";
     public static final String TIME_TABLE = "timeTable";
     public static final String INPUT_FORMAT_CLASS = "inputFormatClass";
+    public static final String MAX_SPLIT_SIZE = "maxSplitSize";
   }
 
   /**
