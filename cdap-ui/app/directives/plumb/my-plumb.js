@@ -21,7 +21,7 @@ commonModule.directive('myPlumb', function() {
         var widthOfEachNode = 174;
         var marginLeft = parentWidth - (noOfNodes * 174);
         if (marginLeft < 100){
-          marginLeft = 150;
+          marginLeft = -20;
         } else {
           marginLeft = marginLeft/2;
         }
