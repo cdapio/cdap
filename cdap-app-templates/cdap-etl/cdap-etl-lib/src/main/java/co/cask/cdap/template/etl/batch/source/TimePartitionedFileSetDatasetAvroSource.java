@@ -54,7 +54,8 @@ import javax.annotation.Nullable;
 public class TimePartitionedFileSetDatasetAvroSource extends
   BatchSource<AvroKey<GenericRecord>, NullWritable, StructuredRecord> {
 
-  private static final String SCHEMA_DESC = "The Avro schema of the record being read from the Source as a JSON Object.";
+  private static final String SCHEMA_DESC = "The Avro schema of the record being read from the Source as a JSON " +
+    "Object.";
   private static final String TPFS_NAME_DESC = "Name of the Time Partitioned FileSet Dataset to which the records " +
     "have to be read from.";
   private static final String BASE_PATH_DESC = "Base path for the Time Partitioned FileSet. Defaults to the " +
