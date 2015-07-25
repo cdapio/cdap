@@ -136,17 +136,20 @@ angular.module(PKG.name + '.feature.adapters')
     }
 
     function checkForParallelDAGs(nodes, connections, metadata, config, errors) {
-      var i,
-          currConn,
-          nextConn;
-      for(i=0; i<connections.length-1; i++) {
-        currConn = connections[i];
-        nextConn = connections[i+1];
-        if (currConn.target !== nextConn.source) {
-          addCanvasError('There are parallel connections inside this adapter', errors);
-          break;
-        }
-      }
+      // FIXME: This is a faulty logic. We have to find
+      // parallel DAGs in a graph in a different way.
+      
+      // var i,
+      //     currConn,
+      //     nextConn;
+      // for(i=0; i<connections.length-1; i++) {
+      //   currConn = connections[i];
+      //   nextConn = connections[i+1];
+      //   if (currConn.target !== nextConn.source) {
+      //     addCanvasError('There are parallel connections inside this adapter', errors);
+      //     break;
+      //   }
+      // }
     }
 
     return {
