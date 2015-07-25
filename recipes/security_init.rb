@@ -41,24 +41,22 @@ execute 'create-security-server-ssl-keystore' do
 end
 
 # Manage Authentication realmfile
-if node['cdap']['security']['manage_realmfile'].to_s == 'true'
-  if node.key?('cdap') && node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('security.authentication.handlerClassName') &&
-     node['cdap']['cdap_site']['security.authentication.handlerClassName'] == 'co.cask.cdap.security.server.BasicAuthenticationHandler'
-    if node.key?('cdap') && node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('security.authentication.basic.realmfile')
-      realmfile = node['cdap']['cdap_site']['security.authentication.basic.realmfile']
-      realmdir = ::File.dirname(realmfile)
+if node['cdap']['security']['manage_realmfile'].to_s == 'true' &&
+   node.key?('cdap') && node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('security.authentication.handlerClassName') &&
+   node['cdap']['cdap_site']['security.authentication.handlerClassName'] == 'co.cask.cdap.security.server.BasicAuthenticationHandler' &&
+   node['cdap']['cdap_site'].key?('security.authentication.basic.realmfile')
+  realmfile = node['cdap']['cdap_site']['security.authentication.basic.realmfile']
+  realmdir = ::File.dirname(realmfile)
 
-      # Ensure parent directory exists
-      directory realmdir do
-        action :create
-        recursive true
-      end
+  # Ensure parent directory exists
+  directory realmdir do
+    action :create
+    recursive true
+  end
 
-      # Create the realmfile
-      file realmfile do
-        content "#{node['cdap']['security']['realmfile']['username']}: #{node['cdap']['security']['realmfile']['password']}"
-        action :create
-      end
-    end
+  # Create the realmfile
+  file realmfile do
+    content "#{node['cdap']['security']['realmfile']['username']}: #{node['cdap']['security']['realmfile']['password']}"
+    action :create
   end
 end
